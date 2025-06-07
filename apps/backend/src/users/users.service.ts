@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateUser, UpdateUser } from '@thclone/shared';
+import { CreateUser, UpdateUser } from '../shared/types';
 
 @Injectable()
 export class UsersService {
@@ -30,6 +30,8 @@ export class UsersService {
         location: true,
         website: true,
         isVerified: true,
+        isAdmin: true,
+        privacySettings: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -80,6 +82,8 @@ export class UsersService {
         location: true,
         website: true,
         isVerified: true,
+        isAdmin: true,
+        privacySettings: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -93,9 +97,17 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUser) {
+    const updateData = {
+      ...updateUserDto,
+      // Convert dateOfBirth string to Date if provided
+      ...(updateUserDto.dateOfBirth && {
+        dateOfBirth: new Date(updateUserDto.dateOfBirth)
+      })
+    };
+    
     return this.db.user.update({
       where: { id },
-      data: updateUserDto,
+      data: updateData,
       select: {
         id: true,
         username: true,
@@ -107,6 +119,7 @@ export class UsersService {
         website: true,
         dateOfBirth: true,
         isVerified: true,
+        isAdmin: true,
         privacySettings: true,
         createdAt: true,
         updatedAt: true,
