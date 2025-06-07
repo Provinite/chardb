@@ -1,0 +1,333 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AuthPayload {
+  accessToken: String!
+  refreshToken: String!
+  user: User!
+}
+
+type Character {
+  _count: CharacterCount
+  age: String
+  backstory: String
+  createdAt: DateTime!
+  creator: User
+  creatorId: ID
+  customFields: String
+  description: String
+  gender: String
+  id: ID!
+  isSellable: Boolean!
+  isTradeable: Boolean!
+  name: String!
+  owner: User!
+  ownerId: ID!
+  personality: String
+  price: Float
+  species: String
+  tags: [String!]!
+  tags_rel: [CharacterTag!]
+  updatedAt: DateTime!
+  visibility: Visibility!
+}
+
+type CharacterConnection {
+  characters: [Character!]!
+  hasMore: Boolean!
+  total: Int!
+}
+
+type CharacterCount {
+  images: Int!
+}
+
+input CharacterFiltersInput {
+  isSellable: Boolean
+  isTradeable: Boolean
+  limit: Int! = 20
+  offset: Int! = 0
+  ownerId: ID
+  search: String
+  species: String
+  tags: [String!]
+  visibility: Visibility
+}
+
+type CharacterTag {
+  character: Character!
+  tag: Tag!
+}
+
+input CreateCharacterInput {
+  age: String
+  backstory: String
+  customFields: String
+  description: String
+  gender: String
+  isSellable: Boolean! = false
+  isTradeable: Boolean! = false
+  name: String!
+  personality: String
+  price: Float
+  species: String
+  tags: [String!]! = []
+  visibility: Visibility! = PUBLIC
+}
+
+input CreateGalleryInput {
+  characterId: ID
+  description: String
+  name: String!
+  sortOrder: Int! = 0
+  visibility: Visibility! = PUBLIC
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Gallery {
+  _count: GalleryCount
+  character: Character
+  characterId: ID
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  images: [Image!]!
+  name: String!
+  owner: User!
+  ownerId: ID!
+  sortOrder: Int!
+  updatedAt: DateTime!
+  visibility: Visibility!
+}
+
+type GalleryConnection {
+  galleries: [Gallery!]!
+  hasMore: Boolean!
+  total: Int!
+}
+
+type GalleryCount {
+  images: Int!
+}
+
+input GalleryFiltersInput {
+  characterId: ID
+  limit: Int! = 20
+  offset: Int! = 0
+  ownerId: ID
+  visibility: Visibility
+}
+
+input GalleryImageOperationInput {
+  imageId: ID!
+}
+
+type Image {
+  altText: String
+  character: Character
+  characterId: ID
+  createdAt: DateTime!
+  description: String
+  fileSize: Int!
+  filename: String!
+  gallery: Gallery
+  galleryId: ID
+  height: Int!
+  id: ID!
+  isNsfw: Boolean!
+  mimeType: String!
+  originalFilename: String!
+  tags_rel: [ImageTag!]
+  thumbnailUrl: String
+  updatedAt: DateTime!
+  uploader: User!
+  uploaderId: ID!
+  url: String!
+  visibility: Visibility!
+  width: Int!
+}
+
+type ImageConnection {
+  hasMore: Boolean!
+  images: [Image!]!
+  total: Int!
+}
+
+input ImageFiltersInput {
+  characterId: ID
+  galleryId: ID
+  isNsfw: Boolean
+  limit: Int! = 20
+  offset: Int! = 0
+  uploaderId: ID
+  visibility: Visibility
+}
+
+type ImageTag {
+  image: Image!
+  tag: Tag!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input ManageImageTagsInput {
+  tagNames: [String!]!
+}
+
+input ManageTagsInput {
+  tagNames: [String!]!
+}
+
+type Mutation {
+  addCharacterTags(id: ID!, input: ManageTagsInput!): Character!
+  addImageTags(id: ID!, input: ManageImageTagsInput!): Image!
+  addImageToGallery(galleryId: ID!, input: GalleryImageOperationInput!): Gallery!
+  createCharacter(input: CreateCharacterInput!): Character!
+  createGallery(input: CreateGalleryInput!): Gallery!
+  deleteAccount: Boolean!
+  deleteCharacter(id: ID!): Boolean!
+  deleteGallery(id: ID!): Boolean!
+  deleteImage(id: ID!): Boolean!
+  login(input: LoginInput!): AuthPayload!
+  refreshToken(token: String!): String!
+  removeCharacterTags(id: ID!, input: ManageTagsInput!): Character!
+  removeImageFromGallery(galleryId: ID!, input: GalleryImageOperationInput!): Gallery!
+  removeImageTags(id: ID!, input: ManageImageTagsInput!): Image!
+  reorderGalleries(input: ReorderGalleriesInput!): [Gallery!]!
+  signup(input: SignupInput!): AuthPayload!
+  transferCharacter(id: ID!, input: TransferCharacterInput!): Character!
+  updateCharacter(id: ID!, input: UpdateCharacterInput!): Character!
+  updateGallery(id: ID!, input: UpdateGalleryInput!): Gallery!
+  updateImage(id: ID!, input: UpdateImageInput!): Image!
+  updateProfile(input: UpdateUserInput!): User!
+}
+
+type Query {
+  character(id: ID!): Character!
+  characterGalleries(characterId: ID!, filters: GalleryFiltersInput): GalleryConnection!
+  characterImages(characterId: ID!, filters: ImageFiltersInput): ImageConnection!
+  characters(filters: CharacterFiltersInput): CharacterConnection!
+  galleries(filters: GalleryFiltersInput): GalleryConnection!
+  gallery(id: ID!): Gallery!
+  galleryImages(filters: ImageFiltersInput, galleryId: ID!): ImageConnection!
+  image(id: ID!): Image!
+  images(filters: ImageFiltersInput): ImageConnection!
+  me: User!
+  myCharacters(filters: CharacterFiltersInput): CharacterConnection!
+  myGalleries(filters: GalleryFiltersInput): GalleryConnection!
+  myImages(filters: ImageFiltersInput): ImageConnection!
+  user(id: ID, username: String): User
+  userCharacters(filters: CharacterFiltersInput, userId: ID!): CharacterConnection!
+  userGalleries(filters: GalleryFiltersInput, userId: ID!): GalleryConnection!
+  userImages(filters: ImageFiltersInput, userId: ID!): ImageConnection!
+  users(limit: Int! = 20, offset: Int! = 0): UserConnection!
+}
+
+input ReorderGalleriesInput {
+  galleryIds: [ID!]!
+}
+
+input SignupInput {
+  displayName: String
+  email: String!
+  password: String!
+  username: String!
+}
+
+type Tag {
+  category: String
+  color: String
+  createdAt: DateTime!
+  id: ID!
+  name: String!
+}
+
+input TransferCharacterInput {
+  newOwnerId: ID!
+}
+
+input UpdateCharacterInput {
+  age: String
+  backstory: String
+  customFields: String
+  description: String
+  gender: String
+  isSellable: Boolean
+  isTradeable: Boolean
+  name: String
+  personality: String
+  price: Float
+  species: String
+  tags: [String!]
+  visibility: Visibility
+}
+
+input UpdateGalleryInput {
+  characterId: ID
+  description: String
+  name: String
+  sortOrder: Int
+  visibility: Visibility
+}
+
+input UpdateImageInput {
+  altText: String
+  characterId: ID
+  description: String
+  galleryId: ID
+  isNsfw: Boolean
+  visibility: Visibility
+}
+
+input UpdateUserInput {
+  bio: String
+  dateOfBirth: String
+  displayName: String
+  location: String
+  privacySettings: JSON
+  website: String
+}
+
+type User {
+  avatarUrl: String
+  bio: String
+  createdAt: DateTime!
+  dateOfBirth: DateTime
+  displayName: String
+  email: String!
+  id: ID!
+  isAdmin: Boolean!
+  isVerified: Boolean!
+  location: String
+  privacySettings: JSON!
+  updatedAt: DateTime!
+  username: String!
+  website: String
+}
+
+type UserConnection {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  nodes: [User!]!
+  totalCount: Float!
+}
+
+"""Visibility levels for content"""
+enum Visibility {
+  PRIVATE
+  PUBLIC
+  UNLISTED
+}

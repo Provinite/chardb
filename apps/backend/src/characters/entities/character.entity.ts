@@ -1,24 +1,7 @@
 import { ObjectType, Field, ID, Float, Int } from '@nestjs/graphql';
 import { Visibility } from '@prisma/client';
 import { User } from '../../users/entities/user.entity';
-
-@ObjectType()
-export class Tag {
-  @Field(() => ID)
-  id: string;
-
-  @Field()
-  name: string;
-
-  @Field({ nullable: true })
-  category?: string;
-
-  @Field({ nullable: true })
-  color?: string;
-
-  @Field()
-  createdAt: Date;
-}
+import { Tag } from '../../shared/entities/tag.entity';
 
 @ObjectType()
 export class CharacterCount {

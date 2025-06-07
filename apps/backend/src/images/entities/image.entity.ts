@@ -2,61 +2,8 @@ import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { Visibility } from '@prisma/client';
 import { User } from '../../users/entities/user.entity';
 import { Character } from '../../characters/entities/character.entity';
-
-@ObjectType()
-export class Tag {
-  @Field(() => ID)
-  id: string;
-
-  @Field()
-  name: string;
-
-  @Field({ nullable: true })
-  category?: string;
-
-  @Field({ nullable: true })
-  color?: string;
-
-  @Field()
-  createdAt: Date;
-}
-
-@ObjectType()
-export class Gallery {
-  @Field(() => ID)
-  id: string;
-
-  @Field()
-  name: string;
-
-  @Field({ nullable: true })
-  description?: string;
-
-  @Field(() => ID)
-  ownerId: string;
-
-  @Field(() => ID, { nullable: true })
-  characterId?: string;
-
-  @Field(() => Visibility)
-  visibility: Visibility;
-
-  @Field(() => Int)
-  sortOrder: number;
-
-  @Field()
-  createdAt: Date;
-
-  @Field()
-  updatedAt: Date;
-
-  // Relations
-  @Field(() => User)
-  owner: User;
-
-  @Field(() => Character, { nullable: true })
-  character?: Character;
-}
+import { Tag } from '../../shared/entities/tag.entity';
+import { Gallery } from '../../galleries/entities/gallery.entity';
 
 @ObjectType()
 export class Image {

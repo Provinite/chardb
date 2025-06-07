@@ -5,6 +5,12 @@ import { Character } from '../../characters/entities/character.entity';
 import { Image } from '../../images/entities/image.entity';
 
 @ObjectType()
+export class GalleryCount {
+  @Field(() => Int)
+  images: number;
+}
+
+@ObjectType()
 export class Gallery {
   @Field(() => ID)
   id: string;
@@ -46,12 +52,6 @@ export class Gallery {
   // Count fields
   @Field(() => GalleryCount, { nullable: true })
   _count?: GalleryCount;
-}
-
-@ObjectType()
-export class GalleryCount {
-  @Field(() => Int)
-  images: number;
 }
 
 @ObjectType()
