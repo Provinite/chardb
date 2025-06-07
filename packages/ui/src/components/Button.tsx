@@ -10,6 +10,9 @@ interface ButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   type?: 'button' | 'submit' | 'reset';
+  as?: React.ElementType;
+  to?: string;
+  href?: string;
 }
 
 const getVariantStyles = (variant: string, theme: Theme) => {
@@ -115,10 +118,12 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   type = 'button',
   onClick,
+  as,
   ...props
 }) => {
   return (
     <StyledButton
+      as={as}
       variant={variant}
       size={size}
       disabled={disabled || loading}
