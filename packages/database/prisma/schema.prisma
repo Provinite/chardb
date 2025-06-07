@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Visibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+}
+
+enum CommentableType {
+  CHARACTER
+  IMAGE
+  GALLERY
+  USER
+}
+
+enum LikeableType {
+  CHARACTER
+  IMAGE
+  GALLERY
+  COMMENT
+}
+
+model User {
+  id              String    @id @default(uuid())
+  username        String    @unique @db.VarChar(30)
+  email           String    @unique @db.VarChar(255)
+  passwordHash    String    @map("password_hash") @db.VarChar(255)
+  displayName     String?   @map("display_name") @db.VarChar(100)
+  bio             String?   @db.Text
+  avatarUrl       String?   @map("avatar_url") @db.VarChar(500)
+  location        String?   @db.VarChar(100)
+  website         String?   @db.VarChar(500)
+  dateOfBirth     DateTime? @map("date_of_birth") @db.Date
+  isVerified      Boolean   @default(false) @map("is_verified")
+  isAdmin         Boolean   @default(false) @map("is_admin")
+  privacySettings Json      @default("{}") @map("privacy_settings")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  ownedCharacters   Character[] @relation("CharacterOwner")
+  createdCharacters Character[] @relation("CharacterCreator")
+  uploadedImages    Image[]     @relation("ImageUploader")
+  galleries         Gallery[]
+  comments          Comment[]
+  likes             Like[]
+
+  // Social relations
+  followers Follow[] @relation("UserFollowing")
+  following Follow[] @relation("UserFollower")
+
+  @@map("users")
+}
+
+model Character {
+  id           String     @id @default(uuid())
+  name         String     @db.VarChar(100)
+  species      String?    @db.VarChar(50)
+  age          String?    @db.VarChar(20)
+  gender       String?    @db.VarChar(30)
+  description  String?    @db.Text
+  personality  String?    @db.Text
+  backstory    String?    @db.Text
+  ownerId      String     @map("owner_id")
+  creatorId    String?    @map("creator_id")
+  visibility   Visibility @default(PUBLIC)
+  isSellable   Boolean    @default(false) @map("is_sellable")
+  isTradeable  Boolean    @default(false) @map("is_tradeable")
+  price        Decimal?   @db.Decimal(10, 2)
+  tags         String[]   @default([])
+  customFields Json       @default("{}") @map("custom_fields")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  owner   User  @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  creator User? @relation("CharacterCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+
+  images    Image[]
+  galleries Gallery[]
+  comments  Comment[]
+  likes     Like[]
+  tags_rel  CharacterTag[]
+
+  @@map("characters")
+}
+
+model Image {
+  id               String     @id @default(uuid())
+  filename         String     @db.VarChar(255)
+  originalFilename String     @map("original_filename") @db.VarChar(255)
+  url              String     @db.VarChar(500)
+  thumbnailUrl     String?    @map("thumbnail_url") @db.VarChar(500)
+  altText          String?    @map("alt_text") @db.VarChar(200)
+  description      String?    @db.Text
+  uploaderId       String     @map("uploader_id")
+  characterId      String?    @map("character_id")
+  galleryId        String?    @map("gallery_id")
+  width            Int
+  height           Int
+  fileSize         Int        @map("file_size")
+  mimeType         String     @map("mime_type") @db.VarChar(50)
+  isNsfw           Boolean    @default(false) @map("is_nsfw")
+  visibility       Visibility @default(PUBLIC)
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  uploader  User       @relation("ImageUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
+  character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
+  gallery   Gallery?   @relation(fields: [galleryId], references: [id], onDelete: SetNull)
+
+  comments Comment[]
+  likes    Like[]
+  tags_rel ImageTag[]
+
+  @@map("images")
+}
+
+model Gallery {
+  id          String     @id @default(uuid())
+  name        String     @db.VarChar(100)
+  description String?    @db.Text
+  ownerId     String     @map("owner_id")
+  characterId String?    @map("character_id")
+  visibility  Visibility @default(PUBLIC)
+  sortOrder   Int        @default(0) @map("sort_order")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
+
+  images   Image[]
+  comments Comment[]
+  likes    Like[]
+
+  @@map("galleries")
+}
+
+model Comment {
+  id              String          @id @default(uuid())
+  content         String          @db.Text
+  authorId        String          @map("author_id")
+  commentableType CommentableType @map("commentable_type")
+  commentableId   String          @map("commentable_id")
+  parentId        String?         @map("parent_id")
+  isHidden        Boolean         @default(false) @map("is_hidden")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Self-referential relation for nested comments
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+  
+  // Polymorphic relations (handled in application logic)
+  character Character? @relation(fields: [commentableId], references: [id], onDelete: Cascade)
+  image     Image?     @relation(fields: [commentableId], references: [id], onDelete: Cascade)
+  gallery   Gallery?   @relation(fields: [commentableId], references: [id], onDelete: Cascade)
+
+  likes Like[]
+
+  @@map("comments")
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  follower  User @relation("UserFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model Like {
+  id           String      @id @default(uuid())
+  userId       String      @map("user_id")
+  likeableType LikeableType @map("likeable_type")
+  likeableId   String      @map("likeable_id")
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Polymorphic relations (handled in application logic)
+  character Character? @relation(fields: [likeableId], references: [id], onDelete: Cascade)
+  image     Image?     @relation(fields: [likeableId], references: [id], onDelete: Cascade)
+  gallery   Gallery?   @relation(fields: [likeableId], references: [id], onDelete: Cascade)
+  comment   Comment?   @relation(fields: [likeableId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, likeableType, likeableId])
+  @@map("likes")
+}
+
+model Tag {
+  id       String  @id @default(uuid())
+  name     String  @unique @db.VarChar(50)
+  category String? @db.VarChar(30)
+  color    String? @db.VarChar(7)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  characters CharacterTag[]
+  images     ImageTag[]
+
+  @@map("tags")
+}
+
+model CharacterTag {
+  characterId String @map("character_id")
+  tagId       String @map("tag_id")
+
+  // Relations
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([characterId, tagId])
+  @@map("character_tags")
+}
+
+model ImageTag {
+  imageId String @map("image_id")
+  tagId   String @map("tag_id")
+
+  // Relations
+  image Image @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([imageId, tagId])
+  @@map("image_tags")
+}
