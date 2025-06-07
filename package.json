@@ -22,7 +22,6 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@anthropic-ai/claude-code": "1.0.16",
-    "task-master-ai": "^0.16.1"
+    "@anthropic-ai/claude-code": "1.0.17"
   }
 }
