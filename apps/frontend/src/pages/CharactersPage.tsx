@@ -75,7 +75,9 @@ const VisibilityFilter = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
 `;
 
-const VisibilityButton = styled.button<{ active: boolean }>`
+const VisibilityButton = styled.button.withConfig({
+  shouldForwardProp: (prop) => prop !== 'active',
+})<{ active: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   border: 2px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.border};
   background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.background};

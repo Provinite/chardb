@@ -55,10 +55,10 @@ export const client = new ApolloClient({
           },
           characters: {
             keyArgs: [],
-            merge(existing = { nodes: [], totalCount: 0 }, incoming) {
+            merge(existing = { characters: [], total: 0 }, incoming) {
               return {
                 ...incoming,
-                nodes: [...existing.nodes, ...incoming.nodes],
+                characters: [...(existing.characters || []), ...(incoming.characters || [])],
               };
             },
           },
