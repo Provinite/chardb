@@ -21,15 +21,6 @@ export class Tag {
 }
 
 @ObjectType()
-export class CharacterTag {
-  @Field(() => Character)
-  character: Character;
-
-  @Field(() => Tag)
-  tag: Tag;
-}
-
-@ObjectType()
 export class CharacterCount {
   @Field(() => Int)
   images: number;
@@ -103,6 +94,15 @@ export class Character {
 
   @Field(() => CharacterCount, { nullable: true })
   _count?: CharacterCount;
+}
+
+@ObjectType()
+export class CharacterTag {
+  @Field(() => Character)
+  character: Character;
+
+  @Field(() => Tag)
+  tag: Tag;
 }
 
 @ObjectType()

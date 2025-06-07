@@ -22,15 +22,6 @@ export class Tag {
 }
 
 @ObjectType()
-export class ImageTag {
-  @Field(() => Image)
-  image: Image;
-
-  @Field(() => Tag)
-  tag: Tag;
-}
-
-@ObjectType()
 export class Gallery {
   @Field(() => ID)
   id: string;
@@ -135,6 +126,15 @@ export class Image {
 
   @Field(() => [ImageTag], { nullable: true })
   tags_rel?: ImageTag[];
+}
+
+@ObjectType()
+export class ImageTag {
+  @Field(() => Image)
+  image: Image;
+
+  @Field(() => Tag)
+  tag: Tag;
 }
 
 @ObjectType()
