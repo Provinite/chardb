@@ -1,0 +1,1 @@
+- Commit changes routinely. Especially when finishing a major step or feature. Use succinct commit messages with the standard commit syntax eg feat(index): add new route
