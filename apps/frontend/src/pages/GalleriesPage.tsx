@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { GET_GALLERIES, Gallery, GalleryFiltersInput } from '../graphql/galleries';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useAuth } from '../contexts/AuthContext';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -29,6 +30,27 @@ const Title = styled.h1`
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
+`;
+
+const CreateButton = styled.button`
+  padding: 0.75rem ${({ theme }) => theme.spacing.lg};
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.secondary};
+  }
+  
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 2px;
+  }
 `;
 
 const SearchSection = styled.div`
@@ -279,6 +301,7 @@ const EmptyState = styled.div`
 
 export const GalleriesPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [filters, setFilters] = useState<GalleryFiltersInput>({
     limit: 12,
     offset: 0,
@@ -359,6 +382,11 @@ export const GalleriesPage: React.FC = () => {
     <Container>
       <Header>
         <Title>Browse Galleries</Title>
+        {user && (
+          <CreateButton onClick={() => navigate('/gallery/create')}>
+            Create Gallery
+          </CreateButton>
+        )}
       </Header>
 
       <SearchSection>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
 import { Button } from '@thclone/ui';
@@ -280,17 +280,28 @@ export const UploadImagePage: React.FC = () => {
               <FormRow>
                 <div>
                   <Label>Gallery (Optional)</Label>
-                  <Select
-                    value={formData.galleryId}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('galleryId', e.target.value)}
-                  >
-                    <option value="">Select a gallery...</option>
-                    {galleries.map((gallery: any) => (
-                      <option key={gallery.id} value={gallery.id}>
-                        {gallery.name}
-                      </option>
-                    ))}
-                  </Select>
+                  {galleries.length === 0 ? (
+                    <div>
+                      <Select disabled>
+                        <option>No galleries yet</option>
+                      </Select>
+                      <Link to="/gallery/create" style={{ fontSize: '0.875rem', marginTop: '0.5rem', display: 'inline-block' }}>
+                        Create your first gallery
+                      </Link>
+                    </div>
+                  ) : (
+                    <Select
+                      value={formData.galleryId}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('galleryId', e.target.value)}
+                    >
+                      <option value="">Select a gallery...</option>
+                      {galleries.map((gallery: any) => (
+                        <option key={gallery.id} value={gallery.id}>
+                          {gallery.name}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
                 </div>
                 <div>
                   <Label>Character (Optional)</Label>
