@@ -6,6 +6,8 @@ import { Button } from '@thclone/ui';
 import { GET_CHARACTER, Character } from '../graphql/characters';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
+import { LikeButton } from '../components/LikeButton';
+import { LikeableType } from '../generated/graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -381,6 +383,11 @@ export const CharacterPage: React.FC = () => {
               <MetaBadge variant="warning">Open to Trades</MetaBadge>
             )}
             <MetaBadge>Created {formatDate(character.createdAt)}</MetaBadge>
+            <LikeButton 
+              entityType={LikeableType.Character}
+              entityId={character.id}
+              size="medium"
+            />
           </CharacterMeta>
 
           <InfoGrid>

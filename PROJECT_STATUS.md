@@ -493,8 +493,8 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 
 **Current Focus**: Likes System Frontend Implementation
 1. ✅ **GraphQL Codegen Update**: Generate types for all social operations
-2. 🚧 **LikeButton Component**: Core like/unlike functionality with optimistic updates
-3. ⏳ **Integration**: Add like buttons to Character, Gallery, and Image pages
+2. ✅ **LikeButton Component**: Core like/unlike functionality with optimistic updates
+3. 🚧 **Integration**: Add like buttons to Character, Gallery, and Image pages (Character ✅, Gallery ⏳, Image ⏳)
 4. ⏳ **User Liked Content**: Pages for viewing user's liked items
 5. ⏳ **Testing**: Component and integration tests for like functionality
 

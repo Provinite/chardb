@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { Button } from '@thclone/ui';
-import { useGetImageQuery } from '../generated/graphql';
+import { useGetImageQuery, LikeableType } from '../generated/graphql';
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { LikeButton } from '../components/LikeButton';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -311,6 +312,14 @@ export const ImagePage: React.FC = () => {
           <Title>
             {image.description || image.originalFilename || 'Untitled'}
           </Title>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <LikeButton 
+              entityType={LikeableType.Image}
+              entityId={image.id}
+              size="medium"
+            />
+          </div>
 
           <MetadataSection>
             <SectionTitle>Basic Information</SectionTitle>

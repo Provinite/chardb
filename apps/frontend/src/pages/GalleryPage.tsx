@@ -6,6 +6,8 @@ import { Button } from '@thclone/ui';
 import { GET_GALLERY, Gallery } from '../graphql/galleries';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
+import { LikeButton } from '../components/LikeButton';
+import { LikeableType } from '../generated/graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -417,6 +419,11 @@ export const GalleryPage: React.FC = () => {
                 </CharacterLink>
               )}
               <MetaBadge>Created {formatDate(gallery.createdAt)}</MetaBadge>
+              <LikeButton 
+                entityType={LikeableType.Gallery}
+                entityId={gallery.id}
+                size="medium"
+              />
             </GalleryMeta>
           </GalleryBasics>
 
