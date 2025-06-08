@@ -60,6 +60,46 @@ type CharacterTag {
   tag: Tag!
 }
 
+type Comment {
+  author: User!
+  authorId: ID!
+  character: Character
+  commentableId: ID!
+  commentableType: CommentableType!
+  content: String!
+  createdAt: DateTime!
+  gallery: Gallery
+  id: ID!
+  image: Image
+  isHidden: Boolean!
+  parent: Comment
+  parentId: ID
+  replies: [Comment!]!
+  repliesCount: Int!
+  updatedAt: DateTime!
+}
+
+type CommentConnection {
+  comments: [Comment!]!
+  hasMore: Boolean!
+  total: Int!
+}
+
+input CommentFiltersInput {
+  entityId: ID
+  entityType: CommentableType
+  limit: Int! = 20
+  offset: Int! = 0
+  parentId: ID
+}
+
+"""Types of entities that can be commented on"""
+enum CommentableType {
+  CHARACTER
+  GALLERY
+  IMAGE
+}
+
 input CreateCharacterInput {
   age: String
   backstory: String
@@ -74,6 +114,13 @@ input CreateCharacterInput {
   species: String
   tags: [String!]! = []
   visibility: Visibility! = PUBLIC
+}
+
+input CreateCommentInput {
+  content: String!
+  entityId: ID!
+  entityType: CommentableType!
+  parentId: ID
 }
 
 input CreateGalleryInput {
@@ -203,9 +250,11 @@ type Mutation {
   addImageTags(id: ID!, input: ManageImageTagsInput!): Image!
   addImageToGallery(galleryId: ID!, input: GalleryImageOperationInput!): Gallery!
   createCharacter(input: CreateCharacterInput!): Character!
+  createComment(input: CreateCommentInput!): Comment!
   createGallery(input: CreateGalleryInput!): Gallery!
   deleteAccount: Boolean!
   deleteCharacter(id: ID!): Boolean!
+  deleteComment(id: ID!): Boolean!
   deleteGallery(id: ID!): Boolean!
   deleteImage(id: ID!): Boolean!
   login(input: LoginInput!): AuthPayload!
@@ -217,6 +266,7 @@ type Mutation {
   signup(input: SignupInput!): AuthPayload!
   transferCharacter(id: ID!, input: TransferCharacterInput!): Character!
   updateCharacter(id: ID!, input: UpdateCharacterInput!): Character!
+  updateComment(id: ID!, input: UpdateCommentInput!): Comment!
   updateGallery(id: ID!, input: UpdateGalleryInput!): Gallery!
   updateImage(id: ID!, input: UpdateImageInput!): Image!
   updateProfile(input: UpdateUserInput!): User!
@@ -227,6 +277,8 @@ type Query {
   characterGalleries(characterId: ID!, filters: GalleryFiltersInput): GalleryConnection!
   characterImages(characterId: ID!, filters: ImageFiltersInput): ImageConnection!
   characters(filters: CharacterFiltersInput): CharacterConnection!
+  comment(id: ID!): Comment!
+  comments(filters: CommentFiltersInput!): CommentConnection!
   galleries(filters: GalleryFiltersInput): GalleryConnection!
   gallery(id: ID!): Gallery!
   galleryImages(filters: ImageFiltersInput, galleryId: ID!): ImageConnection!
@@ -282,6 +334,10 @@ input UpdateCharacterInput {
   species: String
   tags: [String!]
   visibility: Visibility
+}
+
+input UpdateCommentInput {
+  content: String!
 }
 
 input UpdateGalleryInput {
