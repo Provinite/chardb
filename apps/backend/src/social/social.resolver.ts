@@ -3,7 +3,6 @@ import { UseGuards } from '@nestjs/common';
 import { SocialService } from './social.service';
 import { ToggleLikeInput, LikeResult, LikeStatus, LikeableType } from './dto/like.dto';
 import { ToggleFollowInput, FollowResult, FollowStatus } from './dto/follow.dto';
-import { Like } from './entities/like.entity';
 import { Follow } from './entities/follow.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
@@ -25,7 +24,7 @@ function addDefaultSocialFields(user: any): User {
   };
 }
 
-@Resolver(() => Like)
+@Resolver()
 export class SocialResolver {
   constructor(
     private readonly socialService: SocialService,
@@ -51,190 +50,6 @@ export class SocialResolver {
     return this.socialService.getLikeStatus(entityType, entityId, user?.id);
   }
 
-  // Resolve polymorphic relations for Like entity
-  @ResolveField(() => Character, { nullable: true })
-  async character(@Parent() like: Like): Promise<Character | null> {
-    if (like.likeableType !== LikeableType.CHARACTER) {
-      return null;
-    }
-
-    const character = await this.databaseService.character.findUnique({
-      where: { id: like.likeableId },
-      include: {
-        owner: true,
-        creator: true,
-      },
-    });
-
-    if (!character) return null;
-
-    return {
-      ...character,
-      owner: addDefaultSocialFields(character.owner),
-      creator: character.creator ? addDefaultSocialFields(character.creator) : undefined,
-      price: character.price ? Number(character.price) : null,
-      likesCount: 0, // Will be resolved by field resolver
-      userHasLiked: false, // Will be resolved by field resolver
-    } as Character;
-  }
-
-  @ResolveField(() => Image, { nullable: true })
-  async image(@Parent() like: Like): Promise<Image | null> {
-    if (like.likeableType !== LikeableType.IMAGE) {
-      return null;
-    }
-
-    const image = await this.databaseService.image.findUnique({
-      where: { id: like.likeableId },
-      include: {
-        uploader: true,
-        character: {
-          include: {
-            owner: true,
-            creator: true,
-          },
-        },
-        gallery: {
-          include: {
-            owner: true,
-          },
-        },
-      },
-    });
-
-    if (!image) return null;
-
-    return {
-      ...image,
-      uploader: addDefaultSocialFields(image.uploader),
-      character: image.character ? {
-        ...image.character,
-        owner: addDefaultSocialFields(image.character.owner),
-        creator: image.character.creator ? addDefaultSocialFields(image.character.creator) : undefined,
-        price: image.character.price ? Number(image.character.price) : null,
-        likesCount: 0,
-        userHasLiked: false,
-      } : null,
-      gallery: image.gallery ? {
-        ...image.gallery,
-        owner: addDefaultSocialFields(image.gallery.owner),
-        character: null,
-        images: [],
-        likesCount: 0,
-        userHasLiked: false,
-      } : null,
-      likesCount: 0, // Will be resolved by field resolver
-      userHasLiked: false, // Will be resolved by field resolver
-    } as Image;
-  }
-
-  @ResolveField(() => Gallery, { nullable: true })
-  async gallery(@Parent() like: Like): Promise<Gallery | null> {
-    if (like.likeableType !== LikeableType.GALLERY) {
-      return null;
-    }
-
-    const gallery = await this.databaseService.gallery.findUnique({
-      where: { id: like.likeableId },
-      include: {
-        owner: true,
-        character: {
-          include: {
-            owner: true,
-            creator: true,
-          },
-        },
-      },
-    });
-
-    if (!gallery) return null;
-
-    return {
-      ...gallery,
-      owner: addDefaultSocialFields(gallery.owner),
-      character: gallery.character ? {
-        ...gallery.character,
-        owner: addDefaultSocialFields(gallery.character.owner),
-        creator: gallery.character.creator ? addDefaultSocialFields(gallery.character.creator) : undefined,
-        price: gallery.character.price ? Number(gallery.character.price) : null,
-        likesCount: 0,
-        userHasLiked: false,
-      } : null,
-      images: [],
-      likesCount: 0, // Will be resolved by field resolver
-      userHasLiked: false, // Will be resolved by field resolver
-    } as Gallery;
-  }
-
-  @ResolveField(() => Comment, { nullable: true })
-  async comment(@Parent() like: Like): Promise<Comment | null> {
-    if (like.likeableType !== LikeableType.COMMENT) {
-      return null;
-    }
-
-    const comment = await this.databaseService.comment.findUnique({
-      where: { id: like.likeableId },
-      include: {
-        author: true,
-        parent: {
-          include: {
-            author: true,
-          },
-        },
-        replies: {
-          include: {
-            author: true,
-          },
-          orderBy: {
-            createdAt: 'asc',
-          },
-        },
-        _count: {
-          select: {
-            replies: true,
-          },
-        },
-      },
-    });
-
-    if (!comment) return null;
-
-    return {
-      ...comment,
-      author: addDefaultSocialFields(comment.author),
-      parent: comment.parent ? {
-        ...comment.parent,
-        author: addDefaultSocialFields(comment.parent.author),
-        replies: [],
-        repliesCount: 0,
-        character: undefined,
-        image: undefined,
-        gallery: undefined,
-        likesCount: 0,
-        userHasLiked: false,
-      } : undefined,
-      replies: comment.replies?.map(reply => ({
-        ...reply,
-        author: addDefaultSocialFields(reply.author),
-        parent: undefined,
-        replies: [],
-        repliesCount: 0,
-        character: undefined,
-        image: undefined,
-        gallery: undefined,
-        likesCount: 0,
-        userHasLiked: false,
-      })) || [],
-      repliesCount: comment._count?.replies || 0,
-      // Polymorphic relations will be resolved in the resolver
-      character: undefined,
-      image: undefined,
-      gallery: undefined,
-      // Social features will be resolved by field resolvers
-      likesCount: 0,
-      userHasLiked: false,
-    } as Comment;
-  }
 
   // Follow System Mutations and Queries
 
