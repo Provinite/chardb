@@ -80,6 +80,10 @@ describe('ImagesService', () => {
           url: expect.any(String),
           thumbnailUrl: expect.any(String),
           altText: undefined,
+          artistId: undefined,
+          artistName: undefined,
+          artistUrl: undefined,
+          source: undefined,
           mimeType: 'image/jpeg',
           fileSize: 500000,
           width: expect.any(Number),
@@ -92,6 +96,7 @@ describe('ImagesService', () => {
         },
         include: {
           uploader: true,
+          artist: true,
           character: true,
           gallery: true,
           tags_rel: {

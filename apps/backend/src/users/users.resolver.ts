@@ -8,6 +8,16 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
+// Helper function to add default social fields to User objects
+function addDefaultSocialFields(user: any): User {
+  return {
+    ...user,
+    followersCount: 0,
+    followingCount: 0,
+    userIsFollowing: false,
+  };
+}
+
 @Resolver(() => User)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}

@@ -4,6 +4,16 @@ import { CreateUser, UpdateUser } from '../shared/types';
 import { UserProfile, UserStats } from './entities/user-profile.entity';
 import { Visibility } from '@prisma/client';
 
+// Helper function to add default social fields to User objects
+function addDefaultSocialFields(user: any): any {
+  return {
+    ...user,
+    followersCount: 0,
+    followingCount: 0,
+    userIsFollowing: false,
+  };
+}
+
 @Injectable()
 export class UsersService {
   constructor(private db: DatabaseService) {}
@@ -42,7 +52,7 @@ export class UsersService {
     const totalCount = await this.db.user.count();
 
     return {
-      nodes: users,
+      nodes: users.map(addDefaultSocialFields),
       totalCount,
       hasNextPage: offset + limit < totalCount,
       hasPreviousPage: offset > 0,
@@ -50,7 +60,7 @@ export class UsersService {
   }
 
   async findById(id: string) {
-    return this.db.user.findUnique({
+    const user = await this.db.user.findUnique({
       where: { id },
       select: {
         id: true,
@@ -69,10 +79,11 @@ export class UsersService {
         updatedAt: true,
       },
     });
+    return user ? addDefaultSocialFields(user) : null;
   }
 
   async findByUsername(username: string) {
-    return this.db.user.findUnique({
+    const user = await this.db.user.findUnique({
       where: { username },
       select: {
         id: true,
@@ -90,6 +101,7 @@ export class UsersService {
         updatedAt: true,
       },
     });
+    return user ? addDefaultSocialFields(user) : null;
   }
 
   async findByEmail(email: string) {
@@ -107,7 +119,7 @@ export class UsersService {
       })
     };
     
-    return this.db.user.update({
+    const user = await this.db.user.update({
       where: { id },
       data: updateData,
       select: {
@@ -127,6 +139,7 @@ export class UsersService {
         updatedAt: true,
       },
     });
+    return addDefaultSocialFields(user);
   }
 
   async remove(id: string) {
@@ -270,7 +283,12 @@ export class UsersService {
     });
 
     return {
-      user,
+      user: {
+        ...user,
+        followersCount: 0, // Will be resolved by field resolver
+        followingCount: 0, // Will be resolved by field resolver  
+        userIsFollowing: false, // Will be resolved by field resolver
+      },
       stats,
       recentCharacters: recentCharacters as any,
       recentGalleries: recentGalleries as any,

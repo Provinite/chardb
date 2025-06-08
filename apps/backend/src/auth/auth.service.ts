@@ -5,6 +5,16 @@ import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { CreateUser, Login } from '../shared/types';
 
+// Helper function to add default social fields to User objects
+function addDefaultSocialFields(user: any): any {
+  return {
+    ...user,
+    followersCount: 0,
+    followingCount: 0,
+    userIsFollowing: false,
+  };
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -32,7 +42,7 @@ export class AuthService {
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     return {
-      user,
+      user: addDefaultSocialFields(user),
       accessToken,
       refreshToken,
     };
@@ -64,7 +74,7 @@ export class AuthService {
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     return {
-      user: userWithoutPassword,
+      user: addDefaultSocialFields(userWithoutPassword),
       accessToken,
       refreshToken,
     };

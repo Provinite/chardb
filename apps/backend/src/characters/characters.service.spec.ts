@@ -37,6 +37,7 @@ describe('CharactersService', () => {
       const mockCharacter = {
         id: 'char1',
         ...input,
+        customFields: null,
         ownerId: userId,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -77,6 +78,7 @@ describe('CharactersService', () => {
         name: 'Public Character',
         visibility: Visibility.PUBLIC,
         ownerId: 'user1',
+        customFields: null,
       };
 
       db.character.findUnique.mockResolvedValue(mockCharacter);
@@ -104,6 +106,7 @@ describe('CharactersService', () => {
         name: 'Private Character',
         visibility: Visibility.PRIVATE,
         ownerId: 'user1',
+        customFields: null,
       };
 
       db.character.findUnique.mockResolvedValue(mockCharacter);
@@ -118,6 +121,7 @@ describe('CharactersService', () => {
         name: 'Private Character',
         visibility: Visibility.PRIVATE,
         ownerId: 'user1',
+        customFields: null,
       };
 
       db.character.findUnique.mockResolvedValue(mockCharacter);
@@ -142,6 +146,7 @@ describe('CharactersService', () => {
       const mockUpdatedCharacter = {
         ...mockExistingCharacter,
         ...input,
+        customFields: null,
       };
 
       db.character.findUnique.mockResolvedValue(mockExistingCharacter);
@@ -212,8 +217,8 @@ describe('CharactersService', () => {
   describe('findAll', () => {
     it('should return paginated characters with proper filtering', async () => {
       const mockCharacters = [
-        { id: 'char1', name: 'Character 1', visibility: Visibility.PUBLIC },
-        { id: 'char2', name: 'Character 2', visibility: Visibility.PUBLIC },
+        { id: 'char1', name: 'Character 1', visibility: Visibility.PUBLIC, customFields: null },
+        { id: 'char2', name: 'Character 2', visibility: Visibility.PUBLIC, customFields: null },
       ];
 
       db.character.findMany.mockResolvedValue(mockCharacters);
@@ -273,6 +278,7 @@ describe('CharactersService', () => {
 
       const mockUpdatedCharacter = {
         ...mockCharacter,
+        customFields: null,
       };
 
       db.character.findUnique.mockResolvedValue(mockCharacter);
