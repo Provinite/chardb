@@ -2,7 +2,9 @@ import React, { useState, useCallback, useRef } from 'react';
 import styled from 'styled-components';
 import { Button } from '@thclone/ui';
 
-const UploadContainer = styled.div<{ isDragActive: boolean; hasError: boolean }>`
+const UploadContainer = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['isDragActive', 'hasError'].includes(prop),
+})<{ isDragActive: boolean; hasError: boolean }>`
   border: 2px dashed ${({ theme, isDragActive, hasError }) => 
     hasError ? theme.colors.error : 
     isDragActive ? theme.colors.primary : 
