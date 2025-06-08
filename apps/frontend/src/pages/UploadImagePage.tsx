@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
-import { Button, Input, TextArea, Select, Checkbox } from '@thclone/ui';
+import { Button } from '@thclone/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { ImageUpload, ImageFile } from '../components/ImageUpload';
 import { GET_MY_GALLERIES } from '../graphql/galleries';
@@ -63,6 +63,30 @@ const CheckboxGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const Input = styled.input`
+  padding: ${({ theme }) => theme.spacing.sm};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
+`;
+
+const Label = styled.label`
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  margin-bottom: ${({ theme }) => theme.spacing.xs};
+  display: block;
+`;
+
+const Select = styled.select`
+  padding: ${({ theme }) => theme.spacing.sm};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
+`;
+
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+  margin-right: ${({ theme }) => theme.spacing.sm};
 `;
 
 const Actions = styled.div`
@@ -234,19 +258,19 @@ export const UploadImagePage: React.FC = () => {
             <Section>
               <SectionTitle>Image Details</SectionTitle>
               <div>
+                <Label>Description</Label>
                 <Input
-                  label="Description"
                   placeholder="Describe your image..."
                   value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('description', e.target.value)}
                 />
               </div>
               <div>
+                <Label>Alt Text</Label>
                 <Input
-                  label="Alt Text"
                   placeholder="Alt text for accessibility..."
                   value={formData.altText}
-                  onChange={(e) => handleInputChange('altText', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('altText', e.target.value)}
                 />
               </div>
             </Section>
@@ -255,10 +279,10 @@ export const UploadImagePage: React.FC = () => {
               <SectionTitle>Organization</SectionTitle>
               <FormRow>
                 <div>
+                  <Label>Gallery (Optional)</Label>
                   <Select
-                    label="Gallery (Optional)"
                     value={formData.galleryId}
-                    onChange={(e) => handleInputChange('galleryId', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('galleryId', e.target.value)}
                   >
                     <option value="">Select a gallery...</option>
                     {galleries.map((gallery: any) => (
@@ -269,10 +293,10 @@ export const UploadImagePage: React.FC = () => {
                   </Select>
                 </div>
                 <div>
+                  <Label>Character (Optional)</Label>
                   <Select
-                    label="Character (Optional)"
                     value={formData.characterId}
-                    onChange={(e) => handleInputChange('characterId', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('characterId', e.target.value)}
                   >
                     <option value="">Select a character...</option>
                     {characters.map((character: any) => (
@@ -289,10 +313,10 @@ export const UploadImagePage: React.FC = () => {
               <SectionTitle>Settings</SectionTitle>
               <FormRow>
                 <div>
+                  <Label>Visibility</Label>
                   <Select
-                    label="Visibility"
                     value={formData.visibility}
-                    onChange={(e) => handleInputChange('visibility', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('visibility', e.target.value)}
                   >
                     <option value="PUBLIC">Public</option>
                     <option value="UNLISTED">Unlisted</option>
@@ -300,11 +324,13 @@ export const UploadImagePage: React.FC = () => {
                   </Select>
                 </div>
                 <CheckboxGroup>
-                  <Checkbox
-                    label="Mark as NSFW"
-                    checked={formData.isNsfw}
-                    onChange={(e) => handleInputChange('isNsfw', e.target.checked)}
-                  />
+                  <Label>
+                    <Checkbox
+                      checked={formData.isNsfw}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('isNsfw', e.target.checked)}
+                    />
+                    Mark as NSFW
+                  </Label>
                 </CheckboxGroup>
               </FormRow>
             </Section>

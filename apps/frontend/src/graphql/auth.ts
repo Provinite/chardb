@@ -1,59 +1,30 @@
-import { gql } from '@apollo/client';
-
-export const LOGIN_MUTATION = gql`
-  mutation Login($input: LoginInput!) {
-    login(input: $input) {
-      user {
-        id
-        username
-        email
-        displayName
-        avatarUrl
-        isVerified
-      }
-      accessToken
-      refreshToken
-    }
-  }
-`;
-
-export const SIGNUP_MUTATION = gql`
-  mutation Signup($input: SignupInput!) {
-    signup(input: $input) {
-      user {
-        id
-        username
-        email
-        displayName
-        avatarUrl
-        isVerified
-      }
-      accessToken
-      refreshToken
-    }
-  }
-`;
-
-export const REFRESH_TOKEN_MUTATION = gql`
-  mutation RefreshToken($token: String!) {
-    refreshToken(token: $token)
-  }
-`;
-
-export const ME_QUERY = gql`
-  query Me {
-    me {
-      id
-      username
-      email
-      displayName
-      bio
-      avatarUrl
-      location
-      website
-      isVerified
-      isAdmin
-      createdAt
-    }
-  }
-`;
+// Re-export generated auth operations and types
+export {
+  // Mutations
+  LoginDocument as LOGIN_MUTATION,
+  SignupDocument as SIGNUP_MUTATION,
+  RefreshTokenDocument as REFRESH_TOKEN_MUTATION,
+  
+  // Queries
+  MeDocument as ME_QUERY,
+  
+  // Hooks
+  useLoginMutation,
+  useSignupMutation,
+  useRefreshTokenMutation,
+  useMeQuery,
+  
+  // Types
+  type LoginMutation,
+  type LoginMutationVariables,
+  type SignupMutation,
+  type SignupMutationVariables,
+  type RefreshTokenMutation,
+  type RefreshTokenMutationVariables,
+  type MeQuery,
+  type MeQueryVariables,
+  type User,
+  type AuthPayload,
+  type LoginInput,
+  type SignupInput,
+} from '../generated/graphql';

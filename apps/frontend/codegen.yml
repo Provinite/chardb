@@ -1,5 +1,5 @@
 overwrite: true
-schema: "../backend/src/schema.gql"
+schema: "http://localhost:3000/graphql"
 documents: "src/**/*.{ts,tsx}"
 generates:
   src/generated/graphql.ts:
@@ -16,7 +16,6 @@ generates:
         JSON: any
       namingConvention:
         typeNames: pascal-case#pascalCase
-        enumValues: upper-case#UPPER_CASE
       avoidOptionals:
         field: true
         inputValue: false

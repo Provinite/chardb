@@ -1,291 +1,64 @@
-import { gql } from '@apollo/client';
-
-// Fragment for consistent gallery fields
-export const GALLERY_CORE_FRAGMENT = gql`
-  fragment GalleryCore on Gallery {
-    id
-    name
-    description
-    visibility
-    sortOrder
-    createdAt
-    updatedAt
-    owner {
-      id
-      username
-      displayName
-      avatarUrl
-    }
-    character {
-      id
-      name
-      species
-    }
-    _count {
-      images
-    }
-  }
-`;
-
-export const GALLERY_DETAIL_FRAGMENT = gql`
-  fragment GalleryDetail on Gallery {
-    ...GalleryCore
-    images {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      description
-      width
-      height
-      mimeType
-      fileSize
-      isNsfw
-      visibility
-      createdAt
-      uploader {
-        id
-        username
-        displayName
-      }
-    }
-  }
-  ${GALLERY_CORE_FRAGMENT}
-`;
-
-export const GET_GALLERIES = gql`
-  query GetGalleries($filters: GalleryFiltersInput) {
-    galleries(filters: $filters) {
-      galleries {
-        ...GalleryCore
-      }
-      total
-      hasMore
-    }
-  }
-  ${GALLERY_CORE_FRAGMENT}
-`;
-
-export const GET_GALLERY = gql`
-  query GetGallery($id: ID!) {
-    gallery(id: $id) {
-      ...GalleryDetail
-    }
-  }
-  ${GALLERY_DETAIL_FRAGMENT}
-`;
-
-export const GET_MY_GALLERIES = gql`
-  query GetMyGalleries($filters: GalleryFiltersInput) {
-    myGalleries(filters: $filters) {
-      galleries {
-        ...GalleryCore
-      }
-      total
-      hasMore
-    }
-  }
-  ${GALLERY_CORE_FRAGMENT}
-`;
-
-export const GET_USER_GALLERIES = gql`
-  query GetUserGalleries($userId: ID!, $filters: GalleryFiltersInput) {
-    userGalleries(userId: $userId, filters: $filters) {
-      galleries {
-        ...GalleryCore
-      }
-      total
-      hasMore
-    }
-  }
-  ${GALLERY_CORE_FRAGMENT}
-`;
-
-export const GET_CHARACTER_GALLERIES = gql`
-  query GetCharacterGalleries($characterId: ID!, $filters: GalleryFiltersInput) {
-    characterGalleries(characterId: $characterId, filters: $filters) {
-      galleries {
-        ...GalleryCore
-      }
-      total
-      hasMore
-    }
-  }
-  ${GALLERY_CORE_FRAGMENT}
-`;
-
-export const GET_GALLERY_IMAGES = gql`
-  query GetGalleryImages($galleryId: ID!, $filters: ImageFiltersInput) {
-    galleryImages(galleryId: $galleryId, filters: $filters) {
-      images {
-        id
-        filename
-        originalFilename
-        url
-        thumbnailUrl
-        altText
-        description
-        width
-        height
-        mimeType
-        fileSize
-        isNsfw
-        visibility
-        createdAt
-        uploader {
-          id
-          username
-          displayName
-        }
-        character {
-          id
-          name
-        }
-      }
-      total
-      hasMore
-    }
-  }
-`;
-
-export const CREATE_GALLERY = gql`
-  mutation CreateGallery($input: CreateGalleryInput!) {
-    createGallery(input: $input) {
-      ...GalleryCore
-    }
-  }
-  ${GALLERY_CORE_FRAGMENT}
-`;
-
-export const UPDATE_GALLERY = gql`
-  mutation UpdateGallery($id: ID!, $input: UpdateGalleryInput!) {
-    updateGallery(id: $id, input: $input) {
-      ...GalleryDetail
-    }
-  }
-  ${GALLERY_DETAIL_FRAGMENT}
-`;
-
-export const DELETE_GALLERY = gql`
-  mutation DeleteGallery($id: ID!) {
-    deleteGallery(id: $id)
-  }
-`;
-
-export const ADD_IMAGE_TO_GALLERY = gql`
-  mutation AddImageToGallery($galleryId: ID!, $input: GalleryImageOperationInput!) {
-    addImageToGallery(galleryId: $galleryId, input: $input) {
-      ...GalleryDetail
-    }
-  }
-  ${GALLERY_DETAIL_FRAGMENT}
-`;
-
-export const REMOVE_IMAGE_FROM_GALLERY = gql`
-  mutation RemoveImageFromGallery($galleryId: ID!, $input: GalleryImageOperationInput!) {
-    removeImageFromGallery(galleryId: $galleryId, input: $input) {
-      ...GalleryDetail
-    }
-  }
-  ${GALLERY_DETAIL_FRAGMENT}
-`;
-
-export const REORDER_GALLERIES = gql`
-  mutation ReorderGalleries($input: ReorderGalleriesInput!) {
-    reorderGalleries(input: $input) {
-      id
-      sortOrder
-      name
-    }
-  }
-`;
-
-// Gallery Types
-export interface Gallery {
-  id: string;
-  name: string;
-  description?: string;
-  visibility: 'PUBLIC' | 'UNLISTED' | 'PRIVATE';
-  sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
-  owner: {
-    id: string;
-    username: string;
-    displayName?: string;
-    avatarUrl?: string;
-  };
-  character?: {
-    id: string;
-    name: string;
-    species?: string;
-  };
-  images?: Image[];
-  _count?: {
-    images: number;
-  };
-}
-
-export interface Image {
-  id: string;
-  filename: string;
-  originalFilename: string;
-  url: string;
-  thumbnailUrl?: string;
-  altText?: string;
-  description?: string;
-  width: number;
-  height: number;
-  mimeType: string;
-  fileSize: number;
-  isNsfw: boolean;
-  visibility: 'PUBLIC' | 'UNLISTED' | 'PRIVATE';
-  createdAt: string;
-  uploader: {
-    id: string;
-    username: string;
-    displayName?: string;
-  };
-  character?: {
-    id: string;
-    name: string;
-  };
-  gallery?: {
-    id: string;
-    name: string;
-  };
-}
-
-export interface GalleryFilters {
-  limit?: number;
-  offset?: number;
-  ownerId?: string;
-  characterId?: string;
-  visibility?: 'PUBLIC' | 'UNLISTED' | 'PRIVATE';
-}
-
-export interface CreateGalleryInput {
-  name: string;
-  description?: string;
-  characterId?: string;
-  visibility?: 'PUBLIC' | 'UNLISTED' | 'PRIVATE';
-  sortOrder?: number;
-}
-
-export interface UpdateGalleryInput {
-  name?: string;
-  description?: string;
-  characterId?: string;
-  visibility?: 'PUBLIC' | 'UNLISTED' | 'PRIVATE';
-  sortOrder?: number;
-}
-
-export interface GalleryImageOperationInput {
-  imageId: string;
-}
-
-export interface ReorderGalleriesInput {
-  galleryIds: string[];
-}
+// Re-export generated gallery operations and types
+export {
+  // Query Documents
+  GetGalleriesDocument as GET_GALLERIES,
+  GetGalleryDocument as GET_GALLERY,
+  GetMyGalleriesDocument as GET_MY_GALLERIES,
+  GetUserGalleriesDocument as GET_USER_GALLERIES,
+  GetCharacterGalleriesDocument as GET_CHARACTER_GALLERIES,
+  
+  // Mutation Documents
+  CreateGalleryDocument as CREATE_GALLERY,
+  UpdateGalleryDocument as UPDATE_GALLERY,
+  DeleteGalleryDocument as DELETE_GALLERY,
+  AddImageToGalleryDocument as ADD_IMAGE_TO_GALLERY,
+  RemoveImageFromGalleryDocument as REMOVE_IMAGE_FROM_GALLERY,
+  ReorderGalleriesDocument as REORDER_GALLERIES,
+  
+  // Query Hooks
+  useGetGalleriesQuery,
+  useGetGalleryQuery,
+  useGetMyGalleriesQuery,
+  useGetUserGalleriesQuery,
+  useGetCharacterGalleriesQuery,
+  
+  // Mutation Hooks
+  useCreateGalleryMutation,
+  useUpdateGalleryMutation,
+  useDeleteGalleryMutation,
+  useAddImageToGalleryMutation,
+  useRemoveImageFromGalleryMutation,
+  useReorderGalleriesMutation,
+  
+  // Types
+  type Gallery,
+  type GalleryConnection,
+  type GalleryFiltersInput,
+  type CreateGalleryInput,
+  type UpdateGalleryInput,
+  type GalleryImageOperationInput,
+  type ReorderGalleriesInput,
+  type GetGalleriesQuery,
+  type GetGalleriesQueryVariables,
+  type GetGalleryQuery,
+  type GetGalleryQueryVariables,
+  type GetMyGalleriesQuery,
+  type GetMyGalleriesQueryVariables,
+  type GetUserGalleriesQuery,
+  type GetUserGalleriesQueryVariables,
+  type GetCharacterGalleriesQuery,
+  type GetCharacterGalleriesQueryVariables,
+  type CreateGalleryMutation,
+  type CreateGalleryMutationVariables,
+  type UpdateGalleryMutation,
+  type UpdateGalleryMutationVariables,
+  type DeleteGalleryMutation,
+  type DeleteGalleryMutationVariables,
+  type AddImageToGalleryMutation,
+  type AddImageToGalleryMutationVariables,
+  type RemoveImageFromGalleryMutation,
+  type RemoveImageFromGalleryMutationVariables,
+  type ReorderGalleriesMutation,
+  type ReorderGalleriesMutationVariables,
+  type Image,
+} from '../generated/graphql';

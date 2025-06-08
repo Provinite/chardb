@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useQuery } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { GET_GALLERIES, Gallery, GalleryFilters } from '../graphql/galleries';
+import { GET_GALLERIES, Gallery, GalleryFiltersInput } from '../graphql/galleries';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 const Container = styled.div`
@@ -279,7 +279,7 @@ const EmptyState = styled.div`
 
 export const GalleriesPage: React.FC = () => {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<GalleryFilters>({
+  const [filters, setFilters] = useState<GalleryFiltersInput>({
     limit: 12,
     offset: 0,
   });

@@ -86,7 +86,8 @@ const RemoveButton = styled.button`
   font-size: 12px;
   
   &:hover {
-    background: ${({ theme }) => theme.colors.errorDark};
+    background: ${({ theme }) => theme.colors.error};
+    opacity: 0.8;
   }
 `;
 

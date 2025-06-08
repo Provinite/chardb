@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useQuery } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { GET_CHARACTERS, Character, CharacterFilters } from '../graphql/characters';
+import { GET_CHARACTERS, Character, CharacterFiltersInput } from '../graphql/characters';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 const Container = styled.div`
@@ -290,7 +290,7 @@ const EmptyState = styled.div`
 
 export const CharactersPage: React.FC = () => {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<CharacterFilters>({
+  const [filters, setFilters] = useState<CharacterFiltersInput>({
     limit: 12,
     offset: 0,
   });

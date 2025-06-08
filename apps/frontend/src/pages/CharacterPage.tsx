@@ -440,7 +440,7 @@ export const CharacterPage: React.FC = () => {
           <SectionTitle>Tags</SectionTitle>
           <TagsContainer>
             {character.tags_rel.map(({ tag }) => (
-              <Tag key={tag.id} color={tag.color}>
+              <Tag key={tag.id} color={tag.color || undefined}>
                 {tag.name}
               </Tag>
             ))}
