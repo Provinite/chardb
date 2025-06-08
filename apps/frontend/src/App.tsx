@@ -14,6 +14,8 @@ import { CharacterPage } from './pages/CharacterPage';
 import { CharactersPage } from './pages/CharactersPage';
 import { CreateCharacterPage } from './pages/CreateCharacterPage';
 import { GalleryPage } from './pages/GalleryPage';
+import { GalleriesPage } from './pages/GalleriesPage';
+import { CreateGalleryPage } from './pages/CreateGalleryPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
@@ -36,8 +38,9 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/characters" element={<CharactersPage />} />
         <Route path="/character/:id" element={<CharacterPage />} />
-        <Route path="/user/:username" element={<ProfilePage />} />
+        <Route path="/galleries" element={<GalleriesPage />} />
         <Route path="/gallery/:id" element={<GalleryPage />} />
+        <Route path="/user/:username" element={<ProfilePage />} />
 
         {/* Protected routes */}
         <Route
@@ -53,6 +56,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CreateCharacterPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/gallery/create"
+          element={
+            <ProtectedRoute>
+              <CreateGalleryPage />
             </ProtectedRoute>
           }
         />

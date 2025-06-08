@@ -82,7 +82,7 @@ export const Header: React.FC = () => {
         
         <Nav>
           <NavLink to="/characters">Characters</NavLink>
-          <NavLink to="/gallery">Gallery</NavLink>
+          <NavLink to="/galleries">Galleries</NavLink>
           
           {user ? (
             <UserMenu>
