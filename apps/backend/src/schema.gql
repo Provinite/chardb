@@ -140,6 +140,19 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type FollowResult {
+  followersCount: Float!
+  followingCount: Float!
+  isFollowing: Boolean!
+  targetUserId: ID!
+}
+
+type FollowStatus {
+  followersCount: Float!
+  followingCount: Float!
+  isFollowing: Boolean!
+}
+
 type Gallery {
   _count: GalleryCount
   character: Character
@@ -292,6 +305,7 @@ type Mutation {
   removeImageTags(id: ID!, input: ManageImageTagsInput!): Image!
   reorderGalleries(input: ReorderGalleriesInput!): [Gallery!]!
   signup(input: SignupInput!): AuthPayload!
+  toggleFollow(input: ToggleFollowInput!): FollowResult!
   toggleLike(input: ToggleLikeInput!): LikeResult!
   transferCharacter(id: ID!, input: TransferCharacterInput!): Character!
   updateCharacter(id: ID!, input: UpdateCharacterInput!): Character!
@@ -308,6 +322,7 @@ type Query {
   characters(filters: CharacterFiltersInput): CharacterConnection!
   comment(id: ID!): Comment!
   comments(filters: CommentFiltersInput!): CommentConnection!
+  followStatus(userId: ID!): FollowStatus!
   galleries(filters: GalleryFiltersInput): GalleryConnection!
   gallery(id: ID!): Gallery!
   galleryImages(filters: ImageFiltersInput, galleryId: ID!): ImageConnection!
@@ -344,6 +359,10 @@ type Tag {
   createdAt: DateTime!
   id: ID!
   name: String!
+}
+
+input ToggleFollowInput {
+  targetUserId: ID!
 }
 
 input ToggleLikeInput {
@@ -412,12 +431,15 @@ type User {
   dateOfBirth: DateTime
   displayName: String
   email: String!
+  followersCount: Int!
+  followingCount: Int!
   id: ID!
   isAdmin: Boolean!
   isVerified: Boolean!
   location: String
   privacySettings: JSON!
   updatedAt: DateTime!
+  userIsFollowing: Boolean!
   username: String!
   website: String
 }

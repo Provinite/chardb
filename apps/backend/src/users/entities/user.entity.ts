@@ -1,4 +1,4 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-type-json';
 
 @ObjectType()
@@ -44,6 +44,16 @@ export class User {
 
   @Field()
   updatedAt: Date;
+
+  // Social features
+  @Field(() => Int)
+  followersCount: number;
+
+  @Field(() => Int)
+  followingCount: number;
+
+  @Field(() => Boolean)
+  userIsFollowing: boolean;
 }
 
 @ObjectType()

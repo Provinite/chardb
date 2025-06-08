@@ -79,6 +79,18 @@ export class CommentsResolver {
 
     return {
       ...character,
+      owner: {
+        ...character.owner,
+        followersCount: 0,
+        followingCount: 0,
+        userIsFollowing: false,
+      },
+      creator: character.creator ? {
+        ...character.creator,
+        followersCount: 0,
+        followingCount: 0,
+        userIsFollowing: false,
+      } : undefined,
       price: character.price ? Number(character.price) : null,
       likesCount: 0, // Will be resolved by field resolver
       userHasLiked: false, // Will be resolved by field resolver
@@ -113,14 +125,38 @@ export class CommentsResolver {
 
     return {
       ...image,
+      uploader: {
+        ...image.uploader,
+        followersCount: 0,
+        followingCount: 0,
+        userIsFollowing: false,
+      },
       character: image.character ? {
         ...image.character,
+        owner: {
+          ...image.character.owner,
+          followersCount: 0,
+          followingCount: 0,
+          userIsFollowing: false,
+        },
+        creator: image.character.creator ? {
+          ...image.character.creator,
+          followersCount: 0,
+          followingCount: 0,
+          userIsFollowing: false,
+        } : undefined,
         price: image.character.price ? Number(image.character.price) : null,
         likesCount: 0,
         userHasLiked: false,
       } : null,
       gallery: image.gallery ? {
         ...image.gallery,
+        owner: {
+          ...image.gallery.owner,
+          followersCount: 0,
+          followingCount: 0,
+          userIsFollowing: false,
+        },
         character: null,
         images: [],
         likesCount: 0,
@@ -154,8 +190,26 @@ export class CommentsResolver {
 
     return {
       ...gallery,
+      owner: {
+        ...gallery.owner,
+        followersCount: 0,
+        followingCount: 0,
+        userIsFollowing: false,
+      },
       character: gallery.character ? {
         ...gallery.character,
+        owner: {
+          ...gallery.character.owner,
+          followersCount: 0,
+          followingCount: 0,
+          userIsFollowing: false,
+        },
+        creator: gallery.character.creator ? {
+          ...gallery.character.creator,
+          followersCount: 0,
+          followingCount: 0,
+          userIsFollowing: false,
+        } : undefined,
         price: gallery.character.price ? Number(gallery.character.price) : null,
         likesCount: 0,
         userHasLiked: false,

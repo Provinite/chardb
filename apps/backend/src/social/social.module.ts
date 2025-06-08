@@ -6,6 +6,7 @@ import {
   ImageLikesResolver,
   GalleryLikesResolver,
   CommentLikesResolver,
+  UserFollowResolver,
 } from './social.resolver';
 import { DatabaseModule } from '../database/database.module';
 
@@ -18,6 +19,7 @@ import { DatabaseModule } from '../database/database.module';
     ImageLikesResolver,
     GalleryLikesResolver,
     CommentLikesResolver,
+    UserFollowResolver,
   ],
   exports: [SocialService],
 })

@@ -6,6 +6,7 @@ import {
   ImageLikesResolver,
   GalleryLikesResolver,
   CommentLikesResolver,
+  UserFollowResolver,
 } from './social.resolver';
 import { DatabaseService } from '../database/database.service';
 import { LikeableType } from './dto/like.dto';
@@ -25,6 +26,9 @@ describe('SocialResolver', () => {
     privacySettings: {},
     createdAt: new Date(),
     updatedAt: new Date(),
+    followersCount: 0,
+    followingCount: 0,
+    userIsFollowing: false,
   };
 
   const mockLikeResult = {
@@ -125,6 +129,9 @@ describe('SocialResolver', () => {
           privacySettings: {},
           createdAt: new Date(),
           updatedAt: new Date(),
+          followersCount: 0,
+          followingCount: 0,
+          userIsFollowing: false,
         },
         character: undefined,
         image: undefined,
@@ -168,6 +175,9 @@ describe('SocialResolver', () => {
           privacySettings: {},
           createdAt: new Date(),
           updatedAt: new Date(),
+          followersCount: 0,
+          followingCount: 0,
+          userIsFollowing: false,
         },
         character: undefined,
         image: undefined,
@@ -206,6 +216,9 @@ describe('CharacterLikesResolver', () => {
       privacySettings: {},
       createdAt: new Date(),
       updatedAt: new Date(),
+      followersCount: 0,
+      followingCount: 0,
+      userIsFollowing: false,
     },
     likesCount: 0,
     userHasLiked: false,
@@ -302,6 +315,9 @@ describe('ImageLikesResolver', () => {
       privacySettings: {},
       createdAt: new Date(),
       updatedAt: new Date(),
+      followersCount: 0,
+      followingCount: 0,
+      userIsFollowing: false,
     },
     likesCount: 0,
     userHasLiked: false,
@@ -359,6 +375,9 @@ describe('GalleryLikesResolver', () => {
       privacySettings: {},
       createdAt: new Date(),
       updatedAt: new Date(),
+      followersCount: 0,
+      followingCount: 0,
+      userIsFollowing: false,
     },
     images: [],
     likesCount: 0,
@@ -418,6 +437,9 @@ describe('CommentLikesResolver', () => {
       privacySettings: {},
       createdAt: new Date(),
       updatedAt: new Date(),
+      followersCount: 0,
+      followingCount: 0,
+      userIsFollowing: false,
     },
     replies: [],
     repliesCount: 0,
@@ -452,6 +474,172 @@ describe('CommentLikesResolver', () => {
         LikeableType.COMMENT,
         'comment-1',
       );
+    });
+  });
+});
+
+// Follow System Tests
+
+describe('SocialResolver - Follow System', () => {
+  let resolver: SocialResolver;
+  let service: SocialService;
+
+  const mockUser = {
+    id: 'user-1',
+    username: 'testuser',
+    email: 'test@example.com',
+    isAdmin: false,
+    isVerified: true,
+    privacySettings: {},
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    followersCount: 0,
+    followingCount: 0,
+    userIsFollowing: false,
+  };
+
+  const mockFollowResult = {
+    isFollowing: true,
+    followersCount: 1,
+    followingCount: 1,
+    targetUserId: 'user-2',
+  };
+
+  const mockFollowStatus = {
+    isFollowing: true,
+    followersCount: 5,
+    followingCount: 3,
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        SocialResolver,
+        SocialService,
+        {
+          provide: DatabaseService,
+          useValue: mockDatabaseService,
+        },
+      ],
+    }).compile();
+
+    resolver = module.get<SocialResolver>(SocialResolver);
+    service = module.get<SocialService>(SocialService);
+  });
+
+  describe('toggleFollow', () => {
+    it('should toggle a follow successfully', async () => {
+      const input = { targetUserId: 'user-2' };
+
+      jest.spyOn(service, 'toggleFollow').mockResolvedValue(mockFollowResult);
+
+      const result = await resolver.toggleFollow(input, mockUser);
+
+      expect(result).toEqual(mockFollowResult);
+      expect(service.toggleFollow).toHaveBeenCalledWith('user-1', input);
+    });
+  });
+
+  describe('followStatus', () => {
+    it('should return follow status for authenticated user', async () => {
+      jest.spyOn(service, 'getFollowStatus').mockResolvedValue(mockFollowStatus);
+
+      const result = await resolver.followStatus('user-2', mockUser);
+
+      expect(result).toEqual(mockFollowStatus);
+      expect(service.getFollowStatus).toHaveBeenCalledWith('user-2', 'user-1');
+    });
+
+    it('should return follow status for unauthenticated user', async () => {
+      const unauthStatus = { isFollowing: false, followersCount: 5, followingCount: 3 };
+      jest.spyOn(service, 'getFollowStatus').mockResolvedValue(unauthStatus);
+
+      const result = await resolver.followStatus('user-2');
+
+      expect(result).toEqual(unauthStatus);
+      expect(service.getFollowStatus).toHaveBeenCalledWith('user-2', undefined);
+    });
+  });
+});
+
+describe('UserFollowResolver', () => {
+  let resolver: UserFollowResolver;
+  let service: SocialService;
+
+  const mockUser = {
+    id: 'user-1',
+    username: 'testuser',
+    email: 'test@example.com',
+    isAdmin: false,
+    isVerified: true,
+    privacySettings: {},
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    followersCount: 0,
+    followingCount: 0,
+    userIsFollowing: false,
+  };
+
+  const mockCurrentUser = {
+    id: 'user-2',
+    username: 'currentuser',
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UserFollowResolver,
+        SocialService,
+        {
+          provide: DatabaseService,
+          useValue: mockDatabaseService,
+        },
+      ],
+    }).compile();
+
+    resolver = module.get<UserFollowResolver>(UserFollowResolver);
+    service = module.get<SocialService>(SocialService);
+  });
+
+  describe('followersCount', () => {
+    it('should return the followers count for a user', async () => {
+      jest.spyOn(service, 'getFollowersCount').mockResolvedValue(25);
+
+      const result = await resolver.followersCount(mockUser);
+
+      expect(result).toBe(25);
+      expect(service.getFollowersCount).toHaveBeenCalledWith('user-1');
+    });
+  });
+
+  describe('followingCount', () => {
+    it('should return the following count for a user', async () => {
+      jest.spyOn(service, 'getFollowingCount').mockResolvedValue(12);
+
+      const result = await resolver.followingCount(mockUser);
+
+      expect(result).toBe(12);
+      expect(service.getFollowingCount).toHaveBeenCalledWith('user-1');
+    });
+  });
+
+  describe('userIsFollowing', () => {
+    it('should return true when current user is following the target user', async () => {
+      jest.spyOn(service, 'getUserIsFollowing').mockResolvedValue(true);
+
+      const result = await resolver.userIsFollowing(mockUser, mockCurrentUser);
+
+      expect(result).toBe(true);
+      expect(service.getUserIsFollowing).toHaveBeenCalledWith('user-1', 'user-2');
+    });
+
+    it('should return false when no current user is authenticated', async () => {
+      jest.spyOn(service, 'getUserIsFollowing').mockResolvedValue(false);
+
+      const result = await resolver.userIsFollowing(mockUser);
+
+      expect(result).toBe(false);
+      expect(service.getUserIsFollowing).toHaveBeenCalledWith('user-1', undefined);
     });
   });
 });

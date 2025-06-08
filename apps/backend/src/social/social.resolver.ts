@@ -2,7 +2,9 @@ import { Resolver, Mutation, Query, Args, ID, ResolveField, Parent } from '@nest
 import { UseGuards } from '@nestjs/common';
 import { SocialService } from './social.service';
 import { ToggleLikeInput, LikeResult, LikeStatus, LikeableType } from './dto/like.dto';
+import { ToggleFollowInput, FollowResult, FollowStatus } from './dto/follow.dto';
 import { Like } from './entities/like.entity';
+import { Follow } from './entities/follow.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -11,6 +13,17 @@ import { Character } from '../characters/entities/character.entity';
 import { Image } from '../images/entities/image.entity';
 import { Gallery } from '../galleries/entities/gallery.entity';
 import { Comment } from '../comments/entities/comment.entity';
+import { User } from '../users/entities/user.entity';
+
+// Helper function to add default social fields to User objects
+function addDefaultSocialFields(user: any): User {
+  return {
+    ...user,
+    followersCount: 0,
+    followingCount: 0,
+    userIsFollowing: false,
+  };
+}
 
 @Resolver(() => Like)
 export class SocialResolver {
@@ -57,6 +70,8 @@ export class SocialResolver {
 
     return {
       ...character,
+      owner: addDefaultSocialFields(character.owner),
+      creator: character.creator ? addDefaultSocialFields(character.creator) : undefined,
       price: character.price ? Number(character.price) : null,
       likesCount: 0, // Will be resolved by field resolver
       userHasLiked: false, // Will be resolved by field resolver
@@ -91,14 +106,18 @@ export class SocialResolver {
 
     return {
       ...image,
+      uploader: addDefaultSocialFields(image.uploader),
       character: image.character ? {
         ...image.character,
+        owner: addDefaultSocialFields(image.character.owner),
+        creator: image.character.creator ? addDefaultSocialFields(image.character.creator) : undefined,
         price: image.character.price ? Number(image.character.price) : null,
         likesCount: 0,
         userHasLiked: false,
       } : null,
       gallery: image.gallery ? {
         ...image.gallery,
+        owner: addDefaultSocialFields(image.gallery.owner),
         character: null,
         images: [],
         likesCount: 0,
@@ -132,8 +151,11 @@ export class SocialResolver {
 
     return {
       ...gallery,
+      owner: addDefaultSocialFields(gallery.owner),
       character: gallery.character ? {
         ...gallery.character,
+        owner: addDefaultSocialFields(gallery.character.owner),
+        creator: gallery.character.creator ? addDefaultSocialFields(gallery.character.creator) : undefined,
         price: gallery.character.price ? Number(gallery.character.price) : null,
         likesCount: 0,
         userHasLiked: false,
@@ -179,8 +201,10 @@ export class SocialResolver {
 
     return {
       ...comment,
+      author: addDefaultSocialFields(comment.author),
       parent: comment.parent ? {
         ...comment.parent,
+        author: addDefaultSocialFields(comment.parent.author),
         replies: [],
         repliesCount: 0,
         character: undefined,
@@ -191,6 +215,7 @@ export class SocialResolver {
       } : undefined,
       replies: comment.replies?.map(reply => ({
         ...reply,
+        author: addDefaultSocialFields(reply.author),
         parent: undefined,
         replies: [],
         repliesCount: 0,
@@ -209,6 +234,26 @@ export class SocialResolver {
       likesCount: 0,
       userHasLiked: false,
     } as Comment;
+  }
+
+  // Follow System Mutations and Queries
+
+  @Mutation(() => FollowResult)
+  @UseGuards(JwtAuthGuard)
+  async toggleFollow(
+    @Args('input') input: ToggleFollowInput,
+    @CurrentUser() user: any,
+  ): Promise<FollowResult> {
+    return this.socialService.toggleFollow(user.id, input);
+  }
+
+  @Query(() => FollowStatus)
+  @UseGuards(OptionalJwtAuthGuard)
+  async followStatus(
+    @Args('userId', { type: () => ID }) userId: string,
+    @CurrentUser() user?: any,
+  ): Promise<FollowStatus> {
+    return this.socialService.getFollowStatus(userId, user?.id);
   }
 }
 
@@ -286,5 +331,29 @@ export class CommentLikesResolver {
     @CurrentUser() user?: any,
   ): Promise<boolean> {
     return this.socialService.getUserHasLiked(LikeableType.COMMENT, comment.id, user?.id);
+  }
+}
+
+@Resolver(() => User)
+export class UserFollowResolver {
+  constructor(private readonly socialService: SocialService) {}
+
+  @ResolveField(() => Number)
+  async followersCount(@Parent() user: User): Promise<number> {
+    return this.socialService.getFollowersCount(user.id);
+  }
+
+  @ResolveField(() => Number)
+  async followingCount(@Parent() user: User): Promise<number> {
+    return this.socialService.getFollowingCount(user.id);
+  }
+
+  @ResolveField(() => Boolean)
+  @UseGuards(OptionalJwtAuthGuard)
+  async userIsFollowing(
+    @Parent() user: User,
+    @CurrentUser() currentUser?: any,
+  ): Promise<boolean> {
+    return this.socialService.getUserIsFollowing(user.id, currentUser?.id);
   }
 }
