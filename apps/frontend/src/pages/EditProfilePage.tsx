@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -177,17 +177,31 @@ export const EditProfilePage: React.FC = () => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isDirty },
   } = useForm<UpdateProfileFormData>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
-      displayName: meData?.me?.displayName || '',
-      bio: meData?.me?.bio || '',
-      location: meData?.me?.location || '',
-      website: meData?.me?.website || '',
-      dateOfBirth: meData?.me?.dateOfBirth || '',
+      displayName: '',
+      bio: '',
+      location: '',
+      website: '',
+      dateOfBirth: '',
     },
   });
+
+  // Reset form with user data when it becomes available
+  useEffect(() => {
+    if (meData?.me) {
+      reset({
+        displayName: meData.me.displayName || '',
+        bio: meData.me.bio || '',
+        location: meData.me.location || '',
+        website: meData.me.website || '',
+        dateOfBirth: meData.me.dateOfBirth || '',
+      });
+    }
+  }, [meData, reset]);
 
   const onSubmit = async (data: UpdateProfileFormData) => {
     try {
