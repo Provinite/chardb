@@ -18,6 +18,8 @@ import { GalleryPage } from './pages/GalleryPage';
 import { GalleriesPage } from './pages/GalleriesPage';
 import { CreateGalleryPage } from './pages/CreateGalleryPage';
 import { UploadImagePage } from './pages/UploadImagePage';
+import { ImagesPage } from './pages/ImagesPage';
+import { ImagePage } from './pages/ImagePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
@@ -42,6 +44,8 @@ function App() {
         <Route path="/character/:id" element={<CharacterPage />} />
         <Route path="/galleries" element={<GalleriesPage />} />
         <Route path="/gallery/:id" element={<GalleryPage />} />
+        <Route path="/images" element={<ImagesPage />} />
+        <Route path="/image/:id" element={<ImagePage />} />
         <Route path="/user/:username" element={<ProfilePage />} />
 
         {/* Protected routes */}
