@@ -370,6 +370,8 @@ export type Query = {
   userCharacters: CharacterConnection;
   userGalleries: GalleryConnection;
   userImages: ImageConnection;
+  userProfile: Maybe<UserProfile>;
+  userStats: UserStats;
   users: UserConnection;
 };
 
@@ -457,6 +459,16 @@ export type QueryUserGalleriesArgs = {
 
 export type QueryUserImagesArgs = {
   filters?: InputMaybe<ImageFiltersInput>;
+  userId: Scalars['ID']['input'];
+};
+
+
+export type QueryUserProfileArgs = {
+  username: Scalars['String']['input'];
+};
+
+
+export type QueryUserStatsArgs = {
   userId: Scalars['ID']['input'];
 };
 
@@ -560,6 +572,29 @@ export type UserConnection = {
   hasPreviousPage: Scalars['Boolean']['output'];
   nodes: Array<User>;
   totalCount: Scalars['Float']['output'];
+};
+
+export type UserProfile = {
+  __typename?: 'UserProfile';
+  canViewPrivateContent: Scalars['Boolean']['output'];
+  featuredCharacters: Array<Character>;
+  isOwnProfile: Scalars['Boolean']['output'];
+  recentCharacters: Array<Character>;
+  recentGalleries: Array<Gallery>;
+  recentImages: Array<Image>;
+  stats: UserStats;
+  user: User;
+};
+
+export type UserStats = {
+  __typename?: 'UserStats';
+  charactersCount: Scalars['Int']['output'];
+  followersCount: Scalars['Int']['output'];
+  followingCount: Scalars['Int']['output'];
+  galleriesCount: Scalars['Int']['output'];
+  imagesCount: Scalars['Int']['output'];
+  totalLikes: Scalars['Int']['output'];
+  totalViews: Scalars['Int']['output'];
 };
 
 /** Visibility levels for content */
@@ -779,6 +814,20 @@ export type DeleteImageMutationVariables = Exact<{
 
 
 export type DeleteImageMutation = { __typename?: 'Mutation', deleteImage: boolean };
+
+export type GetUserProfileQueryVariables = Exact<{
+  username: Scalars['String']['input'];
+}>;
+
+
+export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentImages: Array<{ __typename?: 'Image', id: string, filename: string, url: string, thumbnailUrl: string | null, description: string | null, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> } | null };
+
+export type GetUserStatsQueryVariables = Exact<{
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type GetUserStatsQuery = { __typename?: 'Query', userStats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number } };
 
 
 export const LoginDocument = gql`
@@ -2480,3 +2529,177 @@ export function useDeleteImageMutation(baseOptions?: Apollo.MutationHookOptions<
 export type DeleteImageMutationHookResult = ReturnType<typeof useDeleteImageMutation>;
 export type DeleteImageMutationResult = Apollo.MutationResult<DeleteImageMutation>;
 export type DeleteImageMutationOptions = Apollo.BaseMutationOptions<DeleteImageMutation, DeleteImageMutationVariables>;
+export const GetUserProfileDocument = gql`
+    query GetUserProfile($username: String!) {
+  userProfile(username: $username) {
+    user {
+      id
+      username
+      displayName
+      bio
+      avatarUrl
+      location
+      website
+      isVerified
+      createdAt
+    }
+    stats {
+      charactersCount
+      galleriesCount
+      imagesCount
+      totalViews
+      totalLikes
+      followersCount
+      followingCount
+    }
+    recentCharacters {
+      id
+      name
+      species
+      description
+      createdAt
+      updatedAt
+      owner {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+    }
+    recentGalleries {
+      id
+      name
+      description
+      createdAt
+      updatedAt
+      owner {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+      character {
+        id
+        name
+      }
+    }
+    recentImages {
+      id
+      filename
+      url
+      thumbnailUrl
+      description
+      createdAt
+      uploader {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+      character {
+        id
+        name
+      }
+      gallery {
+        id
+        name
+      }
+    }
+    featuredCharacters {
+      id
+      name
+      species
+      description
+      createdAt
+      updatedAt
+      owner {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+    }
+    isOwnProfile
+    canViewPrivateContent
+  }
+}
+    `;
+
+/**
+ * __useGetUserProfileQuery__
+ *
+ * To run a query within a React component, call `useGetUserProfileQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetUserProfileQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUserProfileQuery({
+ *   variables: {
+ *      username: // value for 'username'
+ *   },
+ * });
+ */
+export function useGetUserProfileQuery(baseOptions: Apollo.QueryHookOptions<GetUserProfileQuery, GetUserProfileQueryVariables> & ({ variables: GetUserProfileQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetUserProfileQuery, GetUserProfileQueryVariables>(GetUserProfileDocument, options);
+      }
+export function useGetUserProfileLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetUserProfileQuery, GetUserProfileQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetUserProfileQuery, GetUserProfileQueryVariables>(GetUserProfileDocument, options);
+        }
+export function useGetUserProfileSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUserProfileQuery, GetUserProfileQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetUserProfileQuery, GetUserProfileQueryVariables>(GetUserProfileDocument, options);
+        }
+export type GetUserProfileQueryHookResult = ReturnType<typeof useGetUserProfileQuery>;
+export type GetUserProfileLazyQueryHookResult = ReturnType<typeof useGetUserProfileLazyQuery>;
+export type GetUserProfileSuspenseQueryHookResult = ReturnType<typeof useGetUserProfileSuspenseQuery>;
+export type GetUserProfileQueryResult = Apollo.QueryResult<GetUserProfileQuery, GetUserProfileQueryVariables>;
+export const GetUserStatsDocument = gql`
+    query GetUserStats($userId: ID!) {
+  userStats(userId: $userId) {
+    charactersCount
+    galleriesCount
+    imagesCount
+    totalViews
+    totalLikes
+    followersCount
+    followingCount
+  }
+}
+    `;
+
+/**
+ * __useGetUserStatsQuery__
+ *
+ * To run a query within a React component, call `useGetUserStatsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetUserStatsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUserStatsQuery({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useGetUserStatsQuery(baseOptions: Apollo.QueryHookOptions<GetUserStatsQuery, GetUserStatsQueryVariables> & ({ variables: GetUserStatsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetUserStatsQuery, GetUserStatsQueryVariables>(GetUserStatsDocument, options);
+      }
+export function useGetUserStatsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetUserStatsQuery, GetUserStatsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetUserStatsQuery, GetUserStatsQueryVariables>(GetUserStatsDocument, options);
+        }
+export function useGetUserStatsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUserStatsQuery, GetUserStatsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetUserStatsQuery, GetUserStatsQueryVariables>(GetUserStatsDocument, options);
+        }
+export type GetUserStatsQueryHookResult = ReturnType<typeof useGetUserStatsQuery>;
+export type GetUserStatsLazyQueryHookResult = ReturnType<typeof useGetUserStatsLazyQuery>;
+export type GetUserStatsSuspenseQueryHookResult = ReturnType<typeof useGetUserStatsSuspenseQuery>;
+export type GetUserStatsQueryResult = Apollo.QueryResult<GetUserStatsQuery, GetUserStatsQueryVariables>;

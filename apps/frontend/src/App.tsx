@@ -9,7 +9,7 @@ import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { ProfilePage } from './pages/ProfilePage';
+import { UserProfilePage } from './pages/UserProfilePage';
 import { CharacterPage } from './pages/CharacterPage';
 import { CharactersPage } from './pages/CharactersPage';
 import { CreateCharacterPage } from './pages/CreateCharacterPage';
@@ -46,7 +46,7 @@ function App() {
         <Route path="/gallery/:id" element={<GalleryPage />} />
         <Route path="/images" element={<ImagesPage />} />
         <Route path="/image/:id" element={<ImagePage />} />
-        <Route path="/user/:username" element={<ProfilePage />} />
+        <Route path="/user/:username" element={<UserProfilePage />} />
 
         {/* Protected routes */}
         <Route
