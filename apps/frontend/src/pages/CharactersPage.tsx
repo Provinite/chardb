@@ -368,7 +368,6 @@ export const CharactersPage: React.FC = () => {
         <Title>Browse Characters</Title>
         <RandomCharacterButton 
           characters={data?.characters?.characters || []} 
-          variant="primary"
         />
       </Header>
 

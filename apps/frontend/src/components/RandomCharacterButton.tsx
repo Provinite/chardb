@@ -1,7 +1,7 @@
-import React from 'react';
-import styled from 'styled-components';
-import { Button } from '@thclone/ui';
-import { useRandomCharacter } from '../hooks/useRandomCharacter';
+import React from "react";
+import styled from "styled-components";
+import { Tooltip } from "./Tooltip";
+import { useRandomCharacter } from "../hooks/useRandomCharacter";
 
 interface Character {
   id: string;
@@ -10,43 +10,65 @@ interface Character {
 interface RandomCharacterButtonProps {
   characters: Character[];
   disabled?: boolean;
-  size?: 'sm' | 'md' | 'lg';
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  size?: "sm" | "md" | "lg";
 }
 
-const ButtonWrapper = styled.div<{ title: string }>`
-  position: relative;
+const getSizeStyles = (size: string) => {
+  switch (size) {
+    case "sm":
+      return "1.2rem";
+    case "lg":
+      return "2rem";
+    case "md":
+    default:
+      return "1.5rem";
+  }
+};
+
+const TooltipContainer = styled.div`
   display: inline-block;
 `;
 
-const StyledButton = styled(Button)`
-  display: flex;
+const IconButton = styled.button<{ size: string }>`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: ${({ theme }) => theme.spacing.xs};
+  border-radius: 50%;
+  font-size: ${({ size }) => getSizeStyles(size)};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  transition: all 0.2s ease;
+  display: inline-flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  
-  &:hover {
-    transform: translateY(-1px);
+  justify-content: center;
+  width: 2em;
+  height: 2em;
+
+  &:hover:not(:disabled) {
+    color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.colors.surface};
+    transform: rotate(180deg) scale(1.1) translateY(-2px);
   }
 
-  &:active {
-    transform: translateY(0);
+  &:active:not(:disabled) {
+    transform: rotate(180deg) scale(0.95) translateY(-2px);
   }
-`;
 
-const Icon = styled.span`
-  font-size: 1.1em;
-  transition: transform 0.2s ease;
-  
-  ${StyledButton}:hover & {
-    transform: rotate(180deg);
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 2px;
   }
 `;
 
 export const RandomCharacterButton: React.FC<RandomCharacterButtonProps> = ({
   characters,
   disabled = false,
-  size = 'md',
-  variant = 'outline',
+  size = "md",
 }) => {
   const { goToRandomCharacter } = useRandomCharacter();
 
@@ -55,19 +77,26 @@ export const RandomCharacterButton: React.FC<RandomCharacterButtonProps> = ({
   };
 
   const isDisabled = disabled || characters.length === 0;
-  const tooltipText = isDisabled ? 'No characters available' : `Go to random character (${characters.length} available)`;
+  const tooltipText = isDisabled
+    ? "No characters available"
+    : `Random character (${characters.length} available)`;
 
   return (
-    <ButtonWrapper title={tooltipText}>
-      <StyledButton
-        variant={variant}
-        size={size}
-        onClick={handleClick}
-        disabled={isDisabled}
+    <>
+      <TooltipContainer
+        data-tooltip-id="random-character-tooltip"
+        data-tooltip-content={tooltipText}
       >
-        <Icon>🎲</Icon>
-        Random Character
-      </StyledButton>
-    </ButtonWrapper>
+        <IconButton
+          size={size}
+          onClick={handleClick}
+          disabled={isDisabled}
+          aria-label={tooltipText}
+        >
+          🎲
+        </IconButton>
+      </TooltipContainer>
+      <Tooltip id="random-character-tooltip" />
+    </>
   );
 };

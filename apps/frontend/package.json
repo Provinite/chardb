@@ -29,6 +29,7 @@
     "react-hot-toast": "^2.4.0",
     "react-query": "^3.39.0",
     "react-router-dom": "^6.15.0",
+    "react-tooltip": "^5.28.1",
     "styled-components": "^6.0.0",
     "zod": "^3.22.0"
   },

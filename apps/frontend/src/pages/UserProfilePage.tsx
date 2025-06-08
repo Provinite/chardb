@@ -341,7 +341,6 @@ export const UserProfilePage: React.FC = () => {
             <SectionTitle>Featured Characters</SectionTitle>
             <RandomCharacterButton 
               characters={featuredCharacters} 
-              variant="outline" 
               size="sm"
             />
           </SectionHeader>
@@ -365,7 +364,6 @@ export const UserProfilePage: React.FC = () => {
             <SectionTitle>Recent Characters</SectionTitle>
             <RandomCharacterButton 
               characters={recentCharacters} 
-              variant="outline" 
               size="sm"
             />
           </SectionHeader>
