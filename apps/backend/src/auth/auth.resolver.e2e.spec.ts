@@ -228,12 +228,16 @@ describe('AuthResolver (e2e)', () => {
 
   describe('me query', () => {
     let testUserId: string;
+    let testUsername: string;
+    let testEmail: string;
     let testToken: string;
 
     beforeEach(async () => {
       // Create and authenticate a test user
       const testUser = await testApp.createTestUser();
       testUserId = testUser.id;
+      testUsername = testUser.username;
+      testEmail = testUser.email;
       testToken = await testApp.generateTestToken(testUserId);
     });
 
@@ -248,8 +252,8 @@ describe('AuthResolver (e2e)', () => {
       expect(response.body.errors).toBeUndefined();
       expect(response.body.data.me).toMatchObject({
         id: testUserId,
-        username: 'testuser',
-        email: 'test@example.com',
+        username: testUsername,
+        email: testEmail,
         displayName: 'Test User',
       });
     });

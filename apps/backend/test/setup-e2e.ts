@@ -133,7 +133,7 @@ export class TestApp {
     const jwt = require('jsonwebtoken');
     return jwt.sign(
       { sub: userId, username: username || `testuser_${userId}` },
-      'test-jwt-secret-key-for-testing-only',
+      process.env.JWT_SECRET || 'development-jwt-secret-key-change-in-production',
       { expiresIn: '15m' }
     );
   }
@@ -257,6 +257,10 @@ export const GALLERY_QUERIES = {
           id
           username
         }
+        character {
+          id
+          name
+        }
       }
     }
   `,
@@ -274,7 +278,7 @@ export const GALLERY_QUERIES = {
         }
         images {
           id
-          originalName
+          originalFilename
         }
       }
     }

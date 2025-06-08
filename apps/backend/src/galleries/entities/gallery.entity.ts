@@ -1,5 +1,11 @@
-import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
+import { ObjectType, Field, ID, Int, registerEnumType } from '@nestjs/graphql';
 import { Visibility } from '@prisma/client';
+
+// Register enum for GraphQL
+registerEnumType(Visibility, {
+  name: 'Visibility',
+  description: 'Visibility levels for content',
+});
 import { User } from '../../users/entities/user.entity';
 import { Character } from '../../characters/entities/character.entity';
 import { Image } from '../../images/entities/image.entity';

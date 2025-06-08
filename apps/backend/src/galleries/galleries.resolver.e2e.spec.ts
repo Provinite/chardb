@@ -9,6 +9,7 @@ describe('GalleriesResolver (e2e)', () => {
   let testApp: TestApp;
   let app: INestApplication;
   let testUserId: string;
+  let testUsername: string;
   let testToken: string;
 
   beforeAll(async () => {
@@ -25,6 +26,7 @@ describe('GalleriesResolver (e2e)', () => {
     // Recreate test user
     const testUser = await testApp.createTestUser();
     testUserId = testUser.id;
+    testUsername = testUser.username;
     testToken = await testApp.generateTestToken(testUserId);
   });
 
@@ -55,7 +57,7 @@ describe('GalleriesResolver (e2e)', () => {
         visibility: input.visibility,
         owner: {
           id: testUserId,
-          username: 'testuser',
+          username: testUsername,
         },
       });
     });
@@ -147,7 +149,7 @@ describe('GalleriesResolver (e2e)', () => {
     it('should return error for non-existent gallery', async () => {
       const response = await testApp.graphqlRequest(
         GALLERY_QUERIES.GET_GALLERY,
-        { id: 'non-existent-id' }
+        { id: '12345678-1234-1234-1234-123456789012' }
       );
 
       expect(response.status).toBe(200);
