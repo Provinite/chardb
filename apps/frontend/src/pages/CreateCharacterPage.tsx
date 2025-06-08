@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@apollo/client';
+import { toast } from 'react-hot-toast';
 import styled from 'styled-components';
 import { Button } from '@thclone/ui';
 import { CREATE_CHARACTER, GET_CHARACTERS } from '../graphql/characters';
@@ -356,10 +357,11 @@ export const CreateCharacterPage: React.FC = () => {
       });
 
       // Navigate to the newly created character
+      toast.success('Character created successfully!');
       navigate(`/character/${result.data.createCharacter.id}`);
     } catch (error) {
       console.error('Error creating character:', error);
-      // TODO: Show error message to user
+      toast.error(error instanceof Error ? error.message : 'Failed to create character. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

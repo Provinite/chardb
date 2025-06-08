@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery } from '@apollo/client';
+import { toast } from 'react-hot-toast';
 import styled from 'styled-components';
 import { Button } from '@thclone/ui';
 import { CREATE_GALLERY, GET_GALLERIES } from '../graphql/galleries';
@@ -301,10 +302,11 @@ export const CreateGalleryPage: React.FC = () => {
       });
 
       // Navigate to the newly created gallery
+      toast.success('Gallery created successfully!');
       navigate(`/gallery/${result.data.createGallery.id}`);
     } catch (error) {
       console.error('Error creating gallery:', error);
-      // TODO: Show error message to user
+      toast.error(error instanceof Error ? error.message : 'Failed to create gallery. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

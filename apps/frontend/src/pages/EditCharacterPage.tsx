@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { toast } from 'react-hot-toast';
 import styled from 'styled-components';
 import { Button } from '@thclone/ui';
 import { 
@@ -332,9 +333,11 @@ export const EditCharacterPage: React.FC = () => {
         },
       });
 
+      toast.success('Character updated successfully!');
       navigate(`/character/${character.id}`);
     } catch (error) {
       console.error('Failed to update character:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update character. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
