@@ -1,0 +1,24 @@
+overwrite: true
+schema: "../backend/src/schema.gql"
+documents: "src/**/*.{ts,tsx}"
+generates:
+  src/generated/graphql.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"  
+      - "typescript-react-apollo"
+    config:
+      withHooks: true
+      withHOC: false
+      withComponent: false
+      scalars:
+        DateTime: string
+        JSON: any
+      namingConvention:
+        typeNames: pascal-case#pascalCase
+        enumValues: upper-case#UPPER_CASE
+      avoidOptionals:
+        field: true
+        inputValue: false
+        object: false
+        defaultValue: false
