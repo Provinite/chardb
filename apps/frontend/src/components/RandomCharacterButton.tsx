@@ -25,8 +25,9 @@ const getSizeStyles = (size: string) => {
   }
 };
 
-const TooltipContainer = styled.div`
+const ButtonContainer = styled.div`
   display: inline-block;
+  padding: 2px; /* Reserve space for translateY movement */
 `;
 
 const IconButton = styled.button<{ size: string }>`
@@ -82,11 +83,8 @@ export const RandomCharacterButton: React.FC<RandomCharacterButtonProps> = ({
     : `Random character (${characters.length} available)`;
 
   return (
-    <>
-      <TooltipContainer
-        data-tooltip-id="random-character-tooltip"
-        data-tooltip-content={tooltipText}
-      >
+    <Tooltip label={tooltipText}>
+      <ButtonContainer>
         <IconButton
           size={size}
           onClick={handleClick}
@@ -95,8 +93,7 @@ export const RandomCharacterButton: React.FC<RandomCharacterButtonProps> = ({
         >
           🎲
         </IconButton>
-      </TooltipContainer>
-      <Tooltip id="random-character-tooltip" />
-    </>
+      </ButtonContainer>
+    </Tooltip>
   );
 };

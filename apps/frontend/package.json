@@ -18,6 +18,8 @@
   "dependencies": {
     "@apollo/client": "^3.8.0",
     "@hookform/resolvers": "^3.3.0",
+    "@mantine/core": "^8.0.2",
+    "@mantine/hooks": "^8.0.2",
     "@thclone/shared": "workspace:*",
     "@thclone/ui": "workspace:*",
     "framer-motion": "^10.16.0",
@@ -29,7 +31,6 @@
     "react-hot-toast": "^2.4.0",
     "react-query": "^3.39.0",
     "react-router-dom": "^6.15.0",
-    "react-tooltip": "^5.28.1",
     "styled-components": "^6.0.0",
     "zod": "^3.22.0"
   },
