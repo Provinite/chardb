@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { useGetUserProfileQuery } from '../generated/graphql';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { RandomCharacterButton } from '../components/RandomCharacterButton';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -123,7 +124,29 @@ const Section = styled.section`
   margin-bottom: ${({ theme }) => theme.spacing.xl};
 `;
 
+const SectionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  padding-bottom: ${({ theme }) => theme.spacing.sm};
+  border-bottom: 2px solid ${({ theme }) => theme.colors.border};
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: ${({ theme }) => theme.spacing.sm};
+    align-items: stretch;
+  }
+`;
+
 const SectionTitle = styled.h3`
+  font-size: ${({ theme }) => theme.typography.fontSize.xl};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0;
+`;
+
+const SimpleSectionTitle = styled.h3`
   font-size: ${({ theme }) => theme.typography.fontSize.xl};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
@@ -314,7 +337,14 @@ export const UserProfilePage: React.FC = () => {
 
       {featuredCharacters.length > 0 && (
         <Section>
-          <SectionTitle>Featured Characters</SectionTitle>
+          <SectionHeader>
+            <SectionTitle>Featured Characters</SectionTitle>
+            <RandomCharacterButton 
+              characters={featuredCharacters} 
+              variant="outline" 
+              size="sm"
+            />
+          </SectionHeader>
           <Grid>
             {featuredCharacters.map((character) => (
               <Card key={character.id} to={`/character/${character.id}`}>
@@ -331,7 +361,14 @@ export const UserProfilePage: React.FC = () => {
 
       {recentCharacters.length > 0 && (
         <Section>
-          <SectionTitle>Recent Characters</SectionTitle>
+          <SectionHeader>
+            <SectionTitle>Recent Characters</SectionTitle>
+            <RandomCharacterButton 
+              characters={recentCharacters} 
+              variant="outline" 
+              size="sm"
+            />
+          </SectionHeader>
           <Grid>
             {recentCharacters.map((character) => (
               <Card key={character.id} to={`/character/${character.id}`}>
@@ -348,7 +385,7 @@ export const UserProfilePage: React.FC = () => {
 
       {recentGalleries.length > 0 && (
         <Section>
-          <SectionTitle>Recent Galleries</SectionTitle>
+          <SimpleSectionTitle>Recent Galleries</SimpleSectionTitle>
           <Grid>
             {recentGalleries.map((gallery) => (
               <Card key={gallery.id} to={`/gallery/${gallery.id}`}>
@@ -367,7 +404,7 @@ export const UserProfilePage: React.FC = () => {
 
       {recentImages.length > 0 && (
         <Section>
-          <SectionTitle>Recent Images</SectionTitle>
+          <SimpleSectionTitle>Recent Images</SimpleSectionTitle>
           <ImageGrid>
             {recentImages.map((image) => (
               <ImageCard key={image.id} to={`/image/${image.id}`}>

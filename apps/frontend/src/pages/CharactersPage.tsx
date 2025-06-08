@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { GET_CHARACTERS, Character, CharacterFiltersInput } from '../graphql/characters';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { RandomCharacterButton } from '../components/RandomCharacterButton';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -365,6 +366,10 @@ export const CharactersPage: React.FC = () => {
     <Container>
       <Header>
         <Title>Browse Characters</Title>
+        <RandomCharacterButton 
+          characters={data?.characters?.characters || []} 
+          variant="primary"
+        />
       </Header>
 
       <SearchSection>
