@@ -2,6 +2,7 @@ import { Resolver, Query, Mutation, Args, Int, ID } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User, UserConnection } from './entities/user.entity';
+import { UserProfile, UserStats } from './entities/user-profile.entity';
 import { UpdateUserInput } from './dto/update-user.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -51,5 +52,22 @@ export class UsersResolver {
   @UseGuards(JwtAuthGuard)
   async deleteAccount(@CurrentUser() user: User): Promise<boolean> {
     return this.usersService.remove(user.id);
+  }
+
+  @Query(() => UserProfile, { name: 'userProfile', nullable: true })
+  async getUserProfile(
+    @Args('username') username: string,
+    @CurrentUser() currentUser?: User,
+  ): Promise<UserProfile | null> {
+    return this.usersService.getUserProfile(username, currentUser?.id);
+  }
+
+  @Query(() => UserStats, { name: 'userStats' })
+  async getUserStats(
+    @Args('userId', { type: () => ID }) userId: string,
+    @CurrentUser() currentUser?: User,
+  ): Promise<UserStats> {
+    const includePrivate = currentUser?.id === userId || currentUser?.isAdmin;
+    return this.usersService.getUserStats(userId, includePrivate);
   }
 }

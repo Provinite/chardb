@@ -240,6 +240,8 @@ type Query {
   userCharacters(filters: CharacterFiltersInput, userId: ID!): CharacterConnection!
   userGalleries(filters: GalleryFiltersInput, userId: ID!): GalleryConnection!
   userImages(filters: ImageFiltersInput, userId: ID!): ImageConnection!
+  userProfile(username: String!): UserProfile
+  userStats(userId: ID!): UserStats!
   users(limit: Int! = 20, offset: Int! = 0): UserConnection!
 }
 
@@ -334,6 +336,27 @@ type UserConnection {
   hasPreviousPage: Boolean!
   nodes: [User!]!
   totalCount: Float!
+}
+
+type UserProfile {
+  canViewPrivateContent: Boolean!
+  featuredCharacters: [Character!]!
+  isOwnProfile: Boolean!
+  recentCharacters: [Character!]!
+  recentGalleries: [Gallery!]!
+  recentImages: [Image!]!
+  stats: UserStats!
+  user: User!
+}
+
+type UserStats {
+  charactersCount: Int!
+  followersCount: Int!
+  followingCount: Int!
+  galleriesCount: Int!
+  imagesCount: Int!
+  totalLikes: Int!
+  totalViews: Int!
 }
 
 """Visibility levels for content"""
