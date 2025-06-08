@@ -179,7 +179,7 @@ export interface Character {
   isSellable: boolean;
   isTradeable: boolean;
   price?: number;
-  customFields?: any;
+  customFields?: string;
   createdAt: string;
   updatedAt: string;
   owner: {
@@ -230,7 +230,7 @@ export interface CreateCharacterInput {
   isSellable?: boolean;
   isTradeable?: boolean;
   price?: number;
-  customFields?: any;
+  customFields?: string;
 }
 
 export interface UpdateCharacterInput {
@@ -245,5 +245,5 @@ export interface UpdateCharacterInput {
   isSellable?: boolean;
   isTradeable?: boolean;
   price?: number;
-  customFields?: any;
+  customFields?: string;
 }

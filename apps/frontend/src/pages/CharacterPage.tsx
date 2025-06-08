@@ -470,7 +470,7 @@ export const CharacterPage: React.FC = () => {
         </ContentSection>
       )}
 
-      {character.customFields && (
+      {character.customFields && character.customFields !== '{}' && (
         <ContentSection>
           <SectionTitle>Additional Information</SectionTitle>
           <ContentText>
