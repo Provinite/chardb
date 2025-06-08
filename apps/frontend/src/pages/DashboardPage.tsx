@@ -34,11 +34,17 @@ const Grid = styled.div`
 `;
 
 const DashboardCard = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.background};
   padding: ${({ theme }) => theme.spacing.lg};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   box-shadow: ${({ theme }) => theme.shadows.md};
   border: 1px solid ${({ theme }) => theme.colors.border};
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadows.lg};
+  }
 `;
 
 const CardTitle = styled.h3`
