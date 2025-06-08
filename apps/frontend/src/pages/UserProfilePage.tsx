@@ -146,14 +146,6 @@ const SectionTitle = styled.h3`
   margin: 0;
 `;
 
-const SimpleSectionTitle = styled.h3`
-  font-size: ${({ theme }) => theme.typography.fontSize.xl};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-  padding-bottom: ${({ theme }) => theme.spacing.sm};
-  border-bottom: 2px solid ${({ theme }) => theme.colors.border};
-`;
 
 const Grid = styled.div`
   display: grid;
@@ -238,6 +230,29 @@ const VerifiedBadge = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSize.lg};
 `;
 
+const EditButton = styled(Link)`
+  padding: 0.5rem ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  text-decoration: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  transition: all 0.2s ease;
+  align-self: flex-start;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary};
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 768px) {
+    align-self: stretch;
+    text-align: center;
+  }
+`;
+
 export const UserProfilePage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   
@@ -267,7 +282,7 @@ export const UserProfilePage: React.FC = () => {
     );
   }
 
-  const { user, stats, recentCharacters, recentGalleries, recentImages, featuredCharacters } = data.userProfile;
+  const { user, stats, recentCharacters, recentGalleries, recentImages, featuredCharacters, isOwnProfile } = data.userProfile;
 
   return (
     <Container>
@@ -306,6 +321,12 @@ export const UserProfilePage: React.FC = () => {
             </MetaItem>
           </ProfileMeta>
         </ProfileInfo>
+        
+        {isOwnProfile && (
+          <EditButton to="/profile/edit">
+            Edit Profile
+          </EditButton>
+        )}
       </ProfileHeader>
 
       <StatsGrid>
@@ -362,10 +383,20 @@ export const UserProfilePage: React.FC = () => {
         <Section>
           <SectionHeader>
             <SectionTitle>Recent Characters</SectionTitle>
-            <RandomCharacterButton 
-              characters={recentCharacters} 
-              size="sm"
-            />
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <Link to={`/characters?owner=${user.username}`} style={{ 
+                color: 'inherit', 
+                textDecoration: 'none',
+                fontSize: '0.9rem',
+                fontWeight: '500'
+              }}>
+                View All ({stats.charactersCount})
+              </Link>
+              <RandomCharacterButton 
+                characters={recentCharacters} 
+                size="sm"
+              />
+            </div>
           </SectionHeader>
           <Grid>
             {recentCharacters.map((character) => (
@@ -383,7 +414,17 @@ export const UserProfilePage: React.FC = () => {
 
       {recentGalleries.length > 0 && (
         <Section>
-          <SimpleSectionTitle>Recent Galleries</SimpleSectionTitle>
+          <SectionHeader>
+            <SectionTitle>Recent Galleries</SectionTitle>
+            <Link to={`/galleries?owner=${user.username}`} style={{ 
+              color: 'inherit', 
+              textDecoration: 'none',
+              fontSize: '0.9rem',
+              fontWeight: '500'
+            }}>
+              View All ({stats.galleriesCount})
+            </Link>
+          </SectionHeader>
           <Grid>
             {recentGalleries.map((gallery) => (
               <Card key={gallery.id} to={`/gallery/${gallery.id}`}>
@@ -402,7 +443,17 @@ export const UserProfilePage: React.FC = () => {
 
       {recentImages.length > 0 && (
         <Section>
-          <SimpleSectionTitle>Recent Images</SimpleSectionTitle>
+          <SectionHeader>
+            <SectionTitle>Recent Images</SectionTitle>
+            <Link to={`/images?uploader=${user.username}`} style={{ 
+              color: 'inherit', 
+              textDecoration: 'none',
+              fontSize: '0.9rem',
+              fontWeight: '500'
+            }}>
+              View All ({stats.imagesCount})
+            </Link>
+          </SectionHeader>
           <ImageGrid>
             {recentImages.map((image) => (
               <ImageCard key={image.id} to={`/image/${image.id}`}>

@@ -10,6 +10,7 @@ import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { UserProfilePage } from './pages/UserProfilePage';
+import { EditProfilePage } from './pages/EditProfilePage';
 import { CharacterPage } from './pages/CharacterPage';
 import { CharactersPage } from './pages/CharactersPage';
 import { CreateCharacterPage } from './pages/CreateCharacterPage';
@@ -86,6 +87,14 @@ function App() {
           element={
             <ProtectedRoute>
               <UploadImagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/edit"
+          element={
+            <ProtectedRoute>
+              <EditProfilePage />
             </ProtectedRoute>
           }
         />

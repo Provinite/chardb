@@ -49,10 +49,17 @@ const UserMenu = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `;
 
-const UserInfo = styled.div`
+const UserInfo = styled(Link)`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.2s ease;
+  
+  &:hover {
+    opacity: 0.8;
+  }
 `;
 
 const Avatar = styled.img`
@@ -93,7 +100,7 @@ export const Header: React.FC = () => {
               <NavLink to="/dashboard">Dashboard</NavLink>
               <NavLink to="/character/create">Create</NavLink>
               <NavLink to="/upload">Upload</NavLink>
-              <UserInfo>
+              <UserInfo to={`/user/${user.username}`}>
                 {user.avatarUrl && <Avatar src={user.avatarUrl} alt={user.username} />}
                 <Username>{user.displayName || user.username}</Username>
               </UserInfo>

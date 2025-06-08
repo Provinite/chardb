@@ -1,10 +1,11 @@
-import { Resolver, Query, Mutation, Args, Int, ID } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int, ID, Context } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User, UserConnection } from './entities/user.entity';
 import { UserProfile, UserStats } from './entities/user-profile.entity';
 import { UpdateUserInput } from './dto/update-user.input';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Resolver(() => User)
@@ -55,6 +56,7 @@ export class UsersResolver {
   }
 
   @Query(() => UserProfile, { name: 'userProfile', nullable: true })
+  @UseGuards(OptionalJwtAuthGuard)
   async getUserProfile(
     @Args('username') username: string,
     @CurrentUser() currentUser?: User,

@@ -109,3 +109,21 @@ export const GET_USER_STATS = gql`
     }
   }
 `;
+
+export const UPDATE_PROFILE = gql`
+  mutation UpdateProfile($input: UpdateUserInput!) {
+    updateProfile(input: $input) {
+      id
+      username
+      displayName
+      bio
+      avatarUrl
+      location
+      website
+      dateOfBirth
+      isVerified
+      createdAt
+      updatedAt
+    }
+  }
+`;

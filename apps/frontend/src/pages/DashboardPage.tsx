@@ -175,7 +175,7 @@ export const DashboardPage: React.FC = () => {
             Update your profile information, avatar, bio, and privacy settings.
             Customize how others see your profile.
           </CardDescription>
-          <Button as={Link} to="/settings/profile" variant="outline" size="sm">
+          <Button as={Link} to="/profile/edit" variant="outline" size="sm">
             Edit Profile
           </Button>
         </DashboardCard>
