@@ -16,6 +16,7 @@ import { CreateCharacterPage } from './pages/CreateCharacterPage';
 import { GalleryPage } from './pages/GalleryPage';
 import { GalleriesPage } from './pages/GalleriesPage';
 import { CreateGalleryPage } from './pages/CreateGalleryPage';
+import { UploadImagePage } from './pages/UploadImagePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
@@ -64,6 +65,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CreateGalleryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/upload"
+          element={
+            <ProtectedRoute>
+              <UploadImagePage />
             </ProtectedRoute>
           }
         />

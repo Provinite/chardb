@@ -88,6 +88,7 @@ export const Header: React.FC = () => {
             <UserMenu>
               <NavLink to="/dashboard">Dashboard</NavLink>
               <NavLink to="/character/create">Create</NavLink>
+              <NavLink to="/upload">Upload</NavLink>
               <UserInfo>
                 {user.avatarUrl && <Avatar src={user.avatarUrl} alt={user.username} />}
                 <Username>{user.displayName || user.username}</Username>

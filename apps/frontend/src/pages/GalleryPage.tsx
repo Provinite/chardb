@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
+import { Button } from '@thclone/ui';
 import { GET_GALLERY, Gallery } from '../graphql/galleries';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useAuth } from '../contexts/AuthContext';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -142,6 +144,19 @@ const OwnerRole = styled.p`
 
 const ContentSection = styled.section`
   margin-bottom: ${({ theme }) => theme.spacing.xl};
+`;
+
+const SectionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: ${({ theme }) => theme.spacing.md};
+  }
 `;
 
 const SectionTitle = styled.h3`
@@ -316,6 +331,7 @@ const EmptyImagesState = styled.div`
 export const GalleryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   const { data, loading, error } = useQuery(GET_GALLERY, {
@@ -333,6 +349,10 @@ export const GalleryPage: React.FC = () => {
     if (gallery?.character) {
       navigate(`/character/${gallery.character.id}`);
     }
+  };
+
+  const handleAddImage = () => {
+    navigate(`/upload?galleryId=${id}`);
   };
 
   const getVisibilityVariant = (visibility: string) => {
@@ -428,7 +448,18 @@ export const GalleryPage: React.FC = () => {
         )}
 
         <ContentSection>
-          <SectionTitle>Images</SectionTitle>
+          <SectionHeader>
+            <SectionTitle>Images</SectionTitle>
+            {user && user.id === gallery.owner.id && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleAddImage}
+              >
+                Add Image
+              </Button>
+            )}
+          </SectionHeader>
           {gallery.images && gallery.images.length > 0 ? (
             <ImageGrid>
               {gallery.images.map((image) => (
