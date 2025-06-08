@@ -269,6 +269,9 @@ export class CommentsService {
       character: undefined,
       image: undefined,
       gallery: undefined,
+      // Social features will be resolved by field resolvers
+      likesCount: 0,
+      userHasLiked: false,
     };
   }
 }

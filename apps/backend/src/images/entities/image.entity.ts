@@ -89,6 +89,13 @@ export class Image {
 
   @Field(() => [ImageTag], { nullable: true })
   tags_rel?: ImageTag[];
+
+  // Social features
+  @Field(() => Int)
+  likesCount: number;
+
+  @Field(() => Boolean)
+  userHasLiked: boolean;
 }
 
 @ObjectType()

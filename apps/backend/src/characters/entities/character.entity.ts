@@ -77,6 +77,13 @@ export class Character {
 
   @Field(() => CharacterCount, { nullable: true })
   _count?: CharacterCount;
+
+  // Social features
+  @Field(() => Int)
+  likesCount: number;
+
+  @Field(() => Boolean)
+  userHasLiked: boolean;
 }
 
 @ObjectType()

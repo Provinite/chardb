@@ -21,6 +21,7 @@ type Character {
   id: ID!
   isSellable: Boolean!
   isTradeable: Boolean!
+  likesCount: Int!
   name: String!
   owner: User!
   ownerId: ID!
@@ -30,6 +31,7 @@ type Character {
   tags: [String!]!
   tags_rel: [CharacterTag!]
   updatedAt: DateTime!
+  userHasLiked: Boolean!
   visibility: Visibility!
 }
 
@@ -72,11 +74,13 @@ type Comment {
   id: ID!
   image: Image
   isHidden: Boolean!
+  likesCount: Int!
   parent: Comment
   parentId: ID
   replies: [Comment!]!
   repliesCount: Int!
   updatedAt: DateTime!
+  userHasLiked: Boolean!
 }
 
 type CommentConnection {
@@ -144,11 +148,13 @@ type Gallery {
   description: String
   id: ID!
   images: [Image!]!
+  likesCount: Int!
   name: String!
   owner: User!
   ownerId: ID!
   sortOrder: Int!
   updatedAt: DateTime!
+  userHasLiked: Boolean!
   visibility: Visibility!
 }
 
@@ -191,6 +197,7 @@ type Image {
   height: Int!
   id: ID!
   isNsfw: Boolean!
+  likesCount: Int!
   mimeType: String!
   originalFilename: String!
   source: String
@@ -200,6 +207,7 @@ type Image {
   uploader: User!
   uploaderId: ID!
   url: String!
+  userHasLiked: Boolean!
   visibility: Visibility!
   width: Int!
 }
@@ -231,6 +239,26 @@ type ImageTag {
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
 scalar JSON
+
+type LikeResult {
+  entityId: ID!
+  entityType: LikeableType!
+  isLiked: Boolean!
+  likesCount: Float!
+}
+
+type LikeStatus {
+  isLiked: Boolean!
+  likesCount: Float!
+}
+
+"""Types of entities that can be liked"""
+enum LikeableType {
+  CHARACTER
+  COMMENT
+  GALLERY
+  IMAGE
+}
 
 input LoginInput {
   email: String!
@@ -264,6 +292,7 @@ type Mutation {
   removeImageTags(id: ID!, input: ManageImageTagsInput!): Image!
   reorderGalleries(input: ReorderGalleriesInput!): [Gallery!]!
   signup(input: SignupInput!): AuthPayload!
+  toggleLike(input: ToggleLikeInput!): LikeResult!
   transferCharacter(id: ID!, input: TransferCharacterInput!): Character!
   updateCharacter(id: ID!, input: UpdateCharacterInput!): Character!
   updateComment(id: ID!, input: UpdateCommentInput!): Comment!
@@ -284,6 +313,7 @@ type Query {
   galleryImages(filters: ImageFiltersInput, galleryId: ID!): ImageConnection!
   image(id: ID!): Image!
   images(filters: ImageFiltersInput): ImageConnection!
+  likeStatus(entityId: ID!, entityType: LikeableType!): LikeStatus!
   me: User!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
@@ -314,6 +344,11 @@ type Tag {
   createdAt: DateTime!
   id: ID!
   name: String!
+}
+
+input ToggleLikeInput {
+  entityId: ID!
+  entityType: LikeableType!
 }
 
 input TransferCharacterInput {

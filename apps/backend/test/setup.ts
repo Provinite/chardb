@@ -69,6 +69,7 @@ const mockPrismaService = {
     create: jest.fn(),
     findUnique: jest.fn(),
     delete: jest.fn(),
+    count: jest.fn(),
   },
   follow: {
     create: jest.fn(),

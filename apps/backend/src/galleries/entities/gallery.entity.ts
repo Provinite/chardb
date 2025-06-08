@@ -52,6 +52,13 @@ export class Gallery {
   // Count fields
   @Field(() => GalleryCount, { nullable: true })
   _count?: GalleryCount;
+
+  // Social features
+  @Field(() => Int)
+  likesCount: number;
+
+  @Field(() => Boolean)
+  userHasLiked: boolean;
 }
 
 @ObjectType()

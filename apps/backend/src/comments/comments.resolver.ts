@@ -80,6 +80,8 @@ export class CommentsResolver {
     return {
       ...character,
       price: character.price ? Number(character.price) : null,
+      likesCount: 0, // Will be resolved by field resolver
+      userHasLiked: false, // Will be resolved by field resolver
     } as Character;
   }
 
@@ -114,12 +116,18 @@ export class CommentsResolver {
       character: image.character ? {
         ...image.character,
         price: image.character.price ? Number(image.character.price) : null,
+        likesCount: 0,
+        userHasLiked: false,
       } : null,
       gallery: image.gallery ? {
         ...image.gallery,
         character: null,
         images: [],
+        likesCount: 0,
+        userHasLiked: false,
       } : null,
+      likesCount: 0, // Will be resolved by field resolver
+      userHasLiked: false, // Will be resolved by field resolver
     } as Image;
   }
 
@@ -149,8 +157,12 @@ export class CommentsResolver {
       character: gallery.character ? {
         ...gallery.character,
         price: gallery.character.price ? Number(gallery.character.price) : null,
+        likesCount: 0,
+        userHasLiked: false,
       } : null,
       images: [],
+      likesCount: 0, // Will be resolved by field resolver
+      userHasLiked: false, // Will be resolved by field resolver
     } as Gallery;
   }
 }

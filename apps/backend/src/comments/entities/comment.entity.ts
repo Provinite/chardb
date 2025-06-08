@@ -57,6 +57,13 @@ export class Comment {
   // Computed fields
   @Field(() => Int)
   repliesCount: number;
+
+  // Social features
+  @Field(() => Int)
+  likesCount: number;
+
+  @Field(() => Boolean)
+  userHasLiked: boolean;
 }
 
 @ObjectType()
