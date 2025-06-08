@@ -5,16 +5,32 @@ import { Button } from '@thclone/ui';
 import { useAuth } from '../contexts/AuthContext';
 
 const Hero = styled.section`
-  background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary} 0%, ${({ theme }) => theme.colors.secondary} 100%);
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+  position: relative;
   color: white;
   padding: 4rem 0;
   text-align: center;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.3) 0%, transparent 50%);
+    pointer-events: none;
+  }
 `;
 
 const HeroContent = styled.div`
   max-width: 800px;
   margin: 0 auto;
   padding: 0 ${({ theme }) => theme.spacing.md};
+  position: relative;
+  z-index: 1;
 `;
 
 const HeroTitle = styled.h1`
@@ -41,6 +57,33 @@ const HeroActions = styled.div`
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: center;
+  }
+`;
+
+const HeroPrimaryButton = styled(Button)`
+  background: white;
+  color: #1e293b;
+  border: 1px solid white;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  
+  &:hover:not(:disabled) {
+    background: #f1f5f9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+`;
+
+const HeroSecondaryButton = styled(Button)`
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  
+  &:hover:not(:disabled) {
+    background: white;
+    color: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 `;
 
@@ -116,21 +159,21 @@ export const HomePage: React.FC = () => {
           <HeroActions>
             {user ? (
               <>
-                <Button as={Link} to="/dashboard" size="lg">
+                <HeroPrimaryButton as={Link} to="/dashboard" size="lg">
                   Go to Dashboard
-                </Button>
-                <Button as={Link} to="/character/create" variant="outline" size="lg">
+                </HeroPrimaryButton>
+                <HeroSecondaryButton as={Link} to="/character/create" size="lg">
                   Create Character
-                </Button>
+                </HeroSecondaryButton>
               </>
             ) : (
               <>
-                <Button as={Link} to="/signup" size="lg">
+                <HeroPrimaryButton as={Link} to="/signup" size="lg">
                   Get Started
-                </Button>
-                <Button as={Link} to="/characters" variant="outline" size="lg">
+                </HeroPrimaryButton>
+                <HeroSecondaryButton as={Link} to="/characters" size="lg">
                   Browse Characters
-                </Button>
+                </HeroSecondaryButton>
               </>
             )}
           </HeroActions>
