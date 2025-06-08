@@ -21,7 +21,8 @@ const Container = styled.div`
 `;
 
 const Card = styled.div`
-  background: white;
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
   padding: ${({ theme }) => theme.spacing.xl};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   box-shadow: ${({ theme }) => theme.shadows.lg};
@@ -57,11 +58,19 @@ const Input = styled.input`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
+  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.text.primary};
+  transition: all 0.2s ease;
+  
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.text.muted};
+  }
   
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
     box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}20;
+    background: ${({ theme }) => theme.colors.background};
   }
 `;
 
