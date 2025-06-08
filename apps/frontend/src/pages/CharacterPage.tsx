@@ -2,8 +2,10 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
+import { Button } from '@thclone/ui';
 import { GET_CHARACTER, Character } from '../graphql/characters';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useAuth } from '../contexts/AuthContext';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -50,6 +52,17 @@ const CharacterHeader = styled.div`
   @media (max-width: 768px) {
     flex-direction: column;
     gap: ${({ theme }) => theme.spacing.lg};
+  }
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.sm};
+  margin-left: auto;
+  
+  @media (max-width: 768px) {
+    margin-left: 0;
+    justify-content: flex-start;
   }
 `;
 
@@ -286,6 +299,7 @@ const EmptySection = styled.div`
 export const CharacterPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data, loading, error } = useQuery(GET_CHARACTER, {
     variables: { id: id! },
@@ -296,6 +310,10 @@ export const CharacterPage: React.FC = () => {
 
   const handleBackClick = () => {
     navigate('/characters');
+  };
+
+  const handleEditClick = () => {
+    navigate(`/character/${id}/edit`);
   };
 
   const getVisibilityVariant = (visibility: string) => {
@@ -405,6 +423,18 @@ export const CharacterPage: React.FC = () => {
             </>
           )}
         </OwnerInfo>
+
+        {user && user.id === character.owner.id && (
+          <HeaderActions>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleEditClick}
+            >
+              Edit Character
+            </Button>
+          </HeaderActions>
+        )}
       </CharacterHeader>
 
       {character._count && (

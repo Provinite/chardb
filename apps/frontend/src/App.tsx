@@ -13,6 +13,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { CharacterPage } from './pages/CharacterPage';
 import { CharactersPage } from './pages/CharactersPage';
 import { CreateCharacterPage } from './pages/CreateCharacterPage';
+import { EditCharacterPage } from './pages/EditCharacterPage';
 import { GalleryPage } from './pages/GalleryPage';
 import { GalleriesPage } from './pages/GalleriesPage';
 import { CreateGalleryPage } from './pages/CreateGalleryPage';
@@ -57,6 +58,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CreateCharacterPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/character/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditCharacterPage />
             </ProtectedRoute>
           }
         />
