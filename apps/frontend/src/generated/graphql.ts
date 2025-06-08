@@ -40,6 +40,7 @@ export type Character = {
   id: Scalars['ID']['output'];
   isSellable: Scalars['Boolean']['output'];
   isTradeable: Scalars['Boolean']['output'];
+  likesCount: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   owner: User;
   ownerId: Scalars['ID']['output'];
@@ -49,6 +50,7 @@ export type Character = {
   tags: Array<Scalars['String']['output']>;
   tags_rel: Maybe<Array<CharacterTag>>;
   updatedAt: Scalars['DateTime']['output'];
+  userHasLiked: Scalars['Boolean']['output'];
   visibility: Visibility;
 };
 
@@ -82,6 +84,50 @@ export type CharacterTag = {
   tag: Tag;
 };
 
+export type Comment = {
+  __typename?: 'Comment';
+  author: User;
+  authorId: Scalars['ID']['output'];
+  character: Maybe<Character>;
+  commentableId: Scalars['ID']['output'];
+  commentableType: CommentableType;
+  content: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  gallery: Maybe<Gallery>;
+  id: Scalars['ID']['output'];
+  image: Maybe<Image>;
+  isHidden: Scalars['Boolean']['output'];
+  likesCount: Scalars['Int']['output'];
+  parent: Maybe<Comment>;
+  parentId: Maybe<Scalars['ID']['output']>;
+  replies: Array<Comment>;
+  repliesCount: Scalars['Int']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  userHasLiked: Scalars['Boolean']['output'];
+};
+
+export type CommentConnection = {
+  __typename?: 'CommentConnection';
+  comments: Array<Comment>;
+  hasMore: Scalars['Boolean']['output'];
+  total: Scalars['Int']['output'];
+};
+
+export type CommentFiltersInput = {
+  entityId?: InputMaybe<Scalars['ID']['input']>;
+  entityType?: InputMaybe<CommentableType>;
+  limit?: Scalars['Int']['input'];
+  offset?: Scalars['Int']['input'];
+  parentId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** Types of entities that can be commented on */
+export enum CommentableType {
+  Character = 'CHARACTER',
+  Gallery = 'GALLERY',
+  Image = 'IMAGE'
+}
+
 export type CreateCharacterInput = {
   age?: InputMaybe<Scalars['String']['input']>;
   backstory?: InputMaybe<Scalars['String']['input']>;
@@ -98,12 +144,34 @@ export type CreateCharacterInput = {
   visibility?: Visibility;
 };
 
+export type CreateCommentInput = {
+  content: Scalars['String']['input'];
+  entityId: Scalars['ID']['input'];
+  entityType: CommentableType;
+  parentId?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export type CreateGalleryInput = {
   characterId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   sortOrder?: Scalars['Int']['input'];
   visibility?: Visibility;
+};
+
+export type FollowResult = {
+  __typename?: 'FollowResult';
+  followersCount: Scalars['Float']['output'];
+  followingCount: Scalars['Float']['output'];
+  isFollowing: Scalars['Boolean']['output'];
+  targetUserId: Scalars['ID']['output'];
+};
+
+export type FollowStatus = {
+  __typename?: 'FollowStatus';
+  followersCount: Scalars['Float']['output'];
+  followingCount: Scalars['Float']['output'];
+  isFollowing: Scalars['Boolean']['output'];
 };
 
 export type Gallery = {
@@ -115,11 +183,13 @@ export type Gallery = {
   description: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   images: Array<Image>;
+  likesCount: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   owner: User;
   ownerId: Scalars['ID']['output'];
   sortOrder: Scalars['Int']['output'];
   updatedAt: Scalars['DateTime']['output'];
+  userHasLiked: Scalars['Boolean']['output'];
   visibility: Visibility;
 };
 
@@ -165,6 +235,7 @@ export type Image = {
   height: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   isNsfw: Scalars['Boolean']['output'];
+  likesCount: Scalars['Int']['output'];
   mimeType: Scalars['String']['output'];
   originalFilename: Scalars['String']['output'];
   source: Maybe<Scalars['String']['output']>;
@@ -174,6 +245,7 @@ export type Image = {
   uploader: User;
   uploaderId: Scalars['ID']['output'];
   url: Scalars['String']['output'];
+  userHasLiked: Scalars['Boolean']['output'];
   visibility: Visibility;
   width: Scalars['Int']['output'];
 };
@@ -203,6 +275,28 @@ export type ImageTag = {
   tag: Tag;
 };
 
+export type LikeResult = {
+  __typename?: 'LikeResult';
+  entityId: Scalars['ID']['output'];
+  entityType: LikeableType;
+  isLiked: Scalars['Boolean']['output'];
+  likesCount: Scalars['Float']['output'];
+};
+
+export type LikeStatus = {
+  __typename?: 'LikeStatus';
+  isLiked: Scalars['Boolean']['output'];
+  likesCount: Scalars['Float']['output'];
+};
+
+/** Types of entities that can be liked */
+export enum LikeableType {
+  Character = 'CHARACTER',
+  Comment = 'COMMENT',
+  Gallery = 'GALLERY',
+  Image = 'IMAGE'
+}
+
 export type LoginInput = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -222,9 +316,11 @@ export type Mutation = {
   addImageTags: Image;
   addImageToGallery: Gallery;
   createCharacter: Character;
+  createComment: Comment;
   createGallery: Gallery;
   deleteAccount: Scalars['Boolean']['output'];
   deleteCharacter: Scalars['Boolean']['output'];
+  deleteComment: Scalars['Boolean']['output'];
   deleteGallery: Scalars['Boolean']['output'];
   deleteImage: Scalars['Boolean']['output'];
   login: AuthPayload;
@@ -234,8 +330,11 @@ export type Mutation = {
   removeImageTags: Image;
   reorderGalleries: Array<Gallery>;
   signup: AuthPayload;
+  toggleFollow: FollowResult;
+  toggleLike: LikeResult;
   transferCharacter: Character;
   updateCharacter: Character;
+  updateComment: Comment;
   updateGallery: Gallery;
   updateImage: Image;
   updateProfile: User;
@@ -265,12 +364,22 @@ export type MutationCreateCharacterArgs = {
 };
 
 
+export type MutationCreateCommentArgs = {
+  input: CreateCommentInput;
+};
+
+
 export type MutationCreateGalleryArgs = {
   input: CreateGalleryInput;
 };
 
 
 export type MutationDeleteCharacterArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteCommentArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -323,6 +432,16 @@ export type MutationSignupArgs = {
 };
 
 
+export type MutationToggleFollowArgs = {
+  input: ToggleFollowInput;
+};
+
+
+export type MutationToggleLikeArgs = {
+  input: ToggleLikeInput;
+};
+
+
 export type MutationTransferCharacterArgs = {
   id: Scalars['ID']['input'];
   input: TransferCharacterInput;
@@ -332,6 +451,12 @@ export type MutationTransferCharacterArgs = {
 export type MutationUpdateCharacterArgs = {
   id: Scalars['ID']['input'];
   input: UpdateCharacterInput;
+};
+
+
+export type MutationUpdateCommentArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateCommentInput;
 };
 
 
@@ -357,11 +482,15 @@ export type Query = {
   characterGalleries: GalleryConnection;
   characterImages: ImageConnection;
   characters: CharacterConnection;
+  comment: Comment;
+  comments: CommentConnection;
+  followStatus: FollowStatus;
   galleries: GalleryConnection;
   gallery: Gallery;
   galleryImages: ImageConnection;
   image: Image;
   images: ImageConnection;
+  likeStatus: LikeStatus;
   me: User;
   myCharacters: CharacterConnection;
   myGalleries: GalleryConnection;
@@ -398,6 +527,21 @@ export type QueryCharactersArgs = {
 };
 
 
+export type QueryCommentArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommentsArgs = {
+  filters: CommentFiltersInput;
+};
+
+
+export type QueryFollowStatusArgs = {
+  userId: Scalars['ID']['input'];
+};
+
+
 export type QueryGalleriesArgs = {
   filters?: InputMaybe<GalleryFiltersInput>;
 };
@@ -421,6 +565,12 @@ export type QueryImageArgs = {
 
 export type QueryImagesArgs = {
   filters?: InputMaybe<ImageFiltersInput>;
+};
+
+
+export type QueryLikeStatusArgs = {
+  entityId: Scalars['ID']['input'];
+  entityType: LikeableType;
 };
 
 
@@ -498,6 +648,15 @@ export type Tag = {
   name: Scalars['String']['output'];
 };
 
+export type ToggleFollowInput = {
+  targetUserId: Scalars['ID']['input'];
+};
+
+export type ToggleLikeInput = {
+  entityId: Scalars['ID']['input'];
+  entityType: LikeableType;
+};
+
 export type TransferCharacterInput = {
   newOwnerId: Scalars['ID']['input'];
 };
@@ -516,6 +675,10 @@ export type UpdateCharacterInput = {
   species?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   visibility?: InputMaybe<Visibility>;
+};
+
+export type UpdateCommentInput = {
+  content: Scalars['String']['input'];
 };
 
 export type UpdateGalleryInput = {
@@ -556,12 +719,15 @@ export type User = {
   dateOfBirth: Maybe<Scalars['DateTime']['output']>;
   displayName: Maybe<Scalars['String']['output']>;
   email: Scalars['String']['output'];
+  followersCount: Scalars['Int']['output'];
+  followingCount: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   isAdmin: Scalars['Boolean']['output'];
   isVerified: Scalars['Boolean']['output'];
   location: Maybe<Scalars['String']['output']>;
   privacySettings: Scalars['JSON']['output'];
   updatedAt: Scalars['DateTime']['output'];
+  userIsFollowing: Scalars['Boolean']['output'];
   username: Scalars['String']['output'];
   website: Maybe<Scalars['String']['output']>;
 };
@@ -814,6 +980,35 @@ export type DeleteImageMutationVariables = Exact<{
 
 
 export type DeleteImageMutation = { __typename?: 'Mutation', deleteImage: boolean };
+
+export type ToggleLikeMutationVariables = Exact<{
+  input: ToggleLikeInput;
+}>;
+
+
+export type ToggleLikeMutation = { __typename?: 'Mutation', toggleLike: { __typename?: 'LikeResult', isLiked: boolean, likesCount: number, entityType: LikeableType, entityId: string } };
+
+export type GetLikeStatusQueryVariables = Exact<{
+  entityType: LikeableType;
+  entityId: Scalars['ID']['input'];
+}>;
+
+
+export type GetLikeStatusQuery = { __typename?: 'Query', likeStatus: { __typename?: 'LikeStatus', isLiked: boolean, likesCount: number } };
+
+export type ToggleFollowMutationVariables = Exact<{
+  input: ToggleFollowInput;
+}>;
+
+
+export type ToggleFollowMutation = { __typename?: 'Mutation', toggleFollow: { __typename?: 'FollowResult', isFollowing: boolean, followersCount: number, followingCount: number, targetUserId: string } };
+
+export type GetFollowStatusQueryVariables = Exact<{
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type GetFollowStatusQuery = { __typename?: 'Query', followStatus: { __typename?: 'FollowStatus', isFollowing: boolean, followersCount: number, followingCount: number } };
 
 export type GetUserProfileQueryVariables = Exact<{
   username: Scalars['String']['input'];
@@ -2536,6 +2731,162 @@ export function useDeleteImageMutation(baseOptions?: Apollo.MutationHookOptions<
 export type DeleteImageMutationHookResult = ReturnType<typeof useDeleteImageMutation>;
 export type DeleteImageMutationResult = Apollo.MutationResult<DeleteImageMutation>;
 export type DeleteImageMutationOptions = Apollo.BaseMutationOptions<DeleteImageMutation, DeleteImageMutationVariables>;
+export const ToggleLikeDocument = gql`
+    mutation ToggleLike($input: ToggleLikeInput!) {
+  toggleLike(input: $input) {
+    isLiked
+    likesCount
+    entityType
+    entityId
+  }
+}
+    `;
+export type ToggleLikeMutationFn = Apollo.MutationFunction<ToggleLikeMutation, ToggleLikeMutationVariables>;
+
+/**
+ * __useToggleLikeMutation__
+ *
+ * To run a mutation, you first call `useToggleLikeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useToggleLikeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [toggleLikeMutation, { data, loading, error }] = useToggleLikeMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useToggleLikeMutation(baseOptions?: Apollo.MutationHookOptions<ToggleLikeMutation, ToggleLikeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ToggleLikeMutation, ToggleLikeMutationVariables>(ToggleLikeDocument, options);
+      }
+export type ToggleLikeMutationHookResult = ReturnType<typeof useToggleLikeMutation>;
+export type ToggleLikeMutationResult = Apollo.MutationResult<ToggleLikeMutation>;
+export type ToggleLikeMutationOptions = Apollo.BaseMutationOptions<ToggleLikeMutation, ToggleLikeMutationVariables>;
+export const GetLikeStatusDocument = gql`
+    query GetLikeStatus($entityType: LikeableType!, $entityId: ID!) {
+  likeStatus(entityType: $entityType, entityId: $entityId) {
+    isLiked
+    likesCount
+  }
+}
+    `;
+
+/**
+ * __useGetLikeStatusQuery__
+ *
+ * To run a query within a React component, call `useGetLikeStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetLikeStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLikeStatusQuery({
+ *   variables: {
+ *      entityType: // value for 'entityType'
+ *      entityId: // value for 'entityId'
+ *   },
+ * });
+ */
+export function useGetLikeStatusQuery(baseOptions: Apollo.QueryHookOptions<GetLikeStatusQuery, GetLikeStatusQueryVariables> & ({ variables: GetLikeStatusQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetLikeStatusQuery, GetLikeStatusQueryVariables>(GetLikeStatusDocument, options);
+      }
+export function useGetLikeStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLikeStatusQuery, GetLikeStatusQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetLikeStatusQuery, GetLikeStatusQueryVariables>(GetLikeStatusDocument, options);
+        }
+export function useGetLikeStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLikeStatusQuery, GetLikeStatusQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetLikeStatusQuery, GetLikeStatusQueryVariables>(GetLikeStatusDocument, options);
+        }
+export type GetLikeStatusQueryHookResult = ReturnType<typeof useGetLikeStatusQuery>;
+export type GetLikeStatusLazyQueryHookResult = ReturnType<typeof useGetLikeStatusLazyQuery>;
+export type GetLikeStatusSuspenseQueryHookResult = ReturnType<typeof useGetLikeStatusSuspenseQuery>;
+export type GetLikeStatusQueryResult = Apollo.QueryResult<GetLikeStatusQuery, GetLikeStatusQueryVariables>;
+export const ToggleFollowDocument = gql`
+    mutation ToggleFollow($input: ToggleFollowInput!) {
+  toggleFollow(input: $input) {
+    isFollowing
+    followersCount
+    followingCount
+    targetUserId
+  }
+}
+    `;
+export type ToggleFollowMutationFn = Apollo.MutationFunction<ToggleFollowMutation, ToggleFollowMutationVariables>;
+
+/**
+ * __useToggleFollowMutation__
+ *
+ * To run a mutation, you first call `useToggleFollowMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useToggleFollowMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [toggleFollowMutation, { data, loading, error }] = useToggleFollowMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useToggleFollowMutation(baseOptions?: Apollo.MutationHookOptions<ToggleFollowMutation, ToggleFollowMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ToggleFollowMutation, ToggleFollowMutationVariables>(ToggleFollowDocument, options);
+      }
+export type ToggleFollowMutationHookResult = ReturnType<typeof useToggleFollowMutation>;
+export type ToggleFollowMutationResult = Apollo.MutationResult<ToggleFollowMutation>;
+export type ToggleFollowMutationOptions = Apollo.BaseMutationOptions<ToggleFollowMutation, ToggleFollowMutationVariables>;
+export const GetFollowStatusDocument = gql`
+    query GetFollowStatus($userId: ID!) {
+  followStatus(userId: $userId) {
+    isFollowing
+    followersCount
+    followingCount
+  }
+}
+    `;
+
+/**
+ * __useGetFollowStatusQuery__
+ *
+ * To run a query within a React component, call `useGetFollowStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetFollowStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetFollowStatusQuery({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useGetFollowStatusQuery(baseOptions: Apollo.QueryHookOptions<GetFollowStatusQuery, GetFollowStatusQueryVariables> & ({ variables: GetFollowStatusQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetFollowStatusQuery, GetFollowStatusQueryVariables>(GetFollowStatusDocument, options);
+      }
+export function useGetFollowStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetFollowStatusQuery, GetFollowStatusQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetFollowStatusQuery, GetFollowStatusQueryVariables>(GetFollowStatusDocument, options);
+        }
+export function useGetFollowStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetFollowStatusQuery, GetFollowStatusQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetFollowStatusQuery, GetFollowStatusQueryVariables>(GetFollowStatusDocument, options);
+        }
+export type GetFollowStatusQueryHookResult = ReturnType<typeof useGetFollowStatusQuery>;
+export type GetFollowStatusLazyQueryHookResult = ReturnType<typeof useGetFollowStatusLazyQuery>;
+export type GetFollowStatusSuspenseQueryHookResult = ReturnType<typeof useGetFollowStatusSuspenseQuery>;
+export type GetFollowStatusQueryResult = Apollo.QueryResult<GetFollowStatusQuery, GetFollowStatusQueryVariables>;
 export const GetUserProfileDocument = gql`
     query GetUserProfile($username: String!) {
   userProfile(username: $username) {
