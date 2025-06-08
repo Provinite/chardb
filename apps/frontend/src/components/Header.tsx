@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Button } from '@thclone/ui';
 import { useAuth } from '../contexts/AuthContext';
+import { ThemeToggle } from './ThemeToggle';
 
 const HeaderContainer = styled.header`
   background-color: ${({ theme }) => theme.colors.surface};
@@ -84,6 +85,8 @@ export const Header: React.FC = () => {
           <NavLink to="/characters">Characters</NavLink>
           <NavLink to="/galleries">Galleries</NavLink>
           <NavLink to="/images">Images</NavLink>
+          
+          <ThemeToggle />
           
           {user ? (
             <UserMenu>
