@@ -9,7 +9,7 @@ export class CharactersService {
   constructor(private readonly db: DatabaseService) {}
 
   async create(userId: string, input: CreateCharacterInput): Promise<Character> {
-    return this.db.character.create({
+    const character = await this.db.character.create({
       data: {
         ...input,
         ownerId: userId,
@@ -25,6 +25,7 @@ export class CharactersService {
         },
       },
     });
+    return this.transformCharacter(character);
   }
 
   async findAll(filters: CharacterFilters = {}, userId?: string) {
@@ -111,7 +112,7 @@ export class CharactersService {
     ]);
 
     return {
-      characters,
+      characters: characters.map(character => this.transformCharacter(character)),
       total,
       hasMore: offset + limit < total,
     };
@@ -161,7 +162,14 @@ export class CharactersService {
       }
     }
 
-    return character;
+    return this.transformCharacter(character);
+  }
+
+  private transformCharacter(character: any) {
+    return {
+      ...character,
+      customFields: character.customFields ? JSON.stringify(character.customFields) : null,
+    };
   }
 
   async update(id: string, userId: string, input: UpdateCharacterInput): Promise<Character> {
@@ -172,7 +180,7 @@ export class CharactersService {
       throw new ForbiddenException('You can only edit your own characters');
     }
 
-    return this.db.character.update({
+    const updatedCharacter = await this.db.character.update({
       where: { id },
       data: input,
       include: {
@@ -185,6 +193,7 @@ export class CharactersService {
         },
       },
     });
+    return this.transformCharacter(updatedCharacter);
   }
 
   async remove(id: string, userId: string): Promise<boolean> {
@@ -219,7 +228,7 @@ export class CharactersService {
       throw new NotFoundException('New owner not found');
     }
 
-    return this.db.character.update({
+    const transferredCharacter = await this.db.character.update({
       where: { id },
       data: {
         ownerId: newOwnerId,
@@ -235,6 +244,7 @@ export class CharactersService {
         },
       },
     });
+    return this.transformCharacter(transferredCharacter);
   }
 
   async addTags(characterId: string, userId: string, tagNames: string[]): Promise<Character> {

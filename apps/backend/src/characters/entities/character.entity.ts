@@ -57,7 +57,7 @@ export class Character {
   tags: string[];
 
   @Field(() => String, { nullable: true })
-  customFields?: any; // JSON field
+  customFields?: string; // JSON string
 
   @Field()
   createdAt: Date;
