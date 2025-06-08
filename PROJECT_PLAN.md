@@ -306,6 +306,12 @@ thclone/
    - Image viewer/carousel
    - Responsive image display
 
+4. **Developer Experience Improvements**
+   - GraphQL Code Generation setup
+   - Automatic TypeScript type generation from schema
+   - Refactor existing GraphQL operations to use generated types
+   - Enhanced type safety and IntelliSense
+
 ### Phase 5: Social Features (Week 9-10)
 1. **Comment System**
    - Comment components
