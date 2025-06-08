@@ -40,6 +40,30 @@ export class CreateImageFromUploadInput {
   @IsOptional()
   @IsEnum(Visibility)
   visibility?: Visibility;
+
+  // Artist attribution
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  artistId?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  artistName?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  artistUrl?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  source?: string;
 }
 
 @InputType()
@@ -75,6 +99,30 @@ export class UpdateImageInput {
   @IsOptional()
   @IsUUID()
   galleryId?: string;
+
+  // Artist attribution
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  artistId?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  artistName?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  artistUrl?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  source?: string;
 }
 
 @InputType()
@@ -116,6 +164,17 @@ export class ImageFiltersInput {
   @IsOptional()
   @IsEnum(Visibility)
   visibility?: Visibility;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  search?: string;
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  artistId?: string;
 }
 
 @InputType()

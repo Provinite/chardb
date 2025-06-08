@@ -129,6 +129,10 @@ input GalleryImageOperationInput {
 
 type Image {
   altText: String
+  artist: User
+  artistId: ID
+  artistName: String
+  artistUrl: String
   character: Character
   characterId: ID
   createdAt: DateTime!
@@ -142,6 +146,7 @@ type Image {
   isNsfw: Boolean!
   mimeType: String!
   originalFilename: String!
+  source: String
   tags_rel: [ImageTag!]
   thumbnailUrl: String
   updatedAt: DateTime!
@@ -159,11 +164,13 @@ type ImageConnection {
 }
 
 input ImageFiltersInput {
+  artistId: ID
   characterId: ID
   galleryId: ID
   isNsfw: Boolean
   limit: Int! = 20
   offset: Int! = 0
+  search: String
   uploaderId: ID
   visibility: Visibility
 }
@@ -285,10 +292,14 @@ input UpdateGalleryInput {
 
 input UpdateImageInput {
   altText: String
+  artistId: ID
+  artistName: String
+  artistUrl: String
   characterId: ID
   description: String
   galleryId: ID
   isNsfw: Boolean
+  source: String
   visibility: Visibility
 }
 

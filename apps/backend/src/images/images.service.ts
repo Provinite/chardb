@@ -14,6 +14,10 @@ export interface UploadImageInput {
   altText?: string;
   isNsfw?: boolean;
   visibility?: Visibility;
+  artistId?: string;
+  artistName?: string;
+  artistUrl?: string;
+  source?: string;
 }
 
 export interface UpdateImageInput {
@@ -23,6 +27,10 @@ export interface UpdateImageInput {
   visibility?: Visibility;
   characterId?: string;
   galleryId?: string;
+  artistId?: string;
+  artistName?: string;
+  artistUrl?: string;
+  source?: string;
 }
 
 export interface ImageFilters {
@@ -33,6 +41,8 @@ export interface ImageFilters {
   galleryId?: string;
   isNsfw?: boolean;
   visibility?: Visibility;
+  search?: string;
+  artistId?: string;
 }
 
 @Injectable()
@@ -52,7 +62,19 @@ export class ImagesService {
   constructor(private readonly db: DatabaseService) {}
 
   async upload(userId: string, input: UploadImageInput): Promise<Image> {
-    const { file, characterId, galleryId, description, altText, isNsfw = false, visibility = Visibility.PUBLIC } = input;
+    const { 
+      file, 
+      characterId, 
+      galleryId, 
+      description, 
+      altText, 
+      isNsfw = false, 
+      visibility = Visibility.PUBLIC,
+      artistId,
+      artistName,
+      artistUrl,
+      source
+    } = input;
 
     // Validate file
     this.validateFile(file);
@@ -63,6 +85,14 @@ export class ImagesService {
     }
     if (galleryId) {
       await this.verifyGalleryOwnership(galleryId, userId);
+    }
+    
+    // Verify artist exists if artistId is provided
+    if (artistId) {
+      const artist = await this.db.user.findUnique({ where: { id: artistId } });
+      if (!artist) {
+        throw new BadRequestException('Artist not found');
+      }
     }
 
     // Generate unique filename
@@ -89,6 +119,10 @@ export class ImagesService {
         uploaderId: userId,
         characterId,
         galleryId,
+        artistId,
+        artistName,
+        artistUrl,
+        source,
         width: metadata.width!,
         height: metadata.height!,
         fileSize: file.size,
@@ -98,6 +132,7 @@ export class ImagesService {
       },
       include: {
         uploader: true,
+        artist: true,
         character: true,
         gallery: true,
         tags_rel: {
@@ -118,6 +153,8 @@ export class ImagesService {
       galleryId,
       isNsfw,
       visibility,
+      search,
+      artistId,
     } = filters;
 
     const where: Prisma.ImageWhereInput = {
@@ -137,8 +174,19 @@ export class ImagesService {
         uploaderId ? { uploaderId } : {},
         characterId ? { characterId } : {},
         galleryId ? { galleryId } : {},
+        artistId ? { artistId } : {},
         isNsfw !== undefined ? { isNsfw } : {},
         visibility !== undefined ? { visibility } : {},
+        
+        // Search filter
+        search ? {
+          OR: [
+            { description: { contains: search, mode: 'insensitive' } },
+            { altText: { contains: search, mode: 'insensitive' } },
+            { originalFilename: { contains: search, mode: 'insensitive' } },
+            { artistName: { contains: search, mode: 'insensitive' } },
+          ],
+        } : {},
       ],
     };
 
@@ -174,6 +222,7 @@ export class ImagesService {
       where: { id },
       include: {
         uploader: true,
+        artist: true,
         character: true,
         gallery: true,
         tags_rel: {
@@ -213,12 +262,21 @@ export class ImagesService {
     if (input.galleryId && input.galleryId !== image.galleryId) {
       await this.verifyGalleryOwnership(input.galleryId, userId);
     }
+    
+    // Verify artist exists if artistId is provided
+    if (input.artistId && input.artistId !== image.artistId) {
+      const artist = await this.db.user.findUnique({ where: { id: input.artistId } });
+      if (!artist) {
+        throw new BadRequestException('Artist not found');
+      }
+    }
 
     return this.db.image.update({
       where: { id },
       data: input,
       include: {
         uploader: true,
+        artist: true,
         character: true,
         gallery: true,
         tags_rel: {

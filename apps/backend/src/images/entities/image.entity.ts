@@ -37,6 +37,19 @@ export class Image {
   @Field(() => ID, { nullable: true })
   galleryId?: string;
 
+  // Artist attribution
+  @Field(() => ID, { nullable: true })
+  artistId?: string;
+
+  @Field({ nullable: true })
+  artistName?: string;
+
+  @Field({ nullable: true })
+  artistUrl?: string;
+
+  @Field({ nullable: true })
+  source?: string;
+
   @Field(() => Int)
   width: number;
 
@@ -64,6 +77,9 @@ export class Image {
   // Relations
   @Field(() => User)
   uploader: User;
+
+  @Field(() => User, { nullable: true })
+  artist?: User;
 
   @Field(() => Character, { nullable: true })
   character?: Character;
