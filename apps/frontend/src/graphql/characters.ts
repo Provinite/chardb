@@ -290,6 +290,33 @@ export const REMOVE_CHARACTER_TAGS = gql`
   }
 `;
 
+export const GET_LIKED_CHARACTERS = gql`
+  query GetLikedCharacters {
+    likedCharacters {
+      id
+      name
+      species
+      age
+      gender
+      description
+      visibility
+      createdAt
+      updatedAt
+      owner {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+      _count {
+        images
+      }
+      likesCount
+      userHasLiked
+    }
+  }
+`;
+
 // Re-export generated types and hooks after regeneration
 export {
   // Query Hooks

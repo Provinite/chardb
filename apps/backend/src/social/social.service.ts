@@ -300,4 +300,118 @@ export class SocialService {
       throw new BadRequestException('User not found');
     }
   }
+
+  // Methods to get user's liked content
+  async getUserLikedCharacters(userId: string): Promise<any[]> {
+    const likes = await this.databaseService.like.findMany({
+      where: {
+        userId,
+        likeableType: LikeableType.CHARACTER,
+      },
+      select: {
+        likeableId: true,
+      },
+    });
+
+    const characterIds = likes.map(like => like.likeableId);
+    
+    if (characterIds.length === 0) {
+      return [];
+    }
+
+    return this.databaseService.character.findMany({
+      where: {
+        id: { in: characterIds },
+        visibility: 'PUBLIC', // Only return public characters
+      },
+      include: {
+        owner: true,
+        tags_rel: {
+          include: {
+            tag: true,
+          },
+        },
+        _count: {
+          select: {
+            images: true,
+            galleries: true,
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+  }
+
+  async getUserLikedGalleries(userId: string): Promise<any[]> {
+    const likes = await this.databaseService.like.findMany({
+      where: {
+        userId,
+        likeableType: LikeableType.GALLERY,
+      },
+      select: {
+        likeableId: true,
+      },
+    });
+
+    const galleryIds = likes.map(like => like.likeableId);
+    
+    if (galleryIds.length === 0) {
+      return [];
+    }
+
+    return this.databaseService.gallery.findMany({
+      where: {
+        id: { in: galleryIds },
+        visibility: 'PUBLIC', // Only return public galleries
+      },
+      include: {
+        owner: true,
+        character: true,
+        _count: {
+          select: {
+            images: true,
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+  }
+
+  async getUserLikedImages(userId: string): Promise<any[]> {
+    const likes = await this.databaseService.like.findMany({
+      where: {
+        userId,
+        likeableType: LikeableType.IMAGE,
+      },
+      select: {
+        likeableId: true,
+      },
+    });
+
+    const imageIds = likes.map(like => like.likeableId);
+    
+    if (imageIds.length === 0) {
+      return [];
+    }
+
+    return this.databaseService.image.findMany({
+      where: {
+        id: { in: imageIds },
+        visibility: 'PUBLIC', // Only return public images
+      },
+      include: {
+        uploader: true,
+        artist: true,
+        character: true,
+        gallery: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+  }
 }

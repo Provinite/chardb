@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { Heart } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -6,6 +6,22 @@ import { useMutation, useQuery } from '@apollo/client';
 import { LikeableType } from '../generated/graphql';
 import { TOGGLE_LIKE, GET_LIKE_STATUS } from '../graphql/social';
 import { useAuth } from '../contexts/AuthContext';
+
+// Helper function to map LikeableType to GraphQL type names
+const getEntityTypeName = (entityType: LikeableType): string => {
+  switch (entityType) {
+    case LikeableType.Character:
+      return 'Character';
+    case LikeableType.Gallery:
+      return 'Gallery';
+    case LikeableType.Image:
+      return 'Image';
+    case LikeableType.Comment:
+      return 'Comment';
+    default:
+      return 'Unknown';
+  }
+};
 
 interface LikeButtonProps {
   entityType: LikeableType;
@@ -97,36 +113,67 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 }) => {
   const { user } = useAuth();
   const isAuthenticated = !!user;
-  const [optimisticState, setOptimisticState] = useState<{
-    isLiked: boolean;
-    likesCount: number;
-  } | null>(null);
 
   const { data: likeStatusData, loading: statusLoading } = useQuery(GET_LIKE_STATUS, {
     variables: { entityType, entityId },
     skip: !isAuthenticated,
   });
 
+  // Get current state for optimistic response
+  const currentIsLiked = likeStatusData?.likeStatus.isLiked ?? false;
+  const currentLikesCount = likeStatusData?.likeStatus.likesCount ?? 0;
+
   const [toggleLike, { loading: mutationLoading }] = useMutation(TOGGLE_LIKE, {
+    update: (cache, { data }) => {
+      if (!data?.toggleLike) return;
+
+      const { isLiked, likesCount } = data.toggleLike;
+
+      // Update the like status cache
+      cache.writeQuery({
+        query: GET_LIKE_STATUS,
+        variables: { entityType, entityId },
+        data: {
+          likeStatus: {
+            __typename: 'LikeStatus',
+            isLiked,
+            likesCount,
+          },
+        },
+      });
+
+      // Update any cached entities that have like fields
+      cache.modify({
+        id: cache.identify({ __typename: getEntityTypeName(entityType), id: entityId }),
+        fields: {
+          likesCount: () => likesCount,
+          userHasLiked: () => isLiked,
+        },
+      });
+    },
+    optimisticResponse: {
+      toggleLike: {
+        __typename: 'LikeResult',
+        entityId,
+        entityType,
+        isLiked: !currentIsLiked,
+        likesCount: currentIsLiked ? currentLikesCount - 1 : currentLikesCount + 1,
+      },
+    },
     onCompleted: (data: any) => {
-      // Clear optimistic state when mutation completes successfully
-      setOptimisticState(null);
-      
       if (data.toggleLike.isLiked) {
         toast.success('Added to likes!', { duration: 2000 });
       }
     },
     onError: (error: any) => {
-      // Revert optimistic state on error
-      setOptimisticState(null);
       console.error('Like toggle error:', error);
       toast.error('Failed to update like. Please try again.');
     }
   });
 
-  // Use optimistic state if available, otherwise use server data
-  const isLiked = optimisticState?.isLiked ?? likeStatusData?.likeStatus.isLiked ?? false;
-  const likesCount = optimisticState?.likesCount ?? likeStatusData?.likeStatus.likesCount ?? 0;
+  // Use current state (Apollo handles optimistic updates automatically)
+  const isLiked = currentIsLiked;
+  const likesCount = currentLikesCount;
   const isLoading = statusLoading || mutationLoading;
 
   const handleClick = async () => {
@@ -136,12 +183,6 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
     }
 
     if (isLoading) return;
-
-    // Optimistic update
-    setOptimisticState({
-      isLiked: !isLiked,
-      likesCount: isLiked ? likesCount - 1 : likesCount + 1,
-    });
 
     try {
       await toggleLike({

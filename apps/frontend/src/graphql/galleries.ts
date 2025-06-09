@@ -320,6 +320,34 @@ export const REORDER_GALLERIES = gql`
   }
 `;
 
+export const GET_LIKED_GALLERIES = gql`
+  query GetLikedGalleries {
+    likedGalleries {
+      id
+      name
+      description
+      visibility
+      createdAt
+      updatedAt
+      owner {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+      character {
+        id
+        name
+      }
+      _count {
+        images
+      }
+      likesCount
+      userHasLiked
+    }
+  }
+`;
+
 // Re-export generated types and hooks after regeneration
 export {
   // Query Hooks

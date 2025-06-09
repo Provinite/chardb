@@ -92,6 +92,7 @@ const CharacterSpecies = styled.h2`
 
 const CharacterMeta = styled.div`
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.lg};

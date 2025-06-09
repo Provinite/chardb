@@ -491,6 +491,9 @@ export type Query = {
   image: Image;
   images: ImageConnection;
   likeStatus: LikeStatus;
+  likedCharacters: Array<Character>;
+  likedGalleries: Array<Gallery>;
+  likedImages: Array<Image>;
   me: User;
   myCharacters: CharacterConnection;
   myGalleries: GalleryConnection;
@@ -863,6 +866,11 @@ export type RemoveCharacterTagsMutationVariables = Exact<{
 
 export type RemoveCharacterTagsMutation = { __typename?: 'Mutation', removeCharacterTags: { __typename?: 'Character', id: string, name: string, tags: Array<string>, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
+export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, _count: { __typename?: 'CharacterCount', images: number } | null }> };
+
 export type GetGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
 }>;
@@ -945,6 +953,11 @@ export type ReorderGalleriesMutationVariables = Exact<{
 
 export type ReorderGalleriesMutation = { __typename?: 'Mutation', reorderGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, sortOrder: number }> };
 
+export type GetLikedGalleriesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, _count: { __typename?: 'GalleryCount', images: number } | null }> };
+
 export type GetImagesQueryVariables = Exact<{
   filters?: InputMaybe<ImageFiltersInput>;
 }>;
@@ -980,6 +993,11 @@ export type DeleteImageMutationVariables = Exact<{
 
 
 export type DeleteImageMutation = { __typename?: 'Mutation', deleteImage: boolean };
+
+export type GetLikedImagesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetLikedImagesQuery = { __typename?: 'Query', likedImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> };
 
 export type ToggleLikeMutationVariables = Exact<{
   input: ToggleLikeInput;
@@ -1743,6 +1761,64 @@ export function useRemoveCharacterTagsMutation(baseOptions?: Apollo.MutationHook
 export type RemoveCharacterTagsMutationHookResult = ReturnType<typeof useRemoveCharacterTagsMutation>;
 export type RemoveCharacterTagsMutationResult = Apollo.MutationResult<RemoveCharacterTagsMutation>;
 export type RemoveCharacterTagsMutationOptions = Apollo.BaseMutationOptions<RemoveCharacterTagsMutation, RemoveCharacterTagsMutationVariables>;
+export const GetLikedCharactersDocument = gql`
+    query GetLikedCharacters {
+  likedCharacters {
+    id
+    name
+    species
+    age
+    gender
+    description
+    visibility
+    createdAt
+    updatedAt
+    owner {
+      id
+      username
+      displayName
+      avatarUrl
+    }
+    _count {
+      images
+    }
+    likesCount
+    userHasLiked
+  }
+}
+    `;
+
+/**
+ * __useGetLikedCharactersQuery__
+ *
+ * To run a query within a React component, call `useGetLikedCharactersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetLikedCharactersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLikedCharactersQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetLikedCharactersQuery(baseOptions?: Apollo.QueryHookOptions<GetLikedCharactersQuery, GetLikedCharactersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetLikedCharactersQuery, GetLikedCharactersQueryVariables>(GetLikedCharactersDocument, options);
+      }
+export function useGetLikedCharactersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLikedCharactersQuery, GetLikedCharactersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetLikedCharactersQuery, GetLikedCharactersQueryVariables>(GetLikedCharactersDocument, options);
+        }
+export function useGetLikedCharactersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLikedCharactersQuery, GetLikedCharactersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetLikedCharactersQuery, GetLikedCharactersQueryVariables>(GetLikedCharactersDocument, options);
+        }
+export type GetLikedCharactersQueryHookResult = ReturnType<typeof useGetLikedCharactersQuery>;
+export type GetLikedCharactersLazyQueryHookResult = ReturnType<typeof useGetLikedCharactersLazyQuery>;
+export type GetLikedCharactersSuspenseQueryHookResult = ReturnType<typeof useGetLikedCharactersSuspenseQuery>;
+export type GetLikedCharactersQueryResult = Apollo.QueryResult<GetLikedCharactersQuery, GetLikedCharactersQueryVariables>;
 export const GetGalleriesDocument = gql`
     query GetGalleries($filters: GalleryFiltersInput) {
   galleries(filters: $filters) {
@@ -2378,6 +2454,65 @@ export function useReorderGalleriesMutation(baseOptions?: Apollo.MutationHookOpt
 export type ReorderGalleriesMutationHookResult = ReturnType<typeof useReorderGalleriesMutation>;
 export type ReorderGalleriesMutationResult = Apollo.MutationResult<ReorderGalleriesMutation>;
 export type ReorderGalleriesMutationOptions = Apollo.BaseMutationOptions<ReorderGalleriesMutation, ReorderGalleriesMutationVariables>;
+export const GetLikedGalleriesDocument = gql`
+    query GetLikedGalleries {
+  likedGalleries {
+    id
+    name
+    description
+    visibility
+    createdAt
+    updatedAt
+    owner {
+      id
+      username
+      displayName
+      avatarUrl
+    }
+    character {
+      id
+      name
+    }
+    _count {
+      images
+    }
+    likesCount
+    userHasLiked
+  }
+}
+    `;
+
+/**
+ * __useGetLikedGalleriesQuery__
+ *
+ * To run a query within a React component, call `useGetLikedGalleriesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetLikedGalleriesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLikedGalleriesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetLikedGalleriesQuery(baseOptions?: Apollo.QueryHookOptions<GetLikedGalleriesQuery, GetLikedGalleriesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetLikedGalleriesQuery, GetLikedGalleriesQueryVariables>(GetLikedGalleriesDocument, options);
+      }
+export function useGetLikedGalleriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLikedGalleriesQuery, GetLikedGalleriesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetLikedGalleriesQuery, GetLikedGalleriesQueryVariables>(GetLikedGalleriesDocument, options);
+        }
+export function useGetLikedGalleriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLikedGalleriesQuery, GetLikedGalleriesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetLikedGalleriesQuery, GetLikedGalleriesQueryVariables>(GetLikedGalleriesDocument, options);
+        }
+export type GetLikedGalleriesQueryHookResult = ReturnType<typeof useGetLikedGalleriesQuery>;
+export type GetLikedGalleriesLazyQueryHookResult = ReturnType<typeof useGetLikedGalleriesLazyQuery>;
+export type GetLikedGalleriesSuspenseQueryHookResult = ReturnType<typeof useGetLikedGalleriesSuspenseQuery>;
+export type GetLikedGalleriesQueryResult = Apollo.QueryResult<GetLikedGalleriesQuery, GetLikedGalleriesQueryVariables>;
 export const GetImagesDocument = gql`
     query GetImages($filters: ImageFiltersInput) {
   images(filters: $filters) {
@@ -2731,6 +2866,81 @@ export function useDeleteImageMutation(baseOptions?: Apollo.MutationHookOptions<
 export type DeleteImageMutationHookResult = ReturnType<typeof useDeleteImageMutation>;
 export type DeleteImageMutationResult = Apollo.MutationResult<DeleteImageMutation>;
 export type DeleteImageMutationOptions = Apollo.BaseMutationOptions<DeleteImageMutation, DeleteImageMutationVariables>;
+export const GetLikedImagesDocument = gql`
+    query GetLikedImages {
+  likedImages {
+    id
+    filename
+    originalFilename
+    url
+    thumbnailUrl
+    altText
+    description
+    width
+    height
+    fileSize
+    mimeType
+    isNsfw
+    visibility
+    createdAt
+    updatedAt
+    uploader {
+      id
+      username
+      displayName
+      avatarUrl
+    }
+    artist {
+      id
+      username
+      displayName
+      avatarUrl
+    }
+    character {
+      id
+      name
+    }
+    gallery {
+      id
+      name
+    }
+    likesCount
+    userHasLiked
+  }
+}
+    `;
+
+/**
+ * __useGetLikedImagesQuery__
+ *
+ * To run a query within a React component, call `useGetLikedImagesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetLikedImagesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLikedImagesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetLikedImagesQuery(baseOptions?: Apollo.QueryHookOptions<GetLikedImagesQuery, GetLikedImagesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetLikedImagesQuery, GetLikedImagesQueryVariables>(GetLikedImagesDocument, options);
+      }
+export function useGetLikedImagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLikedImagesQuery, GetLikedImagesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetLikedImagesQuery, GetLikedImagesQueryVariables>(GetLikedImagesDocument, options);
+        }
+export function useGetLikedImagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLikedImagesQuery, GetLikedImagesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetLikedImagesQuery, GetLikedImagesQueryVariables>(GetLikedImagesDocument, options);
+        }
+export type GetLikedImagesQueryHookResult = ReturnType<typeof useGetLikedImagesQuery>;
+export type GetLikedImagesLazyQueryHookResult = ReturnType<typeof useGetLikedImagesLazyQuery>;
+export type GetLikedImagesSuspenseQueryHookResult = ReturnType<typeof useGetLikedImagesSuspenseQuery>;
+export type GetLikedImagesQueryResult = Apollo.QueryResult<GetLikedImagesQuery, GetLikedImagesQueryVariables>;
 export const ToggleLikeDocument = gql`
     mutation ToggleLike($input: ToggleLikeInput!) {
   toggleLike(input: $input) {

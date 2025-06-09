@@ -74,6 +74,7 @@ const GalleryTitle = styled.h1`
 
 const GalleryMeta = styled.div`
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.lg};

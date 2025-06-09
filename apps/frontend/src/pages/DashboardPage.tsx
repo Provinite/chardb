@@ -192,6 +192,39 @@ export const DashboardPage: React.FC = () => {
         </DashboardCard>
 
         <DashboardCard>
+          <CardTitle>Liked Characters</CardTitle>
+          <CardDescription>
+            Browse through all the characters you've liked. Discover interesting
+            personalities and designs that caught your attention.
+          </CardDescription>
+          <Button as={Link} to="/liked/characters" variant="outline" size="sm">
+            View Liked Characters
+          </Button>
+        </DashboardCard>
+
+        <DashboardCard>
+          <CardTitle>Liked Galleries</CardTitle>
+          <CardDescription>
+            View all the art galleries you've shown love to. Explore curated
+            collections and themed artwork that inspired you.
+          </CardDescription>
+          <Button as={Link} to="/liked/galleries" variant="outline" size="sm">
+            View Liked Galleries
+          </Button>
+        </DashboardCard>
+
+        <DashboardCard>
+          <CardTitle>Liked Images</CardTitle>
+          <CardDescription>
+            Access your collection of liked artwork and images. Revisit the
+            pieces that captured your imagination.
+          </CardDescription>
+          <Button as={Link} to="/liked/images" variant="outline" size="sm">
+            View Liked Images
+          </Button>
+        </DashboardCard>
+
+        <DashboardCard>
           <CardTitle>Statistics</CardTitle>
           <CardDescription>
             Track your activity with detailed statistics about your characters,

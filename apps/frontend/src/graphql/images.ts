@@ -206,6 +206,50 @@ export const DELETE_IMAGE = gql`
   }
 `;
 
+export const GET_LIKED_IMAGES = gql`
+  query GetLikedImages {
+    likedImages {
+      id
+      filename
+      originalFilename
+      url
+      thumbnailUrl
+      altText
+      description
+      width
+      height
+      fileSize
+      mimeType
+      isNsfw
+      visibility
+      createdAt
+      updatedAt
+      uploader {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+      artist {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+      character {
+        id
+        name
+      }
+      gallery {
+        id
+        name
+      }
+      likesCount
+      userHasLiked
+    }
+  }
+`;
+
 // Type definitions for TypeScript
 export interface Image {
   id: string;

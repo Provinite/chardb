@@ -70,6 +70,31 @@ export class SocialResolver {
   ): Promise<FollowStatus> {
     return this.socialService.getFollowStatus(userId, user?.id);
   }
+
+  // Queries for user's liked content
+  @Query(() => [Character])
+  @UseGuards(JwtAuthGuard)
+  async likedCharacters(
+    @CurrentUser() user: any,
+  ): Promise<Character[]> {
+    return this.socialService.getUserLikedCharacters(user.id);
+  }
+
+  @Query(() => [Gallery])
+  @UseGuards(JwtAuthGuard)
+  async likedGalleries(
+    @CurrentUser() user: any,
+  ): Promise<Gallery[]> {
+    return this.socialService.getUserLikedGalleries(user.id);
+  }
+
+  @Query(() => [Image])
+  @UseGuards(JwtAuthGuard)
+  async likedImages(
+    @CurrentUser() user: any,
+  ): Promise<Image[]> {
+    return this.socialService.getUserLikedImages(user.id);
+  }
 }
 
 // Field resolvers for existing entities

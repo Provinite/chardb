@@ -329,6 +329,9 @@ type Query {
   image(id: ID!): Image!
   images(filters: ImageFiltersInput): ImageConnection!
   likeStatus(entityId: ID!, entityType: LikeableType!): LikeStatus!
+  likedCharacters: [Character!]!
+  likedGalleries: [Gallery!]!
+  likedImages: [Image!]!
   me: User!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
