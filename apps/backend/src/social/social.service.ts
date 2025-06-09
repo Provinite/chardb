@@ -414,4 +414,228 @@ export class SocialService {
       },
     });
   }
+
+  // Methods for follow lists and activity feed
+  async getFollowers(username: string): Promise<{ user: any; followers: any[] }> {
+    // First find the user by username
+    const user = await this.databaseService.user.findUnique({
+      where: { username },
+      select: {
+        id: true,
+        username: true,
+        displayName: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    // Get all followers
+    const follows = await this.databaseService.follow.findMany({
+      where: {
+        followingId: user.id,
+      },
+      include: {
+        follower: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+            bio: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const followers = follows.map(follow => follow.follower);
+
+    return {
+      user,
+      followers,
+    };
+  }
+
+  async getFollowing(username: string): Promise<{ user: any; following: any[] }> {
+    // First find the user by username
+    const user = await this.databaseService.user.findUnique({
+      where: { username },
+      select: {
+        id: true,
+        username: true,
+        displayName: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    // Get all users this user is following
+    const follows = await this.databaseService.follow.findMany({
+      where: {
+        followerId: user.id,
+      },
+      include: {
+        following: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+            bio: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const following = follows.map(follow => follow.following);
+
+    return {
+      user,
+      following,
+    };
+  }
+
+  async getActivityFeed(userId: string, limit = 20, offset = 0): Promise<any[]> {
+    // Get list of users that the current user follows
+    const following = await this.databaseService.follow.findMany({
+      where: {
+        followerId: userId,
+      },
+      select: {
+        followingId: true,
+      },
+    });
+
+    const followingUserIds = following.map(f => f.followingId);
+    
+    if (followingUserIds.length === 0) {
+      return [];
+    }
+
+    // Get recent activities from followed users
+    // For now, we'll include character creation, gallery creation, and image uploads
+    // This could be expanded to include likes and comments in the future
+
+    const [characters, galleries, images] = await Promise.all([
+      // Recent characters created by followed users
+      this.databaseService.character.findMany({
+        where: {
+          ownerId: { in: followingUserIds },
+          visibility: 'PUBLIC',
+        },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              avatarUrl: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: Math.floor(limit / 3),
+        skip: Math.floor(offset / 3),
+      }),
+
+      // Recent galleries created by followed users
+      this.databaseService.gallery.findMany({
+        where: {
+          ownerId: { in: followingUserIds },
+          visibility: 'PUBLIC',
+        },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              avatarUrl: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: Math.floor(limit / 3),
+        skip: Math.floor(offset / 3),
+      }),
+
+      // Recent images uploaded by followed users
+      this.databaseService.image.findMany({
+        where: {
+          uploaderId: { in: followingUserIds },
+          visibility: 'PUBLIC',
+        },
+        include: {
+          uploader: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              avatarUrl: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: Math.floor(limit / 3),
+        skip: Math.floor(offset / 3),
+      }),
+    ]);
+
+    // Transform into activity feed format
+    const activities = [
+      ...characters.map(character => ({
+        id: `character_${character.id}`,
+        type: 'CHARACTER_CREATED',
+        entityId: character.id,
+        createdAt: character.createdAt,
+        user: character.owner,
+        content: {
+          name: character.name,
+          description: character.description,
+        },
+      })),
+      ...galleries.map(gallery => ({
+        id: `gallery_${gallery.id}`,
+        type: 'GALLERY_CREATED',
+        entityId: gallery.id,
+        createdAt: gallery.createdAt,
+        user: gallery.owner,
+        content: {
+          name: gallery.name,
+          description: gallery.description,
+        },
+      })),
+      ...images.map(image => ({
+        id: `image_${image.id}`,
+        type: 'IMAGE_UPLOADED',
+        entityId: image.id,
+        createdAt: image.createdAt,
+        user: image.uploader,
+        content: {
+          name: image.filename,
+          description: image.description,
+        },
+      })),
+    ];
+
+    // Sort by creation date and limit results
+    return activities
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
+  }
 }

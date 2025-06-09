@@ -1,11 +1,11 @@
 import React from 'react';
-// import { useQuery } from '@apollo/client'; // TODO: Use when backend is implemented
+import { useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
 import { LikeButton } from '../components/LikeButton';
-// import { GET_ACTIVITY_FEED } from '../graphql/social'; // TODO: Implement in backend
+import { GET_ACTIVITY_FEED } from '../graphql/social';
 import { LikeableType } from '../generated/graphql';
 
 const Container = styled.div`
@@ -200,11 +200,17 @@ const LoginPromptText = styled.p`
 export const FeedPage: React.FC = () => {
   const { user } = useAuth();
 
-  // TODO: Implement backend query
-  const loading = false;
-  const error = null;
+  const { data, loading, error } = useQuery(GET_ACTIVITY_FEED, {
+    variables: { 
+      input: { 
+        limit: 20, 
+        offset: 0 
+      } 
+    },
+    skip: !user,
+  });
 
-  const activities: any[] = [];
+  const activities = data?.activityFeed || [];
 
   if (!user) {
     return (
@@ -249,7 +255,7 @@ export const FeedPage: React.FC = () => {
         </Header>
         <ErrorContainer>
           <h3>Error loading activity feed</h3>
-          <p>Activity feed not yet implemented</p>
+          <p>{error.message}</p>
         </ErrorContainer>
       </Container>
     );

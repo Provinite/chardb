@@ -1,10 +1,10 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-// import { useQuery } from '@apollo/client'; // TODO: Use when backend is implemented
+import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { FollowButton } from '../components/FollowButton';
-// import { GET_FOLLOWING } from '../graphql/social'; // TODO: Implement in backend
+import { GET_FOLLOWING } from '../graphql/social';
 
 const Container = styled.div`
   max-width: 800px;
@@ -170,12 +170,13 @@ const ErrorContainer = styled.div`
 export const FollowingPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
 
-  // TODO: Implement backend query
-  const loading = false;
-  const error = new Error('Backend following query not implemented yet');
+  const { data, loading, error } = useQuery(GET_FOLLOWING, {
+    variables: { username: username! },
+    skip: !username,
+  });
 
-  const following: any[] = [];
-  const user = { displayName: username, username: username };
+  const following = data?.getFollowing?.following || [];
+  const user = data?.getFollowing?.user;
 
   if (loading) {
     return (
@@ -187,7 +188,7 @@ export const FollowingPage: React.FC = () => {
     );
   }
 
-  if (error || !user) {
+  if (error || (data && !user)) {
     return (
       <Container>
         <ErrorContainer>

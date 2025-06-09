@@ -2,6 +2,26 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type ActivityContent {
+  description: String
+  name: String
+  title: String
+}
+
+input ActivityFeedInput {
+  limit: Int = 20
+  offset: Int = 0
+}
+
+type ActivityItem {
+  content: ActivityContent
+  createdAt: DateTime!
+  entityId: String!
+  id: String!
+  type: String!
+  user: User!
+}
+
 type AuthPayload {
   accessToken: String!
   refreshToken: String!
@@ -139,6 +159,12 @@ input CreateGalleryInput {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type FollowListResult {
+  followers: [User!]!
+  following: [User!]!
+  user: User!
+}
 
 type FollowResult {
   followersCount: Float!
@@ -316,6 +342,7 @@ type Mutation {
 }
 
 type Query {
+  activityFeed(input: ActivityFeedInput): [ActivityItem!]!
   character(id: ID!): Character!
   characterGalleries(characterId: ID!, filters: GalleryFiltersInput): GalleryConnection!
   characterImages(characterId: ID!, filters: ImageFiltersInput): ImageConnection!
@@ -326,6 +353,8 @@ type Query {
   galleries(filters: GalleryFiltersInput): GalleryConnection!
   gallery(id: ID!): Gallery!
   galleryImages(filters: ImageFiltersInput, galleryId: ID!): ImageConnection!
+  getFollowers(username: String!): FollowListResult!
+  getFollowing(username: String!): FollowListResult!
   image(id: ID!): Image!
   images(filters: ImageFiltersInput): ImageConnection!
   likeStatus(entityId: ID!, entityType: LikeableType!): LikeStatus!

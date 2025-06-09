@@ -3,6 +3,7 @@ import { UseGuards } from '@nestjs/common';
 import { SocialService } from './social.service';
 import { ToggleLikeInput, LikeResult, LikeStatus, LikeableType } from './dto/like.dto';
 import { ToggleFollowInput, FollowResult, FollowStatus } from './dto/follow.dto';
+import { FollowListResult, ActivityItem, ActivityFeedInput } from './dto/social-query.dto';
 import { Follow } from './entities/follow.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
@@ -94,6 +95,40 @@ export class SocialResolver {
     @CurrentUser() user: any,
   ): Promise<Image[]> {
     return this.socialService.getUserLikedImages(user.id);
+  }
+
+  // Follow list queries
+  @Query(() => FollowListResult)
+  async getFollowers(
+    @Args('username') username: string,
+  ): Promise<FollowListResult> {
+    const result = await this.socialService.getFollowers(username);
+    return {
+      user: result.user,
+      followers: result.followers,
+    };
+  }
+
+  @Query(() => FollowListResult)
+  async getFollowing(
+    @Args('username') username: string,
+  ): Promise<FollowListResult> {
+    const result = await this.socialService.getFollowing(username);
+    return {
+      user: result.user,
+      following: result.following,
+    };
+  }
+
+  // Activity feed query
+  @Query(() => [ActivityItem])
+  @UseGuards(JwtAuthGuard)
+  async activityFeed(
+    @Args('input', { nullable: true }) input?: ActivityFeedInput,
+    @CurrentUser() user?: any,
+  ): Promise<ActivityItem[]> {
+    const { limit = 20, offset = 0 } = input || {};
+    return this.socialService.getActivityFeed(user.id, limit, offset);
   }
 }
 
