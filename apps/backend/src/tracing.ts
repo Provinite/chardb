@@ -38,6 +38,22 @@ const sdk = new NodeSDK({
       // Enable core instrumentations
       "@opentelemetry/instrumentation-http": {
         enabled: true,
+        ignoreIncomingRequestHook: () => {
+          // Never ignore OPTIONS requests - we want to trace them!
+          return false;
+        },
+        requestHook: (span, request) => {
+          // Type guard to check if this is an IncomingMessage (server request)
+          if ('headers' in request && request.method === 'OPTIONS') {
+            const headers = request.headers as Record<string, string | string[] | undefined>;
+            span.setAttributes({
+              'http.options_request': true,
+              'cors.origin': headers.origin || '',
+              'cors.method': headers['access-control-request-method'] || '',
+              'cors.headers': headers['access-control-request-headers'] || '',
+            });
+          }
+        },
       },
 
       "@opentelemetry/instrumentation-express": {

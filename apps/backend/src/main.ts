@@ -9,8 +9,13 @@ import { TracingMiddleware } from './middleware/tracing.middleware';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Add tracing middleware FIRST
-  app.use(new TracingMiddleware().use.bind(new TracingMiddleware()));
+  // Get the underlying Express instance
+  const expressApp = app.getHttpAdapter().getInstance();
+  
+  // Add tracing middleware to Express BEFORE any NestJS middleware
+  expressApp.use((req: any, res: any, next: any) => {
+    new TracingMiddleware().use(req, res, next);
+  });
   
   // Enable CORS with optimizations
   app.enableCors({

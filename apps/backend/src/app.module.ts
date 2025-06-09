@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { join } from 'path';
+import { CustomThrottlerGuard } from './middleware/custom-throttler.guard';
 
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
@@ -22,8 +24,14 @@ import { HealthModule } from './health/health.module';
     }),
     ThrottlerModule.forRoot([
       {
-        ttl: 60000,
-        limit: 100,
+        name: 'short',
+        ttl: 1000, // 1 second window
+        limit: 20, // 20 requests per second (more reasonable for dev)
+      },
+      {
+        name: 'long',
+        ttl: 60000, // 1 minute window  
+        limit: 200, // 200 requests per minute (increased for Vite)
       },
     ]),
     GraphQLModule.forRoot<ApolloDriverConfig>({
@@ -43,6 +51,12 @@ import { HealthModule } from './health/health.module';
     CommentsModule,
     SocialModule,
     HealthModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: CustomThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

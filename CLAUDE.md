@@ -10,3 +10,4 @@
   - Prefer this method to the subshell when available
 - To execute commands in subdirectories, use the bash subshell syntax instead of cd'ing into directories
 - You can type check the entire repository by running `yarn type-check` in the root
+- Jaeger trace analysis is available at http://localhost:16686
