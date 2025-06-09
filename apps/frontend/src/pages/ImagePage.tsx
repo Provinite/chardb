@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { Button } from '@thclone/ui';
-import { useGetImageQuery, LikeableType } from '../generated/graphql';
+import { useGetImageQuery, LikeableType, CommentableType } from '../generated/graphql';
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { LikeButton } from '../components/LikeButton';
+import { CommentList } from '../components/CommentList';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -473,6 +474,11 @@ export const ImagePage: React.FC = () => {
           )}
         </MetadataPanel>
       </ImageSection>
+
+      <CommentList
+        entityType={CommentableType.Image}
+        entityId={image.id}
+      />
 
       <ImageOverlay isOpen={lightboxOpen} onClick={() => setLightboxOpen(false)}>
         <img

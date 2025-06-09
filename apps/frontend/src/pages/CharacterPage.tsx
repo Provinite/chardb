@@ -7,7 +7,8 @@ import { GET_CHARACTER, Character } from '../graphql/characters';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
 import { LikeButton } from '../components/LikeButton';
-import { LikeableType } from '../generated/graphql';
+import { CommentList } from '../components/CommentList';
+import { LikeableType, CommentableType } from '../generated/graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -522,6 +523,11 @@ export const CharacterPage: React.FC = () => {
           <p>This character doesn't have any detailed information yet.</p>
         </EmptySection>
       )}
+
+      <CommentList
+        entityType={CommentableType.Character}
+        entityId={character.id}
+      />
     </Container>
   );
 };

@@ -7,7 +7,8 @@ import { GET_GALLERY, Gallery } from '../graphql/galleries';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
 import { LikeButton } from '../components/LikeButton';
-import { LikeableType } from '../generated/graphql';
+import { CommentList } from '../components/CommentList';
+import { LikeableType, CommentableType } from '../generated/graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -499,6 +500,11 @@ export const GalleryPage: React.FC = () => {
             </EmptyImagesState>
           )}
         </ContentSection>
+
+        <CommentList
+          entityType={CommentableType.Gallery}
+          entityId={gallery.id}
+        />
       </Container>
 
       <Lightbox isOpen={!!lightboxImage} onClick={() => setLightboxImage(null)}>

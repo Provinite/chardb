@@ -286,13 +286,13 @@ const getVisibilityVariant = (visibility: string) => {
   }
 };
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
+// const formatDate = (dateString: string) => {
+//   return new Date(dateString).toLocaleDateString('en-US', {
+//     year: 'numeric',
+//     month: 'short',
+//     day: 'numeric'
+//   });
+// }; // Unused function
 
 export const MyImagesPage: React.FC = () => {
   const { user } = useAuth();

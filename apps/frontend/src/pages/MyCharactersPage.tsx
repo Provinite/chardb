@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
 import { GET_MY_CHARACTERS } from '../graphql/characters';
-import { Button } from '@thclone/ui';
+// import { Button } from '@thclone/ui'; // Unused import
 
 const Container = styled.div`
   max-width: 1200px;
