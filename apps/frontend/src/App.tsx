@@ -27,6 +27,9 @@ import { LikedImagesPage } from './pages/LikedImagesPage';
 import { MyCharactersPage } from './pages/MyCharactersPage';
 import { MyGalleriesPage } from './pages/MyGalleriesPage';
 import { MyImagesPage } from './pages/MyImagesPage';
+import { FollowersPage } from './pages/FollowersPage';
+import { FollowingPage } from './pages/FollowingPage';
+import { FeedPage } from './pages/FeedPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
@@ -54,6 +57,8 @@ function App() {
         <Route path="/images" element={<ImagesPage />} />
         <Route path="/image/:id" element={<ImagePage />} />
         <Route path="/user/:username" element={<UserProfilePage />} />
+        <Route path="/user/:username/followers" element={<FollowersPage />} />
+        <Route path="/user/:username/following" element={<FollowingPage />} />
 
         {/* Protected routes */}
         <Route
@@ -157,6 +162,14 @@ function App() {
           element={
             <ProtectedRoute>
               <MyImagesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/feed"
+          element={
+            <ProtectedRoute>
+              <FeedPage />
             </ProtectedRoute>
           }
         />

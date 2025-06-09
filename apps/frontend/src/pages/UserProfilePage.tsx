@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { useGetUserProfileQuery } from '../generated/graphql';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { RandomCharacterButton } from '../components/RandomCharacterButton';
+import { FollowButton } from '../components/FollowButton';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -100,12 +101,30 @@ const StatsGrid = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.xl};
 `;
 
-const StatCard = styled.div`
+const StatCard = styled.div<{ clickable?: boolean }>`
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   padding: ${({ theme }) => theme.spacing.md};
   text-align: center;
+  cursor: ${({ clickable }) => clickable ? 'pointer' : 'default'};
+  transition: ${({ clickable }) => clickable ? 'all 0.2s ease-in-out' : 'none'};
+
+  ${({ clickable, theme }) => clickable && `
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-color: ${theme.colors.primary};
+    }
+  `}
+`;
+
+const StatLink = styled(Link)`
+  color: inherit;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+  height: 100%;
 `;
 
 const StatNumber = styled.div`
@@ -230,6 +249,13 @@ const VerifiedBadge = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSize.lg};
 `;
 
+const ProfileActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
+  align-self: flex-start;
+`;
+
 const EditButton = styled(Link)`
   padding: 0.5rem ${({ theme }) => theme.spacing.md};
   background: ${({ theme }) => theme.colors.primary};
@@ -322,11 +348,15 @@ export const UserProfilePage: React.FC = () => {
           </ProfileMeta>
         </ProfileInfo>
         
-        {isOwnProfile && (
-          <EditButton to="/profile/edit">
-            Edit Profile
-          </EditButton>
-        )}
+        <ProfileActions>
+          {isOwnProfile ? (
+            <EditButton to="/profile/edit">
+              Edit Profile
+            </EditButton>
+          ) : (
+            <FollowButton userId={user.id} showCount={true} size="md" />
+          )}
+        </ProfileActions>
       </ProfileHeader>
 
       <StatsGrid>
@@ -346,13 +376,17 @@ export const UserProfilePage: React.FC = () => {
           <StatNumber>{stats.totalViews}</StatNumber>
           <StatLabel>Total Views</StatLabel>
         </StatCard>
-        <StatCard>
-          <StatNumber>{stats.followersCount}</StatNumber>
-          <StatLabel>Followers</StatLabel>
+        <StatCard clickable>
+          <StatLink to={`/user/${user.username}/followers`}>
+            <StatNumber>{stats.followersCount}</StatNumber>
+            <StatLabel>Followers</StatLabel>
+          </StatLink>
         </StatCard>
-        <StatCard>
-          <StatNumber>{stats.followingCount}</StatNumber>
-          <StatLabel>Following</StatLabel>
+        <StatCard clickable>
+          <StatLink to={`/user/${user.username}/following`}>
+            <StatNumber>{stats.followingCount}</StatNumber>
+            <StatLabel>Following</StatLabel>
+          </StatLink>
         </StatCard>
       </StatsGrid>
 

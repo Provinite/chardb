@@ -145,3 +145,64 @@ export const GET_COMMENTS = gql`
     }
   }
 `;
+
+// TODO: These queries need to be implemented in the backend
+// export const GET_FOLLOWERS = gql`
+//   query GetFollowers($username: String!) {
+//     getFollowers(username: $username) {
+//       user {
+//         id
+//         username
+//         displayName
+//       }
+//       followers {
+//         id
+//         username
+//         displayName
+//         avatarUrl
+//         bio
+//       }
+//     }
+//   }
+// `;
+
+// export const GET_FOLLOWING = gql`
+//   query GetFollowing($username: String!) {
+//     getFollowing(username: $username) {
+//       user {
+//         id
+//         username
+//         displayName
+//       }
+//       following {
+//         id
+//         username
+//         displayName
+//         avatarUrl
+//         bio
+//       }
+//     }
+//   }
+// `;
+
+// export const GET_ACTIVITY_FEED = gql`
+//   query GetActivityFeed($limit: Int, $offset: Int) {
+//     activityFeed(limit: $limit, offset: $offset) {
+//       id
+//       type
+//       entityId
+//       createdAt
+//       user {
+//         id
+//         username
+//         displayName
+//         avatarUrl
+//       }
+//       content {
+//         name
+//         title
+//         description
+//       }
+//     }
+//   }
+// `;
