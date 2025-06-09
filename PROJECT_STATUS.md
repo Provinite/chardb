@@ -611,6 +611,47 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 - ✅ **State Management**: Filter indicators, form persistence, and clear functionality
 - ✅ **Enhanced Display**: Character cards show enriched information (species • gender • age)
 
+### **Production-Ready Observability Infrastructure**
+**Status**: ✅ **Complete** | **Completion Date**: Current Session
+- [x] **OpenTelemetry Integration**: Latest OTEL SDK with auto-instrumentation for HTTP, Express, GraphQL
+- [x] **Jaeger Distributed Tracing**: Complete trace collection and analysis with Jaeger UI (v1.56)
+- [x] **OTEL Collector Pipeline**: Processing, batching, and routing of telemetry data (v0.94.0)
+- [x] **Custom Tracing Middleware**: CORS preflight tracking and slow request detection
+- [x] **Health Check Endpoints**: Service health and tracing test endpoints
+- [x] **Docker Observability Stack**: Complete containerized tracing infrastructure
+- [x] **Performance Optimization**: CORS caching (24hr) and request lifecycle visibility
+
+**Key Features**:
+- 🔍 **Real-time Tracing**: Complete request lifecycle visibility from HTTP to database queries
+- 🐌 **Performance Monitoring**: Automatic detection and alerting for slow requests (>1000ms)
+- 🌐 **CORS Debugging**: Special tracking for OPTIONS preflight requests and timing
+- 📊 **Visual Analysis**: Jaeger UI for trace search, filtering, and bottleneck identification
+- ⚡ **Non-invasive**: Auto-instrumentation requiring no business logic changes
+- 🛡️ **Production Ready**: Memory limiting, batching, and graceful shutdown handling
+
+**Technical Implementation**:
+```typescript
+// OpenTelemetry Stack
+- NodeSDK with auto-instrumentations for HTTP, Express, GraphQL
+- OTLP exporters with gRPC/HTTP protocols for reliable trace delivery
+- Custom TracingMiddleware for request timing and metadata collection
+- Resource attribution with service name, version, environment
+
+// Infrastructure Components  
+- Jaeger all-in-one (ports: 16686 UI, 4317/4318 OTLP, 14250/14268 collectors)
+- OTEL Collector with memory limiting, batching, and multi-export pipelines
+- Health check endpoints (/health, /health/tracing) for monitoring
+- Docker services with proper dependencies and health checks
+```
+
+**Observability Endpoints**:
+- ✅ **Jaeger UI**: http://localhost:16686 - Visual trace analysis and search
+- ✅ **Health Check**: http://localhost:4000/health - Service status and tracing config
+- ✅ **Tracing Test**: http://localhost:4000/health/tracing - Generate test spans
+- ✅ **Metrics**: http://localhost:8889/metrics - Prometheus metrics from collector
+
+**Fun Fact**: The original "2-second CORS delay" that triggered this implementation turned out to be adblock! 🤦‍♂️ But now we have enterprise-grade observability for future debugging.
+
 ---
 
 ## ⏳ **PENDING FEATURES**
