@@ -226,7 +226,9 @@ const ImageOverlay = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
 `;
 
-const Lightbox = styled.div<{ isOpen: boolean }>`
+const Lightbox = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'isOpen'
+})<{ isOpen: boolean }>`
   position: fixed;
   top: 0;
   left: 0;

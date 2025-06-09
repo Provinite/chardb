@@ -67,7 +67,9 @@ const ImageElement = styled.img`
   }
 `;
 
-const ImageOverlay = styled.div<{ isOpen: boolean }>`
+const ImageOverlay = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'isOpen'
+})<{ isOpen: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
