@@ -18,7 +18,9 @@ const FollowCount = styled.span`
   margin-left: ${({ theme }) => theme.spacing.xs};
 `;
 
-const StyledButton = styled(Button)<{ isFollowing?: boolean }>`
+const StyledButton = styled(Button).withConfig({
+  shouldForwardProp: (prop) => prop !== 'isFollowing'
+})<{ isFollowing?: boolean }>`
   min-width: 100px;
   background: ${({ theme, isFollowing }) => 
     isFollowing ? theme.colors.surface : theme.colors.primary
@@ -82,8 +84,8 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
         __typename: 'FollowResult',
         isFollowing: !followData?.followStatus?.isFollowing,
         followersCount: followData?.followStatus?.isFollowing 
-          ? (followData.followStatus.followersCount || 0) - 1
-          : (followData.followStatus.followersCount || 0) + 1,
+          ? (followData?.followStatus?.followersCount || 0) - 1
+          : (followData?.followStatus?.followersCount || 0) + 1,
         followingCount: followData?.followStatus?.followingCount || 0,
         targetUserId: userId,
       },

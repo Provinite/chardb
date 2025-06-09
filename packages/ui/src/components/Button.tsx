@@ -85,7 +85,9 @@ const getSizeStyles = (size: string, theme: Theme) => {
   }
 };
 
-const StyledButton = styled.button<ButtonProps>`
+const StyledButton = styled.button.withConfig({
+  shouldForwardProp: (prop) => !['variant', 'size', 'loading', 'isFollowing'].includes(prop as string)
+})<ButtonProps>`
   display: inline-flex;
   align-items: center;
   justify-content: center;

@@ -101,7 +101,9 @@ const StatsGrid = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.xl};
 `;
 
-const StatCard = styled.div<{ clickable?: boolean }>`
+const StatCard = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'clickable'
+})<{ clickable?: boolean }>`
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
