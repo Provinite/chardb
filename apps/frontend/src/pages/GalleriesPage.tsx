@@ -210,7 +210,9 @@ const ImageCount = styled.span`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
 `;
 
-const VisibilityBadge = styled.span<{ visibility: string }>`
+const VisibilityBadge = styled.span.withConfig({
+  shouldForwardProp: (prop) => prop !== 'visibility'
+})<{ visibility: string }>`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};

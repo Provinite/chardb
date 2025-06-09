@@ -8,7 +8,9 @@ import { LikeButton } from './LikeButton';
 import { LikeableType } from '../generated/graphql';
 import toast from 'react-hot-toast';
 
-const CommentContainer = styled.div<{ isReply?: boolean }>`
+const CommentContainer = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'isReply'
+})<{ isReply?: boolean }>`
   padding: ${({ theme }) => theme.spacing.md};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   background: ${({ theme, isReply }) => isReply ? theme.colors.surface : theme.colors.background};

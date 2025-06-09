@@ -77,7 +77,9 @@ const FormActions = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
-const CharacterCount = styled.span<{ isOverLimit: boolean }>`
+const CharacterCount = styled.span.withConfig({
+  shouldForwardProp: (prop) => prop !== 'isOverLimit'
+})<{ isOverLimit: boolean }>`
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   color: ${({ theme, isOverLimit }) => 
     isOverLimit ? theme.colors.error : theme.colors.text.muted
