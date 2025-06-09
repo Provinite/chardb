@@ -24,6 +24,9 @@ import { ImagePage } from './pages/ImagePage';
 import { LikedCharactersPage } from './pages/LikedCharactersPage';
 import { LikedGalleriesPage } from './pages/LikedGalleriesPage';
 import { LikedImagesPage } from './pages/LikedImagesPage';
+import { MyCharactersPage } from './pages/MyCharactersPage';
+import { MyGalleriesPage } from './pages/MyGalleriesPage';
+import { MyImagesPage } from './pages/MyImagesPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
@@ -130,6 +133,30 @@ function App() {
           element={
             <ProtectedRoute>
               <LikedImagesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my/characters"
+          element={
+            <ProtectedRoute>
+              <MyCharactersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my/galleries"
+          element={
+            <ProtectedRoute>
+              <MyGalleriesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my/images"
+          element={
+            <ProtectedRoute>
+              <MyImagesPage />
             </ProtectedRoute>
           }
         />
