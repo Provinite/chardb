@@ -13,6 +13,7 @@ import { ImagesModule } from './images/images.module';
 import { GalleriesModule } from './galleries/galleries.module';
 import { CommentsModule } from './comments/comments.module';
 import { SocialModule } from './social/social.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { SocialModule } from './social/social.module';
     GalleriesModule,
     CommentsModule,
     SocialModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

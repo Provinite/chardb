@@ -1,11 +1,18 @@
+// Import tracing FIRST before any other imports
+import './tracing';
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { TracingMiddleware } from './middleware/tracing.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Enable CORS
+  // Add tracing middleware FIRST
+  app.use(new TracingMiddleware().use.bind(new TracingMiddleware()));
+  
+  // Enable CORS with optimizations
   app.enableCors({
     origin: process.env.NODE_ENV === 'production' 
       ? process.env.FRONTEND_URL 
@@ -16,6 +23,17 @@ async function bootstrap() {
           process.env.FRONTEND_URL
         ].filter(Boolean),
     credentials: true,
+    optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+    maxAge: 86400, // Cache preflight response for 24 hours
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With', 
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'apollo-require-preflight',
+    ],
   });
   
   // Global validation pipe
