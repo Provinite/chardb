@@ -39,6 +39,13 @@ export class CharactersService {
       visibility,
       isSellable,
       isTradeable,
+      gender,
+      ageRange,
+      minPrice,
+      maxPrice,
+      sortBy = 'created',
+      sortOrder = 'desc',
+      searchFields = 'all',
     } = filters;
 
     const where: Prisma.CharacterWhereInput = {
@@ -54,23 +61,31 @@ export class CharactersService {
             }
           : { visibility: Visibility.PUBLIC }, // Only public for anonymous users
         
-        // Search filter
+        // Enhanced search filter
         search
           ? {
-              OR: [
-                { name: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-                { species: { contains: search, mode: 'insensitive' } },
-              ],
+              OR: this.buildSearchConditions(search, searchFields),
             }
           : {},
         
         // Other filters
         species ? { species: { contains: species, mode: 'insensitive' } } : {},
+        gender ? { gender: { contains: gender, mode: 'insensitive' } } : {},
+        ageRange ? { age: { contains: ageRange, mode: 'insensitive' } } : {},
         ownerId ? { ownerId } : {},
         visibility !== undefined ? { visibility } : {},
         isSellable !== undefined ? { isSellable } : {},
         isTradeable !== undefined ? { isTradeable } : {},
+        
+        // Price range filter
+        minPrice !== undefined || maxPrice !== undefined
+          ? {
+              AND: [
+                minPrice !== undefined ? { price: { gte: minPrice } } : {},
+                maxPrice !== undefined ? { price: { lte: maxPrice } } : {},
+              ],
+            }
+          : {},
         
         // Tags filter
         tags && tags.length > 0
@@ -104,7 +119,7 @@ export class CharactersService {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: this.buildOrderBy(sortBy, sortOrder),
         take: limit,
         skip: offset,
       }),
@@ -300,5 +315,43 @@ export class CharactersService {
     });
 
     return this.findOne(characterId, userId);
+  }
+
+  private buildSearchConditions(search: string, searchFields: string) {
+    const searchTerm = { contains: search, mode: 'insensitive' as const };
+    
+    switch (searchFields) {
+      case 'name':
+        return [{ name: searchTerm }];
+      case 'description':
+        return [{ description: searchTerm }];
+      case 'personality':
+        return [{ personality: searchTerm }];
+      case 'backstory':
+        return [{ backstory: searchTerm }];
+      default: // 'all'
+        return [
+          { name: searchTerm },
+          { description: searchTerm },
+          { personality: searchTerm },
+          { backstory: searchTerm },
+          { species: searchTerm },
+        ];
+    }
+  }
+
+  private buildOrderBy(sortBy: string, sortOrder: string) {
+    const order = sortOrder === 'asc' ? 'asc' : 'desc';
+    
+    switch (sortBy) {
+      case 'name':
+        return { name: order } as const;
+      case 'updated':
+        return { updatedAt: order } as const;
+      case 'price':
+        return { price: order } as const;
+      default: // 'created'
+        return { createdAt: order } as const;
+    }
   }
 }

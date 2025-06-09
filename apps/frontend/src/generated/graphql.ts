@@ -89,12 +89,19 @@ export type CharacterCount = {
 };
 
 export type CharacterFiltersInput = {
+  ageRange?: InputMaybe<Scalars['String']['input']>;
+  gender?: InputMaybe<Scalars['String']['input']>;
   isSellable?: InputMaybe<Scalars['Boolean']['input']>;
   isTradeable?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: Scalars['Int']['input'];
+  maxPrice?: InputMaybe<Scalars['Float']['input']>;
+  minPrice?: InputMaybe<Scalars['Float']['input']>;
   offset?: Scalars['Int']['input'];
   ownerId?: InputMaybe<Scalars['ID']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  searchFields?: InputMaybe<Scalars['String']['input']>;
+  sortBy?: InputMaybe<Scalars['String']['input']>;
+  sortOrder?: InputMaybe<Scalars['String']['input']>;
   species?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   visibility?: InputMaybe<Visibility>;

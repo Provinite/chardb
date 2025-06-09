@@ -211,6 +211,43 @@ export class CharacterFiltersInput {
   @IsOptional()
   @IsBoolean()
   isTradeable?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  gender?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  ageRange?: string; // "young", "adult", "elder", etc.
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  minPrice?: number;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  maxPrice?: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  sortBy?: string; // "name", "created", "updated", "price"
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  sortOrder?: string; // "asc", "desc"
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  searchFields?: string; // "name", "description", "all" - what fields to search
 }
 
 @InputType()
@@ -254,6 +291,13 @@ export interface CharacterFilters {
   visibility?: Visibility;
   isSellable?: boolean;
   isTradeable?: boolean;
+  gender?: string;
+  ageRange?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: string;
+  sortOrder?: string;
+  searchFields?: string;
 }
 
 // Character entity will be imported from entities/character.entity.ts

@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { GET_CHARACTERS, Character, CharacterFiltersInput } from '../graphql/characters';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { RandomCharacterButton } from '../components/RandomCharacterButton';
+import { AdvancedSearchForm, AdvancedSearchFilters } from '../components/AdvancedSearchForm';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -33,12 +34,51 @@ const Title = styled.h1`
 `;
 
 const SearchSection = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+`;
+
+const BasicSearchRow = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.md};
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
   
   @media (max-width: 768px) {
     flex-direction: column;
+  }
+`;
+
+const ToggleSection = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: ${({ theme }) => theme.spacing.md};
+    align-items: stretch;
+  }
+`;
+
+const ToggleButton = styled.button`
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.text.primary};
+  cursor: pointer;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  transition: all 0.2s;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary};
+    color: white;
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+  
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 2px;
   }
 `;
 
@@ -298,6 +338,8 @@ export const CharactersPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [speciesFilter, setSpeciesFilter] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState<'ALL' | 'PUBLIC' | 'UNLISTED' | 'PRIVATE'>('ALL');
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  const [currentAdvancedFilters, setCurrentAdvancedFilters] = useState<AdvancedSearchFilters>({});
 
   const { data, loading, error, fetchMore } = useQuery(GET_CHARACTERS, {
     variables: { filters },
@@ -314,6 +356,31 @@ export const CharactersPage: React.FC = () => {
       visibility: visibilityFilter === 'ALL' ? undefined : visibilityFilter as any,
     }));
   }, [searchTerm, speciesFilter, visibilityFilter]);
+
+  const handleAdvancedSearch = useCallback((advancedFilters: AdvancedSearchFilters) => {
+    setCurrentAdvancedFilters(advancedFilters);
+    const newFilters: CharacterFiltersInput = {
+      limit: 12,
+      offset: 0,
+      ...advancedFilters,
+      // Convert string boolean values to actual booleans
+      isSellable: typeof advancedFilters.isSellable === 'string' 
+        ? (advancedFilters.isSellable === 'true' ? true : advancedFilters.isSellable === 'false' ? false : undefined)
+        : advancedFilters.isSellable,
+      isTradeable: typeof advancedFilters.isTradeable === 'string'
+        ? (advancedFilters.isTradeable === 'true' ? true : advancedFilters.isTradeable === 'false' ? false : undefined)
+        : advancedFilters.isTradeable,
+    };
+    setFilters(newFilters);
+  }, []);
+
+  const handleClearAdvancedSearch = useCallback(() => {
+    setCurrentAdvancedFilters({});
+    setFilters({
+      limit: 12,
+      offset: 0,
+    });
+  }, []);
 
   const handleLoadMore = useCallback(() => {
     if (data?.characters.hasMore) {
@@ -372,29 +439,55 @@ export const CharactersPage: React.FC = () => {
       </Header>
 
       <SearchSection>
-        <SearchForm onSubmit={handleSearch}>
-          <SearchInput
-            type="text"
-            placeholder="Search characters by name or description..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <FilterSelect
-            value={speciesFilter}
-            onChange={(e) => setSpeciesFilter(e.target.value)}
+        <ToggleSection>
+          <ToggleButton
+            type="button"
+            onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
           >
-            <option value="">All Species</option>
-            <option value="Dragon">Dragon</option>
-            <option value="Wolf">Wolf</option>
-            <option value="Cat">Cat</option>
-            <option value="Fox">Fox</option>
-            <option value="Human">Human</option>
-            <option value="Other">Other</option>
-          </FilterSelect>
-          <SearchButton type="submit">
-            Search
-          </SearchButton>
-        </SearchForm>
+            {showAdvancedSearch ? '← Simple Search' : 'Advanced Search →'}
+          </ToggleButton>
+          
+          {Object.keys(currentAdvancedFilters).length > 0 && (
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              Advanced filters active
+            </div>
+          )}
+        </ToggleSection>
+
+        {showAdvancedSearch ? (
+          <AdvancedSearchForm
+            initialFilters={currentAdvancedFilters}
+            onSearch={handleAdvancedSearch}
+            onClear={handleClearAdvancedSearch}
+            loading={loading}
+          />
+        ) : (
+          <BasicSearchRow>
+            <SearchForm onSubmit={handleSearch}>
+              <SearchInput
+                type="text"
+                placeholder="Search characters by name or description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <FilterSelect
+                value={speciesFilter}
+                onChange={(e) => setSpeciesFilter(e.target.value)}
+              >
+                <option value="">All Species</option>
+                <option value="Dragon">Dragon</option>
+                <option value="Wolf">Wolf</option>
+                <option value="Cat">Cat</option>
+                <option value="Fox">Fox</option>
+                <option value="Human">Human</option>
+                <option value="Other">Other</option>
+              </FilterSelect>
+              <SearchButton type="submit">
+                Search
+              </SearchButton>
+            </SearchForm>
+          </BasicSearchRow>
+        )}
       </SearchSection>
 
       <VisibilityFilter>
@@ -420,6 +513,7 @@ export const CharactersPage: React.FC = () => {
           {data?.characters && (
             <ResultsCount>
               Showing {data.characters.characters.length} of {data.characters.total} characters
+              {Object.keys(currentAdvancedFilters).length > 0 && ' (filtered)'}
             </ResultsCount>
           )}
 
@@ -441,7 +535,11 @@ export const CharactersPage: React.FC = () => {
                 >
                   <CharacterName>{character.name}</CharacterName>
                   {character.species && (
-                    <CharacterSpecies>{character.species}</CharacterSpecies>
+                    <CharacterSpecies>
+                      {character.species}
+                      {character.gender && ` • ${character.gender}`}
+                      {character.age && ` • ${character.age}`}
+                    </CharacterSpecies>
                   )}
                   {character.description && (
                     <CharacterDescription>{character.description}</CharacterDescription>
@@ -452,8 +550,11 @@ export const CharactersPage: React.FC = () => {
                       by {character.owner.displayName || character.owner.username}
                     </OwnerInfo>
                     <MetaContainer>
-                      {character._count && (
+                          {character._count && (
                         <ImageCount>{character._count.images} images</ImageCount>
+                      )}
+                      {character.isSellable && character.price && (
+                        <ImageCount>${character.price}</ImageCount>
                       )}
                       <VisibilityBadge visibility={character.visibility}>
                         {character.visibility}

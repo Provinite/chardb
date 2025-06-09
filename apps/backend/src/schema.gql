@@ -66,12 +66,19 @@ type CharacterCount {
 }
 
 input CharacterFiltersInput {
+  ageRange: String
+  gender: String
   isSellable: Boolean
   isTradeable: Boolean
   limit: Int! = 20
+  maxPrice: Float
+  minPrice: Float
   offset: Int! = 0
   ownerId: ID
   search: String
+  searchFields: String
+  sortBy: String
+  sortOrder: String
   species: String
   tags: [String!]
   visibility: Visibility
