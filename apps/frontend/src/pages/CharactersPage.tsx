@@ -343,10 +343,15 @@ export const CharactersPage: React.FC = () => {
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [currentAdvancedFilters, setCurrentAdvancedFilters] = useState<AdvancedSearchFilters>({});
 
-  const { data, loading, error, fetchMore, refetch } = useQuery(GET_CHARACTERS, {
+  const { data, loading, error, fetchMore } = useQuery(GET_CHARACTERS, {
     variables: { filters },
     notifyOnNetworkStatusChange: true,
-    fetchPolicy: 'cache-and-network', // Always refetch when variables change
+    fetchPolicy: 'cache-and-network',
+    errorPolicy: 'all',
+    // Use a unique key for each filter combination to prevent cache conflicts
+    context: {
+      filterKey: JSON.stringify(filters)
+    }
   });
 
   const handleSearch = useCallback((e: React.FormEvent) => {
@@ -359,22 +364,20 @@ export const CharactersPage: React.FC = () => {
       visibility: visibilityFilter === 'ALL' ? undefined : visibilityFilter as any,
     };
     setFilters(newFilters);
-    // Explicitly refetch to ensure query executes
-    refetch({ filters: newFilters });
-  }, [searchTerm, speciesFilter, visibilityFilter, refetch]);
+  }, [searchTerm, speciesFilter, visibilityFilter]);
 
-  // Auto-apply filters when visibility filter changes
-  React.useEffect(() => {
+  // Handle visibility filter changes
+  const handleVisibilityChange = useCallback((visibility: 'ALL' | 'PUBLIC' | 'UNLISTED' | 'PRIVATE') => {
+    setVisibilityFilter(visibility);
     const newFilters = {
       limit: 12,
       offset: 0,
       search: searchTerm || undefined,
       species: speciesFilter || undefined,
-      visibility: visibilityFilter === 'ALL' ? undefined : visibilityFilter as any,
+      visibility: visibility === 'ALL' ? undefined : visibility as any,
     };
     setFilters(newFilters);
-    refetch({ filters: newFilters });
-  }, [visibilityFilter, searchTerm, speciesFilter, refetch]);
+  }, [searchTerm, speciesFilter]);
 
   const handleAdvancedSearch = useCallback((advancedFilters: AdvancedSearchFilters) => {
     setCurrentAdvancedFilters(advancedFilters);
@@ -515,7 +518,7 @@ export const CharactersPage: React.FC = () => {
           <VisibilityButton
             key={visibility}
             active={visibilityFilter === visibility}
-            onClick={() => setVisibilityFilter(visibility)}
+            onClick={() => handleVisibilityChange(visibility)}
             aria-label={`Filter by ${visibility.toLowerCase()} characters`}
           >
             {visibility}
