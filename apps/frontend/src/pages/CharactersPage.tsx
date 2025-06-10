@@ -343,21 +343,38 @@ export const CharactersPage: React.FC = () => {
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [currentAdvancedFilters, setCurrentAdvancedFilters] = useState<AdvancedSearchFilters>({});
 
-  const { data, loading, error, fetchMore } = useQuery(GET_CHARACTERS, {
+  const { data, loading, error, fetchMore, refetch } = useQuery(GET_CHARACTERS, {
     variables: { filters },
     notifyOnNetworkStatusChange: true,
+    fetchPolicy: 'cache-and-network', // Always refetch when variables change
   });
 
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    setFilters(prev => ({
-      ...prev,
+    const newFilters = {
+      limit: 12,
       offset: 0,
       search: searchTerm || undefined,
       species: speciesFilter || undefined,
       visibility: visibilityFilter === 'ALL' ? undefined : visibilityFilter as any,
-    }));
-  }, [searchTerm, speciesFilter, visibilityFilter]);
+    };
+    setFilters(newFilters);
+    // Explicitly refetch to ensure query executes
+    refetch({ filters: newFilters });
+  }, [searchTerm, speciesFilter, visibilityFilter, refetch]);
+
+  // Auto-apply filters when visibility filter changes
+  React.useEffect(() => {
+    const newFilters = {
+      limit: 12,
+      offset: 0,
+      search: searchTerm || undefined,
+      species: speciesFilter || undefined,
+      visibility: visibilityFilter === 'ALL' ? undefined : visibilityFilter as any,
+    };
+    setFilters(newFilters);
+    refetch({ filters: newFilters });
+  }, [visibilityFilter, searchTerm, speciesFilter, refetch]);
 
   const handleAdvancedSearch = useCallback((advancedFilters: AdvancedSearchFilters) => {
     setCurrentAdvancedFilters(advancedFilters);

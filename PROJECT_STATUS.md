@@ -620,6 +620,9 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 - [x] **Health Check Endpoints**: Service health and tracing test endpoints
 - [x] **Docker Observability Stack**: Complete containerized tracing infrastructure
 - [x] **Performance Optimization**: CORS caching (24hr) and request lifecycle visibility
+- [x] **React App Stability**: Fixed React bundling errors and "Invalid hook call" issues
+- [x] **GraphQL Context Handling**: Custom throttler guard properly handles GraphQL vs HTTP contexts
+- [x] **Firefox Parallel Request Limiting**: Vite optimizations to prevent overwhelming parallel requests
 
 **Key Features**:
 - 🔍 **Real-time Tracing**: Complete request lifecycle visibility from HTTP to database queries
@@ -628,6 +631,7 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 - 📊 **Visual Analysis**: Jaeger UI for trace search, filtering, and bottleneck identification
 - ⚡ **Non-invasive**: Auto-instrumentation requiring no business logic changes
 - 🛡️ **Production Ready**: Memory limiting, batching, and graceful shutdown handling
+- 🛠️ **Application Stability**: Resolved React rendering issues and GraphQL throttling conflicts
 
 **Technical Implementation**:
 ```typescript
@@ -642,6 +646,11 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 - OTEL Collector with memory limiting, batching, and multi-export pipelines
 - Health check endpoints (/health, /health/tracing) for monitoring
 - Docker services with proper dependencies and health checks
+
+// Stability Fixes
+- CustomThrottlerGuard: GraphQL-aware throttling with context type detection
+- Vite Configuration: Dependency pre-bundling and connection limiting (maxSockets: 5)
+- React Compatibility: Removed problematic manual chunking causing multiple React instances
 ```
 
 **Observability Endpoints**:
@@ -650,7 +659,13 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 - ✅ **Tracing Test**: http://localhost:4000/health/tracing - Generate test spans
 - ✅ **Metrics**: http://localhost:8889/metrics - Prometheus metrics from collector
 
-**Fun Fact**: The original "2-second CORS delay" that triggered this implementation turned out to be adblock! 🤦‍♂️ But now we have enterprise-grade observability for future debugging.
+**Performance Optimizations**:
+- ✅ **CORS Preflight Caching**: 24-hour maxAge for reduced OPTIONS request frequency
+- ✅ **Firefox Request Limiting**: Vite maxSockets configuration prevents overwhelming parallel requests
+- ✅ **Dependency Pre-bundling**: React, Apollo, styled-components pre-bundled for faster startup
+- ✅ **Throttling Intelligence**: GraphQL requests skip HTTP-focused throttling to prevent context errors
+
+**Fun Fact**: The original "2-second CORS delay" that triggered this implementation turned out to be adblock! 🤦‍♂️ But now we have enterprise-grade observability for future debugging and stable React app rendering.
 
 ---
 
