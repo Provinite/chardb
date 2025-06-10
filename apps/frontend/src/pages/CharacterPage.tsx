@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
 import { Button } from '@thclone/ui';
@@ -128,6 +128,33 @@ const OwnerInfo = styled.div`
   align-items: center;
   text-align: center;
   min-width: 200px;
+  
+  @media (max-width: 768px) {
+    align-items: flex-start;
+    text-align: left;
+  }
+`;
+
+const OwnerLink = styled(Link)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+  padding: ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.surface};
+    transform: translateY(-2px);
+  }
+  
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 2px;
+  }
   
   @media (max-width: 768px) {
     align-items: flex-start;
@@ -415,15 +442,17 @@ export const CharacterPage: React.FC = () => {
         </CharacterBasics>
 
         <OwnerInfo>
-          <OwnerAvatar>
-            {character.owner.avatarUrl ? (
-              <img src={character.owner.avatarUrl} alt={character.owner.displayName || character.owner.username} />
-            ) : (
-              character.owner.displayName?.[0] || character.owner.username[0]
-            )}
-          </OwnerAvatar>
-          <OwnerName>{character.owner.displayName || character.owner.username}</OwnerName>
-          <OwnerRole>Character Owner</OwnerRole>
+          <OwnerLink to={`/user/${character.owner.username}`}>
+            <OwnerAvatar>
+              {character.owner.avatarUrl ? (
+                <img src={character.owner.avatarUrl} alt={character.owner.displayName || character.owner.username} />
+              ) : (
+                character.owner.displayName?.[0] || character.owner.username[0]
+              )}
+            </OwnerAvatar>
+            <OwnerName>{character.owner.displayName || character.owner.username}</OwnerName>
+            <OwnerRole>Character Owner</OwnerRole>
+          </OwnerLink>
           {character.creator && character.creator.id !== character.owner.id && (
             <>
               <OwnerRole style={{ marginTop: '0.5rem' }}>
