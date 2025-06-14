@@ -32,7 +32,7 @@ This module creates an EC2 instance with Docker and supporting tools installed, 
 
 - ❌ Deploy applications
 - ❌ Start services
-- ❌ Create docker-compose files
+- ❌ Create docker compose files
 - ❌ Configure application-specific settings
 
 ## Usage

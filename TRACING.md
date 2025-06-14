@@ -18,7 +18,7 @@ Frontend → Backend → OTEL Collector → Jaeger
 
 1. **Start the observability stack**:
    ```bash
-   docker-compose up jaeger otel-collector -d
+   docker compose up jaeger otel-collector -d
    ```
 
 2. **Install backend dependencies**:

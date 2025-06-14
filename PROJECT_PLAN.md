@@ -73,8 +73,8 @@ thclone/
 ├── docker/
 │   ├── Dockerfile.backend
 │   ├── Dockerfile.frontend
-│   ├── docker-compose.yml        # Local development
-│   └── docker-compose.prod.yml   # Production
+│   ├── docker compose.yml        # Local development
+│   └── docker compose.prod.yml   # Production
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml                # Continuous integration

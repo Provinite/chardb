@@ -144,11 +144,11 @@ The infrastructure creates one ECR repository for the backend:
 ssh -i ~/.ssh/your-key ec2-user@<elastic-ip>
 
 # View running containers
-docker-compose ps
+docker compose ps
 
 # View logs
-docker-compose logs backend
-docker-compose logs postgres
+docker compose logs backend
+docker compose logs postgres
 
 # Deploy new backend version
 ./deploy.sh
@@ -182,7 +182,7 @@ cd ../../../
 # Or deploy manually
 ssh -i ~/.ssh/your-key ec2-user@$SERVER_IP
 ./ecr-login.sh
-# Copy your docker-compose.yml and run: docker-compose up -d
+# Copy your docker compose.yml and run: docker compose up -d
 ```
 
 ### Accessing Services

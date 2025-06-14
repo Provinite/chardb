@@ -6,9 +6,9 @@
 # Individual services are defined in ./services/ directory with their own documentation
 # 
 # Usage:
-#   Development: docker-compose up
-#   Production:  docker-compose -f docker-compose.base.yml -f docker-compose.prod.yml up
-#   Test:        docker-compose -f docker-compose.base.yml -f docker-compose.test.yml up
+#   Development: docker compose up
+#   Production:  docker compose -f docker-compose.prod.yml up
+#   Test:        docker compose -f docker-compose.test.yml up
 
 # Include all individual service definitions
 include:

@@ -13,8 +13,8 @@ docker/
 │   ├── frontend.yml            # Frontend React app
 │   ├── jaeger.yml              # Jaeger tracing UI
 │   └── otel-collector.yml      # OpenTelemetry collector
-├── docker-compose.yml          # Development environment (uses include)
-├── docker-compose.prod.yml     # Production environment (uses include)
+├── docker compose.yml          # Development environment (uses include)
+├── docker compose.prod.yml     # Production environment (uses include)
 └── otel-collector-config.yml   # OTEL collector configuration
 ```
 
@@ -23,31 +23,31 @@ docker/
 ### Development (Default)
 ```bash
 # Local development with hot-reloading
-docker-compose up
+docker compose up
 
 # Run specific services only
-docker-compose up postgres redis backend
+docker compose up postgres redis backend
 ```
 
 ### Production
 ```bash
 # Production deployment (requires Docker Compose 2.20+ for include)
-docker-compose -f docker-compose.prod.yml up
+docker compose -f docker compose.prod.yml up
 
 # With environment variables
 ECR_REPOSITORY_URL=123456789.dkr.ecr.us-east-1.amazonaws.com/thclone-backend \
 DATABASE_URL=postgresql://user:pass@localhost:5432/thclone \
 JWT_SECRET=your-secret \
-docker-compose -f docker-compose.prod.yml up
+docker compose -f docker compose.prod.yml up
 ```
 
 ### Testing
 ```bash
 # Individual services for testing
-docker-compose -f services/postgres.yml -f services/redis.yml up
+docker compose -f services/postgres.yml -f services/redis.yml up
 
 # Quick database for tests
-docker-compose -f services/postgres.yml up
+docker compose -f services/postgres.yml up
 ```
 
 ## Service Definitions
@@ -64,10 +64,10 @@ You can run individual services by referencing their files:
 
 ```bash
 # Run just the database
-docker-compose -f services/postgres.yml up
+docker compose -f services/postgres.yml up
 
 # Run database + redis
-docker-compose -f services/postgres.yml -f services/redis.yml up
+docker compose -f services/postgres.yml -f services/redis.yml up
 ```
 
 ## Environment Variables
@@ -112,7 +112,7 @@ The modular structure works well with Terraform templating:
 
 ```hcl
 # Reference the base file and customize with variables
-docker_compose_content = templatefile("docker/docker-compose.base.yml", {
+docker_compose_content = templatefile("docker/docker compose.base.yml", {
   ecr_repository_url = var.ecr_repository_url
   database_url      = var.database_url
   # ... other variables

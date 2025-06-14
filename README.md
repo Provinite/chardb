@@ -71,7 +71,7 @@ thclone/
 4. **Start the development environment**
    ```bash
    # Start PostgreSQL and Redis with Docker
-   docker-compose -f docker/docker-compose.yml up postgres redis -d
+   docker compose -f docker/docker compose.yml up postgres redis -d
    
    # Generate Prisma client and run migrations
    yarn workspace @thclone/database db:generate
@@ -99,7 +99,7 @@ thclone/
 
 ```bash
 # Start everything with Docker Compose
-docker-compose -f docker/docker-compose.yml up
+docker compose -f docker/docker compose.yml up
 
 # The application will be available at:
 # Frontend: http://localhost:3000
@@ -193,7 +193,7 @@ docker build -f docker/Dockerfile.frontend -t thclone-frontend .
 ### Production Deployment
 ```bash
 # Using Docker Compose
-docker-compose -f docker/docker-compose.prod.yml up -d
+docker compose -f docker/docker compose.prod.yml up -d
 ```
 
 The application includes GitHub Actions workflows for:

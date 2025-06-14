@@ -132,7 +132,7 @@ cd ../../../
 
 # This script will:
 # - Get server IP and SSH key from Terraform
-# - Copy docker-compose files to EC2
+# - Copy docker compose files to EC2
 # - SSH into EC2 and start services
 # - Perform health checks
 ```
@@ -156,10 +156,10 @@ ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP
 
 # Inside the server, run database migrations
 cd ~/app
-docker-compose exec backend yarn workspace @thclone/backend db:push
+docker compose exec backend yarn workspace @thclone/backend db:push
 
 # Optional: Run database seed data (if available)
-docker-compose exec backend yarn workspace @thclone/backend db:seed
+docker compose exec backend yarn workspace @thclone/backend db:seed
 
 # Exit SSH session
 exit
@@ -183,7 +183,7 @@ curl -X POST http://$SERVER_IP:4000/graphql \
 echo "Jaeger UI: http://$SERVER_IP:16686"
 
 # Check service status on server
-ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker-compose ps"
+ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker compose ps"
 ```
 
 ### Step 9: **Configure Environment Variables (if needed)**
@@ -194,10 +194,10 @@ The application uses environment variables that are configured automatically, bu
 ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP
 
 # View current environment configuration
-cd ~/app && cat docker-compose.yml
+cd ~/app && cat docker compose.yml
 
-# To update environment variables, edit docker-compose.yml and restart:
-# docker-compose down && docker-compose up -d
+# To update environment variables, edit docker compose.yml and restart:
+# docker compose down && docker compose up -d
 ```
 
 **Key Environment Variables Configured:**
@@ -249,19 +249,19 @@ aws ec2 describe-security-groups --filters "Name=group-name,Values=*backend*"
 **3. Service Health Issues:**
 ```bash
 # Check container logs
-ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker-compose logs backend"
+ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker compose logs backend"
 
 # Restart services if needed
-ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker-compose restart"
+ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker compose restart"
 ```
 
 **4. Database Connection Issues:**
 ```bash
 # Check database container status
-ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker-compose logs postgres"
+ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker compose logs postgres"
 
 # Re-run database setup if needed
-ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker-compose exec backend yarn workspace @thclone/backend db:push"
+ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker compose exec backend yarn workspace @thclone/backend db:push"
 ```
 
 ## 🧹 Cleanup
@@ -298,8 +298,8 @@ To use GitHub Actions instead of manual deployment:
 ## 📊 Monitoring and Observability
 
 Once deployed, you have access to:
-- **Application Logs**: `docker-compose logs backend`
-- **Database Logs**: `docker-compose logs postgres`
+- **Application Logs**: `docker compose logs backend`
+- **Database Logs**: `docker compose logs postgres`
 - **Distributed Tracing**: Jaeger UI at `http://$SERVER_IP:16686`
 - **Health Endpoint**: `http://$SERVER_IP:4000/health`
 - **GraphQL Playground**: `http://$SERVER_IP:4000/graphql` (development mode)

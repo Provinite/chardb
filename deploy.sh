@@ -32,7 +32,7 @@ echo "🚀 Deploying ThClone to $SERVER_IP (environment: $ENVIRONMENT)"
 
 # Copy deployment files to server
 echo "📦 Copying deployment files..."
-scp -i "$SSH_KEY_PATH" docker/docker-compose.prod.yml ec2-user@$SERVER_IP:~/app/docker-compose.yml
+scp -i "$SSH_KEY_PATH" docker/docker compose.prod.yml ec2-user@$SERVER_IP:~/app/docker compose.yml
 scp -i "$SSH_KEY_PATH" docker/otel-collector-config.yml ec2-user@$SERVER_IP:~/app/otel-collector-config.yml
 scp -i "$SSH_KEY_PATH" scripts/ecr-login.sh ec2-user@$SERVER_IP:~/app/ecr-login.sh
 
@@ -52,19 +52,19 @@ chmod +x ecr-login.sh
 ./ecr-login.sh
 
 echo "🛑 Stopping existing services..."
-docker-compose down || true
+docker compose down || true
 
 echo "📥 Pulling latest images..."
-docker-compose pull
+docker compose pull
 
 echo "🚀 Starting services..."
-docker-compose up -d
+docker compose up -d
 
 echo "⏳ Waiting for services to be healthy..."
 sleep 30
 
 echo "🔍 Checking service status..."
-docker-compose ps
+docker compose ps
 
 echo "✅ Deployment complete!"
 echo "🌐 Backend API: http://\$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):4000"
