@@ -1,5 +1,5 @@
 {
-  "name": "@thclone/frontend",
+  "name": "@chardb/frontend",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -19,11 +19,11 @@
   },
   "dependencies": {
     "@apollo/client": "^3.8.0",
+    "@chardb/shared": "workspace:*",
+    "@chardb/ui": "workspace:*",
     "@hookform/resolvers": "^3.3.0",
     "@mantine/core": "^8.0.2",
     "@mantine/hooks": "^8.0.2",
-    "@thclone/shared": "workspace:*",
-    "@thclone/ui": "workspace:*",
     "framer-motion": "^10.16.0",
     "graphql": "^16.8.0",
     "lucide-react": "^0.513.0",

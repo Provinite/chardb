@@ -1,5 +1,5 @@
 {
-  "name": "thclone",
+  "name": "chardb",
   "version": "1.0.0",
   "private": true,
   "packageManager": "yarn@4.1.1",
@@ -9,9 +9,9 @@
   ],
   "scripts": {
     "build": "yarn workspaces foreach -A run build",
-    "dev": "concurrently \"yarn workspace @thclone/backend dev\" \"yarn workspace @thclone/frontend dev\" --names \"backend,frontend\" --prefix-colors \"cyan,magenta\"",
-    "dev:backend": "yarn workspace @thclone/backend dev",
-    "dev:frontend": "yarn workspace @thclone/frontend dev",
+    "dev": "concurrently \"yarn workspace @chardb/backend dev\" \"yarn workspace @chardb/frontend dev\" --names \"backend,frontend\" --prefix-colors \"cyan,magenta\"",
+    "dev:backend": "yarn workspace @chardb/backend dev",
+    "dev:frontend": "yarn workspace @chardb/frontend dev",
     "test": "yarn workspaces foreach -A run test",
     "lint": "yarn workspaces foreach -A run lint",
     "type-check": "yarn workspaces foreach -A run type-check",
