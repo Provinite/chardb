@@ -34,19 +34,24 @@ data "aws_subnet" "default" {
   id = data.aws_subnets.default.ids[0]
 }
 
-# Get latest Amazon Linux 2 AMI
+# Get latest Amazon Linux 2023 AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["al2023-ami-*-x86_64"]
   }
 
   filter {
     name   = "virtualization-type"
     values = ["hvm"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
   }
 }
 
@@ -205,10 +210,10 @@ resource "aws_instance" "docker_host" {
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
     db_password = random_password.db_password.result
-    jwt_secret = random_password.jwt_secret.result
-    db_host = var.db_host
-    db_name = var.db_name
-    db_user = var.db_user
+    jwt_secret  = random_password.jwt_secret.result
+    db_host     = var.db_host
+    db_name     = var.db_name
+    db_user     = var.db_user
   }))
 
   root_block_device {
