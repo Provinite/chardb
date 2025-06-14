@@ -1,6 +1,6 @@
-# ThClone Infrastructure
+# CharDB Infrastructure
 
-This directory contains the Terraform infrastructure-as-code for the ThClone application, designed for a simplified and cost-effective deployment.
+This directory contains the Terraform infrastructure-as-code for the CharDB application, designed for a simplified and cost-effective deployment.
 
 ## Architecture
 
@@ -52,8 +52,8 @@ terraform apply -var-file="prod.tfvars"
 ```
 
 **State Management**: Uses S3 backend with keys:
-- Dev: `thclone/environments/dev`
-- Prod: `thclone/environments/prod`
+- Dev: `chardb/environments/dev`
+- Prod: `chardb/environments/prod`
 - Bucket: `clovercoin-tf-state`
 
 This single deployment creates:
@@ -87,7 +87,7 @@ This single deployment creates:
 ## ECR Repository
 
 The infrastructure creates one ECR repository for the backend:
-- `thclone-backend-{environment}`
+- `chardb-backend-{environment}`
 
 ## Services
 
@@ -157,7 +157,7 @@ docker compose logs postgres
 ### Frontend Deployment
 ```bash
 # Build React app
-yarn workspace @thclone/frontend build
+yarn workspace @chardb/frontend build
 
 # Upload to S3 (use AWS CLI or deployment pipeline)
 aws s3 sync dist/ s3://bucket-name --delete

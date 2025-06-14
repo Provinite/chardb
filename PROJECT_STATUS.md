@@ -1,6 +1,6 @@
-# ThClone - Project Status & Implementation Progress
+# CharDB - Project Status & Implementation Progress
 
-This document tracks the current implementation status of the ThClone project, complementing the comprehensive [PROJECT_PLAN.md](./PROJECT_PLAN.md).
+This document tracks the current implementation status of the CharDB project, complementing the comprehensive [PROJECT_PLAN.md](./PROJECT_PLAN.md).
 
 ## 📊 Overall Progress: **Phase 1 Complete (100%) | Phase 2 Complete (100%) | Phase 2.5 Complete (100%) | Phase 3 Complete (100%) | Phase 4A Complete (100%)**
 
@@ -30,7 +30,7 @@ This document tracks the current implementation status of the ThClone project, c
 ### **1. Project Foundation & Architecture**
 **Status**: ✅ **Complete** | **Completion Date**: Current
 - [x] **Monorepo Structure**: Yarn workspaces with apps/backend, apps/frontend, packages/*
-- [x] **Package Organization**: @thclone/shared, @thclone/database, @thclone/ui packages
+- [x] **Package Organization**: @chardb/shared, @chardb/database, @chardb/ui packages
 - [x] **TypeScript Configuration**: Strict mode, path mapping, proper build setup
 - [x] **Development Environment**: Hot reload, environment variables, development scripts
 

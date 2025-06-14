@@ -1,6 +1,6 @@
 # OpenTelemetry Tracing Setup
 
-This document describes the distributed tracing setup for debugging performance issues in ThClone.
+This document describes the distributed tracing setup for debugging performance issues in CharDB.
 
 ## 🎯 Purpose
 
@@ -29,12 +29,12 @@ Frontend → Backend → OTEL Collector → Jaeger
 
 3. **Start the instrumented backend**:
    ```bash
-   yarn workspace @thclone/backend dev
+   yarn workspace @chardb/backend dev
    ```
 
 4. **Access Jaeger UI**:
    - Open http://localhost:16686
-   - Select "thclone-backend" service
+   - Select "chardb-backend" service
    - View traces and performance metrics
 
 ## 📊 Available Endpoints
@@ -90,7 +90,7 @@ Frontend → Backend → OTEL Collector → Jaeger
 
 ### Environment Variables
 ```bash
-OTEL_SERVICE_NAME="thclone-backend"
+OTEL_SERVICE_NAME="chardb-backend"
 OTEL_SERVICE_VERSION="1.0.0"
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
 OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
@@ -104,13 +104,13 @@ OTEL_LOG_LEVEL="info"
 ### No Traces Appearing
 1. Check backend logs for tracing initialization messages
 2. Verify OTEL collector is running: `docker ps`
-3. Check collector logs: `docker logs thclone-otel-collector`
+3. Check collector logs: `docker logs chardb-otel-collector`
 4. Verify Jaeger is accessible: http://localhost:16686
 
 ### Performance Analysis Steps
 1. Make a slow OPTIONS request to trigger the issue
 2. Go to Jaeger UI → Find Traces
-3. Filter by service "thclone-backend" and operation "OPTIONS /graphql"
+3. Filter by service "chardb-backend" and operation "OPTIONS /graphql"
 4. Look for traces with >2000ms duration
 5. Drill down into spans to find the bottleneck
 6. Check for database connection delays, middleware overhead, or authentication issues

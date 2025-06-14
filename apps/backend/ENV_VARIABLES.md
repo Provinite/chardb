@@ -1,6 +1,6 @@
 # Environment Variables Documentation
 
-This document provides a comprehensive list of all environment variables used in the ThClone backend application.
+This document provides a comprehensive list of all environment variables used in the CharDB backend application.
 
 ## Table of Contents
 - [Database Configuration](#database-configuration)
@@ -21,9 +21,9 @@ This document provides a comprehensive list of all environment variables used in
   - `prisma/schema.prisma` (line 7)
   - `test/setup-e2e.ts` (line 59)
 - **Example Values**:
-  - Development: `"postgresql://thclone:thclone_password@localhost:5433/thclone_dev"`
-  - Production: `"postgresql://username:password@localhost:5432/thclone_db"`
-  - Test: `"postgresql://test_user:test_password@localhost:5440/thclone_test"`
+  - Development: `"postgresql://chardb:chardb_password@localhost:5433/chardb_dev"`
+  - Production: `"postgresql://username:password@localhost:5432/chardb_db"`
+  - Test: `"postgresql://test_user:test_password@localhost:5440/chardb_test"`
 
 ## JWT Authentication
 
@@ -110,8 +110,8 @@ This document provides a comprehensive list of all environment variables used in
 - **Description**: Service name for OpenTelemetry tracing
 - **Referenced in**: 
   - `src/tracing.ts` (line 13)
-- **Default**: `"thclone-backend"`
-- **Example**: `"thclone-backend"`
+- **Default**: `"chardb-backend"`
+- **Example**: `"chardb-backend"`
 
 ### `OTEL_SERVICE_VERSION`
 - **Type**: String
@@ -177,7 +177,7 @@ No environment variables are used for rate limiting configuration.
 
 ### Development Environment (.env)
 ```env
-DATABASE_URL="postgresql://thclone:thclone_password@localhost:5433/thclone_dev"
+DATABASE_URL="postgresql://chardb:chardb_password@localhost:5433/chardb_dev"
 JWT_SECRET="development-jwt-secret-key-change-in-production"
 PORT=4000
 NODE_ENV=development
@@ -186,7 +186,7 @@ FRONTEND_URL="http://localhost:5173"
 
 ### Test Environment (.env.test)
 ```env
-DATABASE_URL="postgresql://test_user:test_password@localhost:5440/thclone_test"
+DATABASE_URL="postgresql://test_user:test_password@localhost:5440/chardb_test"
 JWT_SECRET="test-jwt-secret-key-for-testing-only"
 JWT_REFRESH_SECRET="test-refresh-secret-key-for-testing-only"
 JWT_EXPIRES_IN="15m"
@@ -197,12 +197,12 @@ CORS_ORIGIN="http://localhost:3000"
 
 ### Production Environment (.env.example)
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/thclone_db"
+DATABASE_URL="postgresql://username:password@localhost:5432/chardb_db"
 JWT_SECRET="your-super-secret-jwt-key-here"
 PORT=4000
 NODE_ENV=production
 FRONTEND_URL="http://localhost:3000"
-OTEL_SERVICE_NAME="thclone-backend"
+OTEL_SERVICE_NAME="chardb-backend"
 OTEL_SERVICE_VERSION="1.0.0"
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
 OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"

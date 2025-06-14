@@ -1,6 +1,6 @@
-# Complete ThClone Infrastructure Deployment Guide
+# Complete CharDB Infrastructure Deployment Guide
 
-Based on my comprehensive analysis of the infrastructure and deployment setup, here's the detailed workflow for deploying ThClone from scratch:
+Based on my comprehensive analysis of the infrastructure and deployment setup, here's the detailed workflow for deploying CharDB from scratch:
 
 ## 📋 Prerequisites and Setup
 
@@ -45,7 +45,7 @@ Your AWS user/role needs these permissions:
 ### Step 1: **Terraform State Backend Setup**
 ```bash
 # Navigate to project root
-cd /path/to/thclone
+cd /path/to/chardb
 
 # Create S3 bucket for Terraform state (one-time setup)
 aws s3 mb s3://clovercoin-tf-state --region us-east-1
@@ -149,17 +149,17 @@ cd ../../../
 ```bash
 # Get server IP from Terraform
 export SERVER_IP=$(cd infra/environments/$ENVIRONMENT && terraform output -raw backend_public_ip)
-export SSH_KEY_PATH=$(cd infra/environments/$ENVIRONMENT && terraform output -raw backend_ssh_private_key | tee ~/.ssh/thclone-$ENVIRONMENT.pem && chmod 600 ~/.ssh/thclone-$ENVIRONMENT.pem && echo ~/.ssh/thclone-$ENVIRONMENT.pem)
+export SSH_KEY_PATH=$(cd infra/environments/$ENVIRONMENT && terraform output -raw backend_ssh_private_key | tee ~/.ssh/chardb-$ENVIRONMENT.pem && chmod 600 ~/.ssh/chardb-$ENVIRONMENT.pem && echo ~/.ssh/chardb-$ENVIRONMENT.pem)
 
 # SSH into the server
 ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP
 
 # Inside the server, run database migrations
 cd ~/app
-docker compose exec backend yarn workspace @thclone/backend db:push
+docker compose exec backend yarn workspace @chardb/backend db:push
 
 # Optional: Run database seed data (if available)
-docker compose exec backend yarn workspace @thclone/backend db:seed
+docker compose exec backend yarn workspace @chardb/backend db:seed
 
 # Exit SSH session
 exit
@@ -240,7 +240,7 @@ aws ecr get-login-password --region us-east-1 | docker login --username AWS --pa
 **2. SSH Connection Issues:**
 ```bash
 # Verify SSH key permissions
-chmod 600 ~/.ssh/thclone-$ENVIRONMENT.pem
+chmod 600 ~/.ssh/chardb-$ENVIRONMENT.pem
 
 # Check security group allows your IP
 aws ec2 describe-security-groups --filters "Name=group-name,Values=*backend*"
@@ -261,7 +261,7 @@ ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker compose restart"
 ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker compose logs postgres"
 
 # Re-run database setup if needed
-ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker compose exec backend yarn workspace @thclone/backend db:push"
+ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker compose exec backend yarn workspace @chardb/backend db:push"
 ```
 
 ## 🧹 Cleanup
@@ -304,4 +304,4 @@ Once deployed, you have access to:
 - **Health Endpoint**: `http://$SERVER_IP:4000/health`
 - **GraphQL Playground**: `http://$SERVER_IP:4000/graphql` (development mode)
 
-This completes the full deployment workflow for ThClone infrastructure and application. The setup provides a production-ready environment with proper security, observability, and scalability foundations.
+This completes the full deployment workflow for CharDB infrastructure and application. The setup provides a production-ready environment with proper security, observability, and scalability foundations.

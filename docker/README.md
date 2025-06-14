@@ -1,6 +1,6 @@
 # Docker Compose Configuration
 
-This directory contains a modular Docker Compose setup for the ThClone application.
+This directory contains a modular Docker Compose setup for the CharDB application.
 
 ## Structure
 
@@ -35,8 +35,8 @@ docker compose up postgres redis backend
 docker compose -f docker compose.prod.yml up
 
 # With environment variables
-ECR_REPOSITORY_URL=123456789.dkr.ecr.us-east-1.amazonaws.com/thclone-backend \
-DATABASE_URL=postgresql://user:pass@localhost:5432/thclone \
+ECR_REPOSITORY_URL=123456789.dkr.ecr.us-east-1.amazonaws.com/chardb-backend \
+DATABASE_URL=postgresql://user:pass@localhost:5432/chardb \
 JWT_SECRET=your-secret \
 docker compose -f docker compose.prod.yml up
 ```
@@ -75,9 +75,9 @@ docker compose -f services/postgres.yml -f services/redis.yml up
 All services support environment variable customization:
 
 ### Database (postgres)
-- `POSTGRES_DB` - Database name (default: thclone_dev)
-- `POSTGRES_USER` - Database user (default: thclone)
-- `POSTGRES_PASSWORD` - Database password (default: thclone_password)
+- `POSTGRES_DB` - Database name (default: chardb_dev)
+- `POSTGRES_USER` - Database user (default: chardb)
+- `POSTGRES_PASSWORD` - Database password (default: chardb_password)
 - `POSTGRES_PORT` - External port (default: 5433)
 
 ### Backend
