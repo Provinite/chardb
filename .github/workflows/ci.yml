@@ -15,7 +15,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: thclone_test
+          POSTGRES_DB: chardb_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -49,47 +49,47 @@ jobs:
 
     - name: Lint code
       run: |
-        yarn workspace @thclone/backend lint
-        yarn workspace @thclone/frontend lint
+        yarn workspace @chardb/backend lint
+        yarn workspace @chardb/frontend lint
 
     - name: Type check
       run: |
-        yarn workspace @thclone/shared type-check
-        yarn workspace @thclone/backend type-check
-        yarn workspace @thclone/frontend type-check
+        yarn workspace @chardb/shared type-check
+        yarn workspace @chardb/backend type-check
+        yarn workspace @chardb/frontend type-check
 
     - name: Build packages
       run: |
-        yarn workspace @thclone/shared build
-        yarn workspace @thclone/database build
-        yarn workspace @thclone/ui build
+        yarn workspace @chardb/shared build
+        yarn workspace @chardb/database build
+        yarn workspace @chardb/ui build
 
     - name: Generate Prisma client
-      run: yarn workspace @thclone/database db:generate
+      run: yarn workspace @chardb/database db:generate
       env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/thclone_test
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chardb_test
 
     - name: Run database migrations
-      run: yarn workspace @thclone/database db:push
+      run: yarn workspace @chardb/database db:push
       env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/thclone_test
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chardb_test
 
     - name: Run backend tests
-      run: yarn workspace @thclone/backend test
+      run: yarn workspace @chardb/backend test
       env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/thclone_test
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chardb_test
         JWT_SECRET: test-secret
         REDIS_URL: redis://localhost:6379
 
     - name: Run frontend tests
-      run: yarn workspace @thclone/frontend test --run
+      run: yarn workspace @chardb/frontend test --run
       env:
         VITE_GRAPHQL_URL: http://localhost:4000/graphql
 
     - name: Build applications
       run: |
-        yarn workspace @thclone/backend build
-        yarn workspace @thclone/frontend build
+        yarn workspace @chardb/backend build
+        yarn workspace @chardb/frontend build
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
