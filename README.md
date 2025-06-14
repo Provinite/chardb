@@ -1,6 +1,6 @@
-# ThClone - Character Hosting Platform
+# CharDB - Character Database Platform
 
-A modern, feature-rich character hosting and art sharing platform built with NestJS, React, and TypeScript. Think of it as a next-generation alternative to toyhou.se with enhanced features and performance.
+A modern, feature-rich character database and art sharing platform built with NestJS, React, and TypeScript. Think of it as a next-generation alternative to toyhou.se with enhanced features and performance.
 
 ## 🌟 Features
 
@@ -16,7 +16,7 @@ A modern, feature-rich character hosting and art sharing platform built with Nes
 
 ### Monorepo Structure
 ```
-thclone/
+chardb/
 ├── apps/
 │   ├── backend/          # NestJS API with GraphQL
 │   └── frontend/         # React application
@@ -51,7 +51,7 @@ thclone/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd thclone
+   cd chardb
    ```
 
 2. **Install dependencies**
@@ -74,20 +74,20 @@ thclone/
    docker compose -f docker/docker compose.yml up postgres redis -d
    
    # Generate Prisma client and run migrations
-   yarn workspace @thclone/database db:generate
-   yarn workspace @thclone/database db:migrate
+   yarn workspace @chardb/database db:generate
+   yarn workspace @chardb/database db:migrate
    
    # Seed the database (optional)
-   yarn workspace @thclone/database db:seed
+   yarn workspace @chardb/database db:seed
    ```
 
 5. **Start the applications**
    ```bash
    # Start backend (in one terminal)
-   yarn workspace @thclone/backend dev
+   yarn workspace @chardb/backend dev
    
    # Start frontend (in another terminal)
-   yarn workspace @thclone/frontend dev
+   yarn workspace @chardb/frontend dev
    ```
 
 6. **Access the application**
@@ -149,7 +149,7 @@ The application uses PostgreSQL with Prisma ORM. Key entities include:
 
 #### Backend (`apps/backend/.env`)
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/thclone_db"
+DATABASE_URL="postgresql://username:password@localhost:5432/chardb_db"
 JWT_SECRET="your-super-secret-jwt-key"
 REDIS_URL="redis://localhost:6379"
 AWS_ACCESS_KEY_ID="your-aws-key"
@@ -169,13 +169,13 @@ VITE_GRAPHQL_URL="http://localhost:4000/graphql"
 yarn test
 
 # Run backend tests
-yarn workspace @thclone/backend test
+yarn workspace @chardb/backend test
 
 # Run frontend tests
-yarn workspace @thclone/frontend test
+yarn workspace @chardb/frontend test
 
 # Run tests with coverage
-yarn workspace @thclone/backend test:cov
+yarn workspace @chardb/backend test:cov
 ```
 
 ## 🚢 Deployment
@@ -186,8 +186,8 @@ yarn workspace @thclone/backend test:cov
 yarn build
 
 # Build Docker images
-docker build -f docker/Dockerfile.backend -t thclone-backend .
-docker build -f docker/Dockerfile.frontend -t thclone-frontend .
+docker build -f docker/Dockerfile.backend -t chardb-backend .
+docker build -f docker/Dockerfile.frontend -t chardb-frontend .
 ```
 
 ### Production Deployment
@@ -263,7 +263,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you encounter any issues or have questions:
 
-1. Check the [Issues](https://github.com/your-repo/thclone/issues) page
+1. Check the [Issues](https://github.com/your-repo/chardb/issues) page
 2. Create a new issue with detailed information
 3. Join our community discussions
 
@@ -275,4 +275,4 @@ If you encounter any issues or have questions:
 
 ---
 
-**Built with ❤️ by the ThClone team**
+**Built with ❤️ by the CharDB team**

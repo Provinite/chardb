@@ -1,8 +1,8 @@
-# Toyhou.se Clone - Comprehensive Development Plan
+# Character Database (CharDB) - Comprehensive Development Plan
 
 ## Project Overview
 
-A feature-rich clone of toyhou.se built as a modern monorepo application using NestJS/React with TypeScript, PostgreSQL, and Docker deployment.
+A feature-rich character database application built as a modern monorepo application using NestJS/React with TypeScript, PostgreSQL, and Docker deployment.
 
 ## Tech Stack
 
@@ -26,7 +26,7 @@ A feature-rich clone of toyhou.se built as a modern monorepo application using N
 ## Project Structure
 
 ```
-thclone/
+chardb/
 ├── apps/
 │   ├── backend/                    # NestJS application
 │   │   ├── src/
@@ -696,4 +696,4 @@ Total estimated monthly cost: $450-1200 depending on scale
 
 ---
 
-This plan provides a comprehensive roadmap for building a robust, scalable toyhou.se clone with modern web technologies. The phased approach ensures steady progress while maintaining code quality and user experience standards.
+This plan provides a comprehensive roadmap for building a robust, scalable character database application with modern web technologies. The phased approach ensures steady progress while maintaining code quality and user experience standards.
