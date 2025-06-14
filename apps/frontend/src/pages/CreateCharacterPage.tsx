@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useMutation } from '@apollo/client';
 import { toast } from 'react-hot-toast';
 import styled from 'styled-components';
-import { Button } from '@thclone/ui';
+import { Button } from '@chardb/ui';
 import { CREATE_CHARACTER, GET_CHARACTERS } from '../graphql/characters';
 
 const characterSchema = z.object({

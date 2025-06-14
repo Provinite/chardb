@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'react-hot-toast';
 import styled from 'styled-components';
-import { Button } from '@thclone/ui';
+import { Button } from '@chardb/ui';
 import { 
   useGetCharacterQuery,
   useUpdateCharacterMutation,

@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useMutation, useQuery } from '@apollo/client';
 import { toast } from 'react-hot-toast';
 import styled from 'styled-components';
-import { Button } from '@thclone/ui';
+import { Button } from '@chardb/ui';
 import { CREATE_GALLERY, GET_GALLERIES } from '../graphql/galleries';
 import { GET_MY_CHARACTERS, Character } from '../graphql/characters';
 

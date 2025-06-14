@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Button } from '@thclone/ui';
+import { Button } from '@chardb/ui';
 import { useGetImagesQuery, Visibility } from '../generated/graphql';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { lightTheme, darkTheme, Theme } from '@thclone/ui';
+import { lightTheme, darkTheme, Theme } from '@chardb/ui';
 import { GlobalStyles } from '../components/GlobalStyles';
 
 type ThemeMode = 'light' | 'dark';

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import styled from 'styled-components';
-import { Button } from '@thclone/ui';
+import { Button } from '@chardb/ui';
 
 const UploadContainer = styled.div.withConfig({
   shouldForwardProp: (prop) => !['isDragActive', 'hasError'].includes(prop),

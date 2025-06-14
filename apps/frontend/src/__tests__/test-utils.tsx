@@ -3,7 +3,7 @@ import { render, RenderOptions } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { lightTheme } from '@thclone/ui';
+import { lightTheme } from '@chardb/ui';
 import { vi } from 'vitest';
 
 // Create mock functions first (before vi.mock calls to avoid hoisting issues)

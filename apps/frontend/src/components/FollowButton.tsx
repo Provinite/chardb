@@ -1,7 +1,7 @@
 import React from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import styled from 'styled-components';
-import { Button } from '@thclone/ui';
+import { Button } from '@chardb/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { TOGGLE_FOLLOW, GET_FOLLOW_STATUS } from '../graphql/social';
 import toast from 'react-hot-toast';

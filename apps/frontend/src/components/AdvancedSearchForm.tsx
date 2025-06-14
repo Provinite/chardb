@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useForm } from 'react-hook-form';
-import { Button } from '@thclone/ui';
+import { Button } from '@chardb/ui';
 
 const SearchForm = styled.form`
   display: flex;

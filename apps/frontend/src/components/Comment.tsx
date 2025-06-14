@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation } from '@apollo/client';
 import styled from 'styled-components';
-import { Button } from '@thclone/ui';
+import { Button } from '@chardb/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { UPDATE_COMMENT, DELETE_COMMENT } from '../graphql/social';
 import { LikeButton } from './LikeButton';

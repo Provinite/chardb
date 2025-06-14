@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
-import { Button } from '@thclone/ui';
+import { Button } from '@chardb/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { ImageUpload, ImageFile } from '../components/ImageUpload';
 import { GET_MY_GALLERIES } from '../graphql/galleries';
