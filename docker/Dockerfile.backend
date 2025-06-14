@@ -1,5 +1,12 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS base
+
+RUN apk update && apk add --no-cache openssl
+
+FROM base AS builder
+
+# Enable Corepack for Yarn 4
+RUN corepack enable
 
 WORKDIR /app
 
@@ -10,23 +17,26 @@ COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/database/package.json ./packages/database/
 
-# Install dependencies
-RUN yarn install --immutable
+RUN yarn install
 
 # Copy source code
 COPY apps/backend ./apps/backend
 COPY packages/shared ./packages/shared
 COPY packages/database ./packages/database
 
-# Build shared packages first
-RUN yarn workspace @thclone/shared build
-RUN yarn workspace @thclone/database build
+# Generate Prisma client
+RUN yarn workspace @thclone/backend db:generate
 
-# Build backend application
-RUN yarn workspace @thclone/backend build
+# Build all packages with dependency ordering
+RUN yarn workspaces foreach --all --topological --verbose run build
 
 # Production stage
-FROM node:18-alpine AS production
+FROM base AS production
+
+
+
+# Enable Corepack for Yarn 4
+RUN corepack enable
 
 WORKDIR /app
 
@@ -39,14 +49,17 @@ COPY packages/database/package.json ./packages/database/
 
 RUN yarn workspaces focus --production @thclone/backend
 
+# Copy schema files needed for Prisma client generation
+COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
+COPY --from=builder /app/apps/backend/prisma ./apps/backend/prisma
+
+# Generate Prisma client in production stage
+RUN yarn workspace @thclone/backend db:generate
+
 # Copy built application
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/database/dist ./packages/database/dist
-COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
-
-# Copy necessary files
-COPY apps/backend/prisma ./apps/backend/prisma
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
@@ -64,4 +77,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:4000/health || exit 1
 
 # Start application
-CMD ["node", "apps/backend/dist/main.js"]
+CMD ["node", "apps/backend/dist/src/main.js"]
