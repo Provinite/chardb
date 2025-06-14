@@ -143,7 +143,7 @@ export const SignupPage: React.FC = () => {
   return (
     <Container>
       <Card>
-        <Title>Join ThClone</Title>
+        <Title>Join CharDB</Title>
         
         <Form onSubmit={handleSubmit(onSubmit)}>
           <FormGroup>

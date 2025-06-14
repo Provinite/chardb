@@ -18,7 +18,7 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
-const THEME_STORAGE_KEY = 'thclone-theme-mode';
+const THEME_STORAGE_KEY = 'chardb-theme-mode';
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Initialize theme from localStorage or default to light

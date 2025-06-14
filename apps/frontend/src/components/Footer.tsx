@@ -21,7 +21,7 @@ export const Footer: React.FC = () => {
   return (
     <FooterContainer>
       <FooterContent>
-        <p>&copy; 2024 ThClone. A character hosting platform built with ❤️</p>
+        <p>&copy; 2024 CharDB. A character hosting platform built with ❤️</p>
       </FooterContent>
     </FooterContainer>
   );

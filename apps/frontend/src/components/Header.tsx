@@ -86,7 +86,7 @@ export const Header: React.FC = () => {
   return (
     <HeaderContainer>
       <HeaderContent>
-        <Logo to="/">ThClone</Logo>
+        <Logo to="/">CharDB</Logo>
         
         <Nav>
           <NavLink to="/characters">Characters</NavLink>

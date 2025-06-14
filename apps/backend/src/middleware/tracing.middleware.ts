@@ -5,7 +5,7 @@ import { trace, context, SpanKind } from '@opentelemetry/api';
 @Injectable()
 export class TracingMiddleware implements NestMiddleware {
   private readonly logger = new Logger(TracingMiddleware.name);
-  private readonly tracer = trace.getTracer('thclone-middleware', '1.0.0');
+  private readonly tracer = trace.getTracer('chardb-middleware', '1.0.0');
 
   use(req: Request, res: Response, next: NextFunction) {
     const startTime = Date.now();

@@ -10,7 +10,7 @@ import {
 // Initialize OpenTelemetry SDK with simplified configuration
 const sdk = new NodeSDK({
   resource: resourceFromAttributes({
-    [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || "thclone-backend",
+    [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || "chardb-backend",
     [ATTR_SERVICE_VERSION]: process.env.OTEL_SERVICE_VERSION || "1.0.0",
   }),
 

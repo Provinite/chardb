@@ -13,7 +13,7 @@ export class HealthController {
       const health = {
         status: 'ok',
         timestamp: new Date().toISOString(),
-        service: 'thclone-backend',
+        service: 'chardb-backend',
         version: process.env.OTEL_SERVICE_VERSION || '1.0.0',
         tracing: {
           enabled: true,
