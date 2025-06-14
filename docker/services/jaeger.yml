@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
+
+# Jaeger Distributed Tracing Service
+#
+# All-in-one Jaeger deployment for distributed tracing and observability.
+# Provides essential debugging and performance monitoring capabilities:
+# - Trace collection from the backend API via OpenTelemetry
+# - Request flow visualization across service boundaries
+# - Performance bottleneck identification
+# - Error tracking and debugging assistance
+# - Service dependency mapping
+# - Latency analysis and optimization insights
+#
+# Web UI available at http://localhost:16686 for trace visualization.
+# Accepts traces from the OTEL collector in multiple formats (OTLP, Zipkin).
+# Essential for understanding application behavior and debugging issues.
+
+version: '3.8'
+
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.56
+    container_name: thclone-jaeger
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"  # Jaeger UI
+      - "${JAEGER_HTTP_PORT:-14268}:14268"  # HTTP collector
+      - "${JAEGER_GRPC_PORT:-14250}:14250"  # gRPC collector
+      - "${JAEGER_OTLP_GRPC_PORT:-4317}:4317"    # OTLP gRPC receiver
+      - "${JAEGER_OTLP_HTTP_PORT:-4318}:4318"    # OTLP HTTP receiver
+      - "${JAEGER_UDP_PORT:-6831}:6831/udp"  # UDP collector (legacy)
+    environment:
+      COLLECTOR_OTLP_ENABLED: ${COLLECTOR_OTLP_ENABLED:-true}
+      COLLECTOR_ZIPKIN_HOST_PORT: ${COLLECTOR_ZIPKIN_HOST_PORT:-:9411}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:16686/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped

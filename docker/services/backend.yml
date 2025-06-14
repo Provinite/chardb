@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
+
+# Backend API Service
+#
+# Node.js/NestJS GraphQL API server that provides the core application logic.
+# Handles all business logic and data operations including:
+# - User authentication and authorization (JWT-based)
+# - Character creation, editing, and management
+# - Image upload and processing
+# - Gallery management and organization
+# - Social features (comments, likes, follows)
+# - Database operations via Prisma ORM
+# - File uploads to AWS S3
+#
+# Integrates with OpenTelemetry for distributed tracing and observability.
+# Depends on PostgreSQL for data persistence.
+# Supports hot-reloading in development mode for rapid iteration.
+
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile.backend
+    container_name: thclone-backend
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${BACKEND_PORT:-4000}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://thclone:thclone_password@postgres:5432/thclone_dev}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here}
+      # CORS Configuration
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      # OpenTelemetry Configuration
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-thclone-backend}
+      OTEL_SERVICE_VERSION: ${OTEL_SERVICE_VERSION:-1.0.0}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-otlp}
+      OTEL_LOG_LEVEL: ${OTEL_LOG_LEVEL:-info}
+    ports:
+      - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT:-4000}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped

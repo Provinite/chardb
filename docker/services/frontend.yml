@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
+
+# Frontend Application Service
+#
+# React + TypeScript single-page application that provides the user interface.
+# Built with Vite for fast development and optimized production builds.
+# Features include:
+# - Character browsing and search functionality
+# - User authentication and profile management
+# - Image galleries and viewing
+# - Social interactions (commenting, liking, following)
+# - Responsive design for mobile and desktop
+# - Apollo Client for GraphQL API communication
+# - Theme switching (light/dark mode)
+#
+# In development: Runs with hot-reloading for rapid UI iteration
+# In production: Served as static files from S3 + CloudFront (not via Docker)
+# Connects to the backend GraphQL API for all data operations.
+
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: thclone-frontend
+    environment:
+      VITE_GRAPHQL_URL: ${VITE_GRAPHQL_URL:-http://localhost:4000/graphql}
+    ports:
+      - "${FRONTEND_PORT:-3000}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

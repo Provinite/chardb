@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
+
+# PostgreSQL Database Service
+# 
+# Primary database for the ThClone application. Stores all application data including:
+# - User accounts and profiles
+# - Characters and their metadata
+# - Images and galleries
+# - Comments and social interactions
+# - Authentication and session data
+#
+# Uses PostgreSQL 15 Alpine for a balance of features and container size.
+# Includes health checks for reliable startup ordering and restart policies.
+# Supports environment variable configuration for different environments.
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: thclone-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-thclone_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-thclone}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-thclone_password}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-thclone} -d ${POSTGRES_DB:-thclone_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
