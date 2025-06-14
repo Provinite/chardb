@@ -55,7 +55,7 @@ export class TestApp {
     try {
       // Reset test database
       console.log('Setting up test database...');
-      execSync('yarn workspace @thclone/backend db:push', { 
+      execSync('yarn workspace @chardb/backend db:push', { 
         env: { ...process.env, DATABASE_URL: 'postgresql://test_user:test_password@localhost:5440/chardb_test' },
         stdio: 'inherit' 
       });
