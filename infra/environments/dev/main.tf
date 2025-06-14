@@ -8,7 +8,7 @@ terraform {
   
   backend "s3" {
     bucket = "clovercoin-tf-state"
-    key    = "thclone/environments/dev"
+    key    = "chardb/environments/dev"
     region = "us-east-1"
   }
 }

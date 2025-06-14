@@ -13,7 +13,7 @@ variable "environment" {
 variable "project_name" {
   description = "Name of the project"
   type        = string
-  default     = "thclone"
+  default     = "chardb"
 }
 
 # Backend configuration variables (sensitive/environment-specific only)

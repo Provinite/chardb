@@ -12,7 +12,7 @@ variable "environment" {
 variable "project_name" {
   description = "Name of the project"
   type        = string
-  default     = "thclone"
+  default     = "chardb"
 }
 
 variable "domain_name" {
