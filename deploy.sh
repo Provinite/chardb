@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# ThClone Deployment Script
+# CharDB Deployment Script
 # This script deploys the application to the EC2 instance after infrastructure is provisioned
 
 set -e
@@ -28,7 +28,7 @@ if [ -z "$SERVER_IP" ] || [ -z "$SSH_KEY_PATH" ] || [ -z "$ECR_REPOSITORY_URL" ]
     exit 1
 fi
 
-echo "🚀 Deploying ThClone to $SERVER_IP (environment: $ENVIRONMENT)"
+echo "🚀 Deploying CharDB to $SERVER_IP (environment: $ENVIRONMENT)"
 
 # Copy deployment files to server
 echo "📦 Copying deployment files..."

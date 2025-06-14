@@ -6,7 +6,7 @@
 - Always update the project plan when new requirements are discovered or requested by the user
 - You can always just run `yarn install` from the project root to install dependencies for the entire repository
 - This project is yarn 4 monorepo
-- You can execute yarn scripts in a particular package by running `yarn workspace ${PACKAGE_NAME} ${SCRIPT_NAME}` (example: `yarn workspace @thclone/backend build`)
+- You can execute yarn scripts in a particular package by running `yarn workspace ${PACKAGE_NAME} ${SCRIPT_NAME}` (example: `yarn workspace @chardb/backend build`)
   - Prefer this method to the subshell when available
 - To execute commands in subdirectories, use the bash subshell syntax instead of cd'ing into directories
 - You can type check the entire repository by running `yarn type-check` in the root

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Starting ThClone Development Environment"
+echo "🚀 Starting CharDB Development Environment"
 
 # Start database services in background
 echo "📊 Starting PostgreSQL and Redis..."
@@ -11,7 +11,7 @@ echo "⏳ Waiting for database to be ready..."
 sleep 5
 
 # Check if postgres is ready
-until docker compose -f docker/docker compose.yml exec postgres pg_isready -U thclone -d thclone_dev > /dev/null 2>&1; do
+until docker compose -f docker/docker compose.yml exec postgres pg_isready -U chardb -d chardb_dev > /dev/null 2>&1; do
   echo "⏳ Waiting for PostgreSQL..."
   sleep 2
 done
