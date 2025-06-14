@@ -115,4 +115,9 @@ tasks/
 *.tar.gz
 
 # Terraform
-*.tfvars 
+*.tfvars
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.pem

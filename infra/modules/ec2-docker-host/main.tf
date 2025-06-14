@@ -41,7 +41,7 @@ data "aws_ami" "amazon_linux" {
 
   filter {
     name   = "name"
-    values = ["al2023-ami-*-x86_64"]
+    values = ["al2023-ami-2023.7.20250527.1-kernel-6.12-arm64"]
   }
 
   filter {
@@ -51,7 +51,7 @@ data "aws_ami" "amazon_linux" {
 
   filter {
     name   = "architecture"
-    values = ["x86_64"]
+    values = ["arm64"]
   }
 }
 

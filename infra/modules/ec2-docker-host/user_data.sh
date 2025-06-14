@@ -8,16 +8,17 @@
 dnf update -y
 
 # Install basic dependencies
-dnf install -y git curl unzip dnf-plugins-core
-
+dnf install -y git unzip dnf-plugins-core
 # Remove any existing Docker packages
 dnf remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine
 
 # Add Docker repository
 dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+# Use CentOS9 package repository for Docker on Amazon Linux 2023
+sudo sed -i 's/$releasever/9/g' /etc/yum.repos.d/docker-ce.repo
 
 # Install Docker Engine and Compose plugin
-dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+dnf install -y docker-ce docker-ce-cli docker-buildx-plugin docker-compose-plugin
 
 # Start and enable Docker
 systemctl start docker
