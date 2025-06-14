@@ -20,7 +20,7 @@ version: '3.8'
 services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.94.0
-    container_name: thclone-otel-collector
+    container_name: chardb-otel-collector
     command: ["--config=/etc/otel-collector-config.yml"]
     volumes:
       - ${OTEL_CONFIG_PATH:-./otel-collector-config.yml}:/etc/otel-collector-config.yml

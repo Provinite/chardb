@@ -22,16 +22,16 @@ include:
 services:
   postgres:
     environment:
-      POSTGRES_DB: thclone_dev
-      POSTGRES_USER: thclone
-      POSTGRES_PASSWORD: thclone_password
+      POSTGRES_DB: chardb_dev
+      POSTGRES_USER: chardb
+      POSTGRES_PASSWORD: chardb_password
     ports:
       - "5433:5432"  # Non-standard port to avoid conflicts
 
   backend:
     environment:
       NODE_ENV: development
-      DATABASE_URL: postgresql://thclone:thclone_password@postgres:5432/thclone_dev
+      DATABASE_URL: postgresql://chardb:chardb_password@postgres:5432/chardb_dev
       JWT_SECRET: your-super-secret-jwt-key-here
       FRONTEND_URL: http://localhost:3000
     volumes:
@@ -40,7 +40,7 @@ services:
       - ../packages:/app/packages
       - /app/node_modules
       - /app/apps/backend/node_modules
-    command: ["yarn", "workspace", "@thclone/backend", "dev"]
+    command: ["yarn", "workspace", "@chardb/backend", "dev"]
 
   frontend:
     environment:
@@ -53,8 +53,8 @@ services:
       - ../packages:/app/packages
       - /app/node_modules
       - /app/apps/frontend/node_modules
-    command: ["yarn", "workspace", "@thclone/frontend", "dev", "--host", "0.0.0.0", "--port", "3000"]
+    command: ["yarn", "workspace", "@chardb/frontend", "dev", "--host", "0.0.0.0", "--port", "3000"]
 
 networks:
   default:
-    name: thclone-network
+    name: chardb-network

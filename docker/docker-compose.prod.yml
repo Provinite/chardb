@@ -46,4 +46,4 @@ volumes:
 
 networks:
   default:
-    name: thclone-prod-network
+    name: chardb-prod-network

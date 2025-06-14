@@ -23,16 +23,16 @@ services:
     build:
       context: ../..
       dockerfile: docker/Dockerfile.backend
-    container_name: thclone-backend
+    container_name: chardb-backend
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: ${BACKEND_PORT:-4000}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://thclone:thclone_password@postgres:5432/thclone_dev}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://chardb:chardb_password@postgres:5432/chardb_dev}
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here}
       # CORS Configuration
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       # OpenTelemetry Configuration
-      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-thclone-backend}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-chardb-backend}
       OTEL_SERVICE_VERSION: ${OTEL_SERVICE_VERSION:-1.0.0}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
       OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}

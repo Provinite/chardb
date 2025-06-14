@@ -22,11 +22,11 @@ COPY packages/shared ./packages/shared
 COPY packages/ui ./packages/ui
 
 # Build shared packages first
-RUN yarn workspace @thclone/shared build
-RUN yarn workspace @thclone/ui build
+RUN yarn workspace @chardb/shared build
+RUN yarn workspace @chardb/ui build
 
 # Build frontend application
-RUN yarn workspace @thclone/frontend build
+RUN yarn workspace @chardb/frontend build
 
 # Production stage
 FROM nginx:alpine AS production

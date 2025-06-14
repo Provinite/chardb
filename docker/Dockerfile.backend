@@ -25,7 +25,7 @@ COPY packages/shared ./packages/shared
 COPY packages/database ./packages/database
 
 # Generate Prisma client
-RUN yarn workspace @thclone/backend db:generate
+RUN yarn workspace @chardb/backend db:generate
 
 # Build all packages with dependency ordering
 RUN yarn workspaces foreach --all --topological --verbose run build
@@ -47,14 +47,14 @@ COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/database/package.json ./packages/database/
 
-RUN yarn workspaces focus --production @thclone/backend
+RUN yarn workspaces focus --production @chardb/backend
 
 # Copy schema files needed for Prisma client generation
 COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
 COPY --from=builder /app/apps/backend/prisma ./apps/backend/prisma
 
 # Generate Prisma client in production stage
-RUN yarn workspace @thclone/backend db:generate
+RUN yarn workspace @chardb/backend db:generate
 
 # Copy built application
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
