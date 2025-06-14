@@ -1,6 +1,9 @@
 # Build stage
 FROM node:18-alpine AS builder
 
+# Enable Corepack for Yarn 4
+RUN corepack enable
+
 WORKDIR /app
 
 # Copy package files

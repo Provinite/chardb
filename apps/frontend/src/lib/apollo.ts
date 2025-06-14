@@ -54,8 +54,17 @@ export const client = new ApolloClient({
             },
           },
           characters: {
-            keyArgs: [],
-            merge(existing = { characters: [], total: 0 }, incoming) {
+            keyArgs: ["filters"],
+            merge(existing = { characters: [], total: 0 }, incoming, { args, variables }) {
+              // If this is a fresh query (offset 0) or different filters, replace existing data
+              const isLoadMore = variables?.filters?.offset && variables.filters.offset > 0;
+              
+              if (!isLoadMore) {
+                // Fresh search - replace existing data
+                return incoming;
+              }
+              
+              // Load more - append to existing data
               return {
                 ...incoming,
                 characters: [...(existing.characters || []), ...(incoming.characters || [])],
