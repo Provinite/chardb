@@ -112,4 +112,7 @@ tasks/
 
 # Build artifacts
 *.tgz
-*.tar.gz 
+*.tar.gz
+
+# Terraform
+*.tfvars 
