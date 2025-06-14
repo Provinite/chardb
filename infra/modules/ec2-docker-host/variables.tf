@@ -32,7 +32,7 @@ variable "aws_region" {
 variable "root_volume_size" {
   description = "Size of the root volume in GB"
   type        = number
-  default     = 20
+  default     = 50
 }
 
 variable "tags" {

@@ -26,7 +26,7 @@ variable "backend_instance_type" {
 variable "backend_root_volume_size" {
   description = "Size of the root volume in GB for backend"
   type        = number
-  default     = 20  # Standard default
+  default     = 50  # Increased for application needs
 }
 
 variable "backend_ssh_allowed_cidr_blocks" {
