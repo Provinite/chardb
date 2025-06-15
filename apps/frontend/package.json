@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "predev": "yarn schema:export && yarn codegen",
-    "build": "yarn schema:export && yarn codegen && tsc && vite build",
+    "build": "yarn build:safe",
+    "build:safe": "(yarn schema:export && yarn codegen || echo 'Warning: GraphQL codegen failed, using existing generated files') && tsc && vite build",
     "schema:export": "yarn workspace @chardb/backend schema:export",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",

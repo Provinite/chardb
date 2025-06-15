@@ -25,8 +25,8 @@ module "frontend_static_site" {
   route53_zone_id       = var.route53_zone_id
   
   default_root_object = "index.html"
-  default_ttl        = var.default_ttl
-  max_ttl            = var.max_ttl
+  default_ttl        = var.default_ttl != null ? var.default_ttl : (var.environment == "dev" ? 0 : 3600)
+  max_ttl            = var.max_ttl != null ? var.max_ttl : (var.environment == "dev" ? 0 : 86400)
   price_class        = var.price_class
   
   tags = local.common_tags

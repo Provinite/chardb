@@ -36,13 +36,13 @@ variable "route53_zone_id" {
 variable "default_ttl" {
   description = "Default TTL for cached objects (seconds)"
   type        = number
-  default     = 3600  # 1 hour
+  default     = null  # Will use environment-specific defaults
 }
 
 variable "max_ttl" {
   description = "Maximum TTL for cached objects (seconds)"
   type        = number
-  default     = 86400  # 1 day
+  default     = null  # Will use environment-specific defaults
 }
 
 variable "price_class" {
