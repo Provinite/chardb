@@ -4,18 +4,11 @@ import './tracing';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { TracingMiddleware } from './middleware/tracing.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Get the underlying Express instance
-  const expressApp = app.getHttpAdapter().getInstance();
-  
-  // Add tracing middleware to Express BEFORE any NestJS middleware
-  expressApp.use((req: any, res: any, next: any) => {
-    new TracingMiddleware().use(req, res, next);
-  });
+  // Tracing is handled by OpenTelemetry auto-instrumentation
   
   // Enable CORS with optimizations
   app.enableCors({
