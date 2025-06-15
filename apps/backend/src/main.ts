@@ -19,14 +19,7 @@ async function bootstrap() {
   
   // Enable CORS with optimizations
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production' 
-      ? process.env.FRONTEND_URL 
-      : [
-          'http://localhost:3000',
-          'http://localhost:5173',
-          'http://localhost:8080',
-          process.env.FRONTEND_URL
-        ].filter(Boolean),
+    origin: true, // Allow all origins for now
     credentials: true,
     optionsSuccessStatus: 200, // Some legacy browsers choke on 204
     maxAge: 86400, // Cache preflight response for 24 hours

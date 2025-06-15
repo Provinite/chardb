@@ -17,7 +17,7 @@ const sdk = new NodeSDK({
   // Trace exporter
   traceExporter: new OTLPTraceExporter({
     url:
-      process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
+      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
       "http://localhost:4318/v1/traces",
   }),
 
@@ -44,13 +44,16 @@ const sdk = new NodeSDK({
         },
         requestHook: (span, request) => {
           // Type guard to check if this is an IncomingMessage (server request)
-          if ('headers' in request && request.method === 'OPTIONS') {
-            const headers = request.headers as Record<string, string | string[] | undefined>;
+          if ("headers" in request && request.method === "OPTIONS") {
+            const headers = request.headers as Record<
+              string,
+              string | string[] | undefined
+            >;
             span.setAttributes({
-              'http.options_request': true,
-              'cors.origin': headers.origin || '',
-              'cors.method': headers['access-control-request-method'] || '',
-              'cors.headers': headers['access-control-request-headers'] || '',
+              "http.options_request": true,
+              "cors.origin": headers.origin || "",
+              "cors.method": headers["access-control-request-method"] || "",
+              "cors.headers": headers["access-control-request-headers"] || "",
             });
           }
         },
@@ -72,7 +75,7 @@ try {
   sdk.start();
   console.log("🔍 OpenTelemetry tracing initialized successfully");
   console.log(
-    `📊 Traces will be sent to: ${process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "http://localhost:4318"}`,
+    `📊 Traces will be sent to: ${process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || "http://localhost:4318"}`
   );
   console.log("🖥️  Jaeger UI available at: http://localhost:16686");
 } catch (error) {
@@ -85,7 +88,7 @@ process.on("SIGTERM", () => {
     .shutdown()
     .then(() => console.log("📊 OpenTelemetry terminated"))
     .catch((error) =>
-      console.error("❌ Error terminating OpenTelemetry", error),
+      console.error("❌ Error terminating OpenTelemetry", error)
     )
     .finally(() => process.exit(0));
 });

@@ -2,9 +2,9 @@ receivers:
   otlp:
     protocols:
       grpc:
-        endpoint: 0.0.0.0:${OTEL_GRPC_PORT:-4317}
+        endpoint: 0.0.0.0:4319
       http:
-        endpoint: 0.0.0.0:${OTEL_HTTP_PORT:-4318}
+        endpoint: 0.0.0.0:4320
 
 processors:
   batch:
@@ -14,7 +14,7 @@ processors:
 
 exporters:
   otlp/jaeger:
-    endpoint: jaeger:${OTEL_GRPC_PORT:-4317}
+    endpoint: jaeger:4317
     tls:
       insecure: true
   
@@ -24,7 +24,7 @@ exporters:
     sampling_thereafter: 200
 
   prometheus:
-    endpoint: "0.0.0.0:${OTEL_METRICS_PORT:-8889}"
+    endpoint: "0.0.0.0:8889"
 
 service:
   pipelines:
