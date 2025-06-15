@@ -64,3 +64,15 @@ output "backend_url" {
     module.api_gateway[0].api_gateway_url
   ) : "http://${module.backend_docker_host.public_dns}:${var.backend_port}"
 }
+
+output "db_password" {
+  description = "Generated database password"
+  value       = module.backend_docker_host.db_password
+  sensitive   = true
+}
+
+output "jwt_secret" {
+  description = "Generated JWT secret"
+  value       = module.backend_docker_host.jwt_secret
+  sensitive   = true
+}

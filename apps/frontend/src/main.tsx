@@ -63,7 +63,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   >
                     <div style={{ flex: 1 }}>
                       {t.icon && <span style={{ marginRight: '8px' }}>{t.icon}</span>}
-                      {typeof t.message === 'string' ? t.message : t.message}
+                      {typeof t.message === 'function' ? t.message(t) : t.message}
                     </div>
                     <button
                       onClick={() => toast.dismiss(t.id)}

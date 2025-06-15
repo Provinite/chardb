@@ -166,9 +166,9 @@ model Comment {
   replies  Comment[] @relation("CommentReplies")
   
   // Polymorphic relations (handled in application logic)
-  character Character? @relation(fields: [commentableId], references: [id], onDelete: Cascade)
-  image     Image?     @relation(fields: [commentableId], references: [id], onDelete: Cascade)
-  gallery   Gallery?   @relation(fields: [commentableId], references: [id], onDelete: Cascade)
+  character Character? @relation(fields: [commentableId], references: [id], onDelete: Cascade, map: "comment_character_fkey")
+  image     Image?     @relation(fields: [commentableId], references: [id], onDelete: Cascade, map: "comment_image_fkey")
+  gallery   Gallery?   @relation(fields: [commentableId], references: [id], onDelete: Cascade, map: "comment_gallery_fkey")
 
   likes Like[]
 
@@ -200,10 +200,10 @@ model Like {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   // Polymorphic relations (handled in application logic)
-  character Character? @relation(fields: [likeableId], references: [id], onDelete: Cascade)
-  image     Image?     @relation(fields: [likeableId], references: [id], onDelete: Cascade)
-  gallery   Gallery?   @relation(fields: [likeableId], references: [id], onDelete: Cascade)
-  comment   Comment?   @relation(fields: [likeableId], references: [id], onDelete: Cascade)
+  character Character? @relation(fields: [likeableId], references: [id], onDelete: Cascade, map: "like_character_fkey")
+  image     Image?     @relation(fields: [likeableId], references: [id], onDelete: Cascade, map: "like_image_fkey")
+  gallery   Gallery?   @relation(fields: [likeableId], references: [id], onDelete: Cascade, map: "like_gallery_fkey")
+  comment   Comment?   @relation(fields: [likeableId], references: [id], onDelete: Cascade, map: "like_comment_fkey")
 
   @@unique([userId, likeableType, likeableId])
   @@map("likes")

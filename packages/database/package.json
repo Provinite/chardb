@@ -8,18 +8,19 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "type-check": "tsc --noEmit",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:migrate:prod": "prisma migrate deploy",
-    "db:studio": "prisma studio",
-    "db:seed": "tsx src/seed.ts"
+    "db:generate": "dotenv -e .env -e ../../apps/backend/.env -- prisma generate",
+    "db:push": "dotenv -e .env -e ../../apps/backend/.env -- prisma db push",
+    "db:migrate": "dotenv -e .env -e ../../apps/backend/.env -- prisma migrate dev",
+    "db:migrate:prod": "dotenv -e .env -e ../../apps/backend/.env -- prisma migrate deploy",
+    "db:studio": "dotenv -e .env -e ../../apps/backend/.env -- prisma studio",
+    "db:seed": "dotenv -e .env -e ../../apps/backend/.env -- tsx src/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",
     "prisma": "^5.0.0"
   },
   "devDependencies": {
+    "dotenv-cli": "^8.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   }

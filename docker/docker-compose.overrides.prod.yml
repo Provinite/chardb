@@ -1,0 +1,37 @@
+# Production-specific overrides
+services:
+  backend:
+    # Use pre-built ECR image instead of building locally
+    image: ${ECR_REPOSITORY_URL}:${IMAGE_TAG:-latest}
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL}
+  postgres:
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  jaeger:
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"
+
+  otel-collector:
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+      - "${OTEL_METRICS_PORT:-8889}:8889"
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: chardb-prod-network

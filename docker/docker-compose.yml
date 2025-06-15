@@ -4,7 +4,7 @@
 # This file includes all individual service definitions and applies development-specific overrides
 #
 # Individual services are defined in ./services/ directory with their own documentation
-# 
+#
 # Usage:
 #   Development: docker compose up
 #   Production:  docker compose -f docker-compose.prod.yml up
@@ -17,44 +17,3 @@ include:
   - services/frontend.yml
   - services/jaeger.yml
   - services/otel-collector.yml
-
-# Development-specific overrides
-services:
-  postgres:
-    environment:
-      POSTGRES_DB: chardb_dev
-      POSTGRES_USER: chardb
-      POSTGRES_PASSWORD: chardb_password
-    ports:
-      - "5433:5432"  # Non-standard port to avoid conflicts
-
-  backend:
-    environment:
-      NODE_ENV: development
-      DATABASE_URL: postgresql://chardb:chardb_password@postgres:5432/chardb_dev
-      JWT_SECRET: your-super-secret-jwt-key-here
-      FRONTEND_URL: http://localhost:3000
-    volumes:
-      # Mount source code for hot-reloading
-      - ../apps/backend:/app/apps/backend
-      - ../packages:/app/packages
-      - /app/node_modules
-      - /app/apps/backend/node_modules
-    command: ["yarn", "workspace", "@chardb/backend", "dev"]
-
-  frontend:
-    environment:
-      VITE_GRAPHQL_URL: http://localhost:4000/graphql
-    ports:
-      - "3000:8080"
-    volumes:
-      # Mount source code for hot-reloading
-      - ../apps/frontend:/app/apps/frontend
-      - ../packages:/app/packages
-      - /app/node_modules
-      - /app/apps/frontend/node_modules
-    command: ["yarn", "workspace", "@chardb/frontend", "dev", "--host", "0.0.0.0", "--port", "3000"]
-
-networks:
-  default:
-    name: chardb-network

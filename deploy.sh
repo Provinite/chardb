@@ -9,14 +9,6 @@ set -e
 ENVIRONMENT=${1:-prod}
 IMAGE_TAG=${2:-latest}
 
-# Get Terraform outputs
-echo "📋 Getting Terraform outputs..."
-if ! ./scripts/get-terraform-outputs.sh "$ENVIRONMENT" > /tmp/tf-outputs.log; then
-    echo "❌ Failed to get Terraform outputs"
-    cat /tmp/tf-outputs.log
-    exit 1
-fi
-
 # Source the outputs
 source <(./scripts/get-terraform-outputs.sh "$ENVIRONMENT" | grep "^export")
 
@@ -30,25 +22,58 @@ fi
 
 echo "🚀 Deploying CharDB to $SERVER_IP (environment: $ENVIRONMENT)"
 
-# Copy deployment files to server
-echo "📦 Copying deployment files..."
-scp -i "$SSH_KEY_PATH" docker/docker compose.prod.yml ec2-user@$SERVER_IP:~/app/docker compose.yml
-scp -i "$SSH_KEY_PATH" docker/otel-collector-config.yml ec2-user@$SERVER_IP:~/app/otel-collector-config.yml
-scp -i "$SSH_KEY_PATH" scripts/ecr-login.sh ec2-user@$SERVER_IP:~/app/ecr-login.sh
+# Get variables from terraform outputs
+source <(./scripts/get-terraform-outputs.sh "$ENVIRONMENT" | grep "^export")
 
-# Create deployment script on server
-cat > deploy-remote.sh << EOF
+# Create comprehensive .env file for Docker Compose
+echo "📦 Creating comprehensive .env file..."
+cat > .tmp/.env << EOF
+# ECR and deployment settings
+ECR_REPOSITORY_URL=$ECR_REPOSITORY_URL
+IMAGE_TAG=$IMAGE_TAG
+AWS_REGION=us-east-1
+
+# Database settings
+POSTGRES_DB=app
+POSTGRES_USER=app
+POSTGRES_PASSWORD="${POSTGRES_PASSWORD//$/\\$}"
+POSTGRES_PORT=5432
+DATABASE_URL="postgresql://app:${POSTGRES_PASSWORD//$/\\$}@postgres:5432/app"
+
+# Application settings
+JWT_SECRET="${JWT_SECRET//$/\\$}"
+NODE_ENV=production
+FRONTEND_URL="$FRONTEND_URL"
+
+# Port configurations
+BACKEND_PORT=4000
+JAEGER_UI_PORT=16686
+OTEL_GRPC_PORT=4319
+OTEL_HTTP_PORT=4320
+OTEL_METRICS_PORT=8889
+EOF
+
+# Create simple deploy script that relies on .env file
+echo "📦 Creating deployment script..."
+cat > .tmp/deploy-remote.sh << 'EOF'
 #!/bin/bash
 set -e
 
-# Set environment variables
-export ECR_REPOSITORY_URL="$ECR_REPOSITORY_URL"
-export IMAGE_TAG="$IMAGE_TAG"
-export AWS_REGION="\${AWS_REGION:-us-east-1}"
-export AWS_ACCOUNT_ID="\$(aws sts get-caller-identity --query Account --output text)"
-
 echo "🔐 Logging into ECR..."
 chmod +x ecr-login.sh
+
+# Source .env file for ECR login script
+if [ -f .env ]; then
+    set -a  # automatically export all variables
+    source .env
+    set +a
+    echo "✅ Loaded environment variables from .env"
+    echo "ECR URL: $ECR_REPOSITORY_URL"
+else
+    echo "❌ .env file not found"
+    exit 1
+fi
+
 ./ecr-login.sh
 
 echo "🛑 Stopping existing services..."
@@ -71,13 +96,19 @@ echo "🌐 Backend API: http://\$(curl -s http://169.254.169.254/latest/meta-dat
 echo "📊 Jaeger UI: http://\$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):16686"
 EOF
 
-# Copy and execute deployment script
-echo "🚀 Executing deployment on server..."
-scp -i "$SSH_KEY_PATH" deploy-remote.sh ec2-user@$SERVER_IP:~/app/deploy-remote.sh
-ssh -i "$SSH_KEY_PATH" ec2-user@$SERVER_IP "cd ~/app && chmod +x deploy-remote.sh && ./deploy-remote.sh"
+# Copy deployment files to server
+echo "📦 Copying deployment files..."
+scp -i "$SSH_KEY_PATH" docker/docker-compose.prod.yml ec2-user@$SERVER_IP:~/app/compose.yaml
+scp -i "$SSH_KEY_PATH" docker/docker-compose.overrides.prod.yml ec2-user@$SERVER_IP:~/app/compose.override.yaml
+scp -i "$SSH_KEY_PATH" -r docker/services/ ec2-user@$SERVER_IP:~/app/services/
+scp -i "$SSH_KEY_PATH" docker/otel-collector-config.yml ec2-user@$SERVER_IP:~/app/otel-collector-config.yml
+scp -i "$SSH_KEY_PATH" scripts/ecr-login.sh ec2-user@$SERVER_IP:~/app/ecr-login.sh
+scp -i "$SSH_KEY_PATH" .tmp/.env ec2-user@$SERVER_IP:~/app/.env
+scp -i "$SSH_KEY_PATH" .tmp/deploy-remote.sh ec2-user@$SERVER_IP:~/app/deploy-remote.sh
 
-# Cleanup
-rm deploy-remote.sh
+# Execute deployment script
+echo "🚀 Executing deployment on server..."
+ssh -i "$SSH_KEY_PATH" ec2-user@$SERVER_IP "cd ~/app && chmod +x deploy-remote.sh && ./deploy-remote.sh"
 
 echo "✅ Deployment completed successfully!"
 echo "🌐 Your application should be available at:"

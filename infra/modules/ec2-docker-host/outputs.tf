@@ -58,3 +58,15 @@ output "network_load_balancer_dns_name" {
   description = "DNS name of the Network Load Balancer (if enabled)"
   value       = var.enable_api_gateway ? aws_lb.docker_host[0].dns_name : ""
 }
+
+output "db_password" {
+  description = "Generated database password"
+  value       = random_password.db_password.result
+  sensitive   = true
+}
+
+output "jwt_secret" {
+  description = "Generated JWT secret"
+  value       = random_password.jwt_secret.result
+  sensitive   = true
+}

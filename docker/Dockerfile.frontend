@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Enable Corepack for Yarn 4
 RUN corepack enable
@@ -14,7 +14,7 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/ui/package.json ./packages/ui/
 
 # Install dependencies
-RUN yarn install --immutable
+RUN yarn install
 
 # Copy source code
 COPY apps/frontend ./apps/frontend

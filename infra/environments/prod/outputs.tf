@@ -36,6 +36,11 @@ output "backend_ssh_private_key" {
   sensitive   = true
 }
 
+output "backend_ssh_key_name" {
+  description = "Name of the SSH key pair for backend instance"
+  value       = module.backend.ssh_key_name
+}
+
 output "ssh_key_setup_instructions" {
   description = "Instructions to save and use the SSH key"
   value = <<-EOT
@@ -55,4 +60,16 @@ output "jaeger_url" {
 output "api_gateway_url" {
   description = "API Gateway URL (if enabled)"
   value       = module.backend.api_gateway_url
+}
+
+output "backend_db_password" {
+  description = "Generated database password for backend"
+  value       = module.backend.db_password
+  sensitive   = true
+}
+
+output "backend_jwt_secret" {
+  description = "Generated JWT secret for backend"
+  value       = module.backend.jwt_secret
+  sensitive   = true
 }

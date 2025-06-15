@@ -61,6 +61,10 @@ COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/database/dist ./packages/database/dist
 
+# Copy migration script
+COPY scripts/migrate-and-start.sh ./scripts/migrate-and-start.sh
+RUN chmod +x ./scripts/migrate-and-start.sh
+
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S backend -u 1001
@@ -76,5 +80,6 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:4000/health || exit 1
 
-# Start application
+# Start application with migrations
+ENTRYPOINT ["./scripts/migrate-and-start.sh"]
 CMD ["node", "apps/backend/dist/src/main.js"]

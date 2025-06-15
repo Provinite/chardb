@@ -24,7 +24,6 @@ echo "📦 ECR Repository: $ECR_REPOSITORY_URL"
 
 # Extract AWS account ID from ECR URL
 AWS_ACCOUNT_ID=$(echo "$ECR_REPOSITORY_URL" | cut -d'.' -f1 | cut -d'/' -f3)
-
 echo "🔐 Logging into ECR..."
 aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
