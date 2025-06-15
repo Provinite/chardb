@@ -27,8 +27,9 @@ AWS_ACCOUNT_ID=$(echo "$ECR_REPOSITORY_URL" | cut -d'.' -f1 | cut -d'/' -f3)
 echo "🔐 Logging into ECR..."
 aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
-echo "🏗️ Building backend Docker image..."
+echo "🏗️ Building ARM64 backend Docker image..."
 docker build \
+    --platform linux/arm64 \
     -f docker/Dockerfile.backend \
     -t "${ECR_REPOSITORY_URL}:${IMAGE_TAG}" \
     -t "${ECR_REPOSITORY_URL}:latest" \
