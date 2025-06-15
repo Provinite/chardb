@@ -38,7 +38,9 @@ POSTGRES_DB=app
 POSTGRES_USER=app
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD//$/\\$}"
 POSTGRES_PORT=5432
-DATABASE_URL="postgresql://app:${POSTGRES_PASSWORD//$/\\$}@postgres:5432/app"
+# URL-encode the password properly using Python
+ENCODED_PASSWORD="\$(python3 -c "import urllib.parse; print(urllib.parse.quote('${POSTGRES_PASSWORD}', safe=''))")"
+DATABASE_URL="postgresql://app:\${ENCODED_PASSWORD}@postgres:5432/app"
 
 # Application settings
 JWT_SECRET="${JWT_SECRET//$/\\$}"
