@@ -42,22 +42,22 @@ variable "backend_enable_api_gateway" {
 }
 
 # Frontend configuration variables
-variable "frontend_custom_domain_name" {
+variable "frontend_domain_name" {
   description = "Custom domain name for frontend"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "frontend_acm_certificate_arn" {
   description = "ACM certificate ARN for frontend custom domain"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "frontend_route53_zone_id" {
   description = "Route53 hosted zone ID for frontend custom domain"
   type        = string
-  default     = ""
+  default     = null
 }
 
 # SSH key is now auto-generated during deployment

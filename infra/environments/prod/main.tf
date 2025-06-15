@@ -45,15 +45,16 @@ module "backend" {
   backend_ecr_repository_url = module.backend_ecr.repository_url
 }
 
-# Frontend infrastructure (placeholder for future)
-# module "frontend" {
-#   source = "../../../apps/frontend/infra"
-#   
-#   environment             = var.environment
-#   custom_domain_name      = var.frontend_custom_domain_name
-#   acm_certificate_arn     = var.frontend_acm_certificate_arn
-#   route53_zone_id         = var.frontend_route53_zone_id
-# }
+# Frontend infrastructure
+module "frontend" {
+  source = "../../../apps/frontend/infra"
+  
+  environment         = var.environment
+  project_name        = var.project_name
+  domain_name         = var.frontend_domain_name
+  acm_certificate_arn = var.frontend_acm_certificate_arn
+  route53_zone_id     = var.frontend_route53_zone_id
+}
 
 
 locals {

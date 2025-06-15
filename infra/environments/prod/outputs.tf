@@ -73,3 +73,24 @@ output "backend_jwt_secret" {
   value       = module.backend.jwt_secret
   sensitive   = true
 }
+
+# Frontend infrastructure outputs
+output "frontend_bucket_name" {
+  description = "Name of the frontend S3 bucket"
+  value       = module.frontend.bucket_name
+}
+
+output "frontend_cloudfront_distribution_id" {
+  description = "ID of the frontend CloudFront distribution"
+  value       = module.frontend.cloudfront_distribution_id
+}
+
+output "frontend_cloudfront_domain_name" {
+  description = "Domain name of the frontend CloudFront distribution"
+  value       = module.frontend.cloudfront_domain_name
+}
+
+output "frontend_website_url" {
+  description = "URL of the frontend website"
+  value       = module.frontend.website_url
+}

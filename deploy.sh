@@ -6,8 +6,20 @@
 set -e
 
 # Configuration
-ENVIRONMENT=${1:-prod}
+ENVIRONMENT=$1
 IMAGE_TAG=${2:-latest}
+
+if [ -z "$ENVIRONMENT" ]; then
+    echo "❌ Environment is required"
+    echo "Usage: $0 <environment> [image_tag]"
+    echo "Example: $0 prod latest"
+    exit 1
+fi
+
+if [ "$ENVIRONMENT" != "dev" ] && [ "$ENVIRONMENT" != "prod" ]; then
+    echo "❌ Environment must be 'dev' or 'prod'"
+    exit 1
+fi
 
 # Source the outputs
 source <(./scripts/get-terraform-outputs.sh "$ENVIRONMENT" | grep "^export")

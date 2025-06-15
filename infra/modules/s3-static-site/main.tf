@@ -66,12 +66,7 @@ resource "aws_cloudfront_distribution" "static_site" {
   default_root_object = var.default_root_object
 
   # Configure aliases if custom domain is provided
-  dynamic "aliases" {
-    for_each = var.domain_name != null ? [var.domain_name] : []
-    content {
-      aliases = [var.domain_name]
-    }
-  }
+  aliases = var.domain_name != null ? [var.domain_name] : []
 
   default_cache_behavior {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
@@ -92,9 +87,9 @@ resource "aws_cloudfront_distribution" "static_site" {
     max_ttl     = var.max_ttl
   }
 
-  # Cache behavior for static assets (CSS, JS, images)
+  # Cache behavior for static assets (CSS, JS, images) - Vite uses /assets/*
   ordered_cache_behavior {
-    path_pattern           = "/static/*"
+    path_pattern           = "/assets/*"
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = "S3-${var.bucket_name}"
@@ -110,31 +105,10 @@ resource "aws_cloudfront_distribution" "static_site" {
     }
 
     min_ttl     = 0
-    default_ttl = 86400  # 1 day
-    max_ttl     = 31536000  # 1 year
+    default_ttl = var.default_ttl  # Use environment-specific setting
+    max_ttl     = var.max_ttl      # Use environment-specific setting
   }
 
-  # Cache behavior for API calls (don't cache)
-  ordered_cache_behavior {
-    path_pattern           = "/api/*"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "S3-${var.bucket_name}"
-    compress               = false
-    viewer_protocol_policy = "https-only"
-
-    forwarded_values {
-      query_string = true
-      headers      = ["*"]
-      cookies {
-        forward = "all"
-      }
-    }
-
-    min_ttl     = 0
-    default_ttl = 0
-    max_ttl     = 0
-  }
 
   price_class = var.price_class
 
