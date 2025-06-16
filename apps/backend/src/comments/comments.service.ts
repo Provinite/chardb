@@ -16,14 +16,9 @@ export class CommentsService {
       await this.validateParentComment(input.parentId, input.entityType, input.entityId);
     }
 
+    const createData = this.buildCommentCreateData(authorId, input.content, input.entityType, input.entityId, input.parentId);
     const comment = await this.databaseService.comment.create({
-      data: {
-        content: input.content,
-        authorId,
-        commentableType: input.entityType,
-        commentableId: input.entityId,
-        parentId: input.parentId,
-      },
+      data: createData,
       include: {
         author: true,
         parent: {
@@ -86,12 +81,11 @@ export class CommentsService {
   async findMany(filters: CommentFiltersInput) {
     const where: any = {};
 
-    if (filters.entityType) {
-      where.commentableType = filters.entityType;
-    }
-
-    if (filters.entityId) {
-      where.commentableId = filters.entityId;
+    // Build where clause for entity type and ID using new structure
+    if (filters.entityType && filters.entityId) {
+      this.addEntityFilterToWhere(where, filters.entityType, filters.entityId);
+    } else if (filters.entityType) {
+      this.addEntityTypeFilterToWhere(where, filters.entityType);
     }
 
     if (filters.parentId !== undefined) {
@@ -229,6 +223,12 @@ export class CommentsService {
         });
         exists = !!gallery;
         break;
+      case CommentableType.USER:
+        const user = await this.databaseService.user.findUnique({
+          where: { id: entityId },
+        });
+        exists = !!user;
+        break;
     }
 
     if (!exists) {
@@ -245,17 +245,101 @@ export class CommentsService {
       throw new BadRequestException('Parent comment not found');
     }
 
-    if (parentComment.commentableType !== entityType || parentComment.commentableId !== entityId) {
+    // Check if parent comment belongs to the same entity using the new structure
+    const parentEntityType = this.getEntityTypeFromComment(parentComment);
+    const parentEntityId = this.getEntityIdFromComment(parentComment);
+
+    if (parentEntityType !== entityType || parentEntityId !== entityId) {
       throw new BadRequestException('Parent comment must belong to the same entity');
     }
   }
 
+  private buildCommentCreateData(
+    authorId: string, 
+    content: string, 
+    entityType: CommentableType, 
+    entityId: string, 
+    parentId?: string
+  ) {
+    const baseData = { 
+      content, 
+      authorId, 
+      parentId 
+    };
+
+    switch (entityType) {
+      case CommentableType.CHARACTER:
+        return { ...baseData, characterId: entityId };
+      case CommentableType.IMAGE:
+        return { ...baseData, imageId: entityId };
+      case CommentableType.GALLERY:
+        return { ...baseData, galleryId: entityId };
+      case CommentableType.USER:
+        return { ...baseData, userId: entityId };
+      default:
+        throw new BadRequestException(`Invalid entity type: ${entityType}`);
+    }
+  }
+
+  private getEntityTypeFromComment(comment: any): CommentableType {
+    if (comment.characterId) return CommentableType.CHARACTER;
+    if (comment.imageId) return CommentableType.IMAGE;
+    if (comment.galleryId) return CommentableType.GALLERY;
+    if (comment.userId) return CommentableType.USER;
+    throw new BadRequestException('Comment has no valid entity type');
+  }
+
+  private getEntityIdFromComment(comment: any): string {
+    return comment.characterId || comment.imageId || comment.galleryId || comment.userId;
+  }
+
+  private addEntityFilterToWhere(where: any, entityType: CommentableType, entityId: string): void {
+    switch (entityType) {
+      case CommentableType.CHARACTER:
+        where.characterId = entityId;
+        break;
+      case CommentableType.IMAGE:
+        where.imageId = entityId;
+        break;
+      case CommentableType.GALLERY:
+        where.galleryId = entityId;
+        break;
+      case CommentableType.USER:
+        where.userId = entityId;
+        break;
+      default:
+        throw new BadRequestException(`Invalid entity type: ${entityType}`);
+    }
+  }
+
+  private addEntityTypeFilterToWhere(where: any, entityType: CommentableType): void {
+    switch (entityType) {
+      case CommentableType.CHARACTER:
+        where.characterId = { not: null };
+        break;
+      case CommentableType.IMAGE:
+        where.imageId = { not: null };
+        break;
+      case CommentableType.GALLERY:
+        where.galleryId = { not: null };
+        break;
+      case CommentableType.USER:
+        where.userId = { not: null };
+        break;
+      default:
+        throw new BadRequestException(`Invalid entity type: ${entityType}`);
+    }
+  }
+
   private mapToCommentEntity(comment: any): Comment {
+    const entityType = this.getEntityTypeFromComment(comment);
+    const entityId = this.getEntityIdFromComment(comment);
+
     return {
       id: comment.id,
       content: comment.content,
-      commentableType: comment.commentableType,
-      commentableId: comment.commentableId,
+      commentableType: entityType,
+      commentableId: entityId,
       parentId: comment.parentId,
       isHidden: comment.isHidden,
       createdAt: comment.createdAt,

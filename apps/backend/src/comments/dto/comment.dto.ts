@@ -5,6 +5,7 @@ export enum CommentableType {
   CHARACTER = 'CHARACTER',
   IMAGE = 'IMAGE',
   GALLERY = 'GALLERY',
+  USER = 'USER',
 }
 
 registerEnumType(CommentableType, {
