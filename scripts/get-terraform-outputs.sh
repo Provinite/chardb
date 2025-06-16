@@ -49,11 +49,13 @@ ECR_REPOSITORY_URL=$(terraform output -raw backend_ecr_repository_url 2>/dev/nul
 DB_PASSWORD=$(terraform output -raw backend_db_password 2>/dev/null || echo "")
 JWT_SECRET=$(terraform output -raw backend_jwt_secret 2>/dev/null || echo "")
 
-# Get backend URL for constructing DATABASE_URL
+# Get backend URL for frontend
+BACKEND_URL=$(terraform output -raw backend_url 2>/dev/null || echo "")
 BACKEND_IP=$(terraform output -raw backend_public_ip 2>/dev/null || echo "")
 
 echo "✅ Terraform outputs retrieved:"
 echo "   Server IP: $SERVER_IP"
+echo "   Backend URL: $BACKEND_URL"
 echo "   SSH Key: $SSH_KEY_PATH"
 echo "   ECR Repository: $ECR_REPOSITORY_URL"
 echo "   Database Password: [REDACTED]"
@@ -61,6 +63,7 @@ echo "   JWT Secret: [REDACTED]"
 echo ""
 echo "Export these variables:"
 echo "export SERVER_IP='$SERVER_IP'"
+echo "export BACKEND_URL='$BACKEND_URL'"
 echo "export SSH_KEY_PATH='$SSH_KEY_PATH'"
 echo "export ECR_REPOSITORY_URL='$ECR_REPOSITORY_URL'"
 echo "export POSTGRES_PASSWORD='$DB_PASSWORD'"

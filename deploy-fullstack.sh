@@ -55,12 +55,11 @@ fi
 echo "📋 Getting backend URL for frontend..."
 source <(./scripts/get-terraform-outputs.sh "$ENVIRONMENT" | grep "^export")
 
-if [ -z "$SERVER_IP" ]; then
-    echo "❌ Could not get backend server IP. Make sure backend infrastructure is deployed."
+if [ -z "$BACKEND_URL" ]; then
+    echo "❌ Could not get backend URL. Make sure backend infrastructure is deployed."
     exit 1
 fi
 
-BACKEND_URL="http://$SERVER_IP:4000"
 echo "🔗 Backend URL: $BACKEND_URL"
 
 # Deploy frontend if requested
