@@ -20,12 +20,6 @@ enum CommentableType {
   USER
 }
 
-enum LikeableType {
-  CHARACTER
-  IMAGE
-  GALLERY
-  COMMENT
-}
 
 model User {
   id              String    @id @default(uuid())
@@ -198,22 +192,27 @@ model Follow {
 }
 
 model Like {
-  id           String      @id @default(uuid())
-  userId       String      @map("user_id")
-  likeableType LikeableType @map("likeable_type")
-  likeableId   String      @map("likeable_id")
-  createdAt    DateTime    @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Polymorphic relations (handled in application logic)
-  character Character? @relation(fields: [likeableId], references: [id], onDelete: Cascade, map: "like_character_fkey")
-  image     Image?     @relation(fields: [likeableId], references: [id], onDelete: Cascade, map: "like_image_fkey")
-  gallery   Gallery?   @relation(fields: [likeableId], references: [id], onDelete: Cascade, map: "like_gallery_fkey")
-  comment   Comment?   @relation(fields: [likeableId], references: [id], onDelete: Cascade, map: "like_comment_fkey")
+  // Separate fields for each likeable type - only one will be non-null
+  characterId String? @map("character_id")
+  imageId     String? @map("image_id")
+  galleryId   String? @map("gallery_id")
+  commentId   String? @map("comment_id")
 
-  @@unique([userId, likeableType, likeableId])
+  // Relations with proper foreign key constraints
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  character Character? @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  image     Image?     @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  gallery   Gallery?   @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  comment   Comment?   @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, characterId])
+  @@unique([userId, imageId])
+  @@unique([userId, galleryId])
+  @@unique([userId, commentId])
   @@map("likes")
 }
 

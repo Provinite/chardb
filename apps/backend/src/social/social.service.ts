@@ -13,14 +13,11 @@ export class SocialService {
 
     // Use transaction for atomicity
     const result = await this.databaseService.$transaction(async (tx) => {
+      // Build where clause based on entity type
+      const whereClause = this.buildLikeWhereClause(userId, input.entityType, input.entityId);
+      
       const existingLike = await tx.like.findUnique({
-        where: {
-          userId_likeableType_likeableId: {
-            userId,
-            likeableType: input.entityType,
-            likeableId: input.entityId,
-          },
-        },
+        where: whereClause,
       });
 
       let isLiked: boolean;
@@ -33,22 +30,17 @@ export class SocialService {
         isLiked = false;
       } else {
         // Like - create new like
+        const createData = this.buildLikeCreateData(userId, input.entityType, input.entityId);
         await tx.like.create({
-          data: {
-            userId,
-            likeableType: input.entityType,
-            likeableId: input.entityId,
-          },
+          data: createData,
         });
         isLiked = true;
       }
 
       // Get updated count
+      const countWhere = this.buildLikeCountWhereClause(input.entityType, input.entityId);
       const likesCount = await tx.like.count({
-        where: {
-          likeableType: input.entityType,
-          likeableId: input.entityId,
-        },
+        where: countWhere,
       });
 
       return {
@@ -68,24 +60,17 @@ export class SocialService {
     userId?: string,
   ): Promise<LikeStatus> {
     // Get likes count
+    const countWhere = this.buildLikeCountWhereClause(entityType, entityId);
     const likesCount = await this.databaseService.like.count({
-      where: {
-        likeableType: entityType,
-        likeableId: entityId,
-      },
+      where: countWhere,
     });
 
     // Check if user has liked (if user is provided)
     let isLiked = false;
     if (userId) {
+      const whereClause = this.buildLikeWhereClause(userId, entityType, entityId);
       const userLike = await this.databaseService.like.findUnique({
-        where: {
-          userId_likeableType_likeableId: {
-            userId,
-            likeableType: entityType,
-            likeableId: entityId,
-          },
-        },
+        where: whereClause,
       });
       isLiked = !!userLike;
     }
@@ -97,11 +82,9 @@ export class SocialService {
   }
 
   async getLikesCount(entityType: LikeableType, entityId: string): Promise<number> {
+    const countWhere = this.buildLikeCountWhereClause(entityType, entityId);
     return this.databaseService.like.count({
-      where: {
-        likeableType: entityType,
-        likeableId: entityId,
-      },
+      where: countWhere,
     });
   }
 
@@ -114,17 +97,58 @@ export class SocialService {
       return false;
     }
 
+    const whereClause = this.buildLikeWhereClause(userId, entityType, entityId);
     const userLike = await this.databaseService.like.findUnique({
-      where: {
-        userId_likeableType_likeableId: {
-          userId,
-          likeableType: entityType,
-          likeableId: entityId,
-        },
-      },
+      where: whereClause,
     });
 
     return !!userLike;
+  }
+
+  private buildLikeWhereClause(userId: string, entityType: LikeableType, entityId: string) {
+    switch (entityType) {
+      case LikeableType.CHARACTER:
+        return { userId_characterId: { userId, characterId: entityId } };
+      case LikeableType.IMAGE:
+        return { userId_imageId: { userId, imageId: entityId } };
+      case LikeableType.GALLERY:
+        return { userId_galleryId: { userId, galleryId: entityId } };
+      case LikeableType.COMMENT:
+        return { userId_commentId: { userId, commentId: entityId } };
+      default:
+        throw new BadRequestException(`Invalid entity type: ${entityType}`);
+    }
+  }
+
+  private buildLikeCreateData(userId: string, entityType: LikeableType, entityId: string) {
+    const baseData = { userId };
+    switch (entityType) {
+      case LikeableType.CHARACTER:
+        return { ...baseData, characterId: entityId };
+      case LikeableType.IMAGE:
+        return { ...baseData, imageId: entityId };
+      case LikeableType.GALLERY:
+        return { ...baseData, galleryId: entityId };
+      case LikeableType.COMMENT:
+        return { ...baseData, commentId: entityId };
+      default:
+        throw new BadRequestException(`Invalid entity type: ${entityType}`);
+    }
+  }
+
+  private buildLikeCountWhereClause(entityType: LikeableType, entityId: string) {
+    switch (entityType) {
+      case LikeableType.CHARACTER:
+        return { characterId: entityId };
+      case LikeableType.IMAGE:
+        return { imageId: entityId };
+      case LikeableType.GALLERY:
+        return { galleryId: entityId };
+      case LikeableType.COMMENT:
+        return { commentId: entityId };
+      default:
+        throw new BadRequestException(`Invalid entity type: ${entityType}`);
+    }
   }
 
   private async validateEntity(entityType: LikeableType, entityId: string): Promise<void> {
@@ -306,14 +330,14 @@ export class SocialService {
     const likes = await this.databaseService.like.findMany({
       where: {
         userId,
-        likeableType: LikeableType.CHARACTER,
+        characterId: { not: null },
       },
       select: {
-        likeableId: true,
+        characterId: true,
       },
     });
 
-    const characterIds = likes.map(like => like.likeableId);
+    const characterIds = likes.map(like => like.characterId).filter(Boolean);
     
     if (characterIds.length === 0) {
       return [];
@@ -348,14 +372,14 @@ export class SocialService {
     const likes = await this.databaseService.like.findMany({
       where: {
         userId,
-        likeableType: LikeableType.GALLERY,
+        galleryId: { not: null },
       },
       select: {
-        likeableId: true,
+        galleryId: true,
       },
     });
 
-    const galleryIds = likes.map(like => like.likeableId);
+    const galleryIds = likes.map(like => like.galleryId).filter(Boolean);
     
     if (galleryIds.length === 0) {
       return [];
@@ -385,14 +409,14 @@ export class SocialService {
     const likes = await this.databaseService.like.findMany({
       where: {
         userId,
-        likeableType: LikeableType.IMAGE,
+        imageId: { not: null },
       },
       select: {
-        likeableId: true,
+        imageId: true,
       },
     });
 
-    const imageIds = likes.map(like => like.likeableId);
+    const imageIds = likes.map(like => like.imageId).filter(Boolean);
     
     if (imageIds.length === 0) {
       return [];
