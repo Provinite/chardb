@@ -17,6 +17,57 @@ provider "aws" {
   region = var.aws_region
 }
 
+# Route53 hosted zone lookup (if domain_name is provided)
+data "aws_route53_zone" "main" {
+  count = var.domain_name != null ? 1 : 0
+  name  = var.domain_name
+}
+
+# Get current AWS account ID for ACM certificate lookup
+data "aws_caller_identity" "current" {}
+
+# ACM Certificate for both API and frontend subdomains (if domain_name is provided)
+resource "aws_acm_certificate" "main" {
+  count           = var.domain_name != null ? 1 : 0
+  domain_name     = "*.${var.environment}.${var.domain_name}"
+  validation_method = "DNS"
+
+  subject_alternative_names = [
+    "${var.environment}.${var.domain_name}"
+  ]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = local.common_tags
+}
+
+# ACM Certificate validation
+resource "aws_acm_certificate_validation" "main" {
+  count           = var.domain_name != null ? 1 : 0
+  certificate_arn = aws_acm_certificate.main[0].arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+# Route53 records for ACM certificate validation
+resource "aws_route53_record" "cert_validation" {
+  for_each = var.domain_name != null ? {
+    for dvo in aws_acm_certificate.main[0].domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  } : {}
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.main[0].zone_id
+}
+
 # Note: Using default VPC, no need to specify VPC/subnet IDs
 
 # ECR repository for backend
@@ -43,6 +94,11 @@ module "backend" {
   ssh_allowed_cidr_blocks    = var.backend_ssh_allowed_cidr_blocks
   enable_api_gateway         = var.backend_enable_api_gateway
   backend_ecr_repository_url = module.backend_ecr.repository_url
+  
+  # Custom domain configuration (if domain_name is provided)
+  api_custom_domain_name   = var.domain_name != null ? "api.${var.environment}.${var.domain_name}" : ""
+  api_acm_certificate_arn  = var.domain_name != null ? aws_acm_certificate_validation.main[0].certificate_arn : ""
+  api_route53_zone_id      = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : ""
 }
 
 # Frontend infrastructure
@@ -51,9 +107,9 @@ module "frontend" {
   
   environment         = var.environment
   project_name        = var.project_name
-  domain_name         = var.frontend_domain_name
-  acm_certificate_arn = var.frontend_acm_certificate_arn
-  route53_zone_id     = var.frontend_route53_zone_id
+  domain_name         = var.domain_name != null ? "${var.environment}.${var.domain_name}" : null
+  acm_certificate_arn = var.domain_name != null ? aws_acm_certificate_validation.main[0].certificate_arn : null
+  route53_zone_id     = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : null
 }
 
 

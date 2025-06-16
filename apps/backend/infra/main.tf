@@ -27,18 +27,16 @@ module "backend_docker_host" {
   tags = local.common_tags
 }
 
-# API Gateway for HTTPS termination (optional)
-module "api_gateway" {
+# CloudFront distribution for HTTPS termination (optional)
+module "cloudfront_api" {
   count  = var.enable_api_gateway ? 1 : 0
-  source = "../../../infra/modules/api-gateway"
+  source = "../../../infra/modules/cloudfront-api"
 
   app_name    = var.project_name
   environment = var.environment
   
-  backend_host = module.backend_docker_host.private_ip
-  backend_port = var.backend_port
-  
-  network_load_balancer_arn = module.backend_docker_host.network_load_balancer_arn
+  backend_public_dns = module.backend_docker_host.public_dns
+  backend_port       = var.backend_port
   
   # Optional custom domain
   custom_domain_name    = var.api_custom_domain_name

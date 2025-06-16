@@ -45,23 +45,23 @@ output "security_group_id" {
   value       = module.backend_docker_host.security_group_id
 }
 
-# API Gateway outputs (when enabled)
-output "api_gateway_url" {
-  description = "API Gateway URL (if enabled)"
-  value       = var.enable_api_gateway ? module.api_gateway[0].api_gateway_url : ""
+# CloudFront API outputs (when enabled)
+output "cloudfront_api_url" {
+  description = "CloudFront API URL (if enabled)"
+  value       = var.enable_api_gateway ? module.cloudfront_api[0].api_url : ""
 }
 
-output "api_gateway_custom_domain_url" {
-  description = "API Gateway custom domain URL (if configured)"
-  value       = var.enable_api_gateway ? module.api_gateway[0].custom_domain_url : ""
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID (if enabled)"
+  value       = var.enable_api_gateway ? module.cloudfront_api[0].cloudfront_distribution_id : ""
 }
 
 output "backend_url" {
-  description = "Backend URL (API Gateway if enabled, otherwise direct EC2)"
+  description = "Backend URL (CloudFront if enabled, otherwise direct EC2)"
   value = var.enable_api_gateway ? (
     var.api_custom_domain_name != "" ? 
     "https://${var.api_custom_domain_name}" : 
-    module.api_gateway[0].api_gateway_url
+    module.cloudfront_api[0].api_url
   ) : "http://${module.backend_docker_host.public_dns}:${var.backend_port}"
 }
 

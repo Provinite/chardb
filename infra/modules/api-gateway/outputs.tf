@@ -20,7 +20,4 @@ output "custom_domain_url" {
   value       = var.custom_domain_name != "" ? "https://${var.custom_domain_name}" : ""
 }
 
-output "vpc_link_id" {
-  description = "ID of the VPC Link"
-  value       = aws_api_gateway_vpc_link.backend.id
-}
+# VPC Link removed - using direct HTTP integration to EC2 public endpoint

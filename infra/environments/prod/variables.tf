@@ -41,9 +41,16 @@ variable "backend_enable_api_gateway" {
   default     = true  # Production should use HTTPS by default
 }
 
-# Frontend configuration variables
+# Domain configuration
+variable "domain_name" {
+  description = "Root domain name (e.g., 'example.com'). Route53 hosted zone will be looked up by this name."
+  type        = string
+  default     = "chardb.cc"
+}
+
+# Frontend configuration variables (derived from domain_name)
 variable "frontend_domain_name" {
-  description = "Custom domain name for frontend"
+  description = "Custom domain name for frontend (will be auto-set to root domain for prod)"
   type        = string
   default     = null
 }

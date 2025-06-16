@@ -49,15 +49,6 @@ output "ssh_key_name" {
   value       = aws_key_pair.docker_host.key_name
 }
 
-output "network_load_balancer_arn" {
-  description = "ARN of the Network Load Balancer (if enabled)"
-  value       = var.enable_api_gateway ? aws_lb.docker_host[0].arn : ""
-}
-
-output "network_load_balancer_dns_name" {
-  description = "DNS name of the Network Load Balancer (if enabled)"
-  value       = var.enable_api_gateway ? aws_lb.docker_host[0].dns_name : ""
-}
 
 output "db_password" {
   description = "Generated database password"

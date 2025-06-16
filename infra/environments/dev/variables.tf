@@ -38,12 +38,19 @@ variable "backend_ssh_allowed_cidr_blocks" {
 variable "backend_enable_api_gateway" {
   description = "Whether to enable API Gateway for backend"
   type        = bool
-  default     = false  # Default to simpler setup
+  default     = true  # Enable for custom domain support
 }
 
-# Frontend configuration variables
+# Domain configuration
+variable "domain_name" {
+  description = "Root domain name (e.g., 'example.com'). Route53 hosted zone will be looked up by this name."
+  type        = string
+  default     = "chardb.cc"
+}
+
+# Frontend configuration variables (derived from domain_name)
 variable "frontend_domain_name" {
-  description = "Custom domain name for frontend"
+  description = "Custom domain name for frontend (will be auto-set to dev.domain_name)"
   type        = string
   default     = null
 }

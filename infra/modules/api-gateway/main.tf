@@ -3,6 +3,72 @@
 # API Gateway for EC2 backend with SSL termination
 # Provides HTTPS endpoint that proxies to EC2 instance
 
+# CloudWatch log group for API Gateway logs
+resource "aws_cloudwatch_log_group" "api_gateway" {
+  name              = "/aws/apigateway/${var.app_name}-${var.environment}"
+  retention_in_days = 7
+
+  tags = {
+    Name        = "${var.app_name}-${var.environment}-api-logs"
+    Environment = var.environment
+    Application = var.app_name
+  }
+}
+
+# IAM role for API Gateway logging
+resource "aws_iam_role" "api_gateway_logging" {
+  name = "${var.app_name}-${var.environment}-api-gateway-logging"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "apigateway.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.app_name}-${var.environment}-api-gateway-logging"
+    Environment = var.environment
+    Application = var.app_name
+  }
+}
+
+# IAM policy for API Gateway to write to CloudWatch
+resource "aws_iam_role_policy" "api_gateway_logging" {
+  name = "${var.app_name}-${var.environment}-api-gateway-logging"
+  role = aws_iam_role.api_gateway_logging.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams",
+          "logs:PutLogEvents",
+          "logs:GetLogEvents",
+          "logs:FilterLogEvents"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# API Gateway account settings for logging
+resource "aws_api_gateway_account" "main" {
+  cloudwatch_role_arn = aws_iam_role.api_gateway_logging.arn
+}
+
 # API Gateway REST API
 resource "aws_api_gateway_rest_api" "backend" {
   name        = "${var.app_name}-${var.environment}-api"
@@ -19,18 +85,8 @@ resource "aws_api_gateway_rest_api" "backend" {
   }
 }
 
-# VPC Link for private integration with EC2
-resource "aws_api_gateway_vpc_link" "backend" {
-  name        = "${var.app_name}-${var.environment}-vpc-link"
-  description = "VPC Link for ${var.app_name} backend"
-  target_arns = [var.network_load_balancer_arn]
-
-  tags = {
-    Name        = "${var.app_name}-${var.environment}-vpc-link"
-    Environment = var.environment
-    Application = var.app_name
-  }
-}
+# Note: Using direct HTTP integration to EC2 public endpoint
+# This avoids the need for VPC Link + Load Balancer for single instance
 
 # Proxy resource to catch all paths
 resource "aws_api_gateway_resource" "proxy" {
@@ -47,7 +103,7 @@ resource "aws_api_gateway_method" "proxy" {
   authorization = "NONE"
 }
 
-# Integration with EC2 via VPC Link
+# Direct HTTP integration with EC2 public endpoint
 resource "aws_api_gateway_integration" "proxy" {
   rest_api_id = aws_api_gateway_rest_api.backend.id
   resource_id = aws_api_gateway_resource.proxy.id
@@ -55,9 +111,7 @@ resource "aws_api_gateway_integration" "proxy" {
 
   integration_http_method = "ANY"
   type                    = "HTTP_PROXY"
-  connection_type         = "VPC_LINK"
-  connection_id           = aws_api_gateway_vpc_link.backend.id
-  uri                     = "http://${var.backend_host}:${var.backend_port}/{proxy}"
+  uri                     = "http://${var.backend_public_dns}:${var.backend_port}"
 }
 
 # Root resource method (for health checks, etc.)
@@ -76,9 +130,7 @@ resource "aws_api_gateway_integration" "root" {
 
   integration_http_method = "ANY"
   type                    = "HTTP_PROXY"
-  connection_type         = "VPC_LINK"
-  connection_id           = aws_api_gateway_vpc_link.backend.id
-  uri                     = "http://${var.backend_host}:${var.backend_port}/"
+  uri                     = "http://${var.backend_public_dns}:${var.backend_port}/"
 }
 
 # Deployment
@@ -111,6 +163,26 @@ resource "aws_api_gateway_stage" "backend" {
   rest_api_id   = aws_api_gateway_rest_api.backend.id
   stage_name    = var.environment
 
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api_gateway.arn
+    format = jsonencode({
+      requestId      = "$context.requestId"
+      requestTime    = "$context.requestTime"
+      httpMethod     = "$context.httpMethod"
+      resourcePath   = "$context.resourcePath"
+      status         = "$context.status"
+      error_message  = "$context.error.message"
+      error_type     = "$context.error.responseType"
+      integrationRequestId = "$context.integration.requestId"
+      integrationStatus    = "$context.integration.status"
+      integrationLatency   = "$context.integration.latency"
+      responseLatency      = "$context.responseLatency"
+    })
+  }
+
+  xray_tracing_enabled = true
+
+
   tags = {
     Name        = "${var.app_name}-${var.environment}-stage"
     Environment = var.environment
@@ -120,9 +192,9 @@ resource "aws_api_gateway_stage" "backend" {
 
 # Custom domain (optional)
 resource "aws_api_gateway_domain_name" "backend" {
-  count           = var.custom_domain_name != "" ? 1 : 0
-  domain_name     = var.custom_domain_name
-  certificate_arn = var.acm_certificate_arn
+  count                    = var.custom_domain_name != "" ? 1 : 0
+  domain_name              = var.custom_domain_name
+  regional_certificate_arn = var.acm_certificate_arn
 
   endpoint_configuration {
     types = ["REGIONAL"]
@@ -151,8 +223,8 @@ resource "aws_route53_record" "backend" {
   type    = "A"
 
   alias {
-    name                   = aws_api_gateway_domain_name.backend[0].cloudfront_domain_name
-    zone_id                = aws_api_gateway_domain_name.backend[0].cloudfront_zone_id
+    name                   = aws_api_gateway_domain_name.backend[0].regional_domain_name
+    zone_id                = aws_api_gateway_domain_name.backend[0].regional_zone_id
     evaluate_target_health = false
   }
 }

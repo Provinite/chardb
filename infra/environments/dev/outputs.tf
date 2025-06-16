@@ -56,10 +56,10 @@ output "jaeger_url" {
   value       = module.backend.jaeger_url
 }
 
-# API Gateway outputs (when enabled)
+# CloudFront API outputs (when enabled)
 output "api_gateway_url" {
-  description = "API Gateway URL (if enabled)"
-  value       = module.backend.api_gateway_url
+  description = "CloudFront API URL (if enabled)"
+  value       = module.backend.cloudfront_api_url
 }
 
 output "backend_db_password" {

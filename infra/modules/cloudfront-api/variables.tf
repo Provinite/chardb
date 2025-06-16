@@ -1,5 +1,3 @@
-# $schema: https://raw.githubusercontent.com/hashicorp/terraform/main/schemas/providers/aws.json
-
 variable "app_name" {
   description = "Name of the application"
   type        = string
@@ -22,7 +20,7 @@ variable "backend_port" {
 }
 
 variable "custom_domain_name" {
-  description = "Custom domain name for API Gateway (optional)"
+  description = "Custom domain name for the API (optional)"
   type        = string
   default     = ""
 }

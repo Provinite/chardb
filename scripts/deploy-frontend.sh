@@ -36,14 +36,10 @@ fi
 
 # Get terraform outputs for frontend infrastructure
 echo "📋 Getting terraform outputs..."
-cd "$(dirname "$0")/../infra/environments/$ENVIRONMENT"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-# Check if terraform state exists
-if [ ! -f "terraform.tfstate" ]; then
-    echo "❌ Terraform state not found. Please deploy infrastructure first:"
-    echo "   cd infra/environments/$ENVIRONMENT && terraform init && terraform apply"
-    exit 1
-fi
+cd "$PROJECT_ROOT/infra/environments/$ENVIRONMENT"
 
 # Get S3 bucket name and CloudFront distribution ID
 BUCKET_NAME=$(terraform output -raw frontend_bucket_name)
@@ -61,7 +57,7 @@ echo "📁 S3 Bucket: $BUCKET_NAME"
 echo "🌐 CloudFront Distribution: $CLOUDFRONT_DISTRIBUTION_ID"
 
 # Navigate back to project root
-cd "$(dirname "$0")/.."
+cd "$PROJECT_ROOT"
 
 # Check if build exists
 if [ ! -d "apps/frontend/dist" ]; then
