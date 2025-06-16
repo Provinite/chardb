@@ -3,7 +3,7 @@ import { TestApp, CHARACTER_QUERIES } from '../../test/setup-e2e';
 import { CharactersModule } from './characters.module';
 import { DatabaseModule } from '../database/database.module';
 import { AuthModule } from '../auth/auth.module';
-import { Visibility } from '@prisma/client';
+import { Visibility } from '@chardb/database';
 
 describe('CharactersResolver (e2e)', () => {
   let testApp: TestApp;

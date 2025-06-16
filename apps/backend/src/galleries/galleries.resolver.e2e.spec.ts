@@ -3,7 +3,7 @@ import { TestApp, GALLERY_QUERIES } from '../../test/setup-e2e';
 import { GalleriesModule } from './galleries.module';
 import { DatabaseModule } from '../database/database.module';
 import { AuthModule } from '../auth/auth.module';
-import { Visibility } from '@prisma/client';
+import { Visibility } from '@chardb/database';
 
 describe('GalleriesResolver (e2e)', () => {
   let testApp: TestApp;

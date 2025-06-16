@@ -3,8 +3,8 @@ set -e
 
 echo "🔄 Running database migrations..."
 
-# Run migrations directly with prisma
-(cd packages/database && npx prisma migrate deploy)
+# Run migrations with yarn workspace
+yarn workspace @chardb/database db:migrate:prod
 
 echo "✅ Migrations completed successfully"
 

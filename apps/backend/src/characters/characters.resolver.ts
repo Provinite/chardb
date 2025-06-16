@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { CharactersService } from './characters.service';
 import { Character as CharacterEntity, CharacterConnection } from './entities/character.entity';
-import type { Character } from '@prisma/client';
+import type { Character } from '@chardb/database';
 import {
   CreateCharacterInput,
   UpdateCharacterInput,

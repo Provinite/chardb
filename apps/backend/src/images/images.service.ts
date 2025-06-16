@@ -1,10 +1,10 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { Prisma, Visibility } from '@prisma/client';
+import { Prisma, Visibility } from '@chardb/database';
 import * as sharp from 'sharp';
 import { v4 as uuid } from 'uuid';
 import { extname } from 'path';
-import type { Image } from '@prisma/client';
+import type { Image } from '@chardb/database';
 
 export interface UploadImageInput {
   file: Express.Multer.File;

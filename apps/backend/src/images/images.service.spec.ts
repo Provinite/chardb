@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ImagesService } from './images.service';
 import { DatabaseService } from '../database/database.service';
-import { Visibility } from '@prisma/client';
+import { Visibility } from '@chardb/database';
 import { mockDatabaseService } from '../../test/setup';
 
 // Mock Sharp

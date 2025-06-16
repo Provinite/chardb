@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType, Int, ID } from '@nestjs/graphql';
 import { IsString, IsOptional, IsNumber, IsUUID, IsEnum, MaxLength, Min, Max, IsArray } from 'class-validator';
-import { Visibility } from '@prisma/client';
+import { Visibility } from '@chardb/database';
 
 @InputType()
 export class CreateGalleryInput {

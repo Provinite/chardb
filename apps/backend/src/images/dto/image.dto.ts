@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType, Int, ID } from '@nestjs/graphql';
 import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, IsEnum, MaxLength, Min, Max } from 'class-validator';
-import { Visibility } from '@prisma/client';
+import { Visibility } from '@chardb/database';
 
 // File upload handled via REST endpoint - this is for GraphQL updates
 @InputType()

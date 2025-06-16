@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateCharacterInput, UpdateCharacterInput, CharacterFilters } from './dto/character.dto';
-import { Prisma, Visibility } from '@prisma/client';
-import type { Character } from '@prisma/client';
+import { Prisma, Visibility } from '@chardb/database';
+import type { Character } from '@chardb/database';
 
 @Injectable()
 export class CharactersService {

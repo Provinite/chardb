@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
-import { Visibility } from '@prisma/client';
+import { Visibility } from '@chardb/database';
 import { User } from '../../users/entities/user.entity';
 import { Character } from '../../characters/entities/character.entity';
 import { Tag } from '../../shared/entities/tag.entity';

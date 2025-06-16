@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID, Int, registerEnumType } from '@nestjs/graphql';
-import { Visibility } from '@prisma/client';
+import { Visibility } from '@chardb/database';
 
 // Register enum for GraphQL
 registerEnumType(Visibility, {

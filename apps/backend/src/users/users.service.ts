@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateUser, UpdateUser } from '../shared/types';
 import { UserProfile, UserStats } from './entities/user-profile.entity';
-import { Visibility } from '@prisma/client';
+import { Visibility } from '@chardb/database';
 
 // Helper function to add default social fields to User objects
 function addDefaultSocialFields(user: any): any {

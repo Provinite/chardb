@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { Prisma, Visibility } from '@prisma/client';
-import type { Gallery } from '@prisma/client';
+import { Prisma, Visibility } from '@chardb/database';
+import type { Gallery } from '@chardb/database';
 
 export interface CreateGalleryInput {
   name: string;

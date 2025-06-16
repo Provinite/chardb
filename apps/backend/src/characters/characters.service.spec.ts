@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CharactersService } from './characters.service';
 import { DatabaseService } from '../database/database.service';
-import { Visibility } from '@prisma/client';
+import { Visibility } from '@chardb/database';
 import { mockDatabaseService } from '../../test/setup';
 
 describe('CharactersService', () => {

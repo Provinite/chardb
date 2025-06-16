@@ -9,7 +9,7 @@ import {
   ImageFiltersInput,
   ManageImageTagsInput,
 } from './dto/image.dto';
-import type { Image } from '@prisma/client';
+import type { Image } from '@chardb/database';
 
 @Resolver(() => ImageEntity)
 export class ImagesResolver {

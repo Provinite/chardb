@@ -49,6 +49,7 @@ model User {
   ownedCharacters   Character[] @relation("CharacterOwner")
   createdCharacters Character[] @relation("CharacterCreator")
   uploadedImages    Image[]     @relation("ImageUploader")
+  artistImages      Image[]     @relation("ImageArtist")
   galleries         Gallery[]
   comments          Comment[]
   likes             Like[]
@@ -97,13 +98,20 @@ model Image {
   id               String     @id @default(uuid())
   filename         String     @db.VarChar(255)
   originalFilename String     @map("original_filename") @db.VarChar(255)
-  url              String     @db.VarChar(500)
-  thumbnailUrl     String?    @map("thumbnail_url") @db.VarChar(500)
+  url              String     @db.Text
+  thumbnailUrl     String?    @map("thumbnail_url") @db.Text
   altText          String?    @map("alt_text") @db.VarChar(200)
   description      String?    @db.Text
   uploaderId       String     @map("uploader_id")
   characterId      String?    @map("character_id")
   galleryId        String?    @map("gallery_id")
+  
+  // Artist attribution
+  artistId         String?    @map("artist_id")
+  artistName       String?    @map("artist_name") @db.VarChar(255)
+  artistUrl        String?    @map("artist_url") @db.VarChar(500)
+  source           String?    @db.VarChar(500)
+  
   width            Int
   height           Int
   fileSize         Int        @map("file_size")
@@ -115,6 +123,7 @@ model Image {
 
   // Relations
   uploader  User       @relation("ImageUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
+  artist    User?      @relation("ImageArtist", fields: [artistId], references: [id], onDelete: SetNull)
   character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
   gallery   Gallery?   @relation(fields: [galleryId], references: [id], onDelete: SetNull)
 

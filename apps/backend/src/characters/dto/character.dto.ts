@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType, Int, Float, ID, registerEnumType } from '@nestjs/graphql';
 import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, IsEnum, MinLength, MaxLength, Min, Max } from 'class-validator';
-import { Visibility } from '@prisma/client';
+import { Visibility } from '@chardb/database';
 
 // Register enum for GraphQL
 registerEnumType(Visibility, {
