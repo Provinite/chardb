@@ -9,7 +9,7 @@ export const validateEmail = (value: string): boolean => {
 };
 
 export const validateUsername = (value: string): boolean => {
-  return z.string().min(3).max(30).regex(/^[a-zA-Z0-9_-]+$/).safeParse(value).success;
+  return z.string().min(2).max(30).regex(/^[a-zA-Z0-9_-]+$/).safeParse(value).success;
 };
 
 export const validatePassword = (value: string): boolean => {

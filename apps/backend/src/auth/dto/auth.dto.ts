@@ -17,7 +17,7 @@ export class LoginInput {
 export class SignupInput {
   @Field()
   @IsString()
-  @MinLength(3)
+  @MinLength(2)
   @MaxLength(30)
   username: string;
 
