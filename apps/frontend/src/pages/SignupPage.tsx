@@ -9,7 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const signupSchema = z.object({
   username: z.string()
-    .min(3, 'Username must be at least 3 characters')
+    .min(2, 'Username must be at least 2 characters')
     .max(30, 'Username must be less than 30 characters')
     .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores, and hyphens'),
   email: z.string().email('Please enter a valid email'),
