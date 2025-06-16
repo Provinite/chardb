@@ -178,7 +178,8 @@ export const UploadImagePage: React.FC = () => {
         formDataToSend.append('isNsfw', formData.isNsfw.toString());
         formDataToSend.append('visibility', formData.visibility);
 
-        const response = await fetch('/api/images/upload', {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        const response = await fetch(`${apiUrl}/images/upload`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
