@@ -105,7 +105,10 @@ export class ImagesService {
     // For now, we'll store base64 encoded images in the database
     // In production, you'd upload to S3/CloudStorage and store URLs
     const imageUrl = `data:${file.mimetype};base64,${processedImage.toString('base64')}`;
-    const thumbnailUrl = `data:${file.mimetype};base64,${thumbnail.toString('base64')}`;
+    
+    // Determine thumbnail MIME type based on original format
+    const thumbnailMimeType = file.mimetype === 'image/png' ? 'image/png' : 'image/jpeg';
+    const thumbnailUrl = `data:${thumbnailMimeType};base64,${thumbnail.toString('base64')}`;
 
     // Create image record
     return this.db.image.create({
@@ -381,33 +384,65 @@ export class ImagesService {
       const image = sharp(buffer);
       const metadata = await image.metadata();
 
+      // For GIFs, preserve original to maintain animations
+      if (metadata.format === 'gif') {
+        // Create static thumbnail only for GIFs
+        const thumbnail = image
+          .resize(this.thumbnailSize, this.thumbnailSize, { 
+            fit: 'cover',
+            position: 'center'
+          })
+          .jpeg({ quality: 80 });
+
+        const thumbnailBuffer = await thumbnail.toBuffer();
+
+        return {
+          processedImage: buffer, // Return original GIF buffer
+          thumbnail: thumbnailBuffer,
+          metadata,
+        };
+      }
+
       // Process main image (resize if too large, optimize quality)
       let processedImage = image;
       
-      // Resize if larger than 2000px on either dimension
-      if (metadata.width! > 2000 || metadata.height! > 2000) {
-        processedImage = image.resize(2000, 2000, { 
+      // Only resize if larger than 4000px (less aggressive than before)
+      if (metadata.width! > 4000 || metadata.height! > 4000) {
+        processedImage = image.resize(4000, 4000, { 
           fit: 'inside',
           withoutEnlargement: true 
         });
       }
 
-      // Optimize based on format
+      // Format-specific optimization with higher quality
       if (metadata.format === 'jpeg') {
-        processedImage = processedImage.jpeg({ quality: 85, progressive: true });
+        processedImage = processedImage.jpeg({ quality: 92, progressive: true });
       } else if (metadata.format === 'png') {
-        processedImage = processedImage.png({ quality: 85 });
+        // Minimal compression for PNGs to preserve transparency
+        processedImage = processedImage.png({ compressionLevel: 6, adaptiveFiltering: false });
       } else if (metadata.format === 'webp') {
-        processedImage = processedImage.webp({ quality: 85 });
+        processedImage = processedImage.webp({ quality: 95, lossless: false });
       }
 
-      // Generate thumbnail
-      const thumbnail = image
-        .resize(this.thumbnailSize, this.thumbnailSize, { 
-          fit: 'cover',
-          position: 'center'
-        })
-        .jpeg({ quality: 80 });
+      // Generate format-appropriate thumbnail
+      let thumbnail;
+      if (metadata.format === 'png') {
+        // Keep PNG thumbnails as PNG to preserve transparency
+        thumbnail = image
+          .resize(this.thumbnailSize, this.thumbnailSize, { 
+            fit: 'cover',
+            position: 'center'
+          })
+          .png({ compressionLevel: 6 });
+      } else {
+        // Use JPEG for other formats
+        thumbnail = image
+          .resize(this.thumbnailSize, this.thumbnailSize, { 
+            fit: 'cover',
+            position: 'center'
+          })
+          .jpeg({ quality: 85 });
+      }
 
       const [processedBuffer, thumbnailBuffer] = await Promise.all([
         processedImage.toBuffer(),
