@@ -2,11 +2,28 @@
 import './tracing';
 
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['log', 'error', 'warn', 'debug', 'verbose'],
+  });
+  
+  // Enable request logging middleware
+  app.use((req: any, res: any, next: any) => {
+    const logger = new Logger('HTTP');
+    const start = Date.now();
+    
+    logger.log(`${req.method} ${req.url} - ${req.ip}`);
+    
+    res.on('finish', () => {
+      const duration = Date.now() - start;
+      logger.log(`${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
+    });
+    
+    next();
+  });
   
   // Tracing is handled by OpenTelemetry auto-instrumentation
   

@@ -4,6 +4,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { Logger } from '@nestjs/common';
 import { join } from 'path';
 import { CustomThrottlerGuard } from './middleware/custom-throttler.guard';
 
@@ -42,6 +43,42 @@ import { HealthModule } from './health/health.module';
       introspection: process.env.GRAPHQL_INTROSPECTION === 'true',
       context: ({ req, res }) => ({ req, res }),
       csrfPrevention: process.env.GRAPHQL_CSRF_PREVENTION === 'true',
+      plugins: [
+        {
+          async requestDidStart() {
+            const logger = new Logger('GraphQL');
+            
+            return {
+              async didResolveOperation(requestContext: any) {
+                const { request, operationName } = requestContext;
+                const operationType = request.query?.match(/^\s*(query|mutation|subscription)/i)?.[1] || 'unknown';
+                const variables = request.variables ? JSON.stringify(request.variables) : '{}';
+                
+                logger.log(`${operationType}: ${operationName || 'unnamed'} - Variables: ${variables}`);
+              },
+              
+              async willSendResponse(requestContext: any) {
+                const { request, response, operationName } = requestContext;
+                const operationType = request.query?.match(/^\s*(query|mutation|subscription)/i)?.[1] || 'unknown';
+                const hasErrors = response.errors && response.errors.length > 0;
+                
+                if (hasErrors) {
+                  logger.error(`${operationType}: ${operationName || 'unnamed'} - Errors: ${JSON.stringify(response.errors)}`);
+                } else {
+                  logger.log(`${operationType}: ${operationName || 'unnamed'} - Success`);
+                }
+              },
+              
+              async didEncounterErrors(requestContext: any) {
+                const { request, errors, operationName } = requestContext;
+                const operationType = request.query?.match(/^\s*(query|mutation|subscription)/i)?.[1] || 'unknown';
+                
+                logger.error(`${operationType}: ${operationName || 'unnamed'} - Execution Errors: ${JSON.stringify(errors)}`);
+              },
+            };
+          },
+        },
+      ],
     }),
     DatabaseModule,
     AuthModule,
