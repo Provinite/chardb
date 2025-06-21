@@ -39,6 +39,7 @@ type Character {
   description: String
   gender: String
   id: ID!
+  images(limit: Int = 10): [Image!]
   isSellable: Boolean!
   isTradeable: Boolean!
   likesCount: Int!

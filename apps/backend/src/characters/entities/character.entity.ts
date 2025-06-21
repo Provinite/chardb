@@ -2,6 +2,7 @@ import { ObjectType, Field, ID, Float, Int } from '@nestjs/graphql';
 import { Visibility } from '@chardb/database';
 import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../shared/entities/tag.entity';
+import { Image } from '../../images/entities/image.entity';
 
 @ObjectType()
 export class CharacterCount {
@@ -77,6 +78,9 @@ export class Character {
 
   @Field(() => CharacterCount, { nullable: true })
   _count?: CharacterCount;
+
+  @Field(() => [Image], { nullable: true })
+  images?: Image[];
 
   // Social features
   @Field(() => Int)

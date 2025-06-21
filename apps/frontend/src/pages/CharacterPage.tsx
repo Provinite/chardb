@@ -3,11 +3,12 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
 import { Button } from '@chardb/ui';
-import { GET_CHARACTER, Character } from '../graphql/characters';
+import { GET_CHARACTER, GetCharacterQuery } from '../graphql/characters';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
 import { LikeButton } from '../components/LikeButton';
 import { CommentList } from '../components/CommentList';
+import { CharacterImageGallery } from '../components/CharacterImageGallery';
 import { LikeableType, CommentableType } from '../generated/graphql';
 
 const Container = styled.div`
@@ -337,7 +338,7 @@ export const CharacterPage: React.FC = () => {
     skip: !id,
   });
 
-  const character: Character | undefined = data?.character;
+  const character: GetCharacterQuery['character'] | undefined = data?.character;
 
   const handleBackClick = () => {
     navigate('/characters');
@@ -552,6 +553,12 @@ export const CharacterPage: React.FC = () => {
           <p>This character doesn't have any detailed information yet.</p>
         </EmptySection>
       )}
+
+      <CharacterImageGallery
+        characterId={character.id}
+        images={character.recentImages || []}
+        totalCount={character._count?.images || 0}
+      />
 
       <CommentList
         entityType={CommentableType.Character}

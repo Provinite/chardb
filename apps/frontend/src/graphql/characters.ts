@@ -80,6 +80,25 @@ export const GET_CHARACTER = gql`
       _count {
         images
       }
+      tags_rel {
+        tag {
+          id
+          name
+          category
+          color
+        }
+      }
+      recentImages: images(limit: 8) {
+        id
+        filename
+        originalFilename
+        url
+        thumbnailUrl
+        altText
+        description
+        isNsfw
+        createdAt
+      }
     }
   }
 `;

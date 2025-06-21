@@ -1,9 +1,11 @@
-import { Resolver, Query, Mutation, Args, ID, Context } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID, Context, ResolveField, Parent, Int } from '@nestjs/graphql';
 import { UseGuards, ForbiddenException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { CharactersService } from './characters.service';
 import { Character as CharacterEntity, CharacterConnection } from './entities/character.entity';
+import { Image } from '../images/entities/image.entity';
+import { ImagesService } from '../images/images.service';
 import type { Character } from '@chardb/database';
 import {
   CreateCharacterInput,
@@ -15,7 +17,10 @@ import {
 
 @Resolver(() => CharacterEntity)
 export class CharactersResolver {
-  constructor(private readonly charactersService: CharactersService) {}
+  constructor(
+    private readonly charactersService: CharactersService,
+    private readonly imagesService: ImagesService,
+  ) {}
 
   @Mutation(() => CharacterEntity)
   @UseGuards(JwtAuthGuard)
@@ -111,5 +116,22 @@ export class CharactersResolver {
   ): Promise<any> {
     const userFilters = { ...filters, ownerId: userId };
     return this.charactersService.findAll(userFilters, user?.id);
+  }
+
+  // Field resolver for character images with limit
+  @ResolveField(() => [Image])
+  async images(
+    @Parent() character: CharacterEntity,
+    @Args('limit', { type: () => Int, nullable: true, defaultValue: 10 }) limit: number,
+    @CurrentUser() user?: any,
+  ): Promise<any[]> {
+    const result = await this.imagesService.findAll(
+      {
+        characterId: character.id,
+        limit: Math.min(limit, 50), // Cap at 50 to prevent abuse
+      },
+      user?.id,
+    );
+    return result.images;
   }
 }

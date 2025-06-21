@@ -62,6 +62,7 @@ export type Character = {
   description: Maybe<Scalars['String']['output']>;
   gender: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  images: Maybe<Array<Image>>;
   isSellable: Scalars['Boolean']['output'];
   isTradeable: Scalars['Boolean']['output'];
   likesCount: Scalars['Int']['output'];
@@ -76,6 +77,11 @@ export type Character = {
   updatedAt: Scalars['DateTime']['output'];
   userHasLiked: Scalars['Boolean']['output'];
   visibility: Visibility;
+};
+
+
+export type CharacterImagesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type CharacterConnection = {
@@ -869,7 +875,7 @@ export type GetCharacterQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null, recentImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, isNsfw: boolean, createdAt: string }> | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -1440,6 +1446,25 @@ export const GetCharacterDocument = gql`
     }
     _count {
       images
+    }
+    tags_rel {
+      tag {
+        id
+        name
+        category
+        color
+      }
+    }
+    recentImages: images(limit: 8) {
+      id
+      filename
+      originalFilename
+      url
+      thumbnailUrl
+      altText
+      description
+      isNsfw
+      createdAt
     }
   }
 }
