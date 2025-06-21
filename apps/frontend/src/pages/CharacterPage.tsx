@@ -558,6 +558,7 @@ export const CharacterPage: React.FC = () => {
         characterId={character.id}
         images={character.recentImages || []}
         totalCount={character._count?.images || 0}
+        canUpload={!!(user && user.id === character.owner.id)}
       />
 
       <CommentList

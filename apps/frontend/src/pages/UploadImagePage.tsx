@@ -289,11 +289,17 @@ export const UploadImagePage: React.FC = () => {
     artistLabel: '',
   });
 
-  // Pre-select gallery from URL query parameter
+  // Pre-select gallery and character from URL query parameters
   useEffect(() => {
     const galleryId = searchParams.get('galleryId');
+    const characterId = searchParams.get('character');
+    
     if (galleryId) {
       setFormData(prev => ({ ...prev, galleryId }));
+    }
+    
+    if (characterId) {
+      setFormData(prev => ({ ...prev, characterId }));
     }
   }, [searchParams]);
 

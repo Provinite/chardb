@@ -15,6 +15,12 @@ const GalleryHeader = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
 `;
 
+const HeaderActions = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.sm};
+  align-items: center;
+`;
+
 const SectionTitle = styled.h3`
   font-size: ${({ theme }) => theme.typography.fontSize.xl};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
@@ -123,17 +129,30 @@ interface CharacterImageGalleryProps {
   characterId: string;
   images: ImageType[];
   totalCount: number;
+  canUpload?: boolean;
 }
 
 export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
   characterId,
   images,
   totalCount,
+  canUpload = false,
 }) => {
   if (!images || images.length === 0) {
     return (
       <GalleryContainer>
-        <SectionTitle>Recent Images</SectionTitle>
+        <GalleryHeader>
+          <SectionTitle>Recent Images</SectionTitle>
+          {canUpload && (
+            <HeaderActions>
+              <Link to={`/upload?character=${characterId}`}>
+                <Button variant="primary" size="sm">
+                  Upload Image
+                </Button>
+              </Link>
+            </HeaderActions>
+          )}
+        </GalleryHeader>
         <EmptyState>
           <p>No images uploaded yet for this character.</p>
         </EmptyState>
@@ -145,13 +164,22 @@ export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
     <GalleryContainer>
       <GalleryHeader>
         <SectionTitle>Recent Images</SectionTitle>
-        {totalCount > images.length && (
-          <Link to={`/character/${characterId}/gallery`}>
-            <Button variant="ghost" size="sm">
-              View All ({totalCount})
-            </Button>
-          </Link>
-        )}
+        <HeaderActions>
+          {canUpload && (
+            <Link to={`/upload?character=${characterId}`}>
+              <Button variant="primary" size="sm">
+                Upload Image
+              </Button>
+            </Link>
+          )}
+          {totalCount > images.length && (
+            <Link to={`/character/${characterId}/gallery`}>
+              <Button variant="ghost" size="sm">
+                View All ({totalCount})
+              </Button>
+            </Link>
+          )}
+        </HeaderActions>
       </GalleryHeader>
 
       <ImageGrid>
