@@ -87,20 +87,22 @@ const SectionTitle = styled.h2`
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
-const FormRow = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${({ theme }) => theme.spacing.md};
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
 
 const CheckboxGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const UploadButton = styled(Button)`
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+`;
+
+const CancelButton = styled(Button)`
+  width: 100%;
 `;
 
 const Input = styled.input`
@@ -521,19 +523,13 @@ export const UploadImagePage: React.FC = () => {
             </Section>
 
             <Actions style={{ justifyContent: 'center' }}>
-              <Button
+              <UploadButton
                 onClick={() => handleUpload(files)}
                 disabled={uploading || files.length === 0}
                 variant="primary"
-                style={{ 
-                  width: '100%', 
-                  padding: '14px 24px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                }}
               >
                 {uploading ? 'Uploading...' : 'Upload Image'}
-              </Button>
+              </UploadButton>
             </Actions>
           </Form>
         </MainContent>
@@ -658,9 +654,9 @@ export const UploadImagePage: React.FC = () => {
           </SidebarSection>
 
           <div style={{ padding: '0 16px' }}>
-            <Button variant="ghost" onClick={handleCancel} disabled={uploading} style={{ width: '100%' }}>
+            <CancelButton variant="ghost" onClick={handleCancel} disabled={uploading}>
               Cancel
-            </Button>
+            </CancelButton>
           </div>
         </Sidebar>
       </MainLayout>
