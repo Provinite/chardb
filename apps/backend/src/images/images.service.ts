@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Prisma, Visibility } from '@chardb/database';
 import * as sharp from 'sharp';
@@ -380,9 +380,13 @@ export class ImagesService {
   }
 
   private async processImage(buffer: Buffer) {
+    const logger = new Logger('ImageProcessing');
+    
     try {
       const image = sharp(buffer);
       const metadata = await image.metadata();
+      
+      logger.log(`Processing image: ${metadata.format} ${metadata.width}x${metadata.height}, size: ${buffer.length} bytes`);
 
       // For GIFs, preserve original to maintain animations
       if (metadata.format === 'gif') {
@@ -455,6 +459,8 @@ export class ImagesService {
         metadata,
       };
     } catch (error) {
+      logger.error(`Image processing failed:`, error.message || error);
+      logger.error(`Stack trace:`, error.stack);
       throw new BadRequestException('Invalid image file or processing failed');
     }
   }

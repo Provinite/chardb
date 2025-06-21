@@ -129,6 +129,7 @@ enum CommentableType {
   CHARACTER
   GALLERY
   IMAGE
+  USER
 }
 
 input CreateCharacterInput {
