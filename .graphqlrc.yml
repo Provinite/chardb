@@ -1,0 +1,4 @@
+schema: "apps/backend/src/schema.gql"
+documents: 
+  - "apps/frontend/src/**/*.{ts,tsx}"
+  - "apps/backend/src/**/*.{ts,tsx}"

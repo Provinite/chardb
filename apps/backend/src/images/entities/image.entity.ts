@@ -65,6 +65,9 @@ export class Image {
   @Field()
   isNsfw: boolean;
 
+  @Field({ nullable: true })
+  sensitiveContentDescription?: string;
+
   @Field(() => Visibility)
   visibility: Visibility;
 

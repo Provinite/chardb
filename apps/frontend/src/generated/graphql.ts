@@ -15,7 +15,9 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  /** A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format. */
   DateTime: { input: string; output: string; }
+  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
   JSON: { input: any; output: any; }
 };
 
@@ -154,7 +156,8 @@ export type CommentFiltersInput = {
 export enum CommentableType {
   Character = 'CHARACTER',
   Gallery = 'GALLERY',
-  Image = 'IMAGE'
+  Image = 'IMAGE',
+  User = 'USER'
 }
 
 export type CreateCharacterInput = {
@@ -274,6 +277,7 @@ export type Image = {
   likesCount: Scalars['Int']['output'];
   mimeType: Scalars['String']['output'];
   originalFilename: Scalars['String']['output'];
+  sensitiveContentDescription: Maybe<Scalars['String']['output']>;
   source: Maybe<Scalars['String']['output']>;
   tags_rel: Maybe<Array<ImageTag>>;
   thumbnailUrl: Maybe<Scalars['String']['output']>;
@@ -1017,21 +1021,21 @@ export type GetImagesQueryVariables = Exact<{
 }>;
 
 
-export type GetImagesQuery = { __typename?: 'Query', images: { __typename?: 'ImageConnection', total: number, hasMore: boolean, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> } };
+export type GetImagesQuery = { __typename?: 'Query', images: { __typename?: 'ImageConnection', total: number, hasMore: boolean, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> } };
 
 export type GetImageQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, gallery: { __typename?: 'Gallery', id: string, name: string, description: string | null } | null } };
+export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, gallery: { __typename?: 'Gallery', id: string, name: string, description: string | null } | null } };
 
 export type GetMyImagesQueryVariables = Exact<{
   filters?: InputMaybe<ImageFiltersInput>;
 }>;
 
 
-export type GetMyImagesQuery = { __typename?: 'Query', myImages: { __typename?: 'ImageConnection', total: number, hasMore: boolean, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> } };
+export type GetMyImagesQuery = { __typename?: 'Query', myImages: { __typename?: 'ImageConnection', total: number, hasMore: boolean, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> } };
 
 export type UpdateImageMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1039,7 +1043,7 @@ export type UpdateImageMutationVariables = Exact<{
 }>;
 
 
-export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null } };
+export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null } };
 
 export type DeleteImageMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1051,7 +1055,7 @@ export type DeleteImageMutation = { __typename?: 'Mutation', deleteImage: boolea
 export type GetLikedImagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedImagesQuery = { __typename?: 'Query', likedImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> };
+export type GetLikedImagesQuery = { __typename?: 'Query', likedImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> };
 
 export type ToggleLikeMutationVariables = Exact<{
   input: ToggleLikeInput;
@@ -2640,6 +2644,7 @@ export const GetImagesDocument = gql`
       fileSize
       mimeType
       isNsfw
+      sensitiveContentDescription
       visibility
       createdAt
       updatedAt
@@ -2722,6 +2727,7 @@ export const GetImageDocument = gql`
     fileSize
     mimeType
     isNsfw
+    sensitiveContentDescription
     visibility
     createdAt
     updatedAt
@@ -2806,6 +2812,7 @@ export const GetMyImagesDocument = gql`
       fileSize
       mimeType
       isNsfw
+      sensitiveContentDescription
       visibility
       createdAt
       updatedAt
@@ -2888,6 +2895,7 @@ export const UpdateImageDocument = gql`
     fileSize
     mimeType
     isNsfw
+    sensitiveContentDescription
     visibility
     createdAt
     updatedAt
@@ -2985,6 +2993,7 @@ export const GetLikedImagesDocument = gql`
     fileSize
     mimeType
     isNsfw
+    sensitiveContentDescription
     visibility
     createdAt
     updatedAt

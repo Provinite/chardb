@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const GET_IMAGES = gql`
   query GetImages($filters: ImageFiltersInput) {
@@ -23,6 +23,7 @@ export const GET_IMAGES = gql`
         fileSize
         mimeType
         isNsfw
+        sensitiveContentDescription
         visibility
         createdAt
         updatedAt
@@ -73,6 +74,7 @@ export const GET_IMAGE = gql`
       fileSize
       mimeType
       isNsfw
+      sensitiveContentDescription
       visibility
       createdAt
       updatedAt
@@ -125,6 +127,7 @@ export const GET_MY_IMAGES = gql`
         fileSize
         mimeType
         isNsfw
+        sensitiveContentDescription
         visibility
         createdAt
         updatedAt
@@ -175,6 +178,7 @@ export const UPDATE_IMAGE = gql`
       fileSize
       mimeType
       isNsfw
+      sensitiveContentDescription
       visibility
       createdAt
       updatedAt
@@ -221,6 +225,7 @@ export const GET_LIKED_IMAGES = gql`
       fileSize
       mimeType
       isNsfw
+      sensitiveContentDescription
       visibility
       createdAt
       updatedAt
@@ -271,7 +276,8 @@ export interface Image {
   fileSize: number;
   mimeType: string;
   isNsfw: boolean;
-  visibility: 'PUBLIC' | 'UNLISTED' | 'PRIVATE';
+  sensitiveContentDescription?: string;
+  visibility: "PUBLIC" | "UNLISTED" | "PRIVATE";
   createdAt: string;
   updatedAt: string;
   uploader: {
@@ -308,7 +314,7 @@ export interface ImageFiltersInput {
   limit?: number;
   offset?: number;
   search?: string;
-  visibility?: 'PUBLIC' | 'UNLISTED' | 'PRIVATE';
+  visibility?: "PUBLIC" | "UNLISTED" | "PRIVATE";
   isNsfw?: boolean;
   uploaderId?: string;
   characterId?: string;
@@ -326,5 +332,6 @@ export interface UpdateImageInput {
   artistUrl?: string;
   source?: string;
   isNsfw?: boolean;
-  visibility?: 'PUBLIC' | 'UNLISTED' | 'PRIVATE';
+  sensitiveContentDescription?: string;
+  visibility?: "PUBLIC" | "UNLISTED" | "PRIVATE";
 }

@@ -1,6 +1,7 @@
-overwrite: true
-schema: "../../packages/shared/src/schema.graphql"
+# yaml-language-server: disable
+schema: "../../apps/backend/src/schema.gql"
 documents: "src/**/*.{ts,tsx}"
+overwrite: true
 generates:
   src/generated/graphql.ts:
     plugins:

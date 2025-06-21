@@ -36,6 +36,7 @@ export class ImagesController {
       altText: body.altText,
       isNsfw: body.isNsfw === 'true',
       visibility: body.visibility,
+      sensitiveContentDescription: body.sensitiveContentDescription,
     };
 
     return this.imagesService.upload(req.user.id, uploadInput);

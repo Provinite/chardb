@@ -14,6 +14,7 @@ export interface UploadImageInput {
   altText?: string;
   isNsfw?: boolean;
   visibility?: Visibility;
+  sensitiveContentDescription?: string;
   artistId?: string;
   artistName?: string;
   artistUrl?: string;
@@ -25,6 +26,7 @@ export interface UpdateImageInput {
   altText?: string;
   isNsfw?: boolean;
   visibility?: Visibility;
+  sensitiveContentDescription?: string;
   characterId?: string;
   galleryId?: string;
   artistId?: string;
@@ -70,6 +72,7 @@ export class ImagesService {
       altText, 
       isNsfw = false, 
       visibility = Visibility.PUBLIC,
+      sensitiveContentDescription,
       artistId,
       artistName,
       artistUrl,
@@ -131,6 +134,7 @@ export class ImagesService {
         fileSize: file.size,
         mimeType: file.mimetype,
         isNsfw,
+        sensitiveContentDescription,
         visibility,
       },
       include: {

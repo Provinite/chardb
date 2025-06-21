@@ -453,6 +453,13 @@ export const ImagePage: React.FC = () => {
             </MetadataSection>
           )}
 
+          {image.isNsfw && image.sensitiveContentDescription && (
+            <MetadataSection>
+              <SectionTitle>Content Warning</SectionTitle>
+              <Description>{image.sensitiveContentDescription}</Description>
+            </MetadataSection>
+          )}
+
           {isOwner && (
             <Actions>
               <Button

@@ -24,7 +24,8 @@ const getVariantStyles = (variant: string, theme: Theme) => {
         border: 1px solid ${theme.colors.primary};
         
         &:hover:not(:disabled) {
-          opacity: 0.9;
+          background-color: ${theme.colors.primary}e6;
+          border-color: ${theme.colors.primary}e6;
         }
       `;
     case 'secondary':
@@ -102,8 +103,11 @@ const StyledButton = styled.button.withConfig({
   ${({ size = 'md', theme }) => getSizeStyles(size, theme)}
   
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
+    background-color: ${({ theme }) => theme.colors.text.muted} !important;
+    border-color: ${({ theme }) => theme.colors.text.muted} !important;
+    color: ${({ theme }) => theme.colors.background} !important;
   }
   
   &:focus {

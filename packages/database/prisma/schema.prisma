@@ -105,6 +105,7 @@ model Image {
   fileSize         Int        @map("file_size")
   mimeType         String     @map("mime_type") @db.VarChar(50)
   isNsfw           Boolean    @default(false) @map("is_nsfw")
+  sensitiveContentDescription String? @map("sensitive_content_description") @db.Text
   visibility       Visibility @default(PUBLIC)
   createdAt        DateTime   @default(now()) @map("created_at")
   updatedAt        DateTime   @updatedAt @map("updated_at")

@@ -247,6 +247,7 @@ type Image {
   likesCount: Int!
   mimeType: String!
   originalFilename: String!
+  sensitiveContentDescription: String
   source: String
   tags_rel: [ImageTag!]
   thumbnailUrl: String
