@@ -60,6 +60,7 @@ model Character {
   backstory    String?    @db.Text
   ownerId      String     @map("owner_id")
   creatorId    String?    @map("creator_id")
+  mainImageId  String?    @map("main_image_id")
   visibility   Visibility @default(PUBLIC)
   isSellable   Boolean    @default(false) @map("is_sellable")
   isTradeable  Boolean    @default(false) @map("is_tradeable")
@@ -70,8 +71,9 @@ model Character {
   updatedAt    DateTime   @updatedAt @map("updated_at")
 
   // Relations
-  owner   User  @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  creator User? @relation("CharacterCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  owner     User   @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  creator   User?  @relation("CharacterCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  mainImage Image? @relation("CharacterMainImage", fields: [mainImageId], references: [id], onDelete: SetNull)
 
   images    Image[]
   galleries Gallery[]
@@ -115,6 +117,7 @@ model Image {
   artist    User?      @relation("ImageArtist", fields: [artistId], references: [id], onDelete: SetNull)
   character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
   gallery   Gallery?   @relation(fields: [galleryId], references: [id], onDelete: SetNull)
+  mainImageFor Character[] @relation("CharacterMainImage")
 
   comments Comment[]
   likes    Like[]

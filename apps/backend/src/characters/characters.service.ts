@@ -108,6 +108,7 @@ export class CharactersService {
         include: {
           owner: true,
           creator: true,
+          mainImage: true,
           tags_rel: {
             include: {
               tag: true,
@@ -139,6 +140,7 @@ export class CharactersService {
       include: {
         owner: true,
         creator: true,
+        mainImage: true,
         tags_rel: {
           include: {
             tag: true,
@@ -315,6 +317,48 @@ export class CharactersService {
     });
 
     return this.findOne(characterId, userId);
+  }
+
+  async setMainImage(characterId: string, userId: string, imageId?: string): Promise<Character> {
+    const character = await this.findOne(characterId, userId);
+
+    // Check ownership
+    if (character.ownerId !== userId) {
+      throw new ForbiddenException('You can only set main image on your own characters');
+    }
+
+    // If imageId is provided, verify the image exists and belongs to this character
+    if (imageId) {
+      const image = await this.db.image.findUnique({
+        where: { id: imageId },
+      });
+
+      if (!image) {
+        throw new NotFoundException('Image not found');
+      }
+
+      if (image.characterId !== characterId) {
+        throw new ForbiddenException('Image must belong to this character');
+      }
+    }
+
+    // Update character with new main image (or null to clear)
+    const updatedCharacter = await this.db.character.update({
+      where: { id: characterId },
+      data: { mainImageId: imageId },
+      include: {
+        owner: true,
+        creator: true,
+        mainImage: true,
+        tags_rel: {
+          include: {
+            tag: true,
+          },
+        },
+      },
+    });
+
+    return this.transformCharacter(updatedCharacter);
   }
 
   private buildSearchConditions(search: string, searchFields: string) {

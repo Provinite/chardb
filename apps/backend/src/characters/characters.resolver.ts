@@ -13,6 +13,7 @@ import {
   CharacterFiltersInput,
   TransferCharacterInput,
   ManageTagsInput,
+  SetMainImageInput,
 } from './dto/character.dto';
 
 @Resolver(() => CharacterEntity)
@@ -94,6 +95,16 @@ export class CharactersResolver {
     @CurrentUser() user: any,
   ): Promise<any> {
     return this.charactersService.removeTags(id, user.id, input.tagNames);
+  }
+
+  @Mutation(() => CharacterEntity)
+  @UseGuards(JwtAuthGuard)
+  async setCharacterMainImage(
+    @Args('id', { type: () => ID }) id: string,
+    @Args('input') input: SetMainImageInput,
+    @CurrentUser() user: any,
+  ): Promise<any> {
+    return this.charactersService.setMainImage(id, user.id, input.imageId);
   }
 
   // Query for user's own characters

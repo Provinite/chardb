@@ -66,6 +66,8 @@ export type Character = {
   isSellable: Scalars['Boolean']['output'];
   isTradeable: Scalars['Boolean']['output'];
   likesCount: Scalars['Int']['output'];
+  mainImage: Maybe<Image>;
+  mainImageId: Maybe<Scalars['ID']['output']>;
   name: Scalars['String']['output'];
   owner: User;
   ownerId: Scalars['ID']['output'];
@@ -375,6 +377,7 @@ export type Mutation = {
   removeImageFromGallery: Gallery;
   removeImageTags: Image;
   reorderGalleries: Array<Gallery>;
+  setCharacterMainImage: Character;
   signup: AuthPayload;
   toggleFollow: FollowResult;
   toggleLike: LikeResult;
@@ -470,6 +473,12 @@ export type MutationRemoveImageTagsArgs = {
 
 export type MutationReorderGalleriesArgs = {
   input: ReorderGalleriesInput;
+};
+
+
+export type MutationSetCharacterMainImageArgs = {
+  id: Scalars['ID']['input'];
+  input: SetMainImageInput;
 };
 
 
@@ -699,6 +708,10 @@ export type ReorderGalleriesInput = {
   galleryIds: Array<Scalars['ID']['input']>;
 };
 
+export type SetMainImageInput = {
+  imageId?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export type SignupInput = {
   displayName?: InputMaybe<Scalars['String']['input']>;
   email: Scalars['String']['input'];
@@ -736,6 +749,7 @@ export type UpdateCharacterInput = {
   gender?: InputMaybe<Scalars['String']['input']>;
   isSellable?: InputMaybe<Scalars['Boolean']['input']>;
   isTradeable?: InputMaybe<Scalars['Boolean']['input']>;
+  mainImageId?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   personality?: InputMaybe<Scalars['String']['input']>;
   price?: InputMaybe<Scalars['Float']['input']>;
@@ -868,21 +882,21 @@ export type GetCharactersQueryVariables = Exact<{
 }>;
 
 
-export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null }> } };
+export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainImageId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainImage: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, _count: { __typename?: 'CharacterCount', images: number } | null }> } };
 
 export type GetCharacterQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null, recentImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, isNsfw: boolean, createdAt: string }> | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainImageId: string | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null, mainImage: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, recentImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, isNsfw: boolean, createdAt: string }> | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
 
 
-export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null }> } };
+export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainImageId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainImage: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, _count: { __typename?: 'CharacterCount', images: number } | null }> } };
 
 export type CreateCharacterMutationVariables = Exact<{
   input: CreateCharacterInput;
@@ -929,6 +943,14 @@ export type RemoveCharacterTagsMutationVariables = Exact<{
 
 
 export type RemoveCharacterTagsMutation = { __typename?: 'Mutation', removeCharacterTags: { __typename?: 'Character', id: string, name: string, tags: Array<string>, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
+
+export type SetCharacterMainImageMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: SetMainImageInput;
+}>;
+
+
+export type SetCharacterMainImageMutation = { __typename?: 'Mutation', setCharacterMainImage: { __typename?: 'Character', id: string, name: string, mainImageId: string | null, mainImage: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } };
 
 export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1349,6 +1371,7 @@ export const GetCharactersDocument = gql`
       backstory
       ownerId
       creatorId
+      mainImageId
       visibility
       isSellable
       isTradeable
@@ -1368,6 +1391,13 @@ export const GetCharactersDocument = gql`
         username
         displayName
         avatarUrl
+      }
+      mainImage {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
       }
       _count {
         images
@@ -1455,6 +1485,14 @@ export const GetCharacterDocument = gql`
         color
       }
     }
+    mainImageId
+    mainImage {
+      id
+      url
+      thumbnailUrl
+      altText
+      isNsfw
+    }
     recentImages: images(limit: 8) {
       id
       filename
@@ -1516,6 +1554,7 @@ export const GetMyCharactersDocument = gql`
       backstory
       ownerId
       creatorId
+      mainImageId
       visibility
       isSellable
       isTradeable
@@ -1535,6 +1574,13 @@ export const GetMyCharactersDocument = gql`
         username
         displayName
         avatarUrl
+      }
+      mainImage {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
       }
       _count {
         images
@@ -1894,6 +1940,49 @@ export function useRemoveCharacterTagsMutation(baseOptions?: Apollo.MutationHook
 export type RemoveCharacterTagsMutationHookResult = ReturnType<typeof useRemoveCharacterTagsMutation>;
 export type RemoveCharacterTagsMutationResult = Apollo.MutationResult<RemoveCharacterTagsMutation>;
 export type RemoveCharacterTagsMutationOptions = Apollo.BaseMutationOptions<RemoveCharacterTagsMutation, RemoveCharacterTagsMutationVariables>;
+export const SetCharacterMainImageDocument = gql`
+    mutation SetCharacterMainImage($id: ID!, $input: SetMainImageInput!) {
+  setCharacterMainImage(id: $id, input: $input) {
+    id
+    name
+    mainImageId
+    mainImage {
+      id
+      url
+      thumbnailUrl
+      altText
+      isNsfw
+    }
+  }
+}
+    `;
+export type SetCharacterMainImageMutationFn = Apollo.MutationFunction<SetCharacterMainImageMutation, SetCharacterMainImageMutationVariables>;
+
+/**
+ * __useSetCharacterMainImageMutation__
+ *
+ * To run a mutation, you first call `useSetCharacterMainImageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetCharacterMainImageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setCharacterMainImageMutation, { data, loading, error }] = useSetCharacterMainImageMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useSetCharacterMainImageMutation(baseOptions?: Apollo.MutationHookOptions<SetCharacterMainImageMutation, SetCharacterMainImageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetCharacterMainImageMutation, SetCharacterMainImageMutationVariables>(SetCharacterMainImageDocument, options);
+      }
+export type SetCharacterMainImageMutationHookResult = ReturnType<typeof useSetCharacterMainImageMutation>;
+export type SetCharacterMainImageMutationResult = Apollo.MutationResult<SetCharacterMainImageMutation>;
+export type SetCharacterMainImageMutationOptions = Apollo.BaseMutationOptions<SetCharacterMainImageMutation, SetCharacterMainImageMutationVariables>;
 export const GetLikedCharactersDocument = gql`
     query GetLikedCharacters {
   likedCharacters {

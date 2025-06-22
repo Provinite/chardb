@@ -74,6 +74,55 @@ const CharacterBasics = styled.div`
   flex: 1;
 `;
 
+const MainImageSection = styled.div`
+  flex: 0 0 300px;
+  
+  @media (max-width: 768px) {
+    flex: none;
+    width: 100%;
+  }
+`;
+
+const MainImageContainer = styled.div`
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  overflow: hidden;
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+`;
+
+const MainImageElement = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const MainImagePlaceholder = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${({ theme }) => theme.colors.text.muted};
+  font-style: italic;
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing.lg};
+`;
+
+const MainImageBadge = styled.div`
+  position: absolute;
+  top: ${({ theme }) => theme.spacing.sm};
+  left: ${({ theme }) => theme.spacing.sm};
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+`;
+
 const CharacterTitle = styled.h1`
   font-size: 3rem;
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
@@ -396,6 +445,24 @@ export const CharacterPage: React.FC = () => {
       </BackButton>
 
       <CharacterHeader>
+        <MainImageSection>
+          <MainImageContainer>
+            {character.mainImage ? (
+              <>
+                <MainImageElement
+                  src={character.mainImage.thumbnailUrl || character.mainImage.url}
+                  alt={character.mainImage.altText || `${character.name} main image`}
+                />
+                <MainImageBadge>Main Image</MainImageBadge>
+              </>
+            ) : (
+              <MainImagePlaceholder>
+                No main image set for this character
+              </MainImagePlaceholder>
+            )}
+          </MainImageContainer>
+        </MainImageSection>
+
         <CharacterBasics>
           <CharacterTitle>{character.name}</CharacterTitle>
           {character.species && (
@@ -559,6 +626,8 @@ export const CharacterPage: React.FC = () => {
         images={character.recentImages || []}
         totalCount={character._count?.images || 0}
         canUpload={!!(user && user.id === character.owner.id)}
+        mainImageId={character.mainImageId}
+        isOwner={!!(user && user.id === character.owner.id)}
       />
 
       <CommentList

@@ -2,7 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
-import { GetCharacterQuery } from "../generated/graphql";
+import { GetCharacterQuery, useSetCharacterMainImageMutation } from "../generated/graphql";
+import toast from "react-hot-toast";
 
 const GalleryContainer = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.xl};
@@ -104,6 +105,51 @@ const NSFWBadge = styled.span`
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  z-index: 2;
+`;
+
+const MainImageBadge = styled.span`
+  position: absolute;
+  top: ${({ theme }) => theme.spacing.xs};
+  left: ${({ theme }) => theme.spacing.xs};
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  padding: 2px 6px;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  z-index: 2;
+`;
+
+const ImageActions = styled.div`
+  position: absolute;
+  bottom: ${({ theme }) => theme.spacing.xs};
+  left: ${({ theme }) => theme.spacing.xs};
+  right: ${({ theme }) => theme.spacing.xs};
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.xs};
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 3;
+`;
+
+const ImageCardWrapper = styled.div`
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  overflow: hidden;
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    
+    ${ImageActions} {
+      opacity: 1;
+    }
+  }
 `;
 
 const ViewAllContainer = styled.div`
@@ -130,6 +176,8 @@ interface CharacterImageGalleryProps {
   images: ImageType[];
   totalCount: number;
   canUpload?: boolean;
+  mainImageId?: string | null;
+  isOwner?: boolean;
 }
 
 export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
@@ -137,7 +185,43 @@ export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
   images,
   totalCount,
   canUpload = false,
+  mainImageId,
+  isOwner = false,
 }) => {
+  const [setCharacterMainImage, { loading: settingMainImage }] = useSetCharacterMainImageMutation();
+
+  const handleSetMainImage = async (imageId: string) => {
+    try {
+      await setCharacterMainImage({
+        variables: {
+          id: characterId,
+          input: { imageId },
+        },
+        refetchQueries: ['GetCharacter'],
+      });
+      toast.success('Main image updated successfully!');
+    } catch (error) {
+      console.error('Error setting main image:', error);
+      toast.error('Failed to set main image. Please try again.');
+    }
+  };
+
+  const handleClearMainImage = async () => {
+    try {
+      await setCharacterMainImage({
+        variables: {
+          id: characterId,
+          input: { imageId: null },
+        },
+        refetchQueries: ['GetCharacter'],
+      });
+      toast.success('Main image cleared successfully!');
+    } catch (error) {
+      console.error('Error clearing main image:', error);
+      toast.error('Failed to clear main image. Please try again.');
+    }
+  };
+
   if (!images || images.length === 0) {
     return (
       <GalleryContainer>
@@ -183,19 +267,55 @@ export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
       </GalleryHeader>
 
       <ImageGrid>
-        {images.map((image) => (
-          <ImageCard key={image.id} to={`/image/${image.id}`}>
-            {image.isNsfw && <NSFWBadge>NSFW</NSFWBadge>}
-            <ImageElement
-              src={image.thumbnailUrl || image.url}
-              alt={image.altText || image.description || image.originalFilename}
-              loading="lazy"
-            />
-            <ImageOverlay>
-              {image.description || image.originalFilename}
-            </ImageOverlay>
-          </ImageCard>
-        ))}
+        {images.map((image) => {
+          const isMainImage = mainImageId === image.id;
+          
+          return (
+            <ImageCardWrapper key={image.id}>
+              <Link to={`/image/${image.id}`}>
+                {image.isNsfw && <NSFWBadge>NSFW</NSFWBadge>}
+                {isMainImage && <MainImageBadge>Main Image</MainImageBadge>}
+                <ImageElement
+                  src={image.thumbnailUrl || image.url}
+                  alt={image.altText || image.description || image.originalFilename}
+                  loading="lazy"
+                />
+                <ImageOverlay>
+                  {image.description || image.originalFilename}
+                </ImageOverlay>
+              </Link>
+              
+              {isOwner && (
+                <ImageActions
+                  onClick={(e: React.MouseEvent) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  {isMainImage ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleClearMainImage()}
+                      disabled={settingMainImage}
+                    >
+                      Remove as Main
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleSetMainImage(image.id)}
+                      disabled={settingMainImage}
+                    >
+                      Set as Main
+                    </Button>
+                  )}
+                </ImageActions>
+              )}
+            </ImageCardWrapper>
+          );
+        })}
       </ImageGrid>
 
       {totalCount > images.length && (

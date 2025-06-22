@@ -14,6 +14,7 @@ export const GET_CHARACTERS = gql`
         backstory
         ownerId
         creatorId
+        mainImageId
         visibility
         isSellable
         isTradeable
@@ -33,6 +34,13 @@ export const GET_CHARACTERS = gql`
           username
           displayName
           avatarUrl
+        }
+        mainImage {
+          id
+          url
+          thumbnailUrl
+          altText
+          isNsfw
         }
         _count {
           images
@@ -88,6 +96,14 @@ export const GET_CHARACTER = gql`
           color
         }
       }
+      mainImageId
+      mainImage {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
+      }
       recentImages: images(limit: 8) {
         id
         filename
@@ -117,6 +133,7 @@ export const GET_MY_CHARACTERS = gql`
         backstory
         ownerId
         creatorId
+        mainImageId
         visibility
         isSellable
         isTradeable
@@ -136,6 +153,13 @@ export const GET_MY_CHARACTERS = gql`
           username
           displayName
           avatarUrl
+        }
+        mainImage {
+          id
+          url
+          thumbnailUrl
+          altText
+          isNsfw
         }
         _count {
           images
@@ -309,6 +333,23 @@ export const REMOVE_CHARACTER_TAGS = gql`
   }
 `;
 
+export const SET_CHARACTER_MAIN_IMAGE = gql`
+  mutation SetCharacterMainImage($id: ID!, $input: SetMainImageInput!) {
+    setCharacterMainImage(id: $id, input: $input) {
+      id
+      name
+      mainImageId
+      mainImage {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
+      }
+    }
+  }
+`;
+
 export const GET_LIKED_CHARACTERS = gql`
   query GetLikedCharacters {
     likedCharacters {
@@ -350,6 +391,7 @@ export {
   useTransferCharacterMutation,
   useAddCharacterTagsMutation,
   useRemoveCharacterTagsMutation,
+  useSetCharacterMainImageMutation,
   
   // Types
   type Character,
@@ -359,6 +401,7 @@ export {
   type UpdateCharacterInput,
   type TransferCharacterInput,
   type ManageTagsInput,
+  type SetMainImageInput,
   type GetCharactersQuery,
   type GetCharactersQueryVariables,
   type GetCharacterQuery,
@@ -377,6 +420,8 @@ export {
   type AddCharacterTagsMutationVariables,
   type RemoveCharacterTagsMutation,
   type RemoveCharacterTagsMutationVariables,
+  type SetCharacterMainImageMutation,
+  type SetCharacterMainImageMutationVariables,
   type Visibility,
   type Tag,
   type CharacterTag,

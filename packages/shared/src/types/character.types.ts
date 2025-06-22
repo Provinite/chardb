@@ -12,6 +12,7 @@ export const CharacterSchema = z.object({
   backstory: z.string().max(5000).optional(),
   ownerId: z.string().uuid(),
   creatorId: z.string().uuid().optional(),
+  mainImageId: z.string().uuid().optional(),
   visibility: z.nativeEnum(Visibility).default(Visibility.PUBLIC),
   isSellable: z.boolean().default(false),
   isTradeable: z.boolean().default(false),
@@ -38,7 +39,9 @@ export const CreateCharacterSchema = z.object({
   customFields: z.record(z.any()).default({}),
 });
 
-export const UpdateCharacterSchema = CreateCharacterSchema.partial();
+export const UpdateCharacterSchema = CreateCharacterSchema.partial().extend({
+  mainImageId: z.string().uuid().optional(),
+});
 
 export const CharacterSearchSchema = z.object({
   search: z.string().optional(),

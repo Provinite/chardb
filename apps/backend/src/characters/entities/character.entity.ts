@@ -42,6 +42,9 @@ export class Character {
   @Field(() => ID, { nullable: true })
   creatorId?: string;
 
+  @Field(() => ID, { nullable: true })
+  mainImageId?: string;
+
   @Field(() => Visibility)
   visibility: Visibility;
 
@@ -72,6 +75,9 @@ export class Character {
 
   @Field(() => User, { nullable: true })
   creator?: User;
+
+  @Field(() => Image, { nullable: true })
+  mainImage?: Image;
 
   @Field(() => [CharacterTag], { nullable: true })
   tags_rel?: CharacterTag[];

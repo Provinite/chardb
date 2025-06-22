@@ -159,6 +159,11 @@ export class UpdateCharacterInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   customFields?: any; // JSON field
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  mainImageId?: string;
 }
 
 @InputType()
@@ -263,6 +268,14 @@ export class ManageTagsInput {
   @IsArray()
   @IsString({ each: true })
   tagNames: string[];
+}
+
+@InputType()
+export class SetMainImageInput {
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  imageId?: string;
 }
 
 // Output types
