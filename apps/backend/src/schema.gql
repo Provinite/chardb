@@ -378,7 +378,7 @@ input MediaFiltersInput {
 }
 
 type MediaTag {
-  media: Media!
+  media: Media
   tag: Tag!
 }
 

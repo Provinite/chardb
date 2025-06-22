@@ -76,12 +76,12 @@ export class Media {
   @Field(() => [MediaTag], { nullable: true })
   tags_rel?: MediaTag[];
 
-  // Content union - only one will be populated based on mediaType
+  // Content union - only one will be populated based on nullable FKs
   @Field(() => Image, { nullable: true })
-  image?: Image;
+  image?: Partial<Image>;
 
   @Field(() => TextContent, { nullable: true })
-  textContent?: TextContent;
+  textContent?: Partial<TextContent>;
 
   // Social features
   @Field()
@@ -93,8 +93,8 @@ export class Media {
 
 @ObjectType()
 export class MediaTag {
-  @Field(() => Media)
-  media: Media;
+  @Field(() => Media, { nullable: true })
+  media?: Media;
 
   @Field(() => Tag)
   tag: Tag;
