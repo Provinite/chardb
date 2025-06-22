@@ -18,10 +18,13 @@ const FooterContent = styled.div`
 `;
 
 export const Footer: React.FC = () => {
+  const version = import.meta.env.VITE_VERSION || 'unknown';
+  
   return (
     <FooterContainer>
       <FooterContent>
         <p>&copy; 2024 CharDB. A character hosting platform built with ❤️</p>
+        <p>Version: {version}</p>
       </FooterContent>
     </FooterContainer>
   );
