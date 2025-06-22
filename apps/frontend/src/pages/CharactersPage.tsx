@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { useQuery } from '@apollo/client';
-import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { GET_CHARACTERS, Character, CharacterFiltersInput } from '../graphql/characters';
+import { GET_CHARACTERS, CharacterFiltersInput } from '../graphql/characters';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { CharacterGrid } from '../components/CharacterGrid';
 import { RandomCharacterButton } from '../components/RandomCharacterButton';
 import { AdvancedSearchForm, AdvancedSearchFilters } from '../components/AdvancedSearchForm';
 
@@ -138,120 +138,11 @@ const VisibilityButton = styled.button.withConfig({
   }
 `;
 
-const CharacterGrid = styled.div`
+const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: ${({ theme }) => theme.spacing.lg};
   margin-bottom: ${({ theme }) => theme.spacing.xl};
-`;
-
-const CharacterCard = styled.div`
-  background: ${({ theme }) => theme.colors.background};
-  border-radius: 12px;
-  box-shadow: ${({ theme }) => theme.shadows.sm};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  transition: all 0.2s;
-  cursor: pointer;
-  overflow: hidden;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.shadows.lg};
-  }
-  
-  &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
-    outline-offset: 2px;
-  }
-`;
-
-const CharacterImageSection = styled.div`
-  width: 100%;
-  aspect-ratio: 16/9;
-  background: ${({ theme }) => theme.colors.surface};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-`;
-
-const CharacterMainImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-`;
-
-const CharacterImagePlaceholder = styled.div`
-  color: ${({ theme }) => theme.colors.text.muted};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  text-align: center;
-  padding: ${({ theme }) => theme.spacing.md};
-`;
-
-const CharacterContent = styled.div`
-  padding: ${({ theme }) => theme.spacing.lg};
-`;
-
-const CharacterName = styled.h3`
-  font-size: ${({ theme }) => theme.typography.fontSize.xl};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
-`;
-
-const CharacterSpecies = styled.p`
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0 0 ${({ theme }) => theme.spacing.md} 0;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-`;
-
-const CharacterDescription = styled.p`
-  color: ${({ theme }) => theme.colors.text.muted};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  line-height: 1.5;
-  margin: 0 0 ${({ theme }) => theme.spacing.md} 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-`;
-
-const CharacterMeta = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  color: ${({ theme }) => theme.colors.text.muted};
-`;
-
-const OwnerInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const ImageCount = styled.span`
-  background: ${({ theme }) => theme.colors.surface};
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-`;
-
-const VisibilityBadge = styled.span.withConfig({
-  shouldForwardProp: (prop) => prop !== 'visibility'
-})<{ visibility: string }>`
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  background: ${props => 
-    props.visibility === 'PUBLIC' ? props.theme.colors.success + '20' :
-    props.visibility === 'UNLISTED' ? props.theme.colors.warning + '20' : props.theme.colors.error + '20'
-  };
-  color: ${props => 
-    props.visibility === 'PUBLIC' ? props.theme.colors.success :
-    props.visibility === 'UNLISTED' ? props.theme.colors.warning : props.theme.colors.error
-  };
 `;
 
 const LoadMoreButton = styled.button`
@@ -335,11 +226,6 @@ const LoadingContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.xxl};
 `;
 
-const MetaContainer = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
-  align-items: center;
-`;
 
 const EmptyState = styled.div`
   text-align: center;
@@ -359,7 +245,6 @@ const EmptyState = styled.div`
 `;
 
 export const CharactersPage: React.FC = () => {
-  const navigate = useNavigate();
   const [filters, setFilters] = useState<CharacterFiltersInput>({
     limit: 12,
     offset: 0,
@@ -456,16 +341,6 @@ export const CharactersPage: React.FC = () => {
     }
   }, [data, filters, fetchMore]);
 
-  const handleCharacterClick = useCallback((characterId: string) => {
-    navigate(`/character/${characterId}`);
-  }, [navigate]);
-  
-  const handleCharacterKeyDown = useCallback((e: React.KeyboardEvent, characterId: string) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleCharacterClick(characterId);
-    }
-  }, [handleCharacterClick]);
 
   if (error) {
     return (
@@ -572,62 +447,13 @@ export const CharactersPage: React.FC = () => {
               <p>Try adjusting your search terms or filters to find what you're looking for.</p>
             </EmptyState>
           ) : (
-            <CharacterGrid>
-              {data?.characters.characters.map((character: Character) => (
-                <CharacterCard
-                  key={character.id}
-                  onClick={() => handleCharacterClick(character.id)}
-                  onKeyDown={(e) => handleCharacterKeyDown(e, character.id)}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`View character ${character.name}`}
-                >
-                  <CharacterImageSection>
-                    {character.mainImage ? (
-                      <CharacterMainImage
-                        src={character.mainImage.thumbnailUrl || character.mainImage.url}
-                        alt={character.mainImage.altText || `${character.name} main image`}
-                      />
-                    ) : (
-                      <CharacterImagePlaceholder>
-                        No main image
-                      </CharacterImagePlaceholder>
-                    )}
-                  </CharacterImageSection>
-                  
-                  <CharacterContent>
-                    <CharacterName>{character.name}</CharacterName>
-                    {character.species && (
-                      <CharacterSpecies>
-                        {character.species}
-                        {character.gender && ` • ${character.gender}`}
-                        {character.age && ` • ${character.age}`}
-                      </CharacterSpecies>
-                    )}
-                    {character.description && (
-                      <CharacterDescription>{character.description}</CharacterDescription>
-                    )}
-                    
-                    <CharacterMeta>
-                      <OwnerInfo>
-                        by {character.owner.displayName || character.owner.username}
-                      </OwnerInfo>
-                      <MetaContainer>
-                            {character._count && (
-                          <ImageCount>{character._count.images} images</ImageCount>
-                        )}
-                        {character.isSellable && character.price && (
-                          <ImageCount>${character.price}</ImageCount>
-                        )}
-                        <VisibilityBadge visibility={character.visibility}>
-                          {character.visibility}
-                        </VisibilityBadge>
-                      </MetaContainer>
-                    </CharacterMeta>
-                  </CharacterContent>
-                </CharacterCard>
-              ))}
-            </CharacterGrid>
+            <Grid>
+              <CharacterGrid 
+                characters={data?.characters.characters || []}
+                showOwner={true}
+                showEditButton={false}
+              />
+            </Grid>
           )}
 
           {data?.characters.hasMore && (
