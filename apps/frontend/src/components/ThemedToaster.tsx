@@ -22,10 +22,6 @@ export const ThemedToaster: React.FC = () => {
       display: 'flex',
       alignItems: 'center',
       width: '100%',
-      // Animation properties
-      transform: t.visible ? 'translateX(0)' : 'translateX(100%)',
-      opacity: t.visible ? 1 : 0,
-      transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
     };
 
     switch (t.type) {
@@ -65,43 +61,49 @@ export const ThemedToaster: React.FC = () => {
       }}
     >
       {(t) => (
-        <div style={getToastStyles(t)}>
-          <div style={{ flex: 1 }}>
-            {typeof t.message === 'function' ? t.message(t) : t.message}
+        <div style={{
+          transform: t.visible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: t.visible ? 1 : 0,
+          transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}>
+          <div style={getToastStyles(t)}>
+            <div style={{ flex: 1 }}>
+              {typeof t.message === 'function' ? t.message(t) : t.message}
+            </div>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              style={{
+                position: 'absolute',
+                top: '50%',
+                right: '8px',
+                transform: 'translateY(-50%)',
+                background: 'transparent',
+                border: 'none',
+                color: theme.colors.text.secondary,
+                cursor: 'pointer',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                lineHeight: '1',
+                padding: '6px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '28px',
+                height: '28px',
+                transition: 'background-color 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.backgroundColor = theme.colors.border;
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+              }}
+              aria-label="Dismiss notification"
+            >
+              ×
+            </button>
           </div>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            style={{
-              position: 'absolute',
-              top: '50%',
-              right: '8px',
-              transform: 'translateY(-50%)',
-              background: 'transparent',
-              border: 'none',
-              color: theme.colors.text.secondary,
-              cursor: 'pointer',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              lineHeight: '1',
-              padding: '6px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '28px',
-              height: '28px',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor = theme.colors.border;
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-            }}
-            aria-label="Dismiss notification"
-          >
-            ×
-          </button>
         </div>
       )}
     </Toaster>
