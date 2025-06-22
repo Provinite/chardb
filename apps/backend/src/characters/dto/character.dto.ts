@@ -278,6 +278,14 @@ export class SetMainImageInput {
   imageId?: string;
 }
 
+@InputType()
+export class SetMainMediaInput {
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  mediaId?: string;
+}
+
 // Output types
 @ObjectType()
 export class CharacterCount {

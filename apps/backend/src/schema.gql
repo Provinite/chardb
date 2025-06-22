@@ -166,6 +166,16 @@ input CreateGalleryInput {
   visibility: Visibility! = PUBLIC
 }
 
+input CreateTextMediaInput {
+  characterId: ID
+  content: String!
+  description: String
+  formatting: TextFormatting! = PLAINTEXT
+  galleryId: ID
+  title: String!
+  visibility: Visibility! = PUBLIC
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
@@ -320,27 +330,85 @@ input ManageImageTagsInput {
   tagNames: [String!]!
 }
 
+input ManageMediaTagsInput {
+  tagNames: [String!]!
+}
+
 input ManageTagsInput {
   tagNames: [String!]!
+}
+
+type Media {
+  character: Character
+  characterId: ID
+  contentId: ID!
+  createdAt: DateTime!
+  description: String
+  gallery: Gallery
+  galleryId: ID
+  id: ID!
+  image: Image
+  likesCount: Float!
+  mediaType: MediaType!
+  owner: User!
+  ownerId: ID!
+  tags_rel: [MediaTag!]
+  textContent: TextContent
+  title: String!
+  updatedAt: DateTime!
+  userHasLiked: Boolean!
+  visibility: Visibility!
+}
+
+type MediaConnection {
+  hasMore: Boolean!
+  media: [Media!]!
+  total: Float!
+}
+
+input MediaFiltersInput {
+  characterId: ID
+  galleryId: ID
+  limit: Float
+  mediaType: MediaType
+  offset: Float
+  ownerId: ID
+  search: String
+  visibility: Visibility
+}
+
+type MediaTag {
+  media: Media!
+  tag: Tag!
+}
+
+"""The type of media content"""
+enum MediaType {
+  IMAGE
+  TEXT
 }
 
 type Mutation {
   addCharacterTags(id: ID!, input: ManageTagsInput!): Character!
   addImageTags(id: ID!, input: ManageImageTagsInput!): Image!
   addImageToGallery(galleryId: ID!, input: GalleryImageOperationInput!): Gallery!
+  addMediaTags(id: ID!, input: ManageMediaTagsInput!): Media!
   createCharacter(input: CreateCharacterInput!): Character!
   createComment(input: CreateCommentInput!): Comment!
   createGallery(input: CreateGalleryInput!): Gallery!
+  createTextMedia(input: CreateTextMediaInput!): Media!
   deleteAccount: Boolean!
   deleteCharacter(id: ID!): Boolean!
   deleteComment(id: ID!): Boolean!
   deleteGallery(id: ID!): Boolean!
   deleteImage(id: ID!): Boolean!
+  deleteMedia(id: ID!): Boolean!
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): String!
   removeCharacterTags(id: ID!, input: ManageTagsInput!): Character!
   removeImageFromGallery(galleryId: ID!, input: GalleryImageOperationInput!): Gallery!
   removeImageTags(id: ID!, input: ManageImageTagsInput!): Image!
+  removeMediaTags(id: ID!, input: ManageMediaTagsInput!): Media!
   reorderGalleries(input: ReorderGalleriesInput!): [Gallery!]!
   setCharacterMainImage(id: ID!, input: SetMainImageInput!): Character!
   signup(input: SignupInput!): AuthPayload!
@@ -351,7 +419,9 @@ type Mutation {
   updateComment(id: ID!, input: UpdateCommentInput!): Comment!
   updateGallery(id: ID!, input: UpdateGalleryInput!): Gallery!
   updateImage(id: ID!, input: UpdateImageInput!): Image!
+  updateMedia(id: ID!, input: UpdateMediaInput!): Media!
   updateProfile(input: UpdateUserInput!): User!
+  updateTextContent(input: UpdateTextContentInput!, mediaId: ID!): Media!
 }
 
 type Query {
@@ -359,6 +429,7 @@ type Query {
   character(id: ID!): Character!
   characterGalleries(characterId: ID!, filters: GalleryFiltersInput): GalleryConnection!
   characterImages(characterId: ID!, filters: ImageFiltersInput): ImageConnection!
+  characterMedia(characterId: ID!, filters: MediaFiltersInput): MediaConnection!
   characters(filters: CharacterFiltersInput): CharacterConnection!
   comment(id: ID!): Comment!
   comments(filters: CommentFiltersInput!): CommentConnection!
@@ -366,6 +437,7 @@ type Query {
   galleries(filters: GalleryFiltersInput): GalleryConnection!
   gallery(id: ID!): Gallery!
   galleryImages(filters: ImageFiltersInput, galleryId: ID!): ImageConnection!
+  galleryMedia(filters: MediaFiltersInput, galleryId: ID!): MediaConnection!
   getFollowers(username: String!): FollowListResult!
   getFollowing(username: String!): FollowListResult!
   image(id: ID!): Image!
@@ -375,13 +447,17 @@ type Query {
   likedGalleries: [Gallery!]!
   likedImages: [Image!]!
   me: User!
+  media(filters: MediaFiltersInput): MediaConnection!
+  mediaItem(id: ID!): Media!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
   myImages(filters: ImageFiltersInput): ImageConnection!
+  myMedia(filters: MediaFiltersInput): MediaConnection!
   user(id: ID, username: String): User
   userCharacters(filters: CharacterFiltersInput, userId: ID!): CharacterConnection!
   userGalleries(filters: GalleryFiltersInput, userId: ID!): GalleryConnection!
   userImages(filters: ImageFiltersInput, userId: ID!): ImageConnection!
+  userMedia(filters: MediaFiltersInput, userId: ID!): MediaConnection!
   userProfile(username: String!): UserProfile
   userStats(userId: ID!): UserStats!
   users(limit: Int! = 20, offset: Int! = 0): UserConnection!
@@ -408,6 +484,19 @@ type Tag {
   createdAt: DateTime!
   id: ID!
   name: String!
+}
+
+type TextContent {
+  content: String!
+  formatting: TextFormatting!
+  id: ID!
+  wordCount: Float!
+}
+
+"""The formatting type for text content"""
+enum TextFormatting {
+  MARKDOWN
+  PLAINTEXT
 }
 
 input ToggleFollowInput {
@@ -463,6 +552,19 @@ input UpdateImageInput {
   isNsfw: Boolean
   source: String
   visibility: Visibility
+}
+
+input UpdateMediaInput {
+  characterId: ID
+  description: String
+  galleryId: ID
+  title: String
+  visibility: Visibility
+}
+
+input UpdateTextContentInput {
+  content: String
+  formatting: TextFormatting
 }
 
 input UpdateUserInput {

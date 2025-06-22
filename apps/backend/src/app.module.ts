@@ -13,6 +13,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CharactersModule } from './characters/characters.module';
 import { ImagesModule } from './images/images.module';
+import { MediaModule } from './media/media.module';
 import { GalleriesModule } from './galleries/galleries.module';
 import { CommentsModule } from './comments/comments.module';
 import { SocialModule } from './social/social.module';
@@ -85,6 +86,7 @@ import { HealthModule } from './health/health.module';
     UsersModule,
     CharactersModule,
     ImagesModule,
+    MediaModule,
     GalleriesModule,
     CommentsModule,
     SocialModule,

@@ -3,6 +3,7 @@ import { Visibility } from '@chardb/database';
 import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../shared/entities/tag.entity';
 import { Image } from '../../images/entities/image.entity';
+import { Media } from '../../media/entities/media.entity';
 
 @ObjectType()
 export class CharacterCount {
@@ -45,6 +46,9 @@ export class Character {
   @Field(() => ID, { nullable: true })
   mainImageId?: string;
 
+  @Field(() => ID, { nullable: true })
+  mainMediaId?: string;
+
   @Field(() => Visibility)
   visibility: Visibility;
 
@@ -78,6 +82,9 @@ export class Character {
 
   @Field(() => Image, { nullable: true })
   mainImage?: Image;
+
+  @Field(() => Media, { nullable: true })
+  mainMedia?: Media;
 
   @Field(() => [CharacterTag], { nullable: true })
   tags_rel?: CharacterTag[];
