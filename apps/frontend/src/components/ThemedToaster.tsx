@@ -32,14 +32,14 @@ export const ThemedToaster: React.FC = () => {
         success: {
           duration: 3500,
           style: {
-            background: `${theme.colors.success}15`,
+            background: theme.colors.surface,
             color: theme.colors.text.primary,
             border: `1px solid ${theme.colors.success}`,
             borderRadius: theme.borderRadius.lg,
             padding: `${theme.spacing.md} ${theme.spacing.lg}`,
             fontSize: theme.typography.fontSize.sm,
             fontFamily: theme.typography.fontFamily,
-            boxShadow: `0 4px 12px ${theme.colors.success}20, ${theme.shadows.lg}`,
+            boxShadow: `0 4px 12px ${theme.colors.success}30, ${theme.shadows.lg}`,
             minWidth: '300px',
             maxWidth: '500px',
             wordBreak: 'break-word',
@@ -52,14 +52,14 @@ export const ThemedToaster: React.FC = () => {
         error: {
           duration: 6000,
           style: {
-            background: `${theme.colors.error}15`,
+            background: theme.colors.surface,
             color: theme.colors.text.primary,
             border: `1px solid ${theme.colors.error}`,
             borderRadius: theme.borderRadius.lg,
             padding: `${theme.spacing.md} ${theme.spacing.lg}`,
             fontSize: theme.typography.fontSize.sm,
             fontFamily: theme.typography.fontFamily,
-            boxShadow: `0 4px 12px ${theme.colors.error}20, ${theme.shadows.lg}`,
+            boxShadow: `0 4px 12px ${theme.colors.error}30, ${theme.shadows.lg}`,
             minWidth: '300px',
             maxWidth: '500px',
             wordBreak: 'break-word',
