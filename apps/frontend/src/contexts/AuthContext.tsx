@@ -72,7 +72,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       return false;
     } catch (error: any) {
-      toast.error(error.message || 'Login failed');
+      console.error('Login error:', error);
+      const errorMessage = error?.graphQLErrors?.[0]?.message || 
+                          error?.networkError?.message || 
+                          error?.message || 
+                          'Login failed';
+      toast.error(errorMessage);
       return false;
     }
   };
@@ -97,7 +102,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       return false;
     } catch (error: any) {
-      toast.error(error.message || 'Signup failed');
+      console.error('Signup error:', error);
+      const errorMessage = error?.graphQLErrors?.[0]?.message || 
+                          error?.networkError?.message || 
+                          error?.message || 
+                          'Signup failed';
+      toast.error(errorMessage);
       return false;
     }
   };
