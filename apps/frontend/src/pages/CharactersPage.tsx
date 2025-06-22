@@ -138,12 +138,6 @@ const VisibilityButton = styled.button.withConfig({
   }
 `;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: ${({ theme }) => theme.spacing.lg};
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-`;
 
 const LoadMoreButton = styled.button`
   width: 100%;
@@ -447,13 +441,11 @@ export const CharactersPage: React.FC = () => {
               <p>Try adjusting your search terms or filters to find what you're looking for.</p>
             </EmptyState>
           ) : (
-            <Grid>
-              <CharacterGrid 
-                characters={data?.characters.characters || []}
-                showOwner={true}
-                showEditButton={false}
-              />
-            </Grid>
+            <CharacterGrid 
+              characters={data?.characters.characters || []}
+              showOwner={true}
+              showEditButton={false}
+            />
           )}
 
           {data?.characters.hasMore && (
