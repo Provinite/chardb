@@ -22,6 +22,10 @@ export const ThemedToaster: React.FC = () => {
       display: 'flex',
       alignItems: 'center',
       width: '100%',
+      // Animation properties
+      transform: t.visible ? 'translateX(0)' : 'translateX(100%)',
+      opacity: t.visible ? 1 : 0,
+      transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
     };
 
     switch (t.type) {
