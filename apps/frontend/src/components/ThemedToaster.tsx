@@ -86,11 +86,11 @@ export const ThemedToaster: React.FC = () => {
               height: '24px',
               transition: 'background-color 0.15s ease',
             }}
-            onMouseOver={(e) => {
-              (e.target as HTMLElement).style.backgroundColor = theme.colors.border;
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor = theme.colors.border;
             }}
-            onMouseOut={(e) => {
-              (e.target as HTMLElement).style.backgroundColor = 'transparent';
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
             }}
             aria-label="Dismiss notification"
           >
