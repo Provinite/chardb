@@ -11,8 +11,8 @@ export const GET_MEDIA = gql`
         characterId
         galleryId
         visibility
-        mediaType
-        contentId
+        imageId
+        textContentId
         createdAt
         updatedAt
         owner {
@@ -69,8 +69,8 @@ export const GET_MEDIA_ITEM = gql`
       characterId
       galleryId
       visibility
-      mediaType
-      contentId
+      imageId
+      textContentId
       createdAt
       updatedAt
       owner {
@@ -130,8 +130,8 @@ export const GET_CHARACTER_MEDIA = gql`
         characterId
         galleryId
         visibility
-        mediaType
-        contentId
+        imageId
+        textContentId
         createdAt
         updatedAt
         owner {
@@ -173,8 +173,8 @@ export const GET_MY_MEDIA = gql`
         characterId
         galleryId
         visibility
-        mediaType
-        contentId
+        imageId
+        textContentId
         createdAt
         updatedAt
         character {
@@ -225,8 +225,8 @@ export const CREATE_TEXT_MEDIA = gql`
       characterId
       galleryId
       visibility
-      mediaType
-      contentId
+      imageId
+      textContentId
       createdAt
       updatedAt
       owner {
@@ -261,8 +261,8 @@ export const UPDATE_MEDIA = gql`
       characterId
       galleryId
       visibility
-      mediaType
-      contentId
+      imageId
+      textContentId
       createdAt
       updatedAt
       owner {

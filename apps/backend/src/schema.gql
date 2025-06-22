@@ -45,6 +45,8 @@ type Character {
   likesCount: Int!
   mainImage: Image
   mainImageId: ID
+  mainMedia: Media
+  mainMediaId: ID
   name: String!
   owner: User!
   ownerId: ID!

@@ -8,7 +8,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
 import { LikeButton } from '../components/LikeButton';
 import { CommentList } from '../components/CommentList';
-import { CharacterImageGallery } from '../components/CharacterImageGallery';
+import { CharacterMediaGallery } from '../components/CharacterMediaGallery';
 import { LikeableType, CommentableType } from '../generated/graphql';
 
 const Container = styled.div`
@@ -607,13 +607,10 @@ export const CharacterPage: React.FC = () => {
         </EmptySection>
       )}
 
-      <CharacterImageGallery
+      <CharacterMediaGallery
         characterId={character.id}
-        images={character.recentImages || []}
-        totalCount={character._count?.images || 0}
         canUpload={!!(user && user.id === character.owner.id)}
-        mainImageId={character.mainImageId}
-        isOwner={!!(user && user.id === character.owner.id)}
+        limit={8}
       />
 
       <CommentList

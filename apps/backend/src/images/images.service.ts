@@ -113,42 +113,62 @@ export class ImagesService {
     const thumbnailMimeType = file.mimetype === 'image/png' ? 'image/png' : 'image/jpeg';
     const thumbnailUrl = `data:${thumbnailMimeType};base64,${thumbnail.toString('base64')}`;
 
-    // Create image record
-    return this.db.image.create({
-      data: {
-        filename,
-        originalFilename: file.originalname,
-        url: imageUrl,
-        thumbnailUrl,
-        altText,
-        description,
-        uploaderId: userId,
-        characterId,
-        galleryId,
-        artistId,
-        artistName,
-        artistUrl,
-        source,
-        width: metadata.width!,
-        height: metadata.height!,
-        fileSize: file.size,
-        mimeType: file.mimetype,
-        isNsfw,
-        sensitiveContentDescription,
-        visibility,
-      },
-      include: {
-        uploader: true,
-        artist: true,
-        character: true,
-        gallery: true,
-        tags_rel: {
-          include: {
-            tag: true,
+    // Use transaction to create both image and media records
+    const result = await this.db.$transaction(async (tx) => {
+      // Create image record
+      const image = await tx.image.create({
+        data: {
+          filename,
+          originalFilename: file.originalname,
+          url: imageUrl,
+          thumbnailUrl,
+          altText,
+          description,
+          uploaderId: userId,
+          characterId,
+          galleryId,
+          artistId,
+          artistName,
+          artistUrl,
+          source,
+          width: metadata.width!,
+          height: metadata.height!,
+          fileSize: file.size,
+          mimeType: file.mimetype,
+          isNsfw,
+          sensitiveContentDescription,
+          visibility,
+        },
+        include: {
+          uploader: true,
+          artist: true,
+          character: true,
+          gallery: true,
+          tags_rel: {
+            include: {
+              tag: true,
+            },
           },
         },
-      },
+      });
+
+      // Create corresponding media record
+      await tx.media.create({
+        data: {
+          title: altText || file.originalname || 'Untitled Image',
+          description,
+          ownerId: userId,
+          characterId,
+          galleryId,
+          visibility,
+          imageId: image.id,
+        },
+      });
+
+      return image;
     });
+
+    return result;
   }
 
   async findAll(filters: ImageFilters = {}, userId?: string) {

@@ -15,6 +15,8 @@ import { CharacterPage } from './pages/CharacterPage';
 import { CharactersPage } from './pages/CharactersPage';
 import { CreateCharacterPage } from './pages/CreateCharacterPage';
 import { EditCharacterPage } from './pages/EditCharacterPage';
+import { CreateTextPage } from './pages/CreateTextPage';
+import { MediaPage } from './pages/MediaPage';
 import { GalleryPage } from './pages/GalleryPage';
 import { GalleriesPage } from './pages/GalleriesPage';
 import { CreateGalleryPage } from './pages/CreateGalleryPage';
@@ -56,6 +58,7 @@ function App() {
         <Route path="/gallery/:id" element={<GalleryPage />} />
         <Route path="/images" element={<ImagesPage />} />
         <Route path="/image/:id" element={<ImagePage />} />
+        <Route path="/media/:id" element={<MediaPage />} />
         <Route path="/user/:username" element={<UserProfilePage />} />
         <Route path="/user/:username/followers" element={<FollowersPage />} />
         <Route path="/user/:username/following" element={<FollowingPage />} />
@@ -98,6 +101,14 @@ function App() {
           element={
             <ProtectedRoute>
               <UploadImagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/text/create"
+          element={
+            <ProtectedRoute>
+              <CreateTextPage />
             </ProtectedRoute>
           }
         />

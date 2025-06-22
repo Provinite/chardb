@@ -68,6 +68,8 @@ export type Character = {
   likesCount: Scalars['Int']['output'];
   mainImage: Maybe<Image>;
   mainImageId: Maybe<Scalars['ID']['output']>;
+  mainMedia: Maybe<Media>;
+  mainMediaId: Maybe<Scalars['ID']['output']>;
   name: Scalars['String']['output'];
   owner: User;
   ownerId: Scalars['ID']['output'];
@@ -376,19 +378,19 @@ export type Media = {
   __typename?: 'Media';
   character: Maybe<Character>;
   characterId: Maybe<Scalars['ID']['output']>;
-  contentId: Scalars['ID']['output'];
   createdAt: Scalars['DateTime']['output'];
   description: Maybe<Scalars['String']['output']>;
   gallery: Maybe<Gallery>;
   galleryId: Maybe<Scalars['ID']['output']>;
   id: Scalars['ID']['output'];
   image: Maybe<Image>;
+  imageId: Maybe<Scalars['ID']['output']>;
   likesCount: Scalars['Float']['output'];
-  mediaType: MediaType;
   owner: User;
   ownerId: Scalars['ID']['output'];
   tags_rel: Maybe<Array<MediaTag>>;
   textContent: Maybe<TextContent>;
+  textContentId: Maybe<Scalars['ID']['output']>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   userHasLiked: Scalars['Boolean']['output'];
@@ -415,11 +417,11 @@ export type MediaFiltersInput = {
 
 export type MediaTag = {
   __typename?: 'MediaTag';
-  media: Media;
+  media: Maybe<Media>;
   tag: Tag;
 };
 
-/** The type of media content */
+/** The type of media content for filtering */
 export enum MediaType {
   Image = 'IMAGE',
   Text = 'TEXT'
@@ -1263,14 +1265,14 @@ export type GetMediaQueryVariables = Exact<{
 }>;
 
 
-export type GetMediaQuery = { __typename?: 'Query', media: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, mediaType: MediaType, contentId: string, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> } };
+export type GetMediaQuery = { __typename?: 'Query', media: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> } };
 
 export type GetMediaItemQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetMediaItemQuery = { __typename?: 'Query', mediaItem: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, mediaType: MediaType, contentId: string, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, description: string | null, width: number, height: number, fileSize: number, mimeType: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
+export type GetMediaItemQuery = { __typename?: 'Query', mediaItem: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, description: string | null, width: number, height: number, fileSize: number, mimeType: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
 export type GetCharacterMediaQueryVariables = Exact<{
   characterId: Scalars['ID']['input'];
@@ -1278,21 +1280,21 @@ export type GetCharacterMediaQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterMediaQuery = { __typename?: 'Query', characterMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, mediaType: MediaType, contentId: string, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null }> } };
+export type GetCharacterMediaQuery = { __typename?: 'Query', characterMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null }> } };
 
 export type GetMyMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
 }>;
 
 
-export type GetMyMediaQuery = { __typename?: 'Query', myMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, mediaType: MediaType, contentId: string, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> } };
+export type GetMyMediaQuery = { __typename?: 'Query', myMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> } };
 
 export type CreateTextMediaMutationVariables = Exact<{
   input: CreateTextMediaInput;
 }>;
 
 
-export type CreateTextMediaMutation = { __typename?: 'Mutation', createTextMedia: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, mediaType: MediaType, contentId: string, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null } };
+export type CreateTextMediaMutation = { __typename?: 'Mutation', createTextMedia: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null } };
 
 export type UpdateMediaMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1300,7 +1302,7 @@ export type UpdateMediaMutationVariables = Exact<{
 }>;
 
 
-export type UpdateMediaMutation = { __typename?: 'Mutation', updateMedia: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, mediaType: MediaType, contentId: string, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
+export type UpdateMediaMutation = { __typename?: 'Mutation', updateMedia: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
 export type UpdateTextContentMutationVariables = Exact<{
   mediaId: Scalars['ID']['input'];
@@ -3427,8 +3429,8 @@ export const GetMediaDocument = gql`
       characterId
       galleryId
       visibility
-      mediaType
-      contentId
+      imageId
+      textContentId
       createdAt
       updatedAt
       owner {
@@ -3517,8 +3519,8 @@ export const GetMediaItemDocument = gql`
     characterId
     galleryId
     visibility
-    mediaType
-    contentId
+    imageId
+    textContentId
     createdAt
     updatedAt
     owner {
@@ -3610,8 +3612,8 @@ export const GetCharacterMediaDocument = gql`
       characterId
       galleryId
       visibility
-      mediaType
-      contentId
+      imageId
+      textContentId
       createdAt
       updatedAt
       owner {
@@ -3686,8 +3688,8 @@ export const GetMyMediaDocument = gql`
       characterId
       galleryId
       visibility
-      mediaType
-      contentId
+      imageId
+      textContentId
       createdAt
       updatedAt
       character {
@@ -3770,8 +3772,8 @@ export const CreateTextMediaDocument = gql`
     characterId
     galleryId
     visibility
-    mediaType
-    contentId
+    imageId
+    textContentId
     createdAt
     updatedAt
     owner {
@@ -3831,8 +3833,8 @@ export const UpdateMediaDocument = gql`
     characterId
     galleryId
     visibility
-    mediaType
-    contentId
+    imageId
+    textContentId
     createdAt
     updatedAt
     owner {

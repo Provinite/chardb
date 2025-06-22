@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Media, MediaType } from '../generated/graphql';
+import { Media } from '../generated/graphql';
 
 const Card = styled.div`
   background: ${({ theme }) => theme.colors.background};
@@ -131,14 +131,14 @@ const Badge = styled.span`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
 `;
 
-const TypeBadge = styled(Badge)<{ mediaType: MediaType }>`
+const TypeBadge = styled(Badge)<{ isImage: boolean }>`
   background: ${props => 
-    props.mediaType === MediaType.Image 
+    props.isImage 
       ? props.theme.colors.primary + '20'
       : props.theme.colors.secondary + '20'
   };
   color: ${props => 
-    props.mediaType === MediaType.Image 
+    props.isImage 
       ? props.theme.colors.primary
       : props.theme.colors.secondary
   };
@@ -168,8 +168,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   media, 
   showOwner = true 
 }) => {
+  const isImage = !!media.image;
+  const isText = !!media.textContent;
+
   const renderMediaPreview = () => {
-    if (media.mediaType === MediaType.Image && media.image) {
+    if (isImage && media.image) {
       return (
         <ImageElement
           src={media.image.thumbnailUrl || media.image.url}
@@ -177,7 +180,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
           loading="lazy"
         />
       );
-    } else if (media.mediaType === MediaType.Text && media.textContent) {
+    } else if (isText && media.textContent) {
       return (
         <TextPreview>
           {media.textContent.content}
@@ -187,7 +190,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
       return (
         <PlaceholderContent>
           <TextIcon>
-            {media.mediaType === MediaType.Image ? '🖼️' : '📝'}
+            {isImage ? '🖼️' : '📝'}
           </TextIcon>
           <span>No content available</span>
         </PlaceholderContent>
@@ -196,8 +199,8 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   };
 
   const getMediaUrl = () => {
-    if (media.mediaType === MediaType.Image) {
-      return `/image/${media.contentId}`;
+    if (isImage && media.image) {
+      return `/image/${media.image.id}`;
     } else {
       return `/media/${media.id}`;
     }
@@ -220,7 +223,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
-      aria-label={`View ${media.mediaType.toLowerCase()} ${media.title}`}
+      aria-label={`View ${isImage ? 'image' : 'text'} ${media.title}`}
     >
       <MediaSection>
         {renderMediaPreview()}
@@ -241,10 +244,10 @@ export const MediaCard: React.FC<MediaCardProps> = ({
             <div />
           )}
           <MetaContainer>
-            <TypeBadge mediaType={media.mediaType}>
-              {media.mediaType.toLowerCase()}
+            <TypeBadge isImage={isImage}>
+              {isImage ? 'image' : 'text'}
             </TypeBadge>
-            {media.mediaType === MediaType.Text && media.textContent && (
+            {isText && media.textContent && (
               <Badge>{media.textContent.wordCount} words</Badge>
             )}
             <VisibilityBadge visibility={media.visibility}>

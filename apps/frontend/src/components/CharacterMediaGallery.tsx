@@ -38,7 +38,9 @@ const FilterTabs = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
 `;
 
-const FilterTab = styled.button<{ active: boolean }>`
+const FilterTab = styled.button.withConfig({
+  shouldForwardProp: (prop) => prop !== 'active',
+})<{ active: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.border};
   background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.background};
