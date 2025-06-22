@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
-import { Media, MediaType, useCharacterMediaQuery } from "../generated/graphql";
+import { MediaType, useGetCharacterMediaQuery } from "../generated/graphql";
 import { MediaGrid } from "./MediaGrid";
 import toast from "react-hot-toast";
 
@@ -173,20 +173,18 @@ type MediaFilter = 'all' | 'images' | 'text';
 interface CharacterMediaGalleryProps {
   characterId: string;
   canUpload?: boolean;
-  isOwner?: boolean;
   limit?: number;
 }
 
 export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
   characterId,
   canUpload = false,
-  isOwner = false,
   limit = 8,
 }) => {
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const { data, loading, error } = useCharacterMediaQuery({
+  const { data, loading, error } = useGetCharacterMediaQuery({
     variables: {
       characterId,
       filters: {
@@ -222,8 +220,8 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
     );
   }
 
-  const imageCount = data?.characterMedia?.media?.filter(m => m.mediaType === MediaType.Image)?.length || 0;
-  const textCount = data?.characterMedia?.media?.filter(m => m.mediaType === MediaType.Text)?.length || 0;
+  const imageCount = data?.characterMedia?.media?.filter((m: any) => m.mediaType === MediaType.Image)?.length || 0;
+  const textCount = data?.characterMedia?.media?.filter((m: any) => m.mediaType === MediaType.Text)?.length || 0;
 
   return (
     <GalleryContainer>
@@ -269,7 +267,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
       )}
 
       <MediaGrid
-        media={media}
+        media={media as any[]}
         showOwner={false}
         loading={loading}
         emptyMessage={

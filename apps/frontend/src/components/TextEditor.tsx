@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 import { TextFormatting, Visibility } from '../generated/graphql';
 
@@ -71,7 +71,7 @@ const TextArea = styled.textarea`
   padding: ${({ theme }) => theme.spacing.md};
   border: none;
   border-top: 1px solid ${({ theme }) => theme.colors.border};
-  font-family: ${({ theme }) => theme.typography.fontFamily.mono || 'Monaco, Consolas, "Courier New", monospace'};
+  font-family: 'Monaco, Consolas, "Courier New", monospace';
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   line-height: 1.6;
   resize: vertical;
@@ -194,7 +194,6 @@ interface TextEditorProps {
   isLoading?: boolean;
   showPreview?: boolean;
   characters?: Array<{ id: string; name: string }>;
-  galleries?: Array<{ id: string; name: string }>;
 }
 
 const calculateWordCount = (text: string): number => {
@@ -224,7 +223,6 @@ export const TextEditor: React.FC<TextEditorProps> = ({
   isLoading = false,
   showPreview = false,
   characters = [],
-  galleries = [],
 }) => {
   const [data, setData] = useState<TextEditorData>({
     title: initialData.title || '',

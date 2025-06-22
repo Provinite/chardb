@@ -56,7 +56,7 @@ const ContentContainer = styled.div<{ maxHeight?: string }>`
 `;
 
 const PlainTextContent = styled.div`
-  font-family: ${({ theme }) => theme.typography.fontFamily.mono || 'Monaco, Consolas, "Courier New", monospace'};
+  font-family: 'Monaco, Consolas, "Courier New", monospace';
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   line-height: 1.6;
   color: ${({ theme }) => theme.colors.text.primary};
@@ -102,7 +102,7 @@ const MarkdownContent = styled.div`
     background: ${({ theme }) => theme.colors.surface};
     padding: 2px 4px;
     border-radius: 3px;
-    font-family: ${({ theme }) => theme.typography.fontFamily.mono || 'Monaco, Consolas, "Courier New", monospace'};
+    font-family: 'Monaco, Consolas, "Courier New", monospace';
     font-size: 0.9em;
   }
   
