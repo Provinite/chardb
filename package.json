@@ -15,12 +15,14 @@
     "test": "yarn workspaces foreach -A run test",
     "lint": "yarn workspaces foreach -A run lint",
     "type-check": "yarn workspaces foreach -A run type-check",
-    "clean": "yarn workspaces foreach -A run clean"
+    "clean": "yarn workspaces foreach -A run clean",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "concurrently": "^9.1.2",
     "eslint": "^8.0.0",
+    "husky": "^9.1.7",
     "prettier": "^3.0.0",
     "typescript": "^5.0.0"
   },
