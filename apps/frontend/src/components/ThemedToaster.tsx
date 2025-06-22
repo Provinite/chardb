@@ -5,6 +5,46 @@ import { useTheme } from '../contexts/ThemeContext';
 export const ThemedToaster: React.FC = () => {
   const { theme } = useTheme();
 
+  const getToastStyles = (t: any) => {
+    const baseStyles = {
+      background: theme.colors.surface,
+      color: theme.colors.text.primary,
+      borderRadius: theme.borderRadius.lg,
+      padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+      paddingRight: '48px',
+      fontSize: theme.typography.fontSize.sm,
+      fontFamily: theme.typography.fontFamily,
+      boxShadow: theme.shadows.lg,
+      minWidth: '300px',
+      maxWidth: '500px',
+      wordBreak: 'break-word' as const,
+      position: 'relative' as const,
+      display: 'flex',
+      alignItems: 'center',
+      width: '100%',
+    };
+
+    switch (t.type) {
+      case 'success':
+        return {
+          ...baseStyles,
+          border: `1px solid ${theme.colors.success}`,
+          boxShadow: `0 4px 12px ${theme.colors.success}30, ${theme.shadows.lg}`,
+        };
+      case 'error':
+        return {
+          ...baseStyles,
+          border: `1px solid ${theme.colors.error}`,
+          boxShadow: `0 4px 12px ${theme.colors.error}30, ${theme.shadows.lg}`,
+        };
+      default:
+        return {
+          ...baseStyles,
+          border: `1px solid ${theme.colors.border}`,
+        };
+    }
+  };
+
   return (
     <Toaster 
       position="top-right"
@@ -16,69 +56,12 @@ export const ThemedToaster: React.FC = () => {
       }}
       toastOptions={{
         duration: 4000,
-        style: {
-          background: theme.colors.surface,
-          color: theme.colors.text.primary,
-          border: `1px solid ${theme.colors.border}`,
-          borderRadius: theme.borderRadius.lg,
-          padding: `${theme.spacing.md} ${theme.spacing.lg}`,
-          fontSize: theme.typography.fontSize.sm,
-          fontFamily: theme.typography.fontFamily,
-          boxShadow: theme.shadows.lg,
-          minWidth: '300px',
-          maxWidth: '500px',
-          wordBreak: 'break-word',
-          position: 'relative',
-          paddingRight: '48px',
-        },
-        success: {
-          duration: 3500,
-          style: {
-            background: theme.colors.surface,
-            color: theme.colors.text.primary,
-            border: `1px solid ${theme.colors.success}`,
-            borderRadius: theme.borderRadius.lg,
-            padding: `${theme.spacing.md} ${theme.spacing.lg}`,
-            fontSize: theme.typography.fontSize.sm,
-            fontFamily: theme.typography.fontFamily,
-            boxShadow: `0 4px 12px ${theme.colors.success}30, ${theme.shadows.lg}`,
-            minWidth: '300px',
-            maxWidth: '500px',
-            wordBreak: 'break-word',
-            position: 'relative',
-            paddingRight: '48px',
-          },
-          iconTheme: {
-            primary: theme.colors.success,
-            secondary: theme.colors.background,
-          },
-        },
-        error: {
-          duration: 6000,
-          style: {
-            background: theme.colors.surface,
-            color: theme.colors.text.primary,
-            border: `1px solid ${theme.colors.error}`,
-            borderRadius: theme.borderRadius.lg,
-            padding: `${theme.spacing.md} ${theme.spacing.lg}`,
-            fontSize: theme.typography.fontSize.sm,
-            fontFamily: theme.typography.fontFamily,
-            boxShadow: `0 4px 12px ${theme.colors.error}30, ${theme.shadows.lg}`,
-            minWidth: '300px',
-            maxWidth: '500px',
-            wordBreak: 'break-word',
-            position: 'relative',
-            paddingRight: '48px',
-          },
-          iconTheme: {
-            primary: theme.colors.error,
-            secondary: theme.colors.background,
-          },
-        },
+        success: { duration: 3500 },
+        error: { duration: 6000 },
       }}
     >
       {(t) => (
-        <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+        <div style={getToastStyles(t)}>
           <div style={{ flex: 1 }}>
             {typeof t.message === 'function' ? t.message(t) : t.message}
           </div>
