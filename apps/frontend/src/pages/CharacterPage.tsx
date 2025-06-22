@@ -111,17 +111,6 @@ const MainImagePlaceholder = styled.div`
   padding: ${({ theme }) => theme.spacing.lg};
 `;
 
-const MainImageBadge = styled.div`
-  position: absolute;
-  top: ${({ theme }) => theme.spacing.sm};
-  left: ${({ theme }) => theme.spacing.sm};
-  background: ${({ theme }) => theme.colors.primary};
-  color: white;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-`;
 
 const CharacterTitle = styled.h1`
   font-size: 3rem;
