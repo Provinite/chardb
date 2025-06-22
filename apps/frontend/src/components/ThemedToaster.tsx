@@ -1,5 +1,5 @@
 import React from 'react';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
 
 export const ThemedToaster: React.FC = () => {
@@ -28,6 +28,8 @@ export const ThemedToaster: React.FC = () => {
           minWidth: '300px',
           maxWidth: '500px',
           wordBreak: 'break-word',
+          position: 'relative',
+          paddingRight: '48px',
         },
         success: {
           duration: 3500,
@@ -43,6 +45,8 @@ export const ThemedToaster: React.FC = () => {
             minWidth: '300px',
             maxWidth: '500px',
             wordBreak: 'break-word',
+            position: 'relative',
+            paddingRight: '48px',
           },
           iconTheme: {
             primary: theme.colors.success,
@@ -63,6 +67,8 @@ export const ThemedToaster: React.FC = () => {
             minWidth: '300px',
             maxWidth: '500px',
             wordBreak: 'break-word',
+            position: 'relative',
+            paddingRight: '48px',
           },
           iconTheme: {
             primary: theme.colors.error,
@@ -70,6 +76,45 @@ export const ThemedToaster: React.FC = () => {
           },
         },
       }}
-    />
+    >
+      {(t) => (
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+          <div style={{ flex: 1 }}>
+            {t.message}
+          </div>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              background: 'transparent',
+              border: 'none',
+              color: theme.colors.text.secondary,
+              cursor: 'pointer',
+              fontSize: '18px',
+              lineHeight: '1',
+              padding: '4px',
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '24px',
+              height: '24px',
+              transition: 'background-color 0.15s ease',
+            }}
+            onMouseOver={(e) => {
+              (e.target as HTMLElement).style.backgroundColor = theme.colors.border;
+            }}
+            onMouseOut={(e) => {
+              (e.target as HTMLElement).style.backgroundColor = 'transparent';
+            }}
+            aria-label="Dismiss notification"
+          >
+            ×
+          </button>
+        </div>
+      )}
+    </Toaster>
   );
 };
