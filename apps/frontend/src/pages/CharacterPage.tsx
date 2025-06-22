@@ -448,13 +448,10 @@ export const CharacterPage: React.FC = () => {
         <MainImageSection>
           <MainImageContainer>
             {character.mainImage ? (
-              <>
-                <MainImageElement
-                  src={character.mainImage.thumbnailUrl || character.mainImage.url}
-                  alt={character.mainImage.altText || `${character.name} main image`}
-                />
-                <MainImageBadge>Main Image</MainImageBadge>
-              </>
+              <MainImageElement
+                src={character.mainImage.thumbnailUrl || character.mainImage.url}
+                alt={character.mainImage.altText || `${character.name} main image`}
+              />
             ) : (
               <MainImagePlaceholder>
                 No main image set for this character
