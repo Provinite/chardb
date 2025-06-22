@@ -80,7 +80,7 @@ export const ThemedToaster: React.FC = () => {
       {(t) => (
         <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
           <div style={{ flex: 1 }}>
-            {t.message}
+            {typeof t.message === 'function' ? t.message(t) : t.message}
           </div>
           <button
             onClick={() => toast.dismiss(t.id)}
