@@ -73,21 +73,23 @@ export const ThemedToaster: React.FC = () => {
             onClick={() => toast.dismiss(t.id)}
             style={{
               position: 'absolute',
-              top: '8px',
+              top: '50%',
               right: '8px',
+              transform: 'translateY(-50%)',
               background: 'transparent',
               border: 'none',
               color: theme.colors.text.secondary,
               cursor: 'pointer',
-              fontSize: '18px',
+              fontSize: '20px',
+              fontWeight: 'bold',
               lineHeight: '1',
-              padding: '4px',
+              padding: '6px',
               borderRadius: '4px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '24px',
-              height: '24px',
+              width: '28px',
+              height: '28px',
               transition: 'background-color 0.15s ease',
             }}
             onMouseEnter={(e) => {
