@@ -341,19 +341,19 @@ input ManageTagsInput {
 type Media {
   character: Character
   characterId: ID
-  contentId: ID!
   createdAt: DateTime!
   description: String
   gallery: Gallery
   galleryId: ID
   id: ID!
   image: Image
+  imageId: ID
   likesCount: Float!
-  mediaType: MediaType!
   owner: User!
   ownerId: ID!
   tags_rel: [MediaTag!]
   textContent: TextContent
+  textContentId: ID
   title: String!
   updatedAt: DateTime!
   userHasLiked: Boolean!
@@ -382,7 +382,7 @@ type MediaTag {
   tag: Tag!
 }
 
-"""The type of media content"""
+"""The type of media content for filtering"""
 enum MediaType {
   IMAGE
   TEXT

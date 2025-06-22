@@ -1,6 +1,17 @@
-import { InputType, Field, ID } from '@nestjs/graphql';
-import { MediaType, TextFormatting, Visibility } from '@chardb/database';
+import { InputType, Field, ID, registerEnumType } from '@nestjs/graphql';
+import { TextFormatting, Visibility } from '@chardb/database';
 import { IsString, IsOptional, IsEnum, IsInt, Min, IsUUID } from 'class-validator';
+
+// Define MediaType for filtering (no longer stored in DB)
+export enum MediaType {
+  IMAGE = 'IMAGE',
+  TEXT = 'TEXT'
+}
+
+registerEnumType(MediaType, {
+  name: 'MediaType',
+  description: 'The type of media content for filtering',
+});
 
 @InputType()
 export class MediaFiltersInput {

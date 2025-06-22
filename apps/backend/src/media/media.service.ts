@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import type { Media, TextContent, MediaType, Prisma } from '@chardb/database';
+import type { Media, TextContent, Prisma } from '@chardb/database';
 import { 
   MediaFiltersInput, 
   CreateTextMediaInput, 
@@ -45,8 +45,9 @@ export class MediaService {
           ]
         } : {},
 
-        // Type-specific filters
-        filters?.mediaType ? { mediaType: filters.mediaType } : {},
+        // Type-specific filters (using new nullable FK structure)
+        filters?.mediaType === 'IMAGE' ? { imageId: { not: null } } : {},
+        filters?.mediaType === 'TEXT' ? { textContentId: { not: null } } : {},
         filters?.ownerId ? { ownerId: filters.ownerId } : {},
         filters?.characterId ? { characterId: filters.characterId } : {},
         filters?.galleryId ? { galleryId: filters.galleryId } : {},
@@ -83,6 +84,9 @@ export class MediaService {
               }
             }
           },
+          // Direct JOIN to content tables - no more N+1 queries!
+          image: true,
+          textContent: true,
           tags_rel: {
             include: { tag: true }
           },
@@ -97,45 +101,19 @@ export class MediaService {
       this.db.media.count({ where }),
     ]);
 
-    // Batch fetch content and likes to avoid N+1 queries
-    const mediaIds = media.map(m => m.id);
-    const imageContentIds = media.filter(m => m.mediaType === 'IMAGE').map(m => m.contentId);
-    const textContentIds = media.filter(m => m.mediaType === 'TEXT').map(m => m.contentId);
+    // Simple user likes query (only if user is authenticated)
+    const userLikes = userId ? await this.db.like.findMany({
+      where: { 
+        userId,
+        mediaId: { in: media.map(m => m.id) }
+      },
+      select: { mediaId: true }
+    }) : [];
 
-    // Batch fetch all content in parallel
-    const [imageContents, textContents, userLikes] = await Promise.all([
-      imageContentIds.length > 0 
-        ? this.db.image.findMany({
-            where: { id: { in: imageContentIds } }
-          })
-        : [],
-      textContentIds.length > 0
-        ? this.db.textContent.findMany({
-            where: { id: { in: textContentIds } }
-          })
-        : [],
-      userId && mediaIds.length > 0
-        ? this.db.like.findMany({
-            where: { 
-              userId,
-              mediaId: { in: mediaIds }
-            },
-            select: { mediaId: true }
-          })
-        : []
-    ]);
-
-    // Create lookup maps for O(1) access
-    const imageContentMap = new Map(imageContents.map(img => [img.id, img] as const));
-    const textContentMap = new Map(textContents.map(text => [text.id, text] as const));
     const likedMediaIds = new Set(userLikes.map(like => like.mediaId));
 
-    // Enrich media with content and like status
+    // Clean, simple enrichment - no complex batch logic needed
     const enrichedMedia = media.map(item => {
-      const image = item.mediaType === 'IMAGE' ? imageContentMap.get(item.contentId) : null;
-      const textContent = item.mediaType === 'TEXT' ? textContentMap.get(item.contentId) : null;
-      const userHasLiked = likedMediaIds.has(item.id);
-
       const enrichedItem = {
         ...item,
         owner: {
@@ -186,10 +164,9 @@ export class MediaService {
           likesCount: item.gallery._count?.likes || 0,
           userHasLiked: false, // TODO: Implement proper gallery like status
         } : null,
-        image,
-        textContent,
+        // Content is now directly available via JOINs!
         likesCount: item._count.likes,
-        userHasLiked,
+        userHasLiked: likedMediaIds.has(item.id),
       };
 
       // Fix tags_rel to include media reference
@@ -238,6 +215,9 @@ export class MediaService {
             }
           }
         },
+        // Direct JOINs - content is immediately available!
+        image: true,
+        textContent: true,
         tags_rel: {
           include: { tag: true }
         },
@@ -254,18 +234,6 @@ export class MediaService {
     // Check visibility permissions
     if (media.visibility === 'PRIVATE' && media.ownerId !== userId) {
       throw new ForbiddenException('You do not have permission to view this media');
-    }
-
-    // Get content based on media type
-    let content = null;
-    if (media.mediaType === 'IMAGE') {
-      content = await this.db.image.findUnique({
-        where: { id: media.contentId }
-      });
-    } else if (media.mediaType === 'TEXT') {
-      content = await this.db.textContent.findUnique({
-        where: { id: media.contentId }
-      });
     }
 
     // Check if user has liked this media
@@ -323,8 +291,7 @@ export class MediaService {
         likesCount: media.gallery._count?.likes || 0,
         userHasLiked: false, // TODO: Implement proper gallery like status
       } : null,
-      image: media.mediaType === 'IMAGE' ? content : null,
-      textContent: media.mediaType === 'TEXT' ? content : null,
+      // Content is directly available via JOINs - no additional queries needed!
       likesCount: media._count.likes,
       userHasLiked,
     };
@@ -352,7 +319,7 @@ export class MediaService {
         },
       });
 
-      // Create media record
+      // Create media record with nullable FK approach
       const media = await tx.media.create({
         data: {
           title: input.title,
@@ -361,8 +328,9 @@ export class MediaService {
           characterId: input.characterId,
           galleryId: input.galleryId,
           visibility: input.visibility,
-          mediaType: 'TEXT',
-          contentId: textContent.id,
+          // Use nullable FK instead of discriminator
+          textContentId: textContent.id,
+          imageId: null, // Explicitly null for text media
         },
         include: {
           owner: true,
@@ -390,6 +358,8 @@ export class MediaService {
               }
             }
           },
+          // Direct JOIN to get text content
+          textContent: true,
           tags_rel: {
             include: { tag: true }
           },
@@ -446,8 +416,7 @@ export class MediaService {
           likesCount: media.gallery._count?.likes || 0,
           userHasLiked: false, // TODO: Implement proper gallery like status
         } : null,
-        textContent,
-        image: null,
+        // textContent and image are directly available via JOINs!
         likesCount: 0,
         userHasLiked: false,
       };
@@ -511,6 +480,9 @@ export class MediaService {
             }
           }
         },
+        // Direct JOINs for content
+        image: true,
+        textContent: true,
         tags_rel: {
           include: { tag: true }
         },
@@ -520,18 +492,7 @@ export class MediaService {
       },
     });
 
-    // Get content
-    let content = null;
-    if (updatedMedia.mediaType === 'IMAGE') {
-      content = await this.db.image.findUnique({
-        where: { id: updatedMedia.contentId }
-      });
-    } else if (updatedMedia.mediaType === 'TEXT') {
-      content = await this.db.textContent.findUnique({
-        where: { id: updatedMedia.contentId }
-      });
-    }
-
+    // Check if user has liked this media
     const userHasLiked = await this.db.like.findFirst({
       where: { userId, mediaId: updatedMedia.id }
     }) !== null;
@@ -586,8 +547,7 @@ export class MediaService {
         likesCount: updatedMedia.gallery._count?.likes || 0,
         userHasLiked: false, // TODO: Implement proper gallery like status
       } : null,
-      image: updatedMedia.mediaType === 'IMAGE' ? content : null,
-      textContent: updatedMedia.mediaType === 'TEXT' ? content : null,
+      // Content is directly available via JOINs!
       likesCount: updatedMedia._count.likes,
       userHasLiked,
     };
@@ -604,7 +564,11 @@ export class MediaService {
 
   async updateTextContent(mediaId: string, userId: string, input: UpdateTextContentInput) {
     const media = await this.db.media.findUnique({
-      where: { id: mediaId }
+      where: { id: mediaId },
+      include: {
+        // Direct JOIN to get text content
+        textContent: true,
+      }
     });
 
     if (!media) {
@@ -615,7 +579,7 @@ export class MediaService {
       throw new ForbiddenException('You can only update your own media');
     }
 
-    if (media.mediaType !== 'TEXT') {
+    if (media.textContentId === null) {
       throw new ForbiddenException('This media is not text content');
     }
 
@@ -629,7 +593,7 @@ export class MediaService {
     }
 
     const updatedTextContent = await this.db.textContent.update({
-      where: { id: media.contentId },
+      where: { id: media.textContentId },
       data: updateData,
     });
 
@@ -649,18 +613,9 @@ export class MediaService {
       throw new ForbiddenException('You can only delete your own media');
     }
 
-    await this.db.$transaction(async (tx) => {
-      // Delete the media record (this will cascade to comments, likes, tags)
-      await tx.media.delete({
-        where: { id }
-      });
-
-      // Delete the content if it's text (images are handled by image service)
-      if (media.mediaType === 'TEXT') {
-        await tx.textContent.delete({
-          where: { id: media.contentId }
-        });
-      }
+    // Delete the media record - CASCADE constraints will handle content deletion
+    await this.db.media.delete({
+      where: { id }
     });
 
     return true;

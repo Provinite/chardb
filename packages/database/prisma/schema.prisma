@@ -136,6 +136,7 @@ model Image {
   comments Comment[]
   likes    Like[]
   tags_rel ImageTag[]
+  media    Media[]
 
   @@map("images")
 }
@@ -287,15 +288,22 @@ model Media {
   characterId String?    @map("character_id")
   galleryId   String?    @map("gallery_id")
   visibility  Visibility @default(PUBLIC)
-  mediaType   MediaType  @map("media_type")
-  contentId   String     @map("content_id")
+  
+  // Content references (exactly one must be non-null)
+  imageId       String?  @map("image_id")
+  textContentId String?  @map("text_content_id")
+  
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
   // Relations
-  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
-  gallery   Gallery?   @relation(fields: [galleryId], references: [id], onDelete: SetNull)
+  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  character   Character?   @relation(fields: [characterId], references: [id], onDelete: SetNull)
+  gallery     Gallery?     @relation(fields: [galleryId], references: [id], onDelete: SetNull)
+  
+  // Content relations
+  image       Image?       @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  textContent TextContent? @relation(fields: [textContentId], references: [id], onDelete: Cascade)
 
   mainMediaFor Character[] @relation("CharacterMainMedia")
   comments     Comment[]
@@ -310,6 +318,9 @@ model TextContent {
   content    String         @db.Text
   wordCount  Int            @map("word_count")
   formatting TextFormatting @default(PLAINTEXT)
+
+  // Relations
+  media      Media[]
 
   @@map("text_content")
 }

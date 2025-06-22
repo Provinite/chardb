@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID, createUnionType, registerEnumType } from '@nestjs/graphql';
-import { MediaType, TextFormatting, Visibility } from '@chardb/database';
+import { TextFormatting, Visibility } from '@chardb/database';
 import { User } from '../../users/entities/user.entity';
 import { Character } from '../../characters/entities/character.entity';
 import { Gallery } from '../../galleries/entities/gallery.entity';
@@ -7,11 +7,6 @@ import { Tag } from '../../shared/entities/tag.entity';
 import { Image } from '../../images/entities/image.entity';
 
 // Register enums for GraphQL
-registerEnumType(MediaType, {
-  name: 'MediaType',
-  description: 'The type of media content',
-});
-
 registerEnumType(TextFormatting, {
   name: 'TextFormatting',
   description: 'The formatting type for text content',
@@ -55,11 +50,12 @@ export class Media {
   @Field(() => Visibility)
   visibility: Visibility;
 
-  @Field(() => MediaType)
-  mediaType: MediaType;
+  // Content references (nullable FKs)
+  @Field(() => ID, { nullable: true })
+  imageId?: string;
 
-  @Field(() => ID)
-  contentId: string;
+  @Field(() => ID, { nullable: true })
+  textContentId?: string;
 
   @Field()
   createdAt: Date;
