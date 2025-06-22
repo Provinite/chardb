@@ -148,11 +148,11 @@ const CharacterGrid = styled.div`
 const CharacterCard = styled.div`
   background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
-  padding: ${({ theme }) => theme.spacing.lg};
   box-shadow: ${({ theme }) => theme.shadows.sm};
   border: 1px solid ${({ theme }) => theme.colors.border};
   transition: all 0.2s;
   cursor: pointer;
+  overflow: hidden;
   
   &:hover {
     transform: translateY(-2px);
@@ -163,6 +163,33 @@ const CharacterCard = styled.div`
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
   }
+`;
+
+const CharacterImageSection = styled.div`
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: ${({ theme }) => theme.colors.surface};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+`;
+
+const CharacterMainImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const CharacterImagePlaceholder = styled.div`
+  color: ${({ theme }) => theme.colors.text.muted};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing.md};
+`;
+
+const CharacterContent = styled.div`
+  padding: ${({ theme }) => theme.spacing.lg};
 `;
 
 const CharacterName = styled.h3`
@@ -555,34 +582,49 @@ export const CharactersPage: React.FC = () => {
                   role="button"
                   aria-label={`View character ${character.name}`}
                 >
-                  <CharacterName>{character.name}</CharacterName>
-                  {character.species && (
-                    <CharacterSpecies>
-                      {character.species}
-                      {character.gender && ` • ${character.gender}`}
-                      {character.age && ` • ${character.age}`}
-                    </CharacterSpecies>
-                  )}
-                  {character.description && (
-                    <CharacterDescription>{character.description}</CharacterDescription>
-                  )}
+                  <CharacterImageSection>
+                    {character.mainImage ? (
+                      <CharacterMainImage
+                        src={character.mainImage.thumbnailUrl || character.mainImage.url}
+                        alt={character.mainImage.altText || `${character.name} main image`}
+                      />
+                    ) : (
+                      <CharacterImagePlaceholder>
+                        No main image
+                      </CharacterImagePlaceholder>
+                    )}
+                  </CharacterImageSection>
                   
-                  <CharacterMeta>
-                    <OwnerInfo>
-                      by {character.owner.displayName || character.owner.username}
-                    </OwnerInfo>
-                    <MetaContainer>
-                          {character._count && (
-                        <ImageCount>{character._count.images} images</ImageCount>
-                      )}
-                      {character.isSellable && character.price && (
-                        <ImageCount>${character.price}</ImageCount>
-                      )}
-                      <VisibilityBadge visibility={character.visibility}>
-                        {character.visibility}
-                      </VisibilityBadge>
-                    </MetaContainer>
-                  </CharacterMeta>
+                  <CharacterContent>
+                    <CharacterName>{character.name}</CharacterName>
+                    {character.species && (
+                      <CharacterSpecies>
+                        {character.species}
+                        {character.gender && ` • ${character.gender}`}
+                        {character.age && ` • ${character.age}`}
+                      </CharacterSpecies>
+                    )}
+                    {character.description && (
+                      <CharacterDescription>{character.description}</CharacterDescription>
+                    )}
+                    
+                    <CharacterMeta>
+                      <OwnerInfo>
+                        by {character.owner.displayName || character.owner.username}
+                      </OwnerInfo>
+                      <MetaContainer>
+                            {character._count && (
+                          <ImageCount>{character._count.images} images</ImageCount>
+                        )}
+                        {character.isSellable && character.price && (
+                          <ImageCount>${character.price}</ImageCount>
+                        )}
+                        <VisibilityBadge visibility={character.visibility}>
+                          {character.visibility}
+                        </VisibilityBadge>
+                      </MetaContainer>
+                    </CharacterMeta>
+                  </CharacterContent>
                 </CharacterCard>
               ))}
             </CharacterGrid>

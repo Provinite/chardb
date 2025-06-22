@@ -27,22 +27,15 @@ echo "🔗 Backend URL: $BACKEND_URL"
 # Navigate to frontend directory
 cd "$(dirname "$0")/../apps/frontend"
 
-# Create environment-specific .env file
-echo "📝 Creating environment configuration..."
-cat > .env << EOF
-VITE_API_URL=$BACKEND_URL
-VITE_ENVIRONMENT=$ENVIRONMENT
-EOF
-
-echo "✅ Environment file created:"
-cat .env
-
-# Install dependencies and build
+# Install dependencies
 echo "📦 Installing dependencies..."
 yarn install
 
-echo "🏗️  Building frontend..."
-yarn build
+# Build with environment variables (no shell pollution)
+echo "🏗️  Building frontend with environment configuration..."
+echo "VITE_API_URL=$BACKEND_URL"
+echo "VITE_ENVIRONMENT=$ENVIRONMENT"
+VITE_API_URL=$BACKEND_URL VITE_ENVIRONMENT=$ENVIRONMENT yarn build
 
 echo "✅ Frontend build completed!"
 echo "📁 Build output available in: apps/frontend/dist"
