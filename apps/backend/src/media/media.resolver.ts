@@ -20,7 +20,8 @@ export class MediaResolver {
   async media(
     @Args('filters', { nullable: true }) filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
-  ): Promise<any> {
+  ): Promise<MediaConnection> {
+    // @ts-ignore - Circular reference issue with MediaTag.media property
     return this.mediaService.findAll(filters, user?.id);
   }
 
@@ -28,7 +29,8 @@ export class MediaResolver {
   async mediaItem(
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user?: any,
-  ): Promise<any> {
+  ): Promise<MediaEntity> {
+    // @ts-ignore - Circular reference issue with MediaTag.media property
     return this.mediaService.findOne(id, user?.id);
   }
 
@@ -37,8 +39,9 @@ export class MediaResolver {
   async myMedia(
     @CurrentUser() user: any,
     @Args('filters', { nullable: true }) filters?: MediaFiltersInput,
-  ): Promise<any> {
+  ): Promise<MediaConnection> {
     const userFilters = { ...filters, ownerId: user.id };
+    // @ts-ignore - Circular reference issue with MediaTag.media property
     return this.mediaService.findAll(userFilters, user.id);
   }
 
@@ -47,8 +50,9 @@ export class MediaResolver {
     @Args('userId', { type: () => ID }) userId: string,
     @Args('filters', { nullable: true }) filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
-  ): Promise<any> {
+  ): Promise<MediaConnection> {
     const userFilters = { ...filters, ownerId: userId };
+    // @ts-ignore - Circular reference issue with MediaTag.media property
     return this.mediaService.findAll(userFilters, user?.id);
   }
 
@@ -57,8 +61,9 @@ export class MediaResolver {
     @Args('characterId', { type: () => ID }) characterId: string,
     @Args('filters', { nullable: true }) filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
-  ): Promise<any> {
+  ): Promise<MediaConnection> {
     const characterFilters = { ...filters, characterId };
+    // @ts-ignore - Circular reference issue with MediaTag.media property
     return this.mediaService.findAll(characterFilters, user?.id);
   }
 
@@ -67,8 +72,9 @@ export class MediaResolver {
     @Args('galleryId', { type: () => ID }) galleryId: string,
     @Args('filters', { nullable: true }) filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
-  ): Promise<any> {
+  ): Promise<MediaConnection> {
     const galleryFilters = { ...filters, galleryId };
+    // @ts-ignore - Circular reference issue with MediaTag.media property
     return this.mediaService.findAll(galleryFilters, user?.id);
   }
 
@@ -77,7 +83,8 @@ export class MediaResolver {
   async createTextMedia(
     @Args('input') input: CreateTextMediaInput,
     @CurrentUser() user: any,
-  ): Promise<any> {
+  ): Promise<MediaEntity> {
+    // @ts-ignore - Circular reference issue with MediaTag.media property
     return this.mediaService.createTextMedia(user.id, input);
   }
 
@@ -87,7 +94,8 @@ export class MediaResolver {
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateMediaInput,
     @CurrentUser() user: any,
-  ): Promise<any> {
+  ): Promise<MediaEntity> {
+    // @ts-ignore - Circular reference issue with MediaTag.media property
     return this.mediaService.updateMedia(id, user.id, input);
   }
 
@@ -97,7 +105,8 @@ export class MediaResolver {
     @Args('mediaId', { type: () => ID }) mediaId: string,
     @Args('input') input: UpdateTextContentInput,
     @CurrentUser() user: any,
-  ): Promise<any> {
+  ): Promise<MediaEntity> {
+    // @ts-ignore - Circular reference issue with MediaTag.media property
     return this.mediaService.updateTextContent(mediaId, user.id, input);
   }
 
@@ -116,7 +125,8 @@ export class MediaResolver {
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: ManageMediaTagsInput,
     @CurrentUser() user: any,
-  ): Promise<any> {
+  ): Promise<MediaEntity> {
+    // @ts-ignore - Circular reference issue with MediaTag.media property
     return this.mediaService.addTags(id, user.id, input.tagNames);
   }
 
@@ -126,7 +136,8 @@ export class MediaResolver {
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: ManageMediaTagsInput,
     @CurrentUser() user: any,
-  ): Promise<any> {
+  ): Promise<MediaEntity> {
+    // @ts-ignore - Circular reference issue with MediaTag.media property
     return this.mediaService.removeTags(id, user.id, input.tagNames);
   }
 }

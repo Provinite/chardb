@@ -22,8 +22,20 @@ export class MediaService {
 
     const where: Prisma.MediaWhereInput = {
       AND: [
-        // Visibility filter
-        userId ? {} : { visibility: 'PUBLIC' },
+        // Visibility filter - properly handle private content
+        {
+          OR: [
+            { visibility: 'PUBLIC' },
+            { visibility: 'UNLISTED' },
+            // Private content only visible to owner
+            userId ? { 
+              AND: [
+                { visibility: 'PRIVATE' },
+                { ownerId: userId }
+              ]
+            } : { id: 'never-matches' } // Exclude private content for anonymous users
+          ]
+        },
         
         // Search filter
         filters?.search ? {
@@ -47,8 +59,30 @@ export class MediaService {
         where,
         include: {
           owner: true,
-          character: true,
-          gallery: true,
+          character: {
+            include: {
+              owner: true,
+              _count: {
+                select: { likes: true, images: true }
+              }
+            }
+          },
+          gallery: {
+            include: {
+              owner: true,
+              images: {
+                include: {
+                  uploader: true,
+                  _count: {
+                    select: { likes: true }
+                  }
+                }
+              },
+              _count: {
+                select: { images: true, likes: true }
+              }
+            }
+          },
           tags_rel: {
             include: { tag: true }
           },
@@ -63,35 +97,110 @@ export class MediaService {
       this.db.media.count({ where }),
     ]);
 
-    // Add content based on media type and user interaction data
-    const enrichedMedia = await Promise.all(
-      media.map(async (item) => {
-        let content = null;
-        
-        if (item.mediaType === 'IMAGE') {
-          content = await this.db.image.findUnique({
-            where: { id: item.contentId }
-          });
-        } else if (item.mediaType === 'TEXT') {
-          content = await this.db.textContent.findUnique({
-            where: { id: item.contentId }
-          });
-        }
+    // Batch fetch content and likes to avoid N+1 queries
+    const mediaIds = media.map(m => m.id);
+    const imageContentIds = media.filter(m => m.mediaType === 'IMAGE').map(m => m.contentId);
+    const textContentIds = media.filter(m => m.mediaType === 'TEXT').map(m => m.contentId);
 
-        // Check if user has liked this media
-        const userHasLiked = userId ? await this.db.like.findFirst({
-          where: { userId, mediaId: item.id }
-        }) !== null : false;
+    // Batch fetch all content in parallel
+    const [imageContents, textContents, userLikes] = await Promise.all([
+      imageContentIds.length > 0 
+        ? this.db.image.findMany({
+            where: { id: { in: imageContentIds } }
+          })
+        : [],
+      textContentIds.length > 0
+        ? this.db.textContent.findMany({
+            where: { id: { in: textContentIds } }
+          })
+        : [],
+      userId && mediaIds.length > 0
+        ? this.db.like.findMany({
+            where: { 
+              userId,
+              mediaId: { in: mediaIds }
+            },
+            select: { mediaId: true }
+          })
+        : []
+    ]);
 
-        return {
-          ...item,
-          image: item.mediaType === 'IMAGE' ? content : null,
-          textContent: item.mediaType === 'TEXT' ? content : null,
-          likesCount: item._count.likes,
-          userHasLiked,
-        };
-      })
-    );
+    // Create lookup maps for O(1) access
+    const imageContentMap = new Map(imageContents.map(img => [img.id, img] as const));
+    const textContentMap = new Map(textContents.map(text => [text.id, text] as const));
+    const likedMediaIds = new Set(userLikes.map(like => like.mediaId));
+
+    // Enrich media with content and like status
+    const enrichedMedia = media.map(item => {
+      const image = item.mediaType === 'IMAGE' ? imageContentMap.get(item.contentId) : null;
+      const textContent = item.mediaType === 'TEXT' ? textContentMap.get(item.contentId) : null;
+      const userHasLiked = likedMediaIds.has(item.id);
+
+      const enrichedItem = {
+        ...item,
+        owner: {
+          ...item.owner,
+          followersCount: 0, // TODO: Implement proper follower counts
+          followingCount: 0, // TODO: Implement proper following counts
+          userIsFollowing: false, // TODO: Implement proper following status
+        },
+        character: item.character ? {
+          ...item.character,
+          price: item.character.price ? Number(item.character.price) : null,
+          customFields: JSON.stringify(item.character.customFields),
+          owner: {
+            ...item.character.owner,
+            followersCount: 0, // TODO: Implement proper follower counts
+            followingCount: 0, // TODO: Implement proper following counts
+            userIsFollowing: false, // TODO: Implement proper following status
+          },
+          _count: {
+            images: item.character._count?.images || 0,
+            likes: item.character._count?.likes || 0,
+          },
+          likesCount: item.character._count?.likes || 0,
+          userHasLiked: false, // TODO: Implement proper character like status
+        } : null,
+        gallery: item.gallery ? {
+          ...item.gallery,
+          owner: {
+            ...item.gallery.owner,
+            followersCount: 0, // TODO: Implement proper follower counts
+            followingCount: 0, // TODO: Implement proper following counts
+            userIsFollowing: false, // TODO: Implement proper following status
+          },
+          images: item.gallery.images ? item.gallery.images.map(img => ({
+            ...img,
+            uploader: {
+              ...img.uploader,
+              followersCount: 0, // TODO: Implement proper follower counts
+              followingCount: 0, // TODO: Implement proper following counts
+              userIsFollowing: false, // TODO: Implement proper following status
+            },
+            likesCount: img._count?.likes || 0,
+            userHasLiked: false, // TODO: Implement proper image like status
+          })) : [],
+          _count: {
+            images: item.gallery._count?.images || 0,
+          },
+          likesCount: item.gallery._count?.likes || 0,
+          userHasLiked: false, // TODO: Implement proper gallery like status
+        } : null,
+        image,
+        textContent,
+        likesCount: item._count.likes,
+        userHasLiked,
+      };
+
+      // Fix tags_rel to include media reference
+      // @ts-ignore - Circular reference issue with Media type
+      enrichedItem.tags_rel = item.tags_rel?.map(tagRel => ({
+        ...tagRel,
+        media: enrichedItem,
+      })) || [];
+
+      return enrichedItem;
+    });
 
     return {
       media: enrichedMedia,
@@ -105,8 +214,30 @@ export class MediaService {
       where: { id },
       include: {
         owner: true,
-        character: true,
-        gallery: true,
+        character: {
+          include: {
+            owner: true,
+            _count: {
+              select: { likes: true, images: true }
+            }
+          }
+        },
+        gallery: {
+          include: {
+            owner: true,
+            images: {
+              include: {
+                uploader: true,
+                _count: {
+                  select: { likes: true }
+                }
+              }
+            },
+            _count: {
+              select: { images: true, likes: true }
+            }
+          }
+        },
         tags_rel: {
           include: { tag: true }
         },
@@ -142,13 +273,70 @@ export class MediaService {
       where: { userId, mediaId: media.id }
     }) !== null : false;
 
-    return {
+    const enrichedMedia = {
       ...media,
+      owner: {
+        ...media.owner,
+        followersCount: 0, // TODO: Implement proper follower counts
+        followingCount: 0, // TODO: Implement proper following counts
+        userIsFollowing: false, // TODO: Implement proper following status
+      },
+      character: media.character ? {
+        ...media.character,
+        price: media.character.price ? Number(media.character.price) : null,
+        customFields: JSON.stringify(media.character.customFields),
+        owner: {
+          ...media.character.owner,
+          followersCount: 0, // TODO: Implement proper follower counts
+          followingCount: 0, // TODO: Implement proper following counts
+          userIsFollowing: false, // TODO: Implement proper following status
+        },
+        _count: {
+          images: media.character._count?.images || 0,
+          likes: media.character._count?.likes || 0,
+        },
+        likesCount: media.character._count?.likes || 0,
+        userHasLiked: false, // TODO: Implement proper character like status
+      } : null,
+      gallery: media.gallery ? {
+        ...media.gallery,
+        owner: {
+          ...media.gallery.owner,
+          followersCount: 0, // TODO: Implement proper follower counts
+          followingCount: 0, // TODO: Implement proper following counts
+          userIsFollowing: false, // TODO: Implement proper following status
+        },
+        images: media.gallery.images ? media.gallery.images.map(img => ({
+          ...img,
+          uploader: {
+            ...img.uploader,
+            followersCount: 0, // TODO: Implement proper follower counts
+            followingCount: 0, // TODO: Implement proper following counts
+            userIsFollowing: false, // TODO: Implement proper following status
+          },
+          likesCount: img._count?.likes || 0,
+          userHasLiked: false, // TODO: Implement proper image like status
+        })) : [],
+        _count: {
+          images: media.gallery._count?.images || 0,
+        },
+        likesCount: media.gallery._count?.likes || 0,
+        userHasLiked: false, // TODO: Implement proper gallery like status
+      } : null,
       image: media.mediaType === 'IMAGE' ? content : null,
       textContent: media.mediaType === 'TEXT' ? content : null,
       likesCount: media._count.likes,
       userHasLiked,
     };
+
+    // Fix tags_rel to include media reference
+    // @ts-ignore - Circular reference issue with Media type
+    enrichedMedia.tags_rel = media.tags_rel?.map(tagRel => ({
+      ...tagRel,
+      media: enrichedMedia,
+    })) || [];
+
+    return enrichedMedia;
   }
 
   async createTextMedia(userId: string, input: CreateTextMediaInput) {
@@ -178,21 +366,100 @@ export class MediaService {
         },
         include: {
           owner: true,
-          character: true,
-          gallery: true,
+          character: {
+            include: {
+              owner: true,
+              _count: {
+                select: { likes: true, images: true }
+              }
+            }
+          },
+          gallery: {
+            include: {
+              owner: true,
+              images: {
+                include: {
+                  uploader: true,
+                  _count: {
+                    select: { likes: true }
+                  }
+                }
+              },
+              _count: {
+                select: { images: true, likes: true }
+              }
+            }
+          },
           tags_rel: {
             include: { tag: true }
           },
         },
       });
 
-      return {
+      const enrichedMedia = {
         ...media,
+        owner: {
+          ...media.owner,
+          followersCount: 0, // TODO: Implement proper follower counts
+          followingCount: 0, // TODO: Implement proper following counts
+          userIsFollowing: false, // TODO: Implement proper following status
+        },
+        character: media.character ? {
+          ...media.character,
+          price: media.character.price ? Number(media.character.price) : null,
+          customFields: JSON.stringify(media.character.customFields),
+          owner: {
+            ...media.character.owner,
+            followersCount: 0, // TODO: Implement proper follower counts
+            followingCount: 0, // TODO: Implement proper following counts
+            userIsFollowing: false, // TODO: Implement proper following status
+          },
+          _count: {
+            images: media.character._count?.images || 0,
+            likes: media.character._count?.likes || 0,
+          },
+          likesCount: media.character._count?.likes || 0,
+          userHasLiked: false, // TODO: Implement proper character like status
+        } : null,
+        gallery: media.gallery ? {
+          ...media.gallery,
+          owner: {
+            ...media.gallery.owner,
+            followersCount: 0, // TODO: Implement proper follower counts
+            followingCount: 0, // TODO: Implement proper following counts
+            userIsFollowing: false, // TODO: Implement proper following status
+          },
+          images: media.gallery.images ? media.gallery.images.map(img => ({
+            ...img,
+            uploader: {
+              ...img.uploader,
+              followersCount: 0, // TODO: Implement proper follower counts
+              followingCount: 0, // TODO: Implement proper following counts
+              userIsFollowing: false, // TODO: Implement proper following status
+            },
+            likesCount: img._count?.likes || 0,
+            userHasLiked: false, // TODO: Implement proper image like status
+          })) : [],
+          _count: {
+            images: media.gallery._count?.images || 0,
+          },
+          likesCount: media.gallery._count?.likes || 0,
+          userHasLiked: false, // TODO: Implement proper gallery like status
+        } : null,
         textContent,
         image: null,
         likesCount: 0,
         userHasLiked: false,
       };
+
+      // Fix tags_rel to include media reference
+      // @ts-ignore - Circular reference issue with Media type
+      enrichedMedia.tags_rel = media.tags_rel?.map(tagRel => ({
+        ...tagRel,
+        media: enrichedMedia,
+      })) || [];
+
+      return enrichedMedia;
     });
   }
 
@@ -220,8 +487,30 @@ export class MediaService {
       },
       include: {
         owner: true,
-        character: true,
-        gallery: true,
+        character: {
+          include: {
+            owner: true,
+            _count: {
+              select: { likes: true, images: true }
+            }
+          }
+        },
+        gallery: {
+          include: {
+            owner: true,
+            images: {
+              include: {
+                uploader: true,
+                _count: {
+                  select: { likes: true }
+                }
+              }
+            },
+            _count: {
+              select: { images: true, likes: true }
+            }
+          }
+        },
         tags_rel: {
           include: { tag: true }
         },
@@ -247,13 +536,70 @@ export class MediaService {
       where: { userId, mediaId: updatedMedia.id }
     }) !== null;
 
-    return {
+    const enrichedMedia = {
       ...updatedMedia,
+      owner: {
+        ...updatedMedia.owner,
+        followersCount: 0, // TODO: Implement proper follower counts
+        followingCount: 0, // TODO: Implement proper following counts
+        userIsFollowing: false, // TODO: Implement proper following status
+      },
+      character: updatedMedia.character ? {
+        ...updatedMedia.character,
+        price: updatedMedia.character.price ? Number(updatedMedia.character.price) : null,
+        customFields: JSON.stringify(updatedMedia.character.customFields),
+        owner: {
+          ...updatedMedia.character.owner,
+          followersCount: 0, // TODO: Implement proper follower counts
+          followingCount: 0, // TODO: Implement proper following counts
+          userIsFollowing: false, // TODO: Implement proper following status
+        },
+        _count: {
+          images: updatedMedia.character._count?.images || 0,
+          likes: updatedMedia.character._count?.likes || 0,
+        },
+        likesCount: updatedMedia.character._count?.likes || 0,
+        userHasLiked: false, // TODO: Implement proper character like status
+      } : null,
+      gallery: updatedMedia.gallery ? {
+        ...updatedMedia.gallery,
+        owner: {
+          ...updatedMedia.gallery.owner,
+          followersCount: 0, // TODO: Implement proper follower counts
+          followingCount: 0, // TODO: Implement proper following counts
+          userIsFollowing: false, // TODO: Implement proper following status
+        },
+        images: updatedMedia.gallery.images ? updatedMedia.gallery.images.map(img => ({
+          ...img,
+          uploader: {
+            ...img.uploader,
+            followersCount: 0, // TODO: Implement proper follower counts
+            followingCount: 0, // TODO: Implement proper following counts
+            userIsFollowing: false, // TODO: Implement proper following status
+          },
+          likesCount: img._count?.likes || 0,
+          userHasLiked: false, // TODO: Implement proper image like status
+        })) : [],
+        _count: {
+          images: updatedMedia.gallery._count?.images || 0,
+        },
+        likesCount: updatedMedia.gallery._count?.likes || 0,
+        userHasLiked: false, // TODO: Implement proper gallery like status
+      } : null,
       image: updatedMedia.mediaType === 'IMAGE' ? content : null,
       textContent: updatedMedia.mediaType === 'TEXT' ? content : null,
       likesCount: updatedMedia._count.likes,
       userHasLiked,
     };
+
+    // Fix tags_rel to include media reference
+    // @ts-ignore - Circular reference issue with Media type
+    enrichedMedia.tags_rel = updatedMedia.tags_rel?.map(tagRel => ({
+      ...tagRel,
+      media: enrichedMedia,
+    })) || [];
+
+    return enrichedMedia;
   }
 
   async updateTextContent(mediaId: string, userId: string, input: UpdateTextContentInput) {
