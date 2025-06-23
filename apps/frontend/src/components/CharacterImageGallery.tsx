@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
-import { useSetCharacterMainMediaMutation } from "../generated/graphql";
+import { useGetCharacterMediaQuery, useSetCharacterMainMediaMutation, MediaType } from "../generated/graphql";
 import toast from "react-hot-toast";
 
 const GalleryContainer = styled.div`
@@ -169,35 +169,47 @@ const EmptyState = styled.div`
   }
 `;
 
-// TODO: This component needs to be updated to work with the new media system
-// For now, we'll use a simple interface until media queries are implemented
 interface CharacterImageGalleryProps {
   characterId: string;
   canUpload?: boolean;
   mainMediaId?: string | null;
   isOwner?: boolean;
+  limit?: number;
 }
 
 export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
   characterId,
   canUpload = false,
-  mainMediaId: _mainMediaId,
+  mainMediaId,
   isOwner = false,
+  limit = 8,
 }) => {
-  // TODO: Implement media loading using GraphQL queries
-  const images: any[] = [];
-  const totalCount = 0;
+  // Query character media with images only
+  const { data, loading, error } = useGetCharacterMediaQuery({
+    variables: {
+      characterId,
+      filters: {
+        limit,
+        mediaType: MediaType.Image, // Only get media that contains images
+      },
+    },
+  });
+
   const [setCharacterMainMedia, { loading: settingMainMedia }] = useSetCharacterMainMediaMutation();
 
-  const handleSetMainMedia = async (_imageId: string) => {
+  const handleSetMainMedia = async (mediaId: string) => {
     try {
-      // First find the media record that corresponds to this image
-      // This would require a query to get the media record for the image
-      // For now, we'll assume this needs to be implemented when we have media records
-      toast.error('Setting main media from images not yet implemented - need media records');
+      await setCharacterMainMedia({
+        variables: {
+          id: characterId,
+          input: { mediaId },
+        },
+        refetchQueries: ['GetCharacter', 'GetCharacterMedia'],
+      });
+      toast.success('Main image updated successfully!');
     } catch (error) {
       console.error('Error setting main media:', error);
-      toast.error('Failed to set main media. Please try again.');
+      toast.error('Failed to set main image. Please try again.');
     }
   };
 
@@ -208,16 +220,46 @@ export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
           id: characterId,
           input: { mediaId: null },
         },
-        refetchQueries: ['GetCharacter'],
+        refetchQueries: ['GetCharacter', 'GetCharacterMedia'],
       });
-      toast.success('Main media cleared successfully!');
+      toast.success('Main image cleared successfully!');
     } catch (error) {
       console.error('Error clearing main media:', error);
-      toast.error('Failed to clear main media. Please try again.');
+      toast.error('Failed to clear main image. Please try again.');
     }
   };
 
-  if (!images || images.length === 0) {
+  if (loading) {
+    return (
+      <GalleryContainer>
+        <GalleryHeader>
+          <SectionTitle>Recent Images</SectionTitle>
+        </GalleryHeader>
+        <EmptyState>
+          <p>Loading images...</p>
+        </EmptyState>
+      </GalleryContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <GalleryContainer>
+        <GalleryHeader>
+          <SectionTitle>Recent Images</SectionTitle>
+        </GalleryHeader>
+        <EmptyState>
+          <p>Error loading images: {error.message}</p>
+        </EmptyState>
+      </GalleryContainer>
+    );
+  }
+
+  const mediaItems = data?.characterMedia?.media || [];
+  const imageMedia = mediaItems.filter(media => media.image); // Only media with images
+  const totalCount = data?.characterMedia?.total || 0;
+
+  if (imageMedia.length === 0) {
     return (
       <GalleryContainer>
         <GalleryHeader>
@@ -251,7 +293,7 @@ export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
               </Button>
             </Link>
           )}
-          {totalCount > images.length && (
+          {totalCount > imageMedia.length && (
             <Link to={`/character/${characterId}/gallery`}>
               <Button variant="ghost" size="sm">
                 View All ({totalCount})
@@ -262,21 +304,24 @@ export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
       </GalleryHeader>
 
       <ImageGrid>
-        {images.map((image) => {
-          const isMainMedia = false; // TODO: Need to check if this image is part of the main media
+        {imageMedia.map((media) => {
+          if (!media.image) return null; // Skip media without images
+          
+          const isMainMedia = mainMediaId === media.id;
+          const image = media.image;
           
           return (
-            <ImageCardWrapper key={image.id}>
+            <ImageCardWrapper key={media.id}>
               <Link to={`/image/${image.id}`}>
                 {image.isNsfw && <NSFWBadge>NSFW</NSFWBadge>}
-                {isMainMedia && <MainImageBadge>Main Media</MainImageBadge>}
+                {isMainMedia && <MainImageBadge>Main Image</MainImageBadge>}
                 <ImageElement
                   src={image.thumbnailUrl || image.url}
-                  alt={image.altText || image.description || image.originalFilename}
+                  alt={image.altText || media.description || media.title}
                   loading="lazy"
                 />
                 <ImageOverlay>
-                  {image.description || image.originalFilename}
+                  {media.description || media.title}
                 </ImageOverlay>
               </Link>
               
@@ -300,7 +345,7 @@ export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
                     <Button
                       variant="primary"
                       size="sm"
-                      onClick={() => handleSetMainMedia(image.id)}
+                      onClick={() => handleSetMainMedia(media.id)}
                       disabled={settingMainMedia}
                     >
                       Set as Main
@@ -313,7 +358,7 @@ export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
         })}
       </ImageGrid>
 
-      {totalCount > images.length && (
+      {totalCount > imageMedia.length && (
         <ViewAllContainer>
           <Link to={`/character/${characterId}/gallery`}>
             <Button variant="primary" size="md">
