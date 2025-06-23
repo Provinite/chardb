@@ -60,25 +60,8 @@ export class GalleriesResolver {
     return this.galleriesService.remove(id, user.id);
   }
 
-  @Mutation(() => Gallery)
-  @UseGuards(JwtAuthGuard)
-  async addImageToGallery(
-    @Args('galleryId', { type: () => ID }) galleryId: string,
-    @Args('input') input: GalleryImageOperationInput,
-    @CurrentUser() user: any,
-  ): Promise<any> {
-    return this.galleriesService.addImage(galleryId, input.imageId, user.id);
-  }
+  // NOTE: Image-gallery operations now handled through Media system
 
-  @Mutation(() => Gallery)
-  @UseGuards(JwtAuthGuard)
-  async removeImageFromGallery(
-    @Args('galleryId', { type: () => ID }) galleryId: string,
-    @Args('input') input: GalleryImageOperationInput,
-    @CurrentUser() user: any,
-  ): Promise<any> {
-    return this.galleriesService.removeImage(galleryId, input.imageId, user.id);
-  }
 
   @Mutation(() => [Gallery])
   @UseGuards(JwtAuthGuard)

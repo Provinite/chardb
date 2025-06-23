@@ -107,17 +107,6 @@ export class CommentsResolver {
       where: { id: comment.commentableId },
       include: {
         uploader: true,
-        character: {
-          include: {
-            owner: true,
-            creator: true,
-          },
-        },
-        gallery: {
-          include: {
-            owner: true,
-          },
-        },
       },
     });
 
@@ -131,37 +120,6 @@ export class CommentsResolver {
         followingCount: 0,
         userIsFollowing: false,
       },
-      character: image.character ? {
-        ...image.character,
-        owner: {
-          ...image.character.owner,
-          followersCount: 0,
-          followingCount: 0,
-          userIsFollowing: false,
-        },
-        creator: image.character.creator ? {
-          ...image.character.creator,
-          followersCount: 0,
-          followingCount: 0,
-          userIsFollowing: false,
-        } : undefined,
-        price: image.character.price ? Number(image.character.price) : null,
-        likesCount: 0,
-        userHasLiked: false,
-      } : null,
-      gallery: image.gallery ? {
-        ...image.gallery,
-        owner: {
-          ...image.gallery.owner,
-          followersCount: 0,
-          followingCount: 0,
-          userIsFollowing: false,
-        },
-        character: null,
-        images: [],
-        likesCount: 0,
-        userHasLiked: false,
-      } : null,
       likesCount: 0, // Will be resolved by field resolver
       userHasLiked: false, // Will be resolved by field resolver
     } as Image;

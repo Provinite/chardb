@@ -357,7 +357,6 @@ export class SocialService {
         },
         _count: {
           select: {
-            images: true,
             galleries: true,
           },
         },
@@ -395,7 +394,6 @@ export class SocialService {
         character: true,
         _count: {
           select: {
-            images: true,
           },
         },
       },
@@ -425,13 +423,10 @@ export class SocialService {
     return this.databaseService.image.findMany({
       where: {
         id: { in: imageIds },
-        visibility: 'PUBLIC', // Only return public images
       },
       include: {
         uploader: true,
         artist: true,
-        character: true,
-        gallery: true,
       },
       orderBy: {
         updatedAt: 'desc',
@@ -554,7 +549,6 @@ export class SocialService {
       this.databaseService.character.findMany({
         where: {
           ownerId: { in: followingUserIds },
-          visibility: 'PUBLIC',
         },
         include: {
           owner: {
@@ -577,7 +571,6 @@ export class SocialService {
       this.databaseService.gallery.findMany({
         where: {
           ownerId: { in: followingUserIds },
-          visibility: 'PUBLIC',
         },
         include: {
           owner: {
@@ -600,7 +593,6 @@ export class SocialService {
       this.databaseService.image.findMany({
         where: {
           uploaderId: { in: followingUserIds },
-          visibility: 'PUBLIC',
         },
         include: {
           uploader: {
@@ -652,7 +644,7 @@ export class SocialService {
         user: image.uploader,
         content: {
           name: image.filename,
-          description: image.description,
+          description: image.altText,
         },
       })),
     ];

@@ -415,7 +415,6 @@ describe('GalleriesResolver (e2e)', () => {
           width: 800,
           height: 600,
           uploaderId: testUserId,
-          visibility: Visibility.PUBLIC,
         },
       });
 

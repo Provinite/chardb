@@ -232,8 +232,7 @@ export class UsersService {
       }),
       this.db.image.findMany({
         where: { 
-          uploaderId: user.id,
-          visibility: { in: visibilityFilter }
+          uploaderId: user.id
         },
         take: 12,
         orderBy: { createdAt: 'desc' },
@@ -244,18 +243,6 @@ export class UsersService {
               username: true,
               displayName: true,
               avatarUrl: true,
-            }
-          },
-          character: {
-            select: {
-              id: true,
-              name: true,
-            }
-          },
-          gallery: {
-            select: {
-              id: true,
-              name: true,
             }
           }
         }
@@ -319,8 +306,7 @@ export class UsersService {
       }),
       this.db.image.count({
         where: { 
-          uploaderId: userId,
-          visibility: { in: visibilityFilter }
+          uploaderId: userId
         }
       })
     ]);

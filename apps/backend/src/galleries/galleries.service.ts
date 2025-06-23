@@ -51,10 +51,6 @@ export class GalleriesService {
       include: {
         owner: true,
         character: true,
-        images: {
-          orderBy: { createdAt: 'desc' },
-          take: 10, // Preview images
-        },
       },
     });
   }
@@ -94,15 +90,6 @@ export class GalleriesService {
         include: {
           owner: true,
           character: true,
-          images: {
-            orderBy: { createdAt: 'desc' },
-            take: 5, // Preview images
-          },
-          _count: {
-            select: {
-              images: true,
-            },
-          },
         },
         orderBy: [
           { sortOrder: 'asc' },
@@ -181,15 +168,6 @@ export class GalleriesService {
       include: {
         owner: true,
         character: true,
-        images: {
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-        },
-        _count: {
-          select: {
-            images: true,
-          },
-        },
       },
     });
   }
@@ -209,75 +187,9 @@ export class GalleriesService {
     return true;
   }
 
-  async addImage(galleryId: string, imageId: string, userId: string): Promise<Gallery> {
-    const [gallery, image] = await Promise.all([
-      this.findOne(galleryId, userId),
-      this.db.image.findUnique({
-        where: { id: imageId },
-        select: { id: true, uploaderId: true, galleryId: true },
-      }),
-    ]);
+  // NOTE: Image-gallery association now handled through Media system
+  // These methods are deprecated and should be replaced with media-based operations
 
-    if (!image) {
-      throw new NotFoundException('Image not found');
-    }
-
-    // Check permissions
-    if (gallery.ownerId !== userId) {
-      throw new ForbiddenException('You can only manage your own galleries');
-    }
-
-    if (image.uploaderId !== userId) {
-      throw new ForbiddenException('You can only add your own images to galleries');
-    }
-
-    if (image.galleryId === galleryId) {
-      throw new ForbiddenException('Image is already in this gallery');
-    }
-
-    // Update image to be in this gallery
-    await this.db.image.update({
-      where: { id: imageId },
-      data: { galleryId },
-    });
-
-    return this.findOne(galleryId, userId);
-  }
-
-  async removeImage(galleryId: string, imageId: string, userId: string): Promise<Gallery> {
-    const [gallery, image] = await Promise.all([
-      this.findOne(galleryId, userId),
-      this.db.image.findUnique({
-        where: { id: imageId },
-        select: { id: true, uploaderId: true, galleryId: true },
-      }),
-    ]);
-
-    if (!image) {
-      throw new NotFoundException('Image not found');
-    }
-
-    // Check permissions
-    if (gallery.ownerId !== userId) {
-      throw new ForbiddenException('You can only manage your own galleries');
-    }
-
-    if (image.uploaderId !== userId) {
-      throw new ForbiddenException('You can only remove your own images from galleries');
-    }
-
-    if (image.galleryId !== galleryId) {
-      throw new ForbiddenException('Image is not in this gallery');
-    }
-
-    // Remove image from gallery
-    await this.db.image.update({
-      where: { id: imageId },
-      data: { galleryId: null },
-    });
-
-    return this.findOne(galleryId, userId);
-  }
 
   async reorderGalleries(userId: string, galleryIds: string[]): Promise<Gallery[]> {
     // Verify all galleries belong to the user

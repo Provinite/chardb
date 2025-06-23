@@ -179,21 +179,8 @@ export class MediaService {
                 followingCount: 0, // TODO: Implement proper following counts
                 userIsFollowing: false, // TODO: Implement proper following status
               },
-              images: item.gallery.images
-                ? item.gallery.images.map((img) => ({
-                    ...img,
-                    uploader: {
-                      ...img.uploader,
-                      followersCount: 0, // TODO: Implement proper follower counts
-                      followingCount: 0, // TODO: Implement proper following counts
-                      userIsFollowing: false, // TODO: Implement proper following status
-                    },
-                    likesCount: img._count?.likes || 0,
-                    userHasLiked: false, // TODO: Implement proper image like status
-                  }))
-                : [],
               _count: {
-                images: item.gallery._count?.images || 0,
+                images: 0, // Gallery images now handled through media system
               },
               likesCount: item.gallery._count?.likes || 0,
               userHasLiked: false, // TODO: Implement proper gallery like status
@@ -324,21 +311,8 @@ export class MediaService {
               followingCount: 0, // TODO: Implement proper following counts
               userIsFollowing: false, // TODO: Implement proper following status
             },
-            images: media.gallery.images
-              ? media.gallery.images.map((img) => ({
-                  ...img,
-                  uploader: {
-                    ...img.uploader,
-                    followersCount: 0, // TODO: Implement proper follower counts
-                    followingCount: 0, // TODO: Implement proper following counts
-                    userIsFollowing: false, // TODO: Implement proper following status
-                  },
-                  likesCount: img._count?.likes || 0,
-                  userHasLiked: false, // TODO: Implement proper image like status
-                }))
-              : [],
             _count: {
-              images: media.gallery._count?.images || 0,
+              images: 0, // Gallery images now handled through media system
             },
             likesCount: media.gallery._count?.likes || 0,
             userHasLiked: false, // TODO: Implement proper gallery like status
@@ -464,21 +438,8 @@ export class MediaService {
                 followingCount: 0, // TODO: Implement proper following counts
                 userIsFollowing: false, // TODO: Implement proper following status
               },
-              images: media.gallery.images
-                ? media.gallery.images.map((img) => ({
-                    ...img,
-                    uploader: {
-                      ...img.uploader,
-                      followersCount: 0, // TODO: Implement proper follower counts
-                      followingCount: 0, // TODO: Implement proper following counts
-                      userIsFollowing: false, // TODO: Implement proper following status
-                    },
-                    likesCount: img._count?.likes || 0,
-                    userHasLiked: false, // TODO: Implement proper image like status
-                  }))
-                : [],
               _count: {
-                images: media.gallery._count?.images || 0,
+                images: 0, // Gallery images now handled through media system
               },
               likesCount: media.gallery._count?.likes || 0,
               userHasLiked: false, // TODO: Implement proper gallery like status
@@ -613,21 +574,8 @@ export class MediaService {
               followingCount: 0, // TODO: Implement proper following counts
               userIsFollowing: false, // TODO: Implement proper following status
             },
-            images: updatedMedia.gallery.images
-              ? updatedMedia.gallery.images.map((img) => ({
-                  ...img,
-                  uploader: {
-                    ...img.uploader,
-                    followersCount: 0, // TODO: Implement proper follower counts
-                    followingCount: 0, // TODO: Implement proper following counts
-                    userIsFollowing: false, // TODO: Implement proper following status
-                  },
-                  likesCount: img._count?.likes || 0,
-                  userHasLiked: false, // TODO: Implement proper image like status
-                }))
-              : [],
             _count: {
-              images: updatedMedia.gallery._count?.images || 0,
+              images: 0, // Gallery images now handled through media system
             },
             likesCount: updatedMedia.gallery._count?.likes || 0,
             userHasLiked: false, // TODO: Implement proper gallery like status
