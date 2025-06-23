@@ -98,16 +98,8 @@ export class MediaService {
           gallery: {
             include: {
               owner: true,
-              images: {
-                include: {
-                  uploader: true,
-                  _count: {
-                    select: { likes: true },
-                  },
-                },
-              },
               _count: {
-                select: { images: true, likes: true },
+                select: { likes: true },
               },
             },
           },
@@ -232,16 +224,8 @@ export class MediaService {
         gallery: {
           include: {
             owner: true,
-            images: {
-              include: {
-                uploader: true,
-                _count: {
-                  select: { likes: true },
-                },
-              },
-            },
             _count: {
-              select: { images: true, likes: true },
+              select: { likes: true },
             },
           },
         },
@@ -379,16 +363,8 @@ export class MediaService {
           gallery: {
             include: {
               owner: true,
-              images: {
-                include: {
-                  uploader: true,
-                  _count: {
-                    select: { likes: true },
-                  },
-                },
-              },
               _count: {
-                select: { images: true, likes: true },
+                select: { likes: true },
               },
             },
           },
@@ -505,16 +481,8 @@ export class MediaService {
         gallery: {
           include: {
             owner: true,
-            images: {
-              include: {
-                uploader: true,
-                _count: {
-                  select: { likes: true },
-                },
-              },
-            },
             _count: {
-              select: { images: true, likes: true },
+              select: { likes: true },
             },
           },
         },

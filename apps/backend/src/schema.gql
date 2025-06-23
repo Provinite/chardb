@@ -252,10 +252,6 @@ input GalleryFiltersInput {
   visibility: Visibility
 }
 
-input GalleryImageOperationInput {
-  imageId: ID!
-}
-
 type Image {
   altText: String
   artist: User
@@ -464,7 +460,6 @@ enum MediaType {
 type Mutation {
   addCharacterTags(id: ID!, input: ManageTagsInput!): Character!
   addImageTags(id: ID!, input: ManageImageTagsInput!): Image!
-  addImageToGallery(galleryId: ID!, input: GalleryImageOperationInput!): Gallery!
 
   """Adds tags to a media item"""
   addMediaTags(
@@ -497,7 +492,6 @@ type Mutation {
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): String!
   removeCharacterTags(id: ID!, input: ManageTagsInput!): Character!
-  removeImageFromGallery(galleryId: ID!, input: GalleryImageOperationInput!): Gallery!
   removeImageTags(id: ID!, input: ManageImageTagsInput!): Image!
 
   """Removes tags from a media item"""

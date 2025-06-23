@@ -114,24 +114,7 @@ export class GalleriesService {
       include: {
         owner: true,
         character: true,
-        images: {
-          where: {
-            // Only include public images unless user is the owner
-            OR: userId
-              ? [
-                  { visibility: Visibility.PUBLIC },
-                  { uploaderId: userId },
-                  { gallery: { ownerId: userId } },
-                ]
-              : [{ visibility: Visibility.PUBLIC }],
-          },
-          orderBy: { createdAt: 'desc' },
-        },
-        _count: {
-          select: {
-            images: true,
-          },
-        },
+        // NOTE: Gallery images now accessed through Media system
       },
     });
 
@@ -222,11 +205,6 @@ export class GalleriesService {
       include: {
         owner: true,
         character: true,
-        _count: {
-          select: {
-            images: true,
-          },
-        },
       },
       orderBy: { sortOrder: 'asc' },
     });

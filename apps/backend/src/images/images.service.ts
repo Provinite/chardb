@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
+import { Prisma, Visibility } from '@chardb/database';
 import * as sharp from 'sharp';
 import { v4 as uuid } from 'uuid';
 import { extname } from 'path';
@@ -55,12 +55,8 @@ export class ImagesService {
   async upload(userId: string, input: UploadImageInput): Promise<Image> {
     const { 
       file, 
-      characterId, 
-      galleryId, 
-      description, 
       altText, 
       isNsfw = false, 
-      visibility = Visibility.PUBLIC,
       sensitiveContentDescription,
       artistId,
       artistName,
@@ -71,13 +67,7 @@ export class ImagesService {
     // Validate file
     this.validateFile(file);
 
-    // Verify character/gallery ownership if specified
-    if (characterId) {
-      await this.verifyCharacterOwnership(characterId, userId);
-    }
-    if (galleryId) {
-      await this.verifyGalleryOwnership(galleryId, userId);
-    }
+    // NOTE: Character/gallery associations now handled through Media system
     
     // Verify artist exists if artistId is provided
     if (artistId) {
@@ -112,10 +102,7 @@ export class ImagesService {
           url: imageUrl,
           thumbnailUrl,
           altText,
-          description,
           uploaderId: userId,
-          characterId,
-          galleryId,
           artistId,
           artistName,
           artistUrl,
@@ -126,13 +113,10 @@ export class ImagesService {
           mimeType: file.mimetype,
           isNsfw,
           sensitiveContentDescription,
-          visibility,
         },
         include: {
           uploader: true,
           artist: true,
-          character: true,
-          gallery: true,
           tags_rel: {
             include: {
               tag: true,
@@ -141,18 +125,7 @@ export class ImagesService {
         },
       });
 
-      // Create corresponding media record
-      await tx.media.create({
-        data: {
-          title: altText || file.originalname || 'Untitled Image',
-          description,
-          ownerId: userId,
-          characterId,
-          galleryId,
-          visibility,
-          imageId: image.id,
-        },
-      });
+      // NOTE: Media record creation now handled by upload endpoint
 
       return image;
     });
@@ -165,39 +138,21 @@ export class ImagesService {
       limit = 20,
       offset = 0,
       uploaderId,
-      characterId,
-      galleryId,
       isNsfw,
-      visibility,
       search,
       artistId,
     } = filters;
 
     const where: Prisma.ImageWhereInput = {
       AND: [
-        // Visibility filter
-        userId 
-          ? {
-              OR: [
-                { visibility: Visibility.PUBLIC },
-                { uploaderId: userId }, // User can see their own images
-                { visibility: Visibility.UNLISTED },
-              ],
-            }
-          : { visibility: Visibility.PUBLIC },
-        
         // Other filters
         uploaderId ? { uploaderId } : {},
-        characterId ? { characterId } : {},
-        galleryId ? { galleryId } : {},
         artistId ? { artistId } : {},
         isNsfw !== undefined ? { isNsfw } : {},
-        visibility !== undefined ? { visibility } : {},
         
         // Search filter
         search ? {
           OR: [
-            { description: { contains: search, mode: 'insensitive' } },
             { altText: { contains: search, mode: 'insensitive' } },
             { originalFilename: { contains: search, mode: 'insensitive' } },
             { artistName: { contains: search, mode: 'insensitive' } },
@@ -211,8 +166,6 @@ export class ImagesService {
         where,
         include: {
           uploader: true,
-          character: true,
-          gallery: true,
           tags_rel: {
             include: {
               tag: true,
@@ -239,8 +192,6 @@ export class ImagesService {
       include: {
         uploader: true,
         artist: true,
-        character: true,
-        gallery: true,
         tags_rel: {
           include: {
             tag: true,
@@ -253,12 +204,7 @@ export class ImagesService {
       throw new NotFoundException('Image not found');
     }
 
-    // Check visibility permissions
-    if (image.visibility === Visibility.PRIVATE) {
-      if (!userId || image.uploaderId !== userId) {
-        throw new ForbiddenException('Image is private');
-      }
-    }
+    // NOTE: Visibility now handled through Media system
 
     return image;
   }
@@ -271,13 +217,7 @@ export class ImagesService {
       throw new ForbiddenException('You can only edit your own images');
     }
 
-    // Verify new character/gallery ownership if changing
-    if (input.characterId && input.characterId !== image.characterId) {
-      await this.verifyCharacterOwnership(input.characterId, userId);
-    }
-    if (input.galleryId && input.galleryId !== image.galleryId) {
-      await this.verifyGalleryOwnership(input.galleryId, userId);
-    }
+    // NOTE: Character/gallery associations now handled through Media system
     
     // Verify artist exists if artistId is provided
     if (input.artistId && input.artistId !== image.artistId) {
@@ -293,8 +233,6 @@ export class ImagesService {
       include: {
         uploader: true,
         artist: true,
-        character: true,
-        gallery: true,
         tags_rel: {
           include: {
             tag: true,

@@ -51,7 +51,6 @@ describe('ImagesService', () => {
       const userId = 'user1';
       const input = {
         description: 'Test image',
-        visibility: Visibility.PUBLIC,
       };
 
       const mockImage = {
@@ -148,7 +147,6 @@ describe('ImagesService', () => {
       const mockImage = {
         id: imageId,
         description: 'Public image',
-        visibility: Visibility.PUBLIC,
         uploaderId: 'user1',
       };
 
@@ -189,12 +187,11 @@ describe('ImagesService', () => {
     it('should update image successfully', async () => {
       const imageId = 'img1';
       const userId = 'user1';
-      const input = { description: 'Updated description' };
+      const input = { altText: 'Updated alt text' };
 
       const mockExistingImage = {
         id: imageId,
         uploaderId: userId,
-        visibility: Visibility.PUBLIC,
       };
 
       const mockUpdatedImage = {
@@ -220,35 +217,15 @@ describe('ImagesService', () => {
       const mockImage = {
         id: imageId,
         uploaderId: 'user1',
-        visibility: Visibility.PUBLIC,
       };
 
       db.image.findUnique.mockResolvedValue(mockImage);
 
-      await expect(service.update(imageId, 'user2', { description: 'Hacked' }))
+      await expect(service.update(imageId, 'user2', { altText: 'Hacked' }))
         .rejects.toThrow(ForbiddenException);
     });
 
-    it('should verify new character ownership when changing character', async () => {
-      const imageId = 'img1';
-      const userId = 'user1';
-      const input = { characterId: 'char2' };
-
-      const mockExistingImage = {
-        id: imageId,
-        uploaderId: userId,
-        characterId: 'char1',
-      };
-
-      db.image.findUnique.mockResolvedValue(mockExistingImage);
-      db.character.findUnique.mockResolvedValue({
-        id: 'char2',
-        ownerId: 'user2', // Different user
-      });
-
-      await expect(service.update(imageId, userId, input))
-        .rejects.toThrow(ForbiddenException);
-    });
+    // NOTE: Character association tests removed - now handled through Media system
   });
 
   describe('remove', () => {
@@ -259,7 +236,6 @@ describe('ImagesService', () => {
       const mockImage = {
         id: imageId,
         uploaderId: userId,
-        visibility: Visibility.PUBLIC,
       };
 
       db.image.findUnique.mockResolvedValue(mockImage);
@@ -278,7 +254,6 @@ describe('ImagesService', () => {
       const mockImage = {
         id: imageId,
         uploaderId: 'user1',
-        visibility: Visibility.PUBLIC,
       };
 
       db.image.findUnique.mockResolvedValue(mockImage);
@@ -369,7 +344,6 @@ describe('ImagesService', () => {
       const mockImage = {
         id: imageId,
         uploaderId: userId,
-        visibility: Visibility.PUBLIC,
       };
 
       const mockTags = [
