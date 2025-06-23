@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
-import { GetCharacterQuery, useSetCharacterMainImageMutation } from "../generated/graphql";
+import { useSetCharacterMainMediaMutation } from "../generated/graphql";
 import toast from "react-hot-toast";
 
 const GalleryContainer = styled.div`
@@ -169,56 +169,51 @@ const EmptyState = styled.div`
   }
 `;
 
-type ImageType = NonNullable<NonNullable<GetCharacterQuery["character"]>["recentImages"]>[0];
-
+// TODO: This component needs to be updated to work with the new media system
+// For now, we'll use a simple interface until media queries are implemented
 interface CharacterImageGalleryProps {
   characterId: string;
-  images: ImageType[];
-  totalCount: number;
   canUpload?: boolean;
-  mainImageId?: string | null;
+  mainMediaId?: string | null;
   isOwner?: boolean;
 }
 
 export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
   characterId,
-  images,
-  totalCount,
   canUpload = false,
-  mainImageId,
+  mainMediaId: _mainMediaId,
   isOwner = false,
 }) => {
-  const [setCharacterMainImage, { loading: settingMainImage }] = useSetCharacterMainImageMutation();
+  // TODO: Implement media loading using GraphQL queries
+  const images: any[] = [];
+  const totalCount = 0;
+  const [setCharacterMainMedia, { loading: settingMainMedia }] = useSetCharacterMainMediaMutation();
 
-  const handleSetMainImage = async (imageId: string) => {
+  const handleSetMainMedia = async (_imageId: string) => {
     try {
-      await setCharacterMainImage({
-        variables: {
-          id: characterId,
-          input: { imageId },
-        },
-        refetchQueries: ['GetCharacter'],
-      });
-      toast.success('Main image updated successfully!');
+      // First find the media record that corresponds to this image
+      // This would require a query to get the media record for the image
+      // For now, we'll assume this needs to be implemented when we have media records
+      toast.error('Setting main media from images not yet implemented - need media records');
     } catch (error) {
-      console.error('Error setting main image:', error);
-      toast.error('Failed to set main image. Please try again.');
+      console.error('Error setting main media:', error);
+      toast.error('Failed to set main media. Please try again.');
     }
   };
 
-  const handleClearMainImage = async () => {
+  const handleClearMainMedia = async () => {
     try {
-      await setCharacterMainImage({
+      await setCharacterMainMedia({
         variables: {
           id: characterId,
-          input: { imageId: null },
+          input: { mediaId: null },
         },
         refetchQueries: ['GetCharacter'],
       });
-      toast.success('Main image cleared successfully!');
+      toast.success('Main media cleared successfully!');
     } catch (error) {
-      console.error('Error clearing main image:', error);
-      toast.error('Failed to clear main image. Please try again.');
+      console.error('Error clearing main media:', error);
+      toast.error('Failed to clear main media. Please try again.');
     }
   };
 
@@ -268,13 +263,13 @@ export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
 
       <ImageGrid>
         {images.map((image) => {
-          const isMainImage = mainImageId === image.id;
+          const isMainMedia = false; // TODO: Need to check if this image is part of the main media
           
           return (
             <ImageCardWrapper key={image.id}>
               <Link to={`/image/${image.id}`}>
                 {image.isNsfw && <NSFWBadge>NSFW</NSFWBadge>}
-                {isMainImage && <MainImageBadge>Main Image</MainImageBadge>}
+                {isMainMedia && <MainImageBadge>Main Media</MainImageBadge>}
                 <ImageElement
                   src={image.thumbnailUrl || image.url}
                   alt={image.altText || image.description || image.originalFilename}
@@ -292,12 +287,12 @@ export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
                     e.stopPropagation();
                   }}
                 >
-                  {isMainImage ? (
+                  {isMainMedia ? (
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => handleClearMainImage()}
-                      disabled={settingMainImage}
+                      onClick={() => handleClearMainMedia()}
+                      disabled={settingMainMedia}
                     >
                       Remove as Main
                     </Button>
@@ -305,8 +300,8 @@ export const CharacterImageGallery: React.FC<CharacterImageGalleryProps> = ({
                     <Button
                       variant="primary"
                       size="sm"
-                      onClick={() => handleSetMainImage(image.id)}
-                      disabled={settingMainImage}
+                      onClick={() => handleSetMainMedia(image.id)}
+                      disabled={settingMainMedia}
                     >
                       Set as Main
                     </Button>
