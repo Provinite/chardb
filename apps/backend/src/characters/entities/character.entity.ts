@@ -8,7 +8,7 @@ import { Media } from '../../media/entities/media.entity';
 @ObjectType()
 export class CharacterCount {
   @Field(() => Int)
-  images: number;
+  media: number;
 }
 
 @ObjectType()
@@ -44,9 +44,6 @@ export class Character {
   creatorId?: string;
 
   @Field(() => ID, { nullable: true })
-  mainImageId?: string;
-
-  @Field(() => ID, { nullable: true })
   mainMediaId?: string;
 
   @Field(() => Visibility)
@@ -80,9 +77,6 @@ export class Character {
   @Field(() => User, { nullable: true })
   creator?: User;
 
-  @Field(() => Image, { nullable: true })
-  mainImage?: Image;
-
   @Field(() => Media, { nullable: true })
   mainMedia?: Media;
 
@@ -92,8 +86,6 @@ export class Character {
   @Field(() => CharacterCount, { nullable: true })
   _count?: CharacterCount;
 
-  @Field(() => [Image], { nullable: true })
-  images?: Image[];
 
   // Social features
   @Field(() => Int)
