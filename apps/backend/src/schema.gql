@@ -224,7 +224,6 @@ type Gallery {
   createdAt: DateTime!
   description: String
   id: ID!
-  images: [Image!]!
   likesCount: Int!
   name: String!
   owner: User!
@@ -263,14 +262,9 @@ type Image {
   artistId: ID
   artistName: String
   artistUrl: String
-  character: Character
-  characterId: ID
   createdAt: DateTime!
-  description: String
   fileSize: Int!
   filename: String!
-  gallery: Gallery
-  galleryId: ID
   height: Int!
   id: ID!
   isNsfw: Boolean!
@@ -286,7 +280,6 @@ type Image {
   uploaderId: ID!
   url: String!
   userHasLiked: Boolean!
-  visibility: Visibility!
   width: Int!
 }
 
@@ -298,14 +291,11 @@ type ImageConnection {
 
 input ImageFiltersInput {
   artistId: ID
-  characterId: ID
-  galleryId: ID
   isNsfw: Boolean
   limit: Int! = 20
   offset: Int! = 0
   search: String
   uploaderId: ID
-  visibility: Visibility
 }
 
 type ImageTag {
@@ -726,12 +716,8 @@ input UpdateImageInput {
   artistId: ID
   artistName: String
   artistUrl: String
-  characterId: ID
-  description: String
-  galleryId: ID
   isNsfw: Boolean
   source: String
-  visibility: Visibility
 }
 
 """Input type for updating media metadata"""

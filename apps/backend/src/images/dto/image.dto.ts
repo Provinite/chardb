@@ -1,6 +1,5 @@
 import { Field, InputType, ObjectType, Int, ID } from '@nestjs/graphql';
-import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, IsEnum, MaxLength, Min, Max } from 'class-validator';
-import { Visibility } from '@chardb/database';
+import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, MaxLength, Min, Max } from 'class-validator';
 
 // File upload handled via REST endpoint - this is for GraphQL updates
 @InputType()
@@ -9,21 +8,8 @@ export class CreateImageFromUploadInput {
   @IsString()
   uploadId: string; // Reference to uploaded file
 
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  characterId?: string;
 
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  galleryId?: string;
 
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  description?: string;
 
   @Field({ nullable: true })
   @IsOptional()
@@ -36,10 +22,6 @@ export class CreateImageFromUploadInput {
   @IsBoolean()
   isNsfw?: boolean;
 
-  @Field(() => Visibility, { defaultValue: Visibility.PUBLIC })
-  @IsOptional()
-  @IsEnum(Visibility)
-  visibility?: Visibility;
 
   // Artist attribution
   @Field(() => ID, { nullable: true })
@@ -68,11 +50,6 @@ export class CreateImageFromUploadInput {
 
 @InputType()
 export class UpdateImageInput {
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  description?: string;
 
   @Field({ nullable: true })
   @IsOptional()
@@ -85,20 +62,8 @@ export class UpdateImageInput {
   @IsBoolean()
   isNsfw?: boolean;
 
-  @Field(() => Visibility, { nullable: true })
-  @IsOptional()
-  @IsEnum(Visibility)
-  visibility?: Visibility;
 
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  characterId?: string;
 
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  galleryId?: string;
 
   // Artist attribution
   @Field(() => ID, { nullable: true })
@@ -145,25 +110,13 @@ export class ImageFiltersInput {
   @IsUUID()
   uploaderId?: string;
 
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  characterId?: string;
 
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  galleryId?: string;
 
   @Field({ nullable: true })
   @IsOptional()
   @IsBoolean()
   isNsfw?: boolean;
 
-  @Field(() => Visibility, { nullable: true })
-  @IsOptional()
-  @IsEnum(Visibility)
-  visibility?: Visibility;
 
   @Field({ nullable: true })
   @IsOptional()
@@ -190,8 +143,5 @@ export interface ImageFilters {
   limit?: number;
   offset?: number;
   uploaderId?: string;
-  characterId?: string;
-  galleryId?: string;
   isNsfw?: boolean;
-  visibility?: Visibility;
 }

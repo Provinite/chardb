@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { Prisma, Visibility } from '@chardb/database';
+import { Prisma } from '@chardb/database';
 import * as sharp from 'sharp';
 import { v4 as uuid } from 'uuid';
 import { extname } from 'path';
@@ -8,12 +8,8 @@ import type { Image } from '@chardb/database';
 
 export interface UploadImageInput {
   file: Express.Multer.File;
-  characterId?: string;
-  galleryId?: string;
-  description?: string;
   altText?: string;
   isNsfw?: boolean;
-  visibility?: Visibility;
   sensitiveContentDescription?: string;
   artistId?: string;
   artistName?: string;
@@ -22,13 +18,9 @@ export interface UploadImageInput {
 }
 
 export interface UpdateImageInput {
-  description?: string;
   altText?: string;
   isNsfw?: boolean;
-  visibility?: Visibility;
   sensitiveContentDescription?: string;
-  characterId?: string;
-  galleryId?: string;
   artistId?: string;
   artistName?: string;
   artistUrl?: string;
@@ -39,10 +31,7 @@ export interface ImageFilters {
   limit?: number;
   offset?: number;
   uploaderId?: string;
-  characterId?: string;
-  galleryId?: string;
   isNsfw?: boolean;
-  visibility?: Visibility;
   search?: string;
   artistId?: string;
 }

@@ -8,7 +8,6 @@ registerEnumType(Visibility, {
 });
 import { User } from '../../users/entities/user.entity';
 import { Character } from '../../characters/entities/character.entity';
-import { Image } from '../../images/entities/image.entity';
 
 @ObjectType()
 export class GalleryCount {
@@ -52,8 +51,6 @@ export class Gallery {
   @Field(() => Character, { nullable: true })
   character?: Character;
 
-  @Field(() => [Image])
-  images: Image[];
 
   // Count fields
   @Field(() => GalleryCount, { nullable: true })

@@ -86,7 +86,6 @@ model Character {
   creator   User?  @relation("CharacterCreator", fields: [creatorId], references: [id], onDelete: SetNull)
   mainMedia Media? @relation("CharacterMainMedia", fields: [mainMediaId], references: [id], onDelete: SetNull)
 
-  images    Image[]
   media     Media[]
   galleries Gallery[]
   comments  Comment[]
@@ -103,10 +102,7 @@ model Image {
   url              String     @db.Text
   thumbnailUrl     String?    @map("thumbnail_url") @db.Text
   altText          String?    @map("alt_text") @db.VarChar(200)
-  description      String?    @db.Text
   uploaderId       String     @map("uploader_id")
-  characterId      String?    @map("character_id")
-  galleryId        String?    @map("gallery_id")
   
   // Artist attribution
   artistId         String?    @map("artist_id")
@@ -120,15 +116,12 @@ model Image {
   mimeType         String     @map("mime_type") @db.VarChar(50)
   isNsfw           Boolean    @default(false) @map("is_nsfw")
   sensitiveContentDescription String? @map("sensitive_content_description") @db.Text
-  visibility       Visibility @default(PUBLIC)
   createdAt        DateTime   @default(now()) @map("created_at")
   updatedAt        DateTime   @updatedAt @map("updated_at")
 
   // Relations
   uploader  User       @relation("ImageUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
   artist    User?      @relation("ImageArtist", fields: [artistId], references: [id], onDelete: SetNull)
-  character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
-  gallery   Gallery?   @relation(fields: [galleryId], references: [id], onDelete: SetNull)
 
   comments Comment[]
   likes    Like[]
@@ -153,7 +146,6 @@ model Gallery {
   owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
 
-  images   Image[]
   media    Media[]
   comments Comment[]
   likes    Like[]
