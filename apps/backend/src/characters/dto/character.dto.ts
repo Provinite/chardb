@@ -163,7 +163,7 @@ export class UpdateCharacterInput {
   @Field(() => ID, { nullable: true })
   @IsOptional()
   @IsUUID()
-  mainImageId?: string;
+  mainMediaId?: string;
 }
 
 @InputType()
@@ -270,13 +270,6 @@ export class ManageTagsInput {
   tagNames: string[];
 }
 
-@InputType()
-export class SetMainImageInput {
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  imageId?: string;
-}
 
 @InputType()
 export class SetMainMediaInput {
@@ -290,7 +283,7 @@ export class SetMainMediaInput {
 @ObjectType()
 export class CharacterCount {
   @Field(() => Int)
-  images: number;
+  media: number;
 
   @Field(() => Int)
   comments: number;
