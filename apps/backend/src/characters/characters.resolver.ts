@@ -97,11 +97,11 @@ export class CharactersResolver {
     return this.charactersService.removeTags(id, user.id, input.tagNames);
   }
 
-  @Mutation(() => CharacterEntity)
+  @Mutation(() => CharacterEntity, { description: 'Sets or clears the main media for a character' })
   @UseGuards(JwtAuthGuard)
   async setCharacterMainMedia(
-    @Args('id', { type: () => ID }) id: string,
-    @Args('input') input: SetMainMediaInput,
+    @Args('id', { type: () => ID, description: 'Character ID to update' }) id: string,
+    @Args('input', { description: 'Main media setting parameters' }) input: SetMainMediaInput,
     @CurrentUser() user: any,
   ): Promise<any> {
     return this.charactersService.setMainMedia(id, user.id, input.mediaId);

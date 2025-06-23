@@ -177,29 +177,50 @@ const PreviewContent = styled.div`
   }
 `;
 
+/** Data structure for text editor content */
 export interface TextEditorData {
+  /** Title for the text content */
   title: string;
+  /** Optional description */
   description?: string;
+  /** The actual text content */
   content: string;
+  /** Text formatting type */
   formatting: TextFormatting;
+  /** Visibility setting */
   visibility: Visibility;
+  /** Optional character association */
   characterId?: string;
+  /** Optional gallery association */
   galleryId?: string;
 }
 
 interface TextEditorProps {
+  /** Initial data to populate the editor */
   initialData?: Partial<TextEditorData>;
+  /** Callback called when user saves the content */
   onSave: (data: TextEditorData) => void;
+  /** Callback called when user cancels editing */
   onCancel: () => void;
+  /** Whether the editor is in a loading state */
   isLoading?: boolean;
+  /** Whether to show the markdown preview */
   showPreview?: boolean;
+  /** Available characters for association */
   characters?: Array<{ id: string; name: string }>;
 }
 
+/**
+ * Calculates the word count for text content
+ */
 const calculateWordCount = (text: string): number => {
   return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 };
 
+/**
+ * Simple markdown renderer for preview functionality
+ * Supports basic markdown features like headers, bold, italic, and code
+ */
 const renderMarkdownPreview = (text: string): string => {
   return text
     .replace(/^### (.*$)/gim, '<h3>$1</h3>')
@@ -216,6 +237,10 @@ const renderMarkdownPreview = (text: string): string => {
     .replace(/<p><\/p>/g, '');
 };
 
+/**
+ * A rich text editor component with markdown support and live preview
+ * Provides form inputs for title, description, content, and metadata
+ */
 export const TextEditor: React.FC<TextEditorProps> = ({
   initialData = {},
   onSave,

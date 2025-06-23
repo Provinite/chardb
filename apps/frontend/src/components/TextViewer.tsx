@@ -165,13 +165,20 @@ const ExpandButton = styled.button`
 `;
 
 interface TextViewerProps {
+  /** The text content to display */
   textContent: TextContent;
+  /** Maximum height before showing expand button */
   maxHeight?: string;
+  /** Whether to show word count in header */
   showWordCount?: boolean;
+  /** Whether to allow switching between raw and formatted view */
   allowFormatToggle?: boolean;
 }
 
-// Simple markdown-to-HTML converter for basic formatting
+/**
+ * Simple markdown-to-HTML converter for basic formatting
+ * Supports headers, bold, italic, code, and basic structure
+ */
 const renderMarkdown = (text: string): string => {
   return text
     // Headers
@@ -194,6 +201,10 @@ const renderMarkdown = (text: string): string => {
     .replace(/<p><\/p>/g, '');
 };
 
+/**
+ * A component for displaying text content with optional markdown formatting
+ * Supports collapsible content and format switching between raw and rendered text
+ */
 export const TextViewer: React.FC<TextViewerProps> = ({
   textContent,
   maxHeight = '400px',

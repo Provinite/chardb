@@ -2,7 +2,10 @@ import { InputType, Field, ID, registerEnumType } from '@nestjs/graphql';
 import { TextFormatting, Visibility } from '@chardb/database';
 import { IsString, IsOptional, IsEnum, IsInt, Min, IsUUID } from 'class-validator';
 
-// Define MediaType for filtering (no longer stored in DB)
+/**
+ * Enum for filtering media by type
+ * Note: This is not stored in the DB, used only for filtering
+ */
 export enum MediaType {
   IMAGE = 'IMAGE',
   TEXT = 'TEXT'
@@ -13,136 +16,178 @@ registerEnumType(MediaType, {
   description: 'The type of media content for filtering',
 });
 
-@InputType()
+/**
+ * Input type for filtering and paginating media queries
+ */
+@InputType({ description: 'Input type for filtering and paginating media queries' })
 export class MediaFiltersInput {
-  @Field({ nullable: true })
+  /** Search term to filter by title and description */
+  @Field({ nullable: true, description: 'Search term to filter by title and description' })
   @IsOptional()
   @IsString()
   search?: string;
 
-  @Field(() => MediaType, { nullable: true })
+  /** Filter by media type (image or text) */
+  @Field(() => MediaType, { nullable: true, description: 'Filter by media type (image or text)' })
   @IsOptional()
   @IsEnum(MediaType)
   mediaType?: MediaType;
 
-  @Field(() => Visibility, { nullable: true })
+  /** Filter by visibility level */
+  @Field(() => Visibility, { nullable: true, description: 'Filter by visibility level' })
   @IsOptional()
   @IsEnum(Visibility)
   visibility?: Visibility;
 
-  @Field(() => ID, { nullable: true })
+  /** Filter by owner user ID */
+  @Field(() => ID, { nullable: true, description: 'Filter by owner user ID' })
   @IsOptional()
   @IsUUID()
   ownerId?: string;
 
-  @Field(() => ID, { nullable: true })
+  /** Filter by associated character ID */
+  @Field(() => ID, { nullable: true, description: 'Filter by associated character ID' })
   @IsOptional()
   @IsUUID()
   characterId?: string;
 
-  @Field(() => ID, { nullable: true })
+  /** Filter by gallery ID */
+  @Field(() => ID, { nullable: true, description: 'Filter by gallery ID' })
   @IsOptional()
   @IsUUID()
   galleryId?: string;
 
-  @Field({ nullable: true })
+  /** Maximum number of results to return */
+  @Field({ nullable: true, description: 'Maximum number of results to return' })
   @IsOptional()
   @IsInt()
   @Min(1)
   limit?: number;
 
-  @Field({ nullable: true })
+  /** Number of results to skip for pagination */
+  @Field({ nullable: true, description: 'Number of results to skip for pagination' })
   @IsOptional()
   @IsInt()
   @Min(0)
   offset?: number;
 }
 
-@InputType()
+/**
+ * Input type for creating new text media
+ */
+@InputType({ description: 'Input type for creating new text media' })
 export class CreateTextMediaInput {
-  @Field()
+  /** Title for the text media */
+  @Field({ description: 'Title for the text media' })
   @IsString()
   title: string;
 
-  @Field({ nullable: true })
+  /** Optional description for the text media */
+  @Field({ nullable: true, description: 'Optional description for the text media' })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @Field()
+  /** The actual text content */
+  @Field({ description: 'The actual text content' })
   @IsString()
   content: string;
 
-  @Field(() => TextFormatting, { defaultValue: TextFormatting.PLAINTEXT })
+  /** Text formatting type (plaintext or markdown) */
+  @Field(() => TextFormatting, { defaultValue: TextFormatting.PLAINTEXT, description: 'Text formatting type (plaintext or markdown)' })
   @IsEnum(TextFormatting)
   formatting: TextFormatting;
 
-  @Field(() => ID, { nullable: true })
+  /** Optional character to associate with this media */
+  @Field(() => ID, { nullable: true, description: 'Optional character to associate with this media' })
   @IsOptional()
   @IsUUID()
   characterId?: string;
 
-  @Field(() => ID, { nullable: true })
+  /** Optional gallery to add this media to */
+  @Field(() => ID, { nullable: true, description: 'Optional gallery to add this media to' })
   @IsOptional()
   @IsUUID()
   galleryId?: string;
 
-  @Field(() => Visibility, { defaultValue: Visibility.PUBLIC })
+  /** Visibility setting for the media */
+  @Field(() => Visibility, { defaultValue: Visibility.PUBLIC, description: 'Visibility setting for the media' })
   @IsEnum(Visibility)
   visibility: Visibility;
 }
 
-@InputType()
+/**
+ * Input type for updating media metadata
+ */
+@InputType({ description: 'Input type for updating media metadata' })
 export class UpdateMediaInput {
-  @Field({ nullable: true })
+  /** Updated title for the media */
+  @Field({ nullable: true, description: 'Updated title for the media' })
   @IsOptional()
   @IsString()
   title?: string;
 
-  @Field({ nullable: true })
+  /** Updated description for the media */
+  @Field({ nullable: true, description: 'Updated description for the media' })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @Field(() => ID, { nullable: true })
+  /** Updated character association */
+  @Field(() => ID, { nullable: true, description: 'Updated character association' })
   @IsOptional()
   @IsUUID()
   characterId?: string;
 
-  @Field(() => ID, { nullable: true })
+  /** Updated gallery association */
+  @Field(() => ID, { nullable: true, description: 'Updated gallery association' })
   @IsOptional()
   @IsUUID()
   galleryId?: string;
 
-  @Field(() => Visibility, { nullable: true })
+  /** Updated visibility setting */
+  @Field(() => Visibility, { nullable: true, description: 'Updated visibility setting' })
   @IsOptional()
   @IsEnum(Visibility)
   visibility?: Visibility;
 }
 
-@InputType()
+/**
+ * Input type for updating text content specifically
+ */
+@InputType({ description: 'Input type for updating text content specifically' })
 export class UpdateTextContentInput {
-  @Field({ nullable: true })
+  /** Updated text content */
+  @Field({ nullable: true, description: 'Updated text content' })
   @IsOptional()
   @IsString()
   content?: string;
 
-  @Field(() => TextFormatting, { nullable: true })
+  /** Updated text formatting type */
+  @Field(() => TextFormatting, { nullable: true, description: 'Updated text formatting type' })
   @IsOptional()
   @IsEnum(TextFormatting)
   formatting?: TextFormatting;
 }
 
-@InputType()
+/**
+ * Input type for managing media tags
+ */
+@InputType({ description: 'Input type for managing media tags' })
 export class ManageMediaTagsInput {
-  @Field(() => [String])
+  /** Array of tag names to add or remove */
+  @Field(() => [String], { description: 'Array of tag names to add or remove' })
   @IsString({ each: true })
   tagNames: string[];
 }
 
-@InputType()
+/**
+ * Input type for setting a character's main media
+ */
+@InputType({ description: 'Input type for setting a character\'s main media' })
 export class SetCharacterMainMediaInput {
-  @Field(() => ID, { nullable: true })
+  /** Media ID to set as main, or null to remove main media */
+  @Field(() => ID, { nullable: true, description: 'Media ID to set as main, or null to remove main media' })
   @IsOptional()
   @IsUUID()
   mediaId?: string;

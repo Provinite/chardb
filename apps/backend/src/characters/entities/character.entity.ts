@@ -43,7 +43,7 @@ export class Character {
   @Field(() => ID, { nullable: true })
   creatorId?: string;
 
-  @Field(() => ID, { nullable: true })
+  @Field(() => ID, { nullable: true, description: 'ID of the main media item for this character' })
   mainMediaId?: string;
 
   @Field(() => Visibility)
@@ -77,7 +77,7 @@ export class Character {
   @Field(() => User, { nullable: true })
   creator?: User;
 
-  @Field(() => Media, { nullable: true })
+  @Field(() => Media, { nullable: true, description: 'Main media item for this character (image or text)' })
   mainMedia?: Media;
 
   @Field(() => [CharacterTag], { nullable: true })

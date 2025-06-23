@@ -38,13 +38,22 @@ const LoadingState = styled.div`
 `;
 
 interface MediaGridProps {
+  /** Array of media items to display */
   media: Media[];
+  /** Whether to show owner information on each card */
   showOwner?: boolean;
+  /** Whether the grid is currently loading */
   loading?: boolean;
+  /** Custom message to show when no media is found */
   emptyMessage?: string;
+  /** Custom description to show when no media is found */
   emptyDescription?: string;
 }
 
+/**
+ * A responsive grid component for displaying media cards
+ * Handles loading states and empty states automatically
+ */
 export const MediaGrid: React.FC<MediaGridProps> = ({
   media,
   showOwner = true,

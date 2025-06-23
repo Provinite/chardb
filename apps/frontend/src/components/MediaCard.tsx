@@ -160,10 +160,16 @@ const VisibilityBadge = styled.span<{ visibility: string }>`
 `;
 
 interface MediaCardProps {
+  /** The media item to display */
   media: Media;
+  /** Whether to show owner information in the card */
   showOwner?: boolean;
 }
 
+/**
+ * A card component that displays either image or text media with metadata
+ * Automatically adapts its layout based on the media type
+ */
 export const MediaCard: React.FC<MediaCardProps> = ({ 
   media, 
   showOwner = true 

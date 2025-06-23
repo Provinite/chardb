@@ -315,6 +315,15 @@ export class CharactersService {
     return this.findOne(characterId, userId);
   }
 
+  /**
+   * Sets or clears the main media for a character
+   * @param characterId ID of the character to update
+   * @param userId ID of the user making the request (must be character owner)
+   * @param mediaId Media ID to set as main, or undefined to clear
+   * @returns Updated character with new main media
+   * @throws ForbiddenException if user doesn't own the character or media doesn't belong to character
+   * @throws NotFoundException if media doesn't exist
+   */
   async setMainMedia(characterId: string, userId: string, mediaId?: string): Promise<Character> {
     const character = await this.findOne(characterId, userId);
 

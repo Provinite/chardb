@@ -173,11 +173,18 @@ const CreateLabel = styled.span`
 type MediaFilter = 'all' | 'images' | 'text';
 
 interface CharacterMediaGalleryProps {
+  /** ID of the character whose media to display */
   characterId: string;
+  /** Whether the current user can upload media to this character */
   canUpload?: boolean;
+  /** Maximum number of media items to display */
   limit?: number;
 }
 
+/**
+ * A component that displays a character's media with filtering and upload capabilities
+ * Supports both image and text media with type-specific filtering
+ */
 export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
   characterId,
   canUpload = false,

@@ -12,10 +12,18 @@ import {
   UpdateTextContentInput,
 } from "./dto/media.dto";
 
+/**
+ * Service for managing polymorphic media (images and text content)
+ */
 @Injectable()
 export class MediaService {
   constructor(private readonly db: DatabaseService) {}
 
+  /**
+   * Calculates word count for text content
+   * @param text The text to count words for
+   * @returns Number of words in the text
+   */
   private calculateWordCount(text: string): number {
     return text
       .trim()
@@ -23,6 +31,12 @@ export class MediaService {
       .filter((word) => word.length > 0).length;
   }
 
+  /**
+   * Retrieves paginated media with proper visibility filtering
+   * @param filters Optional filtering and pagination parameters
+   * @param userId Current user ID for visibility checks
+   * @returns Paginated media results with enriched data
+   */
   async findAll(filters?: MediaFiltersInput, userId?: string) {
     const limit = filters?.limit || 20;
     const offset = filters?.offset || 0;
@@ -207,6 +221,14 @@ export class MediaService {
     };
   }
 
+  /**
+   * Retrieves a single media item by ID with full content inclusion
+   * @param id Media ID to retrieve
+   * @param userId Current user ID for visibility and like status checks
+   * @returns Enriched media item with all related data
+   * @throws NotFoundException if media doesn't exist
+   * @throws ForbiddenException if user lacks access to private media
+   */
   async findOne(id: string, userId?: string) {
     const media = await this.db.media.findUnique({
       where: { id },
@@ -337,6 +359,13 @@ export class MediaService {
     return enrichedMedia;
   }
 
+  /**
+   * Creates a new text media item with automatic word count calculation
+   * @param userId ID of the user creating the media
+   * @param input Text media creation parameters
+   * @returns Newly created media item with text content
+   * @throws ForbiddenException if user tries to assign media to character they don't own
+   */
   async createTextMedia(userId: string, input: CreateTextMediaInput) {
     const wordCount = this.calculateWordCount(input.content);
 
@@ -471,6 +500,15 @@ export class MediaService {
     });
   }
 
+  /**
+   * Updates media metadata (title, description, visibility, etc.)
+   * @param id Media ID to update
+   * @param userId ID of the user performing the update
+   * @param input Updated media parameters
+   * @returns Updated media item
+   * @throws NotFoundException if media doesn't exist
+   * @throws ForbiddenException if user doesn't own the media
+   */
   async updateMedia(id: string, userId: string, input: UpdateMediaInput) {
     const media = await this.db.media.findUnique({
       where: { id },
@@ -610,6 +648,15 @@ export class MediaService {
     return enrichedMedia;
   }
 
+  /**
+   * Updates the text content of a text media item
+   * @param mediaId ID of the media containing the text content
+   * @param userId ID of the user performing the update
+   * @param input Updated text content parameters
+   * @returns Updated media item with new text content
+   * @throws NotFoundException if media doesn't exist
+   * @throws ForbiddenException if user doesn't own the media
+   */
   async updateTextContent(
     mediaId: string,
     userId: string,
@@ -652,6 +699,14 @@ export class MediaService {
     return this.findOne(mediaId, userId);
   }
 
+  /**
+   * Deletes a media item and its associated content
+   * @param id Media ID to delete
+   * @param userId ID of the user performing the deletion
+   * @returns Promise resolving to true if deletion was successful
+   * @throws NotFoundException if media doesn't exist
+   * @throws ForbiddenException if user doesn't own the media
+   */
   async remove(id: string, userId: string): Promise<boolean> {
     const media = await this.db.media.findUnique({
       where: { id },
@@ -673,6 +728,15 @@ export class MediaService {
     return true;
   }
 
+  /**
+   * Adds tags to a media item
+   * @param id Media ID to add tags to
+   * @param userId ID of the user adding tags
+   * @param tagNames Array of tag names to add
+   * @returns Updated media item with new tags
+   * @throws NotFoundException if media doesn't exist
+   * @throws ForbiddenException if user doesn't own the media
+   */
   async addTags(id: string, userId: string, tagNames: string[]) {
     const media = await this.db.media.findUnique({
       where: { id },
@@ -719,6 +783,15 @@ export class MediaService {
     return this.findOne(id, userId);
   }
 
+  /**
+   * Removes tags from a media item
+   * @param id Media ID to remove tags from
+   * @param userId ID of the user removing tags
+   * @param tagNames Array of tag names to remove
+   * @returns Updated media item without the removed tags
+   * @throws NotFoundException if media doesn't exist
+   * @throws ForbiddenException if user doesn't own the media
+   */
   async removeTags(id: string, userId: string, tagNames: string[]) {
     const media = await this.db.media.findUnique({
       where: { id },

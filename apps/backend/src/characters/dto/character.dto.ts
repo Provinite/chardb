@@ -271,8 +271,12 @@ export class ManageTagsInput {
 }
 
 
+/**
+ * Input type for setting a character's main media
+ */
 @InputType()
 export class SetMainMediaInput {
+  /** Media ID to set as main, or null to remove main media */
   @Field(() => ID, { nullable: true })
   @IsOptional()
   @IsUUID()
