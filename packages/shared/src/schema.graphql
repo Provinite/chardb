@@ -35,12 +35,9 @@ type Character {
   description: String
   gender: String
   id: ID!
-  images(limit: Int = 10): [Image!]
   isSellable: Boolean!
   isTradeable: Boolean!
   likesCount: Int!
-  mainImage: Image
-  mainImageId: ID
   mainMedia: Media
   mainMediaId: ID
   name: String!
@@ -63,7 +60,7 @@ type CharacterConnection {
 }
 
 type CharacterCount {
-  images: Int!
+  media: Int!
 }
 
 input CharacterFiltersInput {
@@ -408,7 +405,7 @@ type Mutation {
   removeImageTags(id: ID!, input: ManageImageTagsInput!): Image!
   removeMediaTags(id: ID!, input: ManageMediaTagsInput!): Media!
   reorderGalleries(input: ReorderGalleriesInput!): [Gallery!]!
-  setCharacterMainImage(id: ID!, input: SetMainImageInput!): Character!
+  setCharacterMainMedia(id: ID!, input: SetMainMediaInput!): Character!
   signup(input: SignupInput!): AuthPayload!
   toggleFollow(input: ToggleFollowInput!): FollowResult!
   toggleLike(input: ToggleLikeInput!): LikeResult!
@@ -465,8 +462,8 @@ input ReorderGalleriesInput {
   galleryIds: [ID!]!
 }
 
-input SetMainImageInput {
-  imageId: ID
+input SetMainMediaInput {
+  mediaId: ID
 }
 
 input SignupInput {
@@ -518,7 +515,7 @@ input UpdateCharacterInput {
   gender: String
   isSellable: Boolean
   isTradeable: Boolean
-  mainImageId: ID
+  mainMediaId: ID
   name: String
   personality: String
   price: Float
