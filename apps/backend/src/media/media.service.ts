@@ -77,7 +77,7 @@ export class MediaService {
             include: {
               owner: true,
               _count: {
-                select: { likes: true, images: true },
+                select: { likes: true, media: true },
               },
             },
           },
@@ -149,7 +149,7 @@ export class MediaService {
                 userIsFollowing: false, // TODO: Implement proper following status
               },
               _count: {
-                images: item.character._count?.images || 0,
+                media: item.character._count?.media || 0,
                 likes: item.character._count?.likes || 0,
               },
               likesCount: item.character._count?.likes || 0,
@@ -216,7 +216,7 @@ export class MediaService {
           include: {
             owner: true,
             _count: {
-              select: { likes: true, images: true },
+              select: { likes: true, media: true },
             },
           },
         },
@@ -286,7 +286,7 @@ export class MediaService {
               userIsFollowing: false, // TODO: Implement proper following status
             },
             _count: {
-              images: media.character._count?.images || 0,
+              media: media.character._count?.media || 0,
               likes: media.character._count?.likes || 0,
             },
             likesCount: media.character._count?.likes || 0,
@@ -369,7 +369,7 @@ export class MediaService {
             include: {
               owner: true,
               _count: {
-                select: { likes: true, images: true },
+                select: { likes: true, media: true },
               },
             },
           },
@@ -419,7 +419,7 @@ export class MediaService {
                 userIsFollowing: false, // TODO: Implement proper following status
               },
               _count: {
-                images: media.character._count?.images || 0,
+                media: media.character._count?.media || 0,
                 likes: media.character._count?.likes || 0,
               },
               likesCount: media.character._count?.likes || 0,
@@ -499,7 +499,7 @@ export class MediaService {
           include: {
             owner: true,
             _count: {
-              select: { likes: true, images: true },
+              select: { likes: true, media: true },
             },
           },
         },
@@ -559,7 +559,7 @@ export class MediaService {
               userIsFollowing: false, // TODO: Implement proper following status
             },
             _count: {
-              images: updatedMedia.character._count?.images || 0,
+              media: updatedMedia.character._count?.media || 0,
               likes: updatedMedia.character._count?.likes || 0,
             },
             likesCount: updatedMedia.character._count?.likes || 0,
