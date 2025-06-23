@@ -436,10 +436,10 @@ export const CharacterPage: React.FC = () => {
       <CharacterHeader>
         <MainImageSection>
           <MainImageContainer>
-            {character.mainImage ? (
+            {character.mainMedia?.image ? (
               <MainImageElement
-                src={character.mainImage.thumbnailUrl || character.mainImage.url}
-                alt={character.mainImage.altText || `${character.name} main image`}
+                src={character.mainMedia.image.thumbnailUrl || character.mainMedia.image.url}
+                alt={character.mainMedia.image.altText || `${character.name} main image`}
               />
             ) : (
               <MainImagePlaceholder>
@@ -488,8 +488,8 @@ export const CharacterPage: React.FC = () => {
             )}
             {character._count && (
               <InfoItem>
-                <InfoLabel>Images</InfoLabel>
-                <InfoValue>{character._count.images}</InfoValue>
+                <InfoLabel>Media</InfoLabel>
+                <InfoValue>{character._count.media}</InfoValue>
               </InfoItem>
             )}
           </InfoGrid>
@@ -531,8 +531,8 @@ export const CharacterPage: React.FC = () => {
 
       {character._count && (
         <ImageStats>
-          <ImageCount>{character._count.images}</ImageCount>
-          <ImageLabel>Images in Gallery</ImageLabel>
+          <ImageCount>{character._count.media}</ImageCount>
+          <ImageLabel>Media in Gallery</ImageLabel>
         </ImageStats>
       )}
 
