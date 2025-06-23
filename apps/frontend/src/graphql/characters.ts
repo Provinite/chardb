@@ -355,6 +355,7 @@ export const SET_CHARACTER_MAIN_MEDIA = gql`
   }
 `;
 
+
 export const GET_LIKED_CHARACTERS = gql`
   query GetLikedCharacters {
     likedCharacters {
