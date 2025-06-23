@@ -13,7 +13,7 @@ import {
   CharacterFiltersInput,
   TransferCharacterInput,
   ManageTagsInput,
-  SetMainImageInput,
+  SetMainMediaInput,
 } from './dto/character.dto';
 
 @Resolver(() => CharacterEntity)
@@ -99,12 +99,12 @@ export class CharactersResolver {
 
   @Mutation(() => CharacterEntity)
   @UseGuards(JwtAuthGuard)
-  async setCharacterMainImage(
+  async setCharacterMainMedia(
     @Args('id', { type: () => ID }) id: string,
-    @Args('input') input: SetMainImageInput,
+    @Args('input') input: SetMainMediaInput,
     @CurrentUser() user: any,
   ): Promise<any> {
-    return this.charactersService.setMainImage(id, user.id, input.imageId);
+    return this.charactersService.setMainMedia(id, user.id, input.mediaId);
   }
 
   // Query for user's own characters
@@ -129,20 +129,4 @@ export class CharactersResolver {
     return this.charactersService.findAll(userFilters, user?.id);
   }
 
-  // Field resolver for character images with limit
-  @ResolveField(() => [Image])
-  async images(
-    @Parent() character: CharacterEntity,
-    @Args('limit', { type: () => Int, nullable: true, defaultValue: 10 }) limit: number,
-    @CurrentUser() user?: any,
-  ): Promise<any[]> {
-    const result = await this.imagesService.findAll(
-      {
-        characterId: character.id,
-        limit: Math.min(limit, 50), // Cap at 50 to prevent abuse
-      },
-      user?.id,
-    );
-    return result.images;
-  }
 }
