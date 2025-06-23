@@ -62,12 +62,9 @@ export type Character = {
   description: Maybe<Scalars['String']['output']>;
   gender: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  images: Maybe<Array<Image>>;
   isSellable: Scalars['Boolean']['output'];
   isTradeable: Scalars['Boolean']['output'];
   likesCount: Scalars['Int']['output'];
-  mainImage: Maybe<Image>;
-  mainImageId: Maybe<Scalars['ID']['output']>;
   mainMedia: Maybe<Media>;
   mainMediaId: Maybe<Scalars['ID']['output']>;
   name: Scalars['String']['output'];
@@ -83,11 +80,6 @@ export type Character = {
   visibility: Visibility;
 };
 
-
-export type CharacterImagesArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
 export type CharacterConnection = {
   __typename?: 'CharacterConnection';
   characters: Array<Character>;
@@ -97,7 +89,7 @@ export type CharacterConnection = {
 
 export type CharacterCount = {
   __typename?: 'CharacterCount';
-  images: Scalars['Int']['output'];
+  media: Scalars['Int']['output'];
 };
 
 export type CharacterFiltersInput = {
@@ -450,7 +442,7 @@ export type Mutation = {
   removeImageTags: Image;
   removeMediaTags: Media;
   reorderGalleries: Array<Gallery>;
-  setCharacterMainImage: Character;
+  setCharacterMainMedia: Character;
   signup: AuthPayload;
   toggleFollow: FollowResult;
   toggleLike: LikeResult;
@@ -573,9 +565,9 @@ export type MutationReorderGalleriesArgs = {
 };
 
 
-export type MutationSetCharacterMainImageArgs = {
+export type MutationSetCharacterMainMediaArgs = {
   id: Scalars['ID']['input'];
-  input: SetMainImageInput;
+  input: SetMainMediaInput;
 };
 
 
@@ -856,8 +848,8 @@ export type ReorderGalleriesInput = {
   galleryIds: Array<Scalars['ID']['input']>;
 };
 
-export type SetMainImageInput = {
-  imageId?: InputMaybe<Scalars['ID']['input']>;
+export type SetMainMediaInput = {
+  mediaId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type SignupInput = {
@@ -911,7 +903,7 @@ export type UpdateCharacterInput = {
   gender?: InputMaybe<Scalars['String']['input']>;
   isSellable?: InputMaybe<Scalars['Boolean']['input']>;
   isTradeable?: InputMaybe<Scalars['Boolean']['input']>;
-  mainImageId?: InputMaybe<Scalars['ID']['input']>;
+  mainMediaId?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   personality?: InputMaybe<Scalars['String']['input']>;
   price?: InputMaybe<Scalars['Float']['input']>;
@@ -1057,28 +1049,28 @@ export type GetCharactersQueryVariables = Exact<{
 }>;
 
 
-export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainImageId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainImage: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, _count: { __typename?: 'CharacterCount', images: number } | null }> } };
+export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null }> } };
 
 export type GetCharacterQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainImageId: string | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null, mainImage: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, recentImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, isNsfw: boolean, createdAt: string }> | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
 
 
-export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainImageId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainImage: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, _count: { __typename?: 'CharacterCount', images: number } | null }> } };
+export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null }> } };
 
 export type CreateCharacterMutationVariables = Exact<{
   input: CreateCharacterInput;
 }>;
 
 
-export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null } };
+export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null } };
 
 export type UpdateCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1086,7 +1078,7 @@ export type UpdateCharacterMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCharacterMutation = { __typename?: 'Mutation', updateCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null } };
+export type UpdateCharacterMutation = { __typename?: 'Mutation', updateCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null } };
 
 export type DeleteCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1101,7 +1093,7 @@ export type TransferCharacterMutationVariables = Exact<{
 }>;
 
 
-export type TransferCharacterMutation = { __typename?: 'Mutation', transferCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null } };
+export type TransferCharacterMutation = { __typename?: 'Mutation', transferCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null } };
 
 export type AddCharacterTagsMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1119,18 +1111,18 @@ export type RemoveCharacterTagsMutationVariables = Exact<{
 
 export type RemoveCharacterTagsMutation = { __typename?: 'Mutation', removeCharacterTags: { __typename?: 'Character', id: string, name: string, tags: Array<string>, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
-export type SetCharacterMainImageMutationVariables = Exact<{
+export type SetCharacterMainMediaMutationVariables = Exact<{
   id: Scalars['ID']['input'];
-  input: SetMainImageInput;
+  input: SetMainMediaInput;
 }>;
 
 
-export type SetCharacterMainImageMutation = { __typename?: 'Mutation', setCharacterMainImage: { __typename?: 'Character', id: string, name: string, mainImageId: string | null, mainImage: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } };
+export type SetCharacterMainMediaMutation = { __typename?: 'Mutation', setCharacterMainMedia: { __typename?: 'Character', id: string, name: string, mainMediaId: string | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, _count: { __typename?: 'CharacterCount', images: number } | null }> };
+export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, _count: { __typename?: 'CharacterCount', media: number } | null }> };
 
 export type GetGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
@@ -1621,7 +1613,7 @@ export const GetCharactersDocument = gql`
       backstory
       ownerId
       creatorId
-      mainImageId
+      mainMediaId
       visibility
       isSellable
       isTradeable
@@ -1642,15 +1634,19 @@ export const GetCharactersDocument = gql`
         displayName
         avatarUrl
       }
-      mainImage {
+      mainMedia {
         id
-        url
-        thumbnailUrl
-        altText
-        isNsfw
+        title
+        image {
+          id
+          url
+          thumbnailUrl
+          altText
+          isNsfw
+        }
       }
       _count {
-        images
+        media
       }
     }
     total
@@ -1725,7 +1721,7 @@ export const GetCharacterDocument = gql`
       avatarUrl
     }
     _count {
-      images
+      media
     }
     tags_rel {
       tag {
@@ -1735,24 +1731,17 @@ export const GetCharacterDocument = gql`
         color
       }
     }
-    mainImageId
-    mainImage {
+    mainMediaId
+    mainMedia {
       id
-      url
-      thumbnailUrl
-      altText
-      isNsfw
-    }
-    recentImages: images(limit: 8) {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      description
-      isNsfw
-      createdAt
+      title
+      image {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
+      }
     }
   }
 }
@@ -1804,7 +1793,7 @@ export const GetMyCharactersDocument = gql`
       backstory
       ownerId
       creatorId
-      mainImageId
+      mainMediaId
       visibility
       isSellable
       isTradeable
@@ -1825,15 +1814,19 @@ export const GetMyCharactersDocument = gql`
         displayName
         avatarUrl
       }
-      mainImage {
+      mainMedia {
         id
-        url
-        thumbnailUrl
-        altText
-        isNsfw
+        title
+        image {
+          id
+          url
+          thumbnailUrl
+          altText
+          isNsfw
+        }
       }
       _count {
-        images
+        media
       }
     }
     total
@@ -1908,7 +1901,7 @@ export const CreateCharacterDocument = gql`
       avatarUrl
     }
     _count {
-      images
+      media
     }
   }
 }
@@ -1973,7 +1966,7 @@ export const UpdateCharacterDocument = gql`
       avatarUrl
     }
     _count {
-      images
+      media
     }
   }
 }
@@ -2070,7 +2063,7 @@ export const TransferCharacterDocument = gql`
       avatarUrl
     }
     _count {
-      images
+      media
     }
   }
 }
@@ -2190,49 +2183,53 @@ export function useRemoveCharacterTagsMutation(baseOptions?: Apollo.MutationHook
 export type RemoveCharacterTagsMutationHookResult = ReturnType<typeof useRemoveCharacterTagsMutation>;
 export type RemoveCharacterTagsMutationResult = Apollo.MutationResult<RemoveCharacterTagsMutation>;
 export type RemoveCharacterTagsMutationOptions = Apollo.BaseMutationOptions<RemoveCharacterTagsMutation, RemoveCharacterTagsMutationVariables>;
-export const SetCharacterMainImageDocument = gql`
-    mutation SetCharacterMainImage($id: ID!, $input: SetMainImageInput!) {
-  setCharacterMainImage(id: $id, input: $input) {
+export const SetCharacterMainMediaDocument = gql`
+    mutation SetCharacterMainMedia($id: ID!, $input: SetMainMediaInput!) {
+  setCharacterMainMedia(id: $id, input: $input) {
     id
     name
-    mainImageId
-    mainImage {
+    mainMediaId
+    mainMedia {
       id
-      url
-      thumbnailUrl
-      altText
-      isNsfw
+      title
+      image {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
+      }
     }
   }
 }
     `;
-export type SetCharacterMainImageMutationFn = Apollo.MutationFunction<SetCharacterMainImageMutation, SetCharacterMainImageMutationVariables>;
+export type SetCharacterMainMediaMutationFn = Apollo.MutationFunction<SetCharacterMainMediaMutation, SetCharacterMainMediaMutationVariables>;
 
 /**
- * __useSetCharacterMainImageMutation__
+ * __useSetCharacterMainMediaMutation__
  *
- * To run a mutation, you first call `useSetCharacterMainImageMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useSetCharacterMainImageMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useSetCharacterMainMediaMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetCharacterMainMediaMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [setCharacterMainImageMutation, { data, loading, error }] = useSetCharacterMainImageMutation({
+ * const [setCharacterMainMediaMutation, { data, loading, error }] = useSetCharacterMainMediaMutation({
  *   variables: {
  *      id: // value for 'id'
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useSetCharacterMainImageMutation(baseOptions?: Apollo.MutationHookOptions<SetCharacterMainImageMutation, SetCharacterMainImageMutationVariables>) {
+export function useSetCharacterMainMediaMutation(baseOptions?: Apollo.MutationHookOptions<SetCharacterMainMediaMutation, SetCharacterMainMediaMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<SetCharacterMainImageMutation, SetCharacterMainImageMutationVariables>(SetCharacterMainImageDocument, options);
+        return Apollo.useMutation<SetCharacterMainMediaMutation, SetCharacterMainMediaMutationVariables>(SetCharacterMainMediaDocument, options);
       }
-export type SetCharacterMainImageMutationHookResult = ReturnType<typeof useSetCharacterMainImageMutation>;
-export type SetCharacterMainImageMutationResult = Apollo.MutationResult<SetCharacterMainImageMutation>;
-export type SetCharacterMainImageMutationOptions = Apollo.BaseMutationOptions<SetCharacterMainImageMutation, SetCharacterMainImageMutationVariables>;
+export type SetCharacterMainMediaMutationHookResult = ReturnType<typeof useSetCharacterMainMediaMutation>;
+export type SetCharacterMainMediaMutationResult = Apollo.MutationResult<SetCharacterMainMediaMutation>;
+export type SetCharacterMainMediaMutationOptions = Apollo.BaseMutationOptions<SetCharacterMainMediaMutation, SetCharacterMainMediaMutationVariables>;
 export const GetLikedCharactersDocument = gql`
     query GetLikedCharacters {
   likedCharacters {
@@ -2252,7 +2249,7 @@ export const GetLikedCharactersDocument = gql`
       avatarUrl
     }
     _count {
-      images
+      media
     }
     likesCount
     userHasLiked
