@@ -5,6 +5,7 @@ import { useGetUserProfileQuery } from '../generated/graphql';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { RandomCharacterButton } from '../components/RandomCharacterButton';
 import { FollowButton } from '../components/FollowButton';
+import { MediaGrid } from '../components/MediaGrid';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -174,12 +175,6 @@ const Grid = styled.div`
   gap: ${({ theme }) => theme.spacing.lg};
 `;
 
-const ImageGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`;
-
 const Card = styled(Link)`
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -193,26 +188,6 @@ const Card = styled(Link)`
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
   }
-`;
-
-const ImageCard = styled(Link)`
-  display: block;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  overflow: hidden;
-  aspect-ratio: 1;
-  position: relative;
-  text-decoration: none;
-
-  &:hover img {
-    transform: scale(1.05);
-  }
-`;
-
-const CardImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.2s ease;
 `;
 
 const CardTitle = styled.h4`
@@ -490,16 +465,12 @@ export const UserProfilePage: React.FC = () => {
               View All ({stats.imagesCount})
             </Link>
           </SectionHeader>
-          <ImageGrid>
-            {recentMedia.map((media) => (
-              <ImageCard key={media.id} to={`/media/${media.id}`}>
-                <CardImage
-                  src={media.image?.thumbnailUrl || media.image?.url}
-                  alt={media.description || media.title || 'Media'}
-                />
-              </ImageCard>
-            ))}
-          </ImageGrid>
+          <MediaGrid
+            media={recentMedia as any[]}
+            showOwner={false}
+            emptyMessage="No media uploaded yet"
+            emptyDescription="Upload some images or create text content to get started!"
+          />
         </Section>
       )}
     </Container>
