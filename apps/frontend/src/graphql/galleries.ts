@@ -268,7 +268,6 @@ export {
   type GalleryFiltersInput,
   type CreateGalleryInput,
   type UpdateGalleryInput,
-  type GalleryImageOperationInput,
   type ReorderGalleriesInput,
   type GetGalleriesQuery,
   type GetGalleriesQueryVariables,

@@ -1,38 +1,37 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext';
-import { Layout } from './components/Layout';
-import { LoadingSpinner } from './components/LoadingSpinner';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./contexts/AuthContext";
+import { Layout } from "./components/Layout";
+import { LoadingSpinner } from "./components/LoadingSpinner";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 // Pages
-import { HomePage } from './pages/HomePage';
-import { LoginPage } from './pages/LoginPage';
-import { SignupPage } from './pages/SignupPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { UserProfilePage } from './pages/UserProfilePage';
-import { EditProfilePage } from './pages/EditProfilePage';
-import { CharacterPage } from './pages/CharacterPage';
-import { CharactersPage } from './pages/CharactersPage';
-import { CreateCharacterPage } from './pages/CreateCharacterPage';
-import { EditCharacterPage } from './pages/EditCharacterPage';
-import { CreateTextPage } from './pages/CreateTextPage';
-import { MediaPage } from './pages/MediaPage';
-import { GalleryPage } from './pages/GalleryPage';
-import { GalleriesPage } from './pages/GalleriesPage';
-import { CreateGalleryPage } from './pages/CreateGalleryPage';
-import { UploadImagePage } from './pages/UploadImagePage';
-import { ImagesPage } from './pages/ImagesPage';
-import { ImagePage } from './pages/ImagePage';
-import { LikedCharactersPage } from './pages/LikedCharactersPage';
-import { LikedGalleriesPage } from './pages/LikedGalleriesPage';
-import { LikedImagesPage } from './pages/LikedImagesPage';
-import { MyCharactersPage } from './pages/MyCharactersPage';
-import { MyGalleriesPage } from './pages/MyGalleriesPage';
-import { MyImagesPage } from './pages/MyImagesPage';
-import { FollowersPage } from './pages/FollowersPage';
-import { FollowingPage } from './pages/FollowingPage';
-import { FeedPage } from './pages/FeedPage';
-import { NotFoundPage } from './pages/NotFoundPage';
+import { HomePage } from "./pages/HomePage";
+import { LoginPage } from "./pages/LoginPage";
+import { SignupPage } from "./pages/SignupPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { UserProfilePage } from "./pages/UserProfilePage";
+import { EditProfilePage } from "./pages/EditProfilePage";
+import { CharacterPage } from "./pages/CharacterPage";
+import { CharactersPage } from "./pages/CharactersPage";
+import { CreateCharacterPage } from "./pages/CreateCharacterPage";
+import { EditCharacterPage } from "./pages/EditCharacterPage";
+import { CreateTextPage } from "./pages/CreateTextPage";
+import { MediaPage } from "./pages/MediaPage";
+import { GalleryPage } from "./pages/GalleryPage";
+import { GalleriesPage } from "./pages/GalleriesPage";
+import { CreateGalleryPage } from "./pages/CreateGalleryPage";
+import { UploadImagePage } from "./pages/UploadImagePage";
+import { ImagesPage } from "./pages/ImagesPage";
+import { LikedCharactersPage } from "./pages/LikedCharactersPage";
+import { LikedGalleriesPage } from "./pages/LikedGalleriesPage";
+import { LikedImagesPage } from "./pages/LikedImagesPage";
+import { MyCharactersPage } from "./pages/MyCharactersPage";
+import { MyGalleriesPage } from "./pages/MyGalleriesPage";
+import { MyImagesPage } from "./pages/MyImagesPage";
+import { FollowersPage } from "./pages/FollowersPage";
+import { FollowingPage } from "./pages/FollowingPage";
+import { FeedPage } from "./pages/FeedPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
   const { loading } = useAuth();
@@ -57,7 +56,6 @@ function App() {
         <Route path="/galleries" element={<GalleriesPage />} />
         <Route path="/gallery/:id" element={<GalleryPage />} />
         <Route path="/images" element={<ImagesPage />} />
-        <Route path="/image/:id" element={<ImagePage />} />
         <Route path="/media/:id" element={<MediaPage />} />
         <Route path="/user/:username" element={<UserProfilePage />} />
         <Route path="/user/:username/followers" element={<FollowersPage />} />

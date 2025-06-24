@@ -783,7 +783,7 @@ type UserProfile {
   isOwnProfile: Boolean!
   recentCharacters: [Character!]!
   recentGalleries: [Gallery!]!
-  recentImages: [Image!]!
+  recentMedia: [Media!]!
   stats: UserStats!
   user: User!
 }
