@@ -54,26 +54,22 @@ export const GET_USER_PROFILE = gql`
           name
         }
       }
-      recentImages {
+      recentMedia {
         id
-        filename
-        url
-        thumbnailUrl
+        title
         description
         createdAt
-        uploader {
+        owner {
           id
           username
           displayName
           avatarUrl
         }
-        character {
+        image {
           id
-          name
-        }
-        gallery {
-          id
-          name
+          filename
+          url
+          thumbnailUrl
         }
       }
       featuredCharacters {

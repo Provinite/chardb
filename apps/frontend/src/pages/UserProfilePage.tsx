@@ -310,7 +310,7 @@ export const UserProfilePage: React.FC = () => {
     );
   }
 
-  const { user, stats, recentCharacters, recentGalleries, recentImages, featuredCharacters, isOwnProfile } = data.userProfile;
+  const { user, stats, recentCharacters, recentGalleries, recentMedia, featuredCharacters, isOwnProfile } = data.userProfile;
 
   return (
     <Container>
@@ -477,10 +477,10 @@ export const UserProfilePage: React.FC = () => {
         </Section>
       )}
 
-      {recentImages.length > 0 && (
+      {recentMedia.length > 0 && (
         <Section>
           <SectionHeader>
-            <SectionTitle>Recent Images</SectionTitle>
+            <SectionTitle>Recent Media</SectionTitle>
             <Link to={`/images?uploader=${user.username}`} style={{ 
               color: 'inherit', 
               textDecoration: 'none',
@@ -491,11 +491,11 @@ export const UserProfilePage: React.FC = () => {
             </Link>
           </SectionHeader>
           <ImageGrid>
-            {recentImages.map((image) => (
-              <ImageCard key={image.id} to={`/image/${image.id}`}>
+            {recentMedia.map((media) => (
+              <ImageCard key={media.id} to={`/media/${media.id}`}>
                 <CardImage
-                  src={image.thumbnailUrl || image.url}
-                  alt={image.description || 'Image'}
+                  src={media.image?.thumbnailUrl || media.image?.url}
+                  alt={media.description || media.title || 'Media'}
                 />
               </ImageCard>
             ))}

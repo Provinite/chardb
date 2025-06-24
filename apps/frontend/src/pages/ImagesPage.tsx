@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Button } from '@chardb/ui';
-import { useGetImagesQuery, Visibility } from '../generated/graphql';
+import { useGetImagesQuery } from '../generated/graphql';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 const Container = styled.div`
@@ -58,19 +58,6 @@ const SearchBar = styled.input`
   }
 `;
 
-const FilterSelect = styled.select`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 2px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  background: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text.primary};
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-  }
-`;
 
 const ImageGrid = styled.div`
   display: grid;
@@ -138,14 +125,6 @@ const ImageMeta = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-const ImageDescription = styled.p`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: ${({ theme }) => theme.spacing.xs} 0 0 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
 
 const LoadingContainer = styled.div`
   display: flex;
@@ -211,14 +190,12 @@ const ArtistInfo = styled.div`
 export const ImagesPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [visibilityFilter, setVisibilityFilter] = useState<Visibility | ''>('');
 
   const { data, loading, error } = useGetImagesQuery({
     variables: {
       filters: {
         limit: 50,
         offset: 0,
-        visibility: visibilityFilter || undefined,
         search: searchTerm || undefined,
       },
     },
@@ -229,8 +206,8 @@ export const ImagesPage: React.FC = () => {
 
   const filteredImages = searchTerm
     ? images.filter(image =>
-        image.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        image.altText?.toLowerCase().includes(searchTerm.toLowerCase())
+        image.altText?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        image.filename?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : images;
 
@@ -269,15 +246,6 @@ export const ImagesPage: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <FilterSelect
-            value={visibilityFilter}
-            onChange={(e) => setVisibilityFilter(e.target.value as Visibility | '')}
-          >
-            <option value="">All Visibility</option>
-            <option value="PUBLIC">Public</option>
-            <option value="UNLISTED">Unlisted</option>
-            <option value="PRIVATE">Private</option>
-          </FilterSelect>
           <Button
             variant="primary"
             onClick={() => navigate('/upload')}
@@ -315,7 +283,7 @@ export const ImagesPage: React.FC = () => {
               </ImageContainer>
               <ImageInfo>
                 <ImageTitle>
-                  {image.description || image.originalFilename || 'Untitled'}
+                  {image.originalFilename || 'Untitled'}
                 </ImageTitle>
                 <ImageMeta>
                   <span>By {image.uploader.username}</span>
@@ -325,9 +293,6 @@ export const ImagesPage: React.FC = () => {
                   <ArtistInfo>
                     Artist: {image.artistName || image.artist?.username}
                   </ArtistInfo>
-                )}
-                {image.description && (
-                  <ImageDescription>{image.description}</ImageDescription>
                 )}
               </ImageInfo>
             </ImageCard>

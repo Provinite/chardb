@@ -93,7 +93,6 @@ export const GET_MEDIA_ITEM = gql`
         thumbnailUrl
         altText
         isNsfw
-        description
         width
         height
         fileSize

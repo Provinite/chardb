@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
@@ -183,6 +183,69 @@ const ContentSection = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.xl};
 `;
 
+const ImageContainer = styled.div`
+  position: relative;
+  background: ${({ theme }) => theme.colors.surface};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: ${({ theme }) => theme.spacing.lg};
+`;
+
+const ImageElement = styled.img`
+  max-width: 100%;
+  max-height: 80vh;
+  height: auto;
+  width: auto;
+  display: block;
+  cursor: pointer;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  box-shadow: ${({ theme }) => theme.shadows.md};
+`;
+
+const ImageOverlay = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'isOpen'
+})<{ isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: ${({ isOpen }) => (isOpen ? 'flex' : 'none')};
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  cursor: pointer;
+
+  img {
+    max-width: 95vw;
+    max-height: 95vh;
+    object-fit: contain;
+  }
+`;
+
+const ImageMeta = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing.sm};
+  flex-wrap: wrap;
+`;
+
+const ImageMetaBadge = styled.span`
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
 const ErrorContainer = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xxl};
@@ -224,6 +287,7 @@ export const MediaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const { data, loading, error } = useQuery(GET_MEDIA_ITEM, {
     variables: { id: id! },
@@ -265,6 +329,13 @@ export const MediaPage: React.FC = () => {
     });
   };
 
+  const formatFileSize = (bytes: number) => {
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    if (bytes === 0) return '0 Bytes';
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
   if (loading) {
     return (
       <Container>
@@ -289,16 +360,19 @@ export const MediaPage: React.FC = () => {
     );
   }
 
-  // Only show text content for now, as this is the MediaPage for text
-  if (!media.textContentId || !media.textContent) {
+  const isTextMedia = media.textContentId && media.textContent;
+  const isImageMedia = media.imageId && media.image;
+
+  // Ensure we have valid content
+  if (!isTextMedia && !isImageMedia) {
     return (
       <Container>
         <BackButton onClick={handleBackClick}>
           Back
         </BackButton>
         <ErrorContainer>
-          <h3>Invalid content type</h3>
-          <p>This page is for text content only.</p>
+          <h3>No content found</h3>
+          <p>This media item doesn't contain any viewable content.</p>
         </ErrorContainer>
       </Container>
     );
@@ -321,12 +395,31 @@ export const MediaPage: React.FC = () => {
             <MetaBadge variant={getVisibilityVariant(media.visibility)}>
               {media.visibility}
             </MetaBadge>
-            <MetaBadge>
-              {media.textContent.wordCount} words
-            </MetaBadge>
-            <MetaBadge>
-              {media.textContent.formatting.toLowerCase()}
-            </MetaBadge>
+            {isTextMedia && (
+              <>
+                <MetaBadge>
+                  {media.textContent.wordCount} words
+                </MetaBadge>
+                <MetaBadge>
+                  {media.textContent.formatting.toLowerCase()}
+                </MetaBadge>
+              </>
+            )}
+            {isImageMedia && (
+              <>
+                <MetaBadge>
+                  {media.image.width} × {media.image.height}px
+                </MetaBadge>
+                <MetaBadge>
+                  {formatFileSize(media.image.fileSize)}
+                </MetaBadge>
+                {media.image.isNsfw && (
+                  <MetaBadge variant="error">
+                    NSFW
+                  </MetaBadge>
+                )}
+              </>
+            )}
             <MetaBadge>
               Created {formatDate(media.createdAt)}
             </MetaBadge>
@@ -371,12 +464,44 @@ export const MediaPage: React.FC = () => {
       </AuthorInfo>
 
       <ContentSection>
-        <TextViewer
-          textContent={media.textContent}
-          maxHeight="none"
-          showWordCount={false}
-          allowFormatToggle={true}
-        />
+        {isImageMedia && (
+          <>
+            <ImageContainer>
+              <ImageElement
+                src={media.image.url}
+                alt={media.image.altText || media.title}
+                onClick={() => setLightboxOpen(true)}
+              />
+            </ImageContainer>
+            {media.image.altText && (
+              <ImageMeta>
+                <ImageMetaBadge>
+                  Alt text: {media.image.altText}
+                </ImageMetaBadge>
+              </ImageMeta>
+            )}
+            {media.image.artistName && (
+              <ImageMeta>
+                <ImageMetaBadge>
+                  Artist: {media.image.artistName}
+                </ImageMetaBadge>
+                {media.image.source && (
+                  <ImageMetaBadge>
+                    Source: {media.image.source}
+                  </ImageMetaBadge>
+                )}
+              </ImageMeta>
+            )}
+          </>
+        )}
+        {isTextMedia && (
+          <TextViewer
+            textContent={media.textContent}
+            maxHeight="none"
+            showWordCount={false}
+            allowFormatToggle={true}
+          />
+        )}
       </ContentSection>
 
       {/* TODO: Add comments when MEDIA is added to CommentableType enum */}
@@ -384,6 +509,16 @@ export const MediaPage: React.FC = () => {
         entityType={CommentableType.Media}
         entityId={media.id}
       /> */}
+
+      {isImageMedia && (
+        <ImageOverlay isOpen={lightboxOpen} onClick={() => setLightboxOpen(false)}>
+          <img
+            src={media.image.url}
+            alt={media.image.altText || media.title}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </ImageOverlay>
+      )}
     </Container>
   );
 };

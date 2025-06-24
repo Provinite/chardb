@@ -229,25 +229,6 @@ const ErrorContainer = styled.div`
   }
 `;
 
-const CharacterLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primary};
-  text-decoration: none;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
-const GalleryLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primary};
-  text-decoration: none;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-
-  &:hover {
-    text-decoration: underline;
-  }
-`;
 
 export const ImagePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -313,7 +294,7 @@ export const ImagePage: React.FC = () => {
 
         <MetadataPanel>
           <Title>
-            {image.description || image.originalFilename || 'Untitled'}
+            {image.originalFilename || 'Untitled'}
           </Title>
 
           <div style={{ marginBottom: '1rem' }}>
@@ -387,9 +368,6 @@ export const ImagePage: React.FC = () => {
               <MetadataLabel>Status:</MetadataLabel>
               <MetadataValue>
                 {image.isNsfw && <Badge variant="nsfw">NSFW</Badge>}
-                {image.visibility === 'PRIVATE' && <Badge variant="private">Private</Badge>}
-                {image.visibility === 'UNLISTED' && <Badge variant="unlisted">Unlisted</Badge>}
-                {image.visibility === 'PUBLIC' && !image.isNsfw && 'Public'}
               </MetadataValue>
             </MetadataItem>
           </MetadataSection>
@@ -418,40 +396,7 @@ export const ImagePage: React.FC = () => {
             </MetadataItem>
           </MetadataSection>
 
-          {(image.character || image.gallery) && (
-            <MetadataSection>
-              <SectionTitle>Associations</SectionTitle>
-              
-              {image.character && (
-                <MetadataItem>
-                  <MetadataLabel>Character:</MetadataLabel>
-                  <MetadataValue>
-                    <CharacterLink to={`/character/${image.character.id}`}>
-                      {image.character.name}
-                    </CharacterLink>
-                  </MetadataValue>
-                </MetadataItem>
-              )}
 
-              {image.gallery && (
-                <MetadataItem>
-                  <MetadataLabel>Gallery:</MetadataLabel>
-                  <MetadataValue>
-                    <GalleryLink to={`/gallery/${image.gallery.id}`}>
-                      {image.gallery.name}
-                    </GalleryLink>
-                  </MetadataValue>
-                </MetadataItem>
-              )}
-            </MetadataSection>
-          )}
-
-          {image.description && (
-            <MetadataSection>
-              <SectionTitle>Description</SectionTitle>
-              <Description>{image.description}</Description>
-            </MetadataSection>
-          )}
 
           {image.isNsfw && image.sensitiveContentDescription && (
             <MetadataSection>

@@ -10,10 +10,7 @@ export const GET_IMAGES = gql`
         url
         thumbnailUrl
         altText
-        description
         uploaderId
-        characterId
-        galleryId
         artistId
         artistName
         artistUrl
@@ -24,7 +21,6 @@ export const GET_IMAGES = gql`
         mimeType
         isNsfw
         sensitiveContentDescription
-        visibility
         createdAt
         updatedAt
         uploader {
@@ -36,14 +32,6 @@ export const GET_IMAGES = gql`
           id
           username
           displayName
-        }
-        character {
-          id
-          name
-        }
-        gallery {
-          id
-          name
         }
       }
       total
@@ -61,10 +49,7 @@ export const GET_IMAGE = gql`
       url
       thumbnailUrl
       altText
-      description
       uploaderId
-      characterId
-      galleryId
       artistId
       artistName
       artistUrl
@@ -75,7 +60,6 @@ export const GET_IMAGE = gql`
       mimeType
       isNsfw
       sensitiveContentDescription
-      visibility
       createdAt
       updatedAt
       uploader {
@@ -89,16 +73,6 @@ export const GET_IMAGE = gql`
         username
         displayName
         avatarUrl
-      }
-      character {
-        id
-        name
-        species
-      }
-      gallery {
-        id
-        name
-        description
       }
     }
   }
@@ -114,10 +88,7 @@ export const GET_MY_IMAGES = gql`
         url
         thumbnailUrl
         altText
-        description
         uploaderId
-        characterId
-        galleryId
         artistId
         artistName
         artistUrl
@@ -128,7 +99,6 @@ export const GET_MY_IMAGES = gql`
         mimeType
         isNsfw
         sensitiveContentDescription
-        visibility
         createdAt
         updatedAt
         uploader {
@@ -140,14 +110,6 @@ export const GET_MY_IMAGES = gql`
           id
           username
           displayName
-        }
-        character {
-          id
-          name
-        }
-        gallery {
-          id
-          name
         }
       }
       total
@@ -165,10 +127,7 @@ export const UPDATE_IMAGE = gql`
       url
       thumbnailUrl
       altText
-      description
       uploaderId
-      characterId
-      galleryId
       artistId
       artistName
       artistUrl
@@ -179,7 +138,6 @@ export const UPDATE_IMAGE = gql`
       mimeType
       isNsfw
       sensitiveContentDescription
-      visibility
       createdAt
       updatedAt
       uploader {
@@ -191,14 +149,6 @@ export const UPDATE_IMAGE = gql`
         id
         username
         displayName
-      }
-      character {
-        id
-        name
-      }
-      gallery {
-        id
-        name
       }
     }
   }
@@ -219,14 +169,12 @@ export const GET_LIKED_IMAGES = gql`
       url
       thumbnailUrl
       altText
-      description
       width
       height
       fileSize
       mimeType
       isNsfw
       sensitiveContentDescription
-      visibility
       createdAt
       updatedAt
       uploader {
@@ -240,14 +188,6 @@ export const GET_LIKED_IMAGES = gql`
         username
         displayName
         avatarUrl
-      }
-      character {
-        id
-        name
-      }
-      gallery {
-        id
-        name
       }
       likesCount
       userHasLiked

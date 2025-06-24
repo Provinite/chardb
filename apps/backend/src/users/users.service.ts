@@ -187,7 +187,7 @@ export class UsersService {
       ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
       : [Visibility.PUBLIC];
 
-    const [recentCharacters, recentGalleries, recentImages] = await Promise.all([
+    const [recentCharacters, recentGalleries, recentMedia] = await Promise.all([
       this.db.character.findMany({
         where: { 
           ownerId: user.id,
@@ -230,19 +230,28 @@ export class UsersService {
           }
         }
       }),
-      this.db.image.findMany({
+      this.db.media.findMany({
         where: { 
-          uploaderId: user.id
+          ownerId: user.id,
+          imageId: { not: null } // Only include image media
         },
         take: 12,
         orderBy: { createdAt: 'desc' },
         include: {
-          uploader: {
+          owner: {
             select: {
               id: true,
               username: true,
               displayName: true,
               avatarUrl: true,
+            }
+          },
+          image: {
+            select: {
+              id: true,
+              filename: true,
+              url: true,
+              thumbnailUrl: true,
             }
           }
         }
@@ -279,7 +288,7 @@ export class UsersService {
       stats,
       recentCharacters: recentCharacters as any,
       recentGalleries: recentGalleries as any,
-      recentImages: recentImages as any,
+      recentMedia: recentMedia as any,
       featuredCharacters: featuredCharacters as any,
       isOwnProfile,
       canViewPrivateContent,

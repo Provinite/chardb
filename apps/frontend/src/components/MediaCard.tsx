@@ -205,11 +205,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   };
 
   const getMediaUrl = () => {
-    if (isImage && media.image) {
-      return `/image/${media.image.id}`;
-    } else {
-      return `/media/${media.id}`;
-    }
+    return `/media/${media.id}`;
   };
 
   const handleClick = () => {

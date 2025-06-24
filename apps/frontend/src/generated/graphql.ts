@@ -65,7 +65,9 @@ export type Character = {
   isSellable: Scalars['Boolean']['output'];
   isTradeable: Scalars['Boolean']['output'];
   likesCount: Scalars['Int']['output'];
+  /** Main media item for this character (image or text) */
   mainMedia: Maybe<Media>;
+  /** ID of the main media item for this character */
   mainMediaId: Maybe<Scalars['ID']['output']>;
   name: Scalars['String']['output'];
   owner: User;
@@ -193,13 +195,21 @@ export type CreateGalleryInput = {
   visibility?: Visibility;
 };
 
+/** Input type for creating new text media */
 export type CreateTextMediaInput = {
+  /** Optional character to associate with this media */
   characterId?: InputMaybe<Scalars['ID']['input']>;
+  /** The actual text content */
   content: Scalars['String']['input'];
+  /** Optional description for the text media */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** Text formatting type (plaintext or markdown) */
   formatting?: TextFormatting;
+  /** Optional gallery to add this media to */
   galleryId?: InputMaybe<Scalars['ID']['input']>;
+  /** Title for the text media */
   title: Scalars['String']['input'];
+  /** Visibility setting for the media */
   visibility?: Visibility;
 };
 
@@ -233,7 +243,6 @@ export type Gallery = {
   createdAt: Scalars['DateTime']['output'];
   description: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  images: Array<Image>;
   likesCount: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   owner: User;
@@ -264,10 +273,6 @@ export type GalleryFiltersInput = {
   visibility?: InputMaybe<Visibility>;
 };
 
-export type GalleryImageOperationInput = {
-  imageId: Scalars['ID']['input'];
-};
-
 export type Image = {
   __typename?: 'Image';
   altText: Maybe<Scalars['String']['output']>;
@@ -275,14 +280,9 @@ export type Image = {
   artistId: Maybe<Scalars['ID']['output']>;
   artistName: Maybe<Scalars['String']['output']>;
   artistUrl: Maybe<Scalars['String']['output']>;
-  character: Maybe<Character>;
-  characterId: Maybe<Scalars['ID']['output']>;
   createdAt: Scalars['DateTime']['output'];
-  description: Maybe<Scalars['String']['output']>;
   fileSize: Scalars['Int']['output'];
   filename: Scalars['String']['output'];
-  gallery: Maybe<Gallery>;
-  galleryId: Maybe<Scalars['ID']['output']>;
   height: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   isNsfw: Scalars['Boolean']['output'];
@@ -298,7 +298,6 @@ export type Image = {
   uploaderId: Scalars['ID']['output'];
   url: Scalars['String']['output'];
   userHasLiked: Scalars['Boolean']['output'];
-  visibility: Visibility;
   width: Scalars['Int']['output'];
 };
 
@@ -311,14 +310,11 @@ export type ImageConnection = {
 
 export type ImageFiltersInput = {
   artistId?: InputMaybe<Scalars['ID']['input']>;
-  characterId?: InputMaybe<Scalars['ID']['input']>;
-  galleryId?: InputMaybe<Scalars['ID']['input']>;
   isNsfw?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: Scalars['Int']['input'];
   offset?: Scalars['Int']['input'];
   search?: InputMaybe<Scalars['String']['input']>;
   uploaderId?: InputMaybe<Scalars['ID']['input']>;
-  visibility?: InputMaybe<Visibility>;
 };
 
 export type ImageTag = {
@@ -358,7 +354,9 @@ export type ManageImageTagsInput = {
   tagNames: Array<Scalars['String']['input']>;
 };
 
+/** Input type for managing media tags */
 export type ManageMediaTagsInput = {
+  /** Array of tag names to add or remove */
   tagNames: Array<Scalars['String']['input']>;
 };
 
@@ -366,50 +364,86 @@ export type ManageTagsInput = {
   tagNames: Array<Scalars['String']['input']>;
 };
 
+/** Polymorphic media that can represent both images and text content */
 export type Media = {
   __typename?: 'Media';
+  /** The character this media is associated with, if any */
   character: Maybe<Character>;
+  /** Optional ID of the character this media is associated with */
   characterId: Maybe<Scalars['ID']['output']>;
+  /** When the media was created */
   createdAt: Scalars['DateTime']['output'];
+  /** Optional description for the media */
   description: Maybe<Scalars['String']['output']>;
+  /** The gallery this media belongs to, if any */
   gallery: Maybe<Gallery>;
+  /** Optional ID of the gallery this media belongs to */
   galleryId: Maybe<Scalars['ID']['output']>;
+  /** Unique identifier for the media */
   id: Scalars['ID']['output'];
+  /** Image content (populated for image media) */
   image: Maybe<Image>;
+  /** Foreign key to image content (null for text media) */
   imageId: Maybe<Scalars['ID']['output']>;
+  /** Number of likes this media has received */
   likesCount: Scalars['Float']['output'];
+  /** The user who owns this media */
   owner: User;
+  /** ID of the user who owns this media */
   ownerId: Scalars['ID']['output'];
+  /** Tag relationships for this media */
   tags_rel: Maybe<Array<MediaTag>>;
+  /** Text content (populated for text media) */
   textContent: Maybe<TextContent>;
+  /** Foreign key to text content (null for image media) */
   textContentId: Maybe<Scalars['ID']['output']>;
+  /** User-provided title for the media */
   title: Scalars['String']['output'];
+  /** When the media was last updated */
   updatedAt: Scalars['DateTime']['output'];
+  /** Whether the current user has liked this media */
   userHasLiked: Scalars['Boolean']['output'];
+  /** Visibility setting for the media */
   visibility: Visibility;
 };
 
+/** Paginated connection result for media queries */
 export type MediaConnection = {
   __typename?: 'MediaConnection';
+  /** Whether there are more items available after this page */
   hasMore: Scalars['Boolean']['output'];
+  /** Array of media items for this page */
   media: Array<Media>;
+  /** Total number of media items matching the query */
   total: Scalars['Float']['output'];
 };
 
+/** Input type for filtering and paginating media queries */
 export type MediaFiltersInput = {
+  /** Filter by associated character ID */
   characterId?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by gallery ID */
   galleryId?: InputMaybe<Scalars['ID']['input']>;
+  /** Maximum number of results to return */
   limit?: InputMaybe<Scalars['Float']['input']>;
+  /** Filter by media type (image or text) */
   mediaType?: InputMaybe<MediaType>;
+  /** Number of results to skip for pagination */
   offset?: InputMaybe<Scalars['Float']['input']>;
+  /** Filter by owner user ID */
   ownerId?: InputMaybe<Scalars['ID']['input']>;
+  /** Search term to filter by title and description */
   search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by visibility level */
   visibility?: InputMaybe<Visibility>;
 };
 
+/** Junction entity for media-tag relationships */
 export type MediaTag = {
   __typename?: 'MediaTag';
+  /** The media this tag is associated with */
   media: Maybe<Media>;
+  /** The tag applied to the media */
   tag: Tag;
 };
 
@@ -423,25 +457,28 @@ export type Mutation = {
   __typename?: 'Mutation';
   addCharacterTags: Character;
   addImageTags: Image;
-  addImageToGallery: Gallery;
+  /** Adds tags to a media item */
   addMediaTags: Media;
   createCharacter: Character;
   createComment: Comment;
   createGallery: Gallery;
+  /** Creates a new text media item */
   createTextMedia: Media;
   deleteAccount: Scalars['Boolean']['output'];
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
   deleteGallery: Scalars['Boolean']['output'];
   deleteImage: Scalars['Boolean']['output'];
+  /** Deletes a media item and its associated content */
   deleteMedia: Scalars['Boolean']['output'];
   login: AuthPayload;
   refreshToken: Scalars['String']['output'];
   removeCharacterTags: Character;
-  removeImageFromGallery: Gallery;
   removeImageTags: Image;
+  /** Removes tags from a media item */
   removeMediaTags: Media;
   reorderGalleries: Array<Gallery>;
+  /** Sets or clears the main media for a character */
   setCharacterMainMedia: Character;
   signup: AuthPayload;
   toggleFollow: FollowResult;
@@ -451,8 +488,10 @@ export type Mutation = {
   updateComment: Comment;
   updateGallery: Gallery;
   updateImage: Image;
+  /** Updates media metadata (title, description, etc.) */
   updateMedia: Media;
   updateProfile: User;
+  /** Updates the text content of a text media item */
   updateTextContent: Media;
 };
 
@@ -466,12 +505,6 @@ export type MutationAddCharacterTagsArgs = {
 export type MutationAddImageTagsArgs = {
   id: Scalars['ID']['input'];
   input: ManageImageTagsInput;
-};
-
-
-export type MutationAddImageToGalleryArgs = {
-  galleryId: Scalars['ID']['input'];
-  input: GalleryImageOperationInput;
 };
 
 
@@ -539,12 +572,6 @@ export type MutationRefreshTokenArgs = {
 export type MutationRemoveCharacterTagsArgs = {
   id: Scalars['ID']['input'];
   input: ManageTagsInput;
-};
-
-
-export type MutationRemoveImageFromGalleryArgs = {
-  galleryId: Scalars['ID']['input'];
-  input: GalleryImageOperationInput;
 };
 
 
@@ -638,6 +665,7 @@ export type Query = {
   character: Character;
   characterGalleries: GalleryConnection;
   characterImages: ImageConnection;
+  /** Retrieves media associated with a specific character */
   characterMedia: MediaConnection;
   characters: CharacterConnection;
   comment: Comment;
@@ -646,6 +674,7 @@ export type Query = {
   galleries: GalleryConnection;
   gallery: Gallery;
   galleryImages: ImageConnection;
+  /** Retrieves media from a specific gallery */
   galleryMedia: MediaConnection;
   getFollowers: FollowListResult;
   getFollowing: FollowListResult;
@@ -656,16 +685,20 @@ export type Query = {
   likedGalleries: Array<Gallery>;
   likedImages: Array<Image>;
   me: User;
+  /** Retrieves paginated media with filtering and visibility controls */
   media: MediaConnection;
+  /** Retrieves a single media item by ID */
   mediaItem: Media;
   myCharacters: CharacterConnection;
   myGalleries: GalleryConnection;
   myImages: ImageConnection;
+  /** Retrieves media owned by the current authenticated user */
   myMedia: MediaConnection;
   user: Maybe<User>;
   userCharacters: CharacterConnection;
   userGalleries: GalleryConnection;
   userImages: ImageConnection;
+  /** Retrieves media owned by a specific user */
   userMedia: MediaConnection;
   userProfile: Maybe<UserProfile>;
   userStats: UserStats;
@@ -868,11 +901,16 @@ export type Tag = {
   name: Scalars['String']['output'];
 };
 
+/** Text content with formatting and word count information */
 export type TextContent = {
   __typename?: 'TextContent';
+  /** The actual text content */
   content: Scalars['String']['output'];
+  /** Text formatting type (plaintext or markdown) */
   formatting: TextFormatting;
+  /** Unique identifier for the text content */
   id: Scalars['ID']['output'];
+  /** Automatically calculated word count */
   wordCount: Scalars['Float']['output'];
 };
 
@@ -929,24 +967,29 @@ export type UpdateImageInput = {
   artistId?: InputMaybe<Scalars['ID']['input']>;
   artistName?: InputMaybe<Scalars['String']['input']>;
   artistUrl?: InputMaybe<Scalars['String']['input']>;
-  characterId?: InputMaybe<Scalars['ID']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  galleryId?: InputMaybe<Scalars['ID']['input']>;
   isNsfw?: InputMaybe<Scalars['Boolean']['input']>;
   source?: InputMaybe<Scalars['String']['input']>;
-  visibility?: InputMaybe<Visibility>;
 };
 
+/** Input type for updating media metadata */
 export type UpdateMediaInput = {
+  /** Updated character association */
   characterId?: InputMaybe<Scalars['ID']['input']>;
+  /** Updated description for the media */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** Updated gallery association */
   galleryId?: InputMaybe<Scalars['ID']['input']>;
+  /** Updated title for the media */
   title?: InputMaybe<Scalars['String']['input']>;
+  /** Updated visibility setting */
   visibility?: InputMaybe<Visibility>;
 };
 
+/** Input type for updating text content specifically */
 export type UpdateTextContentInput = {
+  /** Updated text content */
   content?: InputMaybe<Scalars['String']['input']>;
+  /** Updated text formatting type */
   formatting?: InputMaybe<TextFormatting>;
 };
 
@@ -995,7 +1038,7 @@ export type UserProfile = {
   isOwnProfile: Scalars['Boolean']['output'];
   recentCharacters: Array<Character>;
   recentGalleries: Array<Gallery>;
-  recentImages: Array<Image>;
+  recentMedia: Array<Media>;
   stats: UserStats;
   user: User;
 };
@@ -1129,21 +1172,21 @@ export type GetGalleriesQueryVariables = Exact<{
 }>;
 
 
-export type GetGalleriesQuery = { __typename?: 'Query', galleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', images: number } | null }> } };
+export type GetGalleriesQuery = { __typename?: 'Query', galleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null }> } };
 
 export type GetGalleryQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetGalleryQuery = { __typename?: 'Query', gallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }>, _count: { __typename?: 'GalleryCount', images: number } | null } };
+export type GetGalleryQuery = { __typename?: 'Query', gallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null } };
 
 export type GetMyGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
 }>;
 
 
-export type GetMyGalleriesQuery = { __typename?: 'Query', myGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', images: number } | null }> } };
+export type GetMyGalleriesQuery = { __typename?: 'Query', myGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null }> } };
 
 export type GetUserGalleriesQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -1151,7 +1194,7 @@ export type GetUserGalleriesQueryVariables = Exact<{
 }>;
 
 
-export type GetUserGalleriesQuery = { __typename?: 'Query', userGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', images: number } | null }> } };
+export type GetUserGalleriesQuery = { __typename?: 'Query', userGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null }> } };
 
 export type GetCharacterGalleriesQueryVariables = Exact<{
   characterId: Scalars['ID']['input'];
@@ -1159,14 +1202,14 @@ export type GetCharacterGalleriesQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterGalleriesQuery = { __typename?: 'Query', characterGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', images: number } | null }> } };
+export type GetCharacterGalleriesQuery = { __typename?: 'Query', characterGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null }> } };
 
 export type CreateGalleryMutationVariables = Exact<{
   input: CreateGalleryInput;
 }>;
 
 
-export type CreateGalleryMutation = { __typename?: 'Mutation', createGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', images: number } | null } };
+export type CreateGalleryMutation = { __typename?: 'Mutation', createGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null } };
 
 export type UpdateGalleryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1174,7 +1217,7 @@ export type UpdateGalleryMutationVariables = Exact<{
 }>;
 
 
-export type UpdateGalleryMutation = { __typename?: 'Mutation', updateGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', images: number } | null } };
+export type UpdateGalleryMutation = { __typename?: 'Mutation', updateGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null } };
 
 export type DeleteGalleryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1182,22 +1225,6 @@ export type DeleteGalleryMutationVariables = Exact<{
 
 
 export type DeleteGalleryMutation = { __typename?: 'Mutation', deleteGallery: boolean };
-
-export type AddImageToGalleryMutationVariables = Exact<{
-  galleryId: Scalars['ID']['input'];
-  input: GalleryImageOperationInput;
-}>;
-
-
-export type AddImageToGalleryMutation = { __typename?: 'Mutation', addImageToGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, _count: { __typename?: 'GalleryCount', images: number } | null, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null }> } };
-
-export type RemoveImageFromGalleryMutationVariables = Exact<{
-  galleryId: Scalars['ID']['input'];
-  input: GalleryImageOperationInput;
-}>;
-
-
-export type RemoveImageFromGalleryMutation = { __typename?: 'Mutation', removeImageFromGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, _count: { __typename?: 'GalleryCount', images: number } | null, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null }> } };
 
 export type ReorderGalleriesMutationVariables = Exact<{
   input: ReorderGalleriesInput;
@@ -1209,28 +1236,28 @@ export type ReorderGalleriesMutation = { __typename?: 'Mutation', reorderGalleri
 export type GetLikedGalleriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, _count: { __typename?: 'GalleryCount', images: number } | null }> };
+export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }> };
 
 export type GetImagesQueryVariables = Exact<{
   filters?: InputMaybe<ImageFiltersInput>;
 }>;
 
 
-export type GetImagesQuery = { __typename?: 'Query', images: { __typename?: 'ImageConnection', total: number, hasMore: boolean, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> } };
+export type GetImagesQuery = { __typename?: 'Query', images: { __typename?: 'ImageConnection', total: number, hasMore: boolean, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, uploaderId: string, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> } };
 
 export type GetImageQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, gallery: { __typename?: 'Gallery', id: string, name: string, description: string | null } | null } };
+export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, uploaderId: string, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null } };
 
 export type GetMyImagesQueryVariables = Exact<{
   filters?: InputMaybe<ImageFiltersInput>;
 }>;
 
 
-export type GetMyImagesQuery = { __typename?: 'Query', myImages: { __typename?: 'ImageConnection', total: number, hasMore: boolean, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> } };
+export type GetMyImagesQuery = { __typename?: 'Query', myImages: { __typename?: 'ImageConnection', total: number, hasMore: boolean, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, uploaderId: string, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> } };
 
 export type UpdateImageMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1238,7 +1265,7 @@ export type UpdateImageMutationVariables = Exact<{
 }>;
 
 
-export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null } };
+export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, uploaderId: string, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null } };
 
 export type DeleteImageMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1250,7 +1277,7 @@ export type DeleteImageMutation = { __typename?: 'Mutation', deleteImage: boolea
 export type GetLikedImagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedImagesQuery = { __typename?: 'Query', likedImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> };
+export type GetLikedImagesQuery = { __typename?: 'Query', likedImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> };
 
 export type GetMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -1264,7 +1291,7 @@ export type GetMediaItemQueryVariables = Exact<{
 }>;
 
 
-export type GetMediaItemQuery = { __typename?: 'Query', mediaItem: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, description: string | null, width: number, height: number, fileSize: number, mimeType: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
+export type GetMediaItemQuery = { __typename?: 'Query', mediaItem: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, width: number, height: number, fileSize: number, mimeType: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
 export type GetCharacterMediaQueryVariables = Exact<{
   characterId: Scalars['ID']['input'];
@@ -1411,7 +1438,7 @@ export type GetUserProfileQueryVariables = Exact<{
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentImages: Array<{ __typename?: 'Image', id: string, filename: string, url: string, thumbnailUrl: string | null, description: string | null, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> } | null };
+export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, filename: string, url: string, thumbnailUrl: string | null } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> } | null };
 
 export type GetUserStatsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -2312,9 +2339,6 @@ export const GetGalleriesDocument = gql`
         name
         species
       }
-      _count {
-        images
-      }
     }
     total
     hasMore
@@ -2377,43 +2401,6 @@ export const GetGalleryDocument = gql`
       name
       species
     }
-    images {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      description
-      uploaderId
-      characterId
-      galleryId
-      artistId
-      artistName
-      artistUrl
-      source
-      width
-      height
-      fileSize
-      mimeType
-      isNsfw
-      visibility
-      createdAt
-      updatedAt
-      uploader {
-        id
-        username
-        displayName
-      }
-      artist {
-        id
-        username
-        displayName
-      }
-    }
-    _count {
-      images
-    }
   }
 }
     `;
@@ -2473,9 +2460,6 @@ export const GetMyGalleriesDocument = gql`
         id
         name
         species
-      }
-      _count {
-        images
       }
     }
     total
@@ -2539,9 +2523,6 @@ export const GetUserGalleriesDocument = gql`
         id
         name
         species
-      }
-      _count {
-        images
       }
     }
     total
@@ -2607,9 +2588,6 @@ export const GetCharacterGalleriesDocument = gql`
         name
         species
       }
-      _count {
-        images
-      }
     }
     total
     hasMore
@@ -2673,9 +2651,6 @@ export const CreateGalleryDocument = gql`
       name
       species
     }
-    _count {
-      images
-    }
   }
 }
     `;
@@ -2727,9 +2702,6 @@ export const UpdateGalleryDocument = gql`
       id
       name
       species
-    }
-    _count {
-      images
     }
   }
 }
@@ -2792,102 +2764,6 @@ export function useDeleteGalleryMutation(baseOptions?: Apollo.MutationHookOption
 export type DeleteGalleryMutationHookResult = ReturnType<typeof useDeleteGalleryMutation>;
 export type DeleteGalleryMutationResult = Apollo.MutationResult<DeleteGalleryMutation>;
 export type DeleteGalleryMutationOptions = Apollo.BaseMutationOptions<DeleteGalleryMutation, DeleteGalleryMutationVariables>;
-export const AddImageToGalleryDocument = gql`
-    mutation AddImageToGallery($galleryId: ID!, $input: GalleryImageOperationInput!) {
-  addImageToGallery(galleryId: $galleryId, input: $input) {
-    id
-    name
-    description
-    _count {
-      images
-    }
-    images {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      description
-    }
-  }
-}
-    `;
-export type AddImageToGalleryMutationFn = Apollo.MutationFunction<AddImageToGalleryMutation, AddImageToGalleryMutationVariables>;
-
-/**
- * __useAddImageToGalleryMutation__
- *
- * To run a mutation, you first call `useAddImageToGalleryMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAddImageToGalleryMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [addImageToGalleryMutation, { data, loading, error }] = useAddImageToGalleryMutation({
- *   variables: {
- *      galleryId: // value for 'galleryId'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useAddImageToGalleryMutation(baseOptions?: Apollo.MutationHookOptions<AddImageToGalleryMutation, AddImageToGalleryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddImageToGalleryMutation, AddImageToGalleryMutationVariables>(AddImageToGalleryDocument, options);
-      }
-export type AddImageToGalleryMutationHookResult = ReturnType<typeof useAddImageToGalleryMutation>;
-export type AddImageToGalleryMutationResult = Apollo.MutationResult<AddImageToGalleryMutation>;
-export type AddImageToGalleryMutationOptions = Apollo.BaseMutationOptions<AddImageToGalleryMutation, AddImageToGalleryMutationVariables>;
-export const RemoveImageFromGalleryDocument = gql`
-    mutation RemoveImageFromGallery($galleryId: ID!, $input: GalleryImageOperationInput!) {
-  removeImageFromGallery(galleryId: $galleryId, input: $input) {
-    id
-    name
-    description
-    _count {
-      images
-    }
-    images {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      description
-    }
-  }
-}
-    `;
-export type RemoveImageFromGalleryMutationFn = Apollo.MutationFunction<RemoveImageFromGalleryMutation, RemoveImageFromGalleryMutationVariables>;
-
-/**
- * __useRemoveImageFromGalleryMutation__
- *
- * To run a mutation, you first call `useRemoveImageFromGalleryMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useRemoveImageFromGalleryMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [removeImageFromGalleryMutation, { data, loading, error }] = useRemoveImageFromGalleryMutation({
- *   variables: {
- *      galleryId: // value for 'galleryId'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useRemoveImageFromGalleryMutation(baseOptions?: Apollo.MutationHookOptions<RemoveImageFromGalleryMutation, RemoveImageFromGalleryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<RemoveImageFromGalleryMutation, RemoveImageFromGalleryMutationVariables>(RemoveImageFromGalleryDocument, options);
-      }
-export type RemoveImageFromGalleryMutationHookResult = ReturnType<typeof useRemoveImageFromGalleryMutation>;
-export type RemoveImageFromGalleryMutationResult = Apollo.MutationResult<RemoveImageFromGalleryMutation>;
-export type RemoveImageFromGalleryMutationOptions = Apollo.BaseMutationOptions<RemoveImageFromGalleryMutation, RemoveImageFromGalleryMutationVariables>;
 export const ReorderGalleriesDocument = gql`
     mutation ReorderGalleries($input: ReorderGalleriesInput!) {
   reorderGalleries(input: $input) {
@@ -2942,9 +2818,6 @@ export const GetLikedGalleriesDocument = gql`
       id
       name
     }
-    _count {
-      images
-    }
     likesCount
     userHasLiked
   }
@@ -2992,10 +2865,7 @@ export const GetImagesDocument = gql`
       url
       thumbnailUrl
       altText
-      description
       uploaderId
-      characterId
-      galleryId
       artistId
       artistName
       artistUrl
@@ -3006,7 +2876,6 @@ export const GetImagesDocument = gql`
       mimeType
       isNsfw
       sensitiveContentDescription
-      visibility
       createdAt
       updatedAt
       uploader {
@@ -3018,14 +2887,6 @@ export const GetImagesDocument = gql`
         id
         username
         displayName
-      }
-      character {
-        id
-        name
-      }
-      gallery {
-        id
-        name
       }
     }
     total
@@ -3075,10 +2936,7 @@ export const GetImageDocument = gql`
     url
     thumbnailUrl
     altText
-    description
     uploaderId
-    characterId
-    galleryId
     artistId
     artistName
     artistUrl
@@ -3089,7 +2947,6 @@ export const GetImageDocument = gql`
     mimeType
     isNsfw
     sensitiveContentDescription
-    visibility
     createdAt
     updatedAt
     uploader {
@@ -3103,16 +2960,6 @@ export const GetImageDocument = gql`
       username
       displayName
       avatarUrl
-    }
-    character {
-      id
-      name
-      species
-    }
-    gallery {
-      id
-      name
-      description
     }
   }
 }
@@ -3160,10 +3007,7 @@ export const GetMyImagesDocument = gql`
       url
       thumbnailUrl
       altText
-      description
       uploaderId
-      characterId
-      galleryId
       artistId
       artistName
       artistUrl
@@ -3174,7 +3018,6 @@ export const GetMyImagesDocument = gql`
       mimeType
       isNsfw
       sensitiveContentDescription
-      visibility
       createdAt
       updatedAt
       uploader {
@@ -3186,14 +3029,6 @@ export const GetMyImagesDocument = gql`
         id
         username
         displayName
-      }
-      character {
-        id
-        name
-      }
-      gallery {
-        id
-        name
       }
     }
     total
@@ -3243,10 +3078,7 @@ export const UpdateImageDocument = gql`
     url
     thumbnailUrl
     altText
-    description
     uploaderId
-    characterId
-    galleryId
     artistId
     artistName
     artistUrl
@@ -3257,7 +3089,6 @@ export const UpdateImageDocument = gql`
     mimeType
     isNsfw
     sensitiveContentDescription
-    visibility
     createdAt
     updatedAt
     uploader {
@@ -3269,14 +3100,6 @@ export const UpdateImageDocument = gql`
       id
       username
       displayName
-    }
-    character {
-      id
-      name
-    }
-    gallery {
-      id
-      name
     }
   }
 }
@@ -3348,14 +3171,12 @@ export const GetLikedImagesDocument = gql`
     url
     thumbnailUrl
     altText
-    description
     width
     height
     fileSize
     mimeType
     isNsfw
     sensitiveContentDescription
-    visibility
     createdAt
     updatedAt
     uploader {
@@ -3369,14 +3190,6 @@ export const GetLikedImagesDocument = gql`
       username
       displayName
       avatarUrl
-    }
-    character {
-      id
-      name
-    }
-    gallery {
-      id
-      name
     }
     likesCount
     userHasLiked
@@ -3540,7 +3353,6 @@ export const GetMediaItemDocument = gql`
       thumbnailUrl
       altText
       isNsfw
-      description
       width
       height
       fileSize
@@ -4638,26 +4450,22 @@ export const GetUserProfileDocument = gql`
         name
       }
     }
-    recentImages {
+    recentMedia {
       id
-      filename
-      url
-      thumbnailUrl
+      title
       description
       createdAt
-      uploader {
+      owner {
         id
         username
         displayName
         avatarUrl
       }
-      character {
+      image {
         id
-        name
-      }
-      gallery {
-        id
-        name
+        filename
+        url
+        thumbnailUrl
       }
     }
     featuredCharacters {
