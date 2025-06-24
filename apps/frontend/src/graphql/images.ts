@@ -89,9 +89,4 @@ export interface Image {
   };
 }
 
-export interface ImageConnection {
-  images: Image[];
-  total: number;
-  hasMore: boolean;
-}
 
