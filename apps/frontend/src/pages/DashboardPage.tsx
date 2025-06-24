@@ -159,13 +159,13 @@ export const DashboardPage: React.FC = () => {
         </DashboardCard>
 
         <DashboardCard>
-          <CardTitle>My Images</CardTitle>
+          <CardTitle>My Media</CardTitle>
           <CardDescription>
-            Browse all your uploaded images and artwork. Organize them into galleries
+            Browse all your uploaded images and text content. Organize them into galleries
             or assign them to specific characters.
           </CardDescription>
-          <Button as={Link} to="/my/images" variant="outline" size="sm">
-            View Images
+          <Button as={Link} to="/my/media" variant="outline" size="sm">
+            View Media
           </Button>
         </DashboardCard>
 

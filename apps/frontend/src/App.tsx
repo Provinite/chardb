@@ -27,7 +27,7 @@ import { LikedGalleriesPage } from "./pages/LikedGalleriesPage";
 import { LikedImagesPage } from "./pages/LikedImagesPage";
 import { MyCharactersPage } from "./pages/MyCharactersPage";
 import { MyGalleriesPage } from "./pages/MyGalleriesPage";
-import { MyImagesPage } from "./pages/MyImagesPage";
+import { MyMediaPage } from "./pages/MyMediaPage";
 import { FollowersPage } from "./pages/FollowersPage";
 import { FollowingPage } from "./pages/FollowingPage";
 import { FeedPage } from "./pages/FeedPage";
@@ -167,10 +167,10 @@ function App() {
           }
         />
         <Route
-          path="/my/images"
+          path="/my/media"
           element={
             <ProtectedRoute>
-              <MyImagesPage />
+              <MyMediaPage />
             </ProtectedRoute>
           }
         />
