@@ -48,6 +48,16 @@ interface MediaGridProps {
   emptyMessage?: string;
   /** Custom description to show when no media is found */
   emptyDescription?: string;
+  /** Character ID if this is being displayed on a character page (enables Set as Main functionality) */
+  characterId?: string;
+  /** ID of the current main media for the character */
+  currentMainMediaId?: string;
+  /** Callback when Set as Main button is clicked */
+  onSetAsMain?: (mediaId: string) => void;
+  /** Callback when Remove as Main button is clicked */
+  onRemoveAsMain?: () => void;
+  /** Whether the Set as Main action is currently loading */
+  isSettingMain?: boolean;
 }
 
 /**
@@ -60,6 +70,11 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
   loading = false,
   emptyMessage = "No media found",
   emptyDescription = "Try adjusting your search or filters to find what you're looking for.",
+  characterId,
+  currentMainMediaId,
+  onSetAsMain,
+  onRemoveAsMain,
+  isSettingMain = false,
 }) => {
   if (loading) {
     return (
@@ -89,6 +104,11 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
           key={item.id}
           media={item}
           showOwner={showOwner}
+          characterId={characterId}
+          currentMainMediaId={currentMainMediaId}
+          onSetAsMain={onSetAsMain}
+          onRemoveAsMain={onRemoveAsMain}
+          isSettingMain={isSettingMain}
         />
       ))}
     </Grid>

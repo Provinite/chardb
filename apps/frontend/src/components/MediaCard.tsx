@@ -159,11 +159,74 @@ const VisibilityBadge = styled.span<{ visibility: string }>`
   };
 `;
 
+const ActionButton = styled.button<{ variant?: 'primary' | 'danger' }>`
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  background: ${props => 
+    props.variant === 'danger' ? props.theme.colors.error :
+    props.theme.colors.primary
+  };
+  color: white;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const ActionsOverlay = styled.div`
+  position: absolute;
+  top: ${({ theme }) => theme.spacing.sm};
+  right: ${({ theme }) => theme.spacing.sm};
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.xs};
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 1;
+  
+  ${Card}:hover & {
+    opacity: 1;
+  }
+`;
+
+const MainImageBadge = styled.span`
+  position: absolute;
+  top: ${({ theme }) => theme.spacing.sm};
+  left: ${({ theme }) => theme.spacing.sm};
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  z-index: 1;
+`;
+
 interface MediaCardProps {
   /** The media item to display */
   media: Media;
   /** Whether to show owner information in the card */
   showOwner?: boolean;
+  /** Character ID if this is being displayed on a character page (enables Set as Main functionality) */
+  characterId?: string;
+  /** ID of the current main media for the character */
+  currentMainMediaId?: string;
+  /** Callback when Set as Main button is clicked */
+  onSetAsMain?: (mediaId: string) => void;
+  /** Callback when Remove as Main button is clicked */
+  onRemoveAsMain?: () => void;
+  /** Whether the Set as Main action is currently loading */
+  isSettingMain?: boolean;
 }
 
 /**
@@ -172,10 +235,17 @@ interface MediaCardProps {
  */
 export const MediaCard: React.FC<MediaCardProps> = ({ 
   media, 
-  showOwner = true 
+  showOwner = true,
+  characterId,
+  currentMainMediaId,
+  onSetAsMain,
+  onRemoveAsMain,
+  isSettingMain = false
 }) => {
   const isImage = !!media.image;
   const isText = !!media.textContent;
+  const isMainMedia = currentMainMediaId === media.id;
+  const showSetAsMainActions = !!characterId && !!onSetAsMain;
 
   const renderMediaPreview = () => {
     if (isImage && media.image) {
@@ -219,6 +289,20 @@ export const MediaCard: React.FC<MediaCardProps> = ({
     }
   };
 
+  const handleSetAsMain = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    if (onSetAsMain && !isSettingMain) {
+      onSetAsMain(media.id);
+    }
+  };
+
+  const handleRemoveAsMain = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    if (onRemoveAsMain && !isSettingMain) {
+      onRemoveAsMain();
+    }
+  };
+
   return (
     <Card
       onClick={handleClick}
@@ -229,6 +313,37 @@ export const MediaCard: React.FC<MediaCardProps> = ({
     >
       <MediaSection>
         {renderMediaPreview()}
+        
+        {/* Main Image Badge */}
+        {isMainMedia && (
+          <MainImageBadge>
+            Main Image
+          </MainImageBadge>
+        )}
+        
+        {/* Set as Main Actions */}
+        {showSetAsMainActions && (
+          <ActionsOverlay>
+            {isMainMedia ? (
+              <ActionButton
+                variant="danger"
+                onClick={handleRemoveAsMain}
+                disabled={isSettingMain}
+                title="Remove as main image"
+              >
+                {isSettingMain ? '...' : 'Remove Main'}
+              </ActionButton>
+            ) : (
+              <ActionButton
+                onClick={handleSetAsMain}
+                disabled={isSettingMain}
+                title="Set as main image"
+              >
+                {isSettingMain ? '...' : 'Set as Main'}
+              </ActionButton>
+            )}
+          </ActionsOverlay>
+        )}
       </MediaSection>
       
       <Content>

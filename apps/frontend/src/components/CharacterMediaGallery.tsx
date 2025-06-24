@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
-import { MediaType, useGetCharacterMediaQuery } from "../generated/graphql";
+import { MediaType, useGetCharacterMediaQuery, useSetCharacterMainMediaMutation } from "../generated/graphql";
 import { MediaGrid } from "./MediaGrid";
 import toast from "react-hot-toast";
 
@@ -179,6 +179,8 @@ interface CharacterMediaGalleryProps {
   canUpload?: boolean;
   /** Maximum number of media items to display */
   limit?: number;
+  /** Current main media ID for the character */
+  currentMainMediaId?: string;
 }
 
 /**
@@ -189,9 +191,11 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
   characterId,
   canUpload = false,
   limit = 8,
+  currentMainMediaId,
 }) => {
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isSettingMain, setIsSettingMain] = useState(false);
 
   const { data, loading, error } = useGetCharacterMediaQuery({
     variables: {
@@ -204,9 +208,53 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
     },
   });
 
+  const [setCharacterMainMedia] = useSetCharacterMainMediaMutation({
+    refetchQueries: ['GetCharacter', 'GetCharacterMedia'],
+  });
+
   const media = data?.characterMedia?.media || [];
   const totalCount = data?.characterMedia?.total || 0;
   const hasMore = data?.characterMedia?.hasMore || false;
+
+  const handleSetAsMain = async (mediaId: string) => {
+    if (!canUpload) return;
+    
+    setIsSettingMain(true);
+    try {
+      await setCharacterMainMedia({
+        variables: {
+          id: characterId,
+          input: { mediaId },
+        },
+      });
+      toast.success('Main image updated successfully');
+    } catch (error) {
+      console.error('Failed to set main media:', error);
+      toast.error('Failed to update main image');
+    } finally {
+      setIsSettingMain(false);
+    }
+  };
+
+  const handleRemoveAsMain = async () => {
+    if (!canUpload) return;
+    
+    setIsSettingMain(true);
+    try {
+      await setCharacterMainMedia({
+        variables: {
+          id: characterId,
+          input: { mediaId: null },
+        },
+      });
+      toast.success('Main image removed successfully');
+    } catch (error) {
+      console.error('Failed to remove main media:', error);
+      toast.error('Failed to remove main image');
+    } finally {
+      setIsSettingMain(false);
+    }
+  };
 
   if (error) {
     toast.error('Failed to load media');
@@ -289,6 +337,11 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
             ? "Upload some images or create text content to get started!"
             : "Check back later for updates."
         }
+        characterId={canUpload ? characterId : undefined}
+        currentMainMediaId={currentMainMediaId}
+        onSetAsMain={canUpload ? handleSetAsMain : undefined}
+        onRemoveAsMain={canUpload ? handleRemoveAsMain : undefined}
+        isSettingMain={isSettingMain}
       />
 
       {hasMore && (

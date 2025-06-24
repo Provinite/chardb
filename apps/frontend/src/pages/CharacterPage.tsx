@@ -611,6 +611,7 @@ export const CharacterPage: React.FC = () => {
         characterId={character.id}
         canUpload={!!(user && user.id === character.owner.id)}
         limit={8}
+        currentMainMediaId={character.mainMediaId || undefined}
       />
 
       <CommentList
