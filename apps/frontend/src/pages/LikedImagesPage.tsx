@@ -317,7 +317,7 @@ export const LikedImagesPage: React.FC = () => {
                   </ImageMeta>
                   
                   <CardActions>
-                    <ViewButton to={`/image/${image.id}`}>
+                    <ViewButton to={`/media/${image.id}`}>
                       View Image
                     </ViewButton>
                     <LikeButton
