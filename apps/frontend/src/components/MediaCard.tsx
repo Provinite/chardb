@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import { Media } from '../generated/graphql';
 
 const Card = styled.div`
@@ -242,6 +243,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   onRemoveAsMain,
   isSettingMain = false
 }) => {
+  const navigate = useNavigate();
   const isImage = !!media.image;
   const isText = !!media.textContent;
   const isMainMedia = currentMainMediaId === media.id;
@@ -274,12 +276,8 @@ export const MediaCard: React.FC<MediaCardProps> = ({
     }
   };
 
-  const getMediaUrl = () => {
-    return `/media/${media.id}`;
-  };
-
   const handleClick = () => {
-    window.location.href = getMediaUrl();
+    navigate(`/media/${media.id}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
