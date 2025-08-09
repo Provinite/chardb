@@ -322,6 +322,7 @@ enum LikeableType {
   COMMENT
   GALLERY
   IMAGE
+  MEDIA
 }
 
 input LoginInput {
@@ -579,6 +580,7 @@ type Query {
   likedCharacters: [Character!]!
   likedGalleries: [Gallery!]!
   likedImages: [Image!]!
+  likedMedia(filters: MediaFiltersInput): MediaConnection!
   me: User!
 
   """Retrieves paginated media with filtering and visibility controls"""

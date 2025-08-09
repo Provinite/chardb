@@ -446,58 +446,77 @@ export class SocialService {
     });
   }
 
-  async getUserLikedMedia(userId: string): Promise<any[]> {
-    const likes = await this.databaseService.like.findMany({
-      where: {
-        userId,
-        mediaId: { not: null },
-      },
-      select: {
-        mediaId: true,
-      },
-    });
+  async getUserLikedMedia(userId: string, filters?: any): Promise<any> {
+    const limit = filters?.limit || 20;
+    const offset = filters?.offset || 0;
 
-    const mediaIds = likes.map(like => like.mediaId).filter(Boolean);
-    
-    if (mediaIds.length === 0) {
-      return [];
-    }
-
-    return this.databaseService.media.findMany({
-      where: {
-        id: { in: mediaIds },
+    // Build the base where clause for liked media
+    const baseWhere = {
+      likes: {
+        some: { userId },
       },
-      include: {
-        owner: true,
-        character: {
-          include: {
-            owner: true,
-            _count: {
-              select: { likes: true, media: true },
+    };
+
+    // Add additional filters if provided
+    const where = {
+      ...baseWhere,
+      ...(filters?.search ? {
+        OR: [
+          { title: { contains: filters.search, mode: 'insensitive' as const } },
+          { description: { contains: filters.search, mode: 'insensitive' as const } },
+        ],
+      } : {}),
+      ...(filters?.mediaType === 'IMAGE' ? { imageId: { not: null } } : {}),
+      ...(filters?.mediaType === 'TEXT' ? { textContentId: { not: null } } : {}),
+      ...(filters?.characterId ? { characterId: filters.characterId } : {}),
+      ...(filters?.galleryId ? { galleryId: filters.galleryId } : {}),
+      ...(filters?.visibility ? { visibility: filters.visibility } : {}),
+    };
+
+    const [media, total] = await Promise.all([
+      this.databaseService.media.findMany({
+        where,
+        include: {
+          owner: true,
+          character: {
+            include: {
+              owner: true,
+              _count: {
+                select: { likes: true, media: true },
+              },
             },
           },
-        },
-        gallery: {
-          include: {
-            owner: true,
-            _count: {
-              select: { likes: true },
+          gallery: {
+            include: {
+              owner: true,
+              _count: {
+                select: { likes: true },
+              },
             },
           },
+          image: true,
+          textContent: true,
+          tags_rel: {
+            include: { tag: true },
+          },
+          _count: {
+            select: { likes: true },
+          },
         },
-        image: true,
-        textContent: true,
-        tags_rel: {
-          include: { tag: true },
+        orderBy: {
+          updatedAt: 'desc',
         },
-        _count: {
-          select: { likes: true },
-        },
-      },
-      orderBy: {
-        updatedAt: 'desc',
-      },
-    });
+        take: limit,
+        skip: offset,
+      }),
+      this.databaseService.media.count({ where }),
+    ]);
+
+    return {
+      media,
+      total,
+      hasMore: offset + limit < total,
+    };
   }
 
   // Methods for follow lists and activity feed

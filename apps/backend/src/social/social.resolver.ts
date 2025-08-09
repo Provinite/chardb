@@ -14,7 +14,8 @@ import { Image } from '../images/entities/image.entity';
 import { Gallery } from '../galleries/entities/gallery.entity';
 import { Comment } from '../comments/entities/comment.entity';
 import { User } from '../users/entities/user.entity';
-import { Media } from '../media/entities/media.entity';
+import { Media, MediaConnection } from '../media/entities/media.entity';
+import { MediaFiltersInput } from '../media/dto/media.dto';
 
 // Helper function to add default social fields to User objects
 function addDefaultSocialFields(user: any): User {
@@ -98,12 +99,13 @@ export class SocialResolver {
     return this.socialService.getUserLikedImages(user.id);
   }
 
-  @Query(() => [Media])
+  @Query(() => MediaConnection)
   @UseGuards(JwtAuthGuard)
   async likedMedia(
-    @CurrentUser() user: any,
-  ): Promise<Media[]> {
-    return this.socialService.getUserLikedMedia(user.id);
+    @Args('filters', { nullable: true }) filters?: MediaFiltersInput,
+    @CurrentUser() user?: any,
+  ): Promise<MediaConnection> {
+    return this.socialService.getUserLikedMedia(user.id, filters);
   }
 
   // Follow list queries
