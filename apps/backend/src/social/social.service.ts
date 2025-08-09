@@ -115,6 +115,8 @@ export class SocialService {
         return { userId_galleryId: { userId, galleryId: entityId } };
       case LikeableType.COMMENT:
         return { userId_commentId: { userId, commentId: entityId } };
+      case LikeableType.MEDIA:
+        return { userId_mediaId: { userId, mediaId: entityId } };
       default:
         throw new BadRequestException(`Invalid entity type: ${entityType}`);
     }
@@ -131,6 +133,8 @@ export class SocialService {
         return { ...baseData, galleryId: entityId };
       case LikeableType.COMMENT:
         return { ...baseData, commentId: entityId };
+      case LikeableType.MEDIA:
+        return { ...baseData, mediaId: entityId };
       default:
         throw new BadRequestException(`Invalid entity type: ${entityType}`);
     }
@@ -146,6 +150,8 @@ export class SocialService {
         return { galleryId: entityId };
       case LikeableType.COMMENT:
         return { commentId: entityId };
+      case LikeableType.MEDIA:
+        return { mediaId: entityId };
       default:
         throw new BadRequestException(`Invalid entity type: ${entityType}`);
     }
@@ -178,6 +184,12 @@ export class SocialService {
           where: { id: entityId },
         });
         exists = !!comment;
+        break;
+      case LikeableType.MEDIA:
+        const media = await this.databaseService.media.findUnique({
+          where: { id: entityId },
+        });
+        exists = !!media;
         break;
     }
 
@@ -427,6 +439,60 @@ export class SocialService {
       include: {
         uploader: true,
         artist: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+  }
+
+  async getUserLikedMedia(userId: string): Promise<any[]> {
+    const likes = await this.databaseService.like.findMany({
+      where: {
+        userId,
+        mediaId: { not: null },
+      },
+      select: {
+        mediaId: true,
+      },
+    });
+
+    const mediaIds = likes.map(like => like.mediaId).filter(Boolean);
+    
+    if (mediaIds.length === 0) {
+      return [];
+    }
+
+    return this.databaseService.media.findMany({
+      where: {
+        id: { in: mediaIds },
+      },
+      include: {
+        owner: true,
+        character: {
+          include: {
+            owner: true,
+            _count: {
+              select: { likes: true, media: true },
+            },
+          },
+        },
+        gallery: {
+          include: {
+            owner: true,
+            _count: {
+              select: { likes: true },
+            },
+          },
+        },
+        image: true,
+        textContent: true,
+        tags_rel: {
+          include: { tag: true },
+        },
+        _count: {
+          select: { likes: true },
+        },
       },
       orderBy: {
         updatedAt: 'desc',

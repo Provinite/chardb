@@ -214,13 +214,13 @@ export const DashboardPage: React.FC = () => {
         </DashboardCard>
 
         <DashboardCard>
-          <CardTitle>Liked Images</CardTitle>
+          <CardTitle>Liked Media</CardTitle>
           <CardDescription>
-            Access your collection of liked artwork and images. Revisit the
+            Access your collection of liked media and content. Revisit the
             pieces that captured your imagination.
           </CardDescription>
-          <Button as={Link} to="/liked/images" variant="outline" size="sm">
-            View Liked Images
+          <Button as={Link} to="/liked/media" variant="outline" size="sm">
+            View Liked Media
           </Button>
         </DashboardCard>
 

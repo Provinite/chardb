@@ -14,6 +14,7 @@ import { Image } from '../images/entities/image.entity';
 import { Gallery } from '../galleries/entities/gallery.entity';
 import { Comment } from '../comments/entities/comment.entity';
 import { User } from '../users/entities/user.entity';
+import { Media } from '../media/entities/media.entity';
 
 // Helper function to add default social fields to User objects
 function addDefaultSocialFields(user: any): User {
@@ -95,6 +96,14 @@ export class SocialResolver {
     @CurrentUser() user: any,
   ): Promise<Image[]> {
     return this.socialService.getUserLikedImages(user.id);
+  }
+
+  @Query(() => [Media])
+  @UseGuards(JwtAuthGuard)
+  async likedMedia(
+    @CurrentUser() user: any,
+  ): Promise<Media[]> {
+    return this.socialService.getUserLikedMedia(user.id);
   }
 
   // Follow list queries
@@ -206,6 +215,25 @@ export class CommentLikesResolver {
     @CurrentUser() user?: any,
   ): Promise<boolean> {
     return this.socialService.getUserHasLiked(LikeableType.COMMENT, comment.id, user?.id);
+  }
+}
+
+@Resolver(() => Media)
+export class MediaLikesResolver {
+  constructor(private readonly socialService: SocialService) {}
+
+  @ResolveField(() => Number)
+  async likesCount(@Parent() media: Media): Promise<number> {
+    return this.socialService.getLikesCount(LikeableType.MEDIA, media.id);
+  }
+
+  @ResolveField(() => Boolean)
+  @UseGuards(OptionalJwtAuthGuard)
+  async userHasLiked(
+    @Parent() media: Media,
+    @CurrentUser() user?: any,
+  ): Promise<boolean> {
+    return this.socialService.getUserHasLiked(LikeableType.MEDIA, media.id, user?.id);
   }
 }
 

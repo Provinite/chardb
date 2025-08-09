@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
-import { GET_LIKED_IMAGES } from '../graphql/images';
+import { GET_LIKED_MEDIA } from '../graphql/media';
 import { LikeButton } from '../components/LikeButton';
 import { LikeableType } from '../generated/graphql';
 
@@ -211,21 +211,21 @@ const ErrorContainer = styled.div`
   color: ${({ theme }) => theme.colors.error};
 `;
 
-export const LikedImagesPage: React.FC = () => {
+export const LikedMediaPage: React.FC = () => {
   const { user } = useAuth();
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
-  const { data, loading, error } = useQuery(GET_LIKED_IMAGES, {
+  const { data, loading, error } = useQuery(GET_LIKED_MEDIA, {
     skip: !user,
   });
 
-  const likedImages = data?.likedImages || [];
+  const likedMedia = data?.likedMedia || [];
 
   if (!user) {
     return (
       <Container>
         <ErrorContainer>
-          <h3>Please log in to view your liked images</h3>
+          <h3>Please log in to view your liked media</h3>
         </ErrorContainer>
       </Container>
     );
@@ -245,7 +245,7 @@ export const LikedImagesPage: React.FC = () => {
     return (
       <Container>
         <ErrorContainer>
-          <h3>Error loading liked images</h3>
+          <h3>Error loading liked media</h3>
           <p>{error.message}</p>
         </ErrorContainer>
       </Container>
@@ -263,66 +263,76 @@ export const LikedImagesPage: React.FC = () => {
     <>
       <Container>
         <Header>
-          <Title>My Liked Images</Title>
-          <Subtitle>Artwork you've shown love to</Subtitle>
+          <Title>My Liked Media</Title>
+          <Subtitle>Media you've shown love to</Subtitle>
         </Header>
 
-        {likedImages.length === 0 ? (
+        {likedMedia.length === 0 ? (
           <EmptyState>
             <EmptyIcon>🖼️</EmptyIcon>
-            <EmptyTitle>No liked images yet</EmptyTitle>
+            <EmptyTitle>No liked media yet</EmptyTitle>
             <EmptyDescription>
-              Start exploring and liking artwork you love! Your liked images will appear here.
+              Start exploring and liking media you love! Your liked media will appear here.
             </EmptyDescription>
-            <ExploreButton to="/images">
-              Explore Images
+            <ExploreButton to="/media">
+              Explore Media
             </ExploreButton>
           </EmptyState>
         ) : (
           <Grid>
-            {likedImages.map((image: any) => (
-              <ImageCard key={image.id}>
-                <ImageContainer onClick={() => setLightboxImage(image.url)}>
-                  <ImageElement
-                    src={image.thumbnailUrl || image.url}
-                    alt={image.altText || image.originalFilename}
-                    loading="lazy"
-                  />
-                </ImageContainer>
+            {likedMedia.map((media: any) => (
+              <ImageCard key={media.id}>
+                {media.image && (
+                  <ImageContainer onClick={() => setLightboxImage(media.image.url)}>
+                    <ImageElement
+                      src={media.image.thumbnailUrl || media.image.url}
+                      alt={media.image.altText || media.title}
+                      loading="lazy"
+                    />
+                  </ImageContainer>
+                )}
+                {media.textContent && !media.image && (
+                  <div style={{padding: '16px', backgroundColor: '#f5f5f5', minHeight: '200px', display: 'flex', flexDirection: 'column'}}>
+                    <h4 style={{margin: '0 0 12px 0', color: '#333'}}>Text Content</h4>
+                    <p style={{margin: 0, fontSize: '14px', lineHeight: '1.4', color: '#666'}}>
+                      {media.textContent.content.slice(0, 200)}...
+                    </p>
+                  </div>
+                )}
                 
                 <CardContent>
                   <ImageTitle>
-                    {image.description || image.originalFilename || 'Untitled'}
+                    {media.title || 'Untitled'}
                   </ImageTitle>
                   
                   <ImageMeta>
-                    <MetaBadge>{image.width} × {image.height}</MetaBadge>
-                    <MetaBadge>{formatFileSize(image.fileSize)}</MetaBadge>
-                    {image.isNsfw && <MetaBadge>NSFW</MetaBadge>}
+                    {media.image && <MetaBadge>{media.image.width} × {media.image.height}</MetaBadge>}
+                    {media.image && <MetaBadge>{formatFileSize(media.image.fileSize)}</MetaBadge>}
+                    {media.image?.isNsfw && <MetaBadge>NSFW</MetaBadge>}
                   </ImageMeta>
 
                   <ImageMeta>
                     <MetaBadge>
-                      by <UploaderLink to={`/user/${image.uploader.id}`}>
-                        {image.uploader.displayName || image.uploader.username}
+                      by <UploaderLink to={`/user/${media.owner.id}`}>
+                        {media.owner.displayName || media.owner.username}
                       </UploaderLink>
                     </MetaBadge>
-                    {image.character && (
+                    {media.character && (
                       <MetaBadge>
-                        <UploaderLink to={`/character/${image.character.id}`}>
-                          {image.character.name}
+                        <UploaderLink to={`/character/${media.character.id}`}>
+                          {media.character.name}
                         </UploaderLink>
                       </MetaBadge>
                     )}
                   </ImageMeta>
                   
                   <CardActions>
-                    <ViewButton to={`/media/${image.id}`}>
-                      View Image
+                    <ViewButton to={`/media/${media.id}`}>
+                      View Media
                     </ViewButton>
                     <LikeButton
-                      entityType={LikeableType.Image}
-                      entityId={image.id}
+                      entityType={LikeableType.Media}
+                      entityId={media.id}
                       size="small"
                     />
                   </CardActions>
@@ -346,4 +356,4 @@ export const LikedImagesPage: React.FC = () => {
   );
 };
 
-export default LikedImagesPage;
+export default LikedMediaPage;

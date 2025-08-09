@@ -6,6 +6,7 @@ export enum LikeableType {
   IMAGE = 'IMAGE',
   GALLERY = 'GALLERY',
   COMMENT = 'COMMENT',
+  MEDIA = 'MEDIA',
 }
 
 registerEnumType(LikeableType, {

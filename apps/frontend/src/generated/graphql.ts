@@ -342,7 +342,8 @@ export enum LikeableType {
   Character = 'CHARACTER',
   Comment = 'COMMENT',
   Gallery = 'GALLERY',
-  Image = 'IMAGE'
+  Image = 'IMAGE',
+  Media = 'MEDIA'
 }
 
 export type LoginInput = {
@@ -684,6 +685,7 @@ export type Query = {
   likedCharacters: Array<Character>;
   likedGalleries: Array<Gallery>;
   likedImages: Array<Image>;
+  likedMedia: Array<Media>;
   me: User;
   /** Retrieves paginated media with filtering and visibility controls */
   media: MediaConnection;
@@ -1238,42 +1240,6 @@ export type GetLikedGalleriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }> };
 
-export type GetImagesQueryVariables = Exact<{
-  filters?: InputMaybe<ImageFiltersInput>;
-}>;
-
-
-export type GetImagesQuery = { __typename?: 'Query', images: { __typename?: 'ImageConnection', total: number, hasMore: boolean, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, uploaderId: string, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> } };
-
-export type GetImageQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, uploaderId: string, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null } };
-
-export type GetMyImagesQueryVariables = Exact<{
-  filters?: InputMaybe<ImageFiltersInput>;
-}>;
-
-
-export type GetMyImagesQuery = { __typename?: 'Query', myImages: { __typename?: 'ImageConnection', total: number, hasMore: boolean, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, uploaderId: string, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> } };
-
-export type UpdateImageMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  input: UpdateImageInput;
-}>;
-
-
-export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, uploaderId: string, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null } };
-
-export type DeleteImageMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type DeleteImageMutation = { __typename?: 'Mutation', deleteImage: boolean };
-
 export type GetLikedImagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -1307,6 +1273,11 @@ export type GetMyMediaQueryVariables = Exact<{
 
 
 export type GetMyMediaQuery = { __typename?: 'Query', myMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> } };
+
+export type GetLikedMediaQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetLikedMediaQuery = { __typename?: 'Query', likedMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, width: number, height: number, fileSize: number, mimeType: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> };
 
 export type CreateTextMediaMutationVariables = Exact<{
   input: CreateTextMediaInput;
@@ -2855,313 +2826,6 @@ export type GetLikedGalleriesQueryHookResult = ReturnType<typeof useGetLikedGall
 export type GetLikedGalleriesLazyQueryHookResult = ReturnType<typeof useGetLikedGalleriesLazyQuery>;
 export type GetLikedGalleriesSuspenseQueryHookResult = ReturnType<typeof useGetLikedGalleriesSuspenseQuery>;
 export type GetLikedGalleriesQueryResult = Apollo.QueryResult<GetLikedGalleriesQuery, GetLikedGalleriesQueryVariables>;
-export const GetImagesDocument = gql`
-    query GetImages($filters: ImageFiltersInput) {
-  images(filters: $filters) {
-    images {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      uploaderId
-      artistId
-      artistName
-      artistUrl
-      source
-      width
-      height
-      fileSize
-      mimeType
-      isNsfw
-      sensitiveContentDescription
-      createdAt
-      updatedAt
-      uploader {
-        id
-        username
-        displayName
-      }
-      artist {
-        id
-        username
-        displayName
-      }
-    }
-    total
-    hasMore
-  }
-}
-    `;
-
-/**
- * __useGetImagesQuery__
- *
- * To run a query within a React component, call `useGetImagesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetImagesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetImagesQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *   },
- * });
- */
-export function useGetImagesQuery(baseOptions?: Apollo.QueryHookOptions<GetImagesQuery, GetImagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
-      }
-export function useGetImagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetImagesQuery, GetImagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
-        }
-export function useGetImagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetImagesQuery, GetImagesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
-        }
-export type GetImagesQueryHookResult = ReturnType<typeof useGetImagesQuery>;
-export type GetImagesLazyQueryHookResult = ReturnType<typeof useGetImagesLazyQuery>;
-export type GetImagesSuspenseQueryHookResult = ReturnType<typeof useGetImagesSuspenseQuery>;
-export type GetImagesQueryResult = Apollo.QueryResult<GetImagesQuery, GetImagesQueryVariables>;
-export const GetImageDocument = gql`
-    query GetImage($id: ID!) {
-  image(id: $id) {
-    id
-    filename
-    originalFilename
-    url
-    thumbnailUrl
-    altText
-    uploaderId
-    artistId
-    artistName
-    artistUrl
-    source
-    width
-    height
-    fileSize
-    mimeType
-    isNsfw
-    sensitiveContentDescription
-    createdAt
-    updatedAt
-    uploader {
-      id
-      username
-      displayName
-      avatarUrl
-    }
-    artist {
-      id
-      username
-      displayName
-      avatarUrl
-    }
-  }
-}
-    `;
-
-/**
- * __useGetImageQuery__
- *
- * To run a query within a React component, call `useGetImageQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetImageQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetImageQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetImageQuery(baseOptions: Apollo.QueryHookOptions<GetImageQuery, GetImageQueryVariables> & ({ variables: GetImageQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
-      }
-export function useGetImageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetImageQuery, GetImageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
-        }
-export function useGetImageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetImageQuery, GetImageQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
-        }
-export type GetImageQueryHookResult = ReturnType<typeof useGetImageQuery>;
-export type GetImageLazyQueryHookResult = ReturnType<typeof useGetImageLazyQuery>;
-export type GetImageSuspenseQueryHookResult = ReturnType<typeof useGetImageSuspenseQuery>;
-export type GetImageQueryResult = Apollo.QueryResult<GetImageQuery, GetImageQueryVariables>;
-export const GetMyImagesDocument = gql`
-    query GetMyImages($filters: ImageFiltersInput) {
-  myImages(filters: $filters) {
-    images {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      uploaderId
-      artistId
-      artistName
-      artistUrl
-      source
-      width
-      height
-      fileSize
-      mimeType
-      isNsfw
-      sensitiveContentDescription
-      createdAt
-      updatedAt
-      uploader {
-        id
-        username
-        displayName
-      }
-      artist {
-        id
-        username
-        displayName
-      }
-    }
-    total
-    hasMore
-  }
-}
-    `;
-
-/**
- * __useGetMyImagesQuery__
- *
- * To run a query within a React component, call `useGetMyImagesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetMyImagesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetMyImagesQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *   },
- * });
- */
-export function useGetMyImagesQuery(baseOptions?: Apollo.QueryHookOptions<GetMyImagesQuery, GetMyImagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMyImagesQuery, GetMyImagesQueryVariables>(GetMyImagesDocument, options);
-      }
-export function useGetMyImagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyImagesQuery, GetMyImagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMyImagesQuery, GetMyImagesQueryVariables>(GetMyImagesDocument, options);
-        }
-export function useGetMyImagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyImagesQuery, GetMyImagesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetMyImagesQuery, GetMyImagesQueryVariables>(GetMyImagesDocument, options);
-        }
-export type GetMyImagesQueryHookResult = ReturnType<typeof useGetMyImagesQuery>;
-export type GetMyImagesLazyQueryHookResult = ReturnType<typeof useGetMyImagesLazyQuery>;
-export type GetMyImagesSuspenseQueryHookResult = ReturnType<typeof useGetMyImagesSuspenseQuery>;
-export type GetMyImagesQueryResult = Apollo.QueryResult<GetMyImagesQuery, GetMyImagesQueryVariables>;
-export const UpdateImageDocument = gql`
-    mutation UpdateImage($id: ID!, $input: UpdateImageInput!) {
-  updateImage(id: $id, input: $input) {
-    id
-    filename
-    originalFilename
-    url
-    thumbnailUrl
-    altText
-    uploaderId
-    artistId
-    artistName
-    artistUrl
-    source
-    width
-    height
-    fileSize
-    mimeType
-    isNsfw
-    sensitiveContentDescription
-    createdAt
-    updatedAt
-    uploader {
-      id
-      username
-      displayName
-    }
-    artist {
-      id
-      username
-      displayName
-    }
-  }
-}
-    `;
-export type UpdateImageMutationFn = Apollo.MutationFunction<UpdateImageMutation, UpdateImageMutationVariables>;
-
-/**
- * __useUpdateImageMutation__
- *
- * To run a mutation, you first call `useUpdateImageMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateImageMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateImageMutation, { data, loading, error }] = useUpdateImageMutation({
- *   variables: {
- *      id: // value for 'id'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useUpdateImageMutation(baseOptions?: Apollo.MutationHookOptions<UpdateImageMutation, UpdateImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateImageMutation, UpdateImageMutationVariables>(UpdateImageDocument, options);
-      }
-export type UpdateImageMutationHookResult = ReturnType<typeof useUpdateImageMutation>;
-export type UpdateImageMutationResult = Apollo.MutationResult<UpdateImageMutation>;
-export type UpdateImageMutationOptions = Apollo.BaseMutationOptions<UpdateImageMutation, UpdateImageMutationVariables>;
-export const DeleteImageDocument = gql`
-    mutation DeleteImage($id: ID!) {
-  deleteImage(id: $id)
-}
-    `;
-export type DeleteImageMutationFn = Apollo.MutationFunction<DeleteImageMutation, DeleteImageMutationVariables>;
-
-/**
- * __useDeleteImageMutation__
- *
- * To run a mutation, you first call `useDeleteImageMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteImageMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteImageMutation, { data, loading, error }] = useDeleteImageMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDeleteImageMutation(baseOptions?: Apollo.MutationHookOptions<DeleteImageMutation, DeleteImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteImageMutation, DeleteImageMutationVariables>(DeleteImageDocument, options);
-      }
-export type DeleteImageMutationHookResult = ReturnType<typeof useDeleteImageMutation>;
-export type DeleteImageMutationResult = Apollo.MutationResult<DeleteImageMutation>;
-export type DeleteImageMutationOptions = Apollo.BaseMutationOptions<DeleteImageMutation, DeleteImageMutationVariables>;
 export const GetLikedImagesDocument = gql`
     query GetLikedImages {
   likedImages {
@@ -3571,6 +3235,108 @@ export type GetMyMediaQueryHookResult = ReturnType<typeof useGetMyMediaQuery>;
 export type GetMyMediaLazyQueryHookResult = ReturnType<typeof useGetMyMediaLazyQuery>;
 export type GetMyMediaSuspenseQueryHookResult = ReturnType<typeof useGetMyMediaSuspenseQuery>;
 export type GetMyMediaQueryResult = Apollo.QueryResult<GetMyMediaQuery, GetMyMediaQueryVariables>;
+export const GetLikedMediaDocument = gql`
+    query GetLikedMedia {
+  likedMedia {
+    id
+    title
+    description
+    ownerId
+    characterId
+    galleryId
+    visibility
+    imageId
+    textContentId
+    createdAt
+    updatedAt
+    owner {
+      id
+      username
+      displayName
+      avatarUrl
+    }
+    character {
+      id
+      name
+    }
+    gallery {
+      id
+      name
+    }
+    image {
+      id
+      url
+      thumbnailUrl
+      altText
+      isNsfw
+      width
+      height
+      fileSize
+      mimeType
+      uploader {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+      artist {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+    }
+    textContent {
+      id
+      content
+      wordCount
+      formatting
+    }
+    likesCount
+    userHasLiked
+    tags_rel {
+      tag {
+        id
+        name
+        category
+        color
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetLikedMediaQuery__
+ *
+ * To run a query within a React component, call `useGetLikedMediaQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetLikedMediaQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLikedMediaQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetLikedMediaQuery(baseOptions?: Apollo.QueryHookOptions<GetLikedMediaQuery, GetLikedMediaQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetLikedMediaQuery, GetLikedMediaQueryVariables>(GetLikedMediaDocument, options);
+      }
+export function useGetLikedMediaLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLikedMediaQuery, GetLikedMediaQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetLikedMediaQuery, GetLikedMediaQueryVariables>(GetLikedMediaDocument, options);
+        }
+export function useGetLikedMediaSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLikedMediaQuery, GetLikedMediaQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetLikedMediaQuery, GetLikedMediaQueryVariables>(GetLikedMediaDocument, options);
+        }
+export type GetLikedMediaQueryHookResult = ReturnType<typeof useGetLikedMediaQuery>;
+export type GetLikedMediaLazyQueryHookResult = ReturnType<typeof useGetLikedMediaLazyQuery>;
+export type GetLikedMediaSuspenseQueryHookResult = ReturnType<typeof useGetLikedMediaSuspenseQuery>;
+export type GetLikedMediaQueryResult = Apollo.QueryResult<GetLikedMediaQuery, GetLikedMediaQueryVariables>;
 export const CreateTextMediaDocument = gql`
     mutation CreateTextMedia($input: CreateTextMediaInput!) {
   createTextMedia(input: $input) {
