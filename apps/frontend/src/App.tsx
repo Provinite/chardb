@@ -16,6 +16,7 @@ import { CharactersPage } from "./pages/CharactersPage";
 import { CreateCharacterPage } from "./pages/CreateCharacterPage";
 import { EditCharacterPage } from "./pages/EditCharacterPage";
 import { CreateTextPage } from "./pages/CreateTextPage";
+import { CreateMediaPage } from "./pages/CreateMediaPage";
 import { MediaPage } from "./pages/MediaPage";
 import { GalleryPage } from "./pages/GalleryPage";
 import { GalleriesPage } from "./pages/GalleriesPage";
@@ -96,6 +97,14 @@ function App() {
         />
         <Route
           path="/upload"
+          element={
+            <ProtectedRoute>
+              <CreateMediaPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/image/upload"
           element={
             <ProtectedRoute>
               <UploadImagePage />

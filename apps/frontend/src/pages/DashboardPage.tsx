@@ -122,7 +122,7 @@ export const DashboardPage: React.FC = () => {
             Create Gallery
           </Button>
           <Button as={Link} to="/upload" variant="outline">
-            Upload Image
+            Create Media
           </Button>
           <Button as={Link} to="/characters" variant="ghost">
             Browse Characters
