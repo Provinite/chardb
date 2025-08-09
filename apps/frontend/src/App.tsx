@@ -23,7 +23,7 @@ import { GalleryPage } from "./pages/GalleryPage";
 import { GalleriesPage } from "./pages/GalleriesPage";
 import { CreateGalleryPage } from "./pages/CreateGalleryPage";
 import { UploadImagePage } from "./pages/UploadImagePage";
-import { ImagesPage } from "./pages/ImagesPage";
+import { MediaLibraryPage } from "./pages/MediaLibraryPage";
 import { LikedCharactersPage } from "./pages/LikedCharactersPage";
 import { LikedGalleriesPage } from "./pages/LikedGalleriesPage";
 import { LikedMediaPage } from "./pages/LikedMediaPage";
@@ -58,7 +58,7 @@ function App() {
         <Route path="/character/:id" element={<CharacterPage />} />
         <Route path="/galleries" element={<GalleriesPage />} />
         <Route path="/gallery/:id" element={<GalleryPage />} />
-        <Route path="/images" element={<ImagesPage />} />
+        <Route path="/media" element={<MediaLibraryPage />} />
         <Route path="/media/:id" element={<MediaPage />} />
         <Route path="/user/:username" element={<UserProfilePage />} />
         <Route path="/user/:username/followers" element={<FollowersPage />} />

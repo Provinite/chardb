@@ -59,6 +59,35 @@ const SearchBar = styled.input`
   }
 `;
 
+const FilterTabs = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.sm};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+`;
+
+const FilterTab = styled.button.withConfig({
+  shouldForwardProp: (prop) => prop !== 'active',
+})<{ active: boolean }>`
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.border};
+  background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.background};
+  color: ${props => props.active ? 'white' : props.theme.colors.text.secondary};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  cursor: pointer;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  transition: all 0.2s;
+  
+  &:hover:not([data-active="true"]) {
+    border-color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.colors.primary}10;
+  }
+  
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 2px;
+  }
+`;
+
 const LoadingContainer = styled.div`
   display: flex;
   justify-content: center;
@@ -68,9 +97,12 @@ const LoadingContainer = styled.div`
 
 
 
-export const ImagesPage: React.FC = () => {
+type MediaFilter = 'all' | 'images' | 'text';
+
+export const MediaLibraryPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all');
 
   const { data, loading, error } = useGetMediaQuery({
     variables: {
@@ -78,7 +110,8 @@ export const ImagesPage: React.FC = () => {
         limit: 50,
         offset: 0,
         search: searchTerm || undefined,
-        mediaType: MediaType.Image, // Filter to only image media
+        mediaType: mediaFilter === 'all' ? undefined : 
+                  mediaFilter === 'images' ? MediaType.Image : MediaType.Text,
       },
     },
   });
@@ -86,8 +119,9 @@ export const ImagesPage: React.FC = () => {
   const media = data?.media?.media || [];
   const totalCount = data?.media?.total || 0;
 
-  // Filter media to only images (additional safety check)
-  const imageMedia = media.filter(item => item.image);
+  // Count media by type for filter tabs
+  const imageCount = media.filter(item => item.image).length;
+  const textCount = media.filter(item => item.textContent).length;
 
   if (loading) {
     return (
@@ -103,8 +137,8 @@ export const ImagesPage: React.FC = () => {
     return (
       <Container>
         <div style={{ textAlign: 'center', padding: '2rem', color: 'red' }}>
-          <h3>Error Loading Images</h3>
-          <p>Unable to load images. Please try again later.</p>
+          <h3>Error Loading Media</h3>
+          <p>Unable to load media. Please try again later.</p>
         </div>
       </Container>
     );
@@ -114,13 +148,13 @@ export const ImagesPage: React.FC = () => {
     <Container>
       <Header>
         <div>
-          <Title>Image Library</Title>
-          <Stats>{totalCount} images</Stats>
+          <Title>Media Library</Title>
+          <Stats>{totalCount} media items</Stats>
         </div>
         <Controls>
           <SearchBar
             type="text"
-            placeholder="Search images..."
+            placeholder="Search media..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -128,17 +162,50 @@ export const ImagesPage: React.FC = () => {
             variant="primary"
             onClick={() => navigate('/upload')}
           >
-            Upload Image
+            Add Media
           </Button>
         </Controls>
       </Header>
 
+      {totalCount > 0 && (
+        <FilterTabs>
+          <FilterTab
+            active={mediaFilter === 'all'}
+            onClick={() => setMediaFilter('all')}
+          >
+            All ({totalCount})
+          </FilterTab>
+          <FilterTab
+            active={mediaFilter === 'images'}
+            onClick={() => setMediaFilter('images')}
+          >
+            Images ({imageCount})
+          </FilterTab>
+          <FilterTab
+            active={mediaFilter === 'text'}
+            onClick={() => setMediaFilter('text')}
+          >
+            Text ({textCount})
+          </FilterTab>
+        </FilterTabs>
+      )}
+
       <MediaGrid
-        media={imageMedia as any}
+        media={media as any}
         showOwner={true}
         loading={loading}
-        emptyMessage={searchTerm ? "No images match your search criteria" : "No images found"}
-        emptyDescription={searchTerm ? "Try adjusting your search terms." : "Start building your collection by uploading your first image."}
+        emptyMessage={
+          searchTerm 
+            ? "No media matches your search criteria" 
+            : mediaFilter === 'all' 
+              ? "No media found" 
+              : `No ${mediaFilter} found`
+        }
+        emptyDescription={
+          searchTerm 
+            ? "Try adjusting your search terms." 
+            : "Start building your collection by uploading your first media."
+        }
       />
     </Container>
   );
