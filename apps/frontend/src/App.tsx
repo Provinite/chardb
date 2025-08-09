@@ -3,6 +3,7 @@ import { useAuth } from "./contexts/AuthContext";
 import { Layout } from "./components/Layout";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 // Pages
 import { HomePage } from "./pages/HomePage";
@@ -47,6 +48,7 @@ function App() {
 
   return (
     <Layout>
+      <ScrollToTop />
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<HomePage />} />

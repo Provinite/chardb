@@ -85,90 +85,6 @@ const LoadingState = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
-const CreateMediaModal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: ${({ theme }) => theme.spacing.lg};
-`;
-
-const ModalContent = styled.div`
-  background: ${({ theme }) => theme.colors.background};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  max-width: 600px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-`;
-
-const ModalHeader = styled.div`
-  padding: ${({ theme }) => theme.spacing.lg};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const ModalTitle = styled.h2`
-  margin: 0;
-  font-size: ${({ theme }) => theme.typography.fontSize.xl};
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: ${({ theme }) => theme.colors.text.muted};
-  padding: ${({ theme }) => theme.spacing.xs};
-  
-  &:hover {
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
-`;
-
-const CreateOptions = styled.div`
-  padding: ${({ theme }) => theme.spacing.lg};
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
-  justify-content: center;
-`;
-
-const CreateOption = styled(Link)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: ${({ theme }) => theme.spacing.lg};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  text-decoration: none;
-  color: ${({ theme }) => theme.colors.text.primary};
-  transition: all 0.2s;
-  min-width: 120px;
-  
-  &:hover {
-    border-color: ${({ theme }) => theme.colors.primary};
-    transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.shadows.md};
-  }
-`;
-
-const CreateIcon = styled.div`
-  font-size: 2rem;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-`;
-
-const CreateLabel = styled.span`
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-`;
 
 type MediaFilter = 'all' | 'images' | 'text';
 
@@ -194,7 +110,6 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
   currentMainMediaId,
 }) => {
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [isSettingMain, setIsSettingMain] = useState(false);
 
   const { data, loading, error } = useGetCharacterMediaQuery({
@@ -286,7 +201,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
         <SectionTitle>Media Gallery</SectionTitle>
         <HeaderActions>
           {canUpload && (
-            <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
+            <Button as={Link} to={`/upload?character=${characterId}`} variant="primary" size="sm">
               Add Media
             </Button>
           )}
@@ -354,28 +269,6 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
         </ViewAllContainer>
       )}
 
-      {showCreateModal && (
-        <CreateMediaModal onClick={() => setShowCreateModal(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>Add New Media</ModalTitle>
-              <CloseButton onClick={() => setShowCreateModal(false)}>
-                ×
-              </CloseButton>
-            </ModalHeader>
-            <CreateOptions>
-              <CreateOption to={`/upload?character=${characterId}`}>
-                <CreateIcon>🖼️</CreateIcon>
-                <CreateLabel>Upload Image</CreateLabel>
-              </CreateOption>
-              <CreateOption to={`/text/create?character=${characterId}`}>
-                <CreateIcon>📝</CreateIcon>
-                <CreateLabel>Create Text</CreateLabel>
-              </CreateOption>
-            </CreateOptions>
-          </ModalContent>
-        </CreateMediaModal>
-      )}
     </GalleryContainer>
   );
 };
