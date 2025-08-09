@@ -543,7 +543,7 @@ export const UploadImagePage: React.FC = () => {
         <UploadedImagesGrid>
           {uploadedImages.map((image) => (
             <UploadedImageCard key={image.id}>
-              <Link to={`/image/${image.id}`}>
+              <Link to={`/media/${image.id}`}>
                 <UploadedImagePreview
                   src={image.thumbnailUrl || image.url}
                   alt={image.altText || image.filename}
@@ -569,7 +569,7 @@ export const UploadImagePage: React.FC = () => {
         
         <SuccessNavLinks>
           {uploadedImages.length === 1 && (
-            <Link to={`/image/${uploadedImages[0].id}`}>
+            <Link to={`/media/${uploadedImages[0].id}`}>
               View Image
             </Link>
           )}
