@@ -219,7 +219,9 @@ export const LikedMediaPage: React.FC = () => {
     skip: !user,
   });
 
-  const likedMedia = data?.likedMedia || [];
+  const likedMediaConnection = data?.likedMedia;
+  const likedMedia = likedMediaConnection?.media || [];
+  const total = likedMediaConnection?.total || 0;
 
   if (!user) {
     return (
@@ -264,7 +266,10 @@ export const LikedMediaPage: React.FC = () => {
       <Container>
         <Header>
           <Title>My Liked Media</Title>
-          <Subtitle>Media you've shown love to</Subtitle>
+          <Subtitle>
+            Media you've shown love to
+            {total > 0 && <span> • {total} items</span>}
+          </Subtitle>
         </Header>
 
         {likedMedia.length === 0 ? (

@@ -685,7 +685,7 @@ export type Query = {
   likedCharacters: Array<Character>;
   likedGalleries: Array<Gallery>;
   likedImages: Array<Image>;
-  likedMedia: Array<Media>;
+  likedMedia: MediaConnection;
   me: User;
   /** Retrieves paginated media with filtering and visibility controls */
   media: MediaConnection;
@@ -801,6 +801,11 @@ export type QueryImagesArgs = {
 export type QueryLikeStatusArgs = {
   entityId: Scalars['ID']['input'];
   entityType: LikeableType;
+};
+
+
+export type QueryLikedMediaArgs = {
+  filters?: InputMaybe<MediaFiltersInput>;
 };
 
 
@@ -1274,10 +1279,12 @@ export type GetMyMediaQueryVariables = Exact<{
 
 export type GetMyMediaQuery = { __typename?: 'Query', myMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> } };
 
-export type GetLikedMediaQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetLikedMediaQueryVariables = Exact<{
+  filters?: InputMaybe<MediaFiltersInput>;
+}>;
 
 
-export type GetLikedMediaQuery = { __typename?: 'Query', likedMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, width: number, height: number, fileSize: number, mimeType: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> };
+export type GetLikedMediaQuery = { __typename?: 'Query', likedMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, width: number, height: number, fileSize: number, mimeType: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> } };
 
 export type CreateTextMediaMutationVariables = Exact<{
   input: CreateTextMediaInput;
@@ -3236,72 +3243,76 @@ export type GetMyMediaLazyQueryHookResult = ReturnType<typeof useGetMyMediaLazyQ
 export type GetMyMediaSuspenseQueryHookResult = ReturnType<typeof useGetMyMediaSuspenseQuery>;
 export type GetMyMediaQueryResult = Apollo.QueryResult<GetMyMediaQuery, GetMyMediaQueryVariables>;
 export const GetLikedMediaDocument = gql`
-    query GetLikedMedia {
-  likedMedia {
-    id
-    title
-    description
-    ownerId
-    characterId
-    galleryId
-    visibility
-    imageId
-    textContentId
-    createdAt
-    updatedAt
-    owner {
+    query GetLikedMedia($filters: MediaFiltersInput) {
+  likedMedia(filters: $filters) {
+    media {
       id
-      username
-      displayName
-      avatarUrl
-    }
-    character {
-      id
-      name
-    }
-    gallery {
-      id
-      name
-    }
-    image {
-      id
-      url
-      thumbnailUrl
-      altText
-      isNsfw
-      width
-      height
-      fileSize
-      mimeType
-      uploader {
+      title
+      description
+      ownerId
+      characterId
+      galleryId
+      visibility
+      imageId
+      textContentId
+      createdAt
+      updatedAt
+      owner {
         id
         username
         displayName
         avatarUrl
       }
-      artist {
-        id
-        username
-        displayName
-        avatarUrl
-      }
-    }
-    textContent {
-      id
-      content
-      wordCount
-      formatting
-    }
-    likesCount
-    userHasLiked
-    tags_rel {
-      tag {
+      character {
         id
         name
-        category
-        color
+      }
+      gallery {
+        id
+        name
+      }
+      image {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
+        width
+        height
+        fileSize
+        mimeType
+        uploader {
+          id
+          username
+          displayName
+          avatarUrl
+        }
+        artist {
+          id
+          username
+          displayName
+          avatarUrl
+        }
+      }
+      textContent {
+        id
+        content
+        wordCount
+        formatting
+      }
+      likesCount
+      userHasLiked
+      tags_rel {
+        tag {
+          id
+          name
+          category
+          color
+        }
       }
     }
+    total
+    hasMore
   }
 }
     `;
@@ -3318,6 +3329,7 @@ export const GetLikedMediaDocument = gql`
  * @example
  * const { data, loading, error } = useGetLikedMediaQuery({
  *   variables: {
+ *      filters: // value for 'filters'
  *   },
  * });
  */

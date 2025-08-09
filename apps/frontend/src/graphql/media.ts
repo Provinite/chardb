@@ -215,72 +215,76 @@ export const GET_MY_MEDIA = gql`
 `;
 
 export const GET_LIKED_MEDIA = gql`
-  query GetLikedMedia {
-    likedMedia {
-      id
-      title
-      description
-      ownerId
-      characterId
-      galleryId
-      visibility
-      imageId
-      textContentId
-      createdAt
-      updatedAt
-      owner {
+  query GetLikedMedia($filters: MediaFiltersInput) {
+    likedMedia(filters: $filters) {
+      media {
         id
-        username
-        displayName
-        avatarUrl
-      }
-      character {
-        id
-        name
-      }
-      gallery {
-        id
-        name
-      }
-      image {
-        id
-        url
-        thumbnailUrl
-        altText
-        isNsfw
-        width
-        height
-        fileSize
-        mimeType
-        uploader {
+        title
+        description
+        ownerId
+        characterId
+        galleryId
+        visibility
+        imageId
+        textContentId
+        createdAt
+        updatedAt
+        owner {
           id
           username
           displayName
           avatarUrl
         }
-        artist {
-          id
-          username
-          displayName
-          avatarUrl
-        }
-      }
-      textContent {
-        id
-        content
-        wordCount
-        formatting
-      }
-      likesCount
-      userHasLiked
-      tags_rel {
-        tag {
+        character {
           id
           name
-          category
-          color
+        }
+        gallery {
+          id
+          name
+        }
+        image {
+          id
+          url
+          thumbnailUrl
+          altText
+          isNsfw
+          width
+          height
+          fileSize
+          mimeType
+          uploader {
+            id
+            username
+            displayName
+            avatarUrl
+          }
+          artist {
+            id
+            username
+            displayName
+            avatarUrl
+          }
+        }
+        textContent {
+          id
+          content
+          wordCount
+          formatting
+        }
+        likesCount
+        userHasLiked
+        tags_rel {
+          tag {
+            id
+            name
+            category
+            color
+          }
         }
       }
+      total
+      hasMore
     }
   }
 `;
