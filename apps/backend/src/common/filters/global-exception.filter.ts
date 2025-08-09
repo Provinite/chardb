@@ -13,6 +13,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger('GlobalException');
 
   catch(exception: unknown, host: ArgumentsHost): void {
+    // Check if we're in a GraphQL context
+    const gqlHost = host.switchToRpc();
+    if (gqlHost?.getContext) {
+      // GraphQL context - just log and rethrow
+      this.logError(exception, null, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw exception;
+    }
+
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -35,18 +43,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     );
   }
 
-  private logError(exception: unknown, request: Request, status: number): void {
+  private logError(exception: unknown, request: Request | null, status: number): void {
     const errorInfo = {
       timestamp: new Date().toISOString(),
-      method: request.method,
-      url: request.url,
+      method: request?.method || 'unknown',
+      url: request?.url || 'unknown',
       statusCode: status,
-      userAgent: request.get('user-agent') || '',
-      ip: request.ip,
+      userAgent: request?.get?.('user-agent') || '',
+      ip: request?.ip || 'unknown',
     };
 
     // Add file upload info if it's a multipart request
-    if (request.is('multipart/form-data') && (request as any).file) {
+    if (request?.is?.('multipart/form-data') && (request as any)?.file) {
       const file = (request as any).file;
       errorInfo['fileInfo'] = {
         originalname: file.originalname,

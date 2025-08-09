@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
 import styled from 'styled-components';
-import { Button } from '@chardb/ui';
 
 const UploadContainer = styled.div.withConfig({
   shouldForwardProp: (prop) => !['isDragActive', 'hasError'].includes(prop),
@@ -106,23 +105,19 @@ export interface ImageFile {
 interface ImageUploadProps {
   files: ImageFile[];
   onFilesChange: (files: ImageFile[]) => void;
-  onUpload?: (files: ImageFile[]) => Promise<void>;
   maxFiles?: number;
   maxSizeMB?: number;
   acceptedTypes?: string[];
   disabled?: boolean;
-  uploading?: boolean;
 }
 
 export const ImageUpload: React.FC<ImageUploadProps> = ({
   files,
   onFilesChange,
-  onUpload,
   maxFiles = 10,
   maxSizeMB = 10,
   acceptedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
   disabled = false,
-  uploading = false,
 }) => {
   const [isDragActive, setIsDragActive] = useState(false);
   const [error, setError] = useState<string>('');
@@ -229,16 +224,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     onFilesChange(updatedFiles);
   }, [files, onFilesChange]);
 
-  const handleUpload = useCallback(async () => {
-    if (onUpload && files.length > 0) {
-      try {
-        setError('');
-        await onUpload(files);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Upload failed');
-      }
-    }
-  }, [onUpload, files]);
 
   // Cleanup object URLs on unmount
   React.useEffect(() => {
@@ -298,17 +283,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         </PreviewContainer>
       )}
 
-      {onUpload && files.length > 0 && (
-        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-          <Button
-            onClick={handleUpload}
-            disabled={disabled || uploading}
-            variant="primary"
-          >
-            {uploading ? 'Uploading...' : `Upload ${files.length} file${files.length > 1 ? 's' : ''}`}
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

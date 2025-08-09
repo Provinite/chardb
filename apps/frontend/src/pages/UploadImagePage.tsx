@@ -627,8 +627,6 @@ export const UploadImagePage: React.FC = () => {
               <ImageUpload
                 files={files}
                 onFilesChange={setFiles}
-                onUpload={handleUpload}
-                uploading={uploading}
                 disabled={uploading}
               />
             </Section>

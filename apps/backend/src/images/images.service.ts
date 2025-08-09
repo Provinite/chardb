@@ -4,7 +4,7 @@ import { Prisma, Visibility } from '@chardb/database';
 import * as sharp from 'sharp';
 import { v4 as uuid } from 'uuid';
 import { extname } from 'path';
-import type { Image } from '@chardb/database';
+import type { Image, Media, User } from '@chardb/database';
 
 export interface UploadImageInput {
   file: Express.Multer.File;
@@ -15,6 +15,11 @@ export interface UploadImageInput {
   artistName?: string;
   artistUrl?: string;
   source?: string;
+  // Media record parameters
+  characterId?: string;
+  galleryId?: string;
+  description?: string;
+  visibility?: string;
 }
 
 export interface UpdateImageInput {
@@ -52,7 +57,7 @@ export class ImagesService {
 
   constructor(private readonly db: DatabaseService) {}
 
-  async upload(userId: string, input: UploadImageInput): Promise<Image> {
+  async upload(userId: string, input: UploadImageInput): Promise<Media & { image: Image; owner: User }> {
     const { 
       file, 
       altText, 
@@ -61,7 +66,11 @@ export class ImagesService {
       artistId,
       artistName,
       artistUrl,
-      source
+      source,
+      characterId,
+      galleryId,
+      description,
+      visibility
     } = input;
 
     // Validate file
@@ -125,9 +134,25 @@ export class ImagesService {
         },
       });
 
-      // NOTE: Media record creation now handled by upload endpoint
+      // Create corresponding Media record for unified media system
+      const media = await tx.media.create({
+        data: {
+          title: altText || file.originalname,
+          description: description || sensitiveContentDescription,
+          ownerId: userId,
+          characterId: characterId || null,
+          galleryId: galleryId || null,
+          visibility: visibility ? visibility.toUpperCase() as Visibility : (isNsfw ? 'PRIVATE' : 'PUBLIC'),
+          imageId: image.id,    // Link to image record
+          textContentId: null,  // Null for image media
+        },
+        include: {
+          image: true,
+          owner: true,
+        },
+      });
 
-      return image;
+      return media;
     });
 
     return result;

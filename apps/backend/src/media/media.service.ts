@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import type { Media, TextContent, Prisma } from "@chardb/database";
@@ -17,6 +18,8 @@ import {
  */
 @Injectable()
 export class MediaService {
+  private readonly logger = new Logger(MediaService.name);
+  
   constructor(private readonly db: DatabaseService) {}
 
   /**
@@ -209,6 +212,8 @@ export class MediaService {
    * @throws ForbiddenException if user lacks access to private media
    */
   async findOne(id: string, userId?: string) {
+    this.logger.debug(`Finding media with id: ${id}, userId: ${userId || 'anonymous'}`);
+    
     const media = await this.db.media.findUnique({
       where: { id },
       include: {

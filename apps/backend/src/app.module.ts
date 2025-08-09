@@ -53,9 +53,28 @@ import { HealthModule } from './health/health.module';
               async didResolveOperation(requestContext: any) {
                 const { request, operationName } = requestContext;
                 const operationType = request.query?.match(/^\s*(query|mutation|subscription)/i)?.[1] || 'unknown';
-                const variables = request.variables ? JSON.stringify(request.variables) : '{}';
+                
+                // Filter sensitive data from variables
+                const sanitizedVariables = this.sanitizeVariables(request.variables);
+                const variables = sanitizedVariables ? JSON.stringify(sanitizedVariables) : '{}';
                 
                 logger.log(`${operationType}: ${operationName || 'unnamed'} - Variables: ${variables}`);
+              },
+              
+              // Helper method to remove sensitive data from logs
+              sanitizeVariables(variables: any): any {
+                if (!variables) return variables;
+                
+                const sensitiveFields = ['password', 'oldPassword', 'newPassword', 'token', 'refreshToken'];
+                const sanitized = { ...variables };
+                
+                for (const field of sensitiveFields) {
+                  if (sanitized[field]) {
+                    sanitized[field] = '[REDACTED]';
+                  }
+                }
+                
+                return sanitized;
               },
               
               async willSendResponse(requestContext: any) {
@@ -74,7 +93,35 @@ import { HealthModule } from './health/health.module';
                 const { request, errors, operationName } = requestContext;
                 const operationType = request.query?.match(/^\s*(query|mutation|subscription)/i)?.[1] || 'unknown';
                 
-                logger.error(`${operationType}: ${operationName || 'unnamed'} - Execution Errors: ${JSON.stringify(errors)}`);
+                // Filter sensitive data from variables
+                const sanitizedVariables = this.sanitizeVariables(request.variables);
+                const variables = sanitizedVariables ? JSON.stringify(sanitizedVariables) : '{}';
+                
+                // Log detailed error information
+                logger.error(`${operationType}: ${operationName || 'unnamed'} - Execution Errors:`);
+                logger.error(`Variables: ${variables}`);
+                logger.error(`Query: ${request.query}`);
+                
+                errors.forEach((error: any, index: number) => {
+                  logger.error(`Error ${index + 1}:`);
+                  logger.error(`  Message: ${error.message}`);
+                  logger.error(`  Path: ${error.path ? error.path.join(' -> ') : 'N/A'}`);
+                  logger.error(`  Locations: ${error.locations ? JSON.stringify(error.locations) : 'N/A'}`);
+                  
+                  // Include stack trace if available
+                  if (error.originalError?.stack) {
+                    logger.error(`  Stack Trace:`);
+                    logger.error(`${error.originalError.stack}`);
+                  } else if (error.stack) {
+                    logger.error(`  Stack Trace:`);
+                    logger.error(`${error.stack}`);
+                  }
+                  
+                  // Include any extensions
+                  if (error.extensions) {
+                    logger.error(`  Extensions: ${JSON.stringify(error.extensions)}`);
+                  }
+                });
               },
             };
           },
