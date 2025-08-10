@@ -1309,6 +1309,14 @@ export type UpdateTextContentMutationVariables = Exact<{
 
 export type UpdateTextContentMutation = { __typename?: 'Mutation', updateTextContent: { __typename?: 'Media', id: string, title: string, description: string | null, updatedAt: string, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null } };
 
+export type UpdateImageMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateImageInput;
+}>;
+
+
+export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, altText: string | null, isNsfw: boolean, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, updatedAt: string } };
+
 export type DeleteMediaMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -3577,6 +3585,47 @@ export function useUpdateTextContentMutation(baseOptions?: Apollo.MutationHookOp
 export type UpdateTextContentMutationHookResult = ReturnType<typeof useUpdateTextContentMutation>;
 export type UpdateTextContentMutationResult = Apollo.MutationResult<UpdateTextContentMutation>;
 export type UpdateTextContentMutationOptions = Apollo.BaseMutationOptions<UpdateTextContentMutation, UpdateTextContentMutationVariables>;
+export const UpdateImageDocument = gql`
+    mutation UpdateImage($id: ID!, $input: UpdateImageInput!) {
+  updateImage(id: $id, input: $input) {
+    id
+    altText
+    isNsfw
+    artistId
+    artistName
+    artistUrl
+    source
+    updatedAt
+  }
+}
+    `;
+export type UpdateImageMutationFn = Apollo.MutationFunction<UpdateImageMutation, UpdateImageMutationVariables>;
+
+/**
+ * __useUpdateImageMutation__
+ *
+ * To run a mutation, you first call `useUpdateImageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateImageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateImageMutation, { data, loading, error }] = useUpdateImageMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateImageMutation(baseOptions?: Apollo.MutationHookOptions<UpdateImageMutation, UpdateImageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateImageMutation, UpdateImageMutationVariables>(UpdateImageDocument, options);
+      }
+export type UpdateImageMutationHookResult = ReturnType<typeof useUpdateImageMutation>;
+export type UpdateImageMutationResult = Apollo.MutationResult<UpdateImageMutation>;
+export type UpdateImageMutationOptions = Apollo.BaseMutationOptions<UpdateImageMutation, UpdateImageMutationVariables>;
 export const DeleteMediaDocument = gql`
     mutation DeleteMedia($id: ID!) {
   deleteMedia(id: $id)

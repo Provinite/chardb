@@ -11,6 +11,7 @@ import {
   GET_MEDIA_ITEM, 
   UPDATE_MEDIA, 
   UPDATE_TEXT_CONTENT,
+  UPDATE_IMAGE,
   useGetMediaItemQuery
 } from "../graphql/media";
 import { useGetMyGalleriesQuery } from "../graphql/galleries";
@@ -36,6 +37,28 @@ const mediaSchema = z.object({
   formatting: z.nativeEnum(TextFormatting).optional(),
   visibility: z.nativeEnum(Visibility),
   galleryId: z.string().optional(),
+  // Image-specific fields
+  altText: z
+    .string()
+    .max(200, "Alt text must be less than 200 characters")
+    .optional()
+    .or(z.literal("")),
+  isNsfw: z.boolean().optional(),
+  artistName: z
+    .string()
+    .max(100, "Artist name must be less than 100 characters")
+    .optional()
+    .or(z.literal("")),
+  artistUrl: z
+    .string()
+    .url("Artist URL must be a valid URL")
+    .optional()
+    .or(z.literal("")),
+  source: z
+    .string()
+    .url("Source URL must be a valid URL")
+    .optional()
+    .or(z.literal("")),
 });
 
 type MediaForm = z.infer<typeof mediaSchema>;
@@ -247,6 +270,21 @@ const ErrorContainer = styled.div`
   color: ${({ theme }) => theme.colors.error};
 `;
 
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.primary};
+  cursor: pointer;
+`;
+
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+  width: 16px;
+  height: 16px;
+  accent-color: ${({ theme }) => theme.colors.primary};
+`;
+
 export const EditMediaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -272,6 +310,7 @@ export const EditMediaPage: React.FC = () => {
   const galleries = galleriesData?.myGalleries?.galleries || [];
   const media = data?.mediaItem;
   const isTextMedia = media?.textContentId && media?.textContent;
+  const isImageMedia = media?.imageId && media?.image;
 
   const {
     register,
@@ -287,6 +326,12 @@ export const EditMediaPage: React.FC = () => {
       formatting: TextFormatting.Markdown,
       visibility: Visibility.Public,
       galleryId: undefined,
+      // Image fields
+      altText: "",
+      isNsfw: false,
+      artistName: "",
+      artistUrl: "",
+      source: "",
     },
   });
 
@@ -295,6 +340,10 @@ export const EditMediaPage: React.FC = () => {
   });
 
   const [updateTextContent] = useMutation(UPDATE_TEXT_CONTENT, {
+    refetchQueries: [{ query: GET_MEDIA_ITEM, variables: { id } }],
+  });
+
+  const [updateImage] = useMutation(UPDATE_IMAGE, {
     refetchQueries: [{ query: GET_MEDIA_ITEM, variables: { id } }],
   });
 
@@ -308,6 +357,12 @@ export const EditMediaPage: React.FC = () => {
         formatting: media.textContent?.formatting || TextFormatting.Markdown,
         visibility: media.visibility,
         galleryId: media.galleryId || undefined,
+        // Image fields
+        altText: media.image?.altText || "",
+        isNsfw: media.image?.isNsfw || false,
+        artistName: "", // Note: artistName is not included in the current GET_MEDIA_ITEM query
+        artistUrl: "", // Note: artistUrl is not included in the current GET_MEDIA_ITEM query
+        source: "", // Note: source is not included in the current GET_MEDIA_ITEM query
       });
     }
   }, [media, reset]);
@@ -342,6 +397,22 @@ export const EditMediaPage: React.FC = () => {
             input: {
               content: data.content,
               formatting: data.formatting,
+            },
+          },
+        });
+      }
+
+      // Update image metadata if this is an image media item
+      if (isImageMedia && media.image) {
+        await updateImage({
+          variables: {
+            id: media.image.id,
+            input: {
+              altText: data.altText || undefined,
+              isNsfw: data.isNsfw,
+              artistName: data.artistName || undefined,
+              artistUrl: data.artistUrl || undefined,
+              source: data.source || undefined,
             },
           },
         });
@@ -536,6 +607,74 @@ export const EditMediaPage: React.FC = () => {
               {errors.content && (
                 <ErrorMessage>{errors.content.message}</ErrorMessage>
               )}
+            </FormGroup>
+          </Section>
+        )}
+
+        {/* Image Content Section - only show for image media */}
+        {isImageMedia && (
+          <Section>
+            <SectionTitle>Image Information</SectionTitle>
+
+            <FormGroup>
+              <Label htmlFor="altText">Alt Text</Label>
+              <Input
+                id="altText"
+                {...register("altText")}
+                aria-invalid={!!errors.altText}
+                placeholder="Describe the image for accessibility..."
+              />
+              {errors.altText && (
+                <ErrorMessage>{errors.altText.message}</ErrorMessage>
+              )}
+            </FormGroup>
+
+            <FormRow>
+              <FormGroup>
+                <Label htmlFor="artistName">Artist Name</Label>
+                <Input
+                  id="artistName"
+                  {...register("artistName")}
+                  aria-invalid={!!errors.artistName}
+                  placeholder="Name of the artist (if known)"
+                />
+                {errors.artistName && (
+                  <ErrorMessage>{errors.artistName.message}</ErrorMessage>
+                )}
+              </FormGroup>
+
+              <FormGroup>
+                <Label htmlFor="artistUrl">Artist URL</Label>
+                <Input
+                  id="artistUrl"
+                  {...register("artistUrl")}
+                  aria-invalid={!!errors.artistUrl}
+                  placeholder="https://artist-website.com"
+                />
+                {errors.artistUrl && (
+                  <ErrorMessage>{errors.artistUrl.message}</ErrorMessage>
+                )}
+              </FormGroup>
+            </FormRow>
+
+            <FormGroup>
+              <Label htmlFor="source">Source URL</Label>
+              <Input
+                id="source"
+                {...register("source")}
+                aria-invalid={!!errors.source}
+                placeholder="https://original-source.com"
+              />
+              {errors.source && (
+                <ErrorMessage>{errors.source.message}</ErrorMessage>
+              )}
+            </FormGroup>
+
+            <FormGroup>
+              <CheckboxLabel>
+                <Checkbox {...register("isNsfw")} />
+                Mark as NSFW (Not Safe for Work)
+              </CheckboxLabel>
             </FormGroup>
           </Section>
         )}

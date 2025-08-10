@@ -397,6 +397,21 @@ export const UPDATE_TEXT_CONTENT = gql`
   }
 `;
 
+export const UPDATE_IMAGE = gql`
+  mutation UpdateImage($id: ID!, $input: UpdateImageInput!) {
+    updateImage(id: $id, input: $input) {
+      id
+      altText
+      isNsfw
+      artistId
+      artistName
+      artistUrl
+      source
+      updatedAt
+    }
+  }
+`;
+
 export const DELETE_MEDIA = gql`
   mutation DeleteMedia($id: ID!) {
     deleteMedia(id: $id)
@@ -447,6 +462,7 @@ export {
   useCreateTextMediaMutation,
   useUpdateMediaMutation,
   useUpdateTextContentMutation,
+  useUpdateImageMutation,
   useDeleteMediaMutation,
   useAddMediaTagsMutation,
   useRemoveMediaTagsMutation,
@@ -459,6 +475,7 @@ export {
   type CreateTextMediaInput,
   type UpdateMediaInput,
   type UpdateTextContentInput,
+  type UpdateImageInput,
   type ManageMediaTagsInput,
   type MediaType,
   type TextFormatting,
@@ -476,6 +493,8 @@ export {
   type UpdateMediaMutationVariables,
   type UpdateTextContentMutation,
   type UpdateTextContentMutationVariables,
+  type UpdateImageMutation,
+  type UpdateImageMutationVariables,
   type DeleteMediaMutation,
   type DeleteMediaMutationVariables,
 } from '../generated/graphql';
