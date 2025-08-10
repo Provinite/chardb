@@ -7,7 +7,7 @@ import { useMutation } from '@apollo/client';
 import { toast } from 'react-hot-toast';
 import styled from 'styled-components';
 import { Button } from '@chardb/ui';
-import { CREATE_CHARACTER, GET_CHARACTERS } from '../graphql/characters';
+import { CREATE_CHARACTER, GET_CHARACTERS, GET_MY_CHARACTERS } from '../graphql/characters';
 
 const characterSchema = z.object({
   name: z.string()
@@ -314,7 +314,10 @@ export const CreateCharacterPage: React.FC = () => {
   });
 
   const [createCharacter] = useMutation(CREATE_CHARACTER, {
-    refetchQueries: [{ query: GET_CHARACTERS }],
+    refetchQueries: [
+      { query: GET_CHARACTERS },
+      { query: GET_MY_CHARACTERS },
+    ],
   });
 
   const isSellable = watch('isSellable');

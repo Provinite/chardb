@@ -7,7 +7,7 @@ import { useMutation } from "@apollo/client";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
-import { CREATE_TEXT_MEDIA, GET_CHARACTER_MEDIA } from "../graphql/media";
+import { CREATE_TEXT_MEDIA, GET_CHARACTER_MEDIA, GET_MY_MEDIA, GET_MEDIA } from "../graphql/media";
 import { useGetCharacterQuery } from "../graphql/characters";
 import { useGetMyGalleriesQuery } from "../graphql/galleries";
 import { TextFormatting, Visibility } from "../generated/graphql";
@@ -325,14 +325,18 @@ export const CreateTextPage: React.FC = () => {
   const galleries = galleriesData?.myGalleries?.galleries || [];
 
   const [createTextMedia] = useMutation(CREATE_TEXT_MEDIA, {
-    refetchQueries: characterId
-      ? [
-          {
-            query: GET_CHARACTER_MEDIA,
-            variables: { characterId, filters: { limit: 8 } },
-          },
-        ]
-      : [],
+    refetchQueries: [
+      { query: GET_MY_MEDIA },
+      { query: GET_MEDIA },
+      ...(characterId
+        ? [
+            {
+              query: GET_CHARACTER_MEDIA,
+              variables: { characterId, filters: { limit: 8 } },
+            },
+          ]
+        : []),
+    ],
   });
 
   const handleBackClick = () => {
