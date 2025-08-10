@@ -12,7 +12,7 @@ import { Character } from '../../characters/entities/character.entity';
 @ObjectType()
 export class GalleryCount {
   @Field(() => Int)
-  images: number;
+  media: number;
 }
 
 @ObjectType()

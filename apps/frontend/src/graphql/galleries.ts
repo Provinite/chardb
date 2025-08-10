@@ -24,6 +24,11 @@ export const GET_GALLERIES = gql`
           name
           species
         }
+        _count {
+          media
+        }
+        likesCount
+        userHasLiked
       }
       total
       hasMore
@@ -54,6 +59,11 @@ export const GET_GALLERY = gql`
         name
         species
       }
+      _count {
+        media
+      }
+      likesCount
+      userHasLiked
     }
   }
 `;
@@ -82,6 +92,11 @@ export const GET_MY_GALLERIES = gql`
           name
           species
         }
+        _count {
+          media
+        }
+        likesCount
+        userHasLiked
       }
       total
       hasMore
@@ -113,6 +128,11 @@ export const GET_USER_GALLERIES = gql`
           name
           species
         }
+        _count {
+          media
+        }
+        likesCount
+        userHasLiked
       }
       total
       hasMore
@@ -144,6 +164,11 @@ export const GET_CHARACTER_GALLERIES = gql`
           name
           species
         }
+        _count {
+          media
+        }
+        likesCount
+        userHasLiked
       }
       total
       hasMore
@@ -174,6 +199,11 @@ export const CREATE_GALLERY = gql`
         name
         species
       }
+      _count {
+        media
+      }
+      likesCount
+      userHasLiked
     }
   }
 `;
@@ -201,6 +231,11 @@ export const UPDATE_GALLERY = gql`
         name
         species
       }
+      _count {
+        media
+      }
+      likesCount
+      userHasLiked
     }
   }
 `;
@@ -218,6 +253,11 @@ export const REORDER_GALLERIES = gql`
       id
       name
       sortOrder
+      _count {
+        media
+      }
+      likesCount
+      userHasLiked
     }
   }
 `;
@@ -240,6 +280,9 @@ export const GET_LIKED_GALLERIES = gql`
       character {
         id
         name
+      }
+      _count {
+        media
       }
       likesCount
       userHasLiked

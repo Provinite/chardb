@@ -237,7 +237,7 @@ type GalleryConnection {
 }
 
 type GalleryCount {
-  images: Int!
+  media: Int!
 }
 
 input GalleryFiltersInput {

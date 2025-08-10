@@ -459,7 +459,7 @@ export const GalleriesPage: React.FC = () => {
                     </OwnerInfo>
                     <MetaContainer>
                       {gallery._count && (
-                        <ImageCount>{gallery._count.images} images</ImageCount>
+                        <ImageCount>{gallery._count.media} media</ImageCount>
                       )}
                       {gallery.character && (
                         <CharacterBadge>{gallery.character.name}</CharacterBadge>

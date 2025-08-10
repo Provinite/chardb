@@ -94,12 +94,6 @@ export class GalleryFiltersInput {
   visibility?: Visibility;
 }
 
-@InputType()
-export class GalleryImageOperationInput {
-  @Field(() => ID)
-  @IsUUID()
-  imageId: string;
-}
 
 @InputType()
 export class ReorderGalleriesInput {

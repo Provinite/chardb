@@ -8,7 +8,6 @@ import {
   CreateGalleryInput,
   UpdateGalleryInput,
   GalleryFiltersInput,
-  GalleryImageOperationInput,
   ReorderGalleriesInput,
 } from './dto/gallery.dto';
 
@@ -103,5 +102,14 @@ export class GalleriesResolver {
   ): Promise<any> {
     const characterFilters = { ...filters, characterId };
     return this.galleriesService.findAll(characterFilters, user?.id);
+  }
+
+  // Query for galleries liked by the current user
+  @Query(() => [Gallery])
+  @UseGuards(JwtAuthGuard)
+  async likedGalleries(
+    @CurrentUser() user: any,
+  ): Promise<any[]> {
+    return this.galleriesService.findLikedGalleries(user.id);
   }
 }

@@ -3,10 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
 import { GET_GALLERY, Gallery } from '../graphql/galleries';
+import { GET_MEDIA } from '../graphql/media';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { LikeButton } from '../components/LikeButton';
 import { CommentList } from '../components/CommentList';
-import { LikeableType, CommentableType } from '../generated/graphql';
+import { MediaCard } from '../components/MediaCard';
+import { LikeableType, CommentableType, Media } from '../generated/graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -286,6 +288,21 @@ const EmptyImagesState = styled.div`
   }
 `;
 
+const MediaGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+`;
+
+const MediaLoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: ${({ theme }) => theme.spacing.xl};
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
 export const GalleryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -296,7 +313,13 @@ export const GalleryPage: React.FC = () => {
     skip: !id,
   });
 
+  const { data: mediaData, loading: mediaLoading, error: mediaError } = useQuery(GET_MEDIA, {
+    variables: { filters: { galleryId: id } },
+    skip: !id,
+  });
+
   const gallery: Gallery | undefined = data?.gallery;
+  const mediaItems = mediaData?.media?.media || [];
 
   const handleBackClick = () => {
     navigate('/galleries');
@@ -394,8 +417,8 @@ export const GalleryPage: React.FC = () => {
 
         {gallery._count && (
           <ImageStats>
-            <ImageCount>{gallery._count.images}</ImageCount>
-            <ImageLabel>Images in Gallery</ImageLabel>
+            <ImageCount>{gallery._count.media}</ImageCount>
+            <ImageLabel>Media in Gallery</ImageLabel>
           </ImageStats>
         )}
 
@@ -410,10 +433,35 @@ export const GalleryPage: React.FC = () => {
           <SectionHeader>
             <SectionTitle>Gallery Content</SectionTitle>
           </SectionHeader>
-          <EmptyImagesState>
-            <h4>Gallery content has moved</h4>
-            <p>Gallery content is now managed through the character media system. Visit the character page to view and manage media.</p>
-          </EmptyImagesState>
+          {mediaLoading && (
+            <MediaLoadingContainer>
+              <LoadingSpinner />
+              <span style={{ marginLeft: '12px' }}>Loading gallery content...</span>
+            </MediaLoadingContainer>
+          )}
+          {mediaError && (
+            <EmptyImagesState>
+              <h4>Error loading gallery content</h4>
+              <p>There was an error loading the media content for this gallery. Please try refreshing the page.</p>
+            </EmptyImagesState>
+          )}
+          {!mediaLoading && !mediaError && mediaItems.length === 0 && (
+            <EmptyImagesState>
+              <h4>No media yet</h4>
+              <p>This gallery doesn't have any media content yet. Upload some images or create text content and assign it to this gallery to get started!</p>
+            </EmptyImagesState>
+          )}
+          {!mediaLoading && !mediaError && mediaItems.length > 0 && (
+            <MediaGrid>
+              {mediaItems.map((mediaItem: Media) => (
+                <MediaCard
+                  key={mediaItem.id}
+                  media={mediaItem}
+                  showOwner={true}
+                />
+              ))}
+            </MediaGrid>
+          )}
         </ContentSection>
 
         <CommentList

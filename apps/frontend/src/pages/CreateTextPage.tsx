@@ -9,6 +9,7 @@ import styled from 'styled-components';
 import { Button } from '@chardb/ui';
 import { CREATE_TEXT_MEDIA, GET_CHARACTER_MEDIA } from '../graphql/media';
 import { GET_CHARACTER } from '../graphql/characters';
+import { GET_MY_GALLERIES, Gallery } from '../graphql/galleries';
 import { TextFormatting, Visibility } from '../generated/graphql';
 // import { TextEditor } from '../components/TextEditor';
 import { useAuth } from '../contexts/AuthContext';
@@ -303,6 +304,19 @@ export const CreateTextPage: React.FC = () => {
     skip: !characterId,
   });
 
+  // Get user's galleries for selection
+  const { data: galleriesData } = useQuery(GET_MY_GALLERIES, {
+    variables: { 
+      filters: { 
+        limit: 100, // Get all user galleries for selection
+        offset: 0 
+      } 
+    },
+    skip: !user,
+  });
+
+  const galleries = galleriesData?.myGalleries?.galleries || [];
+
   const [createTextMedia] = useMutation(CREATE_TEXT_MEDIA, {
     refetchQueries: characterId 
       ? [{ 
@@ -452,6 +466,36 @@ export const CreateTextPage: React.FC = () => {
                 {errors.visibility && <ErrorMessage>{errors.visibility.message}</ErrorMessage>}
               </FormGroup>
             </FormRow>
+
+            <FormGroup>
+              <Label htmlFor="galleryId">Gallery (Optional)</Label>
+              {galleries.length === 0 ? (
+                <>
+                  <Select id="galleryId" disabled>
+                    <option>No galleries yet</option>
+                  </Select>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <a href="/gallery/create" style={{ fontSize: '0.875rem', color: 'var(--color-primary)' }}>
+                      Create your first gallery
+                    </a>
+                  </div>
+                </>
+              ) : (
+                <Select
+                  id="galleryId"
+                  {...register('galleryId')}
+                  aria-invalid={!!errors.galleryId}
+                >
+                  <option value="">Select a gallery...</option>
+                  {galleries.map((gallery: Gallery) => (
+                    <option key={gallery.id} value={gallery.id}>
+                      {gallery.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+              {errors.galleryId && <ErrorMessage>{errors.galleryId.message}</ErrorMessage>}
+            </FormGroup>
 
             <FormGroup>
               <Label htmlFor="content">Content *</Label>
