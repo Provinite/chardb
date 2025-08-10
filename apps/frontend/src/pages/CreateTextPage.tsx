@@ -1,30 +1,33 @@
-import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useMutation, useQuery } from '@apollo/client';
-import { toast } from 'react-hot-toast';
-import styled from 'styled-components';
-import { Button } from '@chardb/ui';
-import { CREATE_TEXT_MEDIA, GET_CHARACTER_MEDIA } from '../graphql/media';
-import { GET_CHARACTER } from '../graphql/characters';
-import { GET_MY_GALLERIES, Gallery } from '../graphql/galleries';
-import { TextFormatting, Visibility } from '../generated/graphql';
+import React, { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useMutation } from "@apollo/client";
+import { toast } from "react-hot-toast";
+import styled from "styled-components";
+import { Button } from "@chardb/ui";
+import { CREATE_TEXT_MEDIA, GET_CHARACTER_MEDIA } from "../graphql/media";
+import { useGetCharacterQuery } from "../graphql/characters";
+import { useGetMyGalleriesQuery } from "../graphql/galleries";
+import { TextFormatting, Visibility } from "../generated/graphql";
 // import { TextEditor } from '../components/TextEditor';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from "../contexts/AuthContext";
 
 const textMediaSchema = z.object({
-  title: z.string()
-    .min(1, 'Title is required')
-    .max(255, 'Title must be less than 255 characters'),
-  description: z.string()
-    .max(1000, 'Description must be less than 1000 characters')
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(255, "Title must be less than 255 characters"),
+  description: z
+    .string()
+    .max(1000, "Description must be less than 1000 characters")
     .optional()
-    .or(z.literal('')),
-  content: z.string()
-    .min(1, 'Content is required')
-    .max(50000, 'Content must be less than 50,000 characters'),
+    .or(z.literal("")),
+  content: z
+    .string()
+    .min(1, "Content is required")
+    .max(50000, "Content must be less than 50,000 characters"),
   formatting: z.nativeEnum(TextFormatting),
   visibility: z.nativeEnum(Visibility),
   characterId: z.string().optional(),
@@ -64,7 +67,7 @@ const BackButton = styled.button`
   }
 
   &::before {
-    content: '←';
+    content: "←";
     font-weight: bold;
   }
 `;
@@ -265,8 +268,12 @@ const LoadingSpinner = styled.div`
   animation: spin 1s linear infinite;
 
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
   }
 `;
 
@@ -276,8 +283,8 @@ export const CreateTextPage: React.FC = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const characterId = searchParams.get('character');
-  const galleryId = searchParams.get('gallery');
+  const characterId = searchParams.get("character");
+  const galleryId = searchParams.get("gallery");
 
   const {
     register,
@@ -299,18 +306,18 @@ export const CreateTextPage: React.FC = () => {
   // const watchFormatting = watch('formatting');
 
   // Get character info if characterId is provided
-  const { data: characterData } = useQuery(GET_CHARACTER, {
+  const { data: characterData } = useGetCharacterQuery({
     variables: { id: characterId! },
     skip: !characterId,
   });
 
   // Get user's galleries for selection
-  const { data: galleriesData } = useQuery(GET_MY_GALLERIES, {
-    variables: { 
-      filters: { 
+  const { data: galleriesData } = useGetMyGalleriesQuery({
+    variables: {
+      filters: {
         limit: 100, // Get all user galleries for selection
-        offset: 0 
-      } 
+        offset: 0,
+      },
     },
     skip: !user,
   });
@@ -318,11 +325,13 @@ export const CreateTextPage: React.FC = () => {
   const galleries = galleriesData?.myGalleries?.galleries || [];
 
   const [createTextMedia] = useMutation(CREATE_TEXT_MEDIA, {
-    refetchQueries: characterId 
-      ? [{ 
-          query: GET_CHARACTER_MEDIA, 
-          variables: { characterId, filters: { limit: 8 } } 
-        }]
+    refetchQueries: characterId
+      ? [
+          {
+            query: GET_CHARACTER_MEDIA,
+            variables: { characterId, filters: { limit: 8 } },
+          },
+        ]
       : [],
   });
 
@@ -332,13 +341,13 @@ export const CreateTextPage: React.FC = () => {
     } else if (galleryId) {
       navigate(`/gallery/${galleryId}`);
     } else {
-      navigate('/');
+      navigate("/");
     }
   };
 
   const onSubmit = async (data: TextMediaForm) => {
     if (!user) {
-      toast.error('You must be logged in to create content');
+      toast.error("You must be logged in to create content");
       return;
     }
 
@@ -361,8 +370,8 @@ export const CreateTextPage: React.FC = () => {
         },
       });
 
-      toast.success('Text content created successfully!');
-      
+      toast.success("Text content created successfully!");
+
       // Navigate to the created media or back to character
       if (characterId) {
         navigate(`/character/${characterId}`);
@@ -372,8 +381,12 @@ export const CreateTextPage: React.FC = () => {
         navigate(`/media/${result.data.createTextMedia.id}`);
       }
     } catch (error) {
-      console.error('Error creating text media:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create text content. Please try again.');
+      console.error("Error creating text media:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to create text content. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -390,10 +403,14 @@ export const CreateTextPage: React.FC = () => {
           <LoadingSpinner />
         </LoadingOverlay>
       )}
-      
+
       <Container>
         <BackButton onClick={handleBackClick}>
-          {characterId ? 'Back to Character' : galleryId ? 'Back to Gallery' : 'Back'}
+          {characterId
+            ? "Back to Character"
+            : galleryId
+              ? "Back to Gallery"
+              : "Back"}
         </BackButton>
 
         <Title>Create Text Content</Title>
@@ -401,7 +418,9 @@ export const CreateTextPage: React.FC = () => {
         {characterData?.character && (
           <CharacterInfo>
             <CharacterName>{characterData.character.name}</CharacterName>
-            <CharacterNote>This text content will be associated with this character</CharacterNote>
+            <CharacterNote>
+              This text content will be associated with this character
+            </CharacterNote>
           </CharacterInfo>
         )}
 
@@ -409,61 +428,75 @@ export const CreateTextPage: React.FC = () => {
           {/* Basic Information */}
           <Section>
             <SectionTitle>Basic Information</SectionTitle>
-            
+
             <FormGroup>
               <Label htmlFor="title">Title *</Label>
               <Input
                 id="title"
-                {...register('title')}
+                {...register("title")}
                 aria-invalid={!!errors.title}
                 placeholder="Enter a title for your text content"
               />
-              {errors.title && <ErrorMessage>{errors.title.message}</ErrorMessage>}
+              {errors.title && (
+                <ErrorMessage>{errors.title.message}</ErrorMessage>
+              )}
             </FormGroup>
 
             <FormGroup>
               <Label htmlFor="description">Description</Label>
               <TextArea
                 id="description"
-                {...register('description')}
+                {...register("description")}
                 aria-invalid={!!errors.description}
                 placeholder="Optional description or summary of your content..."
                 rows={3}
               />
-              {errors.description && <ErrorMessage>{errors.description.message}</ErrorMessage>}
+              {errors.description && (
+                <ErrorMessage>{errors.description.message}</ErrorMessage>
+              )}
             </FormGroup>
           </Section>
 
           {/* Content */}
           <Section>
             <SectionTitle>Content</SectionTitle>
-            
+
             <FormRow>
               <FormGroup>
                 <Label htmlFor="formatting">Formatting</Label>
                 <Select
                   id="formatting"
-                  {...register('formatting')}
+                  {...register("formatting")}
                   aria-invalid={!!errors.formatting}
                 >
                   <option value={TextFormatting.Markdown}>Markdown</option>
                   <option value={TextFormatting.Plaintext}>Plain Text</option>
                 </Select>
-                {errors.formatting && <ErrorMessage>{errors.formatting.message}</ErrorMessage>}
+                {errors.formatting && (
+                  <ErrorMessage>{errors.formatting.message}</ErrorMessage>
+                )}
               </FormGroup>
 
               <FormGroup>
                 <Label htmlFor="visibility">Visibility</Label>
                 <Select
                   id="visibility"
-                  {...register('visibility')}
+                  {...register("visibility")}
                   aria-invalid={!!errors.visibility}
                 >
-                  <option value={Visibility.Public}>Public - Visible to everyone</option>
-                  <option value={Visibility.Unlisted}>Unlisted - Only visible with direct link</option>
-                  <option value={Visibility.Private}>Private - Only visible to you</option>
+                  <option value={Visibility.Public}>
+                    Public - Visible to everyone
+                  </option>
+                  <option value={Visibility.Unlisted}>
+                    Unlisted - Only visible with direct link
+                  </option>
+                  <option value={Visibility.Private}>
+                    Private - Only visible to you
+                  </option>
                 </Select>
-                {errors.visibility && <ErrorMessage>{errors.visibility.message}</ErrorMessage>}
+                {errors.visibility && (
+                  <ErrorMessage>{errors.visibility.message}</ErrorMessage>
+                )}
               </FormGroup>
             </FormRow>
 
@@ -474,8 +507,14 @@ export const CreateTextPage: React.FC = () => {
                   <Select id="galleryId" disabled>
                     <option>No galleries yet</option>
                   </Select>
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <a href="/gallery/create" style={{ fontSize: '0.875rem', color: 'var(--color-primary)' }}>
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <a
+                      href="/gallery/create"
+                      style={{
+                        fontSize: "0.875rem",
+                        color: "var(--color-primary)",
+                      }}
+                    >
                       Create your first gallery
                     </a>
                   </div>
@@ -483,30 +522,34 @@ export const CreateTextPage: React.FC = () => {
               ) : (
                 <Select
                   id="galleryId"
-                  {...register('galleryId')}
+                  {...register("galleryId")}
                   aria-invalid={!!errors.galleryId}
                 >
                   <option value="">Select a gallery...</option>
-                  {galleries.map((gallery: Gallery) => (
+                  {galleries.map((gallery) => (
                     <option key={gallery.id} value={gallery.id}>
                       {gallery.name}
                     </option>
                   ))}
                 </Select>
               )}
-              {errors.galleryId && <ErrorMessage>{errors.galleryId.message}</ErrorMessage>}
+              {errors.galleryId && (
+                <ErrorMessage>{errors.galleryId.message}</ErrorMessage>
+              )}
             </FormGroup>
 
             <FormGroup>
               <Label htmlFor="content">Content *</Label>
               <TextArea
                 id="content"
-                {...register('content')}
+                {...register("content")}
                 aria-invalid={!!errors.content}
                 placeholder="Write your story, character description, backstory, or any other text content..."
-                style={{ minHeight: '400px' }}
+                style={{ minHeight: "400px" }}
               />
-              {errors.content && <ErrorMessage>{errors.content.message}</ErrorMessage>}
+              {errors.content && (
+                <ErrorMessage>{errors.content.message}</ErrorMessage>
+              )}
             </FormGroup>
           </Section>
 
@@ -515,7 +558,7 @@ export const CreateTextPage: React.FC = () => {
               Cancel
             </CancelButton>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Text Content'}
+              {isSubmitting ? "Creating..." : "Create Text Content"}
             </Button>
           </ButtonRow>
         </Form>
