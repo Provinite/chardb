@@ -1,6 +1,7 @@
 import { Resolver, Query, Mutation, Args, ID, Context, ResolveField, Parent, Int } from '@nestjs/graphql';
 import { UseGuards, ForbiddenException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { CharactersService } from './characters.service';
 import { Character as CharacterEntity, CharacterConnection } from './entities/character.entity';
@@ -33,6 +34,7 @@ export class CharactersResolver {
   }
 
   @Query(() => CharacterConnection)
+  @UseGuards(OptionalJwtAuthGuard)
   async characters(
     @Args('filters', { nullable: true }) filters?: CharacterFiltersInput,
     @CurrentUser() user?: any,
@@ -41,6 +43,7 @@ export class CharactersResolver {
   }
 
   @Query(() => CharacterEntity)
+  @UseGuards(OptionalJwtAuthGuard)
   async character(
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user?: any,
@@ -120,6 +123,7 @@ export class CharactersResolver {
 
   // Query for characters by specific user
   @Query(() => CharacterConnection)
+  @UseGuards(OptionalJwtAuthGuard)
   async userCharacters(
     @Args('userId', { type: () => ID }) userId: string,
     @Args('filters', { nullable: true }) filters?: CharacterFiltersInput,
