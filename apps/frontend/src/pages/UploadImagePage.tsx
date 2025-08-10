@@ -238,6 +238,98 @@ const ErrorMessage = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
 `;
 
+const SuccessContainer = styled.div`
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing.xl};
+  background: ${({ theme }) => theme.colors.surface};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  border: 1px solid ${({ theme }) => theme.colors.success};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+`;
+
+const SuccessTitle = styled.h2`
+  color: ${({ theme }) => theme.colors.success};
+  font-size: ${({ theme }) => theme.typography.fontSize.xl};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const SuccessMessage = styled.p`
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
+`;
+
+const UploadedImagesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+`;
+
+const UploadedImageCard = styled.div`
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadows.md};
+  }
+`;
+
+const UploadedImagePreview = styled.img`
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+`;
+
+const UploadedImageInfo = styled.div`
+  padding: ${({ theme }) => theme.spacing.sm};
+`;
+
+const UploadedImageName = styled.div`
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: ${({ theme }) => theme.spacing.xs};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const SuccessActions = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.md};
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+`;
+
+const SuccessNavLinks = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.md};
+  justify-content: center;
+  flex-wrap: wrap;
+  
+  a {
+    color: ${({ theme }) => theme.colors.primary};
+    text-decoration: none;
+    font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
 interface UploadFormData {
   description: string;
   altText: string;
@@ -260,6 +352,14 @@ interface UploadFormData {
   artistLabel: string;
 }
 
+interface UploadedImage {
+  id: string;
+  url: string;
+  thumbnailUrl?: string;
+  filename: string;
+  altText?: string;
+}
+
 export const UploadImagePage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -267,6 +367,8 @@ export const UploadImagePage: React.FC = () => {
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   const [formData, setFormData] = useState<UploadFormData>({
     description: '',
     altText: '',
@@ -377,14 +479,34 @@ export const UploadImagePage: React.FC = () => {
         return response.json();
       });
 
-      await Promise.all(uploadPromises);
+      const uploadResults = await Promise.all(uploadPromises);
       
-      // Navigate to the gallery if one was selected, otherwise to user's images
-      if (formData.galleryId) {
-        navigate(`/gallery/${formData.galleryId}`);
-      } else {
-        navigate('/dashboard');
-      }
+      // Convert upload results to UploadedImage format
+      const images: UploadedImage[] = uploadResults.map((result) => ({
+        id: result.id,
+        url: result.url,
+        thumbnailUrl: result.thumbnailUrl,
+        filename: result.filename || result.originalFilename,
+        altText: result.altText,
+      }));
+      
+      // Show success state instead of navigating away
+      setUploadedImages(images);
+      setUploadSuccess(true);
+      setFiles([]); // Clear the files for next upload
+      
+      // Reset form data except character/gallery selection for convenience
+      setFormData(prev => ({
+        ...prev,
+        description: '',
+        altText: '',
+        nsfwNudity: false,
+        nsfwGore: false,
+        nsfwSensitive: false,
+        sensitiveContentDescription: '',
+        artistLink: '',
+        artistLabel: '',
+      }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
@@ -394,6 +516,76 @@ export const UploadImagePage: React.FC = () => {
 
   const handleCancel = () => {
     navigate(-1);
+  };
+
+  const handleUploadMore = () => {
+    setUploadSuccess(false);
+    setUploadedImages([]);
+    setError('');
+  };
+
+  const renderSuccessState = () => {
+    const selectedCharacter = characters.find((c: any) => c.id === formData.characterId);
+    const selectedGallery = galleries.find((g: any) => g.id === formData.galleryId);
+    
+    return (
+      <SuccessContainer>
+        <SuccessTitle>
+          ✅ Upload Successful!
+        </SuccessTitle>
+        <SuccessMessage>
+          {uploadedImages.length === 1 
+            ? 'Your image has been uploaded successfully.'
+            : `${uploadedImages.length} images have been uploaded successfully.`
+          }
+        </SuccessMessage>
+        
+        <UploadedImagesGrid>
+          {uploadedImages.map((image) => (
+            <UploadedImageCard key={image.id}>
+              <Link to={`/media/${image.id}`}>
+                <UploadedImagePreview
+                  src={image.thumbnailUrl || image.url}
+                  alt={image.altText || image.filename}
+                />
+              </Link>
+              <UploadedImageInfo>
+                <UploadedImageName title={image.filename}>
+                  {image.filename}
+                </UploadedImageName>
+              </UploadedImageInfo>
+            </UploadedImageCard>
+          ))}
+        </UploadedImagesGrid>
+        
+        <SuccessActions>
+          <Button variant="primary" onClick={handleUploadMore}>
+            Upload More Images
+          </Button>
+          <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+            Go to Dashboard
+          </Button>
+        </SuccessActions>
+        
+        <SuccessNavLinks>
+          {uploadedImages.length === 1 && (
+            <Link to={`/media/${uploadedImages[0].id}`}>
+              View Image
+            </Link>
+          )}
+          {selectedCharacter && (
+            <Link to={`/character/${selectedCharacter.id}`}>
+              View {selectedCharacter.name}
+            </Link>
+          )}
+          {selectedGallery && (
+            <Link to={`/gallery/${selectedGallery.id}`}>
+              View {selectedGallery.name} Gallery
+            </Link>
+          )}
+        </SuccessNavLinks>
+      </SuccessContainer>
+    );
   };
 
   if (!user) {
@@ -424,7 +616,10 @@ export const UploadImagePage: React.FC = () => {
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
 
-      <MainLayout>
+      {uploadSuccess ? (
+        renderSuccessState()
+      ) : (
+        <MainLayout>
         <MainContent>
           <Form onSubmit={(e) => e.preventDefault()}>
             <Section>
@@ -432,8 +627,6 @@ export const UploadImagePage: React.FC = () => {
               <ImageUpload
                 files={files}
                 onFilesChange={setFiles}
-                onUpload={handleUpload}
-                uploading={uploading}
                 disabled={uploading}
               />
             </Section>
@@ -666,6 +859,7 @@ export const UploadImagePage: React.FC = () => {
           </div>
         </Sidebar>
       </MainLayout>
+      )}
     </Container>
   );
 };

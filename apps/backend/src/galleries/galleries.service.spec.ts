@@ -42,7 +42,6 @@ describe('GalleriesService', () => {
         updatedAt: new Date(),
         owner: { id: userId, username: 'testuser' },
         character: null,
-        images: [],
       };
 
       db.gallery.create.mockResolvedValue(mockGallery);
@@ -57,10 +56,6 @@ describe('GalleriesService', () => {
         include: {
           owner: true,
           character: true,
-          images: {
-            orderBy: { createdAt: 'desc' },
-            take: 10,
-          },
         },
       });
       expect(result).toEqual(mockGallery);
@@ -299,120 +294,7 @@ describe('GalleriesService', () => {
     });
   });
 
-  describe('addImage', () => {
-    it('should add image to gallery successfully', async () => {
-      const galleryId = 'gallery1';
-      const imageId = 'img1';
-      const userId = 'user1';
-
-      const mockGallery = {
-        id: galleryId,
-        ownerId: userId,
-        visibility: Visibility.PUBLIC,
-      };
-
-      const mockImage = {
-        id: imageId,
-        uploaderId: userId,
-        galleryId: null,
-      };
-
-      const mockUpdatedGallery = {
-        ...mockGallery,
-        images: [{ ...mockImage, galleryId }],
-      };
-
-      db.gallery.findUnique.mockResolvedValue(mockGallery);
-      db.image.findUnique.mockResolvedValue(mockImage);
-      db.image.update.mockResolvedValue({ ...mockImage, galleryId });
-
-      // Mock the findOne call for returning updated gallery
-      const findOneSpy = jest.spyOn(service, 'findOne').mockResolvedValue(mockUpdatedGallery as any);
-
-      const result = await service.addImage(galleryId, imageId, userId);
-
-      expect(db.image.update).toHaveBeenCalledWith({
-        where: { id: imageId },
-        data: { galleryId },
-      });
-      expect(findOneSpy).toHaveBeenCalledWith(galleryId, userId);
-      expect(result).toEqual(mockUpdatedGallery);
-
-      findOneSpy.mockRestore();
-    });
-
-    it('should throw ForbiddenException when non-owner tries to add image', async () => {
-      const galleryId = 'gallery1';
-      const imageId = 'img1';
-      const userId = 'user2';
-
-      const mockGallery = {
-        id: galleryId,
-        ownerId: 'user1', // Different user
-        visibility: Visibility.PUBLIC,
-      };
-
-      const mockImage = {
-        id: imageId,
-        uploaderId: 'user2',
-        galleryId: null,
-      };
-
-      db.gallery.findUnique.mockResolvedValue(mockGallery);
-      db.image.findUnique.mockResolvedValue(mockImage);
-
-      await expect(service.addImage(galleryId, imageId, userId))
-        .rejects.toThrow(ForbiddenException);
-    });
-
-    it('should throw ForbiddenException when trying to add someone elses image', async () => {
-      const galleryId = 'gallery1';
-      const imageId = 'img1';
-      const userId = 'user1';
-
-      const mockGallery = {
-        id: galleryId,
-        ownerId: userId,
-        visibility: Visibility.PUBLIC,
-      };
-
-      const mockImage = {
-        id: imageId,
-        uploaderId: 'user2', // Different user
-        galleryId: null,
-      };
-
-      db.gallery.findUnique.mockResolvedValue(mockGallery);
-      db.image.findUnique.mockResolvedValue(mockImage);
-
-      await expect(service.addImage(galleryId, imageId, userId))
-        .rejects.toThrow(ForbiddenException);
-    });
-
-    it('should throw ForbiddenException when image is already in gallery', async () => {
-      const galleryId = 'gallery1';
-      const imageId = 'img1';
-      const userId = 'user1';
-
-      const mockGallery = {
-        id: galleryId,
-        ownerId: userId,
-        visibility: Visibility.PUBLIC,
-      };
-
-      const mockImage = {
-        id: imageId,
-        uploaderId: userId,
-        galleryId: galleryId, // Already in this gallery
-      };
-
-      db.gallery.findUnique.mockResolvedValue(mockGallery);
-      db.image.findUnique.mockResolvedValue(mockImage);
-
-      await expect(service.addImage(galleryId, imageId, userId))
-        .rejects.toThrow(ForbiddenException);
-    });
-  });
+  // NOTE: addImage and removeImage tests removed - operations now handled through Media system
 
   describe('reorderGalleries', () => {
     it('should reorder galleries successfully', async () => {
@@ -431,7 +313,6 @@ describe('GalleriesService', () => {
         sortOrder: index,
         owner: { id: userId, username: 'testuser' },
         character: null,
-        _count: { images: 0 },
       }));
 
       db.gallery.findMany.mockResolvedValueOnce(mockGalleries).mockResolvedValueOnce(mockReorderedGalleries);

@@ -311,7 +311,7 @@ export const FeedPage: React.FC = () => {
         return `/gallery/${activity.entityId}`;
       case 'IMAGE_UPLOADED':
       case 'IMAGE_LIKED':
-        return `/image/${activity.entityId}`;
+        return `/media/${activity.entityId}`;
       default:
         return '#';
     }

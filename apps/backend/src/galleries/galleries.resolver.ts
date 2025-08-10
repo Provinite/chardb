@@ -8,7 +8,6 @@ import {
   CreateGalleryInput,
   UpdateGalleryInput,
   GalleryFiltersInput,
-  GalleryImageOperationInput,
   ReorderGalleriesInput,
 } from './dto/gallery.dto';
 
@@ -60,25 +59,8 @@ export class GalleriesResolver {
     return this.galleriesService.remove(id, user.id);
   }
 
-  @Mutation(() => Gallery)
-  @UseGuards(JwtAuthGuard)
-  async addImageToGallery(
-    @Args('galleryId', { type: () => ID }) galleryId: string,
-    @Args('input') input: GalleryImageOperationInput,
-    @CurrentUser() user: any,
-  ): Promise<any> {
-    return this.galleriesService.addImage(galleryId, input.imageId, user.id);
-  }
+  // NOTE: Image-gallery operations now handled through Media system
 
-  @Mutation(() => Gallery)
-  @UseGuards(JwtAuthGuard)
-  async removeImageFromGallery(
-    @Args('galleryId', { type: () => ID }) galleryId: string,
-    @Args('input') input: GalleryImageOperationInput,
-    @CurrentUser() user: any,
-  ): Promise<any> {
-    return this.galleriesService.removeImage(galleryId, input.imageId, user.id);
-  }
 
   @Mutation(() => [Gallery])
   @UseGuards(JwtAuthGuard)
@@ -120,5 +102,14 @@ export class GalleriesResolver {
   ): Promise<any> {
     const characterFilters = { ...filters, characterId };
     return this.galleriesService.findAll(characterFilters, user?.id);
+  }
+
+  // Query for galleries liked by the current user
+  @Query(() => [Gallery])
+  @UseGuards(JwtAuthGuard)
+  async likedGalleries(
+    @CurrentUser() user: any,
+  ): Promise<any[]> {
+    return this.galleriesService.findLikedGalleries(user.id);
   }
 }

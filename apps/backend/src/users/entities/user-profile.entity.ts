@@ -2,7 +2,7 @@ import { ObjectType, Field, Int } from '@nestjs/graphql';
 import { User } from './user.entity';
 import { Character } from '../../characters/entities/character.entity';
 import { Gallery } from '../../galleries/entities/gallery.entity';
-import { Image } from '../../images/entities/image.entity';
+import { Media } from '../../media/entities/media.entity';
 
 @ObjectType()
 export class UserStats {
@@ -42,8 +42,8 @@ export class UserProfile {
   @Field(() => [Gallery])
   recentGalleries: Gallery[];
 
-  @Field(() => [Image])
-  recentImages: Image[];
+  @Field(() => [Media])
+  recentMedia: Media[];
 
   @Field(() => [Character])
   featuredCharacters: Character[];

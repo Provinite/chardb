@@ -122,7 +122,7 @@ export const DashboardPage: React.FC = () => {
             Create Gallery
           </Button>
           <Button as={Link} to="/upload" variant="outline">
-            Upload Image
+            Create Media
           </Button>
           <Button as={Link} to="/characters" variant="ghost">
             Browse Characters
@@ -159,13 +159,13 @@ export const DashboardPage: React.FC = () => {
         </DashboardCard>
 
         <DashboardCard>
-          <CardTitle>My Images</CardTitle>
+          <CardTitle>My Media</CardTitle>
           <CardDescription>
-            Browse all your uploaded images and artwork. Organize them into galleries
+            Browse all your uploaded images and text content. Organize them into galleries
             or assign them to specific characters.
           </CardDescription>
-          <Button as={Link} to="/my/images" variant="outline" size="sm">
-            View Images
+          <Button as={Link} to="/my/media" variant="outline" size="sm">
+            View Media
           </Button>
         </DashboardCard>
 
@@ -214,13 +214,13 @@ export const DashboardPage: React.FC = () => {
         </DashboardCard>
 
         <DashboardCard>
-          <CardTitle>Liked Images</CardTitle>
+          <CardTitle>Liked Media</CardTitle>
           <CardDescription>
-            Access your collection of liked artwork and images. Revisit the
+            Access your collection of liked media and content. Revisit the
             pieces that captured your imagination.
           </CardDescription>
-          <Button as={Link} to="/liked/images" variant="outline" size="sm">
-            View Liked Images
+          <Button as={Link} to="/liked/media" variant="outline" size="sm">
+            View Liked Media
           </Button>
         </DashboardCard>
 

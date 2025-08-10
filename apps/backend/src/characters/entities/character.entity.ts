@@ -3,11 +3,12 @@ import { Visibility } from '@chardb/database';
 import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../shared/entities/tag.entity';
 import { Image } from '../../images/entities/image.entity';
+import { Media } from '../../media/entities/media.entity';
 
 @ObjectType()
 export class CharacterCount {
   @Field(() => Int)
-  images: number;
+  media: number;
 }
 
 @ObjectType()
@@ -42,8 +43,8 @@ export class Character {
   @Field(() => ID, { nullable: true })
   creatorId?: string;
 
-  @Field(() => ID, { nullable: true })
-  mainImageId?: string;
+  @Field(() => ID, { nullable: true, description: 'ID of the main media item for this character' })
+  mainMediaId?: string;
 
   @Field(() => Visibility)
   visibility: Visibility;
@@ -76,8 +77,8 @@ export class Character {
   @Field(() => User, { nullable: true })
   creator?: User;
 
-  @Field(() => Image, { nullable: true })
-  mainImage?: Image;
+  @Field(() => Media, { nullable: true, description: 'Main media item for this character (image or text)' })
+  mainMedia?: Media;
 
   @Field(() => [CharacterTag], { nullable: true })
   tags_rel?: CharacterTag[];
@@ -85,8 +86,6 @@ export class Character {
   @Field(() => CharacterCount, { nullable: true })
   _count?: CharacterCount;
 
-  @Field(() => [Image], { nullable: true })
-  images?: Image[];
 
   // Social features
   @Field(() => Int)

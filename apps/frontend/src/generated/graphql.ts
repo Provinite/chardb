@@ -62,12 +62,13 @@ export type Character = {
   description: Maybe<Scalars['String']['output']>;
   gender: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  images: Maybe<Array<Image>>;
   isSellable: Scalars['Boolean']['output'];
   isTradeable: Scalars['Boolean']['output'];
   likesCount: Scalars['Int']['output'];
-  mainImage: Maybe<Image>;
-  mainImageId: Maybe<Scalars['ID']['output']>;
+  /** Main media item for this character (image or text) */
+  mainMedia: Maybe<Media>;
+  /** ID of the main media item for this character */
+  mainMediaId: Maybe<Scalars['ID']['output']>;
   name: Scalars['String']['output'];
   owner: User;
   ownerId: Scalars['ID']['output'];
@@ -81,11 +82,6 @@ export type Character = {
   visibility: Visibility;
 };
 
-
-export type CharacterImagesArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
 export type CharacterConnection = {
   __typename?: 'CharacterConnection';
   characters: Array<Character>;
@@ -95,7 +91,7 @@ export type CharacterConnection = {
 
 export type CharacterCount = {
   __typename?: 'CharacterCount';
-  images: Scalars['Int']['output'];
+  media: Scalars['Int']['output'];
 };
 
 export type CharacterFiltersInput = {
@@ -199,6 +195,24 @@ export type CreateGalleryInput = {
   visibility?: Visibility;
 };
 
+/** Input type for creating new text media */
+export type CreateTextMediaInput = {
+  /** Optional character to associate with this media */
+  characterId?: InputMaybe<Scalars['ID']['input']>;
+  /** The actual text content */
+  content: Scalars['String']['input'];
+  /** Optional description for the text media */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Text formatting type (plaintext or markdown) */
+  formatting?: TextFormatting;
+  /** Optional gallery to add this media to */
+  galleryId?: InputMaybe<Scalars['ID']['input']>;
+  /** Title for the text media */
+  title: Scalars['String']['input'];
+  /** Visibility setting for the media */
+  visibility?: Visibility;
+};
+
 export type FollowListResult = {
   __typename?: 'FollowListResult';
   followers: Array<User>;
@@ -229,7 +243,6 @@ export type Gallery = {
   createdAt: Scalars['DateTime']['output'];
   description: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  images: Array<Image>;
   likesCount: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   owner: User;
@@ -249,7 +262,7 @@ export type GalleryConnection = {
 
 export type GalleryCount = {
   __typename?: 'GalleryCount';
-  images: Scalars['Int']['output'];
+  media: Scalars['Int']['output'];
 };
 
 export type GalleryFiltersInput = {
@@ -260,10 +273,6 @@ export type GalleryFiltersInput = {
   visibility?: InputMaybe<Visibility>;
 };
 
-export type GalleryImageOperationInput = {
-  imageId: Scalars['ID']['input'];
-};
-
 export type Image = {
   __typename?: 'Image';
   altText: Maybe<Scalars['String']['output']>;
@@ -271,14 +280,9 @@ export type Image = {
   artistId: Maybe<Scalars['ID']['output']>;
   artistName: Maybe<Scalars['String']['output']>;
   artistUrl: Maybe<Scalars['String']['output']>;
-  character: Maybe<Character>;
-  characterId: Maybe<Scalars['ID']['output']>;
   createdAt: Scalars['DateTime']['output'];
-  description: Maybe<Scalars['String']['output']>;
   fileSize: Scalars['Int']['output'];
   filename: Scalars['String']['output'];
-  gallery: Maybe<Gallery>;
-  galleryId: Maybe<Scalars['ID']['output']>;
   height: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   isNsfw: Scalars['Boolean']['output'];
@@ -294,7 +298,6 @@ export type Image = {
   uploaderId: Scalars['ID']['output'];
   url: Scalars['String']['output'];
   userHasLiked: Scalars['Boolean']['output'];
-  visibility: Visibility;
   width: Scalars['Int']['output'];
 };
 
@@ -307,14 +310,11 @@ export type ImageConnection = {
 
 export type ImageFiltersInput = {
   artistId?: InputMaybe<Scalars['ID']['input']>;
-  characterId?: InputMaybe<Scalars['ID']['input']>;
-  galleryId?: InputMaybe<Scalars['ID']['input']>;
   isNsfw?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: Scalars['Int']['input'];
   offset?: Scalars['Int']['input'];
   search?: InputMaybe<Scalars['String']['input']>;
   uploaderId?: InputMaybe<Scalars['ID']['input']>;
-  visibility?: InputMaybe<Visibility>;
 };
 
 export type ImageTag = {
@@ -342,7 +342,8 @@ export enum LikeableType {
   Character = 'CHARACTER',
   Comment = 'COMMENT',
   Gallery = 'GALLERY',
-  Image = 'IMAGE'
+  Image = 'IMAGE',
+  Media = 'MEDIA'
 }
 
 export type LoginInput = {
@@ -354,30 +355,132 @@ export type ManageImageTagsInput = {
   tagNames: Array<Scalars['String']['input']>;
 };
 
+/** Input type for managing media tags */
+export type ManageMediaTagsInput = {
+  /** Array of tag names to add or remove */
+  tagNames: Array<Scalars['String']['input']>;
+};
+
 export type ManageTagsInput = {
   tagNames: Array<Scalars['String']['input']>;
 };
+
+/** Polymorphic media that can represent both images and text content */
+export type Media = {
+  __typename?: 'Media';
+  /** The character this media is associated with, if any */
+  character: Maybe<Character>;
+  /** Optional ID of the character this media is associated with */
+  characterId: Maybe<Scalars['ID']['output']>;
+  /** When the media was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** Optional description for the media */
+  description: Maybe<Scalars['String']['output']>;
+  /** The gallery this media belongs to, if any */
+  gallery: Maybe<Gallery>;
+  /** Optional ID of the gallery this media belongs to */
+  galleryId: Maybe<Scalars['ID']['output']>;
+  /** Unique identifier for the media */
+  id: Scalars['ID']['output'];
+  /** Image content (populated for image media) */
+  image: Maybe<Image>;
+  /** Foreign key to image content (null for text media) */
+  imageId: Maybe<Scalars['ID']['output']>;
+  /** Number of likes this media has received */
+  likesCount: Scalars['Float']['output'];
+  /** The user who owns this media */
+  owner: User;
+  /** ID of the user who owns this media */
+  ownerId: Scalars['ID']['output'];
+  /** Tag relationships for this media */
+  tags_rel: Maybe<Array<MediaTag>>;
+  /** Text content (populated for text media) */
+  textContent: Maybe<TextContent>;
+  /** Foreign key to text content (null for image media) */
+  textContentId: Maybe<Scalars['ID']['output']>;
+  /** User-provided title for the media */
+  title: Scalars['String']['output'];
+  /** When the media was last updated */
+  updatedAt: Scalars['DateTime']['output'];
+  /** Whether the current user has liked this media */
+  userHasLiked: Scalars['Boolean']['output'];
+  /** Visibility setting for the media */
+  visibility: Visibility;
+};
+
+/** Paginated connection result for media queries */
+export type MediaConnection = {
+  __typename?: 'MediaConnection';
+  /** Whether there are more items available after this page */
+  hasMore: Scalars['Boolean']['output'];
+  /** Array of media items for this page */
+  media: Array<Media>;
+  /** Total number of media items matching the query */
+  total: Scalars['Float']['output'];
+};
+
+/** Input type for filtering and paginating media queries */
+export type MediaFiltersInput = {
+  /** Filter by associated character ID */
+  characterId?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by gallery ID */
+  galleryId?: InputMaybe<Scalars['ID']['input']>;
+  /** Maximum number of results to return */
+  limit?: InputMaybe<Scalars['Float']['input']>;
+  /** Filter by media type (image or text) */
+  mediaType?: InputMaybe<MediaType>;
+  /** Number of results to skip for pagination */
+  offset?: InputMaybe<Scalars['Float']['input']>;
+  /** Filter by owner user ID */
+  ownerId?: InputMaybe<Scalars['ID']['input']>;
+  /** Search term to filter by title and description */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by visibility level */
+  visibility?: InputMaybe<Visibility>;
+};
+
+/** Junction entity for media-tag relationships */
+export type MediaTag = {
+  __typename?: 'MediaTag';
+  /** The media this tag is associated with */
+  media: Maybe<Media>;
+  /** The tag applied to the media */
+  tag: Tag;
+};
+
+/** The type of media content for filtering */
+export enum MediaType {
+  Image = 'IMAGE',
+  Text = 'TEXT'
+}
 
 export type Mutation = {
   __typename?: 'Mutation';
   addCharacterTags: Character;
   addImageTags: Image;
-  addImageToGallery: Gallery;
+  /** Adds tags to a media item */
+  addMediaTags: Media;
   createCharacter: Character;
   createComment: Comment;
   createGallery: Gallery;
+  /** Creates a new text media item */
+  createTextMedia: Media;
   deleteAccount: Scalars['Boolean']['output'];
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
   deleteGallery: Scalars['Boolean']['output'];
   deleteImage: Scalars['Boolean']['output'];
+  /** Deletes a media item and its associated content */
+  deleteMedia: Scalars['Boolean']['output'];
   login: AuthPayload;
   refreshToken: Scalars['String']['output'];
   removeCharacterTags: Character;
-  removeImageFromGallery: Gallery;
   removeImageTags: Image;
+  /** Removes tags from a media item */
+  removeMediaTags: Media;
   reorderGalleries: Array<Gallery>;
-  setCharacterMainImage: Character;
+  /** Sets or clears the main media for a character */
+  setCharacterMainMedia: Character;
   signup: AuthPayload;
   toggleFollow: FollowResult;
   toggleLike: LikeResult;
@@ -386,7 +489,11 @@ export type Mutation = {
   updateComment: Comment;
   updateGallery: Gallery;
   updateImage: Image;
+  /** Updates media metadata (title, description, etc.) */
+  updateMedia: Media;
   updateProfile: User;
+  /** Updates the text content of a text media item */
+  updateTextContent: Media;
 };
 
 
@@ -402,9 +509,9 @@ export type MutationAddImageTagsArgs = {
 };
 
 
-export type MutationAddImageToGalleryArgs = {
-  galleryId: Scalars['ID']['input'];
-  input: GalleryImageOperationInput;
+export type MutationAddMediaTagsArgs = {
+  id: Scalars['ID']['input'];
+  input: ManageMediaTagsInput;
 };
 
 
@@ -420,6 +527,11 @@ export type MutationCreateCommentArgs = {
 
 export type MutationCreateGalleryArgs = {
   input: CreateGalleryInput;
+};
+
+
+export type MutationCreateTextMediaArgs = {
+  input: CreateTextMediaInput;
 };
 
 
@@ -443,6 +555,11 @@ export type MutationDeleteImageArgs = {
 };
 
 
+export type MutationDeleteMediaArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationLoginArgs = {
   input: LoginInput;
 };
@@ -459,15 +576,15 @@ export type MutationRemoveCharacterTagsArgs = {
 };
 
 
-export type MutationRemoveImageFromGalleryArgs = {
-  galleryId: Scalars['ID']['input'];
-  input: GalleryImageOperationInput;
-};
-
-
 export type MutationRemoveImageTagsArgs = {
   id: Scalars['ID']['input'];
   input: ManageImageTagsInput;
+};
+
+
+export type MutationRemoveMediaTagsArgs = {
+  id: Scalars['ID']['input'];
+  input: ManageMediaTagsInput;
 };
 
 
@@ -476,9 +593,9 @@ export type MutationReorderGalleriesArgs = {
 };
 
 
-export type MutationSetCharacterMainImageArgs = {
+export type MutationSetCharacterMainMediaArgs = {
   id: Scalars['ID']['input'];
-  input: SetMainImageInput;
+  input: SetMainMediaInput;
 };
 
 
@@ -527,8 +644,20 @@ export type MutationUpdateImageArgs = {
 };
 
 
+export type MutationUpdateMediaArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateMediaInput;
+};
+
+
 export type MutationUpdateProfileArgs = {
   input: UpdateUserInput;
+};
+
+
+export type MutationUpdateTextContentArgs = {
+  input: UpdateTextContentInput;
+  mediaId: Scalars['ID']['input'];
 };
 
 export type Query = {
@@ -537,6 +666,8 @@ export type Query = {
   character: Character;
   characterGalleries: GalleryConnection;
   characterImages: ImageConnection;
+  /** Retrieves media associated with a specific character */
+  characterMedia: MediaConnection;
   characters: CharacterConnection;
   comment: Comment;
   comments: CommentConnection;
@@ -544,6 +675,8 @@ export type Query = {
   galleries: GalleryConnection;
   gallery: Gallery;
   galleryImages: ImageConnection;
+  /** Retrieves media from a specific gallery */
+  galleryMedia: MediaConnection;
   getFollowers: FollowListResult;
   getFollowing: FollowListResult;
   image: Image;
@@ -552,14 +685,23 @@ export type Query = {
   likedCharacters: Array<Character>;
   likedGalleries: Array<Gallery>;
   likedImages: Array<Image>;
+  likedMedia: MediaConnection;
   me: User;
+  /** Retrieves paginated media with filtering and visibility controls */
+  media: MediaConnection;
+  /** Retrieves a single media item by ID */
+  mediaItem: Media;
   myCharacters: CharacterConnection;
   myGalleries: GalleryConnection;
   myImages: ImageConnection;
+  /** Retrieves media owned by the current authenticated user */
+  myMedia: MediaConnection;
   user: Maybe<User>;
   userCharacters: CharacterConnection;
   userGalleries: GalleryConnection;
   userImages: ImageConnection;
+  /** Retrieves media owned by a specific user */
+  userMedia: MediaConnection;
   userProfile: Maybe<UserProfile>;
   userStats: UserStats;
   users: UserConnection;
@@ -585,6 +727,12 @@ export type QueryCharacterGalleriesArgs = {
 export type QueryCharacterImagesArgs = {
   characterId: Scalars['ID']['input'];
   filters?: InputMaybe<ImageFiltersInput>;
+};
+
+
+export type QueryCharacterMediaArgs = {
+  characterId: Scalars['ID']['input'];
+  filters?: InputMaybe<MediaFiltersInput>;
 };
 
 
@@ -624,6 +772,12 @@ export type QueryGalleryImagesArgs = {
 };
 
 
+export type QueryGalleryMediaArgs = {
+  filters?: InputMaybe<MediaFiltersInput>;
+  galleryId: Scalars['ID']['input'];
+};
+
+
 export type QueryGetFollowersArgs = {
   username: Scalars['String']['input'];
 };
@@ -650,6 +804,21 @@ export type QueryLikeStatusArgs = {
 };
 
 
+export type QueryLikedMediaArgs = {
+  filters?: InputMaybe<MediaFiltersInput>;
+};
+
+
+export type QueryMediaArgs = {
+  filters?: InputMaybe<MediaFiltersInput>;
+};
+
+
+export type QueryMediaItemArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryMyCharactersArgs = {
   filters?: InputMaybe<CharacterFiltersInput>;
 };
@@ -662,6 +831,11 @@ export type QueryMyGalleriesArgs = {
 
 export type QueryMyImagesArgs = {
   filters?: InputMaybe<ImageFiltersInput>;
+};
+
+
+export type QueryMyMediaArgs = {
+  filters?: InputMaybe<MediaFiltersInput>;
 };
 
 
@@ -689,6 +863,12 @@ export type QueryUserImagesArgs = {
 };
 
 
+export type QueryUserMediaArgs = {
+  filters?: InputMaybe<MediaFiltersInput>;
+  userId: Scalars['ID']['input'];
+};
+
+
 export type QueryUserProfileArgs = {
   username: Scalars['String']['input'];
 };
@@ -708,8 +888,8 @@ export type ReorderGalleriesInput = {
   galleryIds: Array<Scalars['ID']['input']>;
 };
 
-export type SetMainImageInput = {
-  imageId?: InputMaybe<Scalars['ID']['input']>;
+export type SetMainMediaInput = {
+  mediaId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type SignupInput = {
@@ -727,6 +907,25 @@ export type Tag = {
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
 };
+
+/** Text content with formatting and word count information */
+export type TextContent = {
+  __typename?: 'TextContent';
+  /** The actual text content */
+  content: Scalars['String']['output'];
+  /** Text formatting type (plaintext or markdown) */
+  formatting: TextFormatting;
+  /** Unique identifier for the text content */
+  id: Scalars['ID']['output'];
+  /** Automatically calculated word count */
+  wordCount: Scalars['Float']['output'];
+};
+
+/** The formatting type for text content */
+export enum TextFormatting {
+  Markdown = 'MARKDOWN',
+  Plaintext = 'PLAINTEXT'
+}
 
 export type ToggleFollowInput = {
   targetUserId: Scalars['ID']['input'];
@@ -749,7 +948,7 @@ export type UpdateCharacterInput = {
   gender?: InputMaybe<Scalars['String']['input']>;
   isSellable?: InputMaybe<Scalars['Boolean']['input']>;
   isTradeable?: InputMaybe<Scalars['Boolean']['input']>;
-  mainImageId?: InputMaybe<Scalars['ID']['input']>;
+  mainMediaId?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   personality?: InputMaybe<Scalars['String']['input']>;
   price?: InputMaybe<Scalars['Float']['input']>;
@@ -775,12 +974,30 @@ export type UpdateImageInput = {
   artistId?: InputMaybe<Scalars['ID']['input']>;
   artistName?: InputMaybe<Scalars['String']['input']>;
   artistUrl?: InputMaybe<Scalars['String']['input']>;
-  characterId?: InputMaybe<Scalars['ID']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  galleryId?: InputMaybe<Scalars['ID']['input']>;
   isNsfw?: InputMaybe<Scalars['Boolean']['input']>;
   source?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input type for updating media metadata */
+export type UpdateMediaInput = {
+  /** Updated character association */
+  characterId?: InputMaybe<Scalars['ID']['input']>;
+  /** Updated description for the media */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Updated gallery association */
+  galleryId?: InputMaybe<Scalars['ID']['input']>;
+  /** Updated title for the media */
+  title?: InputMaybe<Scalars['String']['input']>;
+  /** Updated visibility setting */
   visibility?: InputMaybe<Visibility>;
+};
+
+/** Input type for updating text content specifically */
+export type UpdateTextContentInput = {
+  /** Updated text content */
+  content?: InputMaybe<Scalars['String']['input']>;
+  /** Updated text formatting type */
+  formatting?: InputMaybe<TextFormatting>;
 };
 
 export type UpdateUserInput = {
@@ -828,7 +1045,7 @@ export type UserProfile = {
   isOwnProfile: Scalars['Boolean']['output'];
   recentCharacters: Array<Character>;
   recentGalleries: Array<Gallery>;
-  recentImages: Array<Image>;
+  recentMedia: Array<Media>;
   stats: UserStats;
   user: User;
 };
@@ -882,28 +1099,28 @@ export type GetCharactersQueryVariables = Exact<{
 }>;
 
 
-export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainImageId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainImage: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, _count: { __typename?: 'CharacterCount', images: number } | null }> } };
+export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null }> } };
 
 export type GetCharacterQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainImageId: string | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null, mainImage: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, recentImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, isNsfw: boolean, createdAt: string }> | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
 
 
-export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainImageId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainImage: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, _count: { __typename?: 'CharacterCount', images: number } | null }> } };
+export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null }> } };
 
 export type CreateCharacterMutationVariables = Exact<{
   input: CreateCharacterInput;
 }>;
 
 
-export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null } };
+export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null } };
 
 export type UpdateCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -911,7 +1128,7 @@ export type UpdateCharacterMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCharacterMutation = { __typename?: 'Mutation', updateCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null } };
+export type UpdateCharacterMutation = { __typename?: 'Mutation', updateCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null } };
 
 export type DeleteCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -926,7 +1143,7 @@ export type TransferCharacterMutationVariables = Exact<{
 }>;
 
 
-export type TransferCharacterMutation = { __typename?: 'Mutation', transferCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', images: number } | null } };
+export type TransferCharacterMutation = { __typename?: 'Mutation', transferCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null } };
 
 export type AddCharacterTagsMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -944,39 +1161,39 @@ export type RemoveCharacterTagsMutationVariables = Exact<{
 
 export type RemoveCharacterTagsMutation = { __typename?: 'Mutation', removeCharacterTags: { __typename?: 'Character', id: string, name: string, tags: Array<string>, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
-export type SetCharacterMainImageMutationVariables = Exact<{
+export type SetCharacterMainMediaMutationVariables = Exact<{
   id: Scalars['ID']['input'];
-  input: SetMainImageInput;
+  input: SetMainMediaInput;
 }>;
 
 
-export type SetCharacterMainImageMutation = { __typename?: 'Mutation', setCharacterMainImage: { __typename?: 'Character', id: string, name: string, mainImageId: string | null, mainImage: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } };
+export type SetCharacterMainMediaMutation = { __typename?: 'Mutation', setCharacterMainMedia: { __typename?: 'Character', id: string, name: string, mainMediaId: string | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, _count: { __typename?: 'CharacterCount', images: number } | null }> };
+export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, _count: { __typename?: 'CharacterCount', media: number } | null }> };
 
 export type GetGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
 }>;
 
 
-export type GetGalleriesQuery = { __typename?: 'Query', galleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', images: number } | null }> } };
+export type GetGalleriesQuery = { __typename?: 'Query', galleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null }> } };
 
 export type GetGalleryQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetGalleryQuery = { __typename?: 'Query', gallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }>, _count: { __typename?: 'GalleryCount', images: number } | null } };
+export type GetGalleryQuery = { __typename?: 'Query', gallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null } };
 
 export type GetMyGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
 }>;
 
 
-export type GetMyGalleriesQuery = { __typename?: 'Query', myGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', images: number } | null }> } };
+export type GetMyGalleriesQuery = { __typename?: 'Query', myGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null }> } };
 
 export type GetUserGalleriesQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -984,7 +1201,7 @@ export type GetUserGalleriesQueryVariables = Exact<{
 }>;
 
 
-export type GetUserGalleriesQuery = { __typename?: 'Query', userGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', images: number } | null }> } };
+export type GetUserGalleriesQuery = { __typename?: 'Query', userGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null }> } };
 
 export type GetCharacterGalleriesQueryVariables = Exact<{
   characterId: Scalars['ID']['input'];
@@ -992,14 +1209,14 @@ export type GetCharacterGalleriesQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterGalleriesQuery = { __typename?: 'Query', characterGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', images: number } | null }> } };
+export type GetCharacterGalleriesQuery = { __typename?: 'Query', characterGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null }> } };
 
 export type CreateGalleryMutationVariables = Exact<{
   input: CreateGalleryInput;
 }>;
 
 
-export type CreateGalleryMutation = { __typename?: 'Mutation', createGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', images: number } | null } };
+export type CreateGalleryMutation = { __typename?: 'Mutation', createGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null } };
 
 export type UpdateGalleryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1007,7 +1224,7 @@ export type UpdateGalleryMutationVariables = Exact<{
 }>;
 
 
-export type UpdateGalleryMutation = { __typename?: 'Mutation', updateGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', images: number } | null } };
+export type UpdateGalleryMutation = { __typename?: 'Mutation', updateGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null } };
 
 export type DeleteGalleryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1016,74 +1233,104 @@ export type DeleteGalleryMutationVariables = Exact<{
 
 export type DeleteGalleryMutation = { __typename?: 'Mutation', deleteGallery: boolean };
 
-export type AddImageToGalleryMutationVariables = Exact<{
-  galleryId: Scalars['ID']['input'];
-  input: GalleryImageOperationInput;
-}>;
-
-
-export type AddImageToGalleryMutation = { __typename?: 'Mutation', addImageToGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, _count: { __typename?: 'GalleryCount', images: number } | null, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null }> } };
-
-export type RemoveImageFromGalleryMutationVariables = Exact<{
-  galleryId: Scalars['ID']['input'];
-  input: GalleryImageOperationInput;
-}>;
-
-
-export type RemoveImageFromGalleryMutation = { __typename?: 'Mutation', removeImageFromGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, _count: { __typename?: 'GalleryCount', images: number } | null, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null }> } };
-
 export type ReorderGalleriesMutationVariables = Exact<{
   input: ReorderGalleriesInput;
 }>;
 
 
-export type ReorderGalleriesMutation = { __typename?: 'Mutation', reorderGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, sortOrder: number }> };
+export type ReorderGalleriesMutation = { __typename?: 'Mutation', reorderGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, sortOrder: number, likesCount: number, userHasLiked: boolean, _count: { __typename?: 'GalleryCount', media: number } | null }> };
 
 export type GetLikedGalleriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, _count: { __typename?: 'GalleryCount', images: number } | null }> };
-
-export type GetImagesQueryVariables = Exact<{
-  filters?: InputMaybe<ImageFiltersInput>;
-}>;
-
-
-export type GetImagesQuery = { __typename?: 'Query', images: { __typename?: 'ImageConnection', total: number, hasMore: boolean, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> } };
-
-export type GetImageQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetImageQuery = { __typename?: 'Query', image: { __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, gallery: { __typename?: 'Gallery', id: string, name: string, description: string | null } | null } };
-
-export type GetMyImagesQueryVariables = Exact<{
-  filters?: InputMaybe<ImageFiltersInput>;
-}>;
-
-
-export type GetMyImagesQuery = { __typename?: 'Query', myImages: { __typename?: 'ImageConnection', total: number, hasMore: boolean, images: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> } };
-
-export type UpdateImageMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  input: UpdateImageInput;
-}>;
-
-
-export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, uploaderId: string, characterId: string | null, galleryId: string | null, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null } };
-
-export type DeleteImageMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type DeleteImageMutation = { __typename?: 'Mutation', deleteImage: boolean };
+export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, _count: { __typename?: 'GalleryCount', media: number } | null }> };
 
 export type GetLikedImagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedImagesQuery = { __typename?: 'Query', likedImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, description: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }> };
+export type GetLikedImagesQuery = { __typename?: 'Query', likedImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> };
+
+export type GetMediaQueryVariables = Exact<{
+  filters?: InputMaybe<MediaFiltersInput>;
+}>;
+
+
+export type GetMediaQuery = { __typename?: 'Query', media: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> } };
+
+export type GetMediaItemQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetMediaItemQuery = { __typename?: 'Query', mediaItem: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, width: number, height: number, fileSize: number, mimeType: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
+
+export type GetCharacterMediaQueryVariables = Exact<{
+  characterId: Scalars['ID']['input'];
+  filters?: InputMaybe<MediaFiltersInput>;
+}>;
+
+
+export type GetCharacterMediaQuery = { __typename?: 'Query', characterMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null }> } };
+
+export type GetMyMediaQueryVariables = Exact<{
+  filters?: InputMaybe<MediaFiltersInput>;
+}>;
+
+
+export type GetMyMediaQuery = { __typename?: 'Query', myMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> } };
+
+export type GetLikedMediaQueryVariables = Exact<{
+  filters?: InputMaybe<MediaFiltersInput>;
+}>;
+
+
+export type GetLikedMediaQuery = { __typename?: 'Query', likedMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, width: number, height: number, fileSize: number, mimeType: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> } };
+
+export type CreateTextMediaMutationVariables = Exact<{
+  input: CreateTextMediaInput;
+}>;
+
+
+export type CreateTextMediaMutation = { __typename?: 'Mutation', createTextMedia: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null } };
+
+export type UpdateMediaMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateMediaInput;
+}>;
+
+
+export type UpdateMediaMutation = { __typename?: 'Mutation', updateMedia: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
+
+export type UpdateTextContentMutationVariables = Exact<{
+  mediaId: Scalars['ID']['input'];
+  input: UpdateTextContentInput;
+}>;
+
+
+export type UpdateTextContentMutation = { __typename?: 'Mutation', updateTextContent: { __typename?: 'Media', id: string, title: string, description: string | null, updatedAt: string, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null } };
+
+export type DeleteMediaMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteMediaMutation = { __typename?: 'Mutation', deleteMedia: boolean };
+
+export type AddMediaTagsMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: ManageMediaTagsInput;
+}>;
+
+
+export type AddMediaTagsMutation = { __typename?: 'Mutation', addMediaTags: { __typename?: 'Media', id: string, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
+
+export type RemoveMediaTagsMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: ManageMediaTagsInput;
+}>;
+
+
+export type RemoveMediaTagsMutation = { __typename?: 'Mutation', removeMediaTags: { __typename?: 'Media', id: string, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
 export type ToggleLikeMutationVariables = Exact<{
   input: ToggleLikeInput;
@@ -1169,7 +1416,7 @@ export type GetUserProfileQueryVariables = Exact<{
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentImages: Array<{ __typename?: 'Image', id: string, filename: string, url: string, thumbnailUrl: string | null, description: string | null, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> } | null };
+export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, filename: string, url: string, thumbnailUrl: string | null } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> } | null };
 
 export type GetUserStatsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -1371,7 +1618,7 @@ export const GetCharactersDocument = gql`
       backstory
       ownerId
       creatorId
-      mainImageId
+      mainMediaId
       visibility
       isSellable
       isTradeable
@@ -1392,15 +1639,19 @@ export const GetCharactersDocument = gql`
         displayName
         avatarUrl
       }
-      mainImage {
+      mainMedia {
         id
-        url
-        thumbnailUrl
-        altText
-        isNsfw
+        title
+        image {
+          id
+          url
+          thumbnailUrl
+          altText
+          isNsfw
+        }
       }
       _count {
-        images
+        media
       }
     }
     total
@@ -1475,7 +1726,7 @@ export const GetCharacterDocument = gql`
       avatarUrl
     }
     _count {
-      images
+      media
     }
     tags_rel {
       tag {
@@ -1485,24 +1736,17 @@ export const GetCharacterDocument = gql`
         color
       }
     }
-    mainImageId
-    mainImage {
+    mainMediaId
+    mainMedia {
       id
-      url
-      thumbnailUrl
-      altText
-      isNsfw
-    }
-    recentImages: images(limit: 8) {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      description
-      isNsfw
-      createdAt
+      title
+      image {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
+      }
     }
   }
 }
@@ -1554,7 +1798,7 @@ export const GetMyCharactersDocument = gql`
       backstory
       ownerId
       creatorId
-      mainImageId
+      mainMediaId
       visibility
       isSellable
       isTradeable
@@ -1575,15 +1819,19 @@ export const GetMyCharactersDocument = gql`
         displayName
         avatarUrl
       }
-      mainImage {
+      mainMedia {
         id
-        url
-        thumbnailUrl
-        altText
-        isNsfw
+        title
+        image {
+          id
+          url
+          thumbnailUrl
+          altText
+          isNsfw
+        }
       }
       _count {
-        images
+        media
       }
     }
     total
@@ -1658,7 +1906,7 @@ export const CreateCharacterDocument = gql`
       avatarUrl
     }
     _count {
-      images
+      media
     }
   }
 }
@@ -1723,7 +1971,7 @@ export const UpdateCharacterDocument = gql`
       avatarUrl
     }
     _count {
-      images
+      media
     }
   }
 }
@@ -1820,7 +2068,7 @@ export const TransferCharacterDocument = gql`
       avatarUrl
     }
     _count {
-      images
+      media
     }
   }
 }
@@ -1940,49 +2188,53 @@ export function useRemoveCharacterTagsMutation(baseOptions?: Apollo.MutationHook
 export type RemoveCharacterTagsMutationHookResult = ReturnType<typeof useRemoveCharacterTagsMutation>;
 export type RemoveCharacterTagsMutationResult = Apollo.MutationResult<RemoveCharacterTagsMutation>;
 export type RemoveCharacterTagsMutationOptions = Apollo.BaseMutationOptions<RemoveCharacterTagsMutation, RemoveCharacterTagsMutationVariables>;
-export const SetCharacterMainImageDocument = gql`
-    mutation SetCharacterMainImage($id: ID!, $input: SetMainImageInput!) {
-  setCharacterMainImage(id: $id, input: $input) {
+export const SetCharacterMainMediaDocument = gql`
+    mutation SetCharacterMainMedia($id: ID!, $input: SetMainMediaInput!) {
+  setCharacterMainMedia(id: $id, input: $input) {
     id
     name
-    mainImageId
-    mainImage {
+    mainMediaId
+    mainMedia {
       id
-      url
-      thumbnailUrl
-      altText
-      isNsfw
+      title
+      image {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
+      }
     }
   }
 }
     `;
-export type SetCharacterMainImageMutationFn = Apollo.MutationFunction<SetCharacterMainImageMutation, SetCharacterMainImageMutationVariables>;
+export type SetCharacterMainMediaMutationFn = Apollo.MutationFunction<SetCharacterMainMediaMutation, SetCharacterMainMediaMutationVariables>;
 
 /**
- * __useSetCharacterMainImageMutation__
+ * __useSetCharacterMainMediaMutation__
  *
- * To run a mutation, you first call `useSetCharacterMainImageMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useSetCharacterMainImageMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useSetCharacterMainMediaMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetCharacterMainMediaMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [setCharacterMainImageMutation, { data, loading, error }] = useSetCharacterMainImageMutation({
+ * const [setCharacterMainMediaMutation, { data, loading, error }] = useSetCharacterMainMediaMutation({
  *   variables: {
  *      id: // value for 'id'
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useSetCharacterMainImageMutation(baseOptions?: Apollo.MutationHookOptions<SetCharacterMainImageMutation, SetCharacterMainImageMutationVariables>) {
+export function useSetCharacterMainMediaMutation(baseOptions?: Apollo.MutationHookOptions<SetCharacterMainMediaMutation, SetCharacterMainMediaMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<SetCharacterMainImageMutation, SetCharacterMainImageMutationVariables>(SetCharacterMainImageDocument, options);
+        return Apollo.useMutation<SetCharacterMainMediaMutation, SetCharacterMainMediaMutationVariables>(SetCharacterMainMediaDocument, options);
       }
-export type SetCharacterMainImageMutationHookResult = ReturnType<typeof useSetCharacterMainImageMutation>;
-export type SetCharacterMainImageMutationResult = Apollo.MutationResult<SetCharacterMainImageMutation>;
-export type SetCharacterMainImageMutationOptions = Apollo.BaseMutationOptions<SetCharacterMainImageMutation, SetCharacterMainImageMutationVariables>;
+export type SetCharacterMainMediaMutationHookResult = ReturnType<typeof useSetCharacterMainMediaMutation>;
+export type SetCharacterMainMediaMutationResult = Apollo.MutationResult<SetCharacterMainMediaMutation>;
+export type SetCharacterMainMediaMutationOptions = Apollo.BaseMutationOptions<SetCharacterMainMediaMutation, SetCharacterMainMediaMutationVariables>;
 export const GetLikedCharactersDocument = gql`
     query GetLikedCharacters {
   likedCharacters {
@@ -2002,7 +2254,7 @@ export const GetLikedCharactersDocument = gql`
       avatarUrl
     }
     _count {
-      images
+      media
     }
     likesCount
     userHasLiked
@@ -2066,8 +2318,10 @@ export const GetGalleriesDocument = gql`
         species
       }
       _count {
-        images
+        media
       }
+      likesCount
+      userHasLiked
     }
     total
     hasMore
@@ -2130,43 +2384,11 @@ export const GetGalleryDocument = gql`
       name
       species
     }
-    images {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      description
-      uploaderId
-      characterId
-      galleryId
-      artistId
-      artistName
-      artistUrl
-      source
-      width
-      height
-      fileSize
-      mimeType
-      isNsfw
-      visibility
-      createdAt
-      updatedAt
-      uploader {
-        id
-        username
-        displayName
-      }
-      artist {
-        id
-        username
-        displayName
-      }
-    }
     _count {
-      images
+      media
     }
+    likesCount
+    userHasLiked
   }
 }
     `;
@@ -2228,8 +2450,10 @@ export const GetMyGalleriesDocument = gql`
         species
       }
       _count {
-        images
+        media
       }
+      likesCount
+      userHasLiked
     }
     total
     hasMore
@@ -2294,8 +2518,10 @@ export const GetUserGalleriesDocument = gql`
         species
       }
       _count {
-        images
+        media
       }
+      likesCount
+      userHasLiked
     }
     total
     hasMore
@@ -2361,8 +2587,10 @@ export const GetCharacterGalleriesDocument = gql`
         species
       }
       _count {
-        images
+        media
       }
+      likesCount
+      userHasLiked
     }
     total
     hasMore
@@ -2427,8 +2655,10 @@ export const CreateGalleryDocument = gql`
       species
     }
     _count {
-      images
+      media
     }
+    likesCount
+    userHasLiked
   }
 }
     `;
@@ -2482,8 +2712,10 @@ export const UpdateGalleryDocument = gql`
       species
     }
     _count {
-      images
+      media
     }
+    likesCount
+    userHasLiked
   }
 }
     `;
@@ -2545,108 +2777,17 @@ export function useDeleteGalleryMutation(baseOptions?: Apollo.MutationHookOption
 export type DeleteGalleryMutationHookResult = ReturnType<typeof useDeleteGalleryMutation>;
 export type DeleteGalleryMutationResult = Apollo.MutationResult<DeleteGalleryMutation>;
 export type DeleteGalleryMutationOptions = Apollo.BaseMutationOptions<DeleteGalleryMutation, DeleteGalleryMutationVariables>;
-export const AddImageToGalleryDocument = gql`
-    mutation AddImageToGallery($galleryId: ID!, $input: GalleryImageOperationInput!) {
-  addImageToGallery(galleryId: $galleryId, input: $input) {
-    id
-    name
-    description
-    _count {
-      images
-    }
-    images {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      description
-    }
-  }
-}
-    `;
-export type AddImageToGalleryMutationFn = Apollo.MutationFunction<AddImageToGalleryMutation, AddImageToGalleryMutationVariables>;
-
-/**
- * __useAddImageToGalleryMutation__
- *
- * To run a mutation, you first call `useAddImageToGalleryMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAddImageToGalleryMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [addImageToGalleryMutation, { data, loading, error }] = useAddImageToGalleryMutation({
- *   variables: {
- *      galleryId: // value for 'galleryId'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useAddImageToGalleryMutation(baseOptions?: Apollo.MutationHookOptions<AddImageToGalleryMutation, AddImageToGalleryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddImageToGalleryMutation, AddImageToGalleryMutationVariables>(AddImageToGalleryDocument, options);
-      }
-export type AddImageToGalleryMutationHookResult = ReturnType<typeof useAddImageToGalleryMutation>;
-export type AddImageToGalleryMutationResult = Apollo.MutationResult<AddImageToGalleryMutation>;
-export type AddImageToGalleryMutationOptions = Apollo.BaseMutationOptions<AddImageToGalleryMutation, AddImageToGalleryMutationVariables>;
-export const RemoveImageFromGalleryDocument = gql`
-    mutation RemoveImageFromGallery($galleryId: ID!, $input: GalleryImageOperationInput!) {
-  removeImageFromGallery(galleryId: $galleryId, input: $input) {
-    id
-    name
-    description
-    _count {
-      images
-    }
-    images {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      description
-    }
-  }
-}
-    `;
-export type RemoveImageFromGalleryMutationFn = Apollo.MutationFunction<RemoveImageFromGalleryMutation, RemoveImageFromGalleryMutationVariables>;
-
-/**
- * __useRemoveImageFromGalleryMutation__
- *
- * To run a mutation, you first call `useRemoveImageFromGalleryMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useRemoveImageFromGalleryMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [removeImageFromGalleryMutation, { data, loading, error }] = useRemoveImageFromGalleryMutation({
- *   variables: {
- *      galleryId: // value for 'galleryId'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useRemoveImageFromGalleryMutation(baseOptions?: Apollo.MutationHookOptions<RemoveImageFromGalleryMutation, RemoveImageFromGalleryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<RemoveImageFromGalleryMutation, RemoveImageFromGalleryMutationVariables>(RemoveImageFromGalleryDocument, options);
-      }
-export type RemoveImageFromGalleryMutationHookResult = ReturnType<typeof useRemoveImageFromGalleryMutation>;
-export type RemoveImageFromGalleryMutationResult = Apollo.MutationResult<RemoveImageFromGalleryMutation>;
-export type RemoveImageFromGalleryMutationOptions = Apollo.BaseMutationOptions<RemoveImageFromGalleryMutation, RemoveImageFromGalleryMutationVariables>;
 export const ReorderGalleriesDocument = gql`
     mutation ReorderGalleries($input: ReorderGalleriesInput!) {
   reorderGalleries(input: $input) {
     id
     name
     sortOrder
+    _count {
+      media
+    }
+    likesCount
+    userHasLiked
   }
 }
     `;
@@ -2696,7 +2837,7 @@ export const GetLikedGalleriesDocument = gql`
       name
     }
     _count {
-      images
+      media
     }
     likesCount
     userHasLiked
@@ -2735,363 +2876,6 @@ export type GetLikedGalleriesQueryHookResult = ReturnType<typeof useGetLikedGall
 export type GetLikedGalleriesLazyQueryHookResult = ReturnType<typeof useGetLikedGalleriesLazyQuery>;
 export type GetLikedGalleriesSuspenseQueryHookResult = ReturnType<typeof useGetLikedGalleriesSuspenseQuery>;
 export type GetLikedGalleriesQueryResult = Apollo.QueryResult<GetLikedGalleriesQuery, GetLikedGalleriesQueryVariables>;
-export const GetImagesDocument = gql`
-    query GetImages($filters: ImageFiltersInput) {
-  images(filters: $filters) {
-    images {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      description
-      uploaderId
-      characterId
-      galleryId
-      artistId
-      artistName
-      artistUrl
-      source
-      width
-      height
-      fileSize
-      mimeType
-      isNsfw
-      sensitiveContentDescription
-      visibility
-      createdAt
-      updatedAt
-      uploader {
-        id
-        username
-        displayName
-      }
-      artist {
-        id
-        username
-        displayName
-      }
-      character {
-        id
-        name
-      }
-      gallery {
-        id
-        name
-      }
-    }
-    total
-    hasMore
-  }
-}
-    `;
-
-/**
- * __useGetImagesQuery__
- *
- * To run a query within a React component, call `useGetImagesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetImagesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetImagesQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *   },
- * });
- */
-export function useGetImagesQuery(baseOptions?: Apollo.QueryHookOptions<GetImagesQuery, GetImagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
-      }
-export function useGetImagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetImagesQuery, GetImagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
-        }
-export function useGetImagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetImagesQuery, GetImagesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetImagesQuery, GetImagesQueryVariables>(GetImagesDocument, options);
-        }
-export type GetImagesQueryHookResult = ReturnType<typeof useGetImagesQuery>;
-export type GetImagesLazyQueryHookResult = ReturnType<typeof useGetImagesLazyQuery>;
-export type GetImagesSuspenseQueryHookResult = ReturnType<typeof useGetImagesSuspenseQuery>;
-export type GetImagesQueryResult = Apollo.QueryResult<GetImagesQuery, GetImagesQueryVariables>;
-export const GetImageDocument = gql`
-    query GetImage($id: ID!) {
-  image(id: $id) {
-    id
-    filename
-    originalFilename
-    url
-    thumbnailUrl
-    altText
-    description
-    uploaderId
-    characterId
-    galleryId
-    artistId
-    artistName
-    artistUrl
-    source
-    width
-    height
-    fileSize
-    mimeType
-    isNsfw
-    sensitiveContentDescription
-    visibility
-    createdAt
-    updatedAt
-    uploader {
-      id
-      username
-      displayName
-      avatarUrl
-    }
-    artist {
-      id
-      username
-      displayName
-      avatarUrl
-    }
-    character {
-      id
-      name
-      species
-    }
-    gallery {
-      id
-      name
-      description
-    }
-  }
-}
-    `;
-
-/**
- * __useGetImageQuery__
- *
- * To run a query within a React component, call `useGetImageQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetImageQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetImageQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetImageQuery(baseOptions: Apollo.QueryHookOptions<GetImageQuery, GetImageQueryVariables> & ({ variables: GetImageQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
-      }
-export function useGetImageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetImageQuery, GetImageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
-        }
-export function useGetImageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetImageQuery, GetImageQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetImageQuery, GetImageQueryVariables>(GetImageDocument, options);
-        }
-export type GetImageQueryHookResult = ReturnType<typeof useGetImageQuery>;
-export type GetImageLazyQueryHookResult = ReturnType<typeof useGetImageLazyQuery>;
-export type GetImageSuspenseQueryHookResult = ReturnType<typeof useGetImageSuspenseQuery>;
-export type GetImageQueryResult = Apollo.QueryResult<GetImageQuery, GetImageQueryVariables>;
-export const GetMyImagesDocument = gql`
-    query GetMyImages($filters: ImageFiltersInput) {
-  myImages(filters: $filters) {
-    images {
-      id
-      filename
-      originalFilename
-      url
-      thumbnailUrl
-      altText
-      description
-      uploaderId
-      characterId
-      galleryId
-      artistId
-      artistName
-      artistUrl
-      source
-      width
-      height
-      fileSize
-      mimeType
-      isNsfw
-      sensitiveContentDescription
-      visibility
-      createdAt
-      updatedAt
-      uploader {
-        id
-        username
-        displayName
-      }
-      artist {
-        id
-        username
-        displayName
-      }
-      character {
-        id
-        name
-      }
-      gallery {
-        id
-        name
-      }
-    }
-    total
-    hasMore
-  }
-}
-    `;
-
-/**
- * __useGetMyImagesQuery__
- *
- * To run a query within a React component, call `useGetMyImagesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetMyImagesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetMyImagesQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *   },
- * });
- */
-export function useGetMyImagesQuery(baseOptions?: Apollo.QueryHookOptions<GetMyImagesQuery, GetMyImagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMyImagesQuery, GetMyImagesQueryVariables>(GetMyImagesDocument, options);
-      }
-export function useGetMyImagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyImagesQuery, GetMyImagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMyImagesQuery, GetMyImagesQueryVariables>(GetMyImagesDocument, options);
-        }
-export function useGetMyImagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyImagesQuery, GetMyImagesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetMyImagesQuery, GetMyImagesQueryVariables>(GetMyImagesDocument, options);
-        }
-export type GetMyImagesQueryHookResult = ReturnType<typeof useGetMyImagesQuery>;
-export type GetMyImagesLazyQueryHookResult = ReturnType<typeof useGetMyImagesLazyQuery>;
-export type GetMyImagesSuspenseQueryHookResult = ReturnType<typeof useGetMyImagesSuspenseQuery>;
-export type GetMyImagesQueryResult = Apollo.QueryResult<GetMyImagesQuery, GetMyImagesQueryVariables>;
-export const UpdateImageDocument = gql`
-    mutation UpdateImage($id: ID!, $input: UpdateImageInput!) {
-  updateImage(id: $id, input: $input) {
-    id
-    filename
-    originalFilename
-    url
-    thumbnailUrl
-    altText
-    description
-    uploaderId
-    characterId
-    galleryId
-    artistId
-    artistName
-    artistUrl
-    source
-    width
-    height
-    fileSize
-    mimeType
-    isNsfw
-    sensitiveContentDescription
-    visibility
-    createdAt
-    updatedAt
-    uploader {
-      id
-      username
-      displayName
-    }
-    artist {
-      id
-      username
-      displayName
-    }
-    character {
-      id
-      name
-    }
-    gallery {
-      id
-      name
-    }
-  }
-}
-    `;
-export type UpdateImageMutationFn = Apollo.MutationFunction<UpdateImageMutation, UpdateImageMutationVariables>;
-
-/**
- * __useUpdateImageMutation__
- *
- * To run a mutation, you first call `useUpdateImageMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateImageMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateImageMutation, { data, loading, error }] = useUpdateImageMutation({
- *   variables: {
- *      id: // value for 'id'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useUpdateImageMutation(baseOptions?: Apollo.MutationHookOptions<UpdateImageMutation, UpdateImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateImageMutation, UpdateImageMutationVariables>(UpdateImageDocument, options);
-      }
-export type UpdateImageMutationHookResult = ReturnType<typeof useUpdateImageMutation>;
-export type UpdateImageMutationResult = Apollo.MutationResult<UpdateImageMutation>;
-export type UpdateImageMutationOptions = Apollo.BaseMutationOptions<UpdateImageMutation, UpdateImageMutationVariables>;
-export const DeleteImageDocument = gql`
-    mutation DeleteImage($id: ID!) {
-  deleteImage(id: $id)
-}
-    `;
-export type DeleteImageMutationFn = Apollo.MutationFunction<DeleteImageMutation, DeleteImageMutationVariables>;
-
-/**
- * __useDeleteImageMutation__
- *
- * To run a mutation, you first call `useDeleteImageMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteImageMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteImageMutation, { data, loading, error }] = useDeleteImageMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDeleteImageMutation(baseOptions?: Apollo.MutationHookOptions<DeleteImageMutation, DeleteImageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteImageMutation, DeleteImageMutationVariables>(DeleteImageDocument, options);
-      }
-export type DeleteImageMutationHookResult = ReturnType<typeof useDeleteImageMutation>;
-export type DeleteImageMutationResult = Apollo.MutationResult<DeleteImageMutation>;
-export type DeleteImageMutationOptions = Apollo.BaseMutationOptions<DeleteImageMutation, DeleteImageMutationVariables>;
 export const GetLikedImagesDocument = gql`
     query GetLikedImages {
   likedImages {
@@ -3101,14 +2885,12 @@ export const GetLikedImagesDocument = gql`
     url
     thumbnailUrl
     altText
-    description
     width
     height
     fileSize
     mimeType
     isNsfw
     sensitiveContentDescription
-    visibility
     createdAt
     updatedAt
     uploader {
@@ -3122,14 +2904,6 @@ export const GetLikedImagesDocument = gql`
       username
       displayName
       avatarUrl
-    }
-    character {
-      id
-      name
-    }
-    gallery {
-      id
-      name
     }
     likesCount
     userHasLiked
@@ -3168,6 +2942,756 @@ export type GetLikedImagesQueryHookResult = ReturnType<typeof useGetLikedImagesQ
 export type GetLikedImagesLazyQueryHookResult = ReturnType<typeof useGetLikedImagesLazyQuery>;
 export type GetLikedImagesSuspenseQueryHookResult = ReturnType<typeof useGetLikedImagesSuspenseQuery>;
 export type GetLikedImagesQueryResult = Apollo.QueryResult<GetLikedImagesQuery, GetLikedImagesQueryVariables>;
+export const GetMediaDocument = gql`
+    query GetMedia($filters: MediaFiltersInput) {
+  media(filters: $filters) {
+    media {
+      id
+      title
+      description
+      ownerId
+      characterId
+      galleryId
+      visibility
+      imageId
+      textContentId
+      createdAt
+      updatedAt
+      owner {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+      character {
+        id
+        name
+      }
+      gallery {
+        id
+        name
+      }
+      image {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
+      }
+      textContent {
+        id
+        content
+        wordCount
+        formatting
+      }
+      likesCount
+      userHasLiked
+      tags_rel {
+        tag {
+          id
+          name
+          category
+          color
+        }
+      }
+    }
+    total
+    hasMore
+  }
+}
+    `;
+
+/**
+ * __useGetMediaQuery__
+ *
+ * To run a query within a React component, call `useGetMediaQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMediaQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMediaQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useGetMediaQuery(baseOptions?: Apollo.QueryHookOptions<GetMediaQuery, GetMediaQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMediaQuery, GetMediaQueryVariables>(GetMediaDocument, options);
+      }
+export function useGetMediaLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMediaQuery, GetMediaQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMediaQuery, GetMediaQueryVariables>(GetMediaDocument, options);
+        }
+export function useGetMediaSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMediaQuery, GetMediaQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMediaQuery, GetMediaQueryVariables>(GetMediaDocument, options);
+        }
+export type GetMediaQueryHookResult = ReturnType<typeof useGetMediaQuery>;
+export type GetMediaLazyQueryHookResult = ReturnType<typeof useGetMediaLazyQuery>;
+export type GetMediaSuspenseQueryHookResult = ReturnType<typeof useGetMediaSuspenseQuery>;
+export type GetMediaQueryResult = Apollo.QueryResult<GetMediaQuery, GetMediaQueryVariables>;
+export const GetMediaItemDocument = gql`
+    query GetMediaItem($id: ID!) {
+  mediaItem(id: $id) {
+    id
+    title
+    description
+    ownerId
+    characterId
+    galleryId
+    visibility
+    imageId
+    textContentId
+    createdAt
+    updatedAt
+    owner {
+      id
+      username
+      displayName
+      avatarUrl
+    }
+    character {
+      id
+      name
+    }
+    gallery {
+      id
+      name
+    }
+    image {
+      id
+      url
+      thumbnailUrl
+      altText
+      isNsfw
+      width
+      height
+      fileSize
+      mimeType
+    }
+    textContent {
+      id
+      content
+      wordCount
+      formatting
+    }
+    likesCount
+    userHasLiked
+    tags_rel {
+      tag {
+        id
+        name
+        category
+        color
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetMediaItemQuery__
+ *
+ * To run a query within a React component, call `useGetMediaItemQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMediaItemQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMediaItemQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetMediaItemQuery(baseOptions: Apollo.QueryHookOptions<GetMediaItemQuery, GetMediaItemQueryVariables> & ({ variables: GetMediaItemQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMediaItemQuery, GetMediaItemQueryVariables>(GetMediaItemDocument, options);
+      }
+export function useGetMediaItemLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMediaItemQuery, GetMediaItemQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMediaItemQuery, GetMediaItemQueryVariables>(GetMediaItemDocument, options);
+        }
+export function useGetMediaItemSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMediaItemQuery, GetMediaItemQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMediaItemQuery, GetMediaItemQueryVariables>(GetMediaItemDocument, options);
+        }
+export type GetMediaItemQueryHookResult = ReturnType<typeof useGetMediaItemQuery>;
+export type GetMediaItemLazyQueryHookResult = ReturnType<typeof useGetMediaItemLazyQuery>;
+export type GetMediaItemSuspenseQueryHookResult = ReturnType<typeof useGetMediaItemSuspenseQuery>;
+export type GetMediaItemQueryResult = Apollo.QueryResult<GetMediaItemQuery, GetMediaItemQueryVariables>;
+export const GetCharacterMediaDocument = gql`
+    query GetCharacterMedia($characterId: ID!, $filters: MediaFiltersInput) {
+  characterMedia(characterId: $characterId, filters: $filters) {
+    media {
+      id
+      title
+      description
+      ownerId
+      characterId
+      galleryId
+      visibility
+      imageId
+      textContentId
+      createdAt
+      updatedAt
+      owner {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+      image {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
+      }
+      textContent {
+        id
+        content
+        wordCount
+        formatting
+      }
+      likesCount
+      userHasLiked
+    }
+    total
+    hasMore
+  }
+}
+    `;
+
+/**
+ * __useGetCharacterMediaQuery__
+ *
+ * To run a query within a React component, call `useGetCharacterMediaQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCharacterMediaQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCharacterMediaQuery({
+ *   variables: {
+ *      characterId: // value for 'characterId'
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useGetCharacterMediaQuery(baseOptions: Apollo.QueryHookOptions<GetCharacterMediaQuery, GetCharacterMediaQueryVariables> & ({ variables: GetCharacterMediaQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCharacterMediaQuery, GetCharacterMediaQueryVariables>(GetCharacterMediaDocument, options);
+      }
+export function useGetCharacterMediaLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCharacterMediaQuery, GetCharacterMediaQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCharacterMediaQuery, GetCharacterMediaQueryVariables>(GetCharacterMediaDocument, options);
+        }
+export function useGetCharacterMediaSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCharacterMediaQuery, GetCharacterMediaQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCharacterMediaQuery, GetCharacterMediaQueryVariables>(GetCharacterMediaDocument, options);
+        }
+export type GetCharacterMediaQueryHookResult = ReturnType<typeof useGetCharacterMediaQuery>;
+export type GetCharacterMediaLazyQueryHookResult = ReturnType<typeof useGetCharacterMediaLazyQuery>;
+export type GetCharacterMediaSuspenseQueryHookResult = ReturnType<typeof useGetCharacterMediaSuspenseQuery>;
+export type GetCharacterMediaQueryResult = Apollo.QueryResult<GetCharacterMediaQuery, GetCharacterMediaQueryVariables>;
+export const GetMyMediaDocument = gql`
+    query GetMyMedia($filters: MediaFiltersInput) {
+  myMedia(filters: $filters) {
+    media {
+      id
+      title
+      description
+      ownerId
+      characterId
+      galleryId
+      visibility
+      imageId
+      textContentId
+      createdAt
+      updatedAt
+      character {
+        id
+        name
+      }
+      gallery {
+        id
+        name
+      }
+      image {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
+      }
+      textContent {
+        id
+        content
+        wordCount
+        formatting
+      }
+      likesCount
+      userHasLiked
+      tags_rel {
+        tag {
+          id
+          name
+          category
+          color
+        }
+      }
+    }
+    total
+    hasMore
+  }
+}
+    `;
+
+/**
+ * __useGetMyMediaQuery__
+ *
+ * To run a query within a React component, call `useGetMyMediaQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMyMediaQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMyMediaQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useGetMyMediaQuery(baseOptions?: Apollo.QueryHookOptions<GetMyMediaQuery, GetMyMediaQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMyMediaQuery, GetMyMediaQueryVariables>(GetMyMediaDocument, options);
+      }
+export function useGetMyMediaLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyMediaQuery, GetMyMediaQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMyMediaQuery, GetMyMediaQueryVariables>(GetMyMediaDocument, options);
+        }
+export function useGetMyMediaSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyMediaQuery, GetMyMediaQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMyMediaQuery, GetMyMediaQueryVariables>(GetMyMediaDocument, options);
+        }
+export type GetMyMediaQueryHookResult = ReturnType<typeof useGetMyMediaQuery>;
+export type GetMyMediaLazyQueryHookResult = ReturnType<typeof useGetMyMediaLazyQuery>;
+export type GetMyMediaSuspenseQueryHookResult = ReturnType<typeof useGetMyMediaSuspenseQuery>;
+export type GetMyMediaQueryResult = Apollo.QueryResult<GetMyMediaQuery, GetMyMediaQueryVariables>;
+export const GetLikedMediaDocument = gql`
+    query GetLikedMedia($filters: MediaFiltersInput) {
+  likedMedia(filters: $filters) {
+    media {
+      id
+      title
+      description
+      ownerId
+      characterId
+      galleryId
+      visibility
+      imageId
+      textContentId
+      createdAt
+      updatedAt
+      owner {
+        id
+        username
+        displayName
+        avatarUrl
+      }
+      character {
+        id
+        name
+      }
+      gallery {
+        id
+        name
+      }
+      image {
+        id
+        url
+        thumbnailUrl
+        altText
+        isNsfw
+        width
+        height
+        fileSize
+        mimeType
+        uploader {
+          id
+          username
+          displayName
+          avatarUrl
+        }
+        artist {
+          id
+          username
+          displayName
+          avatarUrl
+        }
+      }
+      textContent {
+        id
+        content
+        wordCount
+        formatting
+      }
+      likesCount
+      userHasLiked
+      tags_rel {
+        tag {
+          id
+          name
+          category
+          color
+        }
+      }
+    }
+    total
+    hasMore
+  }
+}
+    `;
+
+/**
+ * __useGetLikedMediaQuery__
+ *
+ * To run a query within a React component, call `useGetLikedMediaQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetLikedMediaQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLikedMediaQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useGetLikedMediaQuery(baseOptions?: Apollo.QueryHookOptions<GetLikedMediaQuery, GetLikedMediaQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetLikedMediaQuery, GetLikedMediaQueryVariables>(GetLikedMediaDocument, options);
+      }
+export function useGetLikedMediaLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLikedMediaQuery, GetLikedMediaQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetLikedMediaQuery, GetLikedMediaQueryVariables>(GetLikedMediaDocument, options);
+        }
+export function useGetLikedMediaSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLikedMediaQuery, GetLikedMediaQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetLikedMediaQuery, GetLikedMediaQueryVariables>(GetLikedMediaDocument, options);
+        }
+export type GetLikedMediaQueryHookResult = ReturnType<typeof useGetLikedMediaQuery>;
+export type GetLikedMediaLazyQueryHookResult = ReturnType<typeof useGetLikedMediaLazyQuery>;
+export type GetLikedMediaSuspenseQueryHookResult = ReturnType<typeof useGetLikedMediaSuspenseQuery>;
+export type GetLikedMediaQueryResult = Apollo.QueryResult<GetLikedMediaQuery, GetLikedMediaQueryVariables>;
+export const CreateTextMediaDocument = gql`
+    mutation CreateTextMedia($input: CreateTextMediaInput!) {
+  createTextMedia(input: $input) {
+    id
+    title
+    description
+    ownerId
+    characterId
+    galleryId
+    visibility
+    imageId
+    textContentId
+    createdAt
+    updatedAt
+    owner {
+      id
+      username
+      displayName
+      avatarUrl
+    }
+    character {
+      id
+      name
+    }
+    textContent {
+      id
+      content
+      wordCount
+      formatting
+    }
+    likesCount
+    userHasLiked
+  }
+}
+    `;
+export type CreateTextMediaMutationFn = Apollo.MutationFunction<CreateTextMediaMutation, CreateTextMediaMutationVariables>;
+
+/**
+ * __useCreateTextMediaMutation__
+ *
+ * To run a mutation, you first call `useCreateTextMediaMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateTextMediaMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createTextMediaMutation, { data, loading, error }] = useCreateTextMediaMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateTextMediaMutation(baseOptions?: Apollo.MutationHookOptions<CreateTextMediaMutation, CreateTextMediaMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateTextMediaMutation, CreateTextMediaMutationVariables>(CreateTextMediaDocument, options);
+      }
+export type CreateTextMediaMutationHookResult = ReturnType<typeof useCreateTextMediaMutation>;
+export type CreateTextMediaMutationResult = Apollo.MutationResult<CreateTextMediaMutation>;
+export type CreateTextMediaMutationOptions = Apollo.BaseMutationOptions<CreateTextMediaMutation, CreateTextMediaMutationVariables>;
+export const UpdateMediaDocument = gql`
+    mutation UpdateMedia($id: ID!, $input: UpdateMediaInput!) {
+  updateMedia(id: $id, input: $input) {
+    id
+    title
+    description
+    ownerId
+    characterId
+    galleryId
+    visibility
+    imageId
+    textContentId
+    createdAt
+    updatedAt
+    owner {
+      id
+      username
+      displayName
+      avatarUrl
+    }
+    character {
+      id
+      name
+    }
+    gallery {
+      id
+      name
+    }
+    image {
+      id
+      url
+      thumbnailUrl
+      altText
+      isNsfw
+    }
+    textContent {
+      id
+      content
+      wordCount
+      formatting
+    }
+    likesCount
+    userHasLiked
+    tags_rel {
+      tag {
+        id
+        name
+        category
+        color
+      }
+    }
+  }
+}
+    `;
+export type UpdateMediaMutationFn = Apollo.MutationFunction<UpdateMediaMutation, UpdateMediaMutationVariables>;
+
+/**
+ * __useUpdateMediaMutation__
+ *
+ * To run a mutation, you first call `useUpdateMediaMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateMediaMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateMediaMutation, { data, loading, error }] = useUpdateMediaMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateMediaMutation(baseOptions?: Apollo.MutationHookOptions<UpdateMediaMutation, UpdateMediaMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateMediaMutation, UpdateMediaMutationVariables>(UpdateMediaDocument, options);
+      }
+export type UpdateMediaMutationHookResult = ReturnType<typeof useUpdateMediaMutation>;
+export type UpdateMediaMutationResult = Apollo.MutationResult<UpdateMediaMutation>;
+export type UpdateMediaMutationOptions = Apollo.BaseMutationOptions<UpdateMediaMutation, UpdateMediaMutationVariables>;
+export const UpdateTextContentDocument = gql`
+    mutation UpdateTextContent($mediaId: ID!, $input: UpdateTextContentInput!) {
+  updateTextContent(mediaId: $mediaId, input: $input) {
+    id
+    title
+    description
+    textContent {
+      id
+      content
+      wordCount
+      formatting
+    }
+    updatedAt
+  }
+}
+    `;
+export type UpdateTextContentMutationFn = Apollo.MutationFunction<UpdateTextContentMutation, UpdateTextContentMutationVariables>;
+
+/**
+ * __useUpdateTextContentMutation__
+ *
+ * To run a mutation, you first call `useUpdateTextContentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateTextContentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateTextContentMutation, { data, loading, error }] = useUpdateTextContentMutation({
+ *   variables: {
+ *      mediaId: // value for 'mediaId'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateTextContentMutation(baseOptions?: Apollo.MutationHookOptions<UpdateTextContentMutation, UpdateTextContentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateTextContentMutation, UpdateTextContentMutationVariables>(UpdateTextContentDocument, options);
+      }
+export type UpdateTextContentMutationHookResult = ReturnType<typeof useUpdateTextContentMutation>;
+export type UpdateTextContentMutationResult = Apollo.MutationResult<UpdateTextContentMutation>;
+export type UpdateTextContentMutationOptions = Apollo.BaseMutationOptions<UpdateTextContentMutation, UpdateTextContentMutationVariables>;
+export const DeleteMediaDocument = gql`
+    mutation DeleteMedia($id: ID!) {
+  deleteMedia(id: $id)
+}
+    `;
+export type DeleteMediaMutationFn = Apollo.MutationFunction<DeleteMediaMutation, DeleteMediaMutationVariables>;
+
+/**
+ * __useDeleteMediaMutation__
+ *
+ * To run a mutation, you first call `useDeleteMediaMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteMediaMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteMediaMutation, { data, loading, error }] = useDeleteMediaMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteMediaMutation(baseOptions?: Apollo.MutationHookOptions<DeleteMediaMutation, DeleteMediaMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteMediaMutation, DeleteMediaMutationVariables>(DeleteMediaDocument, options);
+      }
+export type DeleteMediaMutationHookResult = ReturnType<typeof useDeleteMediaMutation>;
+export type DeleteMediaMutationResult = Apollo.MutationResult<DeleteMediaMutation>;
+export type DeleteMediaMutationOptions = Apollo.BaseMutationOptions<DeleteMediaMutation, DeleteMediaMutationVariables>;
+export const AddMediaTagsDocument = gql`
+    mutation AddMediaTags($id: ID!, $input: ManageMediaTagsInput!) {
+  addMediaTags(id: $id, input: $input) {
+    id
+    tags_rel {
+      tag {
+        id
+        name
+        category
+        color
+      }
+    }
+  }
+}
+    `;
+export type AddMediaTagsMutationFn = Apollo.MutationFunction<AddMediaTagsMutation, AddMediaTagsMutationVariables>;
+
+/**
+ * __useAddMediaTagsMutation__
+ *
+ * To run a mutation, you first call `useAddMediaTagsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddMediaTagsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addMediaTagsMutation, { data, loading, error }] = useAddMediaTagsMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddMediaTagsMutation(baseOptions?: Apollo.MutationHookOptions<AddMediaTagsMutation, AddMediaTagsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddMediaTagsMutation, AddMediaTagsMutationVariables>(AddMediaTagsDocument, options);
+      }
+export type AddMediaTagsMutationHookResult = ReturnType<typeof useAddMediaTagsMutation>;
+export type AddMediaTagsMutationResult = Apollo.MutationResult<AddMediaTagsMutation>;
+export type AddMediaTagsMutationOptions = Apollo.BaseMutationOptions<AddMediaTagsMutation, AddMediaTagsMutationVariables>;
+export const RemoveMediaTagsDocument = gql`
+    mutation RemoveMediaTags($id: ID!, $input: ManageMediaTagsInput!) {
+  removeMediaTags(id: $id, input: $input) {
+    id
+    tags_rel {
+      tag {
+        id
+        name
+        category
+        color
+      }
+    }
+  }
+}
+    `;
+export type RemoveMediaTagsMutationFn = Apollo.MutationFunction<RemoveMediaTagsMutation, RemoveMediaTagsMutationVariables>;
+
+/**
+ * __useRemoveMediaTagsMutation__
+ *
+ * To run a mutation, you first call `useRemoveMediaTagsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveMediaTagsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeMediaTagsMutation, { data, loading, error }] = useRemoveMediaTagsMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useRemoveMediaTagsMutation(baseOptions?: Apollo.MutationHookOptions<RemoveMediaTagsMutation, RemoveMediaTagsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveMediaTagsMutation, RemoveMediaTagsMutationVariables>(RemoveMediaTagsDocument, options);
+      }
+export type RemoveMediaTagsMutationHookResult = ReturnType<typeof useRemoveMediaTagsMutation>;
+export type RemoveMediaTagsMutationResult = Apollo.MutationResult<RemoveMediaTagsMutation>;
+export type RemoveMediaTagsMutationOptions = Apollo.BaseMutationOptions<RemoveMediaTagsMutation, RemoveMediaTagsMutationVariables>;
 export const ToggleLikeDocument = gql`
     mutation ToggleLike($input: ToggleLikeInput!) {
   toggleLike(input: $input) {
@@ -3747,26 +4271,22 @@ export const GetUserProfileDocument = gql`
         name
       }
     }
-    recentImages {
+    recentMedia {
       id
-      filename
-      url
-      thumbnailUrl
+      title
       description
       createdAt
-      uploader {
+      owner {
         id
         username
         displayName
         avatarUrl
       }
-      character {
+      image {
         id
-        name
-      }
-      gallery {
-        id
-        name
+        filename
+        url
+        thumbnailUrl
       }
     }
     featuredCharacters {

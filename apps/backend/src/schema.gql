@@ -39,12 +39,15 @@ type Character {
   description: String
   gender: String
   id: ID!
-  images(limit: Int = 10): [Image!]
   isSellable: Boolean!
   isTradeable: Boolean!
   likesCount: Int!
-  mainImage: Image
-  mainImageId: ID
+
+  """Main media item for this character (image or text)"""
+  mainMedia: Media
+
+  """ID of the main media item for this character"""
+  mainMediaId: ID
   name: String!
   owner: User!
   ownerId: ID!
@@ -65,7 +68,7 @@ type CharacterConnection {
 }
 
 type CharacterCount {
-  images: Int!
+  media: Int!
 }
 
 input CharacterFiltersInput {
@@ -166,6 +169,30 @@ input CreateGalleryInput {
   visibility: Visibility! = PUBLIC
 }
 
+"""Input type for creating new text media"""
+input CreateTextMediaInput {
+  """Optional character to associate with this media"""
+  characterId: ID
+
+  """The actual text content"""
+  content: String!
+
+  """Optional description for the text media"""
+  description: String
+
+  """Text formatting type (plaintext or markdown)"""
+  formatting: TextFormatting! = PLAINTEXT
+
+  """Optional gallery to add this media to"""
+  galleryId: ID
+
+  """Title for the text media"""
+  title: String!
+
+  """Visibility setting for the media"""
+  visibility: Visibility! = PUBLIC
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
@@ -197,7 +224,6 @@ type Gallery {
   createdAt: DateTime!
   description: String
   id: ID!
-  images: [Image!]!
   likesCount: Int!
   name: String!
   owner: User!
@@ -215,7 +241,7 @@ type GalleryConnection {
 }
 
 type GalleryCount {
-  images: Int!
+  media: Int!
 }
 
 input GalleryFiltersInput {
@@ -226,24 +252,15 @@ input GalleryFiltersInput {
   visibility: Visibility
 }
 
-input GalleryImageOperationInput {
-  imageId: ID!
-}
-
 type Image {
   altText: String
   artist: User
   artistId: ID
   artistName: String
   artistUrl: String
-  character: Character
-  characterId: ID
   createdAt: DateTime!
-  description: String
   fileSize: Int!
   filename: String!
-  gallery: Gallery
-  galleryId: ID
   height: Int!
   id: ID!
   isNsfw: Boolean!
@@ -259,7 +276,6 @@ type Image {
   uploaderId: ID!
   url: String!
   userHasLiked: Boolean!
-  visibility: Visibility!
   width: Int!
 }
 
@@ -271,14 +287,11 @@ type ImageConnection {
 
 input ImageFiltersInput {
   artistId: ID
-  characterId: ID
-  galleryId: ID
   isNsfw: Boolean
   limit: Int! = 20
   offset: Int! = 0
   search: String
   uploaderId: ID
-  visibility: Visibility
 }
 
 type ImageTag {
@@ -309,6 +322,7 @@ enum LikeableType {
   COMMENT
   GALLERY
   IMAGE
+  MEDIA
 }
 
 input LoginInput {
@@ -320,29 +334,185 @@ input ManageImageTagsInput {
   tagNames: [String!]!
 }
 
+"""Input type for managing media tags"""
+input ManageMediaTagsInput {
+  """Array of tag names to add or remove"""
+  tagNames: [String!]!
+}
+
 input ManageTagsInput {
   tagNames: [String!]!
+}
+
+"""Polymorphic media that can represent both images and text content"""
+type Media {
+  """The character this media is associated with, if any"""
+  character: Character
+
+  """Optional ID of the character this media is associated with"""
+  characterId: ID
+
+  """When the media was created"""
+  createdAt: DateTime!
+
+  """Optional description for the media"""
+  description: String
+
+  """The gallery this media belongs to, if any"""
+  gallery: Gallery
+
+  """Optional ID of the gallery this media belongs to"""
+  galleryId: ID
+
+  """Unique identifier for the media"""
+  id: ID!
+
+  """Image content (populated for image media)"""
+  image: Image
+
+  """Foreign key to image content (null for text media)"""
+  imageId: ID
+
+  """Number of likes this media has received"""
+  likesCount: Float!
+
+  """The user who owns this media"""
+  owner: User!
+
+  """ID of the user who owns this media"""
+  ownerId: ID!
+
+  """Tag relationships for this media"""
+  tags_rel: [MediaTag!]
+
+  """Text content (populated for text media)"""
+  textContent: TextContent
+
+  """Foreign key to text content (null for image media)"""
+  textContentId: ID
+
+  """User-provided title for the media"""
+  title: String!
+
+  """When the media was last updated"""
+  updatedAt: DateTime!
+
+  """Whether the current user has liked this media"""
+  userHasLiked: Boolean!
+
+  """Visibility setting for the media"""
+  visibility: Visibility!
+}
+
+"""Paginated connection result for media queries"""
+type MediaConnection {
+  """Whether there are more items available after this page"""
+  hasMore: Boolean!
+
+  """Array of media items for this page"""
+  media: [Media!]!
+
+  """Total number of media items matching the query"""
+  total: Float!
+}
+
+"""Input type for filtering and paginating media queries"""
+input MediaFiltersInput {
+  """Filter by associated character ID"""
+  characterId: ID
+
+  """Filter by gallery ID"""
+  galleryId: ID
+
+  """Maximum number of results to return"""
+  limit: Float
+
+  """Filter by media type (image or text)"""
+  mediaType: MediaType
+
+  """Number of results to skip for pagination"""
+  offset: Float
+
+  """Filter by owner user ID"""
+  ownerId: ID
+
+  """Search term to filter by title and description"""
+  search: String
+
+  """Filter by visibility level"""
+  visibility: Visibility
+}
+
+"""Junction entity for media-tag relationships"""
+type MediaTag {
+  """The media this tag is associated with"""
+  media: Media
+
+  """The tag applied to the media"""
+  tag: Tag!
+}
+
+"""The type of media content for filtering"""
+enum MediaType {
+  IMAGE
+  TEXT
 }
 
 type Mutation {
   addCharacterTags(id: ID!, input: ManageTagsInput!): Character!
   addImageTags(id: ID!, input: ManageImageTagsInput!): Image!
-  addImageToGallery(galleryId: ID!, input: GalleryImageOperationInput!): Gallery!
+
+  """Adds tags to a media item"""
+  addMediaTags(
+    """Media ID to add tags to"""
+    id: ID!
+
+    """Tags to add to the media"""
+    input: ManageMediaTagsInput!
+  ): Media!
   createCharacter(input: CreateCharacterInput!): Character!
   createComment(input: CreateCommentInput!): Comment!
   createGallery(input: CreateGalleryInput!): Gallery!
+
+  """Creates a new text media item"""
+  createTextMedia(
+    """Text media creation parameters"""
+    input: CreateTextMediaInput!
+  ): Media!
   deleteAccount: Boolean!
   deleteCharacter(id: ID!): Boolean!
   deleteComment(id: ID!): Boolean!
   deleteGallery(id: ID!): Boolean!
   deleteImage(id: ID!): Boolean!
+
+  """Deletes a media item and its associated content"""
+  deleteMedia(
+    """Media ID to delete"""
+    id: ID!
+  ): Boolean!
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): String!
   removeCharacterTags(id: ID!, input: ManageTagsInput!): Character!
-  removeImageFromGallery(galleryId: ID!, input: GalleryImageOperationInput!): Gallery!
   removeImageTags(id: ID!, input: ManageImageTagsInput!): Image!
+
+  """Removes tags from a media item"""
+  removeMediaTags(
+    """Media ID to remove tags from"""
+    id: ID!
+
+    """Tags to remove from the media"""
+    input: ManageMediaTagsInput!
+  ): Media!
   reorderGalleries(input: ReorderGalleriesInput!): [Gallery!]!
-  setCharacterMainImage(id: ID!, input: SetMainImageInput!): Character!
+
+  """Sets or clears the main media for a character"""
+  setCharacterMainMedia(
+    """Character ID to update"""
+    id: ID!
+
+    """Main media setting parameters"""
+    input: SetMainMediaInput!
+  ): Character!
   signup(input: SignupInput!): AuthPayload!
   toggleFollow(input: ToggleFollowInput!): FollowResult!
   toggleLike(input: ToggleLikeInput!): LikeResult!
@@ -351,7 +521,25 @@ type Mutation {
   updateComment(id: ID!, input: UpdateCommentInput!): Comment!
   updateGallery(id: ID!, input: UpdateGalleryInput!): Gallery!
   updateImage(id: ID!, input: UpdateImageInput!): Image!
+
+  """Updates media metadata (title, description, etc.)"""
+  updateMedia(
+    """Media ID to update"""
+    id: ID!
+
+    """Updated media parameters"""
+    input: UpdateMediaInput!
+  ): Media!
   updateProfile(input: UpdateUserInput!): User!
+
+  """Updates the text content of a text media item"""
+  updateTextContent(
+    """Updated text content parameters"""
+    input: UpdateTextContentInput!
+
+    """Media ID containing the text content to update"""
+    mediaId: ID!
+  ): Media!
 }
 
 type Query {
@@ -359,6 +547,15 @@ type Query {
   character(id: ID!): Character!
   characterGalleries(characterId: ID!, filters: GalleryFiltersInput): GalleryConnection!
   characterImages(characterId: ID!, filters: ImageFiltersInput): ImageConnection!
+
+  """Retrieves media associated with a specific character"""
+  characterMedia(
+    """Character ID whose media to retrieve"""
+    characterId: ID!
+
+    """Optional filters for media query"""
+    filters: MediaFiltersInput
+  ): MediaConnection!
   characters(filters: CharacterFiltersInput): CharacterConnection!
   comment(id: ID!): Comment!
   comments(filters: CommentFiltersInput!): CommentConnection!
@@ -366,6 +563,15 @@ type Query {
   galleries(filters: GalleryFiltersInput): GalleryConnection!
   gallery(id: ID!): Gallery!
   galleryImages(filters: ImageFiltersInput, galleryId: ID!): ImageConnection!
+
+  """Retrieves media from a specific gallery"""
+  galleryMedia(
+    """Optional filters for media query"""
+    filters: MediaFiltersInput
+
+    """Gallery ID whose media to retrieve"""
+    galleryId: ID!
+  ): MediaConnection!
   getFollowers(username: String!): FollowListResult!
   getFollowing(username: String!): FollowListResult!
   image(id: ID!): Image!
@@ -374,14 +580,42 @@ type Query {
   likedCharacters: [Character!]!
   likedGalleries: [Gallery!]!
   likedImages: [Image!]!
+  likedMedia(filters: MediaFiltersInput): MediaConnection!
   me: User!
+
+  """Retrieves paginated media with filtering and visibility controls"""
+  media(
+    """Optional filters for media query"""
+    filters: MediaFiltersInput
+  ): MediaConnection!
+
+  """Retrieves a single media item by ID"""
+  mediaItem(
+    """Media ID to retrieve"""
+    id: ID!
+  ): Media!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
   myImages(filters: ImageFiltersInput): ImageConnection!
+
+  """Retrieves media owned by the current authenticated user"""
+  myMedia(
+    """Optional filters for media query"""
+    filters: MediaFiltersInput
+  ): MediaConnection!
   user(id: ID, username: String): User
   userCharacters(filters: CharacterFiltersInput, userId: ID!): CharacterConnection!
   userGalleries(filters: GalleryFiltersInput, userId: ID!): GalleryConnection!
   userImages(filters: ImageFiltersInput, userId: ID!): ImageConnection!
+
+  """Retrieves media owned by a specific user"""
+  userMedia(
+    """Optional filters for media query"""
+    filters: MediaFiltersInput
+
+    """User ID whose media to retrieve"""
+    userId: ID!
+  ): MediaConnection!
   userProfile(username: String!): UserProfile
   userStats(userId: ID!): UserStats!
   users(limit: Int! = 20, offset: Int! = 0): UserConnection!
@@ -391,8 +625,8 @@ input ReorderGalleriesInput {
   galleryIds: [ID!]!
 }
 
-input SetMainImageInput {
-  imageId: ID
+input SetMainMediaInput {
+  mediaId: ID
 }
 
 input SignupInput {
@@ -408,6 +642,27 @@ type Tag {
   createdAt: DateTime!
   id: ID!
   name: String!
+}
+
+"""Text content with formatting and word count information"""
+type TextContent {
+  """The actual text content"""
+  content: String!
+
+  """Text formatting type (plaintext or markdown)"""
+  formatting: TextFormatting!
+
+  """Unique identifier for the text content"""
+  id: ID!
+
+  """Automatically calculated word count"""
+  wordCount: Float!
+}
+
+"""The formatting type for text content"""
+enum TextFormatting {
+  MARKDOWN
+  PLAINTEXT
 }
 
 input ToggleFollowInput {
@@ -431,7 +686,7 @@ input UpdateCharacterInput {
   gender: String
   isSellable: Boolean
   isTradeable: Boolean
-  mainImageId: ID
+  mainMediaId: ID
   name: String
   personality: String
   price: Float
@@ -457,12 +712,35 @@ input UpdateImageInput {
   artistId: ID
   artistName: String
   artistUrl: String
-  characterId: ID
-  description: String
-  galleryId: ID
   isNsfw: Boolean
   source: String
+}
+
+"""Input type for updating media metadata"""
+input UpdateMediaInput {
+  """Updated character association"""
+  characterId: ID
+
+  """Updated description for the media"""
+  description: String
+
+  """Updated gallery association"""
+  galleryId: ID
+
+  """Updated title for the media"""
+  title: String
+
+  """Updated visibility setting"""
   visibility: Visibility
+}
+
+"""Input type for updating text content specifically"""
+input UpdateTextContentInput {
+  """Updated text content"""
+  content: String
+
+  """Updated text formatting type"""
+  formatting: TextFormatting
 }
 
 input UpdateUserInput {
@@ -507,7 +785,7 @@ type UserProfile {
   isOwnProfile: Boolean!
   recentCharacters: [Character!]!
   recentGalleries: [Gallery!]!
-  recentImages: [Image!]!
+  recentMedia: [Media!]!
   stats: UserStats!
   user: User!
 }

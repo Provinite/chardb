@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
-import { Button } from '@chardb/ui';
 import { GET_GALLERY, Gallery } from '../graphql/galleries';
+import { GET_MEDIA } from '../graphql/media';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { useAuth } from '../contexts/AuthContext';
 import { LikeButton } from '../components/LikeButton';
 import { CommentList } from '../components/CommentList';
-import { LikeableType, CommentableType } from '../generated/graphql';
+import { MediaCard } from '../components/MediaCard';
+import { LikeableType, CommentableType, Media } from '../generated/graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -179,52 +179,6 @@ const ContentText = styled.div`
   white-space: pre-wrap;
 `;
 
-const ImageGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`;
-
-const ImageCard = styled.div`
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.2s;
-  background: ${({ theme }) => theme.colors.surface};
-  
-  &:hover {
-    transform: scale(1.02);
-  }
-`;
-
-const ImageThumbnail = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-`;
-
-const ImagePlaceholder = styled.div`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${({ theme }) => theme.colors.text.muted};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-`;
-
-const ImageOverlay = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-  color: white;
-  padding: ${({ theme }) => theme.spacing.sm};
-  font-size: ${({ theme }) => theme.typography.fontSize.xs};
-`;
 
 const Lightbox = styled.div.withConfig({
   shouldForwardProp: (prop) => prop !== 'isOpen'
@@ -334,10 +288,24 @@ const EmptyImagesState = styled.div`
   }
 `;
 
+const MediaGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+`;
+
+const MediaLoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: ${({ theme }) => theme.spacing.xl};
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
 export const GalleryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   const { data, loading, error } = useQuery(GET_GALLERY, {
@@ -345,7 +313,13 @@ export const GalleryPage: React.FC = () => {
     skip: !id,
   });
 
+  const { data: mediaData, loading: mediaLoading, error: mediaError } = useQuery(GET_MEDIA, {
+    variables: { filters: { galleryId: id } },
+    skip: !id,
+  });
+
   const gallery: Gallery | undefined = data?.gallery;
+  const mediaItems = mediaData?.media?.media || [];
 
   const handleBackClick = () => {
     navigate('/galleries');
@@ -357,9 +331,6 @@ export const GalleryPage: React.FC = () => {
     }
   };
 
-  const handleAddImage = () => {
-    navigate(`/upload?galleryId=${id}`);
-  };
 
   const getVisibilityVariant = (visibility: string) => {
     switch (visibility) {
@@ -446,8 +417,8 @@ export const GalleryPage: React.FC = () => {
 
         {gallery._count && (
           <ImageStats>
-            <ImageCount>{gallery._count.images}</ImageCount>
-            <ImageLabel>Images in Gallery</ImageLabel>
+            <ImageCount>{gallery._count.media}</ImageCount>
+            <ImageLabel>Media in Gallery</ImageLabel>
           </ImageStats>
         )}
 
@@ -460,46 +431,36 @@ export const GalleryPage: React.FC = () => {
 
         <ContentSection>
           <SectionHeader>
-            <SectionTitle>Images</SectionTitle>
-            {user && user.id === gallery.owner.id && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleAddImage}
-              >
-                Add Image
-              </Button>
-            )}
+            <SectionTitle>Gallery Content</SectionTitle>
           </SectionHeader>
-          {gallery.images && gallery.images.length > 0 ? (
-            <ImageGrid>
-              {gallery.images.map((image) => (
-                <ImageCard
-                  key={image.id}
-                  onClick={() => setLightboxImage(image.url)}
-                >
-                  {image.thumbnailUrl || image.url ? (
-                    <ImageThumbnail
-                      src={image.thumbnailUrl || image.url}
-                      alt={image.altText || image.originalFilename}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <ImagePlaceholder>
-                      No preview available
-                    </ImagePlaceholder>
-                  )}
-                  <ImageOverlay>
-                    {image.originalFilename}
-                  </ImageOverlay>
-                </ImageCard>
-              ))}
-            </ImageGrid>
-          ) : (
+          {mediaLoading && (
+            <MediaLoadingContainer>
+              <LoadingSpinner />
+              <span style={{ marginLeft: '12px' }}>Loading gallery content...</span>
+            </MediaLoadingContainer>
+          )}
+          {mediaError && (
             <EmptyImagesState>
-              <h4>No images in this gallery</h4>
-              <p>This gallery doesn't contain any images yet.</p>
+              <h4>Error loading gallery content</h4>
+              <p>There was an error loading the media content for this gallery. Please try refreshing the page.</p>
             </EmptyImagesState>
+          )}
+          {!mediaLoading && !mediaError && mediaItems.length === 0 && (
+            <EmptyImagesState>
+              <h4>No media yet</h4>
+              <p>This gallery doesn't have any media content yet. Upload some images or create text content and assign it to this gallery to get started!</p>
+            </EmptyImagesState>
+          )}
+          {!mediaLoading && !mediaError && mediaItems.length > 0 && (
+            <MediaGrid>
+              {mediaItems.map((mediaItem: Media) => (
+                <MediaCard
+                  key={mediaItem.id}
+                  media={mediaItem}
+                  showOwner={true}
+                />
+              ))}
+            </MediaGrid>
           )}
         </ContentSection>
 

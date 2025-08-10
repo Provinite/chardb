@@ -13,6 +13,16 @@ enum Visibility {
   PRIVATE
 }
 
+enum MediaType {
+  IMAGE
+  TEXT
+}
+
+enum TextFormatting {
+  PLAINTEXT
+  MARKDOWN
+}
+
 
 
 model User {
@@ -37,6 +47,7 @@ model User {
   createdCharacters Character[] @relation("CharacterCreator")
   uploadedImages    Image[]     @relation("ImageUploader")
   artistImages      Image[]     @relation("ImageArtist")
+  media             Media[]
   galleries         Gallery[]
   comments          Comment[]
   profileComments   Comment[]   @relation("UserComments")
@@ -60,7 +71,7 @@ model Character {
   backstory    String?    @db.Text
   ownerId      String     @map("owner_id")
   creatorId    String?    @map("creator_id")
-  mainImageId  String?    @map("main_image_id")
+  mainMediaId  String?    @map("main_media_id")
   visibility   Visibility @default(PUBLIC)
   isSellable   Boolean    @default(false) @map("is_sellable")
   isTradeable  Boolean    @default(false) @map("is_tradeable")
@@ -73,9 +84,9 @@ model Character {
   // Relations
   owner     User   @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   creator   User?  @relation("CharacterCreator", fields: [creatorId], references: [id], onDelete: SetNull)
-  mainImage Image? @relation("CharacterMainImage", fields: [mainImageId], references: [id], onDelete: SetNull)
+  mainMedia Media? @relation("CharacterMainMedia", fields: [mainMediaId], references: [id], onDelete: SetNull)
 
-  images    Image[]
+  media     Media[]
   galleries Gallery[]
   comments  Comment[]
   likes     Like[]
@@ -91,10 +102,7 @@ model Image {
   url              String     @db.Text
   thumbnailUrl     String?    @map("thumbnail_url") @db.Text
   altText          String?    @map("alt_text") @db.VarChar(200)
-  description      String?    @db.Text
   uploaderId       String     @map("uploader_id")
-  characterId      String?    @map("character_id")
-  galleryId        String?    @map("gallery_id")
   
   // Artist attribution
   artistId         String?    @map("artist_id")
@@ -108,20 +116,17 @@ model Image {
   mimeType         String     @map("mime_type") @db.VarChar(50)
   isNsfw           Boolean    @default(false) @map("is_nsfw")
   sensitiveContentDescription String? @map("sensitive_content_description") @db.Text
-  visibility       Visibility @default(PUBLIC)
   createdAt        DateTime   @default(now()) @map("created_at")
   updatedAt        DateTime   @updatedAt @map("updated_at")
 
   // Relations
   uploader  User       @relation("ImageUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
   artist    User?      @relation("ImageArtist", fields: [artistId], references: [id], onDelete: SetNull)
-  character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
-  gallery   Gallery?   @relation(fields: [galleryId], references: [id], onDelete: SetNull)
-  mainImageFor Character[] @relation("CharacterMainImage")
 
   comments Comment[]
   likes    Like[]
   tags_rel ImageTag[]
+  media    Media[]
 
   @@map("images")
 }
@@ -141,7 +146,7 @@ model Gallery {
   owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
 
-  images   Image[]
+  media    Media[]
   comments Comment[]
   likes    Like[]
 
@@ -160,6 +165,7 @@ model Comment {
   // Separate fields for each commentable type - only one will be non-null
   characterId String? @map("character_id")
   imageId     String? @map("image_id")
+  mediaId     String? @map("media_id")
   galleryId   String? @map("gallery_id")
   userId      String? @map("user_id") // for user profile comments
 
@@ -173,6 +179,7 @@ model Comment {
   // Relations with proper foreign key constraints
   character      Character? @relation(fields: [characterId], references: [id], onDelete: Cascade)
   image          Image?     @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  media          Media?     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   gallery        Gallery?   @relation(fields: [galleryId], references: [id], onDelete: Cascade)
   commentedUser  User?      @relation("UserComments", fields: [userId], references: [id], onDelete: Cascade)
 
@@ -203,6 +210,7 @@ model Like {
   // Separate fields for each likeable type - only one will be non-null
   characterId String? @map("character_id")
   imageId     String? @map("image_id")
+  mediaId     String? @map("media_id")
   galleryId   String? @map("gallery_id")
   commentId   String? @map("comment_id")
 
@@ -210,11 +218,13 @@ model Like {
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   character Character? @relation(fields: [characterId], references: [id], onDelete: Cascade)
   image     Image?     @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  media     Media?     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   gallery   Gallery?   @relation(fields: [galleryId], references: [id], onDelete: Cascade)
   comment   Comment?   @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, characterId])
   @@unique([userId, imageId])
+  @@unique([userId, mediaId])
   @@unique([userId, galleryId])
   @@unique([userId, commentId])
   @@map("likes")
@@ -230,6 +240,7 @@ model Tag {
   // Relations
   characters CharacterTag[]
   images     ImageTag[]
+  media      MediaTag[]
 
   @@map("tags")
 }
@@ -256,4 +267,61 @@ model ImageTag {
 
   @@id([imageId, tagId])
   @@map("image_tags")
+}
+
+model Media {
+  id          String     @id @default(uuid())
+  title       String     @db.VarChar(255)
+  description String?    @db.Text
+  ownerId     String     @map("owner_id")
+  characterId String?    @map("character_id")
+  galleryId   String?    @map("gallery_id")
+  visibility  Visibility @default(PUBLIC)
+  
+  // Content references (exactly one must be non-null)
+  imageId       String?  @map("image_id")
+  textContentId String?  @map("text_content_id")
+  
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  character   Character?   @relation(fields: [characterId], references: [id], onDelete: SetNull)
+  gallery     Gallery?     @relation(fields: [galleryId], references: [id], onDelete: SetNull)
+  
+  // Content relations
+  image       Image?       @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  textContent TextContent? @relation(fields: [textContentId], references: [id], onDelete: Cascade)
+
+  mainMediaFor Character[] @relation("CharacterMainMedia")
+  comments     Comment[]
+  likes        Like[]
+  tags_rel     MediaTag[]
+
+  @@map("media")
+}
+
+model TextContent {
+  id         String         @id @default(uuid())
+  content    String         @db.Text
+  wordCount  Int            @map("word_count")
+  formatting TextFormatting @default(PLAINTEXT)
+
+  // Relations
+  media      Media[]
+
+  @@map("text_content")
+}
+
+model MediaTag {
+  mediaId String @map("media_id")
+  tagId   String @map("tag_id")
+
+  // Relations
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, tagId])
+  @@map("media_tags")
 }

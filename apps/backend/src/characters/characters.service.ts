@@ -108,7 +108,12 @@ export class CharactersService {
         include: {
           owner: true,
           creator: true,
-          mainImage: true,
+          mainMedia: {
+          include: {
+            image: true,
+            textContent: true,
+          },
+        },
           tags_rel: {
             include: {
               tag: true,
@@ -116,7 +121,7 @@ export class CharactersService {
           },
           _count: {
             select: {
-              images: true,
+              media: true,
             },
           },
         },
@@ -140,29 +145,20 @@ export class CharactersService {
       include: {
         owner: true,
         creator: true,
-        mainImage: true,
+        mainMedia: {
+          include: {
+            image: true,
+            textContent: true,
+          },
+        },
         tags_rel: {
           include: {
             tag: true,
           },
         },
-        images: {
-          where: {
-            // Only include public images unless user is the owner
-            OR: userId
-              ? [
-                  { visibility: Visibility.PUBLIC },
-                  { uploaderId: userId },
-                  { character: { ownerId: userId } },
-                ]
-              : [{ visibility: Visibility.PUBLIC }],
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 10, // Limit to recent images
-        },
         _count: {
           select: {
-            images: true,
+            media: true,
           },
         },
       },
@@ -319,37 +315,51 @@ export class CharactersService {
     return this.findOne(characterId, userId);
   }
 
-  async setMainImage(characterId: string, userId: string, imageId?: string): Promise<Character> {
+  /**
+   * Sets or clears the main media for a character
+   * @param characterId ID of the character to update
+   * @param userId ID of the user making the request (must be character owner)
+   * @param mediaId Media ID to set as main, or undefined to clear
+   * @returns Updated character with new main media
+   * @throws ForbiddenException if user doesn't own the character or media doesn't belong to character
+   * @throws NotFoundException if media doesn't exist
+   */
+  async setMainMedia(characterId: string, userId: string, mediaId?: string): Promise<Character> {
     const character = await this.findOne(characterId, userId);
 
     // Check ownership
     if (character.ownerId !== userId) {
-      throw new ForbiddenException('You can only set main image on your own characters');
+      throw new ForbiddenException('You can only set main media on your own characters');
     }
 
-    // If imageId is provided, verify the image exists and belongs to this character
-    if (imageId) {
-      const image = await this.db.image.findUnique({
-        where: { id: imageId },
+    // If mediaId is provided, verify the media exists and belongs to this character
+    if (mediaId) {
+      const media = await this.db.media.findUnique({
+        where: { id: mediaId },
       });
 
-      if (!image) {
-        throw new NotFoundException('Image not found');
+      if (!media) {
+        throw new NotFoundException('Media not found');
       }
 
-      if (image.characterId !== characterId) {
-        throw new ForbiddenException('Image must belong to this character');
+      if (media.characterId !== characterId) {
+        throw new ForbiddenException('Media must belong to this character');
       }
     }
 
-    // Update character with new main image (or null to clear)
+    // Update character with new main media (or null to clear)
     const updatedCharacter = await this.db.character.update({
       where: { id: characterId },
-      data: { mainImageId: imageId },
+      data: { mainMediaId: mediaId },
       include: {
         owner: true,
         creator: true,
-        mainImage: true,
+        mainMedia: {
+          include: {
+            image: true,
+            textContent: true,
+          },
+        },
         tags_rel: {
           include: {
             tag: true,

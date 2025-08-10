@@ -190,10 +190,10 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         </EditButton>
       )}
       <ImageSection>
-        {character.mainImage ? (
+        {character.mainMedia?.image ? (
           <MainImage
-            src={character.mainImage.thumbnailUrl || character.mainImage.url}
-            alt={character.mainImage.altText || `${character.name} main image`}
+            src={character.mainMedia.image.thumbnailUrl || character.mainMedia.image.url}
+            alt={character.mainMedia.image.altText || `${character.name} main image`}
           />
         ) : (
           <ImagePlaceholder>
@@ -225,7 +225,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
           )}
           <MetaContainer>
             {character._count && (
-              <ImageCount>{character._count.images} images</ImageCount>
+              <ImageCount>{character._count.media} media</ImageCount>
             )}
             {character.isSellable && character.price && (
               <ImageCount>${character.price}</ImageCount>

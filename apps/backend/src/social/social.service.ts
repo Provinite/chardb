@@ -115,6 +115,8 @@ export class SocialService {
         return { userId_galleryId: { userId, galleryId: entityId } };
       case LikeableType.COMMENT:
         return { userId_commentId: { userId, commentId: entityId } };
+      case LikeableType.MEDIA:
+        return { userId_mediaId: { userId, mediaId: entityId } };
       default:
         throw new BadRequestException(`Invalid entity type: ${entityType}`);
     }
@@ -131,6 +133,8 @@ export class SocialService {
         return { ...baseData, galleryId: entityId };
       case LikeableType.COMMENT:
         return { ...baseData, commentId: entityId };
+      case LikeableType.MEDIA:
+        return { ...baseData, mediaId: entityId };
       default:
         throw new BadRequestException(`Invalid entity type: ${entityType}`);
     }
@@ -146,6 +150,8 @@ export class SocialService {
         return { galleryId: entityId };
       case LikeableType.COMMENT:
         return { commentId: entityId };
+      case LikeableType.MEDIA:
+        return { mediaId: entityId };
       default:
         throw new BadRequestException(`Invalid entity type: ${entityType}`);
     }
@@ -178,6 +184,12 @@ export class SocialService {
           where: { id: entityId },
         });
         exists = !!comment;
+        break;
+      case LikeableType.MEDIA:
+        const media = await this.databaseService.media.findUnique({
+          where: { id: entityId },
+        });
+        exists = !!media;
         break;
     }
 
@@ -357,7 +369,6 @@ export class SocialService {
         },
         _count: {
           select: {
-            images: true,
             galleries: true,
           },
         },
@@ -395,7 +406,6 @@ export class SocialService {
         character: true,
         _count: {
           select: {
-            images: true,
           },
         },
       },
@@ -425,18 +435,88 @@ export class SocialService {
     return this.databaseService.image.findMany({
       where: {
         id: { in: imageIds },
-        visibility: 'PUBLIC', // Only return public images
       },
       include: {
         uploader: true,
         artist: true,
-        character: true,
-        gallery: true,
       },
       orderBy: {
         updatedAt: 'desc',
       },
     });
+  }
+
+  async getUserLikedMedia(userId: string, filters?: any): Promise<any> {
+    const limit = filters?.limit || 20;
+    const offset = filters?.offset || 0;
+
+    // Build the base where clause for liked media
+    const baseWhere = {
+      likes: {
+        some: { userId },
+      },
+    };
+
+    // Add additional filters if provided
+    const where = {
+      ...baseWhere,
+      ...(filters?.search ? {
+        OR: [
+          { title: { contains: filters.search, mode: 'insensitive' as const } },
+          { description: { contains: filters.search, mode: 'insensitive' as const } },
+        ],
+      } : {}),
+      ...(filters?.mediaType === 'IMAGE' ? { imageId: { not: null } } : {}),
+      ...(filters?.mediaType === 'TEXT' ? { textContentId: { not: null } } : {}),
+      ...(filters?.characterId ? { characterId: filters.characterId } : {}),
+      ...(filters?.galleryId ? { galleryId: filters.galleryId } : {}),
+      ...(filters?.visibility ? { visibility: filters.visibility } : {}),
+    };
+
+    const [media, total] = await Promise.all([
+      this.databaseService.media.findMany({
+        where,
+        include: {
+          owner: true,
+          character: {
+            include: {
+              owner: true,
+              _count: {
+                select: { likes: true, media: true },
+              },
+            },
+          },
+          gallery: {
+            include: {
+              owner: true,
+              _count: {
+                select: { likes: true },
+              },
+            },
+          },
+          image: true,
+          textContent: true,
+          tags_rel: {
+            include: { tag: true },
+          },
+          _count: {
+            select: { likes: true },
+          },
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+        take: limit,
+        skip: offset,
+      }),
+      this.databaseService.media.count({ where }),
+    ]);
+
+    return {
+      media,
+      total,
+      hasMore: offset + limit < total,
+    };
   }
 
   // Methods for follow lists and activity feed
@@ -554,7 +634,6 @@ export class SocialService {
       this.databaseService.character.findMany({
         where: {
           ownerId: { in: followingUserIds },
-          visibility: 'PUBLIC',
         },
         include: {
           owner: {
@@ -577,7 +656,6 @@ export class SocialService {
       this.databaseService.gallery.findMany({
         where: {
           ownerId: { in: followingUserIds },
-          visibility: 'PUBLIC',
         },
         include: {
           owner: {
@@ -600,7 +678,6 @@ export class SocialService {
       this.databaseService.image.findMany({
         where: {
           uploaderId: { in: followingUserIds },
-          visibility: 'PUBLIC',
         },
         include: {
           uploader: {
@@ -652,7 +729,7 @@ export class SocialService {
         user: image.uploader,
         content: {
           name: image.filename,
-          description: image.description,
+          description: image.altText,
         },
       })),
     ];

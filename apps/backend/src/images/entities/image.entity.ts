@@ -1,9 +1,6 @@
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
-import { Visibility } from '@chardb/database';
 import { User } from '../../users/entities/user.entity';
-import { Character } from '../../characters/entities/character.entity';
 import { Tag } from '../../shared/entities/tag.entity';
-import { Gallery } from '../../galleries/entities/gallery.entity';
 
 @ObjectType()
 export class Image {
@@ -25,17 +22,11 @@ export class Image {
   @Field({ nullable: true })
   altText?: string;
 
-  @Field({ nullable: true })
-  description?: string;
 
   @Field(() => ID)
   uploaderId: string;
 
-  @Field(() => ID, { nullable: true })
-  characterId?: string;
 
-  @Field(() => ID, { nullable: true })
-  galleryId?: string;
 
   // Artist attribution
   @Field(() => ID, { nullable: true })
@@ -68,8 +59,6 @@ export class Image {
   @Field({ nullable: true })
   sensitiveContentDescription?: string;
 
-  @Field(() => Visibility)
-  visibility: Visibility;
 
   @Field()
   createdAt: Date;
@@ -84,11 +73,7 @@ export class Image {
   @Field(() => User, { nullable: true })
   artist?: User;
 
-  @Field(() => Character, { nullable: true })
-  character?: Character;
 
-  @Field(() => Gallery, { nullable: true })
-  gallery?: Gallery;
 
   @Field(() => [ImageTag], { nullable: true })
   tags_rel?: ImageTag[];

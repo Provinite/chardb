@@ -163,7 +163,7 @@ export class UpdateCharacterInput {
   @Field(() => ID, { nullable: true })
   @IsOptional()
   @IsUUID()
-  mainImageId?: string;
+  mainMediaId?: string;
 }
 
 @InputType()
@@ -270,19 +270,24 @@ export class ManageTagsInput {
   tagNames: string[];
 }
 
+
+/**
+ * Input type for setting a character's main media
+ */
 @InputType()
-export class SetMainImageInput {
+export class SetMainMediaInput {
+  /** Media ID to set as main, or null to remove main media */
   @Field(() => ID, { nullable: true })
   @IsOptional()
   @IsUUID()
-  imageId?: string;
+  mediaId?: string;
 }
 
 // Output types
 @ObjectType()
 export class CharacterCount {
   @Field(() => Int)
-  images: number;
+  media: number;
 
   @Field(() => Int)
   comments: number;

@@ -14,7 +14,7 @@ export const GET_CHARACTERS = gql`
         backstory
         ownerId
         creatorId
-        mainImageId
+        mainMediaId
         visibility
         isSellable
         isTradeable
@@ -35,15 +35,19 @@ export const GET_CHARACTERS = gql`
           displayName
           avatarUrl
         }
-        mainImage {
+        mainMedia {
           id
-          url
-          thumbnailUrl
-          altText
-          isNsfw
+          title
+          image {
+            id
+            url
+            thumbnailUrl
+            altText
+            isNsfw
+          }
         }
         _count {
-          images
+          media
         }
       }
       total
@@ -86,7 +90,7 @@ export const GET_CHARACTER = gql`
         avatarUrl
       }
       _count {
-        images
+        media
       }
       tags_rel {
         tag {
@@ -96,24 +100,17 @@ export const GET_CHARACTER = gql`
           color
         }
       }
-      mainImageId
-      mainImage {
+      mainMediaId
+      mainMedia {
         id
-        url
-        thumbnailUrl
-        altText
-        isNsfw
-      }
-      recentImages: images(limit: 8) {
-        id
-        filename
-        originalFilename
-        url
-        thumbnailUrl
-        altText
-        description
-        isNsfw
-        createdAt
+        title
+        image {
+          id
+          url
+          thumbnailUrl
+          altText
+          isNsfw
+        }
       }
     }
   }
@@ -133,7 +130,7 @@ export const GET_MY_CHARACTERS = gql`
         backstory
         ownerId
         creatorId
-        mainImageId
+        mainMediaId
         visibility
         isSellable
         isTradeable
@@ -154,15 +151,19 @@ export const GET_MY_CHARACTERS = gql`
           displayName
           avatarUrl
         }
-        mainImage {
+        mainMedia {
           id
-          url
-          thumbnailUrl
-          altText
-          isNsfw
+          title
+          image {
+            id
+            url
+            thumbnailUrl
+            altText
+            isNsfw
+          }
         }
         _count {
-          images
+          media
         }
       }
       total
@@ -205,7 +206,7 @@ export const CREATE_CHARACTER = gql`
         avatarUrl
       }
       _count {
-        images
+        media
       }
     }
   }
@@ -245,7 +246,7 @@ export const UPDATE_CHARACTER = gql`
         avatarUrl
       }
       _count {
-        images
+        media
       }
     }
   }
@@ -291,7 +292,7 @@ export const TRANSFER_CHARACTER = gql`
         avatarUrl
       }
       _count {
-        images
+        media
       }
     }
   }
@@ -333,22 +334,27 @@ export const REMOVE_CHARACTER_TAGS = gql`
   }
 `;
 
-export const SET_CHARACTER_MAIN_IMAGE = gql`
-  mutation SetCharacterMainImage($id: ID!, $input: SetMainImageInput!) {
-    setCharacterMainImage(id: $id, input: $input) {
+export const SET_CHARACTER_MAIN_MEDIA = gql`
+  mutation SetCharacterMainMedia($id: ID!, $input: SetMainMediaInput!) {
+    setCharacterMainMedia(id: $id, input: $input) {
       id
       name
-      mainImageId
-      mainImage {
+      mainMediaId
+      mainMedia {
         id
-        url
-        thumbnailUrl
-        altText
-        isNsfw
+        title
+        image {
+          id
+          url
+          thumbnailUrl
+          altText
+          isNsfw
+        }
       }
     }
   }
 `;
+
 
 export const GET_LIKED_CHARACTERS = gql`
   query GetLikedCharacters {
@@ -369,7 +375,7 @@ export const GET_LIKED_CHARACTERS = gql`
         avatarUrl
       }
       _count {
-        images
+        media
       }
       likesCount
       userHasLiked
@@ -391,7 +397,7 @@ export {
   useTransferCharacterMutation,
   useAddCharacterTagsMutation,
   useRemoveCharacterTagsMutation,
-  useSetCharacterMainImageMutation,
+  useSetCharacterMainMediaMutation,
   
   // Types
   type Character,
@@ -401,7 +407,7 @@ export {
   type UpdateCharacterInput,
   type TransferCharacterInput,
   type ManageTagsInput,
-  type SetMainImageInput,
+  type SetMainMediaInput,
   type GetCharactersQuery,
   type GetCharactersQueryVariables,
   type GetCharacterQuery,
@@ -420,8 +426,8 @@ export {
   type AddCharacterTagsMutationVariables,
   type RemoveCharacterTagsMutation,
   type RemoveCharacterTagsMutationVariables,
-  type SetCharacterMainImageMutation,
-  type SetCharacterMainImageMutationVariables,
+  type SetCharacterMainMediaMutation,
+  type SetCharacterMainMediaMutationVariables,
   type Visibility,
   type Tag,
   type CharacterTag,

@@ -1,4 +1,4 @@
-import { createGlobalStyle } from 'styled-components';
+import { createGlobalStyle } from "styled-components";
 
 export const GlobalStyles = createGlobalStyle`
   body {
@@ -12,7 +12,7 @@ export const GlobalStyles = createGlobalStyle`
     transition: background-color 0.3s ease;
   }
 
-  /* Ensure smooth transitions for theme changes */
+  /* Ensure smooth transitions for theme changes, but not on initial load */
   * {
     transition: 
       background-color 0.3s ease,

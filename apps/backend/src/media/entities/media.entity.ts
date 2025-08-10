@@ -1,0 +1,171 @@
+import { ObjectType, Field, ID, createUnionType, registerEnumType } from '@nestjs/graphql';
+import { TextFormatting, Visibility } from '@chardb/database';
+import { User } from '../../users/entities/user.entity';
+import { Character } from '../../characters/entities/character.entity';
+import { Gallery } from '../../galleries/entities/gallery.entity';
+import { Tag } from '../../shared/entities/tag.entity';
+import { Image } from '../../images/entities/image.entity';
+
+// Register enums for GraphQL
+registerEnumType(TextFormatting, {
+  name: 'TextFormatting',
+  description: 'The formatting type for text content',
+});
+
+/**
+ * Text content entity for storing text-based media content
+ */
+@ObjectType({ description: 'Text content with formatting and word count information' })
+export class TextContent {
+  /** Unique identifier for the text content */
+  @Field(() => ID, { description: 'Unique identifier for the text content' })
+  id: string;
+
+  /** The actual text content */
+  @Field({ description: 'The actual text content' })
+  content: string;
+
+  /** Automatically calculated word count */
+  @Field({ description: 'Automatically calculated word count' })
+  wordCount: number;
+
+  /** Formatting type (plaintext or markdown) */
+  @Field(() => TextFormatting, { description: 'Text formatting type (plaintext or markdown)' })
+  formatting: TextFormatting;
+}
+
+/**
+ * Polymorphic media entity that can represent both images and text content
+ */
+@ObjectType({ description: 'Polymorphic media that can represent both images and text content' })
+export class Media {
+  /** Unique identifier for the media */
+  @Field(() => ID, { description: 'Unique identifier for the media' })
+  id: string;
+
+  /** User-provided title for the media */
+  @Field({ description: 'User-provided title for the media' })
+  title: string;
+
+  /** Optional description for the media */
+  @Field({ nullable: true, description: 'Optional description for the media' })
+  description?: string;
+
+  /** ID of the user who owns this media */
+  @Field(() => ID, { description: 'ID of the user who owns this media' })
+  ownerId: string;
+
+  /** Optional ID of the character this media is associated with */
+  @Field(() => ID, { nullable: true, description: 'Optional ID of the character this media is associated with' })
+  characterId?: string;
+
+  /** Optional ID of the gallery this media belongs to */
+  @Field(() => ID, { nullable: true, description: 'Optional ID of the gallery this media belongs to' })
+  galleryId?: string;
+
+  /** Visibility setting for the media */
+  @Field(() => Visibility, { description: 'Visibility setting for the media' })
+  visibility: Visibility;
+
+  // Content references (nullable FKs)
+  /** Foreign key to image content (null for text media) */
+  @Field(() => ID, { nullable: true, description: 'Foreign key to image content (null for text media)' })
+  imageId?: string;
+
+  /** Foreign key to text content (null for image media) */
+  @Field(() => ID, { nullable: true, description: 'Foreign key to text content (null for image media)' })
+  textContentId?: string;
+
+  /** When the media was created */
+  @Field({ description: 'When the media was created' })
+  createdAt: Date;
+
+  /** When the media was last updated */
+  @Field({ description: 'When the media was last updated' })
+  updatedAt: Date;
+
+  // Relations
+  /** The user who owns this media */
+  @Field(() => User, { description: 'The user who owns this media' })
+  owner: User;
+
+  /** The character this media is associated with, if any */
+  @Field(() => Character, { nullable: true, description: 'The character this media is associated with, if any' })
+  character?: Character;
+
+  /** The gallery this media belongs to, if any */
+  @Field(() => Gallery, { nullable: true, description: 'The gallery this media belongs to, if any' })
+  gallery?: Gallery;
+
+  /** Tag relationships for this media */
+  @Field(() => [MediaTag], { nullable: true, description: 'Tag relationships for this media' })
+  tags_rel?: MediaTag[];
+
+  // Content union - only one will be populated based on nullable FKs
+  /** Image content (populated for image media) */
+  @Field(() => Image, { nullable: true, description: 'Image content (populated for image media)' })
+  image?: Partial<Image>;
+
+  /** Text content (populated for text media) */
+  @Field(() => TextContent, { nullable: true, description: 'Text content (populated for text media)' })
+  textContent?: Partial<TextContent>;
+
+  // Social features
+  /** Number of likes this media has received */
+  @Field({ description: 'Number of likes this media has received' })
+  likesCount: number;
+
+  /** Whether the current user has liked this media */
+  @Field({ description: 'Whether the current user has liked this media' })
+  userHasLiked: boolean;
+}
+
+/**
+ * Junction entity for media-tag relationships
+ */
+@ObjectType({ description: 'Junction entity for media-tag relationships' })
+export class MediaTag {
+  /** The media this tag is associated with */
+  @Field(() => Media, { nullable: true, description: 'The media this tag is associated with' })
+  media?: Media;
+
+  /** The tag applied to the media */
+  @Field(() => Tag, { description: 'The tag applied to the media' })
+  tag: Tag;
+}
+
+/**
+ * Paginated connection result for media queries
+ */
+@ObjectType({ description: 'Paginated connection result for media queries' })
+export class MediaConnection {
+  /** Array of media items for this page */
+  @Field(() => [Media], { description: 'Array of media items for this page' })
+  media: Media[];
+
+  /** Total number of media items matching the query */
+  @Field({ description: 'Total number of media items matching the query' })
+  total: number;
+
+  /** Whether there are more items available after this page */
+  @Field({ description: 'Whether there are more items available after this page' })
+  hasMore: boolean;
+}
+
+/**
+ * Union type for polymorphic media content
+ * Resolves to either Image or TextContent based on the presence of specific fields
+ */
+export const MediaContentUnion = createUnionType({
+  name: 'MediaContent',
+  types: () => [Image, TextContent] as const,
+  resolveType(value) {
+    if ('url' in value) {
+      return Image;
+    }
+    if ('content' in value) {
+      return TextContent;
+    }
+    return null;
+  },
+});

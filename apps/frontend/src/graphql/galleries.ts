@@ -25,8 +25,10 @@ export const GET_GALLERIES = gql`
           species
         }
         _count {
-          images
+          media
         }
+        likesCount
+        userHasLiked
       }
       total
       hasMore
@@ -57,43 +59,11 @@ export const GET_GALLERY = gql`
         name
         species
       }
-      images {
-        id
-        filename
-        originalFilename
-        url
-        thumbnailUrl
-        altText
-        description
-        uploaderId
-        characterId
-        galleryId
-        artistId
-        artistName
-        artistUrl
-        source
-        width
-        height
-        fileSize
-        mimeType
-        isNsfw
-        visibility
-        createdAt
-        updatedAt
-        uploader {
-          id
-          username
-          displayName
-        }
-        artist {
-          id
-          username
-          displayName
-        }
-      }
       _count {
-        images
+        media
       }
+      likesCount
+      userHasLiked
     }
   }
 `;
@@ -123,8 +93,10 @@ export const GET_MY_GALLERIES = gql`
           species
         }
         _count {
-          images
+          media
         }
+        likesCount
+        userHasLiked
       }
       total
       hasMore
@@ -157,8 +129,10 @@ export const GET_USER_GALLERIES = gql`
           species
         }
         _count {
-          images
+          media
         }
+        likesCount
+        userHasLiked
       }
       total
       hasMore
@@ -191,8 +165,10 @@ export const GET_CHARACTER_GALLERIES = gql`
           species
         }
         _count {
-          images
+          media
         }
+        likesCount
+        userHasLiked
       }
       total
       hasMore
@@ -224,8 +200,10 @@ export const CREATE_GALLERY = gql`
         species
       }
       _count {
-        images
+        media
       }
+      likesCount
+      userHasLiked
     }
   }
 `;
@@ -254,8 +232,10 @@ export const UPDATE_GALLERY = gql`
         species
       }
       _count {
-        images
+        media
       }
+      likesCount
+      userHasLiked
     }
   }
 `;
@@ -266,49 +246,6 @@ export const DELETE_GALLERY = gql`
   }
 `;
 
-export const ADD_IMAGE_TO_GALLERY = gql`
-  mutation AddImageToGallery($galleryId: ID!, $input: GalleryImageOperationInput!) {
-    addImageToGallery(galleryId: $galleryId, input: $input) {
-      id
-      name
-      description
-      _count {
-        images
-      }
-      images {
-        id
-        filename
-        originalFilename
-        url
-        thumbnailUrl
-        altText
-        description
-      }
-    }
-  }
-`;
-
-export const REMOVE_IMAGE_FROM_GALLERY = gql`
-  mutation RemoveImageFromGallery($galleryId: ID!, $input: GalleryImageOperationInput!) {
-    removeImageFromGallery(galleryId: $galleryId, input: $input) {
-      id
-      name
-      description
-      _count {
-        images
-      }
-      images {
-        id
-        filename
-        originalFilename
-        url
-        thumbnailUrl
-        altText
-        description
-      }
-    }
-  }
-`;
 
 export const REORDER_GALLERIES = gql`
   mutation ReorderGalleries($input: ReorderGalleriesInput!) {
@@ -316,6 +253,11 @@ export const REORDER_GALLERIES = gql`
       id
       name
       sortOrder
+      _count {
+        media
+      }
+      likesCount
+      userHasLiked
     }
   }
 `;
@@ -340,7 +282,7 @@ export const GET_LIKED_GALLERIES = gql`
         name
       }
       _count {
-        images
+        media
       }
       likesCount
       userHasLiked
@@ -361,8 +303,6 @@ export {
   useCreateGalleryMutation,
   useUpdateGalleryMutation,
   useDeleteGalleryMutation,
-  useAddImageToGalleryMutation,
-  useRemoveImageFromGalleryMutation,
   useReorderGalleriesMutation,
   
   // Types
@@ -371,7 +311,6 @@ export {
   type GalleryFiltersInput,
   type CreateGalleryInput,
   type UpdateGalleryInput,
-  type GalleryImageOperationInput,
   type ReorderGalleriesInput,
   type GetGalleriesQuery,
   type GetGalleriesQueryVariables,
@@ -389,10 +328,6 @@ export {
   type UpdateGalleryMutationVariables,
   type DeleteGalleryMutation,
   type DeleteGalleryMutationVariables,
-  type AddImageToGalleryMutation,
-  type AddImageToGalleryMutationVariables,
-  type RemoveImageFromGalleryMutation,
-  type RemoveImageFromGalleryMutationVariables,
   type ReorderGalleriesMutation,
   type ReorderGalleriesMutationVariables,
   type Image,
