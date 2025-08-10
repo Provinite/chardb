@@ -7,7 +7,7 @@ import { useMutation, useQuery } from '@apollo/client';
 import { toast } from 'react-hot-toast';
 import styled from 'styled-components';
 import { Button } from '@chardb/ui';
-import { CREATE_GALLERY, GET_GALLERIES } from '../graphql/galleries';
+import { CREATE_GALLERY, GET_GALLERIES, GET_MY_GALLERIES } from '../graphql/galleries';
 import { GET_MY_CHARACTERS, Character } from '../graphql/characters';
 
 const gallerySchema = z.object({
@@ -268,7 +268,10 @@ export const CreateGalleryPage: React.FC = () => {
   });
 
   const [createGallery] = useMutation(CREATE_GALLERY, {
-    refetchQueries: [{ query: GET_GALLERIES }],
+    refetchQueries: [
+      { query: GET_GALLERIES },
+      { query: GET_MY_GALLERIES },
+    ],
   });
 
   // Fetch user's characters for the character association dropdown
