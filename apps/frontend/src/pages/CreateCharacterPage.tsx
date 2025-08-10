@@ -524,9 +524,23 @@ export const CreateCharacterPage: React.FC = () => {
                   type="number"
                   step="0.01"
                   min="0"
+                  pattern="^[0-9]*\.?[0-9]*$"
                   {...register('price')}
                   aria-invalid={!!errors.price}
                   placeholder="0.00"
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    const value = target.value;
+                    // Remove any invalid characters, keeping only digits and decimal point
+                    const cleaned = value.replace(/[^0-9.]/g, '');
+                    // Ensure only one decimal point
+                    const parts = cleaned.split('.');
+                    if (parts.length > 2) {
+                      target.value = parts[0] + '.' + parts.slice(1).join('');
+                    } else {
+                      target.value = cleaned;
+                    }
+                  }}
                 />
                 {errors.price && <ErrorMessage>{errors.price.message}</ErrorMessage>}
               </FormGroup>
