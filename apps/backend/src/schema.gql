@@ -603,6 +603,15 @@ type Query {
     """Optional filters for media query"""
     filters: MediaFiltersInput
   ): MediaConnection!
+
+  """Search for tags by name or get popular suggestions"""
+  searchTags(
+    """Maximum number of tags to return (default: 10, max: 50)"""
+    limit: Float = 10
+
+    """Search term to filter tags. If empty, returns popular suggestions"""
+    search: String
+  ): [Tag!]!
   user(id: ID, username: String): User
   userCharacters(filters: CharacterFiltersInput, userId: ID!): CharacterConnection!
   userGalleries(filters: GalleryFiltersInput, userId: ID!): GalleryConnection!

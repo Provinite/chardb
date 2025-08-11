@@ -696,6 +696,8 @@ export type Query = {
   myImages: ImageConnection;
   /** Retrieves media owned by the current authenticated user */
   myMedia: MediaConnection;
+  /** Search for tags by name or get popular suggestions */
+  searchTags: Array<Tag>;
   user: Maybe<User>;
   userCharacters: CharacterConnection;
   userGalleries: GalleryConnection;
@@ -836,6 +838,12 @@ export type QueryMyImagesArgs = {
 
 export type QueryMyMediaArgs = {
   filters?: InputMaybe<MediaFiltersInput>;
+};
+
+
+export type QuerySearchTagsArgs = {
+  limit?: InputMaybe<Scalars['Float']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1418,6 +1426,14 @@ export type GetActivityFeedQueryVariables = Exact<{
 
 
 export type GetActivityFeedQuery = { __typename?: 'Query', activityFeed: Array<{ __typename?: 'ActivityItem', id: string, type: string, entityId: string, createdAt: string, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, content: { __typename?: 'ActivityContent', name: string | null, title: string | null, description: string | null } | null }> };
+
+export type SearchTagsQueryVariables = Exact<{
+  search?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Float']['input']>;
+}>;
+
+
+export type SearchTagsQuery = { __typename?: 'Query', searchTags: Array<{ __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null, createdAt: string }> };
 
 export type GetUserProfileQueryVariables = Exact<{
   username: Scalars['String']['input'];
@@ -4269,6 +4285,51 @@ export type GetActivityFeedQueryHookResult = ReturnType<typeof useGetActivityFee
 export type GetActivityFeedLazyQueryHookResult = ReturnType<typeof useGetActivityFeedLazyQuery>;
 export type GetActivityFeedSuspenseQueryHookResult = ReturnType<typeof useGetActivityFeedSuspenseQuery>;
 export type GetActivityFeedQueryResult = Apollo.QueryResult<GetActivityFeedQuery, GetActivityFeedQueryVariables>;
+export const SearchTagsDocument = gql`
+    query SearchTags($search: String, $limit: Float) {
+  searchTags(search: $search, limit: $limit) {
+    id
+    name
+    category
+    color
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useSearchTagsQuery__
+ *
+ * To run a query within a React component, call `useSearchTagsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchTagsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchTagsQuery({
+ *   variables: {
+ *      search: // value for 'search'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function useSearchTagsQuery(baseOptions?: Apollo.QueryHookOptions<SearchTagsQuery, SearchTagsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SearchTagsQuery, SearchTagsQueryVariables>(SearchTagsDocument, options);
+      }
+export function useSearchTagsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SearchTagsQuery, SearchTagsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SearchTagsQuery, SearchTagsQueryVariables>(SearchTagsDocument, options);
+        }
+export function useSearchTagsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SearchTagsQuery, SearchTagsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SearchTagsQuery, SearchTagsQueryVariables>(SearchTagsDocument, options);
+        }
+export type SearchTagsQueryHookResult = ReturnType<typeof useSearchTagsQuery>;
+export type SearchTagsLazyQueryHookResult = ReturnType<typeof useSearchTagsLazyQuery>;
+export type SearchTagsSuspenseQueryHookResult = ReturnType<typeof useSearchTagsSuspenseQuery>;
+export type SearchTagsQueryResult = Apollo.QueryResult<SearchTagsQuery, SearchTagsQueryVariables>;
 export const GetUserProfileDocument = gql`
     query GetUserProfile($username: String!) {
   userProfile(username: $username) {
