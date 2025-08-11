@@ -93,6 +93,9 @@ export const GET_MEDIA_ITEM = gql`
         thumbnailUrl
         altText
         isNsfw
+        artistName
+        artistUrl
+        source
         width
         height
         fileSize
