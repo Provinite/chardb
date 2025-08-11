@@ -31,9 +31,9 @@ const mediaSchema = z.object({
     .or(z.literal("")),
   content: z
     .string()
-    .min(1, "Content is required")
     .max(50000, "Content must be less than 50,000 characters")
-    .optional(),
+    .optional()
+    .or(z.literal("")),
   formatting: z.nativeEnum(TextFormatting).optional(),
   visibility: z.nativeEnum(Visibility),
   galleryId: z.string().optional(),
@@ -51,14 +51,16 @@ const mediaSchema = z.object({
     .or(z.literal("")),
   artistUrl: z
     .string()
-    .url("Artist URL must be a valid URL")
     .optional()
-    .or(z.literal("")),
+    .refine((val) => !val || val === "" || z.string().url().safeParse(val).success, {
+      message: "Artist URL must be a valid URL",
+    }),
   source: z
     .string()
-    .url("Source URL must be a valid URL")
     .optional()
-    .or(z.literal("")),
+    .refine((val) => !val || val === "" || z.string().url().safeParse(val).success, {
+      message: "Source URL must be a valid URL",
+    }),
 });
 
 type MediaForm = z.infer<typeof mediaSchema>;
@@ -317,6 +319,8 @@ export const EditMediaPage: React.FC = () => {
     handleSubmit,
     formState: { errors },
     reset,
+    setError,
+    clearErrors,
   } = useForm<MediaForm>({
     resolver: zodResolver(mediaSchema),
     defaultValues: {
@@ -360,9 +364,9 @@ export const EditMediaPage: React.FC = () => {
         // Image fields
         altText: media.image?.altText || "",
         isNsfw: media.image?.isNsfw || false,
-        artistName: "", // Note: artistName is not included in the current GET_MEDIA_ITEM query
-        artistUrl: "", // Note: artistUrl is not included in the current GET_MEDIA_ITEM query
-        source: "", // Note: source is not included in the current GET_MEDIA_ITEM query
+        artistName: media.image?.artistName || "",
+        artistUrl: media.image?.artistUrl || "",
+        source: media.image?.source || "",
       });
     }
   }, [media, reset]);
@@ -373,11 +377,29 @@ export const EditMediaPage: React.FC = () => {
 
   const onSubmit = async (data: MediaForm) => {
     if (!media || !user) return;
+    
+    // Custom validation for text media content
+    if (isTextMedia && (!data.content || data.content.trim() === "")) {
+      setError("content", {
+        type: "manual",
+        message: "Content is required for text media"
+      });
+      return;
+    }
+    
+    // Clear any existing content errors
+    clearErrors("content");
+    
+    console.log('Form submission started');
+    console.log('Form data:', data);
+    console.log('Is image media:', isImageMedia);
+    console.log('Media object:', media);
 
     setIsSubmitting(true);
     try {
+      console.log('Step 1: Starting updateMedia mutation');
       // Update basic media information
-      await updateMedia({
+      const mediaResult = await updateMedia({
         variables: {
           id: media.id,
           input: {
@@ -388,10 +410,12 @@ export const EditMediaPage: React.FC = () => {
           },
         },
       });
+      console.log('Step 1: updateMedia completed:', mediaResult);
 
       // Update text content if this is a text media item
       if (isTextMedia && data.content && data.formatting) {
-        await updateTextContent({
+        console.log('Step 2: Starting updateTextContent mutation');
+        const textResult = await updateTextContent({
           variables: {
             mediaId: media.id,
             input: {
@@ -400,11 +424,13 @@ export const EditMediaPage: React.FC = () => {
             },
           },
         });
+        console.log('Step 2: updateTextContent completed:', textResult);
       }
 
       // Update image metadata if this is an image media item
       if (isImageMedia && media.image) {
-        await updateImage({
+        console.log('Step 3: Starting updateImage mutation');
+        const imageResult = await updateImage({
           variables: {
             id: media.image.id,
             input: {
@@ -416,8 +442,10 @@ export const EditMediaPage: React.FC = () => {
             },
           },
         });
+        console.log('Step 3: updateImage completed:', imageResult);
       }
 
+      console.log('All mutations completed successfully');
       toast.success("Media updated successfully!");
       navigate(`/media/${media.id}`);
     } catch (error) {
@@ -428,6 +456,7 @@ export const EditMediaPage: React.FC = () => {
           : "Failed to update media. Please try again.",
       );
     } finally {
+      console.log('Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
@@ -540,8 +569,12 @@ export const EditMediaPage: React.FC = () => {
               <Label htmlFor="galleryId">Gallery (Optional)</Label>
               {galleries.length === 0 ? (
                 <>
-                  <Select id="galleryId" disabled>
-                    <option>No galleries yet</option>
+                  <Select 
+                    id="galleryId" 
+                    {...register("galleryId")} 
+                    disabled
+                  >
+                    <option value="">No galleries yet</option>
                   </Select>
                   <div style={{ marginTop: "0.5rem" }}>
                     <a
