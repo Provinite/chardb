@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.2.0] - 2025-01-12
+
 ### Added
 - Advanced `TagInput` component with typeahead functionality and integrated chip display
 - Tag chips with remove buttons (X) replacing comma-separated text input
