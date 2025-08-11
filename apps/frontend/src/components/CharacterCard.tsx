@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { Character } from '../generated/graphql';
+import { Tag } from './Tag';
+import { TagsContainer } from './TagsContainer';
 
 const Card = styled.div`
   background: ${({ theme }) => theme.colors.background};
@@ -119,6 +121,7 @@ const VisibilityBadge = styled.span.withConfig({
   };
 `;
 
+
 const EditButton = styled(Link)`
   position: absolute;
   top: ${({ theme }) => theme.spacing.md};
@@ -213,6 +216,21 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         )}
         {character.description && (
           <Description>{character.description}</Description>
+        )}
+        
+        {character.tags && character.tags.length > 0 && (
+          <TagsContainer size="sm" style={{ marginBottom: '0.75rem' }}>
+            {character.tags.slice(0, 3).map((tag, index) => (
+              <Tag key={index} size="sm">
+                {tag}
+              </Tag>
+            ))}
+            {character.tags.length > 3 && (
+              <Tag size="sm" variant="primary">
+                +{character.tags.length - 3}
+              </Tag>
+            )}
+          </TagsContainer>
         )}
         
         <Meta>

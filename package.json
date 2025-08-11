@@ -12,6 +12,7 @@
     "dev": "concurrently \"yarn workspace @chardb/backend dev\" \"yarn workspace @chardb/frontend dev\" --names \"backend,frontend\" --prefix-colors \"cyan,magenta\"",
     "dev:backend": "yarn workspace @chardb/backend dev",
     "dev:frontend": "yarn workspace @chardb/frontend dev",
+    "dev:agent": "yarn dev | tee dev.log",
     "test": "yarn workspaces foreach -A run test",
     "lint": "yarn workspaces foreach -A run lint",
     "type-check": "yarn workspaces foreach -A run type-check",
