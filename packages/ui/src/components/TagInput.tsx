@@ -21,10 +21,10 @@ export interface TagInputProps {
   maxTags?: number;
 }
 
-const Container = styled.div<{ hasError?: boolean }>`
+const Container = styled.div<{ $hasError?: boolean }>`
   position: relative;
   min-height: 42px;
-  border: 2px solid ${({ theme, hasError }) => hasError ? theme.colors.error : theme.colors.border};
+  border: 2px solid ${({ theme, $hasError }) => $hasError ? theme.colors.error : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   background: ${({ theme }) => theme.colors.background};
   padding: ${({ theme }) => theme.spacing.xs};
@@ -36,11 +36,11 @@ const Container = styled.div<{ hasError?: boolean }>`
   transition: border-color 0.2s;
 
   &:focus-within {
-    border-color: ${({ theme, hasError }) => hasError ? theme.colors.error : theme.colors.primary};
+    border-color: ${({ theme, $hasError }) => $hasError ? theme.colors.error : theme.colors.primary};
   }
 
   &:hover:not(:focus-within) {
-    border-color: ${({ theme, hasError }) => hasError ? theme.colors.error : theme.colors.text.muted};
+    border-color: ${({ theme, $hasError }) => $hasError ? theme.colors.error : theme.colors.text.muted};
   }
 `;
 
@@ -109,7 +109,7 @@ const Input = styled.input`
   }
 `;
 
-const SuggestionsDropdown = styled.div<{ isOpen: boolean }>`
+const SuggestionsDropdown = styled.div<{ $isOpen: boolean }>`
   position: absolute;
   top: 100%;
   left: 0;
@@ -121,16 +121,16 @@ const SuggestionsDropdown = styled.div<{ isOpen: boolean }>`
   z-index: 1000;
   max-height: 200px;
   overflow-y: auto;
-  display: ${({ isOpen }) => isOpen ? 'block' : 'none'};
+  display: ${({ $isOpen }) => $isOpen ? 'block' : 'none'};
   margin-top: 2px;
 `;
 
-const SuggestionItem = styled.button<{ isHighlighted: boolean }>`
+const SuggestionItem = styled.button<{ $isHighlighted: boolean }>`
   width: 100%;
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   border: none;
-  background: ${({ theme, isHighlighted }) => 
-    isHighlighted ? theme.colors.surface : 'transparent'};
+  background: ${({ theme, $isHighlighted }) => 
+    $isHighlighted ? theme.colors.surface : 'transparent'};
   color: ${({ theme }) => theme.colors.text.primary};
   text-align: left;
   cursor: pointer;
@@ -304,7 +304,7 @@ export const TagInput: React.FC<TagInputProps> = ({
   return (
     <div ref={containerRef}>
       <Container 
-        hasError={!!error} 
+        $hasError={!!error} 
         onClick={handleContainerClick}
       >
         {value.map((tag, index) => (
@@ -336,7 +336,7 @@ export const TagInput: React.FC<TagInputProps> = ({
           aria-label="Add tags"
         />
         
-        <SuggestionsDropdown isOpen={isOpen && (loading || availableSuggestions.length > 0)}>
+        <SuggestionsDropdown $isOpen={isOpen && (loading || availableSuggestions.length > 0)}>
           {loading ? (
             <LoadingIndicator>Searching...</LoadingIndicator>
           ) : (
@@ -344,7 +344,7 @@ export const TagInput: React.FC<TagInputProps> = ({
               <SuggestionItem
                 key={suggestion.id}
                 type="button"
-                isHighlighted={index === highlightedIndex}
+                $isHighlighted={index === highlightedIndex}
                 onClick={() => handleSuggestionClick(suggestion)}
               >
                 {suggestion.name}
