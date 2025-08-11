@@ -39,12 +39,12 @@ format_for_discord() {
     local formatted=""
     
     if [ -n "$changes" ]; then
-        formatted="**$title**\n"
+        formatted="**$title**"$'\n'
         # Convert to Discord markdown format
-        formatted="$formatted$(echo "$changes" | sed 's/^### /• **/' | sed 's/^- /  - /' | sed 's/^## \[/\n**Version /' | sed 's/\*\*$/\*\*:/')\n"
+        formatted="$formatted$(echo "$changes" | sed 's/^### /• **/' | sed 's/^- /  - /' | sed $'s/^## \\[/\\\n**Version /' | sed 's/\*\*$/\*\*:/')"$'\n'
     fi
     
-    echo -e "$formatted"
+    echo "$formatted"
 }
 
 # Extract changes from each changelog
@@ -53,33 +53,36 @@ BACKEND_CHANGES=$(extract_changelog_changes "apps/backend/CHANGELOG.md")
 FRONTEND_CHANGES=$(extract_changelog_changes "apps/frontend/CHANGELOG.md")
 
 # Build the Discord message
-MESSAGE="🚀 **Release Update for $REPO_NAME**\n\n"
+MESSAGE="🚀 **Release Update for $REPO_NAME**"$'\n\n'
 
 # Add changes if they exist
 if [ -n "$ROOT_CHANGES" ]; then
-    MESSAGE="$MESSAGE$(format_for_discord "Repository Changes" "$ROOT_CHANGES")\n"
+    MESSAGE="$MESSAGE$(format_for_discord "Repository Changes" "$ROOT_CHANGES")"$'\n'
 fi
 
 if [ -n "$BACKEND_CHANGES" ]; then
-    MESSAGE="$MESSAGE$(format_for_discord "Backend Changes" "$BACKEND_CHANGES")\n"
+    MESSAGE="$MESSAGE$(format_for_discord "Backend Changes" "$BACKEND_CHANGES")"$'\n'
 fi
 
 if [ -n "$FRONTEND_CHANGES" ]; then
-    MESSAGE="$MESSAGE$(format_for_discord "Frontend Changes" "$FRONTEND_CHANGES")\n"
+    MESSAGE="$MESSAGE$(format_for_discord "Frontend Changes" "$FRONTEND_CHANGES")"$'\n'
 fi
 
 # If no changes found, create a generic message
 if [ -z "$ROOT_CHANGES" ] && [ -z "$BACKEND_CHANGES" ] && [ -z "$FRONTEND_CHANGES" ]; then
-    MESSAGE="$MESSAGE📝 Changelog updates detected between commits \`$FROM_COMMIT\` and \`$TO_COMMIT\`\n\nNo specific changelog entries were found in the diff."
+    MESSAGE="${MESSAGE}📝 Changelog updates detected between commits \`$FROM_COMMIT\` and \`$TO_COMMIT\`"$'\n\n'"No specific changelog entries were found in the diff."
 fi
 
 # Add commit range info
-MESSAGE="$MESSAGE\n📋 **Commit Range:** \`$FROM_COMMIT\` → \`$TO_COMMIT\`"
+MESSAGE="${MESSAGE}"$'\n'"📋 **Commit Range:** \`$FROM_COMMIT\` → \`$TO_COMMIT\`"
 
 # Send to Discord webhook
+# Escape the message for JSON and handle newlines properly
+JSON_MESSAGE=$(printf '%s' "$MESSAGE" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed 's/$/\\n/' | tr -d '\n' | sed 's/\\n$//')
+
 curl -H "Content-Type: application/json" \
      -X POST \
-     -d "{\"content\": \"$MESSAGE\"}" \
+     -d "{\"content\": \"$JSON_MESSAGE\"}" \
      "$WEBHOOK_URL"
 
 echo "✅ Release notification sent to Discord!"
