@@ -77,9 +77,12 @@ fi
 MESSAGE="$MESSAGE\n📋 **Commit Range:** \`$FROM_COMMIT\` → \`$TO_COMMIT\`"
 
 # Send to Discord webhook
+# Escape the message for JSON and handle newlines properly
+JSON_MESSAGE=$(printf '%s' "$MESSAGE" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed 's/$/\\n/' | tr -d '\n' | sed 's/\\n$//')
+
 curl -H "Content-Type: application/json" \
      -X POST \
-     -d "{\"content\": \"$MESSAGE\"}" \
+     -d "{\"content\": \"$JSON_MESSAGE\"}" \
      "$WEBHOOK_URL"
 
 echo "✅ Release notification sent to Discord!"
