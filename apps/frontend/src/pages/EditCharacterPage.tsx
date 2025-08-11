@@ -53,6 +53,9 @@ const characterSchema = z.object({
       const num = parseFloat(val);
       return !isNaN(num) && num >= 0;
     }, 'Price must be a valid positive number'),
+  tags: z.string()
+    .optional()
+    .or(z.literal('')),
 });
 
 type CharacterForm = z.infer<typeof characterSchema>;
@@ -226,6 +229,12 @@ const ErrorMessage = styled.span`
   margin-top: ${({ theme }) => theme.spacing.xs};
 `;
 
+const TagsHelp = styled.p`
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.muted};
+  margin: ${({ theme }) => theme.spacing.xs} 0 0 0;
+`;
+
 const Actions = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.md};
@@ -281,6 +290,7 @@ export const EditCharacterPage: React.FC = () => {
       isSellable: false,
       isTradeable: false,
       price: '',
+      tags: '',
     },
   });
 
@@ -301,6 +311,7 @@ export const EditCharacterPage: React.FC = () => {
         isSellable: character.isSellable,
         isTradeable: character.isTradeable,
         price: character.price?.toString() || '',
+        tags: character.tags.join(', '),
       });
     }
   }, [character, reset]);
@@ -312,6 +323,11 @@ export const EditCharacterPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      // Process tags
+      const tags = data.tags
+        ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+        : [];
+
       const input: UpdateCharacterInput = {
         name: data.name,
         species: data.species || undefined,
@@ -324,6 +340,7 @@ export const EditCharacterPage: React.FC = () => {
         isSellable: data.isSellable,
         isTradeable: data.isTradeable,
         price: data.price && data.isSellable ? parseFloat(data.price) : undefined,
+        tags,
       };
 
       await updateCharacter({
@@ -529,6 +546,23 @@ export const EditCharacterPage: React.FC = () => {
               {errors.price && <ErrorMessage>{errors.price.message}</ErrorMessage>}
             </FormGroup>
           )}
+        </FormSection>
+
+        <FormSection>
+          <SectionTitle>Tags</SectionTitle>
+          
+          <FormGroup>
+            <Label>Tags</Label>
+            <Input
+              {...register('tags')}
+              placeholder="fantasy, original, cute, warrior"
+              hasError={!!errors.tags}
+            />
+            <TagsHelp>
+              Add tags separated by commas to help others find your character
+            </TagsHelp>
+            {errors.tags && <ErrorMessage>{errors.tags.message}</ErrorMessage>}
+          </FormGroup>
         </FormSection>
 
         <Actions>
