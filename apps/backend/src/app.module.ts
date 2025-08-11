@@ -18,6 +18,7 @@ import { GalleriesModule } from './galleries/galleries.module';
 import { CommentsModule } from './comments/comments.module';
 import { SocialModule } from './social/social.module';
 import { HealthModule } from './health/health.module';
+import { TagsModule } from './tags/tags.module';
 
 @Module({
   imports: [
@@ -138,6 +139,7 @@ import { HealthModule } from './health/health.module';
     CommentsModule,
     SocialModule,
     HealthModule,
+    TagsModule,
   ],
   providers: [
     {

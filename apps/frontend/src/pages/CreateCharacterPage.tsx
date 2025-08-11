@@ -6,8 +6,9 @@ import { z } from 'zod';
 import { useMutation } from '@apollo/client';
 import { toast } from 'react-hot-toast';
 import styled from 'styled-components';
-import { Button } from '@chardb/ui';
+import { Button, TagInput } from '@chardb/ui';
 import { CREATE_CHARACTER, GET_CHARACTERS, GET_MY_CHARACTERS } from '../graphql/characters';
+import { useTagSearch } from '../hooks/useTagSearch';
 
 const characterSchema = z.object({
   name: z.string()
@@ -47,9 +48,9 @@ const characterSchema = z.object({
       const num = parseFloat(val);
       return !isNaN(num) && num >= 0;
     }, 'Price must be a valid positive number'),
-  tags: z.string()
+  tags: z.array(z.string())
     .optional()
-    .or(z.literal('')),
+    .default([]),
 });
 
 type CharacterForm = z.infer<typeof characterSchema>;
@@ -298,6 +299,9 @@ const LoadingSpinner = styled.div`
 export const CreateCharacterPage: React.FC = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  
+  const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
 
   const {
     register,
@@ -310,6 +314,7 @@ export const CreateCharacterPage: React.FC = () => {
       visibility: 'PUBLIC',
       isSellable: false,
       isTradeable: false,
+      tags: [],
     },
   });
 
@@ -329,11 +334,6 @@ export const CreateCharacterPage: React.FC = () => {
   const onSubmit = async (data: CharacterForm) => {
     setIsSubmitting(true);
     try {
-      // Process tags
-      const tags = data.tags
-        ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
-        : [];
-
       // Process price
       const price = data.price && data.price !== '' ? parseFloat(data.price) : undefined;
 
@@ -350,7 +350,7 @@ export const CreateCharacterPage: React.FC = () => {
         isSellable: data.isSellable,
         isTradeable: data.isTradeable,
         price,
-        tags,
+        tags, // Use the tags state directly
       };
 
       const result = await createCharacter({
@@ -556,14 +556,17 @@ export const CreateCharacterPage: React.FC = () => {
             
             <FormGroup>
               <Label htmlFor="tags">Tags</Label>
-              <Input
-                id="tags"
-                {...register('tags')}
-                aria-invalid={!!errors.tags}
-                placeholder="fantasy, original, cute, warrior"
+              <TagInput
+                value={tags}
+                onChange={setTags}
+                onSearch={searchTags}
+                suggestions={suggestions}
+                loading={tagsLoading}
+                placeholder="Start typing to search tags..."
+                maxTags={20}
               />
               <TagsHelp>
-                Add tags separated by commas to help others find your character
+                Start typing to find existing tags or create new ones. Tags help others discover your character.
               </TagsHelp>
               {errors.tags && <ErrorMessage>{errors.tags.message}</ErrorMessage>}
             </FormGroup>

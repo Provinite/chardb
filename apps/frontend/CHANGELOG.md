@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Advanced `TagInput` component with typeahead functionality and integrated chip display
+- Tag chips with remove buttons (X) replacing comma-separated text input
+- Real-time tag search with debounced API calls (300ms delay)
+- Keyboard navigation support (Enter, Backspace, Arrow keys, Escape)
+- `useTagSearch` hook for managing tag search state and API integration
+- Visual tag chip design with purple styling and hover effects
+- Support for creating new tags and selecting from existing suggestions
+
+### Changed
+- Replaced comma-separated tag input with modern chip-based interface in character forms
+- Enhanced character creation and editing forms with improved tag UX
+- Updated form validation to handle tags as arrays instead of comma-separated strings
+- Improved tag discoverability and user experience
+
+### Fixed
+- Styled-components DOM prop warnings in TagInput component using transient props
+- Proper focus management and accessibility in tag input interface
+- Form state management for tags in both create and edit character pages
+
+### Technical
+- Enhanced UI package with reusable TagInput component
+- Updated GraphQL integration with new searchTags query
+- Improved TypeScript types and interfaces for tag management
+
 ## [v0.1.0] - 2025-01-11
 
 ### Added

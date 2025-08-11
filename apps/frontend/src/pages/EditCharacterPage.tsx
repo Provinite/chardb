@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'react-hot-toast';
 import styled from 'styled-components';
-import { Button } from '@chardb/ui';
+import { Button, TagInput } from '@chardb/ui';
 import { 
   useGetCharacterQuery,
   useUpdateCharacterMutation,
@@ -14,6 +14,7 @@ import {
 } from '../graphql/characters';
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useTagSearch } from '../hooks/useTagSearch';
 
 const characterSchema = z.object({
   name: z.string()
@@ -53,9 +54,9 @@ const characterSchema = z.object({
       const num = parseFloat(val);
       return !isNaN(num) && num >= 0;
     }, 'Price must be a valid positive number'),
-  tags: z.string()
+  tags: z.array(z.string())
     .optional()
-    .or(z.literal('')),
+    .default([]),
 });
 
 type CharacterForm = z.infer<typeof characterSchema>;
@@ -262,6 +263,9 @@ export const EditCharacterPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  
+  const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
 
   const { data, loading, error } = useGetCharacterQuery({
     variables: { id: id! },
@@ -290,7 +294,7 @@ export const EditCharacterPage: React.FC = () => {
       isSellable: false,
       isTradeable: false,
       price: '',
-      tags: '',
+      tags: [],
     },
   });
 
@@ -311,8 +315,9 @@ export const EditCharacterPage: React.FC = () => {
         isSellable: character.isSellable,
         isTradeable: character.isTradeable,
         price: character.price?.toString() || '',
-        tags: character.tags.join(', '),
+        tags: [],
       });
+      setTags(character.tags || []);
     }
   }, [character, reset]);
 
@@ -323,11 +328,6 @@ export const EditCharacterPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // Process tags
-      const tags = data.tags
-        ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
-        : [];
-
       const input: UpdateCharacterInput = {
         name: data.name,
         species: data.species || undefined,
@@ -340,7 +340,7 @@ export const EditCharacterPage: React.FC = () => {
         isSellable: data.isSellable,
         isTradeable: data.isTradeable,
         price: data.price && data.isSellable ? parseFloat(data.price) : undefined,
-        tags,
+        tags, // Use the tags state directly
       };
 
       await updateCharacter({
@@ -553,13 +553,17 @@ export const EditCharacterPage: React.FC = () => {
           
           <FormGroup>
             <Label>Tags</Label>
-            <Input
-              {...register('tags')}
-              placeholder="fantasy, original, cute, warrior"
-              hasError={!!errors.tags}
+            <TagInput
+              value={tags}
+              onChange={setTags}
+              onSearch={searchTags}
+              suggestions={suggestions}
+              loading={tagsLoading}
+              placeholder="Start typing to search tags..."
+              maxTags={20}
             />
             <TagsHelp>
-              Add tags separated by commas to help others find your character
+              Start typing to find existing tags or create new ones. Tags help others discover your character.
             </TagsHelp>
             {errors.tags && <ErrorMessage>{errors.tags.message}</ErrorMessage>}
           </FormGroup>

@@ -5,6 +5,19 @@ All notable changes to the backend application will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- New `TagsModule` with resolver and service for tag management
+- `searchTags` GraphQL query for real-time tag search functionality
+- Tag search API with popular suggestions and filtered results
+- Database queries for tag relationships with usage count sorting
+- Support for tag search with case-insensitive filtering
+
+### Changed
+- Enhanced GraphQL schema with tag search capabilities
+- Updated app module to include TagsModule
+
 ## [v0.0.2] - 2025-08-10
 
 ### Changed
