@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.1.0] - 2025-01-11
+
 ### Added
 - Tag editing functionality in character edit form
 - Reusable `Tag` component with multiple variants (default, primary, success, warning, error)
