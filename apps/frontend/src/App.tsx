@@ -19,6 +19,7 @@ import { EditCharacterPage } from "./pages/EditCharacterPage";
 import { CreateTextPage } from "./pages/CreateTextPage";
 import { CreateMediaPage } from "./pages/CreateMediaPage";
 import { MediaPage } from "./pages/MediaPage";
+import { EditMediaPage } from "./pages/EditMediaPage";
 import { GalleryPage } from "./pages/GalleryPage";
 import { GalleriesPage } from "./pages/GalleriesPage";
 import { CreateGalleryPage } from "./pages/CreateGalleryPage";
@@ -118,6 +119,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CreateTextPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/media/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditMediaPage />
             </ProtectedRoute>
           }
         />
