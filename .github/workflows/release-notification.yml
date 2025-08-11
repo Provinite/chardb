@@ -1,0 +1,53 @@
+name: Release Notification
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0, v0.1.0, etc.
+
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tag comparison
+      
+      - name: Get previous tag
+        id: prev-tag
+        run: |
+          # Get the current tag
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          echo "current_tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
+          
+          # Get the previous tag
+          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v "^$CURRENT_TAG$" | head -n1)
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # If no previous tag, use the first commit
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+            echo "No previous tag found, using first commit: $PREVIOUS_TAG"
+          fi
+          
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          echo "Current tag: $CURRENT_TAG"
+          echo "Previous tag: $PREVIOUS_TAG"
+      
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "❌ DISCORD_WEBHOOK_URL secret not set"
+            exit 1
+          fi
+          
+          echo "🚀 Sending release notification for tag ${{ steps.prev-tag.outputs.current_tag }}"
+          echo "📋 Comparing ${{ steps.prev-tag.outputs.previous_tag }} → ${{ steps.prev-tag.outputs.current_tag }}"
+          
+          ./scripts/notify-release.sh \
+            "${{ steps.prev-tag.outputs.previous_tag }}" \
+            "${{ steps.prev-tag.outputs.current_tag }}" \
+            "$DISCORD_WEBHOOK_URL"
