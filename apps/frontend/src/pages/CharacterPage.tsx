@@ -9,6 +9,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { LikeButton } from '../components/LikeButton';
 import { CommentList } from '../components/CommentList';
 import { CharacterMediaGallery } from '../components/CharacterMediaGallery';
+import { Tag } from '../components/Tag';
+import { TagsContainer } from '../components/TagsContainer';
 import { LikeableType, CommentableType } from '../generated/graphql';
 
 const Container = styled.div`
@@ -248,21 +250,6 @@ const ContentText = styled.div`
   white-space: pre-wrap;
 `;
 
-const TagsContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const Tag = styled.span<{ color?: string }>`
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  background: ${props => props.color ? props.color + '20' : props.theme.colors.surface};
-  color: ${props => props.color || props.theme.colors.text.secondary};
-  border: 1px solid ${props => props.color ? props.color + '40' : props.theme.colors.border};
-`;
 
 const TradingInfo = styled.div`
   background: ${({ theme }) => theme.colors.surface};
@@ -557,18 +544,26 @@ export const CharacterPage: React.FC = () => {
         </ContentSection>
       )}
 
-      {character.tags_rel && character.tags_rel.length > 0 && (
+      {(character.tags_rel && character.tags_rel.length > 0) || (character.tags && character.tags.length > 0) ? (
         <ContentSection>
           <SectionTitle>Tags</SectionTitle>
           <TagsContainer>
-            {character.tags_rel.map(({ tag }) => (
-              <Tag key={tag.id} color={tag.color || undefined}>
-                {tag.name}
-              </Tag>
-            ))}
+            {character.tags_rel && character.tags_rel.length > 0 ? (
+              character.tags_rel.map(({ tag }) => (
+                <Tag key={tag.id} color={tag.color || undefined}>
+                  {tag.name}
+                </Tag>
+              ))
+            ) : (
+              character.tags?.map((tag, index) => (
+                <Tag key={index}>
+                  {tag}
+                </Tag>
+              ))
+            )}
           </TagsContainer>
         </ContentSection>
-      )}
+      ) : null}
 
       {(character.isSellable || character.isTradeable) && (
         <ContentSection>
