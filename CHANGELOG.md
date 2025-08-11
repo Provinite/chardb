@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.2.0] - 2025-01-12
+
+### Added
+- Enhanced tag editing system with typeahead functionality and improved UX
+
 ## [v0.1.0] - 2025-01-11
 
 ### Added
