@@ -13,6 +13,7 @@ import {
   UpdateMediaInput,
   UpdateTextContentInput,
 } from "./dto/media.dto";
+import * as path from "path";
 
 /**
  * Service for managing polymorphic media (images and text content)
@@ -635,6 +636,10 @@ export class MediaService {
   async remove(id: string, userId: string): Promise<boolean> {
     const media = await this.db.media.findUnique({
       where: { id },
+      include: {
+        image: true,
+        textContent: true,
+      },
     });
 
     if (!media) {
@@ -645,12 +650,107 @@ export class MediaService {
       throw new ForbiddenException("You can only delete your own media");
     }
 
+    // Handle image file cleanup if this media contains an image
+    if (media.image) {
+      await this.cleanupImageFiles(media.image);
+    }
+
     // Delete the media record - CASCADE constraints will handle content deletion
     await this.db.media.delete({
       where: { id },
     });
 
     return true;
+  }
+
+  /**
+   * Cleans up image files (handles both S3 and local storage)
+   * @param image Image record containing file information
+   */
+  private async cleanupImageFiles(image: any): Promise<void> {
+    try {
+      // Check if we're using S3 (URL contains amazonaws.com or other S3 indicators)
+      if (image.url && (image.url.includes('amazonaws.com') || image.url.includes('s3'))) {
+        await this.deleteFromS3(image.url, image.thumbnailUrl);
+      } else if (image.url && image.url.startsWith('data:')) {
+        // Base64 encoded image - no file cleanup needed, stored in DB
+        this.logger.debug('Base64 image detected, no file cleanup needed');
+      } else if (image.url && (image.url.startsWith('/') || image.url.includes('localhost'))) {
+        // Local file storage
+        await this.deleteLocalFiles(image.url, image.thumbnailUrl);
+      }
+    } catch (error) {
+      // Log the error but don't fail the deletion
+      this.logger.error(`Failed to cleanup image files for image ${image.id}:`, error);
+    }
+  }
+
+  /**
+   * Deletes files from S3
+   * @param imageUrl Main image URL
+   * @param thumbnailUrl Optional thumbnail URL
+   */
+  private async deleteFromS3(imageUrl: string, thumbnailUrl?: string): Promise<void> {
+    // TODO: Implement S3 deletion using AWS SDK
+    // This would require:
+    // 1. Parse the S3 key from the URL
+    // 2. Use AWS S3 client to delete the object(s)
+    // 3. Handle both main image and thumbnail
+    
+    this.logger.warn('S3 file cleanup not implemented yet');
+    
+    // Example implementation:
+    // const s3Key = this.extractS3KeyFromUrl(imageUrl);
+    // await this.s3Client.deleteObject({ Bucket: this.bucketName, Key: s3Key }).promise();
+    // if (thumbnailUrl) {
+    //   const thumbnailKey = this.extractS3KeyFromUrl(thumbnailUrl);
+    //   await this.s3Client.deleteObject({ Bucket: this.bucketName, Key: thumbnailKey }).promise();
+    // }
+  }
+
+  /**
+   * Deletes local files from filesystem
+   * @param imageUrl Main image path
+   * @param thumbnailUrl Optional thumbnail path
+   */
+  private async deleteLocalFiles(imageUrl: string, thumbnailUrl?: string): Promise<void> {
+    const fs = require('fs').promises;
+    const path = require('path');
+
+    try {
+      // Convert URL to local file path
+      const imagePath = this.urlToLocalPath(imageUrl);
+      await fs.unlink(imagePath);
+      this.logger.debug(`Deleted local image file: ${imagePath}`);
+
+      if (thumbnailUrl) {
+        const thumbnailPath = this.urlToLocalPath(thumbnailUrl);
+        await fs.unlink(thumbnailPath);
+        this.logger.debug(`Deleted local thumbnail file: ${thumbnailPath}`);
+      }
+    } catch (error) {
+      this.logger.error('Failed to delete local files:', error);
+    }
+  }
+
+  /**
+   * Converts a URL to a local file system path
+   * @param url The URL to convert
+   * @returns Local file system path
+   */
+  private urlToLocalPath(url: string): string {
+    // Handle relative URLs like '/uploads/image.jpg'
+    if (url.startsWith('/')) {
+      return path.join(process.cwd(), 'uploads', url.substring(1));
+    }
+    
+    // Handle localhost URLs
+    if (url.includes('localhost')) {
+      const urlPath = new URL(url).pathname;
+      return path.join(process.cwd(), 'uploads', urlPath.substring(1));
+    }
+    
+    return url;
   }
 
   /**

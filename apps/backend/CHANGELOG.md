@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Enhanced media service deletion with automatic file cleanup for images
+- Support for cleaning up image files from S3, local filesystem, and base64 storage
+- Proper error handling for file cleanup operations (non-blocking)
+
+### Fixed
+- Media deletion now properly cleans up associated image files
+- Image file orphaning when media is deleted
+
 ## [v1.0.0] - 2025-01-12
 
 ### Added
