@@ -135,13 +135,13 @@ export class CharactersResolver {
 
   // Field resolver to return displayName values for tags string array
   @ResolveField('tags', () => [String])
-  async resolveTagsField(@Parent() character: any): Promise<string[]> {
+  async resolveTagsField(@Parent() character: Character & { tags_rel?: Array<{ tag: { displayName: string } }> }): Promise<string[]> {
     if (!character.tags_rel) {
       return character.tags || [];
     }
     
     // Return displayName values from the relational tags
-    return character.tags_rel.map((ct: any) => ct.tag.displayName);
+    return character.tags_rel.map(ct => ct.tag.displayName);
   }
 
 }
