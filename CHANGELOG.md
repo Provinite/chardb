@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Case-insensitive tag system with canonical display name preservation across the platform
+- Database migration to add `displayName` field to tags table for preserving user-entered casing
+- Enhanced tag management system to prevent duplicate tags with different cases
+
+### Fixed
+- Tag duplicate creation issues where "Fantasy", "FANTASY", and "fantasy" would create separate tags
+- Character creation/editing failing when using new tag relationship system
+- Inconsistent tag casing across the application
+
+### Changed
+- Tags are now matched case-insensitively while preserving the original user-entered casing for display
+- Eliminated legacy `tags String[]` field in favor of proper tag relationships
+- Centralized tag creation logic for consistent behavior across all tag operations
+
 ## [v0.2.0] - 2025-01-12
 
 ### Added
