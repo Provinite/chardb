@@ -53,9 +53,24 @@ async function main() {
       backstory: 'Born in the northern mountains, Aria learned magic from the ancient spirits.',
       ownerId: testUser.id,
       creatorId: testUser.id,
-      tags: ['wolf', 'magic', 'original'],
     },
   });
+
+  // Connect tags to character
+  await Promise.all([
+    prisma.characterTag.create({
+      data: {
+        characterId: character.id,
+        tagId: tags.find(t => t.name === 'wolf')!.id,
+      },
+    }),
+    prisma.characterTag.create({
+      data: {
+        characterId: character.id,
+        tagId: tags.find(t => t.name === 'original')!.id,
+      },
+    }),
+  ]);
 
   // Create sample gallery
   const gallery = await prisma.gallery.create({

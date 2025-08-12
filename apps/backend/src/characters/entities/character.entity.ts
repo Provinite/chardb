@@ -59,7 +59,7 @@ export class Character {
   price?: number;
 
   @Field(() => [String])
-  tags: string[];
+  tags?: string[];
 
   @Field(() => String, { nullable: true })
   customFields?: string; // JSON string

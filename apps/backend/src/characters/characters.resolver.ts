@@ -142,7 +142,7 @@ export class CharactersResolver {
   @ResolveField('tags', () => [String])
   async resolveTagsField(@Parent() character: CharacterWithTags): Promise<string[]> {
     if (!character.tags_rel) {
-      return character.tags || [];
+      return [];
     }
     
     // Return displayName values from the relational tags
