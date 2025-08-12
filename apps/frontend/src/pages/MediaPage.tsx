@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
+import { toast } from 'react-hot-toast';
 import { Button } from '@chardb/ui';
-import { GET_MEDIA_ITEM } from '../graphql/media';
+import { GET_MEDIA_ITEM, useDeleteMediaMutation } from '../graphql/media';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
+import { DeleteConfirmationDialog } from '../components/DeleteConfirmationDialog';
 // import { LikeButton } from '../components/LikeButton';
 // import { CommentList } from '../components/CommentList';
 import { TextViewer } from '../components/TextViewer';
@@ -288,10 +290,34 @@ export const MediaPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data, loading, error } = useQuery(GET_MEDIA_ITEM, {
     variables: { id: id! },
     skip: !id,
+  });
+
+  const [deleteMedia, { loading: deleteLoading }] = useDeleteMediaMutation({
+    onCompleted: () => {
+      toast.success(`Media "${media?.title}" has been deleted successfully`);
+      // Navigate back to the appropriate page
+      if (media?.characterId) {
+        navigate(`/character/${media.characterId}`);
+      } else if (media?.galleryId) {
+        navigate(`/gallery/${media.galleryId}`);
+      } else {
+        navigate('/');
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to delete media:', error);
+      toast.error(`Failed to delete media: ${error.message}`);
+    },
+    update: (cache) => {
+      // Remove the media from cache
+      cache.evict({ id: cache.identify({ __typename: 'Media', id }) });
+      cache.gc();
+    }
   });
 
   const media = data?.mediaItem;
@@ -308,6 +334,20 @@ export const MediaPage: React.FC = () => {
 
   const handleEditClick = () => {
     navigate(`/media/${id}/edit`);
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (id) {
+      deleteMedia({ variables: { id } });
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteDialog(false);
   };
 
   const getVisibilityVariant = (visibility: string) => {
@@ -435,6 +475,13 @@ export const MediaPage: React.FC = () => {
             >
               Edit Content
             </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleDeleteClick}
+            >
+              Delete
+            </Button>
           </HeaderActions>
         )}
       </Header>
@@ -519,6 +566,16 @@ export const MediaPage: React.FC = () => {
           />
         </ImageOverlay>
       )}
+
+      <DeleteConfirmationDialog
+        isOpen={showDeleteDialog}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Delete Media"
+        message="Are you sure you want to delete this media? This action cannot be undone and will permanently remove the content."
+        itemName={media?.title}
+        isLoading={deleteLoading}
+      />
     </Container>
   );
 };

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
+import { toast } from 'react-hot-toast';
 import { Button } from '@chardb/ui';
-import { GET_CHARACTER, GetCharacterQuery } from '../graphql/characters';
+import { GET_CHARACTER, GetCharacterQuery, useDeleteCharacterMutation } from '../graphql/characters';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
 import { LikeButton } from '../components/LikeButton';
@@ -11,6 +12,7 @@ import { CommentList } from '../components/CommentList';
 import { CharacterMediaGallery } from '../components/CharacterMediaGallery';
 import { Tag } from '../components/Tag';
 import { TagsContainer } from '../components/TagsContainer';
+import { DeleteConfirmationDialog } from '../components/DeleteConfirmationDialog';
 import { LikeableType, CommentableType } from '../generated/graphql';
 
 const Container = styled.div`
@@ -357,10 +359,27 @@ export const CharacterPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data, loading, error } = useQuery(GET_CHARACTER, {
     variables: { id: id! },
     skip: !id,
+  });
+
+  const [deleteCharacter, { loading: deleteLoading }] = useDeleteCharacterMutation({
+    onCompleted: () => {
+      toast.success(`Character "${character?.name}" has been deleted successfully`);
+      navigate('/characters');
+    },
+    onError: (error) => {
+      console.error('Failed to delete character:', error);
+      toast.error(`Failed to delete character: ${error.message}`);
+    },
+    update: (cache) => {
+      // Remove the character from cache
+      cache.evict({ id: cache.identify({ __typename: 'Character', id }) });
+      cache.gc();
+    }
   });
 
   const character: GetCharacterQuery['character'] | undefined = data?.character;
@@ -371,6 +390,20 @@ export const CharacterPage: React.FC = () => {
 
   const handleEditClick = () => {
     navigate(`/character/${id}/edit`);
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (id) {
+      deleteCharacter({ variables: { id } });
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteDialog(false);
   };
 
   const getVisibilityVariant = (visibility: string) => {
@@ -512,6 +545,13 @@ export const CharacterPage: React.FC = () => {
             >
               Edit Character
             </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleDeleteClick}
+            >
+              Delete
+            </Button>
           </HeaderActions>
         )}
       </CharacterHeader>
@@ -604,6 +644,16 @@ export const CharacterPage: React.FC = () => {
       <CommentList
         entityType={CommentableType.Character}
         entityId={character.id}
+      />
+
+      <DeleteConfirmationDialog
+        isOpen={showDeleteDialog}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Delete Character"
+        message="Are you sure you want to delete this character? This action cannot be undone. All associated media will remain but will no longer be linked to this character."
+        itemName={character?.name}
+        isLoading={deleteLoading}
       />
     </Container>
   );
