@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.1.0] - 2025-08-12
+
 ### Added
 - Character and media deletion functionality with confirmation dialogs
 - Reusable `DeleteConfirmationDialog` component with themed styling
