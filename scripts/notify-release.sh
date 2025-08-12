@@ -40,8 +40,12 @@ format_for_discord() {
     
     if [ -n "$changes" ]; then
         formatted="**$title**"$'\n'
-        # Convert to Discord markdown format
-        formatted="$formatted$(echo "$changes" | sed 's/^### /• **/' | sed 's/^- /  - /' | sed $'s/^## \\[/\\\n**Version /' | sed 's/\*\*$/\*\*:/')"$'\n'
+        # Convert to Discord markdown format with proper formatting
+        formatted="$formatted$(echo "$changes" | \
+            sed 's/^## \[/\n🏷️ **Version [/' | \
+            sed 's/\] - /]** - /' | \
+            sed 's/^### /### /' | \
+            sed 's/^- /  - /')"$'\n'
     fi
     
     echo "$formatted"
@@ -57,15 +61,15 @@ MESSAGE="🚀 **Release Update for $REPO_NAME**"$'\n\n'
 
 # Add changes if they exist
 if [ -n "$ROOT_CHANGES" ]; then
-    MESSAGE="$MESSAGE$(format_for_discord "Repository Changes" "$ROOT_CHANGES")"$'\n'
+    MESSAGE="$MESSAGE$(format_for_discord "📦 Repository Changes" "$ROOT_CHANGES")"$'\n'
 fi
 
 if [ -n "$BACKEND_CHANGES" ]; then
-    MESSAGE="$MESSAGE$(format_for_discord "Backend Changes" "$BACKEND_CHANGES")"$'\n'
+    MESSAGE="$MESSAGE$(format_for_discord "⚙️ Backend Changes" "$BACKEND_CHANGES")"$'\n'
 fi
 
 if [ -n "$FRONTEND_CHANGES" ]; then
-    MESSAGE="$MESSAGE$(format_for_discord "Frontend Changes" "$FRONTEND_CHANGES")"$'\n'
+    MESSAGE="$MESSAGE$(format_for_discord "🎨 Frontend Changes" "$FRONTEND_CHANGES")"$'\n'
 fi
 
 # If no changes found, create a generic message
@@ -73,11 +77,16 @@ if [ -z "$ROOT_CHANGES" ] && [ -z "$BACKEND_CHANGES" ] && [ -z "$FRONTEND_CHANGE
     MESSAGE="${MESSAGE}📝 Changelog updates detected between commits \`$FROM_COMMIT\` and \`$TO_COMMIT\`"$'\n\n'"No specific changelog entries were found in the diff."
 fi
 
-# Add commit range info
-MESSAGE="${MESSAGE}"$'\n'"📋 **Commit Range:** \`$FROM_COMMIT\` → \`$TO_COMMIT\`"
+# Add commit range info at the bottom
+MESSAGE="${MESSAGE}"$'\n'"---"$'\n'"📋 **Commit Range:** \`$FROM_COMMIT\` → \`$TO_COMMIT\`"
 
 # Send to Discord webhook using jq for safe JSON encoding
 PAYLOAD=$(echo "$MESSAGE" | jq -Rs '{content: .}')
+
+echo "Sending payload to Discord:"
+echo "$PAYLOAD"
+
+exit 0
 
 curl -H "Content-Type: application/json" \
      -X POST \
