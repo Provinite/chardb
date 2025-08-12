@@ -1,17 +1,24 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { TagsService } from '../tags/tags.service';
 import { CreateCharacterInput, UpdateCharacterInput, CharacterFilters } from './dto/character.dto';
 import { Prisma, Visibility } from '@chardb/database';
 import type { Character } from '@chardb/database';
 
 @Injectable()
 export class CharactersService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly tagsService: TagsService,
+  ) {}
 
   async create(userId: string, input: CreateCharacterInput): Promise<Character> {
+    // Extract tags from input since they need special handling
+    const { tags, ...characterData } = input;
+    
     const character = await this.db.character.create({
       data: {
-        ...input,
+        ...characterData,
         ownerId: userId,
         creatorId: userId, // Creator is the same as owner for new characters
       },
@@ -25,7 +32,23 @@ export class CharactersService {
         },
       },
     });
-    return this.transformCharacter(character);
+
+    // Handle tags if provided
+    if (tags && tags.length > 0) {
+      const tagModels = await this.tagsService.findOrCreateTags(tags);
+      
+      for (const tag of tagModels) {
+        await this.db.characterTag.create({
+          data: {
+            characterId: character.id,
+            tagId: tag.id,
+          },
+        });
+      }
+    }
+
+    // Refetch character with tags
+    return this.findOne(character.id, userId);
   }
 
   async findAll(filters: CharacterFilters = {}, userId?: string) {
@@ -193,9 +216,12 @@ export class CharactersService {
       throw new ForbiddenException('You can only edit your own characters');
     }
 
+    // Extract tags from input since they need special handling
+    const { tags, ...characterData } = input;
+
     const updatedCharacter = await this.db.character.update({
       where: { id },
-      data: input,
+      data: characterData,
       include: {
         owner: true,
         creator: true,
@@ -206,7 +232,31 @@ export class CharactersService {
         },
       },
     });
-    return this.transformCharacter(updatedCharacter);
+
+    // Handle tags if provided
+    if (tags !== undefined) {
+      // Remove all existing character-tag relationships
+      await this.db.characterTag.deleteMany({
+        where: { characterId: id },
+      });
+
+      // Add new tags if provided
+      if (tags.length > 0) {
+        const tagModels = await this.tagsService.findOrCreateTags(tags);
+        
+        for (const tag of tagModels) {
+          await this.db.characterTag.create({
+            data: {
+              characterId: id,
+              tagId: tag.id,
+            },
+          });
+        }
+      }
+    }
+
+    // Refetch character with updated tags
+    return this.findOne(id, userId);
   }
 
   async remove(id: string, userId: string): Promise<boolean> {
@@ -269,13 +319,9 @@ export class CharactersService {
     }
 
     // Create tags if they don't exist and connect them
-    for (const tagName of tagNames) {
-      const tag = await this.db.tag.upsert({
-        where: { name: tagName.toLowerCase() },
-        create: { name: tagName.toLowerCase() },
-        update: {},
-      });
-
+    const tags = await this.tagsService.findOrCreateTags(tagNames);
+    
+    for (const tag of tags) {
       await this.db.characterTag.upsert({
         where: {
           characterId_tagId: {

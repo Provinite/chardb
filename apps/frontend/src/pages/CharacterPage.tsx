@@ -544,23 +544,15 @@ export const CharacterPage: React.FC = () => {
         </ContentSection>
       )}
 
-      {(character.tags_rel && character.tags_rel.length > 0) || (character.tags && character.tags.length > 0) ? (
+      {character.tags && character.tags.length > 0 ? (
         <ContentSection>
           <SectionTitle>Tags</SectionTitle>
           <TagsContainer>
-            {character.tags_rel && character.tags_rel.length > 0 ? (
-              character.tags_rel.map(({ tag }) => (
-                <Tag key={tag.id} color={tag.color || undefined}>
-                  {tag.name}
-                </Tag>
-              ))
-            ) : (
-              character.tags?.map((tag, index) => (
-                <Tag key={index}>
-                  {tag}
-                </Tag>
-              ))
-            )}
+            {character.tags.map((tag, index) => (
+              <Tag key={index}>
+                {tag}
+              </Tag>
+            ))}
           </TagsContainer>
         </ContentSection>
       ) : null}

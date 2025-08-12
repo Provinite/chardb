@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { TagsService } from '../tags/tags.service';
 import { Prisma, Visibility } from '@chardb/database';
 import * as sharp from 'sharp';
 import { v4 as uuid } from 'uuid';
@@ -55,7 +56,10 @@ export class ImagesService {
   private readonly thumbnailSize = 300;
   private readonly mediumSize = 800;
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly tagsService: TagsService,
+  ) {}
 
   async upload(userId: string, input: UploadImageInput): Promise<Media & { image: Image; owner: User }> {
     const { 
@@ -282,60 +286,7 @@ export class ImagesService {
     return true;
   }
 
-  async addTags(imageId: string, userId: string, tagNames: string[]): Promise<Image> {
-    const image = await this.findOne(imageId, userId);
-
-    // Check ownership
-    if (image.uploaderId !== userId) {
-      throw new ForbiddenException('You can only modify tags on your own images');
-    }
-
-    // Create tags if they don't exist and connect them
-    for (const tagName of tagNames) {
-      const tag = await this.db.tag.upsert({
-        where: { name: tagName.toLowerCase() },
-        create: { name: tagName.toLowerCase() },
-        update: {},
-      });
-
-      await this.db.imageTag.upsert({
-        where: {
-          imageId_tagId: {
-            imageId,
-            tagId: tag.id,
-          },
-        },
-        create: {
-          imageId,
-          tagId: tag.id,
-        },
-        update: {},
-      });
-    }
-
-    return this.findOne(imageId, userId);
-  }
-
-  async removeTags(imageId: string, userId: string, tagNames: string[]): Promise<Image> {
-    const image = await this.findOne(imageId, userId);
-
-    // Check ownership
-    if (image.uploaderId !== userId) {
-      throw new ForbiddenException('You can only modify tags on your own images');
-    }
-
-    // Remove tag connections
-    await this.db.imageTag.deleteMany({
-      where: {
-        imageId,
-        tag: {
-          name: { in: tagNames.map(name => name.toLowerCase()) },
-        },
-      },
-    });
-
-    return this.findOne(imageId, userId);
-  }
+  // Image tagging removed - tags should be managed on the associated Media entry instead
 
   private validateFile(file: Express.Multer.File): void {
     if (!file) {

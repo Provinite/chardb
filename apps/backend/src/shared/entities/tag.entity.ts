@@ -8,6 +8,9 @@ export class Tag {
   @Field()
   name: string;
 
+  @Field()
+  displayName: string;
+
   @Field({ nullable: true })
   category?: string;
 

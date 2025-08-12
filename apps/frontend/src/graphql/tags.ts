@@ -5,6 +5,7 @@ export const SEARCH_TAGS = gql`
     searchTags(search: $search, limit: $limit) {
       id
       name
+      displayName
       category
       color
       createdAt

@@ -7,7 +7,7 @@ import { CharactersService } from './characters.service';
 import { Character as CharacterEntity, CharacterConnection } from './entities/character.entity';
 import { Image } from '../images/entities/image.entity';
 import { ImagesService } from '../images/images.service';
-import type { Character } from '@chardb/database';
+import type { Prisma } from '@chardb/database';
 import {
   CreateCharacterInput,
   UpdateCharacterInput,
@@ -16,6 +16,11 @@ import {
   ManageTagsInput,
   SetMainMediaInput,
 } from './dto/character.dto';
+
+// Use Prisma's generated type for Character with tag relations
+type CharacterWithTags = Prisma.CharacterGetPayload<{
+  include: { tags_rel: { include: { tag: true } } }
+}>;
 
 @Resolver(() => CharacterEntity)
 export class CharactersResolver {
@@ -131,6 +136,17 @@ export class CharactersResolver {
   ): Promise<any> {
     const userFilters = { ...filters, ownerId: userId };
     return this.charactersService.findAll(userFilters, user?.id);
+  }
+
+  // Field resolver to return displayName values for tags string array
+  @ResolveField('tags', () => [String])
+  async resolveTagsField(@Parent() character: CharacterWithTags): Promise<string[]> {
+    if (!character.tags_rel) {
+      return [];
+    }
+    
+    // Return displayName values from the relational tags
+    return character.tags_rel.map(ct => ct.tag.displayName);
   }
 
 }

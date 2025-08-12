@@ -76,7 +76,6 @@ model Character {
   isSellable   Boolean    @default(false) @map("is_sellable")
   isTradeable  Boolean    @default(false) @map("is_tradeable")
   price        Decimal?   @db.Decimal(10, 2)
-  tags         String[]   @default([])
   customFields Json       @default("{}") @map("custom_fields")
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
@@ -231,11 +230,12 @@ model Like {
 }
 
 model Tag {
-  id       String  @id @default(uuid())
-  name     String  @unique @db.VarChar(50)
-  category String? @db.VarChar(30)
-  color    String? @db.VarChar(7)
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String  @id @default(uuid())
+  name        String  @unique @db.VarChar(50)
+  displayName String  @map("display_name") @db.VarChar(50)
+  category    String? @db.VarChar(30)
+  color       String? @db.VarChar(7)
+  createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
   characters CharacterTag[]

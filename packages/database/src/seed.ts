@@ -33,12 +33,12 @@ async function main() {
 
   // Create sample tags
   const tags = await Promise.all([
-    prisma.tag.create({ data: { name: 'furry', category: 'species' } }),
-    prisma.tag.create({ data: { name: 'anthro', category: 'species' } }),
-    prisma.tag.create({ data: { name: 'dragon', category: 'species' } }),
-    prisma.tag.create({ data: { name: 'wolf', category: 'species' } }),
-    prisma.tag.create({ data: { name: 'original', category: 'type' } }),
-    prisma.tag.create({ data: { name: 'commission', category: 'type' } }),
+    prisma.tag.create({ data: { name: 'furry', displayName: 'Furry', category: 'species' } }),
+    prisma.tag.create({ data: { name: 'anthro', displayName: 'Anthro', category: 'species' } }),
+    prisma.tag.create({ data: { name: 'dragon', displayName: 'Dragon', category: 'species' } }),
+    prisma.tag.create({ data: { name: 'wolf', displayName: 'Wolf', category: 'species' } }),
+    prisma.tag.create({ data: { name: 'original', displayName: 'Original', category: 'type' } }),
+    prisma.tag.create({ data: { name: 'commission', displayName: 'Commission', category: 'type' } }),
   ]);
 
   // Create sample character
@@ -53,9 +53,24 @@ async function main() {
       backstory: 'Born in the northern mountains, Aria learned magic from the ancient spirits.',
       ownerId: testUser.id,
       creatorId: testUser.id,
-      tags: ['wolf', 'magic', 'original'],
     },
   });
+
+  // Connect tags to character
+  await Promise.all([
+    prisma.characterTag.create({
+      data: {
+        characterId: character.id,
+        tagId: tags.find(t => t.name === 'wolf')!.id,
+      },
+    }),
+    prisma.characterTag.create({
+      data: {
+        characterId: character.id,
+        tagId: tags.find(t => t.name === 'original')!.id,
+      },
+    }),
+  ]);
 
   // Create sample gallery
   const gallery = await prisma.gallery.create({
