@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.0.0] - 2025-01-12
+
 ### Added
 - Database migration to add `displayName` field to tags table
 - Case-insensitive tag system to prevent duplicate tags with different cases
