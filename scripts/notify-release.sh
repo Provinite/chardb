@@ -86,8 +86,6 @@ PAYLOAD=$(echo "$MESSAGE" | jq -Rs '{content: .}')
 echo "Sending payload to Discord:"
 echo "$PAYLOAD"
 
-exit 0
-
 curl -H "Content-Type: application/json" \
      -X POST \
      -d "$PAYLOAD" \
