@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.0.0] - 2025-01-12
+
 ### Added
 - Case-insensitive tag matching system with canonical display name preservation
 - `displayName` field to Tag model for preserving user-entered tag casing
