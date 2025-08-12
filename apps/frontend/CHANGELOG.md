@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Character and media deletion functionality with confirmation dialogs
+- Reusable `DeleteConfirmationDialog` component with themed styling
+- Delete buttons on character and media detail pages for content owners
+- Toast notifications for successful deletions and error handling
+- Proper Apollo cache invalidation after deletions for real-time UI updates
+
+### Fixed
+- Missing delete options for characters and media (resolves issue #33)
+
 ## [v1.0.0] - 2025-01-12
 
 ### Changed
