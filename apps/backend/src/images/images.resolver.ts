@@ -53,25 +53,7 @@ export class ImagesResolver {
     return this.imagesService.remove(id, user.id);
   }
 
-  @Mutation(() => ImageEntity)
-  @UseGuards(JwtAuthGuard)
-  async addImageTags(
-    @Args('id', { type: () => ID }) id: string,
-    @Args('input') input: ManageImageTagsInput,
-    @CurrentUser() user: any,
-  ): Promise<any> {
-    return this.imagesService.addTags(id, user.id, input.tagNames);
-  }
-
-  @Mutation(() => ImageEntity)
-  @UseGuards(JwtAuthGuard)
-  async removeImageTags(
-    @Args('id', { type: () => ID }) id: string,
-    @Args('input') input: ManageImageTagsInput,
-    @CurrentUser() user: any,
-  ): Promise<any> {
-    return this.imagesService.removeTags(id, user.id, input.tagNames);
-  }
+  // Image tag mutations removed - tags should be managed on Media entries instead
 
   // Query for user's own images
   @Query(() => ImageConnection)

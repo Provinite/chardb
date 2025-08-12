@@ -80,4 +80,27 @@ export class TagsService {
     });
   }
 
+  /**
+   * Find or create tags from an array of tag names
+   * @param tagNames Array of tag name strings (with user's original casing)
+   * @returns Array of Tag entities
+   */
+  async findOrCreateTags(tagNames: string[]) {
+    const tags = [];
+    
+    for (const tagName of tagNames) {
+      const tag = await this.db.tag.upsert({
+        where: { name: tagName.toLowerCase() },
+        create: { 
+          name: tagName.toLowerCase(),
+          displayName: tagName 
+        },
+        update: {},
+      });
+      tags.push(tag);
+    }
+    
+    return tags;
+  }
+
 }

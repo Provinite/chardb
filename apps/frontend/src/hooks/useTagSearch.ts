@@ -18,7 +18,7 @@ export const useTagSearch = () => {
     onCompleted: (data) => {
       const tags = data.searchTags?.map((tag: Tag) => ({
         id: tag.id,
-        name: tag.name,
+        name: tag.displayName || tag.name, // Use displayName for UI, fallback to name
         category: tag.category || undefined,
         color: tag.color || undefined,
       })) || [];

@@ -330,10 +330,6 @@ input LoginInput {
   password: String!
 }
 
-input ManageImageTagsInput {
-  tagNames: [String!]!
-}
-
 """Input type for managing media tags"""
 input ManageMediaTagsInput {
   """Array of tag names to add or remove"""
@@ -460,7 +456,6 @@ enum MediaType {
 
 type Mutation {
   addCharacterTags(id: ID!, input: ManageTagsInput!): Character!
-  addImageTags(id: ID!, input: ManageImageTagsInput!): Image!
 
   """Adds tags to a media item"""
   addMediaTags(
@@ -493,7 +488,6 @@ type Mutation {
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): String!
   removeCharacterTags(id: ID!, input: ManageTagsInput!): Character!
-  removeImageTags(id: ID!, input: ManageImageTagsInput!): Image!
 
   """Removes tags from a media item"""
   removeMediaTags(
@@ -649,6 +643,7 @@ type Tag {
   category: String
   color: String
   createdAt: DateTime!
+  displayName: String!
   id: ID!
   name: String!
 }

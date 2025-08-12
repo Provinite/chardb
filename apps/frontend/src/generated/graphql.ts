@@ -351,10 +351,6 @@ export type LoginInput = {
   password: Scalars['String']['input'];
 };
 
-export type ManageImageTagsInput = {
-  tagNames: Array<Scalars['String']['input']>;
-};
-
 /** Input type for managing media tags */
 export type ManageMediaTagsInput = {
   /** Array of tag names to add or remove */
@@ -457,7 +453,6 @@ export enum MediaType {
 export type Mutation = {
   __typename?: 'Mutation';
   addCharacterTags: Character;
-  addImageTags: Image;
   /** Adds tags to a media item */
   addMediaTags: Media;
   createCharacter: Character;
@@ -475,7 +470,6 @@ export type Mutation = {
   login: AuthPayload;
   refreshToken: Scalars['String']['output'];
   removeCharacterTags: Character;
-  removeImageTags: Image;
   /** Removes tags from a media item */
   removeMediaTags: Media;
   reorderGalleries: Array<Gallery>;
@@ -500,12 +494,6 @@ export type Mutation = {
 export type MutationAddCharacterTagsArgs = {
   id: Scalars['ID']['input'];
   input: ManageTagsInput;
-};
-
-
-export type MutationAddImageTagsArgs = {
-  id: Scalars['ID']['input'];
-  input: ManageImageTagsInput;
 };
 
 
@@ -573,12 +561,6 @@ export type MutationRefreshTokenArgs = {
 export type MutationRemoveCharacterTagsArgs = {
   id: Scalars['ID']['input'];
   input: ManageTagsInput;
-};
-
-
-export type MutationRemoveImageTagsArgs = {
-  id: Scalars['ID']['input'];
-  input: ManageImageTagsInput;
 };
 
 
@@ -912,6 +894,7 @@ export type Tag = {
   category: Maybe<Scalars['String']['output']>;
   color: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
+  displayName: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
 };
@@ -1433,7 +1416,7 @@ export type SearchTagsQueryVariables = Exact<{
 }>;
 
 
-export type SearchTagsQuery = { __typename?: 'Query', searchTags: Array<{ __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null, createdAt: string }> };
+export type SearchTagsQuery = { __typename?: 'Query', searchTags: Array<{ __typename?: 'Tag', id: string, name: string, displayName: string, category: string | null, color: string | null, createdAt: string }> };
 
 export type GetUserProfileQueryVariables = Exact<{
   username: Scalars['String']['input'];
@@ -4290,6 +4273,7 @@ export const SearchTagsDocument = gql`
   searchTags(search: $search, limit: $limit) {
     id
     name
+    displayName
     category
     color
     createdAt

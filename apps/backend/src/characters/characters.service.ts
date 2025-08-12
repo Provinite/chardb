@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { TagsService } from '../tags/tags.service';
 import { CreateCharacterInput, UpdateCharacterInput, CharacterFilters } from './dto/character.dto';
 import { Prisma, Visibility } from '@chardb/database';
 import type { Character } from '@chardb/database';
 
 @Injectable()
 export class CharactersService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly tagsService: TagsService,
+  ) {}
 
   async create(userId: string, input: CreateCharacterInput): Promise<Character> {
     const character = await this.db.character.create({
@@ -269,13 +273,9 @@ export class CharactersService {
     }
 
     // Create tags if they don't exist and connect them
-    for (const tagName of tagNames) {
-      const tag = await this.db.tag.upsert({
-        where: { name: tagName.toLowerCase() },
-        create: { name: tagName.toLowerCase() },
-        update: {},
-      });
-
+    const tags = await this.tagsService.findOrCreateTags(tagNames);
+    
+    for (const tag of tags) {
       await this.db.characterTag.upsert({
         where: {
           characterId_tagId: {

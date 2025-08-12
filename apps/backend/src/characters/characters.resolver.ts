@@ -133,4 +133,15 @@ export class CharactersResolver {
     return this.charactersService.findAll(userFilters, user?.id);
   }
 
+  // Field resolver to return displayName values for tags string array
+  @ResolveField('tags', () => [String])
+  async resolveTagsField(@Parent() character: any): Promise<string[]> {
+    if (!character.tags_rel) {
+      return character.tags || [];
+    }
+    
+    // Return displayName values from the relational tags
+    return character.tags_rel.map((ct: any) => ct.tag.displayName);
+  }
+
 }

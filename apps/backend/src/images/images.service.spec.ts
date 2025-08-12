@@ -335,36 +335,5 @@ describe('ImagesService', () => {
     });
   });
 
-  describe('addTags', () => {
-    it('should add tags to image', async () => {
-      const imageId = 'img1';
-      const userId = 'user1';
-      const tagNames = ['art', 'digital'];
-
-      const mockImage = {
-        id: imageId,
-        uploaderId: userId,
-      };
-
-      const mockTags = [
-        { id: 'tag1', name: 'art' },
-        { id: 'tag2', name: 'digital' },
-      ];
-
-      const mockUpdatedImage = {
-        ...mockImage,
-      };
-
-      db.image.findUnique.mockResolvedValue(mockImage);
-      db.tag.upsert.mockResolvedValueOnce(mockTags[0]).mockResolvedValueOnce(mockTags[1]);
-      db.imageTag.upsert.mockResolvedValue({});
-      db.image.findUnique.mockResolvedValueOnce(mockUpdatedImage);
-
-      const result = await service.addTags(imageId, userId, tagNames);
-
-      expect(db.tag.upsert).toHaveBeenCalledTimes(2);
-      expect(db.imageTag.upsert).toHaveBeenCalledTimes(2);
-      expect(result).toEqual(mockUpdatedImage);
-    });
-  });
+  // Image tagging tests removed - tags should be managed on Media entries instead
 });

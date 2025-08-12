@@ -5,6 +5,7 @@ import {
   Logger,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
+import { TagsService } from "../tags/tags.service";
 import type { Media, TextContent, Prisma } from "@chardb/database";
 import {
   MediaFiltersInput,
@@ -20,7 +21,10 @@ import {
 export class MediaService {
   private readonly logger = new Logger(MediaService.name);
   
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly tagsService: TagsService,
+  ) {}
 
   /**
    * Calculates word count for text content
@@ -672,15 +676,7 @@ export class MediaService {
     }
 
     // Get or create tags
-    const tags = await Promise.all(
-      tagNames.map((name) =>
-        this.db.tag.upsert({
-          where: { name },
-          update: {},
-          create: { name },
-        }),
-      ),
-    );
+    const tags = await this.tagsService.findOrCreateTags(tagNames);
 
     // Create tag relations
     await Promise.all(

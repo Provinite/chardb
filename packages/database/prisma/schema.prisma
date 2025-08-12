@@ -231,11 +231,12 @@ model Like {
 }
 
 model Tag {
-  id       String  @id @default(uuid())
-  name     String  @unique @db.VarChar(50)
-  category String? @db.VarChar(30)
-  color    String? @db.VarChar(7)
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String  @id @default(uuid())
+  name        String  @unique @db.VarChar(50)
+  displayName String  @map("display_name") @db.VarChar(50)
+  category    String? @db.VarChar(30)
+  color       String? @db.VarChar(7)
+  createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
   characters CharacterTag[]
