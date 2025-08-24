@@ -2,6 +2,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator json {
+  provider = "prisma-json-types-generator"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -23,6 +27,13 @@ enum TextFormatting {
   MARKDOWN
 }
 
+enum TraitValueType {
+  STRING
+  TIMESTAMP
+  INTEGER
+  ENUM
+}
+
 
 
 model User {
@@ -39,6 +50,14 @@ model User {
   isVerified      Boolean   @default(false) @map("is_verified")
   isAdmin         Boolean   @default(false) @map("is_admin")
   privacySettings Json      @default("{}") @map("privacy_settings")
+  
+  // Identity permission fields (migrated from clovercoin-app Identity model)
+  canCreateCommunity        Boolean @default(false) @map("can_create_community")
+  canListUsers              Boolean @default(false) @map("can_list_users")
+  canListInviteCodes        Boolean @default(false) @map("can_list_invite_codes")
+  canCreateInviteCode       Boolean @default(false) @map("can_create_invite_code")
+  canGrantGlobalPermissions Boolean @default(false) @map("can_grant_global_permissions")
+  
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
@@ -56,6 +75,16 @@ model User {
   // Social relations
   followers Follow[] @relation("UserFollowing")
   following Follow[] @relation("UserFollower")
+
+  // Community membership relations
+  communityMemberships   CommunityMember[]     @relation
+  receivedInvitations    CommunityInvitation[] @relation("ReceivedInvitations")
+  createdInvitations     CommunityInvitation[] @relation("CreatedInvitations")
+  createdInviteCodes     InviteCode[]
+
+  // Character ownership change tracking
+  ownershipChangesFrom   CharacterOwnershipChange[] @relation("CharacterOwnershipChangeFrom")
+  ownershipChangesTo     CharacterOwnershipChange[] @relation("CharacterOwnershipChangeTo")
 
   @@map("users")
 }
@@ -77,6 +106,8 @@ model Character {
   isTradeable  Boolean    @default(false) @map("is_tradeable")
   price        Decimal?   @db.Decimal(10, 2)
   customFields Json       @default("{}") @map("custom_fields")
+  /// [CharacterTraitValuesJson]
+  traitValues  Json       @default("[]") @map("trait_values")
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
 
@@ -91,6 +122,10 @@ model Character {
   likes     Like[]
   tags_rel  CharacterTag[]
 
+  // Ownership change tracking
+  ownershipChanges CharacterOwnershipChange[]
+
+  @@index([traitValues], type: Gin, map: "character_traitvalues_gin_idx")
   @@map("characters")
 }
 
@@ -324,4 +359,212 @@ model MediaTag {
 
   @@id([mediaId, tagId])
   @@map("media_tags")
+}
+
+model Community {
+  id        String   @id @default(uuid())
+  name      String   @unique @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  species              Species[]
+  roles                Role[]
+  communityInvitations CommunityInvitation[]
+
+  @@map("communities")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(100)
+  communityId String   @map("community_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Community-scoped permissions
+  canCreateSpecies    Boolean @default(false) @map("can_create_species")
+  canCreateCharacter  Boolean @default(false) @map("can_create_character")
+  canEditCharacter    Boolean @default(false) @map("can_edit_character")
+  canEditSpecies      Boolean @default(false) @map("can_edit_species")
+  canCreateInviteCode Boolean @default(false) @map("can_create_invite_code")
+  canListInviteCodes  Boolean @default(false) @map("can_list_invite_codes")
+  canCreateRole       Boolean @default(false) @map("can_create_role")
+  canEditRole         Boolean @default(false) @map("can_edit_role")
+
+  // Relations
+  community            Community             @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  communityMembers     CommunityMember[]
+  communityInvitations CommunityInvitation[]
+  inviteCodes          InviteCode[]
+
+  @@unique([communityId, name])
+  @@map("roles")
+}
+
+model CommunityMember {
+  id        String   @id @default(uuid())
+  roleId    String   @map("role_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, userId])
+  @@map("community_members")
+}
+
+model CommunityInvitation {
+  id          String    @id @default(uuid())
+  roleId      String    @map("role_id")
+  inviteeId   String    @map("invitee_id")
+  inviterId   String    @map("inviter_id")
+  communityId String    @map("community_id")
+  acceptedAt  DateTime? @map("accepted_at") @db.Timestamptz
+  declinedAt  DateTime? @map("declined_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  role      Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  invitee   User      @relation("ReceivedInvitations", fields: [inviteeId], references: [id], onDelete: Cascade)
+  inviter   User      @relation("CreatedInvitations", fields: [inviterId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@map("community_invitations")
+}
+
+model InviteCode {
+  id         String   @id @db.VarChar(50)
+  claimCount Int      @default(0) @map("claim_count")
+  maxClaims  Int      @map("max_claims")
+  creatorId  String   @map("creator_id")
+  roleId     String?  @map("role_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  creator User  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  role    Role? @relation(fields: [roleId], references: [id], onDelete: SetNull)
+
+  @@map("invite_codes")
+}
+
+model CharacterOwnershipChange {
+  id            String   @id @default(uuid())
+  characterId   String   @map("character_id")
+  fromUserId    String?  @map("from_user_id")
+  toUserId      String   @map("to_user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  fromUser  User?     @relation("CharacterOwnershipChangeFrom", fields: [fromUserId], references: [id], onDelete: SetNull)
+  toUser    User      @relation("CharacterOwnershipChangeTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@map("character_ownership_changes")
+}
+
+model Species {
+  id          String    @id @default(uuid())
+  name        String    @unique @db.VarChar(100)
+  communityId String    @map("community_id")
+  hasImage    Boolean   @default(false) @map("has_image")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  community       Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  traits          Trait[]
+  speciesVariants SpeciesVariant[]
+
+  @@map("species")
+}
+
+model Trait {
+  id        String         @id @default(uuid())
+  name      String         @db.VarChar(100)
+  valueType TraitValueType @map("value_type")
+  speciesId String         @map("species_id")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  species          Species          @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+  enumValues       EnumValue[]
+  traitListEntries TraitListEntry[]
+
+  @@unique([speciesId, name])
+  @@map("traits")
+}
+
+model EnumValue {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(100)
+  order     Int      @default(0)
+  traitId   String   @map("trait_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  trait             Trait              @relation(fields: [traitId], references: [id], onDelete: Cascade)
+  enumValueSettings EnumValueSetting[]
+
+  @@unique([traitId, name])
+  @@unique([traitId, order])
+  @@map("enum_values")
+}
+
+model SpeciesVariant {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(100)
+  speciesId String   @map("species_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  species           Species            @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+  traitListEntries  TraitListEntry[]
+  enumValueSettings EnumValueSetting[]
+
+  @@unique([speciesId, name])
+  @@map("species_variants")
+}
+
+model TraitListEntry {
+  id                     String         @id @default(uuid())
+  traitId                String         @map("trait_id")
+  speciesVariantId       String         @map("species_variant_id")
+  order                  Int
+  required               Boolean
+  valueType              TraitValueType @map("value_type")
+  defaultValueString     String?        @map("default_value_string") @db.VarChar(255)
+  defaultValueInt        Int?           @map("default_value_int")
+  defaultValueTimestamp  DateTime?      @map("default_value_timestamp") @db.Timestamptz
+  createdAt              DateTime       @default(now()) @map("created_at")
+  updatedAt              DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  trait          Trait          @relation(fields: [traitId], references: [id], onDelete: Cascade)
+  speciesVariant SpeciesVariant @relation(fields: [speciesVariantId], references: [id], onDelete: Cascade)
+
+  @@unique([traitId, speciesVariantId])
+  @@map("trait_list_entries")
+}
+
+model EnumValueSetting {
+  id               String   @id @default(uuid())
+  enumValueId      String   @map("enum_value_id")
+  speciesVariantId String   @map("species_variant_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  enumValue      EnumValue      @relation(fields: [enumValueId], references: [id], onDelete: Cascade)
+  speciesVariant SpeciesVariant @relation(fields: [speciesVariantId], references: [id], onDelete: Cascade)
+
+  @@unique([enumValueId, speciesVariantId])
+  @@map("enum_value_settings")
 }

@@ -454,4 +454,44 @@ export class CharactersService {
         return { createdAt: order } as const;
     }
   }
+
+  /** Update character trait values */
+  async updateTraits(id: string, updateData: { traitValues: PrismaJson.CharacterTraitValuesJson }, userId: string): Promise<Character> {
+    // First verify user owns or created this character
+    const character = await this.prisma.character.findUnique({
+      where: { id },
+      select: { ownerId: true, creatorId: true },
+    });
+
+    if (!character) {
+      throw new NotFoundException(`Character with ID ${id} not found`);
+    }
+
+    if (character.ownerId !== userId && character.creatorId !== userId) {
+      throw new ForbiddenException('You can only update traits for characters you own or created');
+    }
+
+    // Update the character with new trait values
+    return this.prisma.character.update({
+      where: { id },
+      data: {
+        traitValues: updateData.traitValues,
+      },
+      include: {
+        owner: true,
+        creator: true,
+        mainMedia: true,
+        tags_rel: {
+          include: {
+            tag: true,
+          },
+        },
+        _count: {
+          select: {
+            media: true,
+          },
+        },
+      },
+    }) as Promise<Character>;
+  }
 }

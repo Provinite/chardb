@@ -1,11 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { CreateUser, UpdateUser } from '../shared/types';
-import { UserProfile, UserStats } from './entities/user-profile.entity';
-import { Visibility } from '@chardb/database';
+import { Injectable } from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { CreateUser, UpdateUser } from "../shared/types";
+import { UserProfile, UserStats } from "./entities/user-profile.entity";
+import { Visibility, User as PrismaUser } from "@chardb/database";
+import { User as GraphQLUser } from "./entities/user.entity";
 
 // Helper function to add default social fields to User objects
-function addDefaultSocialFields(user: any): any {
+function addDefaultSocialFields<T extends Partial<PrismaUser>>(
+  user: T,
+): T &
+  Pick<GraphQLUser, "followersCount" | "followingCount" | "userIsFollowing"> {
   return {
     ...user,
     followersCount: 0,
@@ -115,10 +119,10 @@ export class UsersService {
       ...updateUserDto,
       // Convert dateOfBirth string to Date if provided
       ...(updateUserDto.dateOfBirth && {
-        dateOfBirth: new Date(updateUserDto.dateOfBirth)
-      })
+        dateOfBirth: new Date(updateUserDto.dateOfBirth),
+      }),
     };
-    
+
     const user = await this.db.user.update({
       where: { id },
       data: updateData,
@@ -150,8 +154,8 @@ export class UsersService {
   }
 
   async getUserProfile(
-    username: string, 
-    currentUserId?: string
+    username: string,
+    currentUserId?: string,
   ): Promise<UserProfile | null> {
     const user = await this.db.user.findUnique({
       where: { username },
@@ -167,6 +171,11 @@ export class UsersService {
         isVerified: true,
         isAdmin: true,
         privacySettings: true,
+        canCreateCommunity: true,
+        canListUsers: true,
+        canListInviteCodes: true,
+        canCreateInviteCode: true,
+        canGrantGlobalPermissions: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -183,18 +192,18 @@ export class UsersService {
     const stats = await this.getUserStats(user.id, canViewPrivateContent);
 
     // Get recent content based on privacy settings
-    const visibilityFilter = canViewPrivateContent 
+    const visibilityFilter = canViewPrivateContent
       ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
       : [Visibility.PUBLIC];
 
     const [recentCharacters, recentGalleries, recentMedia] = await Promise.all([
       this.db.character.findMany({
-        where: { 
+        where: {
           ownerId: user.id,
-          visibility: { in: visibilityFilter }
+          visibility: { in: visibilityFilter },
         },
         take: 6,
-        orderBy: { updatedAt: 'desc' },
+        orderBy: { updatedAt: "desc" },
         include: {
           owner: {
             select: {
@@ -202,17 +211,17 @@ export class UsersService {
               username: true,
               displayName: true,
               avatarUrl: true,
-            }
-          }
-        }
+            },
+          },
+        },
       }),
       this.db.gallery.findMany({
-        where: { 
+        where: {
           ownerId: user.id,
-          visibility: { in: visibilityFilter }
+          visibility: { in: visibilityFilter },
         },
         take: 6,
-        orderBy: { updatedAt: 'desc' },
+        orderBy: { updatedAt: "desc" },
         include: {
           owner: {
             select: {
@@ -220,23 +229,23 @@ export class UsersService {
               username: true,
               displayName: true,
               avatarUrl: true,
-            }
+            },
           },
           character: {
             select: {
               id: true,
               name: true,
-            }
-          }
-        }
+            },
+          },
+        },
       }),
       this.db.media.findMany({
-        where: { 
+        where: {
           ownerId: user.id,
-          imageId: { not: null } // Only include image media
+          imageId: { not: null }, // Only include image media
         },
         take: 12,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           owner: {
             select: {
@@ -244,7 +253,7 @@ export class UsersService {
               username: true,
               displayName: true,
               avatarUrl: true,
-            }
+            },
           },
           image: {
             select: {
@@ -252,20 +261,20 @@ export class UsersService {
               filename: true,
               url: true,
               thumbnailUrl: true,
-            }
-          }
-        }
-      })
+            },
+          },
+        },
+      }),
     ]);
 
     // Get featured characters (most recently updated public ones)
     const featuredCharacters = await this.db.character.findMany({
-      where: { 
+      where: {
         ownerId: user.id,
-        visibility: Visibility.PUBLIC
+        visibility: Visibility.PUBLIC,
       },
       take: 3,
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { updatedAt: "desc" },
       include: {
         owner: {
           select: {
@@ -273,18 +282,13 @@ export class UsersService {
             username: true,
             displayName: true,
             avatarUrl: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     return {
-      user: {
-        ...user,
-        followersCount: 0, // Will be resolved by field resolver
-        followingCount: 0, // Will be resolved by field resolver  
-        userIsFollowing: false, // Will be resolved by field resolver
-      },
+      user: addDefaultSocialFields(user),
       stats,
       recentCharacters: recentCharacters as any,
       recentGalleries: recentGalleries as any,
@@ -295,29 +299,32 @@ export class UsersService {
     };
   }
 
-  async getUserStats(userId: string, includePrivate = false): Promise<UserStats> {
-    const visibilityFilter = includePrivate 
+  async getUserStats(
+    userId: string,
+    includePrivate = false,
+  ): Promise<UserStats> {
+    const visibilityFilter = includePrivate
       ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
       : [Visibility.PUBLIC];
 
     const [charactersCount, galleriesCount, imagesCount] = await Promise.all([
       this.db.character.count({
-        where: { 
+        where: {
           ownerId: userId,
-          visibility: { in: visibilityFilter }
-        }
+          visibility: { in: visibilityFilter },
+        },
       }),
       this.db.gallery.count({
-        where: { 
+        where: {
           ownerId: userId,
-          visibility: { in: visibilityFilter }
-        }
+          visibility: { in: visibilityFilter },
+        },
       }),
       this.db.image.count({
-        where: { 
-          uploaderId: userId
-        }
-      })
+        where: {
+          uploaderId: userId,
+        },
+      }),
     ]);
 
     // TODO: Implement views, likes, and follows when those systems are added

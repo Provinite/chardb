@@ -39,6 +39,22 @@ export class User {
   @Field(() => GraphQLJSON)
   privacySettings: any;
 
+  // Identity permission fields (migrated from clovercoin-app)
+  @Field()
+  canCreateCommunity: boolean;
+
+  @Field()
+  canListUsers: boolean;
+
+  @Field()
+  canListInviteCodes: boolean;
+
+  @Field()
+  canCreateInviteCode: boolean;
+
+  @Field()
+  canGrantGlobalPermissions: boolean;
+
   @Field()
   createdAt: Date;
 

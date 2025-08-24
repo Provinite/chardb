@@ -1,6 +1,7 @@
 import { Field, InputType, ObjectType, Int, Float, ID, registerEnumType } from '@nestjs/graphql';
 import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, IsEnum, MinLength, MaxLength, Min, Max } from 'class-validator';
 import { Visibility } from '@chardb/database';
+import { CharacterTraitValueInput } from './character-trait.dto';
 
 // Register enum for GraphQL
 registerEnumType(Visibility, {
@@ -82,6 +83,10 @@ export class CreateCharacterInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   customFields?: any; // JSON field
+
+  @Field(() => [CharacterTraitValueInput], { defaultValue: [], description: 'Trait values for the character' })
+  @IsOptional()
+  traitValues?: CharacterTraitValueInput[];
 }
 
 @InputType()
@@ -159,6 +164,10 @@ export class UpdateCharacterInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   customFields?: any; // JSON field
+
+  @Field(() => [CharacterTraitValueInput], { nullable: true, description: 'Trait values for the character' })
+  @IsOptional()
+  traitValues?: CharacterTraitValueInput[];
 
   @Field(() => ID, { nullable: true })
   @IsOptional()

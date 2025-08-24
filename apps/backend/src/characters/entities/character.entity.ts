@@ -4,6 +4,7 @@ import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../shared/entities/tag.entity';
 import { Image } from '../../images/entities/image.entity';
 import { Media } from '../../media/entities/media.entity';
+import { CharacterTraitValue } from '../../shared/types/character-trait.types';
 
 @ObjectType()
 export class CharacterCount {
@@ -63,6 +64,10 @@ export class Character {
 
   @Field(() => String, { nullable: true })
   customFields?: string; // JSON string
+
+  /** Trait values assigned to this character */
+  @Field(() => [CharacterTraitValue], { description: 'Trait values assigned to this character' })
+  traitValues!: CharacterTraitValue[];
 
   @Field()
   createdAt: Date;

@@ -16,6 +16,7 @@ import {
   ManageTagsInput,
   SetMainMediaInput,
 } from './dto/character.dto';
+import { UpdateCharacterTraitsInput } from './dto/character-trait.dto';
 
 // Use Prisma's generated type for Character with tag relations
 type CharacterWithTags = Prisma.CharacterGetPayload<{
@@ -147,6 +148,17 @@ export class CharactersResolver {
     
     // Return displayName values from the relational tags
     return character.tags_rel.map(ct => ct.tag.displayName);
+  }
+
+  /** Update character trait values */
+  @Mutation(() => CharacterEntity, { description: 'Update character trait values' })
+  @UseGuards(JwtAuthGuard)
+  async updateCharacterTraits(
+    @Args('id', { type: () => ID }) id: string,
+    @Args('updateCharacterTraitsInput') updateCharacterTraitsInput: UpdateCharacterTraitsInput,
+    @CurrentUser() user: any,
+  ): Promise<CharacterEntity> {
+    return this.charactersService.updateTraits(id, updateCharacterTraitsInput, user.id);
   }
 
 }
