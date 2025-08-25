@@ -28,9 +28,6 @@ export class Trait {
   @Field({ description: 'When the trait was last updated' })
   updatedAt: Date;
 
-  /** The species this trait belongs to */
-  @Field(() => Species, { description: 'The species this trait belongs to' })
-  species: Species;
 }
 
 @ObjectType()

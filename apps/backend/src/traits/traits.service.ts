@@ -1,17 +1,52 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { CreateTraitInput, UpdateTraitInput } from './dto/trait.dto';
-import { mapCreateTraitInputToPrisma, mapUpdateTraitInputToPrisma } from '../shared/utils/dto-mapper';
-import type { Trait } from '@chardb/database';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { TraitValueType } from "../shared/enums/trait-value-type.enum";
+import { $Enums, Prisma } from "@chardb/database";
+
+/**
+ * Service layer input types for traits operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of Prisma relation objects.
+ */
+
+/**
+ * Input data for creating a new trait
+ */
+interface CreateTraitServiceInput {
+  /** Name of the trait (unique within species) */
+  name: string;
+  /** Type of values this trait can store */
+  valueType: $Enums.TraitValueType;
+  /** ID of the species this trait belongs to */
+  speciesId: string;
+}
+
+/**
+ * Input data for updating a trait
+ */
+interface UpdateTraitServiceInput {
+  /** Name of the trait (unique within species) */
+  name?: string;
+  /** Type of values this trait can store */
+  valueType?: $Enums.TraitValueType;
+  /** ID of the species this trait belongs to */
+  speciesId?: string;
+}
 
 @Injectable()
 export class TraitsService {
   constructor(private prisma: DatabaseService) {}
 
   /** Create a new trait */
-  async create(createTraitInput: CreateTraitInput): Promise<Trait> {
+  async create(input: CreateTraitServiceInput) {
     return this.prisma.trait.create({
-      data: mapCreateTraitInputToPrisma(createTraitInput),
+      data: {
+        name: input.name,
+        valueType: input.valueType,
+        species: {
+          connect: { id: input.speciesId },
+        },
+      },
     });
   }
 
@@ -25,7 +60,7 @@ export class TraitsService {
         take: first + 1, // Take one extra to check if there's a next page
         skip,
         cursor,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.trait.count(),
     ]);
@@ -52,7 +87,7 @@ export class TraitsService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.trait.count({
         where: { speciesId },
@@ -71,7 +106,7 @@ export class TraitsService {
   }
 
   /** Find a trait by ID */
-  async findOne(id: string): Promise<Trait> {
+  async findOne(id: string) {
     const trait = await this.prisma.trait.findUnique({
       where: { id },
     });
@@ -84,18 +119,26 @@ export class TraitsService {
   }
 
   /** Update a trait */
-  async update(id: string, updateTraitInput: UpdateTraitInput): Promise<Trait> {
+  async update(id: string, input: UpdateTraitServiceInput) {
     await this.findOne(id); // This will throw if not found
+
+    const updateData: Prisma.TraitUpdateInput = {};
+
+    if (input.name !== undefined) updateData.name = input.name;
+    if (input.valueType !== undefined) updateData.valueType = input.valueType;
+    if (input.speciesId !== undefined) {
+      updateData.species = { connect: { id: input.speciesId } };
+    }
 
     return this.prisma.trait.update({
       where: { id },
-      data: mapUpdateTraitInputToPrisma(updateTraitInput),
+      data: updateData,
     });
   }
 
   /** Remove a trait */
-  async remove(id: string): Promise<Trait> {
-    const trait = await this.findOne(id); // This will throw if not found
+  async remove(id: string) {
+    await this.findOne(id); // This will throw if not found
 
     return this.prisma.trait.delete({
       where: { id },
