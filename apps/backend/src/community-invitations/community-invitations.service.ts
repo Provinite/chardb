@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateCommunityInvitationInput, RespondToCommunityInvitationInput } from './dto/community-invitation.dto';
-import { CommunityInvitation, CommunityInvitationConnection } from './entities/community-invitation.entity';
+import type { CommunityInvitation } from '@chardb/database';
 
 @Injectable()
 export class CommunityInvitationsService {
@@ -39,7 +39,7 @@ export class CommunityInvitationsService {
   }
 
   /** Find all community invitations with pagination */
-  async findAll(first: number = 20, after?: string): Promise<CommunityInvitationConnection> {
+  async findAll(first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -75,7 +75,7 @@ export class CommunityInvitationsService {
   }
 
   /** Find community invitations by community ID with pagination */
-  async findByCommunity(communityId: string, first: number = 20, after?: string): Promise<CommunityInvitationConnection> {
+  async findByCommunity(communityId: string, first: number = 20, after?: string): Promise<> {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -114,7 +114,7 @@ export class CommunityInvitationsService {
   }
 
   /** Find community invitations by invitee ID with pagination */
-  async findByInvitee(inviteeId: string, first: number = 20, after?: string): Promise<CommunityInvitationConnection> {
+  async findByInvitee(inviteeId: string, first: number = 20, after?: string): Promise<> {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -153,7 +153,7 @@ export class CommunityInvitationsService {
   }
 
   /** Find community invitations by inviter ID with pagination */
-  async findByInviter(inviterId: string, first: number = 20, after?: string): Promise<CommunityInvitationConnection> {
+  async findByInviter(inviterId: string, first: number = 20, after?: string): Promise<> {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 

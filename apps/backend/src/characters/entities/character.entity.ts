@@ -75,29 +75,7 @@ export class Character {
   @Field()
   updatedAt: Date;
 
-  // Relations
-  @Field(() => User)
-  owner: User;
-
-  @Field(() => User, { nullable: true })
-  creator?: User;
-
-  @Field(() => Media, { nullable: true, description: 'Main media item for this character (image or text)' })
-  mainMedia?: Media;
-
-  @Field(() => [CharacterTag], { nullable: true })
-  tags_rel?: CharacterTag[];
-
-  @Field(() => CharacterCount, { nullable: true })
-  _count?: CharacterCount;
-
-
-  // Social features
-  @Field(() => Int)
-  likesCount: number;
-
-  @Field(() => Boolean)
-  userHasLiked: boolean;
+  // Relations handled by field resolvers
 }
 
 @ObjectType()

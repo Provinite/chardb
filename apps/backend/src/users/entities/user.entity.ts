@@ -61,15 +61,7 @@ export class User {
   @Field()
   updatedAt: Date;
 
-  // Social features
-  @Field(() => Int)
-  followersCount: number;
-
-  @Field(() => Int)
-  followingCount: number;
-
-  @Field(() => Boolean)
-  userIsFollowing: boolean;
+  // Social features handled by field resolvers
 }
 
 @ObjectType()

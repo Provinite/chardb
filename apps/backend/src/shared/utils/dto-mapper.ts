@@ -1,5 +1,6 @@
 import { mapGraphQLToPrismaTraitValueType } from './trait-value-type-mapper';
 import type { CreateTraitInput, UpdateTraitInput } from '../../traits/dto/trait.dto';
+import type { CreateCharacterInput, UpdateCharacterInput } from '../../characters/dto/character.dto';
 import type { Prisma } from '@chardb/database';
 
 /**
@@ -36,6 +37,51 @@ export function mapUpdateTraitInputToPrisma(input: UpdateTraitInput): Prisma.Tra
       connect: { id: input.speciesId },
     };
   }
+  
+  return data;
+}
+
+/**
+ * Maps CreateCharacterInput DTO to Prisma create data
+ */
+export function mapCreateCharacterInputToPrisma(input: CreateCharacterInput): Prisma.CharacterCreateInput {
+  return {
+    name: input.name,
+    species: input.species,
+    age: input.age,
+    gender: input.gender,
+    description: input.description,
+    personality: input.personality,
+    backstory: input.backstory,
+    visibility: input.visibility,
+    isSellable: input.isSellable,
+    isTradeable: input.isTradeable,
+    price: input.price,
+    customFields: input.customFields,
+    traitValues: input.traitValues || [],
+  };
+}
+
+/**
+ * Maps UpdateCharacterInput DTO to Prisma update data
+ */
+export function mapUpdateCharacterInputToPrisma(input: UpdateCharacterInput): Prisma.CharacterUpdateInput {
+  const data: Prisma.CharacterUpdateInput = {};
+  
+  if (input.name !== undefined) data.name = input.name;
+  if (input.species !== undefined) data.species = input.species;
+  if (input.age !== undefined) data.age = input.age;
+  if (input.gender !== undefined) data.gender = input.gender;
+  if (input.description !== undefined) data.description = input.description;
+  if (input.personality !== undefined) data.personality = input.personality;
+  if (input.backstory !== undefined) data.backstory = input.backstory;
+  if (input.visibility !== undefined) data.visibility = input.visibility;
+  if (input.isSellable !== undefined) data.isSellable = input.isSellable;
+  if (input.isTradeable !== undefined) data.isTradeable = input.isTradeable;
+  if (input.price !== undefined) data.price = input.price;
+  if (input.customFields !== undefined) data.customFields = input.customFields;
+  if (input.traitValues !== undefined) data.traitValues = input.traitValues;
+  if (input.mainMediaId !== undefined) data.mainMediaId = input.mainMediaId;
   
   return data;
 }

@@ -110,14 +110,6 @@ export class Media {
   @Field(() => TextContent, { nullable: true, description: 'Text content (populated for text media)' })
   textContent?: Partial<TextContent>;
 
-  // Social features
-  /** Number of likes this media has received */
-  @Field({ description: 'Number of likes this media has received' })
-  likesCount: number;
-
-  /** Whether the current user has liked this media */
-  @Field({ description: 'Whether the current user has liked this media' })
-  userHasLiked: boolean;
 }
 
 /**

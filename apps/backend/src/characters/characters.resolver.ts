@@ -1,13 +1,26 @@
-import { Resolver, Query, Mutation, Args, ID, Context, ResolveField, Parent, Int } from '@nestjs/graphql';
-import { UseGuards, ForbiddenException } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { CharactersService } from './characters.service';
-import { Character as CharacterEntity, CharacterConnection } from './entities/character.entity';
-import { Image } from '../images/entities/image.entity';
-import { ImagesService } from '../images/images.service';
-import type { Prisma } from '@chardb/database';
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Args,
+  ID,
+  Context,
+  ResolveField,
+  Parent,
+  Int,
+} from "@nestjs/graphql";
+import { UseGuards, ForbiddenException } from "@nestjs/common";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { OptionalJwtAuthGuard } from "../auth/guards/optional-jwt-auth.guard";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { CharactersService } from "./characters.service";
+import {
+  Character as CharacterEntity,
+  CharacterConnection,
+} from "./entities/character.entity";
+import { Image } from "../images/entities/image.entity";
+import { ImagesService } from "../images/images.service";
+import type { Prisma } from "@chardb/database";
 import {
   CreateCharacterInput,
   UpdateCharacterInput,
@@ -15,35 +28,52 @@ import {
   TransferCharacterInput,
   ManageTagsInput,
   SetMainMediaInput,
-} from './dto/character.dto';
-import { UpdateCharacterTraitsInput } from './dto/character-trait.dto';
+} from "./dto/character.dto";
+import { UpdateCharacterTraitsInput } from "./dto/character-trait.dto";
+import {
+  mapCreateCharacterInputToService,
+  mapUpdateCharacterInputToService,
+  mapUpdateCharacterTraitsInputToService,
+  mapPrismaCharacterToGraphQL,
+} from "./utils/character-resolver-mappers";
 
-// Use Prisma's generated type for Character with tag relations
+// Use Prisma's generated types for Character with various relation combinations
 type CharacterWithTags = Prisma.CharacterGetPayload<{
-  include: { tags_rel: { include: { tag: true } } }
+  include: { tags_rel: { include: { tag: true } } };
+}>;
+
+type CharacterWithRelations = Prisma.CharacterGetPayload<{
+  include: {
+    owner: true;
+    creator: true;
+    mainMedia: true;
+    tags_rel: { include: { tag: true } };
+    _count: { select: { media: true } };
+  };
 }>;
 
 @Resolver(() => CharacterEntity)
 export class CharactersResolver {
   constructor(
     private readonly charactersService: CharactersService,
-    private readonly imagesService: ImagesService,
+    private readonly imagesService: ImagesService
   ) {}
 
   @Mutation(() => CharacterEntity)
   @UseGuards(JwtAuthGuard)
   async createCharacter(
-    @Args('input') input: CreateCharacterInput,
-    @CurrentUser() user: any,
+    @Args("input") input: CreateCharacterInput,
+    @CurrentUser() user: any
   ): Promise<any> {
-    return this.charactersService.create(user.id, input);
+    const { characterData, tags } = mapCreateCharacterInputToService(input);
+    return this.charactersService.create(user.id, { ...characterData, tags });
   }
 
   @Query(() => CharacterConnection)
   @UseGuards(OptionalJwtAuthGuard)
   async characters(
-    @Args('filters', { nullable: true }) filters?: CharacterFiltersInput,
-    @CurrentUser() user?: any,
+    @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
+    @CurrentUser() user?: any
   ): Promise<any> {
     return this.charactersService.findAll(filters, user?.id);
   }
@@ -51,8 +81,8 @@ export class CharactersResolver {
   @Query(() => CharacterEntity)
   @UseGuards(OptionalJwtAuthGuard)
   async character(
-    @Args('id', { type: () => ID }) id: string,
-    @CurrentUser() user?: any,
+    @Args("id", { type: () => ID }) id: string,
+    @CurrentUser() user?: any
   ): Promise<any> {
     return this.charactersService.findOne(id, user?.id);
   }
@@ -60,18 +90,22 @@ export class CharactersResolver {
   @Mutation(() => CharacterEntity)
   @UseGuards(JwtAuthGuard)
   async updateCharacter(
-    @Args('id', { type: () => ID }) id: string,
-    @Args('input') input: UpdateCharacterInput,
-    @CurrentUser() user: any,
+    @Args("id", { type: () => ID }) id: string,
+    @Args("input") input: UpdateCharacterInput,
+    @CurrentUser() user: any
   ): Promise<any> {
-    return this.charactersService.update(id, user.id, input);
+    const { characterData, tags } = mapUpdateCharacterInputToService(input);
+    return this.charactersService.update(id, user.id, {
+      ...characterData,
+      tags,
+    });
   }
 
   @Mutation(() => Boolean)
   @UseGuards(JwtAuthGuard)
   async deleteCharacter(
-    @Args('id', { type: () => ID }) id: string,
-    @CurrentUser() user: any,
+    @Args("id", { type: () => ID }) id: string,
+    @CurrentUser() user: any
   ): Promise<boolean> {
     return this.charactersService.remove(id, user.id);
   }
@@ -79,9 +113,9 @@ export class CharactersResolver {
   @Mutation(() => CharacterEntity)
   @UseGuards(JwtAuthGuard)
   async transferCharacter(
-    @Args('id', { type: () => ID }) id: string,
-    @Args('input') input: TransferCharacterInput,
-    @CurrentUser() user: any,
+    @Args("id", { type: () => ID }) id: string,
+    @Args("input") input: TransferCharacterInput,
+    @CurrentUser() user: any
   ): Promise<any> {
     return this.charactersService.transfer(id, user.id, input.newOwnerId);
   }
@@ -89,9 +123,9 @@ export class CharactersResolver {
   @Mutation(() => CharacterEntity)
   @UseGuards(JwtAuthGuard)
   async addCharacterTags(
-    @Args('id', { type: () => ID }) id: string,
-    @Args('input') input: ManageTagsInput,
-    @CurrentUser() user: any,
+    @Args("id", { type: () => ID }) id: string,
+    @Args("input") input: ManageTagsInput,
+    @CurrentUser() user: any
   ): Promise<any> {
     return this.charactersService.addTags(id, user.id, input.tagNames);
   }
@@ -99,19 +133,23 @@ export class CharactersResolver {
   @Mutation(() => CharacterEntity)
   @UseGuards(JwtAuthGuard)
   async removeCharacterTags(
-    @Args('id', { type: () => ID }) id: string,
-    @Args('input') input: ManageTagsInput,
-    @CurrentUser() user: any,
+    @Args("id", { type: () => ID }) id: string,
+    @Args("input") input: ManageTagsInput,
+    @CurrentUser() user: any
   ): Promise<any> {
     return this.charactersService.removeTags(id, user.id, input.tagNames);
   }
 
-  @Mutation(() => CharacterEntity, { description: 'Sets or clears the main media for a character' })
+  @Mutation(() => CharacterEntity, {
+    description: "Sets or clears the main media for a character",
+  })
   @UseGuards(JwtAuthGuard)
   async setCharacterMainMedia(
-    @Args('id', { type: () => ID, description: 'Character ID to update' }) id: string,
-    @Args('input', { description: 'Main media setting parameters' }) input: SetMainMediaInput,
-    @CurrentUser() user: any,
+    @Args("id", { type: () => ID, description: "Character ID to update" })
+    id: string,
+    @Args("input", { description: "Main media setting parameters" })
+    input: SetMainMediaInput,
+    @CurrentUser() user: any
   ): Promise<any> {
     return this.charactersService.setMainMedia(id, user.id, input.mediaId);
   }
@@ -121,7 +159,7 @@ export class CharactersResolver {
   @UseGuards(JwtAuthGuard)
   async myCharacters(
     @CurrentUser() user: any,
-    @Args('filters', { nullable: true }) filters?: CharacterFiltersInput,
+    @Args("filters", { nullable: true }) filters?: CharacterFiltersInput
   ): Promise<any> {
     const userFilters = { ...filters, ownerId: user.id };
     return this.charactersService.findAll(userFilters, user.id);
@@ -131,34 +169,57 @@ export class CharactersResolver {
   @Query(() => CharacterConnection)
   @UseGuards(OptionalJwtAuthGuard)
   async userCharacters(
-    @Args('userId', { type: () => ID }) userId: string,
-    @Args('filters', { nullable: true }) filters?: CharacterFiltersInput,
-    @CurrentUser() user?: any,
+    @Args("userId", { type: () => ID }) userId: string,
+    @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
+    @CurrentUser() user?: any
   ): Promise<any> {
     const userFilters = { ...filters, ownerId: userId };
     return this.charactersService.findAll(userFilters, user?.id);
   }
 
   // Field resolver to return displayName values for tags string array
-  @ResolveField('tags', () => [String])
-  async resolveTagsField(@Parent() character: CharacterWithTags): Promise<string[]> {
+  @ResolveField("tags", () => [String])
+  async resolveTagsField(
+    @Parent() character: CharacterWithTags
+  ): Promise<string[]> {
     if (!character.tags_rel) {
       return [];
     }
-    
+
     // Return displayName values from the relational tags
-    return character.tags_rel.map(ct => ct.tag.displayName);
+    return character.tags_rel.map((ct) => ct.tag.displayName);
+  }
+
+  @ResolveField("likesCount", () => Int)
+  async resolveLikesCountField(@Parent() character: any): Promise<number> {
+    const count = await this.charactersService.getLikesCount(character.id);
+    return count;
+  }
+
+  @ResolveField("userHasLiked", () => Boolean)
+  async resolveUserHasLikedField(
+    @Parent() character: any,
+    @CurrentUser() user?: any
+  ): Promise<boolean> {
+    if (!user) return false;
+    return this.charactersService.hasUserLiked(character.id, user.id);
   }
 
   /** Update character trait values */
-  @Mutation(() => CharacterEntity, { description: 'Update character trait values' })
+  @Mutation(() => CharacterEntity, {
+    description: "Update character trait values",
+  })
   @UseGuards(JwtAuthGuard)
   async updateCharacterTraits(
-    @Args('id', { type: () => ID }) id: string,
-    @Args('updateCharacterTraitsInput') updateCharacterTraitsInput: UpdateCharacterTraitsInput,
-    @CurrentUser() user: any,
+    @Args("id", { type: () => ID }) id: string,
+    @Args("updateCharacterTraitsInput")
+    updateCharacterTraitsInput: UpdateCharacterTraitsInput,
+    @CurrentUser() user: any
   ): Promise<CharacterEntity> {
-    return this.charactersService.updateTraits(id, updateCharacterTraitsInput, user.id);
+    const serviceInput = mapUpdateCharacterTraitsInputToService(
+      updateCharacterTraitsInput
+    );
+    const prismaResult = await this.charactersService.updateTraits(id, serviceInput, user.id);
+    return mapPrismaCharacterToGraphQL(prismaResult);
   }
-
 }
