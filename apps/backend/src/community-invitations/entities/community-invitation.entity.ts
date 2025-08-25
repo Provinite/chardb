@@ -36,36 +36,7 @@ export class CommunityInvitation {
   @Field(() => Date, { description: 'When the invitation was created' })
   createdAt!: Date;
 
-  /** Whether the invitation has been accepted */
-  @Field(() => Boolean, { description: 'Whether the invitation has been accepted' })
-  get accepted(): boolean {
-    return Boolean(this.acceptedAt);
-  }
-
-  /** Whether the invitation has been declined */
-  @Field(() => Boolean, { description: 'Whether the invitation has been declined' })
-  get declined(): boolean {
-    return Boolean(this.declinedAt);
-  }
-
-  /** Whether the invitation is still pending (not accepted or declined) */
-  @Field(() => Boolean, { description: 'Whether the invitation is still pending' })
-  get pending(): boolean {
-    return !this.accepted && !this.declined;
-  }
-
-  // Relations
-  @Field(() => Role, { description: 'The role to grant when the invitation is accepted' })
-  role?: Role;
-
-  @Field(() => User, { description: 'The user being invited' })
-  invitee?: User;
-
-  @Field(() => User, { description: 'The user who created the invitation' })
-  inviter?: User;
-
-  @Field(() => Community, { description: 'The community the invitation is for' })
-  community?: Community;
+  // Computed properties and relations handled by field resolvers
 }
 
 @ObjectType({ description: 'Paginated list of community invitations with connection metadata' })

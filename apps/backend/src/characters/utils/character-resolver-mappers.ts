@@ -15,7 +15,7 @@ import { CharacterTraitValue } from "../../shared/types/character-trait.types";
  */
 
 function mapTraitValues(
-  traitValues?: CharacterTraitValueInput[]
+  traitValues?: CharacterTraitValueInput[],
 ): PrismaJson.CharacterTraitValuesJson {
   if (!traitValues) return [];
 
@@ -92,7 +92,7 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
 }
 
 export function mapUpdateCharacterTraitsInputToService(
-  input: UpdateCharacterTraitsInput
+  input: UpdateCharacterTraitsInput,
 ): {
   traitValues: PrismaJson.CharacterTraitValuesJson;
 } {
@@ -116,7 +116,7 @@ type PrismaCharacterWithRelations = Prisma.CharacterGetPayload<{
  * Maps Prisma Character result to GraphQL Character entity
  */
 export function mapPrismaCharacterToGraphQL(
-  prismaCharacter: PrismaCharacterWithRelations
+  prismaCharacter: PrismaCharacterWithRelations,
 ): Character {
   return {
     id: prismaCharacter.id,

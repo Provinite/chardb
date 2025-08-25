@@ -1,19 +1,46 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateCommunityInvitationInput, RespondToCommunityInvitationInput } from './dto/community-invitation.dto';
-import type { CommunityInvitation } from '@chardb/database';
+import { Prisma } from '@chardb/database';
+
+/**
+ * Service layer input types for community invitations operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of Prisma relation objects.
+ */
+
+/**
+ * Input data for creating a new community invitation
+ */
+interface CreateCommunityInvitationServiceInput {
+  /** The ID of the role to grant when the invitation is accepted */
+  roleId: string;
+  /** The ID of the user being invited */
+  inviteeId: string;
+  /** The ID of the user who is creating the invitation */
+  inviterId: string;
+  /** The ID of the community the invitation is for */
+  communityId: string;
+}
+
+/**
+ * Input data for responding to a community invitation
+ */
+interface RespondToCommunityInvitationServiceInput {
+  /** Whether to accept (true) or decline (false) the invitation */
+  accept: boolean;
+}
 
 @Injectable()
 export class CommunityInvitationsService {
   constructor(private prisma: DatabaseService) {}
 
   /** Create a new community invitation */
-  async create(createCommunityInvitationInput: CreateCommunityInvitationInput): Promise<CommunityInvitation> {
+  async create(input: CreateCommunityInvitationServiceInput) {
     // Check if there's already a pending invitation for this role and invitee
     const existingInvitation = await this.prisma.communityInvitation.findFirst({
       where: {
-        roleId: createCommunityInvitationInput.roleId,
-        inviteeId: createCommunityInvitationInput.inviteeId,
+        roleId: input.roleId,
+        inviteeId: input.inviteeId,
         acceptedAt: null,
         declinedAt: null,
       },
@@ -24,7 +51,7 @@ export class CommunityInvitationsService {
     }
 
     return this.prisma.communityInvitation.create({
-      data: createCommunityInvitationInput,
+      data: input,
       include: {
         role: {
           include: {
@@ -75,7 +102,7 @@ export class CommunityInvitationsService {
   }
 
   /** Find community invitations by community ID with pagination */
-  async findByCommunity(communityId: string, first: number = 20, after?: string): Promise<> {
+  async findByCommunity(communityId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -114,7 +141,7 @@ export class CommunityInvitationsService {
   }
 
   /** Find community invitations by invitee ID with pagination */
-  async findByInvitee(inviteeId: string, first: number = 20, after?: string): Promise<> {
+  async findByInvitee(inviteeId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -153,7 +180,7 @@ export class CommunityInvitationsService {
   }
 
   /** Find community invitations by inviter ID with pagination */
-  async findByInviter(inviterId: string, first: number = 20, after?: string): Promise<> {
+  async findByInviter(inviterId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -192,7 +219,7 @@ export class CommunityInvitationsService {
   }
 
   /** Find a community invitation by ID */
-  async findOne(id: string): Promise<CommunityInvitation> {
+  async findOne(id: string) {
     const communityInvitation = await this.prisma.communityInvitation.findUnique({
       where: { id },
       include: {
@@ -215,7 +242,7 @@ export class CommunityInvitationsService {
   }
 
   /** Respond to a community invitation (accept or decline) */
-  async respond(id: string, respondInput: RespondToCommunityInvitationInput): Promise<CommunityInvitation> {
+  async respond(id: string, respondInput: RespondToCommunityInvitationServiceInput) {
     const invitation = await this.findOne(id);
 
     if (invitation.acceptedAt || invitation.declinedAt) {
@@ -255,7 +282,7 @@ export class CommunityInvitationsService {
   }
 
   /** Remove a community invitation */
-  async remove(id: string): Promise<CommunityInvitation> {
+  async remove(id: string) {
     const communityInvitation = await this.findOne(id); // This will throw if not found
 
     return this.prisma.communityInvitation.delete({
