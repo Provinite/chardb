@@ -42,28 +42,18 @@ type CharacterWithTags = Prisma.CharacterGetPayload<{
   include: { tags_rel: { include: { tag: true } } };
 }>;
 
-type CharacterWithRelations = Prisma.CharacterGetPayload<{
-  include: {
-    owner: true;
-    creator: true;
-    mainMedia: true;
-    tags_rel: { include: { tag: true } };
-    _count: { select: { media: true } };
-  };
-}>;
-
 @Resolver(() => CharacterEntity)
 export class CharactersResolver {
   constructor(
     private readonly charactersService: CharactersService,
-    private readonly imagesService: ImagesService
+    private readonly imagesService: ImagesService,
   ) {}
 
   @Mutation(() => CharacterEntity)
   @UseGuards(JwtAuthGuard)
   async createCharacter(
     @Args("input") input: CreateCharacterInput,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ): Promise<any> {
     const { characterData, tags } = mapCreateCharacterInputToService(input);
     return this.charactersService.create(user.id, { ...characterData, tags });
@@ -73,7 +63,7 @@ export class CharactersResolver {
   @UseGuards(OptionalJwtAuthGuard)
   async characters(
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
-    @CurrentUser() user?: any
+    @CurrentUser() user?: any,
   ): Promise<any> {
     return this.charactersService.findAll(filters, user?.id);
   }
@@ -82,7 +72,7 @@ export class CharactersResolver {
   @UseGuards(OptionalJwtAuthGuard)
   async character(
     @Args("id", { type: () => ID }) id: string,
-    @CurrentUser() user?: any
+    @CurrentUser() user?: any,
   ): Promise<any> {
     return this.charactersService.findOne(id, user?.id);
   }
@@ -92,7 +82,7 @@ export class CharactersResolver {
   async updateCharacter(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: UpdateCharacterInput,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ): Promise<any> {
     const { characterData, tags } = mapUpdateCharacterInputToService(input);
     return this.charactersService.update(id, user.id, {
@@ -105,7 +95,7 @@ export class CharactersResolver {
   @UseGuards(JwtAuthGuard)
   async deleteCharacter(
     @Args("id", { type: () => ID }) id: string,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ): Promise<boolean> {
     return this.charactersService.remove(id, user.id);
   }
@@ -115,7 +105,7 @@ export class CharactersResolver {
   async transferCharacter(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: TransferCharacterInput,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ): Promise<any> {
     return this.charactersService.transfer(id, user.id, input.newOwnerId);
   }
@@ -125,7 +115,7 @@ export class CharactersResolver {
   async addCharacterTags(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: ManageTagsInput,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ): Promise<any> {
     return this.charactersService.addTags(id, user.id, input.tagNames);
   }
@@ -135,7 +125,7 @@ export class CharactersResolver {
   async removeCharacterTags(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: ManageTagsInput,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ): Promise<any> {
     return this.charactersService.removeTags(id, user.id, input.tagNames);
   }
@@ -149,7 +139,7 @@ export class CharactersResolver {
     id: string,
     @Args("input", { description: "Main media setting parameters" })
     input: SetMainMediaInput,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ): Promise<any> {
     return this.charactersService.setMainMedia(id, user.id, input.mediaId);
   }
@@ -159,7 +149,7 @@ export class CharactersResolver {
   @UseGuards(JwtAuthGuard)
   async myCharacters(
     @CurrentUser() user: any,
-    @Args("filters", { nullable: true }) filters?: CharacterFiltersInput
+    @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
   ): Promise<any> {
     const userFilters = { ...filters, ownerId: user.id };
     return this.charactersService.findAll(userFilters, user.id);
@@ -171,7 +161,7 @@ export class CharactersResolver {
   async userCharacters(
     @Args("userId", { type: () => ID }) userId: string,
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
-    @CurrentUser() user?: any
+    @CurrentUser() user?: any,
   ): Promise<any> {
     const userFilters = { ...filters, ownerId: userId };
     return this.charactersService.findAll(userFilters, user?.id);
@@ -180,7 +170,7 @@ export class CharactersResolver {
   // Field resolver to return displayName values for tags string array
   @ResolveField("tags", () => [String])
   async resolveTagsField(
-    @Parent() character: CharacterWithTags
+    @Parent() character: CharacterWithTags,
   ): Promise<string[]> {
     if (!character.tags_rel) {
       return [];
@@ -199,7 +189,7 @@ export class CharactersResolver {
   @ResolveField("userHasLiked", () => Boolean)
   async resolveUserHasLikedField(
     @Parent() character: any,
-    @CurrentUser() user?: any
+    @CurrentUser() user?: any,
   ): Promise<boolean> {
     if (!user) return false;
     return this.charactersService.hasUserLiked(character.id, user.id);
@@ -214,12 +204,16 @@ export class CharactersResolver {
     @Args("id", { type: () => ID }) id: string,
     @Args("updateCharacterTraitsInput")
     updateCharacterTraitsInput: UpdateCharacterTraitsInput,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ): Promise<CharacterEntity> {
     const serviceInput = mapUpdateCharacterTraitsInputToService(
-      updateCharacterTraitsInput
+      updateCharacterTraitsInput,
     );
-    const prismaResult = await this.charactersService.updateTraits(id, serviceInput, user.id);
+    const prismaResult = await this.charactersService.updateTraits(
+      id,
+      serviceInput,
+      user.id,
+    );
     return mapPrismaCharacterToGraphQL(prismaResult);
   }
 }
