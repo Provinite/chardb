@@ -1,7 +1,15 @@
-import { Resolver, Query, Mutation, Args, ID, Int } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { EnumValuesService } from './enum-values.service';
 import { EnumValue, EnumValueConnection } from './entities/enum-value.entity';
 import { CreateEnumValueInput, UpdateEnumValueInput } from './dto/enum-value.dto';
+import {
+  mapCreateEnumValueInputToService,
+  mapUpdateEnumValueInputToService,
+  mapPrismaEnumValueToGraphQL,
+  mapPrismaEnumValueConnectionToGraphQL,
+} from './utils/enum-value-resolver-mappers';
+import { RemovalResponse } from '../shared/entities/removal-response.entity';
+import { Trait } from '../traits/entities/trait.entity';
 
 @Resolver(() => EnumValue)
 export class EnumValuesResolver {
@@ -9,27 +17,30 @@ export class EnumValuesResolver {
 
   /** Create a new enum value */
   @Mutation(() => EnumValue, { description: 'Create a new enum value' })
-  createEnumValue(
+  async createEnumValue(
     @Args('createEnumValueInput', { description: 'Enum value creation data' }) 
     createEnumValueInput: CreateEnumValueInput,
   ): Promise<EnumValue> {
-    return this.enumValuesService.create(createEnumValueInput);
+    const serviceInput = mapCreateEnumValueInputToService(createEnumValueInput);
+    const prismaResult = await this.enumValuesService.create(serviceInput);
+    return mapPrismaEnumValueToGraphQL(prismaResult);
   }
 
   /** Get all enum values with pagination */
   @Query(() => EnumValueConnection, { name: 'enumValues', description: 'Get all enum values with pagination' })
-  findAll(
+  async findAll(
     @Args('first', { type: () => Int, nullable: true, description: 'Number of enum values to return', defaultValue: 20 })
     first?: number,
     @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
     after?: string,
   ): Promise<EnumValueConnection> {
-    return this.enumValuesService.findAll(first, after);
+    const serviceResult = await this.enumValuesService.findAll(first, after);
+    return mapPrismaEnumValueConnectionToGraphQL(serviceResult);
   }
 
   /** Get enum values by trait ID with pagination */
   @Query(() => EnumValueConnection, { name: 'enumValuesByTrait', description: 'Get enum values by trait ID with pagination' })
-  findByTrait(
+  async findByTrait(
     @Args('traitId', { type: () => ID, description: 'Trait ID' })
     traitId: string,
     @Args('first', { type: () => Int, nullable: true, description: 'Number of enum values to return', defaultValue: 20 })
@@ -37,35 +48,47 @@ export class EnumValuesResolver {
     @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
     after?: string,
   ): Promise<EnumValueConnection> {
-    return this.enumValuesService.findByTrait(traitId, first, after);
+    const serviceResult = await this.enumValuesService.findByTrait(traitId, first, after);
+    return mapPrismaEnumValueConnectionToGraphQL(serviceResult);
   }
 
   /** Get an enum value by ID */
   @Query(() => EnumValue, { name: 'enumValueById', description: 'Get an enum value by ID' })
-  findOne(
+  async findOne(
     @Args('id', { type: () => ID, description: 'Enum value ID' }) 
     id: string,
   ): Promise<EnumValue> {
-    return this.enumValuesService.findOne(id);
+    const prismaResult = await this.enumValuesService.findOne(id);
+    return mapPrismaEnumValueToGraphQL(prismaResult);
   }
 
   /** Update an enum value */
   @Mutation(() => EnumValue, { description: 'Update an enum value' })
-  updateEnumValue(
+  async updateEnumValue(
     @Args('id', { type: () => ID, description: 'Enum value ID' }) 
     id: string,
     @Args('updateEnumValueInput', { description: 'Enum value update data' }) 
     updateEnumValueInput: UpdateEnumValueInput,
   ): Promise<EnumValue> {
-    return this.enumValuesService.update(id, updateEnumValueInput);
+    const serviceInput = mapUpdateEnumValueInputToService(updateEnumValueInput);
+    const prismaResult = await this.enumValuesService.update(id, serviceInput);
+    return mapPrismaEnumValueToGraphQL(prismaResult);
   }
 
   /** Remove an enum value */
-  @Mutation(() => EnumValue, { description: 'Remove an enum value' })
-  removeEnumValue(
+  @Mutation(() => RemovalResponse, { description: 'Remove an enum value' })
+  async removeEnumValue(
     @Args('id', { type: () => ID, description: 'Enum value ID' }) 
     id: string,
-  ): Promise<EnumValue> {
-    return this.enumValuesService.remove(id);
+  ): Promise<RemovalResponse> {
+    await this.enumValuesService.remove(id);
+    return { removed: true, message: 'Enum value successfully removed' };
+  }
+
+  // Field resolver for trait relation
+  @ResolveField('trait', () => Trait, { description: 'The trait this enum value belongs to' })
+  resolveTrait(@Parent() enumValue: EnumValue): Trait | null {
+    // TODO: Implement when traits service field resolver is available
+    return null;
   }
 }

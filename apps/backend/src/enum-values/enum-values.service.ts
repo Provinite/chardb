@@ -1,24 +1,56 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateEnumValueInput, UpdateEnumValueInput } from './dto/enum-value.dto';
-import { EnumValue, EnumValueConnection } from './entities/enum-value.entity';
+import { Prisma } from '@chardb/database';
+
+/**
+ * Service layer input types for enum values operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of Prisma relation objects.
+ */
+
+/**
+ * Input data for creating a new enum value
+ */
+interface CreateEnumValueServiceInput {
+  /** Name/display text of this enum value */
+  name: string;
+  /** Display order within the trait's enum values */
+  order?: number;
+  /** ID of the trait this enum value belongs to */
+  traitId: string;
+}
+
+/**
+ * Input data for updating an enum value
+ */
+interface UpdateEnumValueServiceInput {
+  /** Name/display text of this enum value */
+  name?: string;
+  /** Display order within the trait's enum values */
+  order?: number;
+  /** ID of the trait this enum value belongs to */
+  traitId?: string;
+}
 
 @Injectable()
 export class EnumValuesService {
   constructor(private prisma: DatabaseService) {}
 
   /** Create a new enum value */
-  async create(createEnumValueInput: CreateEnumValueInput): Promise<EnumValue> {
+  async create(input: CreateEnumValueServiceInput) {
     return this.prisma.enumValue.create({
-      data: createEnumValueInput,
-      include: {
-        trait: true,
+      data: {
+        name: input.name,
+        order: input.order ?? 0,
+        trait: {
+          connect: { id: input.traitId }
+        }
       },
     });
   }
 
   /** Find all enum values with pagination */
-  async findAll(first: number = 20, after?: string): Promise<EnumValueConnection> {
+  async findAll(first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -28,9 +60,6 @@ export class EnumValuesService {
         skip,
         cursor,
         orderBy: [{ trait: { name: 'asc' } }, { order: 'asc' }],
-        include: {
-          trait: true,
-        },
       }),
       this.prisma.enumValue.count(),
     ]);
@@ -47,7 +76,7 @@ export class EnumValuesService {
   }
 
   /** Find enum values by trait ID with pagination */
-  async findByTrait(traitId: string, first: number = 20, after?: string): Promise<EnumValueConnection> {
+  async findByTrait(traitId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -58,9 +87,6 @@ export class EnumValuesService {
         skip,
         cursor,
         orderBy: { order: 'asc' },
-        include: {
-          trait: true,
-        },
       }),
       this.prisma.enumValue.count({
         where: { traitId },
@@ -79,12 +105,9 @@ export class EnumValuesService {
   }
 
   /** Find an enum value by ID */
-  async findOne(id: string): Promise<EnumValue> {
+  async findOne(id: string) {
     const enumValue = await this.prisma.enumValue.findUnique({
       where: { id },
-      include: {
-        trait: true,
-      },
     });
 
     if (!enumValue) {
@@ -95,27 +118,29 @@ export class EnumValuesService {
   }
 
   /** Update an enum value */
-  async update(id: string, updateEnumValueInput: UpdateEnumValueInput): Promise<EnumValue> {
-    const enumValue = await this.findOne(id); // This will throw if not found
+  async update(id: string, input: UpdateEnumValueServiceInput) {
+    await this.findOne(id); // This will throw if not found
+
+    const updateData: Prisma.EnumValueUpdateInput = {};
+    
+    if (input.name !== undefined) updateData.name = input.name;
+    if (input.order !== undefined) updateData.order = input.order;
+    if (input.traitId !== undefined) {
+      updateData.trait = { connect: { id: input.traitId } };
+    }
 
     return this.prisma.enumValue.update({
       where: { id },
-      data: updateEnumValueInput,
-      include: {
-        trait: true,
-      },
+      data: updateData,
     });
   }
 
   /** Remove an enum value */
-  async remove(id: string): Promise<EnumValue> {
-    const enumValue = await this.findOne(id); // This will throw if not found
+  async remove(id: string) {
+    await this.findOne(id); // This will throw if not found
 
     return this.prisma.enumValue.delete({
       where: { id },
-      include: {
-        trait: true,
-      },
     });
   }
 }

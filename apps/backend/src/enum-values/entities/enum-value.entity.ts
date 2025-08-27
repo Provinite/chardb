@@ -26,10 +26,6 @@ export class EnumValue {
   /** When the enum value was last updated */
   @Field({ description: 'When the enum value was last updated' })
   updatedAt: Date;
-
-  /** The trait this enum value belongs to */
-  @Field(() => Trait, { description: 'The trait this enum value belongs to' })
-  trait: Trait;
 }
 
 @ObjectType()
