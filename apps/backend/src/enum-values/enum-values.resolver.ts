@@ -10,10 +10,15 @@ import {
 } from './utils/enum-value-resolver-mappers';
 import { RemovalResponse } from '../shared/entities/removal-response.entity';
 import { Trait } from '../traits/entities/trait.entity';
+import { TraitsService } from '../traits/traits.service';
+import { mapPrismaTraitToGraphQL } from '../traits/utils/trait-resolver-mappers';
 
 @Resolver(() => EnumValue)
 export class EnumValuesResolver {
-  constructor(private readonly enumValuesService: EnumValuesService) {}
+  constructor(
+    private readonly enumValuesService: EnumValuesService,
+    private readonly traitsService: TraitsService,
+  ) {}
 
   /** Create a new enum value */
   @Mutation(() => EnumValue, { description: 'Create a new enum value' })
@@ -87,8 +92,8 @@ export class EnumValuesResolver {
 
   // Field resolver for trait relation
   @ResolveField('trait', () => Trait, { description: 'The trait this enum value belongs to' })
-  resolveTrait(@Parent() enumValue: EnumValue): Trait | null {
-    // TODO: Implement when traits service field resolver is available
-    return null;
+  async resolveTrait(@Parent() enumValue: EnumValue): Promise<Trait> {
+    const prismaTrait = await this.traitsService.findOne(enumValue.traitId);
+    return mapPrismaTraitToGraphQL(prismaTrait);
   }
 }
