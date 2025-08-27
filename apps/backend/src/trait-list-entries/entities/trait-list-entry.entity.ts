@@ -1,7 +1,5 @@
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { TraitValueType } from '../../shared/enums/trait-value-type.enum';
-import { Trait } from '../../traits/entities/trait.entity';
-import { SpeciesVariant } from '../../species-variants/entities/species-variant.entity';
 
 @ObjectType()
 export class TraitListEntry {
@@ -49,27 +47,6 @@ export class TraitListEntry {
   @Field({ description: 'When the trait list entry was last updated' })
   updatedAt: Date;
 
-  /** The trait this entry configures */
-  @Field(() => Trait, { description: 'The trait this entry configures' })
-  trait: Trait;
-
-  /** The species variant this entry belongs to */
-  @Field(() => SpeciesVariant, { description: 'The species variant this entry belongs to' })
-  speciesVariant: SpeciesVariant;
-
-  /** Display value for the default value based on type */
-  @Field({ nullable: true, description: 'Display value for the default value based on type' })
-  get defaultDisplayValue(): string | null {
-    if (this.valueType === TraitValueType.STRING) {
-      return this.defaultValueString || null;
-    } else if (this.valueType === TraitValueType.INTEGER) {
-      return this.defaultValueInt !== null && this.defaultValueInt !== undefined ? String(this.defaultValueInt) : null;
-    } else if (this.valueType === TraitValueType.TIMESTAMP) {
-      return this.defaultValueTimestamp ? this.defaultValueTimestamp.toISOString() : null;
-    } else {
-      return null;
-    }
-  }
 }
 
 @ObjectType()

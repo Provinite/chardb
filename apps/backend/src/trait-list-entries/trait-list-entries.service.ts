@@ -1,25 +1,83 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateTraitListEntryInput, UpdateTraitListEntryInput } from './dto/trait-list-entry.dto';
-import { TraitListEntry, TraitListEntryConnection } from './entities/trait-list-entry.entity';
+import { Prisma, $Enums } from '@chardb/database';
+
+/**
+ * Service layer input types for trait list entries operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of Prisma relation objects.
+ */
+
+/**
+ * Input data for creating a new trait list entry
+ */
+interface CreateTraitListEntryServiceInput {
+  /** ID of the trait this entry belongs to */
+  traitId: string;
+  /** ID of the species variant this entry belongs to */
+  speciesVariantId: string;
+  /** Display order within the species variant */
+  order: number;
+  /** Whether this trait is required for the species variant */
+  required: boolean;
+  /** Type of values this trait stores */
+  valueType: $Enums.TraitValueType;
+  /** Default string value (if trait is string type) */
+  defaultValueString?: string;
+  /** Default integer value (if trait is integer type) */
+  defaultValueInt?: number;
+  /** Default timestamp value (if trait is timestamp type) */
+  defaultValueTimestamp?: Date;
+}
+
+/**
+ * Input data for updating a trait list entry
+ */
+interface UpdateTraitListEntryServiceInput {
+  /** ID of the trait this entry belongs to */
+  traitId?: string;
+  /** ID of the species variant this entry belongs to */
+  speciesVariantId?: string;
+  /** Display order within the species variant */
+  order?: number;
+  /** Whether this trait is required for the species variant */
+  required?: boolean;
+  /** Type of values this trait stores */
+  valueType?: $Enums.TraitValueType;
+  /** Default string value (if trait is string type) */
+  defaultValueString?: string;
+  /** Default integer value (if trait is integer type) */
+  defaultValueInt?: number;
+  /** Default timestamp value (if trait is timestamp type) */
+  defaultValueTimestamp?: Date;
+}
 
 @Injectable()
 export class TraitListEntriesService {
   constructor(private prisma: DatabaseService) {}
 
   /** Create a new trait list entry */
-  async create(createTraitListEntryInput: CreateTraitListEntryInput): Promise<TraitListEntry> {
+  async create(input: CreateTraitListEntryServiceInput) {
     return this.prisma.traitListEntry.create({
-      data: createTraitListEntryInput,
-      include: {
-        trait: true,
-        speciesVariant: true,
+      data: {
+        order: input.order,
+        required: input.required,
+        valueType: input.valueType,
+        defaultValueString: input.defaultValueString,
+        defaultValueInt: input.defaultValueInt,
+        defaultValueTimestamp: input.defaultValueTimestamp,
+        trait: {
+          connect: { id: input.traitId }
+        },
+        speciesVariant: {
+          connect: { id: input.speciesVariantId }
+        }
       },
     });
   }
 
   /** Find all trait list entries with pagination */
-  async findAll(first: number = 20, after?: string): Promise<TraitListEntryConnection> {
+  async findAll(first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -32,10 +90,6 @@ export class TraitListEntriesService {
           { speciesVariant: { name: 'asc' } },
           { order: 'asc' },
         ],
-        include: {
-          trait: true,
-          speciesVariant: true,
-        },
       }),
       this.prisma.traitListEntry.count(),
     ]);
@@ -52,7 +106,7 @@ export class TraitListEntriesService {
   }
 
   /** Find trait list entries by species variant ID with pagination */
-  async findBySpeciesVariant(speciesVariantId: string, first: number = 20, after?: string): Promise<TraitListEntryConnection> {
+  async findBySpeciesVariant(speciesVariantId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -63,10 +117,6 @@ export class TraitListEntriesService {
         skip,
         cursor,
         orderBy: { order: 'asc' },
-        include: {
-          trait: true,
-          speciesVariant: true,
-        },
       }),
       this.prisma.traitListEntry.count({
         where: { speciesVariantId },
@@ -85,7 +135,7 @@ export class TraitListEntriesService {
   }
 
   /** Find trait list entries by trait ID with pagination */
-  async findByTrait(traitId: string, first: number = 20, after?: string): Promise<TraitListEntryConnection> {
+  async findByTrait(traitId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -99,10 +149,6 @@ export class TraitListEntriesService {
           { speciesVariant: { name: 'asc' } },
           { order: 'asc' },
         ],
-        include: {
-          trait: true,
-          speciesVariant: true,
-        },
       }),
       this.prisma.traitListEntry.count({
         where: { traitId },
@@ -121,13 +167,9 @@ export class TraitListEntriesService {
   }
 
   /** Find a trait list entry by ID */
-  async findOne(id: string): Promise<TraitListEntry> {
+  async findOne(id: string) {
     const traitListEntry = await this.prisma.traitListEntry.findUnique({
       where: { id },
-      include: {
-        trait: true,
-        speciesVariant: true,
-      },
     });
 
     if (!traitListEntry) {
@@ -138,29 +180,37 @@ export class TraitListEntriesService {
   }
 
   /** Update a trait list entry */
-  async update(id: string, updateTraitListEntryInput: UpdateTraitListEntryInput): Promise<TraitListEntry> {
+  async update(id: string, input: UpdateTraitListEntryServiceInput) {
     const traitListEntry = await this.findOne(id); // This will throw if not found
+
+    const updateData: Prisma.TraitListEntryUpdateInput = {};
+    
+    if (input.order !== undefined) updateData.order = input.order;
+    if (input.required !== undefined) updateData.required = input.required;
+    if (input.valueType !== undefined) updateData.valueType = input.valueType;
+    if (input.defaultValueString !== undefined) updateData.defaultValueString = input.defaultValueString;
+    if (input.defaultValueInt !== undefined) updateData.defaultValueInt = input.defaultValueInt;
+    if (input.defaultValueTimestamp !== undefined) updateData.defaultValueTimestamp = input.defaultValueTimestamp;
+    
+    if (input.traitId !== undefined) {
+      updateData.trait = { connect: { id: input.traitId } };
+    }
+    if (input.speciesVariantId !== undefined) {
+      updateData.speciesVariant = { connect: { id: input.speciesVariantId } };
+    }
 
     return this.prisma.traitListEntry.update({
       where: { id },
-      data: updateTraitListEntryInput,
-      include: {
-        trait: true,
-        speciesVariant: true,
-      },
+      data: updateData,
     });
   }
 
   /** Remove a trait list entry */
-  async remove(id: string): Promise<TraitListEntry> {
-    const traitListEntry = await this.findOne(id); // This will throw if not found
+  async remove(id: string) {
+    await this.findOne(id); // This will throw if not found
 
     return this.prisma.traitListEntry.delete({
       where: { id },
-      include: {
-        trait: true,
-        speciesVariant: true,
-      },
     });
   }
 }
