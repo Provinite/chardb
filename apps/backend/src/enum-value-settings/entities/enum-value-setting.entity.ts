@@ -23,14 +23,6 @@ export class EnumValueSetting {
   /** When the enum value setting was last updated */
   @Field({ description: 'When the enum value setting was last updated' })
   updatedAt: Date;
-
-  /** The enum value this setting allows */
-  @Field(() => EnumValue, { description: 'The enum value this setting allows' })
-  enumValue: EnumValue;
-
-  /** The species variant this setting belongs to */
-  @Field(() => SpeciesVariant, { description: 'The species variant this setting belongs to' })
-  speciesVariant: SpeciesVariant;
 }
 
 @ObjectType()

@@ -1,25 +1,53 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateEnumValueSettingInput, UpdateEnumValueSettingInput } from './dto/enum-value-setting.dto';
-import { EnumValueSetting, EnumValueSettingConnection } from './entities/enum-value-setting.entity';
+import { Prisma } from '@chardb/database';
+
+/**
+ * Service layer input types for enum value settings operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of Prisma relation objects.
+ */
+
+/**
+ * Input data for creating a new enum value setting
+ */
+interface CreateEnumValueSettingServiceInput {
+  /** ID of the enum value this setting allows */
+  enumValueId: string;
+  /** ID of the species variant this setting belongs to */
+  speciesVariantId: string;
+}
+
+/**
+ * Input data for updating an enum value setting
+ */
+interface UpdateEnumValueSettingServiceInput {
+  /** ID of the enum value this setting allows */
+  enumValueId?: string;
+  /** ID of the species variant this setting belongs to */
+  speciesVariantId?: string;
+}
 
 @Injectable()
 export class EnumValueSettingsService {
   constructor(private prisma: DatabaseService) {}
 
   /** Create a new enum value setting */
-  async create(createEnumValueSettingInput: CreateEnumValueSettingInput): Promise<EnumValueSetting> {
+  async create(input: CreateEnumValueSettingServiceInput) {
     return this.prisma.enumValueSetting.create({
-      data: createEnumValueSettingInput,
-      include: {
-        enumValue: true,
-        speciesVariant: true,
+      data: {
+        enumValue: {
+          connect: { id: input.enumValueId }
+        },
+        speciesVariant: {
+          connect: { id: input.speciesVariantId }
+        }
       },
     });
   }
 
   /** Find all enum value settings with pagination */
-  async findAll(first: number = 20, after?: string): Promise<EnumValueSettingConnection> {
+  async findAll(first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -32,10 +60,6 @@ export class EnumValueSettingsService {
           { speciesVariant: { name: 'asc' } },
           { enumValue: { order: 'asc' } },
         ],
-        include: {
-          enumValue: true,
-          speciesVariant: true,
-        },
       }),
       this.prisma.enumValueSetting.count(),
     ]);
@@ -52,7 +76,7 @@ export class EnumValueSettingsService {
   }
 
   /** Find enum value settings by species variant ID with pagination */
-  async findBySpeciesVariant(speciesVariantId: string, first: number = 20, after?: string): Promise<EnumValueSettingConnection> {
+  async findBySpeciesVariant(speciesVariantId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -63,10 +87,6 @@ export class EnumValueSettingsService {
         skip,
         cursor,
         orderBy: { enumValue: { order: 'asc' } },
-        include: {
-          enumValue: true,
-          speciesVariant: true,
-        },
       }),
       this.prisma.enumValueSetting.count({
         where: { speciesVariantId },
@@ -85,7 +105,7 @@ export class EnumValueSettingsService {
   }
 
   /** Find enum value settings by enum value ID with pagination */
-  async findByEnumValue(enumValueId: string, first: number = 20, after?: string): Promise<EnumValueSettingConnection> {
+  async findByEnumValue(enumValueId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -96,10 +116,6 @@ export class EnumValueSettingsService {
         skip,
         cursor,
         orderBy: { speciesVariant: { name: 'asc' } },
-        include: {
-          enumValue: true,
-          speciesVariant: true,
-        },
       }),
       this.prisma.enumValueSetting.count({
         where: { enumValueId },
@@ -118,13 +134,9 @@ export class EnumValueSettingsService {
   }
 
   /** Find an enum value setting by ID */
-  async findOne(id: string): Promise<EnumValueSetting> {
+  async findOne(id: string) {
     const enumValueSetting = await this.prisma.enumValueSetting.findUnique({
       where: { id },
-      include: {
-        enumValue: true,
-        speciesVariant: true,
-      },
     });
 
     if (!enumValueSetting) {
@@ -135,29 +147,30 @@ export class EnumValueSettingsService {
   }
 
   /** Update an enum value setting */
-  async update(id: string, updateEnumValueSettingInput: UpdateEnumValueSettingInput): Promise<EnumValueSetting> {
-    const enumValueSetting = await this.findOne(id); // This will throw if not found
+  async update(id: string, input: UpdateEnumValueSettingServiceInput) {
+    await this.findOne(id); // This will throw if not found
+
+    const updateData: Prisma.EnumValueSettingUpdateInput = {};
+    
+    if (input.enumValueId !== undefined) {
+      updateData.enumValue = { connect: { id: input.enumValueId } };
+    }
+    if (input.speciesVariantId !== undefined) {
+      updateData.speciesVariant = { connect: { id: input.speciesVariantId } };
+    }
 
     return this.prisma.enumValueSetting.update({
       where: { id },
-      data: updateEnumValueSettingInput,
-      include: {
-        enumValue: true,
-        speciesVariant: true,
-      },
+      data: updateData,
     });
   }
 
   /** Remove an enum value setting */
-  async remove(id: string): Promise<EnumValueSetting> {
-    const enumValueSetting = await this.findOne(id); // This will throw if not found
+  async remove(id: string) {
+    await this.findOne(id); // This will throw if not found
 
     return this.prisma.enumValueSetting.delete({
       where: { id },
-      include: {
-        enumValue: true,
-        speciesVariant: true,
-      },
     });
   }
 }
