@@ -1,7 +1,17 @@
-import { Resolver, Query, Mutation, Args, ID, Int } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { InviteCodesService } from './invite-codes.service';
 import { InviteCode, InviteCodeConnection } from './entities/invite-code.entity';
 import { CreateInviteCodeInput, UpdateInviteCodeInput, ClaimInviteCodeInput } from './dto/invite-code.dto';
+import {
+  mapCreateInviteCodeInputToService,
+  mapUpdateInviteCodeInputToService,
+  mapClaimInviteCodeInputToService,
+  mapPrismaInviteCodeToGraphQL,
+  mapPrismaInviteCodeConnectionToGraphQL,
+} from './utils/invite-code-resolver-mappers';
+import { RemovalResponse } from '../shared/entities/removal-response.entity';
+import { User } from '../users/entities/user.entity';
+import { Role } from '../roles/entities/role.entity';
 
 @Resolver(() => InviteCode)
 export class InviteCodesResolver {
@@ -9,27 +19,30 @@ export class InviteCodesResolver {
 
   /** Create a new invite code */
   @Mutation(() => InviteCode, { description: 'Create a new invite code' })
-  createInviteCode(
+  async createInviteCode(
     @Args('createInviteCodeInput', { description: 'Invite code creation data' }) 
     createInviteCodeInput: CreateInviteCodeInput,
   ): Promise<InviteCode> {
-    return this.inviteCodesService.create(createInviteCodeInput);
+    const serviceInput = mapCreateInviteCodeInputToService(createInviteCodeInput);
+    const prismaResult = await this.inviteCodesService.create(serviceInput);
+    return mapPrismaInviteCodeToGraphQL(prismaResult);
   }
 
   /** Get all invite codes with pagination */
   @Query(() => InviteCodeConnection, { name: 'inviteCodes', description: 'Get all invite codes with pagination' })
-  findAll(
+  async findAll(
     @Args('first', { type: () => Int, nullable: true, description: 'Number of invite codes to return', defaultValue: 20 })
     first?: number,
     @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
     after?: string,
   ): Promise<InviteCodeConnection> {
-    return this.inviteCodesService.findAll(first, after);
+    const serviceResult = await this.inviteCodesService.findAll(first, after);
+    return mapPrismaInviteCodeConnectionToGraphQL(serviceResult);
   }
 
   /** Get invite codes by creator ID with pagination */
   @Query(() => InviteCodeConnection, { name: 'inviteCodesByCreator', description: 'Get invite codes by creator ID with pagination' })
-  findByCreator(
+  async findByCreator(
     @Args('creatorId', { type: () => ID, description: 'Creator ID' })
     creatorId: string,
     @Args('first', { type: () => Int, nullable: true, description: 'Number of invite codes to return', defaultValue: 20 })
@@ -37,12 +50,13 @@ export class InviteCodesResolver {
     @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
     after?: string,
   ): Promise<InviteCodeConnection> {
-    return this.inviteCodesService.findByCreator(creatorId, first, after);
+    const serviceResult = await this.inviteCodesService.findByCreator(creatorId, first, after);
+    return mapPrismaInviteCodeConnectionToGraphQL(serviceResult);
   }
 
   /** Get invite codes by role ID with pagination */
   @Query(() => InviteCodeConnection, { name: 'inviteCodesByRole', description: 'Get invite codes by role ID with pagination' })
-  findByRole(
+  async findByRole(
     @Args('roleId', { type: () => ID, description: 'Role ID' })
     roleId: string,
     @Args('first', { type: () => Int, nullable: true, description: 'Number of invite codes to return', defaultValue: 20 })
@@ -50,46 +64,77 @@ export class InviteCodesResolver {
     @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
     after?: string,
   ): Promise<InviteCodeConnection> {
-    return this.inviteCodesService.findByRole(roleId, first, after);
+    const serviceResult = await this.inviteCodesService.findByRole(roleId, first, after);
+    return mapPrismaInviteCodeConnectionToGraphQL(serviceResult);
   }
 
   /** Get an invite code by ID */
   @Query(() => InviteCode, { name: 'inviteCodeById', description: 'Get an invite code by ID' })
-  findOne(
+  async findOne(
     @Args('id', { type: () => ID, description: 'Invite code ID' }) 
     id: string,
   ): Promise<InviteCode> {
-    return this.inviteCodesService.findOne(id);
+    const prismaResult = await this.inviteCodesService.findOne(id);
+    return mapPrismaInviteCodeToGraphQL(prismaResult);
   }
 
   /** Update an invite code */
   @Mutation(() => InviteCode, { description: 'Update an invite code' })
-  updateInviteCode(
+  async updateInviteCode(
     @Args('id', { type: () => ID, description: 'Invite code ID' }) 
     id: string,
     @Args('updateInviteCodeInput', { description: 'Invite code update data' }) 
     updateInviteCodeInput: UpdateInviteCodeInput,
   ): Promise<InviteCode> {
-    return this.inviteCodesService.update(id, updateInviteCodeInput);
+    const serviceInput = mapUpdateInviteCodeInputToService(updateInviteCodeInput);
+    const prismaResult = await this.inviteCodesService.update(id, serviceInput);
+    return mapPrismaInviteCodeToGraphQL(prismaResult);
   }
 
   /** Claim an invite code */
   @Mutation(() => InviteCode, { description: 'Claim an invite code to join a community' })
-  claimInviteCode(
+  async claimInviteCode(
     @Args('id', { type: () => ID, description: 'Invite code ID' }) 
     id: string,
     @Args('claimInviteCodeInput', { description: 'Invite code claim data' }) 
     claimInviteCodeInput: ClaimInviteCodeInput,
   ): Promise<InviteCode> {
-    return this.inviteCodesService.claim(id, claimInviteCodeInput);
+    const serviceInput = mapClaimInviteCodeInputToService(claimInviteCodeInput);
+    const prismaResult = await this.inviteCodesService.claim(id, serviceInput);
+    return mapPrismaInviteCodeToGraphQL(prismaResult);
   }
 
   /** Remove an invite code */
-  @Mutation(() => InviteCode, { description: 'Remove an invite code' })
-  removeInviteCode(
+  @Mutation(() => RemovalResponse, { description: 'Remove an invite code' })
+  async removeInviteCode(
     @Args('id', { type: () => ID, description: 'Invite code ID' }) 
     id: string,
-  ): Promise<InviteCode> {
-    return this.inviteCodesService.remove(id);
+  ): Promise<RemovalResponse> {
+    await this.inviteCodesService.remove(id);
+    return { removed: true, message: 'Invite code successfully removed' };
+  }
+
+  // Field resolvers for computed properties
+  @ResolveField('isAvailable', () => Boolean, { description: 'Whether this invite code is still available for use' })
+  resolveIsAvailable(@Parent() inviteCode: InviteCode): boolean {
+    return inviteCode.claimCount < inviteCode.maxClaims;
+  }
+
+  @ResolveField('remainingClaims', () => Int, { description: 'Number of remaining uses for this invite code' })
+  resolveRemainingClaims(@Parent() inviteCode: InviteCode): number {
+    return Math.max(0, inviteCode.maxClaims - inviteCode.claimCount);
+  }
+
+  // Field resolvers for relations
+  @ResolveField('creator', () => User, { description: 'The user who created this invite code' })
+  resolveCreator(@Parent() inviteCode: InviteCode): User | null {
+    // TODO: Implement when users service is refactored
+    return null;
+  }
+
+  @ResolveField('role', () => Role, { description: 'The role to grant when this invite code is used', nullable: true })
+  resolveRole(@Parent() inviteCode: InviteCode): Role | null {
+    // TODO: Implement when roles service is refactored
+    return null;
   }
 }

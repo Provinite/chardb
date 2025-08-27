@@ -30,25 +30,6 @@ export class InviteCode {
   /** When the invite code was last updated */
   @Field(() => Date, { description: 'When the invite code was last updated' })
   updatedAt!: Date;
-
-  /** Whether this invite code is still available for use */
-  @Field(() => Boolean, { description: 'Whether this invite code is still available for use' })
-  get isAvailable(): boolean {
-    return this.claimCount < this.maxClaims;
-  }
-
-  /** Number of remaining uses for this invite code */
-  @Field(() => Int, { description: 'Number of remaining uses for this invite code' })
-  get remainingClaims(): number {
-    return Math.max(0, this.maxClaims - this.claimCount);
-  }
-
-  // Relations
-  @Field(() => User, { description: 'The user who created this invite code' })
-  creator?: User;
-
-  @Field(() => Role, { description: 'The role to grant when this invite code is used', nullable: true })
-  role?: Role | null;
 }
 
 @ObjectType({ description: 'Paginated list of invite codes with connection metadata' })

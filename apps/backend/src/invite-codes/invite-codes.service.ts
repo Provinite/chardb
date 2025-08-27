@@ -1,29 +1,62 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateInviteCodeInput, UpdateInviteCodeInput, ClaimInviteCodeInput } from './dto/invite-code.dto';
-import { InviteCode, InviteCodeConnection } from './entities/invite-code.entity';
+import { Prisma } from '@chardb/database';
+
+/**
+ * Service layer input types for invite codes operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of Prisma relation objects.
+ */
+
+/**
+ * Input data for creating a new invite code
+ */
+interface CreateInviteCodeServiceInput {
+  /** The invite code string (alphanumeric and hyphens only) */
+  id: string;
+  /** Maximum number of times this invite code can be claimed */
+  maxClaims: number;
+  /** The user who is creating this invite code */
+  creatorId: string;
+  /** The role to grant when this invite code is used (optional) */
+  roleId?: string | null;
+}
+
+/**
+ * Input data for updating an invite code
+ */
+interface UpdateInviteCodeServiceInput {
+  /** Maximum number of times this invite code can be claimed */
+  maxClaims?: number;
+  /** The role to grant when this invite code is used (optional) */
+  roleId?: string | null;
+}
+
+/**
+ * Input data for claiming an invite code
+ */
+interface ClaimInviteCodeServiceInput {
+  /** The user who is claiming this invite code */
+  userId: string;
+}
 
 @Injectable()
 export class InviteCodesService {
   constructor(private prisma: DatabaseService) {}
 
   /** Create a new invite code */
-  async create(createInviteCodeInput: CreateInviteCodeInput): Promise<InviteCode> {
+  async create(input: CreateInviteCodeServiceInput) {
     try {
       return await this.prisma.inviteCode.create({
         data: {
-          id: createInviteCodeInput.id,
-          maxClaims: createInviteCodeInput.maxClaims,
-          creatorId: createInviteCodeInput.creatorId,
-          roleId: createInviteCodeInput.roleId,
-        },
-        include: {
-          creator: true,
-          role: {
-            include: {
-              community: true,
-            },
+          id: input.id,
+          maxClaims: input.maxClaims,
+          creator: {
+            connect: { id: input.creatorId }
           },
+          ...(input.roleId && {
+            role: { connect: { id: input.roleId } }
+          }),
         },
       });
     } catch (error: any) {
@@ -35,7 +68,7 @@ export class InviteCodesService {
   }
 
   /** Find all invite codes with pagination */
-  async findAll(first: number = 20, after?: string): Promise<InviteCodeConnection> {
+  async findAll(first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -45,14 +78,6 @@ export class InviteCodesService {
         skip,
         cursor,
         orderBy: { createdAt: 'desc' },
-        include: {
-          creator: true,
-          role: {
-            include: {
-              community: true,
-            },
-          },
-        },
       }),
       this.prisma.inviteCode.count(),
     ]);
@@ -69,7 +94,7 @@ export class InviteCodesService {
   }
 
   /** Find invite codes by creator ID with pagination */
-  async findByCreator(creatorId: string, first: number = 20, after?: string): Promise<InviteCodeConnection> {
+  async findByCreator(creatorId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -80,14 +105,6 @@ export class InviteCodesService {
         skip,
         cursor,
         orderBy: { createdAt: 'desc' },
-        include: {
-          creator: true,
-          role: {
-            include: {
-              community: true,
-            },
-          },
-        },
       }),
       this.prisma.inviteCode.count({
         where: { creatorId },
@@ -106,7 +123,7 @@ export class InviteCodesService {
   }
 
   /** Find invite codes by role ID with pagination */
-  async findByRole(roleId: string, first: number = 20, after?: string): Promise<InviteCodeConnection> {
+  async findByRole(roleId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -117,14 +134,6 @@ export class InviteCodesService {
         skip,
         cursor,
         orderBy: { createdAt: 'desc' },
-        include: {
-          creator: true,
-          role: {
-            include: {
-              community: true,
-            },
-          },
-        },
       }),
       this.prisma.inviteCode.count({
         where: { roleId },
@@ -143,17 +152,9 @@ export class InviteCodesService {
   }
 
   /** Find an invite code by ID */
-  async findOne(id: string): Promise<InviteCode> {
+  async findOne(id: string) {
     const inviteCode = await this.prisma.inviteCode.findUnique({
       where: { id },
-      include: {
-        creator: true,
-        role: {
-          include: {
-            community: true,
-          },
-        },
-      },
     });
 
     if (!inviteCode) {
@@ -164,31 +165,34 @@ export class InviteCodesService {
   }
 
   /** Update an invite code */
-  async update(id: string, updateInviteCodeInput: UpdateInviteCodeInput): Promise<InviteCode> {
+  async update(id: string, input: UpdateInviteCodeServiceInput) {
     const inviteCode = await this.findOne(id); // This will throw if not found
 
     // Validate that we're not reducing maxClaims below current claimCount
-    if (updateInviteCodeInput.maxClaims !== undefined && 
-        updateInviteCodeInput.maxClaims < inviteCode.claimCount) {
-      throw new BadRequestException(`Cannot set maxClaims (${updateInviteCodeInput.maxClaims}) below current claimCount (${inviteCode.claimCount})`);
+    if (input.maxClaims !== undefined && 
+        input.maxClaims < inviteCode.claimCount) {
+      throw new BadRequestException(`Cannot set maxClaims (${input.maxClaims}) below current claimCount (${inviteCode.claimCount})`);
+    }
+
+    const updateData: Prisma.InviteCodeUpdateInput = {};
+    
+    if (input.maxClaims !== undefined) updateData.maxClaims = input.maxClaims;
+    if (input.roleId !== undefined) {
+      if (input.roleId === null) {
+        updateData.role = { disconnect: true };
+      } else {
+        updateData.role = { connect: { id: input.roleId } };
+      }
     }
 
     return this.prisma.inviteCode.update({
       where: { id },
-      data: updateInviteCodeInput,
-      include: {
-        creator: true,
-        role: {
-          include: {
-            community: true,
-          },
-        },
-      },
+      data: updateData,
     });
   }
 
   /** Claim an invite code (use it to join a community) */
-  async claim(id: string, claimInviteCodeInput: ClaimInviteCodeInput): Promise<InviteCode> {
+  async claim(id: string, input: ClaimInviteCodeServiceInput) {
     const inviteCode = await this.findOne(id);
 
     // Check if invite code is still available
@@ -204,22 +208,14 @@ export class InviteCodesService {
           increment: 1,
         },
       },
-      include: {
-        creator: true,
-        role: {
-          include: {
-            community: true,
-          },
-        },
-      },
     });
 
     // If there's a role associated, create community membership
     if (inviteCode.roleId) {
       await this.prisma.communityMember.create({
         data: {
-          roleId: inviteCode.roleId,
-          userId: claimInviteCodeInput.userId,
+          role: { connect: { id: inviteCode.roleId } },
+          user: { connect: { id: input.userId } },
         },
       });
     }
@@ -228,19 +224,11 @@ export class InviteCodesService {
   }
 
   /** Remove an invite code */
-  async remove(id: string): Promise<InviteCode> {
-    const inviteCode = await this.findOne(id); // This will throw if not found
+  async remove(id: string) {
+    await this.findOne(id); // This will throw if not found
 
     return this.prisma.inviteCode.delete({
       where: { id },
-      include: {
-        creator: true,
-        role: {
-          include: {
-            community: true,
-          },
-        },
-      },
     });
   }
 }
