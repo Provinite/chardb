@@ -38,30 +38,12 @@ export class Gallery {
   @Field(() => Date)
   updatedAt: Date;
 
-  // Relations
+  // Relations - handled by field resolvers
   @Field(() => ID)
   ownerId: string;
 
-  @Field(() => User)
-  owner: User;
-
   @Field(() => ID, { nullable: true })
   characterId?: string;
-
-  @Field(() => Character, { nullable: true })
-  character?: Character;
-
-
-  // Count fields
-  @Field(() => GalleryCount, { nullable: true })
-  _count?: GalleryCount;
-
-  // Social features
-  @Field(() => Int)
-  likesCount: number;
-
-  @Field(() => Boolean)
-  userHasLiked: boolean;
 }
 
 @ObjectType()

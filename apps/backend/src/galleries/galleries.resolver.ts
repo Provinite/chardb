@@ -1,27 +1,50 @@
-import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { Resolver, Query, Mutation, Args, ID, ResolveField, Parent } from '@nestjs/graphql';
+import { UseGuards, NotFoundException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
+import { CurrentUser, CurrentUserType } from '../auth/decorators/current-user.decorator';
 import { GalleriesService } from './galleries.service';
 import { Gallery, GalleryConnection } from './entities/gallery.entity';
+import { User } from '../users/entities/user.entity';
+import { Character } from '../characters/entities/character.entity';
+import { RemovalResponse } from '../shared/entities/removal-response.entity';
 import {
   CreateGalleryInput,
   UpdateGalleryInput,
   GalleryFiltersInput,
   ReorderGalleriesInput,
 } from './dto/gallery.dto';
+import {
+  mapCreateGalleryInputToService,
+  mapUpdateGalleryInputToService,
+  mapPrismaGalleryToGraphQL,
+  mapPrismaGalleryConnectionToGraphQL,
+} from './utils/gallery-resolver-mappers';
+import { mapPrismaUserToGraphQL } from '../users/utils/user-resolver-mappers';
+import { mapPrismaCharacterToGraphQL } from '../characters/utils/character-resolver-mappers';
+import { UsersService } from '../users/users.service';
+import { CharactersService } from '../characters/characters.service';
 
 @Resolver(() => Gallery)
 export class GalleriesResolver {
-  constructor(private readonly galleriesService: GalleriesService) {}
+  constructor(
+    private readonly galleriesService: GalleriesService,
+    private readonly usersService: UsersService,
+    private readonly charactersService: CharactersService,
+  ) {}
 
   @Mutation(() => Gallery)
   @UseGuards(JwtAuthGuard)
   async createGallery(
     @Args('input') input: CreateGalleryInput,
-    @CurrentUser() user: any,
-  ): Promise<any> {
-    return this.galleriesService.create(user.id, input);
+    @CurrentUser() user: CurrentUserType,
+  ): Promise<Gallery> {
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const serviceInput = mapCreateGalleryInputToService(input);
+    const prismaResult = await this.galleriesService.create(user.id, serviceInput);
+    return mapPrismaGalleryToGraphQL(prismaResult);
   }
 
   @Query(() => GalleryConnection)
