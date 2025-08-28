@@ -10,10 +10,15 @@ import {
 } from './utils/species-variant-resolver-mappers';
 import { RemovalResponse } from '../shared/entities/removal-response.entity';
 import { Species } from '../species/entities/species.entity';
+import { SpeciesService } from '../species/species.service';
+import { mapPrismaSpeciesToGraphQL } from '../species/utils/species-resolver-mappers';
 
 @Resolver(() => SpeciesVariant)
 export class SpeciesVariantsResolver {
-  constructor(private readonly speciesVariantsService: SpeciesVariantsService) {}
+  constructor(
+    private readonly speciesVariantsService: SpeciesVariantsService,
+    private readonly speciesService: SpeciesService,
+  ) {}
 
   /** Create a new species variant */
   @Mutation(() => SpeciesVariant, { description: 'Create a new species variant' })
@@ -87,8 +92,12 @@ export class SpeciesVariantsResolver {
 
   // Field resolver for relations
   @ResolveField('species', () => Species, { description: 'The species this variant belongs to' })
-  resolveSpecies(@Parent() speciesVariant: SpeciesVariant): Species | null {
-    // TODO: Implement when species service is refactored
-    return null;
+  async resolveSpecies(@Parent() speciesVariant: SpeciesVariant): Promise<Species | null> {
+    try {
+      const prismaResult = await this.speciesService.findOne(speciesVariant.speciesId);
+      return mapPrismaSpeciesToGraphQL(prismaResult);
+    } catch (error) {
+      return null;
+    }
   }
 }

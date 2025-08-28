@@ -1,5 +1,4 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { Community } from '../../communities/entities/community.entity';
 
 @ObjectType()
 export class Species {
@@ -27,9 +26,6 @@ export class Species {
   @Field({ description: 'When the species was last updated' })
   updatedAt: Date;
 
-  /** The community that owns this species */
-  @Field(() => Community, { description: 'The community that owns this species' })
-  community: Community;
 }
 
 @ObjectType()

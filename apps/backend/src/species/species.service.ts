@@ -1,24 +1,56 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateSpeciesInput, UpdateSpeciesInput } from './dto/species.dto';
-import { Species, SpeciesConnection } from './entities/species.entity';
+import { Prisma } from '@chardb/database';
+
+/**
+ * Service layer input types for species operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of Prisma relation objects.
+ */
+
+/**
+ * Input data for creating a new species
+ */
+export interface CreateSpeciesServiceInput {
+  /** Name of the species (must be unique) */
+  name: string;
+  /** ID of the community that owns this species */
+  communityId: string;
+  /** Whether this species has an associated image */
+  hasImage?: boolean;
+}
+
+/**
+ * Input data for updating a species
+ */
+export interface UpdateSpeciesServiceInput {
+  /** Name of the species (must be unique) */
+  name?: string;
+  /** ID of the community that owns this species */
+  communityId?: string;
+  /** Whether this species has an associated image */
+  hasImage?: boolean;
+}
 
 @Injectable()
 export class SpeciesService {
   constructor(private prisma: DatabaseService) {}
 
   /** Create a new species */
-  async create(createSpeciesInput: CreateSpeciesInput): Promise<Species> {
+  async create(input: CreateSpeciesServiceInput) {
     return this.prisma.species.create({
-      data: createSpeciesInput,
-      include: {
-        community: true,
+      data: {
+        name: input.name,
+        hasImage: input.hasImage ?? false,
+        community: {
+          connect: { id: input.communityId }
+        }
       },
     });
   }
 
   /** Find all species with pagination */
-  async findAll(first: number = 20, after?: string): Promise<SpeciesConnection> {
+  async findAll(first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -28,9 +60,6 @@ export class SpeciesService {
         skip,
         cursor,
         orderBy: { createdAt: 'desc' },
-        include: {
-          community: true,
-        },
       }),
       this.prisma.species.count(),
     ]);
@@ -47,7 +76,7 @@ export class SpeciesService {
   }
 
   /** Find species by community ID with pagination */
-  async findByCommunity(communityId: string, first: number = 20, after?: string): Promise<SpeciesConnection> {
+  async findByCommunity(communityId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -58,9 +87,6 @@ export class SpeciesService {
         skip,
         cursor,
         orderBy: { createdAt: 'desc' },
-        include: {
-          community: true,
-        },
       }),
       this.prisma.species.count({
         where: { communityId },
@@ -79,12 +105,9 @@ export class SpeciesService {
   }
 
   /** Find a species by ID */
-  async findOne(id: string): Promise<Species> {
+  async findOne(id: string) {
     const species = await this.prisma.species.findUnique({
       where: { id },
-      include: {
-        community: true,
-      },
     });
 
     if (!species) {
@@ -95,27 +118,29 @@ export class SpeciesService {
   }
 
   /** Update a species */
-  async update(id: string, updateSpeciesInput: UpdateSpeciesInput): Promise<Species> {
+  async update(id: string, input: UpdateSpeciesServiceInput) {
     const species = await this.findOne(id); // This will throw if not found
+
+    const updateData: Prisma.SpeciesUpdateInput = {};
+    
+    if (input.name !== undefined) updateData.name = input.name;
+    if (input.hasImage !== undefined) updateData.hasImage = input.hasImage;
+    if (input.communityId !== undefined) {
+      updateData.community = { connect: { id: input.communityId } };
+    }
 
     return this.prisma.species.update({
       where: { id },
-      data: updateSpeciesInput,
-      include: {
-        community: true,
-      },
+      data: updateData,
     });
   }
 
   /** Remove a species */
-  async remove(id: string): Promise<Species> {
-    const species = await this.findOne(id); // This will throw if not found
+  async remove(id: string) {
+    await this.findOne(id); // This will throw if not found
 
     return this.prisma.species.delete({
       where: { id },
-      include: {
-        community: true,
-      },
     });
   }
 }
