@@ -1,62 +1,75 @@
 import { Injectable } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import { CreateUser, UpdateUser } from "../shared/types";
 import { UserProfile, UserStats } from "./entities/user-profile.entity";
-import { Visibility, User as PrismaUser } from "@chardb/database";
-import { User as GraphQLUser } from "./entities/user.entity";
+import { Visibility, Prisma } from "@chardb/database";
 
-// Helper function to add default social fields to User objects
-function addDefaultSocialFields<T extends Partial<PrismaUser>>(
-  user: T,
-): T &
-  Pick<GraphQLUser, "followersCount" | "followingCount" | "userIsFollowing"> {
-  return {
-    ...user,
-    followersCount: 0,
-    followingCount: 0,
-    userIsFollowing: false,
-  };
+/**
+ * Service layer input types for user operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of GraphQL relation objects.
+ */
+
+/**
+ * Input data for creating a new user
+ */
+export interface CreateUserServiceInput {
+  /** User's unique username */
+  username: string;
+  /** User's email address */
+  email: string;
+  /** User's hashed password */
+  passwordHash: string;
+  /** Optional display name */
+  displayName?: string;
 }
+
+/**
+ * Input data for updating a user
+ */
+export interface UpdateUserServiceInput {
+  /** User's display name */
+  displayName?: string;
+  /** User's bio */
+  bio?: string;
+  /** User's location */
+  location?: string;
+  /** User's website */
+  website?: string;
+  /** User's date of birth */
+  dateOfBirth?: Date;
+  /** Privacy settings as JSON */
+  privacySettings?: any;
+}
+
+type PrismaUser = Prisma.UserGetPayload<{}>;
 
 @Injectable()
 export class UsersService {
   constructor(private db: DatabaseService) {}
 
-  async create(createUserDto: CreateUser & { password: string }) {
-    const { password, ...userData } = createUserDto;
+  async create(input: CreateUserServiceInput) {
     return this.db.user.create({
       data: {
-        ...userData,
-        passwordHash: password,
+        username: input.username,
+        email: input.email,
+        passwordHash: input.passwordHash,
+        displayName: input.displayName,
       },
     });
   }
 
   async findAll(limit = 20, offset = 0) {
-    const users = await this.db.user.findMany({
-      take: limit,
-      skip: offset,
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        displayName: true,
-        bio: true,
-        avatarUrl: true,
-        location: true,
-        website: true,
-        isVerified: true,
-        isAdmin: true,
-        privacySettings: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    const totalCount = await this.db.user.count();
+    const [users, totalCount] = await Promise.all([
+      this.db.user.findMany({
+        take: limit,
+        skip: offset,
+        orderBy: { createdAt: "desc" },
+      }),
+      this.db.user.count(),
+    ]);
 
     return {
-      nodes: users.map(addDefaultSocialFields),
+      nodes: users,
       totalCount,
       hasNextPage: offset + limit < totalCount,
       hasPreviousPage: offset > 0,
@@ -64,48 +77,15 @@ export class UsersService {
   }
 
   async findById(id: string) {
-    const user = await this.db.user.findUnique({
+    return this.db.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        displayName: true,
-        bio: true,
-        avatarUrl: true,
-        location: true,
-        website: true,
-        dateOfBirth: true,
-        isVerified: true,
-        isAdmin: true,
-        privacySettings: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
-    return user ? addDefaultSocialFields(user) : null;
   }
 
   async findByUsername(username: string) {
-    const user = await this.db.user.findUnique({
+    return this.db.user.findUnique({
       where: { username },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        displayName: true,
-        bio: true,
-        avatarUrl: true,
-        location: true,
-        website: true,
-        isVerified: true,
-        isAdmin: true,
-        privacySettings: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
-    return user ? addDefaultSocialFields(user) : null;
   }
 
   async findByEmail(email: string) {
@@ -114,43 +94,29 @@ export class UsersService {
     });
   }
 
-  async update(id: string, updateUserDto: UpdateUser) {
-    const updateData = {
-      ...updateUserDto,
-      // Convert dateOfBirth string to Date if provided
-      ...(updateUserDto.dateOfBirth && {
-        dateOfBirth: new Date(updateUserDto.dateOfBirth),
-      }),
-    };
+  async update(id: string, input: UpdateUserServiceInput) {
+    const updateData: Prisma.UserUpdateInput = {};
 
-    const user = await this.db.user.update({
+    if (input.displayName !== undefined)
+      updateData.displayName = input.displayName;
+    if (input.bio !== undefined) updateData.bio = input.bio;
+    if (input.location !== undefined) updateData.location = input.location;
+    if (input.website !== undefined) updateData.website = input.website;
+    if (input.dateOfBirth !== undefined)
+      updateData.dateOfBirth = input.dateOfBirth;
+    if (input.privacySettings !== undefined)
+      updateData.privacySettings = input.privacySettings;
+
+    return this.db.user.update({
       where: { id },
       data: updateData,
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        displayName: true,
-        bio: true,
-        avatarUrl: true,
-        location: true,
-        website: true,
-        dateOfBirth: true,
-        isVerified: true,
-        isAdmin: true,
-        privacySettings: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
-    return addDefaultSocialFields(user);
   }
 
   async remove(id: string) {
-    await this.db.user.delete({
+    return this.db.user.delete({
       where: { id },
     });
-    return true;
   }
 
   async getUserProfile(
@@ -288,12 +254,13 @@ export class UsersService {
     });
 
     return {
-      user: addDefaultSocialFields(user),
+      user,
       stats,
-      recentCharacters: recentCharacters as any,
-      recentGalleries: recentGalleries as any,
-      recentMedia: recentMedia as any,
-      featuredCharacters: featuredCharacters as any,
+      recentCharacters,
+      recentGalleries,
+      recentMedia,
+      featuredCharacters,
+
       isOwnProfile,
       canViewPrivateContent,
     };

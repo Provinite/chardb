@@ -1,29 +1,53 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateCommunityMemberInput, UpdateCommunityMemberInput } from './dto/community-member.dto';
-import { CommunityMember, CommunityMemberConnection } from './entities/community-member.entity';
+import { Prisma } from '@chardb/database';
+
+/**
+ * Service layer input types for community member operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of GraphQL relation objects.
+ */
+
+/**
+ * Input data for creating a new community member
+ */
+export interface CreateCommunityMemberServiceInput {
+  /** The user ID */
+  userId: string;
+  /** The role ID */
+  roleId: string;
+}
+
+/**
+ * Input data for updating a community member
+ */
+export interface UpdateCommunityMemberServiceInput {
+  /** The role ID */
+  roleId?: string;
+}
+
+type PrismaCommunityMember = Prisma.CommunityMemberGetPayload<{}>;
 
 @Injectable()
 export class CommunityMembersService {
   constructor(private prisma: DatabaseService) {}
 
   /** Create a new community membership */
-  async create(createCommunityMemberInput: CreateCommunityMemberInput): Promise<CommunityMember> {
+  async create(input: CreateCommunityMemberServiceInput) {
     return this.prisma.communityMember.create({
-      data: createCommunityMemberInput,
-      include: {
-        role: {
-          include: {
-            community: true,
-          },
+      data: {
+        user: {
+          connect: { id: input.userId }
         },
-        user: true,
+        role: {
+          connect: { id: input.roleId }
+        }
       },
     });
   }
 
   /** Find all community members with pagination */
-  async findAll(first: number = 20, after?: string): Promise<CommunityMemberConnection> {
+  async findAll(first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -32,18 +56,7 @@ export class CommunityMembersService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: [
-          { role: { community: { name: 'asc' } } },
-          { user: { username: 'asc' } },
-        ],
-        include: {
-          role: {
-            include: {
-              community: true,
-            },
-          },
-          user: true,
-        },
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.communityMember.count(),
     ]);
@@ -60,7 +73,7 @@ export class CommunityMembersService {
   }
 
   /** Find community members by community ID with pagination */
-  async findByCommunity(communityId: string, first: number = 20, after?: string): Promise<CommunityMemberConnection> {
+  async findByCommunity(communityId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -70,18 +83,7 @@ export class CommunityMembersService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: [
-          { role: { name: 'asc' } },
-          { user: { username: 'asc' } },
-        ],
-        include: {
-          role: {
-            include: {
-              community: true,
-            },
-          },
-          user: true,
-        },
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.communityMember.count({
         where: { role: { communityId } },
@@ -100,7 +102,7 @@ export class CommunityMembersService {
   }
 
   /** Find community members by user ID with pagination */
-  async findByUser(userId: string, first: number = 20, after?: string): Promise<CommunityMemberConnection> {
+  async findByUser(userId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -110,15 +112,7 @@ export class CommunityMembersService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { role: { community: { name: 'asc' } } },
-        include: {
-          role: {
-            include: {
-              community: true,
-            },
-          },
-          user: true,
-        },
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.communityMember.count({
         where: { userId },
@@ -137,17 +131,9 @@ export class CommunityMembersService {
   }
 
   /** Find a community member by ID */
-  async findOne(id: string): Promise<CommunityMember> {
+  async findOne(id: string) {
     const communityMember = await this.prisma.communityMember.findUnique({
       where: { id },
-      include: {
-        role: {
-          include: {
-            community: true,
-          },
-        },
-        user: true,
-      },
     });
 
     if (!communityMember) {
@@ -158,37 +144,43 @@ export class CommunityMembersService {
   }
 
   /** Update a community membership (change role) */
-  async update(id: string, updateCommunityMemberInput: UpdateCommunityMemberInput): Promise<CommunityMember> {
-    const communityMember = await this.findOne(id); // This will throw if not found
+  async update(id: string, input: UpdateCommunityMemberServiceInput) {
+    await this.findOne(id); // This will throw if not found
+
+    const updateData: Prisma.CommunityMemberUpdateInput = {};
+    
+    if (input.roleId !== undefined) {
+      updateData.role = {
+        connect: { id: input.roleId }
+      };
+    }
 
     return this.prisma.communityMember.update({
       where: { id },
-      data: updateCommunityMemberInput,
-      include: {
-        role: {
-          include: {
-            community: true,
-          },
-        },
-        user: true,
-      },
+      data: updateData,
     });
   }
 
   /** Remove a community membership */
-  async remove(id: string): Promise<CommunityMember> {
-    const communityMember = await this.findOne(id); // This will throw if not found
+  async remove(id: string) {
+    await this.findOne(id); // This will throw if not found
 
     return this.prisma.communityMember.delete({
       where: { id },
-      include: {
-        role: {
-          include: {
-            community: true,
-          },
-        },
-        user: true,
-      },
+    });
+  }
+
+  /** Get user by ID for field resolvers */
+  async getUserById(userId: string) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+  }
+
+  /** Get role by ID for field resolvers */
+  async getRoleById(roleId: string) {
+    return this.prisma.role.findUnique({
+      where: { id: roleId },
     });
   }
 }

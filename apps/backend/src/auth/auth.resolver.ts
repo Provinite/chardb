@@ -1,6 +1,11 @@
 import { Resolver, Mutation, Args } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { LoginInput, SignupInput, AuthPayload } from './dto/auth.dto';
+import {
+  mapLoginInputToService,
+  mapSignupInputToService,
+  mapAuthResponseToGraphQL,
+} from './utils/auth-resolver-mappers';
 
 @Resolver()
 export class AuthResolver {
@@ -8,12 +13,16 @@ export class AuthResolver {
 
   @Mutation(() => AuthPayload)
   async login(@Args('input') loginInput: LoginInput): Promise<AuthPayload> {
-    return this.authService.login(loginInput);
+    const serviceInput = mapLoginInputToService(loginInput);
+    const serviceResult = await this.authService.login(serviceInput);
+    return mapAuthResponseToGraphQL(serviceResult);
   }
 
   @Mutation(() => AuthPayload)
   async signup(@Args('input') signupInput: SignupInput): Promise<AuthPayload> {
-    return this.authService.signup(signupInput);
+    const serviceInput = mapSignupInputToService(signupInput);
+    const serviceResult = await this.authService.signup(serviceInput);
+    return mapAuthResponseToGraphQL(serviceResult);
   }
 
   @Mutation(() => String)
