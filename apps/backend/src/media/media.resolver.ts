@@ -1,9 +1,17 @@
-import { Resolver, Query, Mutation, Args, ID } from "@nestjs/graphql";
+import { Resolver, Query, Mutation, Args, ID, ResolveField, Parent } from "@nestjs/graphql";
 import { UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { MediaService } from "./media.service";
-import { Media as MediaEntity, MediaConnection } from "./entities/media.entity";
+import { UsersService } from "../users/users.service";
+import { CharactersService } from "../characters/characters.service";
+import { GalleriesService } from "../galleries/galleries.service";
+import { ImagesService } from "../images/images.service";
+import { Media as MediaEntity, MediaConnection, TextContent, MediaTag } from "./entities/media.entity";
+import { User } from "../users/entities/user.entity";
+import { Character } from "../characters/entities/character.entity";
+import { Gallery } from "../galleries/entities/gallery.entity";
+import { Image } from "../images/entities/image.entity";
 import {
   MediaFiltersInput,
   CreateTextMediaInput,
@@ -11,13 +19,27 @@ import {
   UpdateTextContentInput,
   ManageMediaTagsInput,
 } from "./dto/media.dto";
+import {
+  mapMediaFiltersInputToService,
+  mapCreateTextMediaInputToService,
+  mapUpdateMediaInputToService,
+  mapUpdateTextContentInputToService,
+  mapPrismaMediaToGraphQL,
+  mapPrismaMediaConnectionToGraphQL,
+} from "./utils/media-resolver-mappers";
 
 /**
  * GraphQL resolver for media operations
  */
 @Resolver(() => MediaEntity)
 export class MediaResolver {
-  constructor(private readonly mediaService: MediaService) {}
+  constructor(
+    private readonly mediaService: MediaService,
+    private readonly usersService: UsersService,
+    private readonly charactersService: CharactersService,
+    private readonly galleriesService: GalleriesService,
+    private readonly imagesService: ImagesService,
+  ) {}
 
   /**
    * Retrieves paginated media with filtering and visibility controls
@@ -27,7 +49,9 @@ export class MediaResolver {
     @Args("filters", { nullable: true, description: 'Optional filters for media query' }) filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
   ): Promise<MediaConnection> {
-    return this.mediaService.findAll(filters, user?.id);
+    const serviceFilters = mapMediaFiltersInputToService(filters);
+    const result = await this.mediaService.findAll(serviceFilters, user?.id);
+    return mapPrismaMediaConnectionToGraphQL(result);
   }
 
   /**
@@ -38,7 +62,8 @@ export class MediaResolver {
     @Args("id", { type: () => ID, description: 'Media ID to retrieve' }) id: string,
     @CurrentUser() user?: any,
   ): Promise<MediaEntity> {
-    return this.mediaService.findOne(id, user?.id);
+    const media = await this.mediaService.findOne(id, user?.id);
+    return mapPrismaMediaToGraphQL(media);
   }
 
   /**
@@ -50,8 +75,9 @@ export class MediaResolver {
     @CurrentUser() user: any,
     @Args("filters", { nullable: true, description: 'Optional filters for media query' }) filters?: MediaFiltersInput,
   ): Promise<MediaConnection> {
-    const userFilters = { ...filters, ownerId: user.id };
-    return this.mediaService.findAll(userFilters, user.id);
+    const serviceFilters = mapMediaFiltersInputToService({ ...filters, ownerId: user.id });
+    const result = await this.mediaService.findAll(serviceFilters, user.id);
+    return mapPrismaMediaConnectionToGraphQL(result);
   }
 
   /**
@@ -63,8 +89,9 @@ export class MediaResolver {
     @Args("filters", { nullable: true, description: 'Optional filters for media query' }) filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
   ): Promise<MediaConnection> {
-    const userFilters = { ...filters, ownerId: userId };
-    return this.mediaService.findAll(userFilters, user?.id);
+    const serviceFilters = mapMediaFiltersInputToService({ ...filters, ownerId: userId });
+    const result = await this.mediaService.findAll(serviceFilters, user?.id);
+    return mapPrismaMediaConnectionToGraphQL(result);
   }
 
   /**
@@ -76,8 +103,9 @@ export class MediaResolver {
     @Args("filters", { nullable: true, description: 'Optional filters for media query' }) filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
   ): Promise<MediaConnection> {
-    const characterFilters = { ...filters, characterId };
-    return this.mediaService.findAll(characterFilters, user?.id);
+    const serviceFilters = mapMediaFiltersInputToService({ ...filters, characterId });
+    const result = await this.mediaService.findAll(serviceFilters, user?.id);
+    return mapPrismaMediaConnectionToGraphQL(result);
   }
 
   /**
@@ -89,8 +117,9 @@ export class MediaResolver {
     @Args("filters", { nullable: true, description: 'Optional filters for media query' }) filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
   ): Promise<MediaConnection> {
-    const galleryFilters = { ...filters, galleryId };
-    return this.mediaService.findAll(galleryFilters, user?.id);
+    const serviceFilters = mapMediaFiltersInputToService({ ...filters, galleryId });
+    const result = await this.mediaService.findAll(serviceFilters, user?.id);
+    return mapPrismaMediaConnectionToGraphQL(result);
   }
 
   /**
@@ -102,7 +131,9 @@ export class MediaResolver {
     @Args("input", { description: 'Text media creation parameters' }) input: CreateTextMediaInput,
     @CurrentUser() user: any,
   ): Promise<MediaEntity> {
-    return this.mediaService.createTextMedia(user.id, input);
+    const serviceInput = mapCreateTextMediaInputToService(input);
+    const media = await this.mediaService.createTextMedia(user.id, serviceInput);
+    return mapPrismaMediaToGraphQL(media);
   }
 
   /**
@@ -115,7 +146,9 @@ export class MediaResolver {
     @Args("input", { description: 'Updated media parameters' }) input: UpdateMediaInput,
     @CurrentUser() user: any,
   ): Promise<MediaEntity> {
-    return this.mediaService.updateMedia(id, user.id, input);
+    const serviceInput = mapUpdateMediaInputToService(input);
+    const media = await this.mediaService.updateMedia(id, user.id, serviceInput);
+    return mapPrismaMediaToGraphQL(media);
   }
 
   /**
@@ -128,7 +161,9 @@ export class MediaResolver {
     @Args("input", { description: 'Updated text content parameters' }) input: UpdateTextContentInput,
     @CurrentUser() user: any,
   ): Promise<MediaEntity> {
-    return this.mediaService.updateTextContent(mediaId, user.id, input);
+    const serviceInput = mapUpdateTextContentInputToService(input);
+    const media = await this.mediaService.updateTextContent(mediaId, user.id, serviceInput);
+    return mapPrismaMediaToGraphQL(media);
   }
 
   /**
@@ -153,7 +188,8 @@ export class MediaResolver {
     @Args("input", { description: 'Tags to add to the media' }) input: ManageMediaTagsInput,
     @CurrentUser() user: any,
   ): Promise<MediaEntity> {
-    return this.mediaService.addTags(id, user.id, input.tagNames);
+    const media = await this.mediaService.addTags(id, user.id, input.tagNames);
+    return mapPrismaMediaToGraphQL(media);
   }
 
   /**
@@ -166,6 +202,65 @@ export class MediaResolver {
     @Args("input", { description: 'Tags to remove from the media' }) input: ManageMediaTagsInput,
     @CurrentUser() user: any,
   ): Promise<MediaEntity> {
-    return this.mediaService.removeTags(id, user.id, input.tagNames);
+    const media = await this.mediaService.removeTags(id, user.id, input.tagNames);
+    return mapPrismaMediaToGraphQL(media);
+  }
+
+  // Field Resolvers
+
+  /**
+   * Resolves the owner of a media item
+   */
+  @ResolveField(() => User)
+  async owner(@Parent() media: MediaEntity) {
+    return this.usersService.findById(media.ownerId);
+  }
+
+  /**
+   * Resolves the character associated with a media item
+   */
+  @ResolveField(() => Character, { nullable: true })
+  async character(@Parent() media: MediaEntity) {
+    if (!media.characterId) return null;
+    return this.charactersService.findOne(media.characterId);
+  }
+
+  /**
+   * Resolves the gallery containing a media item
+   */
+  @ResolveField(() => Gallery, { nullable: true })
+  async gallery(@Parent() media: MediaEntity): Promise<Gallery | null> {
+    if (!media.galleryId) return null;
+    return this.galleriesService.findOne(media.galleryId);
+  }
+
+  /**
+   * Resolves the image content for image media
+   */
+  @ResolveField(() => Image, { nullable: true })
+  async image(@Parent() media: MediaEntity) {
+    if (!media.imageId) return null;
+    return this.imagesService.findOne(media.imageId);
+  }
+
+  /**
+   * Resolves the text content for text media
+   */
+  @ResolveField(() => TextContent, { nullable: true })
+  async textContent(@Parent() media: MediaEntity): Promise<TextContent | null> {
+    if (!media.textContentId) return null;
+    return this.mediaService.findTextContent(media.textContentId);
+  }
+
+  /**
+   * Resolves the tag relationships for a media item
+   */
+  @ResolveField(() => [MediaTag], { nullable: true })
+  async tags_rel(@Parent() media: MediaEntity): Promise<MediaTag[]> {
+    const mediaTags = await this.mediaService.findMediaTags(media.id);
+    
+    return mediaTags.map(mediaTag => ({
+      tag: mediaTag.tag,
+    }));
   }
 }

@@ -84,31 +84,6 @@ export class Media {
   @Field({ description: 'When the media was last updated' })
   updatedAt: Date;
 
-  // Relations
-  /** The user who owns this media */
-  @Field(() => User, { description: 'The user who owns this media' })
-  owner: User;
-
-  /** The character this media is associated with, if any */
-  @Field(() => Character, { nullable: true, description: 'The character this media is associated with, if any' })
-  character?: Character;
-
-  /** The gallery this media belongs to, if any */
-  @Field(() => Gallery, { nullable: true, description: 'The gallery this media belongs to, if any' })
-  gallery?: Gallery;
-
-  /** Tag relationships for this media */
-  @Field(() => [MediaTag], { nullable: true, description: 'Tag relationships for this media' })
-  tags_rel?: MediaTag[];
-
-  // Content union - only one will be populated based on nullable FKs
-  /** Image content (populated for image media) */
-  @Field(() => Image, { nullable: true, description: 'Image content (populated for image media)' })
-  image?: Partial<Image>;
-
-  /** Text content (populated for text media) */
-  @Field(() => TextContent, { nullable: true, description: 'Text content (populated for text media)' })
-  textContent?: Partial<TextContent>;
 
 }
 

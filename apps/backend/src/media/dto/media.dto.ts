@@ -114,6 +114,12 @@ export class CreateTextMediaInput {
   @Field(() => Visibility, { defaultValue: Visibility.PUBLIC, description: 'Visibility setting for the media' })
   @IsEnum(Visibility)
   visibility: Visibility;
+
+  /** Optional tags to associate with this media */
+  @Field(() => [String], { nullable: true, description: 'Optional tags to associate with this media' })
+  @IsOptional()
+  @IsString({ each: true })
+  tags?: string[];
 }
 
 /**
@@ -150,6 +156,12 @@ export class UpdateMediaInput {
   @IsOptional()
   @IsEnum(Visibility)
   visibility?: Visibility;
+
+  /** Updated tags */
+  @Field(() => [String], { nullable: true, description: 'Updated tags' })
+  @IsOptional()
+  @IsString({ each: true })
+  tags?: string[];
 }
 
 /**

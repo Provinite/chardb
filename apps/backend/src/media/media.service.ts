@@ -6,14 +6,94 @@ import {
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
-import type { Media, TextContent, Prisma } from "@chardb/database";
-import {
-  MediaFiltersInput,
-  CreateTextMediaInput,
-  UpdateMediaInput,
-  UpdateTextContentInput,
-} from "./dto/media.dto";
+import type { Prisma, Visibility, TextFormatting } from "@chardb/database";
 import * as path from "path";
+
+/**
+ * Service layer input types for media operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of GraphQL relation objects.
+ */
+
+/**
+ * Enum for filtering media by type (service layer equivalent)
+ */
+export enum MediaTypeFilter {
+  IMAGE = 'IMAGE',
+  TEXT = 'TEXT'
+}
+
+/**
+ * Input data for filtering and paginating media queries
+ */
+export interface MediaFiltersServiceInput {
+  /** Search term to filter by title and description */
+  search?: string;
+  /** Filter by media type (image or text) */
+  mediaType?: MediaTypeFilter;
+  /** Filter by visibility level */
+  visibility?: Visibility;
+  /** Filter by owner user ID */
+  ownerId?: string;
+  /** Filter by associated character ID */
+  characterId?: string;
+  /** Filter by associated gallery ID */
+  galleryId?: string;
+  /** Number of items to return */
+  limit?: number;
+  /** Number of items to skip */
+  offset?: number;
+}
+
+/**
+ * Input data for creating text media
+ */
+export interface CreateTextMediaServiceInput {
+  /** Title of the text media */
+  title: string;
+  /** Optional description */
+  description?: string;
+  /** The text content */
+  content: string;
+  /** Text formatting type */
+  formatting?: TextFormatting;
+  /** Visibility level */
+  visibility?: Visibility;
+  /** Associated character ID */
+  characterId?: string;
+  /** Associated gallery ID */
+  galleryId?: string;
+  /** Tags to associate with this media */
+  tags?: string[];
+}
+
+/**
+ * Input data for updating media
+ */
+export interface UpdateMediaServiceInput {
+  /** Updated title */
+  title?: string;
+  /** Updated description */
+  description?: string;
+  /** Updated visibility */
+  visibility?: Visibility;
+  /** Updated character association */
+  characterId?: string;
+  /** Updated gallery association */
+  galleryId?: string;
+  /** Updated tags */
+  tags?: string[];
+}
+
+/**
+ * Input data for updating text content
+ */
+export interface UpdateTextContentServiceInput {
+  /** Updated text content */
+  content?: string;
+  /** Updated formatting */
+  formatting?: TextFormatting;
+}
 
 /**
  * Service for managing polymorphic media (images and text content)
@@ -43,9 +123,9 @@ export class MediaService {
    * Retrieves paginated media with proper visibility filtering
    * @param filters Optional filtering and pagination parameters
    * @param userId Current user ID for visibility checks
-   * @returns Paginated media results with enriched data
+   * @returns Paginated media results
    */
-  async findAll(filters?: MediaFiltersInput, userId?: string) {
+  async findAll(filters: MediaFiltersServiceInput = {}, userId?: string) {
     const limit = filters?.limit || 20;
     const offset = filters?.offset || 0;
 
@@ -81,8 +161,8 @@ export class MediaService {
           : {},
 
         // Type-specific filters (using new nullable FK structure)
-        filters?.mediaType === "IMAGE" ? { imageId: { not: null } } : {},
-        filters?.mediaType === "TEXT" ? { textContentId: { not: null } } : {},
+        filters?.mediaType === MediaTypeFilter.IMAGE ? { imageId: { not: null } } : {},
+        filters?.mediaType === MediaTypeFilter.TEXT ? { textContentId: { not: null } } : {},
         filters?.ownerId ? { ownerId: filters.ownerId } : {},
         filters?.characterId ? { characterId: filters.characterId } : {},
         filters?.galleryId ? { galleryId: filters.galleryId } : {},
@@ -93,34 +173,6 @@ export class MediaService {
     const [media, total] = await Promise.all([
       this.db.media.findMany({
         where,
-        include: {
-          owner: true,
-          character: {
-            include: {
-              owner: true,
-              _count: {
-                select: { likes: true, media: true },
-              },
-            },
-          },
-          gallery: {
-            include: {
-              owner: true,
-              _count: {
-                select: { likes: true, media: true },
-              },
-            },
-          },
-          // Direct JOIN to content tables - no more N+1 queries!
-          image: true,
-          textContent: true,
-          tags_rel: {
-            include: { tag: true },
-          },
-          _count: {
-            select: { likes: true },
-          },
-        },
         orderBy: { createdAt: "desc" },
         take: limit,
         skip: offset,
@@ -128,91 +180,18 @@ export class MediaService {
       this.db.media.count({ where }),
     ]);
 
-    // Simple user likes query (only if user is authenticated)
-    const userLikes = userId
-      ? await this.db.like.findMany({
-          where: {
-            userId,
-            mediaId: { in: media.map((m) => m.id) },
-          },
-          select: { mediaId: true },
-        })
-      : [];
-
-    const likedMediaIds = new Set(userLikes.map((like) => like.mediaId));
-
-    // Clean, simple enrichment - no complex batch logic needed
-    const enrichedMedia = media.map((item) => {
-      const enrichedItem = {
-        ...item,
-        owner: {
-          ...item.owner,
-          followersCount: 0, // TODO: Implement proper follower counts
-          followingCount: 0, // TODO: Implement proper following counts
-          userIsFollowing: false, // TODO: Implement proper following status
-        },
-        character: item.character
-          ? {
-              ...item.character,
-              price: item.character.price ? Number(item.character.price) : null,
-              customFields: JSON.stringify(item.character.customFields),
-              owner: {
-                ...item.character.owner,
-                followersCount: 0, // TODO: Implement proper follower counts
-                followingCount: 0, // TODO: Implement proper following counts
-                userIsFollowing: false, // TODO: Implement proper following status
-              },
-              _count: {
-                media: item.character._count?.media || 0,
-                likes: item.character._count?.likes || 0,
-              },
-              likesCount: item.character._count?.likes || 0,
-              userHasLiked: false, // TODO: Implement proper character like status
-            }
-          : null,
-        gallery: item.gallery
-          ? {
-              ...item.gallery,
-              owner: {
-                ...item.gallery.owner,
-                followersCount: 0, // TODO: Implement proper follower counts
-                followingCount: 0, // TODO: Implement proper following counts
-                userIsFollowing: false, // TODO: Implement proper following status
-              },
-              _count: {
-                media: item.gallery._count?.media || 0,
-              },
-              likesCount: item.gallery._count?.likes || 0,
-              userHasLiked: false, // TODO: Implement proper gallery like status
-            }
-          : null,
-        // Content is now directly available via JOINs!
-        likesCount: item._count.likes,
-        userHasLiked: likedMediaIds.has(item.id),
-      };
-
-      // Fix tags_rel to include media reference
-      enrichedItem.tags_rel =
-        item.tags_rel?.map((tagRel) => ({
-          ...tagRel,
-          media: enrichedItem,
-        })) || [];
-
-      return enrichedItem;
-    });
-
     return {
-      media: enrichedMedia,
+      media,
       total,
       hasMore: offset + limit < total,
     };
   }
 
   /**
-   * Retrieves a single media item by ID with full content inclusion
+   * Retrieves a single media item by ID
    * @param id Media ID to retrieve
-   * @param userId Current user ID for visibility and like status checks
-   * @returns Enriched media item with all related data
+   * @param userId Current user ID for visibility checks
+   * @returns Media item
    * @throws NotFoundException if media doesn't exist
    * @throws ForbiddenException if user lacks access to private media
    */
@@ -221,34 +200,6 @@ export class MediaService {
     
     const media = await this.db.media.findUnique({
       where: { id },
-      include: {
-        owner: true,
-        character: {
-          include: {
-            owner: true,
-            _count: {
-              select: { likes: true, media: true },
-            },
-          },
-        },
-        gallery: {
-          include: {
-            owner: true,
-            _count: {
-              select: { likes: true, media: true },
-            },
-          },
-        },
-        // Direct JOINs - content is immediately available!
-        image: true,
-        textContent: true,
-        tags_rel: {
-          include: { tag: true },
-        },
-        _count: {
-          select: { likes: true },
-        },
-      },
     });
 
     if (!media) {
@@ -262,69 +213,7 @@ export class MediaService {
       );
     }
 
-    // Check if user has liked this media
-    const userHasLiked = userId
-      ? (await this.db.like.findFirst({
-          where: { userId, mediaId: media.id },
-        })) !== null
-      : false;
-
-    const enrichedMedia = {
-      ...media,
-      owner: {
-        ...media.owner,
-        followersCount: 0, // TODO: Implement proper follower counts
-        followingCount: 0, // TODO: Implement proper following counts
-        userIsFollowing: false, // TODO: Implement proper following status
-      },
-      character: media.character
-        ? {
-            ...media.character,
-            price: media.character.price ? Number(media.character.price) : null,
-            customFields: JSON.stringify(media.character.customFields),
-            owner: {
-              ...media.character.owner,
-              followersCount: 0, // TODO: Implement proper follower counts
-              followingCount: 0, // TODO: Implement proper following counts
-              userIsFollowing: false, // TODO: Implement proper following status
-            },
-            _count: {
-              media: media.character._count?.media || 0,
-              likes: media.character._count?.likes || 0,
-            },
-            likesCount: media.character._count?.likes || 0,
-            userHasLiked: false, // TODO: Implement proper character like status
-          }
-        : null,
-      gallery: media.gallery
-        ? {
-            ...media.gallery,
-            owner: {
-              ...media.gallery.owner,
-              followersCount: 0, // TODO: Implement proper follower counts
-              followingCount: 0, // TODO: Implement proper following counts
-              userIsFollowing: false, // TODO: Implement proper following status
-            },
-            _count: {
-              media: media.gallery._count?.media || 0,
-            },
-            likesCount: media.gallery._count?.likes || 0,
-            userHasLiked: false, // TODO: Implement proper gallery like status
-          }
-        : null,
-      // Content is directly available via JOINs - no additional queries needed!
-      likesCount: media._count.likes,
-      userHasLiked,
-    };
-
-    // Fix tags_rel to include media reference
-    enrichedMedia.tags_rel =
-      media.tags_rel?.map((tagRel) => ({
-        ...tagRel,
-        media: enrichedMedia,
-      })) || [];
-
-    return enrichedMedia;
+    return media;
   }
 
   /**
@@ -334,7 +223,7 @@ export class MediaService {
    * @returns Newly created media item with text content
    * @throws ForbiddenException if user tries to assign media to character they don't own
    */
-  async createTextMedia(userId: string, input: CreateTextMediaInput) {
+  async createTextMedia(userId: string, input: CreateTextMediaServiceInput) {
     const wordCount = this.calculateWordCount(input.content);
 
     return this.db.$transaction(async (tx) => {
@@ -360,90 +249,9 @@ export class MediaService {
           textContentId: textContent.id,
           imageId: null, // Explicitly null for text media
         },
-        include: {
-          owner: true,
-          character: {
-            include: {
-              owner: true,
-              _count: {
-                select: { likes: true, media: true },
-              },
-            },
-          },
-          gallery: {
-            include: {
-              owner: true,
-              _count: {
-                select: { likes: true, media: true },
-              },
-            },
-          },
-          // Direct JOIN to get text content
-          textContent: true,
-          tags_rel: {
-            include: { tag: true },
-          },
-        },
       });
 
-      const enrichedMedia = {
-        ...media,
-        owner: {
-          ...media.owner,
-          followersCount: 0, // TODO: Implement proper follower counts
-          followingCount: 0, // TODO: Implement proper following counts
-          userIsFollowing: false, // TODO: Implement proper following status
-        },
-        character: media.character
-          ? {
-              ...media.character,
-              price: media.character.price
-                ? Number(media.character.price)
-                : null,
-              customFields: JSON.stringify(media.character.customFields),
-              owner: {
-                ...media.character.owner,
-                followersCount: 0, // TODO: Implement proper follower counts
-                followingCount: 0, // TODO: Implement proper following counts
-                userIsFollowing: false, // TODO: Implement proper following status
-              },
-              _count: {
-                media: media.character._count?.media || 0,
-                likes: media.character._count?.likes || 0,
-              },
-              likesCount: media.character._count?.likes || 0,
-              userHasLiked: false, // TODO: Implement proper character like status
-            }
-          : null,
-        gallery: media.gallery
-          ? {
-              ...media.gallery,
-              owner: {
-                ...media.gallery.owner,
-                followersCount: 0, // TODO: Implement proper follower counts
-                followingCount: 0, // TODO: Implement proper following counts
-                userIsFollowing: false, // TODO: Implement proper following status
-              },
-              _count: {
-                media: media.gallery._count?.media || 0,
-              },
-              likesCount: media.gallery._count?.likes || 0,
-              userHasLiked: false, // TODO: Implement proper gallery like status
-            }
-          : null,
-        // textContent and image are directly available via JOINs!
-        likesCount: 0,
-        userHasLiked: false,
-      };
-
-      // Fix tags_rel to include media reference
-      enrichedMedia.tags_rel =
-        media.tags_rel?.map((tagRel) => ({
-          ...tagRel,
-          media: enrichedMedia,
-        })) || [];
-
-      return enrichedMedia;
+      return media;
     });
   }
 
@@ -456,7 +264,7 @@ export class MediaService {
    * @throws NotFoundException if media doesn't exist
    * @throws ForbiddenException if user doesn't own the media
    */
-  async updateMedia(id: string, userId: string, input: UpdateMediaInput) {
+  async updateMedia(id: string, userId: string, input: UpdateMediaServiceInput) {
     const media = await this.db.media.findUnique({
       where: { id },
     });
@@ -469,7 +277,7 @@ export class MediaService {
       throw new ForbiddenException("You can only update your own media");
     }
 
-    const updatedMedia = await this.db.media.update({
+    return this.db.media.update({
       where: { id },
       data: {
         title: input.title,
@@ -478,101 +286,11 @@ export class MediaService {
         galleryId: input.galleryId,
         visibility: input.visibility,
       },
-      include: {
-        owner: true,
-        character: {
-          include: {
-            owner: true,
-            _count: {
-              select: { likes: true, media: true },
-            },
-          },
-        },
-        gallery: {
-          include: {
-            owner: true,
-            _count: {
-              select: { likes: true, media: true },
-            },
-          },
-        },
-        // Direct JOINs for content
-        image: true,
-        textContent: true,
-        tags_rel: {
-          include: { tag: true },
-        },
-        _count: {
-          select: { likes: true },
-        },
-      },
     });
 
-    // Check if user has liked this media
-    const userHasLiked =
-      (await this.db.like.findFirst({
-        where: { userId, mediaId: updatedMedia.id },
-      })) !== null;
-
-    const enrichedMedia = {
-      ...updatedMedia,
-      owner: {
-        ...updatedMedia.owner,
-        followersCount: 0, // TODO: Implement proper follower counts
-        followingCount: 0, // TODO: Implement proper following counts
-        userIsFollowing: false, // TODO: Implement proper following status
-      },
-      character: updatedMedia.character
-        ? {
-            ...updatedMedia.character,
-            price: updatedMedia.character.price
-              ? Number(updatedMedia.character.price)
-              : null,
-            customFields: JSON.stringify(updatedMedia.character.customFields),
-            owner: {
-              ...updatedMedia.character.owner,
-              followersCount: 0, // TODO: Implement proper follower counts
-              followingCount: 0, // TODO: Implement proper following counts
-              userIsFollowing: false, // TODO: Implement proper following status
-            },
-            _count: {
-              media: updatedMedia.character._count?.media || 0,
-              likes: updatedMedia.character._count?.likes || 0,
-            },
-            likesCount: updatedMedia.character._count?.likes || 0,
-            userHasLiked: false, // TODO: Implement proper character like status
-          }
-        : null,
-      gallery: updatedMedia.gallery
-        ? {
-            ...updatedMedia.gallery,
-            owner: {
-              ...updatedMedia.gallery.owner,
-              followersCount: 0, // TODO: Implement proper follower counts
-              followingCount: 0, // TODO: Implement proper following counts
-              userIsFollowing: false, // TODO: Implement proper following status
-            },
-            _count: {
-              media: updatedMedia.gallery._count?.media || 0,
-            },
-            likesCount: updatedMedia.gallery._count?.likes || 0,
-            userHasLiked: false, // TODO: Implement proper gallery like status
-          }
-        : null,
-      // Content is directly available via JOINs!
-      likesCount: updatedMedia._count.likes,
-      userHasLiked,
-    };
-
-    // Fix tags_rel to include media reference
-    enrichedMedia.tags_rel =
-      updatedMedia.tags_rel?.map((tagRel) => ({
-        ...tagRel,
-        media: enrichedMedia,
-      })) || [];
-
-    return enrichedMedia;
   }
+
+
 
   /**
    * Updates the text content of a text media item
@@ -586,14 +304,10 @@ export class MediaService {
   async updateTextContent(
     mediaId: string,
     userId: string,
-    input: UpdateTextContentInput,
+    input: UpdateTextContentServiceInput,
   ) {
     const media = await this.db.media.findUnique({
       where: { id: mediaId },
-      include: {
-        // Direct JOIN to get text content
-        textContent: true,
-      },
     });
 
     if (!media) {
@@ -608,7 +322,7 @@ export class MediaService {
       throw new ForbiddenException("This media is not text content");
     }
 
-    const updateData: any = {};
+    const updateData: Prisma.TextContentUpdateInput = {};
     if (input.content !== undefined) {
       updateData.content = input.content;
       updateData.wordCount = this.calculateWordCount(input.content);
@@ -617,12 +331,14 @@ export class MediaService {
       updateData.formatting = input.formatting;
     }
 
-    const updatedTextContent = await this.db.textContent.update({
+    await this.db.textContent.update({
       where: { id: media.textContentId },
       data: updateData,
     });
 
-    return this.findOne(mediaId, userId);
+    return this.db.media.findUnique({
+      where: { id: mediaId },
+    });
   }
 
   /**
@@ -633,13 +349,9 @@ export class MediaService {
    * @throws NotFoundException if media doesn't exist
    * @throws ForbiddenException if user doesn't own the media
    */
-  async remove(id: string, userId: string): Promise<boolean> {
+  async remove(id: string, userId: string) {
     const media = await this.db.media.findUnique({
       where: { id },
-      include: {
-        image: true,
-        textContent: true,
-      },
     });
 
     if (!media) {
@@ -651,8 +363,13 @@ export class MediaService {
     }
 
     // Handle image file cleanup if this media contains an image
-    if (media.image) {
-      await this.cleanupImageFiles(media.image);
+    if (media.imageId) {
+      const image = await this.db.image.findUnique({
+        where: { id: media.imageId },
+      });
+      if (image) {
+        await this.cleanupImageFiles(image);
+      }
     }
 
     // Delete the media record - CASCADE constraints will handle content deletion
@@ -667,7 +384,7 @@ export class MediaService {
    * Cleans up image files (handles both S3 and local storage)
    * @param image Image record containing file information
    */
-  private async cleanupImageFiles(image: any): Promise<void> {
+  private async cleanupImageFiles(image: Prisma.ImageGetPayload<{}>) {
     try {
       // Check if we're using S3 (URL contains amazonaws.com or other S3 indicators)
       if (image.url && (image.url.includes('amazonaws.com') || image.url.includes('s3'))) {
@@ -690,7 +407,7 @@ export class MediaService {
    * @param imageUrl Main image URL
    * @param thumbnailUrl Optional thumbnail URL
    */
-  private async deleteFromS3(imageUrl: string, thumbnailUrl?: string): Promise<void> {
+  private async deleteFromS3(imageUrl: string, thumbnailUrl?: string) {
     // TODO: Implement S3 deletion using AWS SDK
     // This would require:
     // 1. Parse the S3 key from the URL
@@ -713,7 +430,7 @@ export class MediaService {
    * @param imageUrl Main image path
    * @param thumbnailUrl Optional thumbnail path
    */
-  private async deleteLocalFiles(imageUrl: string, thumbnailUrl?: string): Promise<void> {
+  private async deleteLocalFiles(imageUrl: string, thumbnailUrl?: string) {
     const fs = require('fs').promises;
     const path = require('path');
 
@@ -838,5 +555,37 @@ export class MediaService {
     });
 
     return this.findOne(id, userId);
+  }
+
+  /**
+   * Retrieves text content by ID
+   * @param textContentId Text content ID to retrieve
+   * @returns Text content record
+   * @throws NotFoundException if text content doesn't exist
+   */
+  async findTextContent(textContentId: string) {
+    const textContent = await this.db.textContent.findUnique({
+      where: { id: textContentId },
+    });
+
+    if (!textContent) {
+      throw new NotFoundException("Text content not found");
+    }
+
+    return textContent;
+  }
+
+  /**
+   * Retrieves media tag relationships for a media item
+   * @param mediaId Media ID to get tags for
+   * @returns Array of media tag relationships with tag information
+   */
+  async findMediaTags(mediaId: string) {
+    return this.db.mediaTag.findMany({
+      where: { mediaId },
+      include: {
+        tag: true,
+      },
+    });
   }
 }
