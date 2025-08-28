@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import { UserProfile, UserStats } from "./entities/user-profile.entity";
+import { UserStats } from "./entities/user-profile.entity";
 import { Visibility, Prisma } from "@chardb/database";
 
 /**
@@ -122,29 +122,9 @@ export class UsersService {
   async getUserProfile(
     username: string,
     currentUserId?: string,
-  ): Promise<UserProfile | null> {
+  ) {
     const user = await this.db.user.findUnique({
       where: { username },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        displayName: true,
-        bio: true,
-        avatarUrl: true,
-        location: true,
-        website: true,
-        isVerified: true,
-        isAdmin: true,
-        privacySettings: true,
-        canCreateCommunity: true,
-        canListUsers: true,
-        canListInviteCodes: true,
-        canCreateInviteCode: true,
-        canGrantGlobalPermissions: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
 
     if (!user) {
@@ -170,16 +150,6 @@ export class UsersService {
         },
         take: 6,
         orderBy: { updatedAt: "desc" },
-        include: {
-          owner: {
-            select: {
-              id: true,
-              username: true,
-              displayName: true,
-              avatarUrl: true,
-            },
-          },
-        },
       }),
       this.db.gallery.findMany({
         where: {
@@ -188,22 +158,6 @@ export class UsersService {
         },
         take: 6,
         orderBy: { updatedAt: "desc" },
-        include: {
-          owner: {
-            select: {
-              id: true,
-              username: true,
-              displayName: true,
-              avatarUrl: true,
-            },
-          },
-          character: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
       }),
       this.db.media.findMany({
         where: {
@@ -212,24 +166,6 @@ export class UsersService {
         },
         take: 12,
         orderBy: { createdAt: "desc" },
-        include: {
-          owner: {
-            select: {
-              id: true,
-              username: true,
-              displayName: true,
-              avatarUrl: true,
-            },
-          },
-          image: {
-            select: {
-              id: true,
-              filename: true,
-              url: true,
-              thumbnailUrl: true,
-            },
-          },
-        },
       }),
     ]);
 
@@ -241,16 +177,6 @@ export class UsersService {
       },
       take: 3,
       orderBy: { updatedAt: "desc" },
-      include: {
-        owner: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-            avatarUrl: true,
-          },
-        },
-      },
     });
 
     return {

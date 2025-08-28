@@ -13,6 +13,7 @@ import {
   mapPrismaUserToGraphQL,
   mapPrismaUserConnectionToGraphQL,
 } from './utils/user-resolver-mappers';
+import { mapPrismaCharacterToGraphQL } from '../characters/utils/character-resolver-mappers';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -87,8 +88,15 @@ export class UsersResolver {
     if (!serviceResult) return null;
     
     return {
-      ...serviceResult,
       user: mapPrismaUserToGraphQL(serviceResult.user),
+      stats: serviceResult.stats,
+      recentCharacters: serviceResult.recentCharacters.map(mapPrismaCharacterToGraphQL),
+      // TODO: Create mappers for galleries and media when those services are refactored
+      recentGalleries: serviceResult.recentGalleries as any,
+      recentMedia: serviceResult.recentMedia as any,
+      featuredCharacters: serviceResult.featuredCharacters.map(mapPrismaCharacterToGraphQL),
+      isOwnProfile: serviceResult.isOwnProfile,
+      canViewPrivateContent: serviceResult.canViewPrivateContent,
     };
   }
 
