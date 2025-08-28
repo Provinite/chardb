@@ -1,5 +1,4 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { Species } from '../../species/entities/species.entity';
 
 @ObjectType()
 export class SpeciesVariant {
@@ -23,9 +22,6 @@ export class SpeciesVariant {
   @Field({ description: 'When the species variant was last updated' })
   updatedAt: Date;
 
-  /** The species this variant belongs to */
-  @Field(() => Species, { description: 'The species this variant belongs to' })
-  species: Species;
 }
 
 @ObjectType()

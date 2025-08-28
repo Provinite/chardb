@@ -1,24 +1,51 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateSpeciesVariantInput, UpdateSpeciesVariantInput } from './dto/species-variant.dto';
-import { SpeciesVariant, SpeciesVariantConnection } from './entities/species-variant.entity';
+import { Prisma } from '@chardb/database';
+
+/**
+ * Service layer input types for species variants operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of Prisma relation objects.
+ */
+
+/**
+ * Input data for creating a new species variant
+ */
+export interface CreateSpeciesVariantServiceInput {
+  /** Name of the species variant (unique within species) */
+  name: string;
+  /** ID of the species this variant belongs to */
+  speciesId: string;
+}
+
+/**
+ * Input data for updating a species variant
+ */
+export interface UpdateSpeciesVariantServiceInput {
+  /** Name of the species variant (unique within species) */
+  name?: string;
+  /** ID of the species this variant belongs to */
+  speciesId?: string;
+}
 
 @Injectable()
 export class SpeciesVariantsService {
   constructor(private prisma: DatabaseService) {}
 
   /** Create a new species variant */
-  async create(createSpeciesVariantInput: CreateSpeciesVariantInput): Promise<SpeciesVariant> {
+  async create(input: CreateSpeciesVariantServiceInput) {
     return this.prisma.speciesVariant.create({
-      data: createSpeciesVariantInput,
-      include: {
-        species: true,
+      data: {
+        name: input.name,
+        species: {
+          connect: { id: input.speciesId }
+        }
       },
     });
   }
 
   /** Find all species variants with pagination */
-  async findAll(first: number = 20, after?: string): Promise<SpeciesVariantConnection> {
+  async findAll(first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -28,9 +55,6 @@ export class SpeciesVariantsService {
         skip,
         cursor,
         orderBy: { createdAt: 'desc' },
-        include: {
-          species: true,
-        },
       }),
       this.prisma.speciesVariant.count(),
     ]);
@@ -47,7 +71,7 @@ export class SpeciesVariantsService {
   }
 
   /** Find species variants by species ID with pagination */
-  async findBySpecies(speciesId: string, first: number = 20, after?: string): Promise<SpeciesVariantConnection> {
+  async findBySpecies(speciesId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -58,9 +82,6 @@ export class SpeciesVariantsService {
         skip,
         cursor,
         orderBy: { createdAt: 'desc' },
-        include: {
-          species: true,
-        },
       }),
       this.prisma.speciesVariant.count({
         where: { speciesId },
@@ -79,12 +100,9 @@ export class SpeciesVariantsService {
   }
 
   /** Find a species variant by ID */
-  async findOne(id: string): Promise<SpeciesVariant> {
+  async findOne(id: string) {
     const speciesVariant = await this.prisma.speciesVariant.findUnique({
       where: { id },
-      include: {
-        species: true,
-      },
     });
 
     if (!speciesVariant) {
@@ -95,27 +113,28 @@ export class SpeciesVariantsService {
   }
 
   /** Update a species variant */
-  async update(id: string, updateSpeciesVariantInput: UpdateSpeciesVariantInput): Promise<SpeciesVariant> {
+  async update(id: string, input: UpdateSpeciesVariantServiceInput) {
     const speciesVariant = await this.findOne(id); // This will throw if not found
+
+    const updateData: Prisma.SpeciesVariantUpdateInput = {};
+    
+    if (input.name !== undefined) updateData.name = input.name;
+    if (input.speciesId !== undefined) {
+      updateData.species = { connect: { id: input.speciesId } };
+    }
 
     return this.prisma.speciesVariant.update({
       where: { id },
-      data: updateSpeciesVariantInput,
-      include: {
-        species: true,
-      },
+      data: updateData,
     });
   }
 
   /** Remove a species variant */
-  async remove(id: string): Promise<SpeciesVariant> {
-    const speciesVariant = await this.findOne(id); // This will throw if not found
+  async remove(id: string) {
+    await this.findOne(id); // This will throw if not found
 
     return this.prisma.speciesVariant.delete({
       where: { id },
-      include: {
-        species: true,
-      },
     });
   }
 }
