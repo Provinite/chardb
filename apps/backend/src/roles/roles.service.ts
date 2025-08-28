@@ -1,24 +1,89 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateRoleInput, UpdateRoleInput } from './dto/role.dto';
-import { Role, RoleConnection } from './entities/role.entity';
+import { Prisma } from '@chardb/database';
+
+/**
+ * Service layer input types for roles operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of Prisma relation objects.
+ */
+
+/**
+ * Input data for creating a new role
+ */
+export interface CreateRoleServiceInput {
+  /** The name of the role */
+  name: string;
+  /** The community this role belongs to */
+  communityId: string;
+  /** Permission to create new species */
+  canCreateSpecies?: boolean;
+  /** Permission to create new characters */
+  canCreateCharacter?: boolean;
+  /** Permission to edit characters */
+  canEditCharacter?: boolean;
+  /** Permission to edit species */
+  canEditSpecies?: boolean;
+  /** Permission to create invite codes */
+  canCreateInviteCode?: boolean;
+  /** Permission to list invite codes */
+  canListInviteCodes?: boolean;
+  /** Permission to create new roles */
+  canCreateRole?: boolean;
+  /** Permission to edit existing roles */
+  canEditRole?: boolean;
+}
+
+/**
+ * Input data for updating a role
+ */
+export interface UpdateRoleServiceInput {
+  /** The name of the role */
+  name?: string;
+  /** Permission to create new species */
+  canCreateSpecies?: boolean;
+  /** Permission to create new characters */
+  canCreateCharacter?: boolean;
+  /** Permission to edit characters */
+  canEditCharacter?: boolean;
+  /** Permission to edit species */
+  canEditSpecies?: boolean;
+  /** Permission to create invite codes */
+  canCreateInviteCode?: boolean;
+  /** Permission to list invite codes */
+  canListInviteCodes?: boolean;
+  /** Permission to create new roles */
+  canCreateRole?: boolean;
+  /** Permission to edit existing roles */
+  canEditRole?: boolean;
+}
 
 @Injectable()
 export class RolesService {
   constructor(private prisma: DatabaseService) {}
 
   /** Create a new role */
-  async create(createRoleInput: CreateRoleInput): Promise<Role> {
+  async create(input: CreateRoleServiceInput) {
     return this.prisma.role.create({
-      data: createRoleInput,
-      include: {
-        community: true,
+      data: {
+        name: input.name,
+        canCreateSpecies: input.canCreateSpecies ?? false,
+        canCreateCharacter: input.canCreateCharacter ?? false,
+        canEditCharacter: input.canEditCharacter ?? false,
+        canEditSpecies: input.canEditSpecies ?? false,
+        canCreateInviteCode: input.canCreateInviteCode ?? false,
+        canListInviteCodes: input.canListInviteCodes ?? false,
+        canCreateRole: input.canCreateRole ?? false,
+        canEditRole: input.canEditRole ?? false,
+        community: {
+          connect: { id: input.communityId }
+        }
       },
     });
   }
 
   /** Find all roles with pagination */
-  async findAll(first: number = 20, after?: string): Promise<RoleConnection> {
+  async findAll(first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -31,9 +96,6 @@ export class RolesService {
           { community: { name: 'asc' } },
           { name: 'asc' },
         ],
-        include: {
-          community: true,
-        },
       }),
       this.prisma.role.count(),
     ]);
@@ -50,7 +112,7 @@ export class RolesService {
   }
 
   /** Find roles by community ID with pagination */
-  async findByCommunity(communityId: string, first: number = 20, after?: string): Promise<RoleConnection> {
+  async findByCommunity(communityId: string, first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -61,9 +123,6 @@ export class RolesService {
         skip,
         cursor,
         orderBy: { name: 'asc' },
-        include: {
-          community: true,
-        },
       }),
       this.prisma.role.count({
         where: { communityId },
@@ -82,12 +141,9 @@ export class RolesService {
   }
 
   /** Find a role by ID */
-  async findOne(id: string): Promise<Role> {
+  async findOne(id: string) {
     const role = await this.prisma.role.findUnique({
       where: { id },
-      include: {
-        community: true,
-      },
     });
 
     if (!role) {
@@ -98,27 +154,33 @@ export class RolesService {
   }
 
   /** Update a role */
-  async update(id: string, updateRoleInput: UpdateRoleInput): Promise<Role> {
+  async update(id: string, input: UpdateRoleServiceInput) {
     const role = await this.findOne(id); // This will throw if not found
+
+    const updateData: Prisma.RoleUpdateInput = {};
+    
+    if (input.name !== undefined) updateData.name = input.name;
+    if (input.canCreateSpecies !== undefined) updateData.canCreateSpecies = input.canCreateSpecies;
+    if (input.canCreateCharacter !== undefined) updateData.canCreateCharacter = input.canCreateCharacter;
+    if (input.canEditCharacter !== undefined) updateData.canEditCharacter = input.canEditCharacter;
+    if (input.canEditSpecies !== undefined) updateData.canEditSpecies = input.canEditSpecies;
+    if (input.canCreateInviteCode !== undefined) updateData.canCreateInviteCode = input.canCreateInviteCode;
+    if (input.canListInviteCodes !== undefined) updateData.canListInviteCodes = input.canListInviteCodes;
+    if (input.canCreateRole !== undefined) updateData.canCreateRole = input.canCreateRole;
+    if (input.canEditRole !== undefined) updateData.canEditRole = input.canEditRole;
 
     return this.prisma.role.update({
       where: { id },
-      data: updateRoleInput,
-      include: {
-        community: true,
-      },
+      data: updateData,
     });
   }
 
   /** Remove a role */
-  async remove(id: string): Promise<Role> {
-    const role = await this.findOne(id); // This will throw if not found
+  async remove(id: string) {
+    await this.findOne(id); // This will throw if not found
 
     return this.prisma.role.delete({
       where: { id },
-      include: {
-        community: true,
-      },
     });
   }
 }

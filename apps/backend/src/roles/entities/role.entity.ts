@@ -1,5 +1,4 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { Community } from '../../communities/entities/community.entity';
 
 @ObjectType({ description: 'A role within a community that defines permissions for members' })
 export class Role {
@@ -54,9 +53,6 @@ export class Role {
   @Field(() => Date, { description: 'When the role was last updated' })
   updatedAt!: Date;
 
-  // Relations
-  @Field(() => Community, { description: 'The community this role belongs to' })
-  community?: Community;
 }
 
 @ObjectType({ description: 'Paginated list of roles with connection metadata' })
