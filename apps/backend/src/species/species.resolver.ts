@@ -10,10 +10,15 @@ import {
 } from './utils/species-resolver-mappers';
 import { RemovalResponse } from '../shared/entities/removal-response.entity';
 import { Community } from '../communities/entities/community.entity';
+import { CommunitiesService } from '../communities/communities.service';
+import { mapPrismaCommunityToGraphQL } from '../communities/utils/community-resolver-mappers';
 
 @Resolver(() => Species)
 export class SpeciesResolver {
-  constructor(private readonly speciesService: SpeciesService) {}
+  constructor(
+    private readonly speciesService: SpeciesService,
+    private readonly communitiesService: CommunitiesService,
+  ) {}
 
   /** Create a new species */
   @Mutation(() => Species, { description: 'Create a new species' })
@@ -87,8 +92,12 @@ export class SpeciesResolver {
 
   // Field resolver for relations
   @ResolveField('community', () => Community, { description: 'The community that owns this species' })
-  resolveCommunity(@Parent() species: Species): Community | null {
-    // TODO: Implement when communities service is refactored
-    return null;
+  async resolveCommunity(@Parent() species: Species): Promise<Community | null> {
+    try {
+      const prismaResult = await this.communitiesService.findOne(species.communityId);
+      return mapPrismaCommunityToGraphQL(prismaResult);
+    } catch (error) {
+      return null;
+    }
   }
 }

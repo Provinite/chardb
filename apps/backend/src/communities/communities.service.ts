@@ -1,21 +1,44 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateCommunityInput, UpdateCommunityInput } from './dto/community.dto';
-import { Community, CommunityConnection } from './entities/community.entity';
+import { Prisma } from '@chardb/database';
+
+/**
+ * Service layer input types for communities operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of Prisma relation objects.
+ */
+
+/**
+ * Input data for creating a new community
+ */
+export interface CreateCommunityServiceInput {
+  /** Name of the community (must be unique) */
+  name: string;
+}
+
+/**
+ * Input data for updating a community
+ */
+export interface UpdateCommunityServiceInput {
+  /** Name of the community (must be unique) */
+  name?: string;
+}
 
 @Injectable()
 export class CommunitiesService {
   constructor(private prisma: DatabaseService) {}
 
   /** Create a new community */
-  async create(createCommunityInput: CreateCommunityInput): Promise<Community> {
+  async create(input: CreateCommunityServiceInput) {
     return this.prisma.community.create({
-      data: createCommunityInput,
+      data: {
+        name: input.name,
+      },
     });
   }
 
   /** Find all communities with pagination */
-  async findAll(first: number = 20, after?: string): Promise<CommunityConnection> {
+  async findAll(first: number = 20, after?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -41,7 +64,7 @@ export class CommunitiesService {
   }
 
   /** Find a community by ID */
-  async findOne(id: string): Promise<Community> {
+  async findOne(id: string) {
     const community = await this.prisma.community.findUnique({
       where: { id },
     });
@@ -54,18 +77,22 @@ export class CommunitiesService {
   }
 
   /** Update a community */
-  async update(id: string, updateCommunityInput: UpdateCommunityInput): Promise<Community> {
+  async update(id: string, input: UpdateCommunityServiceInput) {
     const community = await this.findOne(id); // This will throw if not found
+
+    const updateData: Prisma.CommunityUpdateInput = {};
+    
+    if (input.name !== undefined) updateData.name = input.name;
 
     return this.prisma.community.update({
       where: { id },
-      data: updateCommunityInput,
+      data: updateData,
     });
   }
 
   /** Remove a community */
-  async remove(id: string): Promise<Community> {
-    const community = await this.findOne(id); // This will throw if not found
+  async remove(id: string) {
+    await this.findOne(id); // This will throw if not found
 
     return this.prisma.community.delete({
       where: { id },
