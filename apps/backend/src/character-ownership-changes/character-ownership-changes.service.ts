@@ -1,21 +1,48 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { CreateCharacterOwnershipChangeInput } from './dto/character-ownership-change.dto';
-import type { CharacterOwnershipChange, Prisma } from '@chardb/database';
+import type { Prisma } from '@chardb/database';
+
+/**
+ * Service layer input types for character ownership change operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of GraphQL relation objects.
+ */
+
+/**
+ * Input data for creating a new character ownership change
+ */
+export interface CreateCharacterOwnershipChangeServiceInput {
+  characterId: string;
+  fromUserId?: string | null;
+  toUserId: string;
+}
+
+/**
+ * Filters for querying character ownership changes with pagination
+ */
+export interface CharacterOwnershipChangeFiltersServiceInput {
+  first?: number;
+  after?: string;
+  characterId?: string;
+  userId?: string;
+}
 
 @Injectable()
 export class CharacterOwnershipChangesService {
   constructor(private prisma: DatabaseService) {}
 
-  /** Create a new character ownership change record */
-  async create(createCharacterOwnershipChangeInput: CreateCharacterOwnershipChangeInput): Promise<CharacterOwnershipChange> {
+  async create(input: CreateCharacterOwnershipChangeServiceInput) {
     return this.prisma.characterOwnershipChange.create({
-      data: createCharacterOwnershipChangeInput,
+      data: {
+        characterId: input.characterId,
+        fromUserId: input.fromUserId,
+        toUserId: input.toUserId,
+      },
     });
   }
 
-  /** Find all character ownership changes with pagination */
-  async findAll(first: number = 20, after?: string) {
+  async findAll(filters: CharacterOwnershipChangeFiltersServiceInput = {}) {
+    const { first = 20, after } = filters;
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -40,8 +67,8 @@ export class CharacterOwnershipChangesService {
     };
   }
 
-  /** Find character ownership changes by character ID with pagination */
-  async findByCharacter(characterId: string, first: number = 20, after?: string) {
+  async findByCharacter(filters: CharacterOwnershipChangeFiltersServiceInput & { characterId: string }) {
+    const { characterId, first = 20, after } = filters;
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -69,8 +96,8 @@ export class CharacterOwnershipChangesService {
     };
   }
 
-  /** Find character ownership changes by user ID (both from and to) with pagination */
-  async findByUser(userId: string, first: number = 20, after?: string) {
+  async findByUser(filters: CharacterOwnershipChangeFiltersServiceInput & { userId: string }) {
+    const { userId, first = 20, after } = filters;
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -108,15 +135,9 @@ export class CharacterOwnershipChangesService {
     };
   }
 
-  /** Find a character ownership change by ID */
-  async findOne(id: string): Promise<CharacterOwnershipChange> {
+  async findOne(id: string) {
     const ownershipChange = await this.prisma.characterOwnershipChange.findUnique({
       where: { id },
-      include: {
-        character: true,
-        fromUser: true,
-        toUser: true,
-      },
     });
 
     if (!ownershipChange) {
@@ -126,17 +147,13 @@ export class CharacterOwnershipChangesService {
     return ownershipChange;
   }
 
-  /** Remove a character ownership change record */
-  async remove(id: string): Promise<CharacterOwnershipChange> {
+  async remove(id: string) {
     const ownershipChange = await this.findOne(id); // This will throw if not found
 
-    return this.prisma.characterOwnershipChange.delete({
+    await this.prisma.characterOwnershipChange.delete({
       where: { id },
-      include: {
-        character: true,
-        fromUser: true,
-        toUser: true,
-      },
     });
+
+    return true;
   }
 }

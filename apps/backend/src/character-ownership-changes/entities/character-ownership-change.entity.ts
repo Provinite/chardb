@@ -23,7 +23,7 @@ export class CharacterOwnershipChange {
   @Field(() => Date, { description: 'When the ownership change occurred' })
   createdAt!: Date;
 
-  // Relations
+  // Relations - handled by field resolvers
   @Field(() => Character, { description: 'The character whose ownership was changed' })
   character?: Character;
 
