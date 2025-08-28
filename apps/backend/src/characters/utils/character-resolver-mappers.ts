@@ -102,21 +102,14 @@ export function mapUpdateCharacterTraitsInputToService(
 }
 
 // Define the exact Prisma return type for updateTraits method
-type PrismaCharacterWithRelations = Prisma.CharacterGetPayload<{
-  include: {
-    owner: true;
-    creator: true;
-    mainMedia: true;
-    tags_rel: { include: { tag: true } };
-    _count: { select: { media: true } };
-  };
-}>;
+type PrismaCharacter = Prisma.CharacterGetPayload<{}>;
 
 /**
  * Maps Prisma Character result to GraphQL Character entity
+ * Only includes scalar fields - relations handled by field resolvers
  */
 export function mapPrismaCharacterToGraphQL(
-  prismaCharacter: PrismaCharacterWithRelations,
+  prismaCharacter: PrismaCharacter,
 ): Character {
   return {
     id: prismaCharacter.id,

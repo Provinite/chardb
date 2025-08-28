@@ -48,19 +48,23 @@ export class GalleriesResolver {
   }
 
   @Query(() => GalleryConnection)
+  @UseGuards(OptionalJwtAuthGuard)
   async galleries(
     @Args('filters', { nullable: true }) filters?: GalleryFiltersInput,
-    @CurrentUser() user?: any,
-  ): Promise<any> {
-    return this.galleriesService.findAll(filters, user?.id);
+    @CurrentUser() user?: CurrentUserType,
+  ): Promise<GalleryConnection> {
+    const serviceResult = await this.galleriesService.findAll(filters, user?.id);
+    return mapPrismaGalleryConnectionToGraphQL(serviceResult);
   }
 
   @Query(() => Gallery)
+  @UseGuards(OptionalJwtAuthGuard)
   async gallery(
     @Args('id', { type: () => ID }) id: string,
-    @CurrentUser() user?: any,
-  ): Promise<any> {
-    return this.galleriesService.findOne(id, user?.id);
+    @CurrentUser() user?: CurrentUserType,
+  ): Promise<Gallery> {
+    const prismaResult = await this.galleriesService.findOne(id, user?.id);
+    return mapPrismaGalleryToGraphQL(prismaResult);
   }
 
   @Mutation(() => Gallery)
@@ -68,18 +72,27 @@ export class GalleriesResolver {
   async updateGallery(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateGalleryInput,
-    @CurrentUser() user: any,
-  ): Promise<any> {
-    return this.galleriesService.update(id, user.id, input);
+    @CurrentUser() user: CurrentUserType,
+  ): Promise<Gallery> {
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const serviceInput = mapUpdateGalleryInputToService(input);
+    const prismaResult = await this.galleriesService.update(id, user.id, serviceInput);
+    return mapPrismaGalleryToGraphQL(prismaResult);
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(() => RemovalResponse)
   @UseGuards(JwtAuthGuard)
   async deleteGallery(
     @Args('id', { type: () => ID }) id: string,
-    @CurrentUser() user: any,
-  ): Promise<boolean> {
-    return this.galleriesService.remove(id, user.id);
+    @CurrentUser() user: CurrentUserType,
+  ): Promise<RemovalResponse> {
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    await this.galleriesService.remove(id, user.id);
+    return { removed: true, message: 'Gallery successfully deleted' };
   }
 
   // NOTE: Image-gallery operations now handled through Media system
@@ -89,50 +102,104 @@ export class GalleriesResolver {
   @UseGuards(JwtAuthGuard)
   async reorderGalleries(
     @Args('input') input: ReorderGalleriesInput,
-    @CurrentUser() user: any,
-  ): Promise<any> {
-    return this.galleriesService.reorderGalleries(user.id, input.galleryIds);
+    @CurrentUser() user: CurrentUserType,
+  ): Promise<Gallery[]> {
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const prismaResults = await this.galleriesService.reorderGalleries(user.id, input.galleryIds);
+    return prismaResults.map(mapPrismaGalleryToGraphQL);
   }
 
   // Query for user's own galleries
   @Query(() => GalleryConnection)
   @UseGuards(JwtAuthGuard)
   async myGalleries(
-    @CurrentUser() user: any,
+    @CurrentUser() user: CurrentUserType,
     @Args('filters', { nullable: true }) filters?: GalleryFiltersInput,
-  ): Promise<any> {
+  ): Promise<GalleryConnection> {
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     const userFilters = { ...filters, ownerId: user.id };
-    return this.galleriesService.findAll(userFilters, user.id);
+    const serviceResult = await this.galleriesService.findAll(userFilters, user.id);
+    return mapPrismaGalleryConnectionToGraphQL(serviceResult);
   }
 
   // Query for galleries by specific user
   @Query(() => GalleryConnection)
+  @UseGuards(OptionalJwtAuthGuard)
   async userGalleries(
     @Args('userId', { type: () => ID }) userId: string,
     @Args('filters', { nullable: true }) filters?: GalleryFiltersInput,
-    @CurrentUser() user?: any,
-  ): Promise<any> {
+    @CurrentUser() user?: CurrentUserType,
+  ): Promise<GalleryConnection> {
     const userFilters = { ...filters, ownerId: userId };
-    return this.galleriesService.findAll(userFilters, user?.id);
+    const serviceResult = await this.galleriesService.findAll(userFilters, user?.id);
+    return mapPrismaGalleryConnectionToGraphQL(serviceResult);
   }
 
   // Query for galleries associated with a specific character
   @Query(() => GalleryConnection)
+  @UseGuards(OptionalJwtAuthGuard)
   async characterGalleries(
     @Args('characterId', { type: () => ID }) characterId: string,
     @Args('filters', { nullable: true }) filters?: GalleryFiltersInput,
-    @CurrentUser() user?: any,
-  ): Promise<any> {
+    @CurrentUser() user?: CurrentUserType,
+  ): Promise<GalleryConnection> {
     const characterFilters = { ...filters, characterId };
-    return this.galleriesService.findAll(characterFilters, user?.id);
+    const serviceResult = await this.galleriesService.findAll(characterFilters, user?.id);
+    return mapPrismaGalleryConnectionToGraphQL(serviceResult);
   }
 
   // Query for galleries liked by the current user
   @Query(() => [Gallery])
   @UseGuards(JwtAuthGuard)
   async likedGalleries(
-    @CurrentUser() user: any,
-  ): Promise<any[]> {
-    return this.galleriesService.findLikedGalleries(user.id);
+    @CurrentUser() user: CurrentUserType,
+  ): Promise<Gallery[]> {
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const prismaResults = await this.galleriesService.findLikedGalleries(user.id);
+    return prismaResults.map(mapPrismaGalleryToGraphQL);
+  }
+
+  // Field resolvers for relations and computed properties
+  @ResolveField('owner', () => User)
+  async resolveOwner(@Parent() gallery: Gallery): Promise<User> {
+    const prismaUser = await this.usersService.findById(gallery.ownerId);
+    if (!prismaUser) {
+      throw new NotFoundException(`User with ID ${gallery.ownerId} not found`);
+    }
+    return mapPrismaUserToGraphQL(prismaUser);
+  }
+
+  @ResolveField('character', () => Character, { nullable: true })
+  async resolveCharacter(@Parent() gallery: Gallery): Promise<Character | null> {
+    if (!gallery.characterId) return null;
+    
+    try {
+      const prismaCharacter = await this.charactersService.findOne(gallery.characterId);
+      return mapPrismaCharacterToGraphQL(prismaCharacter);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  @ResolveField('likesCount', () => Number)
+  async resolveLikesCount(@Parent() gallery: Gallery): Promise<number> {
+    return this.galleriesService.getGalleryLikesCount(gallery.id);
+  }
+
+  @ResolveField('userHasLiked', () => Boolean)
+  async resolveUserHasLiked(
+    @Parent() gallery: Gallery,
+    @CurrentUser() user?: CurrentUserType,
+  ): Promise<boolean> {
+    return this.galleriesService.getUserHasLikedGallery(gallery.id, user?.id);
   }
 }
