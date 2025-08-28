@@ -1,4 +1,5 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
+import { NotFoundException } from '@nestjs/common';
 import { TraitsService } from './traits.service';
 import { Trait, TraitConnection } from './entities/trait.entity';
 import { CreateTraitInput, UpdateTraitInput } from './dto/trait.dto';
@@ -10,10 +11,15 @@ import {
 } from './utils/trait-resolver-mappers';
 import { Species } from '../species/entities/species.entity';
 import { RemovalResponse } from '../shared/entities/removal-response.entity';
+import { SpeciesService } from '../species/species.service';
+import { mapPrismaSpeciesToGraphQL } from '../species/utils/species-resolver-mappers';
 
 @Resolver(() => Trait)
 export class TraitsResolver {
-  constructor(private readonly traitsService: TraitsService) {}
+  constructor(
+    private readonly traitsService: TraitsService,
+    private readonly speciesService: SpeciesService,
+  ) {}
 
   /** Create a new trait */
   @Mutation(() => Trait, { description: 'Create a new trait' })
@@ -87,8 +93,15 @@ export class TraitsResolver {
 
   // Field resolver for species relation
   @ResolveField('species', () => Species, { description: 'The species this trait belongs to' })
-  resolveSpecies(@Parent() trait: Trait): Species | null {
-    // TODO: Implement when species service is refactored
-    return null;
+  async resolveSpecies(@Parent() trait: Trait): Promise<Species | null> {
+    try {
+      const prismaResult = await this.speciesService.findOne(trait.speciesId);
+      return mapPrismaSpeciesToGraphQL(prismaResult);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return null;
+      }
+      throw error;
+    }
   }
 }

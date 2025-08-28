@@ -12,10 +12,15 @@ import { RemovalResponse } from '../shared/entities/removal-response.entity';
 import { Trait } from '../traits/entities/trait.entity';
 import { SpeciesVariant } from '../species-variants/entities/species-variant.entity';
 import { TraitValueType } from '../shared/enums/trait-value-type.enum';
+import { TraitsService } from '../traits/traits.service';
+import { mapPrismaTraitToGraphQL } from '../traits/utils/trait-resolver-mappers';
 
 @Resolver(() => TraitListEntry)
 export class TraitListEntriesResolver {
-  constructor(private readonly traitListEntriesService: TraitListEntriesService) {}
+  constructor(
+    private readonly traitListEntriesService: TraitListEntriesService,
+    private readonly traitsService: TraitsService,
+  ) {}
 
   /** Create a new trait list entry */
   @Mutation(() => TraitListEntry, { description: 'Create a new trait list entry' })

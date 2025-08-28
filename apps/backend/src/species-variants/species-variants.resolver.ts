@@ -1,4 +1,5 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
+import { NotFoundException } from '@nestjs/common';
 import { SpeciesVariantsService } from './species-variants.service';
 import { SpeciesVariant, SpeciesVariantConnection } from './entities/species-variant.entity';
 import { CreateSpeciesVariantInput, UpdateSpeciesVariantInput } from './dto/species-variant.dto';
@@ -97,7 +98,10 @@ export class SpeciesVariantsResolver {
       const prismaResult = await this.speciesService.findOne(speciesVariant.speciesId);
       return mapPrismaSpeciesToGraphQL(prismaResult);
     } catch (error) {
-      return null;
+      if (error instanceof NotFoundException) {
+        return null;
+      }
+      throw error;
     }
   }
 }
