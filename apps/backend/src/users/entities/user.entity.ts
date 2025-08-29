@@ -1,5 +1,5 @@
-import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
-import { GraphQLJSON } from 'graphql-type-json';
+import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
+import { GraphQLJSON } from "graphql-type-json";
 
 @ObjectType()
 export class User {
@@ -60,8 +60,6 @@ export class User {
 
   @Field()
   updatedAt: Date;
-
-  // Social features handled by field resolvers
 }
 
 @ObjectType()

@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import { UserStats } from "./entities/user-profile.entity";
 import { Visibility, Prisma } from "@chardb/database";
 
 /**
@@ -8,6 +7,20 @@ import { Visibility, Prisma } from "@chardb/database";
  * These interfaces provide clean, simple inputs for the service layer,
  * avoiding the complexity of GraphQL relation objects.
  */
+
+/**
+ * Privacy settings interface for users
+ */
+export interface UserPrivacySettings {
+  /** Whether profile is visible to public */
+  profileVisible?: boolean;
+  /** Whether to show online status */
+  showOnlineStatus?: boolean;
+  /** Whether to allow direct messages */
+  allowDirectMessages?: boolean;
+  /** Who can comment on user's content */
+  allowCommentsFrom?: 'everyone' | 'following' | 'none';
+}
 
 /**
  * Input data for creating a new user
@@ -37,8 +50,8 @@ export interface UpdateUserServiceInput {
   website?: string;
   /** User's date of birth */
   dateOfBirth?: Date;
-  /** Privacy settings as JSON */
-  privacySettings?: any;
+  /** Privacy settings */
+  privacySettings?: UserPrivacySettings;
 }
 
 type PrismaUser = Prisma.UserGetPayload<{}>;
@@ -119,116 +132,89 @@ export class UsersService {
     });
   }
 
-  async getUserProfile(
-    username: string,
-    currentUserId?: string,
-  ) {
-    const user = await this.db.user.findUnique({
-      where: { username },
-    });
-
-    if (!user) {
-      return null;
-    }
-
-    const isOwnProfile = currentUserId === user.id;
-    const canViewPrivateContent = isOwnProfile || user.isAdmin;
-
-    // Get user statistics
-    const stats = await this.getUserStats(user.id, canViewPrivateContent);
-
-    // Get recent content based on privacy settings
-    const visibilityFilter = canViewPrivateContent
-      ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
-      : [Visibility.PUBLIC];
-
-    const [recentCharacters, recentGalleries, recentMedia] = await Promise.all([
-      this.db.character.findMany({
-        where: {
-          ownerId: user.id,
-          visibility: { in: visibilityFilter },
-        },
-        take: 6,
-        orderBy: { updatedAt: "desc" },
-      }),
-      this.db.gallery.findMany({
-        where: {
-          ownerId: user.id,
-          visibility: { in: visibilityFilter },
-        },
-        take: 6,
-        orderBy: { updatedAt: "desc" },
-      }),
-      this.db.media.findMany({
-        where: {
-          ownerId: user.id,
-          imageId: { not: null }, // Only include image media
-        },
-        take: 12,
-        orderBy: { createdAt: "desc" },
-      }),
-    ]);
-
-    // Get featured characters (most recently updated public ones)
-    const featuredCharacters = await this.db.character.findMany({
-      where: {
-        ownerId: user.id,
-        visibility: Visibility.PUBLIC,
-      },
-      take: 3,
-      orderBy: { updatedAt: "desc" },
-    });
-
-    return {
-      user,
-      stats,
-      recentCharacters,
-      recentGalleries,
-      recentMedia,
-      featuredCharacters,
-
-      isOwnProfile,
-      canViewPrivateContent,
-    };
-  }
-
-  async getUserStats(
-    userId: string,
-    includePrivate = false,
-  ): Promise<UserStats> {
+  async getUserCharactersCount(userId: string, includePrivate = false) {
     const visibilityFilter = includePrivate
       ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
       : [Visibility.PUBLIC];
 
-    const [charactersCount, galleriesCount, imagesCount] = await Promise.all([
-      this.db.character.count({
-        where: {
-          ownerId: userId,
-          visibility: { in: visibilityFilter },
-        },
-      }),
-      this.db.gallery.count({
-        where: {
-          ownerId: userId,
-          visibility: { in: visibilityFilter },
-        },
-      }),
-      this.db.image.count({
-        where: {
-          uploaderId: userId,
-        },
-      }),
-    ]);
+    return this.db.character.count({
+      where: {
+        ownerId: userId,
+        visibility: { in: visibilityFilter },
+      },
+    });
+  }
 
-    // TODO: Implement views, likes, and follows when those systems are added
-    return {
-      charactersCount,
-      galleriesCount,
-      imagesCount,
-      totalViews: 0,
-      totalLikes: 0,
-      followersCount: 0,
-      followingCount: 0,
-    };
+  async getUserGalleriesCount(userId: string, includePrivate = false) {
+    const visibilityFilter = includePrivate
+      ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
+      : [Visibility.PUBLIC];
+
+    return this.db.gallery.count({
+      where: {
+        ownerId: userId,
+        visibility: { in: visibilityFilter },
+      },
+    });
+  }
+
+  async getUserImagesCount(userId: string) {
+    return this.db.image.count({
+      where: {
+        uploaderId: userId,
+      },
+    });
+  }
+
+  async getUserRecentCharacters(userId: string, includePrivate = false, limit = 6) {
+    const visibilityFilter = includePrivate
+      ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
+      : [Visibility.PUBLIC];
+
+    return this.db.character.findMany({
+      where: {
+        ownerId: userId,
+        visibility: { in: visibilityFilter },
+      },
+      take: limit,
+      orderBy: { updatedAt: "desc" },
+    });
+  }
+
+  async getUserRecentGalleries(userId: string, includePrivate = false, limit = 6) {
+    const visibilityFilter = includePrivate
+      ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
+      : [Visibility.PUBLIC];
+
+    return this.db.gallery.findMany({
+      where: {
+        ownerId: userId,
+        visibility: { in: visibilityFilter },
+      },
+      take: limit,
+      orderBy: { updatedAt: "desc" },
+    });
+  }
+
+  async getUserRecentMedia(userId: string, limit = 12) {
+    return this.db.media.findMany({
+      where: {
+        ownerId: userId,
+        imageId: { not: null }, // Only include image media
+      },
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async getUserFeaturedCharacters(userId: string, limit = 3) {
+    return this.db.character.findMany({
+      where: {
+        ownerId: userId,
+        visibility: Visibility.PUBLIC,
+      },
+      take: limit,
+      orderBy: { updatedAt: "desc" },
+    });
   }
 }
