@@ -12,7 +12,7 @@ import { $Enums, Prisma } from "@chardb/database";
 /**
  * Input data for creating a new trait
  */
-interface CreateTraitServiceInput {
+export interface CreateTraitServiceInput {
   /** Name of the trait (unique within species) */
   name: string;
   /** Type of values this trait can store */
@@ -24,7 +24,7 @@ interface CreateTraitServiceInput {
 /**
  * Input data for updating a trait
  */
-interface UpdateTraitServiceInput {
+export interface UpdateTraitServiceInput {
   /** Name of the trait (unique within species) */
   name?: string;
   /** Type of values this trait can store */
