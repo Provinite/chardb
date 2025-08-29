@@ -125,6 +125,7 @@ describe('CharacterLikesResolver', () => {
     isSellable: false,
     isTradeable: false,
     tags: [],
+    traitValues: [],
     createdAt: new Date(),
     updatedAt: new Date(),
     owner: {

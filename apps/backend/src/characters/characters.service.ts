@@ -6,18 +6,9 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import { Prisma, Visibility } from "@chardb/database";
-import type { Character } from "@chardb/database";
 
-// Service layer interfaces that extend Prisma types to handle tags
-interface CreateCharacterServiceInput extends Omit<Prisma.CharacterCreateInput, 'owner' | 'creator'> {
-  tags?: string[];
-}
-
-interface UpdateCharacterServiceInput extends Prisma.CharacterUpdateInput {
-  tags?: string[];
-}
-
-interface CharacterServiceFilters {
+// Service layer interfaces
+export interface CharacterServiceFilters {
   limit?: number;
   offset?: number;
   search?: string;
@@ -36,10 +27,6 @@ interface CharacterServiceFilters {
   searchFields?: string;
 }
 
-interface UpdateCharacterTraitsServiceInput {
-  traitValues: PrismaJson.CharacterTraitValuesJson;
-}
-
 @Injectable()
 export class CharactersService {
   constructor(
@@ -49,10 +36,9 @@ export class CharactersService {
 
   async create(
     userId: string,
-    input: CreateCharacterServiceInput,
-  ): Promise<Character> {
-    // Extract tags from input since they need special handling
-    const { tags, ...characterData } = input;
+    input: { characterData: Omit<Prisma.CharacterCreateInput, 'owner' | 'creator'>; tags?: string[] },
+  ) {
+    const { characterData, tags } = input;
 
     const character = await this.db.character.create({
       data: {
@@ -63,15 +49,6 @@ export class CharactersService {
           connect: { id: userId },
         },
         ...characterData,
-      },
-      include: {
-        owner: true,
-        creator: true,
-        tags_rel: {
-          include: {
-            tag: true,
-          },
-        },
       },
     });
 
@@ -89,8 +66,8 @@ export class CharactersService {
       }
     }
 
-    // Refetch character with tags
-    return this.findOne(character.id, userId);
+    // Return the created character
+    return character;
   }
 
   async findAll(filters: CharacterServiceFilters = {}, userId?: string) {
@@ -170,26 +147,6 @@ export class CharactersService {
     const [characters, total] = await Promise.all([
       this.db.character.findMany({
         where,
-        include: {
-          owner: true,
-          creator: true,
-          mainMedia: {
-            include: {
-              image: true,
-              textContent: true,
-            },
-          },
-          tags_rel: {
-            include: {
-              tag: true,
-            },
-          },
-          _count: {
-            select: {
-              media: true,
-            },
-          },
-        },
         orderBy: this.buildOrderBy(sortBy, sortOrder),
         take: limit,
         skip: offset,
@@ -198,37 +155,15 @@ export class CharactersService {
     ]);
 
     return {
-      characters: characters.map((character) =>
-        this.transformCharacter(character),
-      ),
+      characters,
       total,
       hasMore: offset + limit < total,
     };
   }
 
-  async findOne(id: string, userId?: string): Promise<Character> {
+  async findOne(id: string, userId?: string) {
     const character = await this.db.character.findUnique({
       where: { id },
-      include: {
-        owner: true,
-        creator: true,
-        mainMedia: {
-          include: {
-            image: true,
-            textContent: true,
-          },
-        },
-        tags_rel: {
-          include: {
-            tag: true,
-          },
-        },
-        _count: {
-          select: {
-            media: true,
-          },
-        },
-      },
     });
 
     if (!character) {
@@ -242,23 +177,15 @@ export class CharactersService {
       }
     }
 
-    return this.transformCharacter(character);
+    return character;
   }
 
-  private transformCharacter(character: any) {
-    return {
-      ...character,
-      customFields: character.customFields
-        ? JSON.stringify(character.customFields)
-        : null,
-    };
-  }
 
   async update(
     id: string,
     userId: string,
-    input: UpdateCharacterServiceInput,
-  ): Promise<Character> {
+    input: { characterData: Prisma.CharacterUpdateInput; tags?: string[] },
+  ) {
     const character = await this.findOne(id, userId);
 
     // Check ownership
@@ -266,21 +193,11 @@ export class CharactersService {
       throw new ForbiddenException("You can only edit your own characters");
     }
 
-    // Extract tags from input since they need special handling
-    const { tags, ...characterData } = input;
+    const { characterData, tags } = input;
 
     const updatedCharacter = await this.db.character.update({
       where: { id },
       data: characterData,
-      include: {
-        owner: true,
-        creator: true,
-        tags_rel: {
-          include: {
-            tag: true,
-          },
-        },
-      },
     });
 
     // Handle tags if provided
@@ -305,8 +222,8 @@ export class CharactersService {
       }
     }
 
-    // Refetch character with updated tags
-    return this.findOne(id, userId);
+    // Return the updated character
+    return updatedCharacter;
   }
 
   async remove(id: string, userId: string): Promise<boolean> {
@@ -328,7 +245,7 @@ export class CharactersService {
     id: string,
     currentOwnerId: string,
     newOwnerId: string,
-  ): Promise<Character> {
+  ) {
     const character = await this.findOne(id, currentOwnerId);
 
     // Check ownership
@@ -351,25 +268,22 @@ export class CharactersService {
         ownerId: newOwnerId,
         // Keep original creator
       },
-      include: {
-        owner: true,
-        creator: true,
-        tags_rel: {
-          include: {
-            tag: true,
-          },
-        },
-      },
     });
-    return this.transformCharacter(transferredCharacter);
+    return transferredCharacter;
   }
 
   async addTags(
     characterId: string,
     userId: string,
     tagNames: string[],
-  ): Promise<Character> {
-    const character = await this.findOne(characterId, userId);
+  ) {
+    const character = await this.db.character.findUnique({
+      where: { id: characterId },
+    });
+
+    if (!character) {
+      throw new NotFoundException("Character not found");
+    }
 
     // Check ownership
     if (character.ownerId !== userId) {
@@ -397,15 +311,21 @@ export class CharactersService {
       });
     }
 
-    return this.findOne(characterId, userId);
+    return character;
   }
 
   async removeTags(
     characterId: string,
     userId: string,
     tagNames: string[],
-  ): Promise<Character> {
-    const character = await this.findOne(characterId, userId);
+  ) {
+    const character = await this.db.character.findUnique({
+      where: { id: characterId },
+    });
+
+    if (!character) {
+      throw new NotFoundException("Character not found");
+    }
 
     // Check ownership
     if (character.ownerId !== userId) {
@@ -424,7 +344,7 @@ export class CharactersService {
       },
     });
 
-    return this.findOne(characterId, userId);
+    return character;
   }
 
   /**
@@ -440,8 +360,14 @@ export class CharactersService {
     characterId: string,
     userId: string,
     mediaId?: string,
-  ): Promise<Character> {
-    const character = await this.findOne(characterId, userId);
+  ) {
+    const character = await this.db.character.findUnique({
+      where: { id: characterId },
+    });
+
+    if (!character) {
+      throw new NotFoundException("Character not found");
+    }
 
     // Check ownership
     if (character.ownerId !== userId) {
@@ -469,24 +395,9 @@ export class CharactersService {
     const updatedCharacter = await this.db.character.update({
       where: { id: characterId },
       data: { mainMediaId: mediaId },
-      include: {
-        owner: true,
-        creator: true,
-        mainMedia: {
-          include: {
-            image: true,
-            textContent: true,
-          },
-        },
-        tags_rel: {
-          include: {
-            tag: true,
-          },
-        },
-      },
     });
 
-    return this.transformCharacter(updatedCharacter);
+    return updatedCharacter;
   }
 
   private buildSearchConditions(search: string, searchFields: string) {
@@ -530,7 +441,7 @@ export class CharactersService {
   /** Update character trait values */
   async updateTraits(
     id: string,
-    updateData: UpdateCharacterTraitsServiceInput,
+    updateData: { traitValues: PrismaJson.CharacterTraitValuesJson },
     userId: string,
   ) {
     // First verify user owns or created this character
@@ -555,31 +466,16 @@ export class CharactersService {
       data: {
         traitValues: updateData.traitValues,
       },
-      include: {
-        owner: true,
-        creator: true,
-        mainMedia: true,
-        tags_rel: {
-          include: {
-            tag: true,
-          },
-        },
-        _count: {
-          select: {
-            media: true,
-          },
-        },
-      },
     });
   }
 
-  async getLikesCount(characterId: string): Promise<number> {
+  async getLikesCount(characterId: string) {
     return this.db.like.count({
       where: { characterId },
     });
   }
 
-  async hasUserLiked(characterId: string, userId: string): Promise<boolean> {
+  async hasUserLiked(characterId: string, userId: string) {
     const like = await this.db.like.findUnique({
       where: {
         userId_characterId: {
@@ -590,4 +486,5 @@ export class CharactersService {
     });
     return !!like;
   }
+
 }

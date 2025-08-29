@@ -103,4 +103,17 @@ export class TagsService {
     return tags;
   }
 
+  /**
+   * Get display names of tags associated with a character
+   * @param characterId ID of the character
+   * @returns Array of tag display names
+   */
+  async getCharacterTags(characterId: string) {
+    const characterTags = await this.db.characterTag.findMany({
+      where: { characterId },
+      include: { tag: true },
+    });
+    return characterTags.map((ct) => ct.tag.displayName);
+  }
+
 }

@@ -7,7 +7,7 @@ import {
   UpdateCharacterTraitsInput,
   CharacterTraitValueInput,
 } from "../dto/character-trait.dto";
-import { Character } from "../entities/character.entity";
+import { Character, CharacterConnection } from "../entities/character.entity";
 import { CharacterTraitValue } from "../../shared/types/character-trait.types";
 
 /**
@@ -140,5 +140,20 @@ export function mapPrismaCharacterToGraphQL(
       : [],
     createdAt: prismaCharacter.createdAt,
     updatedAt: prismaCharacter.updatedAt,
+  };
+}
+
+/**
+ * Maps service connection result to GraphQL connection
+ */
+export function mapPrismaCharacterConnectionToGraphQL(serviceResult: {
+  characters: PrismaCharacter[];
+  total: number;
+  hasMore: boolean;
+}): CharacterConnection {
+  return {
+    characters: serviceResult.characters.map(mapPrismaCharacterToGraphQL),
+    total: serviceResult.total,
+    hasMore: serviceResult.hasMore,
   };
 }

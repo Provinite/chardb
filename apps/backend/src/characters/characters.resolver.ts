@@ -12,14 +12,16 @@ import {
 import { UseGuards, ForbiddenException } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { OptionalJwtAuthGuard } from "../auth/guards/optional-jwt-auth.guard";
-import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { CurrentUser, CurrentUserType } from "../auth/decorators/current-user.decorator";
 import { CharactersService } from "./characters.service";
+import { TagsService } from "../tags/tags.service";
 import {
   Character as CharacterEntity,
   CharacterConnection,
 } from "./entities/character.entity";
 import { Image } from "../images/entities/image.entity";
 import { ImagesService } from "../images/images.service";
+import { User } from "../users/entities/user.entity";
 import type { Prisma } from "@chardb/database";
 import {
   CreateCharacterInput,
@@ -35,18 +37,16 @@ import {
   mapUpdateCharacterInputToService,
   mapUpdateCharacterTraitsInputToService,
   mapPrismaCharacterToGraphQL,
+  mapPrismaCharacterConnectionToGraphQL,
 } from "./utils/character-resolver-mappers";
 
-// Use Prisma's generated types for Character with various relation combinations
-type CharacterWithTags = Prisma.CharacterGetPayload<{
-  include: { tags_rel: { include: { tag: true } } };
-}>;
 
 @Resolver(() => CharacterEntity)
 export class CharactersResolver {
   constructor(
     private readonly charactersService: CharactersService,
     private readonly imagesService: ImagesService,
+    private readonly tagsService: TagsService,
   ) {}
 
   @Mutation(() => CharacterEntity)
@@ -54,9 +54,10 @@ export class CharactersResolver {
   async createCharacter(
     @Args("input") input: CreateCharacterInput,
     @CurrentUser() user: any,
-  ): Promise<any> {
-    const { characterData, tags } = mapCreateCharacterInputToService(input);
-    return this.charactersService.create(user.id, { ...characterData, tags });
+  ) {
+    const serviceInput = mapCreateCharacterInputToService(input);
+    const character = await this.charactersService.create(user.id, serviceInput);
+    return mapPrismaCharacterToGraphQL(character);
   }
 
   @Query(() => CharacterConnection)
@@ -64,8 +65,9 @@ export class CharactersResolver {
   async characters(
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
     @CurrentUser() user?: any,
-  ): Promise<any> {
-    return this.charactersService.findAll(filters, user?.id);
+  ) {
+    const result = await this.charactersService.findAll(filters, user?.id);
+    return mapPrismaCharacterConnectionToGraphQL(result);
   }
 
   @Query(() => CharacterEntity)
@@ -84,11 +86,9 @@ export class CharactersResolver {
     @Args("input") input: UpdateCharacterInput,
     @CurrentUser() user: any,
   ): Promise<any> {
-    const { characterData, tags } = mapUpdateCharacterInputToService(input);
-    return this.charactersService.update(id, user.id, {
-      ...characterData,
-      tags,
-    });
+    const serviceInput = mapUpdateCharacterInputToService(input);
+    const character = await this.charactersService.update(id, user.id, serviceInput);
+    return mapPrismaCharacterToGraphQL(character);
   }
 
   @Mutation(() => Boolean)
@@ -152,7 +152,8 @@ export class CharactersResolver {
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
   ): Promise<any> {
     const userFilters = { ...filters, ownerId: user.id };
-    return this.charactersService.findAll(userFilters, user.id);
+    const result = await this.charactersService.findAll(userFilters, user.id);
+    return mapPrismaCharacterConnectionToGraphQL(result);
   }
 
   // Query for characters by specific user
@@ -164,32 +165,28 @@ export class CharactersResolver {
     @CurrentUser() user?: any,
   ): Promise<any> {
     const userFilters = { ...filters, ownerId: userId };
-    return this.charactersService.findAll(userFilters, user?.id);
+    const result = await this.charactersService.findAll(userFilters, user?.id);
+    return mapPrismaCharacterConnectionToGraphQL(result);
   }
 
   // Field resolver to return displayName values for tags string array
   @ResolveField("tags", () => [String])
   async resolveTagsField(
-    @Parent() character: CharacterWithTags,
+    @Parent() character: CharacterEntity,
   ): Promise<string[]> {
-    if (!character.tags_rel) {
-      return [];
-    }
-
-    // Return displayName values from the relational tags
-    return character.tags_rel.map((ct) => ct.tag.displayName);
+    return this.tagsService.getCharacterTags(character.id);
   }
 
   @ResolveField("likesCount", () => Int)
-  async resolveLikesCountField(@Parent() character: any): Promise<number> {
+  async resolveLikesCountField(@Parent() character: CharacterEntity): Promise<number> {
     const count = await this.charactersService.getLikesCount(character.id);
     return count;
   }
 
   @ResolveField("userHasLiked", () => Boolean)
   async resolveUserHasLikedField(
-    @Parent() character: any,
-    @CurrentUser() user?: any,
+    @Parent() character: CharacterEntity,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<boolean> {
     if (!user) return false;
     return this.charactersService.hasUserLiked(character.id, user.id);
