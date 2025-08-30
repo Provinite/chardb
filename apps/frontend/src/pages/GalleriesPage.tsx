@@ -1,10 +1,14 @@
-import React, { useState, useCallback } from 'react';
-import { useQuery } from '@apollo/client';
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import { GET_GALLERIES, Gallery, GalleryFiltersInput } from '../graphql/galleries';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState, useCallback } from "react";
+import { useQuery } from "@apollo/client";
+import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import {
+  GET_GALLERIES,
+  Gallery,
+  GalleryFiltersInput,
+} from "../graphql/galleries.graphql";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useAuth } from "../contexts/AuthContext";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -17,7 +21,7 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: ${({ theme }) => theme.spacing.xl};
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     gap: ${({ theme }) => theme.spacing.md};
@@ -42,11 +46,11 @@ const CreateButton = styled.button`
   transition: background-color 0.2s;
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.secondary};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -57,7 +61,7 @@ const SearchSection = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.xl};
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
   }
@@ -75,7 +79,7 @@ const SearchInput = styled.input`
   border: 2px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -92,11 +96,11 @@ const SearchButton = styled.button`
   transition: background-color 0.2s;
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.secondary};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -117,21 +121,25 @@ const VisibilityLabel = styled.span`
 `;
 
 const VisibilityButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'active',
+  shouldForwardProp: (prop) => prop !== "active",
 })<{ active: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 2px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.border};
-  background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.background};
-  color: ${props => props.active ? 'white' : props.theme.colors.text.secondary};
+  border: 2px solid
+    ${(props) =>
+      props.active ? props.theme.colors.primary : props.theme.colors.border};
+  background: ${(props) =>
+    props.active ? props.theme.colors.primary : props.theme.colors.background};
+  color: ${(props) =>
+    props.active ? "white" : props.theme.colors.text.secondary};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -153,12 +161,12 @@ const GalleryCard = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
   transition: all 0.2s;
   cursor: pointer;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -211,24 +219,28 @@ const ImageCount = styled.span`
 `;
 
 const VisibilityBadge = styled.span.withConfig({
-  shouldForwardProp: (prop) => prop !== 'visibility'
+  shouldForwardProp: (prop) => prop !== "visibility",
 })<{ visibility: string }>`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  background: ${props => 
-    props.visibility === 'PUBLIC' ? props.theme.colors.success + '20' :
-    props.visibility === 'UNLISTED' ? props.theme.colors.warning + '20' : props.theme.colors.error + '20'
-  };
-  color: ${props => 
-    props.visibility === 'PUBLIC' ? props.theme.colors.success :
-    props.visibility === 'UNLISTED' ? props.theme.colors.warning : props.theme.colors.error
-  };
+  background: ${(props) =>
+    props.visibility === "PUBLIC"
+      ? props.theme.colors.success + "20"
+      : props.visibility === "UNLISTED"
+        ? props.theme.colors.warning + "20"
+        : props.theme.colors.error + "20"};
+  color: ${(props) =>
+    props.visibility === "PUBLIC"
+      ? props.theme.colors.success
+      : props.visibility === "UNLISTED"
+        ? props.theme.colors.warning
+        : props.theme.colors.error};
 `;
 
 const CharacterBadge = styled.span`
-  background: ${({ theme }) => theme.colors.primary + '20'};
+  background: ${({ theme }) => theme.colors.primary + "20"};
   color: ${({ theme }) => theme.colors.primary};
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
@@ -247,16 +259,16 @@ const LoadMoreButton = styled.button`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   cursor: pointer;
   transition: background-color 0.2s;
-  
+
   &:hover:not(:disabled) {
     background: ${({ theme }) => theme.colors.secondary};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
   }
-  
+
   &:disabled {
     background: ${({ theme }) => theme.colors.text.muted};
     cursor: not-allowed;
@@ -272,7 +284,7 @@ const ErrorContainer = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xl};
   color: ${({ theme }) => theme.colors.error};
-  
+
   h3 {
     margin-bottom: ${({ theme }) => theme.spacing.sm};
   }
@@ -286,15 +298,16 @@ const LoadingContainer = styled.div`
 
 const EmptyState = styled.div`
   text-align: center;
-  padding: ${({ theme }) => theme.spacing.xxl} ${({ theme }) => theme.spacing.xl};
+  padding: ${({ theme }) => theme.spacing.xxl}
+    ${({ theme }) => theme.spacing.xl};
   color: ${({ theme }) => theme.colors.text.muted};
-  
+
   h3 {
     font-size: ${({ theme }) => theme.typography.fontSize.xxl};
     margin-bottom: ${({ theme }) => theme.spacing.sm};
     color: ${({ theme }) => theme.colors.text.secondary};
   }
-  
+
   p {
     font-size: ${({ theme }) => theme.typography.fontSize.md};
     line-height: 1.5;
@@ -308,22 +321,28 @@ export const GalleriesPage: React.FC = () => {
     limit: 12,
     offset: 0,
   });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [visibilityFilter, setVisibilityFilter] = useState<'ALL' | 'PUBLIC' | 'UNLISTED' | 'PRIVATE'>('ALL');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [visibilityFilter, setVisibilityFilter] = useState<
+    "ALL" | "PUBLIC" | "UNLISTED" | "PRIVATE"
+  >("ALL");
 
   const { data, loading, error, fetchMore } = useQuery(GET_GALLERIES, {
     variables: { filters },
     notifyOnNetworkStatusChange: true,
   });
 
-  const handleSearch = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    setFilters(prev => ({
-      ...prev,
-      offset: 0,
-      visibility: visibilityFilter === 'ALL' ? undefined : visibilityFilter as any,
-    }));
-  }, [searchTerm, visibilityFilter]);
+  const handleSearch = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      setFilters((prev) => ({
+        ...prev,
+        offset: 0,
+        visibility:
+          visibilityFilter === "ALL" ? undefined : (visibilityFilter as any),
+      }));
+    },
+    [searchTerm, visibilityFilter],
+  );
 
   const handleLoadMore = useCallback(() => {
     if (data?.galleries.hasMore) {
@@ -350,22 +369,28 @@ export const GalleriesPage: React.FC = () => {
     }
   }, [data, filters, fetchMore]);
 
-  const handleGalleryClick = useCallback((galleryId: string) => {
-    navigate(`/gallery/${galleryId}`);
-  }, [navigate]);
-  
-  const handleGalleryKeyDown = useCallback((e: React.KeyboardEvent, galleryId: string) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleGalleryClick(galleryId);
-    }
-  }, [handleGalleryClick]);
+  const handleGalleryClick = useCallback(
+    (galleryId: string) => {
+      navigate(`/gallery/${galleryId}`);
+    },
+    [navigate],
+  );
+
+  const handleGalleryKeyDown = useCallback(
+    (e: React.KeyboardEvent, galleryId: string) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleGalleryClick(galleryId);
+      }
+    },
+    [handleGalleryClick],
+  );
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -385,7 +410,7 @@ export const GalleriesPage: React.FC = () => {
       <Header>
         <Title>Browse Galleries</Title>
         {user && (
-          <CreateButton onClick={() => navigate('/gallery/create')}>
+          <CreateButton onClick={() => navigate("/gallery/create")}>
             Create Gallery
           </CreateButton>
         )}
@@ -399,15 +424,13 @@ export const GalleriesPage: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <SearchButton type="submit">
-            Search
-          </SearchButton>
+          <SearchButton type="submit">Search</SearchButton>
         </SearchForm>
       </SearchSection>
 
       <VisibilityFilter>
         <VisibilityLabel>Visibility:</VisibilityLabel>
-        {(['ALL', 'PUBLIC', 'UNLISTED'] as const).map((visibility) => (
+        {(["ALL", "PUBLIC", "UNLISTED"] as const).map((visibility) => (
           <VisibilityButton
             key={visibility}
             active={visibilityFilter === visibility}
@@ -427,14 +450,18 @@ export const GalleriesPage: React.FC = () => {
         <>
           {data?.galleries && (
             <ResultsCount>
-              Showing {data.galleries.galleries.length} of {data.galleries.total} galleries
+              Showing {data.galleries.galleries.length} of{" "}
+              {data.galleries.total} galleries
             </ResultsCount>
           )}
 
           {data?.galleries.galleries.length === 0 ? (
             <EmptyState>
               <h3>No galleries found</h3>
-              <p>Try adjusting your search terms or filters to find what you're looking for.</p>
+              <p>
+                Try adjusting your search terms or filters to find what you're
+                looking for.
+              </p>
             </EmptyState>
           ) : (
             <GalleryGrid>
@@ -449,9 +476,11 @@ export const GalleriesPage: React.FC = () => {
                 >
                   <GalleryName>{gallery.name}</GalleryName>
                   {gallery.description && (
-                    <GalleryDescription>{gallery.description}</GalleryDescription>
+                    <GalleryDescription>
+                      {gallery.description}
+                    </GalleryDescription>
                   )}
-                  
+
                   <GalleryMeta>
                     <OwnerInfo>
                       by {gallery.owner.displayName || gallery.owner.username}
@@ -462,7 +491,9 @@ export const GalleriesPage: React.FC = () => {
                         <ImageCount>{gallery._count.media} media</ImageCount>
                       )}
                       {gallery.character && (
-                        <CharacterBadge>{gallery.character.name}</CharacterBadge>
+                        <CharacterBadge>
+                          {gallery.character.name}
+                        </CharacterBadge>
                       )}
                       <VisibilityBadge visibility={gallery.visibility}>
                         {gallery.visibility}
@@ -476,7 +507,7 @@ export const GalleriesPage: React.FC = () => {
 
           {data?.galleries.hasMore && (
             <LoadMoreButton onClick={handleLoadMore} disabled={loading}>
-              {loading ? 'Loading...' : 'Load More Galleries'}
+              {loading ? "Loading..." : "Load More Galleries"}
             </LoadMoreButton>
           )}
         </>

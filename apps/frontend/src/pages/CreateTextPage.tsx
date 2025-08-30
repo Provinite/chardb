@@ -7,9 +7,14 @@ import { useMutation } from "@apollo/client";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
-import { CREATE_TEXT_MEDIA, GET_CHARACTER_MEDIA, GET_MY_MEDIA, GET_MEDIA } from "../graphql/media";
-import { useGetCharacterQuery } from "../graphql/characters";
-import { useGetMyGalleriesQuery } from "../graphql/galleries";
+import {
+  CREATE_TEXT_MEDIA,
+  GET_CHARACTER_MEDIA,
+  GET_MY_MEDIA,
+  GET_MEDIA,
+} from "../graphql/media.graphql";
+import { useGetCharacterQuery } from "../graphql/characters.graphql";
+import { useGetMyGalleriesQuery } from "../graphql/galleries.graphql";
 import { TextFormatting, Visibility } from "../generated/graphql";
 // import { TextEditor } from '../components/TextEditor';
 import { useAuth } from "../contexts/AuthContext";

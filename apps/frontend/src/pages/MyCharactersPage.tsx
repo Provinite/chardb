@@ -1,11 +1,11 @@
-import React from 'react';
-import { useQuery } from '@apollo/client';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { CharacterGrid } from '../components/CharacterGrid';
-import { useAuth } from '../contexts/AuthContext';
-import { GET_MY_CHARACTERS } from '../graphql/characters';
+import React from "react";
+import { useQuery } from "@apollo/client";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { CharacterGrid } from "../components/CharacterGrid";
+import { useAuth } from "../contexts/AuthContext";
+import { GET_MY_CHARACTERS } from "../graphql/characters.graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -28,7 +28,6 @@ const Subtitle = styled.p`
   color: ${({ theme }) => theme.colors.text.secondary};
   margin: 0;
 `;
-
 
 const EmptyState = styled.div`
   text-align: center;
@@ -85,7 +84,6 @@ const ErrorContainer = styled.div`
   color: ${({ theme }) => theme.colors.error};
 `;
 
-
 export const MyCharactersPage: React.FC = () => {
   const { user } = useAuth();
 
@@ -138,14 +136,15 @@ export const MyCharactersPage: React.FC = () => {
           <EmptyIcon>🎭</EmptyIcon>
           <EmptyTitle>No characters yet</EmptyTitle>
           <EmptyDescription>
-            You haven't created any characters yet. Create your first character to get started!
+            You haven't created any characters yet. Create your first character
+            to get started!
           </EmptyDescription>
           <CreateButton to="/character/create">
             Create Your First Character
           </CreateButton>
         </EmptyState>
       ) : (
-        <CharacterGrid 
+        <CharacterGrid
           characters={myCharacters}
           showOwner={false}
           showEditButton={true}

@@ -1,25 +1,25 @@
-import React from 'react';
-import styled from 'styled-components';
-import { Heart } from 'lucide-react';
-import { toast } from 'react-hot-toast';
-import { useMutation, useQuery } from '@apollo/client';
-import { LikeableType } from '../generated/graphql';
-import { TOGGLE_LIKE, GET_LIKE_STATUS } from '../graphql/social';
-import { useAuth } from '../contexts/AuthContext';
+import React from "react";
+import styled from "styled-components";
+import { Heart } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { useMutation, useQuery } from "@apollo/client";
+import { LikeableType } from "../generated/graphql";
+import { TOGGLE_LIKE, GET_LIKE_STATUS } from "../graphql/social.graphql";
+import { useAuth } from "../contexts/AuthContext";
 
 // Helper function to map LikeableType to GraphQL type names
 const getEntityTypeName = (entityType: LikeableType): string => {
   switch (entityType) {
     case LikeableType.Character:
-      return 'Character';
+      return "Character";
     case LikeableType.Gallery:
-      return 'Gallery';
+      return "Gallery";
     case LikeableType.Image:
-      return 'Image';
+      return "Image";
     case LikeableType.Comment:
-      return 'Comment';
+      return "Comment";
     default:
-      return 'Unknown';
+      return "Unknown";
   }
 };
 
@@ -28,44 +28,50 @@ interface LikeButtonProps {
   entityId: string;
   className?: string;
   showCount?: boolean;
-  size?: 'small' | 'medium' | 'large';
+  size?: "small" | "medium" | "large";
 }
 
 const ButtonContainer = styled.button<{ $isLiked: boolean; $size: string }>`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: ${props => {
+  padding: ${(props) => {
     switch (props.$size) {
-      case 'small': return '0.25rem 0.5rem';
-      case 'large': return '0.75rem 1rem';
-      default: return '0.5rem 0.75rem';
+      case "small":
+        return "0.25rem 0.5rem";
+      case "large":
+        return "0.75rem 1rem";
+      default:
+        return "0.5rem 0.75rem";
     }
   }};
-  border: 1px solid ${props => props.$isLiked 
-    ? props.theme.colors.primary 
-    : props.theme.colors.border};
-  border-radius: ${props => props.theme.borderRadius.md};
-  background: ${props => props.$isLiked 
-    ? props.theme.colors.primary + '10' 
-    : 'transparent'};
-  color: ${props => props.$isLiked 
-    ? props.theme.colors.primary 
-    : props.theme.colors.text.secondary};
+  border: 1px solid
+    ${(props) =>
+      props.$isLiked ? props.theme.colors.primary : props.theme.colors.border};
+  border-radius: ${(props) => props.theme.borderRadius.md};
+  background: ${(props) =>
+    props.$isLiked ? props.theme.colors.primary + "10" : "transparent"};
+  color: ${(props) =>
+    props.$isLiked
+      ? props.theme.colors.primary
+      : props.theme.colors.text.secondary};
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  font-size: ${props => {
+  font-size: ${(props) => {
     switch (props.$size) {
-      case 'small': return '0.875rem';
-      case 'large': return '1.125rem';
-      default: return '1rem';
+      case "small":
+        return "0.875rem";
+      case "large":
+        return "1.125rem";
+      default:
+        return "1rem";
     }
   }};
 
   &:hover {
-    border-color: ${props => props.theme.colors.primary};
-    background: ${props => props.theme.colors.primary + '15'};
-    color: ${props => props.theme.colors.primary};
+    border-color: ${(props) => props.theme.colors.primary};
+    background: ${(props) => props.theme.colors.primary + "15"};
+    color: ${(props) => props.theme.colors.primary};
     transform: translateY(-1px);
   }
 
@@ -81,21 +87,27 @@ const ButtonContainer = styled.button<{ $isLiked: boolean; $size: string }>`
 `;
 
 const HeartIcon = styled(Heart)<{ $isLiked: boolean; $size: string }>`
-  width: ${props => {
+  width: ${(props) => {
     switch (props.$size) {
-      case 'small': return '16px';
-      case 'large': return '24px';
-      default: return '20px';
+      case "small":
+        return "16px";
+      case "large":
+        return "24px";
+      default:
+        return "20px";
     }
   }};
-  height: ${props => {
+  height: ${(props) => {
     switch (props.$size) {
-      case 'small': return '16px';
-      case 'large': return '24px';
-      default: return '20px';
+      case "small":
+        return "16px";
+      case "large":
+        return "24px";
+      default:
+        return "20px";
     }
   }};
-  fill: ${props => props.$isLiked ? 'currentColor' : 'none'};
+  fill: ${(props) => (props.$isLiked ? "currentColor" : "none")};
   transition: all 0.2s ease-in-out;
 `;
 
@@ -109,15 +121,18 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
   entityId,
   className,
   showCount = true,
-  size = 'medium'
+  size = "medium",
 }) => {
   const { user } = useAuth();
   const isAuthenticated = !!user;
 
-  const { data: likeStatusData, loading: statusLoading } = useQuery(GET_LIKE_STATUS, {
-    variables: { entityType, entityId },
-    skip: !isAuthenticated,
-  });
+  const { data: likeStatusData, loading: statusLoading } = useQuery(
+    GET_LIKE_STATUS,
+    {
+      variables: { entityType, entityId },
+      skip: !isAuthenticated,
+    },
+  );
 
   // Get current state for optimistic response
   const currentIsLiked = likeStatusData?.likeStatus.isLiked ?? false;
@@ -135,7 +150,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
         variables: { entityType, entityId },
         data: {
           likeStatus: {
-            __typename: 'LikeStatus',
+            __typename: "LikeStatus",
             isLiked,
             likesCount,
           },
@@ -144,7 +159,10 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 
       // Update any cached entities that have like fields
       cache.modify({
-        id: cache.identify({ __typename: getEntityTypeName(entityType), id: entityId }),
+        id: cache.identify({
+          __typename: getEntityTypeName(entityType),
+          id: entityId,
+        }),
         fields: {
           likesCount: () => likesCount,
           userHasLiked: () => isLiked,
@@ -153,22 +171,24 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
     },
     optimisticResponse: {
       toggleLike: {
-        __typename: 'LikeResult',
+        __typename: "LikeResult",
         entityId,
         entityType,
         isLiked: !currentIsLiked,
-        likesCount: currentIsLiked ? currentLikesCount - 1 : currentLikesCount + 1,
+        likesCount: currentIsLiked
+          ? currentLikesCount - 1
+          : currentLikesCount + 1,
       },
     },
     onCompleted: (data: any) => {
       if (data.toggleLike.isLiked) {
-        toast.success('Added to likes!', { duration: 2000 });
+        toast.success("Added to likes!", { duration: 2000 });
       }
     },
     onError: (error: any) => {
-      console.error('Like toggle error:', error);
-      toast.error('Failed to update like. Please try again.');
-    }
+      console.error("Like toggle error:", error);
+      toast.error("Failed to update like. Please try again.");
+    },
   });
 
   // Use current state (Apollo handles optimistic updates automatically)
@@ -178,7 +198,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 
   const handleClick = async () => {
     if (!isAuthenticated) {
-      toast.error('Please log in to like content');
+      toast.error("Please log in to like content");
       return;
     }
 
@@ -187,8 +207,8 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
     try {
       await toggleLike({
         variables: {
-          input: { entityType, entityId }
-        }
+          input: { entityType, entityId },
+        },
       });
     } catch (error) {
       // Error handling is done in onError callback
@@ -207,7 +227,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
       disabled={isLoading || !isAuthenticated}
       className={className}
       type="button"
-      aria-label={isLiked ? 'Unlike' : 'Like'}
+      aria-label={isLiked ? "Unlike" : "Like"}
     >
       <HeartIcon $isLiked={isLiked} $size={size} />
       {showCount && <Count>{likesCount}</Count>}

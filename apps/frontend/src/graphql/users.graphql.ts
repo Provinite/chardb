@@ -26,7 +26,10 @@ export const GET_USER_PROFILE = gql`
       recentCharacters {
         id
         name
-        species
+        species {
+          id
+          name
+        }
         description
         createdAt
         updatedAt
@@ -75,7 +78,10 @@ export const GET_USER_PROFILE = gql`
       featuredCharacters {
         id
         name
-        species
+        species {
+          id
+          name
+        }
         description
         createdAt
         updatedAt

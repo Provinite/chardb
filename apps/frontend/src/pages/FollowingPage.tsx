@@ -1,10 +1,10 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@apollo/client';
-import styled from 'styled-components';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { FollowButton } from '../components/FollowButton';
-import { GET_FOLLOWING } from '../graphql/social';
+import React from "react";
+import { useParams, Link } from "react-router-dom";
+import { useQuery } from "@apollo/client";
+import styled from "styled-components";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { FollowButton } from "../components/FollowButton";
+import { GET_FOLLOWING } from "../graphql/social.graphql";
 
 const Container = styled.div`
   max-width: 800px;
@@ -36,7 +36,7 @@ const BackButton = styled(Link)`
   }
 
   &::before {
-    content: '←';
+    content: "←";
     font-weight: bold;
   }
 `;
@@ -193,7 +193,7 @@ export const FollowingPage: React.FC = () => {
       <Container>
         <ErrorContainer>
           <h3>Error loading following</h3>
-          <p>{error?.message || 'User not found'}</p>
+          <p>{error?.message || "User not found"}</p>
         </ErrorContainer>
       </Container>
     );
@@ -201,13 +201,14 @@ export const FollowingPage: React.FC = () => {
 
   return (
     <Container>
-      <BackButton to={`/user/${username}`}>
-        Back to Profile
-      </BackButton>
+      <BackButton to={`/user/${username}`}>Back to Profile</BackButton>
 
       <Header>
         <Title>{user.displayName || user.username} Following</Title>
-        <Subtitle>{following.length} {following.length === 1 ? 'user' : 'users'} followed</Subtitle>
+        <Subtitle>
+          {following.length} {following.length === 1 ? "user" : "users"}{" "}
+          followed
+        </Subtitle>
       </Header>
 
       {following.length === 0 ? (
@@ -215,7 +216,8 @@ export const FollowingPage: React.FC = () => {
           <EmptyIcon>👤</EmptyIcon>
           <EmptyTitle>Not following anyone yet</EmptyTitle>
           <EmptyDescription>
-            This user hasn't followed anyone yet. Discover interesting creators to follow!
+            This user hasn't followed anyone yet. Discover interesting creators
+            to follow!
           </EmptyDescription>
         </EmptyState>
       ) : (
@@ -224,18 +226,27 @@ export const FollowingPage: React.FC = () => {
             <UserCard key={followedUser.id}>
               <UserAvatar>
                 {followedUser.avatarUrl ? (
-                  <img 
-                    src={followedUser.avatarUrl} 
+                  <img
+                    src={followedUser.avatarUrl}
                     alt={followedUser.displayName || followedUser.username}
-                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
                   />
                 ) : (
-                  (followedUser.displayName?.[0] || followedUser.username[0]).toUpperCase()
+                  (
+                    followedUser.displayName?.[0] || followedUser.username[0]
+                  ).toUpperCase()
                 )}
               </UserAvatar>
-              
+
               <UserInfo>
-                <UserName>{followedUser.displayName || followedUser.username}</UserName>
+                <UserName>
+                  {followedUser.displayName || followedUser.username}
+                </UserName>
                 <Username to={`/user/${followedUser.username}`}>
                   @{followedUser.username}
                 </Username>
@@ -243,9 +254,9 @@ export const FollowingPage: React.FC = () => {
               </UserInfo>
 
               <UserActions>
-                <FollowButton 
-                  userId={followedUser.id} 
-                  showCount={false} 
+                <FollowButton
+                  userId={followedUser.id}
+                  showCount={false}
                   size="sm"
                   variant="compact"
                 />

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { useMutation } from '@apollo/client';
-import styled from 'styled-components';
-import { Button } from '@chardb/ui';
-import { useAuth } from '../contexts/AuthContext';
-import { CREATE_COMMENT } from '../graphql/social';
-import { CommentableType } from '../generated/graphql';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { useMutation } from "@apollo/client";
+import styled from "styled-components";
+import { Button } from "@chardb/ui";
+import { useAuth } from "../contexts/AuthContext";
+import { CREATE_COMMENT } from "../graphql/social.graphql";
+import { CommentableType } from "../generated/graphql";
+import toast from "react-hot-toast";
 
 const FormContainer = styled.div`
   background: ${({ theme }) => theme.colors.surface};
@@ -78,12 +78,11 @@ const FormActions = styled.div`
 `;
 
 const CharacterCount = styled.span.withConfig({
-  shouldForwardProp: (prop) => prop !== 'isOverLimit'
+  shouldForwardProp: (prop) => prop !== "isOverLimit",
 })<{ isOverLimit: boolean }>`
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  color: ${({ theme, isOverLimit }) => 
-    isOverLimit ? theme.colors.error : theme.colors.text.muted
-  };
+  color: ${({ theme, isOverLimit }) =>
+    isOverLimit ? theme.colors.error : theme.colors.text.muted};
   margin-right: auto;
   padding-top: ${({ theme }) => theme.spacing.xs};
 `;
@@ -124,13 +123,15 @@ export const CommentForm: React.FC<CommentFormProps> = ({
   compact = false,
 }) => {
   const { user } = useAuth();
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [createComment] = useMutation(CREATE_COMMENT, {
     onCompleted: () => {
-      toast.success(parentId ? 'Reply posted successfully' : 'Comment posted successfully');
-      setContent('');
+      toast.success(
+        parentId ? "Reply posted successfully" : "Comment posted successfully",
+      );
+      setContent("");
       setIsSubmitting(false);
       onCommentAdded?.();
     },
@@ -142,14 +143,16 @@ export const CommentForm: React.FC<CommentFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!content.trim()) {
-      toast.error('Comment cannot be empty');
+      toast.error("Comment cannot be empty");
       return;
     }
 
     if (content.length > MAX_COMMENT_LENGTH) {
-      toast.error(`Comment is too long. Maximum length is ${MAX_COMMENT_LENGTH} characters.`);
+      toast.error(
+        `Comment is too long. Maximum length is ${MAX_COMMENT_LENGTH} characters.`,
+      );
       return;
     }
 
@@ -172,7 +175,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({
   };
 
   const handleCancel = () => {
-    setContent('');
+    setContent("");
     onCancel?.();
   };
 
@@ -182,9 +185,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({
   if (!user) {
     return (
       <LoginPrompt>
-        <LoginPromptText>
-          Please log in to leave a comment
-        </LoginPromptText>
+        <LoginPromptText>Please log in to leave a comment</LoginPromptText>
         <Button as="a" href="/login" variant="primary" size="sm">
           Log In
         </Button>
@@ -198,17 +199,22 @@ export const CommentForm: React.FC<CommentFormProps> = ({
         <FormHeader>
           <UserAvatar>
             {user.avatarUrl ? (
-              <img 
-                src={user.avatarUrl} 
+              <img
+                src={user.avatarUrl}
                 alt={user.displayName || user.username}
-                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                }}
               />
             ) : (
               (user.displayName?.[0] || user.username[0]).toUpperCase()
             )}
           </UserAvatar>
           <FormTitle>
-            {parentId ? 'Write a reply' : 'Leave a comment'}
+            {parentId ? "Write a reply" : "Leave a comment"}
           </FormTitle>
         </FormHeader>
       )}
@@ -221,31 +227,31 @@ export const CommentForm: React.FC<CommentFormProps> = ({
           disabled={isSubmitting}
           maxLength={MAX_COMMENT_LENGTH + 100} // Allow slight over-typing to show error
         />
-        
+
         <FormActions>
           <CharacterCount isOverLimit={isOverLimit}>
             {remainingChars} characters remaining
           </CharacterCount>
-          
+
           {onCancel && (
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
               onClick={handleCancel}
               disabled={isSubmitting}
             >
               Cancel
             </Button>
           )}
-          
-          <Button 
-            type="submit" 
-            variant="primary" 
+
+          <Button
+            type="submit"
+            variant="primary"
             size="sm"
             disabled={isSubmitting || !content.trim() || isOverLimit}
           >
-            {isSubmitting ? 'Posting...' : (parentId ? 'Reply' : 'Comment')}
+            {isSubmitting ? "Posting..." : parentId ? "Reply" : "Comment"}
           </Button>
         </FormActions>
       </Form>

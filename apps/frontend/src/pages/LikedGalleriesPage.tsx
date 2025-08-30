@@ -1,12 +1,12 @@
-import React from 'react';
-import { useQuery } from '@apollo/client';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { useAuth } from '../contexts/AuthContext';
-import { GET_LIKED_GALLERIES } from '../graphql/galleries';
-import { LikeButton } from '../components/LikeButton';
-import { LikeableType } from '../generated/graphql';
+import React from "react";
+import { useQuery } from "@apollo/client";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useAuth } from "../contexts/AuthContext";
+import { GET_LIKED_GALLERIES } from "../graphql/galleries.graphql";
+import { LikeButton } from "../components/LikeButton";
+import { LikeableType } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -42,7 +42,7 @@ const GalleryCard = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   overflow: hidden;
   transition: all 0.2s ease-in-out;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -92,7 +92,7 @@ const CharacterLink = styled(Link)`
   color: ${({ theme }) => theme.colors.primary};
   text-decoration: none;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -229,11 +229,10 @@ export const LikedGalleriesPage: React.FC = () => {
           <EmptyIcon>🖼️</EmptyIcon>
           <EmptyTitle>No liked galleries yet</EmptyTitle>
           <EmptyDescription>
-            Start exploring and liking art galleries you love! Your liked galleries will appear here.
+            Start exploring and liking art galleries you love! Your liked
+            galleries will appear here.
           </EmptyDescription>
-          <ExploreButton to="/galleries">
-            Explore Galleries
-          </ExploreButton>
+          <ExploreButton to="/galleries">Explore Galleries</ExploreButton>
         </EmptyState>
       ) : (
         <Grid>
@@ -244,7 +243,7 @@ export const LikedGalleriesPage: React.FC = () => {
                 {gallery.description && (
                   <GalleryDescription>{gallery.description}</GalleryDescription>
                 )}
-                
+
                 <GalleryMeta>
                   <MetaBadge>{gallery._count?.images || 0} images</MetaBadge>
                   {gallery.character && (
@@ -255,7 +254,7 @@ export const LikedGalleriesPage: React.FC = () => {
                     </MetaBadge>
                   )}
                 </GalleryMeta>
-                
+
                 <CardActions>
                   <ViewButton to={`/gallery/${gallery.id}`}>
                     View Gallery

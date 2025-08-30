@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { useQuery } from '@apollo/client';
-import styled from 'styled-components';
-import { Button } from '@chardb/ui';
-import { useAuth } from '../contexts/AuthContext';
-import { ImageUpload, ImageFile } from '../components/ImageUpload';
-import { GET_MY_GALLERIES } from '../graphql/galleries';
-import { GET_MY_CHARACTERS } from '../graphql/characters';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useQuery } from "@apollo/client";
+import styled from "styled-components";
+import { Button } from "@chardb/ui";
+import { useAuth } from "../contexts/AuthContext";
+import { ImageUpload, ImageFile } from "../components/ImageUpload";
+import { GET_MY_GALLERIES } from "../graphql/galleries.graphql";
+import { GET_MY_CHARACTERS } from "../graphql/characters.graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -18,7 +18,7 @@ const MainLayout = styled.div`
   display: grid;
   grid-template-columns: 1fr 350px;
   gap: ${({ theme }) => theme.spacing.xl};
-  
+
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
     gap: ${({ theme }) => theme.spacing.lg};
@@ -35,7 +35,7 @@ const Sidebar = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
-  
+
   @media (max-width: 1024px) {
     order: -1;
   }
@@ -87,7 +87,6 @@ const SectionTitle = styled.h2`
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
-
 const CheckboxGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -112,7 +111,7 @@ const Input = styled.input`
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   width: 100%;
   box-sizing: border-box;
-  
+
   &[as="textarea"] {
     resize: vertical;
     min-height: 100px;
@@ -134,7 +133,7 @@ const Select = styled.select`
   font-size: ${({ theme }) => theme.typography.fontSize.md};
 `;
 
-const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+const Checkbox = styled.input.attrs({ type: "checkbox" })`
   margin-right: ${({ theme }) => theme.spacing.sm};
 `;
 
@@ -155,7 +154,7 @@ const CharacterCard = styled.div`
   background: ${({ theme }) => theme.colors.surface};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
   transition: all 0.2s ease;
-  
+
   &:hover {
     border-color: ${({ theme }) => `${theme.colors.primary}e6`};
     background: ${({ theme }) => `${theme.colors.surface}f0`};
@@ -199,28 +198,33 @@ const ArtistToggle = styled.div`
 `;
 
 const ArtistToggleButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'active',
+  shouldForwardProp: (prop) => prop !== "active",
 })<{ active: boolean }>`
   flex: 1;
   padding: ${({ theme }) => theme.spacing.sm};
   border: none;
-  background: ${({ theme, active }) => active ? theme.colors.primary : theme.colors.surface};
-  color: ${({ theme, active }) => active ? 'white' : theme.colors.text.primary};
+  background: ${({ theme, active }) =>
+    active ? theme.colors.primary : theme.colors.surface};
+  color: ${({ theme, active }) =>
+    active ? "white" : theme.colors.text.primary};
   cursor: pointer;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   transition: all 0.2s ease;
-  
+
   &:hover {
-    background: ${({ theme, active }) => active ? `${theme.colors.primary}e6` : `${theme.colors.primary}15`};
+    background: ${({ theme, active }) =>
+      active ? `${theme.colors.primary}e6` : `${theme.colors.primary}15`};
   }
-  
+
   &:first-child {
-    border-radius: ${({ theme }) => theme.borderRadius.md} 0 0 ${({ theme }) => theme.borderRadius.md};
+    border-radius: ${({ theme }) => theme.borderRadius.md} 0 0
+      ${({ theme }) => theme.borderRadius.md};
   }
-  
+
   &:last-child {
-    border-radius: 0 ${({ theme }) => theme.borderRadius.md} ${({ theme }) => theme.borderRadius.md} 0;
+    border-radius: 0 ${({ theme }) => theme.borderRadius.md}
+      ${({ theme }) => theme.borderRadius.md} 0;
   }
 `;
 
@@ -276,8 +280,10 @@ const UploadedImageCard = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.md};
@@ -318,12 +324,12 @@ const SuccessNavLinks = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
   justify-content: center;
   flex-wrap: wrap;
-  
+
   a {
     color: ${({ theme }) => theme.colors.primary};
     text-decoration: none;
     font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-    
+
     &:hover {
       text-decoration: underline;
     }
@@ -336,18 +342,18 @@ interface UploadFormData {
   galleryId: string;
   characterId: string;
   isNsfw: boolean;
-  visibility: 'PUBLIC' | 'UNLISTED' | 'PRIVATE';
+  visibility: "PUBLIC" | "UNLISTED" | "PRIVATE";
   // Privacy settings
-  authorizedViewers: 'full-size' | 'watermarked' | 'no-access';
-  publicViewers: 'full-size' | 'watermarked' | 'no-access';
-  watermark: 'url-fileside' | 'url-only' | 'none';
+  authorizedViewers: "full-size" | "watermarked" | "no-access";
+  publicViewers: "full-size" | "watermarked" | "no-access";
+  watermark: "url-fileside" | "url-only" | "none";
   // NSFW categories
   nsfwNudity: boolean;
   nsfwGore: boolean;
   nsfwSensitive: boolean;
   sensitiveContentDescription: string;
   // Artist credits
-  artistType: 'onsite' | 'offsite';
+  artistType: "onsite" | "offsite";
   artistLink: string;
   artistLabel: string;
 }
@@ -366,121 +372,138 @@ export const UploadImagePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [formData, setFormData] = useState<UploadFormData>({
-    description: '',
-    altText: '',
-    galleryId: '',
-    characterId: '',
+    description: "",
+    altText: "",
+    galleryId: "",
+    characterId: "",
     isNsfw: false,
-    visibility: 'PUBLIC',
+    visibility: "PUBLIC",
     // Privacy settings
-    authorizedViewers: 'full-size',
-    publicViewers: 'watermarked',
-    watermark: 'url-fileside',
+    authorizedViewers: "full-size",
+    publicViewers: "watermarked",
+    watermark: "url-fileside",
     // NSFW categories
     nsfwNudity: false,
     nsfwGore: false,
     nsfwSensitive: false,
-    sensitiveContentDescription: '',
+    sensitiveContentDescription: "",
     // Artist credits
-    artistType: 'onsite',
-    artistLink: '',
-    artistLabel: '',
+    artistType: "onsite",
+    artistLink: "",
+    artistLabel: "",
   });
 
   // Pre-select gallery and character from URL query parameters
   useEffect(() => {
-    const galleryId = searchParams.get('galleryId');
-    const characterId = searchParams.get('character');
-    
+    const galleryId = searchParams.get("galleryId");
+    const characterId = searchParams.get("character");
+
     if (galleryId) {
-      setFormData(prev => ({ ...prev, galleryId }));
+      setFormData((prev) => ({ ...prev, galleryId }));
     }
-    
+
     if (characterId) {
-      setFormData(prev => ({ ...prev, characterId }));
+      setFormData((prev) => ({ ...prev, characterId }));
     }
   }, [searchParams]);
 
-  const { data: galleriesData, loading: galleriesLoading } = useQuery(GET_MY_GALLERIES, {
-    variables: { filters: { limit: 100 } },
-    skip: !user,
-  });
+  const { data: galleriesData, loading: galleriesLoading } = useQuery(
+    GET_MY_GALLERIES,
+    {
+      variables: { filters: { limit: 100 } },
+      skip: !user,
+    },
+  );
 
-  const { data: charactersData, loading: charactersLoading } = useQuery(GET_MY_CHARACTERS, {
-    variables: { filters: { limit: 100 } },
-    skip: !user,
-  });
+  const { data: charactersData, loading: charactersLoading } = useQuery(
+    GET_MY_CHARACTERS,
+    {
+      variables: { filters: { limit: 100 } },
+      skip: !user,
+    },
+  );
 
   const handleInputChange = (field: keyof UploadFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleUpload = async (uploadFiles: ImageFile[]) => {
     if (!user) {
-      setError('You must be logged in to upload images');
+      setError("You must be logged in to upload images");
       return;
     }
 
     setUploading(true);
-    setError('');
+    setError("");
 
     try {
       const uploadPromises = uploadFiles.map(async (imageFile) => {
         const formDataToSend = new FormData();
-        formDataToSend.append('file', imageFile.file);
-        
-        if (formData.description) formDataToSend.append('description', formData.description);
-        if (formData.altText) formDataToSend.append('altText', formData.altText);
-        if (formData.galleryId) formDataToSend.append('galleryId', formData.galleryId);
-        if (formData.characterId) formDataToSend.append('characterId', formData.characterId);
+        formDataToSend.append("file", imageFile.file);
+
+        if (formData.description)
+          formDataToSend.append("description", formData.description);
+        if (formData.altText)
+          formDataToSend.append("altText", formData.altText);
+        if (formData.galleryId)
+          formDataToSend.append("galleryId", formData.galleryId);
+        if (formData.characterId)
+          formDataToSend.append("characterId", formData.characterId);
         // Handle NSFW flags
-        const hasNsfwContent = formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive;
-        formDataToSend.append('isNsfw', hasNsfwContent.toString());
-        if (formData.nsfwNudity) formDataToSend.append('nsfwNudity', 'true');
-        if (formData.nsfwGore) formDataToSend.append('nsfwGore', 'true');
+        const hasNsfwContent =
+          formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive;
+        formDataToSend.append("isNsfw", hasNsfwContent.toString());
+        if (formData.nsfwNudity) formDataToSend.append("nsfwNudity", "true");
+        if (formData.nsfwGore) formDataToSend.append("nsfwGore", "true");
         if (formData.nsfwSensitive) {
-          formDataToSend.append('nsfwSensitive', 'true');
+          formDataToSend.append("nsfwSensitive", "true");
           if (formData.sensitiveContentDescription) {
-            formDataToSend.append('sensitiveContentDescription', formData.sensitiveContentDescription);
+            formDataToSend.append(
+              "sensitiveContentDescription",
+              formData.sensitiveContentDescription,
+            );
           }
         }
-        
+
         // Handle privacy settings
-        formDataToSend.append('authorizedViewers', formData.authorizedViewers);
-        formDataToSend.append('publicViewers', formData.publicViewers);
-        formDataToSend.append('watermark', formData.watermark);
-        
+        formDataToSend.append("authorizedViewers", formData.authorizedViewers);
+        formDataToSend.append("publicViewers", formData.publicViewers);
+        formDataToSend.append("watermark", formData.watermark);
+
         // Handle artist credits
         if (formData.artistLink) {
-          formDataToSend.append('artistType', formData.artistType);
-          formDataToSend.append('artistLink', formData.artistLink);
-          if (formData.artistLabel) formDataToSend.append('artistLabel', formData.artistLabel);
+          formDataToSend.append("artistType", formData.artistType);
+          formDataToSend.append("artistLink", formData.artistLink);
+          if (formData.artistLabel)
+            formDataToSend.append("artistLabel", formData.artistLabel);
         }
-        formDataToSend.append('visibility', formData.visibility);
+        formDataToSend.append("visibility", formData.visibility);
 
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
         const response = await fetch(`${apiUrl}/images/upload`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
           body: formDataToSend,
         });
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `Upload failed: ${response.statusText}`);
+          throw new Error(
+            errorData.message || `Upload failed: ${response.statusText}`,
+          );
         }
 
         return response.json();
       });
 
       const uploadResults = await Promise.all(uploadPromises);
-      
+
       // Convert upload results to UploadedImage format
       const images: UploadedImage[] = uploadResults.map((result) => ({
         id: result.id,
@@ -489,26 +512,26 @@ export const UploadImagePage: React.FC = () => {
         filename: result.filename || result.originalFilename,
         altText: result.altText,
       }));
-      
+
       // Show success state instead of navigating away
       setUploadedImages(images);
       setUploadSuccess(true);
       setFiles([]); // Clear the files for next upload
-      
+
       // Reset form data except character/gallery selection for convenience
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        description: '',
-        altText: '',
+        description: "",
+        altText: "",
         nsfwNudity: false,
         nsfwGore: false,
         nsfwSensitive: false,
-        sensitiveContentDescription: '',
-        artistLink: '',
-        artistLabel: '',
+        sensitiveContentDescription: "",
+        artistLink: "",
+        artistLabel: "",
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -521,25 +544,26 @@ export const UploadImagePage: React.FC = () => {
   const handleUploadMore = () => {
     setUploadSuccess(false);
     setUploadedImages([]);
-    setError('');
+    setError("");
   };
 
   const renderSuccessState = () => {
-    const selectedCharacter = characters.find((c: any) => c.id === formData.characterId);
-    const selectedGallery = galleries.find((g: any) => g.id === formData.galleryId);
-    
+    const selectedCharacter = characters.find(
+      (c: any) => c.id === formData.characterId,
+    );
+    const selectedGallery = galleries.find(
+      (g: any) => g.id === formData.galleryId,
+    );
+
     return (
       <SuccessContainer>
-        <SuccessTitle>
-          ✅ Upload Successful!
-        </SuccessTitle>
+        <SuccessTitle>✅ Upload Successful!</SuccessTitle>
         <SuccessMessage>
-          {uploadedImages.length === 1 
-            ? 'Your image has been uploaded successfully.'
-            : `${uploadedImages.length} images have been uploaded successfully.`
-          }
+          {uploadedImages.length === 1
+            ? "Your image has been uploaded successfully."
+            : `${uploadedImages.length} images have been uploaded successfully.`}
         </SuccessMessage>
-        
+
         <UploadedImagesGrid>
           {uploadedImages.map((image) => (
             <UploadedImageCard key={image.id}>
@@ -557,21 +581,19 @@ export const UploadImagePage: React.FC = () => {
             </UploadedImageCard>
           ))}
         </UploadedImagesGrid>
-        
+
         <SuccessActions>
           <Button variant="primary" onClick={handleUploadMore}>
             Upload More Images
           </Button>
-          <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+          <Button variant="ghost" onClick={() => navigate("/dashboard")}>
             Go to Dashboard
           </Button>
         </SuccessActions>
-        
+
         <SuccessNavLinks>
           {uploadedImages.length === 1 && (
-            <Link to={`/media/${uploadedImages[0].id}`}>
-              View Image
-            </Link>
+            <Link to={`/media/${uploadedImages[0].id}`}>View Image</Link>
           )}
           {selectedCharacter && (
             <Link to={`/character/${selectedCharacter.id}`}>
@@ -599,7 +621,9 @@ export const UploadImagePage: React.FC = () => {
   if (galleriesLoading || charactersLoading) {
     return (
       <Container>
-        <LoadingMessage>Loading your galleries and characters...</LoadingMessage>
+        <LoadingMessage>
+          Loading your galleries and characters...
+        </LoadingMessage>
       </Container>
     );
   }
@@ -620,245 +644,295 @@ export const UploadImagePage: React.FC = () => {
         renderSuccessState()
       ) : (
         <MainLayout>
-        <MainContent>
-          <Form onSubmit={(e) => e.preventDefault()}>
-            <Section>
-              <SectionTitle>Basics</SectionTitle>
-              <ImageUpload
-                files={files}
-                onFilesChange={setFiles}
-                disabled={uploading}
-              />
-            </Section>
+          <MainContent>
+            <Form onSubmit={(e) => e.preventDefault()}>
+              <Section>
+                <SectionTitle>Basics</SectionTitle>
+                <ImageUpload
+                  files={files}
+                  onFilesChange={setFiles}
+                  disabled={uploading}
+                />
+              </Section>
 
-            <Section>
-              <Label>Caption (optional)</Label>
-              <Input
-                as="textarea"
-                rows={4}
-                placeholder="Describe your image..."
-                value={formData.description}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('description', e.target.value)}
-              />
-            </Section>
+              <Section>
+                <Label>Caption (optional)</Label>
+                <Input
+                  as="textarea"
+                  rows={4}
+                  placeholder="Describe your image..."
+                  value={formData.description}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    handleInputChange("description", e.target.value)
+                  }
+                />
+              </Section>
 
-            <Section>
-              <SectionTitle>Privacies</SectionTitle>
-              <div>
-                <Label>Authorized Viewers</Label>
-                <Select 
-                  value={formData.authorizedViewers}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('authorizedViewers', e.target.value)}
-                >
-                  <option value="full-size">Full Size</option>
-                  <option value="watermarked">Watermarked</option>
-                  <option value="no-access">No Access</option>
-                </Select>
-              </div>
-              <div>
-                <Label>Public Viewers</Label>
-                <Select 
-                  value={formData.publicViewers}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('publicViewers', e.target.value)}
-                >
-                  <option value="full-size">Full Size</option>
-                  <option value="watermarked">Watermarked</option>
-                  <option value="no-access">No Access</option>
-                </Select>
-              </div>
-              <div>
-                <Label>Watermark</Label>
-                <Select 
-                  value={formData.watermark}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('watermark', e.target.value)}
-                >
-                  <option value="url-fileside">URL, Fileside</option>
-                  <option value="url-only">URL Only</option>
-                  <option value="none">None</option>
-                </Select>
-              </div>
-            </Section>
-
-            <Section>
-              <SectionTitle>NSFW Settings</SectionTitle>
-              <CheckboxGroup>
-                <Label>
-                  <Checkbox 
-                    type="checkbox"
-                    checked={formData.nsfwNudity}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('nsfwNudity', e.target.checked)}
-                  />
-                  Nudity
-                </Label>
-                <Label>
-                  <Checkbox 
-                    type="checkbox"
-                    checked={formData.nsfwGore}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('nsfwGore', e.target.checked)}
-                  />
-                  Gore
-                </Label>
-                <Label>
-                  <Checkbox 
-                    type="checkbox"
-                    checked={formData.nsfwSensitive}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('nsfwSensitive', e.target.checked)}
-                  />
-                  Sensitive Content
-                </Label>
-              </CheckboxGroup>
-              {formData.nsfwSensitive && (
+              <Section>
+                <SectionTitle>Privacies</SectionTitle>
                 <div>
-                  <Label>Describe the sensitive content</Label>
-                  <Input
-                    as="textarea"
-                    rows={2}
-                    placeholder="Briefly describe the sensitive content..."
-                    value={formData.sensitiveContentDescription}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('sensitiveContentDescription', e.target.value)}
-                  />
-                </div>
-              )}
-            </Section>
-
-            <Actions style={{ justifyContent: 'center' }}>
-              <UploadButton
-                onClick={() => handleUpload(files)}
-                disabled={uploading || files.length === 0}
-                variant="primary"
-              >
-                {uploading ? 'Uploading...' : 'Upload Image'}
-              </UploadButton>
-            </Actions>
-          </Form>
-        </MainContent>
-
-        <Sidebar>
-          <SidebarSection>
-            <SectionTitle>Characters</SectionTitle>
-            {formData.characterId && (
-              <CharacterCard>
-                <CharacterAvatar>
-                  {characters.find((c: any) => c.id === formData.characterId)?.name?.charAt(0) || '?'}
-                </CharacterAvatar>
-                <CharacterInfo>
-                  <CharacterName>
-                    {characters.find((c: any) => c.id === formData.characterId)?.name || 'Unknown'}
-                  </CharacterName>
-                  <CharacterMeta>
-                    {characters.find((c: any) => c.id === formData.characterId)?.species || 'Unknown species'}
-                  </CharacterMeta>
-                </CharacterInfo>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => handleInputChange('characterId', '')}
-                >
-                  ×
-                </Button>
-              </CharacterCard>
-            )}
-            <div>
-              <Select
-                value={formData.characterId}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('characterId', e.target.value)}
-              >
-                <option value="">Select a character...</option>
-                {characters.map((character: any) => (
-                  <option key={character.id} value={character.id}>
-                    {character.name} ({character.species || 'Unknown'})
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <Button variant="ghost" size="sm">
-              + Add Character
-            </Button>
-          </SidebarSection>
-
-          <SidebarSection>
-            <SectionTitle>Artist Credits</SectionTitle>
-            <ArtistToggle>
-              <ArtistToggleButton 
-                type="button"
-                active={formData.artistType === 'onsite'}
-                onClick={() => handleInputChange('artistType', 'onsite')}
-              >
-                On-site Artist
-              </ArtistToggleButton>
-              <ArtistToggleButton 
-                type="button"
-                active={formData.artistType === 'offsite'}
-                onClick={() => handleInputChange('artistType', 'offsite')}
-              >
-                Off-site Artist
-              </ArtistToggleButton>
-            </ArtistToggle>
-            <div>
-              <Label>Link to Artist</Label>
-              <Input 
-                placeholder={formData.artistType === 'onsite' ? 'Username or profile...' : 'Artist website or profile...'}
-                value={formData.artistLink}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('artistLink', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Label (optional)</Label>
-              <Input 
-                placeholder="Artist name or description..."
-                value={formData.artistLabel}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('artistLabel', e.target.value)}
-              />
-            </div>
-            <Button variant="ghost" size="sm">
-              + Add another artist
-            </Button>
-          </SidebarSection>
-
-          <SidebarSection>
-            <SectionTitle>Organization</SectionTitle>
-            <div>
-              <Label>Gallery (Optional)</Label>
-              {galleries.length === 0 ? (
-                <div>
-                  <Select disabled>
-                    <option>No galleries yet</option>
+                  <Label>Authorized Viewers</Label>
+                  <Select
+                    value={formData.authorizedViewers}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      handleInputChange("authorizedViewers", e.target.value)
+                    }
+                  >
+                    <option value="full-size">Full Size</option>
+                    <option value="watermarked">Watermarked</option>
+                    <option value="no-access">No Access</option>
                   </Select>
-                  <Link to="/gallery/create" style={{ fontSize: '0.875rem', marginTop: '0.5rem', display: 'inline-block' }}>
-                    Create your first gallery
-                  </Link>
                 </div>
-              ) : (
-                <Select
-                  value={formData.galleryId}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('galleryId', e.target.value)}
+                <div>
+                  <Label>Public Viewers</Label>
+                  <Select
+                    value={formData.publicViewers}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      handleInputChange("publicViewers", e.target.value)
+                    }
+                  >
+                    <option value="full-size">Full Size</option>
+                    <option value="watermarked">Watermarked</option>
+                    <option value="no-access">No Access</option>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Watermark</Label>
+                  <Select
+                    value={formData.watermark}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      handleInputChange("watermark", e.target.value)
+                    }
+                  >
+                    <option value="url-fileside">URL, Fileside</option>
+                    <option value="url-only">URL Only</option>
+                    <option value="none">None</option>
+                  </Select>
+                </div>
+              </Section>
+
+              <Section>
+                <SectionTitle>NSFW Settings</SectionTitle>
+                <CheckboxGroup>
+                  <Label>
+                    <Checkbox
+                      type="checkbox"
+                      checked={formData.nsfwNudity}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleInputChange("nsfwNudity", e.target.checked)
+                      }
+                    />
+                    Nudity
+                  </Label>
+                  <Label>
+                    <Checkbox
+                      type="checkbox"
+                      checked={formData.nsfwGore}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleInputChange("nsfwGore", e.target.checked)
+                      }
+                    />
+                    Gore
+                  </Label>
+                  <Label>
+                    <Checkbox
+                      type="checkbox"
+                      checked={formData.nsfwSensitive}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleInputChange("nsfwSensitive", e.target.checked)
+                      }
+                    />
+                    Sensitive Content
+                  </Label>
+                </CheckboxGroup>
+                {formData.nsfwSensitive && (
+                  <div>
+                    <Label>Describe the sensitive content</Label>
+                    <Input
+                      as="textarea"
+                      rows={2}
+                      placeholder="Briefly describe the sensitive content..."
+                      value={formData.sensitiveContentDescription}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        handleInputChange(
+                          "sensitiveContentDescription",
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </div>
+                )}
+              </Section>
+
+              <Actions style={{ justifyContent: "center" }}>
+                <UploadButton
+                  onClick={() => handleUpload(files)}
+                  disabled={uploading || files.length === 0}
+                  variant="primary"
                 >
-                  <option value="">Select a gallery...</option>
-                  {galleries.map((gallery: any) => (
-                    <option key={gallery.id} value={gallery.id}>
-                      {gallery.name}
+                  {uploading ? "Uploading..." : "Upload Image"}
+                </UploadButton>
+              </Actions>
+            </Form>
+          </MainContent>
+
+          <Sidebar>
+            <SidebarSection>
+              <SectionTitle>Characters</SectionTitle>
+              {formData.characterId && (
+                <CharacterCard>
+                  <CharacterAvatar>
+                    {characters
+                      .find((c: any) => c.id === formData.characterId)
+                      ?.name?.charAt(0) || "?"}
+                  </CharacterAvatar>
+                  <CharacterInfo>
+                    <CharacterName>
+                      {characters.find(
+                        (c: any) => c.id === formData.characterId,
+                      )?.name || "Unknown"}
+                    </CharacterName>
+                    <CharacterMeta>
+                      {characters.find(
+                        (c: any) => c.id === formData.characterId,
+                      )?.species?.name || "Unknown species"}
+                    </CharacterMeta>
+                  </CharacterInfo>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleInputChange("characterId", "")}
+                  >
+                    ×
+                  </Button>
+                </CharacterCard>
+              )}
+              <div>
+                <Select
+                  value={formData.characterId}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    handleInputChange("characterId", e.target.value)
+                  }
+                >
+                  <option value="">Select a character...</option>
+                  {characters.map((character: any) => (
+                    <option key={character.id} value={character.id}>
+                      {character.name} ({character.species?.name || "Unknown"})
                     </option>
                   ))}
                 </Select>
-              )}
-            </div>
-            <div>
-              <Label>Alt Text</Label>
-              <Input
-                placeholder="Alt text for accessibility..."
-                value={formData.altText}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('altText', e.target.value)}
-              />
-            </div>
-          </SidebarSection>
+              </div>
+              <Button variant="ghost" size="sm">
+                + Add Character
+              </Button>
+            </SidebarSection>
 
-          <div style={{ padding: '0 16px' }}>
-            <CancelButton variant="ghost" onClick={handleCancel} disabled={uploading}>
-              Cancel
-            </CancelButton>
-          </div>
-        </Sidebar>
-      </MainLayout>
+            <SidebarSection>
+              <SectionTitle>Artist Credits</SectionTitle>
+              <ArtistToggle>
+                <ArtistToggleButton
+                  type="button"
+                  active={formData.artistType === "onsite"}
+                  onClick={() => handleInputChange("artistType", "onsite")}
+                >
+                  On-site Artist
+                </ArtistToggleButton>
+                <ArtistToggleButton
+                  type="button"
+                  active={formData.artistType === "offsite"}
+                  onClick={() => handleInputChange("artistType", "offsite")}
+                >
+                  Off-site Artist
+                </ArtistToggleButton>
+              </ArtistToggle>
+              <div>
+                <Label>Link to Artist</Label>
+                <Input
+                  placeholder={
+                    formData.artistType === "onsite"
+                      ? "Username or profile..."
+                      : "Artist website or profile..."
+                  }
+                  value={formData.artistLink}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange("artistLink", e.target.value)
+                  }
+                />
+              </div>
+              <div>
+                <Label>Label (optional)</Label>
+                <Input
+                  placeholder="Artist name or description..."
+                  value={formData.artistLabel}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange("artistLabel", e.target.value)
+                  }
+                />
+              </div>
+              <Button variant="ghost" size="sm">
+                + Add another artist
+              </Button>
+            </SidebarSection>
+
+            <SidebarSection>
+              <SectionTitle>Organization</SectionTitle>
+              <div>
+                <Label>Gallery (Optional)</Label>
+                {galleries.length === 0 ? (
+                  <div>
+                    <Select disabled>
+                      <option>No galleries yet</option>
+                    </Select>
+                    <Link
+                      to="/gallery/create"
+                      style={{
+                        fontSize: "0.875rem",
+                        marginTop: "0.5rem",
+                        display: "inline-block",
+                      }}
+                    >
+                      Create your first gallery
+                    </Link>
+                  </div>
+                ) : (
+                  <Select
+                    value={formData.galleryId}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      handleInputChange("galleryId", e.target.value)
+                    }
+                  >
+                    <option value="">Select a gallery...</option>
+                    {galleries.map((gallery: any) => (
+                      <option key={gallery.id} value={gallery.id}>
+                        {gallery.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </div>
+              <div>
+                <Label>Alt Text</Label>
+                <Input
+                  placeholder="Alt text for accessibility..."
+                  value={formData.altText}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange("altText", e.target.value)
+                  }
+                />
+              </div>
+            </SidebarSection>
+
+            <div style={{ padding: "0 16px" }}>
+              <CancelButton
+                variant="ghost"
+                onClick={handleCancel}
+                disabled={uploading}
+              >
+                Cancel
+              </CancelButton>
+            </div>
+          </Sidebar>
+        </MainLayout>
       )}
     </Container>
   );

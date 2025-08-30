@@ -1,10 +1,10 @@
-import React from 'react';
-import { useQuery } from '@apollo/client';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { useAuth } from '../contexts/AuthContext';
-import { GET_MY_GALLERIES } from '../graphql/galleries';
+import React from "react";
+import { useQuery } from "@apollo/client";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useAuth } from "../contexts/AuthContext";
+import { GET_MY_GALLERIES } from "../graphql/galleries.graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -40,7 +40,7 @@ const GalleryCard = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   overflow: hidden;
   transition: all 0.2s ease-in-out;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -77,27 +77,39 @@ const GalleryMeta = styled.div`
   flex-wrap: wrap;
 `;
 
-const MetaBadge = styled.span<{ variant?: 'default' | 'success' | 'warning' | 'error' | 'primary' }>`
+const MetaBadge = styled.span<{
+  variant?: "default" | "success" | "warning" | "error" | "primary";
+}>`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  background: ${props => {
+  background: ${(props) => {
     switch (props.variant) {
-      case 'success': return props.theme.colors.success + '20';
-      case 'warning': return props.theme.colors.warning + '20';
-      case 'error': return props.theme.colors.error + '20';
-      case 'primary': return props.theme.colors.primary + '20';
-      default: return props.theme.colors.background;
+      case "success":
+        return props.theme.colors.success + "20";
+      case "warning":
+        return props.theme.colors.warning + "20";
+      case "error":
+        return props.theme.colors.error + "20";
+      case "primary":
+        return props.theme.colors.primary + "20";
+      default:
+        return props.theme.colors.background;
     }
   }};
-  color: ${props => {
+  color: ${(props) => {
     switch (props.variant) {
-      case 'success': return props.theme.colors.success;
-      case 'warning': return props.theme.colors.warning;
-      case 'error': return props.theme.colors.error;
-      case 'primary': return props.theme.colors.primary;
-      default: return props.theme.colors.text.secondary;
+      case "success":
+        return props.theme.colors.success;
+      case "warning":
+        return props.theme.colors.warning;
+      case "error":
+        return props.theme.colors.error;
+      case "primary":
+        return props.theme.colors.primary;
+      default:
+        return props.theme.colors.text.secondary;
     }
   }};
 `;
@@ -112,7 +124,7 @@ const ImageCount = styled.span`
 `;
 
 const CharacterLink = styled(Link)`
-  background: ${({ theme }) => theme.colors.primary + '20'};
+  background: ${({ theme }) => theme.colors.primary + "20"};
   color: ${({ theme }) => theme.colors.primary};
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
@@ -122,7 +134,7 @@ const CharacterLink = styled(Link)`
   transition: all 0.2s ease-in-out;
 
   &:hover {
-    background: ${({ theme }) => theme.colors.primary + '30'};
+    background: ${({ theme }) => theme.colors.primary + "30"};
   }
 `;
 
@@ -225,18 +237,22 @@ const ErrorContainer = styled.div`
 
 const getVisibilityVariant = (visibility: string) => {
   switch (visibility) {
-    case 'PUBLIC': return 'success';
-    case 'UNLISTED': return 'warning';
-    case 'PRIVATE': return 'error';
-    default: return 'default';
+    case "PUBLIC":
+      return "success";
+    case "UNLISTED":
+      return "warning";
+    case "PRIVATE":
+      return "error";
+    default:
+      return "default";
   }
 };
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 };
 
@@ -292,7 +308,8 @@ export const MyGalleriesPage: React.FC = () => {
           <EmptyIcon>🖼️</EmptyIcon>
           <EmptyTitle>No galleries yet</EmptyTitle>
           <EmptyDescription>
-            You haven't created any galleries yet. Create your first gallery to organize your artwork!
+            You haven't created any galleries yet. Create your first gallery to
+            organize your artwork!
           </EmptyDescription>
           <CreateButton to="/gallery/create">
             Create Your First Gallery
@@ -307,7 +324,7 @@ export const MyGalleriesPage: React.FC = () => {
                 {gallery.description && (
                   <GalleryDescription>{gallery.description}</GalleryDescription>
                 )}
-                
+
                 <GalleryMeta>
                   <MetaBadge variant={getVisibilityVariant(gallery.visibility)}>
                     {gallery.visibility}
@@ -322,7 +339,7 @@ export const MyGalleriesPage: React.FC = () => {
                   )}
                   <MetaBadge>Created {formatDate(gallery.createdAt)}</MetaBadge>
                 </GalleryMeta>
-                
+
                 <CardActions>
                   <ViewButton to={`/gallery/${gallery.id}`}>
                     View Gallery

@@ -1,34 +1,39 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useMutation, useQuery } from '@apollo/client';
-import { toast } from 'react-hot-toast';
-import styled from 'styled-components';
-import { Button } from '@chardb/ui';
-import { CREATE_GALLERY, GET_GALLERIES, GET_MY_GALLERIES } from '../graphql/galleries';
-import { GET_MY_CHARACTERS, Character } from '../graphql/characters';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useMutation, useQuery } from "@apollo/client";
+import { toast } from "react-hot-toast";
+import styled from "styled-components";
+import { Button } from "@chardb/ui";
+import {
+  CREATE_GALLERY,
+  GET_GALLERIES,
+  GET_MY_GALLERIES,
+} from "../graphql/galleries.graphql";
+import { GET_MY_CHARACTERS, Character } from "../graphql/characters.graphql";
 
 const gallerySchema = z.object({
-  name: z.string()
-    .min(1, 'Name is required')
-    .max(100, 'Name must be less than 100 characters'),
-  description: z.string()
-    .max(2000, 'Description must be less than 2000 characters')
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(100, "Name must be less than 100 characters"),
+  description: z
+    .string()
+    .max(2000, "Description must be less than 2000 characters")
     .optional()
-    .or(z.literal('')),
-  characterId: z.string()
-    .optional()
-    .or(z.literal('')),
-  visibility: z.enum(['PUBLIC', 'UNLISTED', 'PRIVATE']),
-  sortOrder: z.string()
+    .or(z.literal("")),
+  characterId: z.string().optional().or(z.literal("")),
+  visibility: z.enum(["PUBLIC", "UNLISTED", "PRIVATE"]),
+  sortOrder: z
+    .string()
     .optional()
     .refine((val) => {
-      if (!val || val === '') return true;
+      if (!val || val === "") return true;
       const num = parseInt(val);
       return !isNaN(num) && num >= 0;
-    }, 'Sort order must be a valid positive number'),
+    }, "Sort order must be a valid positive number"),
 });
 
 type GalleryForm = z.infer<typeof gallerySchema>;
@@ -64,7 +69,7 @@ const BackButton = styled.button`
   }
 
   &::before {
-    content: '←';
+    content: "←";
     font-weight: bold;
   }
 `;
@@ -247,8 +252,12 @@ const LoadingSpinner = styled.div`
   animation: spin 1s linear infinite;
 
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
   }
 `;
 
@@ -263,15 +272,12 @@ export const CreateGalleryPage: React.FC = () => {
   } = useForm<GalleryForm>({
     resolver: zodResolver(gallerySchema),
     defaultValues: {
-      visibility: 'PUBLIC',
+      visibility: "PUBLIC",
     },
   });
 
   const [createGallery] = useMutation(CREATE_GALLERY, {
-    refetchQueries: [
-      { query: GET_GALLERIES },
-      { query: GET_MY_GALLERIES },
-    ],
+    refetchQueries: [{ query: GET_GALLERIES }, { query: GET_MY_GALLERIES }],
   });
 
   // Fetch user's characters for the character association dropdown
@@ -280,14 +286,17 @@ export const CreateGalleryPage: React.FC = () => {
   });
 
   const handleBackClick = () => {
-    navigate('/galleries');
+    navigate("/galleries");
   };
 
   const onSubmit = async (data: GalleryForm) => {
     setIsSubmitting(true);
     try {
       // Process sort order
-      const sortOrder = data.sortOrder && data.sortOrder !== '' ? parseInt(data.sortOrder) : undefined;
+      const sortOrder =
+        data.sortOrder && data.sortOrder !== ""
+          ? parseInt(data.sortOrder)
+          : undefined;
 
       // Clean up empty strings
       const cleanData = {
@@ -305,11 +314,15 @@ export const CreateGalleryPage: React.FC = () => {
       });
 
       // Navigate to the newly created gallery
-      toast.success('Gallery created successfully!');
+      toast.success("Gallery created successfully!");
       navigate(`/gallery/${result.data.createGallery.id}`);
     } catch (error) {
-      console.error('Error creating gallery:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create gallery. Please try again.');
+      console.error("Error creating gallery:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to create gallery. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -322,11 +335,9 @@ export const CreateGalleryPage: React.FC = () => {
           <LoadingSpinner />
         </LoadingOverlay>
       )}
-      
+
       <Container>
-        <BackButton onClick={handleBackClick}>
-          Back to Galleries
-        </BackButton>
+        <BackButton onClick={handleBackClick}>Back to Galleries</BackButton>
 
         <Title>Create New Gallery</Title>
 
@@ -334,47 +345,55 @@ export const CreateGalleryPage: React.FC = () => {
           {/* Basic Information */}
           <Section>
             <SectionTitle>Basic Information</SectionTitle>
-            
+
             <FormGroup>
               <Label htmlFor="name">Gallery Name *</Label>
               <Input
                 id="name"
-                {...register('name')}
+                {...register("name")}
                 aria-invalid={!!errors.name}
                 placeholder="Enter gallery name"
               />
-              {errors.name && <ErrorMessage>{errors.name.message}</ErrorMessage>}
+              {errors.name && (
+                <ErrorMessage>{errors.name.message}</ErrorMessage>
+              )}
             </FormGroup>
 
             <FormGroup>
               <Label htmlFor="description">Description</Label>
               <TextArea
                 id="description"
-                {...register('description')}
+                {...register("description")}
                 aria-invalid={!!errors.description}
                 placeholder="Describe your gallery and what kind of images it contains..."
               />
-              {errors.description && <ErrorMessage>{errors.description.message}</ErrorMessage>}
+              {errors.description && (
+                <ErrorMessage>{errors.description.message}</ErrorMessage>
+              )}
             </FormGroup>
           </Section>
 
           {/* Settings */}
           <Section>
             <SectionTitle>Settings</SectionTitle>
-            
+
             <FormRow>
               <FormGroup>
                 <Label htmlFor="visibility">Visibility</Label>
                 <Select
                   id="visibility"
-                  {...register('visibility')}
+                  {...register("visibility")}
                   aria-invalid={!!errors.visibility}
                 >
                   <option value="PUBLIC">Public - Visible to everyone</option>
-                  <option value="UNLISTED">Unlisted - Only visible with direct link</option>
+                  <option value="UNLISTED">
+                    Unlisted - Only visible with direct link
+                  </option>
                   <option value="PRIVATE">Private - Only visible to you</option>
                 </Select>
-                {errors.visibility && <ErrorMessage>{errors.visibility.message}</ErrorMessage>}
+                {errors.visibility && (
+                  <ErrorMessage>{errors.visibility.message}</ErrorMessage>
+                )}
               </FormGroup>
 
               <FormGroup>
@@ -383,14 +402,16 @@ export const CreateGalleryPage: React.FC = () => {
                   id="sortOrder"
                   type="number"
                   min="0"
-                  {...register('sortOrder')}
+                  {...register("sortOrder")}
                   aria-invalid={!!errors.sortOrder}
                   placeholder="0"
                 />
                 <HelpText>
                   Lower numbers appear first when sorting galleries
                 </HelpText>
-                {errors.sortOrder && <ErrorMessage>{errors.sortOrder.message}</ErrorMessage>}
+                {errors.sortOrder && (
+                  <ErrorMessage>{errors.sortOrder.message}</ErrorMessage>
+                )}
               </FormGroup>
             </FormRow>
           </Section>
@@ -398,25 +419,33 @@ export const CreateGalleryPage: React.FC = () => {
           {/* Character Association */}
           <Section>
             <SectionTitle>Character Association</SectionTitle>
-            
+
             <FormGroup>
-              <Label htmlFor="characterId">Associate with Character (Optional)</Label>
+              <Label htmlFor="characterId">
+                Associate with Character (Optional)
+              </Label>
               <Select
                 id="characterId"
-                {...register('characterId')}
+                {...register("characterId")}
                 aria-invalid={!!errors.characterId}
               >
                 <option value="">No character association</option>
-                {charactersData?.myCharacters.characters.map((character: Character) => (
-                  <option key={character.id} value={character.id}>
-                    {character.name} {character.species && `(${character.species})`}
-                  </option>
-                ))}
+                {charactersData?.myCharacters.characters.map(
+                  (character: Character) => (
+                    <option key={character.id} value={character.id}>
+                      {character.name}{" "}
+                      {character.species?.name && `(${character.species.name})`}
+                    </option>
+                  ),
+                )}
               </Select>
               <HelpText>
-                Link this gallery to one of your characters to organize related artwork
+                Link this gallery to one of your characters to organize related
+                artwork
               </HelpText>
-              {errors.characterId && <ErrorMessage>{errors.characterId.message}</ErrorMessage>}
+              {errors.characterId && (
+                <ErrorMessage>{errors.characterId.message}</ErrorMessage>
+              )}
             </FormGroup>
           </Section>
 
@@ -425,7 +454,7 @@ export const CreateGalleryPage: React.FC = () => {
               Cancel
             </CancelButton>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Gallery'}
+              {isSubmitting ? "Creating..." : "Create Gallery"}
             </Button>
           </ButtonRow>
         </Form>

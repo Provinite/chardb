@@ -380,7 +380,7 @@ export const UserProfilePage: React.FC = () => {
             {featuredCharacters.map((character) => (
               <Card key={character.id} to={`/character/${character.id}`}>
                 <CardTitle>{character.name}</CardTitle>
-                <CardDescription>{character.species}</CardDescription>
+                <CardDescription>{character.species?.name}</CardDescription>
                 {character.description && (
                   <CardDescription>{character.description}</CardDescription>
                 )}
@@ -413,7 +413,7 @@ export const UserProfilePage: React.FC = () => {
             {recentCharacters.map((character) => (
               <Card key={character.id} to={`/character/${character.id}`}>
                 <CardTitle>{character.name}</CardTitle>
-                <CardDescription>{character.species}</CardDescription>
+                <CardDescription>{character.species?.name}</CardDescription>
                 {character.description && (
                   <CardDescription>{character.description}</CardDescription>
                 )}

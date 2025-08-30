@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery } from '@apollo/client';
-import styled from 'styled-components';
-import { toast } from 'react-hot-toast';
-import { Button } from '@chardb/ui';
-import { GET_CHARACTER, GetCharacterQuery, useDeleteCharacterMutation } from '../graphql/characters';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { useAuth } from '../contexts/AuthContext';
-import { LikeButton } from '../components/LikeButton';
-import { CommentList } from '../components/CommentList';
-import { CharacterMediaGallery } from '../components/CharacterMediaGallery';
-import { Tag } from '../components/Tag';
-import { TagsContainer } from '../components/TagsContainer';
-import { DeleteConfirmationDialog } from '../components/DeleteConfirmationDialog';
-import { LikeableType, CommentableType } from '../generated/graphql';
+import React, { useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { useQuery } from "@apollo/client";
+import styled from "styled-components";
+import { toast } from "react-hot-toast";
+import { Button } from "@chardb/ui";
+import {
+  GET_CHARACTER,
+  GetCharacterQuery,
+  useDeleteCharacterMutation,
+} from "../graphql/characters.graphql";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useAuth } from "../contexts/AuthContext";
+import { LikeButton } from "../components/LikeButton";
+import { CommentList } from "../components/CommentList";
+import { CharacterMediaGallery } from "../components/CharacterMediaGallery";
+import { Tag } from "../components/Tag";
+import { TagsContainer } from "../components/TagsContainer";
+import { DeleteConfirmationDialog } from "../components/DeleteConfirmationDialog";
+import { LikeableType, CommentableType } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -46,7 +50,7 @@ const BackButton = styled.button`
   }
 
   &::before {
-    content: '←';
+    content: "←";
     font-weight: bold;
   }
 `;
@@ -56,7 +60,7 @@ const CharacterHeader = styled.div`
   align-items: flex-start;
   gap: ${({ theme }) => theme.spacing.xl};
   margin-bottom: ${({ theme }) => theme.spacing.xl};
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     gap: ${({ theme }) => theme.spacing.lg};
@@ -67,7 +71,7 @@ const HeaderActions = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.sm};
   margin-left: auto;
-  
+
   @media (max-width: 768px) {
     margin-left: 0;
     justify-content: flex-start;
@@ -80,7 +84,7 @@ const CharacterBasics = styled.div`
 
 const MainImageSection = styled.div`
   flex: 0 0 300px;
-  
+
   @media (max-width: 768px) {
     flex: none;
     width: 100%;
@@ -115,13 +119,12 @@ const MainImagePlaceholder = styled.div`
   padding: ${({ theme }) => theme.spacing.lg};
 `;
 
-
 const CharacterTitle = styled.h1`
   font-size: 3rem;
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
-  
+
   @media (max-width: 768px) {
     font-size: 2.5rem;
   }
@@ -142,25 +145,35 @@ const CharacterMeta = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
 `;
 
-const MetaBadge = styled.span<{ variant?: 'default' | 'success' | 'warning' | 'error' }>`
+const MetaBadge = styled.span<{
+  variant?: "default" | "success" | "warning" | "error";
+}>`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  background: ${props => {
+  background: ${(props) => {
     switch (props.variant) {
-      case 'success': return props.theme.colors.success + '20';
-      case 'warning': return props.theme.colors.warning + '20';
-      case 'error': return props.theme.colors.error + '20';
-      default: return props.theme.colors.surface;
+      case "success":
+        return props.theme.colors.success + "20";
+      case "warning":
+        return props.theme.colors.warning + "20";
+      case "error":
+        return props.theme.colors.error + "20";
+      default:
+        return props.theme.colors.surface;
     }
   }};
-  color: ${props => {
+  color: ${(props) => {
     switch (props.variant) {
-      case 'success': return props.theme.colors.success;
-      case 'warning': return props.theme.colors.warning;
-      case 'error': return props.theme.colors.error;
-      default: return props.theme.colors.text.secondary;
+      case "success":
+        return props.theme.colors.success;
+      case "warning":
+        return props.theme.colors.warning;
+      case "error":
+        return props.theme.colors.error;
+      default:
+        return props.theme.colors.text.secondary;
     }
   }};
 `;
@@ -171,7 +184,7 @@ const OwnerInfo = styled.div`
   align-items: center;
   text-align: center;
   min-width: 200px;
-  
+
   @media (max-width: 768px) {
     align-items: flex-start;
     text-align: left;
@@ -188,17 +201,17 @@ const OwnerLink = styled(Link)`
   transition: all 0.2s;
   padding: ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.surface};
     transform: translateY(-2px);
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
   }
-  
+
   @media (max-width: 768px) {
     align-items: flex-start;
     text-align: left;
@@ -252,7 +265,6 @@ const ContentText = styled.div`
   white-space: pre-wrap;
 `;
 
-
 const TradingInfo = styled.div`
   background: ${({ theme }) => theme.colors.surface};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
@@ -291,7 +303,7 @@ const ErrorContainer = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xxl};
   color: ${({ theme }) => theme.colors.error};
-  
+
   h3 {
     margin-bottom: ${({ theme }) => theme.spacing.sm};
   }
@@ -366,26 +378,29 @@ export const CharacterPage: React.FC = () => {
     skip: !id,
   });
 
-  const [deleteCharacter, { loading: deleteLoading }] = useDeleteCharacterMutation({
-    onCompleted: () => {
-      toast.success(`Character "${character?.name}" has been deleted successfully`);
-      navigate('/characters');
-    },
-    onError: (error) => {
-      console.error('Failed to delete character:', error);
-      toast.error(`Failed to delete character: ${error.message}`);
-    },
-    update: (cache) => {
-      // Remove the character from cache
-      cache.evict({ id: cache.identify({ __typename: 'Character', id }) });
-      cache.gc();
-    }
-  });
+  const [deleteCharacter, { loading: deleteLoading }] =
+    useDeleteCharacterMutation({
+      onCompleted: () => {
+        toast.success(
+          `Character "${character?.name}" has been deleted successfully`,
+        );
+        navigate("/characters");
+      },
+      onError: (error) => {
+        console.error("Failed to delete character:", error);
+        toast.error(`Failed to delete character: ${error.message}`);
+      },
+      update: (cache) => {
+        // Remove the character from cache
+        cache.evict({ id: cache.identify({ __typename: "Character", id }) });
+        cache.gc();
+      },
+    });
 
-  const character: GetCharacterQuery['character'] | undefined = data?.character;
+  const character: GetCharacterQuery["character"] | undefined = data?.character;
 
   const handleBackClick = () => {
-    navigate('/characters');
+    navigate("/characters");
   };
 
   const handleEditClick = () => {
@@ -408,18 +423,22 @@ export const CharacterPage: React.FC = () => {
 
   const getVisibilityVariant = (visibility: string) => {
     switch (visibility) {
-      case 'PUBLIC': return 'success';
-      case 'UNLISTED': return 'warning';
-      case 'PRIVATE': return 'error';
-      default: return 'default';
+      case "PUBLIC":
+        return "success";
+      case "UNLISTED":
+        return "warning";
+      case "PRIVATE":
+        return "error";
+      default:
+        return "default";
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -436,12 +455,13 @@ export const CharacterPage: React.FC = () => {
   if (error || !character) {
     return (
       <Container>
-        <BackButton onClick={handleBackClick}>
-          Back to Characters
-        </BackButton>
+        <BackButton onClick={handleBackClick}>Back to Characters</BackButton>
         <ErrorContainer>
           <h3>Character not found</h3>
-          <p>{error?.message || 'The character you are looking for does not exist or you do not have permission to view it.'}</p>
+          <p>
+            {error?.message ||
+              "The character you are looking for does not exist or you do not have permission to view it."}
+          </p>
         </ErrorContainer>
       </Container>
     );
@@ -449,17 +469,21 @@ export const CharacterPage: React.FC = () => {
 
   return (
     <Container>
-      <BackButton onClick={handleBackClick}>
-        Back to Characters
-      </BackButton>
+      <BackButton onClick={handleBackClick}>Back to Characters</BackButton>
 
       <CharacterHeader>
         <MainImageSection>
           <MainImageContainer>
             {character.mainMedia?.image ? (
               <MainImageElement
-                src={character.mainMedia.image.thumbnailUrl || character.mainMedia.image.url}
-                alt={character.mainMedia.image.altText || `${character.name} main image`}
+                src={
+                  character.mainMedia.image.thumbnailUrl ||
+                  character.mainMedia.image.url
+                }
+                alt={
+                  character.mainMedia.image.altText ||
+                  `${character.name} main image`
+                }
               />
             ) : (
               <MainImagePlaceholder>
@@ -471,10 +495,10 @@ export const CharacterPage: React.FC = () => {
 
         <CharacterBasics>
           <CharacterTitle>{character.name}</CharacterTitle>
-          {character.species && (
-            <CharacterSpecies>{character.species}</CharacterSpecies>
+          {character.species?.name && (
+            <CharacterSpecies>{character.species.name}</CharacterSpecies>
           )}
-          
+
           <CharacterMeta>
             <MetaBadge variant={getVisibilityVariant(character.visibility)}>
               {character.visibility}
@@ -486,7 +510,7 @@ export const CharacterPage: React.FC = () => {
               <MetaBadge variant="warning">Open to Trades</MetaBadge>
             )}
             <MetaBadge>Created {formatDate(character.createdAt)}</MetaBadge>
-            <LikeButton 
+            <LikeButton
               entityType={LikeableType.Character}
               entityId={character.id}
               size="medium"
@@ -519,18 +543,24 @@ export const CharacterPage: React.FC = () => {
           <OwnerLink to={`/user/${character.owner.username}`}>
             <OwnerAvatar>
               {character.owner.avatarUrl ? (
-                <img src={character.owner.avatarUrl} alt={character.owner.displayName || character.owner.username} />
+                <img
+                  src={character.owner.avatarUrl}
+                  alt={character.owner.displayName || character.owner.username}
+                />
               ) : (
                 character.owner.displayName?.[0] || character.owner.username[0]
               )}
             </OwnerAvatar>
-            <OwnerName>{character.owner.displayName || character.owner.username}</OwnerName>
+            <OwnerName>
+              {character.owner.displayName || character.owner.username}
+            </OwnerName>
             <OwnerRole>Character Owner</OwnerRole>
           </OwnerLink>
           {character.creator && character.creator.id !== character.owner.id && (
             <>
-              <OwnerRole style={{ marginTop: '0.5rem' }}>
-                Created by {character.creator.displayName || character.creator.username}
+              <OwnerRole style={{ marginTop: "0.5rem" }}>
+                Created by{" "}
+                {character.creator.displayName || character.creator.username}
               </OwnerRole>
             </>
           )}
@@ -538,18 +568,10 @@ export const CharacterPage: React.FC = () => {
 
         {user && user.id === character.owner.id && (
           <HeaderActions>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleEditClick}
-            >
+            <Button variant="primary" size="sm" onClick={handleEditClick}>
               Edit Character
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleDeleteClick}
-            >
+            <Button variant="secondary" size="sm" onClick={handleDeleteClick}>
               Delete
             </Button>
           </HeaderActions>
@@ -589,9 +611,7 @@ export const CharacterPage: React.FC = () => {
           <SectionTitle>Tags</SectionTitle>
           <TagsContainer>
             {character.tags.map((tag, index) => (
-              <Tag key={index}>
-                {tag}
-              </Tag>
+              <Tag key={index}>{tag}</Tag>
             ))}
           </TagsContainer>
         </ContentSection>
@@ -603,11 +623,13 @@ export const CharacterPage: React.FC = () => {
           <TradingInfo>
             <TradingRow>
               <TradingLabel>Available for Sale:</TradingLabel>
-              <TradingValue>{character.isSellable ? 'Yes' : 'No'}</TradingValue>
+              <TradingValue>{character.isSellable ? "Yes" : "No"}</TradingValue>
             </TradingRow>
             <TradingRow>
               <TradingLabel>Open to Trades:</TradingLabel>
-              <TradingValue>{character.isTradeable ? 'Yes' : 'No'}</TradingValue>
+              <TradingValue>
+                {character.isTradeable ? "Yes" : "No"}
+              </TradingValue>
             </TradingRow>
             {character.price && character.isSellable && (
               <TradingRow>
@@ -619,20 +641,24 @@ export const CharacterPage: React.FC = () => {
         </ContentSection>
       )}
 
-      {character.customFields && character.customFields !== '{}' && (
+      {character.customFields && character.customFields !== "{}" && (
         <ContentSection>
           <SectionTitle>Additional Information</SectionTitle>
           <ContentText>
-            <pre>{JSON.stringify(JSON.parse(character.customFields), null, 2)}</pre>
+            <pre>
+              {JSON.stringify(JSON.parse(character.customFields), null, 2)}
+            </pre>
           </ContentText>
         </ContentSection>
       )}
 
-      {!character.description && !character.personality && !character.backstory && (
-        <EmptySection>
-          <p>This character doesn't have any detailed information yet.</p>
-        </EmptySection>
-      )}
+      {!character.description &&
+        !character.personality &&
+        !character.backstory && (
+          <EmptySection>
+            <p>This character doesn't have any detailed information yet.</p>
+          </EmptySection>
+        )}
 
       <CharacterMediaGallery
         characterId={character.id}
