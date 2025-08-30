@@ -1,10 +1,11 @@
-import { Resolver, Query, Mutation, Args, ID, ResolveField, Parent } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID, ResolveField, Parent, Int } from '@nestjs/graphql';
 import { UseGuards, NotFoundException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser, CurrentUserType } from '../auth/decorators/current-user.decorator';
 import { GalleriesService } from './galleries.service';
-import { Gallery, GalleryConnection } from './entities/gallery.entity';
+import { MediaService } from '../media/media.service';
+import { Gallery, GalleryConnection, GalleryCount } from './entities/gallery.entity';
 import { User } from '../users/entities/user.entity';
 import { Character } from '../characters/entities/character.entity';
 import { RemovalResponse } from '../shared/entities/removal-response.entity';
@@ -31,6 +32,7 @@ export class GalleriesResolver {
     private readonly galleriesService: GalleriesService,
     private readonly usersService: UsersService,
     private readonly charactersService: CharactersService,
+    private readonly mediaService: MediaService,
   ) {}
 
   @Mutation(() => Gallery)
@@ -190,7 +192,7 @@ export class GalleriesResolver {
     }
   }
 
-  @ResolveField('likesCount', () => Number)
+  @ResolveField('likesCount', () => Int)
   async resolveLikesCount(@Parent() gallery: Gallery): Promise<number> {
     return this.galleriesService.getGalleryLikesCount(gallery.id);
   }
@@ -201,5 +203,12 @@ export class GalleriesResolver {
     @CurrentUser() user?: CurrentUserType,
   ): Promise<boolean> {
     return this.galleriesService.getUserHasLikedGallery(gallery.id, user?.id);
+  }
+
+  /** Gallery count field resolver */
+  @ResolveField('_count', () => GalleryCount)
+  async resolveCountField(@Parent() gallery: Gallery): Promise<GalleryCount> {
+    const mediaCount = await this.mediaService.getGalleryMediaCount(gallery.id);
+    return { media: mediaCount };
   }
 }

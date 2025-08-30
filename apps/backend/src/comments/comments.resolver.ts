@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Args, ID, ResolveField, Parent } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID, ResolveField, Parent, Int } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { CommentsService, CommentFiltersServiceInput } from './comments.service';
 import { UsersService } from '../users/users.service';
@@ -114,7 +114,7 @@ export class CommentsResolver {
   /**
    * Resolves the replies count
    */
-  @ResolveField(() => Number)
+  @ResolveField(() => Int)
   async repliesCount(@Parent() comment: Comment) {
     const serviceFilters: CommentFiltersServiceInput = { parentId: comment.id };
     const result = await this.commentsService.findMany(serviceFilters);

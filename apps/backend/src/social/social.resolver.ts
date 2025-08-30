@@ -1,4 +1,4 @@
-import { Resolver, Mutation, Query, Args, ID, ResolveField, Parent } from '@nestjs/graphql';
+import { Resolver, Mutation, Query, Args, ID, ResolveField, Parent, Int } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { SocialService } from './social.service';
 import { ToggleLikeInput, LikeResult, LikeStatus, LikeableType } from './dto/like.dto';
@@ -148,7 +148,7 @@ export class SocialResolver {
 export class CharacterLikesResolver {
   constructor(private readonly socialService: SocialService) {}
 
-  @ResolveField(() => Number)
+  @ResolveField(() => Int)
   async likesCount(@Parent() character: Character): Promise<number> {
     return this.socialService.getLikesCount(LikeableType.CHARACTER, character.id);
   }
@@ -167,7 +167,7 @@ export class CharacterLikesResolver {
 export class ImageLikesResolver {
   constructor(private readonly socialService: SocialService) {}
 
-  @ResolveField(() => Number)
+  @ResolveField(() => Int)
   async likesCount(@Parent() image: Image): Promise<number> {
     return this.socialService.getLikesCount(LikeableType.IMAGE, image.id);
   }
@@ -186,7 +186,7 @@ export class ImageLikesResolver {
 export class GalleryLikesResolver {
   constructor(private readonly socialService: SocialService) {}
 
-  @ResolveField(() => Number)
+  @ResolveField(() => Int)
   async likesCount(@Parent() gallery: Gallery): Promise<number> {
     return this.socialService.getLikesCount(LikeableType.GALLERY, gallery.id);
   }
@@ -205,7 +205,7 @@ export class GalleryLikesResolver {
 export class CommentLikesResolver {
   constructor(private readonly socialService: SocialService) {}
 
-  @ResolveField(() => Number)
+  @ResolveField(() => Int)
   async likesCount(@Parent() comment: Comment): Promise<number> {
     return this.socialService.getLikesCount(LikeableType.COMMENT, comment.id);
   }
@@ -224,7 +224,7 @@ export class CommentLikesResolver {
 export class MediaLikesResolver {
   constructor(private readonly socialService: SocialService) {}
 
-  @ResolveField(() => Number)
+  @ResolveField(() => Int)
   async likesCount(@Parent() media: Media): Promise<number> {
     return this.socialService.getLikesCount(LikeableType.MEDIA, media.id);
   }
@@ -243,12 +243,12 @@ export class MediaLikesResolver {
 export class UserFollowResolver {
   constructor(private readonly socialService: SocialService) {}
 
-  @ResolveField(() => Number)
+  @ResolveField(() => Int)
   async followersCount(@Parent() user: User): Promise<number> {
     return this.socialService.getFollowersCount(user.id);
   }
 
-  @ResolveField(() => Number)
+  @ResolveField(() => Int)
   async followingCount(@Parent() user: User): Promise<number> {
     return this.socialService.getFollowingCount(user.id);
   }

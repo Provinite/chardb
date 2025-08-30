@@ -15,11 +15,17 @@ import { OptionalJwtAuthGuard } from "../auth/guards/optional-jwt-auth.guard";
 import { CurrentUser, CurrentUserType } from "../auth/decorators/current-user.decorator";
 import { CharactersService } from "./characters.service";
 import { TagsService } from "../tags/tags.service";
+import { UsersService } from "../users/users.service";
+import { MediaService } from "../media/media.service";
 import {
   Character as CharacterEntity,
   CharacterConnection,
+  CharacterCount,
+  CharacterTag,
 } from "./entities/character.entity";
 import { Image } from "../images/entities/image.entity";
+import { Media } from "../media/entities/media.entity";
+import { Tag } from "../shared/entities/tag.entity";
 import { ImagesService } from "../images/images.service";
 import { User } from "../users/entities/user.entity";
 import type { Prisma } from "@chardb/database";
@@ -47,6 +53,8 @@ export class CharactersResolver {
     private readonly charactersService: CharactersService,
     private readonly imagesService: ImagesService,
     private readonly tagsService: TagsService,
+    private readonly usersService: UsersService,
+    private readonly mediaService: MediaService,
   ) {}
 
   @Mutation(() => CharacterEntity)
@@ -190,6 +198,43 @@ export class CharactersResolver {
   ): Promise<boolean> {
     if (!user) return false;
     return this.charactersService.hasUserLiked(character.id, user.id);
+  }
+
+  /** Character count field resolver */
+  @ResolveField("_count", () => CharacterCount)
+  async resolveCountField(@Parent() character: CharacterEntity): Promise<CharacterCount> {
+    const mediaCount = await this.mediaService.getCharacterMediaCount(character.id);
+    return { media: mediaCount };
+  }
+
+  /** Character creator field resolver */
+  @ResolveField("creator", () => User, { nullable: true })
+  async resolveCreatorField(@Parent() character: CharacterEntity): Promise<User | null> {
+    if (!character.creatorId) return null;
+    return this.usersService.findById(character.creatorId);
+  }
+
+  /** Character owner field resolver */
+  @ResolveField("owner", () => User)
+  async resolveOwnerField(@Parent() character: CharacterEntity): Promise<User> {
+    return this.usersService.findById(character.ownerId);
+  }
+
+  /** Main media field resolver */
+  @ResolveField("mainMedia", () => Media, { nullable: true, description: "Main media item for this character (image or text)" })
+  async resolveMainMediaField(@Parent() character: CharacterEntity): Promise<Media | null> {
+    if (!character.mainMediaId) return null;
+    return this.mediaService.findOne(character.mainMediaId);
+  }
+
+  /** Character tags relation field resolver */
+  @ResolveField("tags_rel", () => [CharacterTag])
+  async resolveTagsRelField(@Parent() character: CharacterEntity): Promise<CharacterTag[]> {
+    const tags = await this.tagsService.getCharacterTagRelations(character.id);
+    return tags.map(tag => ({
+      character,
+      tag
+    }));
   }
 
   /** Update character trait values */

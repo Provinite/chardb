@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MediaService } from './media.service';
 import { MediaResolver } from './media.resolver';
 import { DatabaseModule } from '../database/database.module';
@@ -13,8 +13,8 @@ import { ImagesModule } from '../images/images.module';
     DatabaseModule, 
     TagsModule, 
     UsersModule, 
-    CharactersModule, 
-    GalleriesModule, 
+    forwardRef(() => CharactersModule), 
+    forwardRef(() => GalleriesModule), 
     ImagesModule
   ],
   providers: [MediaService, MediaResolver],

@@ -116,4 +116,17 @@ export class TagsService {
     return characterTags.map((ct) => ct.tag.displayName);
   }
 
+  /**
+   * Get all character tag relations with full tag objects
+   * @param characterId the character ID
+   * @returns array of tag objects
+   */
+  async getCharacterTagRelations(characterId: string) {
+    const characterTags = await this.db.characterTag.findMany({
+      where: { characterId },
+      include: { tag: true },
+    });
+    return characterTags.map((ct) => ct.tag);
+  }
+
 }

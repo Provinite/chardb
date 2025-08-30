@@ -26,6 +26,9 @@ import {
   mapPrismaUserConnectionToGraphQL,
 } from "./utils/user-resolver-mappers";
 import { mapPrismaCharacterToGraphQL } from "../characters/utils/character-resolver-mappers";
+import { Character } from "../characters/entities/character.entity";
+import { Gallery } from "../galleries/entities/gallery.entity";
+import { Media } from "../media/entities/media.entity";
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -150,12 +153,12 @@ export class UsersResolver {
 export class UserProfileResolver {
   constructor(private readonly usersService: UsersService) {}
 
-  @ResolveField("stats", () => UserStats)
+  @ResolveField("stats", () => UserStats, { description: "User statistics including counts and engagement metrics" })
   async resolveStats(@Parent() profile: UserProfile): Promise<UserStats> {
     return { userId: profile.user.id };
   }
 
-  @ResolveField("recentCharacters", () => [mapPrismaCharacterToGraphQL])
+  @ResolveField("recentCharacters", () => [Character], { description: "Recently created or updated characters by this user" })
   async resolveRecentCharacters(
     @Parent() profile: UserProfile,
     @CurrentUser() currentUser?: CurrentUserType
@@ -169,7 +172,7 @@ export class UserProfileResolver {
     return characters.map(mapPrismaCharacterToGraphQL);
   }
 
-  @ResolveField("recentGalleries")
+  @ResolveField("recentGalleries", () => [Gallery], { description: "Recently created or updated galleries by this user" })
   async resolveRecentGalleries(
     @Parent() profile: UserProfile,
     @CurrentUser() currentUser?: CurrentUserType
@@ -182,12 +185,12 @@ export class UserProfileResolver {
     );
   }
 
-  @ResolveField("recentMedia")
+  @ResolveField("recentMedia", () => [Media], { description: "Recently uploaded media (images and text) by this user" })
   async resolveRecentMedia(@Parent() profile: UserProfile) {
     return this.usersService.getUserRecentMedia(profile.user.id, 12);
   }
 
-  @ResolveField("featuredCharacters", () => [mapPrismaCharacterToGraphQL])
+  @ResolveField("featuredCharacters", () => [Character], { description: "Characters featured or highlighted by this user" })
   async resolveFeaturedCharacters(@Parent() profile: UserProfile) {
     const characters = await this.usersService.getUserFeaturedCharacters(
       profile.user.id,
@@ -202,7 +205,7 @@ export class UserProfileResolver {
 export class UserStatsResolver {
   constructor(private readonly usersService: UsersService) {}
 
-  @ResolveField("charactersCount", () => Int)
+  @ResolveField("charactersCount", () => Int, { description: "Total number of characters owned by this user" })
   async resolveCharactersCount(
     @Parent() stats: UserStats,
     @CurrentUser() currentUser?: CurrentUserType
@@ -212,7 +215,7 @@ export class UserStatsResolver {
     return this.usersService.getUserCharactersCount(stats.userId, includePrivate);
   }
 
-  @ResolveField("galleriesCount", () => Int)
+  @ResolveField("galleriesCount", () => Int, { description: "Total number of galleries created by this user" })
   async resolveGalleriesCount(
     @Parent() stats: UserStats,
     @CurrentUser() currentUser?: CurrentUserType
@@ -222,31 +225,31 @@ export class UserStatsResolver {
     return this.usersService.getUserGalleriesCount(stats.userId, includePrivate);
   }
 
-  @ResolveField("imagesCount", () => Int)
+  @ResolveField("imagesCount", () => Int, { description: "Total number of images uploaded by this user" })
   async resolveImagesCount(@Parent() stats: UserStats) {
     if (!stats.userId) return 0;
     return this.usersService.getUserImagesCount(stats.userId);
   }
 
-  @ResolveField("totalViews", () => Int)
+  @ResolveField("totalViews", () => Int, { description: "Total number of views across all user's content" })
   async resolveTotalViews(@Parent() stats: UserStats) {
     // TODO: Implement when views system is added
     return 0;
   }
 
-  @ResolveField("totalLikes", () => Int)
+  @ResolveField("totalLikes", () => Int, { description: "Total number of likes received across all user's content" })
   async resolveTotalLikes(@Parent() stats: UserStats) {
     // TODO: Implement when likes system is added
     return 0;
   }
 
-  @ResolveField("followersCount", () => Int)
+  @ResolveField("followersCount", () => Int, { description: "Number of users following this user" })
   async resolveFollowersCount(@Parent() stats: UserStats) {
     // TODO: Implement when social features are added
     return 0;
   }
 
-  @ResolveField("followingCount", () => Int)
+  @ResolveField("followingCount", () => Int, { description: "Number of users this user is following" })
   async resolveFollowingCount(@Parent() stats: UserStats) {
     // TODO: Implement when social features are added
     return 0;
