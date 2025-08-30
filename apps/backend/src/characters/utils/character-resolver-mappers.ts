@@ -36,7 +36,8 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
   return {
     characterData: {
       name: characterData.name,
-      species: characterData.species,
+      ...(characterData.speciesId && { speciesObj: { connect: { id: characterData.speciesId } } }),
+      ...(characterData.speciesVariantId && { speciesVariant: { connect: { id: characterData.speciesVariantId } } }),
       age: characterData.age,
       gender: characterData.gender,
       description: characterData.description,
@@ -61,8 +62,16 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
   const characterData: Prisma.CharacterUpdateInput = {};
 
   if (inputData.name !== undefined) characterData.name = inputData.name;
-  if (inputData.species !== undefined)
-    characterData.species = inputData.species;
+  if (inputData.speciesId !== undefined) {
+    characterData.speciesObj = inputData.speciesId
+      ? { connect: { id: inputData.speciesId } }
+      : { disconnect: true };
+  }
+  if (inputData.speciesVariantId !== undefined) {
+    characterData.speciesVariant = inputData.speciesVariantId
+      ? { connect: { id: inputData.speciesVariantId } }
+      : { disconnect: true };
+  }
   if (inputData.age !== undefined) characterData.age = inputData.age;
   if (inputData.gender !== undefined) characterData.gender = inputData.gender;
   if (inputData.description !== undefined)
@@ -114,7 +123,8 @@ export function mapPrismaCharacterToGraphQL(
   return {
     id: prismaCharacter.id,
     name: prismaCharacter.name,
-    species: prismaCharacter.species,
+    speciesId: prismaCharacter.speciesId,
+    speciesVariantId: prismaCharacter.speciesVariantId,
     age: prismaCharacter.age,
     gender: prismaCharacter.gender,
     description: prismaCharacter.description,

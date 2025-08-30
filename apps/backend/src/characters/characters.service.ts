@@ -13,6 +13,8 @@ export interface CharacterServiceFilters {
   offset?: number;
   search?: string;
   species?: string;
+  speciesId?: string;
+  speciesVariantId?: string;
   tags?: string[];
   ownerId?: string;
   visibility?: Visibility;
@@ -76,6 +78,8 @@ export class CharactersService {
       offset = 0,
       search,
       species,
+      speciesId,
+      speciesVariantId,
       tags,
       ownerId,
       visibility,
@@ -112,6 +116,8 @@ export class CharactersService {
 
         // Other filters
         species ? { species: { contains: species, mode: "insensitive" } } : {},
+        speciesId ? { speciesId } : {},
+        speciesVariantId ? { speciesVariantId } : {},
         gender ? { gender: { contains: gender, mode: "insensitive" } } : {},
         ageRange ? { age: { contains: ageRange, mode: "insensitive" } } : {},
         ownerId ? { ownerId } : {},

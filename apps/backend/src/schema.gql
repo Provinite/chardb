@@ -53,7 +53,18 @@ type Character {
   ownerId: ID!
   personality: String
   price: Float
-  species: String
+
+  """Species this character belongs to"""
+  species: Species
+
+  """ID of the species this character belongs to"""
+  speciesId: ID
+
+  """Species variant this character belongs to"""
+  speciesVariant: SpeciesVariant
+
+  """ID of the species variant this character belongs to"""
+  speciesVariantId: ID
   tags: [String!]!
   tags_rel: [CharacterTag!]!
 
@@ -89,6 +100,8 @@ input CharacterFiltersInput {
   sortBy: String
   sortOrder: String
   species: String
+  speciesId: ID
+  speciesVariantId: ID
   tags: [String!]
   visibility: Visibility
 }
@@ -336,7 +349,8 @@ input CreateCharacterInput {
   name: String!
   personality: String
   price: Float
-  species: String
+  speciesId: ID
+  speciesVariantId: ID
   tags: [String!]! = []
 
   """Trait values for the character"""
@@ -2091,7 +2105,8 @@ input UpdateCharacterInput {
   name: String
   personality: String
   price: Float
-  species: String
+  speciesId: ID
+  speciesVariantId: ID
   tags: [String!]
 
   """Trait values for the character"""

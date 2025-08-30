@@ -17,6 +17,8 @@ import { CharactersService } from "./characters.service";
 import { TagsService } from "../tags/tags.service";
 import { UsersService } from "../users/users.service";
 import { MediaService } from "../media/media.service";
+import { SpeciesVariantsService } from "../species-variants/species-variants.service";
+import { SpeciesService } from "../species/species.service";
 import {
   Character as CharacterEntity,
   CharacterConnection,
@@ -28,6 +30,8 @@ import { Media } from "../media/entities/media.entity";
 import { Tag } from "../shared/entities/tag.entity";
 import { ImagesService } from "../images/images.service";
 import { User } from "../users/entities/user.entity";
+import { SpeciesVariant } from "../species-variants/entities/species-variant.entity";
+import { Species } from "../species/entities/species.entity";
 import type { Prisma } from "@chardb/database";
 import {
   CreateCharacterInput,
@@ -55,6 +59,8 @@ export class CharactersResolver {
     private readonly tagsService: TagsService,
     private readonly usersService: UsersService,
     private readonly mediaService: MediaService,
+    private readonly speciesVariantsService: SpeciesVariantsService,
+    private readonly speciesService: SpeciesService,
   ) {}
 
   @Mutation(() => CharacterEntity)
@@ -235,6 +241,20 @@ export class CharactersResolver {
       character,
       tag
     }));
+  }
+
+  /** Species field resolver */
+  @ResolveField("species", () => Species, { nullable: true, description: "Species this character belongs to" })
+  async resolveSpeciesField(@Parent() character: CharacterEntity): Promise<Species | null> {
+    if (!character.speciesId) return null;
+    return this.speciesService.findOne(character.speciesId);
+  }
+
+  /** Species variant field resolver */
+  @ResolveField("speciesVariant", () => SpeciesVariant, { nullable: true, description: "Species variant this character belongs to" })
+  async resolveSpeciesVariantField(@Parent() character: CharacterEntity): Promise<SpeciesVariant | null> {
+    if (!character.speciesVariantId) return null;
+    return this.speciesVariantsService.findOne(character.speciesVariantId);
   }
 
   /** Update character trait values */

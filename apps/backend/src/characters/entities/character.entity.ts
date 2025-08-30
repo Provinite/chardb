@@ -5,6 +5,8 @@ import { Tag } from '../../shared/entities/tag.entity';
 import { Image } from '../../images/entities/image.entity';
 import { Media } from '../../media/entities/media.entity';
 import { CharacterTraitValue } from '../../shared/types/character-trait.types';
+import { SpeciesVariant } from '../../species-variants/entities/species-variant.entity';
+import { Species } from '../../species/entities/species.entity';
 
 @ObjectType()
 export class CharacterCount {
@@ -20,8 +22,11 @@ export class Character {
   @Field()
   name: string;
 
-  @Field({ nullable: true })
-  species?: string;
+  @Field(() => ID, { nullable: true, description: 'ID of the species this character belongs to' })
+  speciesId?: string;
+
+  @Field(() => ID, { nullable: true, description: 'ID of the species variant this character belongs to' })
+  speciesVariantId?: string;
 
   @Field({ nullable: true })
   age?: string;

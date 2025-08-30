@@ -17,11 +17,15 @@ export class CreateCharacterInput {
   @MaxLength(100)
   name: string;
 
-  @Field({ nullable: true })
+  @Field(() => ID, { nullable: true })
   @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  species?: string;
+  @IsUUID()
+  speciesId?: string;
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  speciesVariantId?: string;
 
   @Field({ nullable: true })
   @IsOptional()
@@ -98,11 +102,15 @@ export class UpdateCharacterInput {
   @MaxLength(100)
   name?: string;
 
-  @Field({ nullable: true })
+  @Field(() => ID, { nullable: true })
   @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  species?: string;
+  @IsUUID()
+  speciesId?: string;
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  speciesVariantId?: string;
 
   @Field({ nullable: true })
   @IsOptional()
@@ -199,6 +207,16 @@ export class CharacterFiltersInput {
   @IsOptional()
   @IsString()
   species?: string;
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  speciesId?: string;
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  speciesVariantId?: string;
 
   @Field(() => [String], { nullable: true })
   @IsOptional()
@@ -313,6 +331,8 @@ export interface CharacterFilters {
   offset?: number;
   search?: string;
   species?: string;
+  speciesId?: string;
+  speciesVariantId?: string;
   tags?: string[];
   ownerId?: string;
   visibility?: Visibility;

@@ -90,31 +90,35 @@ model User {
 }
 
 model Character {
-  id           String     @id @default(uuid())
-  name         String     @db.VarChar(100)
-  species      String?    @db.VarChar(50)
-  age          String?    @db.VarChar(20)
-  gender       String?    @db.VarChar(30)
-  description  String?    @db.Text
-  personality  String?    @db.Text
-  backstory    String?    @db.Text
-  ownerId      String     @map("owner_id")
-  creatorId    String?    @map("creator_id")
-  mainMediaId  String?    @map("main_media_id")
-  visibility   Visibility @default(PUBLIC)
-  isSellable   Boolean    @default(false) @map("is_sellable")
-  isTradeable  Boolean    @default(false) @map("is_tradeable")
-  price        Decimal?   @db.Decimal(10, 2)
-  customFields Json       @default("{}") @map("custom_fields")
+  id                String     @id @default(uuid())
+  name              String     @db.VarChar(100)
+  species           String?    @db.VarChar(50)
+  speciesId         String?    @map("species_id")
+  speciesVariantId  String?    @map("species_variant_id")
+  age               String?    @db.VarChar(20)
+  gender            String?    @db.VarChar(30)
+  description       String?    @db.Text
+  personality       String?    @db.Text
+  backstory         String?    @db.Text
+  ownerId           String     @map("owner_id")
+  creatorId         String?    @map("creator_id")
+  mainMediaId       String?    @map("main_media_id")
+  visibility        Visibility @default(PUBLIC)
+  isSellable        Boolean    @default(false) @map("is_sellable")
+  isTradeable       Boolean    @default(false) @map("is_tradeable")
+  price             Decimal?   @db.Decimal(10, 2)
+  customFields      Json       @default("{}") @map("custom_fields")
   /// [CharacterTraitValuesJson]
-  traitValues  Json       @default("[]") @map("trait_values")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  traitValues       Json       @default("[]") @map("trait_values")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
 
   // Relations
-  owner     User   @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  creator   User?  @relation("CharacterCreator", fields: [creatorId], references: [id], onDelete: SetNull)
-  mainMedia Media? @relation("CharacterMainMedia", fields: [mainMediaId], references: [id], onDelete: SetNull)
+  owner          User            @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  creator        User?           @relation("CharacterCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  mainMedia      Media?          @relation("CharacterMainMedia", fields: [mainMediaId], references: [id], onDelete: SetNull)
+  speciesObj     Species?        @relation(fields: [speciesId], references: [id], onDelete: SetNull)
+  speciesVariant SpeciesVariant? @relation(fields: [speciesVariantId], references: [id], onDelete: SetNull)
 
   media     Media[]
   galleries Gallery[]
@@ -477,6 +481,7 @@ model Species {
 
   // Relations
   community       Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  characters      Character[]
   traits          Trait[]
   speciesVariants SpeciesVariant[]
 
@@ -526,6 +531,7 @@ model SpeciesVariant {
 
   // Relations
   species           Species            @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+  characters        Character[]
   traitListEntries  TraitListEntry[]
   enumValueSettings EnumValueSetting[]
 
