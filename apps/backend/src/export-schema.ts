@@ -1,3 +1,5 @@
+/// <reference path="./json-types.d.ts" />
+
 // Set environment variables BEFORE any imports that might use them
 if (!process.env.DATABASE_URL) {
   console.error("❌ DATABASE_URL environment variable is required");

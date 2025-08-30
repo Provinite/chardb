@@ -25,7 +25,7 @@ type AuthPayload {
 }
 
 type Character {
-  _count: CharacterCount
+  _count: CharacterCount!
   age: String
   backstory: String
   createdAt: DateTime!
@@ -49,9 +49,23 @@ type Character {
   ownerId: ID!
   personality: String
   price: Float
-  species: String
+
+  """Species this character belongs to"""
+  species: Species
+
+  """ID of the species this character belongs to"""
+  speciesId: ID
+
+  """Species variant this character belongs to"""
+  speciesVariant: SpeciesVariant
+
+  """ID of the species variant this character belongs to"""
+  speciesVariantId: ID
   tags: [String!]!
-  tags_rel: [CharacterTag!]
+  tags_rel: [CharacterTag!]!
+
+  """Trait values assigned to this character"""
+  traitValues: [CharacterTraitValue!]!
   updatedAt: DateTime!
   userHasLiked: Boolean!
   visibility: Visibility!
@@ -82,13 +96,76 @@ input CharacterFiltersInput {
   sortBy: String
   sortOrder: String
   species: String
+  speciesId: ID
+  speciesVariantId: ID
   tags: [String!]
   visibility: Visibility
+}
+
+"""A record of character ownership transfer between users"""
+type CharacterOwnershipChange {
+  character: Character!
+
+  """The ID of the character whose ownership was changed"""
+  characterId: ID!
+
+  """When the ownership change occurred"""
+  createdAt: DateTime!
+  fromUser: User
+
+  """The ID of the previous owner (null for initial character creation)"""
+  fromUserId: ID
+
+  """Unique identifier for the ownership change record"""
+  id: ID!
+  toUser: User!
+
+  """The ID of the new owner"""
+  toUserId: ID!
+}
+
+"""Paginated list of character ownership changes with connection metadata"""
+type CharacterOwnershipChangeConnection {
+  """Whether there are more character ownership changes after this page"""
+  hasNextPage: Boolean!
+
+  """Whether there are character ownership changes before this page"""
+  hasPreviousPage: Boolean!
+
+  """The character ownership changes in this page"""
+  nodes: [CharacterOwnershipChange!]!
+
+  """Total count of character ownership changes matching the query"""
+  totalCount: Float!
 }
 
 type CharacterTag {
   character: Character!
   tag: Tag!
+}
+
+"""A trait value assigned to a character"""
+type CharacterTraitValue {
+  """The ID of the trait this value belongs to"""
+  traitId: ID!
+
+  """The value of the trait"""
+  value: String
+}
+
+"""Input for setting a character trait value"""
+input CharacterTraitValueInput {
+  """The ID of the trait"""
+  traitId: ID!
+
+  """The value of the trait"""
+  value: String
+}
+
+"""Input for claiming an invite code"""
+input ClaimInviteCodeInput {
+  """The ID of the user who is claiming this invite code"""
+  userId: ID!
 }
 
 type Comment {
@@ -109,6 +186,7 @@ type Comment {
   replies: [Comment!]!
   repliesCount: Int!
   updatedAt: DateTime!
+  user: User
   userHasLiked: Boolean!
 }
 
@@ -134,6 +212,128 @@ enum CommentableType {
   USER
 }
 
+type Community {
+  """When the community was created"""
+  createdAt: DateTime!
+
+  """Unique identifier for the community"""
+  id: ID!
+
+  """Name of the community"""
+  name: String!
+
+  """When the community was last updated"""
+  updatedAt: DateTime!
+}
+
+type CommunityConnection {
+  """Whether there are more communities after this page"""
+  hasNextPage: Boolean!
+
+  """Whether there are more communities before this page"""
+  hasPreviousPage: Boolean!
+
+  """List of communities in this connection"""
+  nodes: [Community!]!
+
+  """Total number of communities available"""
+  totalCount: Float!
+}
+
+"""An invitation for a user to join a community with a specific role"""
+type CommunityInvitation {
+  """Whether the invitation has been accepted"""
+  accepted: Boolean!
+
+  """When the invitation was accepted"""
+  acceptedAt: DateTime
+  community: Community
+
+  """The ID of the community the invitation is for"""
+  communityId: ID!
+
+  """When the invitation was created"""
+  createdAt: DateTime!
+
+  """Whether the invitation has been declined"""
+  declined: Boolean!
+
+  """When the invitation was declined"""
+  declinedAt: DateTime
+
+  """Unique identifier for the community invitation"""
+  id: ID!
+  invitee: User
+
+  """The ID of the user being invited"""
+  inviteeId: ID!
+  inviter: User
+
+  """The ID of the user who created the invitation"""
+  inviterId: ID!
+
+  """Whether the invitation is still pending"""
+  pending: Boolean!
+  role: Role
+
+  """The ID of the role to grant when the invitation is accepted"""
+  roleId: ID!
+}
+
+"""Paginated list of community invitations with connection metadata"""
+type CommunityInvitationConnection {
+  """Whether there are more community invitations after this page"""
+  hasNextPage: Boolean!
+
+  """Whether there are community invitations before this page"""
+  hasPreviousPage: Boolean!
+
+  """The community invitations in this page"""
+  nodes: [CommunityInvitation!]!
+
+  """Total count of community invitations matching the query"""
+  totalCount: Float!
+}
+
+"""A membership record linking a user to a community role"""
+type CommunityMember {
+  """When the membership was created"""
+  createdAt: DateTime!
+
+  """Unique identifier for the community member record"""
+  id: ID!
+
+  """The role this member has"""
+  role: Role!
+
+  """The ID of the role this member has"""
+  roleId: ID!
+
+  """When the membership was last updated"""
+  updatedAt: DateTime!
+
+  """The user who is the member"""
+  user: User!
+
+  """The ID of the user who is the member"""
+  userId: ID!
+}
+
+"""Paginated list of community members with connection metadata"""
+type CommunityMemberConnection {
+  """Whether there are more community members after this page"""
+  hasNextPage: Boolean!
+
+  """Whether there are community members before this page"""
+  hasPreviousPage: Boolean!
+
+  """The community members in this page"""
+  nodes: [CommunityMember!]!
+
+  """Total count of community members matching the query"""
+  totalCount: Float!
+}
+
 input CreateCharacterInput {
   age: String
   backstory: String
@@ -145,9 +345,25 @@ input CreateCharacterInput {
   name: String!
   personality: String
   price: Float
-  species: String
+  speciesId: ID
+  speciesVariantId: ID
   tags: [String!]! = []
+
+  """Trait values for the character"""
+  traitValues: [CharacterTraitValueInput!]! = []
   visibility: Visibility! = PUBLIC
+}
+
+"""Input for creating a new character ownership change record"""
+input CreateCharacterOwnershipChangeInput {
+  """The ID of the character whose ownership is being changed"""
+  characterId: ID!
+
+  """The ID of the previous owner (null for initial character creation)"""
+  fromUserId: ID
+
+  """The ID of the new owner"""
+  toUserId: ID!
 }
 
 input CreateCommentInput {
@@ -157,12 +373,127 @@ input CreateCommentInput {
   parentId: ID
 }
 
+input CreateCommunityInput {
+  """Name of the community"""
+  name: String!
+}
+
+"""Input for creating a new community invitation"""
+input CreateCommunityInvitationInput {
+  """The ID of the community the invitation is for"""
+  communityId: ID!
+
+  """The ID of the user being invited"""
+  inviteeId: ID!
+
+  """The ID of the user who is creating the invitation"""
+  inviterId: ID!
+
+  """The ID of the role to grant when the invitation is accepted"""
+  roleId: ID!
+}
+
+"""Input for creating a new community membership"""
+input CreateCommunityMemberInput {
+  """The ID of the role to assign to the member"""
+  roleId: ID!
+
+  """The ID of the user to make a member"""
+  userId: ID!
+}
+
+input CreateEnumValueInput {
+  """Name/display text of this enum value"""
+  name: String!
+
+  """Display order within the trait's enum values"""
+  order: Int = 0
+
+  """ID of the trait this enum value belongs to"""
+  traitId: ID!
+}
+
+input CreateEnumValueSettingInput {
+  """ID of the enum value this setting allows"""
+  enumValueId: ID!
+
+  """ID of the species variant this setting belongs to"""
+  speciesVariantId: ID!
+}
+
 input CreateGalleryInput {
   characterId: ID
   description: String
   name: String!
   sortOrder: Int! = 0
   visibility: Visibility! = PUBLIC
+}
+
+"""Input for creating a new invite code"""
+input CreateInviteCodeInput {
+  """The ID of the user who is creating this invite code"""
+  creatorId: ID!
+
+  """The invite code string (alphanumeric and hyphens only)"""
+  id: String!
+
+  """Maximum number of times this invite code can be claimed"""
+  maxClaims: Int!
+
+  """The ID of the role to grant when this invite code is used"""
+  roleId: ID
+}
+
+"""Input for creating a new role"""
+input CreateRoleInput {
+  """Whether members with this role can create new characters"""
+  canCreateCharacter: Boolean! = false
+
+  """Whether members with this role can create invite codes"""
+  canCreateInviteCode: Boolean! = false
+
+  """Whether members with this role can create new roles"""
+  canCreateRole: Boolean! = false
+
+  """Whether members with this role can create new species"""
+  canCreateSpecies: Boolean! = false
+
+  """Whether members with this role can edit characters"""
+  canEditCharacter: Boolean! = false
+
+  """Whether members with this role can edit existing roles"""
+  canEditRole: Boolean! = false
+
+  """Whether members with this role can edit species"""
+  canEditSpecies: Boolean! = false
+
+  """Whether members with this role can list invite codes"""
+  canListInviteCodes: Boolean! = false
+
+  """The ID of the community this role belongs to"""
+  communityId: ID!
+
+  """The name of the role"""
+  name: String!
+}
+
+input CreateSpeciesInput {
+  """ID of the community that owns this species"""
+  communityId: ID!
+
+  """Whether this species has an associated image"""
+  hasImage: Boolean = false
+
+  """Name of the species"""
+  name: String!
+}
+
+input CreateSpeciesVariantInput {
+  """Name of the species variant"""
+  name: String!
+
+  """ID of the species this variant belongs to"""
+  speciesId: ID!
 }
 
 """Input type for creating new text media"""
@@ -182,6 +513,9 @@ input CreateTextMediaInput {
   """Optional gallery to add this media to"""
   galleryId: ID
 
+  """Optional tags to associate with this media"""
+  tags: [String!]
+
   """Title for the text media"""
   title: String!
 
@@ -189,10 +523,121 @@ input CreateTextMediaInput {
   visibility: Visibility! = PUBLIC
 }
 
+input CreateTraitInput {
+  """Name of the trait"""
+  name: String!
+
+  """ID of the species this trait belongs to"""
+  speciesId: ID!
+
+  """Type of values this trait can store"""
+  valueType: TraitValueType!
+}
+
+input CreateTraitListEntryInput {
+  """Default integer value for this trait"""
+  defaultValueInt: Int
+
+  """Default string value for this trait"""
+  defaultValueString: String
+
+  """Default timestamp value for this trait"""
+  defaultValueTimestamp: DateTime
+
+  """Display order of this trait in the variant's trait list"""
+  order: Int!
+
+  """Whether this trait is required for critters using this variant"""
+  required: Boolean!
+
+  """ID of the species variant this entry belongs to"""
+  speciesVariantId: ID!
+
+  """ID of the trait this entry configures"""
+  traitId: ID!
+
+  """Type of values this trait stores"""
+  valueType: TraitValueType!
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type EnumValue {
+  """When the enum value was created"""
+  createdAt: DateTime!
+
+  """Unique identifier for the enum value"""
+  id: ID!
+
+  """Name/display text of this enum value"""
+  name: String!
+
+  """Display order within the trait's enum values"""
+  order: Int!
+
+  """The trait this enum value belongs to"""
+  trait: Trait!
+
+  """ID of the trait this enum value belongs to"""
+  traitId: ID!
+
+  """When the enum value was last updated"""
+  updatedAt: DateTime!
+}
+
+type EnumValueConnection {
+  """Whether there are more enum values after this page"""
+  hasNextPage: Boolean!
+
+  """Whether there are more enum values before this page"""
+  hasPreviousPage: Boolean!
+
+  """List of enum values in this connection"""
+  nodes: [EnumValue!]!
+
+  """Total number of enum values available"""
+  totalCount: Float!
+}
+
+type EnumValueSetting {
+  """When the enum value setting was created"""
+  createdAt: DateTime!
+
+  """The enum value this setting allows"""
+  enumValue: EnumValue!
+
+  """ID of the enum value this setting allows"""
+  enumValueId: ID!
+
+  """Unique identifier for the enum value setting"""
+  id: ID!
+
+  """The species variant this setting belongs to"""
+  speciesVariant: SpeciesVariant!
+
+  """ID of the species variant this setting belongs to"""
+  speciesVariantId: ID!
+
+  """When the enum value setting was last updated"""
+  updatedAt: DateTime!
+}
+
+type EnumValueSettingConnection {
+  """Whether there are more enum value settings after this page"""
+  hasNextPage: Boolean!
+
+  """Whether there are more enum value settings before this page"""
+  hasPreviousPage: Boolean!
+
+  """List of enum value settings in this connection"""
+  nodes: [EnumValueSetting!]!
+
+  """Total number of enum value settings available"""
+  totalCount: Float!
+}
 
 type FollowListResult {
   followers: [User!]!
@@ -214,7 +659,7 @@ type FollowStatus {
 }
 
 type Gallery {
-  _count: GalleryCount
+  _count: GalleryCount!
   character: Character
   characterId: ID
   createdAt: DateTime!
@@ -296,6 +741,59 @@ type ImageTag {
 }
 
 """
+An invite code that can be used to join a community with an optional role
+"""
+type InviteCode {
+  """Number of times this invite code has been claimed"""
+  claimCount: Int!
+
+  """When the invite code was created"""
+  createdAt: DateTime!
+
+  """The user who created this invite code"""
+  creator: User!
+
+  """The ID of the user who created this invite code"""
+  creatorId: ID!
+
+  """The unique invite code string"""
+  id: ID!
+
+  """Whether this invite code is still available for use"""
+  isAvailable: Boolean!
+
+  """Maximum number of times this invite code can be claimed"""
+  maxClaims: Int!
+
+  """Number of remaining uses for this invite code"""
+  remainingClaims: Int!
+
+  """The role to grant when this invite code is used"""
+  role: Role
+
+  """The ID of the role to grant when this invite code is used"""
+  roleId: ID
+
+  """When the invite code was last updated"""
+  updatedAt: DateTime!
+}
+
+"""Paginated list of invite codes with connection metadata"""
+type InviteCodeConnection {
+  """Whether there are more invite codes after this page"""
+  hasNextPage: Boolean!
+
+  """Whether there are invite codes before this page"""
+  hasPreviousPage: Boolean!
+
+  """The invite codes in this page"""
+  nodes: [InviteCode!]!
+
+  """Total count of invite codes matching the query"""
+  totalCount: Float!
+}
+
+"""
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
 scalar JSON
@@ -326,10 +824,6 @@ input LoginInput {
   password: String!
 }
 
-input ManageImageTagsInput {
-  tagNames: [String!]!
-}
-
 """Input type for managing media tags"""
 input ManageMediaTagsInput {
   """Array of tag names to add or remove"""
@@ -345,6 +839,9 @@ type Media {
   """The character this media is associated with, if any"""
   character: Character
 
+  """Number of characters this media is associated with"""
+  characterCount: Int!
+
   """Optional ID of the character this media is associated with"""
   characterId: ID
 
@@ -356,6 +853,9 @@ type Media {
 
   """The gallery this media belongs to, if any"""
   gallery: Gallery
+
+  """Number of galleries this media appears in"""
+  galleryCount: Int!
 
   """Optional ID of the gallery this media belongs to"""
   galleryId: ID
@@ -370,7 +870,7 @@ type Media {
   imageId: ID
 
   """Number of likes this media has received"""
-  likesCount: Float!
+  likesCount: Int!
 
   """The user who owns this media"""
   owner: User!
@@ -456,7 +956,6 @@ enum MediaType {
 
 type Mutation {
   addCharacterTags(id: ID!, input: ManageTagsInput!): Character!
-  addImageTags(id: ID!, input: ManageImageTagsInput!): Image!
 
   """Adds tags to a media item"""
   addMediaTags(
@@ -466,19 +965,100 @@ type Mutation {
     """Tags to add to the media"""
     input: ManageMediaTagsInput!
   ): Media!
+
+  """Claim an invite code to join a community"""
+  claimInviteCode(
+    """Invite code claim data"""
+    claimInviteCodeInput: ClaimInviteCodeInput!
+
+    """Invite code ID"""
+    id: ID!
+  ): InviteCode!
   createCharacter(input: CreateCharacterInput!): Character!
+
+  """Create a new character ownership change record"""
+  createCharacterOwnershipChange(
+    """Character ownership change creation data"""
+    createCharacterOwnershipChangeInput: CreateCharacterOwnershipChangeInput!
+  ): CharacterOwnershipChange!
   createComment(input: CreateCommentInput!): Comment!
+
+  """Create a new community"""
+  createCommunity(
+    """Community creation data"""
+    createCommunityInput: CreateCommunityInput!
+  ): Community!
+
+  """Create a new community invitation"""
+  createCommunityInvitation(
+    """Community invitation creation data"""
+    createCommunityInvitationInput: CreateCommunityInvitationInput!
+  ): CommunityInvitation!
+
+  """Create a new community membership"""
+  createCommunityMember(
+    """Community membership creation data"""
+    createCommunityMemberInput: CreateCommunityMemberInput!
+  ): CommunityMember!
+
+  """Create a new enum value"""
+  createEnumValue(
+    """Enum value creation data"""
+    createEnumValueInput: CreateEnumValueInput!
+  ): EnumValue!
+
+  """Create a new enum value setting"""
+  createEnumValueSetting(
+    """Enum value setting creation data"""
+    createEnumValueSettingInput: CreateEnumValueSettingInput!
+  ): EnumValueSetting!
   createGallery(input: CreateGalleryInput!): Gallery!
+
+  """Create a new invite code"""
+  createInviteCode(
+    """Invite code creation data"""
+    createInviteCodeInput: CreateInviteCodeInput!
+  ): InviteCode!
+
+  """Create a new role"""
+  createRole(
+    """Role creation data"""
+    createRoleInput: CreateRoleInput!
+  ): Role!
+
+  """Create a new species"""
+  createSpecies(
+    """Species creation data"""
+    createSpeciesInput: CreateSpeciesInput!
+  ): Species!
+
+  """Create a new species variant"""
+  createSpeciesVariant(
+    """Species variant creation data"""
+    createSpeciesVariantInput: CreateSpeciesVariantInput!
+  ): SpeciesVariant!
 
   """Creates a new text media item"""
   createTextMedia(
     """Text media creation parameters"""
     input: CreateTextMediaInput!
   ): Media!
-  deleteAccount: Boolean!
+
+  """Create a new trait"""
+  createTrait(
+    """Trait creation data"""
+    createTraitInput: CreateTraitInput!
+  ): Trait!
+
+  """Create a new trait list entry"""
+  createTraitListEntry(
+    """Trait list entry creation data"""
+    createTraitListEntryInput: CreateTraitListEntryInput!
+  ): TraitListEntry!
+  deleteAccount: RemovalResponse!
   deleteCharacter(id: ID!): Boolean!
   deleteComment(id: ID!): Boolean!
-  deleteGallery(id: ID!): Boolean!
+  deleteGallery(id: ID!): RemovalResponse!
   deleteImage(id: ID!): Boolean!
 
   """Deletes a media item and its associated content"""
@@ -488,8 +1068,49 @@ type Mutation {
   ): Boolean!
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): String!
+
+  """Remove a character ownership change record"""
+  removeCharacterOwnershipChange(
+    """Character ownership change ID"""
+    id: ID!
+  ): RemovalResponse!
   removeCharacterTags(id: ID!, input: ManageTagsInput!): Character!
-  removeImageTags(id: ID!, input: ManageImageTagsInput!): Image!
+
+  """Remove a community"""
+  removeCommunity(
+    """Community ID"""
+    id: ID!
+  ): RemovalResponse!
+
+  """Remove a community invitation"""
+  removeCommunityInvitation(
+    """Community invitation ID"""
+    id: ID!
+  ): CommunityInvitation!
+
+  """Remove a community membership"""
+  removeCommunityMember(
+    """Community member ID"""
+    id: ID!
+  ): CommunityMember!
+
+  """Remove an enum value"""
+  removeEnumValue(
+    """Enum value ID"""
+    id: ID!
+  ): RemovalResponse!
+
+  """Remove an enum value setting"""
+  removeEnumValueSetting(
+    """Enum value setting ID"""
+    id: ID!
+  ): RemovalResponse!
+
+  """Remove an invite code"""
+  removeInviteCode(
+    """Invite code ID"""
+    id: ID!
+  ): RemovalResponse!
 
   """Removes tags from a media item"""
   removeMediaTags(
@@ -499,7 +1120,46 @@ type Mutation {
     """Tags to remove from the media"""
     input: ManageMediaTagsInput!
   ): Media!
+
+  """Remove a role"""
+  removeRole(
+    """Role ID"""
+    id: ID!
+  ): RemovalResponse!
+
+  """Remove a species"""
+  removeSpecies(
+    """Species ID"""
+    id: ID!
+  ): RemovalResponse!
+
+  """Remove a species variant"""
+  removeSpeciesVariant(
+    """Species variant ID"""
+    id: ID!
+  ): RemovalResponse!
+
+  """Remove a trait"""
+  removeTrait(
+    """Trait ID"""
+    id: ID!
+  ): RemovalResponse!
+
+  """Remove a trait list entry"""
+  removeTraitListEntry(
+    """Trait list entry ID"""
+    id: ID!
+  ): RemovalResponse!
   reorderGalleries(input: ReorderGalleriesInput!): [Gallery!]!
+
+  """Respond to a community invitation (accept or decline)"""
+  respondToCommunityInvitation(
+    """Community invitation ID"""
+    id: ID!
+
+    """Response data (accept or decline)"""
+    respondToCommunityInvitationInput: RespondToCommunityInvitationInput!
+  ): CommunityInvitation!
 
   """Sets or clears the main media for a character"""
   setCharacterMainMedia(
@@ -514,9 +1174,57 @@ type Mutation {
   toggleLike(input: ToggleLikeInput!): LikeResult!
   transferCharacter(id: ID!, input: TransferCharacterInput!): Character!
   updateCharacter(id: ID!, input: UpdateCharacterInput!): Character!
+
+  """Update character trait values"""
+  updateCharacterTraits(id: ID!, updateCharacterTraitsInput: UpdateCharacterTraitsInput!): Character!
   updateComment(id: ID!, input: UpdateCommentInput!): Comment!
+
+  """Update a community"""
+  updateCommunity(
+    """Community ID"""
+    id: ID!
+
+    """Community update data"""
+    updateCommunityInput: UpdateCommunityInput!
+  ): Community!
+
+  """Update a community membership (change role)"""
+  updateCommunityMember(
+    """Community member ID"""
+    id: ID!
+
+    """Community membership update data"""
+    updateCommunityMemberInput: UpdateCommunityMemberInput!
+  ): CommunityMember!
+
+  """Update an enum value"""
+  updateEnumValue(
+    """Enum value ID"""
+    id: ID!
+
+    """Enum value update data"""
+    updateEnumValueInput: UpdateEnumValueInput!
+  ): EnumValue!
+
+  """Update an enum value setting"""
+  updateEnumValueSetting(
+    """Enum value setting ID"""
+    id: ID!
+
+    """Enum value setting update data"""
+    updateEnumValueSettingInput: UpdateEnumValueSettingInput!
+  ): EnumValueSetting!
   updateGallery(id: ID!, input: UpdateGalleryInput!): Gallery!
   updateImage(id: ID!, input: UpdateImageInput!): Image!
+
+  """Update an invite code"""
+  updateInviteCode(
+    """Invite code ID"""
+    id: ID!
+
+    """Invite code update data"""
+    updateInviteCodeInput: UpdateInviteCodeInput!
+  ): InviteCode!
 
   """Updates media metadata (title, description, etc.)"""
   updateMedia(
@@ -528,6 +1236,33 @@ type Mutation {
   ): Media!
   updateProfile(input: UpdateUserInput!): User!
 
+  """Update a role"""
+  updateRole(
+    """Role ID"""
+    id: ID!
+
+    """Role update data"""
+    updateRoleInput: UpdateRoleInput!
+  ): Role!
+
+  """Update a species"""
+  updateSpecies(
+    """Species ID"""
+    id: ID!
+
+    """Species update data"""
+    updateSpeciesInput: UpdateSpeciesInput!
+  ): Species!
+
+  """Update a species variant"""
+  updateSpeciesVariant(
+    """Species variant ID"""
+    id: ID!
+
+    """Species variant update data"""
+    updateSpeciesVariantInput: UpdateSpeciesVariantInput!
+  ): SpeciesVariant!
+
   """Updates the text content of a text media item"""
   updateTextContent(
     """Updated text content parameters"""
@@ -536,6 +1271,24 @@ type Mutation {
     """Media ID containing the text content to update"""
     mediaId: ID!
   ): Media!
+
+  """Update a trait"""
+  updateTrait(
+    """Trait ID"""
+    id: ID!
+
+    """Trait update data"""
+    updateTraitInput: UpdateTraitInput!
+  ): Trait!
+
+  """Update a trait list entry"""
+  updateTraitListEntry(
+    """Trait list entry ID"""
+    id: ID!
+
+    """Trait list entry update data"""
+    updateTraitListEntryInput: UpdateTraitListEntryInput!
+  ): TraitListEntry!
 }
 
 type Query {
@@ -552,9 +1305,219 @@ type Query {
     """Optional filters for media query"""
     filters: MediaFiltersInput
   ): MediaConnection!
+
+  """Get a character ownership change by ID"""
+  characterOwnershipChangeById(
+    """Character ownership change ID"""
+    id: ID!
+  ): CharacterOwnershipChange!
+
+  """Get all character ownership changes with pagination"""
+  characterOwnershipChanges(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of ownership changes to return"""
+    first: Int = 20
+  ): CharacterOwnershipChangeConnection!
+
+  """Get character ownership changes by character ID with pagination"""
+  characterOwnershipChangesByCharacter(
+    """Cursor for pagination"""
+    after: String
+
+    """Character ID"""
+    characterId: ID!
+
+    """Number of ownership changes to return"""
+    first: Int = 20
+  ): CharacterOwnershipChangeConnection!
+
+  """Get character ownership changes by user ID with pagination"""
+  characterOwnershipChangesByUser(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of ownership changes to return"""
+    first: Int = 20
+
+    """User ID (can be from or to user)"""
+    userId: ID!
+  ): CharacterOwnershipChangeConnection!
   characters(filters: CharacterFiltersInput): CharacterConnection!
   comment(id: ID!): Comment!
   comments(filters: CommentFiltersInput!): CommentConnection!
+
+  """Get all communities with pagination"""
+  communities(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of communities to return"""
+    first: Int = 20
+  ): CommunityConnection!
+
+  """Get a community by ID"""
+  community(
+    """Community ID"""
+    id: ID!
+  ): Community!
+
+  """Get a community invitation by ID"""
+  communityInvitationById(
+    """Community invitation ID"""
+    id: ID!
+  ): CommunityInvitation!
+
+  """Get all community invitations with pagination"""
+  communityInvitations(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of community invitations to return"""
+    first: Int = 20
+  ): CommunityInvitationConnection!
+
+  """Get community invitations by community ID with pagination"""
+  communityInvitationsByCommunity(
+    """Cursor for pagination"""
+    after: String
+
+    """Community ID"""
+    communityId: ID!
+
+    """Number of community invitations to return"""
+    first: Int = 20
+  ): CommunityInvitationConnection!
+
+  """Get community invitations by invitee ID with pagination"""
+  communityInvitationsByInvitee(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of community invitations to return"""
+    first: Int = 20
+
+    """Invitee ID"""
+    inviteeId: ID!
+  ): CommunityInvitationConnection!
+
+  """Get community invitations by inviter ID with pagination"""
+  communityInvitationsByInviter(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of community invitations to return"""
+    first: Int = 20
+
+    """Inviter ID"""
+    inviterId: ID!
+  ): CommunityInvitationConnection!
+
+  """Get a community member by ID"""
+  communityMemberById(
+    """Community member ID"""
+    id: ID!
+  ): CommunityMember!
+
+  """Get all community members with pagination"""
+  communityMembers(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of community members to return"""
+    first: Int = 20
+  ): CommunityMemberConnection!
+
+  """Get community members by community ID with pagination"""
+  communityMembersByCommunity(
+    """Cursor for pagination"""
+    after: String
+
+    """Community ID"""
+    communityId: ID!
+
+    """Number of community members to return"""
+    first: Int = 20
+  ): CommunityMemberConnection!
+
+  """Get community members by user ID with pagination"""
+  communityMembersByUser(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of community members to return"""
+    first: Int = 20
+
+    """User ID"""
+    userId: ID!
+  ): CommunityMemberConnection!
+
+  """Get an enum value by ID"""
+  enumValueById(
+    """Enum value ID"""
+    id: ID!
+  ): EnumValue!
+
+  """Get an enum value setting by ID"""
+  enumValueSettingById(
+    """Enum value setting ID"""
+    id: ID!
+  ): EnumValueSetting!
+
+  """Get all enum value settings with pagination"""
+  enumValueSettings(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of enum value settings to return"""
+    first: Int = 20
+  ): EnumValueSettingConnection!
+
+  """Get enum value settings by enum value ID with pagination"""
+  enumValueSettingsByEnumValue(
+    """Cursor for pagination"""
+    after: String
+
+    """Enum value ID"""
+    enumValueId: ID!
+
+    """Number of enum value settings to return"""
+    first: Int = 20
+  ): EnumValueSettingConnection!
+
+  """Get enum value settings by species variant ID with pagination"""
+  enumValueSettingsBySpeciesVariant(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of enum value settings to return"""
+    first: Int = 20
+
+    """Species variant ID"""
+    speciesVariantId: ID!
+  ): EnumValueSettingConnection!
+
+  """Get all enum values with pagination"""
+  enumValues(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of enum values to return"""
+    first: Int = 20
+  ): EnumValueConnection!
+
+  """Get enum values by trait ID with pagination"""
+  enumValuesByTrait(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of enum values to return"""
+    first: Int = 20
+
+    """Trait ID"""
+    traitId: ID!
+  ): EnumValueConnection!
   followStatus(userId: ID!): FollowStatus!
   galleries(filters: GalleryFiltersInput): GalleryConnection!
   gallery(id: ID!): Gallery!
@@ -572,6 +1535,45 @@ type Query {
   getFollowing(username: String!): FollowListResult!
   image(id: ID!): Image!
   images(filters: ImageFiltersInput): ImageConnection!
+
+  """Get an invite code by ID"""
+  inviteCodeById(
+    """Invite code ID"""
+    id: ID!
+  ): InviteCode!
+
+  """Get all invite codes with pagination"""
+  inviteCodes(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of invite codes to return"""
+    first: Int = 20
+  ): InviteCodeConnection!
+
+  """Get invite codes by creator ID with pagination"""
+  inviteCodesByCreator(
+    """Cursor for pagination"""
+    after: String
+
+    """Creator ID"""
+    creatorId: ID!
+
+    """Number of invite codes to return"""
+    first: Int = 20
+  ): InviteCodeConnection!
+
+  """Get invite codes by role ID with pagination"""
+  inviteCodesByRole(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of invite codes to return"""
+    first: Int = 20
+
+    """Role ID"""
+    roleId: ID!
+  ): InviteCodeConnection!
   likeStatus(entityId: ID!, entityType: LikeableType!): LikeStatus!
   likedCharacters: [Character!]!
   likedGalleries: [Gallery!]!
@@ -600,6 +1602,33 @@ type Query {
     filters: MediaFiltersInput
   ): MediaConnection!
 
+  """Get a role by ID"""
+  roleById(
+    """Role ID"""
+    id: ID!
+  ): Role!
+
+  """Get all roles with pagination"""
+  roles(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of roles to return"""
+    first: Int = 20
+  ): RoleConnection!
+
+  """Get roles by community ID with pagination"""
+  rolesByCommunity(
+    """Cursor for pagination"""
+    after: String
+
+    """Community ID"""
+    communityId: ID!
+
+    """Number of roles to return"""
+    first: Int = 20
+  ): RoleConnection!
+
   """Search for tags by name or get popular suggestions"""
   searchTags(
     """Maximum number of tags to return (default: 10, max: 50)"""
@@ -608,6 +1637,126 @@ type Query {
     """Search term to filter tags. If empty, returns popular suggestions"""
     search: String
   ): [Tag!]!
+
+  """Get all species with pagination"""
+  species(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of species to return"""
+    first: Int = 20
+  ): SpeciesConnection!
+
+  """Get species by community ID with pagination"""
+  speciesByCommunity(
+    """Cursor for pagination"""
+    after: String
+
+    """Community ID"""
+    communityId: ID!
+
+    """Number of species to return"""
+    first: Int = 20
+  ): SpeciesConnection!
+
+  """Get a species by ID"""
+  speciesById(
+    """Species ID"""
+    id: ID!
+  ): Species!
+
+  """Get a species variant by ID"""
+  speciesVariantById(
+    """Species variant ID"""
+    id: ID!
+  ): SpeciesVariant!
+
+  """Get all species variants with pagination"""
+  speciesVariants(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of species variants to return"""
+    first: Int = 20
+  ): SpeciesVariantConnection!
+
+  """Get species variants by species ID with pagination"""
+  speciesVariantsBySpecies(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of species variants to return"""
+    first: Int = 20
+
+    """Species ID"""
+    speciesId: ID!
+  ): SpeciesVariantConnection!
+
+  """Get a trait by ID"""
+  traitById(
+    """Trait ID"""
+    id: ID!
+  ): Trait!
+
+  """Get all trait list entries with pagination"""
+  traitListEntries(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of trait list entries to return"""
+    first: Int = 20
+  ): TraitListEntryConnection!
+
+  """Get trait list entries by species variant ID with pagination"""
+  traitListEntriesBySpeciesVariant(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of trait list entries to return"""
+    first: Int = 20
+
+    """Species variant ID"""
+    speciesVariantId: ID!
+  ): TraitListEntryConnection!
+
+  """Get trait list entries by trait ID with pagination"""
+  traitListEntriesByTrait(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of trait list entries to return"""
+    first: Int = 20
+
+    """Trait ID"""
+    traitId: ID!
+  ): TraitListEntryConnection!
+
+  """Get a trait list entry by ID"""
+  traitListEntryById(
+    """Trait list entry ID"""
+    id: ID!
+  ): TraitListEntry!
+
+  """Get all traits with pagination"""
+  traits(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of traits to return"""
+    first: Int = 20
+  ): TraitConnection!
+
+  """Get traits by species ID with pagination"""
+  traitsBySpecies(
+    """Cursor for pagination"""
+    after: String
+
+    """Number of traits to return"""
+    first: Int = 20
+
+    """Species ID"""
+    speciesId: ID!
+  ): TraitConnection!
   user(id: ID, username: String): User
   userCharacters(filters: CharacterFiltersInput, userId: ID!): CharacterConnection!
   userGalleries(filters: GalleryFiltersInput, userId: ID!): GalleryConnection!
@@ -626,8 +1775,83 @@ type Query {
   users(limit: Int! = 20, offset: Int! = 0): UserConnection!
 }
 
+"""Response confirming successful removal of an entity"""
+type RemovalResponse {
+  """Optional message about the removal"""
+  message: String
+
+  """Whether the entity was successfully removed"""
+  removed: Boolean!
+}
+
 input ReorderGalleriesInput {
   galleryIds: [ID!]!
+}
+
+"""Input for responding to a community invitation"""
+input RespondToCommunityInvitationInput {
+  """Whether to accept (true) or decline (false) the invitation"""
+  accept: Boolean!
+}
+
+"""A role within a community that defines permissions for members"""
+type Role {
+  """Whether members with this role can create new characters"""
+  canCreateCharacter: Boolean!
+
+  """Whether members with this role can create invite codes"""
+  canCreateInviteCode: Boolean!
+
+  """Whether members with this role can create new roles"""
+  canCreateRole: Boolean!
+
+  """Whether members with this role can create new species"""
+  canCreateSpecies: Boolean!
+
+  """Whether members with this role can edit characters"""
+  canEditCharacter: Boolean!
+
+  """Whether members with this role can edit existing roles"""
+  canEditRole: Boolean!
+
+  """Whether members with this role can edit species"""
+  canEditSpecies: Boolean!
+
+  """Whether members with this role can list invite codes"""
+  canListInviteCodes: Boolean!
+
+  """The community this role belongs to"""
+  community: Community!
+
+  """The ID of the community this role belongs to"""
+  communityId: ID!
+
+  """When the role was created"""
+  createdAt: DateTime!
+
+  """Unique identifier for the role"""
+  id: ID!
+
+  """The name of the role"""
+  name: String!
+
+  """When the role was last updated"""
+  updatedAt: DateTime!
+}
+
+"""Paginated list of roles with connection metadata"""
+type RoleConnection {
+  """Whether there are more roles after this page"""
+  hasNextPage: Boolean!
+
+  """Whether there are roles before this page"""
+  hasPreviousPage: Boolean!
+
+  """The roles in this page"""
+  nodes: [Role!]!
+
+  """Total count of roles matching the query"""
+  totalCount: Float!
 }
 
 input SetMainMediaInput {
@@ -641,10 +1865,82 @@ input SignupInput {
   username: String!
 }
 
+type Species {
+  """The community that owns this species"""
+  community: Community!
+
+  """ID of the community that owns this species"""
+  communityId: ID!
+
+  """When the species was created"""
+  createdAt: DateTime!
+
+  """Whether this species has an associated image"""
+  hasImage: Boolean!
+
+  """Unique identifier for the species"""
+  id: ID!
+
+  """Name of the species"""
+  name: String!
+
+  """When the species was last updated"""
+  updatedAt: DateTime!
+}
+
+type SpeciesConnection {
+  """Whether there are more species after this page"""
+  hasNextPage: Boolean!
+
+  """Whether there are more species before this page"""
+  hasPreviousPage: Boolean!
+
+  """List of species in this connection"""
+  nodes: [Species!]!
+
+  """Total number of species available"""
+  totalCount: Float!
+}
+
+type SpeciesVariant {
+  """When the species variant was created"""
+  createdAt: DateTime!
+
+  """Unique identifier for the species variant"""
+  id: ID!
+
+  """Name of the species variant"""
+  name: String!
+
+  """The species this variant belongs to"""
+  species: Species!
+
+  """ID of the species this variant belongs to"""
+  speciesId: ID!
+
+  """When the species variant was last updated"""
+  updatedAt: DateTime!
+}
+
+type SpeciesVariantConnection {
+  """Whether there are more species variants after this page"""
+  hasNextPage: Boolean!
+
+  """Whether there are more species variants before this page"""
+  hasPreviousPage: Boolean!
+
+  """List of species variants in this connection"""
+  nodes: [SpeciesVariant!]!
+
+  """Total number of species variants available"""
+  totalCount: Float!
+}
+
 type Tag {
   category: String
   color: String
   createdAt: DateTime!
+  displayName: String!
   id: ID!
   name: String!
 }
@@ -679,6 +1975,116 @@ input ToggleLikeInput {
   entityType: LikeableType!
 }
 
+type Trait {
+  """When the trait was created"""
+  createdAt: DateTime!
+
+  """Unique identifier for the trait"""
+  id: ID!
+
+  """Name of the trait"""
+  name: String!
+
+  """The species this trait belongs to"""
+  species: Species!
+
+  """ID of the species this trait belongs to"""
+  speciesId: ID!
+
+  """When the trait was last updated"""
+  updatedAt: DateTime!
+
+  """Type of values this trait can store"""
+  valueType: TraitValueType!
+}
+
+type TraitConnection {
+  """Whether there are more traits after this page"""
+  hasNextPage: Boolean!
+
+  """Whether there are more traits before this page"""
+  hasPreviousPage: Boolean!
+
+  """List of traits in this connection"""
+  nodes: [Trait!]!
+
+  """Total number of traits available"""
+  totalCount: Float!
+}
+
+type TraitListEntry {
+  """When the trait list entry was created"""
+  createdAt: DateTime!
+
+  """Display value for the default value based on type"""
+  defaultDisplayValue: String
+
+  """Default integer value for this trait"""
+  defaultValueInt: Int
+
+  """Default string value for this trait"""
+  defaultValueString: String
+
+  """Default timestamp value for this trait"""
+  defaultValueTimestamp: DateTime
+
+  """Unique identifier for the trait list entry"""
+  id: ID!
+
+  """Display order of this trait in the variant's trait list"""
+  order: Int!
+
+  """Whether this trait is required for critters using this variant"""
+  required: Boolean!
+
+  """The species variant this entry belongs to"""
+  speciesVariant: SpeciesVariant!
+
+  """ID of the species variant this entry belongs to"""
+  speciesVariantId: ID!
+
+  """The trait this entry configures"""
+  trait: Trait!
+
+  """ID of the trait this entry configures"""
+  traitId: ID!
+
+  """When the trait list entry was last updated"""
+  updatedAt: DateTime!
+
+  """Type of values this trait stores"""
+  valueType: TraitValueType!
+}
+
+type TraitListEntryConnection {
+  """Whether there are more trait list entries after this page"""
+  hasNextPage: Boolean!
+
+  """Whether there are more trait list entries before this page"""
+  hasPreviousPage: Boolean!
+
+  """List of trait list entries in this connection"""
+  nodes: [TraitListEntry!]!
+
+  """Total number of trait list entries available"""
+  totalCount: Float!
+}
+
+"""Types of values that traits can store"""
+enum TraitValueType {
+  """Enumerated value from predefined list"""
+  ENUM
+
+  """Integer/numeric value"""
+  INTEGER
+
+  """String/text value"""
+  STRING
+
+  """Timestamp/date value"""
+  TIMESTAMP
+}
+
 input TransferCharacterInput {
   newOwnerId: ID!
 }
@@ -695,13 +2101,53 @@ input UpdateCharacterInput {
   name: String
   personality: String
   price: Float
-  species: String
+  speciesId: ID
+  speciesVariantId: ID
   tags: [String!]
+
+  """Trait values for the character"""
+  traitValues: [CharacterTraitValueInput!]
   visibility: Visibility
+}
+
+"""Input for updating character trait values"""
+input UpdateCharacterTraitsInput {
+  """Array of trait values to set for the character"""
+  traitValues: [CharacterTraitValueInput!]!
 }
 
 input UpdateCommentInput {
   content: String!
+}
+
+input UpdateCommunityInput {
+  """Name of the community"""
+  name: String
+}
+
+"""Input for updating an existing community membership"""
+input UpdateCommunityMemberInput {
+  """The ID of the role to assign to the member"""
+  roleId: ID!
+}
+
+input UpdateEnumValueInput {
+  """Name/display text of this enum value"""
+  name: String
+
+  """Display order within the trait's enum values"""
+  order: Int
+
+  """ID of the trait this enum value belongs to"""
+  traitId: ID
+}
+
+input UpdateEnumValueSettingInput {
+  """ID of the enum value this setting allows"""
+  enumValueId: ID
+
+  """ID of the species variant this setting belongs to"""
+  speciesVariantId: ID
 }
 
 input UpdateGalleryInput {
@@ -721,6 +2167,15 @@ input UpdateImageInput {
   source: String
 }
 
+"""Input for updating an existing invite code"""
+input UpdateInviteCodeInput {
+  """Maximum number of times this invite code can be claimed"""
+  maxClaims: Int
+
+  """The ID of the role to grant when this invite code is used"""
+  roleId: ID
+}
+
 """Input type for updating media metadata"""
 input UpdateMediaInput {
   """Updated character association"""
@@ -732,11 +2187,63 @@ input UpdateMediaInput {
   """Updated gallery association"""
   galleryId: ID
 
+  """Updated tags"""
+  tags: [String!]
+
   """Updated title for the media"""
   title: String
 
   """Updated visibility setting"""
   visibility: Visibility
+}
+
+"""Input for updating an existing role"""
+input UpdateRoleInput {
+  """Whether members with this role can create new characters"""
+  canCreateCharacter: Boolean
+
+  """Whether members with this role can create invite codes"""
+  canCreateInviteCode: Boolean
+
+  """Whether members with this role can create new roles"""
+  canCreateRole: Boolean
+
+  """Whether members with this role can create new species"""
+  canCreateSpecies: Boolean
+
+  """Whether members with this role can edit characters"""
+  canEditCharacter: Boolean
+
+  """Whether members with this role can edit existing roles"""
+  canEditRole: Boolean
+
+  """Whether members with this role can edit species"""
+  canEditSpecies: Boolean
+
+  """Whether members with this role can list invite codes"""
+  canListInviteCodes: Boolean
+
+  """The name of the role"""
+  name: String
+}
+
+input UpdateSpeciesInput {
+  """ID of the community that owns this species"""
+  communityId: ID
+
+  """Whether this species has an associated image"""
+  hasImage: Boolean
+
+  """Name of the species"""
+  name: String
+}
+
+input UpdateSpeciesVariantInput {
+  """Name of the species variant"""
+  name: String
+
+  """ID of the species this variant belongs to"""
+  speciesId: ID
 }
 
 """Input type for updating text content specifically"""
@@ -746,6 +2253,43 @@ input UpdateTextContentInput {
 
   """Updated text formatting type"""
   formatting: TextFormatting
+}
+
+input UpdateTraitInput {
+  """Name of the trait"""
+  name: String
+
+  """ID of the species this trait belongs to"""
+  speciesId: ID
+
+  """Type of values this trait can store"""
+  valueType: TraitValueType
+}
+
+input UpdateTraitListEntryInput {
+  """Default integer value for this trait"""
+  defaultValueInt: Int
+
+  """Default string value for this trait"""
+  defaultValueString: String
+
+  """Default timestamp value for this trait"""
+  defaultValueTimestamp: DateTime
+
+  """Display order of this trait in the variant's trait list"""
+  order: Int
+
+  """Whether this trait is required for critters using this variant"""
+  required: Boolean
+
+  """ID of the species variant this entry belongs to"""
+  speciesVariantId: ID
+
+  """ID of the trait this entry configures"""
+  traitId: ID
+
+  """Type of values this trait stores"""
+  valueType: TraitValueType
 }
 
 input UpdateUserInput {
@@ -760,6 +2304,11 @@ input UpdateUserInput {
 type User {
   avatarUrl: String
   bio: String
+  canCreateCommunity: Boolean!
+  canCreateInviteCode: Boolean!
+  canGrantGlobalPermissions: Boolean!
+  canListInviteCodes: Boolean!
+  canListUsers: Boolean!
   createdAt: DateTime!
   dateOfBirth: DateTime
   displayName: String
@@ -786,23 +2335,47 @@ type UserConnection {
 
 type UserProfile {
   canViewPrivateContent: Boolean!
+
+  """Characters featured or highlighted by this user"""
   featuredCharacters: [Character!]!
   isOwnProfile: Boolean!
+
+  """Recently created or updated characters by this user"""
   recentCharacters: [Character!]!
+
+  """Recently created or updated galleries by this user"""
   recentGalleries: [Gallery!]!
+
+  """Recently uploaded media (images and text) by this user"""
   recentMedia: [Media!]!
+
+  """User statistics including counts and engagement metrics"""
   stats: UserStats!
   user: User!
 }
 
 type UserStats {
+  """Total number of characters owned by this user"""
   charactersCount: Int!
+
+  """Number of users following this user"""
   followersCount: Int!
+
+  """Number of users this user is following"""
   followingCount: Int!
+
+  """Total number of galleries created by this user"""
   galleriesCount: Int!
+
+  """Total number of images uploaded by this user"""
   imagesCount: Int!
+
+  """Total number of likes received across all user's content"""
   totalLikes: Int!
+
+  """Total number of views across all user's content"""
   totalViews: Int!
+  userId: ID!
 }
 
 """Visibility levels for content"""
