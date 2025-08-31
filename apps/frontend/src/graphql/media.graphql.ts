@@ -159,6 +159,8 @@ export const GET_CHARACTER_MEDIA = gql`
         userHasLiked
       }
       total
+      imageCount
+      textCount
       hasMore
     }
   }

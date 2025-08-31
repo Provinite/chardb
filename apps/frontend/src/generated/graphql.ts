@@ -815,8 +815,12 @@ export type MediaConnection = {
   __typename?: 'MediaConnection';
   /** Whether there are more items available after this page */
   hasMore: Scalars['Boolean']['output'];
+  /** Total number of image media items in the full result set */
+  imageCount: Scalars['Float']['output'];
   /** Array of media items for this page */
   media: Array<Media>;
+  /** Total number of text media items in the full result set */
+  textCount: Scalars['Float']['output'];
   /** Total number of media items matching the query */
   total: Scalars['Float']['output'];
 };
@@ -2616,7 +2620,7 @@ export type GetCharacterMediaQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterMediaQuery = { __typename?: 'Query', characterMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null }> } };
+export type GetCharacterMediaQuery = { __typename?: 'Query', characterMedia: { __typename?: 'MediaConnection', total: number, imageCount: number, textCount: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null }> } };
 
 export type GetMyMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -4572,6 +4576,8 @@ export const GetCharacterMediaDocument = gql`
       userHasLiked
     }
     total
+    imageCount
+    textCount
     hasMore
   }
 }

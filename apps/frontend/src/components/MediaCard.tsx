@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { Media } from '../generated/graphql';
+import { MediaGridItem } from './MediaGrid';
 
 const Card = styled.div`
   background: ${({ theme }) => theme.colors.background};
@@ -215,7 +215,7 @@ const MainImageBadge = styled.span`
 
 interface MediaCardProps {
   /** The media item to display */
-  media: Media;
+  media: MediaGridItem;
   /** Whether to show owner information in the card */
   showOwner?: boolean;
   /** Character ID if this is being displayed on a character page (enables Set as Main functionality) */
