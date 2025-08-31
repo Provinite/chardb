@@ -29,6 +29,7 @@ import { mapPrismaCharacterToGraphQL } from "../characters/utils/character-resol
 import { Character } from "../characters/entities/character.entity";
 import { Gallery } from "../galleries/entities/gallery.entity";
 import { Media } from "../media/entities/media.entity";
+import { SocialService } from "../social/social.service";
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -203,7 +204,10 @@ export class UserProfileResolver {
 // UserStats field resolvers
 @Resolver(() => UserStats)
 export class UserStatsResolver {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly socialService: SocialService,
+  ) {}
 
   @ResolveField("charactersCount", () => Int, { description: "Total number of characters owned by this user" })
   async resolveCharactersCount(
@@ -239,8 +243,11 @@ export class UserStatsResolver {
 
   @ResolveField("totalLikes", () => Int, { description: "Total number of likes received across all user's content" })
   async resolveTotalLikes(@Parent() stats: UserStats) {
-    // TODO: Implement when likes system is added
-    return 0;
+    if (!stats.userId) return 0;
+    
+    // Count likes across all content types owned by this user
+    const totalLikes = await this.socialService.getUserTotalLikes(stats.userId);
+    return totalLikes;
   }
 
   @ResolveField("followersCount", () => Int, { description: "Number of users following this user" })

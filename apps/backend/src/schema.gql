@@ -872,8 +872,6 @@ type Media {
 
   """Foreign key to image content (null for text media)"""
   imageId: ID
-
-  """Number of likes this media has received"""
   likesCount: Int!
 
   """The user who owns this media"""
@@ -896,8 +894,6 @@ type Media {
 
   """When the media was last updated"""
   updatedAt: DateTime!
-
-  """Whether the current user has liked this media"""
   userHasLiked: Boolean!
 
   """Visibility setting for the media"""
