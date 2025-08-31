@@ -129,11 +129,15 @@ export function mapPrismaMediaToGraphQL(prismaMedia: PrismaMedia) {
 export function mapPrismaMediaConnectionToGraphQL(serviceResult: {
   media: PrismaMedia[];
   total: number;
+  imageCount: number;
+  textCount: number;
   hasMore: boolean;
 }): MediaConnection {
   return {
     media: serviceResult.media.map(mapPrismaMediaToGraphQL),
     total: serviceResult.total,
+    imageCount: serviceResult.imageCount,
+    textCount: serviceResult.textCount,
     hasMore: serviceResult.hasMore,
   };
 }

@@ -14,12 +14,15 @@ import { SpeciesVariant } from '../species-variants/entities/species-variant.ent
 import { TraitValueType } from '../shared/enums/trait-value-type.enum';
 import { TraitsService } from '../traits/traits.service';
 import { mapPrismaTraitToGraphQL } from '../traits/utils/trait-resolver-mappers';
+import { SpeciesVariantsService } from '../species-variants/species-variants.service';
+import { mapPrismaSpeciesVariantToGraphQL } from '../species-variants/utils/species-variant-resolver-mappers';
 
 @Resolver(() => TraitListEntry)
 export class TraitListEntriesResolver {
   constructor(
     private readonly traitListEntriesService: TraitListEntriesService,
     private readonly traitsService: TraitsService,
+    private readonly speciesVariantsService: SpeciesVariantsService,
   ) {}
 
   /** Create a new trait list entry */
@@ -108,15 +111,15 @@ export class TraitListEntriesResolver {
 
   // Field resolvers for relations
   @ResolveField('trait', () => Trait, { description: 'The trait this entry configures' })
-  resolveTrait(@Parent() traitListEntry: TraitListEntry): Trait | null {
-    // TODO: Implement when traits service is refactored
-    return null;
+  async resolveTrait(@Parent() traitListEntry: TraitListEntry): Promise<Trait> {
+    const prismaTrait = await this.traitsService.findOne(traitListEntry.traitId);
+    return mapPrismaTraitToGraphQL(prismaTrait);
   }
 
   @ResolveField('speciesVariant', () => SpeciesVariant, { description: 'The species variant this entry belongs to' })
-  resolveSpeciesVariant(@Parent() traitListEntry: TraitListEntry): SpeciesVariant | null {
-    // TODO: Implement when species-variants service is refactored
-    return null;
+  async resolveSpeciesVariant(@Parent() traitListEntry: TraitListEntry): Promise<SpeciesVariant> {
+    const prismaSpeciesVariant = await this.speciesVariantsService.findOne(traitListEntry.speciesVariantId);
+    return mapPrismaSpeciesVariantToGraphQL(prismaSpeciesVariant);
   }
 
   // Field resolver for computed properties

@@ -905,8 +905,14 @@ type MediaConnection {
   """Whether there are more items available after this page"""
   hasMore: Boolean!
 
+  """Total number of image media items in the full result set"""
+  imageCount: Float!
+
   """Array of media items for this page"""
   media: [Media!]!
+
+  """Total number of text media items in the full result set"""
+  textCount: Float!
 
   """Total number of media items matching the query"""
   total: Float!

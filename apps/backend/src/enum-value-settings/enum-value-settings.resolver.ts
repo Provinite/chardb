@@ -13,12 +13,15 @@ import { EnumValue } from '../enum-values/entities/enum-value.entity';
 import { SpeciesVariant } from '../species-variants/entities/species-variant.entity';
 import { EnumValuesService } from '../enum-values/enum-values.service';
 import { mapPrismaEnumValueToGraphQL } from '../enum-values/utils/enum-value-resolver-mappers';
+import { SpeciesVariantsService } from '../species-variants/species-variants.service';
+import { mapPrismaSpeciesVariantToGraphQL } from '../species-variants/utils/species-variant-resolver-mappers';
 
 @Resolver(() => EnumValueSetting)
 export class EnumValueSettingsResolver {
   constructor(
     private readonly enumValueSettingsService: EnumValueSettingsService,
     private readonly enumValuesService: EnumValuesService,
+    private readonly speciesVariantsService: SpeciesVariantsService,
   ) {}
 
   /** Create a new enum value setting */
@@ -113,8 +116,8 @@ export class EnumValueSettingsResolver {
   }
 
   @ResolveField('speciesVariant', () => SpeciesVariant, { description: 'The species variant this setting belongs to' })
-  resolveSpeciesVariant(@Parent() enumValueSetting: EnumValueSetting): SpeciesVariant | null {
-    // TODO: Implement when species-variants service is refactored
-    return null;
+  async resolveSpeciesVariant(@Parent() enumValueSetting: EnumValueSetting): Promise<SpeciesVariant> {
+    const prismaSpeciesVariant = await this.speciesVariantsService.findOne(enumValueSetting.speciesVariantId);
+    return mapPrismaSpeciesVariantToGraphQL(prismaSpeciesVariant);
   }
 }

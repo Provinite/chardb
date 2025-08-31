@@ -12,10 +12,18 @@ import {
 import { RemovalResponse } from '../shared/entities/removal-response.entity';
 import { User } from '../users/entities/user.entity';
 import { Role } from '../roles/entities/role.entity';
+import { UsersService } from '../users/users.service';
+import { mapPrismaUserToGraphQL } from '../users/utils/user-resolver-mappers';
+import { RolesService } from '../roles/roles.service';
+import { mapPrismaRoleToGraphQL } from '../roles/utils/role-resolver-mappers';
 
 @Resolver(() => InviteCode)
 export class InviteCodesResolver {
-  constructor(private readonly inviteCodesService: InviteCodesService) {}
+  constructor(
+    private readonly inviteCodesService: InviteCodesService,
+    private readonly usersService: UsersService,
+    private readonly rolesService: RolesService,
+  ) {}
 
   /** Create a new invite code */
   @Mutation(() => InviteCode, { description: 'Create a new invite code' })
@@ -127,14 +135,17 @@ export class InviteCodesResolver {
 
   // Field resolvers for relations
   @ResolveField('creator', () => User, { description: 'The user who created this invite code' })
-  resolveCreator(@Parent() inviteCode: InviteCode): User | null {
-    // TODO: Implement when users service is refactored
-    return null;
+  async resolveCreator(@Parent() inviteCode: InviteCode): Promise<User | null> {
+    const prismaUser = await this.usersService.findById(inviteCode.creatorId);
+    return prismaUser ? mapPrismaUserToGraphQL(prismaUser) : null;
   }
 
   @ResolveField('role', () => Role, { description: 'The role to grant when this invite code is used', nullable: true })
-  resolveRole(@Parent() inviteCode: InviteCode): Role | null {
-    // TODO: Implement when roles service is refactored
-    return null;
+  async resolveRole(@Parent() inviteCode: InviteCode): Promise<Role | null> {
+    if (!inviteCode.roleId) {
+      return null;
+    }
+    const prismaRole = await this.rolesService.findOne(inviteCode.roleId);
+    return mapPrismaRoleToGraphQL(prismaRole);
   }
 }

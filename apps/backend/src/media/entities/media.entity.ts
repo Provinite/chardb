@@ -114,6 +114,14 @@ export class MediaConnection {
   @Field({ description: 'Total number of media items matching the query' })
   total: number;
 
+  /** Total number of image media items in the full result set */
+  @Field({ description: 'Total number of image media items in the full result set' })
+  imageCount: number;
+
+  /** Total number of text media items in the full result set */
+  @Field({ description: 'Total number of text media items in the full result set' })
+  textCount: number;
+
   /** Whether there are more items available after this page */
   @Field({ description: 'Whether there are more items available after this page' })
   hasMore: boolean;

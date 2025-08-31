@@ -11,10 +11,21 @@ import {
 import { Role } from '../roles/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { Community } from '../communities/entities/community.entity';
+import { RolesService } from '../roles/roles.service';
+import { mapPrismaRoleToGraphQL } from '../roles/utils/role-resolver-mappers';
+import { UsersService } from '../users/users.service';
+import { mapPrismaUserToGraphQL } from '../users/utils/user-resolver-mappers';
+import { CommunitiesService } from '../communities/communities.service';
+import { mapPrismaCommunityToGraphQL } from '../communities/utils/community-resolver-mappers';
 
 @Resolver(() => CommunityInvitation)
 export class CommunityInvitationsResolver {
-  constructor(private readonly communityInvitationsService: CommunityInvitationsService) {}
+  constructor(
+    private readonly communityInvitationsService: CommunityInvitationsService,
+    private readonly rolesService: RolesService,
+    private readonly usersService: UsersService,
+    private readonly communitiesService: CommunitiesService,
+  ) {}
 
   /** Create a new community invitation */
   @Mutation(() => CommunityInvitation, { description: 'Create a new community invitation' })
@@ -133,26 +144,26 @@ export class CommunityInvitationsResolver {
   // Field resolvers for relations - these would fetch the related entities
   // For now, returning null until other services are refactored
   @ResolveField('role', () => Role, { nullable: true })
-  resolveRole(@Parent() invitation: CommunityInvitation): Role | null {
-    // TODO: Implement when roles service is refactored
-    return null;
+  async resolveRole(@Parent() invitation: CommunityInvitation): Promise<Role> {
+    const prismaRole = await this.rolesService.findOne(invitation.roleId);
+    return mapPrismaRoleToGraphQL(prismaRole);
   }
 
   @ResolveField('invitee', () => User, { nullable: true })
-  resolveInvitee(@Parent() invitation: CommunityInvitation): User | null {
-    // TODO: Implement when users service is refactored  
-    return null;
+  async resolveInvitee(@Parent() invitation: CommunityInvitation): Promise<User | null> {
+    const prismaUser = await this.usersService.findById(invitation.inviteeId);
+    return prismaUser ? mapPrismaUserToGraphQL(prismaUser) : null;
   }
 
   @ResolveField('inviter', () => User, { nullable: true })
-  resolveInviter(@Parent() invitation: CommunityInvitation): User | null {
-    // TODO: Implement when users service is refactored
-    return null;
+  async resolveInviter(@Parent() invitation: CommunityInvitation): Promise<User | null> {
+    const prismaUser = await this.usersService.findById(invitation.inviterId);
+    return prismaUser ? mapPrismaUserToGraphQL(prismaUser) : null;
   }
 
   @ResolveField('community', () => Community, { nullable: true })
-  resolveCommunity(@Parent() invitation: CommunityInvitation): Community | null {
-    // TODO: Implement when communities service is refactored
-    return null;
+  async resolveCommunity(@Parent() invitation: CommunityInvitation): Promise<Community> {
+    const prismaCommunity = await this.communitiesService.findOne(invitation.communityId);
+    return mapPrismaCommunityToGraphQL(prismaCommunity);
   }
 }

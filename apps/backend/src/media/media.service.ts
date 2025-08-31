@@ -170,7 +170,7 @@ export class MediaService {
       ],
     };
 
-    const [media, total] = await Promise.all([
+    const [media, total, imageCount, textCount] = await Promise.all([
       this.db.media.findMany({
         where,
         orderBy: { createdAt: "desc" },
@@ -178,11 +178,19 @@ export class MediaService {
         skip: offset,
       }),
       this.db.media.count({ where }),
+      this.db.media.count({ 
+        where: { ...where, imageId: { not: null } } 
+      }),
+      this.db.media.count({ 
+        where: { ...where, textContentId: { not: null } } 
+      }),
     ]);
 
     return {
       media,
       total,
+      imageCount,
+      textCount,
       hasMore: offset + limit < total,
     };
   }
@@ -408,7 +416,7 @@ export class MediaService {
    * @param thumbnailUrl Optional thumbnail URL
    */
   private async deleteFromS3(imageUrl: string, thumbnailUrl?: string) {
-    // TODO: Implement S3 deletion using AWS SDK
+    // TODO: Implement S3 deletion using AWS SDK (https://github.com/Provinite/chardb/issues/49)
     // This would require:
     // 1. Parse the S3 key from the URL
     // 2. Use AWS S3 client to delete the object(s)
