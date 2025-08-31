@@ -89,8 +89,9 @@ export class CharactersResolver {
   async character(
     @Args("id", { type: () => ID }) id: string,
     @CurrentUser() user?: any,
-  ): Promise<any> {
-    return this.charactersService.findOne(id, user?.id);
+  ): Promise<CharacterEntity> {
+    const character = await this.charactersService.findOne(id, user?.id);
+    return mapPrismaCharacterToGraphQL(character);
   }
 
   @Mutation(() => CharacterEntity)

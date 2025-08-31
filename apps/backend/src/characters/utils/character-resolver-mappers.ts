@@ -33,23 +33,25 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
 } {
   const { tags, ...characterData } = input;
 
+  const prismaCharacterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator"> = {
+    name: characterData.name,
+    species: characterData.speciesId ? { connect: { id: characterData.speciesId } } : undefined,
+    speciesVariant: characterData.speciesVariantId ? { connect: { id: characterData.speciesVariantId } } : undefined,
+    age: characterData.age,
+    gender: characterData.gender,
+    description: characterData.description,
+    personality: characterData.personality,
+    backstory: characterData.backstory,
+    visibility: characterData.visibility,
+    isSellable: characterData.isSellable,
+    isTradeable: characterData.isTradeable,
+    price: characterData.price,
+    customFields: characterData.customFields,
+    traitValues: mapTraitValues(characterData.traitValues),
+  };
+
   return {
-    characterData: {
-      name: characterData.name,
-      ...(characterData.speciesId && { speciesObj: { connect: { id: characterData.speciesId } } }),
-      ...(characterData.speciesVariantId && { speciesVariant: { connect: { id: characterData.speciesVariantId } } }),
-      age: characterData.age,
-      gender: characterData.gender,
-      description: characterData.description,
-      personality: characterData.personality,
-      backstory: characterData.backstory,
-      visibility: characterData.visibility,
-      isSellable: characterData.isSellable,
-      isTradeable: characterData.isTradeable,
-      price: characterData.price,
-      customFields: characterData.customFields,
-      traitValues: mapTraitValues(characterData.traitValues),
-    },
+    characterData: prismaCharacterData,
     tags,
   };
 }
