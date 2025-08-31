@@ -274,6 +274,16 @@ This document outlines comprehensive test workflows for the CharDB application t
 
 3. **Performance:** Note any significant performance issues, especially with media uploads and large content listings.
 
+4. **Page Refresh Testing:** Always test page refresh stability (F5) after creating/editing content to verify data persistence and prevent GraphQL serialization issues.
+
+5. **Console Monitoring:** Keep browser console open during testing. Look for errors and warnings.
+
+6. **Field Rendering Validation:** After any backend schema changes, verify ALL fields render correctly on character detail pages, especially:
+   - Species/speciesVariant relationships
+   - JSON fields (customFields, traitValues)
+   - Computed fields (likesCount, media counts)
+   - Date fields and formatting
+
 ## Test Data Management
 
 ### Required Test Data
@@ -286,3 +296,10 @@ This document outlines comprehensive test workflows for the CharDB application t
 ### Data Cleanup
 
 After testing, consider cleaning up test data to avoid database bloat, or maintain dedicated test datasets for consistent testing.
+
+## Common Issues & Troubleshooting
+
+### Type Safety Issues
+
+**Problem:** `Promise<any>` return types masking errors
+**Solution:** Use specific entity types like `Promise<CharacterEntity>` for better compile-time checking
