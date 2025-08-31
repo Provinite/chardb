@@ -26,6 +26,7 @@ interface AuthContextType {
     email: string,
     password: string,
     displayName?: string,
+    inviteCode?: string,
   ) => Promise<boolean>;
   logout: () => void;
   refreshAccessToken: () => Promise<boolean>;
@@ -102,10 +103,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     email: string,
     password: string,
     displayName?: string,
+    inviteCode?: string,
   ): Promise<boolean> => {
     try {
       const { data } = await signupMutation({
-        variables: { input: { username, email, password, displayName } },
+        variables: { input: { username, email, password, displayName, inviteCode: inviteCode || '' } },
       });
 
       if (data?.signup) {

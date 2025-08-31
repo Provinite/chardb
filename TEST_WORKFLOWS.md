@@ -19,32 +19,49 @@ This document outlines comprehensive test workflows for the CharDB application t
 4. Click "Admin Panel" button
 5. **Expected:** Redirected to `/admin` with site administration dashboard
 
-#### 1.2 Site Invite Code Management
+#### 1.2 Site Invite Code Management (Card-Based Design)
 
-1. From admin dashboard, click "Site Invite Codes"
-2. **Expected:** Redirected to `/admin/site-invite-codes` showing global invite codes only
+1. From admin dashboard, click "Site Invite Codes" card
+2. **Expected:** Redirected to `/admin/site-invite-codes` showing global invite codes in card layout
 
 **Create Invite Code:**
-1. Click "Create Invite Code" or "Create Your First Invite Code" 
-2. Fill in optional invite code (e.g., "TESTINVITE2024") or leave blank for auto-generation
-3. Set usage limit (e.g., 50) or leave blank for maximum
-4. Click "Create Invite Code"
-5. **Expected:** Modal closes, new invite code appears in table with correct usage stats
+1. Click "Create Invite Code" button (with plus icon)
+2. **Expected:** Styled modal opens with form fields
+3. Fill in optional invite code (e.g., "TESTINVITE2024") or leave blank for auto-generation
+4. Set usage limit (e.g., 50) or leave blank for maximum (999,999)
+5. **Expected:** Blue info box explains "Global Invite Code" functionality
+6. Click "Create Invite Code" 
+7. **Expected:** Modal closes, new invite code appears as card with usage stats and status badge
+
+**Test Card-Based Display:**
+1. Verify each invite code displays as a styled card with:
+   - Code display in monospace font with copy button
+   - Status badge (Available/Exhausted) with appropriate colors
+   - Usage metrics (current/max, remaining)
+   - Creation date information
+   - Creator attribution ("by [username]")
+   - Action buttons (copy link, edit, delete)
 
 **Edit Invite Code:**
-1. Click edit button (pencil icon) on existing invite code
-2. Modify usage limit (must be >= current usage count)
-3. Click "Update Invite Code" 
-4. **Expected:** Modal closes, table updates with new usage limit
+1. Click edit button (pencil icon) in card actions
+2. **Expected:** Styled modal opens with current values pre-filled
+3. Modify usage limit (must be >= current usage count)
+4. Click "Update Invite Code"
+5. **Expected:** Modal closes, card updates with new usage limit
 
 **Copy Invite Link:**
-1. Click copy button (link icon) on any invite code
+1. Click copy button (link icon) in card header or actions
 2. **Expected:** Invite URL copied to clipboard (format: `/signup?invite=CODE`)
 
 **Delete Invite Code:**
-1. Click delete button (trash icon) on invite code
-2. Confirm deletion in popup
-3. **Expected:** Invite code removed from table
+1. Click delete button (trash icon) with red styling
+2. Confirm deletion in browser popup
+3. **Expected:** Invite code card removed from grid
+
+**Test Dark Mode:**
+1. Toggle to dark mode using theme switch
+2. **Expected:** All cards, modals, and text maintain proper contrast
+3. **Expected:** Invite code display uses green color (not purple) for readability
 
 #### 1.3 Admin Permission Validation
 
@@ -56,13 +73,45 @@ This document outlines comprehensive test workflows for the CharDB application t
 
 ### 2. Authentication & Account Management
 
-#### 1.1 User Registration
+#### 2.1 User Registration with Invite Codes (Required)
 
-1. Navigate to the signup page
-2. Fill in username, email, display name (optional), and password
-3. Confirm password matches
-4. Submit form
-5. **Expected:** Account created successfully, redirected to dashboard
+**IMPORTANT:** All user registration now requires valid invite codes. No signup is possible without them.
+
+**Test Valid Site Invite Code:**
+1. Navigate to `/signup` or `/signup?invite=TESTINVITE2024`
+2. Enter valid site invite code (e.g., "TESTINVITE2024")
+3. **Expected:** Green checkmark with "Valid invite code (X uses remaining)" 
+4. **Expected:** Blue preview box: "Site Registration: This code will give you access to the platform"
+5. Fill in username, email, display name (optional), password, and confirm password
+6. Submit form
+7. **Expected:** Account created successfully, redirected to dashboard, invite code usage incremented
+
+**Test Invalid Invite Code:**
+1. Navigate to signup page
+2. Enter invalid invite code (e.g., "INVALIDCODE")
+3. **Expected:** Red X icon with "Invalid invite code" message
+4. Try to submit form with invalid code
+5. **Expected:** Form validation prevents submission
+
+**Test Exhausted Invite Code:**
+1. Use an invite code that has reached its usage limit
+2. **Expected:** Red X icon with "This invite code has been exhausted" message
+
+**Test Community Invite Code Preview:**
+1. Enter a community invite code (when available)
+2. **Expected:** Blue preview showing "You'll be joining [Community Name] and assigned the [Role Name] role"
+3. Complete signup
+4. **Expected:** User automatically becomes member of community with specified role
+
+**Test URL Parameter Auto-Population:**
+1. Navigate to `/signup?invite=TESTINVITE2024`
+2. **Expected:** Invite code field pre-filled with "TESTINVITE2024"
+3. **Expected:** Real-time validation shows as valid immediately
+
+**Test Atomic Transaction Behavior:**
+1. Monitor database during signup failures (invalid username/email)
+2. **Expected:** If signup fails after invite code validation, invite code usage count remains unchanged
+3. **Expected:** No partial user accounts created on any failure
 
 #### 1.2 User Login
 

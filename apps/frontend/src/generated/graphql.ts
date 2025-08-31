@@ -1969,6 +1969,7 @@ export type SetMainMediaInput = {
 export type SignupInput = {
   displayName?: InputMaybe<Scalars['String']['input']>;
   email: Scalars['String']['input'];
+  inviteCode: Scalars['String']['input'];
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
 };

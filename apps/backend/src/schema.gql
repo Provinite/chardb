@@ -1870,6 +1870,7 @@ input SetMainMediaInput {
 input SignupInput {
   displayName: String
   email: String!
+  inviteCode: String!
   password: String!
   username: String!
 }
