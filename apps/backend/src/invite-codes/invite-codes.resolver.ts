@@ -43,8 +43,10 @@ export class InviteCodesResolver {
     first?: number,
     @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
     after?: string,
+    @Args('communityId', { type: () => ID, nullable: true, description: 'Community ID to filter by. If null, returns only global invite codes' })
+    communityId?: string,
   ): Promise<InviteCodeConnection> {
-    const serviceResult = await this.inviteCodesService.findAll(first, after);
+    const serviceResult = await this.inviteCodesService.findAll(first, after, communityId);
     return mapPrismaInviteCodeConnectionToGraphQL(serviceResult);
   }
 

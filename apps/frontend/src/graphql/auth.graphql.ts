@@ -58,6 +58,11 @@ export const ME_QUERY = gql`
       dateOfBirth
       isVerified
       isAdmin
+      canCreateInviteCode
+      canListInviteCodes
+      canCreateCommunity
+      canGrantGlobalPermissions
+      canListUsers
       privacySettings
       createdAt
       updatedAt

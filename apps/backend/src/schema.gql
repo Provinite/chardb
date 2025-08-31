@@ -1553,6 +1553,9 @@ type Query {
     """Cursor for pagination"""
     after: String
 
+    """Community ID to filter by. If null, returns only global invite codes"""
+    communityId: ID
+
     """Number of invite codes to return"""
     first: Int = 20
   ): InviteCodeConnection!

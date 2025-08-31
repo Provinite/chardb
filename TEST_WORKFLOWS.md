@@ -9,7 +9,52 @@ This document outlines comprehensive test workflows for the CharDB application t
 
 ## Core Test Workflows
 
-### 1. Authentication & Account Management
+### 1. Site Administration (Admin Users Only)
+
+#### 1.1 Access Site Admin Dashboard
+
+1. Log in with admin credentials (test@example.com / password123)
+2. Navigate to dashboard 
+3. Verify "Site Administration" card is visible
+4. Click "Admin Panel" button
+5. **Expected:** Redirected to `/admin` with site administration dashboard
+
+#### 1.2 Site Invite Code Management
+
+1. From admin dashboard, click "Site Invite Codes"
+2. **Expected:** Redirected to `/admin/site-invite-codes` showing global invite codes only
+
+**Create Invite Code:**
+1. Click "Create Invite Code" or "Create Your First Invite Code" 
+2. Fill in optional invite code (e.g., "TESTINVITE2024") or leave blank for auto-generation
+3. Set usage limit (e.g., 50) or leave blank for maximum
+4. Click "Create Invite Code"
+5. **Expected:** Modal closes, new invite code appears in table with correct usage stats
+
+**Edit Invite Code:**
+1. Click edit button (pencil icon) on existing invite code
+2. Modify usage limit (must be >= current usage count)
+3. Click "Update Invite Code" 
+4. **Expected:** Modal closes, table updates with new usage limit
+
+**Copy Invite Link:**
+1. Click copy button (link icon) on any invite code
+2. **Expected:** Invite URL copied to clipboard (format: `/signup?invite=CODE`)
+
+**Delete Invite Code:**
+1. Click delete button (trash icon) on invite code
+2. Confirm deletion in popup
+3. **Expected:** Invite code removed from table
+
+#### 1.3 Admin Permission Validation
+
+1. Log out and log in with non-admin account
+2. Navigate to `/dashboard` 
+3. **Expected:** No "Site Administration" card visible
+4. Try accessing `/admin` directly
+5. **Expected:** Access denied or redirect (permission-based routing)
+
+### 2. Authentication & Account Management
 
 #### 1.1 User Registration
 

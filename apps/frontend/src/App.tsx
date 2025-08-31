@@ -34,6 +34,8 @@ import { MyMediaPage } from "./pages/MyMediaPage";
 import { FollowersPage } from "./pages/FollowersPage";
 import { FollowingPage } from "./pages/FollowingPage";
 import { FeedPage } from "./pages/FeedPage";
+import { SiteAdminPage } from "./pages/SiteAdminPage";
+import { SiteInviteCodesPage } from "./pages/SiteInviteCodesPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
@@ -199,6 +201,24 @@ function App() {
           element={
             <ProtectedRoute>
               <FeedPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <SiteAdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/site-invite-codes"
+          element={
+            <ProtectedRoute>
+              <SiteInviteCodesPage />
             </ProtectedRoute>
           }
         />

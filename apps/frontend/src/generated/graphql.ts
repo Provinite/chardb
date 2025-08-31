@@ -788,7 +788,6 @@ export type Media = {
   image: Maybe<Image>;
   /** Foreign key to image content (null for text media) */
   imageId: Maybe<Scalars['ID']['output']>;
-  /** Number of likes this media has received */
   likesCount: Scalars['Int']['output'];
   /** The user who owns this media */
   owner: User;
@@ -804,7 +803,6 @@ export type Media = {
   title: Scalars['String']['output'];
   /** When the media was last updated */
   updatedAt: Scalars['DateTime']['output'];
-  /** Whether the current user has liked this media */
   userHasLiked: Scalars['Boolean']['output'];
   /** Visibility setting for the media */
   visibility: Visibility;
@@ -1691,6 +1689,7 @@ export type QueryInviteCodeByIdArgs = {
 
 export type QueryInviteCodesArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
+  communityId?: InputMaybe<Scalars['ID']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -2442,7 +2441,7 @@ export type RefreshTokenMutation = { __typename?: 'Mutation', refreshToken: stri
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, privacySettings: any, createdAt: string, updatedAt: string } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string } };
 
 export type GetCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -2599,6 +2598,52 @@ export type GetLikedImagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetLikedImagesQuery = { __typename?: 'Query', likedImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> };
+
+export type InviteCodesQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type InviteCodesQuery = { __typename?: 'Query', inviteCodes: { __typename?: 'InviteCodeConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, createdAt: string, updatedAt: string, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null }> } };
+
+export type InviteCodeByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type InviteCodeByIdQuery = { __typename?: 'Query', inviteCodeById: { __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, createdAt: string, updatedAt: string, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } };
+
+export type CreateInviteCodeMutationVariables = Exact<{
+  createInviteCodeInput: CreateInviteCodeInput;
+}>;
+
+
+export type CreateInviteCodeMutation = { __typename?: 'Mutation', createInviteCode: { __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, createdAt: string, updatedAt: string, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } };
+
+export type UpdateInviteCodeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateInviteCodeInput: UpdateInviteCodeInput;
+}>;
+
+
+export type UpdateInviteCodeMutation = { __typename?: 'Mutation', updateInviteCode: { __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, createdAt: string, updatedAt: string, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } };
+
+export type RemoveInviteCodeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveInviteCodeMutation = { __typename?: 'Mutation', removeInviteCode: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
+export type ClaimInviteCodeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  claimInviteCodeInput: ClaimInviteCodeInput;
+}>;
+
+
+export type ClaimInviteCodeMutation = { __typename?: 'Mutation', claimInviteCode: { __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } };
 
 export type GetMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -2932,6 +2977,11 @@ export const MeDocument = gql`
     dateOfBirth
     isVerified
     isAdmin
+    canCreateInviteCode
+    canListInviteCodes
+    canCreateCommunity
+    canGrantGlobalPermissions
+    canListUsers
     privacySettings
     createdAt
     updatedAt
@@ -4353,6 +4403,321 @@ export type GetLikedImagesQueryHookResult = ReturnType<typeof useGetLikedImagesQ
 export type GetLikedImagesLazyQueryHookResult = ReturnType<typeof useGetLikedImagesLazyQuery>;
 export type GetLikedImagesSuspenseQueryHookResult = ReturnType<typeof useGetLikedImagesSuspenseQuery>;
 export type GetLikedImagesQueryResult = Apollo.QueryResult<GetLikedImagesQuery, GetLikedImagesQueryVariables>;
+export const InviteCodesDocument = gql`
+    query InviteCodes($first: Int, $after: String, $communityId: ID) {
+  inviteCodes(first: $first, after: $after, communityId: $communityId) {
+    nodes {
+      id
+      claimCount
+      maxClaims
+      isAvailable
+      remainingClaims
+      createdAt
+      updatedAt
+      creator {
+        id
+        username
+        displayName
+      }
+      role {
+        id
+        name
+        community {
+          id
+          name
+        }
+      }
+    }
+    hasNextPage
+    hasPreviousPage
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useInviteCodesQuery__
+ *
+ * To run a query within a React component, call `useInviteCodesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useInviteCodesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useInviteCodesQuery({
+ *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useInviteCodesQuery(baseOptions?: Apollo.QueryHookOptions<InviteCodesQuery, InviteCodesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<InviteCodesQuery, InviteCodesQueryVariables>(InviteCodesDocument, options);
+      }
+export function useInviteCodesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<InviteCodesQuery, InviteCodesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<InviteCodesQuery, InviteCodesQueryVariables>(InviteCodesDocument, options);
+        }
+export function useInviteCodesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<InviteCodesQuery, InviteCodesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<InviteCodesQuery, InviteCodesQueryVariables>(InviteCodesDocument, options);
+        }
+export type InviteCodesQueryHookResult = ReturnType<typeof useInviteCodesQuery>;
+export type InviteCodesLazyQueryHookResult = ReturnType<typeof useInviteCodesLazyQuery>;
+export type InviteCodesSuspenseQueryHookResult = ReturnType<typeof useInviteCodesSuspenseQuery>;
+export type InviteCodesQueryResult = Apollo.QueryResult<InviteCodesQuery, InviteCodesQueryVariables>;
+export const InviteCodeByIdDocument = gql`
+    query InviteCodeById($id: ID!) {
+  inviteCodeById(id: $id) {
+    id
+    claimCount
+    maxClaims
+    isAvailable
+    remainingClaims
+    createdAt
+    updatedAt
+    creator {
+      id
+      username
+      displayName
+    }
+    role {
+      id
+      name
+      community {
+        id
+        name
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useInviteCodeByIdQuery__
+ *
+ * To run a query within a React component, call `useInviteCodeByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useInviteCodeByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useInviteCodeByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useInviteCodeByIdQuery(baseOptions: Apollo.QueryHookOptions<InviteCodeByIdQuery, InviteCodeByIdQueryVariables> & ({ variables: InviteCodeByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<InviteCodeByIdQuery, InviteCodeByIdQueryVariables>(InviteCodeByIdDocument, options);
+      }
+export function useInviteCodeByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<InviteCodeByIdQuery, InviteCodeByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<InviteCodeByIdQuery, InviteCodeByIdQueryVariables>(InviteCodeByIdDocument, options);
+        }
+export function useInviteCodeByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<InviteCodeByIdQuery, InviteCodeByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<InviteCodeByIdQuery, InviteCodeByIdQueryVariables>(InviteCodeByIdDocument, options);
+        }
+export type InviteCodeByIdQueryHookResult = ReturnType<typeof useInviteCodeByIdQuery>;
+export type InviteCodeByIdLazyQueryHookResult = ReturnType<typeof useInviteCodeByIdLazyQuery>;
+export type InviteCodeByIdSuspenseQueryHookResult = ReturnType<typeof useInviteCodeByIdSuspenseQuery>;
+export type InviteCodeByIdQueryResult = Apollo.QueryResult<InviteCodeByIdQuery, InviteCodeByIdQueryVariables>;
+export const CreateInviteCodeDocument = gql`
+    mutation CreateInviteCode($createInviteCodeInput: CreateInviteCodeInput!) {
+  createInviteCode(createInviteCodeInput: $createInviteCodeInput) {
+    id
+    claimCount
+    maxClaims
+    isAvailable
+    remainingClaims
+    createdAt
+    updatedAt
+    creator {
+      id
+      username
+      displayName
+    }
+    role {
+      id
+      name
+      community {
+        id
+        name
+      }
+    }
+  }
+}
+    `;
+export type CreateInviteCodeMutationFn = Apollo.MutationFunction<CreateInviteCodeMutation, CreateInviteCodeMutationVariables>;
+
+/**
+ * __useCreateInviteCodeMutation__
+ *
+ * To run a mutation, you first call `useCreateInviteCodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateInviteCodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createInviteCodeMutation, { data, loading, error }] = useCreateInviteCodeMutation({
+ *   variables: {
+ *      createInviteCodeInput: // value for 'createInviteCodeInput'
+ *   },
+ * });
+ */
+export function useCreateInviteCodeMutation(baseOptions?: Apollo.MutationHookOptions<CreateInviteCodeMutation, CreateInviteCodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateInviteCodeMutation, CreateInviteCodeMutationVariables>(CreateInviteCodeDocument, options);
+      }
+export type CreateInviteCodeMutationHookResult = ReturnType<typeof useCreateInviteCodeMutation>;
+export type CreateInviteCodeMutationResult = Apollo.MutationResult<CreateInviteCodeMutation>;
+export type CreateInviteCodeMutationOptions = Apollo.BaseMutationOptions<CreateInviteCodeMutation, CreateInviteCodeMutationVariables>;
+export const UpdateInviteCodeDocument = gql`
+    mutation UpdateInviteCode($id: ID!, $updateInviteCodeInput: UpdateInviteCodeInput!) {
+  updateInviteCode(id: $id, updateInviteCodeInput: $updateInviteCodeInput) {
+    id
+    claimCount
+    maxClaims
+    isAvailable
+    remainingClaims
+    createdAt
+    updatedAt
+    creator {
+      id
+      username
+      displayName
+    }
+    role {
+      id
+      name
+      community {
+        id
+        name
+      }
+    }
+  }
+}
+    `;
+export type UpdateInviteCodeMutationFn = Apollo.MutationFunction<UpdateInviteCodeMutation, UpdateInviteCodeMutationVariables>;
+
+/**
+ * __useUpdateInviteCodeMutation__
+ *
+ * To run a mutation, you first call `useUpdateInviteCodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateInviteCodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateInviteCodeMutation, { data, loading, error }] = useUpdateInviteCodeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateInviteCodeInput: // value for 'updateInviteCodeInput'
+ *   },
+ * });
+ */
+export function useUpdateInviteCodeMutation(baseOptions?: Apollo.MutationHookOptions<UpdateInviteCodeMutation, UpdateInviteCodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateInviteCodeMutation, UpdateInviteCodeMutationVariables>(UpdateInviteCodeDocument, options);
+      }
+export type UpdateInviteCodeMutationHookResult = ReturnType<typeof useUpdateInviteCodeMutation>;
+export type UpdateInviteCodeMutationResult = Apollo.MutationResult<UpdateInviteCodeMutation>;
+export type UpdateInviteCodeMutationOptions = Apollo.BaseMutationOptions<UpdateInviteCodeMutation, UpdateInviteCodeMutationVariables>;
+export const RemoveInviteCodeDocument = gql`
+    mutation RemoveInviteCode($id: ID!) {
+  removeInviteCode(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type RemoveInviteCodeMutationFn = Apollo.MutationFunction<RemoveInviteCodeMutation, RemoveInviteCodeMutationVariables>;
+
+/**
+ * __useRemoveInviteCodeMutation__
+ *
+ * To run a mutation, you first call `useRemoveInviteCodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveInviteCodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeInviteCodeMutation, { data, loading, error }] = useRemoveInviteCodeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useRemoveInviteCodeMutation(baseOptions?: Apollo.MutationHookOptions<RemoveInviteCodeMutation, RemoveInviteCodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveInviteCodeMutation, RemoveInviteCodeMutationVariables>(RemoveInviteCodeDocument, options);
+      }
+export type RemoveInviteCodeMutationHookResult = ReturnType<typeof useRemoveInviteCodeMutation>;
+export type RemoveInviteCodeMutationResult = Apollo.MutationResult<RemoveInviteCodeMutation>;
+export type RemoveInviteCodeMutationOptions = Apollo.BaseMutationOptions<RemoveInviteCodeMutation, RemoveInviteCodeMutationVariables>;
+export const ClaimInviteCodeDocument = gql`
+    mutation ClaimInviteCode($id: ID!, $claimInviteCodeInput: ClaimInviteCodeInput!) {
+  claimInviteCode(id: $id, claimInviteCodeInput: $claimInviteCodeInput) {
+    id
+    claimCount
+    maxClaims
+    isAvailable
+    remainingClaims
+    creator {
+      id
+      username
+      displayName
+    }
+    role {
+      id
+      name
+      community {
+        id
+        name
+      }
+    }
+  }
+}
+    `;
+export type ClaimInviteCodeMutationFn = Apollo.MutationFunction<ClaimInviteCodeMutation, ClaimInviteCodeMutationVariables>;
+
+/**
+ * __useClaimInviteCodeMutation__
+ *
+ * To run a mutation, you first call `useClaimInviteCodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useClaimInviteCodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [claimInviteCodeMutation, { data, loading, error }] = useClaimInviteCodeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      claimInviteCodeInput: // value for 'claimInviteCodeInput'
+ *   },
+ * });
+ */
+export function useClaimInviteCodeMutation(baseOptions?: Apollo.MutationHookOptions<ClaimInviteCodeMutation, ClaimInviteCodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ClaimInviteCodeMutation, ClaimInviteCodeMutationVariables>(ClaimInviteCodeDocument, options);
+      }
+export type ClaimInviteCodeMutationHookResult = ReturnType<typeof useClaimInviteCodeMutation>;
+export type ClaimInviteCodeMutationResult = Apollo.MutationResult<ClaimInviteCodeMutation>;
+export type ClaimInviteCodeMutationOptions = Apollo.BaseMutationOptions<ClaimInviteCodeMutation, ClaimInviteCodeMutationVariables>;
 export const GetMediaDocument = gql`
     query GetMedia($filters: MediaFiltersInput) {
   media(filters: $filters) {

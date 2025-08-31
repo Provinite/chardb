@@ -234,6 +234,19 @@ export const DashboardPage: React.FC = () => {
             View Stats
           </Button>
         </DashboardCard>
+
+        {user?.canCreateInviteCode && (
+          <DashboardCard>
+            <CardTitle>Site Administration</CardTitle>
+            <CardDescription>
+              Manage site-wide settings, invite codes, user accounts, and community oversight.
+              Administrative tools for site management.
+            </CardDescription>
+            <Button as={Link} to="/admin" variant="outline" size="sm">
+              Admin Panel
+            </Button>
+          </DashboardCard>
+        )}
       </Grid>
     </Container>
   );

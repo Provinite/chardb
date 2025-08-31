@@ -12,16 +12,10 @@ import {
   SIGNUP_MUTATION,
   ME_QUERY,
   REFRESH_TOKEN_MUTATION,
+  type MeQuery,
 } from "../graphql/auth.graphql";
 
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  displayName?: string;
-  avatarUrl?: string;
-  isVerified: boolean;
-}
+type User = MeQuery['me'];
 
 interface AuthContextType {
   user: User | null;

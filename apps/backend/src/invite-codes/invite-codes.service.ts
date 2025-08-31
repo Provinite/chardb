@@ -68,18 +68,32 @@ export class InviteCodesService {
   }
 
   /** Find all invite codes with pagination */
-  async findAll(first: number = 20, after?: string) {
+  async findAll(first: number = 20, after?: string, communityId?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
+    // Build where clause based on communityId parameter
+    const whereClause: Prisma.InviteCodeWhereInput = communityId === null 
+      ? { roleId: null } // Global invite codes have no role (roleId is null)
+      : communityId 
+        ? { 
+            role: {
+              communityId: communityId 
+            }
+          } // Community-specific invite codes
+        : {}; // If communityId is undefined, return all codes
+
     const [inviteCodes, totalCount] = await Promise.all([
       this.prisma.inviteCode.findMany({
+        where: whereClause,
         take: first + 1,
         skip,
         cursor,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.inviteCode.count(),
+      this.prisma.inviteCode.count({
+        where: whereClause,
+      }),
     ]);
 
     const hasNextPage = inviteCodes.length > first;
