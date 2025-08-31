@@ -45,7 +45,6 @@ async function main() {
   const character = await prisma.character.create({
     data: {
       name: 'Aria Moonwhisper',
-      species: 'Wolf',
       age: '23',
       gender: 'Female',
       description: 'A mysterious wolf with silver fur and glowing blue eyes.',

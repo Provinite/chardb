@@ -92,7 +92,6 @@ model User {
 model Character {
   id                String     @id @default(uuid())
   name              String     @db.VarChar(100)
-  species           String?    @db.VarChar(50)
   speciesId         String?    @map("species_id")
   speciesVariantId  String?    @map("species_variant_id")
   age               String?    @db.VarChar(20)
@@ -117,7 +116,7 @@ model Character {
   owner          User            @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   creator        User?           @relation("CharacterCreator", fields: [creatorId], references: [id], onDelete: SetNull)
   mainMedia      Media?          @relation("CharacterMainMedia", fields: [mainMediaId], references: [id], onDelete: SetNull)
-  speciesObj     Species?        @relation(fields: [speciesId], references: [id], onDelete: SetNull)
+  species        Species?        @relation(fields: [speciesId], references: [id], onDelete: SetNull)
   speciesVariant SpeciesVariant? @relation(fields: [speciesVariantId], references: [id], onDelete: SetNull)
 
   media     Media[]

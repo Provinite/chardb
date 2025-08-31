@@ -63,7 +63,7 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
 
   if (inputData.name !== undefined) characterData.name = inputData.name;
   if (inputData.speciesId !== undefined) {
-    characterData.speciesObj = inputData.speciesId
+    characterData.species = inputData.speciesId
       ? { connect: { id: inputData.speciesId } }
       : { disconnect: true };
   }

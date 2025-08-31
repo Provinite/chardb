@@ -30,7 +30,6 @@ describe('CharactersService', () => {
       const input = {
         characterData: {
           name: 'Test Character',
-          species: 'Dragon',
           description: 'A test character',
           visibility: Visibility.PUBLIC,
         },

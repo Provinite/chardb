@@ -115,7 +115,7 @@ export class CharactersService {
           : {},
 
         // Other filters
-        species ? { species: { contains: species, mode: "insensitive" } } : {},
+        species ? { species: { name: { contains: species, mode: "insensitive" } } } : {},
         speciesId ? { speciesId } : {},
         speciesVariantId ? { speciesVariantId } : {},
         gender ? { gender: { contains: gender, mode: "insensitive" } } : {},
@@ -424,7 +424,7 @@ export class CharactersService {
           { description: searchTerm },
           { personality: searchTerm },
           { backstory: searchTerm },
-          { species: searchTerm },
+          { species: { name: searchTerm } },
         ];
     }
   }

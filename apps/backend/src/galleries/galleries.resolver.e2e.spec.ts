@@ -84,7 +84,6 @@ describe('GalleriesResolver (e2e)', () => {
       const character = await db.character.create({
         data: {
           name: 'Test Character',
-          species: 'Dragon',
           ownerId: testUserId,
           creatorId: testUserId,
           visibility: Visibility.PUBLIC,
