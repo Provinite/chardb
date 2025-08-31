@@ -118,7 +118,22 @@ This document outlines comprehensive test workflows for the CharDB application t
 5. Submit
 6. **Expected:** Text content created and accessible
 
-#### 3.4 Media Privacy Controls Testing
+#### 3.4 Character Media Association & Main Image Testing
+
+1. Upload image and associate with existing character:
+   - Select character from dropdown during upload
+   - Add caption and alt text
+   - Submit upload
+2. Navigate to character detail page
+3. Verify media appears in character's gallery
+4. Verify media count updated (e.g., "0 media" → "1 media")
+5. Click "Set as Main" button on uploaded media
+6. Verify main image displays at top of character page
+7. Refresh page (F5) to test persistence
+8. Navigate to Characters listing page
+9. **Expected:** Character now shows main image instead of "No main image", media count reflects uploaded content
+
+#### 3.5 Media Privacy Controls Testing
 
 1. Upload images with different privacy settings:
    - Full size for public/authorized viewers
@@ -253,6 +268,7 @@ This document outlines comprehensive test workflows for the CharDB application t
 - Authentication flows (login/logout)
 - Character creation and editing
 - Basic media upload
+- Character media association and main image setting
 - User dashboard functionality
 - NSFW filtering
 
