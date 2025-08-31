@@ -133,7 +133,14 @@ This document outlines comprehensive test workflows for the CharDB application t
 8. Navigate to Characters listing page
 9. **Expected:** Character now shows main image instead of "No main image", media count reflects uploaded content
 
-#### 3.5 Media Privacy Controls Testing
+#### 3.5 Media Type Counting Validation
+
+1. Upload at least 3 media items to a character (mix of images and text)
+2. Verify ALL media type counts update correctly in character gallery
+3. Test filtering functionality by clicking each media type filter
+4. **Expected:** All counters display accurate numbers, filtering works correctly
+
+#### 3.6 Media Privacy Controls Testing
 
 1. Upload images with different privacy settings:
    - Full size for public/authorized viewers
@@ -269,6 +276,7 @@ This document outlines comprehensive test workflows for the CharDB application t
 - Character creation and editing
 - Basic media upload
 - Character media association and main image setting
+- Media type counting and filtering
 - User dashboard functionality
 - NSFW filtering
 

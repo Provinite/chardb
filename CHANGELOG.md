@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Core entity migration from clovercoin-app including community system, species/trait management, and character ownership tracking
+- Backend service layer refactoring to decouple from GraphQL types with field resolver patterns
+- E2E testing agent specification for automated regression testing workflows
+
+### Fixed
+
+- Media type filter button visibility issues on character pages
+
+### Changed
+
+- Characters now use relational species instead of text field (breaking change)
+
 ## [v1.1.3] - 2025-08-12
 
 ### Fixed
