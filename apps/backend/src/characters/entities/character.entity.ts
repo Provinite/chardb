@@ -4,6 +4,9 @@ import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../shared/entities/tag.entity';
 import { Image } from '../../images/entities/image.entity';
 import { Media } from '../../media/entities/media.entity';
+import { CharacterTraitValue } from '../../shared/types/character-trait.types';
+import { SpeciesVariant } from '../../species-variants/entities/species-variant.entity';
+import { Species } from '../../species/entities/species.entity';
 
 @ObjectType()
 export class CharacterCount {
@@ -19,8 +22,11 @@ export class Character {
   @Field()
   name: string;
 
-  @Field({ nullable: true })
-  species?: string;
+  @Field(() => ID, { nullable: true, description: 'ID of the species this character belongs to' })
+  speciesId?: string;
+
+  @Field(() => ID, { nullable: true, description: 'ID of the species variant this character belongs to' })
+  speciesVariantId?: string;
 
   @Field({ nullable: true })
   age?: string;
@@ -64,35 +70,17 @@ export class Character {
   @Field(() => String, { nullable: true })
   customFields?: string; // JSON string
 
+  /** Trait values assigned to this character */
+  @Field(() => [CharacterTraitValue], { description: 'Trait values assigned to this character' })
+  traitValues!: CharacterTraitValue[];
+
   @Field()
   createdAt: Date;
 
   @Field()
   updatedAt: Date;
 
-  // Relations
-  @Field(() => User)
-  owner: User;
-
-  @Field(() => User, { nullable: true })
-  creator?: User;
-
-  @Field(() => Media, { nullable: true, description: 'Main media item for this character (image or text)' })
-  mainMedia?: Media;
-
-  @Field(() => [CharacterTag], { nullable: true })
-  tags_rel?: CharacterTag[];
-
-  @Field(() => CharacterCount, { nullable: true })
-  _count?: CharacterCount;
-
-
-  // Social features
-  @Field(() => Int)
-  likesCount: number;
-
-  @Field(() => Boolean)
-  userHasLiked: boolean;
+  // Relations handled by field resolvers
 }
 
 @ObjectType()

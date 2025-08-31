@@ -19,6 +19,18 @@ import { CommentsModule } from './comments/comments.module';
 import { SocialModule } from './social/social.module';
 import { HealthModule } from './health/health.module';
 import { TagsModule } from './tags/tags.module';
+import { CommunitiesModule } from './communities/communities.module';
+import { SpeciesModule } from './species/species.module';
+import { TraitsModule } from './traits/traits.module';
+import { EnumValuesModule } from './enum-values/enum-values.module';
+import { SpeciesVariantsModule } from './species-variants/species-variants.module';
+import { TraitListEntriesModule } from './trait-list-entries/trait-list-entries.module';
+import { EnumValueSettingsModule } from './enum-value-settings/enum-value-settings.module';
+import { RolesModule } from './roles/roles.module';
+import { CommunityMembersModule } from './community-members/community-members.module';
+import { CommunityInvitationsModule } from './community-invitations/community-invitations.module';
+import { InviteCodesModule } from './invite-codes/invite-codes.module';
+import { CharacterOwnershipChangesModule } from './character-ownership-changes/character-ownership-changes.module';
 
 @Module({
   imports: [
@@ -140,6 +152,18 @@ import { TagsModule } from './tags/tags.module';
     SocialModule,
     HealthModule,
     TagsModule,
+    CommunitiesModule,
+    SpeciesModule,
+    TraitsModule,
+    EnumValuesModule,
+    SpeciesVariantsModule,
+    TraitListEntriesModule,
+    EnumValueSettingsModule,
+    RolesModule,
+    CommunityMembersModule,
+    CommunityInvitationsModule,
+    InviteCodesModule,
+    CharacterOwnershipChangesModule,
   ],
   providers: [
     {

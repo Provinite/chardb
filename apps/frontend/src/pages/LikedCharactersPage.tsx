@@ -1,12 +1,12 @@
-import React from 'react';
-import { useQuery } from '@apollo/client';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { useAuth } from '../contexts/AuthContext';
-import { GET_LIKED_CHARACTERS } from '../graphql/characters';
-import { LikeButton } from '../components/LikeButton';
-import { LikeableType } from '../generated/graphql';
+import React from "react";
+import { useQuery } from "@apollo/client";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useAuth } from "../contexts/AuthContext";
+import { GET_LIKED_CHARACTERS } from "../graphql/characters.graphql";
+import { LikeButton } from "../components/LikeButton";
+import { LikeableType } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -42,7 +42,7 @@ const CharacterCard = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   overflow: hidden;
   transition: all 0.2s ease-in-out;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -208,11 +208,10 @@ export const LikedCharactersPage: React.FC = () => {
           <EmptyIcon>💖</EmptyIcon>
           <EmptyTitle>No liked characters yet</EmptyTitle>
           <EmptyDescription>
-            Start exploring and liking characters you love! Your liked characters will appear here.
+            Start exploring and liking characters you love! Your liked
+            characters will appear here.
           </EmptyDescription>
-          <ExploreButton to="/characters">
-            Explore Characters
-          </ExploreButton>
+          <ExploreButton to="/characters">Explore Characters</ExploreButton>
         </EmptyState>
       ) : (
         <Grid>
@@ -220,13 +219,15 @@ export const LikedCharactersPage: React.FC = () => {
             <CharacterCard key={character.id}>
               <CardContent>
                 <CharacterName>{character.name}</CharacterName>
-                {character.species && (
-                  <CharacterSpecies>{character.species}</CharacterSpecies>
+                {character.species?.name && (
+                  <CharacterSpecies>{character.species.name}</CharacterSpecies>
                 )}
                 {character.description && (
-                  <CharacterDescription>{character.description}</CharacterDescription>
+                  <CharacterDescription>
+                    {character.description}
+                  </CharacterDescription>
                 )}
-                
+
                 <CardActions>
                   <ViewButton to={`/character/${character.id}`}>
                     View Character

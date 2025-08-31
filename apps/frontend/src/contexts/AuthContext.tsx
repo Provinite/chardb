@@ -1,7 +1,18 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useMutation, useQuery } from '@apollo/client';
-import { toast } from 'react-hot-toast';
-import { LOGIN_MUTATION, SIGNUP_MUTATION, ME_QUERY, REFRESH_TOKEN_MUTATION } from '../graphql/auth';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { useMutation, useQuery } from "@apollo/client";
+import { toast } from "react-hot-toast";
+import {
+  LOGIN_MUTATION,
+  SIGNUP_MUTATION,
+  ME_QUERY,
+  REFRESH_TOKEN_MUTATION,
+} from "../graphql/auth.graphql";
 
 interface User {
   id: string;
@@ -16,7 +27,12 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (username: string, email: string, password: string, displayName?: string) => Promise<boolean>;
+  signup: (
+    username: string,
+    email: string,
+    password: string,
+    displayName?: string,
+  ) => Promise<boolean>;
   logout: () => void;
   refreshAccessToken: () => Promise<boolean>;
 }
@@ -35,9 +51,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [signupMutation] = useMutation(SIGNUP_MUTATION);
   const [refreshTokenMutation] = useMutation(REFRESH_TOKEN_MUTATION);
 
-  const { data: meData, loading: meLoading, refetch: refetchMe } = useQuery(ME_QUERY, {
-    skip: !localStorage.getItem('accessToken'),
-    errorPolicy: 'ignore',
+  const {
+    data: meData,
+    loading: meLoading,
+    refetch: refetchMe,
+  } = useQuery(ME_QUERY, {
+    skip: !localStorage.getItem("accessToken"),
+    errorPolicy: "ignore",
   });
 
   useEffect(() => {
@@ -49,7 +69,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Try to refresh token on app load
-    const token = localStorage.getItem('refreshToken');
+    const token = localStorage.getItem("refreshToken");
     if (token && !user) {
       refreshAccessToken();
     } else {
@@ -64,19 +84,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (data?.login) {
-        localStorage.setItem('accessToken', data.login.accessToken);
-        localStorage.setItem('refreshToken', data.login.refreshToken);
+        localStorage.setItem("accessToken", data.login.accessToken);
+        localStorage.setItem("refreshToken", data.login.refreshToken);
         setUser(data.login.user);
-        toast.success('Welcome back!');
+        toast.success("Welcome back!");
         return true;
       }
       return false;
     } catch (error: any) {
-      console.error('Login error:', error);
-      const errorMessage = error?.graphQLErrors?.[0]?.message || 
-                          error?.networkError?.message || 
-                          error?.message || 
-                          'Login failed';
+      console.error("Login error:", error);
+      const errorMessage =
+        error?.graphQLErrors?.[0]?.message ||
+        error?.networkError?.message ||
+        error?.message ||
+        "Login failed";
       toast.error(errorMessage);
       return false;
     }
@@ -86,7 +107,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     username: string,
     email: string,
     password: string,
-    displayName?: string
+    displayName?: string,
   ): Promise<boolean> => {
     try {
       const { data } = await signupMutation({
@@ -94,34 +115,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (data?.signup) {
-        localStorage.setItem('accessToken', data.signup.accessToken);
-        localStorage.setItem('refreshToken', data.signup.refreshToken);
+        localStorage.setItem("accessToken", data.signup.accessToken);
+        localStorage.setItem("refreshToken", data.signup.refreshToken);
         setUser(data.signup.user);
-        toast.success('Account created successfully!');
+        toast.success("Account created successfully!");
         return true;
       }
       return false;
     } catch (error: any) {
-      console.error('Signup error:', error);
-      const errorMessage = error?.graphQLErrors?.[0]?.message || 
-                          error?.networkError?.message || 
-                          error?.message || 
-                          'Signup failed';
+      console.error("Signup error:", error);
+      const errorMessage =
+        error?.graphQLErrors?.[0]?.message ||
+        error?.networkError?.message ||
+        error?.message ||
+        "Signup failed";
       toast.error(errorMessage);
       return false;
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     setUser(null);
-    toast.success('Logged out successfully');
+    toast.success("Logged out successfully");
   };
 
   const refreshAccessToken = async (): Promise<boolean> => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = localStorage.getItem("refreshToken");
       if (!refreshToken) return false;
 
       const { data } = await refreshTokenMutation({
@@ -129,14 +151,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (data?.refreshToken) {
-        localStorage.setItem('accessToken', data.refreshToken);
+        localStorage.setItem("accessToken", data.refreshToken);
         // Refetch user data
         await refetchMe();
         return true;
       }
       return false;
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      console.error("Token refresh failed:", error);
       logout();
       return false;
     }
@@ -157,7 +179,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

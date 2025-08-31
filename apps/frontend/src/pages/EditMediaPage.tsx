@@ -7,14 +7,14 @@ import { useMutation } from "@apollo/client";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
-import { 
-  GET_MEDIA_ITEM, 
-  UPDATE_MEDIA, 
+import {
+  GET_MEDIA_ITEM,
+  UPDATE_MEDIA,
   UPDATE_TEXT_CONTENT,
   UPDATE_IMAGE,
-  useGetMediaItemQuery
-} from "../graphql/media";
-import { useGetMyGalleriesQuery } from "../graphql/galleries";
+  useGetMediaItemQuery,
+} from "../graphql/media.graphql";
+import { useGetMyGalleriesQuery } from "../graphql/galleries.graphql";
 import { TextFormatting, Visibility } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -52,15 +52,21 @@ const mediaSchema = z.object({
   artistUrl: z
     .string()
     .optional()
-    .refine((val) => !val || val === "" || z.string().url().safeParse(val).success, {
-      message: "Artist URL must be a valid URL",
-    }),
+    .refine(
+      (val) => !val || val === "" || z.string().url().safeParse(val).success,
+      {
+        message: "Artist URL must be a valid URL",
+      },
+    ),
   source: z
     .string()
     .optional()
-    .refine((val) => !val || val === "" || z.string().url().safeParse(val).success, {
-      message: "Source URL must be a valid URL",
-    }),
+    .refine(
+      (val) => !val || val === "" || z.string().url().safeParse(val).success,
+      {
+        message: "Source URL must be a valid URL",
+      },
+    ),
 });
 
 type MediaForm = z.infer<typeof mediaSchema>;
@@ -281,7 +287,7 @@ const CheckboxLabel = styled.label`
   cursor: pointer;
 `;
 
-const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+const Checkbox = styled.input.attrs({ type: "checkbox" })`
   width: 16px;
   height: 16px;
   accent-color: ${({ theme }) => theme.colors.primary};
@@ -377,27 +383,27 @@ export const EditMediaPage: React.FC = () => {
 
   const onSubmit = async (data: MediaForm) => {
     if (!media || !user) return;
-    
+
     // Custom validation for text media content
     if (isTextMedia && (!data.content || data.content.trim() === "")) {
       setError("content", {
         type: "manual",
-        message: "Content is required for text media"
+        message: "Content is required for text media",
       });
       return;
     }
-    
+
     // Clear any existing content errors
     clearErrors("content");
-    
-    console.log('Form submission started');
-    console.log('Form data:', data);
-    console.log('Is image media:', isImageMedia);
-    console.log('Media object:', media);
+
+    console.log("Form submission started");
+    console.log("Form data:", data);
+    console.log("Is image media:", isImageMedia);
+    console.log("Media object:", media);
 
     setIsSubmitting(true);
     try {
-      console.log('Step 1: Starting updateMedia mutation');
+      console.log("Step 1: Starting updateMedia mutation");
       // Update basic media information
       const mediaResult = await updateMedia({
         variables: {
@@ -410,11 +416,11 @@ export const EditMediaPage: React.FC = () => {
           },
         },
       });
-      console.log('Step 1: updateMedia completed:', mediaResult);
+      console.log("Step 1: updateMedia completed:", mediaResult);
 
       // Update text content if this is a text media item
       if (isTextMedia && data.content && data.formatting) {
-        console.log('Step 2: Starting updateTextContent mutation');
+        console.log("Step 2: Starting updateTextContent mutation");
         const textResult = await updateTextContent({
           variables: {
             mediaId: media.id,
@@ -424,12 +430,12 @@ export const EditMediaPage: React.FC = () => {
             },
           },
         });
-        console.log('Step 2: updateTextContent completed:', textResult);
+        console.log("Step 2: updateTextContent completed:", textResult);
       }
 
       // Update image metadata if this is an image media item
       if (isImageMedia && media.image) {
-        console.log('Step 3: Starting updateImage mutation');
+        console.log("Step 3: Starting updateImage mutation");
         const imageResult = await updateImage({
           variables: {
             id: media.image.id,
@@ -442,10 +448,10 @@ export const EditMediaPage: React.FC = () => {
             },
           },
         });
-        console.log('Step 3: updateImage completed:', imageResult);
+        console.log("Step 3: updateImage completed:", imageResult);
       }
 
-      console.log('All mutations completed successfully');
+      console.log("All mutations completed successfully");
       toast.success("Media updated successfully!");
       navigate(`/media/${media.id}`);
     } catch (error) {
@@ -456,7 +462,7 @@ export const EditMediaPage: React.FC = () => {
           : "Failed to update media. Please try again.",
       );
     } finally {
-      console.log('Setting isSubmitting to false');
+      console.log("Setting isSubmitting to false");
       setIsSubmitting(false);
     }
   };
@@ -569,11 +575,7 @@ export const EditMediaPage: React.FC = () => {
               <Label htmlFor="galleryId">Gallery (Optional)</Label>
               {galleries.length === 0 ? (
                 <>
-                  <Select 
-                    id="galleryId" 
-                    {...register("galleryId")} 
-                    disabled
-                  >
+                  <Select id="galleryId" {...register("galleryId")} disabled>
                     <option value="">No galleries yet</option>
                   </Select>
                   <div style={{ marginTop: "0.5rem" }}>

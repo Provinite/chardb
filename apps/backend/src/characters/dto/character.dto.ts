@@ -1,6 +1,7 @@
 import { Field, InputType, ObjectType, Int, Float, ID, registerEnumType } from '@nestjs/graphql';
 import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, IsEnum, MinLength, MaxLength, Min, Max } from 'class-validator';
 import { Visibility } from '@chardb/database';
+import { CharacterTraitValueInput } from './character-trait.dto';
 
 // Register enum for GraphQL
 registerEnumType(Visibility, {
@@ -16,11 +17,15 @@ export class CreateCharacterInput {
   @MaxLength(100)
   name: string;
 
-  @Field({ nullable: true })
+  @Field(() => ID, { nullable: true })
   @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  species?: string;
+  @IsUUID()
+  speciesId?: string;
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  speciesVariantId?: string;
 
   @Field({ nullable: true })
   @IsOptional()
@@ -82,6 +87,10 @@ export class CreateCharacterInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   customFields?: any; // JSON field
+
+  @Field(() => [CharacterTraitValueInput], { defaultValue: [], description: 'Trait values for the character' })
+  @IsOptional()
+  traitValues?: CharacterTraitValueInput[];
 }
 
 @InputType()
@@ -93,11 +102,15 @@ export class UpdateCharacterInput {
   @MaxLength(100)
   name?: string;
 
-  @Field({ nullable: true })
+  @Field(() => ID, { nullable: true })
   @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  species?: string;
+  @IsUUID()
+  speciesId?: string;
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  speciesVariantId?: string;
 
   @Field({ nullable: true })
   @IsOptional()
@@ -160,6 +173,10 @@ export class UpdateCharacterInput {
   @IsOptional()
   customFields?: any; // JSON field
 
+  @Field(() => [CharacterTraitValueInput], { nullable: true, description: 'Trait values for the character' })
+  @IsOptional()
+  traitValues?: CharacterTraitValueInput[];
+
   @Field(() => ID, { nullable: true })
   @IsOptional()
   @IsUUID()
@@ -190,6 +207,16 @@ export class CharacterFiltersInput {
   @IsOptional()
   @IsString()
   species?: string;
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  speciesId?: string;
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  speciesVariantId?: string;
 
   @Field(() => [String], { nullable: true })
   @IsOptional()
@@ -304,6 +331,8 @@ export interface CharacterFilters {
   offset?: number;
   search?: string;
   species?: string;
+  speciesId?: string;
+  speciesVariantId?: string;
   tags?: string[];
   ownerId?: string;
   visibility?: Visibility;

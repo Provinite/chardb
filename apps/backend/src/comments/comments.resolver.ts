@@ -1,21 +1,35 @@
-import { Resolver, Query, Mutation, Args, ID, ResolveField, Parent } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID, ResolveField, Parent, Int } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { CommentsService } from './comments.service';
+import { CommentsService, CommentFiltersServiceInput } from './comments.service';
+import { UsersService } from '../users/users.service';
+import { CharactersService } from '../characters/characters.service';
+import { ImagesService } from '../images/images.service';
+import { GalleriesService } from '../galleries/galleries.service';
 import { Comment, CommentConnection } from './entities/comment.entity';
+import { User } from '../users/entities/user.entity';
+import { Character } from '../characters/entities/character.entity';
+import { Image } from '../images/entities/image.entity';
+import { Gallery } from '../galleries/entities/gallery.entity';
 import { CreateCommentInput, UpdateCommentInput, CommentFiltersInput } from './dto/comment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { DatabaseService } from '../database/database.service';
-import { Character } from '../characters/entities/character.entity';
-import { Image } from '../images/entities/image.entity';
-import { Gallery } from '../galleries/entities/gallery.entity';
+import {
+  mapCreateCommentInputToService,
+  mapUpdateCommentInputToService,
+  mapCommentFiltersInputToService,
+  mapPrismaCommentToGraphQL,
+  mapPrismaCommentConnectionToGraphQL,
+} from './utils/comments-resolver-mappers';
 
 @Resolver(() => Comment)
 export class CommentsResolver {
   constructor(
     private readonly commentsService: CommentsService,
-    private readonly databaseService: DatabaseService,
+    private readonly usersService: UsersService,
+    private readonly charactersService: CharactersService,
+    private readonly imagesService: ImagesService,
+    private readonly galleriesService: GalleriesService,
   ) {}
 
   @Mutation(() => Comment)
@@ -23,22 +37,27 @@ export class CommentsResolver {
   async createComment(
     @Args('input') input: CreateCommentInput,
     @CurrentUser() user: any,
-  ): Promise<Comment> {
-    return this.commentsService.create(user.id, input);
+  ) {
+    const serviceInput = mapCreateCommentInputToService(input);
+    const comment = await this.commentsService.create(user.id, serviceInput);
+    return mapPrismaCommentToGraphQL(comment);
   }
 
   @Query(() => Comment)
   @UseGuards(OptionalJwtAuthGuard)
-  async comment(@Args('id', { type: () => ID }) id: string): Promise<Comment> {
-    return this.commentsService.findOne(id);
+  async comment(@Args('id', { type: () => ID }) id: string) {
+    const comment = await this.commentsService.findOne(id);
+    return mapPrismaCommentToGraphQL(comment);
   }
 
   @Query(() => CommentConnection)
   @UseGuards(OptionalJwtAuthGuard)
   async comments(
     @Args('filters', { type: () => CommentFiltersInput }) filters: CommentFiltersInput,
-  ): Promise<CommentConnection> {
-    return this.commentsService.findMany(filters);
+  ) {
+    const serviceFilters = mapCommentFiltersInputToService(filters);
+    const result = await this.commentsService.findMany(serviceFilters);
+    return mapPrismaCommentConnectionToGraphQL(result);
   }
 
   @Mutation(() => Comment)
@@ -47,8 +66,10 @@ export class CommentsResolver {
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateCommentInput,
     @CurrentUser() user: any,
-  ): Promise<Comment> {
-    return this.commentsService.update(id, user.id, input);
+  ) {
+    const serviceInput = mapUpdateCommentInputToService(input);
+    const comment = await this.commentsService.update(id, user.id, serviceInput);
+    return mapPrismaCommentToGraphQL(comment);
   }
 
   @Mutation(() => Boolean)
@@ -56,125 +77,83 @@ export class CommentsResolver {
   async deleteComment(
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: any,
-  ): Promise<boolean> {
+  ) {
     return this.commentsService.remove(id, user.id, user.isAdmin);
   }
 
-  // Resolve polymorphic relations
+  // Field Resolvers
+
+  /**
+   * Resolves the author of a comment
+   */
+  @ResolveField(() => User)
+  async author(@Parent() comment: Comment) {
+    return this.usersService.findById(comment.authorId);
+  }
+
+  /**
+   * Resolves the parent comment (for replies)
+   */
+  @ResolveField(() => Comment, { nullable: true })
+  async parent(@Parent() comment: Comment) {
+    if (!comment.parentId) return null;
+    const parentComment = await this.commentsService.findOne(comment.parentId);
+    return mapPrismaCommentToGraphQL(parentComment);
+  }
+
+  /**
+   * Resolves the replies to a comment
+   */
+  @ResolveField(() => [Comment])
+  async replies(@Parent() comment: Comment) {
+    const serviceFilters: CommentFiltersServiceInput = { parentId: comment.id };
+    const result = await this.commentsService.findMany(serviceFilters);
+    return result.comments.map(mapPrismaCommentToGraphQL);
+  }
+
+  /**
+   * Resolves the replies count
+   */
+  @ResolveField(() => Int)
+  async repliesCount(@Parent() comment: Comment) {
+    const serviceFilters: CommentFiltersServiceInput = { parentId: comment.id };
+    const result = await this.commentsService.findMany(serviceFilters);
+    return result.total;
+  }
+
+  /**
+   * Resolves the character this comment is on (if applicable)
+   */
   @ResolveField(() => Character, { nullable: true })
-  async character(@Parent() comment: Comment): Promise<Character | null> {
-    if (comment.commentableType !== 'CHARACTER') {
-      return null;
-    }
-
-    const character = await this.databaseService.character.findUnique({
-      where: { id: comment.commentableId },
-      include: {
-        owner: true,
-        creator: true,
-      },
-    });
-
-    if (!character) return null;
-
-    return {
-      ...character,
-      owner: {
-        ...character.owner,
-        followersCount: 0,
-        followingCount: 0,
-        userIsFollowing: false,
-      },
-      creator: character.creator ? {
-        ...character.creator,
-        followersCount: 0,
-        followingCount: 0,
-        userIsFollowing: false,
-      } : undefined,
-      price: character.price ? Number(character.price) : null,
-      likesCount: 0, // Will be resolved by field resolver
-      userHasLiked: false, // Will be resolved by field resolver
-    } as Character;
+  async character(@Parent() comment: Comment) {
+    if (comment.commentableType !== 'CHARACTER') return null;
+    return this.charactersService.findOne(comment.commentableId);
   }
 
+  /**
+   * Resolves the image this comment is on (if applicable)
+   */
   @ResolveField(() => Image, { nullable: true })
-  async image(@Parent() comment: Comment): Promise<Image | null> {
-    if (comment.commentableType !== 'IMAGE') {
-      return null;
-    }
-
-    const image = await this.databaseService.image.findUnique({
-      where: { id: comment.commentableId },
-      include: {
-        uploader: true,
-      },
-    });
-
-    if (!image) return null;
-
-    return {
-      ...image,
-      uploader: {
-        ...image.uploader,
-        followersCount: 0,
-        followingCount: 0,
-        userIsFollowing: false,
-      },
-      likesCount: 0, // Will be resolved by field resolver
-      userHasLiked: false, // Will be resolved by field resolver
-    } as Image;
+  async image(@Parent() comment: Comment) {
+    if (comment.commentableType !== 'IMAGE') return null;
+    return this.imagesService.findOne(comment.commentableId);
   }
 
+  /**
+   * Resolves the gallery this comment is on (if applicable)
+   */
   @ResolveField(() => Gallery, { nullable: true })
-  async gallery(@Parent() comment: Comment): Promise<Gallery | null> {
-    if (comment.commentableType !== 'GALLERY') {
-      return null;
-    }
+  async gallery(@Parent() comment: Comment) {
+    if (comment.commentableType !== 'GALLERY') return null;
+    return this.galleriesService.findOne(comment.commentableId);
+  }
 
-    const gallery = await this.databaseService.gallery.findUnique({
-      where: { id: comment.commentableId },
-      include: {
-        owner: true,
-        character: {
-          include: {
-            owner: true,
-            creator: true,
-          },
-        },
-      },
-    });
-
-    if (!gallery) return null;
-
-    return {
-      ...gallery,
-      owner: {
-        ...gallery.owner,
-        followersCount: 0,
-        followingCount: 0,
-        userIsFollowing: false,
-      },
-      character: gallery.character ? {
-        ...gallery.character,
-        owner: {
-          ...gallery.character.owner,
-          followersCount: 0,
-          followingCount: 0,
-          userIsFollowing: false,
-        },
-        creator: gallery.character.creator ? {
-          ...gallery.character.creator,
-          followersCount: 0,
-          followingCount: 0,
-          userIsFollowing: false,
-        } : undefined,
-        price: gallery.character.price ? Number(gallery.character.price) : null,
-        likesCount: 0,
-        userHasLiked: false,
-      } : null,
-      images: [],
-      likesCount: 0, // Will be resolved by field resolver
-      userHasLiked: false, // Will be resolved by field resolver
-    } as Gallery;
+  /**
+   * Resolves the user this comment is on (if applicable)
+   */
+  @ResolveField(() => User, { nullable: true })
+  async user(@Parent() comment: Comment) {
+    if (comment.commentableType !== 'USER') return null;
+    return this.usersService.findById(comment.commentableId);
   }
 }

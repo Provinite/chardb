@@ -31,39 +31,8 @@ export class Comment {
   @Field()
   updatedAt: Date;
 
-  // Relations
-  @Field(() => User)
-  author: User;
-
   @Field(() => ID)
   authorId: string;
-
-  @Field(() => Comment, { nullable: true })
-  parent?: Comment;
-
-  @Field(() => [Comment])
-  replies: Comment[];
-
-  // Polymorphic relations (resolved dynamically)
-  @Field(() => Character, { nullable: true })
-  character?: Character;
-
-  @Field(() => Image, { nullable: true })
-  image?: Image;
-
-  @Field(() => Gallery, { nullable: true })
-  gallery?: Gallery;
-
-  // Computed fields
-  @Field(() => Int)
-  repliesCount: number;
-
-  // Social features
-  @Field(() => Int)
-  likesCount: number;
-
-  @Field(() => Boolean)
-  userHasLiked: boolean;
 }
 
 @ObjectType()

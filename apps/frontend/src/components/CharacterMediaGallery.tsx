@@ -123,12 +123,24 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
     },
   });
 
+  // Get total counts (without media type filter)
+  const { data: countsData } = useGetCharacterMediaQuery({
+    variables: {
+      characterId,
+      filters: {
+        limit: 1, // Minimum valid limit - we only need the counts, not the actual media
+      },
+    },
+  });
+
   const [setCharacterMainMedia] = useSetCharacterMainMediaMutation({
     refetchQueries: ['GetCharacter', 'GetCharacterMedia'],
   });
 
   const media = data?.characterMedia?.media || [];
-  const totalCount = data?.characterMedia?.total || 0;
+  const totalCount = countsData?.characterMedia?.total || 0;
+  const imageCount = countsData?.characterMedia?.imageCount || 0;
+  const textCount = countsData?.characterMedia?.textCount || 0;
   const hasMore = data?.characterMedia?.hasMore || false;
 
   const handleSetAsMain = async (mediaId: string) => {
@@ -192,8 +204,6 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
     );
   }
 
-  const imageCount = data?.characterMedia?.media?.filter((m: any) => m.mediaType === MediaType.Image)?.length || 0;
-  const textCount = data?.characterMedia?.media?.filter((m: any) => m.mediaType === MediaType.Text)?.length || 0;
 
   return (
     <GalleryContainer>
@@ -239,7 +249,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
       )}
 
       <MediaGrid
-        media={media as any[]}
+        media={media}
         showOwner={false}
         loading={loading}
         emptyMessage={

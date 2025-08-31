@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@apollo/client';
-import styled from 'styled-components';
-import { GET_GALLERY, Gallery } from '../graphql/galleries';
-import { GET_MEDIA } from '../graphql/media';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { LikeButton } from '../components/LikeButton';
-import { CommentList } from '../components/CommentList';
-import { MediaCard } from '../components/MediaCard';
-import { LikeableType, CommentableType, Media } from '../generated/graphql';
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@apollo/client";
+import styled from "styled-components";
+import { GET_GALLERY, Gallery } from "../graphql/galleries.graphql";
+import { GET_MEDIA } from "../graphql/media.graphql";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { LikeButton } from "../components/LikeButton";
+import { CommentList } from "../components/CommentList";
+import { MediaCard } from "../components/MediaCard";
+import { LikeableType, CommentableType, Media } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -41,7 +41,7 @@ const BackButton = styled.button`
   }
 
   &::before {
-    content: '←';
+    content: "←";
     font-weight: bold;
   }
 `;
@@ -51,7 +51,7 @@ const GalleryHeader = styled.div`
   align-items: flex-start;
   gap: ${({ theme }) => theme.spacing.xl};
   margin-bottom: ${({ theme }) => theme.spacing.xl};
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     gap: ${({ theme }) => theme.spacing.lg};
@@ -67,7 +67,7 @@ const GalleryTitle = styled.h1`
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
-  
+
   @media (max-width: 768px) {
     font-size: 2.5rem;
   }
@@ -81,27 +81,39 @@ const GalleryMeta = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
 `;
 
-const MetaBadge = styled.span<{ variant?: 'default' | 'success' | 'warning' | 'error' | 'primary' }>`
+const MetaBadge = styled.span<{
+  variant?: "default" | "success" | "warning" | "error" | "primary";
+}>`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  background: ${props => {
+  background: ${(props) => {
     switch (props.variant) {
-      case 'success': return props.theme.colors.success + '20';
-      case 'warning': return props.theme.colors.warning + '20';
-      case 'error': return props.theme.colors.error + '20';
-      case 'primary': return props.theme.colors.primary + '20';
-      default: return props.theme.colors.surface;
+      case "success":
+        return props.theme.colors.success + "20";
+      case "warning":
+        return props.theme.colors.warning + "20";
+      case "error":
+        return props.theme.colors.error + "20";
+      case "primary":
+        return props.theme.colors.primary + "20";
+      default:
+        return props.theme.colors.surface;
     }
   }};
-  color: ${props => {
+  color: ${(props) => {
     switch (props.variant) {
-      case 'success': return props.theme.colors.success;
-      case 'warning': return props.theme.colors.warning;
-      case 'error': return props.theme.colors.error;
-      case 'primary': return props.theme.colors.primary;
-      default: return props.theme.colors.text.secondary;
+      case "success":
+        return props.theme.colors.success;
+      case "warning":
+        return props.theme.colors.warning;
+      case "error":
+        return props.theme.colors.error;
+      case "primary":
+        return props.theme.colors.primary;
+      default:
+        return props.theme.colors.text.secondary;
     }
   }};
 `;
@@ -112,7 +124,7 @@ const OwnerInfo = styled.div`
   align-items: center;
   text-align: center;
   min-width: 200px;
-  
+
   @media (max-width: 768px) {
     align-items: flex-start;
     text-align: left;
@@ -155,7 +167,7 @@ const SectionHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: ${({ theme }) => theme.spacing.lg};
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: stretch;
@@ -179,9 +191,8 @@ const ContentText = styled.div`
   white-space: pre-wrap;
 `;
 
-
 const Lightbox = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== 'isOpen'
+  shouldForwardProp: (prop) => prop !== "isOpen",
 })<{ isOpen: boolean }>`
   position: fixed;
   top: 0;
@@ -189,7 +200,7 @@ const Lightbox = styled.div.withConfig({
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.9);
-  display: ${props => props.isOpen ? 'flex' : 'none'};
+  display: ${(props) => (props.isOpen ? "flex" : "none")};
   align-items: center;
   justify-content: center;
   z-index: 1000;
@@ -217,14 +228,14 @@ const LightboxClose = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   &:hover {
     background: rgba(255, 255, 255, 0.3);
   }
 `;
 
 const CharacterLink = styled.button`
-  background: ${({ theme }) => theme.colors.primary + '20'};
+  background: ${({ theme }) => theme.colors.primary + "20"};
   color: ${({ theme }) => theme.colors.primary};
   border: 2px solid ${({ theme }) => theme.colors.primary};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
@@ -233,7 +244,7 @@ const CharacterLink = styled.button`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.primary};
     color: white;
@@ -265,7 +276,7 @@ const ErrorContainer = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xxl};
   color: ${({ theme }) => theme.colors.error};
-  
+
   h3 {
     margin-bottom: ${({ theme }) => theme.spacing.sm};
   }
@@ -281,7 +292,7 @@ const EmptyImagesState = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xxl};
   color: ${({ theme }) => theme.colors.text.muted};
-  
+
   h4 {
     margin-bottom: ${({ theme }) => theme.spacing.sm};
     color: ${({ theme }) => theme.colors.text.secondary};
@@ -313,7 +324,11 @@ export const GalleryPage: React.FC = () => {
     skip: !id,
   });
 
-  const { data: mediaData, loading: mediaLoading, error: mediaError } = useQuery(GET_MEDIA, {
+  const {
+    data: mediaData,
+    loading: mediaLoading,
+    error: mediaError,
+  } = useQuery(GET_MEDIA, {
     variables: { filters: { galleryId: id } },
     skip: !id,
   });
@@ -322,7 +337,7 @@ export const GalleryPage: React.FC = () => {
   const mediaItems = mediaData?.media?.media || [];
 
   const handleBackClick = () => {
-    navigate('/galleries');
+    navigate("/galleries");
   };
 
   const handleCharacterClick = () => {
@@ -331,21 +346,24 @@ export const GalleryPage: React.FC = () => {
     }
   };
 
-
   const getVisibilityVariant = (visibility: string) => {
     switch (visibility) {
-      case 'PUBLIC': return 'success';
-      case 'UNLISTED': return 'warning';
-      case 'PRIVATE': return 'error';
-      default: return 'default';
+      case "PUBLIC":
+        return "success";
+      case "UNLISTED":
+        return "warning";
+      case "PRIVATE":
+        return "error";
+      default:
+        return "default";
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -362,12 +380,13 @@ export const GalleryPage: React.FC = () => {
   if (error || !gallery) {
     return (
       <Container>
-        <BackButton onClick={handleBackClick}>
-          Back to Galleries
-        </BackButton>
+        <BackButton onClick={handleBackClick}>Back to Galleries</BackButton>
         <ErrorContainer>
           <h3>Gallery not found</h3>
-          <p>{error?.message || 'The gallery you are looking for does not exist or you do not have permission to view it.'}</p>
+          <p>
+            {error?.message ||
+              "The gallery you are looking for does not exist or you do not have permission to view it."}
+          </p>
         </ErrorContainer>
       </Container>
     );
@@ -376,14 +395,12 @@ export const GalleryPage: React.FC = () => {
   return (
     <>
       <Container>
-        <BackButton onClick={handleBackClick}>
-          Back to Galleries
-        </BackButton>
+        <BackButton onClick={handleBackClick}>Back to Galleries</BackButton>
 
         <GalleryHeader>
           <GalleryBasics>
             <GalleryTitle>{gallery.name}</GalleryTitle>
-            
+
             <GalleryMeta>
               <MetaBadge variant={getVisibilityVariant(gallery.visibility)}>
                 {gallery.visibility}
@@ -394,7 +411,7 @@ export const GalleryPage: React.FC = () => {
                 </CharacterLink>
               )}
               <MetaBadge>Created {formatDate(gallery.createdAt)}</MetaBadge>
-              <LikeButton 
+              <LikeButton
                 entityType={LikeableType.Gallery}
                 entityId={gallery.id}
                 size="medium"
@@ -405,12 +422,17 @@ export const GalleryPage: React.FC = () => {
           <OwnerInfo>
             <OwnerAvatar>
               {gallery.owner.avatarUrl ? (
-                <img src={gallery.owner.avatarUrl} alt={gallery.owner.displayName || gallery.owner.username} />
+                <img
+                  src={gallery.owner.avatarUrl}
+                  alt={gallery.owner.displayName || gallery.owner.username}
+                />
               ) : (
                 gallery.owner.displayName?.[0] || gallery.owner.username[0]
               )}
             </OwnerAvatar>
-            <OwnerName>{gallery.owner.displayName || gallery.owner.username}</OwnerName>
+            <OwnerName>
+              {gallery.owner.displayName || gallery.owner.username}
+            </OwnerName>
             <OwnerRole>Gallery Owner</OwnerRole>
           </OwnerInfo>
         </GalleryHeader>
@@ -436,19 +458,28 @@ export const GalleryPage: React.FC = () => {
           {mediaLoading && (
             <MediaLoadingContainer>
               <LoadingSpinner />
-              <span style={{ marginLeft: '12px' }}>Loading gallery content...</span>
+              <span style={{ marginLeft: "12px" }}>
+                Loading gallery content...
+              </span>
             </MediaLoadingContainer>
           )}
           {mediaError && (
             <EmptyImagesState>
               <h4>Error loading gallery content</h4>
-              <p>There was an error loading the media content for this gallery. Please try refreshing the page.</p>
+              <p>
+                There was an error loading the media content for this gallery.
+                Please try refreshing the page.
+              </p>
             </EmptyImagesState>
           )}
           {!mediaLoading && !mediaError && mediaItems.length === 0 && (
             <EmptyImagesState>
               <h4>No media yet</h4>
-              <p>This gallery doesn't have any media content yet. Upload some images or create text content and assign it to this gallery to get started!</p>
+              <p>
+                This gallery doesn't have any media content yet. Upload some
+                images or create text content and assign it to this gallery to
+                get started!
+              </p>
             </EmptyImagesState>
           )}
           {!mediaLoading && !mediaError && mediaItems.length > 0 && (
@@ -471,9 +502,7 @@ export const GalleryPage: React.FC = () => {
       </Container>
 
       <Lightbox isOpen={!!lightboxImage} onClick={() => setLightboxImage(null)}>
-        <LightboxClose onClick={() => setLightboxImage(null)}>
-          ×
-        </LightboxClose>
+        <LightboxClose onClick={() => setLightboxImage(null)}>×</LightboxClose>
         {lightboxImage && (
           <LightboxImage
             src={lightboxImage}

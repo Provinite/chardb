@@ -3,17 +3,59 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { UsersService } from '../users/users.service';
-import { CreateUser, Login } from '../shared/types';
+import { Prisma } from '@chardb/database';
 
-// Helper function to add default social fields to User objects
-function addDefaultSocialFields(user: any): any {
-  return {
-    ...user,
-    followersCount: 0,
-    followingCount: 0,
-    userIsFollowing: false,
-  };
+/**
+ * Service layer input types for auth operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of GraphQL relation objects.
+ */
+
+/**
+ * Input data for user login
+ */
+export interface LoginServiceInput {
+  /** User's email address */
+  email: string;
+  /** User's password */
+  password: string;
 }
+
+/**
+ * Input data for user signup
+ */
+export interface SignupServiceInput {
+  /** User's unique username */
+  username: string;
+  /** User's email address */
+  email: string;
+  /** User's password */
+  password: string;
+  /** Optional display name */
+  displayName?: string;
+}
+
+/**
+ * Auth response containing user and tokens
+ */
+export interface AuthResponse {
+  /** User data without password */
+  user: Omit<Prisma.UserGetPayload<{}>, 'passwordHash'>;
+  /** JWT access token */
+  accessToken: string;
+  /** JWT refresh token */
+  refreshToken: string;
+}
+
+/**
+ * Token refresh response
+ */
+export interface RefreshTokenResponse {
+  /** New JWT access token */
+  accessToken: string;
+}
+
+type PrismaUser = Prisma.UserGetPayload<{}>;
 
 @Injectable()
 export class AuthService {
@@ -22,7 +64,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
+  async validateUser(email: string, password: string): Promise<Omit<PrismaUser, 'passwordHash'> | null> {
     try {
       const user = await this.usersService.findByEmail(email);
       console.log('validateUser - user found:', !!user);
@@ -39,8 +81,8 @@ export class AuthService {
     }
   }
 
-  async login(loginDto: Login) {
-    const user = await this.validateUser(loginDto.email, loginDto.password);
+  async login(input: LoginServiceInput): Promise<AuthResponse> {
+    const user = await this.validateUser(input.email, input.password);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -50,30 +92,32 @@ export class AuthService {
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     return {
-      user: addDefaultSocialFields(user),
+      user,
       accessToken,
       refreshToken,
     };
   }
 
-  async signup(signupDto: CreateUser) {
+  async signup(input: SignupServiceInput): Promise<AuthResponse> {
     // Check for existing user by email
-    const existingUserByEmail = await this.usersService.findByEmail(signupDto.email);
+    const existingUserByEmail = await this.usersService.findByEmail(input.email);
     if (existingUserByEmail) {
       throw new ConflictException('User with this email already exists');
     }
 
     // Check for existing user by username
-    const existingUserByUsername = await this.usersService.findByUsername(signupDto.username);
+    const existingUserByUsername = await this.usersService.findByUsername(input.username);
     if (existingUserByUsername) {
       throw new ConflictException('User with this username already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(signupDto.password, 10);
+    const hashedPassword = await bcrypt.hash(input.password, 10);
     
     const user = await this.usersService.create({
-      ...signupDto,
-      password: hashedPassword,
+      username: input.username,
+      email: input.email,
+      passwordHash: hashedPassword,
+      displayName: input.displayName,
     });
 
     const { passwordHash, ...userWithoutPassword } = user;
@@ -82,13 +126,13 @@ export class AuthService {
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     return {
-      user: addDefaultSocialFields(userWithoutPassword),
+      user: userWithoutPassword,
       accessToken,
       refreshToken,
     };
   }
 
-  async refreshToken(token: string) {
+  async refreshToken(token: string): Promise<RefreshTokenResponse> {
     try {
       const payload = this.jwtService.verify(token);
       const user = await this.usersService.findById(payload.sub);

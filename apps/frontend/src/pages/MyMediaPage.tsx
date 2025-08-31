@@ -1,11 +1,11 @@
-import React from 'react';
-import { useQuery } from '@apollo/client';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { useAuth } from '../contexts/AuthContext';
-import { GET_MY_MEDIA } from '../graphql/media';
-import { MediaGrid } from '../components/MediaGrid';
+import React from "react";
+import { useQuery } from "@apollo/client";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useAuth } from "../contexts/AuthContext";
+import { GET_MY_MEDIA } from "../graphql/media.graphql";
+import { MediaGrid } from "../components/MediaGrid";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -143,15 +143,12 @@ export const MyMediaPage: React.FC = () => {
           <EmptyIcon>📁</EmptyIcon>
           <EmptyTitle>No media yet</EmptyTitle>
           <EmptyDescription>
-            You haven't created any media yet. Upload an image or create some text content to get started!
+            You haven't created any media yet. Upload an image or create some
+            text content to get started!
           </EmptyDescription>
           <CreateButtonsContainer>
-            <CreateButton to="/upload">
-              Upload Image
-            </CreateButton>
-            <CreateButton to="/text/create">
-              Create Text
-            </CreateButton>
+            <CreateButton to="/upload">Upload Image</CreateButton>
+            <CreateButton to="/text/create">Create Text</CreateButton>
           </CreateButtonsContainer>
         </EmptyState>
       ) : (

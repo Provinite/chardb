@@ -608,6 +608,21 @@ export class SocialService {
     };
   }
 
+  async getUserTotalLikes(userId: string): Promise<number> {
+    // Count likes across all content types owned by this user in a single query
+    return this.databaseService.like.count({
+      where: {
+        OR: [
+          { character: { ownerId: userId } },
+          { gallery: { ownerId: userId } },
+          { image: { uploaderId: userId } },
+          { media: { ownerId: userId } },
+          { comment: { userId: userId } },
+        ],
+      },
+    });
+  }
+
   async getActivityFeed(userId: string, limit = 20, offset = 0): Promise<any[]> {
     // Get list of users that the current user follows
     const following = await this.databaseService.follow.findMany({

@@ -1,9 +1,9 @@
-import React from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@apollo/client';
-import styled from 'styled-components';
-import { Button } from '@chardb/ui';
-import { GET_CHARACTER } from '../graphql/characters';
+import React from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { useQuery } from "@apollo/client";
+import styled from "styled-components";
+import { Button } from "@chardb/ui";
+import { GET_CHARACTER } from "../graphql/characters.graphql";
 
 const Container = styled.div`
   max-width: 800px;
@@ -85,13 +85,13 @@ const BackLink = styled(Link)`
   color: ${({ theme }) => theme.colors.text.secondary};
   text-decoration: none;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  
+
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
   }
-  
+
   &::before {
-    content: '← ';
+    content: "← ";
     margin-right: ${({ theme }) => theme.spacing.xs};
   }
 `;
@@ -119,8 +119,8 @@ const CharacterNote = styled.p`
 
 export const CreateMediaPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const characterId = searchParams.get('character');
-  const galleryId = searchParams.get('gallery');
+  const characterId = searchParams.get("character");
+  const galleryId = searchParams.get("gallery");
 
   // Get character info if characterId is provided
   const { data: characterData } = useQuery(GET_CHARACTER, {
@@ -130,8 +130,8 @@ export const CreateMediaPage: React.FC = () => {
 
   const buildUrl = (basePath: string) => {
     const params = new URLSearchParams();
-    if (characterId) params.set('character', characterId);
-    if (galleryId) params.set('gallery', galleryId);
+    if (characterId) params.set("character", characterId);
+    if (galleryId) params.set("gallery", galleryId);
     return params.toString() ? `${basePath}?${params.toString()}` : basePath;
   };
 
@@ -140,43 +140,41 @@ export const CreateMediaPage: React.FC = () => {
       <Header>
         <Title>Create New Media</Title>
         <Subtitle>
-          {characterData?.character 
+          {characterData?.character
             ? `Create content for ${characterData.character.name}`
-            : 'Choose the type of content you\'d like to create'
-          }
+            : "Choose the type of content you'd like to create"}
         </Subtitle>
       </Header>
 
       {characterData?.character && (
         <CharacterInfo>
           <CharacterName>{characterData.character.name}</CharacterName>
-          <CharacterNote>This content will be associated with this character</CharacterNote>
+          <CharacterNote>
+            This content will be associated with this character
+          </CharacterNote>
         </CharacterInfo>
       )}
 
       <OptionsGrid>
-        <OptionCard to={buildUrl('/image/upload')}>
+        <OptionCard to={buildUrl("/image/upload")}>
           <OptionIcon>🖼️</OptionIcon>
           <OptionTitle>Upload Image</OptionTitle>
           <OptionDescription>
-            Upload artwork, photos, or any visual content. Support for JPEG, PNG, GIF, and WebP formats.
-            Perfect for character art, reference images, and visual galleries.
+            Upload artwork, photos, or any visual content. Support for JPEG,
+            PNG, GIF, and WebP formats. Perfect for character art, reference
+            images, and visual galleries.
           </OptionDescription>
-          <OptionButton variant="primary">
-            Upload Image
-          </OptionButton>
+          <OptionButton variant="primary">Upload Image</OptionButton>
         </OptionCard>
 
-        <OptionCard to={buildUrl('/text/create')}>
+        <OptionCard to={buildUrl("/text/create")}>
           <OptionIcon>📝</OptionIcon>
           <OptionTitle>Create Text Content</OptionTitle>
           <OptionDescription>
-            Write stories, character descriptions, world-building notes, or any textual content.
-            Supports both plain text and Markdown formatting.
+            Write stories, character descriptions, world-building notes, or any
+            textual content. Supports both plain text and Markdown formatting.
           </OptionDescription>
-          <OptionButton variant="primary">
-            Create Text
-          </OptionButton>
+          <OptionButton variant="primary">Create Text</OptionButton>
         </OptionCard>
       </OptionsGrid>
 

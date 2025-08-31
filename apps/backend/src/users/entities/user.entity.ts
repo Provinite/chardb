@@ -1,5 +1,5 @@
-import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
-import { GraphQLJSON } from 'graphql-type-json';
+import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
+import { GraphQLJSON } from "graphql-type-json";
 
 @ObjectType()
 export class User {
@@ -39,21 +39,27 @@ export class User {
   @Field(() => GraphQLJSON)
   privacySettings: any;
 
+  // Identity permission fields (migrated from clovercoin-app)
+  @Field()
+  canCreateCommunity: boolean;
+
+  @Field()
+  canListUsers: boolean;
+
+  @Field()
+  canListInviteCodes: boolean;
+
+  @Field()
+  canCreateInviteCode: boolean;
+
+  @Field()
+  canGrantGlobalPermissions: boolean;
+
   @Field()
   createdAt: Date;
 
   @Field()
   updatedAt: Date;
-
-  // Social features
-  @Field(() => Int)
-  followersCount: number;
-
-  @Field(() => Int)
-  followingCount: number;
-
-  @Field(() => Boolean)
-  userIsFollowing: boolean;
 }
 
 @ObjectType()

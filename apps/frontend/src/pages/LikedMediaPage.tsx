@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { useQuery } from '@apollo/client';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { useAuth } from '../contexts/AuthContext';
-import { GET_LIKED_MEDIA } from '../graphql/media';
-import { LikeButton } from '../components/LikeButton';
-import { LikeableType } from '../generated/graphql';
+import React, { useState } from "react";
+import { useQuery } from "@apollo/client";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useAuth } from "../contexts/AuthContext";
+import { GET_LIKED_MEDIA } from "../graphql/media.graphql";
+import { LikeButton } from "../components/LikeButton";
+import { LikeableType } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -42,7 +42,7 @@ const ImageCard = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   overflow: hidden;
   transition: all 0.2s ease-in-out;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -68,7 +68,7 @@ const ImageElement = styled.img`
 `;
 
 const ImageOverlay = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== 'isOpen'
+  shouldForwardProp: (prop) => prop !== "isOpen",
 })<{ isOpen: boolean }>`
   position: fixed;
   top: 0;
@@ -76,7 +76,7 @@ const ImageOverlay = styled.div.withConfig({
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.9);
-  display: ${({ isOpen }) => (isOpen ? 'flex' : 'none')};
+  display: ${({ isOpen }) => (isOpen ? "flex" : "none")};
   align-items: center;
   justify-content: center;
   z-index: 1000;
@@ -126,7 +126,7 @@ const UploaderLink = styled(Link)`
   color: ${({ theme }) => theme.colors.primary};
   text-decoration: none;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -255,10 +255,10 @@ export const LikedMediaPage: React.FC = () => {
   }
 
   const formatFileSize = (bytes: number) => {
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    if (bytes === 0) return '0 Bytes';
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    if (bytes === 0) return "0 Bytes";
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
   };
 
   return (
@@ -277,18 +277,19 @@ export const LikedMediaPage: React.FC = () => {
             <EmptyIcon>🖼️</EmptyIcon>
             <EmptyTitle>No liked media yet</EmptyTitle>
             <EmptyDescription>
-              Start exploring and liking media you love! Your liked media will appear here.
+              Start exploring and liking media you love! Your liked media will
+              appear here.
             </EmptyDescription>
-            <ExploreButton to="/media">
-              Explore Media
-            </ExploreButton>
+            <ExploreButton to="/media">Explore Media</ExploreButton>
           </EmptyState>
         ) : (
           <Grid>
             {likedMedia.map((media: any) => (
               <ImageCard key={media.id}>
                 {media.image && (
-                  <ImageContainer onClick={() => setLightboxImage(media.image.url)}>
+                  <ImageContainer
+                    onClick={() => setLightboxImage(media.image.url)}
+                  >
                     <ImageElement
                       src={media.image.thumbnailUrl || media.image.url}
                       alt={media.image.altText || media.title}
@@ -297,28 +298,52 @@ export const LikedMediaPage: React.FC = () => {
                   </ImageContainer>
                 )}
                 {media.textContent && !media.image && (
-                  <div style={{padding: '16px', backgroundColor: '#f5f5f5', minHeight: '200px', display: 'flex', flexDirection: 'column'}}>
-                    <h4 style={{margin: '0 0 12px 0', color: '#333'}}>Text Content</h4>
-                    <p style={{margin: 0, fontSize: '14px', lineHeight: '1.4', color: '#666'}}>
+                  <div
+                    style={{
+                      padding: "16px",
+                      backgroundColor: "#f5f5f5",
+                      minHeight: "200px",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <h4 style={{ margin: "0 0 12px 0", color: "#333" }}>
+                      Text Content
+                    </h4>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: "14px",
+                        lineHeight: "1.4",
+                        color: "#666",
+                      }}
+                    >
                       {media.textContent.content.slice(0, 200)}...
                     </p>
                   </div>
                 )}
-                
+
                 <CardContent>
-                  <ImageTitle>
-                    {media.title || 'Untitled'}
-                  </ImageTitle>
-                  
+                  <ImageTitle>{media.title || "Untitled"}</ImageTitle>
+
                   <ImageMeta>
-                    {media.image && <MetaBadge>{media.image.width} × {media.image.height}</MetaBadge>}
-                    {media.image && <MetaBadge>{formatFileSize(media.image.fileSize)}</MetaBadge>}
+                    {media.image && (
+                      <MetaBadge>
+                        {media.image.width} × {media.image.height}
+                      </MetaBadge>
+                    )}
+                    {media.image && (
+                      <MetaBadge>
+                        {formatFileSize(media.image.fileSize)}
+                      </MetaBadge>
+                    )}
                     {media.image?.isNsfw && <MetaBadge>NSFW</MetaBadge>}
                   </ImageMeta>
 
                   <ImageMeta>
                     <MetaBadge>
-                      by <UploaderLink to={`/user/${media.owner.id}`}>
+                      by{" "}
+                      <UploaderLink to={`/user/${media.owner.id}`}>
                         {media.owner.displayName || media.owner.username}
                       </UploaderLink>
                     </MetaBadge>
@@ -330,7 +355,7 @@ export const LikedMediaPage: React.FC = () => {
                       </MetaBadge>
                     )}
                   </ImageMeta>
-                  
+
                   <CardActions>
                     <ViewButton to={`/media/${media.id}`}>
                       View Media
@@ -348,7 +373,10 @@ export const LikedMediaPage: React.FC = () => {
         )}
       </Container>
 
-      <ImageOverlay isOpen={!!lightboxImage} onClick={() => setLightboxImage(null)}>
+      <ImageOverlay
+        isOpen={!!lightboxImage}
+        onClick={() => setLightboxImage(null)}
+      >
         {lightboxImage && (
           <img
             src={lightboxImage}

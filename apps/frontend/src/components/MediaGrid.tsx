@@ -3,6 +3,18 @@ import styled from 'styled-components';
 import { Media } from '../generated/graphql';
 import { MediaCard } from './MediaCard';
 
+// Define the minimal Media type that MediaGrid actually needs
+export type MediaGridItem = Pick<Media, 
+  | 'id' 
+  | 'title' 
+  | 'description' 
+  | 'visibility'
+> & {
+  owner: Pick<Media['owner'], 'displayName' | 'username'>;
+  image: Media['image'] extends null ? null : Pick<NonNullable<Media['image']>, 'url' | 'thumbnailUrl' | 'altText'> | null;
+  textContent: Media['textContent'] extends null ? null : Pick<NonNullable<Media['textContent']>, 'content' | 'wordCount'> | null;
+};
+
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -39,7 +51,7 @@ const LoadingState = styled.div`
 
 interface MediaGridProps {
   /** Array of media items to display */
-  media: Media[];
+  media: MediaGridItem[];
   /** Whether to show owner information on each card */
   showOwner?: boolean;
   /** Whether the grid is currently loading */

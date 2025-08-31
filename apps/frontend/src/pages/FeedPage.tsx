@@ -1,12 +1,12 @@
-import React from 'react';
-import { useQuery } from '@apollo/client';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { useAuth } from '../contexts/AuthContext';
-import { LikeButton } from '../components/LikeButton';
-import { GET_ACTIVITY_FEED } from '../graphql/social';
-import { LikeableType } from '../generated/graphql';
+import React from "react";
+import { useQuery } from "@apollo/client";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useAuth } from "../contexts/AuthContext";
+import { LikeButton } from "../components/LikeButton";
+import { GET_ACTIVITY_FEED } from "../graphql/social.graphql";
+import { LikeableType } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 800px;
@@ -201,11 +201,11 @@ export const FeedPage: React.FC = () => {
   const { user } = useAuth();
 
   const { data, loading, error } = useQuery(GET_ACTIVITY_FEED, {
-    variables: { 
-      input: { 
-        limit: 20, 
-        offset: 0 
-      } 
+    variables: {
+      input: {
+        limit: 20,
+        offset: 0,
+      },
     },
     skip: !user,
   });
@@ -219,14 +219,12 @@ export const FeedPage: React.FC = () => {
           <Title>Activity Feed</Title>
           <Subtitle>Stay updated with your network</Subtitle>
         </Header>
-        
+
         <LoginPrompt>
           <LoginPromptText>
             Please log in to see activity from users you follow
           </LoginPromptText>
-          <DiscoverButton to="/login">
-            Log In
-          </DiscoverButton>
+          <DiscoverButton to="/login">Log In</DiscoverButton>
         </LoginPrompt>
       </Container>
     );
@@ -269,64 +267,64 @@ export const FeedPage: React.FC = () => {
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffMins < 1) return 'just now';
+    if (diffMins < 1) return "just now";
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
-    
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
+
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
     });
   };
 
   const getActivityText = (activity: any) => {
     switch (activity.type) {
-      case 'CHARACTER_CREATED':
-        return 'created a new character';
-      case 'GALLERY_CREATED':
-        return 'created a new gallery';
-      case 'IMAGE_UPLOADED':
-        return 'uploaded a new image';
-      case 'CHARACTER_LIKED':
-        return 'liked a character';
-      case 'GALLERY_LIKED':
-        return 'liked a gallery';
-      case 'IMAGE_LIKED':
-        return 'liked an image';
-      case 'COMMENT_POSTED':
-        return 'posted a comment';
+      case "CHARACTER_CREATED":
+        return "created a new character";
+      case "GALLERY_CREATED":
+        return "created a new gallery";
+      case "IMAGE_UPLOADED":
+        return "uploaded a new image";
+      case "CHARACTER_LIKED":
+        return "liked a character";
+      case "GALLERY_LIKED":
+        return "liked a gallery";
+      case "IMAGE_LIKED":
+        return "liked an image";
+      case "COMMENT_POSTED":
+        return "posted a comment";
       default:
-        return 'had some activity';
+        return "had some activity";
     }
   };
 
   const getContentLink = (activity: any) => {
     switch (activity.type) {
-      case 'CHARACTER_CREATED':
-      case 'CHARACTER_LIKED':
+      case "CHARACTER_CREATED":
+      case "CHARACTER_LIKED":
         return `/character/${activity.entityId}`;
-      case 'GALLERY_CREATED':
-      case 'GALLERY_LIKED':
+      case "GALLERY_CREATED":
+      case "GALLERY_LIKED":
         return `/gallery/${activity.entityId}`;
-      case 'IMAGE_UPLOADED':
-      case 'IMAGE_LIKED':
+      case "IMAGE_UPLOADED":
+      case "IMAGE_LIKED":
         return `/media/${activity.entityId}`;
       default:
-        return '#';
+        return "#";
     }
   };
 
   const getLikeableType = (activity: any) => {
     switch (activity.type) {
-      case 'CHARACTER_CREATED':
-      case 'CHARACTER_LIKED':
+      case "CHARACTER_CREATED":
+      case "CHARACTER_LIKED":
         return LikeableType.Character;
-      case 'GALLERY_CREATED':
-      case 'GALLERY_LIKED':
+      case "GALLERY_CREATED":
+      case "GALLERY_LIKED":
         return LikeableType.Gallery;
-      case 'IMAGE_UPLOADED':
-      case 'IMAGE_LIKED':
+      case "IMAGE_UPLOADED":
+      case "IMAGE_LIKED":
         return LikeableType.Image;
       default:
         return LikeableType.Character;
@@ -345,11 +343,10 @@ export const FeedPage: React.FC = () => {
           <EmptyIcon>📡</EmptyIcon>
           <EmptyTitle>Your feed is empty</EmptyTitle>
           <EmptyDescription>
-            Follow other users to see their activity here. Discover characters, galleries, and artwork from creators you're interested in!
+            Follow other users to see their activity here. Discover characters,
+            galleries, and artwork from creators you're interested in!
           </EmptyDescription>
-          <DiscoverButton to="/characters">
-            Discover Content
-          </DiscoverButton>
+          <DiscoverButton to="/characters">Discover Content</DiscoverButton>
         </EmptyState>
       ) : (
         <FeedContainer>
@@ -358,21 +355,32 @@ export const FeedPage: React.FC = () => {
               <ActivityHeader>
                 <UserAvatar>
                   {activity.user.avatarUrl ? (
-                    <img 
-                      src={activity.user.avatarUrl} 
+                    <img
+                      src={activity.user.avatarUrl}
                       alt={activity.user.displayName || activity.user.username}
-                      style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
                     />
                   ) : (
-                    (activity.user.displayName?.[0] || activity.user.username[0]).toUpperCase()
+                    (
+                      activity.user.displayName?.[0] ||
+                      activity.user.username[0]
+                    ).toUpperCase()
                   )}
                 </UserAvatar>
-                
+
                 <ActivityInfo>
                   <ActivityText>
-                    <Link to={`/user/${activity.user.username}`} style={{ color: 'inherit', fontWeight: 'bold' }}>
+                    <Link
+                      to={`/user/${activity.user.username}`}
+                      style={{ color: "inherit", fontWeight: "bold" }}
+                    >
                       {activity.user.displayName || activity.user.username}
-                    </Link>{' '}
+                    </Link>{" "}
                     {getActivityText(activity)}
                   </ActivityText>
                   <ActivityTime>{formatTime(activity.createdAt)}</ActivityTime>
@@ -381,14 +389,22 @@ export const FeedPage: React.FC = () => {
 
               {activity.content && (
                 <ContentPreview>
-                  <ContentTitle>{activity.content.name || activity.content.title}</ContentTitle>
+                  <ContentTitle>
+                    {activity.content.name || activity.content.title}
+                  </ContentTitle>
                   {activity.content.description && (
-                    <ContentDescription>{activity.content.description}</ContentDescription>
+                    <ContentDescription>
+                      {activity.content.description}
+                    </ContentDescription>
                   )}
                   <ContentActions>
                     <ViewContentLink to={getContentLink(activity)}>
-                      View {activity.type.includes('CHARACTER') ? 'Character' : 
-                            activity.type.includes('GALLERY') ? 'Gallery' : 'Image'}
+                      View{" "}
+                      {activity.type.includes("CHARACTER")
+                        ? "Character"
+                        : activity.type.includes("GALLERY")
+                          ? "Gallery"
+                          : "Image"}
                     </ViewContentLink>
                     <LikeButton
                       entityType={getLikeableType(activity)}

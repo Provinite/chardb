@@ -1,11 +1,17 @@
-import React, { useState, useCallback } from 'react';
-import { useQuery } from '@apollo/client';
-import styled from 'styled-components';
-import { GET_CHARACTERS, CharacterFiltersInput } from '../graphql/characters';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { CharacterGrid } from '../components/CharacterGrid';
-import { RandomCharacterButton } from '../components/RandomCharacterButton';
-import { AdvancedSearchForm, AdvancedSearchFilters } from '../components/AdvancedSearchForm';
+import React, { useState, useCallback } from "react";
+import { useQuery } from "@apollo/client";
+import styled from "styled-components";
+import {
+  GET_CHARACTERS,
+  CharacterFiltersInput,
+} from "../graphql/characters.graphql";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { CharacterGrid } from "../components/CharacterGrid";
+import { RandomCharacterButton } from "../components/RandomCharacterButton";
+import {
+  AdvancedSearchForm,
+  AdvancedSearchFilters,
+} from "../components/AdvancedSearchForm";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -18,7 +24,7 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: ${({ theme }) => theme.spacing.xl};
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     gap: ${({ theme }) => theme.spacing.md};
@@ -41,7 +47,7 @@ const BasicSearchRow = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.md};
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
   }
@@ -52,7 +58,7 @@ const ToggleSection = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: ${({ theme }) => theme.spacing.md};
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     gap: ${({ theme }) => theme.spacing.md};
@@ -69,13 +75,13 @@ const ToggleButton = styled.button`
   cursor: pointer;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   transition: all 0.2s;
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.primary};
     color: white;
     border-color: ${({ theme }) => theme.colors.primary};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -88,7 +94,7 @@ const SearchInput = styled.input`
   border: 2px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -102,7 +108,7 @@ const FilterSelect = styled.select`
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   background: ${({ theme }) => theme.colors.background};
   min-width: 150px;
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -117,27 +123,30 @@ const VisibilityFilter = styled.div`
 `;
 
 const VisibilityButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'active',
+  shouldForwardProp: (prop) => prop !== "active",
 })<{ active: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 2px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.border};
-  background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.background};
-  color: ${props => props.active ? 'white' : props.theme.colors.text.secondary};
+  border: 2px solid
+    ${(props) =>
+      props.active ? props.theme.colors.primary : props.theme.colors.border};
+  background: ${(props) =>
+    props.active ? props.theme.colors.primary : props.theme.colors.background};
+  color: ${(props) =>
+    props.active ? "white" : props.theme.colors.text.secondary};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
   }
 `;
-
 
 const LoadMoreButton = styled.button`
   width: 100%;
@@ -150,16 +159,16 @@ const LoadMoreButton = styled.button`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   cursor: pointer;
   transition: background-color 0.2s;
-  
+
   &:hover:not(:disabled) {
     background: ${({ theme }) => theme.colors.secondary};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
   }
-  
+
   &:disabled {
     background: ${({ theme }) => theme.colors.text.muted};
     cursor: not-allowed;
@@ -187,11 +196,11 @@ const SearchButton = styled.button`
   transition: background-color 0.2s;
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.secondary};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -208,7 +217,7 @@ const ErrorContainer = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xl};
   color: ${({ theme }) => theme.colors.error};
-  
+
   h3 {
     margin-bottom: ${({ theme }) => theme.spacing.sm};
   }
@@ -220,18 +229,18 @@ const LoadingContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.xxl};
 `;
 
-
 const EmptyState = styled.div`
   text-align: center;
-  padding: ${({ theme }) => theme.spacing.xxl} ${({ theme }) => theme.spacing.xl};
+  padding: ${({ theme }) => theme.spacing.xxl}
+    ${({ theme }) => theme.spacing.xl};
   color: ${({ theme }) => theme.colors.text.muted};
-  
+
   h3 {
     font-size: ${({ theme }) => theme.typography.fontSize.xxl};
     margin-bottom: ${({ theme }) => theme.spacing.sm};
     color: ${({ theme }) => theme.colors.text.secondary};
   }
-  
+
   p {
     font-size: ${({ theme }) => theme.typography.fontSize.md};
     line-height: 1.5;
@@ -243,64 +252,87 @@ export const CharactersPage: React.FC = () => {
     limit: 12,
     offset: 0,
   });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [speciesFilter, setSpeciesFilter] = useState('');
-  const [visibilityFilter, setVisibilityFilter] = useState<'ALL' | 'PUBLIC' | 'UNLISTED' | 'PRIVATE'>('ALL');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [speciesFilter, setSpeciesFilter] = useState("");
+  const [visibilityFilter, setVisibilityFilter] = useState<
+    "ALL" | "PUBLIC" | "UNLISTED" | "PRIVATE"
+  >("ALL");
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
-  const [currentAdvancedFilters, setCurrentAdvancedFilters] = useState<AdvancedSearchFilters>({});
+  const [currentAdvancedFilters, setCurrentAdvancedFilters] =
+    useState<AdvancedSearchFilters>({});
 
   const { data, loading, error, fetchMore } = useQuery(GET_CHARACTERS, {
     variables: { filters },
     notifyOnNetworkStatusChange: true,
-    fetchPolicy: 'cache-and-network',
-    errorPolicy: 'all',
+    fetchPolicy: "cache-and-network",
+    errorPolicy: "all",
     // Use a unique key for each filter combination to prevent cache conflicts
     context: {
-      filterKey: JSON.stringify(filters)
-    }
+      filterKey: JSON.stringify(filters),
+    },
   });
 
-  const handleSearch = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    const newFilters = {
-      limit: 12,
-      offset: 0,
-      search: searchTerm || undefined,
-      species: speciesFilter || undefined,
-      visibility: visibilityFilter === 'ALL' ? undefined : visibilityFilter as any,
-    };
-    setFilters(newFilters);
-  }, [searchTerm, speciesFilter, visibilityFilter]);
+  const handleSearch = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      const newFilters = {
+        limit: 12,
+        offset: 0,
+        search: searchTerm || undefined,
+        species: speciesFilter || undefined,
+        visibility:
+          visibilityFilter === "ALL" ? undefined : (visibilityFilter as any),
+      };
+      setFilters(newFilters);
+    },
+    [searchTerm, speciesFilter, visibilityFilter],
+  );
 
   // Handle visibility filter changes
-  const handleVisibilityChange = useCallback((visibility: 'ALL' | 'PUBLIC' | 'UNLISTED' | 'PRIVATE') => {
-    setVisibilityFilter(visibility);
-    const newFilters = {
-      limit: 12,
-      offset: 0,
-      search: searchTerm || undefined,
-      species: speciesFilter || undefined,
-      visibility: visibility === 'ALL' ? undefined : visibility as any,
-    };
-    setFilters(newFilters);
-  }, [searchTerm, speciesFilter]);
+  const handleVisibilityChange = useCallback(
+    (visibility: "ALL" | "PUBLIC" | "UNLISTED" | "PRIVATE") => {
+      setVisibilityFilter(visibility);
+      const newFilters = {
+        limit: 12,
+        offset: 0,
+        search: searchTerm || undefined,
+        species: speciesFilter || undefined,
+        visibility: visibility === "ALL" ? undefined : (visibility as any),
+      };
+      setFilters(newFilters);
+    },
+    [searchTerm, speciesFilter],
+  );
 
-  const handleAdvancedSearch = useCallback((advancedFilters: AdvancedSearchFilters) => {
-    setCurrentAdvancedFilters(advancedFilters);
-    const newFilters: CharacterFiltersInput = {
-      limit: 12,
-      offset: 0,
-      ...advancedFilters,
-      // Convert string boolean values to actual booleans
-      isSellable: typeof advancedFilters.isSellable === 'string' 
-        ? (advancedFilters.isSellable === 'true' ? true : advancedFilters.isSellable === 'false' ? false : undefined)
-        : advancedFilters.isSellable,
-      isTradeable: typeof advancedFilters.isTradeable === 'string'
-        ? (advancedFilters.isTradeable === 'true' ? true : advancedFilters.isTradeable === 'false' ? false : undefined)
-        : advancedFilters.isTradeable,
-    };
-    setFilters(newFilters);
-  }, []);
+  const handleAdvancedSearch = useCallback(
+    (advancedFilters: AdvancedSearchFilters) => {
+      setCurrentAdvancedFilters(advancedFilters);
+      const newFilters: CharacterFiltersInput = {
+        limit: 12,
+        offset: 0,
+        ...advancedFilters,
+        // Convert string boolean values to actual booleans
+        isSellable:
+          typeof advancedFilters.isSellable === "string"
+            ? advancedFilters.isSellable === "true"
+              ? true
+              : advancedFilters.isSellable === "false"
+                ? false
+                : undefined
+            : advancedFilters.isSellable,
+        isTradeable:
+          typeof advancedFilters.isTradeable === "string"
+            ? advancedFilters.isTradeable === "true"
+              ? true
+              : advancedFilters.isTradeable === "false"
+                ? false
+                : undefined
+            : advancedFilters.isTradeable,
+      };
+      setFilters(newFilters);
+    },
+    [],
+  );
 
   const handleClearAdvancedSearch = useCallback(() => {
     setCurrentAdvancedFilters({});
@@ -335,7 +367,6 @@ export const CharactersPage: React.FC = () => {
     }
   }, [data, filters, fetchMore]);
 
-
   if (error) {
     return (
       <Container>
@@ -351,8 +382,8 @@ export const CharactersPage: React.FC = () => {
     <Container>
       <Header>
         <Title>Browse Characters</Title>
-        <RandomCharacterButton 
-          characters={data?.characters?.characters || []} 
+        <RandomCharacterButton
+          characters={data?.characters?.characters || []}
         />
       </Header>
 
@@ -362,11 +393,11 @@ export const CharactersPage: React.FC = () => {
             type="button"
             onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
           >
-            {showAdvancedSearch ? '← Simple Search' : 'Advanced Search →'}
+            {showAdvancedSearch ? "← Simple Search" : "Advanced Search →"}
           </ToggleButton>
-          
+
           {Object.keys(currentAdvancedFilters).length > 0 && (
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
               Advanced filters active
             </div>
           )}
@@ -400,9 +431,7 @@ export const CharactersPage: React.FC = () => {
                 <option value="Human">Human</option>
                 <option value="Other">Other</option>
               </FilterSelect>
-              <SearchButton type="submit">
-                Search
-              </SearchButton>
+              <SearchButton type="submit">Search</SearchButton>
             </SearchForm>
           </BasicSearchRow>
         )}
@@ -410,7 +439,7 @@ export const CharactersPage: React.FC = () => {
 
       <VisibilityFilter>
         <VisibilityLabel>Visibility:</VisibilityLabel>
-        {(['ALL', 'PUBLIC', 'UNLISTED'] as const).map((visibility) => (
+        {(["ALL", "PUBLIC", "UNLISTED"] as const).map((visibility) => (
           <VisibilityButton
             key={visibility}
             active={visibilityFilter === visibility}
@@ -430,18 +459,22 @@ export const CharactersPage: React.FC = () => {
         <>
           {data?.characters && (
             <ResultsCount>
-              Showing {data.characters.characters.length} of {data.characters.total} characters
-              {Object.keys(currentAdvancedFilters).length > 0 && ' (filtered)'}
+              Showing {data.characters.characters.length} of{" "}
+              {data.characters.total} characters
+              {Object.keys(currentAdvancedFilters).length > 0 && " (filtered)"}
             </ResultsCount>
           )}
 
           {data?.characters.characters.length === 0 ? (
             <EmptyState>
               <h3>No characters found</h3>
-              <p>Try adjusting your search terms or filters to find what you're looking for.</p>
+              <p>
+                Try adjusting your search terms or filters to find what you're
+                looking for.
+              </p>
             </EmptyState>
           ) : (
-            <CharacterGrid 
+            <CharacterGrid
               characters={data?.characters.characters || []}
               showOwner={true}
               showEditButton={false}
@@ -450,7 +483,7 @@ export const CharactersPage: React.FC = () => {
 
           {data?.characters.hasMore && (
             <LoadMoreButton onClick={handleLoadMore} disabled={loading}>
-              {loading ? 'Loading...' : 'Load More Characters'}
+              {loading ? "Loading..." : "Load More Characters"}
             </LoadMoreButton>
           )}
         </>

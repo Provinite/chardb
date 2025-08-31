@@ -52,7 +52,7 @@ export type AuthPayload = {
 
 export type Character = {
   __typename?: 'Character';
-  _count: Maybe<CharacterCount>;
+  _count: CharacterCount;
   age: Maybe<Scalars['String']['output']>;
   backstory: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
@@ -74,9 +74,18 @@ export type Character = {
   ownerId: Scalars['ID']['output'];
   personality: Maybe<Scalars['String']['output']>;
   price: Maybe<Scalars['Float']['output']>;
-  species: Maybe<Scalars['String']['output']>;
+  /** Species this character belongs to */
+  species: Maybe<Species>;
+  /** ID of the species this character belongs to */
+  speciesId: Maybe<Scalars['ID']['output']>;
+  /** Species variant this character belongs to */
+  speciesVariant: Maybe<SpeciesVariant>;
+  /** ID of the species variant this character belongs to */
+  speciesVariantId: Maybe<Scalars['ID']['output']>;
   tags: Array<Scalars['String']['output']>;
-  tags_rel: Maybe<Array<CharacterTag>>;
+  tags_rel: Array<CharacterTag>;
+  /** Trait values assigned to this character */
+  traitValues: Array<CharacterTraitValue>;
   updatedAt: Scalars['DateTime']['output'];
   userHasLiked: Scalars['Boolean']['output'];
   visibility: Visibility;
@@ -109,14 +118,70 @@ export type CharacterFiltersInput = {
   sortBy?: InputMaybe<Scalars['String']['input']>;
   sortOrder?: InputMaybe<Scalars['String']['input']>;
   species?: InputMaybe<Scalars['String']['input']>;
+  speciesId?: InputMaybe<Scalars['ID']['input']>;
+  speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   visibility?: InputMaybe<Visibility>;
+};
+
+/** A record of character ownership transfer between users */
+export type CharacterOwnershipChange = {
+  __typename?: 'CharacterOwnershipChange';
+  character: Character;
+  /** The ID of the character whose ownership was changed */
+  characterId: Scalars['ID']['output'];
+  /** When the ownership change occurred */
+  createdAt: Scalars['DateTime']['output'];
+  fromUser: Maybe<User>;
+  /** The ID of the previous owner (null for initial character creation) */
+  fromUserId: Maybe<Scalars['ID']['output']>;
+  /** Unique identifier for the ownership change record */
+  id: Scalars['ID']['output'];
+  toUser: User;
+  /** The ID of the new owner */
+  toUserId: Scalars['ID']['output'];
+};
+
+/** Paginated list of character ownership changes with connection metadata */
+export type CharacterOwnershipChangeConnection = {
+  __typename?: 'CharacterOwnershipChangeConnection';
+  /** Whether there are more character ownership changes after this page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there are character ownership changes before this page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** The character ownership changes in this page */
+  nodes: Array<CharacterOwnershipChange>;
+  /** Total count of character ownership changes matching the query */
+  totalCount: Scalars['Float']['output'];
 };
 
 export type CharacterTag = {
   __typename?: 'CharacterTag';
   character: Character;
   tag: Tag;
+};
+
+/** A trait value assigned to a character */
+export type CharacterTraitValue = {
+  __typename?: 'CharacterTraitValue';
+  /** The ID of the trait this value belongs to */
+  traitId: Scalars['ID']['output'];
+  /** The value of the trait */
+  value: Maybe<Scalars['String']['output']>;
+};
+
+/** Input for setting a character trait value */
+export type CharacterTraitValueInput = {
+  /** The ID of the trait */
+  traitId: Scalars['ID']['input'];
+  /** The value of the trait */
+  value?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input for claiming an invite code */
+export type ClaimInviteCodeInput = {
+  /** The ID of the user who is claiming this invite code */
+  userId: Scalars['ID']['input'];
 };
 
 export type Comment = {
@@ -138,6 +203,7 @@ export type Comment = {
   replies: Array<Comment>;
   repliesCount: Scalars['Int']['output'];
   updatedAt: Scalars['DateTime']['output'];
+  user: Maybe<User>;
   userHasLiked: Scalars['Boolean']['output'];
 };
 
@@ -164,6 +230,106 @@ export enum CommentableType {
   User = 'USER'
 }
 
+export type Community = {
+  __typename?: 'Community';
+  /** When the community was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** Unique identifier for the community */
+  id: Scalars['ID']['output'];
+  /** Name of the community */
+  name: Scalars['String']['output'];
+  /** When the community was last updated */
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type CommunityConnection = {
+  __typename?: 'CommunityConnection';
+  /** Whether there are more communities after this page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there are more communities before this page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** List of communities in this connection */
+  nodes: Array<Community>;
+  /** Total number of communities available */
+  totalCount: Scalars['Float']['output'];
+};
+
+/** An invitation for a user to join a community with a specific role */
+export type CommunityInvitation = {
+  __typename?: 'CommunityInvitation';
+  /** Whether the invitation has been accepted */
+  accepted: Scalars['Boolean']['output'];
+  /** When the invitation was accepted */
+  acceptedAt: Maybe<Scalars['DateTime']['output']>;
+  community: Maybe<Community>;
+  /** The ID of the community the invitation is for */
+  communityId: Scalars['ID']['output'];
+  /** When the invitation was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** Whether the invitation has been declined */
+  declined: Scalars['Boolean']['output'];
+  /** When the invitation was declined */
+  declinedAt: Maybe<Scalars['DateTime']['output']>;
+  /** Unique identifier for the community invitation */
+  id: Scalars['ID']['output'];
+  invitee: Maybe<User>;
+  /** The ID of the user being invited */
+  inviteeId: Scalars['ID']['output'];
+  inviter: Maybe<User>;
+  /** The ID of the user who created the invitation */
+  inviterId: Scalars['ID']['output'];
+  /** Whether the invitation is still pending */
+  pending: Scalars['Boolean']['output'];
+  role: Maybe<Role>;
+  /** The ID of the role to grant when the invitation is accepted */
+  roleId: Scalars['ID']['output'];
+};
+
+/** Paginated list of community invitations with connection metadata */
+export type CommunityInvitationConnection = {
+  __typename?: 'CommunityInvitationConnection';
+  /** Whether there are more community invitations after this page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there are community invitations before this page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** The community invitations in this page */
+  nodes: Array<CommunityInvitation>;
+  /** Total count of community invitations matching the query */
+  totalCount: Scalars['Float']['output'];
+};
+
+/** A membership record linking a user to a community role */
+export type CommunityMember = {
+  __typename?: 'CommunityMember';
+  /** When the membership was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** Unique identifier for the community member record */
+  id: Scalars['ID']['output'];
+  /** The role this member has */
+  role: Role;
+  /** The ID of the role this member has */
+  roleId: Scalars['ID']['output'];
+  /** When the membership was last updated */
+  updatedAt: Scalars['DateTime']['output'];
+  /** The user who is the member */
+  user: User;
+  /** The ID of the user who is the member */
+  userId: Scalars['ID']['output'];
+};
+
+/** Paginated list of community members with connection metadata */
+export type CommunityMemberConnection = {
+  __typename?: 'CommunityMemberConnection';
+  /** Whether there are more community members after this page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there are community members before this page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** The community members in this page */
+  nodes: Array<CommunityMember>;
+  /** Total count of community members matching the query */
+  totalCount: Scalars['Float']['output'];
+};
+
 export type CreateCharacterInput = {
   age?: InputMaybe<Scalars['String']['input']>;
   backstory?: InputMaybe<Scalars['String']['input']>;
@@ -175,9 +341,22 @@ export type CreateCharacterInput = {
   name: Scalars['String']['input'];
   personality?: InputMaybe<Scalars['String']['input']>;
   price?: InputMaybe<Scalars['Float']['input']>;
-  species?: InputMaybe<Scalars['String']['input']>;
+  speciesId?: InputMaybe<Scalars['ID']['input']>;
+  speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
   tags?: Array<Scalars['String']['input']>;
+  /** Trait values for the character */
+  traitValues?: Array<CharacterTraitValueInput>;
   visibility?: Visibility;
+};
+
+/** Input for creating a new character ownership change record */
+export type CreateCharacterOwnershipChangeInput = {
+  /** The ID of the character whose ownership is being changed */
+  characterId: Scalars['ID']['input'];
+  /** The ID of the previous owner (null for initial character creation) */
+  fromUserId?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the new owner */
+  toUserId: Scalars['ID']['input'];
 };
 
 export type CreateCommentInput = {
@@ -187,12 +366,105 @@ export type CreateCommentInput = {
   parentId?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type CreateCommunityInput = {
+  /** Name of the community */
+  name: Scalars['String']['input'];
+};
+
+/** Input for creating a new community invitation */
+export type CreateCommunityInvitationInput = {
+  /** The ID of the community the invitation is for */
+  communityId: Scalars['ID']['input'];
+  /** The ID of the user being invited */
+  inviteeId: Scalars['ID']['input'];
+  /** The ID of the user who is creating the invitation */
+  inviterId: Scalars['ID']['input'];
+  /** The ID of the role to grant when the invitation is accepted */
+  roleId: Scalars['ID']['input'];
+};
+
+/** Input for creating a new community membership */
+export type CreateCommunityMemberInput = {
+  /** The ID of the role to assign to the member */
+  roleId: Scalars['ID']['input'];
+  /** The ID of the user to make a member */
+  userId: Scalars['ID']['input'];
+};
+
+export type CreateEnumValueInput = {
+  /** Name/display text of this enum value */
+  name: Scalars['String']['input'];
+  /** Display order within the trait's enum values */
+  order?: InputMaybe<Scalars['Int']['input']>;
+  /** ID of the trait this enum value belongs to */
+  traitId: Scalars['ID']['input'];
+};
+
+export type CreateEnumValueSettingInput = {
+  /** ID of the enum value this setting allows */
+  enumValueId: Scalars['ID']['input'];
+  /** ID of the species variant this setting belongs to */
+  speciesVariantId: Scalars['ID']['input'];
+};
+
 export type CreateGalleryInput = {
   characterId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   sortOrder?: Scalars['Int']['input'];
   visibility?: Visibility;
+};
+
+/** Input for creating a new invite code */
+export type CreateInviteCodeInput = {
+  /** The ID of the user who is creating this invite code */
+  creatorId: Scalars['ID']['input'];
+  /** The invite code string (alphanumeric and hyphens only) */
+  id: Scalars['String']['input'];
+  /** Maximum number of times this invite code can be claimed */
+  maxClaims: Scalars['Int']['input'];
+  /** The ID of the role to grant when this invite code is used */
+  roleId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** Input for creating a new role */
+export type CreateRoleInput = {
+  /** Whether members with this role can create new characters */
+  canCreateCharacter?: Scalars['Boolean']['input'];
+  /** Whether members with this role can create invite codes */
+  canCreateInviteCode?: Scalars['Boolean']['input'];
+  /** Whether members with this role can create new roles */
+  canCreateRole?: Scalars['Boolean']['input'];
+  /** Whether members with this role can create new species */
+  canCreateSpecies?: Scalars['Boolean']['input'];
+  /** Whether members with this role can edit characters */
+  canEditCharacter?: Scalars['Boolean']['input'];
+  /** Whether members with this role can edit existing roles */
+  canEditRole?: Scalars['Boolean']['input'];
+  /** Whether members with this role can edit species */
+  canEditSpecies?: Scalars['Boolean']['input'];
+  /** Whether members with this role can list invite codes */
+  canListInviteCodes?: Scalars['Boolean']['input'];
+  /** The ID of the community this role belongs to */
+  communityId: Scalars['ID']['input'];
+  /** The name of the role */
+  name: Scalars['String']['input'];
+};
+
+export type CreateSpeciesInput = {
+  /** ID of the community that owns this species */
+  communityId: Scalars['ID']['input'];
+  /** Whether this species has an associated image */
+  hasImage?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Name of the species */
+  name: Scalars['String']['input'];
+};
+
+export type CreateSpeciesVariantInput = {
+  /** Name of the species variant */
+  name: Scalars['String']['input'];
+  /** ID of the species this variant belongs to */
+  speciesId: Scalars['ID']['input'];
 };
 
 /** Input type for creating new text media */
@@ -207,10 +479,100 @@ export type CreateTextMediaInput = {
   formatting?: TextFormatting;
   /** Optional gallery to add this media to */
   galleryId?: InputMaybe<Scalars['ID']['input']>;
+  /** Optional tags to associate with this media */
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Title for the text media */
   title: Scalars['String']['input'];
   /** Visibility setting for the media */
   visibility?: Visibility;
+};
+
+export type CreateTraitInput = {
+  /** Name of the trait */
+  name: Scalars['String']['input'];
+  /** ID of the species this trait belongs to */
+  speciesId: Scalars['ID']['input'];
+  /** Type of values this trait can store */
+  valueType: TraitValueType;
+};
+
+export type CreateTraitListEntryInput = {
+  /** Default integer value for this trait */
+  defaultValueInt?: InputMaybe<Scalars['Int']['input']>;
+  /** Default string value for this trait */
+  defaultValueString?: InputMaybe<Scalars['String']['input']>;
+  /** Default timestamp value for this trait */
+  defaultValueTimestamp?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Display order of this trait in the variant's trait list */
+  order: Scalars['Int']['input'];
+  /** Whether this trait is required for critters using this variant */
+  required: Scalars['Boolean']['input'];
+  /** ID of the species variant this entry belongs to */
+  speciesVariantId: Scalars['ID']['input'];
+  /** ID of the trait this entry configures */
+  traitId: Scalars['ID']['input'];
+  /** Type of values this trait stores */
+  valueType: TraitValueType;
+};
+
+export type EnumValue = {
+  __typename?: 'EnumValue';
+  /** When the enum value was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** Unique identifier for the enum value */
+  id: Scalars['ID']['output'];
+  /** Name/display text of this enum value */
+  name: Scalars['String']['output'];
+  /** Display order within the trait's enum values */
+  order: Scalars['Int']['output'];
+  /** The trait this enum value belongs to */
+  trait: Trait;
+  /** ID of the trait this enum value belongs to */
+  traitId: Scalars['ID']['output'];
+  /** When the enum value was last updated */
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type EnumValueConnection = {
+  __typename?: 'EnumValueConnection';
+  /** Whether there are more enum values after this page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there are more enum values before this page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** List of enum values in this connection */
+  nodes: Array<EnumValue>;
+  /** Total number of enum values available */
+  totalCount: Scalars['Float']['output'];
+};
+
+export type EnumValueSetting = {
+  __typename?: 'EnumValueSetting';
+  /** When the enum value setting was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** The enum value this setting allows */
+  enumValue: EnumValue;
+  /** ID of the enum value this setting allows */
+  enumValueId: Scalars['ID']['output'];
+  /** Unique identifier for the enum value setting */
+  id: Scalars['ID']['output'];
+  /** The species variant this setting belongs to */
+  speciesVariant: SpeciesVariant;
+  /** ID of the species variant this setting belongs to */
+  speciesVariantId: Scalars['ID']['output'];
+  /** When the enum value setting was last updated */
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type EnumValueSettingConnection = {
+  __typename?: 'EnumValueSettingConnection';
+  /** Whether there are more enum value settings after this page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there are more enum value settings before this page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** List of enum value settings in this connection */
+  nodes: Array<EnumValueSetting>;
+  /** Total number of enum value settings available */
+  totalCount: Scalars['Float']['output'];
 };
 
 export type FollowListResult = {
@@ -237,7 +599,7 @@ export type FollowStatus = {
 
 export type Gallery = {
   __typename?: 'Gallery';
-  _count: Maybe<GalleryCount>;
+  _count: GalleryCount;
   character: Maybe<Character>;
   characterId: Maybe<Scalars['ID']['output']>;
   createdAt: Scalars['DateTime']['output'];
@@ -323,6 +685,46 @@ export type ImageTag = {
   tag: Tag;
 };
 
+/** An invite code that can be used to join a community with an optional role */
+export type InviteCode = {
+  __typename?: 'InviteCode';
+  /** Number of times this invite code has been claimed */
+  claimCount: Scalars['Int']['output'];
+  /** When the invite code was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** The user who created this invite code */
+  creator: User;
+  /** The ID of the user who created this invite code */
+  creatorId: Scalars['ID']['output'];
+  /** The unique invite code string */
+  id: Scalars['ID']['output'];
+  /** Whether this invite code is still available for use */
+  isAvailable: Scalars['Boolean']['output'];
+  /** Maximum number of times this invite code can be claimed */
+  maxClaims: Scalars['Int']['output'];
+  /** Number of remaining uses for this invite code */
+  remainingClaims: Scalars['Int']['output'];
+  /** The role to grant when this invite code is used */
+  role: Maybe<Role>;
+  /** The ID of the role to grant when this invite code is used */
+  roleId: Maybe<Scalars['ID']['output']>;
+  /** When the invite code was last updated */
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+/** Paginated list of invite codes with connection metadata */
+export type InviteCodeConnection = {
+  __typename?: 'InviteCodeConnection';
+  /** Whether there are more invite codes after this page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there are invite codes before this page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** The invite codes in this page */
+  nodes: Array<InviteCode>;
+  /** Total count of invite codes matching the query */
+  totalCount: Scalars['Float']['output'];
+};
+
 export type LikeResult = {
   __typename?: 'LikeResult';
   entityId: Scalars['ID']['output'];
@@ -366,6 +768,8 @@ export type Media = {
   __typename?: 'Media';
   /** The character this media is associated with, if any */
   character: Maybe<Character>;
+  /** Number of characters this media is associated with */
+  characterCount: Scalars['Int']['output'];
   /** Optional ID of the character this media is associated with */
   characterId: Maybe<Scalars['ID']['output']>;
   /** When the media was created */
@@ -374,6 +778,8 @@ export type Media = {
   description: Maybe<Scalars['String']['output']>;
   /** The gallery this media belongs to, if any */
   gallery: Maybe<Gallery>;
+  /** Number of galleries this media appears in */
+  galleryCount: Scalars['Int']['output'];
   /** Optional ID of the gallery this media belongs to */
   galleryId: Maybe<Scalars['ID']['output']>;
   /** Unique identifier for the media */
@@ -383,7 +789,7 @@ export type Media = {
   /** Foreign key to image content (null for text media) */
   imageId: Maybe<Scalars['ID']['output']>;
   /** Number of likes this media has received */
-  likesCount: Scalars['Float']['output'];
+  likesCount: Scalars['Int']['output'];
   /** The user who owns this media */
   owner: User;
   /** ID of the user who owns this media */
@@ -409,8 +815,12 @@ export type MediaConnection = {
   __typename?: 'MediaConnection';
   /** Whether there are more items available after this page */
   hasMore: Scalars['Boolean']['output'];
+  /** Total number of image media items in the full result set */
+  imageCount: Scalars['Float']['output'];
   /** Array of media items for this page */
   media: Array<Media>;
+  /** Total number of text media items in the full result set */
+  textCount: Scalars['Float']['output'];
   /** Total number of media items matching the query */
   total: Scalars['Float']['output'];
 };
@@ -455,24 +865,76 @@ export type Mutation = {
   addCharacterTags: Character;
   /** Adds tags to a media item */
   addMediaTags: Media;
+  /** Claim an invite code to join a community */
+  claimInviteCode: InviteCode;
   createCharacter: Character;
+  /** Create a new character ownership change record */
+  createCharacterOwnershipChange: CharacterOwnershipChange;
   createComment: Comment;
+  /** Create a new community */
+  createCommunity: Community;
+  /** Create a new community invitation */
+  createCommunityInvitation: CommunityInvitation;
+  /** Create a new community membership */
+  createCommunityMember: CommunityMember;
+  /** Create a new enum value */
+  createEnumValue: EnumValue;
+  /** Create a new enum value setting */
+  createEnumValueSetting: EnumValueSetting;
   createGallery: Gallery;
+  /** Create a new invite code */
+  createInviteCode: InviteCode;
+  /** Create a new role */
+  createRole: Role;
+  /** Create a new species */
+  createSpecies: Species;
+  /** Create a new species variant */
+  createSpeciesVariant: SpeciesVariant;
   /** Creates a new text media item */
   createTextMedia: Media;
-  deleteAccount: Scalars['Boolean']['output'];
+  /** Create a new trait */
+  createTrait: Trait;
+  /** Create a new trait list entry */
+  createTraitListEntry: TraitListEntry;
+  deleteAccount: RemovalResponse;
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
-  deleteGallery: Scalars['Boolean']['output'];
+  deleteGallery: RemovalResponse;
   deleteImage: Scalars['Boolean']['output'];
   /** Deletes a media item and its associated content */
   deleteMedia: Scalars['Boolean']['output'];
   login: AuthPayload;
   refreshToken: Scalars['String']['output'];
+  /** Remove a character ownership change record */
+  removeCharacterOwnershipChange: RemovalResponse;
   removeCharacterTags: Character;
+  /** Remove a community */
+  removeCommunity: RemovalResponse;
+  /** Remove a community invitation */
+  removeCommunityInvitation: CommunityInvitation;
+  /** Remove a community membership */
+  removeCommunityMember: CommunityMember;
+  /** Remove an enum value */
+  removeEnumValue: RemovalResponse;
+  /** Remove an enum value setting */
+  removeEnumValueSetting: RemovalResponse;
+  /** Remove an invite code */
+  removeInviteCode: RemovalResponse;
   /** Removes tags from a media item */
   removeMediaTags: Media;
+  /** Remove a role */
+  removeRole: RemovalResponse;
+  /** Remove a species */
+  removeSpecies: RemovalResponse;
+  /** Remove a species variant */
+  removeSpeciesVariant: RemovalResponse;
+  /** Remove a trait */
+  removeTrait: RemovalResponse;
+  /** Remove a trait list entry */
+  removeTraitListEntry: RemovalResponse;
   reorderGalleries: Array<Gallery>;
+  /** Respond to a community invitation (accept or decline) */
+  respondToCommunityInvitation: CommunityInvitation;
   /** Sets or clears the main media for a character */
   setCharacterMainMedia: Character;
   signup: AuthPayload;
@@ -480,14 +942,36 @@ export type Mutation = {
   toggleLike: LikeResult;
   transferCharacter: Character;
   updateCharacter: Character;
+  /** Update character trait values */
+  updateCharacterTraits: Character;
   updateComment: Comment;
+  /** Update a community */
+  updateCommunity: Community;
+  /** Update a community membership (change role) */
+  updateCommunityMember: CommunityMember;
+  /** Update an enum value */
+  updateEnumValue: EnumValue;
+  /** Update an enum value setting */
+  updateEnumValueSetting: EnumValueSetting;
   updateGallery: Gallery;
   updateImage: Image;
+  /** Update an invite code */
+  updateInviteCode: InviteCode;
   /** Updates media metadata (title, description, etc.) */
   updateMedia: Media;
   updateProfile: User;
+  /** Update a role */
+  updateRole: Role;
+  /** Update a species */
+  updateSpecies: Species;
+  /** Update a species variant */
+  updateSpeciesVariant: SpeciesVariant;
   /** Updates the text content of a text media item */
   updateTextContent: Media;
+  /** Update a trait */
+  updateTrait: Trait;
+  /** Update a trait list entry */
+  updateTraitListEntry: TraitListEntry;
 };
 
 
@@ -503,8 +987,19 @@ export type MutationAddMediaTagsArgs = {
 };
 
 
+export type MutationClaimInviteCodeArgs = {
+  claimInviteCodeInput: ClaimInviteCodeInput;
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationCreateCharacterArgs = {
   input: CreateCharacterInput;
+};
+
+
+export type MutationCreateCharacterOwnershipChangeArgs = {
+  createCharacterOwnershipChangeInput: CreateCharacterOwnershipChangeInput;
 };
 
 
@@ -513,13 +1008,68 @@ export type MutationCreateCommentArgs = {
 };
 
 
+export type MutationCreateCommunityArgs = {
+  createCommunityInput: CreateCommunityInput;
+};
+
+
+export type MutationCreateCommunityInvitationArgs = {
+  createCommunityInvitationInput: CreateCommunityInvitationInput;
+};
+
+
+export type MutationCreateCommunityMemberArgs = {
+  createCommunityMemberInput: CreateCommunityMemberInput;
+};
+
+
+export type MutationCreateEnumValueArgs = {
+  createEnumValueInput: CreateEnumValueInput;
+};
+
+
+export type MutationCreateEnumValueSettingArgs = {
+  createEnumValueSettingInput: CreateEnumValueSettingInput;
+};
+
+
 export type MutationCreateGalleryArgs = {
   input: CreateGalleryInput;
 };
 
 
+export type MutationCreateInviteCodeArgs = {
+  createInviteCodeInput: CreateInviteCodeInput;
+};
+
+
+export type MutationCreateRoleArgs = {
+  createRoleInput: CreateRoleInput;
+};
+
+
+export type MutationCreateSpeciesArgs = {
+  createSpeciesInput: CreateSpeciesInput;
+};
+
+
+export type MutationCreateSpeciesVariantArgs = {
+  createSpeciesVariantInput: CreateSpeciesVariantInput;
+};
+
+
 export type MutationCreateTextMediaArgs = {
   input: CreateTextMediaInput;
+};
+
+
+export type MutationCreateTraitArgs = {
+  createTraitInput: CreateTraitInput;
+};
+
+
+export type MutationCreateTraitListEntryArgs = {
+  createTraitListEntryInput: CreateTraitListEntryInput;
 };
 
 
@@ -558,9 +1108,44 @@ export type MutationRefreshTokenArgs = {
 };
 
 
+export type MutationRemoveCharacterOwnershipChangeArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationRemoveCharacterTagsArgs = {
   id: Scalars['ID']['input'];
   input: ManageTagsInput;
+};
+
+
+export type MutationRemoveCommunityArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveCommunityInvitationArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveCommunityMemberArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveEnumValueArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveEnumValueSettingArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveInviteCodeArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -570,8 +1155,39 @@ export type MutationRemoveMediaTagsArgs = {
 };
 
 
+export type MutationRemoveRoleArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveSpeciesArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveSpeciesVariantArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveTraitArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveTraitListEntryArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationReorderGalleriesArgs = {
   input: ReorderGalleriesInput;
+};
+
+
+export type MutationRespondToCommunityInvitationArgs = {
+  id: Scalars['ID']['input'];
+  respondToCommunityInvitationInput: RespondToCommunityInvitationInput;
 };
 
 
@@ -608,9 +1224,39 @@ export type MutationUpdateCharacterArgs = {
 };
 
 
+export type MutationUpdateCharacterTraitsArgs = {
+  id: Scalars['ID']['input'];
+  updateCharacterTraitsInput: UpdateCharacterTraitsInput;
+};
+
+
 export type MutationUpdateCommentArgs = {
   id: Scalars['ID']['input'];
   input: UpdateCommentInput;
+};
+
+
+export type MutationUpdateCommunityArgs = {
+  id: Scalars['ID']['input'];
+  updateCommunityInput: UpdateCommunityInput;
+};
+
+
+export type MutationUpdateCommunityMemberArgs = {
+  id: Scalars['ID']['input'];
+  updateCommunityMemberInput: UpdateCommunityMemberInput;
+};
+
+
+export type MutationUpdateEnumValueArgs = {
+  id: Scalars['ID']['input'];
+  updateEnumValueInput: UpdateEnumValueInput;
+};
+
+
+export type MutationUpdateEnumValueSettingArgs = {
+  id: Scalars['ID']['input'];
+  updateEnumValueSettingInput: UpdateEnumValueSettingInput;
 };
 
 
@@ -626,6 +1272,12 @@ export type MutationUpdateImageArgs = {
 };
 
 
+export type MutationUpdateInviteCodeArgs = {
+  id: Scalars['ID']['input'];
+  updateInviteCodeInput: UpdateInviteCodeInput;
+};
+
+
 export type MutationUpdateMediaArgs = {
   id: Scalars['ID']['input'];
   input: UpdateMediaInput;
@@ -637,9 +1289,39 @@ export type MutationUpdateProfileArgs = {
 };
 
 
+export type MutationUpdateRoleArgs = {
+  id: Scalars['ID']['input'];
+  updateRoleInput: UpdateRoleInput;
+};
+
+
+export type MutationUpdateSpeciesArgs = {
+  id: Scalars['ID']['input'];
+  updateSpeciesInput: UpdateSpeciesInput;
+};
+
+
+export type MutationUpdateSpeciesVariantArgs = {
+  id: Scalars['ID']['input'];
+  updateSpeciesVariantInput: UpdateSpeciesVariantInput;
+};
+
+
 export type MutationUpdateTextContentArgs = {
   input: UpdateTextContentInput;
   mediaId: Scalars['ID']['input'];
+};
+
+
+export type MutationUpdateTraitArgs = {
+  id: Scalars['ID']['input'];
+  updateTraitInput: UpdateTraitInput;
+};
+
+
+export type MutationUpdateTraitListEntryArgs = {
+  id: Scalars['ID']['input'];
+  updateTraitListEntryInput: UpdateTraitListEntryInput;
 };
 
 export type Query = {
@@ -650,9 +1332,53 @@ export type Query = {
   characterImages: ImageConnection;
   /** Retrieves media associated with a specific character */
   characterMedia: MediaConnection;
+  /** Get a character ownership change by ID */
+  characterOwnershipChangeById: CharacterOwnershipChange;
+  /** Get all character ownership changes with pagination */
+  characterOwnershipChanges: CharacterOwnershipChangeConnection;
+  /** Get character ownership changes by character ID with pagination */
+  characterOwnershipChangesByCharacter: CharacterOwnershipChangeConnection;
+  /** Get character ownership changes by user ID with pagination */
+  characterOwnershipChangesByUser: CharacterOwnershipChangeConnection;
   characters: CharacterConnection;
   comment: Comment;
   comments: CommentConnection;
+  /** Get all communities with pagination */
+  communities: CommunityConnection;
+  /** Get a community by ID */
+  community: Community;
+  /** Get a community invitation by ID */
+  communityInvitationById: CommunityInvitation;
+  /** Get all community invitations with pagination */
+  communityInvitations: CommunityInvitationConnection;
+  /** Get community invitations by community ID with pagination */
+  communityInvitationsByCommunity: CommunityInvitationConnection;
+  /** Get community invitations by invitee ID with pagination */
+  communityInvitationsByInvitee: CommunityInvitationConnection;
+  /** Get community invitations by inviter ID with pagination */
+  communityInvitationsByInviter: CommunityInvitationConnection;
+  /** Get a community member by ID */
+  communityMemberById: CommunityMember;
+  /** Get all community members with pagination */
+  communityMembers: CommunityMemberConnection;
+  /** Get community members by community ID with pagination */
+  communityMembersByCommunity: CommunityMemberConnection;
+  /** Get community members by user ID with pagination */
+  communityMembersByUser: CommunityMemberConnection;
+  /** Get an enum value by ID */
+  enumValueById: EnumValue;
+  /** Get an enum value setting by ID */
+  enumValueSettingById: EnumValueSetting;
+  /** Get all enum value settings with pagination */
+  enumValueSettings: EnumValueSettingConnection;
+  /** Get enum value settings by enum value ID with pagination */
+  enumValueSettingsByEnumValue: EnumValueSettingConnection;
+  /** Get enum value settings by species variant ID with pagination */
+  enumValueSettingsBySpeciesVariant: EnumValueSettingConnection;
+  /** Get all enum values with pagination */
+  enumValues: EnumValueConnection;
+  /** Get enum values by trait ID with pagination */
+  enumValuesByTrait: EnumValueConnection;
   followStatus: FollowStatus;
   galleries: GalleryConnection;
   gallery: Gallery;
@@ -663,6 +1389,14 @@ export type Query = {
   getFollowing: FollowListResult;
   image: Image;
   images: ImageConnection;
+  /** Get an invite code by ID */
+  inviteCodeById: InviteCode;
+  /** Get all invite codes with pagination */
+  inviteCodes: InviteCodeConnection;
+  /** Get invite codes by creator ID with pagination */
+  inviteCodesByCreator: InviteCodeConnection;
+  /** Get invite codes by role ID with pagination */
+  inviteCodesByRole: InviteCodeConnection;
   likeStatus: LikeStatus;
   likedCharacters: Array<Character>;
   likedGalleries: Array<Gallery>;
@@ -678,8 +1412,40 @@ export type Query = {
   myImages: ImageConnection;
   /** Retrieves media owned by the current authenticated user */
   myMedia: MediaConnection;
+  /** Get a role by ID */
+  roleById: Role;
+  /** Get all roles with pagination */
+  roles: RoleConnection;
+  /** Get roles by community ID with pagination */
+  rolesByCommunity: RoleConnection;
   /** Search for tags by name or get popular suggestions */
   searchTags: Array<Tag>;
+  /** Get all species with pagination */
+  species: SpeciesConnection;
+  /** Get species by community ID with pagination */
+  speciesByCommunity: SpeciesConnection;
+  /** Get a species by ID */
+  speciesById: Species;
+  /** Get a species variant by ID */
+  speciesVariantById: SpeciesVariant;
+  /** Get all species variants with pagination */
+  speciesVariants: SpeciesVariantConnection;
+  /** Get species variants by species ID with pagination */
+  speciesVariantsBySpecies: SpeciesVariantConnection;
+  /** Get a trait by ID */
+  traitById: Trait;
+  /** Get all trait list entries with pagination */
+  traitListEntries: TraitListEntryConnection;
+  /** Get trait list entries by species variant ID with pagination */
+  traitListEntriesBySpeciesVariant: TraitListEntryConnection;
+  /** Get trait list entries by trait ID with pagination */
+  traitListEntriesByTrait: TraitListEntryConnection;
+  /** Get a trait list entry by ID */
+  traitListEntryById: TraitListEntry;
+  /** Get all traits with pagination */
+  traits: TraitConnection;
+  /** Get traits by species ID with pagination */
+  traitsBySpecies: TraitConnection;
   user: Maybe<User>;
   userCharacters: CharacterConnection;
   userGalleries: GalleryConnection;
@@ -720,6 +1486,31 @@ export type QueryCharacterMediaArgs = {
 };
 
 
+export type QueryCharacterOwnershipChangeByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryCharacterOwnershipChangesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCharacterOwnershipChangesByCharacterArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  characterId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCharacterOwnershipChangesByUserArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  userId: Scalars['ID']['input'];
+};
+
+
 export type QueryCharactersArgs = {
   filters?: InputMaybe<CharacterFiltersInput>;
 };
@@ -732,6 +1523,117 @@ export type QueryCommentArgs = {
 
 export type QueryCommentsArgs = {
   filters: CommentFiltersInput;
+};
+
+
+export type QueryCommunitiesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCommunityArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityInvitationByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityInvitationsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCommunityInvitationsByCommunityArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  communityId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCommunityInvitationsByInviteeArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  inviteeId: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityInvitationsByInviterArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  inviterId: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityMemberByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityMembersArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCommunityMembersByCommunityArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  communityId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCommunityMembersByUserArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  userId: Scalars['ID']['input'];
+};
+
+
+export type QueryEnumValueByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryEnumValueSettingByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryEnumValueSettingsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryEnumValueSettingsByEnumValueArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  enumValueId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryEnumValueSettingsBySpeciesVariantArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  speciesVariantId: Scalars['ID']['input'];
+};
+
+
+export type QueryEnumValuesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryEnumValuesByTraitArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  traitId: Scalars['ID']['input'];
 };
 
 
@@ -782,6 +1684,31 @@ export type QueryImagesArgs = {
 };
 
 
+export type QueryInviteCodeByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryInviteCodesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryInviteCodesByCreatorArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  creatorId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryInviteCodesByRoleArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  roleId: Scalars['ID']['input'];
+};
+
+
 export type QueryLikeStatusArgs = {
   entityId: Scalars['ID']['input'];
   entityType: LikeableType;
@@ -823,9 +1750,106 @@ export type QueryMyMediaArgs = {
 };
 
 
+export type QueryRoleByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryRolesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryRolesByCommunityArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  communityId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QuerySearchTagsArgs = {
   limit?: InputMaybe<Scalars['Float']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QuerySpeciesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QuerySpeciesByCommunityArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  communityId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QuerySpeciesByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QuerySpeciesVariantByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QuerySpeciesVariantsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QuerySpeciesVariantsBySpeciesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  speciesId: Scalars['ID']['input'];
+};
+
+
+export type QueryTraitByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryTraitListEntriesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryTraitListEntriesBySpeciesVariantArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  speciesVariantId: Scalars['ID']['input'];
+};
+
+
+export type QueryTraitListEntriesByTraitArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  traitId: Scalars['ID']['input'];
+};
+
+
+export type QueryTraitListEntryByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryTraitsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryTraitsBySpeciesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  speciesId: Scalars['ID']['input'];
 };
 
 
@@ -874,8 +1898,69 @@ export type QueryUsersArgs = {
   offset?: Scalars['Int']['input'];
 };
 
+/** Response confirming successful removal of an entity */
+export type RemovalResponse = {
+  __typename?: 'RemovalResponse';
+  /** Optional message about the removal */
+  message: Maybe<Scalars['String']['output']>;
+  /** Whether the entity was successfully removed */
+  removed: Scalars['Boolean']['output'];
+};
+
 export type ReorderGalleriesInput = {
   galleryIds: Array<Scalars['ID']['input']>;
+};
+
+/** Input for responding to a community invitation */
+export type RespondToCommunityInvitationInput = {
+  /** Whether to accept (true) or decline (false) the invitation */
+  accept: Scalars['Boolean']['input'];
+};
+
+/** A role within a community that defines permissions for members */
+export type Role = {
+  __typename?: 'Role';
+  /** Whether members with this role can create new characters */
+  canCreateCharacter: Scalars['Boolean']['output'];
+  /** Whether members with this role can create invite codes */
+  canCreateInviteCode: Scalars['Boolean']['output'];
+  /** Whether members with this role can create new roles */
+  canCreateRole: Scalars['Boolean']['output'];
+  /** Whether members with this role can create new species */
+  canCreateSpecies: Scalars['Boolean']['output'];
+  /** Whether members with this role can edit characters */
+  canEditCharacter: Scalars['Boolean']['output'];
+  /** Whether members with this role can edit existing roles */
+  canEditRole: Scalars['Boolean']['output'];
+  /** Whether members with this role can edit species */
+  canEditSpecies: Scalars['Boolean']['output'];
+  /** Whether members with this role can list invite codes */
+  canListInviteCodes: Scalars['Boolean']['output'];
+  /** The community this role belongs to */
+  community: Community;
+  /** The ID of the community this role belongs to */
+  communityId: Scalars['ID']['output'];
+  /** When the role was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** Unique identifier for the role */
+  id: Scalars['ID']['output'];
+  /** The name of the role */
+  name: Scalars['String']['output'];
+  /** When the role was last updated */
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+/** Paginated list of roles with connection metadata */
+export type RoleConnection = {
+  __typename?: 'RoleConnection';
+  /** Whether there are more roles after this page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there are roles before this page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** The roles in this page */
+  nodes: Array<Role>;
+  /** Total count of roles matching the query */
+  totalCount: Scalars['Float']['output'];
 };
 
 export type SetMainMediaInput = {
@@ -887,6 +1972,64 @@ export type SignupInput = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
+};
+
+export type Species = {
+  __typename?: 'Species';
+  /** The community that owns this species */
+  community: Community;
+  /** ID of the community that owns this species */
+  communityId: Scalars['ID']['output'];
+  /** When the species was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** Whether this species has an associated image */
+  hasImage: Scalars['Boolean']['output'];
+  /** Unique identifier for the species */
+  id: Scalars['ID']['output'];
+  /** Name of the species */
+  name: Scalars['String']['output'];
+  /** When the species was last updated */
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type SpeciesConnection = {
+  __typename?: 'SpeciesConnection';
+  /** Whether there are more species after this page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there are more species before this page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** List of species in this connection */
+  nodes: Array<Species>;
+  /** Total number of species available */
+  totalCount: Scalars['Float']['output'];
+};
+
+export type SpeciesVariant = {
+  __typename?: 'SpeciesVariant';
+  /** When the species variant was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** Unique identifier for the species variant */
+  id: Scalars['ID']['output'];
+  /** Name of the species variant */
+  name: Scalars['String']['output'];
+  /** The species this variant belongs to */
+  species: Species;
+  /** ID of the species this variant belongs to */
+  speciesId: Scalars['ID']['output'];
+  /** When the species variant was last updated */
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type SpeciesVariantConnection = {
+  __typename?: 'SpeciesVariantConnection';
+  /** Whether there are more species variants after this page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there are more species variants before this page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** List of species variants in this connection */
+  nodes: Array<SpeciesVariant>;
+  /** Total number of species variants available */
+  totalCount: Scalars['Float']['output'];
 };
 
 export type Tag = {
@@ -927,6 +2070,92 @@ export type ToggleLikeInput = {
   entityType: LikeableType;
 };
 
+export type Trait = {
+  __typename?: 'Trait';
+  /** When the trait was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** Unique identifier for the trait */
+  id: Scalars['ID']['output'];
+  /** Name of the trait */
+  name: Scalars['String']['output'];
+  /** The species this trait belongs to */
+  species: Species;
+  /** ID of the species this trait belongs to */
+  speciesId: Scalars['ID']['output'];
+  /** When the trait was last updated */
+  updatedAt: Scalars['DateTime']['output'];
+  /** Type of values this trait can store */
+  valueType: TraitValueType;
+};
+
+export type TraitConnection = {
+  __typename?: 'TraitConnection';
+  /** Whether there are more traits after this page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there are more traits before this page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** List of traits in this connection */
+  nodes: Array<Trait>;
+  /** Total number of traits available */
+  totalCount: Scalars['Float']['output'];
+};
+
+export type TraitListEntry = {
+  __typename?: 'TraitListEntry';
+  /** When the trait list entry was created */
+  createdAt: Scalars['DateTime']['output'];
+  /** Display value for the default value based on type */
+  defaultDisplayValue: Maybe<Scalars['String']['output']>;
+  /** Default integer value for this trait */
+  defaultValueInt: Maybe<Scalars['Int']['output']>;
+  /** Default string value for this trait */
+  defaultValueString: Maybe<Scalars['String']['output']>;
+  /** Default timestamp value for this trait */
+  defaultValueTimestamp: Maybe<Scalars['DateTime']['output']>;
+  /** Unique identifier for the trait list entry */
+  id: Scalars['ID']['output'];
+  /** Display order of this trait in the variant's trait list */
+  order: Scalars['Int']['output'];
+  /** Whether this trait is required for critters using this variant */
+  required: Scalars['Boolean']['output'];
+  /** The species variant this entry belongs to */
+  speciesVariant: SpeciesVariant;
+  /** ID of the species variant this entry belongs to */
+  speciesVariantId: Scalars['ID']['output'];
+  /** The trait this entry configures */
+  trait: Trait;
+  /** ID of the trait this entry configures */
+  traitId: Scalars['ID']['output'];
+  /** When the trait list entry was last updated */
+  updatedAt: Scalars['DateTime']['output'];
+  /** Type of values this trait stores */
+  valueType: TraitValueType;
+};
+
+export type TraitListEntryConnection = {
+  __typename?: 'TraitListEntryConnection';
+  /** Whether there are more trait list entries after this page */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether there are more trait list entries before this page */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** List of trait list entries in this connection */
+  nodes: Array<TraitListEntry>;
+  /** Total number of trait list entries available */
+  totalCount: Scalars['Float']['output'];
+};
+
+/** Types of values that traits can store */
+export enum TraitValueType {
+  /** Enumerated value from predefined list */
+  Enum = 'ENUM',
+  /** Integer/numeric value */
+  Integer = 'INTEGER',
+  /** String/text value */
+  String = 'STRING',
+  /** Timestamp/date value */
+  Timestamp = 'TIMESTAMP'
+}
+
 export type TransferCharacterInput = {
   newOwnerId: Scalars['ID']['input'];
 };
@@ -943,13 +2172,49 @@ export type UpdateCharacterInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   personality?: InputMaybe<Scalars['String']['input']>;
   price?: InputMaybe<Scalars['Float']['input']>;
-  species?: InputMaybe<Scalars['String']['input']>;
+  speciesId?: InputMaybe<Scalars['ID']['input']>;
+  speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Trait values for the character */
+  traitValues?: InputMaybe<Array<CharacterTraitValueInput>>;
   visibility?: InputMaybe<Visibility>;
+};
+
+/** Input for updating character trait values */
+export type UpdateCharacterTraitsInput = {
+  /** Array of trait values to set for the character */
+  traitValues: Array<CharacterTraitValueInput>;
 };
 
 export type UpdateCommentInput = {
   content: Scalars['String']['input'];
+};
+
+export type UpdateCommunityInput = {
+  /** Name of the community */
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Input for updating an existing community membership */
+export type UpdateCommunityMemberInput = {
+  /** The ID of the role to assign to the member */
+  roleId: Scalars['ID']['input'];
+};
+
+export type UpdateEnumValueInput = {
+  /** Name/display text of this enum value */
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** Display order within the trait's enum values */
+  order?: InputMaybe<Scalars['Int']['input']>;
+  /** ID of the trait this enum value belongs to */
+  traitId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type UpdateEnumValueSettingInput = {
+  /** ID of the enum value this setting allows */
+  enumValueId?: InputMaybe<Scalars['ID']['input']>;
+  /** ID of the species variant this setting belongs to */
+  speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UpdateGalleryInput = {
@@ -969,6 +2234,14 @@ export type UpdateImageInput = {
   source?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Input for updating an existing invite code */
+export type UpdateInviteCodeInput = {
+  /** Maximum number of times this invite code can be claimed */
+  maxClaims?: InputMaybe<Scalars['Int']['input']>;
+  /** The ID of the role to grant when this invite code is used */
+  roleId?: InputMaybe<Scalars['ID']['input']>;
+};
+
 /** Input type for updating media metadata */
 export type UpdateMediaInput = {
   /** Updated character association */
@@ -977,10 +2250,50 @@ export type UpdateMediaInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   /** Updated gallery association */
   galleryId?: InputMaybe<Scalars['ID']['input']>;
+  /** Updated tags */
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Updated title for the media */
   title?: InputMaybe<Scalars['String']['input']>;
   /** Updated visibility setting */
   visibility?: InputMaybe<Visibility>;
+};
+
+/** Input for updating an existing role */
+export type UpdateRoleInput = {
+  /** Whether members with this role can create new characters */
+  canCreateCharacter?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can create invite codes */
+  canCreateInviteCode?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can create new roles */
+  canCreateRole?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can create new species */
+  canCreateSpecies?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can edit characters */
+  canEditCharacter?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can edit existing roles */
+  canEditRole?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can edit species */
+  canEditSpecies?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can list invite codes */
+  canListInviteCodes?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The name of the role */
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateSpeciesInput = {
+  /** ID of the community that owns this species */
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+  /** Whether this species has an associated image */
+  hasImage?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Name of the species */
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateSpeciesVariantInput = {
+  /** Name of the species variant */
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** ID of the species this variant belongs to */
+  speciesId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 /** Input type for updating text content specifically */
@@ -989,6 +2302,34 @@ export type UpdateTextContentInput = {
   content?: InputMaybe<Scalars['String']['input']>;
   /** Updated text formatting type */
   formatting?: InputMaybe<TextFormatting>;
+};
+
+export type UpdateTraitInput = {
+  /** Name of the trait */
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** ID of the species this trait belongs to */
+  speciesId?: InputMaybe<Scalars['ID']['input']>;
+  /** Type of values this trait can store */
+  valueType?: InputMaybe<TraitValueType>;
+};
+
+export type UpdateTraitListEntryInput = {
+  /** Default integer value for this trait */
+  defaultValueInt?: InputMaybe<Scalars['Int']['input']>;
+  /** Default string value for this trait */
+  defaultValueString?: InputMaybe<Scalars['String']['input']>;
+  /** Default timestamp value for this trait */
+  defaultValueTimestamp?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Display order of this trait in the variant's trait list */
+  order?: InputMaybe<Scalars['Int']['input']>;
+  /** Whether this trait is required for critters using this variant */
+  required?: InputMaybe<Scalars['Boolean']['input']>;
+  /** ID of the species variant this entry belongs to */
+  speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
+  /** ID of the trait this entry configures */
+  traitId?: InputMaybe<Scalars['ID']['input']>;
+  /** Type of values this trait stores */
+  valueType?: InputMaybe<TraitValueType>;
 };
 
 export type UpdateUserInput = {
@@ -1004,6 +2345,11 @@ export type User = {
   __typename?: 'User';
   avatarUrl: Maybe<Scalars['String']['output']>;
   bio: Maybe<Scalars['String']['output']>;
+  canCreateCommunity: Scalars['Boolean']['output'];
+  canCreateInviteCode: Scalars['Boolean']['output'];
+  canGrantGlobalPermissions: Scalars['Boolean']['output'];
+  canListInviteCodes: Scalars['Boolean']['output'];
+  canListUsers: Scalars['Boolean']['output'];
   createdAt: Scalars['DateTime']['output'];
   dateOfBirth: Maybe<Scalars['DateTime']['output']>;
   displayName: Maybe<Scalars['String']['output']>;
@@ -1032,24 +2378,37 @@ export type UserConnection = {
 export type UserProfile = {
   __typename?: 'UserProfile';
   canViewPrivateContent: Scalars['Boolean']['output'];
+  /** Characters featured or highlighted by this user */
   featuredCharacters: Array<Character>;
   isOwnProfile: Scalars['Boolean']['output'];
+  /** Recently created or updated characters by this user */
   recentCharacters: Array<Character>;
+  /** Recently created or updated galleries by this user */
   recentGalleries: Array<Gallery>;
+  /** Recently uploaded media (images and text) by this user */
   recentMedia: Array<Media>;
+  /** User statistics including counts and engagement metrics */
   stats: UserStats;
   user: User;
 };
 
 export type UserStats = {
   __typename?: 'UserStats';
+  /** Total number of characters owned by this user */
   charactersCount: Scalars['Int']['output'];
+  /** Number of users following this user */
   followersCount: Scalars['Int']['output'];
+  /** Number of users this user is following */
   followingCount: Scalars['Int']['output'];
+  /** Total number of galleries created by this user */
   galleriesCount: Scalars['Int']['output'];
+  /** Total number of images uploaded by this user */
   imagesCount: Scalars['Int']['output'];
+  /** Total number of likes received across all user's content */
   totalLikes: Scalars['Int']['output'];
+  /** Total number of views across all user's content */
   totalViews: Scalars['Int']['output'];
+  userId: Scalars['ID']['output'];
 };
 
 /** Visibility levels for content */
@@ -1090,28 +2449,28 @@ export type GetCharactersQueryVariables = Exact<{
 }>;
 
 
-export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null }> } };
+export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
 
 export type GetCharacterQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
 
 
-export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null }> } };
+export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
 
 export type CreateCharacterMutationVariables = Exact<{
   input: CreateCharacterInput;
 }>;
 
 
-export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null } };
+export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type UpdateCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1119,7 +2478,7 @@ export type UpdateCharacterMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCharacterMutation = { __typename?: 'Mutation', updateCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null } };
+export type UpdateCharacterMutation = { __typename?: 'Mutation', updateCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type DeleteCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1134,7 +2493,7 @@ export type TransferCharacterMutationVariables = Exact<{
 }>;
 
 
-export type TransferCharacterMutation = { __typename?: 'Mutation', transferCharacter: { __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } | null } };
+export type TransferCharacterMutation = { __typename?: 'Mutation', transferCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type AddCharacterTagsMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1142,7 +2501,7 @@ export type AddCharacterTagsMutationVariables = Exact<{
 }>;
 
 
-export type AddCharacterTagsMutation = { __typename?: 'Mutation', addCharacterTags: { __typename?: 'Character', id: string, name: string, tags: Array<string>, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
+export type AddCharacterTagsMutation = { __typename?: 'Mutation', addCharacterTags: { __typename?: 'Character', id: string, name: string, tags: Array<string>, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> } };
 
 export type RemoveCharacterTagsMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1150,7 +2509,7 @@ export type RemoveCharacterTagsMutationVariables = Exact<{
 }>;
 
 
-export type RemoveCharacterTagsMutation = { __typename?: 'Mutation', removeCharacterTags: { __typename?: 'Character', id: string, name: string, tags: Array<string>, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
+export type RemoveCharacterTagsMutation = { __typename?: 'Mutation', removeCharacterTags: { __typename?: 'Character', id: string, name: string, tags: Array<string>, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> } };
 
 export type SetCharacterMainMediaMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1163,28 +2522,28 @@ export type SetCharacterMainMediaMutation = { __typename?: 'Mutation', setCharac
 export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, age: string | null, gender: string | null, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, _count: { __typename?: 'CharacterCount', media: number } | null }> };
+export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, _count: { __typename?: 'CharacterCount', media: number } }> };
 
 export type GetGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
 }>;
 
 
-export type GetGalleriesQuery = { __typename?: 'Query', galleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null }> } };
+export type GetGalleriesQuery = { __typename?: 'Query', galleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
 
 export type GetGalleryQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetGalleryQuery = { __typename?: 'Query', gallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null } };
+export type GetGalleryQuery = { __typename?: 'Query', gallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null } | null, _count: { __typename?: 'GalleryCount', media: number } } };
 
 export type GetMyGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
 }>;
 
 
-export type GetMyGalleriesQuery = { __typename?: 'Query', myGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null }> } };
+export type GetMyGalleriesQuery = { __typename?: 'Query', myGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
 
 export type GetUserGalleriesQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -1192,7 +2551,7 @@ export type GetUserGalleriesQueryVariables = Exact<{
 }>;
 
 
-export type GetUserGalleriesQuery = { __typename?: 'Query', userGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null }> } };
+export type GetUserGalleriesQuery = { __typename?: 'Query', userGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
 
 export type GetCharacterGalleriesQueryVariables = Exact<{
   characterId: Scalars['ID']['input'];
@@ -1200,14 +2559,14 @@ export type GetCharacterGalleriesQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterGalleriesQuery = { __typename?: 'Query', characterGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null }> } };
+export type GetCharacterGalleriesQuery = { __typename?: 'Query', characterGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
 
 export type CreateGalleryMutationVariables = Exact<{
   input: CreateGalleryInput;
 }>;
 
 
-export type CreateGalleryMutation = { __typename?: 'Mutation', createGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null } };
+export type CreateGalleryMutation = { __typename?: 'Mutation', createGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null } | null, _count: { __typename?: 'GalleryCount', media: number } } };
 
 export type UpdateGalleryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1215,26 +2574,26 @@ export type UpdateGalleryMutationVariables = Exact<{
 }>;
 
 
-export type UpdateGalleryMutation = { __typename?: 'Mutation', updateGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: string | null } | null, _count: { __typename?: 'GalleryCount', media: number } | null } };
+export type UpdateGalleryMutation = { __typename?: 'Mutation', updateGallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null } | null, _count: { __typename?: 'GalleryCount', media: number } } };
 
 export type DeleteGalleryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type DeleteGalleryMutation = { __typename?: 'Mutation', deleteGallery: boolean };
+export type DeleteGalleryMutation = { __typename?: 'Mutation', deleteGallery: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
 export type ReorderGalleriesMutationVariables = Exact<{
   input: ReorderGalleriesInput;
 }>;
 
 
-export type ReorderGalleriesMutation = { __typename?: 'Mutation', reorderGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, sortOrder: number, likesCount: number, userHasLiked: boolean, _count: { __typename?: 'GalleryCount', media: number } | null }> };
+export type ReorderGalleriesMutation = { __typename?: 'Mutation', reorderGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, sortOrder: number, likesCount: number, userHasLiked: boolean, _count: { __typename?: 'GalleryCount', media: number } }> };
 
 export type GetLikedGalleriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, _count: { __typename?: 'GalleryCount', media: number } | null }> };
+export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null, _count: { __typename?: 'GalleryCount', media: number } }> };
 
 export type GetLikedImagesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1261,7 +2620,7 @@ export type GetCharacterMediaQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterMediaQuery = { __typename?: 'Query', characterMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null }> } };
+export type GetCharacterMediaQuery = { __typename?: 'Query', characterMedia: { __typename?: 'MediaConnection', total: number, imageCount: number, textCount: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null }> } };
 
 export type GetMyMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -1423,7 +2782,7 @@ export type GetUserProfileQueryVariables = Exact<{
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, filename: string, url: string, thumbnailUrl: string | null } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: string | null, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> } | null };
+export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, filename: string, url: string, thumbnailUrl: string | null } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> } | null };
 
 export type GetUserStatsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -1617,7 +2976,10 @@ export const GetCharactersDocument = gql`
     characters {
       id
       name
-      species
+      species {
+        id
+        name
+      }
       age
       gender
       description
@@ -1704,7 +3066,10 @@ export const GetCharacterDocument = gql`
   character(id: $id) {
     id
     name
-    species
+    species {
+      id
+      name
+    }
     age
     gender
     description
@@ -1797,7 +3162,10 @@ export const GetMyCharactersDocument = gql`
     characters {
       id
       name
-      species
+      species {
+        id
+        name
+      }
       age
       gender
       description
@@ -1884,7 +3252,10 @@ export const CreateCharacterDocument = gql`
   createCharacter(input: $input) {
     id
     name
-    species
+    species {
+      id
+      name
+    }
     age
     gender
     description
@@ -1949,7 +3320,10 @@ export const UpdateCharacterDocument = gql`
   updateCharacter(id: $id, input: $input) {
     id
     name
-    species
+    species {
+      id
+      name
+    }
     age
     gender
     description
@@ -2046,7 +3420,10 @@ export const TransferCharacterDocument = gql`
   transferCharacter(id: $id, input: $input) {
     id
     name
-    species
+    species {
+      id
+      name
+    }
     age
     gender
     description
@@ -2247,7 +3624,10 @@ export const GetLikedCharactersDocument = gql`
   likedCharacters {
     id
     name
-    species
+    species {
+      id
+      name
+    }
     age
     gender
     description
@@ -2322,7 +3702,10 @@ export const GetGalleriesDocument = gql`
       character {
         id
         name
-        species
+        species {
+          id
+          name
+        }
       }
       _count {
         media
@@ -2389,7 +3772,10 @@ export const GetGalleryDocument = gql`
     character {
       id
       name
-      species
+      species {
+        id
+        name
+      }
     }
     _count {
       media
@@ -2454,7 +3840,10 @@ export const GetMyGalleriesDocument = gql`
       character {
         id
         name
-        species
+        species {
+          id
+          name
+        }
       }
       _count {
         media
@@ -2522,7 +3911,10 @@ export const GetUserGalleriesDocument = gql`
       character {
         id
         name
-        species
+        species {
+          id
+          name
+        }
       }
       _count {
         media
@@ -2591,7 +3983,10 @@ export const GetCharacterGalleriesDocument = gql`
       character {
         id
         name
-        species
+        species {
+          id
+          name
+        }
       }
       _count {
         media
@@ -2659,7 +4054,10 @@ export const CreateGalleryDocument = gql`
     character {
       id
       name
-      species
+      species {
+        id
+        name
+      }
     }
     _count {
       media
@@ -2716,7 +4114,10 @@ export const UpdateGalleryDocument = gql`
     character {
       id
       name
-      species
+      species {
+        id
+        name
+      }
     }
     _count {
       media
@@ -2755,7 +4156,10 @@ export type UpdateGalleryMutationResult = Apollo.MutationResult<UpdateGalleryMut
 export type UpdateGalleryMutationOptions = Apollo.BaseMutationOptions<UpdateGalleryMutation, UpdateGalleryMutationVariables>;
 export const DeleteGalleryDocument = gql`
     mutation DeleteGallery($id: ID!) {
-  deleteGallery(id: $id)
+  deleteGallery(id: $id) {
+    removed
+    message
+  }
 }
     `;
 export type DeleteGalleryMutationFn = Apollo.MutationFunction<DeleteGalleryMutation, DeleteGalleryMutationVariables>;
@@ -3172,6 +4576,8 @@ export const GetCharacterMediaDocument = gql`
       userHasLiked
     }
     total
+    imageCount
+    textCount
     hasMore
   }
 }
@@ -4340,7 +5746,10 @@ export const GetUserProfileDocument = gql`
     recentCharacters {
       id
       name
-      species
+      species {
+        id
+        name
+      }
       description
       createdAt
       updatedAt
@@ -4389,7 +5798,10 @@ export const GetUserProfileDocument = gql`
     featuredCharacters {
       id
       name
-      species
+      species {
+        id
+        name
+      }
       description
       createdAt
       updatedAt

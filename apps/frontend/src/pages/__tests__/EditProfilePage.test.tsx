@@ -30,8 +30,8 @@ vi.mock("react-hot-toast", () => ({
 
 // Now import the component and test utilities
 import { EditProfilePage } from "../EditProfilePage";
-import { ME_QUERY } from "../../graphql/auth";
-import { UPDATE_PROFILE } from "../../graphql/users";
+import { ME_QUERY } from "../../graphql/auth.graphql";
+import { UPDATE_PROFILE } from "../../graphql/users.graphql";
 import { render, createMockUser } from "../../__tests__/test-utils";
 
 // Mock GraphQL queries
@@ -611,7 +611,9 @@ describe("EditProfilePage", () => {
       // Wait for form to be populated
       await waitFor(() => {
         const bioTextarea = screen.getByLabelText("Bio") as HTMLTextAreaElement;
-        expect(bioTextarea.value).toBe("Software developer and open source enthusiast");
+        expect(bioTextarea.value).toBe(
+          "Software developer and open source enthusiast",
+        );
       });
 
       // Enter bio that's too long (over 1000 characters)

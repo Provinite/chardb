@@ -1,0 +1,107 @@
+import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
+import { NotFoundException } from '@nestjs/common';
+import { TraitsService } from './traits.service';
+import { Trait, TraitConnection } from './entities/trait.entity';
+import { CreateTraitInput, UpdateTraitInput } from './dto/trait.dto';
+import {
+  mapCreateTraitInputToService,
+  mapUpdateTraitInputToService,
+  mapPrismaTraitToGraphQL,
+  mapPrismaTraitConnectionToGraphQL,
+} from './utils/trait-resolver-mappers';
+import { Species } from '../species/entities/species.entity';
+import { RemovalResponse } from '../shared/entities/removal-response.entity';
+import { SpeciesService } from '../species/species.service';
+import { mapPrismaSpeciesToGraphQL } from '../species/utils/species-resolver-mappers';
+
+@Resolver(() => Trait)
+export class TraitsResolver {
+  constructor(
+    private readonly traitsService: TraitsService,
+    private readonly speciesService: SpeciesService,
+  ) {}
+
+  /** Create a new trait */
+  @Mutation(() => Trait, { description: 'Create a new trait' })
+  async createTrait(
+    @Args('createTraitInput', { description: 'Trait creation data' }) 
+    createTraitInput: CreateTraitInput,
+  ): Promise<Trait> {
+    const serviceInput = mapCreateTraitInputToService(createTraitInput);
+    const prismaResult = await this.traitsService.create(serviceInput);
+    return mapPrismaTraitToGraphQL(prismaResult);
+  }
+
+  /** Get all traits with pagination */
+  @Query(() => TraitConnection, { name: 'traits', description: 'Get all traits with pagination' })
+  async findAll(
+    @Args('first', { type: () => Int, nullable: true, description: 'Number of traits to return', defaultValue: 20 })
+    first?: number,
+    @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
+    after?: string,
+  ): Promise<TraitConnection> {
+    const serviceResult = await this.traitsService.findAll(first, after);
+    return mapPrismaTraitConnectionToGraphQL(serviceResult);
+  }
+
+  /** Get traits by species ID with pagination */
+  @Query(() => TraitConnection, { name: 'traitsBySpecies', description: 'Get traits by species ID with pagination' })
+  async findBySpecies(
+    @Args('speciesId', { type: () => ID, description: 'Species ID' })
+    speciesId: string,
+    @Args('first', { type: () => Int, nullable: true, description: 'Number of traits to return', defaultValue: 20 })
+    first?: number,
+    @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
+    after?: string,
+  ): Promise<TraitConnection> {
+    const serviceResult = await this.traitsService.findBySpecies(speciesId, first, after);
+    return mapPrismaTraitConnectionToGraphQL(serviceResult);
+  }
+
+  /** Get a trait by ID */
+  @Query(() => Trait, { name: 'traitById', description: 'Get a trait by ID' })
+  async findOne(
+    @Args('id', { type: () => ID, description: 'Trait ID' }) 
+    id: string,
+  ): Promise<Trait> {
+    const prismaResult = await this.traitsService.findOne(id);
+    return mapPrismaTraitToGraphQL(prismaResult);
+  }
+
+  /** Update a trait */
+  @Mutation(() => Trait, { description: 'Update a trait' })
+  async updateTrait(
+    @Args('id', { type: () => ID, description: 'Trait ID' }) 
+    id: string,
+    @Args('updateTraitInput', { description: 'Trait update data' }) 
+    updateTraitInput: UpdateTraitInput,
+  ): Promise<Trait> {
+    const serviceInput = mapUpdateTraitInputToService(updateTraitInput);
+    const prismaResult = await this.traitsService.update(id, serviceInput);
+    return mapPrismaTraitToGraphQL(prismaResult);
+  }
+
+  /** Remove a trait */
+  @Mutation(() => RemovalResponse, { description: 'Remove a trait' })
+  async removeTrait(
+    @Args('id', { type: () => ID, description: 'Trait ID' }) 
+    id: string,
+  ): Promise<RemovalResponse> {
+    await this.traitsService.remove(id);
+    return { removed: true, message: 'Trait successfully removed' };
+  }
+
+  // Field resolver for species relation
+  @ResolveField('species', () => Species, { description: 'The species this trait belongs to' })
+  async resolveSpecies(@Parent() trait: Trait): Promise<Species | null> {
+    try {
+      const prismaResult = await this.speciesService.findOne(trait.speciesId);
+      return mapPrismaSpeciesToGraphQL(prismaResult);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return null;
+      }
+      throw error;
+    }
+  }
+}

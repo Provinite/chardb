@@ -1,10 +1,10 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@apollo/client';
-import styled from 'styled-components';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { FollowButton } from '../components/FollowButton';
-import { GET_FOLLOWERS } from '../graphql/social';
+import React from "react";
+import { useParams, Link } from "react-router-dom";
+import { useQuery } from "@apollo/client";
+import styled from "styled-components";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { FollowButton } from "../components/FollowButton";
+import { GET_FOLLOWERS } from "../graphql/social.graphql";
 
 const Container = styled.div`
   max-width: 800px;
@@ -36,7 +36,7 @@ const BackButton = styled(Link)`
   }
 
   &::before {
-    content: '←';
+    content: "←";
     font-weight: bold;
   }
 `;
@@ -193,7 +193,7 @@ export const FollowersPage: React.FC = () => {
       <Container>
         <ErrorContainer>
           <h3>Error loading followers</h3>
-          <p>{error?.message || 'User not found'}</p>
+          <p>{error?.message || "User not found"}</p>
         </ErrorContainer>
       </Container>
     );
@@ -201,13 +201,13 @@ export const FollowersPage: React.FC = () => {
 
   return (
     <Container>
-      <BackButton to={`/user/${username}`}>
-        Back to Profile
-      </BackButton>
+      <BackButton to={`/user/${username}`}>Back to Profile</BackButton>
 
       <Header>
         <Title>{user.displayName || user.username}'s Followers</Title>
-        <Subtitle>{followers.length} {followers.length === 1 ? 'follower' : 'followers'}</Subtitle>
+        <Subtitle>
+          {followers.length} {followers.length === 1 ? "follower" : "followers"}
+        </Subtitle>
       </Header>
 
       {followers.length === 0 ? (
@@ -215,7 +215,8 @@ export const FollowersPage: React.FC = () => {
           <EmptyIcon>👥</EmptyIcon>
           <EmptyTitle>No followers yet</EmptyTitle>
           <EmptyDescription>
-            This user doesn't have any followers yet. Be the first to follow them!
+            This user doesn't have any followers yet. Be the first to follow
+            them!
           </EmptyDescription>
         </EmptyState>
       ) : (
@@ -224,16 +225,23 @@ export const FollowersPage: React.FC = () => {
             <UserCard key={follower.id}>
               <UserAvatar>
                 {follower.avatarUrl ? (
-                  <img 
-                    src={follower.avatarUrl} 
+                  <img
+                    src={follower.avatarUrl}
                     alt={follower.displayName || follower.username}
-                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
                   />
                 ) : (
-                  (follower.displayName?.[0] || follower.username[0]).toUpperCase()
+                  (
+                    follower.displayName?.[0] || follower.username[0]
+                  ).toUpperCase()
                 )}
               </UserAvatar>
-              
+
               <UserInfo>
                 <UserName>{follower.displayName || follower.username}</UserName>
                 <Username to={`/user/${follower.username}`}>
@@ -243,9 +251,9 @@ export const FollowersPage: React.FC = () => {
               </UserInfo>
 
               <UserActions>
-                <FollowButton 
-                  userId={follower.id} 
-                  showCount={false} 
+                <FollowButton
+                  userId={follower.id}
+                  showCount={false}
                   size="sm"
                   variant="compact"
                 />

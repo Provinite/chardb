@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const GET_GALLERIES = gql`
   query GetGalleries($filters: GalleryFiltersInput) {
@@ -22,7 +22,10 @@ export const GET_GALLERIES = gql`
         character {
           id
           name
-          species
+          species {
+            id
+            name
+          }
         }
         _count {
           media
@@ -57,7 +60,10 @@ export const GET_GALLERY = gql`
       character {
         id
         name
-        species
+        species {
+          id
+          name
+        }
       }
       _count {
         media
@@ -90,7 +96,10 @@ export const GET_MY_GALLERIES = gql`
         character {
           id
           name
-          species
+          species {
+            id
+            name
+          }
         }
         _count {
           media
@@ -126,7 +135,10 @@ export const GET_USER_GALLERIES = gql`
         character {
           id
           name
-          species
+          species {
+            id
+            name
+          }
         }
         _count {
           media
@@ -141,7 +153,10 @@ export const GET_USER_GALLERIES = gql`
 `;
 
 export const GET_CHARACTER_GALLERIES = gql`
-  query GetCharacterGalleries($characterId: ID!, $filters: GalleryFiltersInput) {
+  query GetCharacterGalleries(
+    $characterId: ID!
+    $filters: GalleryFiltersInput
+  ) {
     characterGalleries(characterId: $characterId, filters: $filters) {
       galleries {
         id
@@ -162,7 +177,10 @@ export const GET_CHARACTER_GALLERIES = gql`
         character {
           id
           name
-          species
+          species {
+            id
+            name
+          }
         }
         _count {
           media
@@ -197,7 +215,10 @@ export const CREATE_GALLERY = gql`
       character {
         id
         name
-        species
+        species {
+          id
+          name
+        }
       }
       _count {
         media
@@ -229,7 +250,10 @@ export const UPDATE_GALLERY = gql`
       character {
         id
         name
-        species
+        species {
+          id
+          name
+        }
       }
       _count {
         media
@@ -242,10 +266,12 @@ export const UPDATE_GALLERY = gql`
 
 export const DELETE_GALLERY = gql`
   mutation DeleteGallery($id: ID!) {
-    deleteGallery(id: $id)
+    deleteGallery(id: $id) {
+      removed
+      message
+    }
   }
 `;
-
 
 export const REORDER_GALLERIES = gql`
   mutation ReorderGalleries($input: ReorderGalleriesInput!) {
@@ -298,13 +324,13 @@ export {
   useGetMyGalleriesQuery,
   useGetUserGalleriesQuery,
   useGetCharacterGalleriesQuery,
-  
+
   // Mutation Hooks
   useCreateGalleryMutation,
   useUpdateGalleryMutation,
   useDeleteGalleryMutation,
   useReorderGalleriesMutation,
-  
+
   // Types
   type Gallery,
   type GalleryConnection,
@@ -331,4 +357,4 @@ export {
   type ReorderGalleriesMutation,
   type ReorderGalleriesMutationVariables,
   type Image,
-} from '../generated/graphql';
+} from "../generated/graphql";

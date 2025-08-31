@@ -1,10 +1,17 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Prisma, Visibility } from '@chardb/database';
-import type { Gallery as PrismaGallery } from '@chardb/database';
-import type { Gallery } from './entities/gallery.entity';
 
-export interface CreateGalleryInput {
+/**
+ * Service layer input types for gallery operations.
+ * These interfaces provide clean, simple inputs for the service layer,
+ * avoiding the complexity of GraphQL relation objects.
+ */
+
+/**
+ * Input data for creating a new gallery
+ */
+export interface CreateGalleryServiceInput {
   name: string;
   description?: string;
   characterId?: string;
@@ -12,7 +19,10 @@ export interface CreateGalleryInput {
   sortOrder?: number;
 }
 
-export interface UpdateGalleryInput {
+/**
+ * Input data for updating a gallery
+ */
+export interface UpdateGalleryServiceInput {
   name?: string;
   description?: string;
   characterId?: string;
@@ -20,7 +30,10 @@ export interface UpdateGalleryInput {
   sortOrder?: number;
 }
 
-export interface GalleryFilters {
+/**
+ * Filters for querying galleries
+ */
+export interface GalleryFiltersServiceInput {
   limit?: number;
   offset?: number;
   ownerId?: string;
@@ -32,7 +45,7 @@ export interface GalleryFilters {
 export class GalleriesService {
   constructor(private readonly db: DatabaseService) {}
 
-  async create(userId: string, input: CreateGalleryInput): Promise<Gallery> {
+  async create(userId: string, input: CreateGalleryServiceInput) {
     const { name, description, characterId, visibility = Visibility.PUBLIC, sortOrder = 0 } = input;
 
     // Verify character ownership if specified
@@ -40,7 +53,7 @@ export class GalleriesService {
       await this.verifyCharacterOwnership(characterId, userId);
     }
 
-    const gallery = await this.db.gallery.create({
+    return this.db.gallery.create({
       data: {
         name,
         description,
@@ -49,46 +62,10 @@ export class GalleriesService {
         visibility,
         sortOrder,
       },
-      include: {
-        owner: true,
-        character: {
-          include: {
-            owner: true,
-          },
-        },
-        _count: {
-          select: { media: true, likes: true },
-        },
-      },
     });
-
-    return {
-      ...gallery,
-      owner: {
-        ...gallery.owner,
-        followersCount: 0,
-        followingCount: 0,
-        userIsFollowing: false,
-      },
-      character: gallery.character ? {
-        ...gallery.character,
-        price: gallery.character.price ? Number(gallery.character.price) : null,
-        customFields: JSON.stringify(gallery.character.customFields),
-        owner: {
-          ...gallery.character.owner,
-          followersCount: 0,
-          followingCount: 0,
-          userIsFollowing: false,
-        },
-        likesCount: 0,
-        userHasLiked: false,
-      } : null,
-      likesCount: gallery._count?.likes || 0,
-      userHasLiked: false, // Newly created gallery cannot be liked yet
-    };
   }
 
-  async findAll(filters: GalleryFilters = {}, userId?: string) {
+  async findAll(filters: GalleryFiltersServiceInput = {}, userId?: string) {
     const {
       limit = 20,
       offset = 0,
@@ -120,17 +97,6 @@ export class GalleriesService {
     const [galleries, total] = await Promise.all([
       this.db.gallery.findMany({
         where,
-        include: {
-          owner: true,
-          character: {
-          include: {
-            owner: true,
-          },
-        },
-          _count: {
-            select: { media: true, likes: true },
-          },
-        },
         orderBy: [
           { sortOrder: 'asc' },
           { createdAt: 'desc' },
@@ -141,67 +107,39 @@ export class GalleriesService {
       this.db.gallery.count({ where }),
     ]);
 
-    // Check user likes for galleries if user is provided
-    const userLikes = userId
-      ? await this.db.like.findMany({
-          where: {
-            userId,
-            galleryId: { in: galleries.map((g) => g.id) },
-          },
-          select: { galleryId: true },
-        })
-      : [];
-
-    const likedGalleryIds = new Set(userLikes.map((like) => like.galleryId));
-
-    // Enrich galleries with social data
-    const enrichedGalleries = galleries.map((gallery) => ({
-      ...gallery,
-      owner: {
-        ...gallery.owner,
-        followersCount: 0,
-        followingCount: 0,
-        userIsFollowing: false,
-      },
-      character: gallery.character ? {
-        ...gallery.character,
-        price: gallery.character.price ? Number(gallery.character.price) : null,
-        customFields: JSON.stringify(gallery.character.customFields),
-        owner: {
-          ...gallery.character.owner,
-          followersCount: 0,
-          followingCount: 0,
-          userIsFollowing: false,
-        },
-        likesCount: 0,
-        userHasLiked: false,
-      } : null,
-      likesCount: gallery._count?.likes || 0,
-      userHasLiked: likedGalleryIds.has(gallery.id),
-    }));
-
     return {
-      galleries: enrichedGalleries,
+      galleries,
       total,
       hasMore: offset + limit < total,
     };
   }
 
-  async findOne(id: string, userId?: string): Promise<Gallery> {
+  /** Get user like status for a gallery - used by field resolvers */
+  async getUserHasLikedGallery(galleryId: string, userId?: string): Promise<boolean> {
+    if (!userId) return false;
+    
+    const like = await this.db.like.findUnique({
+      where: {
+        userId_galleryId: {
+          userId,
+          galleryId,
+        },
+      },
+    });
+    
+    return !!like;
+  }
+
+  /** Get likes count for a gallery - used by field resolvers */
+  async getGalleryLikesCount(galleryId: string): Promise<number> {
+    return this.db.like.count({
+      where: { galleryId },
+    });
+  }
+
+  async findOne(id: string, userId?: string) {
     const gallery = await this.db.gallery.findUnique({
       where: { id },
-      include: {
-        owner: true,
-        character: {
-          include: {
-            owner: true,
-          },
-        },
-        _count: {
-          select: { media: true, likes: true },
-        },
-        // NOTE: Gallery media now accessed through Media system
-      },
     });
 
     if (!gallery) {
@@ -215,40 +153,10 @@ export class GalleriesService {
       }
     }
 
-    // Check if user has liked this gallery
-    const userHasLiked = userId
-      ? (await this.db.like.findFirst({
-          where: { userId, galleryId: gallery.id },
-        })) !== null
-      : false;
-
-    return {
-      ...gallery,
-      owner: {
-        ...gallery.owner,
-        followersCount: 0,
-        followingCount: 0,
-        userIsFollowing: false,
-      },
-      character: gallery.character ? {
-        ...gallery.character,
-        price: gallery.character.price ? Number(gallery.character.price) : null,
-        customFields: JSON.stringify(gallery.character.customFields),
-        owner: {
-          ...gallery.character.owner,
-          followersCount: 0,
-          followingCount: 0,
-          userIsFollowing: false,
-        },
-        likesCount: 0,
-        userHasLiked: false,
-      } : null,
-      likesCount: gallery._count?.likes || 0,
-      userHasLiked,
-    };
+    return gallery;
   }
 
-  async update(id: string, userId: string, input: UpdateGalleryInput): Promise<Gallery> {
+  async update(id: string, userId: string, input: UpdateGalleryServiceInput) {
     const gallery = await this.findOne(id, userId);
 
     // Check ownership
@@ -261,51 +169,10 @@ export class GalleriesService {
       await this.verifyCharacterOwnership(input.characterId, userId);
     }
 
-    const updatedGallery = await this.db.gallery.update({
+    return this.db.gallery.update({
       where: { id },
       data: input,
-      include: {
-        owner: true,
-        character: {
-          include: {
-            owner: true,
-          },
-        },
-        _count: {
-          select: { media: true, likes: true },
-        },
-      },
     });
-
-    // Check if user has liked this gallery
-    const userHasLiked = (await this.db.like.findFirst({
-      where: { userId, galleryId: updatedGallery.id },
-    })) !== null;
-
-    return {
-      ...updatedGallery,
-      owner: {
-        ...updatedGallery.owner,
-        followersCount: 0,
-        followingCount: 0,
-        userIsFollowing: false,
-      },
-      character: updatedGallery.character ? {
-        ...updatedGallery.character,
-        price: updatedGallery.character.price ? Number(updatedGallery.character.price) : null,
-        customFields: JSON.stringify(updatedGallery.character.customFields),
-        owner: {
-          ...updatedGallery.character.owner,
-          followersCount: 0,
-          followingCount: 0,
-          userIsFollowing: false,
-        },
-        likesCount: 0,
-        userHasLiked: false,
-      } : null,
-      likesCount: updatedGallery._count?.likes || 0,
-      userHasLiked,
-    };
   }
 
   async remove(id: string, userId: string): Promise<boolean> {
@@ -327,7 +194,7 @@ export class GalleriesService {
   // These methods are deprecated and should be replaced with media-based operations
 
 
-  async reorderGalleries(userId: string, galleryIds: string[]): Promise<Gallery[]> {
+  async reorderGalleries(userId: string, galleryIds: string[]) {
     // Verify all galleries belong to the user
     const userGalleries = await this.db.gallery.findMany({
       where: {
@@ -350,65 +217,18 @@ export class GalleriesService {
 
     await Promise.all(updatePromises);
 
-    // Return updated galleries with enrichment
-    const updatedGalleries = await this.db.gallery.findMany({
+    // Return updated galleries
+    return this.db.gallery.findMany({
       where: {
         id: { in: galleryIds },
       },
-      include: {
-        owner: true,
-        character: {
-          include: {
-            owner: true,
-          },
-        },
-        _count: {
-          select: { media: true, likes: true },
-        },
-      },
       orderBy: { sortOrder: 'asc' },
     });
-
-    // Check user likes
-    const userLikes = await this.db.like.findMany({
-      where: {
-        userId,
-        galleryId: { in: updatedGalleries.map((g) => g.id) },
-      },
-      select: { galleryId: true },
-    });
-
-    const likedGalleryIds = new Set(userLikes.map((like) => like.galleryId));
-
-    return updatedGalleries.map((gallery) => ({
-      ...gallery,
-      owner: {
-        ...gallery.owner,
-        followersCount: 0,
-        followingCount: 0,
-        userIsFollowing: false,
-      },
-      character: gallery.character ? {
-        ...gallery.character,
-        price: gallery.character.price ? Number(gallery.character.price) : null,
-        customFields: JSON.stringify(gallery.character.customFields),
-        owner: {
-          ...gallery.character.owner,
-          followersCount: 0,
-          followingCount: 0,
-          userIsFollowing: false,
-        },
-        likesCount: 0,
-        userHasLiked: false,
-      } : null,
-      likesCount: gallery._count?.likes || 0,
-      userHasLiked: likedGalleryIds.has(gallery.id),
-    }));
   }
 
-  async findLikedGalleries(userId: string): Promise<Gallery[]> {
+  async findLikedGalleries(userId: string) {
     // Get galleries liked by the user
-    const likedGalleries = await this.db.gallery.findMany({
+    return this.db.gallery.findMany({
       where: {
         likes: {
           some: { userId },
@@ -420,47 +240,10 @@ export class GalleriesService {
           { ownerId: userId }, // User can see their own private galleries
         ],
       },
-      include: {
-        owner: true,
-        character: {
-          include: {
-            owner: true,
-          },
-        },
-        _count: {
-          select: { media: true, likes: true },
-        },
-      },
       orderBy: [
         { createdAt: 'desc' }, // Most recently created first
       ],
     });
-
-    // All these galleries are liked by the user by definition
-    return likedGalleries.map((gallery) => ({
-      ...gallery,
-      owner: {
-        ...gallery.owner,
-        followersCount: 0,
-        followingCount: 0,
-        userIsFollowing: false,
-      },
-      character: gallery.character ? {
-        ...gallery.character,
-        price: gallery.character.price ? Number(gallery.character.price) : null,
-        customFields: JSON.stringify(gallery.character.customFields),
-        owner: {
-          ...gallery.character.owner,
-          followersCount: 0,
-          followingCount: 0,
-          userIsFollowing: false,
-        },
-        likesCount: 0,
-        userHasLiked: false,
-      } : null,
-      likesCount: gallery._count?.likes || 0,
-      userHasLiked: true,
-    }));
   }
 
   private async verifyCharacterOwnership(characterId: string, userId: string): Promise<void> {

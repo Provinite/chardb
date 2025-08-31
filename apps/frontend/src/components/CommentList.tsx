@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { useQuery } from '@apollo/client';
-import styled from 'styled-components';
-import { LoadingSpinner } from './LoadingSpinner';
-import { Comment } from './Comment';
-import { CommentForm } from './CommentForm';
-import { GET_COMMENTS } from '../graphql/social';
-import { CommentableType } from '../generated/graphql';
+import React, { useState } from "react";
+import { useQuery } from "@apollo/client";
+import styled from "styled-components";
+import { LoadingSpinner } from "./LoadingSpinner";
+import { Comment } from "./Comment";
+import { CommentForm } from "./CommentForm";
+import { GET_COMMENTS } from "../graphql/social.graphql";
+import { CommentableType } from "../generated/graphql";
 
 const Container = styled.div`
   margin-top: ${({ theme }) => theme.spacing.xl};
@@ -70,8 +70,8 @@ const ErrorContainer = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xl};
   color: ${({ theme }) => theme.colors.error};
-  background: ${({ theme }) => theme.colors.error + '10'};
-  border: 1px solid ${({ theme }) => theme.colors.error + '30'};
+  background: ${({ theme }) => theme.colors.error + "10"};
+  border: 1px solid ${({ theme }) => theme.colors.error + "30"};
   border-radius: ${({ theme }) => theme.borderRadius.md};
 `;
 
@@ -191,7 +191,7 @@ export const CommentList: React.FC<CommentListProps> = ({
           },
         });
       } catch (error) {
-        console.error('Failed to load more comments:', error);
+        console.error("Failed to load more comments:", error);
       } finally {
         setLoadingMore(false);
       }
@@ -201,7 +201,7 @@ export const CommentList: React.FC<CommentListProps> = ({
   // Group comments by parent/replies
   const topLevelComments = comments.filter((comment: any) => !comment.parentId);
   const repliesMap = new Map();
-  
+
   comments
     .filter((comment: any) => comment.parentId)
     .forEach((reply: any) => {
@@ -243,7 +243,9 @@ export const CommentList: React.FC<CommentListProps> = ({
     <Container>
       <SectionHeader>
         <SectionTitle>Comments</SectionTitle>
-        <CommentCount>{total} {total === 1 ? 'comment' : 'comments'}</CommentCount>
+        <CommentCount>
+          {total} {total === 1 ? "comment" : "comments"}
+        </CommentCount>
       </SectionHeader>
 
       {showCommentForm && (
@@ -266,7 +268,7 @@ export const CommentList: React.FC<CommentListProps> = ({
         <CommentsContainer>
           {topLevelComments.map((comment: any) => {
             const replies = repliesMap.get(comment.id) || [];
-            
+
             return (
               <CommentWithReplies key={comment.id}>
                 <Comment
@@ -274,7 +276,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                   onReply={handleReply}
                   onUpdate={handleCommentAdded}
                 />
-                
+
                 {replies.length > 0 && (
                   <RepliesContainer>
                     {replies.map((reply: any) => (
@@ -287,7 +289,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                     ))}
                   </RepliesContainer>
                 )}
-                
+
                 {replyingTo === comment.id && (
                   <ReplyFormContainer>
                     <CommentForm
@@ -304,13 +306,12 @@ export const CommentList: React.FC<CommentListProps> = ({
               </CommentWithReplies>
             );
           })}
-          
+
           {hasMore && (
-            <LoadMoreButton 
-              onClick={handleLoadMore} 
-              disabled={loadingMore}
-            >
-              {loadingMore ? 'Loading more comments...' : `Load ${Math.min(20, total - comments.length)} more comments`}
+            <LoadMoreButton onClick={handleLoadMore} disabled={loadingMore}>
+              {loadingMore
+                ? "Loading more comments..."
+                : `Load ${Math.min(20, total - comments.length)} more comments`}
             </LoadMoreButton>
           )}
         </CommentsContainer>

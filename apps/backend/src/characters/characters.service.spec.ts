@@ -28,22 +28,30 @@ describe('CharactersService', () => {
     it('should create a character successfully', async () => {
       const userId = 'user1';
       const input = {
-        name: 'Test Character',
-        species: 'Dragon',
-        description: 'A test character',
-        visibility: Visibility.PUBLIC,
+        characterData: {
+          name: 'Test Character',
+          description: 'A test character',
+          visibility: Visibility.PUBLIC,
+        },
       };
 
       const mockCharacter = {
         id: 'char1',
-        ...input,
+        ...input.characterData,
         customFields: null,
         ownerId: userId,
+        creatorId: userId,
         createdAt: new Date(),
         updatedAt: new Date(),
-        owner: { id: userId, username: 'testuser' },
-        tags: [],
-        _count: { images: 0, galleries: 0 },
+        mainMediaId: null,
+        price: null,
+        traitValues: [],
+        age: null,
+        gender: null,
+        personality: null,
+        backstory: null,
+        isSellable: false,
+        isTradeable: false,
       };
 
       db.character.create.mockResolvedValue(mockCharacter);
@@ -52,18 +60,13 @@ describe('CharactersService', () => {
 
       expect(db.character.create).toHaveBeenCalledWith({
         data: {
-          ...input,
-          ownerId: userId,
-          creatorId: userId,
-        },
-        include: {
-          owner: true,
-          creator: true,
-          tags_rel: {
-            include: {
-              tag: true,
-            },
+          owner: {
+            connect: { id: userId },
           },
+          creator: {
+            connect: { id: userId },
+          },
+          ...input.characterData,
         },
       });
       expect(result).toEqual(mockCharacter);
@@ -135,7 +138,7 @@ describe('CharactersService', () => {
     it('should update character successfully', async () => {
       const characterId = 'char1';
       const userId = 'user1';
-      const input = { name: 'Updated Character' };
+      const input = { characterData: { name: 'Updated Character' } };
 
       const mockExistingCharacter = {
         id: characterId,
@@ -145,7 +148,7 @@ describe('CharactersService', () => {
 
       const mockUpdatedCharacter = {
         ...mockExistingCharacter,
-        ...input,
+        ...input.characterData,
         customFields: null,
       };
 
@@ -156,8 +159,7 @@ describe('CharactersService', () => {
 
       expect(db.character.update).toHaveBeenCalledWith({
         where: { id: characterId },
-        data: input,
-        include: expect.any(Object),
+        data: input.characterData,
       });
       expect(result).toEqual(mockUpdatedCharacter);
     });
@@ -172,7 +174,7 @@ describe('CharactersService', () => {
 
       db.character.findUnique.mockResolvedValue(mockCharacter);
 
-      await expect(service.update(characterId, 'user2', { name: 'Hacked' }))
+      await expect(service.update(characterId, 'user2', { characterData: { name: 'Hacked' } }))
         .rejects.toThrow(ForbiddenException);
     });
   });

@@ -7,6 +7,7 @@ A feature-rich character database application built as a modern monorepo applica
 ## Tech Stack
 
 ### Core Technologies
+
 - **Backend**: NestJS with TypeScript
 - **Frontend**: React with TypeScript
 - **Database**: PostgreSQL
@@ -17,6 +18,7 @@ A feature-rich character database application built as a modern monorepo applica
 - **CI/CD**: GitHub Actions
 
 ### Additional Tools
+
 - **Monorepo**: Yarn workspaces
 - **Authentication**: JWT with refresh tokens
 - **File Storage**: Cloud storage (AWS S3/Google Cloud)
@@ -91,6 +93,7 @@ chardb/
 ### Core Entities
 
 #### Users
+
 ```sql
 - id: UUID (Primary Key)
 - username: String (Unique)
@@ -110,6 +113,7 @@ chardb/
 ```
 
 #### Characters
+
 ```sql
 - id: UUID (Primary Key)
 - name: String
@@ -132,6 +136,7 @@ chardb/
 ```
 
 #### Images
+
 ```sql
 - id: UUID (Primary Key)
 - filename: String
@@ -154,6 +159,7 @@ chardb/
 ```
 
 #### Galleries
+
 ```sql
 - id: UUID (Primary Key)
 - name: String
@@ -167,6 +173,7 @@ chardb/
 ```
 
 #### Comments
+
 ```sql
 - id: UUID (Primary Key)
 - content: Text
@@ -180,6 +187,7 @@ chardb/
 ```
 
 #### Follows
+
 ```sql
 - id: UUID (Primary Key)
 - follower_id: UUID (Foreign Key -> Users)
@@ -189,6 +197,7 @@ chardb/
 ```
 
 #### Likes
+
 ```sql
 - id: UUID (Primary Key)
 - user_id: UUID (Foreign Key -> Users)
@@ -199,6 +208,7 @@ chardb/
 ```
 
 #### Tags
+
 ```sql
 - id: UUID (Primary Key)
 - name: String (Unique)
@@ -208,6 +218,7 @@ chardb/
 ```
 
 #### Character_Tags (Many-to-Many)
+
 ```sql
 - character_id: UUID (Foreign Key -> Characters)
 - tag_id: UUID (Foreign Key -> Tags)
@@ -215,6 +226,7 @@ chardb/
 ```
 
 #### Image_Tags (Many-to-Many)
+
 ```sql
 - image_id: UUID (Foreign Key -> Images)
 - tag_id: UUID (Foreign Key -> Tags)
@@ -224,18 +236,22 @@ chardb/
 ## Development Phases
 
 ### Phase 1: Foundation Setup (Week 1-2)
+
 1. **Monorepo Structure**
+
    - Set up Yarn workspaces
    - Configure TypeScript for all packages
    - Set up shared package dependencies
 
 2. **Backend Foundation**
+
    - Initialize NestJS application
    - Configure Prisma with PostgreSQL
    - Set up GraphQL with Apollo Server
    - Implement basic health check endpoint
 
 3. **Frontend Foundation**
+
    - Initialize React application with TypeScript
    - Set up GraphQL client (Apollo Client)
    - Configure routing (React Router)
@@ -247,19 +263,23 @@ chardb/
    - Hot reload setup
 
 ### Phase 2: Authentication & Core Backend (Week 3-4)
+
 1. **Authentication System**
+
    - JWT token generation and validation
    - Refresh token mechanism
    - Password hashing with bcrypt
    - Rate limiting for auth endpoints
 
 2. **User Management**
+
    - User registration/login GraphQL mutations
    - User profile queries and updates
    - Email verification system
    - Password reset functionality
 
 3. **Database Implementation**
+
    - Complete Prisma schema implementation
    - Database migrations
    - Seed data for development
@@ -270,13 +290,16 @@ chardb/
    - Resource ownership validation
 
 ### Phase 3: Core Features Backend (Week 5-6)
+
 1. **Character Management**
+
    - CRUD operations for characters
    - Character ownership and permissions
    - Character search and filtering
    - Tag system implementation
 
 2. **Image Upload Service**
+
    - File upload endpoint with validation
    - Image processing and thumbnails
    - Cloud storage integration
@@ -288,19 +311,23 @@ chardb/
    - Gallery sorting and organization
 
 ### Phase 4: Frontend Core Features (Week 7-8)
+
 1. **Authentication UI**
+
    - Login/registration forms
    - Password reset flow
    - User profile management
    - Authentication state management
 
 2. **Character Interface**
+
    - Character creation form
    - Character profile pages
    - Character browsing/search
    - Character editing interface
 
 3. **Image & Gallery Management**
+
    - Image upload interface
    - Gallery creation and management
    - Image viewer/carousel
@@ -313,7 +340,9 @@ chardb/
    - Enhanced type safety and IntelliSense
 
 ### Phase 5: Social Features (Week 9-10)
+
 1. **Comment System**
+
    - Comment components
    - Nested comment threads
    - Comment moderation
@@ -326,13 +355,16 @@ chardb/
    - Notification system
 
 ### Phase 6: Advanced Features (Week 11-12)
+
 1. **Character Trading**
+
    - Trading proposals
    - Trading history
    - Price management
    - Trading notifications
 
 2. **Search & Discovery**
+
    - Advanced search filters
    - Tag-based browsing
    - Trending content
@@ -345,13 +377,16 @@ chardb/
    - System configuration
 
 ### Phase 7: Testing & Quality Assurance (Week 13-14)
+
 1. **Backend Testing**
+
    - Unit tests for services and resolvers
    - Integration tests for GraphQL endpoints
    - Database testing with test containers
    - Authentication and authorization tests
 
 2. **Frontend Testing**
+
    - Component unit tests
    - Integration tests for user flows
    - E2E tests with Playwright/Cypress
@@ -364,12 +399,15 @@ chardb/
    - Bundle size optimization
 
 ### Phase 8: Deployment & DevOps (Week 15-16)
+
 1. **Docker Configuration**
+
    - Production Dockerfiles
    - Multi-stage builds
    - Health checks and monitoring
 
 2. **CI/CD Pipeline**
+
    - GitHub Actions workflows
    - Automated testing
    - Security scanning
@@ -384,24 +422,25 @@ chardb/
 ## GraphQL API Design
 
 ### Queries
+
 ```graphql
 type Query {
   # User queries
   user(id: ID, username: String): User
   users(limit: Int, offset: Int, search: String): UserConnection
   me: User
-  
+
   # Character queries
   character(id: ID!): Character
   characters(
     limit: Int
-    offset: Int
+    offset: Intoh
     ownerId: ID
     species: String
     tags: [String!]
     search: String
   ): CharacterConnection
-  
+
   # Image queries
   image(id: ID!): Image
   images(
@@ -411,7 +450,7 @@ type Query {
     characterId: ID
     galleryId: ID
   ): ImageConnection
-  
+
   # Gallery queries
   gallery(id: ID!): Gallery
   galleries(
@@ -420,7 +459,7 @@ type Query {
     ownerId: ID
     characterId: ID
   ): GalleryConnection
-  
+
   # Comment queries
   comments(
     entityType: CommentableType!
@@ -428,7 +467,7 @@ type Query {
     limit: Int
     offset: Int
   ): CommentConnection
-  
+
   # Social queries
   followers(userId: ID!): UserConnection
   following(userId: ID!): UserConnection
@@ -437,6 +476,7 @@ type Query {
 ```
 
 ### Mutations
+
 ```graphql
 type Mutation {
   # Authentication
@@ -444,34 +484,34 @@ type Mutation {
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): AuthPayload!
   logout: Boolean!
-  
+
   # User management
   updateProfile(input: UpdateProfileInput!): User!
   changePassword(input: ChangePasswordInput!): Boolean!
   deleteAccount: Boolean!
-  
+
   # Character management
   createCharacter(input: CreateCharacterInput!): Character!
   updateCharacter(id: ID!, input: UpdateCharacterInput!): Character!
   deleteCharacter(id: ID!): Boolean!
-  
+
   # Image management
   uploadImage(input: UploadImageInput!): Image!
   updateImage(id: ID!, input: UpdateImageInput!): Image!
   deleteImage(id: ID!): Boolean!
-  
+
   # Gallery management
   createGallery(input: CreateGalleryInput!): Gallery!
   updateGallery(id: ID!, input: UpdateGalleryInput!): Gallery!
   deleteGallery(id: ID!): Boolean!
   addImageToGallery(galleryId: ID!, imageId: ID!): Boolean!
   removeImageFromGallery(galleryId: ID!, imageId: ID!): Boolean!
-  
+
   # Comments
   addComment(input: AddCommentInput!): Comment!
   updateComment(id: ID!, content: String!): Comment!
   deleteComment(id: ID!): Boolean!
-  
+
   # Social interactions
   followUser(userId: ID!): Boolean!
   unfollowUser(userId: ID!): Boolean!
@@ -481,6 +521,7 @@ type Mutation {
 ```
 
 ### Subscriptions
+
 ```graphql
 type Subscription {
   commentAdded(entityType: CommentableType!, entityId: ID!): Comment!
@@ -492,6 +533,7 @@ type Subscription {
 ## Security Considerations
 
 ### Authentication & Authorization
+
 - JWT tokens with short expiration (15 minutes)
 - Refresh tokens with longer expiration (7 days)
 - Rate limiting on authentication endpoints
@@ -499,6 +541,7 @@ type Subscription {
 - Account lockout after failed attempts
 
 ### Data Protection
+
 - Input validation and sanitization
 - SQL injection prevention (Prisma ORM)
 - XSS protection
@@ -507,6 +550,7 @@ type Subscription {
 - File upload validation and scanning
 
 ### Privacy Features
+
 - Granular privacy controls
 - Content visibility settings
 - User blocking functionality
@@ -516,6 +560,7 @@ type Subscription {
 ## Performance Optimization
 
 ### Backend Optimization
+
 - Database indexing strategy
 - Query optimization with Prisma
 - Connection pooling
@@ -524,6 +569,7 @@ type Subscription {
 - Rate limiting and throttling
 
 ### Frontend Optimization
+
 - Code splitting and lazy loading
 - Image optimization and lazy loading
 - Bundle size optimization
@@ -534,6 +580,7 @@ type Subscription {
 ## Testing Strategy
 
 ### Backend Testing
+
 ```
 - Unit Tests (80% coverage target)
   - Services and business logic
@@ -554,6 +601,7 @@ type Subscription {
 ```
 
 ### Frontend Testing
+
 ```
 - Unit Tests
   - Component rendering
@@ -576,18 +624,21 @@ type Subscription {
 ## Deployment Architecture
 
 ### Development Environment
+
 - Docker Compose with hot reload
 - Local PostgreSQL database
 - Mock external services
 - Development-specific environment variables
 
 ### Staging Environment
+
 - Kubernetes cluster or Docker Swarm
 - Staged database with production-like data
 - Full external service integration
 - Performance and load testing
 
 ### Production Environment
+
 - Load-balanced application instances
 - Managed PostgreSQL database
 - CDN for static assets
@@ -597,6 +648,7 @@ type Subscription {
 ## CI/CD Pipeline
 
 ### Continuous Integration
+
 ```yaml
 # .github/workflows/ci.yml
 - Code quality checks (ESLint, Prettier)
@@ -608,6 +660,7 @@ type Subscription {
 ```
 
 ### Continuous Deployment
+
 ```yaml
 # .github/workflows/deploy.yml
 - Automated deployment to staging
@@ -621,6 +674,7 @@ type Subscription {
 ## Monitoring & Observability
 
 ### Application Monitoring
+
 - Health check endpoints
 - Application performance monitoring (APM)
 - Error tracking and alerting
@@ -628,6 +682,7 @@ type Subscription {
 - Resource usage monitoring
 
 ### Infrastructure Monitoring
+
 - Container health and resource usage
 - Database performance metrics
 - Network latency and throughput
@@ -637,6 +692,7 @@ type Subscription {
 ## Future Enhancements
 
 ### Phase 2 Features
+
 - Mobile application (React Native)
 - Advanced character relationship mapping
 - Character design commission system
@@ -645,6 +701,7 @@ type Subscription {
 - Blockchain-based character ownership
 
 ### Scalability Improvements
+
 - Microservices architecture migration
 - Event-driven architecture with message queues
 - Advanced caching strategies
@@ -654,11 +711,13 @@ type Subscription {
 ## Risk Mitigation
 
 ### Technical Risks
+
 - Database performance at scale → Implement caching and optimization early
 - File storage costs → Implement image compression and cleanup policies
 - Third-party service dependencies → Implement fallbacks and monitoring
 
 ### Business Risks
+
 - Content moderation at scale → Automated content scanning and reporting system
 - User privacy compliance → Built-in privacy controls and audit trails
 - Copyright infringement → DMCA compliance and takedown procedures
@@ -666,12 +725,14 @@ type Subscription {
 ## Success Metrics
 
 ### Technical Metrics
+
 - 99.9% uptime target
 - < 2 second page load times
 - 95% test coverage
 - Zero critical security vulnerabilities
 
 ### User Experience Metrics
+
 - User registration and retention rates
 - Character creation and engagement rates
 - Image upload success rates
@@ -680,12 +741,14 @@ type Subscription {
 ## Resource Requirements
 
 ### Development Team
+
 - 1 Backend Developer (NestJS/GraphQL)
 - 1 Frontend Developer (React/TypeScript)
 - 1 DevOps Engineer (Docker/CI/CD)
 - 1 UI/UX Designer
 
 ### Infrastructure Costs (Monthly Estimates)
+
 - Cloud hosting: $200-500
 - Database: $100-300
 - File storage: $50-200

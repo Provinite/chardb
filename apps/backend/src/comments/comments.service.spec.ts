@@ -1,8 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { CommentsService } from './comments.service';
+import { CommentsService, CommentableTypeFilter } from './comments.service';
 import { DatabaseService } from '../database/database.service';
-import { CommentableType } from './dto/comment.dto';
 import { mockDatabaseService } from '../../test/setup';
 
 describe('CommentsService', () => {
@@ -13,7 +12,7 @@ describe('CommentsService', () => {
     id: 'comment-1',
     content: 'Test comment',
     authorId: 'user-1',
-    commentableType: CommentableType.CHARACTER,
+    commentableType: CommentableTypeFilter.CHARACTER,
     commentableId: 'character-1',
     parentId: null,
     isHidden: false,
@@ -55,7 +54,7 @@ describe('CommentsService', () => {
     it('should create a comment successfully', async () => {
       const input = {
         content: 'Test comment',
-        entityType: CommentableType.CHARACTER,
+        entityType: CommentableTypeFilter.CHARACTER,
         entityId: 'character-1',
       };
 
@@ -72,7 +71,7 @@ describe('CommentsService', () => {
         data: {
           content: 'Test comment',
           authorId: 'user-1',
-          commentableType: CommentableType.CHARACTER,
+          commentableType: CommentableTypeFilter.CHARACTER,
           commentableId: 'character-1',
           parentId: undefined,
         },
@@ -83,7 +82,7 @@ describe('CommentsService', () => {
     it('should throw BadRequestException when entity does not exist', async () => {
       const input = {
         content: 'Test comment',
-        entityType: CommentableType.CHARACTER,
+        entityType: CommentableTypeFilter.CHARACTER,
         entityId: 'non-existent',
       };
 
@@ -97,7 +96,7 @@ describe('CommentsService', () => {
     it('should validate parent comment belongs to same entity', async () => {
       const input = {
         content: 'Test reply',
-        entityType: CommentableType.CHARACTER,
+        entityType: CommentableTypeFilter.CHARACTER,
         entityId: 'character-1',
         parentId: 'parent-comment-1',
       };
@@ -105,7 +104,7 @@ describe('CommentsService', () => {
       const parentComment = {
         ...mockComment,
         id: 'parent-comment-1',
-        commentableType: CommentableType.IMAGE, // Different type
+        commentableType: CommentableTypeFilter.IMAGE, // Different type
         commentableId: 'image-1', // Different entity
       };
 
@@ -143,7 +142,7 @@ describe('CommentsService', () => {
   describe('findMany', () => {
     it('should return comments with pagination', async () => {
       const filters = {
-        entityType: CommentableType.CHARACTER,
+        entityType: CommentableTypeFilter.CHARACTER,
         entityId: 'character-1',
         limit: 10,
         offset: 0,
@@ -161,7 +160,7 @@ describe('CommentsService', () => {
 
     it('should filter by parentId', async () => {
       const filters = {
-        entityType: CommentableType.CHARACTER,
+        entityType: CommentableTypeFilter.CHARACTER,
         entityId: 'character-1',
         parentId: null,
         limit: 10,
@@ -175,7 +174,7 @@ describe('CommentsService', () => {
 
       expect(db.comment.findMany).toHaveBeenCalledWith({
         where: {
-          commentableType: CommentableType.CHARACTER,
+          commentableType: CommentableTypeFilter.CHARACTER,
           commentableId: 'character-1',
           parentId: null,
           isHidden: false,

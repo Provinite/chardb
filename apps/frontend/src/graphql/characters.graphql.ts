@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const GET_CHARACTERS = gql`
   query GetCharacters($filters: CharacterFiltersInput) {
@@ -6,7 +6,10 @@ export const GET_CHARACTERS = gql`
       characters {
         id
         name
-        species
+        species {
+          id
+          name
+        }
         age
         gender
         description
@@ -61,7 +64,10 @@ export const GET_CHARACTER = gql`
     character(id: $id) {
       id
       name
-      species
+      species {
+        id
+        name
+      }
       age
       gender
       description
@@ -122,7 +128,10 @@ export const GET_MY_CHARACTERS = gql`
       characters {
         id
         name
-        species
+        species {
+          id
+          name
+        }
         age
         gender
         description
@@ -177,7 +186,10 @@ export const CREATE_CHARACTER = gql`
     createCharacter(input: $input) {
       id
       name
-      species
+      species {
+        id
+        name
+      }
       age
       gender
       description
@@ -217,7 +229,10 @@ export const UPDATE_CHARACTER = gql`
     updateCharacter(id: $id, input: $input) {
       id
       name
-      species
+      species {
+        id
+        name
+      }
       age
       gender
       description
@@ -263,7 +278,10 @@ export const TRANSFER_CHARACTER = gql`
     transferCharacter(id: $id, input: $input) {
       id
       name
-      species
+      species {
+        id
+        name
+      }
       age
       gender
       description
@@ -355,13 +373,15 @@ export const SET_CHARACTER_MAIN_MEDIA = gql`
   }
 `;
 
-
 export const GET_LIKED_CHARACTERS = gql`
   query GetLikedCharacters {
     likedCharacters {
       id
       name
-      species
+      species {
+        id
+        name
+      }
       age
       gender
       description
@@ -389,7 +409,7 @@ export {
   useGetCharactersQuery,
   useGetCharacterQuery,
   useGetMyCharactersQuery,
-  
+
   // Mutation Hooks
   useCreateCharacterMutation,
   useUpdateCharacterMutation,
@@ -398,7 +418,7 @@ export {
   useAddCharacterTagsMutation,
   useRemoveCharacterTagsMutation,
   useSetCharacterMainMediaMutation,
-  
+
   // Types
   type Character,
   type CharacterConnection,
@@ -431,4 +451,4 @@ export {
   type Visibility,
   type Tag,
   type CharacterTag,
-} from '../generated/graphql';
+} from "../generated/graphql";
