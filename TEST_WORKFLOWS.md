@@ -1029,7 +1029,240 @@ This document outlines comprehensive test workflows for the CharDB application t
 - Species search and filtering functionality
 - Community invitation workflow for existing users
 
-### 9. Community Invitation for Existing Users
+### 9. Comprehensive Trait System Testing
+
+#### 9.1 Complete Species and Trait Setup Testing
+
+**Prerequisites for Testing:**
+- User must have community admin permissions
+- Access to species management interface
+- Clean test environment to create comprehensive test data
+
+**Test Species Creation with Full Trait Types:**
+1. Navigate to community admin interface (`/communities/{communityId}/admin`)
+2. Click "Species Management" card to access species management
+3. Create test species (e.g., "Dragon") using "Create Species" button
+4. **Expected:** Species created successfully with confirmation toast
+
+**Create All Trait Types for Comprehensive Testing:**
+1. Navigate to species traits page (`/species/{speciesId}/traits`)
+2. Create STRING trait:
+   - Name: "Nickname" 
+   - Type: "Text" (STRING value type)
+   - **Expected:** Trait created with Type icon displayed
+3. Create INTEGER trait:
+   - Name: "Power Level"
+   - Type: "Number" (INTEGER value type) 
+   - **Expected:** Trait created with Hash icon displayed
+4. Create TIMESTAMP trait:
+   - Name: "Birth Date"
+   - Type: "Date & Time" (TIMESTAMP value type)
+   - **Expected:** Trait created with Calendar icon displayed
+5. Create ENUM trait:
+   - Name: "Primary Color"
+   - Type: "Selection" (ENUM value type)
+   - **Expected:** Trait created with List icon and "Options" button visible
+
+#### 9.2 ENUM Value Configuration Testing
+
+**Create ENUM Values for Color Trait:**
+1. Click "Options" button on "Primary Color" ENUM trait
+2. **Expected:** Navigate to enum value management page with proper breadcrumb navigation
+3. Create multiple enum values using "Add Option":
+   - "Red" (Order: 1)
+   - "Blue" (Order: 2) 
+   - "Green" (Order: 3)
+4. **Expected:** Each option displays as card with order badge, name, and action buttons
+5. **Expected:** Options automatically sort by order value
+6. Test ordering functionality by using up/down arrows
+7. **Expected:** Real-time reordering with toast confirmations
+
+#### 9.3 Species Variant Creation and Configuration
+
+**Create Multiple Species Variants:**
+1. Navigate to species variants page (`/species/{speciesId}/variants`)
+2. Create test variants:
+   - "Fire Dragon" variant
+   - "Water Dragon" variant
+   - "Forest Dragon" variant
+3. **Expected:** Each variant displays as card with configuration action buttons
+
+**Configure Variant-Specific Enum Settings:**
+1. Click "Manage Enum Settings" on "Water Dragon" variant
+2. **Expected:** Page shows all ENUM traits with their available values
+3. Configure Primary Color trait for Water Dragon:
+   - Enable "Blue" option (click "Disabled" → becomes "Enabled")
+   - Enable "Green" option
+   - Leave "Red" option disabled
+4. **Expected:** Real-time updates with success toasts
+5. **Expected:** Trait header shows count (e.g., "2 of 3 options enabled")
+6. **Expected:** Visual distinction between enabled (green border) and disabled options
+
+**Test Different Variant Configurations:**
+1. Configure "Fire Dragon" variant:
+   - Enable only "Red" for Primary Color
+2. Configure "Forest Dragon" variant:
+   - Enable "Green" and "Blue" for Primary Color
+3. **Expected:** Each variant maintains independent enum value configurations
+
+#### 9.4 Character Creation with Full Trait Integration
+
+**Access Enhanced Character Creation:**
+1. Navigate to character creation page
+2. Select species "Dragon" from dropdown
+3. **Expected:** Species variants appear in second dropdown
+4. Select "Water Dragon" variant
+5. **Expected:** Trait value editors appear for all configured traits
+
+**Test All Trait Type Inputs:**
+1. **STRING Trait (Nickname):**
+   - **Expected:** Text input with placeholder "Enter nickname..."
+   - **Expected:** Type icon displayed in trait label
+   - **Expected:** Helper text: "Enter text (e.g., name, description, or any text value)"
+   - Enter value: "Splash"
+
+2. **INTEGER Trait (Power Level):**
+   - **Expected:** Number input with step="1" 
+   - **Expected:** Hash icon displayed in trait label
+   - **Expected:** Helper text: "Enter a whole number (e.g., age, level, count)"
+   - **Expected:** Validation hint: "Enter whole numbers only (no decimals)"
+   - Enter value: "85"
+
+3. **TIMESTAMP Trait (Birth Date):**
+   - **Expected:** datetime-local input type
+   - **Expected:** Calendar icon displayed in trait label  
+   - **Expected:** Helper text: "Select a date and time"
+   - Enter value: "2023-01-15T10:30"
+
+4. **ENUM Trait (Primary Color):**
+   - **Expected:** Dropdown select with List icon in trait label
+   - **Expected:** Helper text: "Choose from available options • Available options are filtered based on the selected variant"
+   - **Expected:** Only "Blue" and "Green" options available (Red filtered out for Water variant)
+   - **Expected:** Options sorted by order value
+   - Select value: "Blue"
+
+#### 9.5 Variant-Specific Filtering Validation
+
+**Test Variant Switching Behavior:**
+1. With traits filled out, change variant from "Water Dragon" to "Fire Dragon"
+2. **Expected:** Primary Color dropdown updates to show only "Red" option
+3. **Expected:** Previously selected "Blue" value cleared if not available for new variant
+4. **Expected:** Other trait values (STRING, INTEGER, TIMESTAMP) remain unchanged
+5. Change variant to "Forest Dragon" 
+6. **Expected:** Primary Color shows "Blue" and "Green" options (Red filtered out)
+
+**Test Empty Variant State:**
+1. Create variant with no enum value settings configured
+2. Select variant in character creation
+3. **Expected:** ENUM trait shows "No options available for this variant" 
+4. **Expected:** Disabled dropdown with helpful message
+5. **Expected:** Validation hint: "This trait has no available options for the selected variant"
+
+#### 9.6 Complete Character Creation Validation
+
+**Submit Character with All Trait Types:**
+1. Fill character creation form:
+   - Name: "Test Dragon Character"
+   - Species: "Dragon"
+   - Variant: "Water Dragon" 
+   - Nickname: "Splash"
+   - Power Level: "85"
+   - Birth Date: "2023-01-15T10:30"
+   - Primary Color: "Blue"
+2. Submit form
+3. **Expected:** Character created successfully
+4. **Expected:** Redirected to character detail page
+5. **Expected:** All trait values display correctly on character page
+
+#### 9.7 Character Display and Trait Value Rendering
+
+**Verify Trait Values on Character Page:**
+1. Navigate to created character detail page
+2. **Expected:** Character shows species as "Dragon" and variant as "Water Dragon"
+3. **Expected:** Trait values display in organized section:
+   - Nickname: "Splash" (STRING trait)
+   - Power Level: "85" (INTEGER trait) 
+   - Birth Date: "January 15, 2023 at 10:30 AM" (TIMESTAMP trait formatted)
+   - Primary Color: "Blue" (ENUM trait showing enum value name)
+4. **Expected:** All trait types render with appropriate formatting
+5. **Expected:** No missing or undefined values
+
+#### 9.8 Multiple Variant Testing Scenarios
+
+**Create Characters for Each Variant:**
+1. Create "Fire Dragon" character:
+   - Primary Color: "Red" (only available option)
+   - Other traits: varied values
+2. Create "Forest Dragon" character:
+   - Primary Color: "Green" (from available Blue/Green options)
+   - Other traits: varied values  
+3. **Expected:** Each character respects variant-specific enum filtering
+4. **Expected:** All characters display correctly on browse/listing pages
+
+**Test Cross-Variant Consistency:**
+1. Verify STRING, INTEGER, and TIMESTAMP traits work identically across all variants
+2. **Expected:** Only ENUM traits show variant-specific filtering
+3. **Expected:** Non-ENUM traits maintain same behavior regardless of variant selection
+
+#### 9.9 Error Handling and Edge Cases
+
+**Test Required Trait Validation:**
+1. Attempt to create character without filling required trait values
+2. **Expected:** Form validation prevents submission
+3. **Expected:** Error messages appear for missing required traits
+4. **Expected:** Form highlights which trait inputs need attention
+
+**Test Invalid Value Handling:**
+1. Enter non-numeric value in INTEGER trait
+2. **Expected:** Input validation prevents invalid characters
+3. **Expected:** Helpful error message for invalid number format
+4. Test future/past date limits for TIMESTAMP traits (if configured)
+5. **Expected:** Date validation works according to trait constraints
+
+#### 9.10 Data Persistence and State Management
+
+**Test Form State Preservation:**
+1. Fill out character creation form partially
+2. Navigate away and return using browser back button
+3. **Expected:** Form values preserved during session
+4. Test form auto-save or warning on navigation (if implemented)
+
+**Test Character Edit with Traits:**
+1. Navigate to character edit page for trait-enabled character
+2. **Expected:** All current trait values pre-populated correctly
+3. Modify trait values and save
+4. **Expected:** Updates saved successfully with confirmation
+5. **Expected:** Character page reflects changes immediately
+
+#### 9.11 Performance and User Experience Validation
+
+**Test Loading States:**
+1. Monitor trait value editor loading during variant selection
+2. **Expected:** Smooth transitions without loading delays
+3. **Expected:** No flickering or UI jumps during enum option updates
+4. Test with large number of enum values (if available)
+5. **Expected:** Dropdown remains responsive with many options
+
+**Test Real-Time Updates:**
+1. Verify enum value settings changes reflect immediately in character creation
+2. **Expected:** No page refresh required for variant filter updates
+3. **Expected:** Smooth user experience during species/variant selection changes
+
+#### 9.12 Integration with Existing Character System
+
+**Test Backward Compatibility:**
+1. Create characters without species/variant selection (if still supported)
+2. **Expected:** Character creation still works for basic characters
+3. **Expected:** Existing characters without traits display normally
+4. Test migration of existing characters to trait system (if applicable)
+
+**Test Character Listing Integration:**
+1. Browse characters page with trait-enabled characters
+2. **Expected:** Characters display species and variant information
+3. **Expected:** Search and filter functionality includes trait-based characters
+4. **Expected:** Character cards show trait information appropriately
+
+### 10. Community Invitation for Existing Users
 
 #### 9.1 Access Join Community Interface
 
