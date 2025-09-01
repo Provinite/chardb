@@ -38,6 +38,10 @@ import { SiteAdminPage } from "./pages/SiteAdminPage";
 import { SiteInviteCodesPage } from "./pages/SiteInviteCodesPage";
 import { CommunityInviteCodesPage } from "./pages/CommunityInviteCodesPage";
 import { CommunityManagementPage } from "./pages/CommunityManagementPage";
+import { CommunityAdminPage } from "./pages/CommunityAdminPage";
+import { SpeciesManagementPage } from "./pages/SpeciesManagementPage";
+import { TraitBuilderPage } from "./pages/TraitBuilderPage";
+import { SpeciesVariantManagementPage } from "./pages/SpeciesVariantManagementPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
@@ -235,10 +239,44 @@ function App() {
 
         {/* Community routes */}
         <Route
+          path="/communities/:communityId/admin"
+          element={
+            <ProtectedRoute>
+              <CommunityAdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/communities/:communityId/invite-codes"
           element={
             <ProtectedRoute>
               <CommunityInviteCodesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/species"
+          element={
+            <ProtectedRoute>
+              <SpeciesManagementPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Species-specific routes (can be accessed from community context) */}
+        <Route
+          path="/species/:speciesId/traits"
+          element={
+            <ProtectedRoute>
+              <TraitBuilderPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/species/:speciesId/variants"
+          element={
+            <ProtectedRoute>
+              <SpeciesVariantManagementPage />
             </ProtectedRoute>
           }
         />

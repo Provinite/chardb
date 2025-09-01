@@ -2867,6 +2867,148 @@ export type GetActivityFeedQueryVariables = Exact<{
 
 export type GetActivityFeedQuery = { __typename?: 'Query', activityFeed: Array<{ __typename?: 'ActivityItem', id: string, type: string, entityId: string, createdAt: string, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, content: { __typename?: 'ActivityContent', name: string | null, title: string | null, description: string | null } | null }> };
 
+export type SpeciesDetailsFragment = { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string };
+
+export type SpeciesConnectionDetailsFragment = { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string }> };
+
+export type SpeciesQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type SpeciesQuery = { __typename?: 'Query', species: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string }> } };
+
+export type SpeciesByCommunityQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type SpeciesByCommunityQuery = { __typename?: 'Query', speciesByCommunity: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string }> } };
+
+export type SpeciesByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type SpeciesByIdQuery = { __typename?: 'Query', speciesById: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+
+export type CreateSpeciesMutationVariables = Exact<{
+  createSpeciesInput: CreateSpeciesInput;
+}>;
+
+
+export type CreateSpeciesMutation = { __typename?: 'Mutation', createSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string } };
+
+export type UpdateSpeciesMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateSpeciesInput: UpdateSpeciesInput;
+}>;
+
+
+export type UpdateSpeciesMutation = { __typename?: 'Mutation', updateSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string } };
+
+export type DeleteSpeciesMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteSpeciesMutation = { __typename?: 'Mutation', removeSpecies: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
+export type SpeciesVariantDetailsFragment = { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string };
+
+export type SpeciesVariantConnectionDetailsFragment = { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string }> };
+
+export type SpeciesVariantsQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type SpeciesVariantsQuery = { __typename?: 'Query', speciesVariants: { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string }> } };
+
+export type SpeciesVariantsBySpeciesQueryVariables = Exact<{
+  speciesId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type SpeciesVariantsBySpeciesQuery = { __typename?: 'Query', speciesVariantsBySpecies: { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string }> } };
+
+export type SpeciesVariantByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type SpeciesVariantByIdQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string } } };
+
+export type CreateSpeciesVariantMutationVariables = Exact<{
+  createSpeciesVariantInput: CreateSpeciesVariantInput;
+}>;
+
+
+export type CreateSpeciesVariantMutation = { __typename?: 'Mutation', createSpeciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string } };
+
+export type UpdateSpeciesVariantMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateSpeciesVariantInput: UpdateSpeciesVariantInput;
+}>;
+
+
+export type UpdateSpeciesVariantMutation = { __typename?: 'Mutation', updateSpeciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string } };
+
+export type DeleteSpeciesVariantMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteSpeciesVariantMutation = { __typename?: 'Mutation', removeSpeciesVariant: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
+export type TraitDetailsFragment = { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string };
+
+export type TraitConnectionDetailsFragment = { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string }> };
+
+export type TraitsBySpeciesQueryVariables = Exact<{
+  speciesId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type TraitsBySpeciesQuery = { __typename?: 'Query', traitsBySpecies: { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string }> } };
+
+export type TraitByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } } };
+
+export type CreateTraitMutationVariables = Exact<{
+  createTraitInput: CreateTraitInput;
+}>;
+
+
+export type CreateTraitMutation = { __typename?: 'Mutation', createTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string } };
+
+export type UpdateTraitMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateTraitInput: UpdateTraitInput;
+}>;
+
+
+export type UpdateTraitMutation = { __typename?: 'Mutation', updateTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string } };
+
+export type DeleteTraitMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteTraitMutation = { __typename?: 'Mutation', removeTrait: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
 export type SearchTagsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Float']['input']>;
@@ -2896,7 +3038,65 @@ export type UpdateProfileMutationVariables = Exact<{
 
 export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, createdAt: string, updatedAt: string } };
 
-
+export const SpeciesDetailsFragmentDoc = gql`
+    fragment SpeciesDetails on Species {
+  id
+  name
+  communityId
+  hasImage
+  createdAt
+  updatedAt
+}
+    `;
+export const SpeciesConnectionDetailsFragmentDoc = gql`
+    fragment SpeciesConnectionDetails on SpeciesConnection {
+  nodes {
+    ...SpeciesDetails
+  }
+  hasNextPage
+  hasPreviousPage
+  totalCount
+}
+    ${SpeciesDetailsFragmentDoc}`;
+export const SpeciesVariantDetailsFragmentDoc = gql`
+    fragment SpeciesVariantDetails on SpeciesVariant {
+  id
+  name
+  speciesId
+  createdAt
+  updatedAt
+}
+    `;
+export const SpeciesVariantConnectionDetailsFragmentDoc = gql`
+    fragment SpeciesVariantConnectionDetails on SpeciesVariantConnection {
+  nodes {
+    ...SpeciesVariantDetails
+  }
+  hasNextPage
+  hasPreviousPage
+  totalCount
+}
+    ${SpeciesVariantDetailsFragmentDoc}`;
+export const TraitDetailsFragmentDoc = gql`
+    fragment TraitDetails on Trait {
+  id
+  name
+  valueType
+  speciesId
+  createdAt
+  updatedAt
+}
+    `;
+export const TraitConnectionDetailsFragmentDoc = gql`
+    fragment TraitConnectionDetails on TraitConnection {
+  nodes {
+    ...TraitDetails
+  }
+  hasNextPage
+  hasPreviousPage
+  totalCount
+}
+    ${TraitDetailsFragmentDoc}`;
 export const LoginDocument = gql`
     mutation Login($input: LoginInput!) {
   login(input: $input) {
@@ -6344,6 +6544,653 @@ export type GetActivityFeedQueryHookResult = ReturnType<typeof useGetActivityFee
 export type GetActivityFeedLazyQueryHookResult = ReturnType<typeof useGetActivityFeedLazyQuery>;
 export type GetActivityFeedSuspenseQueryHookResult = ReturnType<typeof useGetActivityFeedSuspenseQuery>;
 export type GetActivityFeedQueryResult = Apollo.QueryResult<GetActivityFeedQuery, GetActivityFeedQueryVariables>;
+export const SpeciesDocument = gql`
+    query Species($first: Int, $after: String) {
+  species(first: $first, after: $after) {
+    ...SpeciesConnectionDetails
+  }
+}
+    ${SpeciesConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useSpeciesQuery__
+ *
+ * To run a query within a React component, call `useSpeciesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesQuery({
+ *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useSpeciesQuery(baseOptions?: Apollo.QueryHookOptions<SpeciesQuery, SpeciesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesQuery, SpeciesQueryVariables>(SpeciesDocument, options);
+      }
+export function useSpeciesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesQuery, SpeciesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesQuery, SpeciesQueryVariables>(SpeciesDocument, options);
+        }
+export function useSpeciesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesQuery, SpeciesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesQuery, SpeciesQueryVariables>(SpeciesDocument, options);
+        }
+export type SpeciesQueryHookResult = ReturnType<typeof useSpeciesQuery>;
+export type SpeciesLazyQueryHookResult = ReturnType<typeof useSpeciesLazyQuery>;
+export type SpeciesSuspenseQueryHookResult = ReturnType<typeof useSpeciesSuspenseQuery>;
+export type SpeciesQueryResult = Apollo.QueryResult<SpeciesQuery, SpeciesQueryVariables>;
+export const SpeciesByCommunityDocument = gql`
+    query SpeciesByCommunity($communityId: ID!, $first: Int, $after: String) {
+  speciesByCommunity(communityId: $communityId, first: $first, after: $after) {
+    ...SpeciesConnectionDetails
+  }
+}
+    ${SpeciesConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useSpeciesByCommunityQuery__
+ *
+ * To run a query within a React component, call `useSpeciesByCommunityQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesByCommunityQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesByCommunityQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useSpeciesByCommunityQuery(baseOptions: Apollo.QueryHookOptions<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables> & ({ variables: SpeciesByCommunityQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables>(SpeciesByCommunityDocument, options);
+      }
+export function useSpeciesByCommunityLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables>(SpeciesByCommunityDocument, options);
+        }
+export function useSpeciesByCommunitySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables>(SpeciesByCommunityDocument, options);
+        }
+export type SpeciesByCommunityQueryHookResult = ReturnType<typeof useSpeciesByCommunityQuery>;
+export type SpeciesByCommunityLazyQueryHookResult = ReturnType<typeof useSpeciesByCommunityLazyQuery>;
+export type SpeciesByCommunitySuspenseQueryHookResult = ReturnType<typeof useSpeciesByCommunitySuspenseQuery>;
+export type SpeciesByCommunityQueryResult = Apollo.QueryResult<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables>;
+export const SpeciesByIdDocument = gql`
+    query SpeciesById($id: ID!) {
+  speciesById(id: $id) {
+    ...SpeciesDetails
+    community {
+      id
+      name
+    }
+  }
+}
+    ${SpeciesDetailsFragmentDoc}`;
+
+/**
+ * __useSpeciesByIdQuery__
+ *
+ * To run a query within a React component, call `useSpeciesByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useSpeciesByIdQuery(baseOptions: Apollo.QueryHookOptions<SpeciesByIdQuery, SpeciesByIdQueryVariables> & ({ variables: SpeciesByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesByIdQuery, SpeciesByIdQueryVariables>(SpeciesByIdDocument, options);
+      }
+export function useSpeciesByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesByIdQuery, SpeciesByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesByIdQuery, SpeciesByIdQueryVariables>(SpeciesByIdDocument, options);
+        }
+export function useSpeciesByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesByIdQuery, SpeciesByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesByIdQuery, SpeciesByIdQueryVariables>(SpeciesByIdDocument, options);
+        }
+export type SpeciesByIdQueryHookResult = ReturnType<typeof useSpeciesByIdQuery>;
+export type SpeciesByIdLazyQueryHookResult = ReturnType<typeof useSpeciesByIdLazyQuery>;
+export type SpeciesByIdSuspenseQueryHookResult = ReturnType<typeof useSpeciesByIdSuspenseQuery>;
+export type SpeciesByIdQueryResult = Apollo.QueryResult<SpeciesByIdQuery, SpeciesByIdQueryVariables>;
+export const CreateSpeciesDocument = gql`
+    mutation CreateSpecies($createSpeciesInput: CreateSpeciesInput!) {
+  createSpecies(createSpeciesInput: $createSpeciesInput) {
+    ...SpeciesDetails
+  }
+}
+    ${SpeciesDetailsFragmentDoc}`;
+export type CreateSpeciesMutationFn = Apollo.MutationFunction<CreateSpeciesMutation, CreateSpeciesMutationVariables>;
+
+/**
+ * __useCreateSpeciesMutation__
+ *
+ * To run a mutation, you first call `useCreateSpeciesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSpeciesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSpeciesMutation, { data, loading, error }] = useCreateSpeciesMutation({
+ *   variables: {
+ *      createSpeciesInput: // value for 'createSpeciesInput'
+ *   },
+ * });
+ */
+export function useCreateSpeciesMutation(baseOptions?: Apollo.MutationHookOptions<CreateSpeciesMutation, CreateSpeciesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateSpeciesMutation, CreateSpeciesMutationVariables>(CreateSpeciesDocument, options);
+      }
+export type CreateSpeciesMutationHookResult = ReturnType<typeof useCreateSpeciesMutation>;
+export type CreateSpeciesMutationResult = Apollo.MutationResult<CreateSpeciesMutation>;
+export type CreateSpeciesMutationOptions = Apollo.BaseMutationOptions<CreateSpeciesMutation, CreateSpeciesMutationVariables>;
+export const UpdateSpeciesDocument = gql`
+    mutation UpdateSpecies($id: ID!, $updateSpeciesInput: UpdateSpeciesInput!) {
+  updateSpecies(id: $id, updateSpeciesInput: $updateSpeciesInput) {
+    ...SpeciesDetails
+  }
+}
+    ${SpeciesDetailsFragmentDoc}`;
+export type UpdateSpeciesMutationFn = Apollo.MutationFunction<UpdateSpeciesMutation, UpdateSpeciesMutationVariables>;
+
+/**
+ * __useUpdateSpeciesMutation__
+ *
+ * To run a mutation, you first call `useUpdateSpeciesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateSpeciesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateSpeciesMutation, { data, loading, error }] = useUpdateSpeciesMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateSpeciesInput: // value for 'updateSpeciesInput'
+ *   },
+ * });
+ */
+export function useUpdateSpeciesMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSpeciesMutation, UpdateSpeciesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateSpeciesMutation, UpdateSpeciesMutationVariables>(UpdateSpeciesDocument, options);
+      }
+export type UpdateSpeciesMutationHookResult = ReturnType<typeof useUpdateSpeciesMutation>;
+export type UpdateSpeciesMutationResult = Apollo.MutationResult<UpdateSpeciesMutation>;
+export type UpdateSpeciesMutationOptions = Apollo.BaseMutationOptions<UpdateSpeciesMutation, UpdateSpeciesMutationVariables>;
+export const DeleteSpeciesDocument = gql`
+    mutation DeleteSpecies($id: ID!) {
+  removeSpecies(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type DeleteSpeciesMutationFn = Apollo.MutationFunction<DeleteSpeciesMutation, DeleteSpeciesMutationVariables>;
+
+/**
+ * __useDeleteSpeciesMutation__
+ *
+ * To run a mutation, you first call `useDeleteSpeciesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteSpeciesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteSpeciesMutation, { data, loading, error }] = useDeleteSpeciesMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteSpeciesMutation(baseOptions?: Apollo.MutationHookOptions<DeleteSpeciesMutation, DeleteSpeciesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteSpeciesMutation, DeleteSpeciesMutationVariables>(DeleteSpeciesDocument, options);
+      }
+export type DeleteSpeciesMutationHookResult = ReturnType<typeof useDeleteSpeciesMutation>;
+export type DeleteSpeciesMutationResult = Apollo.MutationResult<DeleteSpeciesMutation>;
+export type DeleteSpeciesMutationOptions = Apollo.BaseMutationOptions<DeleteSpeciesMutation, DeleteSpeciesMutationVariables>;
+export const SpeciesVariantsDocument = gql`
+    query SpeciesVariants($first: Int, $after: String) {
+  speciesVariants(first: $first, after: $after) {
+    ...SpeciesVariantConnectionDetails
+  }
+}
+    ${SpeciesVariantConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useSpeciesVariantsQuery__
+ *
+ * To run a query within a React component, call `useSpeciesVariantsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesVariantsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesVariantsQuery({
+ *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useSpeciesVariantsQuery(baseOptions?: Apollo.QueryHookOptions<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>(SpeciesVariantsDocument, options);
+      }
+export function useSpeciesVariantsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>(SpeciesVariantsDocument, options);
+        }
+export function useSpeciesVariantsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>(SpeciesVariantsDocument, options);
+        }
+export type SpeciesVariantsQueryHookResult = ReturnType<typeof useSpeciesVariantsQuery>;
+export type SpeciesVariantsLazyQueryHookResult = ReturnType<typeof useSpeciesVariantsLazyQuery>;
+export type SpeciesVariantsSuspenseQueryHookResult = ReturnType<typeof useSpeciesVariantsSuspenseQuery>;
+export type SpeciesVariantsQueryResult = Apollo.QueryResult<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>;
+export const SpeciesVariantsBySpeciesDocument = gql`
+    query SpeciesVariantsBySpecies($speciesId: ID!, $first: Int, $after: String) {
+  speciesVariantsBySpecies(speciesId: $speciesId, first: $first, after: $after) {
+    ...SpeciesVariantConnectionDetails
+  }
+}
+    ${SpeciesVariantConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useSpeciesVariantsBySpeciesQuery__
+ *
+ * To run a query within a React component, call `useSpeciesVariantsBySpeciesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesVariantsBySpeciesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesVariantsBySpeciesQuery({
+ *   variables: {
+ *      speciesId: // value for 'speciesId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useSpeciesVariantsBySpeciesQuery(baseOptions: Apollo.QueryHookOptions<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables> & ({ variables: SpeciesVariantsBySpeciesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables>(SpeciesVariantsBySpeciesDocument, options);
+      }
+export function useSpeciesVariantsBySpeciesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables>(SpeciesVariantsBySpeciesDocument, options);
+        }
+export function useSpeciesVariantsBySpeciesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables>(SpeciesVariantsBySpeciesDocument, options);
+        }
+export type SpeciesVariantsBySpeciesQueryHookResult = ReturnType<typeof useSpeciesVariantsBySpeciesQuery>;
+export type SpeciesVariantsBySpeciesLazyQueryHookResult = ReturnType<typeof useSpeciesVariantsBySpeciesLazyQuery>;
+export type SpeciesVariantsBySpeciesSuspenseQueryHookResult = ReturnType<typeof useSpeciesVariantsBySpeciesSuspenseQuery>;
+export type SpeciesVariantsBySpeciesQueryResult = Apollo.QueryResult<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables>;
+export const SpeciesVariantByIdDocument = gql`
+    query SpeciesVariantById($id: ID!) {
+  speciesVariantById(id: $id) {
+    ...SpeciesVariantDetails
+    species {
+      id
+      name
+      communityId
+    }
+  }
+}
+    ${SpeciesVariantDetailsFragmentDoc}`;
+
+/**
+ * __useSpeciesVariantByIdQuery__
+ *
+ * To run a query within a React component, call `useSpeciesVariantByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesVariantByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesVariantByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useSpeciesVariantByIdQuery(baseOptions: Apollo.QueryHookOptions<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables> & ({ variables: SpeciesVariantByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables>(SpeciesVariantByIdDocument, options);
+      }
+export function useSpeciesVariantByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables>(SpeciesVariantByIdDocument, options);
+        }
+export function useSpeciesVariantByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables>(SpeciesVariantByIdDocument, options);
+        }
+export type SpeciesVariantByIdQueryHookResult = ReturnType<typeof useSpeciesVariantByIdQuery>;
+export type SpeciesVariantByIdLazyQueryHookResult = ReturnType<typeof useSpeciesVariantByIdLazyQuery>;
+export type SpeciesVariantByIdSuspenseQueryHookResult = ReturnType<typeof useSpeciesVariantByIdSuspenseQuery>;
+export type SpeciesVariantByIdQueryResult = Apollo.QueryResult<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables>;
+export const CreateSpeciesVariantDocument = gql`
+    mutation CreateSpeciesVariant($createSpeciesVariantInput: CreateSpeciesVariantInput!) {
+  createSpeciesVariant(createSpeciesVariantInput: $createSpeciesVariantInput) {
+    ...SpeciesVariantDetails
+  }
+}
+    ${SpeciesVariantDetailsFragmentDoc}`;
+export type CreateSpeciesVariantMutationFn = Apollo.MutationFunction<CreateSpeciesVariantMutation, CreateSpeciesVariantMutationVariables>;
+
+/**
+ * __useCreateSpeciesVariantMutation__
+ *
+ * To run a mutation, you first call `useCreateSpeciesVariantMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSpeciesVariantMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSpeciesVariantMutation, { data, loading, error }] = useCreateSpeciesVariantMutation({
+ *   variables: {
+ *      createSpeciesVariantInput: // value for 'createSpeciesVariantInput'
+ *   },
+ * });
+ */
+export function useCreateSpeciesVariantMutation(baseOptions?: Apollo.MutationHookOptions<CreateSpeciesVariantMutation, CreateSpeciesVariantMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateSpeciesVariantMutation, CreateSpeciesVariantMutationVariables>(CreateSpeciesVariantDocument, options);
+      }
+export type CreateSpeciesVariantMutationHookResult = ReturnType<typeof useCreateSpeciesVariantMutation>;
+export type CreateSpeciesVariantMutationResult = Apollo.MutationResult<CreateSpeciesVariantMutation>;
+export type CreateSpeciesVariantMutationOptions = Apollo.BaseMutationOptions<CreateSpeciesVariantMutation, CreateSpeciesVariantMutationVariables>;
+export const UpdateSpeciesVariantDocument = gql`
+    mutation UpdateSpeciesVariant($id: ID!, $updateSpeciesVariantInput: UpdateSpeciesVariantInput!) {
+  updateSpeciesVariant(
+    id: $id
+    updateSpeciesVariantInput: $updateSpeciesVariantInput
+  ) {
+    ...SpeciesVariantDetails
+  }
+}
+    ${SpeciesVariantDetailsFragmentDoc}`;
+export type UpdateSpeciesVariantMutationFn = Apollo.MutationFunction<UpdateSpeciesVariantMutation, UpdateSpeciesVariantMutationVariables>;
+
+/**
+ * __useUpdateSpeciesVariantMutation__
+ *
+ * To run a mutation, you first call `useUpdateSpeciesVariantMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateSpeciesVariantMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateSpeciesVariantMutation, { data, loading, error }] = useUpdateSpeciesVariantMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateSpeciesVariantInput: // value for 'updateSpeciesVariantInput'
+ *   },
+ * });
+ */
+export function useUpdateSpeciesVariantMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSpeciesVariantMutation, UpdateSpeciesVariantMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateSpeciesVariantMutation, UpdateSpeciesVariantMutationVariables>(UpdateSpeciesVariantDocument, options);
+      }
+export type UpdateSpeciesVariantMutationHookResult = ReturnType<typeof useUpdateSpeciesVariantMutation>;
+export type UpdateSpeciesVariantMutationResult = Apollo.MutationResult<UpdateSpeciesVariantMutation>;
+export type UpdateSpeciesVariantMutationOptions = Apollo.BaseMutationOptions<UpdateSpeciesVariantMutation, UpdateSpeciesVariantMutationVariables>;
+export const DeleteSpeciesVariantDocument = gql`
+    mutation DeleteSpeciesVariant($id: ID!) {
+  removeSpeciesVariant(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type DeleteSpeciesVariantMutationFn = Apollo.MutationFunction<DeleteSpeciesVariantMutation, DeleteSpeciesVariantMutationVariables>;
+
+/**
+ * __useDeleteSpeciesVariantMutation__
+ *
+ * To run a mutation, you first call `useDeleteSpeciesVariantMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteSpeciesVariantMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteSpeciesVariantMutation, { data, loading, error }] = useDeleteSpeciesVariantMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteSpeciesVariantMutation(baseOptions?: Apollo.MutationHookOptions<DeleteSpeciesVariantMutation, DeleteSpeciesVariantMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteSpeciesVariantMutation, DeleteSpeciesVariantMutationVariables>(DeleteSpeciesVariantDocument, options);
+      }
+export type DeleteSpeciesVariantMutationHookResult = ReturnType<typeof useDeleteSpeciesVariantMutation>;
+export type DeleteSpeciesVariantMutationResult = Apollo.MutationResult<DeleteSpeciesVariantMutation>;
+export type DeleteSpeciesVariantMutationOptions = Apollo.BaseMutationOptions<DeleteSpeciesVariantMutation, DeleteSpeciesVariantMutationVariables>;
+export const TraitsBySpeciesDocument = gql`
+    query TraitsBySpecies($speciesId: ID!, $first: Int, $after: String) {
+  traitsBySpecies(speciesId: $speciesId, first: $first, after: $after) {
+    ...TraitConnectionDetails
+  }
+}
+    ${TraitConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useTraitsBySpeciesQuery__
+ *
+ * To run a query within a React component, call `useTraitsBySpeciesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTraitsBySpeciesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTraitsBySpeciesQuery({
+ *   variables: {
+ *      speciesId: // value for 'speciesId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useTraitsBySpeciesQuery(baseOptions: Apollo.QueryHookOptions<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables> & ({ variables: TraitsBySpeciesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables>(TraitsBySpeciesDocument, options);
+      }
+export function useTraitsBySpeciesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables>(TraitsBySpeciesDocument, options);
+        }
+export function useTraitsBySpeciesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables>(TraitsBySpeciesDocument, options);
+        }
+export type TraitsBySpeciesQueryHookResult = ReturnType<typeof useTraitsBySpeciesQuery>;
+export type TraitsBySpeciesLazyQueryHookResult = ReturnType<typeof useTraitsBySpeciesLazyQuery>;
+export type TraitsBySpeciesSuspenseQueryHookResult = ReturnType<typeof useTraitsBySpeciesSuspenseQuery>;
+export type TraitsBySpeciesQueryResult = Apollo.QueryResult<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables>;
+export const TraitByIdDocument = gql`
+    query TraitById($id: ID!) {
+  traitById(id: $id) {
+    ...TraitDetails
+    species {
+      id
+      name
+    }
+  }
+}
+    ${TraitDetailsFragmentDoc}`;
+
+/**
+ * __useTraitByIdQuery__
+ *
+ * To run a query within a React component, call `useTraitByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTraitByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTraitByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useTraitByIdQuery(baseOptions: Apollo.QueryHookOptions<TraitByIdQuery, TraitByIdQueryVariables> & ({ variables: TraitByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<TraitByIdQuery, TraitByIdQueryVariables>(TraitByIdDocument, options);
+      }
+export function useTraitByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TraitByIdQuery, TraitByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<TraitByIdQuery, TraitByIdQueryVariables>(TraitByIdDocument, options);
+        }
+export function useTraitByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TraitByIdQuery, TraitByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<TraitByIdQuery, TraitByIdQueryVariables>(TraitByIdDocument, options);
+        }
+export type TraitByIdQueryHookResult = ReturnType<typeof useTraitByIdQuery>;
+export type TraitByIdLazyQueryHookResult = ReturnType<typeof useTraitByIdLazyQuery>;
+export type TraitByIdSuspenseQueryHookResult = ReturnType<typeof useTraitByIdSuspenseQuery>;
+export type TraitByIdQueryResult = Apollo.QueryResult<TraitByIdQuery, TraitByIdQueryVariables>;
+export const CreateTraitDocument = gql`
+    mutation CreateTrait($createTraitInput: CreateTraitInput!) {
+  createTrait(createTraitInput: $createTraitInput) {
+    ...TraitDetails
+  }
+}
+    ${TraitDetailsFragmentDoc}`;
+export type CreateTraitMutationFn = Apollo.MutationFunction<CreateTraitMutation, CreateTraitMutationVariables>;
+
+/**
+ * __useCreateTraitMutation__
+ *
+ * To run a mutation, you first call `useCreateTraitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateTraitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createTraitMutation, { data, loading, error }] = useCreateTraitMutation({
+ *   variables: {
+ *      createTraitInput: // value for 'createTraitInput'
+ *   },
+ * });
+ */
+export function useCreateTraitMutation(baseOptions?: Apollo.MutationHookOptions<CreateTraitMutation, CreateTraitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateTraitMutation, CreateTraitMutationVariables>(CreateTraitDocument, options);
+      }
+export type CreateTraitMutationHookResult = ReturnType<typeof useCreateTraitMutation>;
+export type CreateTraitMutationResult = Apollo.MutationResult<CreateTraitMutation>;
+export type CreateTraitMutationOptions = Apollo.BaseMutationOptions<CreateTraitMutation, CreateTraitMutationVariables>;
+export const UpdateTraitDocument = gql`
+    mutation UpdateTrait($id: ID!, $updateTraitInput: UpdateTraitInput!) {
+  updateTrait(id: $id, updateTraitInput: $updateTraitInput) {
+    ...TraitDetails
+  }
+}
+    ${TraitDetailsFragmentDoc}`;
+export type UpdateTraitMutationFn = Apollo.MutationFunction<UpdateTraitMutation, UpdateTraitMutationVariables>;
+
+/**
+ * __useUpdateTraitMutation__
+ *
+ * To run a mutation, you first call `useUpdateTraitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateTraitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateTraitMutation, { data, loading, error }] = useUpdateTraitMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateTraitInput: // value for 'updateTraitInput'
+ *   },
+ * });
+ */
+export function useUpdateTraitMutation(baseOptions?: Apollo.MutationHookOptions<UpdateTraitMutation, UpdateTraitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateTraitMutation, UpdateTraitMutationVariables>(UpdateTraitDocument, options);
+      }
+export type UpdateTraitMutationHookResult = ReturnType<typeof useUpdateTraitMutation>;
+export type UpdateTraitMutationResult = Apollo.MutationResult<UpdateTraitMutation>;
+export type UpdateTraitMutationOptions = Apollo.BaseMutationOptions<UpdateTraitMutation, UpdateTraitMutationVariables>;
+export const DeleteTraitDocument = gql`
+    mutation DeleteTrait($id: ID!) {
+  removeTrait(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type DeleteTraitMutationFn = Apollo.MutationFunction<DeleteTraitMutation, DeleteTraitMutationVariables>;
+
+/**
+ * __useDeleteTraitMutation__
+ *
+ * To run a mutation, you first call `useDeleteTraitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteTraitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteTraitMutation, { data, loading, error }] = useDeleteTraitMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteTraitMutation(baseOptions?: Apollo.MutationHookOptions<DeleteTraitMutation, DeleteTraitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteTraitMutation, DeleteTraitMutationVariables>(DeleteTraitDocument, options);
+      }
+export type DeleteTraitMutationHookResult = ReturnType<typeof useDeleteTraitMutation>;
+export type DeleteTraitMutationResult = Apollo.MutationResult<DeleteTraitMutation>;
+export type DeleteTraitMutationOptions = Apollo.BaseMutationOptions<DeleteTraitMutation, DeleteTraitMutationVariables>;
 export const SearchTagsDocument = gql`
     query SearchTags($search: String, $limit: Float) {
   searchTags(search: $search, limit: $limit) {

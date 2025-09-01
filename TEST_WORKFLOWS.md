@@ -566,7 +566,259 @@ This document outlines comprehensive test workflows for the CharDB application t
 3. Test multiple artist credits per piece
 4. **Expected:** Artist attribution displayed prominently
 
-### 8. Data Integrity & Error Handling
+### 8. Species Management System (Community Admin Users)
+
+#### 8.1 Access Community Administration
+
+**Permission Prerequisites:**
+- User must have community admin role OR appropriate species management permissions
+- Access requires membership in target community with `canCreateSpecies` or `canEditSpecies` permissions
+
+**Access Community Admin Interface:**
+1. Navigate to `/communities/{communityId}/admin` where `{communityId}` is valid community ID
+2. **Expected:** Community Administration page loads showing community name ("Fantasy Realm", etc.)
+3. **Expected:** Page displays administrative access message and available admin cards
+4. **Expected:** "Species Management" card visible with Database icon and description
+5. **Expected:** Other admin cards like "Member Management", "Roles & Permissions", "Invite Management" visible
+
+**Species Management Access:**
+1. Click "Species Management" card from community admin dashboard
+2. **Expected:** Redirected to `/communities/{communityId}/species`
+3. **Expected:** Page shows "Species Management" title with species count (e.g., "$0 species")
+4. **Expected:** Community-scoped indicator: "Showing species for specific community only"
+5. **Expected:** Search bar with magnifying glass icon present
+6. **Expected:** "Create Species" button with plus icon visible
+
+#### 8.2 Species Management Dashboard Testing
+
+**Empty State Validation:**
+1. Access species management for community with no species
+2. **Expected:** Shows "No species found" message with Database icon
+3. **Expected:** Helpful message: "Get started by creating your first species"
+4. **Expected:** Species count displays as "$0 species"
+
+**Search Functionality Testing:**
+1. Type search query in species search box (e.g., "dragon")
+2. **Expected:** Search input accepts text without errors
+3. **Expected:** Empty state message updates to: "No species match your search for 'dragon'"
+4. Clear search field
+5. **Expected:** Returns to default empty state message
+6. **Expected:** Real-time search filtering works without page refresh
+
+**UI Component Validation:**
+1. Verify search input has proper placeholder text: "Search species..."
+2. **Expected:** Create Species button shows plus icon and "Create Species" text
+3. **Expected:** Page layout responsive and elements properly styled
+4. **Expected:** Breadcrumb or navigation context shows community information
+
+#### 8.3 Species Creation Workflow Testing
+
+**Modal Opening:**
+1. Click "Create Species" button from species dashboard
+2. **Expected:** Modal opens with title "Create Species"
+3. **Expected:** Modal contains three form sections:
+   - Species Name text input (required)
+   - Community dropdown (pre-populated)
+   - "Species has associated image" checkbox
+
+**Form Field Validation:**
+1. **Species Name Field:**
+   - **Expected:** Input has placeholder "Enter species name..."
+   - **Expected:** Field marked as required
+   - Test empty submission
+   - **Expected:** Create button disabled until name provided
+   
+2. **Community Dropdown:**
+   - **Expected:** Shows "Select a community..." as default option
+   - **Expected:** Lists available communities (e.g., "Fantasy Realm", "Sci-Fi Universe", "Modern World")
+   - **Expected:** Current community pre-selected or available in list
+   
+3. **Image Association Checkbox:**
+   - **Expected:** Checkbox defaults to unchecked
+   - **Expected:** Label text: "Species has associated image"
+   - Test checking/unchecking
+   - **Expected:** State changes properly without errors
+
+**Form Submission Testing:**
+1. Fill out complete form:
+   - Species Name: "Dragon" 
+   - Community: "Fantasy Realm"
+   - Image checkbox: checked
+2. **Expected:** "Create Species" button becomes enabled
+3. Click "Create Species" button
+4. **Expected:** Form submits and modal processing state shows
+5. **Test Known Issue:** Currently expect "Bad Request Exception" error
+6. **Expected:** Error displays as toast notification with red styling
+7. **Expected:** Modal closes and returns to species dashboard
+8. **Expected:** Error handled gracefully without app crash
+
+**Modal Interaction Testing:**
+1. Click "Cancel" button
+2. **Expected:** Modal closes without saving, returns to dashboard
+3. Test clicking outside modal area
+4. **Expected:** Modal closes (if click-outside behavior enabled)
+5. Test opening modal multiple times
+6. **Expected:** Form resets to defaults on each open
+
+#### 8.4 Species Trait Management Testing
+
+**Access Trait Builder:**
+1. Navigate directly to `/species/{speciesId}/traits` (use ID 1 for testing)
+2. **Expected:** Trait Builder page attempts to load
+3. **Expected:** Shows appropriate error: "Species with ID 1 not found"
+4. **Expected:** Error message displays with proper styling and Error icon
+5. **Expected:** Page doesn't crash or show broken layout
+
+**Trait Builder Interface (When Species Exists):**
+*Note: This section requires successful species creation first*
+1. Access trait builder for valid species
+2. **Expected:** Page shows "Trait Builder" title
+3. **Expected:** Breadcrumb navigation: "Species Management > [Species Name] > Traits"
+4. **Expected:** Species context displayed (e.g., "Configure traits for Dragon")
+5. **Expected:** Empty state shows Settings icon and helpful message
+6. **Expected:** "Add Trait" button with plus icon visible
+7. **Expected:** "Manage Variants" button links to variant management
+
+**Trait Creation Modal (When Available):**
+1. Click "Add Trait" button
+2. **Expected:** Modal opens with "Create New Trait" title
+3. **Expected:** Form includes:
+   - Trait Name text input
+   - Value Type selection (STRING, INTEGER, TIMESTAMP, ENUM)
+   - Each value type shows icon and description
+4. **Expected:** Value type options display properly with icons:
+   - STRING: Type icon, "Text-based traits like names, descriptions..."
+   - INTEGER: Hash icon, "Numeric traits for ages, levels, stats..."
+   - TIMESTAMP: Calendar icon, "Date and time traits for birthdays..."
+   - ENUM: List icon, "Predefined options like colors, rarities..."
+
+#### 8.5 Species Variant Management Testing
+
+**Access Variant Management:**
+1. Navigate directly to `/species/{speciesId}/variants`
+2. **Expected:** Species Variant Management page attempts to load
+3. **Expected:** Shows same error as traits: "Species with ID 1 not found"
+4. **Expected:** Consistent error styling and behavior with trait page
+
+**Variant Management Interface (When Species Exists):**
+1. Access variant management for valid species
+2. **Expected:** Page shows "Species Variants" title
+3. **Expected:** Breadcrumb: "Species Management > [Species Name] > Variants"
+4. **Expected:** Context shows species name and variant count
+5. **Expected:** Empty state explains variant concept with helpful text
+6. **Expected:** "Add Variant" button with plus icon
+7. **Expected:** "Manage Traits" button links back to trait builder
+
+**Variant Creation Workflow:**
+1. Click "Add Variant" button
+2. **Expected:** Modal opens with "Create New Variant" title
+3. **Expected:** Form includes:
+   - Variant Name input with examples ("Common", "Rare", "Shiny", etc.)
+   - Helpful description text about variant purpose
+4. **Expected:** Form validation prevents empty submissions
+5. **Expected:** Cancel and Create buttons function properly
+
+#### 8.6 Error Handling & Edge Cases
+
+**Network Error Handling:**
+1. Test species creation with network connectivity issues
+2. **Expected:** Appropriate timeout and error messages
+3. **Expected:** User can retry operations
+4. **Expected:** No partial data creation on failure
+
+**Permission Validation:**
+1. Access species management URLs with insufficient permissions
+2. **Expected:** Access denied or redirect with clear error message
+3. **Expected:** No broken page states or exposed functionality
+4. Test with user who has no community membership
+5. **Expected:** Proper authorization checks prevent access
+
+**Invalid URL Parameters:**
+1. Access `/communities/999/species` (non-existent community)
+2. **Expected:** 404 error or appropriate not found message
+3. Access `/species/999/traits` (non-existent species)
+4. **Expected:** "Species with ID 999 not found" error
+5. **Expected:** Consistent error handling across all species URLs
+
+**GraphQL Error Handling:**
+1. Monitor browser console during operations
+2. **Expected:** GraphQL errors logged appropriately
+3. **Expected:** User-friendly error messages displayed
+4. **Expected:** No GraphQL query failures that crash the UI
+5. Test with invalid GraphQL operations
+6. **Expected:** Proper error boundaries prevent white screen
+
+#### 8.7 Browser Compatibility & Performance
+
+**Cross-Browser Testing:**
+1. Test species management in Chrome, Firefox, Safari
+2. **Expected:** Consistent functionality across browsers
+3. **Expected:** Modal interactions work properly
+4. **Expected:** Form submissions function correctly
+
+**Responsive Design Testing:**
+1. Access species management on mobile/tablet sizes
+2. **Expected:** Cards and layout adapt properly
+3. **Expected:** Modals remain usable on smaller screens
+4. **Expected:** Search and action buttons accessible
+5. **Expected:** Touch interactions work on mobile
+
+**Performance Validation:**
+1. Monitor page load times for species management
+2. **Expected:** Initial load under 3 seconds on fast connection
+3. **Expected:** Modal open/close animations smooth
+4. **Expected:** Search filtering responsive without lag
+5. Test with large numbers of species (when available)
+6. **Expected:** Pagination or efficient loading for large lists
+
+#### 8.8 Data Persistence & State Management
+
+**Page Refresh Testing:**
+1. Perform species management operations
+2. Refresh page (F5) after each major action
+3. **Expected:** Page state preserved correctly
+4. **Expected:** No loss of search filters or view state
+5. **Expected:** Species count and data remain accurate
+
+**Navigation State:**
+1. Navigate between species, trait, and variant pages
+2. **Expected:** Proper context maintained throughout navigation
+3. **Expected:** Breadcrumbs update correctly
+4. **Expected:** Back button functionality works as expected
+5. Return to species dashboard from sub-pages
+6. **Expected:** Dashboard reflects any changes made in sub-sections
+
+**GraphQL Cache Testing:**
+1. Create species (when backend working)
+2. Navigate to different pages and return
+3. **Expected:** Apollo cache maintains data consistency
+4. **Expected:** Optimistic updates work properly
+5. **Expected:** Refetch operations work after mutations
+
+#### 8.9 Integration with Community System
+
+**Community Context Validation:**
+1. Test species management in different communities
+2. **Expected:** Species data properly scoped to community
+3. **Expected:** No cross-community data leakage
+4. **Expected:** Community names and contexts display correctly
+
+**Role-Based Access Testing:**
+1. Test with different community roles:
+   - Community Admin (full access)
+   - Moderator (limited access)
+   - Member (view only or no access)
+2. **Expected:** Features shown/hidden based on role permissions
+3. **Expected:** Action buttons reflect available permissions
+4. **Expected:** No unauthorized operations possible
+
+**Community Membership Integration:**
+1. Test species management access with various community membership states
+2. **Expected:** Non-members cannot access community species
+3. **Expected:** Proper membership validation throughout workflow
+4. **Expected:** Community admin roles grant appropriate species permissions
+
+### 9. Data Integrity & Error Handling
 
 #### 8.1 Form Validation
 
@@ -600,6 +852,9 @@ This document outlines comprehensive test workflows for the CharDB application t
 - Media type counting and filtering
 - User dashboard functionality
 - NSFW filtering
+- Species Management System access and navigation
+- Community administration interface functionality
+- Species creation modal and form validation
 
 ### Medium Priority (Extended Features)
 
@@ -610,6 +865,10 @@ This document outlines comprehensive test workflows for the CharDB application t
 - Advanced privacy controls
 - Artist credit system
 - Character trading features
+- Species trait builder interface and trait type management
+- Species variant management and configuration
+- Community-scoped species permissions and role integration
+- Species search and filtering functionality
 
 ## Notes for Test Execution
 

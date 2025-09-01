@@ -80,7 +80,7 @@ import { Theme } from '../theme';
  */
 
 interface ButtonProps {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
@@ -136,6 +136,17 @@ const getVariantStyles = (variant: string, theme: Theme) => {
         
         &:hover:not(:disabled) {
           background-color: ${theme.colors.surface};
+        }
+      `;
+    case 'danger':
+      return css`
+        background-color: ${theme.colors.danger};
+        color: white;
+        border: 1px solid ${theme.colors.danger};
+        
+        &:hover:not(:disabled) {
+          background-color: ${theme.colors.dangerHover};
+          border-color: ${theme.colors.dangerHover};
         }
       `;
     default:
