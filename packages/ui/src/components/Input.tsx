@@ -4,10 +4,10 @@ import styled from 'styled-components';
 /**
  * Base input field with theme-based styling and focus states
  */
-const StyledInput = styled.input<{ hasError?: boolean }>`
+const StyledInput = styled.input<{ $hasError?: boolean }>`
   width: 100%;
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme, hasError }) => hasError ? theme.colors.error : theme.colors.border};
+  border: 1px solid ${({ theme, $hasError }) => $hasError ? theme.colors.error : theme.colors.border};
   border-radius: 6px;
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   font-family: inherit;
@@ -17,9 +17,9 @@ const StyledInput = styled.input<{ hasError?: boolean }>`
   
   &:focus {
     outline: none;
-    border-color: ${({ theme, hasError }) => hasError ? theme.colors.error : theme.colors.primary};
-    box-shadow: 0 0 0 3px ${({ theme, hasError }) => 
-      hasError ? theme.colors.error + '20' : theme.colors.primary + '20'
+    border-color: ${({ theme, $hasError }) => $hasError ? theme.colors.error : theme.colors.primary};
+    box-shadow: 0 0 0 3px ${({ theme, $hasError }) => 
+      $hasError ? theme.colors.error + '20' : theme.colors.primary + '20'
     };
   }
   
@@ -39,10 +39,10 @@ const StyledInput = styled.input<{ hasError?: boolean }>`
 /**
  * Styled textarea with consistent styling matching input fields
  */
-const StyledTextArea = styled.textarea<{ hasError?: boolean }>`
+const StyledTextArea = styled.textarea<{ $hasError?: boolean }>`
   width: 100%;
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme, hasError }) => hasError ? theme.colors.error : theme.colors.border};
+  border: 1px solid ${({ theme, $hasError }) => $hasError ? theme.colors.error : theme.colors.border};
   border-radius: 6px;
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   font-family: inherit;
@@ -54,9 +54,9 @@ const StyledTextArea = styled.textarea<{ hasError?: boolean }>`
   
   &:focus {
     outline: none;
-    border-color: ${({ theme, hasError }) => hasError ? theme.colors.error : theme.colors.primary};
-    box-shadow: 0 0 0 3px ${({ theme, hasError }) => 
-      hasError ? theme.colors.error + '20' : theme.colors.primary + '20'
+    border-color: ${({ theme, $hasError }) => $hasError ? theme.colors.error : theme.colors.primary};
+    box-shadow: 0 0 0 3px ${({ theme, $hasError }) => 
+      $hasError ? theme.colors.error + '20' : theme.colors.primary + '20'
     };
   }
   
@@ -167,12 +167,14 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
  * @param props.rows - Number of rows for textarea (defaults to browser default)
  * @returns A styled input or textarea component
  */
-export function Input({ hasError = false, multiline = false, rows, ...props }: InputProps) {
-  if (multiline) {
-    // TypeScript workaround: textarea props are different from input props
-    const textAreaProps = props as React.TextareaHTMLAttributes<HTMLTextAreaElement>;
-    return <StyledTextArea hasError={hasError} rows={rows} {...textAreaProps} />;
+export const Input = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
+  ({ hasError = false, multiline = false, rows, ...props }, ref) => {
+    if (multiline) {
+      // TypeScript workaround: textarea props are different from input props
+      const textAreaProps = props as React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+      return <StyledTextArea $hasError={hasError} rows={rows} ref={ref as React.Ref<HTMLTextAreaElement>} {...textAreaProps} />;
+    }
+    
+    return <StyledInput $hasError={hasError} ref={ref as React.Ref<HTMLInputElement>} {...props} />;
   }
-  
-  return <StyledInput hasError={hasError} {...props} />;
-}
+);

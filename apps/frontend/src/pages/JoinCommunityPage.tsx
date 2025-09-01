@@ -237,7 +237,7 @@ export const JoinCommunityPage: React.FC = () => {
           <Button 
             type="submit" 
             loading={isLoading} 
-            disabled={isLoading || !inviteCodeData?.inviteCodeById?.isAvailable}
+            disabled={isLoading || inviteCodeLoading || !inviteCodeData?.inviteCodeById?.isAvailable}
           >
             {isLoading ? 'Joining Community...' : 'Join Community'}
           </Button>
