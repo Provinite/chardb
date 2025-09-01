@@ -646,11 +646,11 @@ This document outlines comprehensive test workflows for the CharDB application t
    - Image checkbox: checked
 2. **Expected:** "Create Species" button becomes enabled
 3. Click "Create Species" button
-4. **Expected:** Form submits and modal processing state shows
-5. **Test Known Issue:** Currently expect "Bad Request Exception" error
-6. **Expected:** Error displays as toast notification with red styling
-7. **Expected:** Modal closes and returns to species dashboard
-8. **Expected:** Error handled gracefully without app crash
+4. **Expected:** Form submits successfully with loading state
+5. **Expected:** Success toast notification appears: "Species 'Dragon' created successfully!"
+6. **Expected:** Modal closes and returns to species dashboard
+7. **Expected:** New species appears in species list
+8. **Expected:** Species count updates (e.g., "$0 species" → "$1 species")
 
 **Modal Interaction Testing:**
 1. Click "Cancel" button
