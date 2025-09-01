@@ -9,6 +9,7 @@ import {
   mapPrismaCommunityConnectionToGraphQL,
 } from './utils/community-resolver-mappers';
 import { RemovalResponse } from '../shared/entities/removal-response.entity';
+import { CurrentUser, CurrentUserType } from '../auth/decorators/current-user.decorator';
 
 @Resolver(() => Community)
 export class CommunitiesResolver {
@@ -19,8 +20,9 @@ export class CommunitiesResolver {
   async createCommunity(
     @Args('createCommunityInput', { description: 'Community creation data' }) 
     createCommunityInput: CreateCommunityInput,
+    @CurrentUser() user: CurrentUserType,
   ): Promise<Community> {
-    const serviceInput = mapCreateCommunityInputToService(createCommunityInput);
+    const serviceInput = mapCreateCommunityInputToService(createCommunityInput, user.id);
     const prismaResult = await this.communitiesService.create(serviceInput);
     return mapPrismaCommunityToGraphQL(prismaResult);
   }

@@ -389,6 +389,7 @@ model Role {
   canCreateSpecies    Boolean @default(false) @map("can_create_species")
   canCreateCharacter  Boolean @default(false) @map("can_create_character")
   canEditCharacter    Boolean @default(false) @map("can_edit_character")
+  canEditOwnCharacter Boolean @default(false) @map("can_edit_own_character")
   canEditSpecies      Boolean @default(false) @map("can_edit_species")
   canCreateInviteCode Boolean @default(false) @map("can_create_invite_code")
   canListInviteCodes  Boolean @default(false) @map("can_list_invite_codes")

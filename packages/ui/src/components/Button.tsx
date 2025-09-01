@@ -2,6 +2,83 @@ import React from 'react';
 import styled, { css } from 'styled-components';
 import { Theme } from '../theme';
 
+/**
+ * Button - A flexible, themeable button component with multiple variants and icon support
+ * 
+ * Provides consistent button styling across the application with support for different
+ * visual variants, sizes, loading states, and optional icons. Built with accessibility
+ * in mind and integrates seamlessly with the application theme.
+ * 
+ * Features:
+ * - Multiple visual variants (primary, secondary, outline, ghost)
+ * - Three sizes (sm, md, lg) with appropriate spacing
+ * - Loading state with visual indicator
+ * - Optional icon support with proper spacing
+ * - Disabled state handling
+ * - Full accessibility support
+ * - Can render as different elements (button, a, Link, etc.)
+ * 
+ * @example
+ * ```tsx
+ * // Basic primary button
+ * <Button onClick={handleClick}>
+ *   Save Changes
+ * </Button>
+ * 
+ * // Button with icon
+ * <Button 
+ *   variant="primary" 
+ *   icon={<Plus size={16} />}
+ *   onClick={handleCreate}
+ * >
+ *   Create New
+ * </Button>
+ * 
+ * // Secondary button with loading state
+ * <Button 
+ *   variant="secondary"
+ *   loading={isSubmitting}
+ *   onClick={handleSubmit}
+ * >
+ *   Submit Form
+ * </Button>
+ * 
+ * // Outline button with custom size
+ * <Button 
+ *   variant="outline"
+ *   size="lg"
+ *   icon={<Download size={20} />}
+ * >
+ *   Download File
+ * </Button>
+ * 
+ * // Ghost button for subtle actions
+ * <Button variant="ghost" size="sm">
+ *   Cancel
+ * </Button>
+ * 
+ * // Disabled button
+ * <Button disabled>
+ *   Cannot Click
+ * </Button>
+ * 
+ * // Button rendered as Link (requires router integration)
+ * <Button 
+ *   as={Link}
+ *   to="/dashboard"
+ *   variant="primary"
+ *   icon={<ArrowRight size={16} />}
+ * >
+ *   Go to Dashboard
+ * </Button>
+ * 
+ * // Submit button for forms
+ * <Button type="submit" variant="primary">
+ *   Submit
+ * </Button>
+ * ```
+ */
+
 interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
@@ -13,6 +90,8 @@ interface ButtonProps {
   as?: React.ElementType;
   to?: string;
   href?: string;
+  /** Optional icon to display before the button text */
+  icon?: React.ReactNode;
 }
 
 const getVariantStyles = (variant: string, theme: Theme) => {
@@ -125,6 +204,7 @@ export const Button: React.FC<ButtonProps> = ({
   type = 'button',
   onClick,
   as,
+  icon,
   ...props
 }) => {
   return (
@@ -138,6 +218,7 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {loading && <span>⏳</span>}
+      {!loading && icon && icon}
       {children}
     </StyledButton>
   );

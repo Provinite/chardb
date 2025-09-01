@@ -439,6 +439,8 @@ export type CreateRoleInput = {
   canCreateSpecies?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit characters */
   canEditCharacter?: Scalars['Boolean']['input'];
+  /** Whether members with this role can edit their own characters */
+  canEditOwnCharacter?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit existing roles */
   canEditRole?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit species */
@@ -1929,6 +1931,8 @@ export type Role = {
   canCreateSpecies: Scalars['Boolean']['output'];
   /** Whether members with this role can edit characters */
   canEditCharacter: Scalars['Boolean']['output'];
+  /** Whether members with this role can edit their own characters */
+  canEditOwnCharacter: Scalars['Boolean']['output'];
   /** Whether members with this role can edit existing roles */
   canEditRole: Scalars['Boolean']['output'];
   /** Whether members with this role can edit species */
@@ -2270,6 +2274,8 @@ export type UpdateRoleInput = {
   canCreateSpecies?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit characters */
   canEditCharacter?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can edit their own characters */
+  canEditOwnCharacter?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit existing roles */
   canEditRole?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit species */
@@ -2524,6 +2530,43 @@ export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, _count: { __typename?: 'CharacterCount', media: number } }> };
 
+export type CommunitiesQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CommunitiesQuery = { __typename?: 'Query', communities: { __typename?: 'CommunityConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string }> } };
+
+export type CommunityByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type CommunityByIdQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } };
+
+export type CreateCommunityMutationVariables = Exact<{
+  createCommunityInput: CreateCommunityInput;
+}>;
+
+
+export type CreateCommunityMutation = { __typename?: 'Mutation', createCommunity: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } };
+
+export type UpdateCommunityMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateCommunityInput: UpdateCommunityInput;
+}>;
+
+
+export type UpdateCommunityMutation = { __typename?: 'Mutation', updateCommunity: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } };
+
+export type RemoveCommunityMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveCommunityMutation = { __typename?: 'Mutation', removeCommunity: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
 export type GetGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
 }>;
@@ -2645,6 +2688,15 @@ export type ClaimInviteCodeMutationVariables = Exact<{
 
 
 export type ClaimInviteCodeMutation = { __typename?: 'Mutation', claimInviteCode: { __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } };
+
+export type RolesByCommunityQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type RolesByCommunityQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Role', id: string, name: string, canCreateInviteCode: boolean, community: { __typename?: 'Community', id: string, name: string } }> } };
 
 export type GetMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -3731,6 +3783,205 @@ export type GetLikedCharactersQueryHookResult = ReturnType<typeof useGetLikedCha
 export type GetLikedCharactersLazyQueryHookResult = ReturnType<typeof useGetLikedCharactersLazyQuery>;
 export type GetLikedCharactersSuspenseQueryHookResult = ReturnType<typeof useGetLikedCharactersSuspenseQuery>;
 export type GetLikedCharactersQueryResult = Apollo.QueryResult<GetLikedCharactersQuery, GetLikedCharactersQueryVariables>;
+export const CommunitiesDocument = gql`
+    query Communities($first: Int, $after: String) {
+  communities(first: $first, after: $after) {
+    nodes {
+      id
+      name
+      createdAt
+      updatedAt
+    }
+    hasNextPage
+    hasPreviousPage
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useCommunitiesQuery__
+ *
+ * To run a query within a React component, call `useCommunitiesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunitiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommunitiesQuery({
+ *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useCommunitiesQuery(baseOptions?: Apollo.QueryHookOptions<CommunitiesQuery, CommunitiesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CommunitiesQuery, CommunitiesQueryVariables>(CommunitiesDocument, options);
+      }
+export function useCommunitiesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunitiesQuery, CommunitiesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CommunitiesQuery, CommunitiesQueryVariables>(CommunitiesDocument, options);
+        }
+export function useCommunitiesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunitiesQuery, CommunitiesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CommunitiesQuery, CommunitiesQueryVariables>(CommunitiesDocument, options);
+        }
+export type CommunitiesQueryHookResult = ReturnType<typeof useCommunitiesQuery>;
+export type CommunitiesLazyQueryHookResult = ReturnType<typeof useCommunitiesLazyQuery>;
+export type CommunitiesSuspenseQueryHookResult = ReturnType<typeof useCommunitiesSuspenseQuery>;
+export type CommunitiesQueryResult = Apollo.QueryResult<CommunitiesQuery, CommunitiesQueryVariables>;
+export const CommunityByIdDocument = gql`
+    query CommunityById($id: ID!) {
+  community(id: $id) {
+    id
+    name
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useCommunityByIdQuery__
+ *
+ * To run a query within a React component, call `useCommunityByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunityByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommunityByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useCommunityByIdQuery(baseOptions: Apollo.QueryHookOptions<CommunityByIdQuery, CommunityByIdQueryVariables> & ({ variables: CommunityByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CommunityByIdQuery, CommunityByIdQueryVariables>(CommunityByIdDocument, options);
+      }
+export function useCommunityByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunityByIdQuery, CommunityByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CommunityByIdQuery, CommunityByIdQueryVariables>(CommunityByIdDocument, options);
+        }
+export function useCommunityByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunityByIdQuery, CommunityByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CommunityByIdQuery, CommunityByIdQueryVariables>(CommunityByIdDocument, options);
+        }
+export type CommunityByIdQueryHookResult = ReturnType<typeof useCommunityByIdQuery>;
+export type CommunityByIdLazyQueryHookResult = ReturnType<typeof useCommunityByIdLazyQuery>;
+export type CommunityByIdSuspenseQueryHookResult = ReturnType<typeof useCommunityByIdSuspenseQuery>;
+export type CommunityByIdQueryResult = Apollo.QueryResult<CommunityByIdQuery, CommunityByIdQueryVariables>;
+export const CreateCommunityDocument = gql`
+    mutation CreateCommunity($createCommunityInput: CreateCommunityInput!) {
+  createCommunity(createCommunityInput: $createCommunityInput) {
+    id
+    name
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type CreateCommunityMutationFn = Apollo.MutationFunction<CreateCommunityMutation, CreateCommunityMutationVariables>;
+
+/**
+ * __useCreateCommunityMutation__
+ *
+ * To run a mutation, you first call `useCreateCommunityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCommunityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCommunityMutation, { data, loading, error }] = useCreateCommunityMutation({
+ *   variables: {
+ *      createCommunityInput: // value for 'createCommunityInput'
+ *   },
+ * });
+ */
+export function useCreateCommunityMutation(baseOptions?: Apollo.MutationHookOptions<CreateCommunityMutation, CreateCommunityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateCommunityMutation, CreateCommunityMutationVariables>(CreateCommunityDocument, options);
+      }
+export type CreateCommunityMutationHookResult = ReturnType<typeof useCreateCommunityMutation>;
+export type CreateCommunityMutationResult = Apollo.MutationResult<CreateCommunityMutation>;
+export type CreateCommunityMutationOptions = Apollo.BaseMutationOptions<CreateCommunityMutation, CreateCommunityMutationVariables>;
+export const UpdateCommunityDocument = gql`
+    mutation UpdateCommunity($id: ID!, $updateCommunityInput: UpdateCommunityInput!) {
+  updateCommunity(id: $id, updateCommunityInput: $updateCommunityInput) {
+    id
+    name
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type UpdateCommunityMutationFn = Apollo.MutationFunction<UpdateCommunityMutation, UpdateCommunityMutationVariables>;
+
+/**
+ * __useUpdateCommunityMutation__
+ *
+ * To run a mutation, you first call `useUpdateCommunityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCommunityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCommunityMutation, { data, loading, error }] = useUpdateCommunityMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateCommunityInput: // value for 'updateCommunityInput'
+ *   },
+ * });
+ */
+export function useUpdateCommunityMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCommunityMutation, UpdateCommunityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateCommunityMutation, UpdateCommunityMutationVariables>(UpdateCommunityDocument, options);
+      }
+export type UpdateCommunityMutationHookResult = ReturnType<typeof useUpdateCommunityMutation>;
+export type UpdateCommunityMutationResult = Apollo.MutationResult<UpdateCommunityMutation>;
+export type UpdateCommunityMutationOptions = Apollo.BaseMutationOptions<UpdateCommunityMutation, UpdateCommunityMutationVariables>;
+export const RemoveCommunityDocument = gql`
+    mutation RemoveCommunity($id: ID!) {
+  removeCommunity(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type RemoveCommunityMutationFn = Apollo.MutationFunction<RemoveCommunityMutation, RemoveCommunityMutationVariables>;
+
+/**
+ * __useRemoveCommunityMutation__
+ *
+ * To run a mutation, you first call `useRemoveCommunityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveCommunityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeCommunityMutation, { data, loading, error }] = useRemoveCommunityMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useRemoveCommunityMutation(baseOptions?: Apollo.MutationHookOptions<RemoveCommunityMutation, RemoveCommunityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveCommunityMutation, RemoveCommunityMutationVariables>(RemoveCommunityDocument, options);
+      }
+export type RemoveCommunityMutationHookResult = ReturnType<typeof useRemoveCommunityMutation>;
+export type RemoveCommunityMutationResult = Apollo.MutationResult<RemoveCommunityMutation>;
+export type RemoveCommunityMutationOptions = Apollo.BaseMutationOptions<RemoveCommunityMutation, RemoveCommunityMutationVariables>;
 export const GetGalleriesDocument = gql`
     query GetGalleries($filters: GalleryFiltersInput) {
   galleries(filters: $filters) {
@@ -4719,6 +4970,59 @@ export function useClaimInviteCodeMutation(baseOptions?: Apollo.MutationHookOpti
 export type ClaimInviteCodeMutationHookResult = ReturnType<typeof useClaimInviteCodeMutation>;
 export type ClaimInviteCodeMutationResult = Apollo.MutationResult<ClaimInviteCodeMutation>;
 export type ClaimInviteCodeMutationOptions = Apollo.BaseMutationOptions<ClaimInviteCodeMutation, ClaimInviteCodeMutationVariables>;
+export const RolesByCommunityDocument = gql`
+    query RolesByCommunity($communityId: ID!, $first: Int, $after: String) {
+  rolesByCommunity(communityId: $communityId, first: $first, after: $after) {
+    nodes {
+      id
+      name
+      canCreateInviteCode
+      community {
+        id
+        name
+      }
+    }
+    hasNextPage
+    hasPreviousPage
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useRolesByCommunityQuery__
+ *
+ * To run a query within a React component, call `useRolesByCommunityQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRolesByCommunityQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRolesByCommunityQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useRolesByCommunityQuery(baseOptions: Apollo.QueryHookOptions<RolesByCommunityQuery, RolesByCommunityQueryVariables> & ({ variables: RolesByCommunityQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<RolesByCommunityQuery, RolesByCommunityQueryVariables>(RolesByCommunityDocument, options);
+      }
+export function useRolesByCommunityLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<RolesByCommunityQuery, RolesByCommunityQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<RolesByCommunityQuery, RolesByCommunityQueryVariables>(RolesByCommunityDocument, options);
+        }
+export function useRolesByCommunitySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<RolesByCommunityQuery, RolesByCommunityQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<RolesByCommunityQuery, RolesByCommunityQueryVariables>(RolesByCommunityDocument, options);
+        }
+export type RolesByCommunityQueryHookResult = ReturnType<typeof useRolesByCommunityQuery>;
+export type RolesByCommunityLazyQueryHookResult = ReturnType<typeof useRolesByCommunityLazyQuery>;
+export type RolesByCommunitySuspenseQueryHookResult = ReturnType<typeof useRolesByCommunitySuspenseQuery>;
+export type RolesByCommunityQueryResult = Apollo.QueryResult<RolesByCommunityQuery, RolesByCommunityQueryVariables>;
 export const GetMediaDocument = gql`
     query GetMedia($filters: MediaFiltersInput) {
   media(filters: $filters) {

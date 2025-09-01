@@ -25,6 +25,10 @@ export class Role {
   @Field(() => Boolean, { description: 'Whether members with this role can edit characters' })
   canEditCharacter!: boolean;
 
+  /** Permission to edit own characters only */
+  @Field(() => Boolean, { description: 'Whether members with this role can edit their own characters' })
+  canEditOwnCharacter!: boolean;
+
   /** Permission to edit species */
   @Field(() => Boolean, { description: 'Whether members with this role can edit species' })
   canEditSpecies!: boolean;

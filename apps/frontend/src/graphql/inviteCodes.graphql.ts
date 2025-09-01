@@ -147,6 +147,25 @@ export const CLAIM_INVITE_CODE_MUTATION = gql`
   }
 `;
 
+export const ROLES_BY_COMMUNITY_QUERY = gql`
+  query RolesByCommunity($communityId: ID!, $first: Int, $after: String) {
+    rolesByCommunity(communityId: $communityId, first: $first, after: $after) {
+      nodes {
+        id
+        name
+        canCreateInviteCode
+        community {
+          id
+          name
+        }
+      }
+      hasNextPage
+      hasPreviousPage
+      totalCount
+    }
+  }
+`;
+
 // Re-export generated types and hooks after regeneration
 export {
   // Hooks
@@ -156,6 +175,7 @@ export {
   useUpdateInviteCodeMutation,
   useRemoveInviteCodeMutation,
   useClaimInviteCodeMutation,
+  useRolesByCommunityQuery,
   
   // Types
   type InviteCodesQuery,
@@ -170,8 +190,12 @@ export {
   type RemoveInviteCodeMutationVariables,
   type ClaimInviteCodeMutation,
   type ClaimInviteCodeMutationVariables,
+  type RolesByCommunityQuery,
+  type RolesByCommunityQueryVariables,
   type InviteCode,
   type InviteCodeConnection,
+  type Role,
+  type RoleConnection,
   type CreateInviteCodeInput,
   type UpdateInviteCodeInput,
   type ClaimInviteCodeInput,

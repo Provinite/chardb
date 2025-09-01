@@ -36,6 +36,8 @@ import { FollowingPage } from "./pages/FollowingPage";
 import { FeedPage } from "./pages/FeedPage";
 import { SiteAdminPage } from "./pages/SiteAdminPage";
 import { SiteInviteCodesPage } from "./pages/SiteInviteCodesPage";
+import { CommunityInviteCodesPage } from "./pages/CommunityInviteCodesPage";
+import { CommunityManagementPage } from "./pages/CommunityManagementPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
@@ -219,6 +221,24 @@ function App() {
           element={
             <ProtectedRoute>
               <SiteInviteCodesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/communities"
+          element={
+            <ProtectedRoute>
+              <CommunityManagementPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Community routes */}
+        <Route
+          path="/communities/:communityId/invite-codes"
+          element={
+            <ProtectedRoute>
+              <CommunityInviteCodesPage />
             </ProtectedRoute>
           }
         />
