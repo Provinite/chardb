@@ -986,6 +986,44 @@ This document outlines comprehensive test workflows for the CharDB application t
 2. Test codes with edge-case characters within allowed set
 3. **Expected:** Proper validation and error messages
 
+#### 9.7 Complete Community Invitation Workflow Testing
+
+**Test Full Invitation Flow End-to-End:**
+1. Log in with test user credentials
+2. Navigate to dashboard and click "Join Community" in Quick Actions
+3. **Expected:** Redirected to join community page with invite code form
+4. Enter a valid community invite code (obtain from admin invite code management)
+5. **Expected:** Real-time validation shows code status and remaining uses
+6. **Expected:** Community preview displays showing community name and assigned role
+7. Click "Join Community" button
+8. **Expected:** Success notification appears confirming community membership
+9. **Expected:** User redirected to joined community page
+10. Verify user can access community-specific features based on assigned role
+
+**Test Invalid Invite Code Handling:**
+1. Access join community page while logged in
+2. Enter non-existent invite code
+3. **Expected:** Error message indicates invalid code
+4. **Expected:** Submit button remains disabled
+5. Enter exhausted invite code (if available)
+6. **Expected:** Error message indicates code is exhausted
+7. **Expected:** Form prevents submission of invalid codes
+
+**Test Authentication Requirements:**
+1. Navigate to `/join-community` while logged out
+2. **Expected:** Authentication required message displayed
+3. **Expected:** Login prompt or redirect to login page
+4. Complete login flow and return to join community page
+5. **Expected:** Full invite code functionality available after authentication
+
+**Test Multiple Community Memberships:**
+1. Successfully join first community using invite code
+2. Return to join community page
+3. Use different invite code for second community
+4. **Expected:** User can join multiple communities
+5. **Expected:** Each community membership tracked independently
+6. Verify user has appropriate roles in each joined community
+
 ## Notes for Test Execution
 
 1. **Database State:** These tests assume a clean or well-known database state. Some workflows may need existing test data.

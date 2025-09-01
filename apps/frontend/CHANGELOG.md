@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Community Invitation System
+- **Community Join Functionality**: New `JoinCommunityPage` component for existing users to join communities via invite codes
+  - Real-time invite code validation with GraphQL integration
+  - Community preview showing name and assigned role before joining
+  - Form validation using react-hook-form and zod schema validation
+  - Success notifications and automatic navigation to joined community
+- **Dashboard Integration**: Added "Join Community" quick action button to dashboard for easy access
+- **Invite Code Testing Flow**: Complete end-to-end testing of community invitation system
+  - Enter invite code → Real-time validation → Community preview → Join confirmation → Success redirect
+
+#### UI Component Improvements  
+- **Input Component Enhancement**: Fixed React ref forwarding and styled-components prop issues
+  - Resolved "Function components cannot be given refs" console errors
+  - Added transient props (`$hasError`) to prevent DOM warnings
+  - Improved form integration with react-hook-form library
+- **Error Feedback Components**: Enhanced form validation feedback system
+  - Real-time validation status indicators (valid, invalid, loading states)
+  - Community preview cards with role assignment information
+  - Toast notifications for successful community joins
+
 #### TypeScript Type Safety Improvements
 - `MediaGridItem` interface using deep Pick utility types for minimal required media fields
 - Proper TypeScript interfaces for nested GraphQL entity fields (`owner`, `image`, `textContent`)
