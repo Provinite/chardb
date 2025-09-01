@@ -7,6 +7,7 @@ import {
   useSpeciesByCommunityQuery,
   useCreateSpeciesMutation,
   useDeleteSpeciesMutation,
+  useCommunitiesQuery,
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
 
@@ -380,6 +381,14 @@ export const SpeciesManagementPage: React.FC = () => {
     variables: { communityId, first: 50 },
   });
 
+  // Fetch communities for the dropdown
+  const {
+    data: communitiesData,
+    loading: communitiesLoading,
+  } = useCommunitiesQuery({
+    variables: { first: 100 },
+  });
+
   const [createSpeciesMutation] = useCreateSpeciesMutation({
     onCompleted: (data) => {
       toast.success(
@@ -402,12 +411,8 @@ export const SpeciesManagementPage: React.FC = () => {
     },
   });
 
-  // Mock communities data - in real implementation, this would come from a communities query
-  const communities = [
-    { id: "community-1", name: "Fantasy Realm" },
-    { id: "community-2", name: "Sci-Fi Universe" },
-    { id: "community-3", name: "Modern World" },
-  ];
+  // Use real communities data from GraphQL
+  const communities = communitiesData?.communities?.nodes || [];
 
   // Filtered species based on search query
   const filteredSpecies = useMemo(() => {
@@ -464,7 +469,7 @@ export const SpeciesManagementPage: React.FC = () => {
   };
 
   // Loading state
-  if (speciesLoading) {
+  if (speciesLoading || communitiesLoading) {
     return (
       <Container>
         <Header>

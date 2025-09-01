@@ -692,6 +692,75 @@ This document outlines comprehensive test workflows for the CharDB application t
    - TIMESTAMP: Calendar icon, "Date and time traits for birthdays..."
    - ENUM: List icon, "Predefined options like colors, rarities..."
 
+**Create ENUM Trait for Testing:**
+1. Fill trait name (e.g., "Scale Color")
+2. Select "Selection" (ENUM) value type
+3. Click "Create Trait"
+4. **Expected:** Toast notification "Trait 'Scale Color' created successfully!"
+5. **Expected:** Trait appears in grid with ENUM type icon (List)
+6. **Expected:** Trait shows "Selection" type label
+7. **Expected:** Helper text indicates "(Click 'Options' to manage values)"
+
+**ENUM Trait Management Interface:**
+1. **Expected:** ENUM traits display additional "Options" button with List icon
+2. **Expected:** Trait card shows all standard actions (Edit, Delete) plus Options
+3. **Expected:** Options button is only visible for ENUM-type traits
+4. **Expected:** Other trait types (STRING, INTEGER, TIMESTAMP) do not show Options button
+
+#### 8.4.1 Enum Value Management (ENUM Trait Options)
+
+**Access Enum Value Management:**
+1. Create an ENUM-type trait (e.g., "Scale Color") following above steps
+2. Click "Options" button on the ENUM trait card
+3. **Expected:** Navigate to `/traits/{traitId}/enum-values`
+4. **Expected:** Page loads "Manage Options" interface
+
+**Enum Value Management Interface:**
+1. **Expected:** Page title "Manage Options"
+2. **Expected:** Breadcrumb: "Species Management > [Species] > Traits > [Trait Name] > Options"  
+3. **Expected:** Context shows trait name and options count (e.g., "Configure options for 'Scale Color' trait (0 options)")
+4. **Expected:** "Back to Traits" button returns to trait builder
+5. **Expected:** "Add Option" button with plus icon for creating enum values
+
+**Create Enum Values:**
+1. Click "Add Option" button
+2. **Expected:** Modal opens "Create New Option"
+3. **Expected:** Form includes:
+   - Option Name text input
+   - Display Order number input with helpful text
+4. Fill option name (e.g., "Red")
+5. Set display order (e.g., 1)
+6. Click "Create Option"
+7. **Expected:** Toast "Option 'Red' created successfully!"
+8. **Expected:** Option appears in list with order badge and actions
+
+**Add Multiple Enum Values:**
+1. Repeat creation for more options (e.g., "Blue", "Green", "Gold")
+2. **Expected:** Each option displays as a card with:
+   - Order badge (e.g., "#1", "#2")
+   - Option name prominently displayed
+   - Creation date metadata
+   - Up/Down arrows for reordering
+   - Edit and Delete action buttons
+
+**Enum Value Ordering:**
+1. **Expected:** Options display sorted by order value
+2. Click "Up" arrow on second item
+3. **Expected:** Item moves up in list, toast confirms update
+4. Click "Down" arrow on first item  
+5. **Expected:** Item moves down in list
+6. **Expected:** Up button disabled on first item, Down disabled on last item
+
+**Edit and Delete Enum Values:**
+1. Click "Edit" button on an option
+2. **Expected:** Modal opens with current values pre-filled
+3. Modify name and/or order
+4. **Expected:** Changes saved with toast confirmation
+5. Click "Delete" button on an option
+6. **Expected:** Confirmation dialog warns about character data deletion
+7. Confirm deletion
+8. **Expected:** Option removed with toast confirmation
+
 #### 8.5 Species Variant Management Testing
 
 **Access Variant Management:**
@@ -717,6 +786,95 @@ This document outlines comprehensive test workflows for the CharDB application t
    - Helpful description text about variant purpose
 4. **Expected:** Form validation prevents empty submissions
 5. **Expected:** Cancel and Create buttons function properly
+
+**Create Test Variant:**
+1. Create variant (e.g., "Fire Dragon")
+2. **Expected:** Toast "Variant 'Fire Dragon' created successfully!"
+3. **Expected:** Variant appears as card with:
+   - Variant name prominently displayed
+   - Creation/update metadata
+   - Action buttons: "Configure Traits", "Manage Enum Settings", "Edit", "Delete"
+4. **Expected:** Cards display in responsive grid layout
+
+**Variant Action Buttons:**
+1. **Expected:** Each variant card shows 4 action buttons:
+   - "Configure Traits" (Database icon) - for trait inheritance settings
+   - "Manage Enum Settings" (Settings icon) - for variant-specific enum value configuration
+   - "Edit" (Edit icon) - for renaming variant
+   - "Delete" (Trash icon) - for removing variant
+
+#### 8.5.1 Enum Value Settings Management (Variant-Specific Enum Configuration)
+
+**Prerequisites:**
+1. Must have created species with ENUM-type traits
+2. Must have created enum values for those traits (see section 8.4.1)
+3. Must have created at least one species variant
+
+**Access Enum Value Settings:**
+1. From variant management page, click "Manage Enum Settings" button on a variant card
+2. **Expected:** Navigate to `/variants/{variantId}/enum-settings`
+3. **Expected:** Page loads "Configure Enum Values" interface
+
+**Enum Value Settings Interface:**
+1. **Expected:** Page title "Configure Enum Values"
+2. **Expected:** Breadcrumb: "Species Management > [Species] > Variants > [Variant] > Enum Settings"
+3. **Expected:** Context shows variant name (e.g., "Choose which enum values are available for 'Fire Dragon' variant")
+4. **Expected:** "Back to Variants" button with left arrow returns to variant management
+
+**No ENUM Traits State:**
+1. If species has no ENUM-type traits:
+2. **Expected:** Empty state with Palette icon
+3. **Expected:** Message "No ENUM traits found"
+4. **Expected:** Helpful text about creating ENUM traits first
+5. **Expected:** "Manage Traits" button links to trait builder
+
+**ENUM Traits Display (With ENUM Traits Available):**
+1. **Expected:** Each ENUM trait displays as a section:
+   - Trait header with Palette icon and trait name
+   - Metadata showing enabled count (e.g., "2 of 4 options enabled")
+   - Grid of enum value cards within the trait section
+2. **Expected:** Traits are organized by trait (e.g., "Scale Color" section, "Element Type" section)
+
+**Enum Value Configuration Cards:**
+1. **Expected:** Each enum value displays as a card with:
+   - Option name prominently shown
+   - Order metadata (e.g., "Order: 1")
+   - Current status: enabled (green border, success styling) or disabled (default styling)
+   - Toggle button: "Enabled" (with checkmark) or "Disabled" (with X)
+2. **Expected:** Cards have hover effects and visual feedback
+
+**Enable/Disable Enum Values:**
+1. Click "Disabled" button on an enum value
+2. **Expected:** Button changes to "Enabled" with checkmark
+3. **Expected:** Card styling updates to show enabled state (green border)
+4. **Expected:** Toast "Enum value enabled successfully!"
+5. **Expected:** Trait header count updates (e.g., "1 of 4 options enabled")
+
+**Disable Enum Values:**
+1. Click "Enabled" button on a currently enabled enum value
+2. **Expected:** Button changes to "Disabled" with X icon
+3. **Expected:** Card styling reverts to disabled state
+4. **Expected:** Toast "Enum value disabled successfully!"
+5. **Expected:** Trait header count updates
+
+**Multiple Trait Configuration:**
+1. If species has multiple ENUM traits (e.g., "Scale Color" and "Element Type"):
+2. **Expected:** Each trait displays as separate section
+3. **Expected:** Settings for one trait don't affect another trait
+4. **Expected:** Each trait maintains independent enabled/disabled counts
+5. **Expected:** Real-time updates work across all trait sections
+
+**Use Case Example Testing:**
+*Create this scenario for comprehensive testing:*
+1. Species: "Dragon" 
+2. ENUM Traits: "Scale Color" (Red, Blue, Green, Gold), "Element Type" (Fire, Ice, Earth, Air)
+3. Variants: "Fire Dragon", "Ice Dragon", "Forest Dragon"
+4. Configure settings:
+   - Fire Dragon: Scale Color (Red ✓, Gold ✓), Element Type (Fire ✓)
+   - Ice Dragon: Scale Color (Blue ✓), Element Type (Ice ✓)  
+   - Forest Dragon: Scale Color (Green ✓, Blue ✓), Element Type (Earth ✓, Air ✓)
+5. **Expected:** Each variant shows different available options based on configuration
+6. **Expected:** Settings persist across browser sessions
 
 #### 8.6 Error Handling & Edge Cases
 

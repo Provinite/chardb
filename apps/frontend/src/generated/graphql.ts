@@ -2567,6 +2567,107 @@ export type RemoveCommunityMutationVariables = Exact<{
 
 export type RemoveCommunityMutation = { __typename?: 'Mutation', removeCommunity: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
+export type EnumValueSettingDetailsFragment = { __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string };
+
+export type EnumValueSettingConnectionDetailsFragment = { __typename?: 'EnumValueSettingConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string }> };
+
+export type EnumValueSettingsQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type EnumValueSettingsQuery = { __typename?: 'Query', enumValueSettings: { __typename?: 'EnumValueSettingConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string }> } };
+
+export type EnumValueSettingsBySpeciesVariantQueryVariables = Exact<{
+  speciesVariantId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type EnumValueSettingsBySpeciesVariantQuery = { __typename?: 'Query', enumValueSettingsBySpeciesVariant: { __typename?: 'EnumValueSettingConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string }> } };
+
+export type EnumValueSettingsByEnumValueQueryVariables = Exact<{
+  enumValueId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type EnumValueSettingsByEnumValueQuery = { __typename?: 'Query', enumValueSettingsByEnumValue: { __typename?: 'EnumValueSettingConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string }> } };
+
+export type EnumValueSettingByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type EnumValueSettingByIdQuery = { __typename?: 'Query', enumValueSettingById: { __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string } };
+
+export type CreateEnumValueSettingMutationVariables = Exact<{
+  createEnumValueSettingInput: CreateEnumValueSettingInput;
+}>;
+
+
+export type CreateEnumValueSettingMutation = { __typename?: 'Mutation', createEnumValueSetting: { __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string } };
+
+export type UpdateEnumValueSettingMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateEnumValueSettingInput: UpdateEnumValueSettingInput;
+}>;
+
+
+export type UpdateEnumValueSettingMutation = { __typename?: 'Mutation', updateEnumValueSetting: { __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string } };
+
+export type DeleteEnumValueSettingMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteEnumValueSettingMutation = { __typename?: 'Mutation', removeEnumValueSetting: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
+export type EnumValueDetailsFragment = { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string };
+
+export type EnumValueConnectionDetailsFragment = { __typename?: 'EnumValueConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string }> };
+
+export type EnumValuesByTraitQueryVariables = Exact<{
+  traitId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type EnumValuesByTraitQuery = { __typename?: 'Query', enumValuesByTrait: { __typename?: 'EnumValueConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string }> } };
+
+export type EnumValueByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type EnumValueByIdQuery = { __typename?: 'Query', enumValueById: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, species: { __typename?: 'Species', id: string, name: string } } } };
+
+export type CreateEnumValueMutationVariables = Exact<{
+  createEnumValueInput: CreateEnumValueInput;
+}>;
+
+
+export type CreateEnumValueMutation = { __typename?: 'Mutation', createEnumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string } };
+
+export type UpdateEnumValueMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateEnumValueInput: UpdateEnumValueInput;
+}>;
+
+
+export type UpdateEnumValueMutation = { __typename?: 'Mutation', updateEnumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string } };
+
+export type DeleteEnumValueMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteEnumValueMutation = { __typename?: 'Mutation', removeEnumValue: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
 export type GetGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
 }>;
@@ -3038,6 +3139,45 @@ export type UpdateProfileMutationVariables = Exact<{
 
 export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, createdAt: string, updatedAt: string } };
 
+export const EnumValueSettingDetailsFragmentDoc = gql`
+    fragment EnumValueSettingDetails on EnumValueSetting {
+  id
+  enumValueId
+  speciesVariantId
+  createdAt
+  updatedAt
+}
+    `;
+export const EnumValueSettingConnectionDetailsFragmentDoc = gql`
+    fragment EnumValueSettingConnectionDetails on EnumValueSettingConnection {
+  nodes {
+    ...EnumValueSettingDetails
+  }
+  hasNextPage
+  hasPreviousPage
+  totalCount
+}
+    ${EnumValueSettingDetailsFragmentDoc}`;
+export const EnumValueDetailsFragmentDoc = gql`
+    fragment EnumValueDetails on EnumValue {
+  id
+  name
+  order
+  traitId
+  createdAt
+  updatedAt
+}
+    `;
+export const EnumValueConnectionDetailsFragmentDoc = gql`
+    fragment EnumValueConnectionDetails on EnumValueConnection {
+  nodes {
+    ...EnumValueDetails
+  }
+  hasNextPage
+  hasPreviousPage
+  totalCount
+}
+    ${EnumValueDetailsFragmentDoc}`;
 export const SpeciesDetailsFragmentDoc = gql`
     fragment SpeciesDetails on Species {
   id
@@ -4182,6 +4322,477 @@ export function useRemoveCommunityMutation(baseOptions?: Apollo.MutationHookOpti
 export type RemoveCommunityMutationHookResult = ReturnType<typeof useRemoveCommunityMutation>;
 export type RemoveCommunityMutationResult = Apollo.MutationResult<RemoveCommunityMutation>;
 export type RemoveCommunityMutationOptions = Apollo.BaseMutationOptions<RemoveCommunityMutation, RemoveCommunityMutationVariables>;
+export const EnumValueSettingsDocument = gql`
+    query EnumValueSettings($first: Int, $after: String) {
+  enumValueSettings(first: $first, after: $after) {
+    ...EnumValueSettingConnectionDetails
+  }
+}
+    ${EnumValueSettingConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useEnumValueSettingsQuery__
+ *
+ * To run a query within a React component, call `useEnumValueSettingsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnumValueSettingsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnumValueSettingsQuery({
+ *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useEnumValueSettingsQuery(baseOptions?: Apollo.QueryHookOptions<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>(EnumValueSettingsDocument, options);
+      }
+export function useEnumValueSettingsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>(EnumValueSettingsDocument, options);
+        }
+export function useEnumValueSettingsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>(EnumValueSettingsDocument, options);
+        }
+export type EnumValueSettingsQueryHookResult = ReturnType<typeof useEnumValueSettingsQuery>;
+export type EnumValueSettingsLazyQueryHookResult = ReturnType<typeof useEnumValueSettingsLazyQuery>;
+export type EnumValueSettingsSuspenseQueryHookResult = ReturnType<typeof useEnumValueSettingsSuspenseQuery>;
+export type EnumValueSettingsQueryResult = Apollo.QueryResult<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>;
+export const EnumValueSettingsBySpeciesVariantDocument = gql`
+    query EnumValueSettingsBySpeciesVariant($speciesVariantId: ID!, $first: Int, $after: String) {
+  enumValueSettingsBySpeciesVariant(
+    speciesVariantId: $speciesVariantId
+    first: $first
+    after: $after
+  ) {
+    ...EnumValueSettingConnectionDetails
+  }
+}
+    ${EnumValueSettingConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useEnumValueSettingsBySpeciesVariantQuery__
+ *
+ * To run a query within a React component, call `useEnumValueSettingsBySpeciesVariantQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnumValueSettingsBySpeciesVariantQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnumValueSettingsBySpeciesVariantQuery({
+ *   variables: {
+ *      speciesVariantId: // value for 'speciesVariantId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useEnumValueSettingsBySpeciesVariantQuery(baseOptions: Apollo.QueryHookOptions<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables> & ({ variables: EnumValueSettingsBySpeciesVariantQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables>(EnumValueSettingsBySpeciesVariantDocument, options);
+      }
+export function useEnumValueSettingsBySpeciesVariantLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables>(EnumValueSettingsBySpeciesVariantDocument, options);
+        }
+export function useEnumValueSettingsBySpeciesVariantSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables>(EnumValueSettingsBySpeciesVariantDocument, options);
+        }
+export type EnumValueSettingsBySpeciesVariantQueryHookResult = ReturnType<typeof useEnumValueSettingsBySpeciesVariantQuery>;
+export type EnumValueSettingsBySpeciesVariantLazyQueryHookResult = ReturnType<typeof useEnumValueSettingsBySpeciesVariantLazyQuery>;
+export type EnumValueSettingsBySpeciesVariantSuspenseQueryHookResult = ReturnType<typeof useEnumValueSettingsBySpeciesVariantSuspenseQuery>;
+export type EnumValueSettingsBySpeciesVariantQueryResult = Apollo.QueryResult<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables>;
+export const EnumValueSettingsByEnumValueDocument = gql`
+    query EnumValueSettingsByEnumValue($enumValueId: ID!, $first: Int, $after: String) {
+  enumValueSettingsByEnumValue(
+    enumValueId: $enumValueId
+    first: $first
+    after: $after
+  ) {
+    ...EnumValueSettingConnectionDetails
+  }
+}
+    ${EnumValueSettingConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useEnumValueSettingsByEnumValueQuery__
+ *
+ * To run a query within a React component, call `useEnumValueSettingsByEnumValueQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnumValueSettingsByEnumValueQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnumValueSettingsByEnumValueQuery({
+ *   variables: {
+ *      enumValueId: // value for 'enumValueId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useEnumValueSettingsByEnumValueQuery(baseOptions: Apollo.QueryHookOptions<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables> & ({ variables: EnumValueSettingsByEnumValueQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables>(EnumValueSettingsByEnumValueDocument, options);
+      }
+export function useEnumValueSettingsByEnumValueLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables>(EnumValueSettingsByEnumValueDocument, options);
+        }
+export function useEnumValueSettingsByEnumValueSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables>(EnumValueSettingsByEnumValueDocument, options);
+        }
+export type EnumValueSettingsByEnumValueQueryHookResult = ReturnType<typeof useEnumValueSettingsByEnumValueQuery>;
+export type EnumValueSettingsByEnumValueLazyQueryHookResult = ReturnType<typeof useEnumValueSettingsByEnumValueLazyQuery>;
+export type EnumValueSettingsByEnumValueSuspenseQueryHookResult = ReturnType<typeof useEnumValueSettingsByEnumValueSuspenseQuery>;
+export type EnumValueSettingsByEnumValueQueryResult = Apollo.QueryResult<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables>;
+export const EnumValueSettingByIdDocument = gql`
+    query EnumValueSettingById($id: ID!) {
+  enumValueSettingById(id: $id) {
+    ...EnumValueSettingDetails
+  }
+}
+    ${EnumValueSettingDetailsFragmentDoc}`;
+
+/**
+ * __useEnumValueSettingByIdQuery__
+ *
+ * To run a query within a React component, call `useEnumValueSettingByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnumValueSettingByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnumValueSettingByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useEnumValueSettingByIdQuery(baseOptions: Apollo.QueryHookOptions<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables> & ({ variables: EnumValueSettingByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables>(EnumValueSettingByIdDocument, options);
+      }
+export function useEnumValueSettingByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables>(EnumValueSettingByIdDocument, options);
+        }
+export function useEnumValueSettingByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables>(EnumValueSettingByIdDocument, options);
+        }
+export type EnumValueSettingByIdQueryHookResult = ReturnType<typeof useEnumValueSettingByIdQuery>;
+export type EnumValueSettingByIdLazyQueryHookResult = ReturnType<typeof useEnumValueSettingByIdLazyQuery>;
+export type EnumValueSettingByIdSuspenseQueryHookResult = ReturnType<typeof useEnumValueSettingByIdSuspenseQuery>;
+export type EnumValueSettingByIdQueryResult = Apollo.QueryResult<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables>;
+export const CreateEnumValueSettingDocument = gql`
+    mutation CreateEnumValueSetting($createEnumValueSettingInput: CreateEnumValueSettingInput!) {
+  createEnumValueSetting(
+    createEnumValueSettingInput: $createEnumValueSettingInput
+  ) {
+    ...EnumValueSettingDetails
+  }
+}
+    ${EnumValueSettingDetailsFragmentDoc}`;
+export type CreateEnumValueSettingMutationFn = Apollo.MutationFunction<CreateEnumValueSettingMutation, CreateEnumValueSettingMutationVariables>;
+
+/**
+ * __useCreateEnumValueSettingMutation__
+ *
+ * To run a mutation, you first call `useCreateEnumValueSettingMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateEnumValueSettingMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createEnumValueSettingMutation, { data, loading, error }] = useCreateEnumValueSettingMutation({
+ *   variables: {
+ *      createEnumValueSettingInput: // value for 'createEnumValueSettingInput'
+ *   },
+ * });
+ */
+export function useCreateEnumValueSettingMutation(baseOptions?: Apollo.MutationHookOptions<CreateEnumValueSettingMutation, CreateEnumValueSettingMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateEnumValueSettingMutation, CreateEnumValueSettingMutationVariables>(CreateEnumValueSettingDocument, options);
+      }
+export type CreateEnumValueSettingMutationHookResult = ReturnType<typeof useCreateEnumValueSettingMutation>;
+export type CreateEnumValueSettingMutationResult = Apollo.MutationResult<CreateEnumValueSettingMutation>;
+export type CreateEnumValueSettingMutationOptions = Apollo.BaseMutationOptions<CreateEnumValueSettingMutation, CreateEnumValueSettingMutationVariables>;
+export const UpdateEnumValueSettingDocument = gql`
+    mutation UpdateEnumValueSetting($id: ID!, $updateEnumValueSettingInput: UpdateEnumValueSettingInput!) {
+  updateEnumValueSetting(
+    id: $id
+    updateEnumValueSettingInput: $updateEnumValueSettingInput
+  ) {
+    ...EnumValueSettingDetails
+  }
+}
+    ${EnumValueSettingDetailsFragmentDoc}`;
+export type UpdateEnumValueSettingMutationFn = Apollo.MutationFunction<UpdateEnumValueSettingMutation, UpdateEnumValueSettingMutationVariables>;
+
+/**
+ * __useUpdateEnumValueSettingMutation__
+ *
+ * To run a mutation, you first call `useUpdateEnumValueSettingMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateEnumValueSettingMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateEnumValueSettingMutation, { data, loading, error }] = useUpdateEnumValueSettingMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateEnumValueSettingInput: // value for 'updateEnumValueSettingInput'
+ *   },
+ * });
+ */
+export function useUpdateEnumValueSettingMutation(baseOptions?: Apollo.MutationHookOptions<UpdateEnumValueSettingMutation, UpdateEnumValueSettingMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateEnumValueSettingMutation, UpdateEnumValueSettingMutationVariables>(UpdateEnumValueSettingDocument, options);
+      }
+export type UpdateEnumValueSettingMutationHookResult = ReturnType<typeof useUpdateEnumValueSettingMutation>;
+export type UpdateEnumValueSettingMutationResult = Apollo.MutationResult<UpdateEnumValueSettingMutation>;
+export type UpdateEnumValueSettingMutationOptions = Apollo.BaseMutationOptions<UpdateEnumValueSettingMutation, UpdateEnumValueSettingMutationVariables>;
+export const DeleteEnumValueSettingDocument = gql`
+    mutation DeleteEnumValueSetting($id: ID!) {
+  removeEnumValueSetting(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type DeleteEnumValueSettingMutationFn = Apollo.MutationFunction<DeleteEnumValueSettingMutation, DeleteEnumValueSettingMutationVariables>;
+
+/**
+ * __useDeleteEnumValueSettingMutation__
+ *
+ * To run a mutation, you first call `useDeleteEnumValueSettingMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteEnumValueSettingMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteEnumValueSettingMutation, { data, loading, error }] = useDeleteEnumValueSettingMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteEnumValueSettingMutation(baseOptions?: Apollo.MutationHookOptions<DeleteEnumValueSettingMutation, DeleteEnumValueSettingMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteEnumValueSettingMutation, DeleteEnumValueSettingMutationVariables>(DeleteEnumValueSettingDocument, options);
+      }
+export type DeleteEnumValueSettingMutationHookResult = ReturnType<typeof useDeleteEnumValueSettingMutation>;
+export type DeleteEnumValueSettingMutationResult = Apollo.MutationResult<DeleteEnumValueSettingMutation>;
+export type DeleteEnumValueSettingMutationOptions = Apollo.BaseMutationOptions<DeleteEnumValueSettingMutation, DeleteEnumValueSettingMutationVariables>;
+export const EnumValuesByTraitDocument = gql`
+    query EnumValuesByTrait($traitId: ID!, $first: Int, $after: String) {
+  enumValuesByTrait(traitId: $traitId, first: $first, after: $after) {
+    ...EnumValueConnectionDetails
+  }
+}
+    ${EnumValueConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useEnumValuesByTraitQuery__
+ *
+ * To run a query within a React component, call `useEnumValuesByTraitQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnumValuesByTraitQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnumValuesByTraitQuery({
+ *   variables: {
+ *      traitId: // value for 'traitId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useEnumValuesByTraitQuery(baseOptions: Apollo.QueryHookOptions<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables> & ({ variables: EnumValuesByTraitQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables>(EnumValuesByTraitDocument, options);
+      }
+export function useEnumValuesByTraitLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables>(EnumValuesByTraitDocument, options);
+        }
+export function useEnumValuesByTraitSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables>(EnumValuesByTraitDocument, options);
+        }
+export type EnumValuesByTraitQueryHookResult = ReturnType<typeof useEnumValuesByTraitQuery>;
+export type EnumValuesByTraitLazyQueryHookResult = ReturnType<typeof useEnumValuesByTraitLazyQuery>;
+export type EnumValuesByTraitSuspenseQueryHookResult = ReturnType<typeof useEnumValuesByTraitSuspenseQuery>;
+export type EnumValuesByTraitQueryResult = Apollo.QueryResult<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables>;
+export const EnumValueByIdDocument = gql`
+    query EnumValueById($id: ID!) {
+  enumValueById(id: $id) {
+    ...EnumValueDetails
+    trait {
+      id
+      name
+      valueType
+      species {
+        id
+        name
+      }
+    }
+  }
+}
+    ${EnumValueDetailsFragmentDoc}`;
+
+/**
+ * __useEnumValueByIdQuery__
+ *
+ * To run a query within a React component, call `useEnumValueByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnumValueByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnumValueByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useEnumValueByIdQuery(baseOptions: Apollo.QueryHookOptions<EnumValueByIdQuery, EnumValueByIdQueryVariables> & ({ variables: EnumValueByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<EnumValueByIdQuery, EnumValueByIdQueryVariables>(EnumValueByIdDocument, options);
+      }
+export function useEnumValueByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<EnumValueByIdQuery, EnumValueByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<EnumValueByIdQuery, EnumValueByIdQueryVariables>(EnumValueByIdDocument, options);
+        }
+export function useEnumValueByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<EnumValueByIdQuery, EnumValueByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<EnumValueByIdQuery, EnumValueByIdQueryVariables>(EnumValueByIdDocument, options);
+        }
+export type EnumValueByIdQueryHookResult = ReturnType<typeof useEnumValueByIdQuery>;
+export type EnumValueByIdLazyQueryHookResult = ReturnType<typeof useEnumValueByIdLazyQuery>;
+export type EnumValueByIdSuspenseQueryHookResult = ReturnType<typeof useEnumValueByIdSuspenseQuery>;
+export type EnumValueByIdQueryResult = Apollo.QueryResult<EnumValueByIdQuery, EnumValueByIdQueryVariables>;
+export const CreateEnumValueDocument = gql`
+    mutation CreateEnumValue($createEnumValueInput: CreateEnumValueInput!) {
+  createEnumValue(createEnumValueInput: $createEnumValueInput) {
+    ...EnumValueDetails
+  }
+}
+    ${EnumValueDetailsFragmentDoc}`;
+export type CreateEnumValueMutationFn = Apollo.MutationFunction<CreateEnumValueMutation, CreateEnumValueMutationVariables>;
+
+/**
+ * __useCreateEnumValueMutation__
+ *
+ * To run a mutation, you first call `useCreateEnumValueMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateEnumValueMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createEnumValueMutation, { data, loading, error }] = useCreateEnumValueMutation({
+ *   variables: {
+ *      createEnumValueInput: // value for 'createEnumValueInput'
+ *   },
+ * });
+ */
+export function useCreateEnumValueMutation(baseOptions?: Apollo.MutationHookOptions<CreateEnumValueMutation, CreateEnumValueMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateEnumValueMutation, CreateEnumValueMutationVariables>(CreateEnumValueDocument, options);
+      }
+export type CreateEnumValueMutationHookResult = ReturnType<typeof useCreateEnumValueMutation>;
+export type CreateEnumValueMutationResult = Apollo.MutationResult<CreateEnumValueMutation>;
+export type CreateEnumValueMutationOptions = Apollo.BaseMutationOptions<CreateEnumValueMutation, CreateEnumValueMutationVariables>;
+export const UpdateEnumValueDocument = gql`
+    mutation UpdateEnumValue($id: ID!, $updateEnumValueInput: UpdateEnumValueInput!) {
+  updateEnumValue(id: $id, updateEnumValueInput: $updateEnumValueInput) {
+    ...EnumValueDetails
+  }
+}
+    ${EnumValueDetailsFragmentDoc}`;
+export type UpdateEnumValueMutationFn = Apollo.MutationFunction<UpdateEnumValueMutation, UpdateEnumValueMutationVariables>;
+
+/**
+ * __useUpdateEnumValueMutation__
+ *
+ * To run a mutation, you first call `useUpdateEnumValueMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateEnumValueMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateEnumValueMutation, { data, loading, error }] = useUpdateEnumValueMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateEnumValueInput: // value for 'updateEnumValueInput'
+ *   },
+ * });
+ */
+export function useUpdateEnumValueMutation(baseOptions?: Apollo.MutationHookOptions<UpdateEnumValueMutation, UpdateEnumValueMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateEnumValueMutation, UpdateEnumValueMutationVariables>(UpdateEnumValueDocument, options);
+      }
+export type UpdateEnumValueMutationHookResult = ReturnType<typeof useUpdateEnumValueMutation>;
+export type UpdateEnumValueMutationResult = Apollo.MutationResult<UpdateEnumValueMutation>;
+export type UpdateEnumValueMutationOptions = Apollo.BaseMutationOptions<UpdateEnumValueMutation, UpdateEnumValueMutationVariables>;
+export const DeleteEnumValueDocument = gql`
+    mutation DeleteEnumValue($id: ID!) {
+  removeEnumValue(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type DeleteEnumValueMutationFn = Apollo.MutationFunction<DeleteEnumValueMutation, DeleteEnumValueMutationVariables>;
+
+/**
+ * __useDeleteEnumValueMutation__
+ *
+ * To run a mutation, you first call `useDeleteEnumValueMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteEnumValueMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteEnumValueMutation, { data, loading, error }] = useDeleteEnumValueMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteEnumValueMutation(baseOptions?: Apollo.MutationHookOptions<DeleteEnumValueMutation, DeleteEnumValueMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteEnumValueMutation, DeleteEnumValueMutationVariables>(DeleteEnumValueDocument, options);
+      }
+export type DeleteEnumValueMutationHookResult = ReturnType<typeof useDeleteEnumValueMutation>;
+export type DeleteEnumValueMutationResult = Apollo.MutationResult<DeleteEnumValueMutation>;
+export type DeleteEnumValueMutationOptions = Apollo.BaseMutationOptions<DeleteEnumValueMutation, DeleteEnumValueMutationVariables>;
 export const GetGalleriesDocument = gql`
     query GetGalleries($filters: GalleryFiltersInput) {
   galleries(filters: $filters) {
