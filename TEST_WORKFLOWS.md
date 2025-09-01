@@ -869,6 +869,122 @@ This document outlines comprehensive test workflows for the CharDB application t
 - Species variant management and configuration
 - Community-scoped species permissions and role integration
 - Species search and filtering functionality
+- Community invitation workflow for existing users
+
+### 9. Community Invitation for Existing Users
+
+#### 9.1 Access Join Community Interface
+
+**Prerequisites:**
+- User must be logged in (test@example.com / password123)
+- Valid community invite codes must exist (created via admin/community admin interfaces)
+
+**Access Join Community Page:**
+1. Log in with user credentials
+2. Navigate to dashboard (`/dashboard`)
+3. Locate "Quick Actions" section 
+4. Click "Join Community" button
+5. **Expected:** Redirected to `/join-community` with community invitation form
+
+#### 9.2 Community Invite Code Validation and Entry
+
+**Test Invite Code Form Interface:**
+1. Verify page shows:
+   - "Join Community" title
+   - "Enter an invite code to join a community" subtitle
+   - Single input field labeled "Invite Code"
+   - "Join Community" button (initially disabled)
+
+**Test Real-Time Invite Code Validation:**
+1. Enter short invite code (e.g., "te")
+2. **Expected:** No validation message appears (minimum 2 characters required)
+3. Enter valid-length invite code (e.g., "test123")
+4. **Expected:** Real-time GraphQL query triggers validation
+5. **For invalid codes:** Red X icon with "Invalid invite code" message
+6. **For exhausted codes:** Red X icon with "This invite code has been exhausted" message
+7. **For valid codes:** Green checkmark with "Valid invite code (X uses remaining)" message
+
+**Test Community Preview Display:**
+1. Enter valid community invite code with role assignment
+2. **Expected:** Blue preview box appears showing:
+   - Community name in primary color
+   - Role assignment text: "as [Role Name]"
+   - Description: "You'll be joining this community and assigned the [Role Name] role."
+3. For site-wide invite codes (no community):
+4. **Expected:** Preview shows: "Site Registration: This code will give you platform access."
+
+**Test Form Validation:**
+1. Enter invite code with invalid characters (e.g., "test123!")
+2. **Expected:** Form validation prevents submission
+3. Enter valid invite code format
+4. **Expected:** "Join Community" button becomes enabled when code is valid and available
+
+#### 9.3 Community Invite Code Claiming Process
+
+**Test Successful Community Joining:**
+1. Enter valid community invite code
+2. Wait for green validation checkmark
+3. Click "Join Community" button
+4. **Expected:** Button shows loading state ("Joining Community...")
+5. **Expected:** Success toast: "Successfully joined [Community Name] as [Role Name]!"
+6. **Expected:** User redirected to `/communities/[communityId]` 
+
+**Test Site-Wide Invite Code Claiming:**
+1. Enter valid site-wide invite code (no community assignment)
+2. Click "Join Community" button
+3. **Expected:** Success toast: "Successfully claimed invite code!"
+4. **Expected:** User redirected to `/dashboard`
+
+**Test Error Handling:**
+1. Attempt to claim already exhausted invite code
+2. **Expected:** Error toast with appropriate message
+3. Test network error scenarios (if possible)
+4. **Expected:** Graceful error handling with user-friendly messages
+
+#### 9.4 Integration with Dashboard Navigation
+
+**Test Dashboard Navigation:**
+1. From dashboard, verify "Join Community" button in Quick Actions section
+2. **Expected:** Button positioned between "Create Media" and "Browse Characters"
+3. Click button to navigate to join community page
+4. **Expected:** Smooth navigation without errors
+
+**Test User Authentication Requirements:**
+1. Navigate to `/join-community` while logged out
+2. **Expected:** Page shows login requirement message
+3. **Expected:** "Go to Login" button redirects to `/login`
+4. After login, user should be able to access join community functionality
+
+#### 9.5 Community Membership Verification
+
+**Test Community Membership Integration:**
+1. Successfully join a community using invite code
+2. Navigate to community-specific pages (if available)
+3. **Expected:** User has appropriate community role permissions
+4. Verify user appears in community member lists (if accessible)
+5. **Expected:** Community membership records created correctly
+
+**Test Invite Code Usage Tracking:**
+1. After successful claim, return to invite code management
+2. **Expected:** Usage count incremented correctly
+3. **Expected:** Remaining claims decremented
+4. If last use, verify invite code marked as exhausted
+
+#### 9.6 Error Prevention and Edge Cases
+
+**Test Duplicate Community Membership:**
+1. Join a community using an invite code
+2. Attempt to use another invite code for the same community
+3. **Expected:** Error message preventing duplicate membership attempt
+
+**Test Invalid User State:**
+1. Test with user accounts in various states
+2. **Expected:** Consistent behavior regardless of user community membership status
+
+**Test Code Validation Edge Cases:**
+1. Test very long invite codes (approach character limits)
+2. Test codes with edge-case characters within allowed set
+3. **Expected:** Proper validation and error messages
 
 ## Notes for Test Execution
 

@@ -42,6 +42,7 @@ import { CommunityAdminPage } from "./pages/CommunityAdminPage";
 import { SpeciesManagementPage } from "./pages/SpeciesManagementPage";
 import { TraitBuilderPage } from "./pages/TraitBuilderPage";
 import { SpeciesVariantManagementPage } from "./pages/SpeciesVariantManagementPage";
+import { JoinCommunityPage } from "./pages/JoinCommunityPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
@@ -79,6 +80,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/join-community"
+          element={
+            <ProtectedRoute>
+              <JoinCommunityPage />
             </ProtectedRoute>
           }
         />

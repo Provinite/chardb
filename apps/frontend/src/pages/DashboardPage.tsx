@@ -124,6 +124,9 @@ export const DashboardPage: React.FC = () => {
           <Button as={Link} to="/upload" variant="outline">
             Create Media
           </Button>
+          <Button as={Link} to="/join-community" variant="outline">
+            Join Community
+          </Button>
           <Button as={Link} to="/characters" variant="ghost">
             Browse Characters
           </Button>

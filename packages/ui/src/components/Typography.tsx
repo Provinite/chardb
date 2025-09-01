@@ -80,3 +80,15 @@ export const Label = styled.label`
   margin-bottom: 0.5rem;
   line-height: 1.4;
 `;
+
+export const ErrorText = styled.span`
+  color: ${({ theme }) => theme.colors.error};
+  font-size: 0.875rem;
+  line-height: 1.4;
+`;
+
+export const HelpText = styled.span`
+  color: ${({ theme }) => theme.colors.text.muted};
+  font-size: 0.875rem;
+  line-height: 1.4;
+`;
