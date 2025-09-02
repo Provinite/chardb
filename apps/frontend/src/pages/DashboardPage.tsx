@@ -124,6 +124,9 @@ export const DashboardPage: React.FC = () => {
           <Button as={Link} to="/upload" variant="outline">
             Create Media
           </Button>
+          <Button as={Link} to="/join-community" variant="outline">
+            Join Community
+          </Button>
           <Button as={Link} to="/characters" variant="ghost">
             Browse Characters
           </Button>
@@ -234,6 +237,19 @@ export const DashboardPage: React.FC = () => {
             View Stats
           </Button>
         </DashboardCard>
+
+        {user?.canCreateInviteCode && (
+          <DashboardCard>
+            <CardTitle>Site Administration</CardTitle>
+            <CardDescription>
+              Manage site-wide settings, invite codes, user accounts, and community oversight.
+              Administrative tools for site management.
+            </CardDescription>
+            <Button as={Link} to="/admin" variant="outline" size="sm">
+              Admin Panel
+            </Button>
+          </DashboardCard>
+        )}
       </Grid>
     </Container>
   );

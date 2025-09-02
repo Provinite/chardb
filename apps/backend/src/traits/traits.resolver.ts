@@ -13,12 +13,17 @@ import { Species } from '../species/entities/species.entity';
 import { RemovalResponse } from '../shared/entities/removal-response.entity';
 import { SpeciesService } from '../species/species.service';
 import { mapPrismaSpeciesToGraphQL } from '../species/utils/species-resolver-mappers';
+import { EnumValue } from '../enum-values/entities/enum-value.entity';
+import { EnumValuesService } from '../enum-values/enum-values.service';
+import { mapPrismaEnumValueToGraphQL } from '../enum-values/utils/enum-value-resolver-mappers';
+import { TraitValueType } from '../shared/enums/trait-value-type.enum';
 
 @Resolver(() => Trait)
 export class TraitsResolver {
   constructor(
     private readonly traitsService: TraitsService,
     private readonly speciesService: SpeciesService,
+    private readonly enumValuesService: EnumValuesService,
   ) {}
 
   /** Create a new trait */
@@ -91,7 +96,7 @@ export class TraitsResolver {
     return { removed: true, message: 'Trait successfully removed' };
   }
 
-  // Field resolver for species relation
+  // Field resolvers for relations
   @ResolveField('species', () => Species, { description: 'The species this trait belongs to' })
   async resolveSpecies(@Parent() trait: Trait): Promise<Species | null> {
     try {
@@ -103,5 +108,16 @@ export class TraitsResolver {
       }
       throw error;
     }
+  }
+
+  @ResolveField('enumValues', () => [EnumValue], { description: 'Enum values for this trait (only populated for ENUM traits)' })
+  async resolveEnumValues(@Parent() trait: Trait): Promise<EnumValue[]> {
+    // Only fetch enum values for ENUM traits
+    if (trait.valueType !== TraitValueType.ENUM) {
+      return [];
+    }
+    
+    const serviceResult = await this.enumValuesService.findByTrait(trait.id, 100); // Get up to 100 enum values
+    return serviceResult.nodes.map(mapPrismaEnumValueToGraphQL);
   }
 }

@@ -1,36 +1,62 @@
-import { Resolver, Query, Mutation, Args, ID, Int } from '@nestjs/graphql';
-import { CommunitiesService } from './communities.service';
-import { Community, CommunityConnection } from './entities/community.entity';
-import { CreateCommunityInput, UpdateCommunityInput } from './dto/community.dto';
+import { Resolver, Query, Mutation, Args, ID, Int } from "@nestjs/graphql";
+import { CommunitiesService } from "./communities.service";
+import { Community, CommunityConnection } from "./entities/community.entity";
+import {
+  CreateCommunityInput,
+  UpdateCommunityInput,
+} from "./dto/community.dto";
 import {
   mapCreateCommunityInputToService,
   mapUpdateCommunityInputToService,
   mapPrismaCommunityToGraphQL,
   mapPrismaCommunityConnectionToGraphQL,
-} from './utils/community-resolver-mappers';
-import { RemovalResponse } from '../shared/entities/removal-response.entity';
+} from "./utils/community-resolver-mappers";
+import { RemovalResponse } from "../shared/entities/removal-response.entity";
+import {
+  CurrentUser,
+  CurrentUserType,
+} from "../auth/decorators/current-user.decorator";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { UseGuards } from "@nestjs/common";
 
 @Resolver(() => Community)
 export class CommunitiesResolver {
   constructor(private readonly communitiesService: CommunitiesService) {}
 
   /** Create a new community */
-  @Mutation(() => Community, { description: 'Create a new community' })
+  @Mutation(() => Community, { description: "Create a new community" })
+  @UseGuards(JwtAuthGuard)
   async createCommunity(
-    @Args('createCommunityInput', { description: 'Community creation data' }) 
+    @Args("createCommunityInput", { description: "Community creation data" })
     createCommunityInput: CreateCommunityInput,
+    @CurrentUser() user: CurrentUserType,
   ): Promise<Community> {
-    const serviceInput = mapCreateCommunityInputToService(createCommunityInput);
+    const serviceInput = mapCreateCommunityInputToService(
+      createCommunityInput,
+      user.id,
+    );
     const prismaResult = await this.communitiesService.create(serviceInput);
     return mapPrismaCommunityToGraphQL(prismaResult);
   }
 
   /** Get all communities with pagination */
-  @Query(() => CommunityConnection, { name: 'communities', description: 'Get all communities with pagination' })
+  @Query(() => CommunityConnection, {
+    name: "communities",
+    description: "Get all communities with pagination",
+  })
   async findAll(
-    @Args('first', { type: () => Int, nullable: true, description: 'Number of communities to return', defaultValue: 20 })
+    @Args("first", {
+      type: () => Int,
+      nullable: true,
+      description: "Number of communities to return",
+      defaultValue: 20,
+    })
     first?: number,
-    @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
+    @Args("after", {
+      type: () => String,
+      nullable: true,
+      description: "Cursor for pagination",
+    })
     after?: string,
   ): Promise<CommunityConnection> {
     const serviceResult = await this.communitiesService.findAll(first, after);
@@ -38,9 +64,12 @@ export class CommunitiesResolver {
   }
 
   /** Get a community by ID */
-  @Query(() => Community, { name: 'community', description: 'Get a community by ID' })
+  @Query(() => Community, {
+    name: "community",
+    description: "Get a community by ID",
+  })
   async findOne(
-    @Args('id', { type: () => ID, description: 'Community ID' }) 
+    @Args("id", { type: () => ID, description: "Community ID" })
     id: string,
   ): Promise<Community> {
     const prismaResult = await this.communitiesService.findOne(id);
@@ -48,11 +77,11 @@ export class CommunitiesResolver {
   }
 
   /** Update a community */
-  @Mutation(() => Community, { description: 'Update a community' })
+  @Mutation(() => Community, { description: "Update a community" })
   async updateCommunity(
-    @Args('id', { type: () => ID, description: 'Community ID' }) 
+    @Args("id", { type: () => ID, description: "Community ID" })
     id: string,
-    @Args('updateCommunityInput', { description: 'Community update data' }) 
+    @Args("updateCommunityInput", { description: "Community update data" })
     updateCommunityInput: UpdateCommunityInput,
   ): Promise<Community> {
     const serviceInput = mapUpdateCommunityInputToService(updateCommunityInput);
@@ -61,12 +90,12 @@ export class CommunitiesResolver {
   }
 
   /** Remove a community */
-  @Mutation(() => RemovalResponse, { description: 'Remove a community' })
+  @Mutation(() => RemovalResponse, { description: "Remove a community" })
   async removeCommunity(
-    @Args('id', { type: () => ID, description: 'Community ID' }) 
+    @Args("id", { type: () => ID, description: "Community ID" })
     id: string,
   ): Promise<RemovalResponse> {
     await this.communitiesService.remove(id);
-    return { removed: true, message: 'Community successfully removed' };
+    return { removed: true, message: "Community successfully removed" };
   }
 }

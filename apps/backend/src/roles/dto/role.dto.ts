@@ -32,6 +32,12 @@ export class CreateRoleInput {
   @IsOptional()
   canEditCharacter?: boolean = false;
 
+  /** Permission to edit own characters only */
+  @Field(() => Boolean, { description: 'Whether members with this role can edit their own characters', defaultValue: false })
+  @IsBoolean()
+  @IsOptional()
+  canEditOwnCharacter?: boolean = false;
+
   /** Permission to edit species */
   @Field(() => Boolean, { description: 'Whether members with this role can edit species', defaultValue: false })
   @IsBoolean()
@@ -89,6 +95,12 @@ export class UpdateRoleInput {
   @IsOptional()
   @IsBoolean()
   canEditCharacter?: boolean;
+
+  /** Permission to edit own characters only */
+  @Field(() => Boolean, { description: 'Whether members with this role can edit their own characters', nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  canEditOwnCharacter?: boolean;
 
   /** Permission to edit species */
   @Field(() => Boolean, { description: 'Whether members with this role can edit species', nullable: true })

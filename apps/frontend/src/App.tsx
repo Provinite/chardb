@@ -14,7 +14,7 @@ import { UserProfilePage } from "./pages/UserProfilePage";
 import { EditProfilePage } from "./pages/EditProfilePage";
 import { CharacterPage } from "./pages/CharacterPage";
 import { CharactersPage } from "./pages/CharactersPage";
-import { CreateCharacterPage } from "./pages/CreateCharacterPage";
+import { CreateCharacterPageEnhanced as CreateCharacterPage } from "./pages/CreateCharacterPageEnhanced";
 import { EditCharacterPage } from "./pages/EditCharacterPage";
 import { CreateTextPage } from "./pages/CreateTextPage";
 import { CreateMediaPage } from "./pages/CreateMediaPage";
@@ -34,6 +34,24 @@ import { MyMediaPage } from "./pages/MyMediaPage";
 import { FollowersPage } from "./pages/FollowersPage";
 import { FollowingPage } from "./pages/FollowingPage";
 import { FeedPage } from "./pages/FeedPage";
+import { SiteAdminPage } from "./pages/SiteAdminPage";
+import { SiteInviteCodesPage } from "./pages/SiteInviteCodesPage";
+import { CommunityInviteCodesPage } from "./pages/CommunityInviteCodesPage";
+import { CommunityManagementPage } from "./pages/CommunityManagementPage";
+import { CommunityAdminPage } from "./pages/CommunityAdminPage";
+import { SpeciesManagementPage } from "./pages/SpeciesManagementPage";
+import { TraitBuilderPage } from "./pages/TraitBuilderPage";
+import { SpeciesVariantManagementPage } from "./pages/SpeciesVariantManagementPage";
+import { EnumValueManagementPage } from "./pages/EnumValueManagementPage";
+import { EnumValueSettingsPage } from "./pages/EnumValueSettingsPage";
+import { PermissionManagementPage } from "./pages/PermissionManagementPage";
+import { CommunityMembersPage } from "./pages/CommunityMembersPage";
+import { CommunitySettingsPage } from "./pages/CommunitySettingsPage";
+import { CommunityModerationPage } from "./pages/CommunityModerationPage";
+import { JoinCommunityPage } from "./pages/JoinCommunityPage";
+import { MyCommunitiesPage } from "./pages/MyCommunitiesPage";
+import { CommunityPage } from "./pages/CommunityPage";
+import { SpeciesPage } from "./pages/SpeciesPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
@@ -64,6 +82,8 @@ function App() {
         <Route path="/user/:username" element={<UserProfilePage />} />
         <Route path="/user/:username/followers" element={<FollowersPage />} />
         <Route path="/user/:username/following" element={<FollowingPage />} />
+        <Route path="/communities/:communityId" element={<CommunityPage />} />
+        <Route path="/species/:speciesId" element={<SpeciesPage />} />
 
         {/* Protected routes */}
         <Route
@@ -71,6 +91,22 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/join-community"
+          element={
+            <ProtectedRoute>
+              <JoinCommunityPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my/communities"
+          element={
+            <ProtectedRoute>
+              <MyCommunitiesPage />
             </ProtectedRoute>
           }
         />
@@ -199,6 +235,124 @@ function App() {
           element={
             <ProtectedRoute>
               <FeedPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <SiteAdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/site-invite-codes"
+          element={
+            <ProtectedRoute>
+              <SiteInviteCodesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/communities"
+          element={
+            <ProtectedRoute>
+              <CommunityManagementPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Community routes */}
+        <Route
+          path="/communities/:communityId/admin"
+          element={
+            <ProtectedRoute>
+              <CommunityAdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/invite-codes"
+          element={
+            <ProtectedRoute>
+              <CommunityInviteCodesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/species"
+          element={
+            <ProtectedRoute>
+              <SpeciesManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/permissions"
+          element={
+            <ProtectedRoute>
+              <PermissionManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/members"
+          element={
+            <ProtectedRoute>
+              <CommunityMembersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/settings"
+          element={
+            <ProtectedRoute>
+              <CommunitySettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/moderation"
+          element={
+            <ProtectedRoute>
+              <CommunityModerationPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Species-specific routes (can be accessed from community context) */}
+        <Route
+          path="/species/:speciesId/traits"
+          element={
+            <ProtectedRoute>
+              <TraitBuilderPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/species/:speciesId/variants"
+          element={
+            <ProtectedRoute>
+              <SpeciesVariantManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/traits/:traitId/enum-values"
+          element={
+            <ProtectedRoute>
+              <EnumValueManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/variants/:variantId/enum-settings"
+          element={
+            <ProtectedRoute>
+              <EnumValueSettingsPage />
             </ProtectedRoute>
           }
         />

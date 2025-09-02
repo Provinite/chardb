@@ -10,9 +10,10 @@ import { Prisma } from "@chardb/database";
 /**
  * Maps CreateCommunityInput to service input format
  */
-export function mapCreateCommunityInputToService(input: CreateCommunityInput): CreateCommunityServiceInput {
+export function mapCreateCommunityInputToService(input: CreateCommunityInput, creatorId: string): CreateCommunityServiceInput {
   return {
     name: input.name,
+    creatorId: creatorId,
   };
 }
 

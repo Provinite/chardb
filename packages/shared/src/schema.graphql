@@ -461,6 +461,9 @@ input CreateRoleInput {
   """Whether members with this role can edit characters"""
   canEditCharacter: Boolean! = false
 
+  """Whether members with this role can edit their own characters"""
+  canEditOwnCharacter: Boolean! = false
+
   """Whether members with this role can edit existing roles"""
   canEditRole: Boolean! = false
 
@@ -868,8 +871,6 @@ type Media {
 
   """Foreign key to image content (null for text media)"""
   imageId: ID
-
-  """Number of likes this media has received"""
   likesCount: Int!
 
   """The user who owns this media"""
@@ -892,8 +893,6 @@ type Media {
 
   """When the media was last updated"""
   updatedAt: DateTime!
-
-  """Whether the current user has liked this media"""
   userHasLiked: Boolean!
 
   """Visibility setting for the media"""
@@ -1553,6 +1552,9 @@ type Query {
     """Cursor for pagination"""
     after: String
 
+    """Community ID to filter by. If null, returns only global invite codes"""
+    communityId: ID
+
     """Number of invite codes to return"""
     first: Int = 20
   ): InviteCodeConnection!
@@ -1817,6 +1819,9 @@ type Role {
   """Whether members with this role can edit characters"""
   canEditCharacter: Boolean!
 
+  """Whether members with this role can edit their own characters"""
+  canEditOwnCharacter: Boolean!
+
   """Whether members with this role can edit existing roles"""
   canEditRole: Boolean!
 
@@ -1867,6 +1872,7 @@ input SetMainMediaInput {
 input SignupInput {
   displayName: String
   email: String!
+  inviteCode: String!
   password: String!
   username: String!
 }
@@ -1890,6 +1896,9 @@ type Species {
   """Name of the species"""
   name: String!
 
+  """Traits associated with this species"""
+  traits: [Trait!]!
+
   """When the species was last updated"""
   updatedAt: DateTime!
 }
@@ -1911,6 +1920,9 @@ type SpeciesConnection {
 type SpeciesVariant {
   """When the species variant was created"""
   createdAt: DateTime!
+
+  """Enum value settings for this species variant"""
+  enumValueSettings: [EnumValueSetting!]!
 
   """Unique identifier for the species variant"""
   id: ID!
@@ -1984,6 +1996,9 @@ input ToggleLikeInput {
 type Trait {
   """When the trait was created"""
   createdAt: DateTime!
+
+  """Enum values for this trait (only populated for ENUM traits)"""
+  enumValues: [EnumValue!]!
 
   """Unique identifier for the trait"""
   id: ID!
@@ -2219,6 +2234,9 @@ input UpdateRoleInput {
 
   """Whether members with this role can edit characters"""
   canEditCharacter: Boolean
+
+  """Whether members with this role can edit their own characters"""
+  canEditOwnCharacter: Boolean
 
   """Whether members with this role can edit existing roles"""
   canEditRole: Boolean

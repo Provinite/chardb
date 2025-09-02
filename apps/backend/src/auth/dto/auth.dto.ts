@@ -35,6 +35,12 @@ export class SignupInput {
   @IsString()
   @MaxLength(100)
   displayName?: string;
+
+  @Field()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(50)
+  inviteCode: string;
 }
 
 @ObjectType()

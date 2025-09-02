@@ -7,19 +7,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.0.0] - 2025-09-01
+
 ### Added
+
+#### UI Core Entity Management System
+- **Species Management Interface**: Comprehensive species creation and editing system
+  - `SpeciesManagementPage` for viewing all community species with filtering and search
+  - `SpeciesPage` for detailed species information with variant management
+  - `SpeciesVariantManagementPage` for creating and editing species variants
+  - Species creation forms with image support flags and community assignment
+  - Breadcrumb navigation and role-based access control integration
+- **Trait Builder System**: Advanced trait configuration interface supporting multiple value types
+  - `TraitBuilderPage` with support for ENUM, STRING, INTEGER, and TIMESTAMP traits
+  - Enum value management with ordering, color coding, and description support
+  - `EnumValueManagementPage` for comprehensive enum option configuration
+  - `EnumValueSettingsPage` for species variant-specific enum value availability
+  - Matrix-style interface for configuring trait availability per species variant
+- **Community Administration Suite**: Full community management and invitation system
+  - `CommunityManagementPage` for community overview and member management
+  - `CommunityAdminPage` for administrative controls and settings
+  - `CommunityInviteCodesPage` and `SiteInviteCodesPage` for invite code management
+  - `JoinCommunityPage` for existing users to join communities via invite codes
+  - Real-time invite code validation with GraphQL integration
+  - Community preview showing name and assigned role before joining
+- **Site Administration Interface**: Global administrative controls
+  - `SiteAdminPage` with card-based design for system-wide management
+  - Global permission management and user administration interfaces
+  - Centralized invite code oversight and community monitoring tools
+- **Permission Management System**: Comprehensive role and permission administration
+  - `PermissionManagementPage` integrating all permission management tools
+  - `PermissionMatrix` component for visual permission overview
+  - `RoleEditor` component with comprehensive role creation and editing capabilities
+  - `RoleManagementTab` for organized role administration within communities
+  - `PermissionSelector` for granular permission control and assignment
+  - `RoleTemplateManager` for predefined role templates and quick setup
+- **Enhanced Community Pages**: Extended community management capabilities
+  - `CommunityMembersPage` for comprehensive member management and role assignment
+  - `CommunityModerationPage` for content moderation and community oversight
+  - `CommunitySettingsPage` for detailed community configuration options
+  - `MyCommunitiesPage` for user's personal community dashboard
+- **Character Creation Enhancement**: Advanced character creation with species integration
+  - `CreateCharacterPageEnhanced` with dynamic species and trait integration
+  - `SpeciesSelector` component for dynamic species selection with community filtering
+  - `TraitForm` component for comprehensive trait value input and validation
+  - `TraitValueEditor` for complex trait management with type-specific inputs
+
+#### Enhanced UI Component Library
+- **Core Components**: New reusable components with consistent theming
+  - `Card` component family (Card, CardHeader, CardTitle, CardContent) with hover effects
+  - `Modal` component with overlay, backdrop click handling, and accessibility features
+  - `Input` component with error states, validation feedback, and ref forwarding
+  - `Typography` component (H1-H6, Text, Caption) with theme integration
+  - `ErrorMessage` component for consistent error display across forms
+- **Component Improvements**: Enhanced existing components
+  - `Button` component with improved variants, sizing, and loading states
+  - Fixed React ref forwarding and styled-components prop issues
+  - Added transient props (`$hasError`, `$variant`) to prevent DOM warnings
+  - Improved form integration with react-hook-form library
+
+#### Advanced GraphQL Integration
+- **New Query Files**: Comprehensive GraphQL operations for entity management
+  - `enhanced-species.graphql.ts` for advanced species queries with trait relationships
+  - `species.graphql.ts` for species CRUD operations and variant management
+  - `enumValues.graphql.ts` and `enumValueSettings.graphql.ts` for trait configuration
+  - `communities.graphql.ts` and `inviteCodes.graphql.ts` for community management
+  - `roles.graphql.ts` for comprehensive role and permission management operations
+- **Generated Types**: Updated GraphQL TypeScript types with latest backend schema changes
+- **Query Optimization**: Efficient data fetching patterns for admin interfaces
+
+#### Community Invitation System
+- **Dashboard Integration**: Added "Join Community" quick action button to dashboard for easy access
+- **Invite Code Testing Flow**: Complete end-to-end testing of community invitation system
+  - Enter invite code → Real-time validation → Community preview → Join confirmation → Success redirect
+- Form validation using react-hook-form and zod schema validation
+- Success notifications and automatic navigation to joined community
 
 #### TypeScript Type Safety Improvements
 - `MediaGridItem` interface using deep Pick utility types for minimal required media fields
 - Proper TypeScript interfaces for nested GraphQL entity fields (`owner`, `image`, `textContent`)
 - Enhanced type safety for media component props with strict typing
 - Eliminated `any` type usage in media components to prevent runtime type errors
-
-#### GraphQL Schema Integration
-- Updated GraphQL queries to support new backend `imageCount` and `textCount` fields
-- Enhanced `GET_CHARACTER_MEDIA` query with separate count field resolution
-- Regenerated GraphQL TypeScript types with latest backend schema changes
-- Added support for media type filtering with accurate count display
 
 ### Fixed
 
