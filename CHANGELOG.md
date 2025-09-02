@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **UI Core Entity Management System**: Comprehensive administration interface for species, traits, and community management
+  - Species management pages with creation, editing, and variant support
+  - Trait builder system supporting ENUM, STRING, INTEGER, and TIMESTAMP value types  
+  - Community administration with role-based permissions and invite code management
+  - Enum value configuration interface for species variant customization
+  - Enhanced UI component library with Card, Modal, Input, Typography, and ErrorMessage components
 - Core entity migration from clovercoin-app including community system, species/trait management, and character ownership tracking
 - Backend service layer refactoring to decouple from GraphQL types with field resolver patterns
 - E2E testing agent specification for automated regression testing workflows
@@ -20,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Characters now use relational species instead of text field (breaking change)
+- Enhanced Button component with improved styling and variant support
 
 ## [v1.1.3] - 2025-08-12
 
