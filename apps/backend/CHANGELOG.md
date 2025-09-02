@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+#### Invite Code System
+
+- **Invite Code Reuse Bug (#55)**: Fixed issue where invite codes could be reused despite throwing errors
+  - Root cause: Invite code claiming was not atomic - claim count incremented before membership creation, allowing reuse on failure
+  - Solution: Wrapped both claim count increment and membership creation in single database transaction
+  - Added user-friendly error handling for duplicate membership attempts with "You are already a member of this community" message
+  - Applied fixes to both direct invite code claims (`invite-codes.service.ts`) and signup flow (`auth.service.ts`)
+  - Thanks to Neo for reporting this issue
+  - Verified fix prevents usage count inflation and provides proper error messages to users
+
 ## [v2.0.0] - 2025-09-01
 
 ### Added
