@@ -26,6 +26,7 @@ export function mapSignupInputToService(input: SignupInput): SignupServiceInput 
     email: input.email,
     password: input.password,
     displayName: input.displayName,
+    inviteCode: input.inviteCode,
   };
 }
 

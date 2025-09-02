@@ -439,6 +439,8 @@ export type CreateRoleInput = {
   canCreateSpecies?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit characters */
   canEditCharacter?: Scalars['Boolean']['input'];
+  /** Whether members with this role can edit their own characters */
+  canEditOwnCharacter?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit existing roles */
   canEditRole?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit species */
@@ -788,7 +790,6 @@ export type Media = {
   image: Maybe<Image>;
   /** Foreign key to image content (null for text media) */
   imageId: Maybe<Scalars['ID']['output']>;
-  /** Number of likes this media has received */
   likesCount: Scalars['Int']['output'];
   /** The user who owns this media */
   owner: User;
@@ -804,7 +805,6 @@ export type Media = {
   title: Scalars['String']['output'];
   /** When the media was last updated */
   updatedAt: Scalars['DateTime']['output'];
-  /** Whether the current user has liked this media */
   userHasLiked: Scalars['Boolean']['output'];
   /** Visibility setting for the media */
   visibility: Visibility;
@@ -1691,6 +1691,7 @@ export type QueryInviteCodeByIdArgs = {
 
 export type QueryInviteCodesArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
+  communityId?: InputMaybe<Scalars['ID']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -1930,6 +1931,8 @@ export type Role = {
   canCreateSpecies: Scalars['Boolean']['output'];
   /** Whether members with this role can edit characters */
   canEditCharacter: Scalars['Boolean']['output'];
+  /** Whether members with this role can edit their own characters */
+  canEditOwnCharacter: Scalars['Boolean']['output'];
   /** Whether members with this role can edit existing roles */
   canEditRole: Scalars['Boolean']['output'];
   /** Whether members with this role can edit species */
@@ -1970,6 +1973,7 @@ export type SetMainMediaInput = {
 export type SignupInput = {
   displayName?: InputMaybe<Scalars['String']['input']>;
   email: Scalars['String']['input'];
+  inviteCode: Scalars['String']['input'];
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
 };
@@ -1988,6 +1992,8 @@ export type Species = {
   id: Scalars['ID']['output'];
   /** Name of the species */
   name: Scalars['String']['output'];
+  /** Traits associated with this species */
+  traits: Array<Trait>;
   /** When the species was last updated */
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -2008,6 +2014,8 @@ export type SpeciesVariant = {
   __typename?: 'SpeciesVariant';
   /** When the species variant was created */
   createdAt: Scalars['DateTime']['output'];
+  /** Enum value settings for this species variant */
+  enumValueSettings: Array<EnumValueSetting>;
   /** Unique identifier for the species variant */
   id: Scalars['ID']['output'];
   /** Name of the species variant */
@@ -2074,6 +2082,8 @@ export type Trait = {
   __typename?: 'Trait';
   /** When the trait was created */
   createdAt: Scalars['DateTime']['output'];
+  /** Enum values for this trait (only populated for ENUM traits) */
+  enumValues: Array<EnumValue>;
   /** Unique identifier for the trait */
   id: Scalars['ID']['output'];
   /** Name of the trait */
@@ -2270,6 +2280,8 @@ export type UpdateRoleInput = {
   canCreateSpecies?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit characters */
   canEditCharacter?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can edit their own characters */
+  canEditOwnCharacter?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit existing roles */
   canEditRole?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit species */
@@ -2442,7 +2454,7 @@ export type RefreshTokenMutation = { __typename?: 'Mutation', refreshToken: stri
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, privacySettings: any, createdAt: string, updatedAt: string } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string } };
 
 export type GetCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -2524,6 +2536,167 @@ export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, _count: { __typename?: 'CharacterCount', media: number } }> };
 
+export type CommunitiesQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CommunitiesQuery = { __typename?: 'Query', communities: { __typename?: 'CommunityConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string }> } };
+
+export type CommunityByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type CommunityByIdQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } };
+
+export type CreateCommunityMutationVariables = Exact<{
+  createCommunityInput: CreateCommunityInput;
+}>;
+
+
+export type CreateCommunityMutation = { __typename?: 'Mutation', createCommunity: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } };
+
+export type UpdateCommunityMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateCommunityInput: UpdateCommunityInput;
+}>;
+
+
+export type UpdateCommunityMutation = { __typename?: 'Mutation', updateCommunity: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } };
+
+export type RemoveCommunityMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveCommunityMutation = { __typename?: 'Mutation', removeCommunity: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
+export type CommunityMembersByUserQueryVariables = Exact<{
+  userId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canListInviteCodes: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+
+export type SpeciesWithTraitsAndEnumValuesQueryVariables = Exact<{
+  speciesId: Scalars['ID']['input'];
+}>;
+
+
+export type SpeciesWithTraitsAndEnumValuesQuery = { __typename?: 'Query', speciesById: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string }, traits: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string }> }> } };
+
+export type SpeciesVariantWithEnumValueSettingsQueryVariables = Exact<{
+  variantId: Scalars['ID']['input'];
+}>;
+
+
+export type SpeciesVariantWithEnumValueSettingsQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, traits: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> }> }, enumValueSettings: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string, enumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string } }> } };
+
+export type EnumValueSettingDetailsFragment = { __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string };
+
+export type EnumValueSettingConnectionDetailsFragment = { __typename?: 'EnumValueSettingConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string }> };
+
+export type EnumValueSettingsQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type EnumValueSettingsQuery = { __typename?: 'Query', enumValueSettings: { __typename?: 'EnumValueSettingConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string }> } };
+
+export type EnumValueSettingsBySpeciesVariantQueryVariables = Exact<{
+  speciesVariantId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type EnumValueSettingsBySpeciesVariantQuery = { __typename?: 'Query', enumValueSettingsBySpeciesVariant: { __typename?: 'EnumValueSettingConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string }> } };
+
+export type EnumValueSettingsByEnumValueQueryVariables = Exact<{
+  enumValueId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type EnumValueSettingsByEnumValueQuery = { __typename?: 'Query', enumValueSettingsByEnumValue: { __typename?: 'EnumValueSettingConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string }> } };
+
+export type EnumValueSettingByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type EnumValueSettingByIdQuery = { __typename?: 'Query', enumValueSettingById: { __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string } };
+
+export type CreateEnumValueSettingMutationVariables = Exact<{
+  createEnumValueSettingInput: CreateEnumValueSettingInput;
+}>;
+
+
+export type CreateEnumValueSettingMutation = { __typename?: 'Mutation', createEnumValueSetting: { __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string } };
+
+export type UpdateEnumValueSettingMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateEnumValueSettingInput: UpdateEnumValueSettingInput;
+}>;
+
+
+export type UpdateEnumValueSettingMutation = { __typename?: 'Mutation', updateEnumValueSetting: { __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string } };
+
+export type DeleteEnumValueSettingMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteEnumValueSettingMutation = { __typename?: 'Mutation', removeEnumValueSetting: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
+export type EnumValueDetailsFragment = { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string };
+
+export type EnumValueConnectionDetailsFragment = { __typename?: 'EnumValueConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string }> };
+
+export type EnumValuesByTraitQueryVariables = Exact<{
+  traitId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type EnumValuesByTraitQuery = { __typename?: 'Query', enumValuesByTrait: { __typename?: 'EnumValueConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string }> } };
+
+export type EnumValueByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type EnumValueByIdQuery = { __typename?: 'Query', enumValueById: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, species: { __typename?: 'Species', id: string, name: string, communityId: string } } } };
+
+export type CreateEnumValueMutationVariables = Exact<{
+  createEnumValueInput: CreateEnumValueInput;
+}>;
+
+
+export type CreateEnumValueMutation = { __typename?: 'Mutation', createEnumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string } };
+
+export type UpdateEnumValueMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateEnumValueInput: UpdateEnumValueInput;
+}>;
+
+
+export type UpdateEnumValueMutation = { __typename?: 'Mutation', updateEnumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string } };
+
+export type DeleteEnumValueMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteEnumValueMutation = { __typename?: 'Mutation', removeEnumValue: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
 export type GetGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
 }>;
@@ -2599,6 +2772,61 @@ export type GetLikedImagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetLikedImagesQuery = { __typename?: 'Query', likedImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, url: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> };
+
+export type InviteCodesQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type InviteCodesQuery = { __typename?: 'Query', inviteCodes: { __typename?: 'InviteCodeConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, createdAt: string, updatedAt: string, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null }> } };
+
+export type InviteCodeByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type InviteCodeByIdQuery = { __typename?: 'Query', inviteCodeById: { __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, createdAt: string, updatedAt: string, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } };
+
+export type CreateInviteCodeMutationVariables = Exact<{
+  createInviteCodeInput: CreateInviteCodeInput;
+}>;
+
+
+export type CreateInviteCodeMutation = { __typename?: 'Mutation', createInviteCode: { __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, createdAt: string, updatedAt: string, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } };
+
+export type UpdateInviteCodeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateInviteCodeInput: UpdateInviteCodeInput;
+}>;
+
+
+export type UpdateInviteCodeMutation = { __typename?: 'Mutation', updateInviteCode: { __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, createdAt: string, updatedAt: string, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } };
+
+export type RemoveInviteCodeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveInviteCodeMutation = { __typename?: 'Mutation', removeInviteCode: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
+export type ClaimInviteCodeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  claimInviteCodeInput: ClaimInviteCodeInput;
+}>;
+
+
+export type ClaimInviteCodeMutation = { __typename?: 'Mutation', claimInviteCode: { __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } };
+
+export type RolesByCommunityQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type RolesByCommunityQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Role', id: string, name: string, canCreateInviteCode: boolean, community: { __typename?: 'Community', id: string, name: string } }> } };
 
 export type GetMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -2690,6 +2918,47 @@ export type RemoveMediaTagsMutationVariables = Exact<{
 
 export type RemoveMediaTagsMutation = { __typename?: 'Mutation', removeMediaTags: { __typename?: 'Media', id: string, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
+export type RolesByCommunityDetailedQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  first: Scalars['Int']['input'];
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
+
+export type CreateRoleMutationVariables = Exact<{
+  input: CreateRoleInput;
+}>;
+
+
+export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+
+export type UpdateRoleMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateRoleInput;
+}>;
+
+
+export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+
+export type CommunityMembersWithRolesQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  first: Scalars['Int']['input'];
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean } }> } };
+
+export type UpdateCommunityMemberMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateCommunityMemberInput;
+}>;
+
+
+export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean } } };
+
 export type ToggleLikeMutationVariables = Exact<{
   input: ToggleLikeInput;
 }>;
@@ -2769,6 +3038,148 @@ export type GetActivityFeedQueryVariables = Exact<{
 
 export type GetActivityFeedQuery = { __typename?: 'Query', activityFeed: Array<{ __typename?: 'ActivityItem', id: string, type: string, entityId: string, createdAt: string, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, content: { __typename?: 'ActivityContent', name: string | null, title: string | null, description: string | null } | null }> };
 
+export type SpeciesDetailsFragment = { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string };
+
+export type SpeciesConnectionDetailsFragment = { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string }> };
+
+export type SpeciesQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type SpeciesQuery = { __typename?: 'Query', species: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string }> } };
+
+export type SpeciesByCommunityQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type SpeciesByCommunityQuery = { __typename?: 'Query', speciesByCommunity: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string }> } };
+
+export type SpeciesByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type SpeciesByIdQuery = { __typename?: 'Query', speciesById: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+
+export type CreateSpeciesMutationVariables = Exact<{
+  createSpeciesInput: CreateSpeciesInput;
+}>;
+
+
+export type CreateSpeciesMutation = { __typename?: 'Mutation', createSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string } };
+
+export type UpdateSpeciesMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateSpeciesInput: UpdateSpeciesInput;
+}>;
+
+
+export type UpdateSpeciesMutation = { __typename?: 'Mutation', updateSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string } };
+
+export type DeleteSpeciesMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteSpeciesMutation = { __typename?: 'Mutation', removeSpecies: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
+export type SpeciesVariantDetailsFragment = { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string };
+
+export type SpeciesVariantConnectionDetailsFragment = { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string }> };
+
+export type SpeciesVariantsQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type SpeciesVariantsQuery = { __typename?: 'Query', speciesVariants: { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string }> } };
+
+export type SpeciesVariantsBySpeciesQueryVariables = Exact<{
+  speciesId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type SpeciesVariantsBySpeciesQuery = { __typename?: 'Query', speciesVariantsBySpecies: { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string }> } };
+
+export type SpeciesVariantByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type SpeciesVariantByIdQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string } } };
+
+export type CreateSpeciesVariantMutationVariables = Exact<{
+  createSpeciesVariantInput: CreateSpeciesVariantInput;
+}>;
+
+
+export type CreateSpeciesVariantMutation = { __typename?: 'Mutation', createSpeciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string } };
+
+export type UpdateSpeciesVariantMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateSpeciesVariantInput: UpdateSpeciesVariantInput;
+}>;
+
+
+export type UpdateSpeciesVariantMutation = { __typename?: 'Mutation', updateSpeciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string } };
+
+export type DeleteSpeciesVariantMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteSpeciesVariantMutation = { __typename?: 'Mutation', removeSpeciesVariant: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
+export type TraitDetailsFragment = { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string };
+
+export type TraitConnectionDetailsFragment = { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string }> };
+
+export type TraitsBySpeciesQueryVariables = Exact<{
+  speciesId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type TraitsBySpeciesQuery = { __typename?: 'Query', traitsBySpecies: { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string }> } };
+
+export type TraitByIdQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string } } };
+
+export type CreateTraitMutationVariables = Exact<{
+  createTraitInput: CreateTraitInput;
+}>;
+
+
+export type CreateTraitMutation = { __typename?: 'Mutation', createTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string } };
+
+export type UpdateTraitMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateTraitInput: UpdateTraitInput;
+}>;
+
+
+export type UpdateTraitMutation = { __typename?: 'Mutation', updateTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string } };
+
+export type DeleteTraitMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteTraitMutation = { __typename?: 'Mutation', removeTrait: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
 export type SearchTagsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Float']['input']>;
@@ -2798,7 +3209,104 @@ export type UpdateProfileMutationVariables = Exact<{
 
 export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, createdAt: string, updatedAt: string } };
 
-
+export const EnumValueSettingDetailsFragmentDoc = gql`
+    fragment EnumValueSettingDetails on EnumValueSetting {
+  id
+  enumValueId
+  speciesVariantId
+  createdAt
+  updatedAt
+}
+    `;
+export const EnumValueSettingConnectionDetailsFragmentDoc = gql`
+    fragment EnumValueSettingConnectionDetails on EnumValueSettingConnection {
+  nodes {
+    ...EnumValueSettingDetails
+  }
+  hasNextPage
+  hasPreviousPage
+  totalCount
+}
+    ${EnumValueSettingDetailsFragmentDoc}`;
+export const EnumValueDetailsFragmentDoc = gql`
+    fragment EnumValueDetails on EnumValue {
+  id
+  name
+  order
+  traitId
+  createdAt
+  updatedAt
+}
+    `;
+export const EnumValueConnectionDetailsFragmentDoc = gql`
+    fragment EnumValueConnectionDetails on EnumValueConnection {
+  nodes {
+    ...EnumValueDetails
+  }
+  hasNextPage
+  hasPreviousPage
+  totalCount
+}
+    ${EnumValueDetailsFragmentDoc}`;
+export const SpeciesDetailsFragmentDoc = gql`
+    fragment SpeciesDetails on Species {
+  id
+  name
+  communityId
+  hasImage
+  createdAt
+  updatedAt
+}
+    `;
+export const SpeciesConnectionDetailsFragmentDoc = gql`
+    fragment SpeciesConnectionDetails on SpeciesConnection {
+  nodes {
+    ...SpeciesDetails
+  }
+  hasNextPage
+  hasPreviousPage
+  totalCount
+}
+    ${SpeciesDetailsFragmentDoc}`;
+export const SpeciesVariantDetailsFragmentDoc = gql`
+    fragment SpeciesVariantDetails on SpeciesVariant {
+  id
+  name
+  speciesId
+  createdAt
+  updatedAt
+}
+    `;
+export const SpeciesVariantConnectionDetailsFragmentDoc = gql`
+    fragment SpeciesVariantConnectionDetails on SpeciesVariantConnection {
+  nodes {
+    ...SpeciesVariantDetails
+  }
+  hasNextPage
+  hasPreviousPage
+  totalCount
+}
+    ${SpeciesVariantDetailsFragmentDoc}`;
+export const TraitDetailsFragmentDoc = gql`
+    fragment TraitDetails on Trait {
+  id
+  name
+  valueType
+  speciesId
+  createdAt
+  updatedAt
+}
+    `;
+export const TraitConnectionDetailsFragmentDoc = gql`
+    fragment TraitConnectionDetails on TraitConnection {
+  nodes {
+    ...TraitDetails
+  }
+  hasNextPage
+  hasPreviousPage
+  totalCount
+}
+    ${TraitDetailsFragmentDoc}`;
 export const LoginDocument = gql`
     mutation Login($input: LoginInput!) {
   login(input: $input) {
@@ -2932,6 +3440,11 @@ export const MeDocument = gql`
     dateOfBirth
     isVerified
     isAdmin
+    canCreateInviteCode
+    canListInviteCodes
+    canCreateCommunity
+    canGrantGlobalPermissions
+    canListUsers
     privacySettings
     createdAt
     updatedAt
@@ -3680,6 +4193,888 @@ export type GetLikedCharactersQueryHookResult = ReturnType<typeof useGetLikedCha
 export type GetLikedCharactersLazyQueryHookResult = ReturnType<typeof useGetLikedCharactersLazyQuery>;
 export type GetLikedCharactersSuspenseQueryHookResult = ReturnType<typeof useGetLikedCharactersSuspenseQuery>;
 export type GetLikedCharactersQueryResult = Apollo.QueryResult<GetLikedCharactersQuery, GetLikedCharactersQueryVariables>;
+export const CommunitiesDocument = gql`
+    query Communities($first: Int, $after: String) {
+  communities(first: $first, after: $after) {
+    nodes {
+      id
+      name
+      createdAt
+      updatedAt
+    }
+    hasNextPage
+    hasPreviousPage
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useCommunitiesQuery__
+ *
+ * To run a query within a React component, call `useCommunitiesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunitiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommunitiesQuery({
+ *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useCommunitiesQuery(baseOptions?: Apollo.QueryHookOptions<CommunitiesQuery, CommunitiesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CommunitiesQuery, CommunitiesQueryVariables>(CommunitiesDocument, options);
+      }
+export function useCommunitiesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunitiesQuery, CommunitiesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CommunitiesQuery, CommunitiesQueryVariables>(CommunitiesDocument, options);
+        }
+export function useCommunitiesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunitiesQuery, CommunitiesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CommunitiesQuery, CommunitiesQueryVariables>(CommunitiesDocument, options);
+        }
+export type CommunitiesQueryHookResult = ReturnType<typeof useCommunitiesQuery>;
+export type CommunitiesLazyQueryHookResult = ReturnType<typeof useCommunitiesLazyQuery>;
+export type CommunitiesSuspenseQueryHookResult = ReturnType<typeof useCommunitiesSuspenseQuery>;
+export type CommunitiesQueryResult = Apollo.QueryResult<CommunitiesQuery, CommunitiesQueryVariables>;
+export const CommunityByIdDocument = gql`
+    query CommunityById($id: ID!) {
+  community(id: $id) {
+    id
+    name
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useCommunityByIdQuery__
+ *
+ * To run a query within a React component, call `useCommunityByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunityByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommunityByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useCommunityByIdQuery(baseOptions: Apollo.QueryHookOptions<CommunityByIdQuery, CommunityByIdQueryVariables> & ({ variables: CommunityByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CommunityByIdQuery, CommunityByIdQueryVariables>(CommunityByIdDocument, options);
+      }
+export function useCommunityByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunityByIdQuery, CommunityByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CommunityByIdQuery, CommunityByIdQueryVariables>(CommunityByIdDocument, options);
+        }
+export function useCommunityByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunityByIdQuery, CommunityByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CommunityByIdQuery, CommunityByIdQueryVariables>(CommunityByIdDocument, options);
+        }
+export type CommunityByIdQueryHookResult = ReturnType<typeof useCommunityByIdQuery>;
+export type CommunityByIdLazyQueryHookResult = ReturnType<typeof useCommunityByIdLazyQuery>;
+export type CommunityByIdSuspenseQueryHookResult = ReturnType<typeof useCommunityByIdSuspenseQuery>;
+export type CommunityByIdQueryResult = Apollo.QueryResult<CommunityByIdQuery, CommunityByIdQueryVariables>;
+export const CreateCommunityDocument = gql`
+    mutation CreateCommunity($createCommunityInput: CreateCommunityInput!) {
+  createCommunity(createCommunityInput: $createCommunityInput) {
+    id
+    name
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type CreateCommunityMutationFn = Apollo.MutationFunction<CreateCommunityMutation, CreateCommunityMutationVariables>;
+
+/**
+ * __useCreateCommunityMutation__
+ *
+ * To run a mutation, you first call `useCreateCommunityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCommunityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCommunityMutation, { data, loading, error }] = useCreateCommunityMutation({
+ *   variables: {
+ *      createCommunityInput: // value for 'createCommunityInput'
+ *   },
+ * });
+ */
+export function useCreateCommunityMutation(baseOptions?: Apollo.MutationHookOptions<CreateCommunityMutation, CreateCommunityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateCommunityMutation, CreateCommunityMutationVariables>(CreateCommunityDocument, options);
+      }
+export type CreateCommunityMutationHookResult = ReturnType<typeof useCreateCommunityMutation>;
+export type CreateCommunityMutationResult = Apollo.MutationResult<CreateCommunityMutation>;
+export type CreateCommunityMutationOptions = Apollo.BaseMutationOptions<CreateCommunityMutation, CreateCommunityMutationVariables>;
+export const UpdateCommunityDocument = gql`
+    mutation UpdateCommunity($id: ID!, $updateCommunityInput: UpdateCommunityInput!) {
+  updateCommunity(id: $id, updateCommunityInput: $updateCommunityInput) {
+    id
+    name
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type UpdateCommunityMutationFn = Apollo.MutationFunction<UpdateCommunityMutation, UpdateCommunityMutationVariables>;
+
+/**
+ * __useUpdateCommunityMutation__
+ *
+ * To run a mutation, you first call `useUpdateCommunityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCommunityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCommunityMutation, { data, loading, error }] = useUpdateCommunityMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateCommunityInput: // value for 'updateCommunityInput'
+ *   },
+ * });
+ */
+export function useUpdateCommunityMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCommunityMutation, UpdateCommunityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateCommunityMutation, UpdateCommunityMutationVariables>(UpdateCommunityDocument, options);
+      }
+export type UpdateCommunityMutationHookResult = ReturnType<typeof useUpdateCommunityMutation>;
+export type UpdateCommunityMutationResult = Apollo.MutationResult<UpdateCommunityMutation>;
+export type UpdateCommunityMutationOptions = Apollo.BaseMutationOptions<UpdateCommunityMutation, UpdateCommunityMutationVariables>;
+export const RemoveCommunityDocument = gql`
+    mutation RemoveCommunity($id: ID!) {
+  removeCommunity(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type RemoveCommunityMutationFn = Apollo.MutationFunction<RemoveCommunityMutation, RemoveCommunityMutationVariables>;
+
+/**
+ * __useRemoveCommunityMutation__
+ *
+ * To run a mutation, you first call `useRemoveCommunityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveCommunityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeCommunityMutation, { data, loading, error }] = useRemoveCommunityMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useRemoveCommunityMutation(baseOptions?: Apollo.MutationHookOptions<RemoveCommunityMutation, RemoveCommunityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveCommunityMutation, RemoveCommunityMutationVariables>(RemoveCommunityDocument, options);
+      }
+export type RemoveCommunityMutationHookResult = ReturnType<typeof useRemoveCommunityMutation>;
+export type RemoveCommunityMutationResult = Apollo.MutationResult<RemoveCommunityMutation>;
+export type RemoveCommunityMutationOptions = Apollo.BaseMutationOptions<RemoveCommunityMutation, RemoveCommunityMutationVariables>;
+export const CommunityMembersByUserDocument = gql`
+    query CommunityMembersByUser($userId: ID!, $first: Int, $after: String) {
+  communityMembersByUser(userId: $userId, first: $first, after: $after) {
+    nodes {
+      id
+      createdAt
+      updatedAt
+      role {
+        id
+        name
+        community {
+          id
+          name
+          createdAt
+          updatedAt
+        }
+        canCreateCharacter
+        canCreateInviteCode
+        canCreateRole
+        canEditCharacter
+        canCreateSpecies
+        canEditSpecies
+        canEditRole
+        canEditCharacter
+        canEditOwnCharacter
+        canListInviteCodes
+      }
+      user {
+        id
+        username
+        displayName
+      }
+    }
+    hasNextPage
+    hasPreviousPage
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useCommunityMembersByUserQuery__
+ *
+ * To run a query within a React component, call `useCommunityMembersByUserQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunityMembersByUserQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommunityMembersByUserQuery({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useCommunityMembersByUserQuery(baseOptions: Apollo.QueryHookOptions<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables> & ({ variables: CommunityMembersByUserQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>(CommunityMembersByUserDocument, options);
+      }
+export function useCommunityMembersByUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>(CommunityMembersByUserDocument, options);
+        }
+export function useCommunityMembersByUserSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>(CommunityMembersByUserDocument, options);
+        }
+export type CommunityMembersByUserQueryHookResult = ReturnType<typeof useCommunityMembersByUserQuery>;
+export type CommunityMembersByUserLazyQueryHookResult = ReturnType<typeof useCommunityMembersByUserLazyQuery>;
+export type CommunityMembersByUserSuspenseQueryHookResult = ReturnType<typeof useCommunityMembersByUserSuspenseQuery>;
+export type CommunityMembersByUserQueryResult = Apollo.QueryResult<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>;
+export const SpeciesWithTraitsAndEnumValuesDocument = gql`
+    query SpeciesWithTraitsAndEnumValues($speciesId: ID!) {
+  speciesById(id: $speciesId) {
+    id
+    name
+    communityId
+    hasImage
+    createdAt
+    updatedAt
+    community {
+      id
+      name
+    }
+    traits {
+      id
+      name
+      valueType
+      speciesId
+      createdAt
+      updatedAt
+      enumValues {
+        id
+        name
+        order
+        traitId
+        createdAt
+        updatedAt
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useSpeciesWithTraitsAndEnumValuesQuery__
+ *
+ * To run a query within a React component, call `useSpeciesWithTraitsAndEnumValuesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesWithTraitsAndEnumValuesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesWithTraitsAndEnumValuesQuery({
+ *   variables: {
+ *      speciesId: // value for 'speciesId'
+ *   },
+ * });
+ */
+export function useSpeciesWithTraitsAndEnumValuesQuery(baseOptions: Apollo.QueryHookOptions<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables> & ({ variables: SpeciesWithTraitsAndEnumValuesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables>(SpeciesWithTraitsAndEnumValuesDocument, options);
+      }
+export function useSpeciesWithTraitsAndEnumValuesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables>(SpeciesWithTraitsAndEnumValuesDocument, options);
+        }
+export function useSpeciesWithTraitsAndEnumValuesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables>(SpeciesWithTraitsAndEnumValuesDocument, options);
+        }
+export type SpeciesWithTraitsAndEnumValuesQueryHookResult = ReturnType<typeof useSpeciesWithTraitsAndEnumValuesQuery>;
+export type SpeciesWithTraitsAndEnumValuesLazyQueryHookResult = ReturnType<typeof useSpeciesWithTraitsAndEnumValuesLazyQuery>;
+export type SpeciesWithTraitsAndEnumValuesSuspenseQueryHookResult = ReturnType<typeof useSpeciesWithTraitsAndEnumValuesSuspenseQuery>;
+export type SpeciesWithTraitsAndEnumValuesQueryResult = Apollo.QueryResult<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables>;
+export const SpeciesVariantWithEnumValueSettingsDocument = gql`
+    query SpeciesVariantWithEnumValueSettings($variantId: ID!) {
+  speciesVariantById(id: $variantId) {
+    id
+    name
+    speciesId
+    createdAt
+    updatedAt
+    species {
+      id
+      name
+      communityId
+      traits {
+        id
+        name
+        valueType
+        enumValues {
+          id
+          name
+          order
+        }
+      }
+    }
+    enumValueSettings {
+      id
+      enumValueId
+      speciesVariantId
+      createdAt
+      updatedAt
+      enumValue {
+        id
+        name
+        order
+        traitId
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useSpeciesVariantWithEnumValueSettingsQuery__
+ *
+ * To run a query within a React component, call `useSpeciesVariantWithEnumValueSettingsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesVariantWithEnumValueSettingsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesVariantWithEnumValueSettingsQuery({
+ *   variables: {
+ *      variantId: // value for 'variantId'
+ *   },
+ * });
+ */
+export function useSpeciesVariantWithEnumValueSettingsQuery(baseOptions: Apollo.QueryHookOptions<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables> & ({ variables: SpeciesVariantWithEnumValueSettingsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables>(SpeciesVariantWithEnumValueSettingsDocument, options);
+      }
+export function useSpeciesVariantWithEnumValueSettingsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables>(SpeciesVariantWithEnumValueSettingsDocument, options);
+        }
+export function useSpeciesVariantWithEnumValueSettingsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables>(SpeciesVariantWithEnumValueSettingsDocument, options);
+        }
+export type SpeciesVariantWithEnumValueSettingsQueryHookResult = ReturnType<typeof useSpeciesVariantWithEnumValueSettingsQuery>;
+export type SpeciesVariantWithEnumValueSettingsLazyQueryHookResult = ReturnType<typeof useSpeciesVariantWithEnumValueSettingsLazyQuery>;
+export type SpeciesVariantWithEnumValueSettingsSuspenseQueryHookResult = ReturnType<typeof useSpeciesVariantWithEnumValueSettingsSuspenseQuery>;
+export type SpeciesVariantWithEnumValueSettingsQueryResult = Apollo.QueryResult<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables>;
+export const EnumValueSettingsDocument = gql`
+    query EnumValueSettings($first: Int, $after: String) {
+  enumValueSettings(first: $first, after: $after) {
+    ...EnumValueSettingConnectionDetails
+  }
+}
+    ${EnumValueSettingConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useEnumValueSettingsQuery__
+ *
+ * To run a query within a React component, call `useEnumValueSettingsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnumValueSettingsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnumValueSettingsQuery({
+ *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useEnumValueSettingsQuery(baseOptions?: Apollo.QueryHookOptions<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>(EnumValueSettingsDocument, options);
+      }
+export function useEnumValueSettingsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>(EnumValueSettingsDocument, options);
+        }
+export function useEnumValueSettingsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>(EnumValueSettingsDocument, options);
+        }
+export type EnumValueSettingsQueryHookResult = ReturnType<typeof useEnumValueSettingsQuery>;
+export type EnumValueSettingsLazyQueryHookResult = ReturnType<typeof useEnumValueSettingsLazyQuery>;
+export type EnumValueSettingsSuspenseQueryHookResult = ReturnType<typeof useEnumValueSettingsSuspenseQuery>;
+export type EnumValueSettingsQueryResult = Apollo.QueryResult<EnumValueSettingsQuery, EnumValueSettingsQueryVariables>;
+export const EnumValueSettingsBySpeciesVariantDocument = gql`
+    query EnumValueSettingsBySpeciesVariant($speciesVariantId: ID!, $first: Int, $after: String) {
+  enumValueSettingsBySpeciesVariant(
+    speciesVariantId: $speciesVariantId
+    first: $first
+    after: $after
+  ) {
+    ...EnumValueSettingConnectionDetails
+  }
+}
+    ${EnumValueSettingConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useEnumValueSettingsBySpeciesVariantQuery__
+ *
+ * To run a query within a React component, call `useEnumValueSettingsBySpeciesVariantQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnumValueSettingsBySpeciesVariantQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnumValueSettingsBySpeciesVariantQuery({
+ *   variables: {
+ *      speciesVariantId: // value for 'speciesVariantId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useEnumValueSettingsBySpeciesVariantQuery(baseOptions: Apollo.QueryHookOptions<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables> & ({ variables: EnumValueSettingsBySpeciesVariantQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables>(EnumValueSettingsBySpeciesVariantDocument, options);
+      }
+export function useEnumValueSettingsBySpeciesVariantLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables>(EnumValueSettingsBySpeciesVariantDocument, options);
+        }
+export function useEnumValueSettingsBySpeciesVariantSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables>(EnumValueSettingsBySpeciesVariantDocument, options);
+        }
+export type EnumValueSettingsBySpeciesVariantQueryHookResult = ReturnType<typeof useEnumValueSettingsBySpeciesVariantQuery>;
+export type EnumValueSettingsBySpeciesVariantLazyQueryHookResult = ReturnType<typeof useEnumValueSettingsBySpeciesVariantLazyQuery>;
+export type EnumValueSettingsBySpeciesVariantSuspenseQueryHookResult = ReturnType<typeof useEnumValueSettingsBySpeciesVariantSuspenseQuery>;
+export type EnumValueSettingsBySpeciesVariantQueryResult = Apollo.QueryResult<EnumValueSettingsBySpeciesVariantQuery, EnumValueSettingsBySpeciesVariantQueryVariables>;
+export const EnumValueSettingsByEnumValueDocument = gql`
+    query EnumValueSettingsByEnumValue($enumValueId: ID!, $first: Int, $after: String) {
+  enumValueSettingsByEnumValue(
+    enumValueId: $enumValueId
+    first: $first
+    after: $after
+  ) {
+    ...EnumValueSettingConnectionDetails
+  }
+}
+    ${EnumValueSettingConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useEnumValueSettingsByEnumValueQuery__
+ *
+ * To run a query within a React component, call `useEnumValueSettingsByEnumValueQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnumValueSettingsByEnumValueQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnumValueSettingsByEnumValueQuery({
+ *   variables: {
+ *      enumValueId: // value for 'enumValueId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useEnumValueSettingsByEnumValueQuery(baseOptions: Apollo.QueryHookOptions<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables> & ({ variables: EnumValueSettingsByEnumValueQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables>(EnumValueSettingsByEnumValueDocument, options);
+      }
+export function useEnumValueSettingsByEnumValueLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables>(EnumValueSettingsByEnumValueDocument, options);
+        }
+export function useEnumValueSettingsByEnumValueSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables>(EnumValueSettingsByEnumValueDocument, options);
+        }
+export type EnumValueSettingsByEnumValueQueryHookResult = ReturnType<typeof useEnumValueSettingsByEnumValueQuery>;
+export type EnumValueSettingsByEnumValueLazyQueryHookResult = ReturnType<typeof useEnumValueSettingsByEnumValueLazyQuery>;
+export type EnumValueSettingsByEnumValueSuspenseQueryHookResult = ReturnType<typeof useEnumValueSettingsByEnumValueSuspenseQuery>;
+export type EnumValueSettingsByEnumValueQueryResult = Apollo.QueryResult<EnumValueSettingsByEnumValueQuery, EnumValueSettingsByEnumValueQueryVariables>;
+export const EnumValueSettingByIdDocument = gql`
+    query EnumValueSettingById($id: ID!) {
+  enumValueSettingById(id: $id) {
+    ...EnumValueSettingDetails
+  }
+}
+    ${EnumValueSettingDetailsFragmentDoc}`;
+
+/**
+ * __useEnumValueSettingByIdQuery__
+ *
+ * To run a query within a React component, call `useEnumValueSettingByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnumValueSettingByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnumValueSettingByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useEnumValueSettingByIdQuery(baseOptions: Apollo.QueryHookOptions<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables> & ({ variables: EnumValueSettingByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables>(EnumValueSettingByIdDocument, options);
+      }
+export function useEnumValueSettingByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables>(EnumValueSettingByIdDocument, options);
+        }
+export function useEnumValueSettingByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables>(EnumValueSettingByIdDocument, options);
+        }
+export type EnumValueSettingByIdQueryHookResult = ReturnType<typeof useEnumValueSettingByIdQuery>;
+export type EnumValueSettingByIdLazyQueryHookResult = ReturnType<typeof useEnumValueSettingByIdLazyQuery>;
+export type EnumValueSettingByIdSuspenseQueryHookResult = ReturnType<typeof useEnumValueSettingByIdSuspenseQuery>;
+export type EnumValueSettingByIdQueryResult = Apollo.QueryResult<EnumValueSettingByIdQuery, EnumValueSettingByIdQueryVariables>;
+export const CreateEnumValueSettingDocument = gql`
+    mutation CreateEnumValueSetting($createEnumValueSettingInput: CreateEnumValueSettingInput!) {
+  createEnumValueSetting(
+    createEnumValueSettingInput: $createEnumValueSettingInput
+  ) {
+    ...EnumValueSettingDetails
+  }
+}
+    ${EnumValueSettingDetailsFragmentDoc}`;
+export type CreateEnumValueSettingMutationFn = Apollo.MutationFunction<CreateEnumValueSettingMutation, CreateEnumValueSettingMutationVariables>;
+
+/**
+ * __useCreateEnumValueSettingMutation__
+ *
+ * To run a mutation, you first call `useCreateEnumValueSettingMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateEnumValueSettingMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createEnumValueSettingMutation, { data, loading, error }] = useCreateEnumValueSettingMutation({
+ *   variables: {
+ *      createEnumValueSettingInput: // value for 'createEnumValueSettingInput'
+ *   },
+ * });
+ */
+export function useCreateEnumValueSettingMutation(baseOptions?: Apollo.MutationHookOptions<CreateEnumValueSettingMutation, CreateEnumValueSettingMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateEnumValueSettingMutation, CreateEnumValueSettingMutationVariables>(CreateEnumValueSettingDocument, options);
+      }
+export type CreateEnumValueSettingMutationHookResult = ReturnType<typeof useCreateEnumValueSettingMutation>;
+export type CreateEnumValueSettingMutationResult = Apollo.MutationResult<CreateEnumValueSettingMutation>;
+export type CreateEnumValueSettingMutationOptions = Apollo.BaseMutationOptions<CreateEnumValueSettingMutation, CreateEnumValueSettingMutationVariables>;
+export const UpdateEnumValueSettingDocument = gql`
+    mutation UpdateEnumValueSetting($id: ID!, $updateEnumValueSettingInput: UpdateEnumValueSettingInput!) {
+  updateEnumValueSetting(
+    id: $id
+    updateEnumValueSettingInput: $updateEnumValueSettingInput
+  ) {
+    ...EnumValueSettingDetails
+  }
+}
+    ${EnumValueSettingDetailsFragmentDoc}`;
+export type UpdateEnumValueSettingMutationFn = Apollo.MutationFunction<UpdateEnumValueSettingMutation, UpdateEnumValueSettingMutationVariables>;
+
+/**
+ * __useUpdateEnumValueSettingMutation__
+ *
+ * To run a mutation, you first call `useUpdateEnumValueSettingMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateEnumValueSettingMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateEnumValueSettingMutation, { data, loading, error }] = useUpdateEnumValueSettingMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateEnumValueSettingInput: // value for 'updateEnumValueSettingInput'
+ *   },
+ * });
+ */
+export function useUpdateEnumValueSettingMutation(baseOptions?: Apollo.MutationHookOptions<UpdateEnumValueSettingMutation, UpdateEnumValueSettingMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateEnumValueSettingMutation, UpdateEnumValueSettingMutationVariables>(UpdateEnumValueSettingDocument, options);
+      }
+export type UpdateEnumValueSettingMutationHookResult = ReturnType<typeof useUpdateEnumValueSettingMutation>;
+export type UpdateEnumValueSettingMutationResult = Apollo.MutationResult<UpdateEnumValueSettingMutation>;
+export type UpdateEnumValueSettingMutationOptions = Apollo.BaseMutationOptions<UpdateEnumValueSettingMutation, UpdateEnumValueSettingMutationVariables>;
+export const DeleteEnumValueSettingDocument = gql`
+    mutation DeleteEnumValueSetting($id: ID!) {
+  removeEnumValueSetting(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type DeleteEnumValueSettingMutationFn = Apollo.MutationFunction<DeleteEnumValueSettingMutation, DeleteEnumValueSettingMutationVariables>;
+
+/**
+ * __useDeleteEnumValueSettingMutation__
+ *
+ * To run a mutation, you first call `useDeleteEnumValueSettingMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteEnumValueSettingMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteEnumValueSettingMutation, { data, loading, error }] = useDeleteEnumValueSettingMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteEnumValueSettingMutation(baseOptions?: Apollo.MutationHookOptions<DeleteEnumValueSettingMutation, DeleteEnumValueSettingMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteEnumValueSettingMutation, DeleteEnumValueSettingMutationVariables>(DeleteEnumValueSettingDocument, options);
+      }
+export type DeleteEnumValueSettingMutationHookResult = ReturnType<typeof useDeleteEnumValueSettingMutation>;
+export type DeleteEnumValueSettingMutationResult = Apollo.MutationResult<DeleteEnumValueSettingMutation>;
+export type DeleteEnumValueSettingMutationOptions = Apollo.BaseMutationOptions<DeleteEnumValueSettingMutation, DeleteEnumValueSettingMutationVariables>;
+export const EnumValuesByTraitDocument = gql`
+    query EnumValuesByTrait($traitId: ID!, $first: Int, $after: String) {
+  enumValuesByTrait(traitId: $traitId, first: $first, after: $after) {
+    ...EnumValueConnectionDetails
+  }
+}
+    ${EnumValueConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useEnumValuesByTraitQuery__
+ *
+ * To run a query within a React component, call `useEnumValuesByTraitQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnumValuesByTraitQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnumValuesByTraitQuery({
+ *   variables: {
+ *      traitId: // value for 'traitId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useEnumValuesByTraitQuery(baseOptions: Apollo.QueryHookOptions<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables> & ({ variables: EnumValuesByTraitQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables>(EnumValuesByTraitDocument, options);
+      }
+export function useEnumValuesByTraitLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables>(EnumValuesByTraitDocument, options);
+        }
+export function useEnumValuesByTraitSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables>(EnumValuesByTraitDocument, options);
+        }
+export type EnumValuesByTraitQueryHookResult = ReturnType<typeof useEnumValuesByTraitQuery>;
+export type EnumValuesByTraitLazyQueryHookResult = ReturnType<typeof useEnumValuesByTraitLazyQuery>;
+export type EnumValuesByTraitSuspenseQueryHookResult = ReturnType<typeof useEnumValuesByTraitSuspenseQuery>;
+export type EnumValuesByTraitQueryResult = Apollo.QueryResult<EnumValuesByTraitQuery, EnumValuesByTraitQueryVariables>;
+export const EnumValueByIdDocument = gql`
+    query EnumValueById($id: ID!) {
+  enumValueById(id: $id) {
+    ...EnumValueDetails
+    trait {
+      id
+      name
+      valueType
+      species {
+        id
+        name
+        communityId
+      }
+    }
+  }
+}
+    ${EnumValueDetailsFragmentDoc}`;
+
+/**
+ * __useEnumValueByIdQuery__
+ *
+ * To run a query within a React component, call `useEnumValueByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnumValueByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnumValueByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useEnumValueByIdQuery(baseOptions: Apollo.QueryHookOptions<EnumValueByIdQuery, EnumValueByIdQueryVariables> & ({ variables: EnumValueByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<EnumValueByIdQuery, EnumValueByIdQueryVariables>(EnumValueByIdDocument, options);
+      }
+export function useEnumValueByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<EnumValueByIdQuery, EnumValueByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<EnumValueByIdQuery, EnumValueByIdQueryVariables>(EnumValueByIdDocument, options);
+        }
+export function useEnumValueByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<EnumValueByIdQuery, EnumValueByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<EnumValueByIdQuery, EnumValueByIdQueryVariables>(EnumValueByIdDocument, options);
+        }
+export type EnumValueByIdQueryHookResult = ReturnType<typeof useEnumValueByIdQuery>;
+export type EnumValueByIdLazyQueryHookResult = ReturnType<typeof useEnumValueByIdLazyQuery>;
+export type EnumValueByIdSuspenseQueryHookResult = ReturnType<typeof useEnumValueByIdSuspenseQuery>;
+export type EnumValueByIdQueryResult = Apollo.QueryResult<EnumValueByIdQuery, EnumValueByIdQueryVariables>;
+export const CreateEnumValueDocument = gql`
+    mutation CreateEnumValue($createEnumValueInput: CreateEnumValueInput!) {
+  createEnumValue(createEnumValueInput: $createEnumValueInput) {
+    ...EnumValueDetails
+  }
+}
+    ${EnumValueDetailsFragmentDoc}`;
+export type CreateEnumValueMutationFn = Apollo.MutationFunction<CreateEnumValueMutation, CreateEnumValueMutationVariables>;
+
+/**
+ * __useCreateEnumValueMutation__
+ *
+ * To run a mutation, you first call `useCreateEnumValueMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateEnumValueMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createEnumValueMutation, { data, loading, error }] = useCreateEnumValueMutation({
+ *   variables: {
+ *      createEnumValueInput: // value for 'createEnumValueInput'
+ *   },
+ * });
+ */
+export function useCreateEnumValueMutation(baseOptions?: Apollo.MutationHookOptions<CreateEnumValueMutation, CreateEnumValueMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateEnumValueMutation, CreateEnumValueMutationVariables>(CreateEnumValueDocument, options);
+      }
+export type CreateEnumValueMutationHookResult = ReturnType<typeof useCreateEnumValueMutation>;
+export type CreateEnumValueMutationResult = Apollo.MutationResult<CreateEnumValueMutation>;
+export type CreateEnumValueMutationOptions = Apollo.BaseMutationOptions<CreateEnumValueMutation, CreateEnumValueMutationVariables>;
+export const UpdateEnumValueDocument = gql`
+    mutation UpdateEnumValue($id: ID!, $updateEnumValueInput: UpdateEnumValueInput!) {
+  updateEnumValue(id: $id, updateEnumValueInput: $updateEnumValueInput) {
+    ...EnumValueDetails
+  }
+}
+    ${EnumValueDetailsFragmentDoc}`;
+export type UpdateEnumValueMutationFn = Apollo.MutationFunction<UpdateEnumValueMutation, UpdateEnumValueMutationVariables>;
+
+/**
+ * __useUpdateEnumValueMutation__
+ *
+ * To run a mutation, you first call `useUpdateEnumValueMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateEnumValueMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateEnumValueMutation, { data, loading, error }] = useUpdateEnumValueMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateEnumValueInput: // value for 'updateEnumValueInput'
+ *   },
+ * });
+ */
+export function useUpdateEnumValueMutation(baseOptions?: Apollo.MutationHookOptions<UpdateEnumValueMutation, UpdateEnumValueMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateEnumValueMutation, UpdateEnumValueMutationVariables>(UpdateEnumValueDocument, options);
+      }
+export type UpdateEnumValueMutationHookResult = ReturnType<typeof useUpdateEnumValueMutation>;
+export type UpdateEnumValueMutationResult = Apollo.MutationResult<UpdateEnumValueMutation>;
+export type UpdateEnumValueMutationOptions = Apollo.BaseMutationOptions<UpdateEnumValueMutation, UpdateEnumValueMutationVariables>;
+export const DeleteEnumValueDocument = gql`
+    mutation DeleteEnumValue($id: ID!) {
+  removeEnumValue(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type DeleteEnumValueMutationFn = Apollo.MutationFunction<DeleteEnumValueMutation, DeleteEnumValueMutationVariables>;
+
+/**
+ * __useDeleteEnumValueMutation__
+ *
+ * To run a mutation, you first call `useDeleteEnumValueMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteEnumValueMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteEnumValueMutation, { data, loading, error }] = useDeleteEnumValueMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteEnumValueMutation(baseOptions?: Apollo.MutationHookOptions<DeleteEnumValueMutation, DeleteEnumValueMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteEnumValueMutation, DeleteEnumValueMutationVariables>(DeleteEnumValueDocument, options);
+      }
+export type DeleteEnumValueMutationHookResult = ReturnType<typeof useDeleteEnumValueMutation>;
+export type DeleteEnumValueMutationResult = Apollo.MutationResult<DeleteEnumValueMutation>;
+export type DeleteEnumValueMutationOptions = Apollo.BaseMutationOptions<DeleteEnumValueMutation, DeleteEnumValueMutationVariables>;
 export const GetGalleriesDocument = gql`
     query GetGalleries($filters: GalleryFiltersInput) {
   galleries(filters: $filters) {
@@ -4353,6 +5748,374 @@ export type GetLikedImagesQueryHookResult = ReturnType<typeof useGetLikedImagesQ
 export type GetLikedImagesLazyQueryHookResult = ReturnType<typeof useGetLikedImagesLazyQuery>;
 export type GetLikedImagesSuspenseQueryHookResult = ReturnType<typeof useGetLikedImagesSuspenseQuery>;
 export type GetLikedImagesQueryResult = Apollo.QueryResult<GetLikedImagesQuery, GetLikedImagesQueryVariables>;
+export const InviteCodesDocument = gql`
+    query InviteCodes($first: Int, $after: String, $communityId: ID) {
+  inviteCodes(first: $first, after: $after, communityId: $communityId) {
+    nodes {
+      id
+      claimCount
+      maxClaims
+      isAvailable
+      remainingClaims
+      createdAt
+      updatedAt
+      creator {
+        id
+        username
+        displayName
+      }
+      role {
+        id
+        name
+        community {
+          id
+          name
+        }
+      }
+    }
+    hasNextPage
+    hasPreviousPage
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useInviteCodesQuery__
+ *
+ * To run a query within a React component, call `useInviteCodesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useInviteCodesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useInviteCodesQuery({
+ *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useInviteCodesQuery(baseOptions?: Apollo.QueryHookOptions<InviteCodesQuery, InviteCodesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<InviteCodesQuery, InviteCodesQueryVariables>(InviteCodesDocument, options);
+      }
+export function useInviteCodesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<InviteCodesQuery, InviteCodesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<InviteCodesQuery, InviteCodesQueryVariables>(InviteCodesDocument, options);
+        }
+export function useInviteCodesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<InviteCodesQuery, InviteCodesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<InviteCodesQuery, InviteCodesQueryVariables>(InviteCodesDocument, options);
+        }
+export type InviteCodesQueryHookResult = ReturnType<typeof useInviteCodesQuery>;
+export type InviteCodesLazyQueryHookResult = ReturnType<typeof useInviteCodesLazyQuery>;
+export type InviteCodesSuspenseQueryHookResult = ReturnType<typeof useInviteCodesSuspenseQuery>;
+export type InviteCodesQueryResult = Apollo.QueryResult<InviteCodesQuery, InviteCodesQueryVariables>;
+export const InviteCodeByIdDocument = gql`
+    query InviteCodeById($id: ID!) {
+  inviteCodeById(id: $id) {
+    id
+    claimCount
+    maxClaims
+    isAvailable
+    remainingClaims
+    createdAt
+    updatedAt
+    creator {
+      id
+      username
+      displayName
+    }
+    role {
+      id
+      name
+      community {
+        id
+        name
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useInviteCodeByIdQuery__
+ *
+ * To run a query within a React component, call `useInviteCodeByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useInviteCodeByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useInviteCodeByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useInviteCodeByIdQuery(baseOptions: Apollo.QueryHookOptions<InviteCodeByIdQuery, InviteCodeByIdQueryVariables> & ({ variables: InviteCodeByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<InviteCodeByIdQuery, InviteCodeByIdQueryVariables>(InviteCodeByIdDocument, options);
+      }
+export function useInviteCodeByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<InviteCodeByIdQuery, InviteCodeByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<InviteCodeByIdQuery, InviteCodeByIdQueryVariables>(InviteCodeByIdDocument, options);
+        }
+export function useInviteCodeByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<InviteCodeByIdQuery, InviteCodeByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<InviteCodeByIdQuery, InviteCodeByIdQueryVariables>(InviteCodeByIdDocument, options);
+        }
+export type InviteCodeByIdQueryHookResult = ReturnType<typeof useInviteCodeByIdQuery>;
+export type InviteCodeByIdLazyQueryHookResult = ReturnType<typeof useInviteCodeByIdLazyQuery>;
+export type InviteCodeByIdSuspenseQueryHookResult = ReturnType<typeof useInviteCodeByIdSuspenseQuery>;
+export type InviteCodeByIdQueryResult = Apollo.QueryResult<InviteCodeByIdQuery, InviteCodeByIdQueryVariables>;
+export const CreateInviteCodeDocument = gql`
+    mutation CreateInviteCode($createInviteCodeInput: CreateInviteCodeInput!) {
+  createInviteCode(createInviteCodeInput: $createInviteCodeInput) {
+    id
+    claimCount
+    maxClaims
+    isAvailable
+    remainingClaims
+    createdAt
+    updatedAt
+    creator {
+      id
+      username
+      displayName
+    }
+    role {
+      id
+      name
+      community {
+        id
+        name
+      }
+    }
+  }
+}
+    `;
+export type CreateInviteCodeMutationFn = Apollo.MutationFunction<CreateInviteCodeMutation, CreateInviteCodeMutationVariables>;
+
+/**
+ * __useCreateInviteCodeMutation__
+ *
+ * To run a mutation, you first call `useCreateInviteCodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateInviteCodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createInviteCodeMutation, { data, loading, error }] = useCreateInviteCodeMutation({
+ *   variables: {
+ *      createInviteCodeInput: // value for 'createInviteCodeInput'
+ *   },
+ * });
+ */
+export function useCreateInviteCodeMutation(baseOptions?: Apollo.MutationHookOptions<CreateInviteCodeMutation, CreateInviteCodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateInviteCodeMutation, CreateInviteCodeMutationVariables>(CreateInviteCodeDocument, options);
+      }
+export type CreateInviteCodeMutationHookResult = ReturnType<typeof useCreateInviteCodeMutation>;
+export type CreateInviteCodeMutationResult = Apollo.MutationResult<CreateInviteCodeMutation>;
+export type CreateInviteCodeMutationOptions = Apollo.BaseMutationOptions<CreateInviteCodeMutation, CreateInviteCodeMutationVariables>;
+export const UpdateInviteCodeDocument = gql`
+    mutation UpdateInviteCode($id: ID!, $updateInviteCodeInput: UpdateInviteCodeInput!) {
+  updateInviteCode(id: $id, updateInviteCodeInput: $updateInviteCodeInput) {
+    id
+    claimCount
+    maxClaims
+    isAvailable
+    remainingClaims
+    createdAt
+    updatedAt
+    creator {
+      id
+      username
+      displayName
+    }
+    role {
+      id
+      name
+      community {
+        id
+        name
+      }
+    }
+  }
+}
+    `;
+export type UpdateInviteCodeMutationFn = Apollo.MutationFunction<UpdateInviteCodeMutation, UpdateInviteCodeMutationVariables>;
+
+/**
+ * __useUpdateInviteCodeMutation__
+ *
+ * To run a mutation, you first call `useUpdateInviteCodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateInviteCodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateInviteCodeMutation, { data, loading, error }] = useUpdateInviteCodeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateInviteCodeInput: // value for 'updateInviteCodeInput'
+ *   },
+ * });
+ */
+export function useUpdateInviteCodeMutation(baseOptions?: Apollo.MutationHookOptions<UpdateInviteCodeMutation, UpdateInviteCodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateInviteCodeMutation, UpdateInviteCodeMutationVariables>(UpdateInviteCodeDocument, options);
+      }
+export type UpdateInviteCodeMutationHookResult = ReturnType<typeof useUpdateInviteCodeMutation>;
+export type UpdateInviteCodeMutationResult = Apollo.MutationResult<UpdateInviteCodeMutation>;
+export type UpdateInviteCodeMutationOptions = Apollo.BaseMutationOptions<UpdateInviteCodeMutation, UpdateInviteCodeMutationVariables>;
+export const RemoveInviteCodeDocument = gql`
+    mutation RemoveInviteCode($id: ID!) {
+  removeInviteCode(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type RemoveInviteCodeMutationFn = Apollo.MutationFunction<RemoveInviteCodeMutation, RemoveInviteCodeMutationVariables>;
+
+/**
+ * __useRemoveInviteCodeMutation__
+ *
+ * To run a mutation, you first call `useRemoveInviteCodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveInviteCodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeInviteCodeMutation, { data, loading, error }] = useRemoveInviteCodeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useRemoveInviteCodeMutation(baseOptions?: Apollo.MutationHookOptions<RemoveInviteCodeMutation, RemoveInviteCodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveInviteCodeMutation, RemoveInviteCodeMutationVariables>(RemoveInviteCodeDocument, options);
+      }
+export type RemoveInviteCodeMutationHookResult = ReturnType<typeof useRemoveInviteCodeMutation>;
+export type RemoveInviteCodeMutationResult = Apollo.MutationResult<RemoveInviteCodeMutation>;
+export type RemoveInviteCodeMutationOptions = Apollo.BaseMutationOptions<RemoveInviteCodeMutation, RemoveInviteCodeMutationVariables>;
+export const ClaimInviteCodeDocument = gql`
+    mutation ClaimInviteCode($id: ID!, $claimInviteCodeInput: ClaimInviteCodeInput!) {
+  claimInviteCode(id: $id, claimInviteCodeInput: $claimInviteCodeInput) {
+    id
+    claimCount
+    maxClaims
+    isAvailable
+    remainingClaims
+    creator {
+      id
+      username
+      displayName
+    }
+    role {
+      id
+      name
+      community {
+        id
+        name
+      }
+    }
+  }
+}
+    `;
+export type ClaimInviteCodeMutationFn = Apollo.MutationFunction<ClaimInviteCodeMutation, ClaimInviteCodeMutationVariables>;
+
+/**
+ * __useClaimInviteCodeMutation__
+ *
+ * To run a mutation, you first call `useClaimInviteCodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useClaimInviteCodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [claimInviteCodeMutation, { data, loading, error }] = useClaimInviteCodeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      claimInviteCodeInput: // value for 'claimInviteCodeInput'
+ *   },
+ * });
+ */
+export function useClaimInviteCodeMutation(baseOptions?: Apollo.MutationHookOptions<ClaimInviteCodeMutation, ClaimInviteCodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ClaimInviteCodeMutation, ClaimInviteCodeMutationVariables>(ClaimInviteCodeDocument, options);
+      }
+export type ClaimInviteCodeMutationHookResult = ReturnType<typeof useClaimInviteCodeMutation>;
+export type ClaimInviteCodeMutationResult = Apollo.MutationResult<ClaimInviteCodeMutation>;
+export type ClaimInviteCodeMutationOptions = Apollo.BaseMutationOptions<ClaimInviteCodeMutation, ClaimInviteCodeMutationVariables>;
+export const RolesByCommunityDocument = gql`
+    query RolesByCommunity($communityId: ID!, $first: Int, $after: String) {
+  rolesByCommunity(communityId: $communityId, first: $first, after: $after) {
+    nodes {
+      id
+      name
+      canCreateInviteCode
+      community {
+        id
+        name
+      }
+    }
+    hasNextPage
+    hasPreviousPage
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useRolesByCommunityQuery__
+ *
+ * To run a query within a React component, call `useRolesByCommunityQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRolesByCommunityQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRolesByCommunityQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useRolesByCommunityQuery(baseOptions: Apollo.QueryHookOptions<RolesByCommunityQuery, RolesByCommunityQueryVariables> & ({ variables: RolesByCommunityQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<RolesByCommunityQuery, RolesByCommunityQueryVariables>(RolesByCommunityDocument, options);
+      }
+export function useRolesByCommunityLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<RolesByCommunityQuery, RolesByCommunityQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<RolesByCommunityQuery, RolesByCommunityQueryVariables>(RolesByCommunityDocument, options);
+        }
+export function useRolesByCommunitySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<RolesByCommunityQuery, RolesByCommunityQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<RolesByCommunityQuery, RolesByCommunityQueryVariables>(RolesByCommunityDocument, options);
+        }
+export type RolesByCommunityQueryHookResult = ReturnType<typeof useRolesByCommunityQuery>;
+export type RolesByCommunityLazyQueryHookResult = ReturnType<typeof useRolesByCommunityLazyQuery>;
+export type RolesByCommunitySuspenseQueryHookResult = ReturnType<typeof useRolesByCommunitySuspenseQuery>;
+export type RolesByCommunityQueryResult = Apollo.QueryResult<RolesByCommunityQuery, RolesByCommunityQueryVariables>;
 export const GetMediaDocument = gql`
     query GetMedia($filters: MediaFiltersInput) {
   media(filters: $filters) {
@@ -5149,6 +6912,302 @@ export function useRemoveMediaTagsMutation(baseOptions?: Apollo.MutationHookOpti
 export type RemoveMediaTagsMutationHookResult = ReturnType<typeof useRemoveMediaTagsMutation>;
 export type RemoveMediaTagsMutationResult = Apollo.MutationResult<RemoveMediaTagsMutation>;
 export type RemoveMediaTagsMutationOptions = Apollo.BaseMutationOptions<RemoveMediaTagsMutation, RemoveMediaTagsMutationVariables>;
+export const RolesByCommunityDetailedDocument = gql`
+    query RolesByCommunityDetailed($communityId: ID!, $first: Int!, $after: String) {
+  rolesByCommunity(communityId: $communityId, first: $first, after: $after) {
+    nodes {
+      id
+      name
+      communityId
+      canCreateSpecies
+      canCreateCharacter
+      canEditCharacter
+      canEditOwnCharacter
+      canEditSpecies
+      canCreateInviteCode
+      canListInviteCodes
+      canCreateRole
+      canEditRole
+      createdAt
+      updatedAt
+      community {
+        id
+        name
+      }
+    }
+    totalCount
+    hasNextPage
+    hasPreviousPage
+  }
+}
+    `;
+
+/**
+ * __useRolesByCommunityDetailedQuery__
+ *
+ * To run a query within a React component, call `useRolesByCommunityDetailedQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRolesByCommunityDetailedQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRolesByCommunityDetailedQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useRolesByCommunityDetailedQuery(baseOptions: Apollo.QueryHookOptions<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables> & ({ variables: RolesByCommunityDetailedQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables>(RolesByCommunityDetailedDocument, options);
+      }
+export function useRolesByCommunityDetailedLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables>(RolesByCommunityDetailedDocument, options);
+        }
+export function useRolesByCommunityDetailedSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables>(RolesByCommunityDetailedDocument, options);
+        }
+export type RolesByCommunityDetailedQueryHookResult = ReturnType<typeof useRolesByCommunityDetailedQuery>;
+export type RolesByCommunityDetailedLazyQueryHookResult = ReturnType<typeof useRolesByCommunityDetailedLazyQuery>;
+export type RolesByCommunityDetailedSuspenseQueryHookResult = ReturnType<typeof useRolesByCommunityDetailedSuspenseQuery>;
+export type RolesByCommunityDetailedQueryResult = Apollo.QueryResult<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables>;
+export const CreateRoleDocument = gql`
+    mutation CreateRole($input: CreateRoleInput!) {
+  createRole(createRoleInput: $input) {
+    id
+    name
+    communityId
+    canCreateSpecies
+    canCreateCharacter
+    canEditCharacter
+    canEditOwnCharacter
+    canEditSpecies
+    canCreateInviteCode
+    canListInviteCodes
+    canCreateRole
+    canEditRole
+    createdAt
+    updatedAt
+    community {
+      id
+      name
+    }
+  }
+}
+    `;
+export type CreateRoleMutationFn = Apollo.MutationFunction<CreateRoleMutation, CreateRoleMutationVariables>;
+
+/**
+ * __useCreateRoleMutation__
+ *
+ * To run a mutation, you first call `useCreateRoleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateRoleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createRoleMutation, { data, loading, error }] = useCreateRoleMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateRoleMutation(baseOptions?: Apollo.MutationHookOptions<CreateRoleMutation, CreateRoleMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateRoleMutation, CreateRoleMutationVariables>(CreateRoleDocument, options);
+      }
+export type CreateRoleMutationHookResult = ReturnType<typeof useCreateRoleMutation>;
+export type CreateRoleMutationResult = Apollo.MutationResult<CreateRoleMutation>;
+export type CreateRoleMutationOptions = Apollo.BaseMutationOptions<CreateRoleMutation, CreateRoleMutationVariables>;
+export const UpdateRoleDocument = gql`
+    mutation UpdateRole($id: ID!, $input: UpdateRoleInput!) {
+  updateRole(id: $id, updateRoleInput: $input) {
+    id
+    name
+    communityId
+    canCreateSpecies
+    canCreateCharacter
+    canEditCharacter
+    canEditOwnCharacter
+    canEditSpecies
+    canCreateInviteCode
+    canListInviteCodes
+    canCreateRole
+    canEditRole
+    createdAt
+    updatedAt
+    community {
+      id
+      name
+    }
+  }
+}
+    `;
+export type UpdateRoleMutationFn = Apollo.MutationFunction<UpdateRoleMutation, UpdateRoleMutationVariables>;
+
+/**
+ * __useUpdateRoleMutation__
+ *
+ * To run a mutation, you first call `useUpdateRoleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateRoleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateRoleMutation, { data, loading, error }] = useUpdateRoleMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateRoleMutation(baseOptions?: Apollo.MutationHookOptions<UpdateRoleMutation, UpdateRoleMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateRoleMutation, UpdateRoleMutationVariables>(UpdateRoleDocument, options);
+      }
+export type UpdateRoleMutationHookResult = ReturnType<typeof useUpdateRoleMutation>;
+export type UpdateRoleMutationResult = Apollo.MutationResult<UpdateRoleMutation>;
+export type UpdateRoleMutationOptions = Apollo.BaseMutationOptions<UpdateRoleMutation, UpdateRoleMutationVariables>;
+export const CommunityMembersWithRolesDocument = gql`
+    query CommunityMembersWithRoles($communityId: ID!, $first: Int!, $after: String) {
+  communityMembersByCommunity(
+    communityId: $communityId
+    first: $first
+    after: $after
+  ) {
+    nodes {
+      id
+      userId
+      roleId
+      createdAt
+      updatedAt
+      user {
+        id
+        username
+        email
+        displayName
+      }
+      role {
+        id
+        name
+        canCreateSpecies
+        canCreateCharacter
+        canEditCharacter
+        canEditOwnCharacter
+        canEditSpecies
+        canCreateInviteCode
+        canListInviteCodes
+        canCreateRole
+        canEditRole
+      }
+    }
+    totalCount
+    hasNextPage
+    hasPreviousPage
+  }
+}
+    `;
+
+/**
+ * __useCommunityMembersWithRolesQuery__
+ *
+ * To run a query within a React component, call `useCommunityMembersWithRolesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunityMembersWithRolesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommunityMembersWithRolesQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useCommunityMembersWithRolesQuery(baseOptions: Apollo.QueryHookOptions<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables> & ({ variables: CommunityMembersWithRolesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>(CommunityMembersWithRolesDocument, options);
+      }
+export function useCommunityMembersWithRolesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>(CommunityMembersWithRolesDocument, options);
+        }
+export function useCommunityMembersWithRolesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>(CommunityMembersWithRolesDocument, options);
+        }
+export type CommunityMembersWithRolesQueryHookResult = ReturnType<typeof useCommunityMembersWithRolesQuery>;
+export type CommunityMembersWithRolesLazyQueryHookResult = ReturnType<typeof useCommunityMembersWithRolesLazyQuery>;
+export type CommunityMembersWithRolesSuspenseQueryHookResult = ReturnType<typeof useCommunityMembersWithRolesSuspenseQuery>;
+export type CommunityMembersWithRolesQueryResult = Apollo.QueryResult<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>;
+export const UpdateCommunityMemberDocument = gql`
+    mutation UpdateCommunityMember($id: ID!, $input: UpdateCommunityMemberInput!) {
+  updateCommunityMember(id: $id, updateCommunityMemberInput: $input) {
+    id
+    userId
+    roleId
+    createdAt
+    updatedAt
+    user {
+      id
+      username
+      email
+      displayName
+    }
+    role {
+      id
+      name
+      canCreateSpecies
+      canCreateCharacter
+      canEditCharacter
+      canEditOwnCharacter
+      canEditSpecies
+      canCreateInviteCode
+      canListInviteCodes
+      canCreateRole
+      canEditRole
+    }
+  }
+}
+    `;
+export type UpdateCommunityMemberMutationFn = Apollo.MutationFunction<UpdateCommunityMemberMutation, UpdateCommunityMemberMutationVariables>;
+
+/**
+ * __useUpdateCommunityMemberMutation__
+ *
+ * To run a mutation, you first call `useUpdateCommunityMemberMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCommunityMemberMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCommunityMemberMutation, { data, loading, error }] = useUpdateCommunityMemberMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateCommunityMemberMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCommunityMemberMutation, UpdateCommunityMemberMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateCommunityMemberMutation, UpdateCommunityMemberMutationVariables>(UpdateCommunityMemberDocument, options);
+      }
+export type UpdateCommunityMemberMutationHookResult = ReturnType<typeof useUpdateCommunityMemberMutation>;
+export type UpdateCommunityMemberMutationResult = Apollo.MutationResult<UpdateCommunityMemberMutation>;
+export type UpdateCommunityMemberMutationOptions = Apollo.BaseMutationOptions<UpdateCommunityMemberMutation, UpdateCommunityMemberMutationVariables>;
 export const ToggleLikeDocument = gql`
     mutation ToggleLike($input: ToggleLikeInput!) {
   toggleLike(input: $input) {
@@ -5674,6 +7733,654 @@ export type GetActivityFeedQueryHookResult = ReturnType<typeof useGetActivityFee
 export type GetActivityFeedLazyQueryHookResult = ReturnType<typeof useGetActivityFeedLazyQuery>;
 export type GetActivityFeedSuspenseQueryHookResult = ReturnType<typeof useGetActivityFeedSuspenseQuery>;
 export type GetActivityFeedQueryResult = Apollo.QueryResult<GetActivityFeedQuery, GetActivityFeedQueryVariables>;
+export const SpeciesDocument = gql`
+    query Species($first: Int, $after: String) {
+  species(first: $first, after: $after) {
+    ...SpeciesConnectionDetails
+  }
+}
+    ${SpeciesConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useSpeciesQuery__
+ *
+ * To run a query within a React component, call `useSpeciesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesQuery({
+ *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useSpeciesQuery(baseOptions?: Apollo.QueryHookOptions<SpeciesQuery, SpeciesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesQuery, SpeciesQueryVariables>(SpeciesDocument, options);
+      }
+export function useSpeciesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesQuery, SpeciesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesQuery, SpeciesQueryVariables>(SpeciesDocument, options);
+        }
+export function useSpeciesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesQuery, SpeciesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesQuery, SpeciesQueryVariables>(SpeciesDocument, options);
+        }
+export type SpeciesQueryHookResult = ReturnType<typeof useSpeciesQuery>;
+export type SpeciesLazyQueryHookResult = ReturnType<typeof useSpeciesLazyQuery>;
+export type SpeciesSuspenseQueryHookResult = ReturnType<typeof useSpeciesSuspenseQuery>;
+export type SpeciesQueryResult = Apollo.QueryResult<SpeciesQuery, SpeciesQueryVariables>;
+export const SpeciesByCommunityDocument = gql`
+    query SpeciesByCommunity($communityId: ID!, $first: Int, $after: String) {
+  speciesByCommunity(communityId: $communityId, first: $first, after: $after) {
+    ...SpeciesConnectionDetails
+  }
+}
+    ${SpeciesConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useSpeciesByCommunityQuery__
+ *
+ * To run a query within a React component, call `useSpeciesByCommunityQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesByCommunityQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesByCommunityQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useSpeciesByCommunityQuery(baseOptions: Apollo.QueryHookOptions<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables> & ({ variables: SpeciesByCommunityQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables>(SpeciesByCommunityDocument, options);
+      }
+export function useSpeciesByCommunityLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables>(SpeciesByCommunityDocument, options);
+        }
+export function useSpeciesByCommunitySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables>(SpeciesByCommunityDocument, options);
+        }
+export type SpeciesByCommunityQueryHookResult = ReturnType<typeof useSpeciesByCommunityQuery>;
+export type SpeciesByCommunityLazyQueryHookResult = ReturnType<typeof useSpeciesByCommunityLazyQuery>;
+export type SpeciesByCommunitySuspenseQueryHookResult = ReturnType<typeof useSpeciesByCommunitySuspenseQuery>;
+export type SpeciesByCommunityQueryResult = Apollo.QueryResult<SpeciesByCommunityQuery, SpeciesByCommunityQueryVariables>;
+export const SpeciesByIdDocument = gql`
+    query SpeciesById($id: ID!) {
+  speciesById(id: $id) {
+    ...SpeciesDetails
+    community {
+      id
+      name
+    }
+  }
+}
+    ${SpeciesDetailsFragmentDoc}`;
+
+/**
+ * __useSpeciesByIdQuery__
+ *
+ * To run a query within a React component, call `useSpeciesByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useSpeciesByIdQuery(baseOptions: Apollo.QueryHookOptions<SpeciesByIdQuery, SpeciesByIdQueryVariables> & ({ variables: SpeciesByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesByIdQuery, SpeciesByIdQueryVariables>(SpeciesByIdDocument, options);
+      }
+export function useSpeciesByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesByIdQuery, SpeciesByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesByIdQuery, SpeciesByIdQueryVariables>(SpeciesByIdDocument, options);
+        }
+export function useSpeciesByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesByIdQuery, SpeciesByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesByIdQuery, SpeciesByIdQueryVariables>(SpeciesByIdDocument, options);
+        }
+export type SpeciesByIdQueryHookResult = ReturnType<typeof useSpeciesByIdQuery>;
+export type SpeciesByIdLazyQueryHookResult = ReturnType<typeof useSpeciesByIdLazyQuery>;
+export type SpeciesByIdSuspenseQueryHookResult = ReturnType<typeof useSpeciesByIdSuspenseQuery>;
+export type SpeciesByIdQueryResult = Apollo.QueryResult<SpeciesByIdQuery, SpeciesByIdQueryVariables>;
+export const CreateSpeciesDocument = gql`
+    mutation CreateSpecies($createSpeciesInput: CreateSpeciesInput!) {
+  createSpecies(createSpeciesInput: $createSpeciesInput) {
+    ...SpeciesDetails
+  }
+}
+    ${SpeciesDetailsFragmentDoc}`;
+export type CreateSpeciesMutationFn = Apollo.MutationFunction<CreateSpeciesMutation, CreateSpeciesMutationVariables>;
+
+/**
+ * __useCreateSpeciesMutation__
+ *
+ * To run a mutation, you first call `useCreateSpeciesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSpeciesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSpeciesMutation, { data, loading, error }] = useCreateSpeciesMutation({
+ *   variables: {
+ *      createSpeciesInput: // value for 'createSpeciesInput'
+ *   },
+ * });
+ */
+export function useCreateSpeciesMutation(baseOptions?: Apollo.MutationHookOptions<CreateSpeciesMutation, CreateSpeciesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateSpeciesMutation, CreateSpeciesMutationVariables>(CreateSpeciesDocument, options);
+      }
+export type CreateSpeciesMutationHookResult = ReturnType<typeof useCreateSpeciesMutation>;
+export type CreateSpeciesMutationResult = Apollo.MutationResult<CreateSpeciesMutation>;
+export type CreateSpeciesMutationOptions = Apollo.BaseMutationOptions<CreateSpeciesMutation, CreateSpeciesMutationVariables>;
+export const UpdateSpeciesDocument = gql`
+    mutation UpdateSpecies($id: ID!, $updateSpeciesInput: UpdateSpeciesInput!) {
+  updateSpecies(id: $id, updateSpeciesInput: $updateSpeciesInput) {
+    ...SpeciesDetails
+  }
+}
+    ${SpeciesDetailsFragmentDoc}`;
+export type UpdateSpeciesMutationFn = Apollo.MutationFunction<UpdateSpeciesMutation, UpdateSpeciesMutationVariables>;
+
+/**
+ * __useUpdateSpeciesMutation__
+ *
+ * To run a mutation, you first call `useUpdateSpeciesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateSpeciesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateSpeciesMutation, { data, loading, error }] = useUpdateSpeciesMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateSpeciesInput: // value for 'updateSpeciesInput'
+ *   },
+ * });
+ */
+export function useUpdateSpeciesMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSpeciesMutation, UpdateSpeciesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateSpeciesMutation, UpdateSpeciesMutationVariables>(UpdateSpeciesDocument, options);
+      }
+export type UpdateSpeciesMutationHookResult = ReturnType<typeof useUpdateSpeciesMutation>;
+export type UpdateSpeciesMutationResult = Apollo.MutationResult<UpdateSpeciesMutation>;
+export type UpdateSpeciesMutationOptions = Apollo.BaseMutationOptions<UpdateSpeciesMutation, UpdateSpeciesMutationVariables>;
+export const DeleteSpeciesDocument = gql`
+    mutation DeleteSpecies($id: ID!) {
+  removeSpecies(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type DeleteSpeciesMutationFn = Apollo.MutationFunction<DeleteSpeciesMutation, DeleteSpeciesMutationVariables>;
+
+/**
+ * __useDeleteSpeciesMutation__
+ *
+ * To run a mutation, you first call `useDeleteSpeciesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteSpeciesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteSpeciesMutation, { data, loading, error }] = useDeleteSpeciesMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteSpeciesMutation(baseOptions?: Apollo.MutationHookOptions<DeleteSpeciesMutation, DeleteSpeciesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteSpeciesMutation, DeleteSpeciesMutationVariables>(DeleteSpeciesDocument, options);
+      }
+export type DeleteSpeciesMutationHookResult = ReturnType<typeof useDeleteSpeciesMutation>;
+export type DeleteSpeciesMutationResult = Apollo.MutationResult<DeleteSpeciesMutation>;
+export type DeleteSpeciesMutationOptions = Apollo.BaseMutationOptions<DeleteSpeciesMutation, DeleteSpeciesMutationVariables>;
+export const SpeciesVariantsDocument = gql`
+    query SpeciesVariants($first: Int, $after: String) {
+  speciesVariants(first: $first, after: $after) {
+    ...SpeciesVariantConnectionDetails
+  }
+}
+    ${SpeciesVariantConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useSpeciesVariantsQuery__
+ *
+ * To run a query within a React component, call `useSpeciesVariantsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesVariantsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesVariantsQuery({
+ *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useSpeciesVariantsQuery(baseOptions?: Apollo.QueryHookOptions<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>(SpeciesVariantsDocument, options);
+      }
+export function useSpeciesVariantsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>(SpeciesVariantsDocument, options);
+        }
+export function useSpeciesVariantsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>(SpeciesVariantsDocument, options);
+        }
+export type SpeciesVariantsQueryHookResult = ReturnType<typeof useSpeciesVariantsQuery>;
+export type SpeciesVariantsLazyQueryHookResult = ReturnType<typeof useSpeciesVariantsLazyQuery>;
+export type SpeciesVariantsSuspenseQueryHookResult = ReturnType<typeof useSpeciesVariantsSuspenseQuery>;
+export type SpeciesVariantsQueryResult = Apollo.QueryResult<SpeciesVariantsQuery, SpeciesVariantsQueryVariables>;
+export const SpeciesVariantsBySpeciesDocument = gql`
+    query SpeciesVariantsBySpecies($speciesId: ID!, $first: Int, $after: String) {
+  speciesVariantsBySpecies(speciesId: $speciesId, first: $first, after: $after) {
+    ...SpeciesVariantConnectionDetails
+  }
+}
+    ${SpeciesVariantConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useSpeciesVariantsBySpeciesQuery__
+ *
+ * To run a query within a React component, call `useSpeciesVariantsBySpeciesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesVariantsBySpeciesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesVariantsBySpeciesQuery({
+ *   variables: {
+ *      speciesId: // value for 'speciesId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useSpeciesVariantsBySpeciesQuery(baseOptions: Apollo.QueryHookOptions<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables> & ({ variables: SpeciesVariantsBySpeciesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables>(SpeciesVariantsBySpeciesDocument, options);
+      }
+export function useSpeciesVariantsBySpeciesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables>(SpeciesVariantsBySpeciesDocument, options);
+        }
+export function useSpeciesVariantsBySpeciesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables>(SpeciesVariantsBySpeciesDocument, options);
+        }
+export type SpeciesVariantsBySpeciesQueryHookResult = ReturnType<typeof useSpeciesVariantsBySpeciesQuery>;
+export type SpeciesVariantsBySpeciesLazyQueryHookResult = ReturnType<typeof useSpeciesVariantsBySpeciesLazyQuery>;
+export type SpeciesVariantsBySpeciesSuspenseQueryHookResult = ReturnType<typeof useSpeciesVariantsBySpeciesSuspenseQuery>;
+export type SpeciesVariantsBySpeciesQueryResult = Apollo.QueryResult<SpeciesVariantsBySpeciesQuery, SpeciesVariantsBySpeciesQueryVariables>;
+export const SpeciesVariantByIdDocument = gql`
+    query SpeciesVariantById($id: ID!) {
+  speciesVariantById(id: $id) {
+    ...SpeciesVariantDetails
+    species {
+      id
+      name
+      communityId
+    }
+  }
+}
+    ${SpeciesVariantDetailsFragmentDoc}`;
+
+/**
+ * __useSpeciesVariantByIdQuery__
+ *
+ * To run a query within a React component, call `useSpeciesVariantByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesVariantByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesVariantByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useSpeciesVariantByIdQuery(baseOptions: Apollo.QueryHookOptions<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables> & ({ variables: SpeciesVariantByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables>(SpeciesVariantByIdDocument, options);
+      }
+export function useSpeciesVariantByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables>(SpeciesVariantByIdDocument, options);
+        }
+export function useSpeciesVariantByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables>(SpeciesVariantByIdDocument, options);
+        }
+export type SpeciesVariantByIdQueryHookResult = ReturnType<typeof useSpeciesVariantByIdQuery>;
+export type SpeciesVariantByIdLazyQueryHookResult = ReturnType<typeof useSpeciesVariantByIdLazyQuery>;
+export type SpeciesVariantByIdSuspenseQueryHookResult = ReturnType<typeof useSpeciesVariantByIdSuspenseQuery>;
+export type SpeciesVariantByIdQueryResult = Apollo.QueryResult<SpeciesVariantByIdQuery, SpeciesVariantByIdQueryVariables>;
+export const CreateSpeciesVariantDocument = gql`
+    mutation CreateSpeciesVariant($createSpeciesVariantInput: CreateSpeciesVariantInput!) {
+  createSpeciesVariant(createSpeciesVariantInput: $createSpeciesVariantInput) {
+    ...SpeciesVariantDetails
+  }
+}
+    ${SpeciesVariantDetailsFragmentDoc}`;
+export type CreateSpeciesVariantMutationFn = Apollo.MutationFunction<CreateSpeciesVariantMutation, CreateSpeciesVariantMutationVariables>;
+
+/**
+ * __useCreateSpeciesVariantMutation__
+ *
+ * To run a mutation, you first call `useCreateSpeciesVariantMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSpeciesVariantMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSpeciesVariantMutation, { data, loading, error }] = useCreateSpeciesVariantMutation({
+ *   variables: {
+ *      createSpeciesVariantInput: // value for 'createSpeciesVariantInput'
+ *   },
+ * });
+ */
+export function useCreateSpeciesVariantMutation(baseOptions?: Apollo.MutationHookOptions<CreateSpeciesVariantMutation, CreateSpeciesVariantMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateSpeciesVariantMutation, CreateSpeciesVariantMutationVariables>(CreateSpeciesVariantDocument, options);
+      }
+export type CreateSpeciesVariantMutationHookResult = ReturnType<typeof useCreateSpeciesVariantMutation>;
+export type CreateSpeciesVariantMutationResult = Apollo.MutationResult<CreateSpeciesVariantMutation>;
+export type CreateSpeciesVariantMutationOptions = Apollo.BaseMutationOptions<CreateSpeciesVariantMutation, CreateSpeciesVariantMutationVariables>;
+export const UpdateSpeciesVariantDocument = gql`
+    mutation UpdateSpeciesVariant($id: ID!, $updateSpeciesVariantInput: UpdateSpeciesVariantInput!) {
+  updateSpeciesVariant(
+    id: $id
+    updateSpeciesVariantInput: $updateSpeciesVariantInput
+  ) {
+    ...SpeciesVariantDetails
+  }
+}
+    ${SpeciesVariantDetailsFragmentDoc}`;
+export type UpdateSpeciesVariantMutationFn = Apollo.MutationFunction<UpdateSpeciesVariantMutation, UpdateSpeciesVariantMutationVariables>;
+
+/**
+ * __useUpdateSpeciesVariantMutation__
+ *
+ * To run a mutation, you first call `useUpdateSpeciesVariantMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateSpeciesVariantMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateSpeciesVariantMutation, { data, loading, error }] = useUpdateSpeciesVariantMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateSpeciesVariantInput: // value for 'updateSpeciesVariantInput'
+ *   },
+ * });
+ */
+export function useUpdateSpeciesVariantMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSpeciesVariantMutation, UpdateSpeciesVariantMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateSpeciesVariantMutation, UpdateSpeciesVariantMutationVariables>(UpdateSpeciesVariantDocument, options);
+      }
+export type UpdateSpeciesVariantMutationHookResult = ReturnType<typeof useUpdateSpeciesVariantMutation>;
+export type UpdateSpeciesVariantMutationResult = Apollo.MutationResult<UpdateSpeciesVariantMutation>;
+export type UpdateSpeciesVariantMutationOptions = Apollo.BaseMutationOptions<UpdateSpeciesVariantMutation, UpdateSpeciesVariantMutationVariables>;
+export const DeleteSpeciesVariantDocument = gql`
+    mutation DeleteSpeciesVariant($id: ID!) {
+  removeSpeciesVariant(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type DeleteSpeciesVariantMutationFn = Apollo.MutationFunction<DeleteSpeciesVariantMutation, DeleteSpeciesVariantMutationVariables>;
+
+/**
+ * __useDeleteSpeciesVariantMutation__
+ *
+ * To run a mutation, you first call `useDeleteSpeciesVariantMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteSpeciesVariantMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteSpeciesVariantMutation, { data, loading, error }] = useDeleteSpeciesVariantMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteSpeciesVariantMutation(baseOptions?: Apollo.MutationHookOptions<DeleteSpeciesVariantMutation, DeleteSpeciesVariantMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteSpeciesVariantMutation, DeleteSpeciesVariantMutationVariables>(DeleteSpeciesVariantDocument, options);
+      }
+export type DeleteSpeciesVariantMutationHookResult = ReturnType<typeof useDeleteSpeciesVariantMutation>;
+export type DeleteSpeciesVariantMutationResult = Apollo.MutationResult<DeleteSpeciesVariantMutation>;
+export type DeleteSpeciesVariantMutationOptions = Apollo.BaseMutationOptions<DeleteSpeciesVariantMutation, DeleteSpeciesVariantMutationVariables>;
+export const TraitsBySpeciesDocument = gql`
+    query TraitsBySpecies($speciesId: ID!, $first: Int, $after: String) {
+  traitsBySpecies(speciesId: $speciesId, first: $first, after: $after) {
+    ...TraitConnectionDetails
+  }
+}
+    ${TraitConnectionDetailsFragmentDoc}`;
+
+/**
+ * __useTraitsBySpeciesQuery__
+ *
+ * To run a query within a React component, call `useTraitsBySpeciesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTraitsBySpeciesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTraitsBySpeciesQuery({
+ *   variables: {
+ *      speciesId: // value for 'speciesId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useTraitsBySpeciesQuery(baseOptions: Apollo.QueryHookOptions<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables> & ({ variables: TraitsBySpeciesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables>(TraitsBySpeciesDocument, options);
+      }
+export function useTraitsBySpeciesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables>(TraitsBySpeciesDocument, options);
+        }
+export function useTraitsBySpeciesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables>(TraitsBySpeciesDocument, options);
+        }
+export type TraitsBySpeciesQueryHookResult = ReturnType<typeof useTraitsBySpeciesQuery>;
+export type TraitsBySpeciesLazyQueryHookResult = ReturnType<typeof useTraitsBySpeciesLazyQuery>;
+export type TraitsBySpeciesSuspenseQueryHookResult = ReturnType<typeof useTraitsBySpeciesSuspenseQuery>;
+export type TraitsBySpeciesQueryResult = Apollo.QueryResult<TraitsBySpeciesQuery, TraitsBySpeciesQueryVariables>;
+export const TraitByIdDocument = gql`
+    query TraitById($id: ID!) {
+  traitById(id: $id) {
+    ...TraitDetails
+    species {
+      id
+      name
+      communityId
+    }
+  }
+}
+    ${TraitDetailsFragmentDoc}`;
+
+/**
+ * __useTraitByIdQuery__
+ *
+ * To run a query within a React component, call `useTraitByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTraitByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTraitByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useTraitByIdQuery(baseOptions: Apollo.QueryHookOptions<TraitByIdQuery, TraitByIdQueryVariables> & ({ variables: TraitByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<TraitByIdQuery, TraitByIdQueryVariables>(TraitByIdDocument, options);
+      }
+export function useTraitByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TraitByIdQuery, TraitByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<TraitByIdQuery, TraitByIdQueryVariables>(TraitByIdDocument, options);
+        }
+export function useTraitByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TraitByIdQuery, TraitByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<TraitByIdQuery, TraitByIdQueryVariables>(TraitByIdDocument, options);
+        }
+export type TraitByIdQueryHookResult = ReturnType<typeof useTraitByIdQuery>;
+export type TraitByIdLazyQueryHookResult = ReturnType<typeof useTraitByIdLazyQuery>;
+export type TraitByIdSuspenseQueryHookResult = ReturnType<typeof useTraitByIdSuspenseQuery>;
+export type TraitByIdQueryResult = Apollo.QueryResult<TraitByIdQuery, TraitByIdQueryVariables>;
+export const CreateTraitDocument = gql`
+    mutation CreateTrait($createTraitInput: CreateTraitInput!) {
+  createTrait(createTraitInput: $createTraitInput) {
+    ...TraitDetails
+  }
+}
+    ${TraitDetailsFragmentDoc}`;
+export type CreateTraitMutationFn = Apollo.MutationFunction<CreateTraitMutation, CreateTraitMutationVariables>;
+
+/**
+ * __useCreateTraitMutation__
+ *
+ * To run a mutation, you first call `useCreateTraitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateTraitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createTraitMutation, { data, loading, error }] = useCreateTraitMutation({
+ *   variables: {
+ *      createTraitInput: // value for 'createTraitInput'
+ *   },
+ * });
+ */
+export function useCreateTraitMutation(baseOptions?: Apollo.MutationHookOptions<CreateTraitMutation, CreateTraitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateTraitMutation, CreateTraitMutationVariables>(CreateTraitDocument, options);
+      }
+export type CreateTraitMutationHookResult = ReturnType<typeof useCreateTraitMutation>;
+export type CreateTraitMutationResult = Apollo.MutationResult<CreateTraitMutation>;
+export type CreateTraitMutationOptions = Apollo.BaseMutationOptions<CreateTraitMutation, CreateTraitMutationVariables>;
+export const UpdateTraitDocument = gql`
+    mutation UpdateTrait($id: ID!, $updateTraitInput: UpdateTraitInput!) {
+  updateTrait(id: $id, updateTraitInput: $updateTraitInput) {
+    ...TraitDetails
+  }
+}
+    ${TraitDetailsFragmentDoc}`;
+export type UpdateTraitMutationFn = Apollo.MutationFunction<UpdateTraitMutation, UpdateTraitMutationVariables>;
+
+/**
+ * __useUpdateTraitMutation__
+ *
+ * To run a mutation, you first call `useUpdateTraitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateTraitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateTraitMutation, { data, loading, error }] = useUpdateTraitMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateTraitInput: // value for 'updateTraitInput'
+ *   },
+ * });
+ */
+export function useUpdateTraitMutation(baseOptions?: Apollo.MutationHookOptions<UpdateTraitMutation, UpdateTraitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateTraitMutation, UpdateTraitMutationVariables>(UpdateTraitDocument, options);
+      }
+export type UpdateTraitMutationHookResult = ReturnType<typeof useUpdateTraitMutation>;
+export type UpdateTraitMutationResult = Apollo.MutationResult<UpdateTraitMutation>;
+export type UpdateTraitMutationOptions = Apollo.BaseMutationOptions<UpdateTraitMutation, UpdateTraitMutationVariables>;
+export const DeleteTraitDocument = gql`
+    mutation DeleteTrait($id: ID!) {
+  removeTrait(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type DeleteTraitMutationFn = Apollo.MutationFunction<DeleteTraitMutation, DeleteTraitMutationVariables>;
+
+/**
+ * __useDeleteTraitMutation__
+ *
+ * To run a mutation, you first call `useDeleteTraitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteTraitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteTraitMutation, { data, loading, error }] = useDeleteTraitMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteTraitMutation(baseOptions?: Apollo.MutationHookOptions<DeleteTraitMutation, DeleteTraitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteTraitMutation, DeleteTraitMutationVariables>(DeleteTraitDocument, options);
+      }
+export type DeleteTraitMutationHookResult = ReturnType<typeof useDeleteTraitMutation>;
+export type DeleteTraitMutationResult = Apollo.MutationResult<DeleteTraitMutation>;
+export type DeleteTraitMutationOptions = Apollo.BaseMutationOptions<DeleteTraitMutation, DeleteTraitMutationVariables>;
 export const SearchTagsDocument = gql`
     query SearchTags($search: String, $limit: Float) {
   searchTags(search: $search, limit: $limit) {

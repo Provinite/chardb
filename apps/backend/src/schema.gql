@@ -465,6 +465,9 @@ input CreateRoleInput {
   """Whether members with this role can edit characters"""
   canEditCharacter: Boolean! = false
 
+  """Whether members with this role can edit their own characters"""
+  canEditOwnCharacter: Boolean! = false
+
   """Whether members with this role can edit existing roles"""
   canEditRole: Boolean! = false
 
@@ -1553,6 +1556,9 @@ type Query {
     """Cursor for pagination"""
     after: String
 
+    """Community ID to filter by. If null, returns only global invite codes"""
+    communityId: ID
+
     """Number of invite codes to return"""
     first: Int = 20
   ): InviteCodeConnection!
@@ -1817,6 +1823,9 @@ type Role {
   """Whether members with this role can edit characters"""
   canEditCharacter: Boolean!
 
+  """Whether members with this role can edit their own characters"""
+  canEditOwnCharacter: Boolean!
+
   """Whether members with this role can edit existing roles"""
   canEditRole: Boolean!
 
@@ -1867,6 +1876,7 @@ input SetMainMediaInput {
 input SignupInput {
   displayName: String
   email: String!
+  inviteCode: String!
   password: String!
   username: String!
 }
@@ -2219,6 +2229,9 @@ input UpdateRoleInput {
 
   """Whether members with this role can edit characters"""
   canEditCharacter: Boolean
+
+  """Whether members with this role can edit their own characters"""
+  canEditOwnCharacter: Boolean
 
   """Whether members with this role can edit existing roles"""
   canEditRole: Boolean

@@ -14,6 +14,8 @@ export interface Theme {
     warning: string;
     success: string;
     info: string;
+    danger: string;
+    dangerHover: string;
   };
   spacing: {
     xs: string;
@@ -69,6 +71,8 @@ export const lightTheme: Theme = {
     warning: '#f59e0b',
     success: '#10b981',
     info: '#06b6d4',
+    danger: '#dc2626',
+    dangerHover: '#b91c1c',
   },
   spacing: {
     xs: '0.25rem',
@@ -125,5 +129,7 @@ export const darkTheme: Theme = {
     warning: '#fbbf24',
     success: '#34d399',
     info: '#22d3ee',
+    danger: '#f87171',
+    dangerHover: '#ef4444',
   },
 };

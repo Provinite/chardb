@@ -1,8 +1,10 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { UsersService } from '../users/users.service';
+import { InviteCodesService } from '../invite-codes/invite-codes.service';
+import { DatabaseService } from '../database/database.service';
 import { Prisma } from '@chardb/database';
 
 /**
@@ -33,6 +35,8 @@ export interface SignupServiceInput {
   password: string;
   /** Optional display name */
   displayName?: string;
+  /** Required invite code */
+  inviteCode: string;
 }
 
 /**
@@ -62,6 +66,8 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private inviteCodesService: InviteCodesService,
+    private prisma: DatabaseService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<Omit<PrismaUser, 'passwordHash'> | null> {
@@ -99,37 +105,71 @@ export class AuthService {
   }
 
   async signup(input: SignupServiceInput): Promise<AuthResponse> {
-    // Check for existing user by email
-    const existingUserByEmail = await this.usersService.findByEmail(input.email);
-    if (existingUserByEmail) {
-      throw new ConflictException('User with this email already exists');
-    }
+    return await this.prisma.$transaction(async (tx) => {
+      // 1. Validate invite code first (using regular service, not transaction)
+      const inviteCode = await this.inviteCodesService.findOne(input.inviteCode);
+      if (inviteCode.claimCount >= inviteCode.maxClaims) {
+        throw new BadRequestException('Invite code has been exhausted');
+      }
 
-    // Check for existing user by username
-    const existingUserByUsername = await this.usersService.findByUsername(input.username);
-    if (existingUserByUsername) {
-      throw new ConflictException('User with this username already exists');
-    }
+      // 2. Check for existing user by email (within transaction)
+      const existingUserByEmail = await tx.user.findUnique({
+        where: { email: input.email }
+      });
+      if (existingUserByEmail) {
+        throw new ConflictException('User with this email already exists');
+      }
 
-    const hashedPassword = await bcrypt.hash(input.password, 10);
-    
-    const user = await this.usersService.create({
-      username: input.username,
-      email: input.email,
-      passwordHash: hashedPassword,
-      displayName: input.displayName,
+      // 3. Check for existing user by username (within transaction)
+      const existingUserByUsername = await tx.user.findUnique({
+        where: { username: input.username }
+      });
+      if (existingUserByUsername) {
+        throw new ConflictException('User with this username already exists');
+      }
+
+      // 4. Create user (within transaction)
+      const hashedPassword = await bcrypt.hash(input.password, 10);
+      const user = await tx.user.create({
+        data: {
+          username: input.username,
+          email: input.email,
+          passwordHash: hashedPassword,
+          displayName: input.displayName,
+        },
+      });
+
+      // 5. Claim invite code and increment usage (within transaction)
+      const updatedInviteCode = await tx.inviteCode.update({
+        where: { id: input.inviteCode },
+        data: {
+          claimCount: { increment: 1 },
+        },
+        include: { role: true },
+      });
+
+      // 6. Create community membership if invite code has a role (within transaction)
+      if (updatedInviteCode.roleId) {
+        await tx.communityMember.create({
+          data: {
+            role: { connect: { id: updatedInviteCode.roleId } },
+            user: { connect: { id: user.id } },
+          },
+        });
+      }
+
+      // 7. Generate tokens (outside transaction - no DB operations)
+      const { passwordHash, ...userWithoutPassword } = user;
+      const payload = { email: user.email, sub: user.id };
+      const accessToken = this.jwtService.sign(payload);
+      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+      return {
+        user: userWithoutPassword,
+        accessToken,
+        refreshToken,
+      };
     });
-
-    const { passwordHash, ...userWithoutPassword } = user;
-    const payload = { email: user.email, sub: user.id };
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
-    return {
-      user: userWithoutPassword,
-      accessToken,
-      refreshToken,
-    };
   }
 
   async refreshToken(token: string): Promise<RefreshTokenResponse> {

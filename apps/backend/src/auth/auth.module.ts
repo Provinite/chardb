@@ -8,6 +8,8 @@ import { AuthResolver } from './auth.resolver';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { UsersModule } from '../users/users.module';
+import { InviteCodesModule } from '../invite-codes/invite-codes.module';
+import { DatabaseModule } from '../database/database.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { UsersModule } from '../users/users.module';
       }),
     }),
     UsersModule,
+    InviteCodesModule,
+    DatabaseModule,
   ],
   providers: [AuthService, AuthResolver, JwtStrategy, LocalStrategy],
   exports: [AuthService],

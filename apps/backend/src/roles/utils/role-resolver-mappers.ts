@@ -17,6 +17,7 @@ export function mapCreateRoleInputToService(input: CreateRoleInput): CreateRoleS
     canCreateSpecies: input.canCreateSpecies,
     canCreateCharacter: input.canCreateCharacter,
     canEditCharacter: input.canEditCharacter,
+    canEditOwnCharacter: input.canEditOwnCharacter,
     canEditSpecies: input.canEditSpecies,
     canCreateInviteCode: input.canCreateInviteCode,
     canListInviteCodes: input.canListInviteCodes,
@@ -35,6 +36,7 @@ export function mapUpdateRoleInputToService(input: UpdateRoleInput): UpdateRoleS
   if (input.canCreateSpecies !== undefined) result.canCreateSpecies = input.canCreateSpecies;
   if (input.canCreateCharacter !== undefined) result.canCreateCharacter = input.canCreateCharacter;
   if (input.canEditCharacter !== undefined) result.canEditCharacter = input.canEditCharacter;
+  if (input.canEditOwnCharacter !== undefined) result.canEditOwnCharacter = input.canEditOwnCharacter;
   if (input.canEditSpecies !== undefined) result.canEditSpecies = input.canEditSpecies;
   if (input.canCreateInviteCode !== undefined) result.canCreateInviteCode = input.canCreateInviteCode;
   if (input.canListInviteCodes !== undefined) result.canListInviteCodes = input.canListInviteCodes;
@@ -58,6 +60,7 @@ export function mapPrismaRoleToGraphQL(prismaRole: PrismaRole): Role {
     canCreateSpecies: prismaRole.canCreateSpecies,
     canCreateCharacter: prismaRole.canCreateCharacter,
     canEditCharacter: prismaRole.canEditCharacter,
+    canEditOwnCharacter: prismaRole.canEditOwnCharacter,
     canEditSpecies: prismaRole.canEditSpecies,
     canCreateInviteCode: prismaRole.canCreateInviteCode,
     canListInviteCodes: prismaRole.canListInviteCodes,
