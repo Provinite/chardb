@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.0.0] - 2025-09-01
+
 ### Added
 
 #### Core Component Library Expansion
+
 - **Card Component Family**: Reusable card components for consistent surface styling
   - `Card` component with hover effects, clickable variants, and theme integration
   - `CardHeader` component for consistent card header layouts
@@ -40,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Component Improvements
+
 - **Button Component Enhancement**: Expanded button functionality and styling
   - Improved variant system with consistent theming
   - Enhanced size options (sm, md, lg) with proper spacing
@@ -48,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed styled-components prop warnings with transient props pattern
 
 #### Theme Integration
+
 - **Color System Extension**: Enhanced theme colors for new components
   - Added surface color for card and modal backgrounds
   - Improved border color consistency across components
@@ -60,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical Improvements
 
 #### Developer Experience
+
 - **TypeScript Interface Standards**: Consistent prop interfaces across all components
   - Comprehensive prop documentation with JSDoc comments
   - Proper default prop handling and optional parameter patterns
@@ -74,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Keyboard navigation support for all interactive elements
 
 #### Performance Optimizations
+
 - **Component Size Optimization**: Efficient component implementations
   - Minimal re-renders with proper prop dependency management
   - Optimized styled-components with theme caching
@@ -82,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.2.0] - 2025-01-12
 
 ### Added
+
 - TagInput component with typeahead functionality
 - Tag chip component with remove buttons
 - Real-time tag search integration
@@ -89,6 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Visual chip design with theme integration
 
 ### Fixed
+
 - Styled-components DOM prop warnings
 - Tag input focus management
 - Form integration compatibility
@@ -96,6 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.1.0] - 2025-01-11
 
 ### Added
+
 - Tag component with multiple variants
 - TagsContainer component for consistent layouts
 - Size variants (sm, md) for different contexts
@@ -105,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.0.1] - 2025-08-10
 
 ### Added
+
 - Initial UI package setup
 - Basic component infrastructure
 - Theme system foundation
