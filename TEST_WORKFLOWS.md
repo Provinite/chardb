@@ -1013,6 +1013,10 @@ This document outlines comprehensive test workflows for the CharDB application t
 - Species Management System access and navigation
 - Community administration interface functionality
 - Species creation modal and form validation
+- Permission management interface access and navigation
+- Role creation with built-in templates (Member, Moderator, Admin)
+- Role management tab with role cards and editing functionality
+- Permission matrix display and functionality
 
 ### Medium Priority (Extended Features)
 
@@ -1028,6 +1032,8 @@ This document outlines comprehensive test workflows for the CharDB application t
 - Community-scoped species permissions and role integration
 - Species search and filtering functionality
 - Community invitation workflow for existing users
+- Advanced permission management (bulk operations, member role assignments)
+- Cross-community permission inheritance and validation
 
 ### 9. Comprehensive Trait System Testing
 
@@ -1414,6 +1420,225 @@ This document outlines comprehensive test workflows for the CharDB application t
 4. **Expected:** User can join multiple communities
 5. **Expected:** Each community membership tracked independently
 6. Verify user has appropriate roles in each joined community
+
+### 11. Permission Management System (Community Admin Users)
+
+#### 11.1 Access Permission Management Interface
+
+**Permission Prerequisites:**
+- User must have community admin role OR appropriate permission management permissions
+- Access requires membership in target community with `canCreateRole` or `canEditRole` permissions
+
+**Access Permission Management Interface:**
+1. Navigate to `/communities/{communityId}/permissions` where `{communityId}` is valid community ID
+2. **Expected:** Permission Management page loads showing community name in header
+3. **Expected:** Page displays "Permission Management" title with role count (e.g., "Community • 0 roles")
+4. **Expected:** Two main tabs visible: "Member Overview" and "Role Management"
+5. **Expected:** "Create Role" button with plus icon in header actions
+6. **Expected:** Back button for navigation
+
+#### 11.2 Permission Matrix Testing (Member Overview Tab)
+
+**Access Member Overview:**
+1. Click "Member Overview" tab (should be default active tab)
+2. **Expected:** Permission Matrix component loads with grid layout
+3. **Expected:** Search functionality available with "Search members by name, email, or role..." placeholder
+4. **Expected:** Statistics section showing "Total Members: 0" (for empty community)
+5. **Expected:** Matrix table with headers: Member, Role, and all permission columns:
+   - Create Species, Create Character, Edit Characters, Edit Own Characters
+   - Edit Species, Create Invites, List Invites, Create Roles, Edit Roles
+
+**Test Matrix Features:**
+1. **Expected:** Sticky header rows remain visible during scroll
+2. **Expected:** Member column shows user avatars, names, and email addresses
+3. **Expected:** Role column displays role selection dropdowns
+4. **Expected:** Permission columns show checkmark/X icons indicating granted permissions
+5. **Expected:** Search input filters members in real-time
+6. Test with empty state: **Expected:** Empty table body with no member rows
+
+#### 11.3 Role Management Tab Testing
+
+**Access Role Management:**
+1. Click "Role Management" tab
+2. **Expected:** Tab becomes active with role management interface
+3. **Expected:** Shows grid layout of existing community roles as cards
+4. **Expected:** Each role card displays:
+   - Role name with shield icon
+   - Permission count and member count statistics
+   - List of all permissions with granted/denied status
+   - Edit and Delete action buttons (Delete disabled for testing)
+5. **Expected:** Empty state shows "No Roles Yet" message with create role guidance when no roles exist
+6. **Expected:** "Create Role" button available in header or empty state
+
+**Test Role Card Features:**
+1. **Expected:** Permission list shows all permissions with clear granted/denied indicators
+2. **Expected:** Statistics section shows permission count and member count
+3. **Expected:** Edit button opens role editor with current values pre-populated
+4. **Expected:** Role cards have hover effects and are visually appealing
+5. **Expected:** All community roles displayed with consistent styling
+
+#### 11.4 Role Creation and Editing Testing
+
+**Access Role Creation:**
+1. Click "Create Role" button from header or role management tab
+2. **Expected:** Modal opens with "Create New Role" title
+3. **Expected:** Modal contains three main sections:
+   - Basic Information (Settings icon)
+   - Role Templates (Shield icon) - only shown for new role creation
+   - Permissions (Shield icon)
+
+**Test Basic Information Section:**
+1. **Expected:** "Role Name" text input with placeholder "Enter role name (e.g., Member, Moderator, Admin)"
+2. **Expected:** Input marked as required
+3. **Expected:** Create Role button disabled until name provided
+
+**Test Built-in Role Templates Section (New Roles Only):**
+1. **Expected:** Three built-in template buttons: Member, Moderator, Admin
+2. **Expected:** Help text: "Quick-start with a pre-configured role template, then customize as needed."
+3. Click "Moderator" template button
+4. **Expected:** Button becomes selected/active state
+5. **Expected:** Info alert appears with template description
+6. **Expected:** Permission checkboxes automatically update to match template
+7. **Expected:** Template selection is informational only - no custom template creation functionality
+
+**Test Permission Configuration:**
+1. **Expected:** Permissions organized into three groups with icons:
+   - Content Management (Database icon): 5 permissions
+   - Community Management (Users icon): 2 permissions  
+   - Role Administration (Crown icon): 2 permissions
+2. **Expected:** Each permission shows checkbox, name, and description
+3. **Expected:** Template selection automatically checks appropriate permissions
+4. Test manual permission changes:
+   - Check/uncheck individual permissions
+   - **Expected:** Template selection clears when manually modifying permissions
+
+**Test Permission Categories:**
+1. **Content Management permissions:**
+   - Create Species: "Allow creation of new species and their configuration"
+   - Edit Species: "Allow editing existing species, traits, and variants"
+   - Create Characters: "Allow creation of new characters in the community"
+   - Edit Any Character: "Allow editing any community member's characters"
+   - Edit Own Characters: "Allow editing only characters owned by the member"
+
+2. **Community Management permissions:**
+   - Create Invite Codes: "Allow creation of community invitation codes"
+   - View Invite Codes: "Allow viewing and managing existing invite codes"
+
+3. **Role Administration permissions:**
+   - Create Roles: "Allow creation of new community roles"
+   - Edit Roles: "Allow editing existing community roles and permissions"
+
+**Test Role Editing:**
+1. Click "Edit" button on any role card in Role Management tab
+2. **Expected:** Modal opens with "Edit Role" title
+3. **Expected:** Role name and all permissions pre-populated with current values
+4. **Expected:** No role templates section shown (only for new role creation)
+5. **Expected:** All permission checkboxes reflect current role configuration
+6. Modify permissions and save
+7. **Expected:** Role updates successfully with confirmation
+
+**Test Form Submission:**
+1. Fill role name: "Test Moderator"
+2. Select "Moderator" template or configure permissions manually
+3. **Expected:** Create Role button becomes enabled
+4. **Expected:** Info alert shows: "Changes to role permissions will apply to all members with this role."
+5. Click "Create Role" button
+6. **Expected:** Button shows loading state (if backend connected)
+7. **Expected:** Form handles submission (success/error feedback)
+8. **Expected:** New role appears in Role Management tab after creation
+
+**Test Form Cancellation:**
+1. Click "Cancel" button
+2. **Expected:** Modal closes without saving
+3. **Expected:** Returns to previous tab state
+4. **Expected:** Form resets on next open
+
+#### 11.5 Integration and Navigation Testing
+
+**Test Tab Navigation:**
+1. Click between the two tabs: Member Overview and Role Management
+2. **Expected:** Active tab state changes correctly
+3. **Expected:** Content switches without page reload
+4. **Expected:** URLs remain stable during tab switching
+5. **Expected:** Tab state preserved during modal interactions
+
+**Test Modal Integration:**
+1. Open Create Role modal from any tab
+2. **Expected:** Modal renders over current tab content
+3. **Expected:** Background tab content remains accessible after modal close
+4. **Expected:** Modal doesn't interfere with tab navigation
+
+**Test Responsive Design:**
+1. Resize browser window to mobile/tablet sizes
+2. **Expected:** Permission matrix adapts with horizontal scrolling
+3. **Expected:** Role template cards reflow to single column
+4. **Expected:** Modal remains usable on smaller screens
+5. **Expected:** Tab navigation accessible on mobile
+
+#### 11.6 Error Handling and Edge Cases
+
+**Test Permission Validation:**
+1. Access permission management with insufficient community permissions
+2. **Expected:** Access denied or redirect with clear error message
+3. **Expected:** No broken page states or exposed functionality
+4. Test with user who has no community membership
+5. **Expected:** Proper authorization checks prevent access
+
+**Test Loading States:**
+1. Navigate to permission management page
+2. **Expected:** Loading states display during data fetch
+3. **Expected:** Loading indicators for member data, role data
+4. **Expected:** Graceful handling of loading failures
+
+**Test Network Error Handling:**
+1. Test permission management with network connectivity issues
+2. **Expected:** Appropriate timeout and error messages
+3. **Expected:** User can retry operations
+4. **Expected:** No partial data states on failure
+
+**Test GraphQL Error Handling:**
+1. Monitor browser console during operations
+2. **Expected:** GraphQL errors logged appropriately
+3. **Expected:** User-friendly error messages displayed
+4. **Expected:** No GraphQL query failures that crash the UI
+
+#### 11.7 Community Context and Integration
+
+**Test Community Context:**
+1. Navigate to permission management for different communities
+2. **Expected:** Page title and content properly scoped to community
+3. **Expected:** Role and member data specific to selected community
+4. **Expected:** No cross-community data leakage
+
+**Test Community Admin Integration:**
+1. Access from community admin dashboard
+2. **Expected:** Proper navigation context maintained
+3. **Expected:** Breadcrumb or back navigation available
+4. **Expected:** Integration with other community management features
+
+#### 11.8 Performance and Usability Testing
+
+**Test Performance:**
+1. Monitor page load times for permission management
+2. **Expected:** Initial load under 3 seconds on fast connection
+3. **Expected:** Tab switching responsive without lag
+4. **Expected:** Modal open/close animations smooth
+5. **Expected:** Search filtering responsive in real-time
+
+**Test User Experience:**
+1. **Expected:** Clear visual hierarchy between sections
+2. **Expected:** Consistent styling with application theme
+3. **Expected:** Intuitive icon usage throughout interface
+4. **Expected:** Helpful placeholder text and descriptions
+5. **Expected:** Logical workflow from templates to role creation
+6. **Expected:** Clear feedback for all user actions
+
+**Test Accessibility:**
+1. **Expected:** Proper heading structure (H1, H2, H3, H4, H5)
+2. **Expected:** Form labels associated with inputs
+3. **Expected:** Keyboard navigation functional
+4. **Expected:** Screen reader friendly content structure
+5. **Expected:** Focus management in modals
 
 ## Notes for Test Execution
 

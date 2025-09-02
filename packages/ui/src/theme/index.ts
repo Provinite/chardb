@@ -57,7 +57,7 @@ export interface Theme {
 
 export const lightTheme: Theme = {
   colors: {
-    primary: '#6d28d9',
+    primary: '#8b5cf6',
     secondary: '#059669',
     background: '#ffffff',
     surface: '#f8fafc',
@@ -115,8 +115,8 @@ export const lightTheme: Theme = {
 export const darkTheme: Theme = {
   ...lightTheme,
   colors: {
-    primary: '#6d28d9',
-    secondary: '#34d399',
+    primary: '#8b5cf6',
+    secondary: '#22c55e',
     background: '#0f172a',
     surface: '#1e293b',
     text: {
@@ -127,7 +127,7 @@ export const darkTheme: Theme = {
     border: '#334155',
     error: '#f87171',
     warning: '#fbbf24',
-    success: '#34d399',
+    success: '#22c55e',
     info: '#22d3ee',
     danger: '#f87171',
     dangerHover: '#ef4444',

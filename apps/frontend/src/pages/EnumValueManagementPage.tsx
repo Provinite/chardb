@@ -450,9 +450,9 @@ export const EnumValueManagementPage: React.FC = () => {
   return (
     <Container>
       <Breadcrumb>
-        <Link to="/admin/species">Species Management</Link>
+        <Link to={`/communities/${trait.species?.communityId}/species`}>Species Management</Link>
         <span>/</span>
-        <span>{trait.species?.name || 'Species'}</span>
+        <Link to={`/species/${trait.species?.id}`}>{trait.species?.name || 'Species'}</Link>
         <span>/</span>
         <Link to={`/species/${trait.species?.id}/traits`}>Traits</Link>
         <span>/</span>

@@ -13,12 +13,16 @@ import { RemovalResponse } from '../shared/entities/removal-response.entity';
 import { Community } from '../communities/entities/community.entity';
 import { CommunitiesService } from '../communities/communities.service';
 import { mapPrismaCommunityToGraphQL } from '../communities/utils/community-resolver-mappers';
+import { Trait } from '../traits/entities/trait.entity';
+import { TraitsService } from '../traits/traits.service';
+import { mapPrismaTraitToGraphQL } from '../traits/utils/trait-resolver-mappers';
 
 @Resolver(() => Species)
 export class SpeciesResolver {
   constructor(
     private readonly speciesService: SpeciesService,
     private readonly communitiesService: CommunitiesService,
+    private readonly traitsService: TraitsService,
   ) {}
 
   /** Create a new species */
@@ -91,7 +95,7 @@ export class SpeciesResolver {
     return { removed: true, message: 'Species successfully removed' };
   }
 
-  // Field resolver for relations
+  // Field resolvers for relations
   @ResolveField('community', () => Community, { description: 'The community that owns this species' })
   async resolveCommunity(@Parent() species: Species): Promise<Community | null> {
     try {
@@ -103,5 +107,11 @@ export class SpeciesResolver {
       }
       throw error;
     }
+  }
+
+  @ResolveField('traits', () => [Trait], { description: 'Traits associated with this species' })
+  async resolveTraits(@Parent() species: Species): Promise<Trait[]> {
+    const serviceResult = await this.traitsService.findBySpecies(species.id, 100); // Get up to 100 traits
+    return serviceResult.nodes.map(mapPrismaTraitToGraphQL);
   }
 }

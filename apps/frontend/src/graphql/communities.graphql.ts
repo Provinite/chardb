@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const COMMUNITIES_QUERY = gql`
   query Communities($first: Int, $after: String) {
@@ -39,7 +39,10 @@ export const CREATE_COMMUNITY_MUTATION = gql`
 `;
 
 export const UPDATE_COMMUNITY_MUTATION = gql`
-  mutation UpdateCommunity($id: ID!, $updateCommunityInput: UpdateCommunityInput!) {
+  mutation UpdateCommunity(
+    $id: ID!
+    $updateCommunityInput: UpdateCommunityInput!
+  ) {
     updateCommunity(id: $id, updateCommunityInput: $updateCommunityInput) {
       id
       name
@@ -58,6 +61,46 @@ export const REMOVE_COMMUNITY_MUTATION = gql`
   }
 `;
 
+export const COMMUNITY_MEMBERS_BY_USER_QUERY = gql`
+  query CommunityMembersByUser($userId: ID!, $first: Int, $after: String) {
+    communityMembersByUser(userId: $userId, first: $first, after: $after) {
+      nodes {
+        id
+        createdAt
+        updatedAt
+        role {
+          id
+          name
+          community {
+            id
+            name
+            createdAt
+            updatedAt
+          }
+          canCreateCharacter
+          canCreateInviteCode
+          canCreateRole
+          canEditCharacter
+          canCreateSpecies
+          canEditSpecies
+          canEditRole
+          canEditCharacter
+          canEditOwnCharacter
+          canListInviteCodes
+        }
+        user {
+          id
+          username
+          displayName
+        }
+      }
+      hasNextPage
+      hasPreviousPage
+      totalCount
+    }
+  }
+`;
+
 // Re-export generated types and hooks after regeneration
 export {
   // Hooks
@@ -66,7 +109,8 @@ export {
   useCreateCommunityMutation,
   useUpdateCommunityMutation,
   useRemoveCommunityMutation,
-  
+  useCommunityMembersByUserQuery,
+
   // Types
   type CommunitiesQuery,
   type CommunitiesQueryVariables,
@@ -78,8 +122,12 @@ export {
   type UpdateCommunityMutationVariables,
   type RemoveCommunityMutation,
   type RemoveCommunityMutationVariables,
+  type CommunityMembersByUserQuery,
+  type CommunityMembersByUserQueryVariables,
   type Community,
   type CommunityConnection,
+  type CommunityMember,
+  type CommunityMemberConnection,
   type CreateCommunityInput,
   type UpdateCommunityInput,
-} from '../generated/graphql';
+} from "../generated/graphql";

@@ -1896,6 +1896,9 @@ type Species {
   """Name of the species"""
   name: String!
 
+  """Traits associated with this species"""
+  traits: [Trait!]!
+
   """When the species was last updated"""
   updatedAt: DateTime!
 }
@@ -1917,6 +1920,9 @@ type SpeciesConnection {
 type SpeciesVariant {
   """When the species variant was created"""
   createdAt: DateTime!
+
+  """Enum value settings for this species variant"""
+  enumValueSettings: [EnumValueSetting!]!
 
   """Unique identifier for the species variant"""
   id: ID!
@@ -1990,6 +1996,9 @@ input ToggleLikeInput {
 type Trait {
   """When the trait was created"""
   createdAt: DateTime!
+
+  """Enum values for this trait (only populated for ENUM traits)"""
+  enumValues: [EnumValue!]!
 
   """Unique identifier for the trait"""
   id: ID!

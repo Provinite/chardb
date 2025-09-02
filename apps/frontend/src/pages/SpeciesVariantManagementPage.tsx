@@ -325,9 +325,9 @@ export const SpeciesVariantManagementPage: React.FC = () => {
   return (
     <Container>
       <Breadcrumb>
-        <Link to="/admin/species">Species Management</Link>
+        <Link to={`/communities/${species.communityId}/species`}>Species Management</Link>
         <span>/</span>
-        <span>{species.name}</span>
+        <Link to={`/species/${species.id}`}>{species.name}</Link>
         <span>/</span>
         <span>Variants</span>
       </Breadcrumb>

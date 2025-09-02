@@ -1,7 +1,17 @@
-import { Resolver, Query, Mutation, Args, ID, Int } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { CommunityMembersService } from './community-members.service';
 import { CommunityMember, CommunityMemberConnection } from './entities/community-member.entity';
 import { CreateCommunityMemberInput, UpdateCommunityMemberInput } from './dto/community-member.dto';
+import { User } from '../users/entities/user.entity';
+import { Role } from '../roles/entities/role.entity';
+import { 
+  mapCreateCommunityMemberInputToService,
+  mapUpdateCommunityMemberInputToService,
+  mapPrismaCommunityMemberToGraphQL,
+  mapPrismaCommunityMemberConnectionToGraphQL
+} from './utils/community-member-resolver-mappers';
+import { mapPrismaUserToGraphQL } from '../users/utils/user-resolver-mappers';
+import { mapPrismaRoleToGraphQL } from '../roles/utils/role-resolver-mappers';
 
 @Resolver(() => CommunityMember)
 export class CommunityMembersResolver {
@@ -9,27 +19,30 @@ export class CommunityMembersResolver {
 
   /** Create a new community membership */
   @Mutation(() => CommunityMember, { description: 'Create a new community membership' })
-  createCommunityMember(
+  async createCommunityMember(
     @Args('createCommunityMemberInput', { description: 'Community membership creation data' }) 
     createCommunityMemberInput: CreateCommunityMemberInput,
   ): Promise<CommunityMember> {
-    return this.communityMembersService.create(createCommunityMemberInput);
+    const serviceInput = mapCreateCommunityMemberInputToService(createCommunityMemberInput);
+    const result = await this.communityMembersService.create(serviceInput);
+    return mapPrismaCommunityMemberToGraphQL(result);
   }
 
   /** Get all community members with pagination */
   @Query(() => CommunityMemberConnection, { name: 'communityMembers', description: 'Get all community members with pagination' })
-  findAll(
+  async findAll(
     @Args('first', { type: () => Int, nullable: true, description: 'Number of community members to return', defaultValue: 20 })
     first?: number,
     @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
     after?: string,
   ): Promise<CommunityMemberConnection> {
-    return this.communityMembersService.findAll(first, after);
+    const result = await this.communityMembersService.findAll(first, after);
+    return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }
 
   /** Get community members by community ID with pagination */
   @Query(() => CommunityMemberConnection, { name: 'communityMembersByCommunity', description: 'Get community members by community ID with pagination' })
-  findByCommunity(
+  async findByCommunity(
     @Args('communityId', { type: () => ID, description: 'Community ID' })
     communityId: string,
     @Args('first', { type: () => Int, nullable: true, description: 'Number of community members to return', defaultValue: 20 })
@@ -37,12 +50,13 @@ export class CommunityMembersResolver {
     @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
     after?: string,
   ): Promise<CommunityMemberConnection> {
-    return this.communityMembersService.findByCommunity(communityId, first, after);
+    const result = await this.communityMembersService.findByCommunity(communityId, first, after);
+    return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }
 
   /** Get community members by user ID with pagination */
   @Query(() => CommunityMemberConnection, { name: 'communityMembersByUser', description: 'Get community members by user ID with pagination' })
-  findByUser(
+  async findByUser(
     @Args('userId', { type: () => ID, description: 'User ID' })
     userId: string,
     @Args('first', { type: () => Int, nullable: true, description: 'Number of community members to return', defaultValue: 20 })
@@ -50,35 +64,54 @@ export class CommunityMembersResolver {
     @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
     after?: string,
   ): Promise<CommunityMemberConnection> {
-    return this.communityMembersService.findByUser(userId, first, after);
+    const result = await this.communityMembersService.findByUser(userId, first, after);
+    return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }
 
   /** Get a community member by ID */
   @Query(() => CommunityMember, { name: 'communityMemberById', description: 'Get a community member by ID' })
-  findOne(
+  async findOne(
     @Args('id', { type: () => ID, description: 'Community member ID' }) 
     id: string,
   ): Promise<CommunityMember> {
-    return this.communityMembersService.findOne(id);
+    const result = await this.communityMembersService.findOne(id);
+    return mapPrismaCommunityMemberToGraphQL(result);
   }
 
   /** Update a community membership */
   @Mutation(() => CommunityMember, { description: 'Update a community membership (change role)' })
-  updateCommunityMember(
+  async updateCommunityMember(
     @Args('id', { type: () => ID, description: 'Community member ID' }) 
     id: string,
     @Args('updateCommunityMemberInput', { description: 'Community membership update data' }) 
     updateCommunityMemberInput: UpdateCommunityMemberInput,
   ): Promise<CommunityMember> {
-    return this.communityMembersService.update(id, updateCommunityMemberInput);
+    const serviceInput = mapUpdateCommunityMemberInputToService(updateCommunityMemberInput);
+    const result = await this.communityMembersService.update(id, serviceInput);
+    return mapPrismaCommunityMemberToGraphQL(result);
   }
 
   /** Remove a community membership */
   @Mutation(() => CommunityMember, { description: 'Remove a community membership' })
-  removeCommunityMember(
+  async removeCommunityMember(
     @Args('id', { type: () => ID, description: 'Community member ID' }) 
     id: string,
   ): Promise<CommunityMember> {
-    return this.communityMembersService.remove(id);
+    const result = await this.communityMembersService.remove(id);
+    return mapPrismaCommunityMemberToGraphQL(result);
+  }
+
+  /** Resolve the role field */
+  @ResolveField('role', () => Role, { description: 'The role this member has' })
+  async getRole(@Parent() communityMember: CommunityMember): Promise<Role> {
+    const result = await this.communityMembersService.getRoleById(communityMember.roleId);
+    return mapPrismaRoleToGraphQL(result);
+  }
+
+  /** Resolve the user field */
+  @ResolveField('user', () => User, { description: 'The user who is the member' })
+  async getUser(@Parent() communityMember: CommunityMember): Promise<User> {
+    const result = await this.communityMembersService.getUserById(communityMember.userId);
+    return mapPrismaUserToGraphQL(result);
   }
 }

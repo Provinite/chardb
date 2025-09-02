@@ -1,11 +1,12 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TraitsService } from './traits.service';
 import { TraitsResolver } from './traits.resolver';
 import { DatabaseModule } from '../database/database.module';
 import { SpeciesModule } from '../species/species.module';
+import { EnumValuesModule } from '../enum-values/enum-values.module';
 
 @Module({
-  imports: [DatabaseModule, SpeciesModule],
+  imports: [DatabaseModule, forwardRef(() => SpeciesModule), EnumValuesModule],
   providers: [TraitsResolver, TraitsService],
   exports: [TraitsService],
 })

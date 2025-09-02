@@ -1,12 +1,18 @@
-import React from 'react';
-import styled from 'styled-components';
-import { useParams, Link } from 'react-router-dom';
-import { Database, Users, Settings, List, FileText } from 'lucide-react';
-import { Title, Subtitle, Card } from '@chardb/ui';
+import React from "react";
+import styled from "styled-components";
+import { useParams, Link } from "react-router-dom";
+import { Database, Users, Settings, List, FileText } from "lucide-react";
+import { Title, Subtitle, Card } from "@chardb/ui";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import {
+  useCommunityByIdQuery,
+  useCommunityMembersByUserQuery,
+} from "../generated/graphql";
+import { useAuth } from "../contexts/AuthContext";
 
 /**
  * Community Administration Interface
- * 
+ *
  * Central hub for community-specific administration tasks. Provides access to
  * species management, member management, role configuration, and other
  * community-scoped administrative functions.
@@ -25,11 +31,11 @@ const Breadcrumb = styled.div`
   margin-bottom: 2rem;
   font-size: 0.875rem;
   color: ${({ theme }) => theme.colors.text.muted};
-  
+
   a {
     color: ${({ theme }) => theme.colors.primary};
     text-decoration: none;
-    
+
     &:hover {
       text-decoration: underline;
     }
@@ -82,16 +88,53 @@ const PermissionNote = styled.div`
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 2rem;
-  
+
   p {
     margin: 0;
-    color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.text.primary};
     font-size: 0.875rem;
   }
 `;
 
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem;
+`;
+
+const ErrorContainer = styled.div`
+  text-align: center;
+  padding: 4rem 2rem;
+  color: ${({ theme }) => theme.colors.error};
+`;
+
 export const CommunityAdminPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
+  const { user } = useAuth();
+
+  // Fetch community data
+  const {
+    data: communityData,
+    loading: communityLoading,
+    error: communityError,
+  } = useCommunityByIdQuery({
+    variables: { id: communityId! },
+    skip: !communityId,
+  });
+
+  // Fetch user's membership in this community to get role and permissions
+  const {
+    data: membershipData,
+    loading: membershipLoading,
+    error: membershipError,
+  } = useCommunityMembersByUserQuery({
+    variables: {
+      userId: user?.id || "",
+      first: 50,
+    },
+    skip: !user?.id,
+  });
 
   if (!communityId) {
     return (
@@ -102,25 +145,77 @@ export const CommunityAdminPage: React.FC = () => {
     );
   }
 
-  // Mock community data - in real implementation, fetch from GraphQL
-  const communityName = "Fantasy Realm";
+  // Loading states
+  if (communityLoading || membershipLoading) {
+    return (
+      <Container>
+        <LoadingContainer>
+          <LoadingSpinner size="lg" />
+        </LoadingContainer>
+      </Container>
+    );
+  }
 
-  // Mock user permissions - in real implementation, these would come from user context/role
-  const userPermissions = {
-    canCreateSpecies: true,
-    canEditSpecies: true,
-    canCreateRole: true,
-    canEditRole: true,
-    canCreateInviteCode: true,
-    canListInviteCodes: true,
-  };
+  // Error states
+  if (communityError || membershipError) {
+    return (
+      <Container>
+        <ErrorContainer>
+          <Title>Error Loading Community</Title>
+          <Subtitle>
+            {communityError?.message ||
+              membershipError?.message ||
+              "Unable to load community data"}
+          </Subtitle>
+        </ErrorContainer>
+      </Container>
+    );
+  }
+
+  const community = communityData?.community;
+
+  // Find user's membership in this specific community
+  const userMembership = membershipData?.communityMembersByUser?.nodes?.find(
+    (membership) => membership.role.community.id === communityId,
+  );
+
+  if (!community) {
+    return (
+      <Container>
+        <ErrorContainer>
+          <Title>Community Not Found</Title>
+          <Subtitle>
+            The community you're looking for doesn't exist or you don't have
+            access to it.
+          </Subtitle>
+        </ErrorContainer>
+      </Container>
+    );
+  }
+
+  if (!userMembership) {
+    return (
+      <Container>
+        <ErrorContainer>
+          <Title>Access Denied</Title>
+          <Subtitle>
+            You are not a member of this community or don't have administrative
+            permissions.
+          </Subtitle>
+        </ErrorContainer>
+      </Container>
+    );
+  }
+
+  // Extract permissions from user's role
+  const userRole = userMembership.role;
 
   return (
     <Container>
       <Breadcrumb>
-        <Link to="/communities">My Communities</Link>
+        <Link to="/my/communities">My Communities</Link>
         <span>/</span>
-        <span>{communityName}</span>
+        <Link to={`/communities/${communityId}`}>{community.name}</Link>
         <span>/</span>
         <span>Administration</span>
       </Breadcrumb>
@@ -128,28 +223,30 @@ export const CommunityAdminPage: React.FC = () => {
       <Header>
         <Title>Community Administration</Title>
         <Subtitle>
-          Manage {communityName} settings, content, and members
+          Manage {community.name} settings, content, and members
         </Subtitle>
       </Header>
 
       <PermissionNote>
         <p>
-          Your administrative access is based on your role permissions within this community.
-          Contact a community administrator if you need additional permissions.
+          You are currently a <strong>{userRole.name}</strong> in this
+          community. Your administrative access is based on your role
+          permissions. Contact a community administrator if you need additional
+          permissions.
         </p>
       </PermissionNote>
 
       <AdminGrid>
         {/* Species Management - Core feature */}
-        {(userPermissions.canCreateSpecies || userPermissions.canEditSpecies) && (
+        {(userRole.canCreateSpecies || userRole.canEditSpecies) && (
           <AdminCard to={`/communities/${communityId}/species`}>
             <CardIcon>
               <Database size={24} />
             </CardIcon>
             <CardTitle>Species Management</CardTitle>
             <CardDescription>
-              Create and configure species, traits, and variants for your community.
-              Define character templates and customization options.
+              Create and configure species, traits, and variants for your
+              community. Define character templates and customization options.
             </CardDescription>
           </AdminCard>
         )}
@@ -161,35 +258,35 @@ export const CommunityAdminPage: React.FC = () => {
           </CardIcon>
           <CardTitle>Member Management</CardTitle>
           <CardDescription>
-            View community members, manage roles, and handle membership requests.
-            Monitor community activity and engagement.
+            View community members, manage roles, and handle membership
+            requests. Monitor community activity and engagement.
           </CardDescription>
         </AdminCard>
 
         {/* Roles & Permissions */}
-        {(userPermissions.canCreateRole || userPermissions.canEditRole) && (
-          <AdminCard to={`/communities/${communityId}/roles`}>
+        {(userRole.canCreateRole || userRole.canEditRole) && (
+          <AdminCard to={`/communities/${communityId}/permissions`}>
             <CardIcon>
               <Settings size={24} />
             </CardIcon>
             <CardTitle>Roles & Permissions</CardTitle>
             <CardDescription>
-              Configure community roles and permissions. Set up moderation hierarchies
-              and access control for community features.
+              Configure community roles and permissions. Set up moderation
+              hierarchies and access control for community features.
             </CardDescription>
           </AdminCard>
         )}
 
         {/* Invite Codes */}
-        {(userPermissions.canCreateInviteCode || userPermissions.canListInviteCodes) && (
+        {(userRole.canCreateInviteCode || userRole.canListInviteCodes) && (
           <AdminCard to={`/communities/${communityId}/invite-codes`}>
             <CardIcon>
               <List size={24} />
             </CardIcon>
             <CardTitle>Invite Management</CardTitle>
             <CardDescription>
-              Create and manage community invite codes. Control new member onboarding
-              and role assignment through invitation links.
+              Create and manage community invite codes. Control new member
+              onboarding and role assignment through invitation links.
             </CardDescription>
           </AdminCard>
         )}

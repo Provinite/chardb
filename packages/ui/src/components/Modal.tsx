@@ -4,8 +4,8 @@ import styled from 'styled-components';
 /**
  * Full-screen overlay that dims the background content
  */
-const ModalOverlay = styled.div<{ isOpen: boolean }>`
-  display: ${({ isOpen }) => (isOpen ? 'flex' : 'none')};
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
+  display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   position: fixed;
   top: 0;
   left: 0;
@@ -128,7 +128,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   };
 
   return (
-    <ModalOverlay isOpen={isOpen} onClick={handleOverlayClick}>
+    <ModalOverlay $isOpen={isOpen} onClick={handleOverlayClick}>
       <ModalContent>
         {title && <ModalHeader>{title}</ModalHeader>}
         {children}

@@ -14,7 +14,7 @@ import { UserProfilePage } from "./pages/UserProfilePage";
 import { EditProfilePage } from "./pages/EditProfilePage";
 import { CharacterPage } from "./pages/CharacterPage";
 import { CharactersPage } from "./pages/CharactersPage";
-import { CreateCharacterPage } from "./pages/CreateCharacterPage";
+import { CreateCharacterPageEnhanced as CreateCharacterPage } from "./pages/CreateCharacterPageEnhanced";
 import { EditCharacterPage } from "./pages/EditCharacterPage";
 import { CreateTextPage } from "./pages/CreateTextPage";
 import { CreateMediaPage } from "./pages/CreateMediaPage";
@@ -44,7 +44,14 @@ import { TraitBuilderPage } from "./pages/TraitBuilderPage";
 import { SpeciesVariantManagementPage } from "./pages/SpeciesVariantManagementPage";
 import { EnumValueManagementPage } from "./pages/EnumValueManagementPage";
 import { EnumValueSettingsPage } from "./pages/EnumValueSettingsPage";
+import { PermissionManagementPage } from "./pages/PermissionManagementPage";
+import { CommunityMembersPage } from "./pages/CommunityMembersPage";
+import { CommunitySettingsPage } from "./pages/CommunitySettingsPage";
+import { CommunityModerationPage } from "./pages/CommunityModerationPage";
 import { JoinCommunityPage } from "./pages/JoinCommunityPage";
+import { MyCommunitiesPage } from "./pages/MyCommunitiesPage";
+import { CommunityPage } from "./pages/CommunityPage";
+import { SpeciesPage } from "./pages/SpeciesPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
@@ -75,6 +82,8 @@ function App() {
         <Route path="/user/:username" element={<UserProfilePage />} />
         <Route path="/user/:username/followers" element={<FollowersPage />} />
         <Route path="/user/:username/following" element={<FollowingPage />} />
+        <Route path="/communities/:communityId" element={<CommunityPage />} />
+        <Route path="/species/:speciesId" element={<SpeciesPage />} />
 
         {/* Protected routes */}
         <Route
@@ -90,6 +99,14 @@ function App() {
           element={
             <ProtectedRoute>
               <JoinCommunityPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my/communities"
+          element={
+            <ProtectedRoute>
+              <MyCommunitiesPage />
             </ProtectedRoute>
           }
         />
@@ -270,6 +287,38 @@ function App() {
           element={
             <ProtectedRoute>
               <SpeciesManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/permissions"
+          element={
+            <ProtectedRoute>
+              <PermissionManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/members"
+          element={
+            <ProtectedRoute>
+              <CommunityMembersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/settings"
+          element={
+            <ProtectedRoute>
+              <CommunitySettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/moderation"
+          element={
+            <ProtectedRoute>
+              <CommunityModerationPage />
             </ProtectedRoute>
           }
         />

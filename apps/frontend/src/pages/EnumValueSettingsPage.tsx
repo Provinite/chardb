@@ -4,10 +4,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Check, X, Settings, ArrowLeft, Database, Palette } from "lucide-react";
 import { Button, ErrorMessage } from "@chardb/ui";
 import {
-  useSpeciesVariantByIdQuery,
-  useTraitsBySpeciesQuery,
-  useEnumValuesByTraitQuery,
-  useEnumValueSettingsBySpeciesVariantQuery,
+  useSpeciesVariantWithEnumValueSettingsQuery,
   useCreateEnumValueSettingMutation,
   useDeleteEnumValueSettingMutation,
   TraitValueType,
@@ -18,7 +15,7 @@ import { toast } from "react-hot-toast";
  * Enum Value Settings Management Interface
  *
  * Configure which enum values are available for specific species variants.
- * This page provides a comprehensive interface for managing the many-to-many 
+ * This page provides a comprehensive interface for managing the many-to-many
  * relationship between SpeciesVariants and EnumValues.
  *
  * Features:
@@ -146,10 +143,11 @@ const EnumValueCard = styled.div<{ isEnabled: boolean }>`
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: ${({ theme, isEnabled }) => 
+  background: ${({ theme, isEnabled }) =>
     isEnabled ? `${theme.colors.success}10` : `${theme.colors.surface}`};
-  border: 1px solid ${({ theme, isEnabled }) =>
-    isEnabled ? theme.colors.success : theme.colors.border};
+  border: 1px solid
+    ${({ theme, isEnabled }) =>
+      isEnabled ? theme.colors.success : theme.colors.border};
   border-radius: 8px;
   transition: all 0.2s ease;
 
@@ -181,7 +179,7 @@ const ToggleButton = styled(Button)<{ isEnabled: boolean }>`
   background: ${({ theme, isEnabled }) =>
     isEnabled ? theme.colors.success : theme.colors.surface};
   color: ${({ theme, isEnabled }) =>
-    isEnabled ? '#fff' : theme.colors.text.primary};
+    isEnabled ? "#fff" : theme.colors.text.primary};
   border-color: ${({ theme, isEnabled }) =>
     isEnabled ? theme.colors.success : theme.colors.border};
 
@@ -217,7 +215,6 @@ const LoadingState = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
-
 export const EnumValueSettingsPage: React.FC = () => {
   const { variantId } = useParams<{ variantId: string }>();
   const navigate = useNavigate();
@@ -230,47 +227,43 @@ export const EnumValueSettingsPage: React.FC = () => {
     );
   }
 
-  // GraphQL operations
-  const {
-    data: variantData,
-    loading: variantLoading,
-    error: variantError,
-  } = useSpeciesVariantByIdQuery({
-    variables: { id: variantId },
-  });
+  const { data, loading, error, refetch } =
+    useSpeciesVariantWithEnumValueSettingsQuery({
+      variables: { variantId },
+    });
 
-  const {
-    data: traitsData,
-    loading: traitsLoading,
-    error: traitsError,
-  } = useTraitsBySpeciesQuery({
-    variables: { 
-      speciesId: variantData?.speciesVariantById?.speciesId || "", 
-      first: 100 
-    },
-    skip: !variantData?.speciesVariantById?.speciesId,
-  });
+  // Process the single query data efficiently
+  const processedData = useMemo(() => {
+    if (!data?.speciesVariantById) return null;
 
-  const {
-    data: settingsData,
-    loading: settingsLoading,
-    error: settingsError,
-    refetch: refetchSettings,
-  } = useEnumValueSettingsBySpeciesVariantQuery({
-    variables: { speciesVariantId: variantId, first: 1000 },
-  });
+    const variant = data.speciesVariantById;
+    const species = variant.species;
+    
+    // Filter to only ENUM traits
+    const enumTraits = species?.traits?.filter(trait => 
+      trait.valueType === TraitValueType.Enum
+    ) || [];
 
-  // Get enum values for each ENUM trait
-  const enumTraits = useMemo(() => {
-    return (traitsData?.traitsBySpecies?.nodes || []).filter(
-      trait => trait.valueType === TraitValueType.Enum
+    // Create lookup for enabled enum value settings
+    const settingsLookup = new Map(
+      variant.enumValueSettings?.map(setting => [
+        setting.enumValueId, 
+        setting.id
+      ]) || []
     );
-  }, [traitsData]);
+
+    return {
+      variant,
+      species,
+      enumTraits,
+      settingsLookup,
+    };
+  }, [data]);
 
   const [createEnumValueSetting] = useCreateEnumValueSettingMutation({
     onCompleted: () => {
       toast.success("Enum value enabled successfully!");
-      refetchSettings();
+      refetch();
     },
     onError: (error) => {
       toast.error(`Failed to enable enum value: ${error.message}`);
@@ -280,7 +273,7 @@ export const EnumValueSettingsPage: React.FC = () => {
   const [deleteEnumValueSetting] = useDeleteEnumValueSettingMutation({
     onCompleted: () => {
       toast.success("Enum value disabled successfully!");
-      refetchSettings();
+      refetch();
     },
     onError: (error) => {
       toast.error(`Failed to disable enum value: ${error.message}`);
@@ -288,7 +281,11 @@ export const EnumValueSettingsPage: React.FC = () => {
   });
 
   // Event handlers
-  const handleToggleEnumValue = async (enumValueId: string, isCurrentlyEnabled: boolean, settingId?: string) => {
+  const handleToggleEnumValue = async (
+    enumValueId: string,
+    isCurrentlyEnabled: boolean,
+    settingId?: string
+  ) => {
     if (isCurrentlyEnabled && settingId) {
       // Disable by deleting the setting
       await deleteEnumValueSetting({
@@ -307,8 +304,8 @@ export const EnumValueSettingsPage: React.FC = () => {
     }
   };
 
-  // Loading states
-  if (variantLoading || traitsLoading || settingsLoading) {
+  // Loading state
+  if (loading) {
     return (
       <Container>
         <LoadingState>
@@ -319,22 +316,18 @@ export const EnumValueSettingsPage: React.FC = () => {
     );
   }
 
-  // Error states
-  if (variantError || traitsError || settingsError) {
+  // Error state
+  if (error) {
     return (
       <Container>
         <ErrorMessage
-          message={`Failed to load data: ${
-            variantError?.message || traitsError?.message || settingsError?.message
-          }`}
+          message={`Failed to load data: ${error.message}`}
         />
       </Container>
     );
   }
 
-  const variant = variantData?.speciesVariantById;
-
-  if (!variant) {
+  if (!processedData) {
     return (
       <Container>
         <ErrorMessage message="Variant not found" />
@@ -342,21 +335,14 @@ export const EnumValueSettingsPage: React.FC = () => {
     );
   }
 
-  // Create settings lookup for quick access
-  const settingsLookup = useMemo(() => {
-    const lookup = new Map<string, string>();
-    (settingsData?.enumValueSettingsBySpeciesVariant?.nodes || []).forEach(setting => {
-      lookup.set(setting.enumValueId, setting.id);
-    });
-    return lookup;
-  }, [settingsData]);
+  const { variant, species, enumTraits, settingsLookup } = processedData;
 
   return (
     <Container>
       <Breadcrumb>
-        <Link to="/admin/species">Species Management</Link>
+        <Link to={`/communities/${species?.communityId}/species`}>Species Management</Link>
         <span>/</span>
-        <span>{variant.species?.name || 'Species'}</span>
+        <Link to={`/species/${variant.speciesId}`}>{species?.name || "Species"}</Link>
         <span>/</span>
         <Link to={`/species/${variant.speciesId}/variants`}>Variants</Link>
         <span>/</span>
@@ -389,8 +375,8 @@ export const EnumValueSettingsPage: React.FC = () => {
           <Palette size={48} />
           <h3>No ENUM traits found</h3>
           <p>
-            This species doesn't have any ENUM-type traits yet. Create ENUM traits
-            first to configure variant-specific options.
+            This species doesn't have any ENUM-type traits yet. Create ENUM
+            traits first to configure variant-specific options.
           </p>
           <Button
             onClick={() => navigate(`/species/${variant.speciesId}/traits`)}
@@ -400,109 +386,52 @@ export const EnumValueSettingsPage: React.FC = () => {
           </Button>
         </EmptyState>
       ) : (
-        enumTraits.map((trait) => (
-          <EnumValueSettingsByTrait
-            key={trait.id}
-            trait={trait}
-            settingsLookup={settingsLookup}
-            onToggle={handleToggleEnumValue}
-          />
-        ))
+        enumTraits.map((trait) => {
+          const enumValues = trait.enumValues || [];
+          const sortedEnumValues = [...enumValues].sort((a, b) => a.order - b.order);
+          const enabledCount = sortedEnumValues.filter(ev => settingsLookup.has(ev.id)).length;
+
+          return (
+            <TraitSection key={trait.id}>
+              <TraitHeader>
+                <TraitTitle>
+                  <Palette size={20} />
+                  {trait.name}
+                </TraitTitle>
+                <TraitMeta>
+                  {enabledCount} of {sortedEnumValues.length} options enabled
+                </TraitMeta>
+              </TraitHeader>
+              
+              <EnumValuesGrid>
+                {sortedEnumValues.map((enumValue) => {
+                  const isEnabled = settingsLookup.has(enumValue.id);
+                  const settingId = settingsLookup.get(enumValue.id);
+
+                  return (
+                    <EnumValueCard key={enumValue.id} isEnabled={isEnabled}>
+                      <EnumValueInfo>
+                        <EnumValueName>{enumValue.name}</EnumValueName>
+                        <EnumValueMeta>Order: {enumValue.order}</EnumValueMeta>
+                      </EnumValueInfo>
+                      
+                      <ToggleButton
+                        size="sm"
+                        isEnabled={isEnabled}
+                        onClick={() => handleToggleEnumValue(enumValue.id, isEnabled, settingId)}
+                        icon={isEnabled ? <Check size={14} /> : <X size={14} />}
+                      >
+                        {isEnabled ? 'Enabled' : 'Disabled'}
+                      </ToggleButton>
+                    </EnumValueCard>
+                  );
+                })}
+              </EnumValuesGrid>
+            </TraitSection>
+          );
+        })
       )}
     </Container>
   );
 };
 
-// Component for displaying enum values for a specific trait
-interface EnumValueSettingsByTraitProps {
-  trait: { id: string; name: string; valueType: TraitValueType };
-  settingsLookup: Map<string, string>;
-  onToggle: (enumValueId: string, isCurrentlyEnabled: boolean, settingId?: string) => void;
-}
-
-const EnumValueSettingsByTrait: React.FC<EnumValueSettingsByTraitProps> = ({
-  trait,
-  settingsLookup,
-  onToggle,
-}) => {
-  const {
-    data: enumValuesData,
-    loading: enumValuesLoading,
-    error: enumValuesError,
-  } = useEnumValuesByTraitQuery({
-    variables: { traitId: trait.id, first: 100 },
-  });
-
-  if (enumValuesLoading) {
-    return (
-      <TraitSection>
-        <TraitHeader>
-          <TraitTitle>
-            <Palette size={20} />
-            {trait.name}
-          </TraitTitle>
-          <TraitMeta>Loading options...</TraitMeta>
-        </TraitHeader>
-      </TraitSection>
-    );
-  }
-
-  if (enumValuesError || !enumValuesData?.enumValuesByTrait?.nodes?.length) {
-    return (
-      <TraitSection>
-        <TraitHeader>
-          <TraitTitle>
-            <Palette size={20} />
-            {trait.name}
-          </TraitTitle>
-          <TraitMeta>No options available</TraitMeta>
-        </TraitHeader>
-      </TraitSection>
-    );
-  }
-
-  const enumValues = enumValuesData.enumValuesByTrait.nodes
-    .slice()
-    .sort((a, b) => a.order - b.order);
-
-  const enabledCount = enumValues.filter(ev => settingsLookup.has(ev.id)).length;
-
-  return (
-    <TraitSection>
-      <TraitHeader>
-        <TraitTitle>
-          <Palette size={20} />
-          {trait.name}
-        </TraitTitle>
-        <TraitMeta>
-          {enabledCount} of {enumValues.length} options enabled
-        </TraitMeta>
-      </TraitHeader>
-      
-      <EnumValuesGrid>
-        {enumValues.map((enumValue) => {
-          const isEnabled = settingsLookup.has(enumValue.id);
-          const settingId = settingsLookup.get(enumValue.id);
-
-          return (
-            <EnumValueCard key={enumValue.id} isEnabled={isEnabled}>
-              <EnumValueInfo>
-                <EnumValueName>{enumValue.name}</EnumValueName>
-                <EnumValueMeta>Order: {enumValue.order}</EnumValueMeta>
-              </EnumValueInfo>
-              
-              <ToggleButton
-                size="sm"
-                isEnabled={isEnabled}
-                onClick={() => onToggle(enumValue.id, isEnabled, settingId)}
-                icon={isEnabled ? <Check size={14} /> : <X size={14} />}
-              >
-                {isEnabled ? 'Enabled' : 'Disabled'}
-              </ToggleButton>
-            </EnumValueCard>
-          );
-        })}
-      </EnumValuesGrid>
-    </TraitSection>
-  );
-};

@@ -225,6 +225,78 @@ const getTraitTypeDescription = (type: TraitValueType) => {
   }
 };
 
+// Styled components for the modal
+const ValueTypeOption = styled.label<{ $selected: boolean }>`
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid ${({ theme, $selected }) => 
+    $selected ? theme.colors.primary : theme.colors.border};
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: ${({ theme, $selected }) => 
+    $selected ? theme.colors.primary + '20' : theme.colors.surface};
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    background-color: ${({ theme }) => theme.colors.primary + '10'};
+  }
+`;
+
+const ValueTypeContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+`;
+
+const ValueTypeLabel = styled.div`
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const ValueTypeDescription = styled.div`
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
+const ValueTypeRadio = styled.input.attrs({ type: 'radio' })`
+  margin-right: 0.75rem;
+  accent-color: ${({ theme }) => theme.colors.primary};
+`;
+
+const FormSection = styled.div`
+  margin-bottom: 1rem;
+`;
+
+const FormLabel = styled.label`
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const ValueTypeGrid = styled.div`
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+`;
+
+const FormNote = styled.p`
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.text.muted};
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+`;
+
+const FormActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+`;
+
 // Create/Edit Trait Modal
 interface TraitFormData {
   name: string;
@@ -273,8 +345,8 @@ const TraitModal: React.FC<TraitModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="trait-name">Trait Name</label>
+        <FormSection>
+          <FormLabel htmlFor="trait-name">Trait Name</FormLabel>
           <Input
             id="trait-name"
             type="text"
@@ -286,28 +358,17 @@ const TraitModal: React.FC<TraitModalProps> = ({
             required
             disabled={isSubmitting}
           />
-        </div>
+        </FormSection>
 
-        <div style={{ marginBottom: "1.5rem" }}>
-          <label>Value Type</label>
-          <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.5rem" }}>
+        <FormSection style={{ marginBottom: "1.5rem" }}>
+          <FormLabel>Value Type</FormLabel>
+          <ValueTypeGrid>
             {Object.values(TraitValueType).map((type) => (
-              <label
+              <ValueTypeOption
                 key={type}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "0.75rem",
-                  border: "1px solid #ccc",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  backgroundColor:
-                    formData.valueType === type ? "#f0f9ff" : "transparent",
-                  borderColor: formData.valueType === type ? "#3b82f6" : "#ccc",
-                }}
+                $selected={formData.valueType === type}
               >
-                <input
-                  type="radio"
+                <ValueTypeRadio
                   value={type}
                   checked={formData.valueType === type}
                   onChange={(e) =>
@@ -317,45 +378,29 @@ const TraitModal: React.FC<TraitModalProps> = ({
                     }))
                   }
                   disabled={isSubmitting || !!trait} // Disable type changes for existing traits
-                  style={{ marginRight: "0.75rem" }}
                 />
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    flex: 1,
-                  }}
-                >
+                <ValueTypeContent>
                   {getTraitTypeIcon(type)}
                   <div>
-                    <div style={{ fontWeight: 500 }}>
+                    <ValueTypeLabel>
                       {getTraitTypeLabel(type)}
-                    </div>
-                    <div style={{ fontSize: "0.875rem", color: "#666" }}>
+                    </ValueTypeLabel>
+                    <ValueTypeDescription>
                       {getTraitTypeDescription(type)}
-                    </div>
+                    </ValueTypeDescription>
                   </div>
-                </div>
-              </label>
+                </ValueTypeContent>
+              </ValueTypeOption>
             ))}
-          </div>
+          </ValueTypeGrid>
           {trait && (
-            <p
-              style={{
-                fontSize: "0.875rem",
-                color: "#666",
-                marginTop: "0.5rem",
-              }}
-            >
+            <FormNote>
               Note: Cannot change value type for existing traits
-            </p>
+            </FormNote>
           )}
-        </div>
+        </FormSection>
 
-        <div
-          style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}
-        >
+        <FormActions>
           <Button
             type="button"
             variant="secondary"
@@ -374,7 +419,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
                 ? "Update Trait"
                 : "Create Trait"}
           </Button>
-        </div>
+        </FormActions>
       </form>
     </Modal>
   );
@@ -529,9 +574,9 @@ export const TraitBuilderPage: React.FC = () => {
   return (
     <Container>
       <Breadcrumb>
-        <Link to="/admin/species">Species Management</Link>
+        <Link to={`/communities/${species.communityId}/species`}>Species Management</Link>
         <span>/</span>
-        <span>{species.name}</span>
+        <Link to={`/species/${species.id}`}>{species.name}</Link>
         <span>/</span>
         <span>Traits</span>
       </Breadcrumb>
@@ -629,11 +674,12 @@ export const TraitBuilderPage: React.FC = () => {
               <div
                 style={{
                   fontSize: "0.875rem",
-                  color: "#666",
                   fontStyle: "italic",
                 }}
               >
-                {getTraitTypeDescription(trait.valueType)}
+                <ValueTypeDescription>
+                  {getTraitTypeDescription(trait.valueType)}
+                </ValueTypeDescription>
               </div>
             </TraitCard>
           ))}

@@ -13,12 +13,16 @@ import { RemovalResponse } from '../shared/entities/removal-response.entity';
 import { Species } from '../species/entities/species.entity';
 import { SpeciesService } from '../species/species.service';
 import { mapPrismaSpeciesToGraphQL } from '../species/utils/species-resolver-mappers';
+import { EnumValueSetting } from '../enum-value-settings/entities/enum-value-setting.entity';
+import { EnumValueSettingsService } from '../enum-value-settings/enum-value-settings.service';
+import { mapPrismaEnumValueSettingToGraphQL } from '../enum-value-settings/utils/enum-value-setting-resolver-mappers';
 
 @Resolver(() => SpeciesVariant)
 export class SpeciesVariantsResolver {
   constructor(
     private readonly speciesVariantsService: SpeciesVariantsService,
     private readonly speciesService: SpeciesService,
+    private readonly enumValueSettingsService: EnumValueSettingsService,
   ) {}
 
   /** Create a new species variant */
@@ -91,7 +95,7 @@ export class SpeciesVariantsResolver {
     return { removed: true, message: 'Species variant successfully removed' };
   }
 
-  // Field resolver for relations
+  // Field resolvers for relations
   @ResolveField('species', () => Species, { description: 'The species this variant belongs to' })
   async resolveSpecies(@Parent() speciesVariant: SpeciesVariant): Promise<Species | null> {
     try {
@@ -103,5 +107,11 @@ export class SpeciesVariantsResolver {
       }
       throw error;
     }
+  }
+
+  @ResolveField('enumValueSettings', () => [EnumValueSetting], { description: 'Enum value settings for this species variant' })
+  async resolveEnumValueSettings(@Parent() speciesVariant: SpeciesVariant): Promise<EnumValueSetting[]> {
+    const serviceResult = await this.enumValueSettingsService.findBySpeciesVariant(speciesVariant.id, 1000); // Get up to 1000 settings
+    return serviceResult.nodes.map(mapPrismaEnumValueSettingToGraphQL);
   }
 }
