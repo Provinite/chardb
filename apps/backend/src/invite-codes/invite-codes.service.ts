@@ -214,27 +214,38 @@ export class InviteCodesService {
       throw new BadRequestException('This invite code has been fully claimed');
     }
 
-    // Increment claim count
-    const updatedInviteCode = await this.prisma.inviteCode.update({
-      where: { id },
-      data: {
-        claimCount: {
-          increment: 1,
-        },
-      },
-    });
-
-    // If there's a role associated, create community membership
-    if (inviteCode.roleId) {
-      await this.prisma.communityMember.create({
+    // Use transaction to ensure atomicity between claim increment and membership creation
+    return await this.prisma.$transaction(async (tx) => {
+      // Increment claim count
+      const updatedInviteCode = await tx.inviteCode.update({
+        where: { id },
         data: {
-          role: { connect: { id: inviteCode.roleId } },
-          user: { connect: { id: input.userId } },
+          claimCount: {
+            increment: 1,
+          },
         },
       });
-    }
 
-    return updatedInviteCode;
+      // If there's a role associated, create community membership
+      if (inviteCode.roleId) {
+        try {
+          await tx.communityMember.create({
+            data: {
+              role: { connect: { id: inviteCode.roleId } },
+              user: { connect: { id: input.userId } },
+            },
+          });
+        } catch (error: any) {
+          // Handle unique constraint violation with a more user-friendly error
+          if (error.code === 'P2002') {
+            throw new ConflictException('You are already a member of this community');
+          }
+          throw error;
+        }
+      }
+
+      return updatedInviteCode;
+    });
   }
 
   /** Remove an invite code */

@@ -150,12 +150,20 @@ export class AuthService {
 
       // 6. Create community membership if invite code has a role (within transaction)
       if (updatedInviteCode.roleId) {
-        await tx.communityMember.create({
-          data: {
-            role: { connect: { id: updatedInviteCode.roleId } },
-            user: { connect: { id: user.id } },
-          },
-        });
+        try {
+          await tx.communityMember.create({
+            data: {
+              role: { connect: { id: updatedInviteCode.roleId } },
+              user: { connect: { id: user.id } },
+            },
+          });
+        } catch (error: any) {
+          // Handle unique constraint violation with a more user-friendly error
+          if (error.code === 'P2002') {
+            throw new ConflictException('You are already a member of this community');
+          }
+          throw error;
+        }
       }
 
       // 7. Generate tokens (outside transaction - no DB operations)
