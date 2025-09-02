@@ -1992,6 +1992,8 @@ export type Species = {
   id: Scalars['ID']['output'];
   /** Name of the species */
   name: Scalars['String']['output'];
+  /** Traits associated with this species */
+  traits: Array<Trait>;
   /** When the species was last updated */
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -2012,6 +2014,8 @@ export type SpeciesVariant = {
   __typename?: 'SpeciesVariant';
   /** When the species variant was created */
   createdAt: Scalars['DateTime']['output'];
+  /** Enum value settings for this species variant */
+  enumValueSettings: Array<EnumValueSetting>;
   /** Unique identifier for the species variant */
   id: Scalars['ID']['output'];
   /** Name of the species variant */
@@ -2078,6 +2082,8 @@ export type Trait = {
   __typename?: 'Trait';
   /** When the trait was created */
   createdAt: Scalars['DateTime']['output'];
+  /** Enum values for this trait (only populated for ENUM traits) */
+  enumValues: Array<EnumValue>;
   /** Unique identifier for the trait */
   id: Scalars['ID']['output'];
   /** Name of the trait */
@@ -2567,6 +2573,29 @@ export type RemoveCommunityMutationVariables = Exact<{
 
 export type RemoveCommunityMutation = { __typename?: 'Mutation', removeCommunity: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
+export type CommunityMembersByUserQueryVariables = Exact<{
+  userId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canListInviteCodes: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+
+export type SpeciesWithTraitsAndEnumValuesQueryVariables = Exact<{
+  speciesId: Scalars['ID']['input'];
+}>;
+
+
+export type SpeciesWithTraitsAndEnumValuesQuery = { __typename?: 'Query', speciesById: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string }, traits: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string }> }> } };
+
+export type SpeciesVariantWithEnumValueSettingsQueryVariables = Exact<{
+  variantId: Scalars['ID']['input'];
+}>;
+
+
+export type SpeciesVariantWithEnumValueSettingsQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, traits: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> }> }, enumValueSettings: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string, enumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string } }> } };
+
 export type EnumValueSettingDetailsFragment = { __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string };
 
 export type EnumValueSettingConnectionDetailsFragment = { __typename?: 'EnumValueSettingConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string }> };
@@ -2644,7 +2673,7 @@ export type EnumValueByIdQueryVariables = Exact<{
 }>;
 
 
-export type EnumValueByIdQuery = { __typename?: 'Query', enumValueById: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, species: { __typename?: 'Species', id: string, name: string } } } };
+export type EnumValueByIdQuery = { __typename?: 'Query', enumValueById: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, species: { __typename?: 'Species', id: string, name: string, communityId: string } } } };
 
 export type CreateEnumValueMutationVariables = Exact<{
   createEnumValueInput: CreateEnumValueInput;
@@ -2889,6 +2918,47 @@ export type RemoveMediaTagsMutationVariables = Exact<{
 
 export type RemoveMediaTagsMutation = { __typename?: 'Mutation', removeMediaTags: { __typename?: 'Media', id: string, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
+export type RolesByCommunityDetailedQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  first: Scalars['Int']['input'];
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
+
+export type CreateRoleMutationVariables = Exact<{
+  input: CreateRoleInput;
+}>;
+
+
+export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+
+export type UpdateRoleMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateRoleInput;
+}>;
+
+
+export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+
+export type CommunityMembersWithRolesQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  first: Scalars['Int']['input'];
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean } }> } };
+
+export type UpdateCommunityMemberMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateCommunityMemberInput;
+}>;
+
+
+export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean } } };
+
 export type ToggleLikeMutationVariables = Exact<{
   input: ToggleLikeInput;
 }>;
@@ -3086,7 +3156,7 @@ export type TraitByIdQueryVariables = Exact<{
 }>;
 
 
-export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } } };
+export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string } } };
 
 export type CreateTraitMutationVariables = Exact<{
   createTraitInput: CreateTraitInput;
@@ -4322,6 +4392,217 @@ export function useRemoveCommunityMutation(baseOptions?: Apollo.MutationHookOpti
 export type RemoveCommunityMutationHookResult = ReturnType<typeof useRemoveCommunityMutation>;
 export type RemoveCommunityMutationResult = Apollo.MutationResult<RemoveCommunityMutation>;
 export type RemoveCommunityMutationOptions = Apollo.BaseMutationOptions<RemoveCommunityMutation, RemoveCommunityMutationVariables>;
+export const CommunityMembersByUserDocument = gql`
+    query CommunityMembersByUser($userId: ID!, $first: Int, $after: String) {
+  communityMembersByUser(userId: $userId, first: $first, after: $after) {
+    nodes {
+      id
+      createdAt
+      updatedAt
+      role {
+        id
+        name
+        community {
+          id
+          name
+          createdAt
+          updatedAt
+        }
+        canCreateCharacter
+        canCreateInviteCode
+        canCreateRole
+        canEditCharacter
+        canCreateSpecies
+        canEditSpecies
+        canEditRole
+        canEditCharacter
+        canEditOwnCharacter
+        canListInviteCodes
+      }
+      user {
+        id
+        username
+        displayName
+      }
+    }
+    hasNextPage
+    hasPreviousPage
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useCommunityMembersByUserQuery__
+ *
+ * To run a query within a React component, call `useCommunityMembersByUserQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunityMembersByUserQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommunityMembersByUserQuery({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useCommunityMembersByUserQuery(baseOptions: Apollo.QueryHookOptions<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables> & ({ variables: CommunityMembersByUserQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>(CommunityMembersByUserDocument, options);
+      }
+export function useCommunityMembersByUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>(CommunityMembersByUserDocument, options);
+        }
+export function useCommunityMembersByUserSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>(CommunityMembersByUserDocument, options);
+        }
+export type CommunityMembersByUserQueryHookResult = ReturnType<typeof useCommunityMembersByUserQuery>;
+export type CommunityMembersByUserLazyQueryHookResult = ReturnType<typeof useCommunityMembersByUserLazyQuery>;
+export type CommunityMembersByUserSuspenseQueryHookResult = ReturnType<typeof useCommunityMembersByUserSuspenseQuery>;
+export type CommunityMembersByUserQueryResult = Apollo.QueryResult<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>;
+export const SpeciesWithTraitsAndEnumValuesDocument = gql`
+    query SpeciesWithTraitsAndEnumValues($speciesId: ID!) {
+  speciesById(id: $speciesId) {
+    id
+    name
+    communityId
+    hasImage
+    createdAt
+    updatedAt
+    community {
+      id
+      name
+    }
+    traits {
+      id
+      name
+      valueType
+      speciesId
+      createdAt
+      updatedAt
+      enumValues {
+        id
+        name
+        order
+        traitId
+        createdAt
+        updatedAt
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useSpeciesWithTraitsAndEnumValuesQuery__
+ *
+ * To run a query within a React component, call `useSpeciesWithTraitsAndEnumValuesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesWithTraitsAndEnumValuesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesWithTraitsAndEnumValuesQuery({
+ *   variables: {
+ *      speciesId: // value for 'speciesId'
+ *   },
+ * });
+ */
+export function useSpeciesWithTraitsAndEnumValuesQuery(baseOptions: Apollo.QueryHookOptions<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables> & ({ variables: SpeciesWithTraitsAndEnumValuesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables>(SpeciesWithTraitsAndEnumValuesDocument, options);
+      }
+export function useSpeciesWithTraitsAndEnumValuesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables>(SpeciesWithTraitsAndEnumValuesDocument, options);
+        }
+export function useSpeciesWithTraitsAndEnumValuesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables>(SpeciesWithTraitsAndEnumValuesDocument, options);
+        }
+export type SpeciesWithTraitsAndEnumValuesQueryHookResult = ReturnType<typeof useSpeciesWithTraitsAndEnumValuesQuery>;
+export type SpeciesWithTraitsAndEnumValuesLazyQueryHookResult = ReturnType<typeof useSpeciesWithTraitsAndEnumValuesLazyQuery>;
+export type SpeciesWithTraitsAndEnumValuesSuspenseQueryHookResult = ReturnType<typeof useSpeciesWithTraitsAndEnumValuesSuspenseQuery>;
+export type SpeciesWithTraitsAndEnumValuesQueryResult = Apollo.QueryResult<SpeciesWithTraitsAndEnumValuesQuery, SpeciesWithTraitsAndEnumValuesQueryVariables>;
+export const SpeciesVariantWithEnumValueSettingsDocument = gql`
+    query SpeciesVariantWithEnumValueSettings($variantId: ID!) {
+  speciesVariantById(id: $variantId) {
+    id
+    name
+    speciesId
+    createdAt
+    updatedAt
+    species {
+      id
+      name
+      communityId
+      traits {
+        id
+        name
+        valueType
+        enumValues {
+          id
+          name
+          order
+        }
+      }
+    }
+    enumValueSettings {
+      id
+      enumValueId
+      speciesVariantId
+      createdAt
+      updatedAt
+      enumValue {
+        id
+        name
+        order
+        traitId
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useSpeciesVariantWithEnumValueSettingsQuery__
+ *
+ * To run a query within a React component, call `useSpeciesVariantWithEnumValueSettingsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpeciesVariantWithEnumValueSettingsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpeciesVariantWithEnumValueSettingsQuery({
+ *   variables: {
+ *      variantId: // value for 'variantId'
+ *   },
+ * });
+ */
+export function useSpeciesVariantWithEnumValueSettingsQuery(baseOptions: Apollo.QueryHookOptions<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables> & ({ variables: SpeciesVariantWithEnumValueSettingsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables>(SpeciesVariantWithEnumValueSettingsDocument, options);
+      }
+export function useSpeciesVariantWithEnumValueSettingsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables>(SpeciesVariantWithEnumValueSettingsDocument, options);
+        }
+export function useSpeciesVariantWithEnumValueSettingsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables>(SpeciesVariantWithEnumValueSettingsDocument, options);
+        }
+export type SpeciesVariantWithEnumValueSettingsQueryHookResult = ReturnType<typeof useSpeciesVariantWithEnumValueSettingsQuery>;
+export type SpeciesVariantWithEnumValueSettingsLazyQueryHookResult = ReturnType<typeof useSpeciesVariantWithEnumValueSettingsLazyQuery>;
+export type SpeciesVariantWithEnumValueSettingsSuspenseQueryHookResult = ReturnType<typeof useSpeciesVariantWithEnumValueSettingsSuspenseQuery>;
+export type SpeciesVariantWithEnumValueSettingsQueryResult = Apollo.QueryResult<SpeciesVariantWithEnumValueSettingsQuery, SpeciesVariantWithEnumValueSettingsQueryVariables>;
 export const EnumValueSettingsDocument = gql`
     query EnumValueSettings($first: Int, $after: String) {
   enumValueSettings(first: $first, after: $after) {
@@ -4654,6 +4935,7 @@ export const EnumValueByIdDocument = gql`
       species {
         id
         name
+        communityId
       }
     }
   }
@@ -6630,6 +6912,302 @@ export function useRemoveMediaTagsMutation(baseOptions?: Apollo.MutationHookOpti
 export type RemoveMediaTagsMutationHookResult = ReturnType<typeof useRemoveMediaTagsMutation>;
 export type RemoveMediaTagsMutationResult = Apollo.MutationResult<RemoveMediaTagsMutation>;
 export type RemoveMediaTagsMutationOptions = Apollo.BaseMutationOptions<RemoveMediaTagsMutation, RemoveMediaTagsMutationVariables>;
+export const RolesByCommunityDetailedDocument = gql`
+    query RolesByCommunityDetailed($communityId: ID!, $first: Int!, $after: String) {
+  rolesByCommunity(communityId: $communityId, first: $first, after: $after) {
+    nodes {
+      id
+      name
+      communityId
+      canCreateSpecies
+      canCreateCharacter
+      canEditCharacter
+      canEditOwnCharacter
+      canEditSpecies
+      canCreateInviteCode
+      canListInviteCodes
+      canCreateRole
+      canEditRole
+      createdAt
+      updatedAt
+      community {
+        id
+        name
+      }
+    }
+    totalCount
+    hasNextPage
+    hasPreviousPage
+  }
+}
+    `;
+
+/**
+ * __useRolesByCommunityDetailedQuery__
+ *
+ * To run a query within a React component, call `useRolesByCommunityDetailedQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRolesByCommunityDetailedQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRolesByCommunityDetailedQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useRolesByCommunityDetailedQuery(baseOptions: Apollo.QueryHookOptions<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables> & ({ variables: RolesByCommunityDetailedQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables>(RolesByCommunityDetailedDocument, options);
+      }
+export function useRolesByCommunityDetailedLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables>(RolesByCommunityDetailedDocument, options);
+        }
+export function useRolesByCommunityDetailedSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables>(RolesByCommunityDetailedDocument, options);
+        }
+export type RolesByCommunityDetailedQueryHookResult = ReturnType<typeof useRolesByCommunityDetailedQuery>;
+export type RolesByCommunityDetailedLazyQueryHookResult = ReturnType<typeof useRolesByCommunityDetailedLazyQuery>;
+export type RolesByCommunityDetailedSuspenseQueryHookResult = ReturnType<typeof useRolesByCommunityDetailedSuspenseQuery>;
+export type RolesByCommunityDetailedQueryResult = Apollo.QueryResult<RolesByCommunityDetailedQuery, RolesByCommunityDetailedQueryVariables>;
+export const CreateRoleDocument = gql`
+    mutation CreateRole($input: CreateRoleInput!) {
+  createRole(createRoleInput: $input) {
+    id
+    name
+    communityId
+    canCreateSpecies
+    canCreateCharacter
+    canEditCharacter
+    canEditOwnCharacter
+    canEditSpecies
+    canCreateInviteCode
+    canListInviteCodes
+    canCreateRole
+    canEditRole
+    createdAt
+    updatedAt
+    community {
+      id
+      name
+    }
+  }
+}
+    `;
+export type CreateRoleMutationFn = Apollo.MutationFunction<CreateRoleMutation, CreateRoleMutationVariables>;
+
+/**
+ * __useCreateRoleMutation__
+ *
+ * To run a mutation, you first call `useCreateRoleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateRoleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createRoleMutation, { data, loading, error }] = useCreateRoleMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateRoleMutation(baseOptions?: Apollo.MutationHookOptions<CreateRoleMutation, CreateRoleMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateRoleMutation, CreateRoleMutationVariables>(CreateRoleDocument, options);
+      }
+export type CreateRoleMutationHookResult = ReturnType<typeof useCreateRoleMutation>;
+export type CreateRoleMutationResult = Apollo.MutationResult<CreateRoleMutation>;
+export type CreateRoleMutationOptions = Apollo.BaseMutationOptions<CreateRoleMutation, CreateRoleMutationVariables>;
+export const UpdateRoleDocument = gql`
+    mutation UpdateRole($id: ID!, $input: UpdateRoleInput!) {
+  updateRole(id: $id, updateRoleInput: $input) {
+    id
+    name
+    communityId
+    canCreateSpecies
+    canCreateCharacter
+    canEditCharacter
+    canEditOwnCharacter
+    canEditSpecies
+    canCreateInviteCode
+    canListInviteCodes
+    canCreateRole
+    canEditRole
+    createdAt
+    updatedAt
+    community {
+      id
+      name
+    }
+  }
+}
+    `;
+export type UpdateRoleMutationFn = Apollo.MutationFunction<UpdateRoleMutation, UpdateRoleMutationVariables>;
+
+/**
+ * __useUpdateRoleMutation__
+ *
+ * To run a mutation, you first call `useUpdateRoleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateRoleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateRoleMutation, { data, loading, error }] = useUpdateRoleMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateRoleMutation(baseOptions?: Apollo.MutationHookOptions<UpdateRoleMutation, UpdateRoleMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateRoleMutation, UpdateRoleMutationVariables>(UpdateRoleDocument, options);
+      }
+export type UpdateRoleMutationHookResult = ReturnType<typeof useUpdateRoleMutation>;
+export type UpdateRoleMutationResult = Apollo.MutationResult<UpdateRoleMutation>;
+export type UpdateRoleMutationOptions = Apollo.BaseMutationOptions<UpdateRoleMutation, UpdateRoleMutationVariables>;
+export const CommunityMembersWithRolesDocument = gql`
+    query CommunityMembersWithRoles($communityId: ID!, $first: Int!, $after: String) {
+  communityMembersByCommunity(
+    communityId: $communityId
+    first: $first
+    after: $after
+  ) {
+    nodes {
+      id
+      userId
+      roleId
+      createdAt
+      updatedAt
+      user {
+        id
+        username
+        email
+        displayName
+      }
+      role {
+        id
+        name
+        canCreateSpecies
+        canCreateCharacter
+        canEditCharacter
+        canEditOwnCharacter
+        canEditSpecies
+        canCreateInviteCode
+        canListInviteCodes
+        canCreateRole
+        canEditRole
+      }
+    }
+    totalCount
+    hasNextPage
+    hasPreviousPage
+  }
+}
+    `;
+
+/**
+ * __useCommunityMembersWithRolesQuery__
+ *
+ * To run a query within a React component, call `useCommunityMembersWithRolesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunityMembersWithRolesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommunityMembersWithRolesQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useCommunityMembersWithRolesQuery(baseOptions: Apollo.QueryHookOptions<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables> & ({ variables: CommunityMembersWithRolesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>(CommunityMembersWithRolesDocument, options);
+      }
+export function useCommunityMembersWithRolesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>(CommunityMembersWithRolesDocument, options);
+        }
+export function useCommunityMembersWithRolesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>(CommunityMembersWithRolesDocument, options);
+        }
+export type CommunityMembersWithRolesQueryHookResult = ReturnType<typeof useCommunityMembersWithRolesQuery>;
+export type CommunityMembersWithRolesLazyQueryHookResult = ReturnType<typeof useCommunityMembersWithRolesLazyQuery>;
+export type CommunityMembersWithRolesSuspenseQueryHookResult = ReturnType<typeof useCommunityMembersWithRolesSuspenseQuery>;
+export type CommunityMembersWithRolesQueryResult = Apollo.QueryResult<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>;
+export const UpdateCommunityMemberDocument = gql`
+    mutation UpdateCommunityMember($id: ID!, $input: UpdateCommunityMemberInput!) {
+  updateCommunityMember(id: $id, updateCommunityMemberInput: $input) {
+    id
+    userId
+    roleId
+    createdAt
+    updatedAt
+    user {
+      id
+      username
+      email
+      displayName
+    }
+    role {
+      id
+      name
+      canCreateSpecies
+      canCreateCharacter
+      canEditCharacter
+      canEditOwnCharacter
+      canEditSpecies
+      canCreateInviteCode
+      canListInviteCodes
+      canCreateRole
+      canEditRole
+    }
+  }
+}
+    `;
+export type UpdateCommunityMemberMutationFn = Apollo.MutationFunction<UpdateCommunityMemberMutation, UpdateCommunityMemberMutationVariables>;
+
+/**
+ * __useUpdateCommunityMemberMutation__
+ *
+ * To run a mutation, you first call `useUpdateCommunityMemberMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCommunityMemberMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCommunityMemberMutation, { data, loading, error }] = useUpdateCommunityMemberMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateCommunityMemberMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCommunityMemberMutation, UpdateCommunityMemberMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateCommunityMemberMutation, UpdateCommunityMemberMutationVariables>(UpdateCommunityMemberDocument, options);
+      }
+export type UpdateCommunityMemberMutationHookResult = ReturnType<typeof useUpdateCommunityMemberMutation>;
+export type UpdateCommunityMemberMutationResult = Apollo.MutationResult<UpdateCommunityMemberMutation>;
+export type UpdateCommunityMemberMutationOptions = Apollo.BaseMutationOptions<UpdateCommunityMemberMutation, UpdateCommunityMemberMutationVariables>;
 export const ToggleLikeDocument = gql`
     mutation ToggleLike($input: ToggleLikeInput!) {
   toggleLike(input: $input) {
@@ -7664,6 +8242,7 @@ export const TraitByIdDocument = gql`
     species {
       id
       name
+      communityId
     }
   }
 }

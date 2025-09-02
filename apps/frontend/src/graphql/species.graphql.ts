@@ -369,6 +369,7 @@ export const TRAIT_BY_ID_QUERY = gql`
       species {
         id
         name
+        communityId
       }
     }
   }

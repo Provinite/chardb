@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from "react";
 import styled from "styled-components";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { Search, Plus, Trash2, Edit, Palette, Database } from "lucide-react";
 import { Button, Modal, Input, ErrorMessage } from "@chardb/ui";
 import {
   useSpeciesByCommunityQuery,
   useCreateSpeciesMutation,
   useDeleteSpeciesMutation,
-  useCommunitiesQuery,
+  useCommunityByIdQuery,
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
 
@@ -129,10 +129,17 @@ const Card = styled.div`
   }
 `;
 
+const ClickableCard = styled(Link)`
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  
+  ${Card} {
+    cursor: pointer;
+  }
+`;
+
 const CardHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   margin-bottom: 1rem;
 `;
 
@@ -144,14 +151,6 @@ const SpeciesName = styled.h3`
   line-height: 1.2;
 `;
 
-const CommunityBadge = styled.span`
-  background: ${({ theme }) => theme.colors.primary}20;
-  color: ${({ theme }) => theme.colors.primary};
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-`;
 
 const CardMeta = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
@@ -221,10 +220,18 @@ const FilterInfo = styled.div`
   }
 `;
 
+const CommunityDisplay = styled.div`
+  padding: 0.75rem;
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 4px;
+  color: ${({ theme }) => theme.colors.text.muted};
+  font-weight: 500;
+`;
+
 // Create Species Modal Form
 interface CreateSpeciesFormData {
   name: string;
-  communityId: string;
   hasImage: boolean;
 }
 
@@ -232,34 +239,30 @@ interface CreateSpeciesModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CreateSpeciesFormData) => void;
-  communities: Array<{ id: string; name: string }>;
-  defaultCommunityId?: string;
+  communityName: string;
 }
 
 const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  communities,
-  defaultCommunityId,
+  communityName,
 }) => {
   const [formData, setFormData] = useState<CreateSpeciesFormData>({
     name: "",
-    communityId: defaultCommunityId || "",
     hasImage: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.communityId) return;
+    if (!formData.name.trim()) return;
 
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
       setFormData({
         name: "",
-        communityId: defaultCommunityId || "",
         hasImage: false,
       });
       onClose();
@@ -289,29 +292,10 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
         </div>
 
         <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="community-select">Community</label>
-          <select
-            id="community-select"
-            value={formData.communityId}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, communityId: e.target.value }))
-            }
-            required
-            disabled={isSubmitting}
-            style={{
-              width: "100%",
-              padding: "0.5rem",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-            }}
-          >
-            <option value="">Select a community...</option>
-            {communities.map((community) => (
-              <option key={community.id} value={community.id}>
-                {community.name}
-              </option>
-            ))}
-          </select>
+          <label>Community</label>
+          <CommunityDisplay>
+            {communityName}
+          </CommunityDisplay>
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
@@ -342,9 +326,7 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
           </Button>
           <Button
             type="submit"
-            disabled={
-              isSubmitting || !formData.name.trim() || !formData.communityId
-            }
+            disabled={isSubmitting || !formData.name.trim()}
           >
             {isSubmitting ? "Creating..." : "Create Species"}
           </Button>
@@ -381,13 +363,14 @@ export const SpeciesManagementPage: React.FC = () => {
     variables: { communityId, first: 50 },
   });
 
-  // Fetch communities for the dropdown
+  // Fetch the specific community
   const {
-    data: communitiesData,
-    loading: communitiesLoading,
-  } = useCommunitiesQuery({
-    variables: { first: 100 },
+    data: communityData,
+    loading: communityLoading,
+  } = useCommunityByIdQuery({
+    variables: { id: communityId },
   });
+
 
   const [createSpeciesMutation] = useCreateSpeciesMutation({
     onCompleted: (data) => {
@@ -411,8 +394,8 @@ export const SpeciesManagementPage: React.FC = () => {
     },
   });
 
-  // Use real communities data from GraphQL
-  const communities = communitiesData?.communities?.nodes || [];
+  // Get the specific community data
+  const currentCommunity = communityData?.community;
 
   // Filtered species based on search query
   const filteredSpecies = useMemo(() => {
@@ -432,7 +415,7 @@ export const SpeciesManagementPage: React.FC = () => {
       variables: {
         createSpeciesInput: {
           name: formData.name,
-          communityId: formData.communityId,
+          communityId: communityId,
           hasImage: formData.hasImage,
         },
       },
@@ -469,7 +452,7 @@ export const SpeciesManagementPage: React.FC = () => {
   };
 
   // Loading state
-  if (speciesLoading || communitiesLoading) {
+  if (speciesLoading || communityLoading) {
     return (
       <Container>
         <Header>
@@ -510,13 +493,18 @@ export const SpeciesManagementPage: React.FC = () => {
       <Header>
         <Title>Species Management</Title>
         <Subtitle>
-          Manage species for this community (${totalCount} species)
+          Manage species for {currentCommunity?.name || 'this community'} ({totalCount} species)
         </Subtitle>
       </Header>
 
-      {communityId && (
+      {communityId && currentCommunity && (
         <FilterInfo>
-          <p>Showing species for specific community only</p>
+          <p>
+            Explore all species in{' '}
+            <strong>
+              {currentCommunity.name}
+            </strong>
+          </p>
         </FilterInfo>
       )}
 
@@ -552,65 +540,68 @@ export const SpeciesManagementPage: React.FC = () => {
       ) : (
         <Grid>
           {filteredSpecies.map((species) => (
-            <Card key={species.id}>
-              <CardHeader>
-                <SpeciesName>{species.name}</SpeciesName>
-                <CommunityBadge>
-                  {communities.find((c) => c.id === species.communityId)
-                    ?.name || "Unknown Community"}
-                </CommunityBadge>
-              </CardHeader>
+            <ClickableCard key={species.id} to={`/species/${species.id}`}>
+              <Card>
+                <CardHeader>
+                  <SpeciesName>{species.name}</SpeciesName>
+                </CardHeader>
 
-              <ImageIndicator hasImage={species.hasImage}>
-                <Palette size={16} />
-                {species.hasImage ? "Has image" : "No image"}
-              </ImageIndicator>
+                <ImageIndicator hasImage={species.hasImage}>
+                  <Palette size={16} />
+                  {species.hasImage ? "Has image" : "No image"}
+                </ImageIndicator>
 
-              <CardMeta>
-                <p>
-                  Created: {new Date(species.createdAt).toLocaleDateString()}
-                </p>
-                <p>
-                  Last updated:{" "}
-                  {new Date(species.updatedAt).toLocaleDateString()}
-                </p>
-              </CardMeta>
+                <CardMeta>
+                  <p>
+                    Created: {new Date(species.createdAt).toLocaleDateString()}
+                  </p>
+                  <p>
+                    Last updated:{" "}
+                    {new Date(species.updatedAt).toLocaleDateString()}
+                  </p>
+                </CardMeta>
 
-              <Actions>
-                <ActionButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleManageTraits(species)}
-                  icon={<Database size={14} />}
+                <Actions
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
-                  Traits
-                </ActionButton>
-                <ActionButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleManageVariants(species)}
-                  icon={<Palette size={14} />}
-                >
-                  Variants
-                </ActionButton>
-                <ActionButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleEditSpecies(species)}
-                  icon={<Edit size={14} />}
-                >
-                  Edit
-                </ActionButton>
-                <ActionButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDeleteSpecies(species)}
-                  icon={<Trash2 size={14} />}
-                >
-                  Delete
-                </ActionButton>
-              </Actions>
-            </Card>
+                  <ActionButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleManageTraits(species)}
+                    icon={<Database size={14} />}
+                  >
+                    Traits
+                  </ActionButton>
+                  <ActionButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleManageVariants(species)}
+                    icon={<Palette size={14} />}
+                  >
+                    Variants
+                  </ActionButton>
+                  <ActionButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleEditSpecies(species)}
+                    icon={<Edit size={14} />}
+                  >
+                    Edit
+                  </ActionButton>
+                  <ActionButton
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteSpecies(species)}
+                    icon={<Trash2 size={14} />}
+                  >
+                    Delete
+                  </ActionButton>
+                </Actions>
+              </Card>
+            </ClickableCard>
           ))}
         </Grid>
       )}
@@ -619,8 +610,7 @@ export const SpeciesManagementPage: React.FC = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateSpecies}
-        communities={communities}
-        defaultCommunityId={communityId || undefined}
+        communityName={currentCommunity?.name || 'Loading...'}
       />
     </Container>
   );
