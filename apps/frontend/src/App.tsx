@@ -53,6 +53,7 @@ import { MyCommunitiesPage } from "./pages/MyCommunitiesPage";
 import { CommunityPage } from "./pages/CommunityPage";
 import { SpeciesPage } from "./pages/SpeciesPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { SidebarNavPage } from "./pages/SidebarNavPage";
 
 function App() {
   const { loading } = useAuth();
@@ -84,6 +85,7 @@ function App() {
         <Route path="/user/:username/following" element={<FollowingPage />} />
         <Route path="/communities/:communityId" element={<CommunityPage />} />
         <Route path="/species/:speciesId" element={<SpeciesPage />} />
+        <Route path="/sidebar" element={<SidebarNavPage />} />
 
         {/* Protected routes */}
         <Route
