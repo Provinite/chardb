@@ -24,4 +24,4 @@ echo "💡 Tip: Once connected, you can check services with 'docker compose ps'"
 echo ""
 
 # SSH into the server (pass any additional arguments to ssh)
-ssh -i "$SSH_KEY_PATH" "$@" ec2-user@$SERVER_IP
+ssh -i "$SSH_KEY_PATH" ec2-user@$SERVER_IP "$@"
