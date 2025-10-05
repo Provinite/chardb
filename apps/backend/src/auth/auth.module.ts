@@ -16,6 +16,9 @@ import { CommunityMembersModule } from "../community-members/community-members.m
 import { UnauthenticatedGuard } from "../common/guards/UnauthenticatedGuard";
 import { CommunityPermissionGuard } from "../common/guards/CommunityPermissionGuard";
 import { GlobalPermissionGuard } from "../common/guards/GlobalPermissionGuard";
+import { OptionalJwtAuthGuard } from "./guards/optional-jwt-auth.guard";
+import { CustomThrottlerGuard } from "../middleware/custom-throttler.guard";
+import { OrGuard } from "../common/guards/OrGuard";
 
 @Module({
   imports: [
@@ -42,7 +45,23 @@ import { GlobalPermissionGuard } from "../common/guards/GlobalPermissionGuard";
     UnauthenticatedGuard,
     CommunityPermissionGuard,
     GlobalPermissionGuard,
+    OptionalJwtAuthGuard,
+    CustomThrottlerGuard,
+    {
+      provide: 'PERMISSION_OR_GUARD',
+      useClass: OrGuard(GlobalPermissionGuard, CommunityPermissionGuard, UnauthenticatedGuard),
+    },
   ],
-  exports: [AuthService, PermissionService, CommunityResolverService],
+  exports: [
+    AuthService,
+    PermissionService,
+    CommunityResolverService,
+    UnauthenticatedGuard,
+    CommunityPermissionGuard,
+    GlobalPermissionGuard,
+    OptionalJwtAuthGuard,
+    CustomThrottlerGuard,
+    'PERMISSION_OR_GUARD',
+  ],
 })
 export class AuthModule {}

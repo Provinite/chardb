@@ -7,10 +7,6 @@ import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { CustomThrottlerGuard } from './middleware/custom-throttler.guard';
 import { OptionalJwtAuthGuard } from './auth/guards/optional-jwt-auth.guard';
-import { OrGuard } from './common/guards/OrGuard';
-import { GlobalPermissionGuard } from './common/guards/GlobalPermissionGuard';
-import { CommunityPermissionGuard } from './common/guards/CommunityPermissionGuard';
-import { UnauthenticatedGuard } from './common/guards/UnauthenticatedGuard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -65,7 +61,7 @@ async function bootstrap() {
   app.useGlobalGuards(
     app.get(CustomThrottlerGuard), // Rate limiting
     app.get(OptionalJwtAuthGuard), // Populate req.user if JWT present
-    app.get(OrGuard(GlobalPermissionGuard, CommunityPermissionGuard, UnauthenticatedGuard)), // Permission checks
+    app.get('PERMISSION_OR_GUARD'), // Permission checks
   );
 
   const port = process.env.PORT || 4000;
