@@ -125,23 +125,23 @@ export function mapPrismaCharacterToGraphQL(
   return {
     id: prismaCharacter.id,
     name: prismaCharacter.name,
-    speciesId: prismaCharacter.speciesId,
-    speciesVariantId: prismaCharacter.speciesVariantId,
-    age: prismaCharacter.age,
-    gender: prismaCharacter.gender,
-    description: prismaCharacter.description,
-    personality: prismaCharacter.personality,
-    backstory: prismaCharacter.backstory,
+    speciesId: prismaCharacter.speciesId ?? undefined,
+    speciesVariantId: prismaCharacter.speciesVariantId ?? undefined,
+    age: prismaCharacter.age ?? undefined,
+    gender: prismaCharacter.gender ?? undefined,
+    description: prismaCharacter.description ?? undefined,
+    personality: prismaCharacter.personality ?? undefined,
+    backstory: prismaCharacter.backstory ?? undefined,
     ownerId: prismaCharacter.ownerId,
-    creatorId: prismaCharacter.creatorId,
-    mainMediaId: prismaCharacter.mainMediaId,
+    creatorId: prismaCharacter.creatorId ?? undefined,
+    mainMediaId: prismaCharacter.mainMediaId ?? undefined,
     visibility: prismaCharacter.visibility,
     isSellable: prismaCharacter.isSellable,
     isTradeable: prismaCharacter.isTradeable,
     price: prismaCharacter.price?.toNumber(),
     customFields: prismaCharacter.customFields
       ? JSON.stringify(prismaCharacter.customFields)
-      : null,
+      : undefined,
     traitValues: Array.isArray(prismaCharacter.traitValues)
       ? (
           prismaCharacter.traitValues as PrismaJson.CharacterTraitValuesJson

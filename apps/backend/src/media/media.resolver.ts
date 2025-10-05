@@ -41,6 +41,7 @@ import {
   mapPrismaMediaToGraphQL,
   mapPrismaMediaConnectionToGraphQL,
 } from "./utils/media-resolver-mappers";
+import { mapPrismaGalleryToGraphQL } from "../galleries/utils/gallery-resolver-mappers";
 
 /**
  * GraphQL resolver for media operations
@@ -258,6 +259,7 @@ export class MediaResolver {
       user.id,
       serviceInput,
     );
+    if (!media) throw new Error('Media not found');
     return mapPrismaMediaToGraphQL(media);
   }
 
@@ -345,7 +347,8 @@ export class MediaResolver {
   })
   async gallery(@Parent() media: MediaEntity): Promise<Gallery | null> {
     if (!media.galleryId) return null;
-    return this.galleriesService.findOne(media.galleryId);
+    const gallery = await this.galleriesService.findOne(media.galleryId);
+    return gallery ? mapPrismaGalleryToGraphQL(gallery) : null;
   }
 
   /**
@@ -383,7 +386,11 @@ export class MediaResolver {
     const mediaTags = await this.mediaService.findMediaTags(media.id);
 
     return mediaTags.map((mediaTag) => ({
-      tag: mediaTag.tag,
+      tag: {
+        ...mediaTag.tag,
+        category: mediaTag.tag.category ?? undefined,
+        color: mediaTag.tag.color ?? undefined,
+      },
     }));
   }
 

@@ -127,7 +127,7 @@ export function mapPrismaCommentToGraphQL(prismaComment: PrismaComment) {
     commentableType,
     commentableId,
     authorId: prismaComment.authorId,
-    parentId: prismaComment.parentId,
+    parentId: prismaComment.parentId ?? undefined,
     isHidden: prismaComment.isHidden,
     createdAt: prismaComment.createdAt,
     updatedAt: prismaComment.updatedAt,

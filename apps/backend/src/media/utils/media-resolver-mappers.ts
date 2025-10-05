@@ -111,13 +111,13 @@ export function mapPrismaMediaToGraphQL(prismaMedia: PrismaMedia) {
   return {
     id: prismaMedia.id,
     title: prismaMedia.title,
-    description: prismaMedia.description,
+    description: prismaMedia.description ?? undefined,
     ownerId: prismaMedia.ownerId,
-    characterId: prismaMedia.characterId,
-    galleryId: prismaMedia.galleryId,
+    characterId: prismaMedia.characterId ?? undefined,
+    galleryId: prismaMedia.galleryId ?? undefined,
     visibility: prismaMedia.visibility,
-    imageId: prismaMedia.imageId,
-    textContentId: prismaMedia.textContentId,
+    imageId: prismaMedia.imageId ?? undefined,
+    textContentId: prismaMedia.textContentId ?? undefined,
     createdAt: prismaMedia.createdAt,
     updatedAt: prismaMedia.updatedAt,
   };

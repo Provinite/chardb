@@ -17,6 +17,8 @@ import { CharactersService } from "./characters.service";
 import { TagsService } from "../tags/tags.service";
 import { UsersService } from "../users/users.service";
 import { MediaService } from "../media/media.service";
+import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
+import { mapPrismaMediaToGraphQL } from "../media/utils/media-resolver-mappers";
 import { SpeciesVariantsService } from "../species-variants/species-variants.service";
 import { SpeciesService } from "../species/species.service";
 import {
@@ -218,20 +220,24 @@ export class CharactersResolver {
   @ResolveField("creator", () => User, { nullable: true })
   async resolveCreatorField(@Parent() character: CharacterEntity): Promise<User | null> {
     if (!character.creatorId) return null;
-    return this.usersService.findById(character.creatorId);
+    const user = await this.usersService.findById(character.creatorId);
+    return user ? mapPrismaUserToGraphQL(user) : null;
   }
 
   /** Character owner field resolver */
   @ResolveField("owner", () => User)
   async resolveOwnerField(@Parent() character: CharacterEntity): Promise<User> {
-    return this.usersService.findById(character.ownerId);
+    const user = await this.usersService.findById(character.ownerId);
+    if (!user) throw new Error('Owner not found');
+    return mapPrismaUserToGraphQL(user);
   }
 
   /** Main media field resolver */
   @ResolveField("mainMedia", () => Media, { nullable: true, description: "Main media item for this character (image or text)" })
   async resolveMainMediaField(@Parent() character: CharacterEntity): Promise<Media | null> {
     if (!character.mainMediaId) return null;
-    return this.mediaService.findOne(character.mainMediaId);
+    const media = await this.mediaService.findOne(character.mainMediaId);
+    return media ? mapPrismaMediaToGraphQL(media) : null;
   }
 
   /** Character tags relation field resolver */
@@ -240,7 +246,11 @@ export class CharactersResolver {
     const tags = await this.tagsService.getCharacterTagRelations(character.id);
     return tags.map(tag => ({
       character,
-      tag
+      tag: {
+        ...tag,
+        category: tag.category ?? undefined,
+        color: tag.color ?? undefined,
+      }
     }));
   }
 
