@@ -19,6 +19,7 @@ import { GlobalPermissionGuard } from "../common/guards/GlobalPermissionGuard";
 import { OptionalJwtAuthGuard } from "./guards/optional-jwt-auth.guard";
 import { CustomThrottlerGuard } from "../middleware/custom-throttler.guard";
 import { OrGuard } from "../common/guards/OrGuard";
+import { AuthenticatedGuard } from "../common/guards/AuthenticatedGuard";
 
 @Module({
   imports: [
@@ -45,11 +46,12 @@ import { OrGuard } from "../common/guards/OrGuard";
     UnauthenticatedGuard,
     CommunityPermissionGuard,
     GlobalPermissionGuard,
+    AuthenticatedGuard,
     OptionalJwtAuthGuard,
     CustomThrottlerGuard,
     {
       provide: 'PERMISSION_OR_GUARD',
-      useClass: OrGuard(GlobalPermissionGuard, CommunityPermissionGuard, UnauthenticatedGuard),
+      useClass: OrGuard(GlobalPermissionGuard, CommunityPermissionGuard, AuthenticatedGuard, UnauthenticatedGuard),
     },
   ],
   exports: [
