@@ -1,16 +1,25 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { GqlExecutionContext } from '@nestjs/graphql';
-import { UsersService } from '../../users/users.service';
+import { createParamDecorator, ExecutionContext } from "@nestjs/common";
+import { getUserFromContext } from "../utils/get-user-from-context";
+
+// Re-export CurrentUserType for backwards compatibility
+export type { CurrentUserType } from "../types/current-user.type";
 
 /**
- * Type for the current user in request context.
- * This is the type returned by the users service findById method.
+ * Parameter decorator to inject the current authenticated user into a resolver.
+ *
+ * The user is extracted from the request context (set by Passport.js during authentication).
+ *
+ * @example
+ * ```typescript
+ * @Query(() => User)
+ * @UseGuards(JwtAuthGuard)
+ * async me(@CurrentUser() user: CurrentUserType) {
+ *   return user;
+ * }
+ * ```
  */
-export type CurrentUserType = Awaited<ReturnType<UsersService['findById']>>;
-
 export const CurrentUser = createParamDecorator(
-  (data: unknown, context: ExecutionContext): CurrentUserType => {
-    const ctx = GqlExecutionContext.create(context);
-    return ctx.getContext().req.user;
+  (_data: unknown, context: ExecutionContext) => {
+    return getUserFromContext(context);
   },
 );
