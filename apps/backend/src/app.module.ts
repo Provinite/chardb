@@ -7,6 +7,10 @@ import { APP_GUARD } from "@nestjs/core";
 import { Logger } from "@nestjs/common";
 import { join } from "path";
 import { CustomThrottlerGuard } from "./middleware/custom-throttler.guard";
+import { OrGuard } from "./common/guards/OrGuard";
+import { GlobalPermissionGuard } from "./common/guards/GlobalPermissionGuard";
+import { CommunityPermissionGuard } from "./common/guards/CommunityPermissionGuard";
+import { UnauthenticatedGuard } from "./common/guards/UnauthenticatedGuard";
 
 import { DatabaseModule } from "./database/database.module";
 import { AuthModule } from "./auth/auth.module";
@@ -210,6 +214,10 @@ import { Request, Response } from "express";
     {
       provide: APP_GUARD,
       useClass: CustomThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: OrGuard(GlobalPermissionGuard, CommunityPermissionGuard, UnauthenticatedGuard),
     },
   ],
 })
