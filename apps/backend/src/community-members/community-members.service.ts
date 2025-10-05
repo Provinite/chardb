@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { Prisma } from "@chardb/database";
 
 /**
  * Service layer input types for community member operations.
@@ -37,11 +37,11 @@ export class CommunityMembersService {
     return this.prisma.communityMember.create({
       data: {
         user: {
-          connect: { id: input.userId }
+          connect: { id: input.userId },
         },
         role: {
-          connect: { id: input.roleId }
-        }
+          connect: { id: input.roleId },
+        },
       },
     });
   }
@@ -56,13 +56,15 @@ export class CommunityMembersService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.communityMember.count(),
     ]);
 
     const hasNextPage = communityMembers.length > first;
-    const nodes = hasNextPage ? communityMembers.slice(0, -1) : communityMembers;
+    const nodes = hasNextPage
+      ? communityMembers.slice(0, -1)
+      : communityMembers;
 
     return {
       nodes,
@@ -73,7 +75,11 @@ export class CommunityMembersService {
   }
 
   /** Find community members by community ID with pagination */
-  async findByCommunity(communityId: string, first: number = 20, after?: string) {
+  async findByCommunity(
+    communityId: string,
+    first: number = 20,
+    after?: string,
+  ) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -83,7 +89,7 @@ export class CommunityMembersService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.communityMember.count({
         where: { role: { communityId } },
@@ -91,7 +97,9 @@ export class CommunityMembersService {
     ]);
 
     const hasNextPage = communityMembers.length > first;
-    const nodes = hasNextPage ? communityMembers.slice(0, -1) : communityMembers;
+    const nodes = hasNextPage
+      ? communityMembers.slice(0, -1)
+      : communityMembers;
 
     return {
       nodes,
@@ -112,7 +120,7 @@ export class CommunityMembersService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.communityMember.count({
         where: { userId },
@@ -120,7 +128,9 @@ export class CommunityMembersService {
     ]);
 
     const hasNextPage = communityMembers.length > first;
-    const nodes = hasNextPage ? communityMembers.slice(0, -1) : communityMembers;
+    const nodes = hasNextPage
+      ? communityMembers.slice(0, -1)
+      : communityMembers;
 
     return {
       nodes,
@@ -148,10 +158,10 @@ export class CommunityMembersService {
     await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.CommunityMemberUpdateInput = {};
-    
+
     if (input.roleId !== undefined) {
       updateData.role = {
-        connect: { id: input.roleId }
+        connect: { id: input.roleId },
       };
     }
 
@@ -182,5 +192,37 @@ export class CommunityMembersService {
     return this.prisma.role.findUnique({
       where: { id: roleId },
     });
+  }
+
+  /**
+   * Get all roles a user has in a specific community.
+   *
+   * This method queries the CommunityMember join table to find all roles
+   * the user has been assigned within the specified community.
+   *
+   * @param userId - The ID of the user
+   * @param communityId - The ID of the community
+   * @returns Array of Role objects with their permissions
+   *
+   * @example
+   * ```typescript
+   * const roles = await communityMembersService.getUserRolesInCommunity(userId, communityId);
+   * const canEdit = roles.some(role => role.canEditCharacter);
+   * ```
+   */
+  async getUserRolesInCommunity(userId: string, communityId: string) {
+    const communityMembers = await this.prisma.communityMember.findMany({
+      where: {
+        userId,
+        role: {
+          communityId,
+        },
+      },
+      include: {
+        role: true,
+      },
+    });
+
+    return communityMembers.map((member) => member.role);
   }
 }
