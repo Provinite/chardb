@@ -3,15 +3,8 @@ import { ConfigModule } from "@nestjs/config";
 import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
-import { APP_GUARD } from "@nestjs/core";
 import { Logger } from "@nestjs/common";
 import { join } from "path";
-import { CustomThrottlerGuard } from "./middleware/custom-throttler.guard";
-import { OrGuard } from "./common/guards/OrGuard";
-import { GlobalPermissionGuard } from "./common/guards/GlobalPermissionGuard";
-import { CommunityPermissionGuard } from "./common/guards/CommunityPermissionGuard";
-import { UnauthenticatedGuard } from "./common/guards/UnauthenticatedGuard";
-import { OptionalJwtAuthGuard } from "./auth/guards/optional-jwt-auth.guard";
 
 import { DatabaseModule } from "./database/database.module";
 import { AuthModule } from "./auth/auth.module";
@@ -210,20 +203,6 @@ import { Request, Response } from "express";
     CommunityInvitationsModule,
     InviteCodesModule,
     CharacterOwnershipChangesModule,
-  ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: CustomThrottlerGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: OptionalJwtAuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: OrGuard(GlobalPermissionGuard, CommunityPermissionGuard, UnauthenticatedGuard),
-    },
   ],
 })
 export class AppModule {}
