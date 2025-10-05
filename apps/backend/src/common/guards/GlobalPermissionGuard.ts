@@ -38,9 +38,8 @@ export class GlobalPermissionGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    // If no permission is required, allow access
     if (!requiredPermission) {
-      return true;
+      return false;
     }
 
     // Extract user from GraphQL context

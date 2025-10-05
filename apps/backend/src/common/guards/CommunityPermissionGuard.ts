@@ -32,7 +32,7 @@ export class CommunityPermissionGuard implements CanActivate {
     );
 
     if (!requiredPermissions) {
-      return true;
+      return false;
     }
 
     const communityResolution = this.reflector.getAllAndOverride(

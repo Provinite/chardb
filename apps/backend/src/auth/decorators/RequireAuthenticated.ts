@@ -15,4 +15,6 @@ import { Reflector } from "@nestjs/core";
  * }
  * ```
  */
-export const RequireAuthenticated = Reflector.createDecorator<boolean>();
+export const RequireAuthenticated = Reflector.createDecorator<true>({
+  transform: () => true,
+});

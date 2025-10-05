@@ -23,13 +23,11 @@ export class AuthenticatedGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    // If no authentication required, allow access
     if (!requiresAuth) {
-      return true;
+      return false;
     }
 
-    // Check if user exists
     const user = getUserFromContext(context);
-    return !!user;
+    return Boolean(user);
   }
 }
