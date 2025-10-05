@@ -8,3 +8,7 @@ import type { JwtStrategy } from "../strategies/jwt.strategy";
  * by Passport.js during authentication.
  */
 export type CurrentUserType = Awaited<ReturnType<JwtStrategy["validate"]>>;
+export type AuthenticatedCurrentUserType = Exclude<
+  CurrentUserType,
+  undefined | null
+>;

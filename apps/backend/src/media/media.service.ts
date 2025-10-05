@@ -396,13 +396,13 @@ export class MediaService {
     try {
       // Check if we're using S3 (URL contains amazonaws.com or other S3 indicators)
       if (image.url && (image.url.includes('amazonaws.com') || image.url.includes('s3'))) {
-        await this.deleteFromS3(image.url, image.thumbnailUrl);
+        await this.deleteFromS3(image.url, image.thumbnailUrl ?? undefined);
       } else if (image.url && image.url.startsWith('data:')) {
         // Base64 encoded image - no file cleanup needed, stored in DB
         this.logger.debug('Base64 image detected, no file cleanup needed');
       } else if (image.url && (image.url.startsWith('/') || image.url.includes('localhost'))) {
         // Local file storage
-        await this.deleteLocalFiles(image.url, image.thumbnailUrl);
+        await this.deleteLocalFiles(image.url, image.thumbnailUrl ?? undefined);
       }
     } catch (error) {
       // Log the error but don't fail the deletion

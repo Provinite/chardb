@@ -18,6 +18,7 @@ import {
 } from "../auth/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { UseGuards } from "@nestjs/common";
+import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 
 @Resolver(() => Community)
 export class CommunitiesResolver {
@@ -29,7 +30,7 @@ export class CommunitiesResolver {
   async createCommunity(
     @Args("createCommunityInput", { description: "Community creation data" })
     createCommunityInput: CreateCommunityInput,
-    @CurrentUser() user: CurrentUserType,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<Community> {
     const serviceInput = mapCreateCommunityInputToService(
       createCommunityInput,

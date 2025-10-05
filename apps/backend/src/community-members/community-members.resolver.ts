@@ -1,10 +1,11 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
+import { NotFoundException } from '@nestjs/common';
 import { CommunityMembersService } from './community-members.service';
 import { CommunityMember, CommunityMemberConnection } from './entities/community-member.entity';
 import { CreateCommunityMemberInput, UpdateCommunityMemberInput } from './dto/community-member.dto';
 import { User } from '../users/entities/user.entity';
 import { Role } from '../roles/entities/role.entity';
-import { 
+import {
   mapCreateCommunityMemberInputToService,
   mapUpdateCommunityMemberInputToService,
   mapPrismaCommunityMemberToGraphQL,
@@ -105,6 +106,9 @@ export class CommunityMembersResolver {
   @ResolveField('role', () => Role, { description: 'The role this member has' })
   async getRole(@Parent() communityMember: CommunityMember): Promise<Role> {
     const result = await this.communityMembersService.getRoleById(communityMember.roleId);
+    if (!result) {
+      throw new NotFoundException(`Role with ID ${communityMember.roleId} not found`);
+    }
     return mapPrismaRoleToGraphQL(result);
   }
 
@@ -112,6 +116,9 @@ export class CommunityMembersResolver {
   @ResolveField('user', () => User, { description: 'The user who is the member' })
   async getUser(@Parent() communityMember: CommunityMember): Promise<User> {
     const result = await this.communityMembersService.getUserById(communityMember.userId);
+    if (!result) {
+      throw new NotFoundException(`User with ID ${communityMember.userId} not found`);
+    }
     return mapPrismaUserToGraphQL(result);
   }
 }
