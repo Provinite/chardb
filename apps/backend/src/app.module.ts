@@ -11,6 +11,7 @@ import { OrGuard } from "./common/guards/OrGuard";
 import { GlobalPermissionGuard } from "./common/guards/GlobalPermissionGuard";
 import { CommunityPermissionGuard } from "./common/guards/CommunityPermissionGuard";
 import { UnauthenticatedGuard } from "./common/guards/UnauthenticatedGuard";
+import { OptionalJwtAuthGuard } from "./auth/guards/optional-jwt-auth.guard";
 
 import { DatabaseModule } from "./database/database.module";
 import { AuthModule } from "./auth/auth.module";
@@ -214,6 +215,10 @@ import { Request, Response } from "express";
     {
       provide: APP_GUARD,
       useClass: CustomThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: OptionalJwtAuthGuard,
     },
     {
       provide: APP_GUARD,
