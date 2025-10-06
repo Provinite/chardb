@@ -64,13 +64,13 @@ export class SocialResolver {
     return this.socialService.toggleFollow(user.id, input);
   }
 
-  @AllowUnauthenticated()
+  @RequireAuthenticated()
   @Query(() => FollowStatus)
   async followStatus(
     @Args('userId', { type: () => ID }) userId: string,
-    @CurrentUser() user?: any,
+    @CurrentUser() user: any,
   ): Promise<FollowStatus> {
-    return this.socialService.getFollowStatus(userId, user?.id);
+    return this.socialService.getFollowStatus(userId, user.id);
   }
 
   // Queries for user's liked content
