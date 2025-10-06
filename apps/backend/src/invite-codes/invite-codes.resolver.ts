@@ -1,5 +1,8 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { InviteCodesService } from './invite-codes.service';
+import { RequireGlobalPermission } from '../auth/decorators/RequireGlobalPermission';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
+import { GlobalPermission } from '../auth/GlobalPermission';
 import { InviteCode, InviteCodeConnection } from './entities/invite-code.entity';
 import { CreateInviteCodeInput, UpdateInviteCodeInput, ClaimInviteCodeInput } from './dto/invite-code.dto';
 import {
@@ -25,10 +28,10 @@ export class InviteCodesResolver {
     private readonly rolesService: RolesService,
   ) {}
 
-  /** Create a new invite code */
+  @RequireGlobalPermission(GlobalPermission.CanCreateInviteCode)
   @Mutation(() => InviteCode, { description: 'Create a new invite code' })
   async createInviteCode(
-    @Args('createInviteCodeInput', { description: 'Invite code creation data' }) 
+    @Args('createInviteCodeInput', { description: 'Invite code creation data' })
     createInviteCodeInput: CreateInviteCodeInput,
   ): Promise<InviteCode> {
     const serviceInput = mapCreateInviteCodeInputToService(createInviteCodeInput);
@@ -88,12 +91,12 @@ export class InviteCodesResolver {
     return mapPrismaInviteCodeToGraphQL(prismaResult);
   }
 
-  /** Update an invite code */
+  @RequireGlobalPermission(GlobalPermission.CanCreateInviteCode)
   @Mutation(() => InviteCode, { description: 'Update an invite code' })
   async updateInviteCode(
-    @Args('id', { type: () => ID, description: 'Invite code ID' }) 
+    @Args('id', { type: () => ID, description: 'Invite code ID' })
     id: string,
-    @Args('updateInviteCodeInput', { description: 'Invite code update data' }) 
+    @Args('updateInviteCodeInput', { description: 'Invite code update data' })
     updateInviteCodeInput: UpdateInviteCodeInput,
   ): Promise<InviteCode> {
     const serviceInput = mapUpdateInviteCodeInputToService(updateInviteCodeInput);
@@ -101,12 +104,12 @@ export class InviteCodesResolver {
     return mapPrismaInviteCodeToGraphQL(prismaResult);
   }
 
-  /** Claim an invite code */
+  @RequireAuthenticated()
   @Mutation(() => InviteCode, { description: 'Claim an invite code to join a community' })
   async claimInviteCode(
-    @Args('id', { type: () => ID, description: 'Invite code ID' }) 
+    @Args('id', { type: () => ID, description: 'Invite code ID' })
     id: string,
-    @Args('claimInviteCodeInput', { description: 'Invite code claim data' }) 
+    @Args('claimInviteCodeInput', { description: 'Invite code claim data' })
     claimInviteCodeInput: ClaimInviteCodeInput,
   ): Promise<InviteCode> {
     const serviceInput = mapClaimInviteCodeInputToService(claimInviteCodeInput);
@@ -114,10 +117,10 @@ export class InviteCodesResolver {
     return mapPrismaInviteCodeToGraphQL(prismaResult);
   }
 
-  /** Remove an invite code */
+  @RequireGlobalPermission(GlobalPermission.CanCreateInviteCode)
   @Mutation(() => RemovalResponse, { description: 'Remove an invite code' })
   async removeInviteCode(
-    @Args('id', { type: () => ID, description: 'Invite code ID' }) 
+    @Args('id', { type: () => ID, description: 'Invite code ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.inviteCodesService.remove(id);

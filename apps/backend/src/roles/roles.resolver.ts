@@ -1,6 +1,8 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { NotFoundException } from '@nestjs/common';
 import { RolesService } from './roles.service';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
 import { Role, RoleConnection } from './entities/role.entity';
 import { CreateRoleInput, UpdateRoleInput } from './dto/role.dto';
 import {
@@ -21,10 +23,10 @@ export class RolesResolver {
     private readonly communitiesService: CommunitiesService,
   ) {}
 
-  /** Create a new role */
+  @RequireAuthenticated()
   @Mutation(() => Role, { description: 'Create a new role' })
   async createRole(
-    @Args('createRoleInput', { description: 'Role creation data' }) 
+    @Args('createRoleInput', { description: 'Role creation data' })
     createRoleInput: CreateRoleInput,
   ): Promise<Role> {
     const serviceInput = mapCreateRoleInputToService(createRoleInput);
@@ -32,7 +34,7 @@ export class RolesResolver {
     return mapPrismaRoleToGraphQL(prismaResult);
   }
 
-  /** Get all roles with pagination */
+  @RequireGlobalAdmin()
   @Query(() => RoleConnection, { name: 'roles', description: 'Get all roles with pagination' })
   async findAll(
     @Args('first', { type: () => Int, nullable: true, description: 'Number of roles to return', defaultValue: 20 })
@@ -44,7 +46,7 @@ export class RolesResolver {
     return mapPrismaRoleConnectionToGraphQL(serviceResult);
   }
 
-  /** Get roles by community ID with pagination */
+  @RequireAuthenticated()
   @Query(() => RoleConnection, { name: 'rolesByCommunity', description: 'Get roles by community ID with pagination' })
   async findByCommunity(
     @Args('communityId', { type: () => ID, description: 'Community ID' })
@@ -58,22 +60,22 @@ export class RolesResolver {
     return mapPrismaRoleConnectionToGraphQL(serviceResult);
   }
 
-  /** Get a role by ID */
+  @RequireAuthenticated()
   @Query(() => Role, { name: 'roleById', description: 'Get a role by ID' })
   async findOne(
-    @Args('id', { type: () => ID, description: 'Role ID' }) 
+    @Args('id', { type: () => ID, description: 'Role ID' })
     id: string,
   ): Promise<Role> {
     const prismaResult = await this.rolesService.findOne(id);
     return mapPrismaRoleToGraphQL(prismaResult);
   }
 
-  /** Update a role */
+  @RequireAuthenticated()
   @Mutation(() => Role, { description: 'Update a role' })
   async updateRole(
-    @Args('id', { type: () => ID, description: 'Role ID' }) 
+    @Args('id', { type: () => ID, description: 'Role ID' })
     id: string,
-    @Args('updateRoleInput', { description: 'Role update data' }) 
+    @Args('updateRoleInput', { description: 'Role update data' })
     updateRoleInput: UpdateRoleInput,
   ): Promise<Role> {
     const serviceInput = mapUpdateRoleInputToService(updateRoleInput);
@@ -81,10 +83,10 @@ export class RolesResolver {
     return mapPrismaRoleToGraphQL(prismaResult);
   }
 
-  /** Remove a role */
+  @RequireAuthenticated()
   @Mutation(() => RemovalResponse, { description: 'Remove a role' })
   async removeRole(
-    @Args('id', { type: () => ID, description: 'Role ID' }) 
+    @Args('id', { type: () => ID, description: 'Role ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.rolesService.remove(id);
