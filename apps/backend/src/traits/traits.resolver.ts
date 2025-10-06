@@ -1,6 +1,7 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { NotFoundException } from '@nestjs/common';
 import { TraitsService } from './traits.service';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { Trait, TraitConnection } from './entities/trait.entity';
 import { CreateTraitInput, UpdateTraitInput } from './dto/trait.dto';
 import {
@@ -27,9 +28,10 @@ export class TraitsResolver {
   ) {}
 
   /** Create a new trait */
+  @RequireAuthenticated()
   @Mutation(() => Trait, { description: 'Create a new trait' })
   async createTrait(
-    @Args('createTraitInput', { description: 'Trait creation data' }) 
+    @Args('createTraitInput', { description: 'Trait creation data' })
     createTraitInput: CreateTraitInput,
   ): Promise<Trait> {
     const serviceInput = mapCreateTraitInputToService(createTraitInput);
@@ -74,9 +76,10 @@ export class TraitsResolver {
   }
 
   /** Update a trait */
+  @RequireAuthenticated()
   @Mutation(() => Trait, { description: 'Update a trait' })
   async updateTrait(
-    @Args('id', { type: () => ID, description: 'Trait ID' }) 
+    @Args('id', { type: () => ID, description: 'Trait ID' })
     id: string,
     @Args('updateTraitInput', { description: 'Trait update data' }) 
     updateTraitInput: UpdateTraitInput,
@@ -87,9 +90,10 @@ export class TraitsResolver {
   }
 
   /** Remove a trait */
+  @RequireAuthenticated()
   @Mutation(() => RemovalResponse, { description: 'Remove a trait' })
   async removeTrait(
-    @Args('id', { type: () => ID, description: 'Trait ID' }) 
+    @Args('id', { type: () => ID, description: 'Trait ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.traitsService.remove(id);

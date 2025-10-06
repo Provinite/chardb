@@ -1,5 +1,9 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { TraitListEntriesService } from './trait-list-entries.service';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CommunityPermission } from '../auth/CommunityPermission';
 import { TraitListEntry, TraitListEntryConnection } from './entities/trait-list-entry.entity';
 import { CreateTraitListEntryInput, UpdateTraitListEntryInput } from './dto/trait-list-entry.dto';
 import {
@@ -25,10 +29,12 @@ export class TraitListEntriesResolver {
     private readonly speciesVariantsService: SpeciesVariantsService,
   ) {}
 
-  /** Create a new trait list entry */
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ speciesVariantId: 'createTraitListEntryInput.speciesVariantId' })
   @Mutation(() => TraitListEntry, { description: 'Create a new trait list entry' })
   async createTraitListEntry(
-    @Args('createTraitListEntryInput', { description: 'Trait list entry creation data' }) 
+    @Args('createTraitListEntryInput', { description: 'Trait list entry creation data' })
     createTraitListEntryInput: CreateTraitListEntryInput,
   ): Promise<TraitListEntry> {
     const serviceInput = mapCreateTraitListEntryInputToService(createTraitListEntryInput);
@@ -86,12 +92,14 @@ export class TraitListEntriesResolver {
     return mapPrismaTraitListEntryToGraphQL(prismaResult);
   }
 
-  /** Update a trait list entry */
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ traitListEntryId: 'id' })
   @Mutation(() => TraitListEntry, { description: 'Update a trait list entry' })
   async updateTraitListEntry(
-    @Args('id', { type: () => ID, description: 'Trait list entry ID' }) 
+    @Args('id', { type: () => ID, description: 'Trait list entry ID' })
     id: string,
-    @Args('updateTraitListEntryInput', { description: 'Trait list entry update data' }) 
+    @Args('updateTraitListEntryInput', { description: 'Trait list entry update data' })
     updateTraitListEntryInput: UpdateTraitListEntryInput,
   ): Promise<TraitListEntry> {
     const serviceInput = mapUpdateTraitListEntryInputToService(updateTraitListEntryInput);
@@ -99,10 +107,12 @@ export class TraitListEntriesResolver {
     return mapPrismaTraitListEntryToGraphQL(prismaResult);
   }
 
-  /** Remove a trait list entry */
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ traitListEntryId: 'id' })
   @Mutation(() => RemovalResponse, { description: 'Remove a trait list entry' })
   async removeTraitListEntry(
-    @Args('id', { type: () => ID, description: 'Trait list entry ID' }) 
+    @Args('id', { type: () => ID, description: 'Trait list entry ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.traitListEntriesService.remove(id);

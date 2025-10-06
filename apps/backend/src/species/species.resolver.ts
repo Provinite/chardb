@@ -1,6 +1,10 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { NotFoundException } from '@nestjs/common';
 import { SpeciesService } from './species.service';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CommunityPermission } from '../auth/CommunityPermission';
 import { Species, SpeciesConnection } from './entities/species.entity';
 import { CreateSpeciesInput, UpdateSpeciesInput } from './dto/species.dto';
 import {
@@ -25,10 +29,11 @@ export class SpeciesResolver {
     private readonly traitsService: TraitsService,
   ) {}
 
-  /** Create a new species */
+  @RequireCommunityPermission(CommunityPermission.CanCreateSpecies)
+  @ResolveCommunityFrom({ communityId: 'createSpeciesInput.communityId' })
   @Mutation(() => Species, { description: 'Create a new species' })
   async createSpecies(
-    @Args('createSpeciesInput', { description: 'Species creation data' }) 
+    @Args('createSpeciesInput', { description: 'Species creation data' })
     createSpeciesInput: CreateSpeciesInput,
   ): Promise<Species> {
     const serviceInput = mapCreateSpeciesInputToService(createSpeciesInput);
@@ -72,12 +77,14 @@ export class SpeciesResolver {
     return mapPrismaSpeciesToGraphQL(prismaResult);
   }
 
-  /** Update a species */
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ speciesId: 'id' })
   @Mutation(() => Species, { description: 'Update a species' })
   async updateSpecies(
-    @Args('id', { type: () => ID, description: 'Species ID' }) 
+    @Args('id', { type: () => ID, description: 'Species ID' })
     id: string,
-    @Args('updateSpeciesInput', { description: 'Species update data' }) 
+    @Args('updateSpeciesInput', { description: 'Species update data' })
     updateSpeciesInput: UpdateSpeciesInput,
   ): Promise<Species> {
     const serviceInput = mapUpdateSpeciesInputToService(updateSpeciesInput);
@@ -85,10 +92,12 @@ export class SpeciesResolver {
     return mapPrismaSpeciesToGraphQL(prismaResult);
   }
 
-  /** Remove a species */
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ speciesId: 'id' })
   @Mutation(() => RemovalResponse, { description: 'Remove a species' })
   async removeSpecies(
-    @Args('id', { type: () => ID, description: 'Species ID' }) 
+    @Args('id', { type: () => ID, description: 'Species ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.speciesService.remove(id);

@@ -1,5 +1,9 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { EnumValueSettingsService } from './enum-value-settings.service';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CommunityPermission } from '../auth/CommunityPermission';
 import { EnumValueSetting, EnumValueSettingConnection } from './entities/enum-value-setting.entity';
 import { CreateEnumValueSettingInput, UpdateEnumValueSettingInput } from './dto/enum-value-setting.dto';
 import {
@@ -25,9 +29,12 @@ export class EnumValueSettingsResolver {
   ) {}
 
   /** Create a new enum value setting */
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ speciesVariantId: 'createEnumValueSettingInput.speciesVariantId' })
   @Mutation(() => EnumValueSetting, { description: 'Create a new enum value setting' })
   async createEnumValueSetting(
-    @Args('createEnumValueSettingInput', { description: 'Enum value setting creation data' }) 
+    @Args('createEnumValueSettingInput', { description: 'Enum value setting creation data' })
     createEnumValueSettingInput: CreateEnumValueSettingInput,
   ): Promise<EnumValueSetting> {
     const serviceInput = mapCreateEnumValueSettingInputToService(createEnumValueSettingInput);
@@ -85,12 +92,14 @@ export class EnumValueSettingsResolver {
     return mapPrismaEnumValueSettingToGraphQL(prismaResult);
   }
 
-  /** Update an enum value setting */
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ enumValueSettingId: 'id' })
   @Mutation(() => EnumValueSetting, { description: 'Update an enum value setting' })
   async updateEnumValueSetting(
-    @Args('id', { type: () => ID, description: 'Enum value setting ID' }) 
+    @Args('id', { type: () => ID, description: 'Enum value setting ID' })
     id: string,
-    @Args('updateEnumValueSettingInput', { description: 'Enum value setting update data' }) 
+    @Args('updateEnumValueSettingInput', { description: 'Enum value setting update data' })
     updateEnumValueSettingInput: UpdateEnumValueSettingInput,
   ): Promise<EnumValueSetting> {
     const serviceInput = mapUpdateEnumValueSettingInputToService(updateEnumValueSettingInput);
@@ -98,10 +107,12 @@ export class EnumValueSettingsResolver {
     return mapPrismaEnumValueSettingToGraphQL(prismaResult);
   }
 
-  /** Remove an enum value setting */
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ enumValueSettingId: 'id' })
   @Mutation(() => RemovalResponse, { description: 'Remove an enum value setting' })
   async removeEnumValueSetting(
-    @Args('id', { type: () => ID, description: 'Enum value setting ID' }) 
+    @Args('id', { type: () => ID, description: 'Enum value setting ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.enumValueSettingsService.remove(id);

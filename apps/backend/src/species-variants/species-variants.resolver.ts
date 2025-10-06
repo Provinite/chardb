@@ -1,6 +1,7 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { NotFoundException } from '@nestjs/common';
 import { SpeciesVariantsService } from './species-variants.service';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { SpeciesVariant, SpeciesVariantConnection } from './entities/species-variant.entity';
 import { CreateSpeciesVariantInput, UpdateSpeciesVariantInput } from './dto/species-variant.dto';
 import {
@@ -26,9 +27,10 @@ export class SpeciesVariantsResolver {
   ) {}
 
   /** Create a new species variant */
+  @RequireAuthenticated()
   @Mutation(() => SpeciesVariant, { description: 'Create a new species variant' })
   async createSpeciesVariant(
-    @Args('createSpeciesVariantInput', { description: 'Species variant creation data' }) 
+    @Args('createSpeciesVariantInput', { description: 'Species variant creation data' })
     createSpeciesVariantInput: CreateSpeciesVariantInput,
   ): Promise<SpeciesVariant> {
     const serviceInput = mapCreateSpeciesVariantInputToService(createSpeciesVariantInput);
@@ -73,11 +75,12 @@ export class SpeciesVariantsResolver {
   }
 
   /** Update a species variant */
+  @RequireAuthenticated()
   @Mutation(() => SpeciesVariant, { description: 'Update a species variant' })
   async updateSpeciesVariant(
-    @Args('id', { type: () => ID, description: 'Species variant ID' }) 
+    @Args('id', { type: () => ID, description: 'Species variant ID' })
     id: string,
-    @Args('updateSpeciesVariantInput', { description: 'Species variant update data' }) 
+    @Args('updateSpeciesVariantInput', { description: 'Species variant update data' })
     updateSpeciesVariantInput: UpdateSpeciesVariantInput,
   ): Promise<SpeciesVariant> {
     const serviceInput = mapUpdateSpeciesVariantInputToService(updateSpeciesVariantInput);
@@ -86,9 +89,10 @@ export class SpeciesVariantsResolver {
   }
 
   /** Remove a species variant */
+  @RequireAuthenticated()
   @Mutation(() => RemovalResponse, { description: 'Remove a species variant' })
   async removeSpeciesVariant(
-    @Args('id', { type: () => ID, description: 'Species variant ID' }) 
+    @Args('id', { type: () => ID, description: 'Species variant ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.speciesVariantsService.remove(id);

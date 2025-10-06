@@ -1,5 +1,6 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { EnumValuesService } from './enum-values.service';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { EnumValue, EnumValueConnection } from './entities/enum-value.entity';
 import { CreateEnumValueInput, UpdateEnumValueInput } from './dto/enum-value.dto';
 import {
@@ -20,10 +21,10 @@ export class EnumValuesResolver {
     private readonly traitsService: TraitsService,
   ) {}
 
-  /** Create a new enum value */
+  @RequireAuthenticated()
   @Mutation(() => EnumValue, { description: 'Create a new enum value' })
   async createEnumValue(
-    @Args('createEnumValueInput', { description: 'Enum value creation data' }) 
+    @Args('createEnumValueInput', { description: 'Enum value creation data' })
     createEnumValueInput: CreateEnumValueInput,
   ): Promise<EnumValue> {
     const serviceInput = mapCreateEnumValueInputToService(createEnumValueInput);
@@ -67,12 +68,12 @@ export class EnumValuesResolver {
     return mapPrismaEnumValueToGraphQL(prismaResult);
   }
 
-  /** Update an enum value */
+  @RequireAuthenticated()
   @Mutation(() => EnumValue, { description: 'Update an enum value' })
   async updateEnumValue(
-    @Args('id', { type: () => ID, description: 'Enum value ID' }) 
+    @Args('id', { type: () => ID, description: 'Enum value ID' })
     id: string,
-    @Args('updateEnumValueInput', { description: 'Enum value update data' }) 
+    @Args('updateEnumValueInput', { description: 'Enum value update data' })
     updateEnumValueInput: UpdateEnumValueInput,
   ): Promise<EnumValue> {
     const serviceInput = mapUpdateEnumValueInputToService(updateEnumValueInput);
@@ -80,10 +81,10 @@ export class EnumValuesResolver {
     return mapPrismaEnumValueToGraphQL(prismaResult);
   }
 
-  /** Remove an enum value */
+  @RequireAuthenticated()
   @Mutation(() => RemovalResponse, { description: 'Remove an enum value' })
   async removeEnumValue(
-    @Args('id', { type: () => ID, description: 'Enum value ID' }) 
+    @Args('id', { type: () => ID, description: 'Enum value ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.enumValuesService.remove(id);
