@@ -22,6 +22,7 @@ import { MaybePromise } from "@opentelemetry/resources";
  * - EnumValue → Trait → Species → Community
  * - EnumValueSetting → SpeciesVariant → Species → Community
  * - TraitListEntry → SpeciesVariant → Species → Community
+ * - CommunityMember → Role → Community
  */
 @Injectable()
 export class CommunityResolverService {
@@ -213,6 +214,32 @@ export class CommunityResolverService {
   }
 
   /**
+   * Get the community ID for a community member.
+   *
+   * Resolved through: communityMember → role → community
+   *
+   * @param communityMemberId - The community member ID
+   * @returns The community ID
+   * @throws Error if community member doesn't exist
+   */
+  async getCommunityMemberCommunity(communityMemberId: string): Promise<string> {
+    const communityMember = await this.prisma.communityMember.findUnique({
+      where: { id: communityMemberId },
+      select: {
+        role: {
+          select: { communityId: true },
+        },
+      },
+    });
+
+    if (!communityMember) {
+      throw new Error(`CommunityMember with ID ${communityMemberId} not found`);
+    }
+
+    return communityMember.role.communityId;
+  }
+
+  /**
    * Resolve the community for a given entity using resolution configuration.
    *
    * This is the primary method used by guards to determine community context.
@@ -256,6 +283,7 @@ export class CommunityResolverService {
       enumValueId: this.getEnumValueCommunity.bind(this),
       enumValueSettingId: this.getEnumValueSettingCommunity.bind(this),
       traitListEntryId: this.getTraitListEntryCommunity.bind(this),
+      communityMemberId: this.getCommunityMemberCommunity.bind(this),
     };
 
     if (!config.type) {

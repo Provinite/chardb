@@ -12,6 +12,7 @@ export enum CommunityPermission {
   CanListInviteCodes = "canListInviteCodes",
   CanCreateRole = "canCreateRole",
   CanEditRole = "canEditRole",
+  CanRemoveCommunityMember = "canRemoveCommunityMember",
 }
 
 export const AllCommunityPermissions = Object.values(CommunityPermission);
