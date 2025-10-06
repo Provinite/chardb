@@ -16,17 +16,18 @@ import {
   CurrentUser,
   CurrentUserType,
 } from "../auth/decorators/current-user.decorator";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { UseGuards } from "@nestjs/common";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
+import { RequireGlobalPermission } from "../auth/decorators/RequireGlobalPermission";
+import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
+import { GlobalPermission } from "../auth/GlobalPermission";
 
 @Resolver(() => Community)
 export class CommunitiesResolver {
   constructor(private readonly communitiesService: CommunitiesService) {}
 
-  /** Create a new community */
+  @RequireGlobalPermission(GlobalPermission.CanCreateCommunity)
   @Mutation(() => Community, { description: "Create a new community" })
-  @UseGuards(JwtAuthGuard)
   async createCommunity(
     @Args("createCommunityInput", { description: "Community creation data" })
     createCommunityInput: CreateCommunityInput,
@@ -40,7 +41,7 @@ export class CommunitiesResolver {
     return mapPrismaCommunityToGraphQL(prismaResult);
   }
 
-  /** Get all communities with pagination */
+  @RequireAuthenticated()
   @Query(() => CommunityConnection, {
     name: "communities",
     description: "Get all communities with pagination",
@@ -64,7 +65,7 @@ export class CommunitiesResolver {
     return mapPrismaCommunityConnectionToGraphQL(serviceResult);
   }
 
-  /** Get a community by ID */
+  @RequireAuthenticated()
   @Query(() => Community, {
     name: "community",
     description: "Get a community by ID",
@@ -77,7 +78,7 @@ export class CommunitiesResolver {
     return mapPrismaCommunityToGraphQL(prismaResult);
   }
 
-  /** Update a community */
+  @RequireGlobalPermission(GlobalPermission.CanCreateCommunity)
   @Mutation(() => Community, { description: "Update a community" })
   async updateCommunity(
     @Args("id", { type: () => ID, description: "Community ID" })
@@ -90,7 +91,7 @@ export class CommunitiesResolver {
     return mapPrismaCommunityToGraphQL(prismaResult);
   }
 
-  /** Remove a community */
+  @RequireGlobalPermission(GlobalPermission.CanCreateCommunity)
   @Mutation(() => RemovalResponse, { description: "Remove a community" })
   async removeCommunity(
     @Args("id", { type: () => ID, description: "Community ID" })

@@ -1,5 +1,7 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { CommunityInvitationsService } from './community-invitations.service';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
 import { CommunityInvitation, CommunityInvitationConnection } from './entities/community-invitation.entity';
 import { CreateCommunityInvitationInput, RespondToCommunityInvitationInput } from './dto/community-invitation.dto';
 import {
@@ -27,10 +29,10 @@ export class CommunityInvitationsResolver {
     private readonly communitiesService: CommunitiesService,
   ) {}
 
-  /** Create a new community invitation */
+  @RequireAuthenticated()
   @Mutation(() => CommunityInvitation, { description: 'Create a new community invitation' })
   async createCommunityInvitation(
-    @Args('createCommunityInvitationInput', { description: 'Community invitation creation data' }) 
+    @Args('createCommunityInvitationInput', { description: 'Community invitation creation data' })
     createCommunityInvitationInput: CreateCommunityInvitationInput,
   ): Promise<CommunityInvitation> {
     const serviceInput = mapCreateCommunityInvitationInputToService(createCommunityInvitationInput);
@@ -103,11 +105,12 @@ export class CommunityInvitationsResolver {
   }
 
   /** Respond to a community invitation */
+  @RequireAuthenticated()
   @Mutation(() => CommunityInvitation, { description: 'Respond to a community invitation (accept or decline)' })
   async respondToCommunityInvitation(
-    @Args('id', { type: () => ID, description: 'Community invitation ID' }) 
+    @Args('id', { type: () => ID, description: 'Community invitation ID' })
     id: string,
-    @Args('respondToCommunityInvitationInput', { description: 'Response data (accept or decline)' }) 
+    @Args('respondToCommunityInvitationInput', { description: 'Response data (accept or decline)' })
     respondToCommunityInvitationInput: RespondToCommunityInvitationInput,
   ): Promise<CommunityInvitation> {
     const serviceInput = mapRespondToCommunityInvitationInputToService(respondToCommunityInvitationInput);
@@ -115,10 +118,10 @@ export class CommunityInvitationsResolver {
     return mapPrismaCommunityInvitationToGraphQL(prismaResult);
   }
 
-  /** Remove a community invitation */
+  @RequireAuthenticated()
   @Mutation(() => CommunityInvitation, { description: 'Remove a community invitation' })
   async removeCommunityInvitation(
-    @Args('id', { type: () => ID, description: 'Community invitation ID' }) 
+    @Args('id', { type: () => ID, description: 'Community invitation ID' })
     id: string,
   ): Promise<CommunityInvitation> {
     const prismaResult = await this.communityInvitationsService.remove(id);

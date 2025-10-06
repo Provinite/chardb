@@ -1,6 +1,8 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { NotFoundException } from '@nestjs/common';
 import { CommunityMembersService } from './community-members.service';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { CommunityMember, CommunityMemberConnection } from './entities/community-member.entity';
 import { CreateCommunityMemberInput, UpdateCommunityMemberInput } from './dto/community-member.dto';
 import { User } from '../users/entities/user.entity';
@@ -18,10 +20,10 @@ import { mapPrismaRoleToGraphQL } from '../roles/utils/role-resolver-mappers';
 export class CommunityMembersResolver {
   constructor(private readonly communityMembersService: CommunityMembersService) {}
 
-  /** Create a new community membership */
+  @RequireGlobalAdmin()
   @Mutation(() => CommunityMember, { description: 'Create a new community membership' })
   async createCommunityMember(
-    @Args('createCommunityMemberInput', { description: 'Community membership creation data' }) 
+    @Args('createCommunityMemberInput', { description: 'Community membership creation data' })
     createCommunityMemberInput: CreateCommunityMemberInput,
   ): Promise<CommunityMember> {
     const serviceInput = mapCreateCommunityMemberInputToService(createCommunityMemberInput);
@@ -29,7 +31,7 @@ export class CommunityMembersResolver {
     return mapPrismaCommunityMemberToGraphQL(result);
   }
 
-  /** Get all community members with pagination */
+  @RequireGlobalAdmin()
   @Query(() => CommunityMemberConnection, { name: 'communityMembers', description: 'Get all community members with pagination' })
   async findAll(
     @Args('first', { type: () => Int, nullable: true, description: 'Number of community members to return', defaultValue: 20 })
@@ -41,7 +43,7 @@ export class CommunityMembersResolver {
     return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }
 
-  /** Get community members by community ID with pagination */
+  @RequireAuthenticated()
   @Query(() => CommunityMemberConnection, { name: 'communityMembersByCommunity', description: 'Get community members by community ID with pagination' })
   async findByCommunity(
     @Args('communityId', { type: () => ID, description: 'Community ID' })
@@ -79,12 +81,12 @@ export class CommunityMembersResolver {
     return mapPrismaCommunityMemberToGraphQL(result);
   }
 
-  /** Update a community membership */
+  @RequireGlobalAdmin()
   @Mutation(() => CommunityMember, { description: 'Update a community membership (change role)' })
   async updateCommunityMember(
-    @Args('id', { type: () => ID, description: 'Community member ID' }) 
+    @Args('id', { type: () => ID, description: 'Community member ID' })
     id: string,
-    @Args('updateCommunityMemberInput', { description: 'Community membership update data' }) 
+    @Args('updateCommunityMemberInput', { description: 'Community membership update data' })
     updateCommunityMemberInput: UpdateCommunityMemberInput,
   ): Promise<CommunityMember> {
     const serviceInput = mapUpdateCommunityMemberInputToService(updateCommunityMemberInput);
@@ -92,10 +94,10 @@ export class CommunityMembersResolver {
     return mapPrismaCommunityMemberToGraphQL(result);
   }
 
-  /** Remove a community membership */
+  @RequireAuthenticated()
   @Mutation(() => CommunityMember, { description: 'Remove a community membership' })
   async removeCommunityMember(
-    @Args('id', { type: () => ID, description: 'Community member ID' }) 
+    @Args('id', { type: () => ID, description: 'Community member ID' })
     id: string,
   ): Promise<CommunityMember> {
     const result = await this.communityMembersService.remove(id);
