@@ -1,7 +1,10 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { NotFoundException } from '@nestjs/common';
 import { SpeciesVariantsService } from './species-variants.service';
-import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CommunityPermission } from '../auth/CommunityPermission';
 import { SpeciesVariant, SpeciesVariantConnection } from './entities/species-variant.entity';
 import { CreateSpeciesVariantInput, UpdateSpeciesVariantInput } from './dto/species-variant.dto';
 import {
@@ -27,7 +30,9 @@ export class SpeciesVariantsResolver {
   ) {}
 
   /** Create a new species variant */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ speciesId: 'createSpeciesVariantInput.speciesId' })
   @Mutation(() => SpeciesVariant, { description: 'Create a new species variant' })
   async createSpeciesVariant(
     @Args('createSpeciesVariantInput', { description: 'Species variant creation data' })
@@ -75,7 +80,9 @@ export class SpeciesVariantsResolver {
   }
 
   /** Update a species variant */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ speciesVariantId: 'id' })
   @Mutation(() => SpeciesVariant, { description: 'Update a species variant' })
   async updateSpeciesVariant(
     @Args('id', { type: () => ID, description: 'Species variant ID' })
@@ -89,7 +96,9 @@ export class SpeciesVariantsResolver {
   }
 
   /** Remove a species variant */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ speciesVariantId: 'id' })
   @Mutation(() => RemovalResponse, { description: 'Remove a species variant' })
   async removeSpeciesVariant(
     @Args('id', { type: () => ID, description: 'Species variant ID' })

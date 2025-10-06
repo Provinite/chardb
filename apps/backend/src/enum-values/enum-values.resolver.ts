@@ -1,6 +1,9 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { EnumValuesService } from './enum-values.service';
-import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CommunityPermission } from '../auth/CommunityPermission';
 import { EnumValue, EnumValueConnection } from './entities/enum-value.entity';
 import { CreateEnumValueInput, UpdateEnumValueInput } from './dto/enum-value.dto';
 import {
@@ -21,7 +24,9 @@ export class EnumValuesResolver {
     private readonly traitsService: TraitsService,
   ) {}
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ traitId: 'createEnumValueInput.traitId' })
   @Mutation(() => EnumValue, { description: 'Create a new enum value' })
   async createEnumValue(
     @Args('createEnumValueInput', { description: 'Enum value creation data' })
@@ -68,7 +73,9 @@ export class EnumValuesResolver {
     return mapPrismaEnumValueToGraphQL(prismaResult);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ enumValueId: 'id' })
   @Mutation(() => EnumValue, { description: 'Update an enum value' })
   async updateEnumValue(
     @Args('id', { type: () => ID, description: 'Enum value ID' })
@@ -81,7 +88,9 @@ export class EnumValuesResolver {
     return mapPrismaEnumValueToGraphQL(prismaResult);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ enumValueId: 'id' })
   @Mutation(() => RemovalResponse, { description: 'Remove an enum value' })
   async removeEnumValue(
     @Args('id', { type: () => ID, description: 'Enum value ID' })

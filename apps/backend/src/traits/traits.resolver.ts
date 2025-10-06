@@ -1,7 +1,10 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { NotFoundException } from '@nestjs/common';
 import { TraitsService } from './traits.service';
-import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CommunityPermission } from '../auth/CommunityPermission';
 import { Trait, TraitConnection } from './entities/trait.entity';
 import { CreateTraitInput, UpdateTraitInput } from './dto/trait.dto';
 import {
@@ -27,8 +30,9 @@ export class TraitsResolver {
     private readonly enumValuesService: EnumValuesService,
   ) {}
 
-  /** Create a new trait */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ speciesId: 'createTraitInput.speciesId' })
   @Mutation(() => Trait, { description: 'Create a new trait' })
   async createTrait(
     @Args('createTraitInput', { description: 'Trait creation data' })
@@ -75,13 +79,14 @@ export class TraitsResolver {
     return mapPrismaTraitToGraphQL(prismaResult);
   }
 
-  /** Update a trait */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ traitId: 'id' })
   @Mutation(() => Trait, { description: 'Update a trait' })
   async updateTrait(
     @Args('id', { type: () => ID, description: 'Trait ID' })
     id: string,
-    @Args('updateTraitInput', { description: 'Trait update data' }) 
+    @Args('updateTraitInput', { description: 'Trait update data' })
     updateTraitInput: UpdateTraitInput,
   ): Promise<Trait> {
     const serviceInput = mapUpdateTraitInputToService(updateTraitInput);
@@ -89,8 +94,9 @@ export class TraitsResolver {
     return mapPrismaTraitToGraphQL(prismaResult);
   }
 
-  /** Remove a trait */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ traitId: 'id' })
   @Mutation(() => RemovalResponse, { description: 'Remove a trait' })
   async removeTrait(
     @Args('id', { type: () => ID, description: 'Trait ID' })
