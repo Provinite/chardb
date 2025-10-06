@@ -9,10 +9,10 @@ import {
   Parent,
   Int,
 } from "@nestjs/graphql";
-import { UseGuards, ForbiddenException } from "@nestjs/common";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { OptionalJwtAuthGuard } from "../auth/guards/optional-jwt-auth.guard";
+import { ForbiddenException } from "@nestjs/common";
 import { CurrentUser, CurrentUserType } from "../auth/decorators/current-user.decorator";
+import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { CharactersService } from "./characters.service";
 import { TagsService } from "../tags/tags.service";
 import { UsersService } from "../users/users.service";
@@ -65,8 +65,8 @@ export class CharactersResolver {
     private readonly speciesService: SpeciesService,
   ) {}
 
+  @RequireAuthenticated()
   @Mutation(() => CharacterEntity)
-  @UseGuards(JwtAuthGuard)
   async createCharacter(
     @Args("input") input: CreateCharacterInput,
     @CurrentUser() user: any,
@@ -76,8 +76,8 @@ export class CharactersResolver {
     return mapPrismaCharacterToGraphQL(character);
   }
 
+  @AllowUnauthenticated()
   @Query(() => CharacterConnection)
-  @UseGuards(OptionalJwtAuthGuard)
   async characters(
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
     @CurrentUser() user?: any,
@@ -86,8 +86,8 @@ export class CharactersResolver {
     return mapPrismaCharacterConnectionToGraphQL(result);
   }
 
+  @AllowUnauthenticated()
   @Query(() => CharacterEntity)
-  @UseGuards(OptionalJwtAuthGuard)
   async character(
     @Args("id", { type: () => ID }) id: string,
     @CurrentUser() user?: any,
@@ -96,8 +96,8 @@ export class CharactersResolver {
     return mapPrismaCharacterToGraphQL(character);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => CharacterEntity)
-  @UseGuards(JwtAuthGuard)
   async updateCharacter(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: UpdateCharacterInput,
@@ -108,8 +108,8 @@ export class CharactersResolver {
     return mapPrismaCharacterToGraphQL(character);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => Boolean)
-  @UseGuards(JwtAuthGuard)
   async deleteCharacter(
     @Args("id", { type: () => ID }) id: string,
     @CurrentUser() user: any,
@@ -117,8 +117,8 @@ export class CharactersResolver {
     return this.charactersService.remove(id, user.id);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => CharacterEntity)
-  @UseGuards(JwtAuthGuard)
   async transferCharacter(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: TransferCharacterInput,
@@ -127,8 +127,8 @@ export class CharactersResolver {
     return this.charactersService.transfer(id, user.id, input.newOwnerId);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => CharacterEntity)
-  @UseGuards(JwtAuthGuard)
   async addCharacterTags(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: ManageTagsInput,
@@ -137,8 +137,8 @@ export class CharactersResolver {
     return this.charactersService.addTags(id, user.id, input.tagNames);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => CharacterEntity)
-  @UseGuards(JwtAuthGuard)
   async removeCharacterTags(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: ManageTagsInput,
@@ -147,10 +147,10 @@ export class CharactersResolver {
     return this.charactersService.removeTags(id, user.id, input.tagNames);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => CharacterEntity, {
     description: "Sets or clears the main media for a character",
   })
-  @UseGuards(JwtAuthGuard)
   async setCharacterMainMedia(
     @Args("id", { type: () => ID, description: "Character ID to update" })
     id: string,
@@ -161,9 +161,8 @@ export class CharactersResolver {
     return this.charactersService.setMainMedia(id, user.id, input.mediaId);
   }
 
-  // Query for user's own characters
+  @RequireAuthenticated()
   @Query(() => CharacterConnection)
-  @UseGuards(JwtAuthGuard)
   async myCharacters(
     @CurrentUser() user: any,
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
@@ -173,9 +172,8 @@ export class CharactersResolver {
     return mapPrismaCharacterConnectionToGraphQL(result);
   }
 
-  // Query for characters by specific user
+  @AllowUnauthenticated()
   @Query(() => CharacterConnection)
-  @UseGuards(OptionalJwtAuthGuard)
   async userCharacters(
     @Args("userId", { type: () => ID }) userId: string,
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
@@ -268,11 +266,10 @@ export class CharactersResolver {
     return this.speciesVariantsService.findOne(character.speciesVariantId);
   }
 
-  /** Update character trait values */
+  @RequireAuthenticated()
   @Mutation(() => CharacterEntity, {
     description: "Update character trait values",
   })
-  @UseGuards(JwtAuthGuard)
   async updateCharacterTraits(
     @Args("id", { type: () => ID }) id: string,
     @Args("updateCharacterTraitsInput")

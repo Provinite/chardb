@@ -1,6 +1,9 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CharacterOwnershipChangesService } from './character-ownership-changes.service';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
+import { CurrentUser, CurrentUserType } from '../auth/decorators/current-user.decorator';
 import { CharacterOwnershipChange, CharacterOwnershipChangeConnection } from './entities/character-ownership-change.entity';
 import { CreateCharacterOwnershipChangeInput } from './dto/character-ownership-change.dto';
 import { RemovalResponse } from '../shared/entities/removal-response.entity';
@@ -24,9 +27,10 @@ export class CharacterOwnershipChangesResolver {
     private readonly charactersService: CharactersService,
   ) {}
 
+  @RequireGlobalAdmin()
   @Mutation(() => CharacterOwnershipChange, { description: 'Create a new character ownership change record' })
   async createCharacterOwnershipChange(
-    @Args('createCharacterOwnershipChangeInput', { description: 'Character ownership change creation data' }) 
+    @Args('createCharacterOwnershipChangeInput', { description: 'Character ownership change creation data' })
     createCharacterOwnershipChangeInput: CreateCharacterOwnershipChangeInput,
   ): Promise<CharacterOwnershipChange> {
     const serviceInput = mapCreateCharacterOwnershipChangeInputToService(createCharacterOwnershipChangeInput);
@@ -34,6 +38,7 @@ export class CharacterOwnershipChangesResolver {
     return mapPrismaCharacterOwnershipChangeToGraphQL(prismaResult);
   }
 
+  @RequireGlobalAdmin()
   @Query(() => CharacterOwnershipChangeConnection, { name: 'characterOwnershipChanges', description: 'Get all character ownership changes with pagination' })
   async findAll(
     @Args('first', { type: () => Int, nullable: true, description: 'Number of ownership changes to return', defaultValue: 20 })
@@ -45,6 +50,7 @@ export class CharacterOwnershipChangesResolver {
     return mapPrismaCharacterOwnershipChangeConnectionToGraphQL(serviceResult);
   }
 
+  @RequireAuthenticated()
   @Query(() => CharacterOwnershipChangeConnection, { name: 'characterOwnershipChangesByCharacter', description: 'Get character ownership changes by character ID with pagination' })
   async findByCharacter(
     @Args('characterId', { type: () => ID, description: 'Character ID' })
@@ -58,6 +64,7 @@ export class CharacterOwnershipChangesResolver {
     return mapPrismaCharacterOwnershipChangeConnectionToGraphQL(serviceResult);
   }
 
+  @RequireAuthenticated()
   @Query(() => CharacterOwnershipChangeConnection, { name: 'characterOwnershipChangesByUser', description: 'Get character ownership changes by user ID with pagination' })
   async findByUser(
     @Args('userId', { type: () => ID, description: 'User ID (can be from or to user)' })
@@ -66,23 +73,31 @@ export class CharacterOwnershipChangesResolver {
     first?: number,
     @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
     after?: string,
+    @CurrentUser() currentUser?: CurrentUserType,
   ): Promise<CharacterOwnershipChangeConnection> {
+    // TODO: Implement self/admin check: Allow if admin OR userId matches current user
+    if (!currentUser?.isAdmin && userId !== currentUser?.id) {
+      throw new ForbiddenException('You can only view your own ownership changes unless you are an admin');
+    }
+
     const serviceResult = await this.characterOwnershipChangesService.findByUser({ userId, first, after });
     return mapPrismaCharacterOwnershipChangeConnectionToGraphQL(serviceResult);
   }
 
+  @RequireAuthenticated()
   @Query(() => CharacterOwnershipChange, { name: 'characterOwnershipChangeById', description: 'Get a character ownership change by ID' })
   async findOne(
-    @Args('id', { type: () => ID, description: 'Character ownership change ID' }) 
+    @Args('id', { type: () => ID, description: 'Character ownership change ID' })
     id: string,
   ): Promise<CharacterOwnershipChange> {
     const prismaResult = await this.characterOwnershipChangesService.findOne(id);
     return mapPrismaCharacterOwnershipChangeToGraphQL(prismaResult);
   }
 
+  @RequireGlobalAdmin()
   @Mutation(() => RemovalResponse, { description: 'Remove a character ownership change record' })
   async removeCharacterOwnershipChange(
-    @Args('id', { type: () => ID, description: 'Character ownership change ID' }) 
+    @Args('id', { type: () => ID, description: 'Character ownership change ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.characterOwnershipChangesService.remove(id);

@@ -1,7 +1,7 @@
 import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
+import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
 import { ImagesService } from './images.service';
 import { Image as ImageEntity, ImageConnection } from './entities/image.entity';
 import {
@@ -34,8 +34,8 @@ export class ImagesResolver {
     return this.imagesService.findOne(id, user?.id);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => ImageEntity)
-  @UseGuards(JwtAuthGuard)
   async updateImage(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateImageInput,
@@ -44,8 +44,8 @@ export class ImagesResolver {
     return this.imagesService.update(id, user.id, input);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => Boolean)
-  @UseGuards(JwtAuthGuard)
   async deleteImage(
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: any,
@@ -55,9 +55,8 @@ export class ImagesResolver {
 
   // Image tag mutations removed - tags should be managed on Media entries instead
 
-  // Query for user's own images
+  // DEPRECATED: Image queries are blocked (no permission decorators = blocked)
   @Query(() => ImageConnection)
-  @UseGuards(JwtAuthGuard)
   async myImages(
     @CurrentUser() user: any,
     @Args('filters', { nullable: true }) filters?: ImageFiltersInput,

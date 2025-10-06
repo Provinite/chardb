@@ -1,8 +1,8 @@
 import { Resolver, Query, Mutation, Args, ID, ResolveField, Parent, Int } from '@nestjs/graphql';
-import { UseGuards, NotFoundException } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
+import { NotFoundException } from '@nestjs/common';
 import { CurrentUser, CurrentUserType } from '../auth/decorators/current-user.decorator';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
+import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
 import { GalleriesService } from './galleries.service';
 import { MediaService } from '../media/media.service';
 import { Gallery, GalleryConnection, GalleryCount } from './entities/gallery.entity';
@@ -35,8 +35,8 @@ export class GalleriesResolver {
     private readonly mediaService: MediaService,
   ) {}
 
+  @RequireAuthenticated()
   @Mutation(() => Gallery)
-  @UseGuards(JwtAuthGuard)
   async createGallery(
     @Args('input') input: CreateGalleryInput,
     @CurrentUser() user: CurrentUserType,
@@ -49,8 +49,8 @@ export class GalleriesResolver {
     return mapPrismaGalleryToGraphQL(prismaResult);
   }
 
+  @AllowUnauthenticated()
   @Query(() => GalleryConnection)
-  @UseGuards(OptionalJwtAuthGuard)
   async galleries(
     @Args('filters', { nullable: true }) filters?: GalleryFiltersInput,
     @CurrentUser() user?: CurrentUserType,
@@ -59,8 +59,8 @@ export class GalleriesResolver {
     return mapPrismaGalleryConnectionToGraphQL(serviceResult);
   }
 
+  @AllowUnauthenticated()
   @Query(() => Gallery)
-  @UseGuards(OptionalJwtAuthGuard)
   async gallery(
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user?: CurrentUserType,
@@ -69,8 +69,8 @@ export class GalleriesResolver {
     return mapPrismaGalleryToGraphQL(prismaResult);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => Gallery)
-  @UseGuards(JwtAuthGuard)
   async updateGallery(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateGalleryInput,
@@ -79,13 +79,14 @@ export class GalleriesResolver {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    // TODO: Implement owner/admin check
     const serviceInput = mapUpdateGalleryInputToService(input);
     const prismaResult = await this.galleriesService.update(id, user.id, serviceInput);
     return mapPrismaGalleryToGraphQL(prismaResult);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => RemovalResponse)
-  @UseGuards(JwtAuthGuard)
   async deleteGallery(
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: CurrentUserType,
@@ -93,15 +94,15 @@ export class GalleriesResolver {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    // TODO: Implement owner/admin check
     await this.galleriesService.remove(id, user.id);
     return { removed: true, message: 'Gallery successfully deleted' };
   }
 
   // NOTE: Image-gallery operations now handled through Media system
 
-
+  @RequireAuthenticated()
   @Mutation(() => [Gallery])
-  @UseGuards(JwtAuthGuard)
   async reorderGalleries(
     @Args('input') input: ReorderGalleriesInput,
     @CurrentUser() user: CurrentUserType,
@@ -109,13 +110,13 @@ export class GalleriesResolver {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    // TODO: Implement owner/admin check
     const prismaResults = await this.galleriesService.reorderGalleries(user.id, input.galleryIds);
     return prismaResults.map(mapPrismaGalleryToGraphQL);
   }
 
-  // Query for user's own galleries
+  @RequireAuthenticated()
   @Query(() => GalleryConnection)
-  @UseGuards(JwtAuthGuard)
   async myGalleries(
     @CurrentUser() user: CurrentUserType,
     @Args('filters', { nullable: true }) filters?: GalleryFiltersInput,
@@ -128,9 +129,8 @@ export class GalleriesResolver {
     return mapPrismaGalleryConnectionToGraphQL(serviceResult);
   }
 
-  // Query for galleries by specific user
+  @AllowUnauthenticated()
   @Query(() => GalleryConnection)
-  @UseGuards(OptionalJwtAuthGuard)
   async userGalleries(
     @Args('userId', { type: () => ID }) userId: string,
     @Args('filters', { nullable: true }) filters?: GalleryFiltersInput,
@@ -141,9 +141,8 @@ export class GalleriesResolver {
     return mapPrismaGalleryConnectionToGraphQL(serviceResult);
   }
 
-  // Query for galleries associated with a specific character
+  @AllowUnauthenticated()
   @Query(() => GalleryConnection)
-  @UseGuards(OptionalJwtAuthGuard)
   async characterGalleries(
     @Args('characterId', { type: () => ID }) characterId: string,
     @Args('filters', { nullable: true }) filters?: GalleryFiltersInput,
@@ -154,9 +153,8 @@ export class GalleriesResolver {
     return mapPrismaGalleryConnectionToGraphQL(serviceResult);
   }
 
-  // Query for galleries liked by the current user
+  @RequireAuthenticated()
   @Query(() => [Gallery])
-  @UseGuards(JwtAuthGuard)
   async likedGalleries(
     @CurrentUser() user: CurrentUserType,
   ): Promise<Gallery[]> {

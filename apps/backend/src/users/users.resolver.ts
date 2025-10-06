@@ -8,13 +8,11 @@ import {
   ResolveField,
   Parent,
 } from "@nestjs/graphql";
-import { UseGuards, NotFoundException } from "@nestjs/common";
+import { NotFoundException } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { User, UserConnection } from "./entities/user.entity";
 import { UserProfile, UserStats } from "./entities/user-profile.entity";
 import { UpdateUserInput } from "./dto/update-user.input";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { OptionalJwtAuthGuard } from "../auth/guards/optional-jwt-auth.guard";
 import {
   CurrentUser,
   CurrentUserType,
@@ -30,11 +28,16 @@ import { Character } from "../characters/entities/character.entity";
 import { Gallery } from "../galleries/entities/gallery.entity";
 import { Media } from "../media/entities/media.entity";
 import { SocialService } from "../social/social.service";
+import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
+import { RequireGlobalPermission } from "../auth/decorators/RequireGlobalPermission";
+import { GlobalPermission } from "../auth/GlobalPermission";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 
 @Resolver(() => User)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
+  @RequireGlobalPermission(GlobalPermission.CanListUsers)
   @Query(() => UserConnection, { name: "users" })
   async findAll(
     @Args("limit", { type: () => Int, defaultValue: 20 }) limit: number,
@@ -44,6 +47,7 @@ export class UsersResolver {
     return mapPrismaUserConnectionToGraphQL(serviceResult);
   }
 
+  @AllowUnauthenticated()
   @Query(() => User, { name: "user", nullable: true })
   async findOne(
     @Args("id", { type: () => ID, nullable: true }) id?: string,
@@ -61,8 +65,8 @@ export class UsersResolver {
     return prismaResult ? mapPrismaUserToGraphQL(prismaResult) : null;
   }
 
+  @RequireAuthenticated()
   @Query(() => User, { name: "me" })
-  @UseGuards(JwtAuthGuard)
   async getCurrentUser(@CurrentUser() user: CurrentUserType): Promise<User> {
     if (!user) {
       throw new NotFoundException("User not found");
@@ -70,8 +74,8 @@ export class UsersResolver {
     return mapPrismaUserToGraphQL(user);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => User)
-  @UseGuards(JwtAuthGuard)
   async updateProfile(
     @Args("input") updateUserInput: UpdateUserInput,
     @CurrentUser() user: CurrentUserType
@@ -84,8 +88,8 @@ export class UsersResolver {
     return mapPrismaUserToGraphQL(prismaResult);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => RemovalResponse)
-  @UseGuards(JwtAuthGuard)
   async deleteAccount(
     @CurrentUser() user: CurrentUserType
   ): Promise<RemovalResponse> {
@@ -96,8 +100,8 @@ export class UsersResolver {
     return { removed: true, message: "User account successfully deleted" };
   }
 
+  @AllowUnauthenticated()
   @Query(() => UserProfile, { name: "userProfile", nullable: true })
-  @UseGuards(OptionalJwtAuthGuard)
   async getUserProfile(
     @Args("username") username: string,
     @CurrentUser() currentUser?: CurrentUserType
@@ -114,8 +118,8 @@ export class UsersResolver {
     };
   }
 
+  @AllowUnauthenticated()
   @Query(() => UserStats, { name: "userStats" })
-  @UseGuards(OptionalJwtAuthGuard)
   async getUserStats(
     @Args("userId", { type: () => ID }) userId: string,
     @CurrentUser() currentUser?: CurrentUserType
