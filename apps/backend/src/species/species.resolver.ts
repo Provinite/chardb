@@ -1,6 +1,7 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { NotFoundException } from '@nestjs/common';
 import { SpeciesService } from './species.service';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
 import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
 import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
@@ -42,6 +43,7 @@ export class SpeciesResolver {
   }
 
   /** Get all species with pagination */
+  @RequireAuthenticated()
   @Query(() => SpeciesConnection, { name: 'species', description: 'Get all species with pagination' })
   async findAll(
     @Args('first', { type: () => Int, nullable: true, description: 'Number of species to return', defaultValue: 20 })
@@ -54,6 +56,7 @@ export class SpeciesResolver {
   }
 
   /** Get species by community ID with pagination */
+  @RequireAuthenticated()
   @Query(() => SpeciesConnection, { name: 'speciesByCommunity', description: 'Get species by community ID with pagination' })
   async findByCommunity(
     @Args('communityId', { type: () => ID, description: 'Community ID' })
@@ -68,9 +71,10 @@ export class SpeciesResolver {
   }
 
   /** Get a species by ID */
+  @RequireAuthenticated()
   @Query(() => Species, { name: 'speciesById', description: 'Get a species by ID' })
   async findOne(
-    @Args('id', { type: () => ID, description: 'Species ID' }) 
+    @Args('id', { type: () => ID, description: 'Species ID' })
     id: string,
   ): Promise<Species> {
     const prismaResult = await this.speciesService.findOne(id);

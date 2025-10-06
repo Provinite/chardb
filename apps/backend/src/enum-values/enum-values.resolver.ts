@@ -1,5 +1,6 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { EnumValuesService } from './enum-values.service';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
 import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
 import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
@@ -38,6 +39,7 @@ export class EnumValuesResolver {
   }
 
   /** Get all enum values with pagination */
+  @RequireAuthenticated()
   @Query(() => EnumValueConnection, { name: 'enumValues', description: 'Get all enum values with pagination' })
   async findAll(
     @Args('first', { type: () => Int, nullable: true, description: 'Number of enum values to return', defaultValue: 20 })
@@ -50,6 +52,7 @@ export class EnumValuesResolver {
   }
 
   /** Get enum values by trait ID with pagination */
+  @RequireAuthenticated()
   @Query(() => EnumValueConnection, { name: 'enumValuesByTrait', description: 'Get enum values by trait ID with pagination' })
   async findByTrait(
     @Args('traitId', { type: () => ID, description: 'Trait ID' })
@@ -64,9 +67,10 @@ export class EnumValuesResolver {
   }
 
   /** Get an enum value by ID */
+  @RequireAuthenticated()
   @Query(() => EnumValue, { name: 'enumValueById', description: 'Get an enum value by ID' })
   async findOne(
-    @Args('id', { type: () => ID, description: 'Enum value ID' }) 
+    @Args('id', { type: () => ID, description: 'Enum value ID' })
     id: string,
   ): Promise<EnumValue> {
     const prismaResult = await this.enumValuesService.findOne(id);

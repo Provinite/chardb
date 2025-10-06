@@ -1,5 +1,6 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { TraitListEntriesService } from './trait-list-entries.service';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
 import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
 import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
@@ -43,6 +44,7 @@ export class TraitListEntriesResolver {
   }
 
   /** Get all trait list entries with pagination */
+  @RequireAuthenticated()
   @Query(() => TraitListEntryConnection, { name: 'traitListEntries', description: 'Get all trait list entries with pagination' })
   async findAll(
     @Args('first', { type: () => Int, nullable: true, description: 'Number of trait list entries to return', defaultValue: 20 })
@@ -55,6 +57,7 @@ export class TraitListEntriesResolver {
   }
 
   /** Get trait list entries by species variant ID with pagination */
+  @RequireAuthenticated()
   @Query(() => TraitListEntryConnection, { name: 'traitListEntriesBySpeciesVariant', description: 'Get trait list entries by species variant ID with pagination' })
   async findBySpeciesVariant(
     @Args('speciesVariantId', { type: () => ID, description: 'Species variant ID' })
@@ -69,6 +72,7 @@ export class TraitListEntriesResolver {
   }
 
   /** Get trait list entries by trait ID with pagination */
+  @RequireAuthenticated()
   @Query(() => TraitListEntryConnection, { name: 'traitListEntriesByTrait', description: 'Get trait list entries by trait ID with pagination' })
   async findByTrait(
     @Args('traitId', { type: () => ID, description: 'Trait ID' })
@@ -83,9 +87,10 @@ export class TraitListEntriesResolver {
   }
 
   /** Get a trait list entry by ID */
+  @RequireAuthenticated()
   @Query(() => TraitListEntry, { name: 'traitListEntryById', description: 'Get a trait list entry by ID' })
   async findOne(
-    @Args('id', { type: () => ID, description: 'Trait list entry ID' }) 
+    @Args('id', { type: () => ID, description: 'Trait list entry ID' })
     id: string,
   ): Promise<TraitListEntry> {
     const prismaResult = await this.traitListEntriesService.findOne(id);

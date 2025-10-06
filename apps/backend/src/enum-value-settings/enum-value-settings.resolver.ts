@@ -1,5 +1,6 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { EnumValueSettingsService } from './enum-value-settings.service';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
 import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
 import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
@@ -43,6 +44,7 @@ export class EnumValueSettingsResolver {
   }
 
   /** Get all enum value settings with pagination */
+  @RequireAuthenticated()
   @Query(() => EnumValueSettingConnection, { name: 'enumValueSettings', description: 'Get all enum value settings with pagination' })
   async findAll(
     @Args('first', { type: () => Int, nullable: true, description: 'Number of enum value settings to return', defaultValue: 20 })
@@ -55,6 +57,7 @@ export class EnumValueSettingsResolver {
   }
 
   /** Get enum value settings by species variant ID with pagination */
+  @RequireAuthenticated()
   @Query(() => EnumValueSettingConnection, { name: 'enumValueSettingsBySpeciesVariant', description: 'Get enum value settings by species variant ID with pagination' })
   async findBySpeciesVariant(
     @Args('speciesVariantId', { type: () => ID, description: 'Species variant ID' })
@@ -69,6 +72,7 @@ export class EnumValueSettingsResolver {
   }
 
   /** Get enum value settings by enum value ID with pagination */
+  @RequireAuthenticated()
   @Query(() => EnumValueSettingConnection, { name: 'enumValueSettingsByEnumValue', description: 'Get enum value settings by enum value ID with pagination' })
   async findByEnumValue(
     @Args('enumValueId', { type: () => ID, description: 'Enum value ID' })
@@ -83,9 +87,10 @@ export class EnumValueSettingsResolver {
   }
 
   /** Get an enum value setting by ID */
+  @RequireAuthenticated()
   @Query(() => EnumValueSetting, { name: 'enumValueSettingById', description: 'Get an enum value setting by ID' })
   async findOne(
-    @Args('id', { type: () => ID, description: 'Enum value setting ID' }) 
+    @Args('id', { type: () => ID, description: 'Enum value setting ID' })
     id: string,
   ): Promise<EnumValueSetting> {
     const prismaResult = await this.enumValueSettingsService.findOne(id);
