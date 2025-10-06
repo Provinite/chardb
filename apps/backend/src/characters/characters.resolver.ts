@@ -10,7 +10,8 @@ import {
   Int,
 } from "@nestjs/graphql";
 import { ForbiddenException } from "@nestjs/common";
-import { CurrentUser, CurrentUserType } from "../auth/decorators/current-user.decorator";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { CharactersService } from "./characters.service";
@@ -198,12 +199,12 @@ export class CharactersResolver {
     return count;
   }
 
+  @RequireAuthenticated()
   @ResolveField("userHasLiked", () => Boolean)
   async resolveUserHasLikedField(
     @Parent() character: CharacterEntity,
-    @CurrentUser() user?: CurrentUserType,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
-    if (!user) return false;
     return this.charactersService.hasUserLiked(character.id, user.id);
   }
 

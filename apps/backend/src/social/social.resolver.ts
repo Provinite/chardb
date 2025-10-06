@@ -1,12 +1,11 @@
 import { Resolver, Mutation, Query, Args, ID, ResolveField, Parent, Int } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
 import { SocialService } from './social.service';
 import { ToggleLikeInput, LikeResult, LikeStatus, LikeableType } from './dto/like.dto';
 import { ToggleFollowInput, FollowResult, FollowStatus } from './dto/follow.dto';
 import { FollowListResult, ActivityItem, ActivityFeedInput } from './dto/social-query.dto';
 import { Follow } from './entities/follow.entity';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
+import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { DatabaseService } from '../database/database.service';
 import { Character } from '../characters/entities/character.entity';
@@ -34,8 +33,8 @@ export class SocialResolver {
     private readonly databaseService: DatabaseService,
   ) {}
 
+  @RequireAuthenticated()
   @Mutation(() => LikeResult)
-  @UseGuards(JwtAuthGuard)
   async toggleLike(
     @Args('input') input: ToggleLikeInput,
     @CurrentUser() user: any,
@@ -43,8 +42,8 @@ export class SocialResolver {
     return this.socialService.toggleLike(user.id, input);
   }
 
+  @AllowUnauthenticated()
   @Query(() => LikeStatus)
-  @UseGuards(OptionalJwtAuthGuard)
   async likeStatus(
     @Args('entityType', { type: () => LikeableType }) entityType: LikeableType,
     @Args('entityId', { type: () => ID }) entityId: string,
@@ -56,8 +55,8 @@ export class SocialResolver {
 
   // Follow System Mutations and Queries
 
+  @RequireAuthenticated()
   @Mutation(() => FollowResult)
-  @UseGuards(JwtAuthGuard)
   async toggleFollow(
     @Args('input') input: ToggleFollowInput,
     @CurrentUser() user: any,
@@ -65,8 +64,8 @@ export class SocialResolver {
     return this.socialService.toggleFollow(user.id, input);
   }
 
+  @AllowUnauthenticated()
   @Query(() => FollowStatus)
-  @UseGuards(OptionalJwtAuthGuard)
   async followStatus(
     @Args('userId', { type: () => ID }) userId: string,
     @CurrentUser() user?: any,
@@ -75,32 +74,32 @@ export class SocialResolver {
   }
 
   // Queries for user's liked content
+  @RequireAuthenticated()
   @Query(() => [Character])
-  @UseGuards(JwtAuthGuard)
   async likedCharacters(
     @CurrentUser() user: any,
   ): Promise<Character[]> {
     return this.socialService.getUserLikedCharacters(user.id);
   }
 
+  @RequireAuthenticated()
   @Query(() => [Gallery])
-  @UseGuards(JwtAuthGuard)
   async likedGalleries(
     @CurrentUser() user: any,
   ): Promise<Gallery[]> {
     return this.socialService.getUserLikedGalleries(user.id);
   }
 
+  @RequireAuthenticated()
   @Query(() => [Image])
-  @UseGuards(JwtAuthGuard)
   async likedImages(
     @CurrentUser() user: any,
   ): Promise<Image[]> {
     return this.socialService.getUserLikedImages(user.id);
   }
 
+  @RequireAuthenticated()
   @Query(() => MediaConnection)
-  @UseGuards(JwtAuthGuard)
   async likedMedia(
     @Args('filters', { nullable: true }) filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
@@ -109,6 +108,7 @@ export class SocialResolver {
   }
 
   // Follow list queries
+  @AllowUnauthenticated()
   @Query(() => FollowListResult)
   async getFollowers(
     @Args('username') username: string,
@@ -120,6 +120,7 @@ export class SocialResolver {
     };
   }
 
+  @AllowUnauthenticated()
   @Query(() => FollowListResult)
   async getFollowing(
     @Args('username') username: string,
@@ -132,8 +133,8 @@ export class SocialResolver {
   }
 
   // Activity feed query
+  @RequireAuthenticated()
   @Query(() => [ActivityItem])
-  @UseGuards(JwtAuthGuard)
   async activityFeed(
     @Args('input', { nullable: true }) input?: ActivityFeedInput,
     @CurrentUser() user?: any,
@@ -153,13 +154,13 @@ export class CharacterLikesResolver {
     return this.socialService.getLikesCount(LikeableType.CHARACTER, character.id);
   }
 
+  @RequireAuthenticated()
   @ResolveField(() => Boolean)
-  @UseGuards(OptionalJwtAuthGuard)
   async userHasLiked(
     @Parent() character: Character,
-    @CurrentUser() user?: any,
+    @CurrentUser() user: any,
   ): Promise<boolean> {
-    return this.socialService.getUserHasLiked(LikeableType.CHARACTER, character.id, user?.id);
+    return this.socialService.getUserHasLiked(LikeableType.CHARACTER, character.id, user.id);
   }
 }
 
@@ -172,13 +173,13 @@ export class ImageLikesResolver {
     return this.socialService.getLikesCount(LikeableType.IMAGE, image.id);
   }
 
+  @RequireAuthenticated()
   @ResolveField(() => Boolean)
-  @UseGuards(OptionalJwtAuthGuard)
   async userHasLiked(
     @Parent() image: Image,
-    @CurrentUser() user?: any,
+    @CurrentUser() user: any,
   ): Promise<boolean> {
-    return this.socialService.getUserHasLiked(LikeableType.IMAGE, image.id, user?.id);
+    return this.socialService.getUserHasLiked(LikeableType.IMAGE, image.id, user.id);
   }
 }
 
@@ -191,13 +192,13 @@ export class GalleryLikesResolver {
     return this.socialService.getLikesCount(LikeableType.GALLERY, gallery.id);
   }
 
+  @RequireAuthenticated()
   @ResolveField(() => Boolean)
-  @UseGuards(OptionalJwtAuthGuard)
   async userHasLiked(
     @Parent() gallery: Gallery,
-    @CurrentUser() user?: any,
+    @CurrentUser() user: any,
   ): Promise<boolean> {
-    return this.socialService.getUserHasLiked(LikeableType.GALLERY, gallery.id, user?.id);
+    return this.socialService.getUserHasLiked(LikeableType.GALLERY, gallery.id, user.id);
   }
 }
 
@@ -210,13 +211,13 @@ export class CommentLikesResolver {
     return this.socialService.getLikesCount(LikeableType.COMMENT, comment.id);
   }
 
+  @RequireAuthenticated()
   @ResolveField(() => Boolean)
-  @UseGuards(OptionalJwtAuthGuard)
   async userHasLiked(
     @Parent() comment: Comment,
-    @CurrentUser() user?: any,
+    @CurrentUser() user: any,
   ): Promise<boolean> {
-    return this.socialService.getUserHasLiked(LikeableType.COMMENT, comment.id, user?.id);
+    return this.socialService.getUserHasLiked(LikeableType.COMMENT, comment.id, user.id);
   }
 }
 
@@ -229,13 +230,13 @@ export class MediaLikesResolver {
     return this.socialService.getLikesCount(LikeableType.MEDIA, media.id);
   }
 
+  @RequireAuthenticated()
   @ResolveField(() => Boolean)
-  @UseGuards(OptionalJwtAuthGuard)
   async userHasLiked(
     @Parent() media: Media,
-    @CurrentUser() user?: any,
+    @CurrentUser() user: any,
   ): Promise<boolean> {
-    return this.socialService.getUserHasLiked(LikeableType.MEDIA, media.id, user?.id);
+    return this.socialService.getUserHasLiked(LikeableType.MEDIA, media.id, user.id);
   }
 }
 
@@ -253,12 +254,12 @@ export class UserFollowResolver {
     return this.socialService.getFollowingCount(user.id);
   }
 
+  @RequireAuthenticated()
   @ResolveField(() => Boolean)
-  @UseGuards(OptionalJwtAuthGuard)
   async userIsFollowing(
     @Parent() user: User,
-    @CurrentUser() currentUser?: any,
+    @CurrentUser() currentUser: any,
   ): Promise<boolean> {
-    return this.socialService.getUserIsFollowing(user.id, currentUser?.id);
+    return this.socialService.getUserIsFollowing(user.id, currentUser.id);
   }
 }

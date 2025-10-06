@@ -1,5 +1,4 @@
 import { Resolver, Query, Mutation, Args, ID, ResolveField, Parent, Int } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
 import { CommentsService, CommentFiltersServiceInput } from './comments.service';
 import { UsersService } from '../users/users.service';
 import { CharactersService } from '../characters/characters.service';
@@ -11,8 +10,8 @@ import { Character } from '../characters/entities/character.entity';
 import { Image } from '../images/entities/image.entity';
 import { Gallery } from '../galleries/entities/gallery.entity';
 import { CreateCommentInput, UpdateCommentInput, CommentFiltersInput } from './dto/comment.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
+import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
+import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import {
   mapCreateCommentInputToService,
@@ -32,8 +31,8 @@ export class CommentsResolver {
     private readonly galleriesService: GalleriesService,
   ) {}
 
+  @RequireAuthenticated()
   @Mutation(() => Comment)
-  @UseGuards(JwtAuthGuard)
   async createComment(
     @Args('input') input: CreateCommentInput,
     @CurrentUser() user: any,
@@ -43,15 +42,15 @@ export class CommentsResolver {
     return mapPrismaCommentToGraphQL(comment);
   }
 
+  @AllowUnauthenticated()
   @Query(() => Comment)
-  @UseGuards(OptionalJwtAuthGuard)
   async comment(@Args('id', { type: () => ID }) id: string) {
     const comment = await this.commentsService.findOne(id);
     return mapPrismaCommentToGraphQL(comment);
   }
 
+  @AllowUnauthenticated()
   @Query(() => CommentConnection)
-  @UseGuards(OptionalJwtAuthGuard)
   async comments(
     @Args('filters', { type: () => CommentFiltersInput }) filters: CommentFiltersInput,
   ) {
@@ -60,8 +59,8 @@ export class CommentsResolver {
     return mapPrismaCommentConnectionToGraphQL(result);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => Comment)
-  @UseGuards(JwtAuthGuard)
   async updateComment(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateCommentInput,
@@ -72,8 +71,8 @@ export class CommentsResolver {
     return mapPrismaCommentToGraphQL(comment);
   }
 
+  @RequireAuthenticated()
   @Mutation(() => Boolean)
-  @UseGuards(JwtAuthGuard)
   async deleteComment(
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: any,

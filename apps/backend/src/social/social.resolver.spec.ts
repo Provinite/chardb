@@ -199,16 +199,16 @@ describe('CharacterLikesResolver', () => {
       );
     });
 
-    it('should return false when no user is authenticated', async () => {
+    it('should return like status for authenticated user', async () => {
       jest.spyOn(service, 'getUserHasLiked').mockResolvedValue(false);
 
-      const result = await resolver.userHasLiked(mockCharacter);
+      const result = await resolver.userHasLiked(mockCharacter, mockUser);
 
       expect(result).toBe(false);
       expect(service.getUserHasLiked).toHaveBeenCalledWith(
         LikeableType.CHARACTER,
         'character-1',
-        undefined,
+        mockUser.id,
       );
     });
   });
@@ -574,13 +574,13 @@ describe('UserFollowResolver', () => {
       expect(service.getUserIsFollowing).toHaveBeenCalledWith('user-1', 'user-2');
     });
 
-    it('should return false when no current user is authenticated', async () => {
+    it('should return follow status for authenticated user', async () => {
       jest.spyOn(service, 'getUserIsFollowing').mockResolvedValue(false);
 
-      const result = await resolver.userIsFollowing(mockUser);
+      const result = await resolver.userIsFollowing(mockUser, mockCurrentUser);
 
       expect(result).toBe(false);
-      expect(service.getUserIsFollowing).toHaveBeenCalledWith('user-1', undefined);
+      expect(service.getUserIsFollowing).toHaveBeenCalledWith('user-1', mockCurrentUser.id);
     });
   });
 });
