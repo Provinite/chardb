@@ -1,0 +1,123 @@
+import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { GqlExecutionContext } from "@nestjs/graphql";
+import { DatabaseService } from "../../database/database.service";
+import { getUserFromContext } from "../../auth/utils/get-user-from-context";
+import { RequireOwnership } from "../../auth/decorators/RequireOwnership";
+import {
+  OwnershipResolutionConfig,
+  OwnershipResolutionReference,
+} from "../../auth/types/OwnershipResolutionConfig";
+import { getNestedValue } from "../utils/getNestedValue";
+
+/**
+ * Generic guard that checks if the current user owns an entity.
+ *
+ * Works with @RequireOwnership() decorator.
+ *
+ * Resolves the entity ID from arguments, fetches the entity from Prisma,
+ * and verifies ownership:
+ * - Character: entity.ownerId === currentUser.id
+ * - Media: entity.ownerId === currentUser.id
+ * - Gallery: entity.ownerId === currentUser.id
+ */
+@Injectable()
+export class OwnershipGuard implements CanActivate {
+  constructor(
+    private prisma: DatabaseService,
+    private reflector: Reflector,
+  ) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const user = getUserFromContext(context);
+    if (!user) {
+      return false;
+    }
+
+    const config = this.reflector.getAllAndOverride(
+      RequireOwnership,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (!config) {
+      return false;
+    }
+
+    const resolvedIds = this.resolveEntityIds(context, config);
+    if (!resolvedIds.type || !resolvedIds.value) {
+      return false;
+    }
+
+    // Determine entity type from the resolved key
+    const entityType = this.getEntityType(resolvedIds.type);
+    if (!entityType) {
+      return false;
+    }
+
+    // Fetch entity and check ownership based on type
+    return this.checkOwnership(entityType, resolvedIds.value, user.id);
+  }
+
+  private getEntityType(
+    key: keyof OwnershipResolutionConfig,
+  ): "character" | "media" | "gallery" | null {
+    if (key === "characterId") return "character";
+    if (key === "mediaId") return "media";
+    if (key === "galleryId") return "gallery";
+    return null;
+  }
+
+  private async checkOwnership(
+    entityType: "character" | "media" | "gallery",
+    entityId: string,
+    userId: string,
+  ): Promise<boolean> {
+    switch (entityType) {
+      case "character": {
+        const character = await this.prisma.character.findUnique({
+          where: { id: entityId },
+          select: { ownerId: true },
+        });
+        return character?.ownerId === userId;
+      }
+
+      case "media": {
+        const media = await this.prisma.media.findUnique({
+          where: { id: entityId },
+          select: { ownerId: true },
+        });
+        return media?.ownerId === userId;
+      }
+
+      case "gallery": {
+        const gallery = await this.prisma.gallery.findUnique({
+          where: { id: entityId },
+          select: { ownerId: true },
+        });
+        return gallery?.ownerId === userId;
+      }
+
+      default:
+        return false;
+    }
+  }
+
+  private resolveEntityIds(
+    context: ExecutionContext,
+    config: OwnershipResolutionConfig,
+  ): OwnershipResolutionReference {
+    const gqlContext = GqlExecutionContext.create(context);
+    const args = gqlContext.getArgs();
+
+    for (const [key, path] of Object.entries(config)) {
+      if (path) {
+        const value = getNestedValue(args, path);
+        if (value) {
+          return { type: key as keyof OwnershipResolutionConfig, value };
+        }
+      }
+    }
+
+    return { type: null, value: null };
+  }
+}
