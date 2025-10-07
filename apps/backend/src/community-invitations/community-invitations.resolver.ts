@@ -35,7 +35,9 @@ export class CommunityInvitationsResolver {
     private readonly communitiesService: CommunitiesService,
   ) {}
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanCreateInviteCode)
+  @ResolveCommunityFrom({ communityId: 'createCommunityInvitationInput.communityId' })
   @Mutation(() => CommunityInvitation, { description: 'Create a new community invitation' })
   async createCommunityInvitation(
     @Args('createCommunityInvitationInput', { description: 'Community invitation creation data' })
