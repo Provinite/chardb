@@ -3,6 +3,9 @@ import { NotFoundException } from '@nestjs/common';
 import { CurrentUser, CurrentUserType } from '../auth/decorators/current-user.decorator';
 import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireOwnership } from '../auth/decorators/RequireOwnership';
+import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
 import { GalleriesService } from './galleries.service';
 import { MediaService } from '../media/media.service';
 import { Gallery, GalleryConnection, GalleryCount } from './entities/gallery.entity';
@@ -69,32 +72,26 @@ export class GalleriesResolver {
     return mapPrismaGalleryToGraphQL(prismaResult);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ galleryId: 'id' })
   @Mutation(() => Gallery)
   async updateGallery(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateGalleryInput,
-    @CurrentUser() user: CurrentUserType,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<Gallery> {
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    // TODO: Implement owner/admin check
     const serviceInput = mapUpdateGalleryInputToService(input);
     const prismaResult = await this.galleriesService.update(id, user.id, serviceInput);
     return mapPrismaGalleryToGraphQL(prismaResult);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ galleryId: 'id' })
   @Mutation(() => RemovalResponse)
   async deleteGallery(
     @Args('id', { type: () => ID }) id: string,
-    @CurrentUser() user: CurrentUserType,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<RemovalResponse> {
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    // TODO: Implement owner/admin check
     await this.galleriesService.remove(id, user.id);
     return { removed: true, message: 'Gallery successfully deleted' };
   }
@@ -105,12 +102,8 @@ export class GalleriesResolver {
   @Mutation(() => [Gallery])
   async reorderGalleries(
     @Args('input') input: ReorderGalleriesInput,
-    @CurrentUser() user: CurrentUserType,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<Gallery[]> {
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    // TODO: Implement owner/admin check
     const prismaResults = await this.galleriesService.reorderGalleries(user.id, input.galleryIds);
     return prismaResults.map(mapPrismaGalleryToGraphQL);
   }
