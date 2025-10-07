@@ -57,8 +57,9 @@ export class TraitsResolver {
     return mapPrismaTraitConnectionToGraphQL(serviceResult);
   }
 
-  /** Get traits by species ID with pagination */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ speciesId: 'speciesId' })
   @Query(() => TraitConnection, { name: 'traitsBySpecies', description: 'Get traits by species ID with pagination' })
   async findBySpecies(
     @Args('speciesId', { type: () => ID, description: 'Species ID' })
@@ -72,8 +73,9 @@ export class TraitsResolver {
     return mapPrismaTraitConnectionToGraphQL(serviceResult);
   }
 
-  /** Get a trait by ID */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ traitId: 'id' })
   @Query(() => Trait, { name: 'traitById', description: 'Get a trait by ID' })
   async findOne(
     @Args('id', { type: () => ID, description: 'Trait ID' })

@@ -51,8 +51,9 @@ export class EnumValuesResolver {
     return mapPrismaEnumValueConnectionToGraphQL(serviceResult);
   }
 
-  /** Get enum values by trait ID with pagination */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ traitId: 'traitId' })
   @Query(() => EnumValueConnection, { name: 'enumValuesByTrait', description: 'Get enum values by trait ID with pagination' })
   async findByTrait(
     @Args('traitId', { type: () => ID, description: 'Trait ID' })
@@ -66,8 +67,9 @@ export class EnumValuesResolver {
     return mapPrismaEnumValueConnectionToGraphQL(serviceResult);
   }
 
-  /** Get an enum value by ID */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ enumValueId: 'id' })
   @Query(() => EnumValue, { name: 'enumValueById', description: 'Get an enum value by ID' })
   async findOne(
     @Args('id', { type: () => ID, description: 'Enum value ID' })

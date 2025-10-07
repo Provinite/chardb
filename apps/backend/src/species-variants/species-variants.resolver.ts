@@ -57,8 +57,9 @@ export class SpeciesVariantsResolver {
     return mapPrismaSpeciesVariantConnectionToGraphQL(serviceResult);
   }
 
-  /** Get species variants by species ID with pagination */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ speciesId: 'speciesId' })
   @Query(() => SpeciesVariantConnection, { name: 'speciesVariantsBySpecies', description: 'Get species variants by species ID with pagination' })
   async findBySpecies(
     @Args('speciesId', { type: () => ID, description: 'Species ID' })
@@ -72,8 +73,9 @@ export class SpeciesVariantsResolver {
     return mapPrismaSpeciesVariantConnectionToGraphQL(serviceResult);
   }
 
-  /** Get a species variant by ID */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ speciesVariantId: 'id' })
   @Query(() => SpeciesVariant, { name: 'speciesVariantById', description: 'Get a species variant by ID' })
   async findOne(
     @Args('id', { type: () => ID, description: 'Species variant ID' })

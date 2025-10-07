@@ -56,8 +56,9 @@ export class EnumValueSettingsResolver {
     return mapPrismaEnumValueSettingConnectionToGraphQL(serviceResult);
   }
 
-  /** Get enum value settings by species variant ID with pagination */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ speciesVariantId: 'speciesVariantId' })
   @Query(() => EnumValueSettingConnection, { name: 'enumValueSettingsBySpeciesVariant', description: 'Get enum value settings by species variant ID with pagination' })
   async findBySpeciesVariant(
     @Args('speciesVariantId', { type: () => ID, description: 'Species variant ID' })
@@ -71,8 +72,9 @@ export class EnumValueSettingsResolver {
     return mapPrismaEnumValueSettingConnectionToGraphQL(serviceResult);
   }
 
-  /** Get enum value settings by enum value ID with pagination */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ enumValueId: 'enumValueId' })
   @Query(() => EnumValueSettingConnection, { name: 'enumValueSettingsByEnumValue', description: 'Get enum value settings by enum value ID with pagination' })
   async findByEnumValue(
     @Args('enumValueId', { type: () => ID, description: 'Enum value ID' })
@@ -86,8 +88,9 @@ export class EnumValueSettingsResolver {
     return mapPrismaEnumValueSettingConnectionToGraphQL(serviceResult);
   }
 
-  /** Get an enum value setting by ID */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ enumValueSettingId: 'id' })
   @Query(() => EnumValueSetting, { name: 'enumValueSettingById', description: 'Get an enum value setting by ID' })
   async findOne(
     @Args('id', { type: () => ID, description: 'Enum value setting ID' })

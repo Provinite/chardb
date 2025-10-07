@@ -56,8 +56,9 @@ export class TraitListEntriesResolver {
     return mapPrismaTraitListEntryConnectionToGraphQL(serviceResult);
   }
 
-  /** Get trait list entries by species variant ID with pagination */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ speciesVariantId: 'speciesVariantId' })
   @Query(() => TraitListEntryConnection, { name: 'traitListEntriesBySpeciesVariant', description: 'Get trait list entries by species variant ID with pagination' })
   async findBySpeciesVariant(
     @Args('speciesVariantId', { type: () => ID, description: 'Species variant ID' })
@@ -71,8 +72,9 @@ export class TraitListEntriesResolver {
     return mapPrismaTraitListEntryConnectionToGraphQL(serviceResult);
   }
 
-  /** Get trait list entries by trait ID with pagination */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ traitId: 'traitId' })
   @Query(() => TraitListEntryConnection, { name: 'traitListEntriesByTrait', description: 'Get trait list entries by trait ID with pagination' })
   async findByTrait(
     @Args('traitId', { type: () => ID, description: 'Trait ID' })
@@ -86,8 +88,9 @@ export class TraitListEntriesResolver {
     return mapPrismaTraitListEntryConnectionToGraphQL(serviceResult);
   }
 
-  /** Get a trait list entry by ID */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ traitListEntryId: 'id' })
   @Query(() => TraitListEntry, { name: 'traitListEntryById', description: 'Get a trait list entry by ID' })
   async findOne(
     @Args('id', { type: () => ID, description: 'Trait list entry ID' })
