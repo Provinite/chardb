@@ -143,6 +143,7 @@ export class UsersResolver {
     return 0;
   }
 
+  @RequireAuthenticated()
   @ResolveField("userIsFollowing", () => Boolean)
   async resolveUserIsFollowing(
     @Parent() user: User,

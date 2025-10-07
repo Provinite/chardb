@@ -1,13 +1,15 @@
 import { Resolver, Query, Args } from '@nestjs/graphql';
 import { Tag } from '../shared/entities/tag.entity';
 import { TagsService } from './tags.service';
+import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
 
 @Resolver(() => Tag)
 export class TagsResolver {
   constructor(private readonly tagsService: TagsService) {}
 
-  @Query(() => [Tag], { 
-    description: 'Search for tags by name or get popular suggestions' 
+  @AllowUnauthenticated()
+  @Query(() => [Tag], {
+    description: 'Search for tags by name or get popular suggestions'
   })
   async searchTags(
     @Args('search', { 

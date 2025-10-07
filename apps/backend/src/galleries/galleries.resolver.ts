@@ -195,6 +195,7 @@ export class GalleriesResolver {
     return this.galleriesService.getGalleryLikesCount(gallery.id);
   }
 
+  @RequireAuthenticated()
   @ResolveField('userHasLiked', () => Boolean)
   async resolveUserHasLiked(
     @Parent() gallery: Gallery,

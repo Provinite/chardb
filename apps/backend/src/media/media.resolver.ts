@@ -382,6 +382,7 @@ export class MediaResolver {
   /**
    * Resolves whether the current user has liked this media
    */
+  @RequireAuthenticated()
   @ResolveField(() => Boolean, {
     description: "Whether the current user has liked this media",
   })
