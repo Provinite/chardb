@@ -55,8 +55,9 @@ export class SpeciesResolver {
     return mapPrismaSpeciesConnectionToGraphQL(serviceResult);
   }
 
-  /** Get species by community ID with pagination */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ communityId: 'communityId' })
   @Query(() => SpeciesConnection, { name: 'speciesByCommunity', description: 'Get species by community ID with pagination' })
   async findByCommunity(
     @Args('communityId', { type: () => ID, description: 'Community ID' })
@@ -70,8 +71,9 @@ export class SpeciesResolver {
     return mapPrismaSpeciesConnectionToGraphQL(serviceResult);
   }
 
-  /** Get a species by ID */
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ speciesId: 'id' })
   @Query(() => Species, { name: 'speciesById', description: 'Get a species by ID' })
   async findOne(
     @Args('id', { type: () => ID, description: 'Species ID' })

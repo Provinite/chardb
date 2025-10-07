@@ -5,6 +5,7 @@ import { getUserFromContext } from "../../auth/utils/get-user-from-context";
 import { Reflector } from "@nestjs/core";
 import { RequireCommunityPermission } from "../../auth/decorators/RequireCommunityPermission";
 import { ResolveCommunityFrom } from "../../auth/decorators/ResolveCommunityFrom";
+import { CommunityPermission } from "../../auth/CommunityPermission";
 import {
   CommunityResolutionConfig,
   CommunityResolutionReference,
@@ -51,6 +52,15 @@ export class CommunityPermissionGuard implements CanActivate {
 
     if (!community) {
       return false;
+    }
+
+    // Special case: CommunityPermission.Any means user just needs to be a member (have any role)
+    if (requiredPermissions === CommunityPermission.Any) {
+      const permissions = await this.permissionService.getCommunityPermissions(
+        user.id,
+        community.id,
+      );
+      return permissions.hasMembership;
     }
 
     return this.permissionService.hasCommunityPermission(

@@ -21,14 +21,18 @@ export class PermissionService {
    * 1. Retrieves all roles the user has in the community
    * 2. Aggregates permissions across all roles using OR logic
    * 3. Returns a map of permissions the user has
+   * 4. Includes `hasMembership` boolean indicating if user has any role
    *
    * @param userOrId - The user object or user ID
    * @param communityId - The ID of the community
-   * @returns Object mapping permission names to boolean values (or undefined == false)
+   * @returns Object mapping permission names to boolean values (or undefined == false), plus hasMembership
    *
    * @example
    * ```typescript
    * const permissions = await permissionService.getCommunityPermissions(user, communityId);
+   * if (permissions.hasMembership) {
+   *   // User is a member of this community
+   * }
    * if (permissions.canEditCharacter) {
    *   // User can edit characters in this community
    * }
@@ -44,9 +48,16 @@ export class PermissionService {
       communityId,
     );
 
-    const permissions: Partial<Record<CommunityPermission, boolean>> = {};
+    const permissions: Partial<Record<CommunityPermission, boolean>> & { hasMembership: boolean } = {
+      hasMembership: roles.length > 0,
+    };
+
     for (const role of roles) {
       for (const permission of AllCommunityPermissions) {
+        // Skip the sentinel value "Any" - it's not a real permission field
+        if (permission === CommunityPermission.Any) {
+          continue;
+        }
         if (role[permission] === true) {
           permissions[permission] = true;
         }
