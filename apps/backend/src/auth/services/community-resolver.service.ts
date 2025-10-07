@@ -24,6 +24,7 @@ import { MaybePromise } from "@opentelemetry/resources";
  * - TraitListEntry → SpeciesVariant → Species → Community
  * - CommunityMember → Role → Community
  * - CommunityInvitation → Community (direct)
+ * - Role → Community (direct)
  */
 @Injectable()
 export class CommunityResolverService {
@@ -263,6 +264,28 @@ export class CommunityResolverService {
   }
 
   /**
+   * Get the community ID for a role.
+   *
+   * Roles have a direct communityId field.
+   *
+   * @param roleId - The role ID
+   * @returns The community ID
+   * @throws Error if role doesn't exist
+   */
+  async getRoleCommunity(roleId: string): Promise<string> {
+    const role = await this.prisma.role.findUnique({
+      where: { id: roleId },
+      select: { communityId: true },
+    });
+
+    if (!role) {
+      throw new Error(`Role with ID ${roleId} not found`);
+    }
+
+    return role.communityId;
+  }
+
+  /**
    * Resolve the community for a given entity using resolution configuration.
    *
    * This is the primary method used by guards to determine community context.
@@ -308,6 +331,7 @@ export class CommunityResolverService {
       traitListEntryId: this.getTraitListEntryCommunity.bind(this),
       communityMemberId: this.getCommunityMemberCommunity.bind(this),
       communityInvitationId: this.getCommunityInvitationCommunity.bind(this),
+      roleId: this.getRoleCommunity.bind(this),
     };
 
     if (!config.type) {

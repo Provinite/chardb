@@ -3,6 +3,9 @@ import { NotFoundException } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CommunityPermission } from '../auth/CommunityPermission';
 import { Role, RoleConnection } from './entities/role.entity';
 import { CreateRoleInput, UpdateRoleInput } from './dto/role.dto';
 import {
@@ -23,7 +26,9 @@ export class RolesResolver {
     private readonly communitiesService: CommunitiesService,
   ) {}
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanCreateRole)
+  @ResolveCommunityFrom({ communityId: 'createRoleInput.communityId' })
   @Mutation(() => Role, { description: 'Create a new role' })
   async createRole(
     @Args('createRoleInput', { description: 'Role creation data' })
@@ -70,7 +75,9 @@ export class RolesResolver {
     return mapPrismaRoleToGraphQL(prismaResult);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditRole)
+  @ResolveCommunityFrom({ roleId: 'id' })
   @Mutation(() => Role, { description: 'Update a role' })
   async updateRole(
     @Args('id', { type: () => ID, description: 'Role ID' })
@@ -83,7 +90,9 @@ export class RolesResolver {
     return mapPrismaRoleToGraphQL(prismaResult);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditRole)
+  @ResolveCommunityFrom({ roleId: 'id' })
   @Mutation(() => RemovalResponse, { description: 'Remove a role' })
   async removeRole(
     @Args('id', { type: () => ID, description: 'Role ID' })
