@@ -11,6 +11,9 @@ import {
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
+import { RequireGlobalAdmin } from "../auth/decorators/RequireGlobalAdmin";
+import { RequireOwnership } from "../auth/decorators/RequireOwnership";
+import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { MediaService } from "./media.service";
 import { UsersService } from "../users/users.service";
 import { CharactersService } from "../characters/characters.service";
@@ -197,7 +200,8 @@ export class MediaResolver {
     return mapPrismaMediaToGraphQL(media);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ mediaId: 'id' })
   @Mutation(() => MediaEntity, {
     description: "Updates media metadata (title, description, etc.)",
   })
@@ -206,9 +210,8 @@ export class MediaResolver {
     id: string,
     @Args("input", { description: "Updated media parameters" })
     input: UpdateMediaInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
-    // TODO: Implement owner/admin check
     const serviceInput = mapUpdateMediaInputToService(input);
     const media = await this.mediaService.updateMedia(
       id,
@@ -218,7 +221,8 @@ export class MediaResolver {
     return mapPrismaMediaToGraphQL(media);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ mediaId: 'mediaId' })
   @Mutation(() => MediaEntity, {
     description: "Updates the text content of a text media item",
   })
@@ -230,9 +234,8 @@ export class MediaResolver {
     mediaId: string,
     @Args("input", { description: "Updated text content parameters" })
     input: UpdateTextContentInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
-    // TODO: Implement owner/admin check
     const serviceInput = mapUpdateTextContentInputToService(input);
     const media = await this.mediaService.updateTextContent(
       mediaId,
@@ -243,34 +246,35 @@ export class MediaResolver {
     return mapPrismaMediaToGraphQL(media);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ mediaId: 'id' })
   @Mutation(() => Boolean, {
     description: "Deletes a media item and its associated content",
   })
   async deleteMedia(
     @Args("id", { type: () => ID, description: "Media ID to delete" })
     id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
-    // TODO: Implement owner/admin check
     return this.mediaService.remove(id, user.id);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ mediaId: 'id' })
   @Mutation(() => MediaEntity, { description: "Adds tags to a media item" })
   async addMediaTags(
     @Args("id", { type: () => ID, description: "Media ID to add tags to" })
     id: string,
     @Args("input", { description: "Tags to add to the media" })
     input: ManageMediaTagsInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
-    // TODO: Implement owner/admin check
     const media = await this.mediaService.addTags(id, user.id, input.tagNames);
     return mapPrismaMediaToGraphQL(media);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ mediaId: 'id' })
   @Mutation(() => MediaEntity, {
     description: "Removes tags from a media item",
   })
@@ -279,9 +283,8 @@ export class MediaResolver {
     id: string,
     @Args("input", { description: "Tags to remove from the media" })
     input: ManageMediaTagsInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
-    // TODO: Implement owner/admin check
     const media = await this.mediaService.removeTags(
       id,
       user.id,
