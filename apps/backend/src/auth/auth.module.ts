@@ -17,6 +17,7 @@ import { UnauthenticatedGuard } from "../common/guards/UnauthenticatedGuard";
 import { CommunityPermissionGuard } from "../common/guards/CommunityPermissionGuard";
 import { GlobalPermissionGuard } from "../common/guards/GlobalPermissionGuard";
 import { OwnershipGuard } from "../common/guards/OwnershipGuard";
+import { SelfGuard } from "../common/guards/SelfGuard";
 import { OptionalJwtAuthGuard } from "./guards/optional-jwt-auth.guard";
 import { CustomThrottlerGuard } from "../middleware/custom-throttler.guard";
 import { OrGuard } from "../common/guards/OrGuard";
@@ -48,6 +49,7 @@ import { AuthenticatedGuard } from "../common/guards/AuthenticatedGuard";
     CommunityPermissionGuard,
     GlobalPermissionGuard,
     OwnershipGuard,
+    SelfGuard,
     AuthenticatedGuard,
     OptionalJwtAuthGuard,
     CustomThrottlerGuard,
@@ -57,6 +59,7 @@ import { AuthenticatedGuard } from "../common/guards/AuthenticatedGuard";
         GlobalPermissionGuard,
         CommunityPermissionGuard,
         OwnershipGuard,
+        SelfGuard,
         AuthenticatedGuard,
         UnauthenticatedGuard
       ),

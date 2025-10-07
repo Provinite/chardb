@@ -14,6 +14,8 @@ import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
+import { RequireGlobalAdmin } from "../auth/decorators/RequireGlobalAdmin";
+import { RequireOwnership } from "../auth/decorators/RequireOwnership";
 import { CharactersService } from "./characters.service";
 import { TagsService } from "../tags/tags.service";
 import { UsersService } from "../users/users.service";
@@ -97,23 +99,25 @@ export class CharactersResolver {
     return mapPrismaCharacterToGraphQL(character);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ characterId: 'id' })
   @Mutation(() => CharacterEntity)
   async updateCharacter(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: UpdateCharacterInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
     const serviceInput = mapUpdateCharacterInputToService(input);
     const character = await this.charactersService.update(id, user.id, serviceInput);
     return mapPrismaCharacterToGraphQL(character);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ characterId: 'id' })
   @Mutation(() => Boolean)
   async deleteCharacter(
     @Args("id", { type: () => ID }) id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.charactersService.remove(id, user.id);
   }
@@ -128,27 +132,30 @@ export class CharactersResolver {
     return this.charactersService.transfer(id, user.id, input.newOwnerId);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ characterId: 'id' })
   @Mutation(() => CharacterEntity)
   async addCharacterTags(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: ManageTagsInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
     return this.charactersService.addTags(id, user.id, input.tagNames);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ characterId: 'id' })
   @Mutation(() => CharacterEntity)
   async removeCharacterTags(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: ManageTagsInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
     return this.charactersService.removeTags(id, user.id, input.tagNames);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ characterId: 'id' })
   @Mutation(() => CharacterEntity, {
     description: "Sets or clears the main media for a character",
   })
@@ -157,7 +164,7 @@ export class CharactersResolver {
     id: string,
     @Args("input", { description: "Main media setting parameters" })
     input: SetMainMediaInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
     return this.charactersService.setMainMedia(id, user.id, input.mediaId);
   }
