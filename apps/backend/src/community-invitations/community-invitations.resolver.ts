@@ -1,7 +1,13 @@
 import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from '@nestjs/graphql';
+import { ForbiddenException } from '@nestjs/common';
 import { CommunityInvitationsService } from './community-invitations.service';
 import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CommunityPermission } from '../auth/CommunityPermission';
+import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
 import { CommunityInvitation, CommunityInvitationConnection } from './entities/community-invitation.entity';
 import { CreateCommunityInvitationInput, RespondToCommunityInvitationInput } from './dto/community-invitation.dto';
 import {
@@ -40,7 +46,7 @@ export class CommunityInvitationsResolver {
     return mapPrismaCommunityInvitationToGraphQL(prismaResult);
   }
 
-  /** Get all community invitations with pagination */
+  @RequireGlobalAdmin()
   @Query(() => CommunityInvitationConnection, { name: 'communityInvitations', description: 'Get all community invitations with pagination' })
   async findAll(
     @Args('first', { type: () => Int, nullable: true, description: 'Number of community invitations to return', defaultValue: 20 })
@@ -52,7 +58,9 @@ export class CommunityInvitationsResolver {
     return mapPrismaConnectionToGraphQL(serviceResult);
   }
 
-  /** Get community invitations by community ID with pagination */
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanCreateInviteCode)
+  @ResolveCommunityFrom({ communityId: 'communityId' })
   @Query(() => CommunityInvitationConnection, { name: 'communityInvitationsByCommunity', description: 'Get community invitations by community ID with pagination' })
   async findByCommunity(
     @Args('communityId', { type: () => ID, description: 'Community ID' })
@@ -66,16 +74,21 @@ export class CommunityInvitationsResolver {
     return mapPrismaConnectionToGraphQL(serviceResult);
   }
 
-  /** Get community invitations by invitee ID with pagination */
+  @RequireAuthenticated()
   @Query(() => CommunityInvitationConnection, { name: 'communityInvitationsByInvitee', description: 'Get community invitations by invitee ID with pagination' })
   async findByInvitee(
     @Args('inviteeId', { type: () => ID, description: 'Invitee ID' })
     inviteeId: string,
+    @CurrentUser() currentUser: AuthenticatedCurrentUserType,
     @Args('first', { type: () => Int, nullable: true, description: 'Number of community invitations to return', defaultValue: 20 })
     first?: number,
     @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
     after?: string,
   ): Promise<CommunityInvitationConnection> {
+    // Self OR Admin check
+    if (!currentUser.isAdmin && inviteeId !== currentUser.id) {
+      throw new ForbiddenException('You can only view your own invitations unless you are an admin');
+    }
     const serviceResult = await this.communityInvitationsService.findByInvitee(inviteeId, first, after);
     return mapPrismaConnectionToGraphQL(serviceResult);
   }
@@ -94,13 +107,23 @@ export class CommunityInvitationsResolver {
     return mapPrismaConnectionToGraphQL(serviceResult);
   }
 
-  /** Get a community invitation by ID */
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanCreateInviteCode)
+  @ResolveCommunityFrom({ communityInvitationId: 'id' })
   @Query(() => CommunityInvitation, { name: 'communityInvitationById', description: 'Get a community invitation by ID' })
   async findOne(
-    @Args('id', { type: () => ID, description: 'Community invitation ID' }) 
+    @Args('id', { type: () => ID, description: 'Community invitation ID' })
     id: string,
+    @CurrentUser() currentUser: AuthenticatedCurrentUserType,
   ): Promise<CommunityInvitation> {
     const prismaResult = await this.communityInvitationsService.findOne(id);
+
+    // Allow if user is invitee or inviter (in addition to admin/permission checks from decorators)
+    if (prismaResult.inviteeId === currentUser.id || prismaResult.inviterId === currentUser.id) {
+      return mapPrismaCommunityInvitationToGraphQL(prismaResult);
+    }
+
+    // Otherwise, decorators will enforce Admin OR CanCreateInviteCode permission
     return mapPrismaCommunityInvitationToGraphQL(prismaResult);
   }
 

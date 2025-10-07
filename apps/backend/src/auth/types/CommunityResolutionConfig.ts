@@ -21,6 +21,8 @@ export interface CommunityResolutionConfig {
   traitListEntryId?: string;
   /** Path to community member ID in arguments */
   communityMemberId?: string;
+  /** Path to community invitation ID in arguments */
+  communityInvitationId?: string;
   /** Path to community ID in arguments (direct) */
   communityId?: string;
 }
@@ -34,6 +36,7 @@ export const AllCommunityResolutionKeys = [
   "enumValueSettingId",
   "traitListEntryId",
   "communityMemberId",
+  "communityInvitationId",
   "communityId",
 ] as const;
 
