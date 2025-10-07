@@ -32,6 +32,9 @@ import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
 import { RequireGlobalPermission } from "../auth/decorators/RequireGlobalPermission";
 import { GlobalPermission } from "../auth/GlobalPermission";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
+import { RequireSelf } from "../auth/decorators/RequireSelf";
+import { RequireGlobalAdmin } from "../auth/decorators/RequireGlobalAdmin";
+import { GraphQLJSON } from "graphql-type-json";
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -151,6 +154,65 @@ export class UsersResolver {
   ): Promise<boolean> {
     // TODO: Implement when social features are added
     return false;
+  }
+
+  // Sensitive field resolvers
+  @RequireGlobalAdmin()
+  @RequireSelf()
+  @ResolveField("email", () => String)
+  async resolveEmail(@Parent() user: User): Promise<string> {
+    return user.email;
+  }
+
+  @RequireGlobalAdmin()
+  @RequireSelf()
+  @ResolveField("dateOfBirth", () => Date, { nullable: true })
+  async resolveDateOfBirth(@Parent() user: User): Promise<Date | null> {
+    return user.dateOfBirth ?? null;
+  }
+
+  @RequireGlobalAdmin()
+  @RequireSelf()
+  @ResolveField("privacySettings", () => GraphQLJSON)
+  async resolvePrivacySettings(@Parent() user: User): Promise<any> {
+    return user.privacySettings;
+  }
+
+  @RequireGlobalAdmin()
+  @RequireSelf()
+  @ResolveField("canCreateCommunity", () => Boolean)
+  async resolveCanCreateCommunity(@Parent() user: User): Promise<boolean> {
+    return user.canCreateCommunity;
+  }
+
+  @RequireGlobalAdmin()
+  @RequireSelf()
+  @ResolveField("canListUsers", () => Boolean)
+  async resolveCanListUsers(@Parent() user: User): Promise<boolean> {
+    return user.canListUsers;
+  }
+
+  @RequireGlobalAdmin()
+  @RequireSelf()
+  @ResolveField("canListInviteCodes", () => Boolean)
+  async resolveCanListInviteCodes(@Parent() user: User): Promise<boolean> {
+    return user.canListInviteCodes;
+  }
+
+  @RequireGlobalAdmin()
+  @RequireSelf()
+  @ResolveField("canCreateInviteCode", () => Boolean)
+  async resolveCanCreateInviteCode(@Parent() user: User): Promise<boolean> {
+    return user.canCreateInviteCode;
+  }
+
+  @RequireGlobalAdmin()
+  @RequireSelf()
+  @ResolveField("canGrantGlobalPermissions", () => Boolean)
+  async resolveCanGrantGlobalPermissions(
+    @Parent() user: User,
+  ): Promise<boolean> {
+    return user.canGrantGlobalPermissions;
   }
 }
 
