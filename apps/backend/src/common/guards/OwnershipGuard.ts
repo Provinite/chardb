@@ -20,6 +20,7 @@ import { getNestedValue } from "../utils/getNestedValue";
  * - Character: entity.ownerId === currentUser.id
  * - Media: entity.ownerId === currentUser.id
  * - Gallery: entity.ownerId === currentUser.id
+ * - Image: entity.uploaderId === currentUser.id
  * - CommunityInvitation (invitee): entity.inviteeId === currentUser.id
  * - CommunityInvitation (inviter OR invitee): entity.inviterId === currentUser.id || entity.inviteeId === currentUser.id
  * - Comment: entity.authorId === currentUser.id
@@ -67,6 +68,7 @@ export class OwnershipGuard implements CanActivate {
     | "character"
     | "media"
     | "gallery"
+    | "image"
     | "inviteeOfInvitation"
     | "inviterOrInviteeOfInvitation"
     | "comment"
@@ -74,6 +76,7 @@ export class OwnershipGuard implements CanActivate {
     if (key === "characterId") return "character";
     if (key === "mediaId") return "media";
     if (key === "galleryId") return "gallery";
+    if (key === "imageId") return "image";
     if (key === "inviteeOfInvitationId") return "inviteeOfInvitation";
     if (key === "inviterOrInviteeOfInvitationId")
       return "inviterOrInviteeOfInvitation";
@@ -86,6 +89,7 @@ export class OwnershipGuard implements CanActivate {
       | "character"
       | "media"
       | "gallery"
+      | "image"
       | "inviteeOfInvitation"
       | "inviterOrInviteeOfInvitation"
       | "comment",
@@ -115,6 +119,14 @@ export class OwnershipGuard implements CanActivate {
           select: { ownerId: true },
         });
         return gallery?.ownerId === userId;
+      }
+
+      case "image": {
+        const image = await this.prisma.image.findUnique({
+          where: { id: entityId },
+          select: { uploaderId: true },
+        });
+        return image?.uploaderId === userId;
       }
 
       case "inviteeOfInvitation": {

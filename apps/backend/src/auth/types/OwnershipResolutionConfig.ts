@@ -11,6 +11,8 @@ export interface OwnershipResolutionConfig {
   mediaId?: string;
   /** Path to gallery ID in arguments */
   galleryId?: string;
+  /** Path to image ID in arguments (checks uploaderId) */
+  imageId?: string;
   /** Path to user ID in arguments (for self checks) */
   userId?: string;
   /** Path to community invitation ID in arguments (checks inviteeId) */
@@ -25,6 +27,7 @@ export const AllOwnershipResolutionKeys = [
   "characterId",
   "mediaId",
   "galleryId",
+  "imageId",
   "userId",
   "inviteeOfInvitationId",
   "inviterOrInviteeOfInvitationId",

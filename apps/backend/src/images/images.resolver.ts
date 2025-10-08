@@ -2,6 +2,9 @@ import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireOwnership } from '../auth/decorators/RequireOwnership';
+import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
 import { ImagesService } from './images.service';
 import { Image as ImageEntity, ImageConnection } from './entities/image.entity';
 import {
@@ -34,21 +37,23 @@ export class ImagesResolver {
     return this.imagesService.findOne(id, user?.id);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ imageId: 'id' })
   @Mutation(() => ImageEntity)
   async updateImage(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateImageInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
     return this.imagesService.update(id, user.id, input);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ imageId: 'id' })
   @Mutation(() => Boolean)
   async deleteImage(
     @Args('id', { type: () => ID }) id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.imagesService.remove(id, user.id);
   }
