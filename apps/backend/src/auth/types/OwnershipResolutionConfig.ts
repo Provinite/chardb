@@ -17,6 +17,8 @@ export interface OwnershipResolutionConfig {
   inviteeOfInvitationId?: string;
   /** Path to community invitation ID in arguments (checks inviterId OR inviteeId) */
   inviterOrInviteeOfInvitationId?: string;
+  /** Path to comment ID in arguments (checks authorId) */
+  commentId?: string;
 }
 
 export const AllOwnershipResolutionKeys = [
@@ -26,6 +28,7 @@ export const AllOwnershipResolutionKeys = [
   "userId",
   "inviteeOfInvitationId",
   "inviterOrInviteeOfInvitationId",
+  "commentId",
 ] as const;
 
 export type OwnershipResolutionReference = {

@@ -13,6 +13,9 @@ import { CreateCommentInput, UpdateCommentInput, CommentFiltersInput } from './d
 import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
+import { RequireOwnership } from '../auth/decorators/RequireOwnership';
+import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
 import {
   mapCreateCommentInputToService,
   mapUpdateCommentInputToService,
@@ -35,7 +38,7 @@ export class CommentsResolver {
   @Mutation(() => Comment)
   async createComment(
     @Args('input') input: CreateCommentInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
     const serviceInput = mapCreateCommentInputToService(input);
     const comment = await this.commentsService.create(user.id, serviceInput);
@@ -59,24 +62,28 @@ export class CommentsResolver {
     return mapPrismaCommentConnectionToGraphQL(result);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ commentId: 'id' })
   @Mutation(() => Comment)
   async updateComment(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateCommentInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
     const serviceInput = mapUpdateCommentInputToService(input);
     const comment = await this.commentsService.update(id, user.id, serviceInput);
     return mapPrismaCommentToGraphQL(comment);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ commentId: 'id' })
   @Mutation(() => Boolean)
   async deleteComment(
     @Args('id', { type: () => ID }) id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
+    // Note: Audit also specifies "Owner of commentable entity" can delete
+    // This requires service-level check since we need to fetch comment -> commentable -> check owner
     return this.commentsService.remove(id, user.id, user.isAdmin);
   }
 

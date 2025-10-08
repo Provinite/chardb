@@ -22,6 +22,7 @@ import { getNestedValue } from "../utils/getNestedValue";
  * - Gallery: entity.ownerId === currentUser.id
  * - CommunityInvitation (invitee): entity.inviteeId === currentUser.id
  * - CommunityInvitation (inviter OR invitee): entity.inviterId === currentUser.id || entity.inviteeId === currentUser.id
+ * - Comment: entity.authorId === currentUser.id
  */
 @Injectable()
 export class OwnershipGuard implements CanActivate {
@@ -68,6 +69,7 @@ export class OwnershipGuard implements CanActivate {
     | "gallery"
     | "inviteeOfInvitation"
     | "inviterOrInviteeOfInvitation"
+    | "comment"
     | null {
     if (key === "characterId") return "character";
     if (key === "mediaId") return "media";
@@ -75,6 +77,7 @@ export class OwnershipGuard implements CanActivate {
     if (key === "inviteeOfInvitationId") return "inviteeOfInvitation";
     if (key === "inviterOrInviteeOfInvitationId")
       return "inviterOrInviteeOfInvitation";
+    if (key === "commentId") return "comment";
     return null;
   }
 
@@ -84,7 +87,8 @@ export class OwnershipGuard implements CanActivate {
       | "media"
       | "gallery"
       | "inviteeOfInvitation"
-      | "inviterOrInviteeOfInvitation",
+      | "inviterOrInviteeOfInvitation"
+      | "comment",
     entityId: string,
     userId: string,
   ): Promise<boolean> {
@@ -129,6 +133,14 @@ export class OwnershipGuard implements CanActivate {
         return (
           invitation?.inviterId === userId || invitation?.inviteeId === userId
         );
+      }
+
+      case "comment": {
+        const comment = await this.prisma.comment.findUnique({
+          where: { id: entityId },
+          select: { authorId: true },
+        });
+        return comment?.authorId === userId;
       }
 
       default:
