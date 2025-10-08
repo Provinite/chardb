@@ -16,6 +16,9 @@ import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { RequireGlobalAdmin } from "../auth/decorators/RequireGlobalAdmin";
 import { RequireOwnership } from "../auth/decorators/RequireOwnership";
+import { RequireCommunityPermission } from "../auth/decorators/RequireCommunityPermission";
+import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
+import { CommunityPermission } from "../auth/CommunityPermission";
 import { CharactersService } from "./characters.service";
 import { TagsService } from "../tags/tags.service";
 import { UsersService } from "../users/users.service";
@@ -122,12 +125,12 @@ export class CharactersResolver {
     return this.charactersService.remove(id, user.id);
   }
 
-  @RequireAuthenticated()
+  @RequireOwnership({ characterId: 'id' })
   @Mutation(() => CharacterEntity)
   async transferCharacter(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: TransferCharacterInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
     return this.charactersService.transfer(id, user.id, input.newOwnerId);
   }
@@ -274,7 +277,9 @@ export class CharactersResolver {
     return this.speciesVariantsService.findOne(character.speciesVariantId);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.CanEditCharacter)
+  @ResolveCommunityFrom({ characterId: 'id' })
   @Mutation(() => CharacterEntity, {
     description: "Update character trait values",
   })
@@ -282,7 +287,7 @@ export class CharactersResolver {
     @Args("id", { type: () => ID }) id: string,
     @Args("updateCharacterTraitsInput")
     updateCharacterTraitsInput: UpdateCharacterTraitsInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<CharacterEntity> {
     const serviceInput = mapUpdateCharacterTraitsInputToService(
       updateCharacterTraitsInput,
