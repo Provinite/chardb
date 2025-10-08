@@ -11,15 +11,17 @@ import {
 import { getNestedValue } from "../utils/getNestedValue";
 
 /**
- * Generic guard that checks if the current user owns an entity.
+ * Generic guard that checks if the current user owns an entity or has identity relationship.
  *
  * Works with @RequireOwnership() decorator.
  *
  * Resolves the entity ID from arguments, fetches the entity from Prisma,
- * and verifies ownership:
+ * and verifies ownership/identity:
  * - Character: entity.ownerId === currentUser.id
  * - Media: entity.ownerId === currentUser.id
  * - Gallery: entity.ownerId === currentUser.id
+ * - CommunityInvitation (invitee): entity.inviteeId === currentUser.id
+ * - CommunityInvitation (inviter OR invitee): entity.inviterId === currentUser.id || entity.inviteeId === currentUser.id
  */
 @Injectable()
 export class OwnershipGuard implements CanActivate {
@@ -60,15 +62,29 @@ export class OwnershipGuard implements CanActivate {
 
   private getEntityType(
     key: keyof OwnershipResolutionConfig,
-  ): "character" | "media" | "gallery" | null {
+  ):
+    | "character"
+    | "media"
+    | "gallery"
+    | "inviteeOfInvitation"
+    | "inviterOrInviteeOfInvitation"
+    | null {
     if (key === "characterId") return "character";
     if (key === "mediaId") return "media";
     if (key === "galleryId") return "gallery";
+    if (key === "inviteeOfInvitationId") return "inviteeOfInvitation";
+    if (key === "inviterOrInviteeOfInvitationId")
+      return "inviterOrInviteeOfInvitation";
     return null;
   }
 
   private async checkOwnership(
-    entityType: "character" | "media" | "gallery",
+    entityType:
+      | "character"
+      | "media"
+      | "gallery"
+      | "inviteeOfInvitation"
+      | "inviterOrInviteeOfInvitation",
     entityId: string,
     userId: string,
   ): Promise<boolean> {
@@ -95,6 +111,24 @@ export class OwnershipGuard implements CanActivate {
           select: { ownerId: true },
         });
         return gallery?.ownerId === userId;
+      }
+
+      case "inviteeOfInvitation": {
+        const invitation = await this.prisma.communityInvitation.findUnique({
+          where: { id: entityId },
+          select: { inviteeId: true },
+        });
+        return invitation?.inviteeId === userId;
+      }
+
+      case "inviterOrInviteeOfInvitation": {
+        const invitation = await this.prisma.communityInvitation.findUnique({
+          where: { id: entityId },
+          select: { inviterId: true, inviteeId: true },
+        });
+        return (
+          invitation?.inviterId === userId || invitation?.inviteeId === userId
+        );
       }
 
       default:

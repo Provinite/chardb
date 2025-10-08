@@ -5,6 +5,7 @@ import { RequireAuthenticated } from '../auth/decorators/RequireAuthenticated';
 import { RequireGlobalAdmin } from '../auth/decorators/RequireGlobalAdmin';
 import { RequireCommunityPermission } from '../auth/decorators/RequireCommunityPermission';
 import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { RequireOwnership } from '../auth/decorators/RequireOwnership';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { CommunityPermission } from '../auth/CommunityPermission';
 import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
@@ -130,7 +131,7 @@ export class CommunityInvitationsResolver {
   }
 
   /** Respond to a community invitation */
-  @RequireAuthenticated()
+  @RequireOwnership({ inviteeOfInvitationId: 'id' })
   @Mutation(() => CommunityInvitation, { description: 'Respond to a community invitation (accept or decline)' })
   async respondToCommunityInvitation(
     @Args('id', { type: () => ID, description: 'Community invitation ID' })
@@ -143,7 +144,8 @@ export class CommunityInvitationsResolver {
     return mapPrismaCommunityInvitationToGraphQL(prismaResult);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireOwnership({ inviterOrInviteeOfInvitationId: 'id' })
   @Mutation(() => CommunityInvitation, { description: 'Remove a community invitation' })
   async removeCommunityInvitation(
     @Args('id', { type: () => ID, description: 'Community invitation ID' })
