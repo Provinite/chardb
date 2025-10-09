@@ -83,7 +83,9 @@ export class CommunityMembersResolver {
     return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }
 
-  @RequireAuthenticated()
+  @RequireGlobalAdmin()
+  @RequireCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ communityId: "communityId" })
   @Query(() => CommunityMemberConnection, {
     name: "communityMembersByCommunity",
     description: "Get community members by community ID with pagination",
