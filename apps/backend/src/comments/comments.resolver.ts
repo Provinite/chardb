@@ -82,8 +82,6 @@ export class CommentsResolver {
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
-    // Note: Audit also specifies "Owner of commentable entity" can delete
-    // This requires service-level check since we need to fetch comment -> commentable -> check owner
     return this.commentsService.remove(id, user.id, user.isAdmin);
   }
 

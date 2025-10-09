@@ -176,15 +176,77 @@ export class CommentsService {
       throw new NotFoundException("Comment not found");
     }
 
-    if (existingComment.authorId !== authorId && !isAdmin) {
-      throw new ForbiddenException("You can only delete your own comments");
+    // Check if user is the comment author or an admin
+    const isAuthor = existingComment.authorId === authorId;
+    if (isAuthor || isAdmin) {
+      await this.databaseService.comment.delete({
+        where: { id },
+      });
+      return true;
     }
 
-    await this.databaseService.comment.delete({
-      where: { id },
-    });
+    // Check if user owns the commentable entity
+    const isCommentableOwner = await this.checkCommentableOwnership(
+      existingComment,
+      authorId,
+    );
+    if (isCommentableOwner) {
+      await this.databaseService.comment.delete({
+        where: { id },
+      });
+      return true;
+    }
 
-    return true;
+    throw new ForbiddenException(
+      "You can only delete your own comments or comments on content you own",
+    );
+  }
+
+  /**
+   * Check if the user owns the entity that was commented on
+   */
+  private async checkCommentableOwnership(
+    comment: {
+      characterId: string | null;
+      imageId: string | null;
+      galleryId: string | null;
+      userId: string | null;
+    },
+    userId: string,
+  ): Promise<boolean> {
+    // Check character ownership
+    if (comment.characterId) {
+      const character = await this.databaseService.character.findUnique({
+        where: { id: comment.characterId },
+        select: { ownerId: true },
+      });
+      return character?.ownerId === userId;
+    }
+
+    // Check image ownership (via uploaderId)
+    if (comment.imageId) {
+      const image = await this.databaseService.image.findUnique({
+        where: { id: comment.imageId },
+        select: { uploaderId: true },
+      });
+      return image?.uploaderId === userId;
+    }
+
+    // Check gallery ownership
+    if (comment.galleryId) {
+      const gallery = await this.databaseService.gallery.findUnique({
+        where: { id: comment.galleryId },
+        select: { ownerId: true },
+      });
+      return gallery?.ownerId === userId;
+    }
+
+    // Check user profile ownership (self)
+    if (comment.userId) {
+      return comment.userId === userId;
+    }
+
+    return false;
   }
 
   private async validateEntity(
