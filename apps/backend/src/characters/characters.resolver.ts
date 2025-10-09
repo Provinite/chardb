@@ -73,10 +73,12 @@ export class CharactersResolver {
   ) {}
 
   @RequireAuthenticated()
+  @RequireCommunityPermission(CommunityPermission.CanCreateCharacter)
+  @ResolveCommunityFrom({ speciesId: 'input.speciesId' })
   @Mutation(() => CharacterEntity)
   async createCharacter(
     @Args("input") input: CreateCharacterInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
     const serviceInput = mapCreateCharacterInputToService(input);
     const character = await this.charactersService.create(user.id, serviceInput);
