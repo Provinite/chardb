@@ -40,6 +40,7 @@ export class InviteCodesResolver {
   }
 
   /** Get all invite codes with pagination */
+  @RequireGlobalPermission(GlobalPermission.CanListInviteCodes)
   @Query(() => InviteCodeConnection, { name: 'inviteCodes', description: 'Get all invite codes with pagination' })
   async findAll(
     @Args('first', { type: () => Int, nullable: true, description: 'Number of invite codes to return', defaultValue: 20 })
@@ -54,6 +55,7 @@ export class InviteCodesResolver {
   }
 
   /** Get invite codes by creator ID with pagination */
+  @RequireGlobalPermission(GlobalPermission.CanListInviteCodes)
   @Query(() => InviteCodeConnection, { name: 'inviteCodesByCreator', description: 'Get invite codes by creator ID with pagination' })
   async findByCreator(
     @Args('creatorId', { type: () => ID, description: 'Creator ID' })
@@ -68,6 +70,7 @@ export class InviteCodesResolver {
   }
 
   /** Get invite codes by role ID with pagination */
+  @RequireGlobalPermission(GlobalPermission.CanListInviteCodes)
   @Query(() => InviteCodeConnection, { name: 'inviteCodesByRole', description: 'Get invite codes by role ID with pagination' })
   async findByRole(
     @Args('roleId', { type: () => ID, description: 'Role ID' })
@@ -82,9 +85,10 @@ export class InviteCodesResolver {
   }
 
   /** Get an invite code by ID */
+  @RequireGlobalPermission(GlobalPermission.CanListInviteCodes)
   @Query(() => InviteCode, { name: 'inviteCodeById', description: 'Get an invite code by ID' })
   async findOne(
-    @Args('id', { type: () => ID, description: 'Invite code ID' }) 
+    @Args('id', { type: () => ID, description: 'Invite code ID' })
     id: string,
   ): Promise<InviteCode> {
     const prismaResult = await this.inviteCodesService.findOne(id);
