@@ -19,6 +19,7 @@ import { RequireOwnership } from "../auth/decorators/RequireOwnership";
 import { RequireCommunityPermission } from "../auth/decorators/RequireCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
+import { RequireCharacterEdit } from "../auth/decorators/RequireCharacterEdit";
 import { CharactersService } from "./characters.service";
 import { TagsService } from "../tags/tags.service";
 import { UsersService } from "../users/users.service";
@@ -103,7 +104,7 @@ export class CharactersResolver {
   }
 
   @RequireGlobalAdmin()
-  @RequireOwnership({ characterId: 'id' })
+  @RequireCharacterEdit({ characterId: 'id' })
   @Mutation(() => CharacterEntity)
   async updateCharacter(
     @Args("id", { type: () => ID }) id: string,
@@ -116,7 +117,7 @@ export class CharactersResolver {
   }
 
   @RequireGlobalAdmin()
-  @RequireOwnership({ characterId: 'id' })
+  @RequireCharacterEdit({ characterId: 'id' })
   @Mutation(() => Boolean)
   async deleteCharacter(
     @Args("id", { type: () => ID }) id: string,
@@ -136,7 +137,7 @@ export class CharactersResolver {
   }
 
   @RequireGlobalAdmin()
-  @RequireOwnership({ characterId: 'id' })
+  @RequireCharacterEdit({ characterId: 'id' })
   @Mutation(() => CharacterEntity)
   async addCharacterTags(
     @Args("id", { type: () => ID }) id: string,
@@ -147,7 +148,7 @@ export class CharactersResolver {
   }
 
   @RequireGlobalAdmin()
-  @RequireOwnership({ characterId: 'id' })
+  @RequireCharacterEdit({ characterId: 'id' })
   @Mutation(() => CharacterEntity)
   async removeCharacterTags(
     @Args("id", { type: () => ID }) id: string,
@@ -158,7 +159,7 @@ export class CharactersResolver {
   }
 
   @RequireGlobalAdmin()
-  @RequireOwnership({ characterId: 'id' })
+  @RequireCharacterEdit({ characterId: 'id' })
   @Mutation(() => CharacterEntity, {
     description: "Sets or clears the main media for a character",
   })
