@@ -96,20 +96,6 @@ export class CommunityInvitationsResolver {
     return mapPrismaConnectionToGraphQL(serviceResult);
   }
 
-  /** Get community invitations by inviter ID with pagination */
-  @Query(() => CommunityInvitationConnection, { name: 'communityInvitationsByInviter', description: 'Get community invitations by inviter ID with pagination' })
-  async findByInviter(
-    @Args('inviterId', { type: () => ID, description: 'Inviter ID' })
-    inviterId: string,
-    @Args('first', { type: () => Int, nullable: true, description: 'Number of community invitations to return', defaultValue: 20 })
-    first?: number,
-    @Args('after', { type: () => String, nullable: true, description: 'Cursor for pagination' })
-    after?: string,
-  ): Promise<CommunityInvitationConnection> {
-    const serviceResult = await this.communityInvitationsService.findByInviter(inviterId, first, after);
-    return mapPrismaConnectionToGraphQL(serviceResult);
-  }
-
   @RequireGlobalAdmin()
   @RequireCommunityPermission(CommunityPermission.CanCreateInviteCode)
   @ResolveCommunityFrom({ communityInvitationId: 'id' })
