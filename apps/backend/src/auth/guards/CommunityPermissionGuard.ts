@@ -1,17 +1,17 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
-import { PermissionService } from "../../auth/PermissionService";
-import { CommunityResolverService } from "../../auth/services/community-resolver.service";
-import { getUserFromContext } from "../../auth/utils/get-user-from-context";
+import { PermissionService } from "../PermissionService";
+import { CommunityResolverService } from "../services/community-resolver.service";
+import { getUserFromContext } from "../utils/get-user-from-context";
 import { Reflector } from "@nestjs/core";
-import { RequireCommunityPermission } from "../../auth/decorators/RequireCommunityPermission";
-import { ResolveCommunityFrom } from "../../auth/decorators/ResolveCommunityFrom";
-import { CommunityPermission } from "../../auth/CommunityPermission";
+import { AllowCommunityPermission } from "../decorators/AllowCommunityPermission";
+import { ResolveCommunityFrom } from "../decorators/ResolveCommunityFrom";
+import { CommunityPermission } from "../CommunityPermission";
 import {
   CommunityResolutionConfig,
   CommunityResolutionReference,
-} from "../../auth/types/CommunityResolutionConfig";
+} from "../types/CommunityResolutionConfig";
 import { GqlExecutionContext } from "@nestjs/graphql";
-import { getNestedValue } from "../utils/getNestedValue";
+import { getNestedValue } from "../../common/utils/getNestedValue";
 
 @Injectable()
 export class CommunityPermissionGuard implements CanActivate {
@@ -28,7 +28,7 @@ export class CommunityPermissionGuard implements CanActivate {
     }
 
     const requiredPermissions = this.reflector.getAllAndOverride(
-      RequireCommunityPermission,
+      AllowCommunityPermission,
       [context.getHandler(), context.getClass()],
     );
 

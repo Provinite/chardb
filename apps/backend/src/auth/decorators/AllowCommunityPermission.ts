@@ -22,7 +22,7 @@ import { CommunityPermission } from "../CommunityPermission";
  * ```typescript
  * @Mutation(() => Species)
  * @UseGuards(JwtAuthGuard, CommunityRoleGuard)
- * @RequireCommunityPermission(CommunityPermission.CanEditSpecies)
+ * @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
  * @ResolveCommunityFrom({ speciesId: 'id' })
  * async updateSpecies(
  *   @Args('id') id: string,
@@ -36,12 +36,12 @@ import { CommunityPermission } from "../CommunityPermission";
  * ```typescript
  * @Mutation(() => Character)
  * @UseGuards(JwtAuthGuard, CommunityRoleGuard)
- * @RequireCommunityPermission(CommunityPermission.CanCreateCharacter)
+ * @AllowCommunityPermission(CommunityPermission.CanCreateCharacter)
  * @ResolveCommunityFrom({ speciesId: 'input.speciesId' })
  * async createCharacter(@Args('input') input: CreateCharacterInput) {
  *   // User is guaranteed to have canCreateCharacter in the specified community
  * }
  * ```
  */
-export const RequireCommunityPermission =
+export const AllowCommunityPermission =
   Reflector.createDecorator<CommunityPermission>();

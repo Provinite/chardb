@@ -12,13 +12,10 @@ import {
   mapPrismaCommunityConnectionToGraphQL,
 } from "./utils/community-resolver-mappers";
 import { RemovalResponse } from "../shared/entities/removal-response.entity";
-import {
-  CurrentUser,
-  CurrentUserType,
-} from "../auth/decorators/current-user.decorator";
+import { CurrentUser, CurrentUserType } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
-import { RequireGlobalPermission } from "../auth/decorators/RequireGlobalPermission";
-import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
+import { AllowGlobalPermission } from "../auth/decorators/AllowGlobalPermission";
+import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { GlobalPermission } from "../auth/GlobalPermission";
 
@@ -26,7 +23,7 @@ import { GlobalPermission } from "../auth/GlobalPermission";
 export class CommunitiesResolver {
   constructor(private readonly communitiesService: CommunitiesService) {}
 
-  @RequireGlobalPermission(GlobalPermission.CanCreateCommunity)
+  @AllowGlobalPermission(GlobalPermission.CanCreateCommunity)
   @Mutation(() => Community, { description: "Create a new community" })
   async createCommunity(
     @Args("createCommunityInput", { description: "Community creation data" })
@@ -41,7 +38,7 @@ export class CommunitiesResolver {
     return mapPrismaCommunityToGraphQL(prismaResult);
   }
 
-  @RequireAuthenticated()
+  @AllowAnyAuthenticated()
   @Query(() => CommunityConnection, {
     name: "communities",
     description: "Get all communities with pagination",
@@ -65,7 +62,7 @@ export class CommunitiesResolver {
     return mapPrismaCommunityConnectionToGraphQL(serviceResult);
   }
 
-  @RequireAuthenticated()
+  @AllowAnyAuthenticated()
   @Query(() => Community, {
     name: "community",
     description: "Get a community by ID",
@@ -78,7 +75,7 @@ export class CommunitiesResolver {
     return mapPrismaCommunityToGraphQL(prismaResult);
   }
 
-  @RequireGlobalPermission(GlobalPermission.CanCreateCommunity)
+  @AllowGlobalPermission(GlobalPermission.CanCreateCommunity)
   @Mutation(() => Community, { description: "Update a community" })
   async updateCommunity(
     @Args("id", { type: () => ID, description: "Community ID" })
@@ -91,7 +88,7 @@ export class CommunitiesResolver {
     return mapPrismaCommunityToGraphQL(prismaResult);
   }
 
-  @RequireGlobalPermission(GlobalPermission.CanCreateCommunity)
+  @AllowGlobalPermission(GlobalPermission.CanCreateCommunity)
   @Mutation(() => RemovalResponse, { description: "Remove a community" })
   async removeCommunity(
     @Args("id", { type: () => ID, description: "Community ID" })

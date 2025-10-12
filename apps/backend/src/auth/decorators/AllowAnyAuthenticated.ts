@@ -9,12 +9,12 @@ import { Reflector } from "@nestjs/core";
  * @example
  * ```typescript
  * @Query(() => User)
- * @RequireAuthenticated()
+ * @AllowAnyAuthenticated()
  * async me(@CurrentUser() user: CurrentUserType) {
  *   return user; // user is guaranteed to exist
  * }
  * ```
  */
-export const RequireAuthenticated = Reflector.createDecorator<true>({
+export const AllowAnyAuthenticated = Reflector.createDecorator<true>({
   transform: () => true,
 });

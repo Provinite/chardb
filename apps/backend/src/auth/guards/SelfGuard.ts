@@ -1,14 +1,14 @@
 import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { GqlExecutionContext } from "@nestjs/graphql";
-import { RequireSelf } from "../../auth/decorators/RequireSelf";
+import { AllowSelf } from "../decorators/AllowSelf";
 import {
   SelfResolutionConfig,
   AllSelfResolutionKeys,
   SelfResolutionReference,
-} from "../../auth/types/SelfResolutionConfig";
-import { getUserFromContext } from "../../auth/utils/get-user-from-context";
-import { getNestedValue } from "../utils/getNestedValue";
+} from "../types/SelfResolutionConfig";
+import { getUserFromContext } from "../utils/get-user-from-context";
+import { getNestedValue } from "../../common/utils/getNestedValue";
 
 /**
  * Guard that verifies the current user is accessing their own data.
@@ -26,7 +26,7 @@ export class SelfGuard implements CanActivate {
       return false;
     }
 
-    const config = this.reflector.getAllAndOverride(RequireSelf, [
+    const config = this.reflector.getAllAndOverride(AllowSelf, [
       context.getHandler(),
       context.getClass(),
     ]);

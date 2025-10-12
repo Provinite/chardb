@@ -42,7 +42,7 @@ import { ModuleRef } from "@nestjs/core";
  *     GlobalAdminGuard,    // OR is global admin
  *   )
  * )
- * @RequireCommunityPermission(CommunityPermission.CanEditCharacter)
+ * @AllowCommunityPermission(CommunityPermission.CanEditCharacter)
  * @ResolveCommunityFrom({ characterId: 'id' })
  * async updateCharacter(@Args('id') id: string) {
  *   // Passes if user has permission OR is admin

@@ -6,11 +6,11 @@ import { Reflector } from "@nestjs/core";
  *
  * @example
  * ```typescript
- * @RequireGlobalPermission(GlobalPermission.CanCreateCommunity)
+ * @AllowGlobalPermission(GlobalPermission.CanCreateCommunity)
  * @Mutation(() => Community)
  * async createCommunity() { ... }
  * ```
  */
 
-export const RequireGlobalPermission =
+export const AllowGlobalPermission =
   Reflector.createDecorator<GlobalPermission>();

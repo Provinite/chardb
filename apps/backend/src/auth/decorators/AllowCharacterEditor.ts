@@ -15,11 +15,11 @@ export interface CharacterEditConfig {
  *
  * Example usage:
  * ```typescript
- * @RequireGlobalAdmin()
- * @RequireCharacterEdit({ characterId: 'id' })
+ * @AllowGlobalAdmin()
+ * @AllowCharacterEditor({ characterId: 'id' })
  * @Mutation(() => Character)
  * async updateCharacter(@Args('id') id: string, ...) { ... }
  * ```
  */
-export const RequireCharacterEdit =
+export const AllowCharacterEditor =
   Reflector.createDecorator<CharacterEditConfig>();

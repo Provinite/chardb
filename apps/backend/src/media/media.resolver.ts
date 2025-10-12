@@ -8,11 +8,11 @@ import {
   Parent,
   Int,
 } from "@nestjs/graphql";
-import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
+import { CurrentUser } from "../auth/decorators/CurrentUser";
+import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
-import { RequireGlobalAdmin } from "../auth/decorators/RequireGlobalAdmin";
-import { RequireOwnership } from "../auth/decorators/RequireOwnership";
+import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
+import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { MediaService } from "./media.service";
 import { UsersService } from "../users/users.service";
@@ -90,7 +90,7 @@ export class MediaResolver {
     return mapPrismaMediaToGraphQL(media);
   }
 
-  @RequireAuthenticated()
+  @AllowAnyAuthenticated()
   @Query(() => MediaConnection, {
     description: "Retrieves media owned by the current authenticated user",
   })
@@ -185,7 +185,7 @@ export class MediaResolver {
     return mapPrismaMediaConnectionToGraphQL(result);
   }
 
-  @RequireAuthenticated()
+  @AllowAnyAuthenticated()
   @Mutation(() => MediaEntity, { description: "Creates a new text media item" })
   async createTextMedia(
     @Args("input", { description: "Text media creation parameters" })
@@ -200,8 +200,8 @@ export class MediaResolver {
     return mapPrismaMediaToGraphQL(media);
   }
 
-  @RequireGlobalAdmin()
-  @RequireOwnership({ mediaId: 'id' })
+  @AllowGlobalAdmin()
+  @AllowEntityOwner({ mediaId: "id" })
   @Mutation(() => MediaEntity, {
     description: "Updates media metadata (title, description, etc.)",
   })
@@ -221,8 +221,8 @@ export class MediaResolver {
     return mapPrismaMediaToGraphQL(media);
   }
 
-  @RequireGlobalAdmin()
-  @RequireOwnership({ mediaId: 'mediaId' })
+  @AllowGlobalAdmin()
+  @AllowEntityOwner({ mediaId: "mediaId" })
   @Mutation(() => MediaEntity, {
     description: "Updates the text content of a text media item",
   })
@@ -242,12 +242,12 @@ export class MediaResolver {
       user.id,
       serviceInput,
     );
-    if (!media) throw new Error('Media not found');
+    if (!media) throw new Error("Media not found");
     return mapPrismaMediaToGraphQL(media);
   }
 
-  @RequireGlobalAdmin()
-  @RequireOwnership({ mediaId: 'id' })
+  @AllowGlobalAdmin()
+  @AllowEntityOwner({ mediaId: "id" })
   @Mutation(() => Boolean, {
     description: "Deletes a media item and its associated content",
   })
@@ -259,8 +259,8 @@ export class MediaResolver {
     return this.mediaService.remove(id, user.id);
   }
 
-  @RequireGlobalAdmin()
-  @RequireOwnership({ mediaId: 'id' })
+  @AllowGlobalAdmin()
+  @AllowEntityOwner({ mediaId: "id" })
   @Mutation(() => MediaEntity, { description: "Adds tags to a media item" })
   async addMediaTags(
     @Args("id", { type: () => ID, description: "Media ID to add tags to" })
@@ -273,8 +273,8 @@ export class MediaResolver {
     return mapPrismaMediaToGraphQL(media);
   }
 
-  @RequireGlobalAdmin()
-  @RequireOwnership({ mediaId: 'id' })
+  @AllowGlobalAdmin()
+  @AllowEntityOwner({ mediaId: "id" })
   @Mutation(() => MediaEntity, {
     description: "Removes tags from a media item",
   })
@@ -385,7 +385,7 @@ export class MediaResolver {
   /**
    * Resolves whether the current user has liked this media
    */
-  @RequireAuthenticated()
+  @AllowAnyAuthenticated()
   @ResolveField(() => Boolean, {
     description: "Whether the current user has liked this media",
   })

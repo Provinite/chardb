@@ -10,11 +10,11 @@ import {
 } from "@nestjs/graphql";
 import { NotFoundException, ForbiddenException } from "@nestjs/common";
 import { CommunityMembersService } from "./community-members.service";
-import { RequireGlobalAdmin } from "../auth/decorators/RequireGlobalAdmin";
-import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
-import { RequireCommunityPermission } from "../auth/decorators/RequireCommunityPermission";
+import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
+import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
-import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import {
@@ -39,10 +39,10 @@ import { mapPrismaRoleToGraphQL } from "../roles/utils/role-resolver-mappers";
 @Resolver(() => CommunityMember)
 export class CommunityMembersResolver {
   constructor(
-    private readonly communityMembersService: CommunityMembersService
+    private readonly communityMembersService: CommunityMembersService,
   ) {}
 
-  @RequireGlobalAdmin()
+  @AllowGlobalAdmin()
   @Mutation(() => CommunityMember, {
     description: "Create a new community membership",
   })
@@ -50,16 +50,16 @@ export class CommunityMembersResolver {
     @Args("createCommunityMemberInput", {
       description: "Community membership creation data",
     })
-    createCommunityMemberInput: CreateCommunityMemberInput
+    createCommunityMemberInput: CreateCommunityMemberInput,
   ): Promise<CommunityMember> {
     const serviceInput = mapCreateCommunityMemberInputToService(
-      createCommunityMemberInput
+      createCommunityMemberInput,
     );
     const result = await this.communityMembersService.create(serviceInput);
     return mapPrismaCommunityMemberToGraphQL(result);
   }
 
-  @RequireGlobalAdmin()
+  @AllowGlobalAdmin()
   @Query(() => CommunityMemberConnection, {
     name: "communityMembers",
     description: "Get all community members with pagination",
@@ -77,14 +77,14 @@ export class CommunityMembersResolver {
       nullable: true,
       description: "Cursor for pagination",
     })
-    after?: string
+    after?: string,
   ): Promise<CommunityMemberConnection> {
     const result = await this.communityMembersService.findAll(first, after);
     return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }
 
-  @RequireGlobalAdmin()
-  @RequireCommunityPermission(CommunityPermission.Any)
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.Any)
   @ResolveCommunityFrom({ communityId: "communityId" })
   @Query(() => CommunityMemberConnection, {
     name: "communityMembersByCommunity",
@@ -105,18 +105,18 @@ export class CommunityMembersResolver {
       nullable: true,
       description: "Cursor for pagination",
     })
-    after?: string
+    after?: string,
   ): Promise<CommunityMemberConnection> {
     const result = await this.communityMembersService.findByCommunity(
       communityId,
       first,
-      after
+      after,
     );
     return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }
 
   /** Get community members by user ID with pagination */
-  @RequireAuthenticated()
+  @AllowAnyAuthenticated()
   @Query(() => CommunityMemberConnection, {
     name: "communityMembersByUser",
     description: "Get community members by user ID with pagination",
@@ -137,37 +137,37 @@ export class CommunityMembersResolver {
       nullable: true,
       description: "Cursor for pagination",
     })
-    after?: string
+    after?: string,
   ): Promise<CommunityMemberConnection> {
     // Self OR Admin check
     if (!currentUser.isAdmin && userId !== currentUser.id) {
       throw new ForbiddenException(
-        "You can only view your own community memberships"
+        "You can only view your own community memberships",
       );
     }
     const result = await this.communityMembersService.findByUser(
       userId,
       first,
-      after
+      after,
     );
     return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }
 
   /** Get a community member by ID */
-  @RequireGlobalAdmin()
+  @AllowGlobalAdmin()
   @Query(() => CommunityMember, {
     name: "communityMemberById",
     description: "Get a community member by ID",
   })
   async findOne(
     @Args("id", { type: () => ID, description: "Community member ID" })
-    id: string
+    id: string,
   ): Promise<CommunityMember> {
     const result = await this.communityMembersService.findOne(id);
     return mapPrismaCommunityMemberToGraphQL(result);
   }
 
-  @RequireGlobalAdmin()
+  @AllowGlobalAdmin()
   @Mutation(() => CommunityMember, {
     description: "Update a community membership (change role)",
   })
@@ -177,17 +177,17 @@ export class CommunityMembersResolver {
     @Args("updateCommunityMemberInput", {
       description: "Community membership update data",
     })
-    updateCommunityMemberInput: UpdateCommunityMemberInput
+    updateCommunityMemberInput: UpdateCommunityMemberInput,
   ): Promise<CommunityMember> {
     const serviceInput = mapUpdateCommunityMemberInputToService(
-      updateCommunityMemberInput
+      updateCommunityMemberInput,
     );
     const result = await this.communityMembersService.update(id, serviceInput);
     return mapPrismaCommunityMemberToGraphQL(result);
   }
 
-  @RequireGlobalAdmin()
-  @RequireCommunityPermission(CommunityPermission.CanRemoveCommunityMember)
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanRemoveCommunityMember)
   @ResolveCommunityFrom({ communityMemberId: "id" })
   @Mutation(() => CommunityMember, {
     description: "Remove a community membership",
@@ -195,7 +195,7 @@ export class CommunityMembersResolver {
   async removeCommunityMember(
     @Args("id", { type: () => ID, description: "Community member ID" })
     id: string,
-    @CurrentUser() currentUser: AuthenticatedCurrentUserType
+    @CurrentUser() currentUser: AuthenticatedCurrentUserType,
   ): Promise<CommunityMember> {
     // First get the membership to check if user is removing themselves
     const membership = await this.communityMembersService.findOne(id);
@@ -215,11 +215,11 @@ export class CommunityMembersResolver {
   @ResolveField("role", () => Role, { description: "The role this member has" })
   async getRole(@Parent() communityMember: CommunityMember): Promise<Role> {
     const result = await this.communityMembersService.getRoleById(
-      communityMember.roleId
+      communityMember.roleId,
     );
     if (!result) {
       throw new NotFoundException(
-        `Role with ID ${communityMember.roleId} not found`
+        `Role with ID ${communityMember.roleId} not found`,
       );
     }
     return mapPrismaRoleToGraphQL(result);
@@ -231,11 +231,11 @@ export class CommunityMembersResolver {
   })
   async getUser(@Parent() communityMember: CommunityMember): Promise<User> {
     const result = await this.communityMembersService.getUserById(
-      communityMember.userId
+      communityMember.userId,
     );
     if (!result) {
       throw new NotFoundException(
-        `User with ID ${communityMember.userId} not found`
+        `User with ID ${communityMember.userId} not found`,
       );
     }
     return mapPrismaUserToGraphQL(result);

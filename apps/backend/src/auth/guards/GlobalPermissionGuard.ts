@@ -1,16 +1,15 @@
 import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { GqlExecutionContext } from "@nestjs/graphql";
-import { CurrentUserType } from "../../auth/decorators/current-user.decorator";
-import { GlobalPermission } from "../../auth/GlobalPermission";
-import { RequireGlobalPermission } from "../../auth/decorators/RequireGlobalPermission";
+import { CurrentUserType } from "../decorators/CurrentUser";
+import { GlobalPermission } from "../GlobalPermission";
+import { AllowGlobalPermission } from "../decorators/AllowGlobalPermission";
 
 /**
  * Guard that checks if the current user has a specific global permission.
  *
  * Usage:
- * 1. Mark resolver/field with @RequireGlobalPermission('permissionName')
- * 2. Add @UseGuards(JwtAuthGuard, GlobalPermissionGuard) to ensure user is authenticated first
+ * 1. Mark resolver/field with @AllowGlobalPermission('permissionName')
  *
  * The guard will:
  * - Extract the required permission from metadata
@@ -21,7 +20,7 @@ import { RequireGlobalPermission } from "../../auth/decorators/RequireGlobalPerm
  * ```typescript
  * @Mutation(() => Community)
  * @UseGuards(JwtAuthGuard, GlobalPermissionGuard)
- * @RequireGlobalPermission(GlobalPermission.CanCreateCommunity)
+ * @AllowGlobalPermission(GlobalPermission.CanCreateCommunity)
  * async createCommunity(@CurrentUser() user: CurrentUserType) {
  *   // user is guaranteed to have canCreateCommunity permission
  * }
@@ -34,8 +33,8 @@ export class GlobalPermissionGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     // Get the required permission from metadata
     const requiredPermission = this.reflector.getAllAndOverride(
-      RequireGlobalPermission,
-      [context.getHandler(), context.getClass()],
+      AllowGlobalPermission,
+      [context.getHandler(), context.getClass()]
     );
 
     if (!requiredPermission) {
@@ -56,7 +55,7 @@ export class GlobalPermissionGuard implements CanActivate {
 
     if (!hasPermission) {
       throw new Error(
-        `User does not have required permission: ${requiredPermission}`,
+        `User does not have required permission: ${requiredPermission}`
       );
     }
 

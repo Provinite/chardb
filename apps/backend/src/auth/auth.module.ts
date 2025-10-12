@@ -13,16 +13,16 @@ import { DatabaseModule } from "../database/database.module";
 import { PermissionService } from "./PermissionService";
 import { CommunityResolverService } from "./services/community-resolver.service";
 import { CommunityMembersModule } from "../community-members/community-members.module";
-import { UnauthenticatedGuard } from "../common/guards/UnauthenticatedGuard";
-import { CommunityPermissionGuard } from "../common/guards/CommunityPermissionGuard";
-import { GlobalPermissionGuard } from "../common/guards/GlobalPermissionGuard";
-import { OwnershipGuard } from "../common/guards/OwnershipGuard";
-import { SelfGuard } from "../common/guards/SelfGuard";
-import { CharacterEditGuard } from "../common/guards/CharacterEditGuard";
+import { UnauthenticatedGuard } from "./guards/UnauthenticatedGuard";
+import { CommunityPermissionGuard } from "./guards/CommunityPermissionGuard";
+import { GlobalPermissionGuard } from "./guards/GlobalPermissionGuard";
+import { OwnershipGuard } from "./guards/OwnershipGuard";
+import { SelfGuard } from "./guards/SelfGuard";
+import { CharacterEditGuard } from "./guards/CharacterEditGuard";
 import { OptionalJwtAuthGuard } from "./guards/optional-jwt-auth.guard";
 import { CustomThrottlerGuard } from "../middleware/custom-throttler.guard";
-import { OrGuard } from "../common/guards/OrGuard";
-import { AuthenticatedGuard } from "../common/guards/AuthenticatedGuard";
+import { OrGuard } from "./guards/OrGuard";
+import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
 
 @Module({
   imports: [
@@ -64,7 +64,7 @@ import { AuthenticatedGuard } from "../common/guards/AuthenticatedGuard";
         SelfGuard,
         CharacterEditGuard,
         AuthenticatedGuard,
-        UnauthenticatedGuard
+        UnauthenticatedGuard,
       ),
     },
   ],

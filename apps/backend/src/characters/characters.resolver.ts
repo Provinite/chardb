@@ -10,16 +10,16 @@ import {
   Int,
 } from "@nestjs/graphql";
 import { ForbiddenException } from "@nestjs/common";
-import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
-import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
+import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
-import { RequireGlobalAdmin } from "../auth/decorators/RequireGlobalAdmin";
-import { RequireOwnership } from "../auth/decorators/RequireOwnership";
-import { RequireCommunityPermission } from "../auth/decorators/RequireCommunityPermission";
+import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
+import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
+import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
-import { RequireCharacterEdit } from "../auth/decorators/RequireCharacterEdit";
+import { AllowCharacterEditor } from "../auth/decorators/AllowCharacterEditor";
 import { CharactersService } from "./characters.service";
 import { TagsService } from "../tags/tags.service";
 import { UsersService } from "../users/users.service";
@@ -59,7 +59,6 @@ import {
   mapPrismaCharacterConnectionToGraphQL,
 } from "./utils/character-resolver-mappers";
 
-
 @Resolver(() => CharacterEntity)
 export class CharactersResolver {
   constructor(
@@ -72,16 +71,19 @@ export class CharactersResolver {
     private readonly speciesService: SpeciesService,
   ) {}
 
-  @RequireAuthenticated()
-  @RequireCommunityPermission(CommunityPermission.CanCreateCharacter)
-  @ResolveCommunityFrom({ speciesId: 'input.speciesId' })
+  @AllowAnyAuthenticated()
+  @AllowCommunityPermission(CommunityPermission.CanCreateCharacter)
+  @ResolveCommunityFrom({ speciesId: "input.speciesId" })
   @Mutation(() => CharacterEntity)
   async createCharacter(
     @Args("input") input: CreateCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
     const serviceInput = mapCreateCharacterInputToService(input);
-    const character = await this.charactersService.create(user.id, serviceInput);
+    const character = await this.charactersService.create(
+      user.id,
+      serviceInput,
+    );
     return mapPrismaCharacterToGraphQL(character);
   }
 
@@ -105,8 +107,8 @@ export class CharactersResolver {
     return mapPrismaCharacterToGraphQL(character);
   }
 
-  @RequireGlobalAdmin()
-  @RequireCharacterEdit({ characterId: 'id' })
+  @AllowGlobalAdmin()
+  @AllowCharacterEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity)
   async updateCharacter(
     @Args("id", { type: () => ID }) id: string,
@@ -114,12 +116,16 @@ export class CharactersResolver {
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
     const serviceInput = mapUpdateCharacterInputToService(input);
-    const character = await this.charactersService.update(id, user.id, serviceInput);
+    const character = await this.charactersService.update(
+      id,
+      user.id,
+      serviceInput,
+    );
     return mapPrismaCharacterToGraphQL(character);
   }
 
-  @RequireGlobalAdmin()
-  @RequireCharacterEdit({ characterId: 'id' })
+  @AllowGlobalAdmin()
+  @AllowCharacterEditor({ characterId: "id" })
   @Mutation(() => Boolean)
   async deleteCharacter(
     @Args("id", { type: () => ID }) id: string,
@@ -128,7 +134,7 @@ export class CharactersResolver {
     return this.charactersService.remove(id, user.id);
   }
 
-  @RequireOwnership({ characterId: 'id' })
+  @AllowEntityOwner({ characterId: "id" })
   @Mutation(() => CharacterEntity)
   async transferCharacter(
     @Args("id", { type: () => ID }) id: string,
@@ -138,8 +144,8 @@ export class CharactersResolver {
     return this.charactersService.transfer(id, user.id, input.newOwnerId);
   }
 
-  @RequireGlobalAdmin()
-  @RequireCharacterEdit({ characterId: 'id' })
+  @AllowGlobalAdmin()
+  @AllowCharacterEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity)
   async addCharacterTags(
     @Args("id", { type: () => ID }) id: string,
@@ -149,8 +155,8 @@ export class CharactersResolver {
     return this.charactersService.addTags(id, user.id, input.tagNames);
   }
 
-  @RequireGlobalAdmin()
-  @RequireCharacterEdit({ characterId: 'id' })
+  @AllowGlobalAdmin()
+  @AllowCharacterEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity)
   async removeCharacterTags(
     @Args("id", { type: () => ID }) id: string,
@@ -160,8 +166,8 @@ export class CharactersResolver {
     return this.charactersService.removeTags(id, user.id, input.tagNames);
   }
 
-  @RequireGlobalAdmin()
-  @RequireCharacterEdit({ characterId: 'id' })
+  @AllowGlobalAdmin()
+  @AllowCharacterEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity, {
     description: "Sets or clears the main media for a character",
   })
@@ -175,7 +181,7 @@ export class CharactersResolver {
     return this.charactersService.setMainMedia(id, user.id, input.mediaId);
   }
 
-  @RequireAuthenticated()
+  @AllowAnyAuthenticated()
   @Query(() => CharacterConnection)
   async myCharacters(
     @CurrentUser() user: any,
@@ -207,12 +213,14 @@ export class CharactersResolver {
   }
 
   @ResolveField("likesCount", () => Int)
-  async resolveLikesCountField(@Parent() character: CharacterEntity): Promise<number> {
+  async resolveLikesCountField(
+    @Parent() character: CharacterEntity,
+  ): Promise<number> {
     const count = await this.charactersService.getLikesCount(character.id);
     return count;
   }
 
-  @RequireAuthenticated()
+  @AllowAnyAuthenticated()
   @ResolveField("userHasLiked", () => Boolean)
   async resolveUserHasLikedField(
     @Parent() character: CharacterEntity,
@@ -223,14 +231,20 @@ export class CharactersResolver {
 
   /** Character count field resolver */
   @ResolveField("_count", () => CharacterCount)
-  async resolveCountField(@Parent() character: CharacterEntity): Promise<CharacterCount> {
-    const mediaCount = await this.mediaService.getCharacterMediaCount(character.id);
+  async resolveCountField(
+    @Parent() character: CharacterEntity,
+  ): Promise<CharacterCount> {
+    const mediaCount = await this.mediaService.getCharacterMediaCount(
+      character.id,
+    );
     return { media: mediaCount };
   }
 
   /** Character creator field resolver */
   @ResolveField("creator", () => User, { nullable: true })
-  async resolveCreatorField(@Parent() character: CharacterEntity): Promise<User | null> {
+  async resolveCreatorField(
+    @Parent() character: CharacterEntity,
+  ): Promise<User | null> {
     if (!character.creatorId) return null;
     const user = await this.usersService.findById(character.creatorId);
     return user ? mapPrismaUserToGraphQL(user) : null;
@@ -240,13 +254,18 @@ export class CharactersResolver {
   @ResolveField("owner", () => User)
   async resolveOwnerField(@Parent() character: CharacterEntity): Promise<User> {
     const user = await this.usersService.findById(character.ownerId);
-    if (!user) throw new Error('Owner not found');
+    if (!user) throw new Error("Owner not found");
     return mapPrismaUserToGraphQL(user);
   }
 
   /** Main media field resolver */
-  @ResolveField("mainMedia", () => Media, { nullable: true, description: "Main media item for this character (image or text)" })
-  async resolveMainMediaField(@Parent() character: CharacterEntity): Promise<Media | null> {
+  @ResolveField("mainMedia", () => Media, {
+    nullable: true,
+    description: "Main media item for this character (image or text)",
+  })
+  async resolveMainMediaField(
+    @Parent() character: CharacterEntity,
+  ): Promise<Media | null> {
     if (!character.mainMediaId) return null;
     const media = await this.mediaService.findOne(character.mainMediaId);
     return media ? mapPrismaMediaToGraphQL(media) : null;
@@ -254,35 +273,47 @@ export class CharactersResolver {
 
   /** Character tags relation field resolver */
   @ResolveField("tags_rel", () => [CharacterTag])
-  async resolveTagsRelField(@Parent() character: CharacterEntity): Promise<CharacterTag[]> {
+  async resolveTagsRelField(
+    @Parent() character: CharacterEntity,
+  ): Promise<CharacterTag[]> {
     const tags = await this.tagsService.getCharacterTagRelations(character.id);
-    return tags.map(tag => ({
+    return tags.map((tag) => ({
       character,
       tag: {
         ...tag,
         category: tag.category ?? undefined,
         color: tag.color ?? undefined,
-      }
+      },
     }));
   }
 
   /** Species field resolver */
-  @ResolveField("species", () => Species, { nullable: true, description: "Species this character belongs to" })
-  async resolveSpeciesField(@Parent() character: CharacterEntity): Promise<Species | null> {
+  @ResolveField("species", () => Species, {
+    nullable: true,
+    description: "Species this character belongs to",
+  })
+  async resolveSpeciesField(
+    @Parent() character: CharacterEntity,
+  ): Promise<Species | null> {
     if (!character.speciesId) return null;
     return this.speciesService.findOne(character.speciesId);
   }
 
   /** Species variant field resolver */
-  @ResolveField("speciesVariant", () => SpeciesVariant, { nullable: true, description: "Species variant this character belongs to" })
-  async resolveSpeciesVariantField(@Parent() character: CharacterEntity): Promise<SpeciesVariant | null> {
+  @ResolveField("speciesVariant", () => SpeciesVariant, {
+    nullable: true,
+    description: "Species variant this character belongs to",
+  })
+  async resolveSpeciesVariantField(
+    @Parent() character: CharacterEntity,
+  ): Promise<SpeciesVariant | null> {
     if (!character.speciesVariantId) return null;
     return this.speciesVariantsService.findOne(character.speciesVariantId);
   }
 
-  @RequireGlobalAdmin()
-  @RequireCommunityPermission(CommunityPermission.CanEditCharacter)
-  @ResolveCommunityFrom({ characterId: 'id' })
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditCharacter)
+  @ResolveCommunityFrom({ characterId: "id" })
   @Mutation(() => CharacterEntity, {
     description: "Update character trait values",
   })

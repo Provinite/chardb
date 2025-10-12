@@ -13,10 +13,7 @@ import { UsersService } from "./users.service";
 import { User, UserConnection } from "./entities/user.entity";
 import { UserProfile, UserStats } from "./entities/user-profile.entity";
 import { UpdateUserInput } from "./dto/update-user.input";
-import {
-  CurrentUser,
-  CurrentUserType,
-} from "../auth/decorators/current-user.decorator";
+import { CurrentUser, CurrentUserType } from "../auth/decorators/CurrentUser";
 import { RemovalResponse } from "../shared/entities/removal-response.entity";
 import {
   mapUpdateUserInputToService,
@@ -28,23 +25,23 @@ import { Character } from "../characters/entities/character.entity";
 import { Gallery } from "../galleries/entities/gallery.entity";
 import { Media } from "../media/entities/media.entity";
 import { SocialService } from "../social/social.service";
-import { RequireAuthenticated } from "../auth/decorators/RequireAuthenticated";
-import { RequireGlobalPermission } from "../auth/decorators/RequireGlobalPermission";
+import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowGlobalPermission } from "../auth/decorators/AllowGlobalPermission";
 import { GlobalPermission } from "../auth/GlobalPermission";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
-import { RequireSelf } from "../auth/decorators/RequireSelf";
-import { RequireGlobalAdmin } from "../auth/decorators/RequireGlobalAdmin";
+import { AllowSelf } from "../auth/decorators/AllowSelf";
+import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { GraphQLJSON } from "graphql-type-json";
 
 @Resolver(() => User)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
-  @RequireGlobalPermission(GlobalPermission.CanListUsers)
+  @AllowGlobalPermission(GlobalPermission.CanListUsers)
   @Query(() => UserConnection, { name: "users" })
   async findAll(
     @Args("limit", { type: () => Int, defaultValue: 20 }) limit: number,
-    @Args("offset", { type: () => Int, defaultValue: 0 }) offset: number
+    @Args("offset", { type: () => Int, defaultValue: 0 }) offset: number,
   ): Promise<UserConnection> {
     const serviceResult = await this.usersService.findAll(limit, offset);
     return mapPrismaUserConnectionToGraphQL(serviceResult);
@@ -54,7 +51,7 @@ export class UsersResolver {
   @Query(() => User, { name: "user", nullable: true })
   async findOne(
     @Args("id", { type: () => ID, nullable: true }) id?: string,
-    @Args("username", { nullable: true }) username?: string
+    @Args("username", { nullable: true }) username?: string,
   ): Promise<User | null> {
     let prismaResult;
     if (id) {
@@ -68,7 +65,7 @@ export class UsersResolver {
     return prismaResult ? mapPrismaUserToGraphQL(prismaResult) : null;
   }
 
-  @RequireAuthenticated()
+  @AllowAnyAuthenticated()
   @Query(() => User, { name: "me" })
   async getCurrentUser(@CurrentUser() user: CurrentUserType): Promise<User> {
     if (!user) {
@@ -77,11 +74,11 @@ export class UsersResolver {
     return mapPrismaUserToGraphQL(user);
   }
 
-  @RequireAuthenticated()
+  @AllowAnyAuthenticated()
   @Mutation(() => User)
   async updateProfile(
     @Args("input") updateUserInput: UpdateUserInput,
-    @CurrentUser() user: CurrentUserType
+    @CurrentUser() user: CurrentUserType,
   ): Promise<User> {
     if (!user) {
       throw new NotFoundException("User not found");
@@ -91,10 +88,10 @@ export class UsersResolver {
     return mapPrismaUserToGraphQL(prismaResult);
   }
 
-  @RequireAuthenticated()
+  @AllowAnyAuthenticated()
   @Mutation(() => RemovalResponse)
   async deleteAccount(
-    @CurrentUser() user: CurrentUserType
+    @CurrentUser() user: CurrentUserType,
   ): Promise<RemovalResponse> {
     if (!user) {
       throw new NotFoundException("User not found");
@@ -107,7 +104,7 @@ export class UsersResolver {
   @Query(() => UserProfile, { name: "userProfile", nullable: true })
   async getUserProfile(
     @Args("username") username: string,
-    @CurrentUser() currentUser?: CurrentUserType
+    @CurrentUser() currentUser?: CurrentUserType,
   ): Promise<UserProfile | null> {
     const user = await this.usersService.findByUsername(username);
     if (!user) return null;
@@ -125,7 +122,7 @@ export class UsersResolver {
   @Query(() => UserStats, { name: "userStats" })
   async getUserStats(
     @Args("userId", { type: () => ID }) userId: string,
-    @CurrentUser() currentUser?: CurrentUserType
+    @CurrentUser() currentUser?: CurrentUserType,
   ): Promise<UserStats | null> {
     const user = await this.usersService.findById(userId);
     if (!user) return null;
@@ -146,68 +143,68 @@ export class UsersResolver {
     return 0;
   }
 
-  @RequireAuthenticated()
+  @AllowAnyAuthenticated()
   @ResolveField("userIsFollowing", () => Boolean)
   async resolveUserIsFollowing(
     @Parent() user: User,
-    @CurrentUser() currentUser?: CurrentUserType
+    @CurrentUser() currentUser?: CurrentUserType,
   ): Promise<boolean> {
     // TODO: Implement when social features are added
     return false;
   }
 
   // Sensitive field resolvers
-  @RequireGlobalAdmin()
-  @RequireSelf()
+  @AllowGlobalAdmin()
+  @AllowSelf()
   @ResolveField("email", () => String)
   async resolveEmail(@Parent() user: User): Promise<string> {
     return user.email;
   }
 
-  @RequireGlobalAdmin()
-  @RequireSelf()
+  @AllowGlobalAdmin()
+  @AllowSelf()
   @ResolveField("dateOfBirth", () => Date, { nullable: true })
   async resolveDateOfBirth(@Parent() user: User): Promise<Date | null> {
     return user.dateOfBirth ?? null;
   }
 
-  @RequireGlobalAdmin()
-  @RequireSelf()
+  @AllowGlobalAdmin()
+  @AllowSelf()
   @ResolveField("privacySettings", () => GraphQLJSON)
   async resolvePrivacySettings(@Parent() user: User): Promise<any> {
     return user.privacySettings;
   }
 
-  @RequireGlobalAdmin()
-  @RequireSelf()
+  @AllowGlobalAdmin()
+  @AllowSelf()
   @ResolveField("canCreateCommunity", () => Boolean)
   async resolveCanCreateCommunity(@Parent() user: User): Promise<boolean> {
     return user.canCreateCommunity;
   }
 
-  @RequireGlobalAdmin()
-  @RequireSelf()
+  @AllowGlobalAdmin()
+  @AllowSelf()
   @ResolveField("canListUsers", () => Boolean)
   async resolveCanListUsers(@Parent() user: User): Promise<boolean> {
     return user.canListUsers;
   }
 
-  @RequireGlobalAdmin()
-  @RequireSelf()
+  @AllowGlobalAdmin()
+  @AllowSelf()
   @ResolveField("canListInviteCodes", () => Boolean)
   async resolveCanListInviteCodes(@Parent() user: User): Promise<boolean> {
     return user.canListInviteCodes;
   }
 
-  @RequireGlobalAdmin()
-  @RequireSelf()
+  @AllowGlobalAdmin()
+  @AllowSelf()
   @ResolveField("canCreateInviteCode", () => Boolean)
   async resolveCanCreateInviteCode(@Parent() user: User): Promise<boolean> {
     return user.canCreateInviteCode;
   }
 
-  @RequireGlobalAdmin()
-  @RequireSelf()
+  @AllowGlobalAdmin()
+  @AllowSelf()
   @ResolveField("canGrantGlobalPermissions", () => Boolean)
   async resolveCanGrantGlobalPermissions(
     @Parent() user: User,
@@ -221,48 +218,58 @@ export class UsersResolver {
 export class UserProfileResolver {
   constructor(private readonly usersService: UsersService) {}
 
-  @ResolveField("stats", () => UserStats, { description: "User statistics including counts and engagement metrics" })
+  @ResolveField("stats", () => UserStats, {
+    description: "User statistics including counts and engagement metrics",
+  })
   async resolveStats(@Parent() profile: UserProfile): Promise<UserStats> {
     return { userId: profile.user.id };
   }
 
-  @ResolveField("recentCharacters", () => [Character], { description: "Recently created or updated characters by this user" })
+  @ResolveField("recentCharacters", () => [Character], {
+    description: "Recently created or updated characters by this user",
+  })
   async resolveRecentCharacters(
     @Parent() profile: UserProfile,
-    @CurrentUser() currentUser?: CurrentUserType
+    @CurrentUser() currentUser?: CurrentUserType,
   ) {
     const includePrivate = profile.canViewPrivateContent;
     const characters = await this.usersService.getUserRecentCharacters(
       profile.user.id,
       includePrivate,
-      6
+      6,
     );
     return characters.map(mapPrismaCharacterToGraphQL);
   }
 
-  @ResolveField("recentGalleries", () => [Gallery], { description: "Recently created or updated galleries by this user" })
+  @ResolveField("recentGalleries", () => [Gallery], {
+    description: "Recently created or updated galleries by this user",
+  })
   async resolveRecentGalleries(
     @Parent() profile: UserProfile,
-    @CurrentUser() currentUser?: CurrentUserType
+    @CurrentUser() currentUser?: CurrentUserType,
   ) {
     const includePrivate = profile.canViewPrivateContent;
     return this.usersService.getUserRecentGalleries(
       profile.user.id,
       includePrivate,
-      6
+      6,
     );
   }
 
-  @ResolveField("recentMedia", () => [Media], { description: "Recently uploaded media (images and text) by this user" })
+  @ResolveField("recentMedia", () => [Media], {
+    description: "Recently uploaded media (images and text) by this user",
+  })
   async resolveRecentMedia(@Parent() profile: UserProfile) {
     return this.usersService.getUserRecentMedia(profile.user.id, 12);
   }
 
-  @ResolveField("featuredCharacters", () => [Character], { description: "Characters featured or highlighted by this user" })
+  @ResolveField("featuredCharacters", () => [Character], {
+    description: "Characters featured or highlighted by this user",
+  })
   async resolveFeaturedCharacters(@Parent() profile: UserProfile) {
     const characters = await this.usersService.getUserFeaturedCharacters(
       profile.user.id,
-      3
+      3,
     );
     return characters.map(mapPrismaCharacterToGraphQL);
   }
@@ -276,54 +283,76 @@ export class UserStatsResolver {
     private readonly socialService: SocialService,
   ) {}
 
-  @ResolveField("charactersCount", () => Int, { description: "Total number of characters owned by this user" })
+  @ResolveField("charactersCount", () => Int, {
+    description: "Total number of characters owned by this user",
+  })
   async resolveCharactersCount(
     @Parent() stats: UserStats,
-    @CurrentUser() currentUser?: CurrentUserType
+    @CurrentUser() currentUser?: CurrentUserType,
   ) {
     if (!stats.userId) return 0;
-    const includePrivate = currentUser?.id === stats.userId || !!currentUser?.isAdmin;
-    return this.usersService.getUserCharactersCount(stats.userId, includePrivate);
+    const includePrivate =
+      currentUser?.id === stats.userId || !!currentUser?.isAdmin;
+    return this.usersService.getUserCharactersCount(
+      stats.userId,
+      includePrivate,
+    );
   }
 
-  @ResolveField("galleriesCount", () => Int, { description: "Total number of galleries created by this user" })
+  @ResolveField("galleriesCount", () => Int, {
+    description: "Total number of galleries created by this user",
+  })
   async resolveGalleriesCount(
     @Parent() stats: UserStats,
-    @CurrentUser() currentUser?: CurrentUserType
+    @CurrentUser() currentUser?: CurrentUserType,
   ) {
     if (!stats.userId) return 0;
-    const includePrivate = currentUser?.id === stats.userId || !!currentUser?.isAdmin;
-    return this.usersService.getUserGalleriesCount(stats.userId, includePrivate);
+    const includePrivate =
+      currentUser?.id === stats.userId || !!currentUser?.isAdmin;
+    return this.usersService.getUserGalleriesCount(
+      stats.userId,
+      includePrivate,
+    );
   }
 
-  @ResolveField("imagesCount", () => Int, { description: "Total number of images uploaded by this user" })
+  @ResolveField("imagesCount", () => Int, {
+    description: "Total number of images uploaded by this user",
+  })
   async resolveImagesCount(@Parent() stats: UserStats) {
     if (!stats.userId) return 0;
     return this.usersService.getUserImagesCount(stats.userId);
   }
 
-  @ResolveField("totalViews", () => Int, { description: "Total number of views across all user's content" })
+  @ResolveField("totalViews", () => Int, {
+    description: "Total number of views across all user's content",
+  })
   async resolveTotalViews(@Parent() stats: UserStats) {
     // TODO: Implement when views system is added
     return 0;
   }
 
-  @ResolveField("totalLikes", () => Int, { description: "Total number of likes received across all user's content" })
+  @ResolveField("totalLikes", () => Int, {
+    description: "Total number of likes received across all user's content",
+  })
   async resolveTotalLikes(@Parent() stats: UserStats) {
     if (!stats.userId) return 0;
-    
+
     // Count likes across all content types owned by this user
     const totalLikes = await this.socialService.getUserTotalLikes(stats.userId);
     return totalLikes;
   }
 
-  @ResolveField("followersCount", () => Int, { description: "Number of users following this user" })
+  @ResolveField("followersCount", () => Int, {
+    description: "Number of users following this user",
+  })
   async resolveFollowersCount(@Parent() stats: UserStats) {
     // TODO: Implement when social features are added
     return 0;
   }
 
-  @ResolveField("followingCount", () => Int, { description: "Number of users this user is following" })
+  @ResolveField("followingCount", () => Int, {
+    description: "Number of users this user is following",
+  })
   async resolveFollowingCount(@Parent() stats: UserStats) {
     // TODO: Implement when social features are added
     return 0;

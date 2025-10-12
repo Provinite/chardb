@@ -2,18 +2,18 @@ import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { GqlExecutionContext } from "@nestjs/graphql";
 import { DatabaseService } from "../../database/database.service";
-import { getUserFromContext } from "../../auth/utils/get-user-from-context";
-import { RequireOwnership } from "../../auth/decorators/RequireOwnership";
+import { getUserFromContext } from "../utils/get-user-from-context";
+import { AllowEntityOwner } from "../decorators/AllowEntityOwner";
 import {
   OwnershipResolutionConfig,
   OwnershipResolutionReference,
-} from "../../auth/types/OwnershipResolutionConfig";
-import { getNestedValue } from "../utils/getNestedValue";
+} from "../types/OwnershipResolutionConfig";
+import { getNestedValue } from "../../common/utils/getNestedValue";
 
 /**
  * Generic guard that checks if the current user owns an entity or has identity relationship.
  *
- * Works with @RequireOwnership() decorator.
+ * Works with {@link AllowEntityOwner} decorator.
  *
  * Resolves the entity ID from arguments, fetches the entity from Prisma,
  * and verifies ownership/identity:
@@ -38,10 +38,10 @@ export class OwnershipGuard implements CanActivate {
       return false;
     }
 
-    const config = this.reflector.getAllAndOverride(
-      RequireOwnership,
-      [context.getHandler(), context.getClass()],
-    );
+    const config = this.reflector.getAllAndOverride(AllowEntityOwner, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (!config) {
       return false;

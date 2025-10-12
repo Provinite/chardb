@@ -17,8 +17,8 @@ import { OwnershipResolutionConfig } from "../types/OwnershipResolutionConfig";
  * @example Character ownership
  * ```typescript
  * @Mutation(() => Character)
- * @RequireGlobalAdmin()  // Admin OR Owner (OrGuard)
- * @RequireOwnership({ characterId: 'id' })
+ * @AllowGlobalAdmin()  // Admin OR Owner (OrGuard)
+ * @AllowEntityOwner({ characterId: 'id' })
  * async updateCharacter(
  *   @Args('id') id: string,
  *   @Args('input') input: UpdateCharacterInput
@@ -30,8 +30,8 @@ import { OwnershipResolutionConfig } from "../types/OwnershipResolutionConfig";
  * @example Media ownership
  * ```typescript
  * @Mutation(() => Media)
- * @RequireGlobalAdmin()
- * @RequireOwnership({ mediaId: 'id' })
+ * @AllowGlobalAdmin()
+ * @AllowEntityOwner({ mediaId: 'id' })
  * async updateMedia(@Args('id') id: string, @Args('input') input: UpdateMediaInput) {
  *   // User owns this media OR is admin
  * }
@@ -40,12 +40,12 @@ import { OwnershipResolutionConfig } from "../types/OwnershipResolutionConfig";
  * @example Nested path support
  * ```typescript
  * @Mutation(() => Character)
- * @RequireGlobalAdmin()
- * @RequireOwnership({ characterId: 'input.characterId' })
+ * @AllowGlobalAdmin()
+ * @AllowEntityOwner({ characterId: 'input.characterId' })
  * async addCharacterTags(@Args('input') input: AddCharacterTagsInput) {
  *   // Supports nested paths in input objects
  * }
  * ```
  */
-export const RequireOwnership =
+export const AllowEntityOwner =
   Reflector.createDecorator<OwnershipResolutionConfig>();

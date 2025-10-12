@@ -2,17 +2,17 @@ import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { GqlExecutionContext } from "@nestjs/graphql";
 import { DatabaseService } from "../../database/database.service";
-import { PermissionService } from "../../auth/PermissionService";
-import { CommunityResolverService } from "../../auth/services/community-resolver.service";
-import { getUserFromContext } from "../../auth/utils/get-user-from-context";
-import { getNestedValue } from "../utils/getNestedValue";
-import { RequireCharacterEdit } from "../../auth/decorators/RequireCharacterEdit";
-import { CommunityPermission } from "../../auth/CommunityPermission";
+import { PermissionService } from "../PermissionService";
+import { CommunityResolverService } from "../services/community-resolver.service";
+import { getUserFromContext } from "../utils/get-user-from-context";
+import { getNestedValue } from "../../common/utils/getNestedValue";
+import { AllowCharacterEditor } from "../decorators/AllowCharacterEditor";
+import { CommunityPermission } from "../CommunityPermission";
 
 /**
  * Guard that checks character edit permissions based on ownership.
  *
- * Works with @RequireCharacterEdit() decorator.
+ * Works with @AllowCharacterEditor() decorator.
  *
  * Permission logic:
  * - If user owns the character: requires `canEditOwnCharacter` permission
@@ -34,7 +34,7 @@ export class CharacterEditGuard implements CanActivate {
       return false;
     }
 
-    const config = this.reflector.getAllAndOverride(RequireCharacterEdit, [
+    const config = this.reflector.getAllAndOverride(AllowCharacterEditor, [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -73,7 +73,10 @@ export class CharacterEditGuard implements CanActivate {
     }
 
     // Resolve community from species
-    const resolvedIds = { type: "speciesId" as const, value: character.speciesId };
+    const resolvedIds = {
+      type: "speciesId" as const,
+      value: character.speciesId,
+    };
     const community = await this.communityResolverService.resolve(resolvedIds);
 
     if (!community) {
