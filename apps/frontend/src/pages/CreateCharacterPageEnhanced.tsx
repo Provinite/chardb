@@ -349,11 +349,6 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
 
   // Form submission
   const onSubmit = async (data: CharacterForm) => {
-    if (!selectedSpecies) {
-      toast.error("Please select a species for your character");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -371,7 +366,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             isTradeable: data.isTradeable,
             price: data.price ? parseFloat(data.price) : undefined,
             tags: tags.length > 0 ? tags : undefined,
-            speciesId: selectedSpecies.id,
+            speciesId: selectedSpecies?.id || undefined,
             speciesVariantId: selectedVariant?.id || undefined,
             traitValues: traitValues.length > 0 ? traitValues : undefined,
           },

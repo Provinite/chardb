@@ -1411,18 +1411,6 @@ type Query {
     inviteeId: ID!
   ): CommunityInvitationConnection!
 
-  """Get community invitations by inviter ID with pagination"""
-  communityInvitationsByInviter(
-    """Cursor for pagination"""
-    after: String
-
-    """Number of community invitations to return"""
-    first: Int = 20
-
-    """Inviter ID"""
-    inviterId: ID!
-  ): CommunityInvitationConnection!
-
   """Get a community member by ID"""
   communityMemberById(
     """Community member ID"""

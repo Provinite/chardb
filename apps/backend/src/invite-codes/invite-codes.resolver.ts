@@ -11,6 +11,7 @@ import {
 import { InviteCodesService } from "./invite-codes.service";
 import { AllowGlobalPermission } from "../auth/decorators/AllowGlobalPermission";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { GlobalPermission } from "../auth/GlobalPermission";
 import {
   InviteCode,
@@ -156,7 +157,7 @@ export class InviteCodesResolver {
   }
 
   /** Get an invite code by ID */
-  @AllowGlobalPermission(GlobalPermission.CanListInviteCodes)
+  @AllowUnauthenticated()
   @Query(() => InviteCode, {
     name: "inviteCodeById",
     description: "Get an invite code by ID",
