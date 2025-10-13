@@ -73,11 +73,6 @@ export function OrGuard(...guards: Type<CanActivate>[]): Type<CanActivate> {
           // Call the guard's canActivate method
           const result = await guard.canActivate(context);
 
-          console.log({
-            guard: guard.constructor.name,
-            result,
-          });
-
           // If any guard passes, allow access
           if (result === true) {
             return true;
