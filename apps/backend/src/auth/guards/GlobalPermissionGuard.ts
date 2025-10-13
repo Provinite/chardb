@@ -4,6 +4,7 @@ import { GqlExecutionContext } from "@nestjs/graphql";
 import { CurrentUserType } from "../decorators/CurrentUser";
 import { GlobalPermission } from "../GlobalPermission";
 import { AllowGlobalPermission } from "../decorators/AllowGlobalPermission";
+import { PermissionService } from "../PermissionService";
 
 /**
  * Guard that checks if the current user has a specific global permission.
@@ -13,8 +14,8 @@ import { AllowGlobalPermission } from "../decorators/AllowGlobalPermission";
  *
  * The guard will:
  * - Extract the required permission from metadata
- * - Check if current user has that permission
- * - Throw UnauthorizedException if permission check fails
+ * - Check if current user has that permission via PermissionService
+ * - Return false if permission check fails (NestJS converts to ForbiddenException)
  *
  * @example
  * ```typescript
@@ -28,7 +29,10 @@ import { AllowGlobalPermission } from "../decorators/AllowGlobalPermission";
  */
 @Injectable()
 export class GlobalPermissionGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private reflector: Reflector,
+    private permissionService: PermissionService,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     // Get the required permission from metadata
@@ -50,15 +54,7 @@ export class GlobalPermissionGuard implements CanActivate {
       return false;
     }
 
-    // Check if user has the required permission
-    const hasPermission = user[requiredPermission] === true;
-
-    if (!hasPermission) {
-      throw new Error(
-        `User does not have required permission: ${requiredPermission}`
-      );
-    }
-
-    return true;
+    // Check if user has the required permission using PermissionService
+    return this.permissionService.hasGlobalPermission(user, requiredPermission);
   }
 }

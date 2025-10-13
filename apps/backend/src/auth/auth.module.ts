@@ -11,6 +11,7 @@ import { UsersModule } from "../users/users.module";
 import { InviteCodesModule } from "../invite-codes/invite-codes.module";
 import { DatabaseModule } from "../database/database.module";
 import { PermissionService } from "./PermissionService";
+import { OwnershipService } from "./OwnershipService";
 import { CommunityResolverService } from "./services/community-resolver.service";
 import { CommunityMembersModule } from "../community-members/community-members.module";
 import { UnauthenticatedGuard } from "./guards/UnauthenticatedGuard";
@@ -45,6 +46,7 @@ import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
     JwtStrategy,
     LocalStrategy,
     PermissionService,
+    OwnershipService,
     CommunityResolverService,
     UnauthenticatedGuard,
     CommunityPermissionGuard,
@@ -71,6 +73,7 @@ import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
   exports: [
     AuthService,
     PermissionService,
+    OwnershipService,
     CommunityResolverService,
     UnauthenticatedGuard,
     CommunityPermissionGuard,

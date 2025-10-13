@@ -9,6 +9,11 @@ import { GlobalPermission } from "./GlobalPermission";
 
 /**
  * Service for checking user permissions.
+ *
+ * This service handles:
+ * - Global permission checks
+ * - Community permission checks
+ * - Identity checks (self)
  */
 @Injectable()
 export class PermissionService {
@@ -120,5 +125,25 @@ export class PermissionService {
    */
   hasGlobalPermission(user: User, permission: GlobalPermission): boolean {
     return user[permission] === true;
+  }
+
+  // ===== IDENTITY CHECKS =====
+
+  /**
+   * Check if a user ID matches a target user ID (identity check).
+   *
+   * @param userId - The user ID to check
+   * @param targetUserId - The target user ID
+   * @returns True if the IDs match, false otherwise
+   *
+   * @example
+   * ```typescript
+   * if (permissionService.isSelf(currentUser.id, requestedUserId)) {
+   *   // User is accessing their own data
+   * }
+   * ```
+   */
+  isSelf(userId: string, targetUserId: string): boolean {
+    return userId === targetUserId;
   }
 }
