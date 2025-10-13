@@ -17,6 +17,9 @@ import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
+import { PermissionService } from "../auth/PermissionService";
+import { GlobalPermission } from "../auth/GlobalPermission";
+import { CommunityResolverService } from "../auth/services/community-resolver.service";
 import {
   CommunityMember,
   CommunityMemberConnection,
@@ -40,6 +43,8 @@ import { mapPrismaRoleToGraphQL } from "../roles/utils/role-resolver-mappers";
 export class CommunityMembersResolver {
   constructor(
     private readonly communityMembersService: CommunityMembersService,
+    private readonly permissionService: PermissionService,
+    private readonly communityResolverService: CommunityResolverService,
   ) {}
 
   @AllowGlobalAdmin()
@@ -139,12 +144,19 @@ export class CommunityMembersResolver {
     })
     after?: string,
   ): Promise<CommunityMemberConnection> {
-    // Self OR Admin check
-    if (!currentUser.isAdmin && userId !== currentUser.id) {
+    // Check authorization: self OR admin
+    const isSelf = this.permissionService.isSelf(currentUser.id, userId);
+    const isAdmin = this.permissionService.hasGlobalPermission(
+      currentUser,
+      GlobalPermission.IsAdmin
+    );
+
+    if (!isSelf && !isAdmin) {
       throw new ForbiddenException(
-        "You can only view your own community memberships",
+        "You can only view your own community memberships"
       );
     }
+
     const result = await this.communityMembersService.findByUser(
       userId,
       first,
@@ -188,27 +200,45 @@ export class CommunityMembersResolver {
     return mapPrismaCommunityMemberToGraphQL(result);
   }
 
-  @AllowGlobalAdmin()
-  @AllowCommunityPermission(CommunityPermission.CanRemoveCommunityMember)
-  @ResolveCommunityFrom({ communityMemberId: "id" })
+  @AllowAnyAuthenticated()
   @Mutation(() => CommunityMember, {
-    description: "Remove a community membership",
+    description: "Remove a community membership (leave community OR remove member with permission)",
   })
   async removeCommunityMember(
     @Args("id", { type: () => ID, description: "Community member ID" })
     id: string,
     @CurrentUser() currentUser: AuthenticatedCurrentUserType,
   ): Promise<CommunityMember> {
-    // First get the membership to check if user is removing themselves
     const membership = await this.communityMembersService.findOne(id);
 
-    // Allow self-removal (leaving a community) even without admin or permission
-    if (membership.userId === currentUser.id) {
-      const result = await this.communityMembersService.remove(id);
-      return mapPrismaCommunityMemberToGraphQL(result);
+    // Resolve community from membership
+    const community = await this.communityResolverService.resolve({
+      type: "communityMemberId",
+      value: id,
+    });
+    if (!community) {
+      throw new NotFoundException("Community not found");
     }
 
-    // Otherwise, guard decorators will enforce Admin OR CanRemoveCommunityMember
+    // Check all authorization conditions
+    const isSelf = this.permissionService.isSelf(currentUser.id, membership.userId);
+    const isAdmin = this.permissionService.hasGlobalPermission(
+      currentUser,
+      GlobalPermission.IsAdmin
+    );
+    const hasPermission = await this.permissionService.hasCommunityPermission(
+      currentUser.id,
+      community.id,
+      CommunityPermission.CanRemoveCommunityMember
+    );
+
+    // Allow if: self-removal OR admin OR has permission
+    if (!isSelf && !isAdmin && !hasPermission) {
+      throw new ForbiddenException(
+        "Cannot remove this community member"
+      );
+    }
+
     const result = await this.communityMembersService.remove(id);
     return mapPrismaCommunityMemberToGraphQL(result);
   }
