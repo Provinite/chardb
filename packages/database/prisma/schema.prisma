@@ -396,6 +396,7 @@ model Role {
   canCreateRole            Boolean @default(false) @map("can_create_role")
   canEditRole              Boolean @default(false) @map("can_edit_role")
   canRemoveCommunityMember Boolean @default(false) @map("can_remove_community_member")
+  canManageMemberRoles     Boolean @default(false) @map("can_manage_member_roles")
 
   // Relations
   community            Community             @relation(fields: [communityId], references: [id], onDelete: Cascade)

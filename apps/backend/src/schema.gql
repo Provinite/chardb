@@ -477,6 +477,12 @@ input CreateRoleInput {
   """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean! = false
 
+  """Whether members with this role can change other members' roles"""
+  canManageMemberRoles: Boolean! = false
+
+  """Whether members with this role can remove community members"""
+  canRemoveCommunityMember: Boolean! = false
+
   """The ID of the community this role belongs to"""
   communityId: ID!
 
@@ -1823,6 +1829,12 @@ type Role {
   """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean!
 
+  """Whether members with this role can change other members' roles"""
+  canManageMemberRoles: Boolean!
+
+  """Whether members with this role can remove community members"""
+  canRemoveCommunityMember: Boolean!
+
   """The community this role belongs to"""
   community: Community!
 
@@ -2238,6 +2250,12 @@ input UpdateRoleInput {
 
   """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean
+
+  """Whether members with this role can change other members' roles"""
+  canManageMemberRoles: Boolean
+
+  """Whether members with this role can remove community members"""
+  canRemoveCommunityMember: Boolean
 
   """The name of the role"""
   name: String

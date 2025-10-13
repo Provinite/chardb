@@ -49,6 +49,14 @@ export class Role {
   @Field(() => Boolean, { description: 'Whether members with this role can edit existing roles' })
   canEditRole!: boolean;
 
+  /** Permission to remove community members */
+  @Field(() => Boolean, { description: 'Whether members with this role can remove community members' })
+  canRemoveCommunityMember!: boolean;
+
+  /** Permission to manage member roles */
+  @Field(() => Boolean, { description: 'Whether members with this role can change other members\' roles' })
+  canManageMemberRoles!: boolean;
+
   /** When the role was created */
   @Field(() => Date, { description: 'When the role was created' })
   createdAt!: Date;

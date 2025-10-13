@@ -23,6 +23,8 @@ export function mapCreateRoleInputToService(input: CreateRoleInput): CreateRoleS
     canListInviteCodes: input.canListInviteCodes,
     canCreateRole: input.canCreateRole,
     canEditRole: input.canEditRole,
+    canRemoveCommunityMember: input.canRemoveCommunityMember,
+    canManageMemberRoles: input.canManageMemberRoles,
   };
 }
 
@@ -42,6 +44,8 @@ export function mapUpdateRoleInputToService(input: UpdateRoleInput): UpdateRoleS
   if (input.canListInviteCodes !== undefined) result.canListInviteCodes = input.canListInviteCodes;
   if (input.canCreateRole !== undefined) result.canCreateRole = input.canCreateRole;
   if (input.canEditRole !== undefined) result.canEditRole = input.canEditRole;
+  if (input.canRemoveCommunityMember !== undefined) result.canRemoveCommunityMember = input.canRemoveCommunityMember;
+  if (input.canManageMemberRoles !== undefined) result.canManageMemberRoles = input.canManageMemberRoles;
 
   return result;
 }
@@ -66,6 +70,8 @@ export function mapPrismaRoleToGraphQL(prismaRole: PrismaRole): Role {
     canListInviteCodes: prismaRole.canListInviteCodes,
     canCreateRole: prismaRole.canCreateRole,
     canEditRole: prismaRole.canEditRole,
+    canRemoveCommunityMember: prismaRole.canRemoveCommunityMember,
+    canManageMemberRoles: prismaRole.canManageMemberRoles,
     createdAt: prismaRole.createdAt,
     updatedAt: prismaRole.updatedAt,
   };

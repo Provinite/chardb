@@ -34,6 +34,10 @@ export interface CreateRoleServiceInput {
   canCreateRole?: boolean;
   /** Permission to edit existing roles */
   canEditRole?: boolean;
+  /** Permission to remove community members */
+  canRemoveCommunityMember?: boolean;
+  /** Permission to manage member roles */
+  canManageMemberRoles?: boolean;
 }
 
 /**
@@ -60,6 +64,10 @@ export interface UpdateRoleServiceInput {
   canCreateRole?: boolean;
   /** Permission to edit existing roles */
   canEditRole?: boolean;
+  /** Permission to remove community members */
+  canRemoveCommunityMember?: boolean;
+  /** Permission to manage member roles */
+  canManageMemberRoles?: boolean;
 }
 
 @Injectable()
@@ -80,6 +88,8 @@ export class RolesService {
         canListInviteCodes: input.canListInviteCodes ?? false,
         canCreateRole: input.canCreateRole ?? false,
         canEditRole: input.canEditRole ?? false,
+        canRemoveCommunityMember: input.canRemoveCommunityMember ?? false,
+        canManageMemberRoles: input.canManageMemberRoles ?? false,
         community: {
           connect: { id: input.communityId },
         },
@@ -184,6 +194,10 @@ export class RolesService {
       updateData.canCreateRole = input.canCreateRole;
     if (input.canEditRole !== undefined)
       updateData.canEditRole = input.canEditRole;
+    if (input.canRemoveCommunityMember !== undefined)
+      updateData.canRemoveCommunityMember = input.canRemoveCommunityMember;
+    if (input.canManageMemberRoles !== undefined)
+      updateData.canManageMemberRoles = input.canManageMemberRoles;
 
     return this.prisma.role.update({
       where: { id },

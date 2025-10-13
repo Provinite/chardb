@@ -16,6 +16,8 @@ export const ROLES_BY_COMMUNITY = gql`
         canListInviteCodes
         canCreateRole
         canEditRole
+        canRemoveCommunityMember
+        canManageMemberRoles
         createdAt
         updatedAt
         community {
@@ -45,6 +47,8 @@ export const CREATE_ROLE = gql`
       canListInviteCodes
       canCreateRole
       canEditRole
+      canRemoveCommunityMember
+      canManageMemberRoles
       createdAt
       updatedAt
       community {
@@ -70,6 +74,8 @@ export const UPDATE_ROLE = gql`
       canListInviteCodes
       canCreateRole
       canEditRole
+      canRemoveCommunityMember
+      canManageMemberRoles
       createdAt
       updatedAt
       community {
@@ -107,6 +113,8 @@ export const COMMUNITY_MEMBERS_WITH_ROLES = gql`
           canListInviteCodes
           canCreateRole
           canEditRole
+          canRemoveCommunityMember
+          canManageMemberRoles
         }
       }
       totalCount
@@ -142,6 +150,8 @@ export const UPDATE_COMMUNITY_MEMBER = gql`
         canListInviteCodes
         canCreateRole
         canEditRole
+        canRemoveCommunityMember
+        canManageMemberRoles
       }
     }
   }

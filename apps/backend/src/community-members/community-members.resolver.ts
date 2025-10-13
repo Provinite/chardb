@@ -168,6 +168,8 @@ export class CommunityMembersResolver {
   }
 
   @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanManageMemberRoles)
+  @ResolveCommunityFrom({ communityMemberId: "id" })
   @Mutation(() => CommunityMember, {
     description: "Update a community membership (change role)",
   })
