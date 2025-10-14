@@ -1103,7 +1103,9 @@ type Mutation {
     id: ID!
   ): CommunityInvitation!
 
-  """Remove a community membership"""
+  """
+  Remove a community membership (leave community OR remove member with permission)
+  """
   removeCommunityMember(
     """Community member ID"""
     id: ID!
