@@ -13,6 +13,8 @@ import { CharacterOwnershipChangesService } from "./character-ownership-changes.
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { CurrentUser, CurrentUserType } from "../auth/decorators/CurrentUser";
+import { PermissionService } from "../auth/PermissionService";
+import { GlobalPermission } from "../auth/GlobalPermission";
 import {
   CharacterOwnershipChange,
   CharacterOwnershipChangeConnection,
@@ -37,6 +39,7 @@ export class CharacterOwnershipChangesResolver {
     private readonly characterOwnershipChangesService: CharacterOwnershipChangesService,
     private readonly usersService: UsersService,
     private readonly charactersService: CharactersService,
+    private readonly permissionService: PermissionService,
   ) {}
 
   @AllowGlobalAdmin()
@@ -142,10 +145,20 @@ export class CharacterOwnershipChangesResolver {
     after?: string,
     @CurrentUser() currentUser?: CurrentUserType,
   ): Promise<CharacterOwnershipChangeConnection> {
-    // TODO: Implement self/admin check: Allow if admin OR userId matches current user
-    if (!currentUser?.isAdmin && userId !== currentUser?.id) {
+    // Check authorization: self OR admin
+    if (!currentUser) {
+      throw new ForbiddenException("Authentication required");
+    }
+
+    const isSelf = this.permissionService.isSelf(currentUser.id, userId);
+    const isAdmin = this.permissionService.hasGlobalPermission(
+      currentUser,
+      GlobalPermission.IsAdmin
+    );
+
+    if (!isSelf && !isAdmin) {
       throw new ForbiddenException(
-        "You can only view your own ownership changes unless you are an admin",
+        "You can only view your own ownership changes"
       );
     }
 

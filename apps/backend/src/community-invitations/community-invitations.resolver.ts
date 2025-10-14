@@ -18,6 +18,9 @@ import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
+import { PermissionService } from "../auth/PermissionService";
+import { OwnershipService } from "../auth/OwnershipService";
+import { GlobalPermission } from "../auth/GlobalPermission";
 import {
   CommunityInvitation,
   CommunityInvitationConnection,
@@ -49,6 +52,8 @@ export class CommunityInvitationsResolver {
     private readonly rolesService: RolesService,
     private readonly usersService: UsersService,
     private readonly communitiesService: CommunitiesService,
+    private readonly permissionService: PermissionService,
+    private readonly ownershipService: OwnershipService,
   ) {}
 
   @AllowGlobalAdmin()
@@ -156,12 +161,19 @@ export class CommunityInvitationsResolver {
     })
     after?: string,
   ): Promise<CommunityInvitationConnection> {
-    // Self OR Admin check
-    if (!currentUser.isAdmin && inviteeId !== currentUser.id) {
+    // Check authorization: self OR admin
+    const isSelf = this.permissionService.isSelf(currentUser.id, inviteeId);
+    const isAdmin = this.permissionService.hasGlobalPermission(
+      currentUser,
+      GlobalPermission.IsAdmin
+    );
+
+    if (!isSelf && !isAdmin) {
       throw new ForbiddenException(
-        "You can only view your own invitations unless you are an admin",
+        "You can only view your own invitations"
       );
     }
+
     const serviceResult = await this.communityInvitationsService.findByInvitee(
       inviteeId,
       first,
@@ -185,10 +197,13 @@ export class CommunityInvitationsResolver {
     const prismaResult = await this.communityInvitationsService.findOne(id);
 
     // Allow if user is invitee or inviter (in addition to admin/permission checks from decorators)
-    if (
-      prismaResult.inviteeId === currentUser.id ||
-      prismaResult.inviterId === currentUser.id
-    ) {
+    const isInviterOrInvitee = await this.ownershipService.isOwnerOf(
+      currentUser.id,
+      "inviterOrInviteeOfInvitation",
+      id
+    );
+
+    if (isInviterOrInvitee) {
       return mapPrismaCommunityInvitationToGraphQL(prismaResult);
     }
 
