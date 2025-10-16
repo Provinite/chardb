@@ -12,7 +12,10 @@ import { InviteCodesService } from "./invite-codes.service";
 import { AllowGlobalPermission } from "../auth/decorators/AllowGlobalPermission";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
+import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
+import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { GlobalPermission } from "../auth/GlobalPermission";
+import { CommunityPermission } from "../auth/CommunityPermission";
 import {
   InviteCode,
   InviteCodeConnection,
@@ -60,6 +63,8 @@ export class InviteCodesResolver {
 
   /** Get all invite codes with pagination */
   @AllowGlobalPermission(GlobalPermission.CanListInviteCodes)
+  @AllowCommunityPermission(CommunityPermission.CanListInviteCodes)
+  @ResolveCommunityFrom({ communityId: "communityId" })
   @Query(() => InviteCodeConnection, {
     name: "inviteCodes",
     description: "Get all invite codes with pagination",
