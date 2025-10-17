@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { Prisma } from "@chardb/database";
 
 /**
  * Service layer input types for roles operations.
@@ -34,6 +34,10 @@ export interface CreateRoleServiceInput {
   canCreateRole?: boolean;
   /** Permission to edit existing roles */
   canEditRole?: boolean;
+  /** Permission to remove community members */
+  canRemoveCommunityMember?: boolean;
+  /** Permission to manage member roles */
+  canManageMemberRoles?: boolean;
 }
 
 /**
@@ -60,6 +64,10 @@ export interface UpdateRoleServiceInput {
   canCreateRole?: boolean;
   /** Permission to edit existing roles */
   canEditRole?: boolean;
+  /** Permission to remove community members */
+  canRemoveCommunityMember?: boolean;
+  /** Permission to manage member roles */
+  canManageMemberRoles?: boolean;
 }
 
 @Injectable()
@@ -80,9 +88,11 @@ export class RolesService {
         canListInviteCodes: input.canListInviteCodes ?? false,
         canCreateRole: input.canCreateRole ?? false,
         canEditRole: input.canEditRole ?? false,
+        canRemoveCommunityMember: input.canRemoveCommunityMember ?? false,
+        canManageMemberRoles: input.canManageMemberRoles ?? false,
         community: {
-          connect: { id: input.communityId }
-        }
+          connect: { id: input.communityId },
+        },
       },
     });
   }
@@ -97,10 +107,7 @@ export class RolesService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: [
-          { community: { name: 'asc' } },
-          { name: 'asc' },
-        ],
+        orderBy: [{ community: { name: "asc" } }, { name: "asc" }],
       }),
       this.prisma.role.count(),
     ]);
@@ -117,7 +124,11 @@ export class RolesService {
   }
 
   /** Find roles by community ID with pagination */
-  async findByCommunity(communityId: string, first: number = 20, after?: string) {
+  async findByCommunity(
+    communityId: string,
+    first: number = 20,
+    after?: string,
+  ) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -127,7 +138,7 @@ export class RolesService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { name: 'asc' },
+        orderBy: { name: "asc" },
       }),
       this.prisma.role.count({
         where: { communityId },
@@ -163,17 +174,30 @@ export class RolesService {
     const role = await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.RoleUpdateInput = {};
-    
+
     if (input.name !== undefined) updateData.name = input.name;
-    if (input.canCreateSpecies !== undefined) updateData.canCreateSpecies = input.canCreateSpecies;
-    if (input.canCreateCharacter !== undefined) updateData.canCreateCharacter = input.canCreateCharacter;
-    if (input.canEditCharacter !== undefined) updateData.canEditCharacter = input.canEditCharacter;
-    if (input.canEditOwnCharacter !== undefined) updateData.canEditOwnCharacter = input.canEditOwnCharacter;
-    if (input.canEditSpecies !== undefined) updateData.canEditSpecies = input.canEditSpecies;
-    if (input.canCreateInviteCode !== undefined) updateData.canCreateInviteCode = input.canCreateInviteCode;
-    if (input.canListInviteCodes !== undefined) updateData.canListInviteCodes = input.canListInviteCodes;
-    if (input.canCreateRole !== undefined) updateData.canCreateRole = input.canCreateRole;
-    if (input.canEditRole !== undefined) updateData.canEditRole = input.canEditRole;
+    if (input.canCreateSpecies !== undefined)
+      updateData.canCreateSpecies = input.canCreateSpecies;
+    if (input.canCreateCharacter !== undefined)
+      updateData.canCreateCharacter = input.canCreateCharacter;
+    if (input.canEditCharacter !== undefined)
+      updateData.canEditCharacter = input.canEditCharacter;
+    if (input.canEditOwnCharacter !== undefined)
+      updateData.canEditOwnCharacter = input.canEditOwnCharacter;
+    if (input.canEditSpecies !== undefined)
+      updateData.canEditSpecies = input.canEditSpecies;
+    if (input.canCreateInviteCode !== undefined)
+      updateData.canCreateInviteCode = input.canCreateInviteCode;
+    if (input.canListInviteCodes !== undefined)
+      updateData.canListInviteCodes = input.canListInviteCodes;
+    if (input.canCreateRole !== undefined)
+      updateData.canCreateRole = input.canCreateRole;
+    if (input.canEditRole !== undefined)
+      updateData.canEditRole = input.canEditRole;
+    if (input.canRemoveCommunityMember !== undefined)
+      updateData.canRemoveCommunityMember = input.canRemoveCommunityMember;
+    if (input.canManageMemberRoles !== undefined)
+      updateData.canManageMemberRoles = input.canManageMemberRoles;
 
     return this.prisma.role.update({
       where: { id },

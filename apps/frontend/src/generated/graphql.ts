@@ -447,6 +447,10 @@ export type CreateRoleInput = {
   canEditSpecies?: Scalars['Boolean']['input'];
   /** Whether members with this role can list invite codes */
   canListInviteCodes?: Scalars['Boolean']['input'];
+  /** Whether members with this role can change other members' roles */
+  canManageMemberRoles?: Scalars['Boolean']['input'];
+  /** Whether members with this role can remove community members */
+  canRemoveCommunityMember?: Scalars['Boolean']['input'];
   /** The ID of the community this role belongs to */
   communityId: Scalars['ID']['input'];
   /** The name of the role */
@@ -1355,8 +1359,6 @@ export type Query = {
   communityInvitationsByCommunity: CommunityInvitationConnection;
   /** Get community invitations by invitee ID with pagination */
   communityInvitationsByInvitee: CommunityInvitationConnection;
-  /** Get community invitations by inviter ID with pagination */
-  communityInvitationsByInviter: CommunityInvitationConnection;
   /** Get a community member by ID */
   communityMemberById: CommunityMember;
   /** Get all community members with pagination */
@@ -1559,13 +1561,6 @@ export type QueryCommunityInvitationsByInviteeArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   inviteeId: Scalars['ID']['input'];
-};
-
-
-export type QueryCommunityInvitationsByInviterArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  inviterId: Scalars['ID']['input'];
 };
 
 
@@ -1939,6 +1934,10 @@ export type Role = {
   canEditSpecies: Scalars['Boolean']['output'];
   /** Whether members with this role can list invite codes */
   canListInviteCodes: Scalars['Boolean']['output'];
+  /** Whether members with this role can change other members' roles */
+  canManageMemberRoles: Scalars['Boolean']['output'];
+  /** Whether members with this role can remove community members */
+  canRemoveCommunityMember: Scalars['Boolean']['output'];
   /** The community this role belongs to */
   community: Community;
   /** The ID of the community this role belongs to */
@@ -2288,6 +2287,10 @@ export type UpdateRoleInput = {
   canEditSpecies?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can list invite codes */
   canListInviteCodes?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can change other members' roles */
+  canManageMemberRoles?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can remove community members */
+  canRemoveCommunityMember?: InputMaybe<Scalars['Boolean']['input']>;
   /** The name of the role */
   name?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2925,14 +2928,14 @@ export type RolesByCommunityDetailedQueryVariables = Exact<{
 }>;
 
 
-export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
+export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
 
 export type CreateRoleMutationVariables = Exact<{
   input: CreateRoleInput;
 }>;
 
 
-export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
 
 export type UpdateRoleMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2940,7 +2943,7 @@ export type UpdateRoleMutationVariables = Exact<{
 }>;
 
 
-export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
 
 export type CommunityMembersWithRolesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -2949,7 +2952,7 @@ export type CommunityMembersWithRolesQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean } }> } };
+export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
 
 export type UpdateCommunityMemberMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2957,7 +2960,7 @@ export type UpdateCommunityMemberMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean } } };
+export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
 
 export type ToggleLikeMutationVariables = Exact<{
   input: ToggleLikeInput;
@@ -6928,6 +6931,8 @@ export const RolesByCommunityDetailedDocument = gql`
       canListInviteCodes
       canCreateRole
       canEditRole
+      canRemoveCommunityMember
+      canManageMemberRoles
       createdAt
       updatedAt
       community {
@@ -6991,6 +6996,8 @@ export const CreateRoleDocument = gql`
     canListInviteCodes
     canCreateRole
     canEditRole
+    canRemoveCommunityMember
+    canManageMemberRoles
     createdAt
     updatedAt
     community {
@@ -7041,6 +7048,8 @@ export const UpdateRoleDocument = gql`
     canListInviteCodes
     canCreateRole
     canEditRole
+    canRemoveCommunityMember
+    canManageMemberRoles
     createdAt
     updatedAt
     community {
@@ -7108,6 +7117,8 @@ export const CommunityMembersWithRolesDocument = gql`
         canListInviteCodes
         canCreateRole
         canEditRole
+        canRemoveCommunityMember
+        canManageMemberRoles
       }
     }
     totalCount
@@ -7177,6 +7188,8 @@ export const UpdateCommunityMemberDocument = gql`
       canListInviteCodes
       canCreateRole
       canEditRole
+      canRemoveCommunityMember
+      canManageMemberRoles
     }
   }
 }

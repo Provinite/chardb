@@ -8,9 +8,12 @@ import {
   Parent,
   Int,
 } from "@nestjs/graphql";
-import { UseGuards } from "@nestjs/common";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { CurrentUser } from "../auth/decorators/CurrentUser";
+import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
+import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
+import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
+import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { MediaService } from "./media.service";
 import { UsersService } from "../users/users.service";
 import { CharactersService } from "../characters/characters.service";
@@ -41,6 +44,7 @@ import {
   mapPrismaMediaToGraphQL,
   mapPrismaMediaConnectionToGraphQL,
 } from "./utils/media-resolver-mappers";
+import { mapPrismaGalleryToGraphQL } from "../galleries/utils/gallery-resolver-mappers";
 
 /**
  * GraphQL resolver for media operations
@@ -55,9 +59,7 @@ export class MediaResolver {
     private readonly imagesService: ImagesService,
   ) {}
 
-  /**
-   * Retrieves paginated media with filtering and visibility controls
-   */
+  @AllowUnauthenticated()
   @Query(() => MediaConnection, {
     description:
       "Retrieves paginated media with filtering and visibility controls",
@@ -75,9 +77,7 @@ export class MediaResolver {
     return mapPrismaMediaConnectionToGraphQL(result);
   }
 
-  /**
-   * Retrieves a single media item by ID
-   */
+  @AllowUnauthenticated()
   @Query(() => MediaEntity, {
     description: "Retrieves a single media item by ID",
   })
@@ -90,13 +90,10 @@ export class MediaResolver {
     return mapPrismaMediaToGraphQL(media);
   }
 
-  /**
-   * Retrieves media owned by the current authenticated user
-   */
+  @AllowAnyAuthenticated()
   @Query(() => MediaConnection, {
     description: "Retrieves media owned by the current authenticated user",
   })
-  @UseGuards(JwtAuthGuard)
   async myMedia(
     @CurrentUser() user: any,
     @Args("filters", {
@@ -113,9 +110,7 @@ export class MediaResolver {
     return mapPrismaMediaConnectionToGraphQL(result);
   }
 
-  /**
-   * Retrieves media owned by a specific user
-   */
+  @AllowUnauthenticated()
   @Query(() => MediaConnection, {
     description: "Retrieves media owned by a specific user",
   })
@@ -140,9 +135,7 @@ export class MediaResolver {
     return mapPrismaMediaConnectionToGraphQL(result);
   }
 
-  /**
-   * Retrieves media associated with a specific character
-   */
+  @AllowUnauthenticated()
   @Query(() => MediaConnection, {
     description: "Retrieves media associated with a specific character",
   })
@@ -167,9 +160,7 @@ export class MediaResolver {
     return mapPrismaMediaConnectionToGraphQL(result);
   }
 
-  /**
-   * Retrieves media from a specific gallery
-   */
+  @AllowUnauthenticated()
   @Query(() => MediaConnection, {
     description: "Retrieves media from a specific gallery",
   })
@@ -194,11 +185,8 @@ export class MediaResolver {
     return mapPrismaMediaConnectionToGraphQL(result);
   }
 
-  /**
-   * Creates a new text media item
-   */
+  @AllowAnyAuthenticated()
   @Mutation(() => MediaEntity, { description: "Creates a new text media item" })
-  @UseGuards(JwtAuthGuard)
   async createTextMedia(
     @Args("input", { description: "Text media creation parameters" })
     input: CreateTextMediaInput,
@@ -212,19 +200,17 @@ export class MediaResolver {
     return mapPrismaMediaToGraphQL(media);
   }
 
-  /**
-   * Updates media metadata (title, description, etc.)
-   */
+  @AllowGlobalAdmin()
+  @AllowEntityOwner({ mediaId: "id" })
   @Mutation(() => MediaEntity, {
     description: "Updates media metadata (title, description, etc.)",
   })
-  @UseGuards(JwtAuthGuard)
   async updateMedia(
     @Args("id", { type: () => ID, description: "Media ID to update" })
     id: string,
     @Args("input", { description: "Updated media parameters" })
     input: UpdateMediaInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
     const serviceInput = mapUpdateMediaInputToService(input);
     const media = await this.mediaService.updateMedia(
@@ -235,13 +221,11 @@ export class MediaResolver {
     return mapPrismaMediaToGraphQL(media);
   }
 
-  /**
-   * Updates the text content of a text media item
-   */
+  @AllowGlobalAdmin()
+  @AllowEntityOwner({ mediaId: "mediaId" })
   @Mutation(() => MediaEntity, {
     description: "Updates the text content of a text media item",
   })
-  @UseGuards(JwtAuthGuard)
   async updateTextContent(
     @Args("mediaId", {
       type: () => ID,
@@ -250,7 +234,7 @@ export class MediaResolver {
     mediaId: string,
     @Args("input", { description: "Updated text content parameters" })
     input: UpdateTextContentInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
     const serviceInput = mapUpdateTextContentInputToService(input);
     const media = await this.mediaService.updateTextContent(
@@ -258,53 +242,48 @@ export class MediaResolver {
       user.id,
       serviceInput,
     );
+    if (!media) throw new Error("Media not found");
     return mapPrismaMediaToGraphQL(media);
   }
 
-  /**
-   * Deletes a media item and its associated content
-   */
+  @AllowGlobalAdmin()
+  @AllowEntityOwner({ mediaId: "id" })
   @Mutation(() => Boolean, {
     description: "Deletes a media item and its associated content",
   })
-  @UseGuards(JwtAuthGuard)
   async deleteMedia(
     @Args("id", { type: () => ID, description: "Media ID to delete" })
     id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.mediaService.remove(id, user.id);
   }
 
-  /**
-   * Adds tags to a media item
-   */
+  @AllowGlobalAdmin()
+  @AllowEntityOwner({ mediaId: "id" })
   @Mutation(() => MediaEntity, { description: "Adds tags to a media item" })
-  @UseGuards(JwtAuthGuard)
   async addMediaTags(
     @Args("id", { type: () => ID, description: "Media ID to add tags to" })
     id: string,
     @Args("input", { description: "Tags to add to the media" })
     input: ManageMediaTagsInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
     const media = await this.mediaService.addTags(id, user.id, input.tagNames);
     return mapPrismaMediaToGraphQL(media);
   }
 
-  /**
-   * Removes tags from a media item
-   */
+  @AllowGlobalAdmin()
+  @AllowEntityOwner({ mediaId: "id" })
   @Mutation(() => MediaEntity, {
     description: "Removes tags from a media item",
   })
-  @UseGuards(JwtAuthGuard)
   async removeMediaTags(
     @Args("id", { type: () => ID, description: "Media ID to remove tags from" })
     id: string,
     @Args("input", { description: "Tags to remove from the media" })
     input: ManageMediaTagsInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
     const media = await this.mediaService.removeTags(
       id,
@@ -345,7 +324,8 @@ export class MediaResolver {
   })
   async gallery(@Parent() media: MediaEntity): Promise<Gallery | null> {
     if (!media.galleryId) return null;
-    return this.galleriesService.findOne(media.galleryId);
+    const gallery = await this.galleriesService.findOne(media.galleryId);
+    return gallery ? mapPrismaGalleryToGraphQL(gallery) : null;
   }
 
   /**
@@ -383,7 +363,11 @@ export class MediaResolver {
     const mediaTags = await this.mediaService.findMediaTags(media.id);
 
     return mediaTags.map((mediaTag) => ({
-      tag: mediaTag.tag,
+      tag: {
+        ...mediaTag.tag,
+        category: mediaTag.tag.category ?? undefined,
+        color: mediaTag.tag.color ?? undefined,
+      },
     }));
   }
 
@@ -401,6 +385,7 @@ export class MediaResolver {
   /**
    * Resolves whether the current user has liked this media
    */
+  @AllowAnyAuthenticated()
   @ResolveField(() => Boolean, {
     description: "Whether the current user has liked this media",
   })

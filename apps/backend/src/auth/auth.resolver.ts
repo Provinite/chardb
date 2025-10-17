@@ -6,11 +6,13 @@ import {
   mapSignupInputToService,
   mapAuthResponseToGraphQL,
 } from './utils/auth-resolver-mappers';
+import { AllowUnauthenticated } from './decorators/AllowUnauthenticated';
 
 @Resolver()
 export class AuthResolver {
   constructor(private authService: AuthService) {}
 
+  @AllowUnauthenticated()
   @Mutation(() => AuthPayload)
   async login(@Args('input') loginInput: LoginInput): Promise<AuthPayload> {
     const serviceInput = mapLoginInputToService(loginInput);
@@ -18,6 +20,7 @@ export class AuthResolver {
     return mapAuthResponseToGraphQL(serviceResult);
   }
 
+  @AllowUnauthenticated()
   @Mutation(() => AuthPayload)
   async signup(@Args('input') signupInput: SignupInput): Promise<AuthPayload> {
     const serviceInput = mapSignupInputToService(signupInput);
@@ -25,6 +28,7 @@ export class AuthResolver {
     return mapAuthResponseToGraphQL(serviceResult);
   }
 
+  @AllowUnauthenticated()
   @Mutation(() => String)
   async refreshToken(@Args('token') token: string): Promise<string> {
     const result = await this.authService.refreshToken(token);

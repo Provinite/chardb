@@ -217,6 +217,8 @@ type EditableRole = {
   canListInviteCodes: boolean;
   canCreateRole: boolean;
   canEditRole: boolean;
+  canRemoveCommunityMember: boolean;
+  canManageMemberRoles: boolean;
 };
 
 interface RoleEditorProps {
@@ -278,6 +280,16 @@ const PERMISSION_GROUPS = [
         name: "View Invite Codes",
         description: "Allow viewing and managing existing invite codes",
       },
+      {
+        key: "canRemoveCommunityMember",
+        name: "Remove Members",
+        description: "Allow removal of community members",
+      },
+      {
+        key: "canManageMemberRoles",
+        name: "Manage Member Roles",
+        description: "Allow changing roles of community members",
+      },
     ],
   },
   {
@@ -315,6 +327,8 @@ const ROLE_TEMPLATES = [
       canListInviteCodes: false,
       canCreateRole: false,
       canEditRole: false,
+      canRemoveCommunityMember: false,
+      canManageMemberRoles: false,
     },
   },
   {
@@ -330,6 +344,8 @@ const ROLE_TEMPLATES = [
       canListInviteCodes: true,
       canCreateRole: false,
       canEditRole: false,
+      canRemoveCommunityMember: false,
+      canManageMemberRoles: false,
     },
   },
   {
@@ -345,6 +361,8 @@ const ROLE_TEMPLATES = [
       canListInviteCodes: true,
       canCreateRole: true,
       canEditRole: true,
+      canRemoveCommunityMember: true,
+      canManageMemberRoles: true,
     },
   },
 ];
@@ -381,6 +399,8 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
         canListInviteCodes: editingRole.canListInviteCodes,
         canCreateRole: editingRole.canCreateRole,
         canEditRole: editingRole.canEditRole,
+        canRemoveCommunityMember: editingRole.canRemoveCommunityMember,
+        canManageMemberRoles: editingRole.canManageMemberRoles,
       });
     } else {
       // Reset form for new role

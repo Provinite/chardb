@@ -127,7 +127,7 @@ describe('SocialService', () => {
           entityId: 'test-id',
         };
 
-        db[testCase.mock].findUnique.mockResolvedValue({ id: 'test-id' });
+        (db as any)[testCase.mock].findUnique.mockResolvedValue({ id: 'test-id' });
         db.$transaction.mockImplementation(async (callback) => {
           db.like.findUnique.mockResolvedValue(null);
           db.like.create.mockResolvedValue(mockLike);

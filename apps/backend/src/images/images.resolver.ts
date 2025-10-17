@@ -1,15 +1,18 @@
-import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { ImagesService } from './images.service';
-import { Image as ImageEntity, ImageConnection } from './entities/image.entity';
+import { Resolver, Query, Mutation, Args, ID } from "@nestjs/graphql";
+import { CurrentUser } from "../auth/decorators/CurrentUser";
+import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
+import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
+import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
+import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
+import { ImagesService } from "./images.service";
+import { Image as ImageEntity, ImageConnection } from "./entities/image.entity";
 import {
   UpdateImageInput,
   ImageFiltersInput,
   ManageImageTagsInput,
-} from './dto/image.dto';
-import type { Image } from '@chardb/database';
+} from "./dto/image.dto";
+import type { Image } from "@chardb/database";
 
 @Resolver(() => ImageEntity)
 export class ImagesResolver {
@@ -20,7 +23,7 @@ export class ImagesResolver {
 
   @Query(() => ImageConnection)
   async images(
-    @Args('filters', { nullable: true }) filters?: ImageFiltersInput,
+    @Args("filters", { nullable: true }) filters?: ImageFiltersInput,
     @CurrentUser() user?: any,
   ): Promise<any> {
     return this.imagesService.findAll(filters, user?.id);
@@ -28,39 +31,40 @@ export class ImagesResolver {
 
   @Query(() => ImageEntity)
   async image(
-    @Args('id', { type: () => ID }) id: string,
+    @Args("id", { type: () => ID }) id: string,
     @CurrentUser() user?: any,
   ): Promise<any> {
     return this.imagesService.findOne(id, user?.id);
   }
 
+  @AllowGlobalAdmin()
+  @AllowEntityOwner({ imageId: "id" })
   @Mutation(() => ImageEntity)
-  @UseGuards(JwtAuthGuard)
   async updateImage(
-    @Args('id', { type: () => ID }) id: string,
-    @Args('input') input: UpdateImageInput,
-    @CurrentUser() user: any,
+    @Args("id", { type: () => ID }) id: string,
+    @Args("input") input: UpdateImageInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
     return this.imagesService.update(id, user.id, input);
   }
 
+  @AllowGlobalAdmin()
+  @AllowEntityOwner({ imageId: "id" })
   @Mutation(() => Boolean)
-  @UseGuards(JwtAuthGuard)
   async deleteImage(
-    @Args('id', { type: () => ID }) id: string,
-    @CurrentUser() user: any,
+    @Args("id", { type: () => ID }) id: string,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.imagesService.remove(id, user.id);
   }
 
   // Image tag mutations removed - tags should be managed on Media entries instead
 
-  // Query for user's own images
+  // DEPRECATED: Image queries are blocked (no permission decorators = blocked)
   @Query(() => ImageConnection)
-  @UseGuards(JwtAuthGuard)
   async myImages(
     @CurrentUser() user: any,
-    @Args('filters', { nullable: true }) filters?: ImageFiltersInput,
+    @Args("filters", { nullable: true }) filters?: ImageFiltersInput,
   ): Promise<any> {
     const userFilters = { ...filters, uploaderId: user.id };
     return this.imagesService.findAll(userFilters, user.id);
@@ -69,8 +73,8 @@ export class ImagesResolver {
   // Query for images by specific user
   @Query(() => ImageConnection)
   async userImages(
-    @Args('userId', { type: () => ID }) userId: string,
-    @Args('filters', { nullable: true }) filters?: ImageFiltersInput,
+    @Args("userId", { type: () => ID }) userId: string,
+    @Args("filters", { nullable: true }) filters?: ImageFiltersInput,
     @CurrentUser() user?: any,
   ): Promise<any> {
     const userFilters = { ...filters, uploaderId: userId };
@@ -80,8 +84,8 @@ export class ImagesResolver {
   // Query for images in a specific character
   @Query(() => ImageConnection)
   async characterImages(
-    @Args('characterId', { type: () => ID }) characterId: string,
-    @Args('filters', { nullable: true }) filters?: ImageFiltersInput,
+    @Args("characterId", { type: () => ID }) characterId: string,
+    @Args("filters", { nullable: true }) filters?: ImageFiltersInput,
     @CurrentUser() user?: any,
   ): Promise<any> {
     const characterFilters = { ...filters, characterId };
@@ -91,8 +95,8 @@ export class ImagesResolver {
   // Query for images in a specific gallery
   @Query(() => ImageConnection)
   async galleryImages(
-    @Args('galleryId', { type: () => ID }) galleryId: string,
-    @Args('filters', { nullable: true }) filters?: ImageFiltersInput,
+    @Args("galleryId", { type: () => ID }) galleryId: string,
+    @Args("filters", { nullable: true }) filters?: ImageFiltersInput,
     @CurrentUser() user?: any,
   ): Promise<any> {
     const galleryFilters = { ...filters, galleryId };

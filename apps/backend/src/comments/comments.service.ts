@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import type { Prisma } from '@chardb/database';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import type { Prisma } from "@chardb/database";
 
 /**
  * Service layer input types for comment operations.
@@ -12,10 +17,10 @@ import type { Prisma } from '@chardb/database';
  * Enum for commentable entity types (service layer equivalent)
  */
 export enum CommentableTypeFilter {
-  CHARACTER = 'CHARACTER',
-  IMAGE = 'IMAGE',
-  GALLERY = 'GALLERY',
-  USER = 'USER'
+  CHARACTER = "CHARACTER",
+  IMAGE = "IMAGE",
+  GALLERY = "GALLERY",
+  USER = "USER",
 }
 
 /**
@@ -66,10 +71,20 @@ export class CommentsService {
 
     // If this is a reply, validate the parent comment
     if (input.parentId) {
-      await this.validateParentComment(input.parentId, input.entityType, input.entityId);
+      await this.validateParentComment(
+        input.parentId,
+        input.entityType,
+        input.entityId,
+      );
     }
 
-    const createData = this.buildCommentCreateData(authorId, input.content, input.entityType, input.entityId, input.parentId);
+    const createData = this.buildCommentCreateData(
+      authorId,
+      input.content,
+      input.entityType,
+      input.entityId,
+      input.parentId,
+    );
     const comment = await this.databaseService.comment.create({
       data: createData,
     });
@@ -83,7 +98,7 @@ export class CommentsService {
     });
 
     if (!comment) {
-      throw new NotFoundException('Comment not found');
+      throw new NotFoundException("Comment not found");
     }
 
     return comment;
@@ -110,7 +125,7 @@ export class CommentsService {
       this.databaseService.comment.findMany({
         where,
         orderBy: {
-          createdAt: 'desc',
+          createdAt: "desc",
         },
         take: filters.limit,
         skip: filters.offset,
@@ -131,11 +146,11 @@ export class CommentsService {
     });
 
     if (!existingComment) {
-      throw new NotFoundException('Comment not found');
+      throw new NotFoundException("Comment not found");
     }
 
     if (existingComment.authorId !== authorId) {
-      throw new ForbiddenException('You can only edit your own comments');
+      throw new ForbiddenException("You can only edit your own comments");
     }
 
     const comment = await this.databaseService.comment.update({
@@ -148,27 +163,96 @@ export class CommentsService {
     return comment;
   }
 
-  async remove(id: string, authorId: string, isAdmin: boolean = false): Promise<boolean> {
+  async remove(
+    id: string,
+    authorId: string,
+    isAdmin: boolean = false,
+  ): Promise<boolean> {
     const existingComment = await this.databaseService.comment.findUnique({
       where: { id },
     });
 
     if (!existingComment) {
-      throw new NotFoundException('Comment not found');
+      throw new NotFoundException("Comment not found");
     }
 
-    if (existingComment.authorId !== authorId && !isAdmin) {
-      throw new ForbiddenException('You can only delete your own comments');
+    // Check if user is the comment author or an admin
+    const isAuthor = existingComment.authorId === authorId;
+    if (isAuthor || isAdmin) {
+      await this.databaseService.comment.delete({
+        where: { id },
+      });
+      return true;
     }
 
-    await this.databaseService.comment.delete({
-      where: { id },
-    });
+    // Check if user owns the commentable entity
+    const isCommentableOwner = await this.checkCommentableOwnership(
+      existingComment,
+      authorId,
+    );
+    if (isCommentableOwner) {
+      await this.databaseService.comment.delete({
+        where: { id },
+      });
+      return true;
+    }
 
-    return true;
+    throw new ForbiddenException(
+      "You can only delete your own comments or comments on content you own",
+    );
   }
 
-  private async validateEntity(entityType: CommentableTypeFilter, entityId: string): Promise<void> {
+  /**
+   * Check if the user owns the entity that was commented on
+   */
+  private async checkCommentableOwnership(
+    comment: {
+      characterId: string | null;
+      imageId: string | null;
+      galleryId: string | null;
+      userId: string | null;
+    },
+    userId: string,
+  ): Promise<boolean> {
+    // Check character ownership
+    if (comment.characterId) {
+      const character = await this.databaseService.character.findUnique({
+        where: { id: comment.characterId },
+        select: { ownerId: true },
+      });
+      return character?.ownerId === userId;
+    }
+
+    // Check image ownership (via uploaderId)
+    if (comment.imageId) {
+      const image = await this.databaseService.image.findUnique({
+        where: { id: comment.imageId },
+        select: { uploaderId: true },
+      });
+      return image?.uploaderId === userId;
+    }
+
+    // Check gallery ownership
+    if (comment.galleryId) {
+      const gallery = await this.databaseService.gallery.findUnique({
+        where: { id: comment.galleryId },
+        select: { ownerId: true },
+      });
+      return gallery?.ownerId === userId;
+    }
+
+    // Check user profile ownership (self)
+    if (comment.userId) {
+      return comment.userId === userId;
+    }
+
+    return false;
+  }
+
+  private async validateEntity(
+    entityType: CommentableTypeFilter,
+    entityId: string,
+  ): Promise<void> {
     let exists = false;
 
     switch (entityType) {
@@ -203,13 +287,17 @@ export class CommentsService {
     }
   }
 
-  private async validateParentComment(parentId: string, entityType: CommentableTypeFilter, entityId: string): Promise<void> {
+  private async validateParentComment(
+    parentId: string,
+    entityType: CommentableTypeFilter,
+    entityId: string,
+  ): Promise<void> {
     const parentComment = await this.databaseService.comment.findUnique({
       where: { id: parentId },
     });
 
     if (!parentComment) {
-      throw new BadRequestException('Parent comment not found');
+      throw new BadRequestException("Parent comment not found");
     }
 
     // Check if parent comment belongs to the same entity using the new structure
@@ -217,21 +305,23 @@ export class CommentsService {
     const parentEntityId = this.getEntityIdFromComment(parentComment);
 
     if (parentEntityType !== entityType || parentEntityId !== entityId) {
-      throw new BadRequestException('Parent comment must belong to the same entity');
+      throw new BadRequestException(
+        "Parent comment must belong to the same entity",
+      );
     }
   }
 
   private buildCommentCreateData(
-    authorId: string, 
-    content: string, 
-    entityType: CommentableTypeFilter, 
-    entityId: string, 
-    parentId?: string
+    authorId: string,
+    content: string,
+    entityType: CommentableTypeFilter,
+    entityId: string,
+    parentId?: string,
   ) {
-    const baseData = { 
-      content, 
-      authorId, 
-      parentId 
+    const baseData = {
+      content,
+      authorId,
+      parentId,
     };
 
     switch (entityType) {
@@ -248,19 +338,37 @@ export class CommentsService {
     }
   }
 
-  private getEntityTypeFromComment(comment: Prisma.CommentGetPayload<{}>): CommentableTypeFilter {
+  private getEntityTypeFromComment(
+    comment: Prisma.CommentGetPayload<{}>,
+  ): CommentableTypeFilter {
     if (comment.characterId) return CommentableTypeFilter.CHARACTER;
     if (comment.imageId) return CommentableTypeFilter.IMAGE;
     if (comment.galleryId) return CommentableTypeFilter.GALLERY;
     if (comment.userId) return CommentableTypeFilter.USER;
-    throw new BadRequestException('Comment has no valid entity type');
+    throw new BadRequestException("Comment has no valid entity type");
   }
 
-  private getEntityIdFromComment(comment: Prisma.CommentGetPayload<{}>): string {
-    return comment.characterId || comment.imageId || comment.galleryId || comment.userId;
+  private getEntityIdFromComment(
+    comment: Prisma.CommentGetPayload<{}>,
+  ): string {
+    const entityId =
+      comment.characterId ||
+      comment.imageId ||
+      comment.galleryId ||
+      comment.userId;
+
+    if (!entityId) {
+      throw new BadRequestException("Comment has no valid entity reference");
+    }
+
+    return entityId;
   }
 
-  private addEntityFilterToWhere(where: Prisma.CommentWhereInput, entityType: CommentableTypeFilter, entityId: string): void {
+  private addEntityFilterToWhere(
+    where: Prisma.CommentWhereInput,
+    entityType: CommentableTypeFilter,
+    entityId: string,
+  ): void {
     switch (entityType) {
       case CommentableTypeFilter.CHARACTER:
         where.characterId = entityId;
@@ -279,7 +387,10 @@ export class CommentsService {
     }
   }
 
-  private addEntityTypeFilterToWhere(where: Prisma.CommentWhereInput, entityType: CommentableTypeFilter): void {
+  private addEntityTypeFilterToWhere(
+    where: Prisma.CommentWhereInput,
+    entityType: CommentableTypeFilter,
+  ): void {
     switch (entityType) {
       case CommentableTypeFilter.CHARACTER:
         where.characterId = { not: null };
@@ -297,5 +408,4 @@ export class CommentsService {
         throw new BadRequestException(`Invalid entity type: ${entityType}`);
     }
   }
-
 }

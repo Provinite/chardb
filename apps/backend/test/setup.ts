@@ -1,5 +1,5 @@
-import { Test } from '@nestjs/testing';
-import { DatabaseService } from '../src/database/database.service';
+import { Test } from "@nestjs/testing";
+import { DatabaseService } from "../src/database/database.service";
 
 // Mock Prisma Client for testing
 const mockPrismaService = {
@@ -77,7 +77,9 @@ const mockPrismaService = {
     delete: jest.fn(),
     count: jest.fn(),
   },
-  $transaction: jest.fn((callback) => callback(mockPrismaService)),
+  $transaction: jest.fn((callback: (prisma: any) => any): any =>
+    callback(mockPrismaService),
+  ),
 };
 
 // Global test utilities

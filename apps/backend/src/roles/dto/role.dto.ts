@@ -67,6 +67,18 @@ export class CreateRoleInput {
   @IsBoolean()
   @IsOptional()
   canEditRole?: boolean = false;
+
+  /** Permission to remove community members */
+  @Field(() => Boolean, { description: 'Whether members with this role can remove community members', defaultValue: false })
+  @IsBoolean()
+  @IsOptional()
+  canRemoveCommunityMember?: boolean = false;
+
+  /** Permission to manage member roles */
+  @Field(() => Boolean, { description: 'Whether members with this role can change other members\' roles', defaultValue: false })
+  @IsBoolean()
+  @IsOptional()
+  canManageMemberRoles?: boolean = false;
 }
 
 @InputType({ description: 'Input for updating an existing role' })
@@ -131,4 +143,16 @@ export class UpdateRoleInput {
   @IsOptional()
   @IsBoolean()
   canEditRole?: boolean;
+
+  /** Permission to remove community members */
+  @Field(() => Boolean, { description: 'Whether members with this role can remove community members', nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  canRemoveCommunityMember?: boolean;
+
+  /** Permission to manage member roles */
+  @Field(() => Boolean, { description: 'Whether members with this role can change other members\' roles', nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  canManageMemberRoles?: boolean;
 }

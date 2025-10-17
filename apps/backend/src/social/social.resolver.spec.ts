@@ -199,16 +199,16 @@ describe('CharacterLikesResolver', () => {
       );
     });
 
-    it('should return false when no user is authenticated', async () => {
+    it('should return like status for authenticated user', async () => {
       jest.spyOn(service, 'getUserHasLiked').mockResolvedValue(false);
 
-      const result = await resolver.userHasLiked(mockCharacter);
+      const result = await resolver.userHasLiked(mockCharacter, mockUser);
 
       expect(result).toBe(false);
       expect(service.getUserHasLiked).toHaveBeenCalledWith(
         LikeableType.CHARACTER,
         'character-1',
-        undefined,
+        mockUser.id,
       );
     });
   });
@@ -486,14 +486,14 @@ describe('SocialResolver - Follow System', () => {
       expect(service.getFollowStatus).toHaveBeenCalledWith('user-2', 'user-1');
     });
 
-    it('should return follow status for unauthenticated user', async () => {
-      const unauthStatus = { isFollowing: false, followersCount: 5, followingCount: 3 };
-      jest.spyOn(service, 'getFollowStatus').mockResolvedValue(unauthStatus);
+    it('should return follow status for authenticated user', async () => {
+      const authStatus = { isFollowing: false, followersCount: 5, followingCount: 3 };
+      jest.spyOn(service, 'getFollowStatus').mockResolvedValue(authStatus);
 
-      const result = await resolver.followStatus('user-2');
+      const result = await resolver.followStatus('user-2', mockUser);
 
-      expect(result).toEqual(unauthStatus);
-      expect(service.getFollowStatus).toHaveBeenCalledWith('user-2', undefined);
+      expect(result).toEqual(authStatus);
+      expect(service.getFollowStatus).toHaveBeenCalledWith('user-2', mockUser.id);
     });
   });
 });
@@ -574,13 +574,13 @@ describe('UserFollowResolver', () => {
       expect(service.getUserIsFollowing).toHaveBeenCalledWith('user-1', 'user-2');
     });
 
-    it('should return false when no current user is authenticated', async () => {
+    it('should return follow status for authenticated user', async () => {
       jest.spyOn(service, 'getUserIsFollowing').mockResolvedValue(false);
 
-      const result = await resolver.userIsFollowing(mockUser);
+      const result = await resolver.userIsFollowing(mockUser, mockCurrentUser);
 
       expect(result).toBe(false);
-      expect(service.getUserIsFollowing).toHaveBeenCalledWith('user-1', undefined);
+      expect(service.getUserIsFollowing).toHaveBeenCalledWith('user-1', mockCurrentUser.id);
     });
   });
 });

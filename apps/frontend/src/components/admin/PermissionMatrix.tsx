@@ -324,7 +324,9 @@ const PERMISSION_LABELS = {
   canCreateInviteCode: 'Create Invites',
   canListInviteCodes: 'List Invites',
   canCreateRole: 'Create Roles',
-  canEditRole: 'Edit Roles'
+  canEditRole: 'Edit Roles',
+  canRemoveCommunityMember: 'Remove Members',
+  canManageMemberRoles: 'Manage Member Roles'
 } as const;
 
 export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ communityId }) => {

@@ -4,17 +4,34 @@ import { CommentsService } from './comments.service';
 import { DatabaseService } from '../database/database.service';
 import { CommentableType } from './dto/comment.dto';
 import { mockDatabaseService } from '../../test/setup';
+import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
 
 describe('CommentsResolver', () => {
   let resolver: CommentsResolver;
   let service: CommentsService;
   let db: typeof mockDatabaseService;
 
-  const mockUser = {
+  const mockUser: AuthenticatedCurrentUserType = {
     id: 'user-1',
     username: 'testuser',
     email: 'test@example.com',
+    passwordHash: 'hash',
+    displayName: null,
+    bio: null,
+    avatarUrl: null,
+    location: null,
+    website: null,
+    dateOfBirth: null,
+    isVerified: false,
     isAdmin: false,
+    privacySettings: {},
+    canCreateCommunity: false,
+    canListUsers: false,
+    canListInviteCodes: false,
+    canCreateInviteCode: false,
+    canGrantGlobalPermissions: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   const mockComment = {

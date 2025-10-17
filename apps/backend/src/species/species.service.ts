@@ -50,18 +50,36 @@ export class SpeciesService {
   }
 
   /** Find all species with pagination */
-  async findAll(first: number = 20, after?: string) {
+  async findAll(first: number = 20, after?: string, userId?: string) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
+    // If userId is provided, filter to only species from communities the user is a member of
+    const where: Prisma.SpeciesWhereInput = userId
+      ? {
+          community: {
+            roles: {
+              some: {
+                communityMembers: {
+                  some: {
+                    userId,
+                  },
+                },
+              },
+            },
+          },
+        }
+      : {};
+
     const [species, totalCount] = await Promise.all([
       this.prisma.species.findMany({
+        where,
         take: first + 1, // Take one extra to check if there's a next page
         skip,
         cursor,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.species.count(),
+      this.prisma.species.count({ where }),
     ]);
 
     const hasNextPage = species.length > first;

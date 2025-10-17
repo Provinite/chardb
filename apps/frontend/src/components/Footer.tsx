@@ -23,7 +23,7 @@ export const Footer: React.FC = () => {
   return (
     <FooterContainer>
       <FooterContent>
-        <p>&copy; 2024 CharDB. A character hosting platform built with ❤️</p>
+        <p>&copy; 2025 CharDB. A character hosting platform built with ❤️</p>
         <p>Version: {version}</p>
       </FooterContent>
     </FooterContainer>

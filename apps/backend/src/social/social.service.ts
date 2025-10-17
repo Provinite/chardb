@@ -357,7 +357,7 @@ export class SocialService {
 
     return this.databaseService.character.findMany({
       where: {
-        id: { in: characterIds },
+        id: { in: characterIds.filter((id): id is string => id !== null) },
         visibility: 'PUBLIC', // Only return public characters
       },
       include: {
@@ -398,7 +398,7 @@ export class SocialService {
 
     return this.databaseService.gallery.findMany({
       where: {
-        id: { in: galleryIds },
+        id: { in: galleryIds.filter((id): id is string => id !== null) },
         visibility: 'PUBLIC', // Only return public galleries
       },
       include: {
@@ -434,7 +434,7 @@ export class SocialService {
 
     return this.databaseService.image.findMany({
       where: {
-        id: { in: imageIds },
+        id: { in: imageIds.filter((id): id is string => id !== null) },
       },
       include: {
         uploader: true,

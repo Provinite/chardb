@@ -1,13 +1,15 @@
 import { Resolver, Query, Args } from '@nestjs/graphql';
 import { Tag } from '../shared/entities/tag.entity';
 import { TagsService } from './tags.service';
+import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
 
 @Resolver(() => Tag)
 export class TagsResolver {
   constructor(private readonly tagsService: TagsService) {}
 
-  @Query(() => [Tag], { 
-    description: 'Search for tags by name or get popular suggestions' 
+  @AllowUnauthenticated()
+  @Query(() => [Tag], {
+    description: 'Search for tags by name or get popular suggestions'
   })
   async searchTags(
     @Args('search', { 
@@ -26,11 +28,16 @@ export class TagsResolver {
   ): Promise<Tag[]> {
     // Cap the limit to prevent abuse
     const safeLimit = Math.min(limit || 10, 50);
-    
-    if (!search || search.trim().length === 0) {
-      return this.tagsService.findSuggested(safeLimit);
-    }
-    
-    return this.tagsService.search(search, safeLimit);
+
+    const tags = !search || search.trim().length === 0
+      ? await this.tagsService.findSuggested(safeLimit)
+      : await this.tagsService.search(search, safeLimit);
+
+    // Map null to undefined for GraphQL compatibility
+    return tags.map(tag => ({
+      ...tag,
+      category: tag.category ?? undefined,
+      color: tag.color ?? undefined,
+    }));
   }
 }

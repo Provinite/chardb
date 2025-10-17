@@ -5,6 +5,8 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { CustomThrottlerGuard } from './middleware/custom-throttler.guard';
+import { OptionalJwtAuthGuard } from './auth/guards/optional-jwt-auth.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -54,7 +56,14 @@ async function bootstrap() {
   
   // Global exception filter for detailed error logging
   app.useGlobalFilters(new GlobalExceptionFilter());
-  
+
+  // Global guards (order matters!)
+  app.useGlobalGuards(
+    app.get(CustomThrottlerGuard), // Rate limiting
+    app.get(OptionalJwtAuthGuard), // Populate req.user if JWT present
+    app.get('PERMISSION_OR_GUARD'), // Permission checks
+  );
+
   const port = process.env.PORT || 4000;
   await app.listen(port);
   

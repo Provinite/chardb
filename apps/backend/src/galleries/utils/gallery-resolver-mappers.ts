@@ -49,9 +49,9 @@ export function mapPrismaGalleryToGraphQL(prismaGallery: PrismaGallery): Gallery
   return {
     id: prismaGallery.id,
     name: prismaGallery.name,
-    description: prismaGallery.description,
+    description: prismaGallery.description ?? undefined,
     ownerId: prismaGallery.ownerId,
-    characterId: prismaGallery.characterId,
+    characterId: prismaGallery.characterId ?? undefined,
     visibility: prismaGallery.visibility,
     sortOrder: prismaGallery.sortOrder,
     createdAt: prismaGallery.createdAt,

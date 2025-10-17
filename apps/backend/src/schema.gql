@@ -477,6 +477,12 @@ input CreateRoleInput {
   """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean! = false
 
+  """Whether members with this role can change other members' roles"""
+  canManageMemberRoles: Boolean! = false
+
+  """Whether members with this role can remove community members"""
+  canRemoveCommunityMember: Boolean! = false
+
   """The ID of the community this role belongs to"""
   communityId: ID!
 
@@ -1097,7 +1103,9 @@ type Mutation {
     id: ID!
   ): CommunityInvitation!
 
-  """Remove a community membership"""
+  """
+  Remove a community membership (leave community OR remove member with permission)
+  """
   removeCommunityMember(
     """Community member ID"""
     id: ID!
@@ -1409,18 +1417,6 @@ type Query {
 
     """Invitee ID"""
     inviteeId: ID!
-  ): CommunityInvitationConnection!
-
-  """Get community invitations by inviter ID with pagination"""
-  communityInvitationsByInviter(
-    """Cursor for pagination"""
-    after: String
-
-    """Number of community invitations to return"""
-    first: Int = 20
-
-    """Inviter ID"""
-    inviterId: ID!
   ): CommunityInvitationConnection!
 
   """Get a community member by ID"""
@@ -1834,6 +1830,12 @@ type Role {
 
   """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean!
+
+  """Whether members with this role can change other members' roles"""
+  canManageMemberRoles: Boolean!
+
+  """Whether members with this role can remove community members"""
+  canRemoveCommunityMember: Boolean!
 
   """The community this role belongs to"""
   community: Community!
@@ -2250,6 +2252,12 @@ input UpdateRoleInput {
 
   """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean
+
+  """Whether members with this role can change other members' roles"""
+  canManageMemberRoles: Boolean
+
+  """Whether members with this role can remove community members"""
+  canRemoveCommunityMember: Boolean
 
   """The name of the role"""
   name: String

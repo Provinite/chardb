@@ -386,15 +386,17 @@ model Role {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Community-scoped permissions
-  canCreateSpecies    Boolean @default(false) @map("can_create_species")
-  canCreateCharacter  Boolean @default(false) @map("can_create_character")
-  canEditCharacter    Boolean @default(false) @map("can_edit_character")
-  canEditOwnCharacter Boolean @default(false) @map("can_edit_own_character")
-  canEditSpecies      Boolean @default(false) @map("can_edit_species")
-  canCreateInviteCode Boolean @default(false) @map("can_create_invite_code")
-  canListInviteCodes  Boolean @default(false) @map("can_list_invite_codes")
-  canCreateRole       Boolean @default(false) @map("can_create_role")
-  canEditRole         Boolean @default(false) @map("can_edit_role")
+  canCreateSpecies         Boolean @default(false) @map("can_create_species")
+  canCreateCharacter       Boolean @default(false) @map("can_create_character")
+  canEditCharacter         Boolean @default(false) @map("can_edit_character")
+  canEditOwnCharacter      Boolean @default(false) @map("can_edit_own_character")
+  canEditSpecies           Boolean @default(false) @map("can_edit_species")
+  canCreateInviteCode      Boolean @default(false) @map("can_create_invite_code")
+  canListInviteCodes       Boolean @default(false) @map("can_list_invite_codes")
+  canCreateRole            Boolean @default(false) @map("can_create_role")
+  canEditRole              Boolean @default(false) @map("can_edit_role")
+  canRemoveCommunityMember Boolean @default(false) @map("can_remove_community_member")
+  canManageMemberRoles     Boolean @default(false) @map("can_manage_member_roles")
 
   // Relations
   community            Community             @relation(fields: [communityId], references: [id], onDelete: Cascade)

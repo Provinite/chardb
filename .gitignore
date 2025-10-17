@@ -109,6 +109,7 @@ tmp/
 .mcp.json
 tasks.json
 tasks/
+.playwright-mcp/*
 
 # Build artifacts
 *.tgz
