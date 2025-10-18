@@ -1,10 +1,7 @@
 import { Controller, Get, Req, Res, UseGuards, Query, UnauthorizedException } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { Request, Response } from "express";
-import { JwtAuthGuard } from "./guards/jwt-auth.guard";
-import { CurrentUser } from "./decorators/CurrentUser";
 import { AllowUnauthenticated } from "./decorators/AllowUnauthenticated";
-import { User } from "@prisma/client";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 
