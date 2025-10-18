@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Users, Calendar, Settings, UserPlus } from "lucide-react";
 import {
@@ -12,11 +12,12 @@ import {
   Card,
 } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { 
+import {
   useCommunityByIdQuery,
   useSpeciesByCommunityQuery,
   useGetCharactersQuery,
   useCommunityMembersWithRolesQuery,
+  useCommunityMembersByUserQuery,
 } from "../generated/graphql";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -189,6 +190,7 @@ const NotFoundContainer = styled.div`
 export const CommunityPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const { data, loading, error } = useCommunityByIdQuery({
     variables: { id: communityId! },
@@ -217,6 +219,13 @@ export const CommunityPage: React.FC = () => {
   const { data: membersData } = useCommunityMembersWithRolesQuery({
     variables: { communityId: communityId!, first: 1 }, // Just get count
     skip: !communityId,
+  });
+
+  // Check if current user is a member of this community
+  const { data: userMembershipsData } = useCommunityMembersByUserQuery({
+    variables: { userId: user?.id || "", first: 100 },
+    skip: !user?.id,
+    fetchPolicy: "cache-and-network",
   });
 
   if (loading) {
@@ -263,6 +272,11 @@ export const CommunityPage: React.FC = () => {
   const speciesCount = speciesData?.speciesByCommunity?.totalCount || 0;
   const charactersCount = charactersData?.characters?.total || 0;
   const membersCount = membersData?.communityMembersByCommunity?.totalCount || 0;
+
+  // Check if current user is a member of this community
+  const isMember = userMembershipsData?.communityMembersByUser?.nodes.some(
+    (membership) => membership.role.community.id === communityId
+  ) || false;
 
   const sections = [
     {
@@ -323,17 +337,25 @@ export const CommunityPage: React.FC = () => {
             <ActionButtons>
               {user ? (
                 <>
-                  <Button variant="primary" icon={<UserPlus size={16} />}>
-                    Join Community
-                  </Button>
-                  <Button
-                    variant="outline"
-                    icon={<Settings size={16} />}
-                    as={Link}
-                    to={`/communities/${communityId}/admin`}
-                  >
-                    Manage
-                  </Button>
+                  {!isMember && (
+                    <Button
+                      variant="primary"
+                      icon={<UserPlus size={16} />}
+                      onClick={() => navigate('/join-community')}
+                    >
+                      Join Community
+                    </Button>
+                  )}
+                  {isMember && (
+                    <Button
+                      variant="outline"
+                      icon={<Settings size={16} />}
+                      as={Link}
+                      to={`/communities/${communityId}/admin`}
+                    >
+                      Manage
+                    </Button>
+                  )}
                 </>
               ) : (
                 <Button variant="primary" as={Link} to="/login">
