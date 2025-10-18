@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Role List Cache Invalidation (#69)**: Fixed role list not updating after creating or editing roles without page refresh
+- **Join Community Button Functionality (#68)**: Fixed non-functional Join Community button on community detail page
+  - Button now properly navigates to join community page when clicked
+  - Added membership check to hide button for users already in the community
+  - Manage button now only displays for community members
 - **Invite Link Redirect for Authenticated Users (#66)**: Fixed invite links redirecting logged-in users to signup page
   - Users had to manually navigate to join community page and re-enter the invite code
   - Join community page now accepts and pre-fills invite code from URL parameter
