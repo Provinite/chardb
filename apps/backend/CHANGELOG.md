@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **DeviantArt OAuth 2.0 Integration (#62, #73)**: Complete external account linking system
+  - Added `DeviantArtOAuthController` with OAuth flow endpoints (`GET /auth/deviantart` and `GET /auth/deviantart/callback`)
+  - Added `DeviantArtStrategy` for Passport authentication with DeviantArt OAuth 2.0
+  - Added `ExternalAccountsModule` and `ExternalAccountsService` for managing linked social accounts
+  - Added GraphQL API for external accounts:
+    - `myExternalAccounts` query to retrieve all linked accounts for current user
+    - `unlinkExternalAccount` mutation to remove account linkage
+  - Added `ExternalAccount` Prisma model with support for multiple providers (DEVIANTART)
+  - OAuth flow uses JWT-based state parameter for CSRF protection and user identification
+
+### Security
+
+- **OAuth Security Improvements (#62, #73)**: Multiple security enhancements to OAuth implementation
+  - Separated OAuth state JWT secret from main JWT secret (`JWT_SECRET + "_O"`) to prevent token confusion attacks
+  - Moved authentication from URL query parameters to Authorization headers in OAuth initiation flow
+  - Fixed critical vulnerability where OAuth callback trusted URL state parameter without proper verification
+  - Added JWT-based state parameter validation with 10-minute expiration for OAuth flows
+  - Implemented proper state parameter verification in callback to prevent CSRF attacks
+
 ## [v2.0.1] - 2025-09-02
 
 ### Fixed

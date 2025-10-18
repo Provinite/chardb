@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **DeviantArt OAuth Account Linking (#62, #73)**: Complete external account linking UI
+  - Added DeviantArt OAuth callback page (`/auth/deviantart/callback`) for handling OAuth redirects
+  - Added external accounts management section to Edit Profile page
+  - Added connected accounts display showing linked DeviantArt accounts with username
+  - Added "Link DeviantArt Account" button with OAuth flow integration
+  - Added ability to unlink DeviantArt accounts with confirmation
+  - GraphQL integration for `myExternalAccounts` query and `unlinkExternalAccount` mutation
+  - Success and error handling for OAuth callback with user-friendly messages
+
 ### Fixed
 - **Invite Link Redirect for Authenticated Users (#66)**: Fixed invite links redirecting logged-in users to signup page
   - Root cause: Invite links always redirected to signup page, even when user was already logged in
