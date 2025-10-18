@@ -7,6 +7,8 @@ import { AuthService } from "./auth.service";
 import { AuthResolver } from "./auth.resolver";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { LocalStrategy } from "./strategies/local.strategy";
+import { DeviantArtStrategy } from "./strategies/deviantart.strategy";
+import { DeviantArtOAuthController } from "./deviantart-oauth.controller";
 import { UsersModule } from "../users/users.module";
 import { InviteCodesModule } from "../invite-codes/invite-codes.module";
 import { DatabaseModule } from "../database/database.module";
@@ -40,11 +42,13 @@ import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
     DatabaseModule,
     CommunityMembersModule,
   ],
+  controllers: [DeviantArtOAuthController],
   providers: [
     AuthService,
     AuthResolver,
     JwtStrategy,
     LocalStrategy,
+    DeviantArtStrategy,
     PermissionService,
     OwnershipService,
     CommunityResolverService,

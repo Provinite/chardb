@@ -1,5 +1,6 @@
 import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
 import { GraphQLJSON } from "graphql-type-json";
+import { ExternalAccount } from "../../external-accounts/entities/external-account.entity";
 
 @ObjectType()
 export class User {
@@ -60,6 +61,9 @@ export class User {
 
   @Field()
   updatedAt: Date;
+
+  @Field(() => [ExternalAccount])
+  externalAccounts: ExternalAccount[];
 }
 
 @ObjectType()
