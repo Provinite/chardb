@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **DeviantArt Account Linking** (#62): OAuth-based external account linking system
+  - Link DeviantArt accounts to CloverCoin user profiles for ownership verification
+  - Secure OAuth 2.0 Authorization Code flow implementation
+  - Connected Accounts section in Edit Profile page
+  - Backend external accounts module with GraphQL API
+  - Database support for multiple external account providers (extensible for future platforms)
+  - Automatic callback handling and account verification
+
 ## [v2.0.0] - 2025-09-01
 
 ### Added

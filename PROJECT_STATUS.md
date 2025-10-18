@@ -449,6 +449,50 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 - ✅ **Error Details**: Specific error messages instead of generic failures
 - ✅ **Visual Consistency**: Green for success, red for errors across all forms
 
+### **DeviantArt Account Linking System**
+**Status**: ✅ **Complete** | **Completion Date**: Current Session (#62)
+- [x] **OAuth 2.0 Integration**: Secure Authorization Code flow with DeviantArt API
+- [x] **External Accounts Module**: Complete backend module with GraphQL API
+- [x] **Database Schema**: ExternalAccount model with provider enum (extensible for future platforms)
+- [x] **OAuth Controller**: REST endpoints for initiate and callback handling
+- [x] **Frontend Integration**: Connected Accounts section in Edit Profile page
+- [x] **Link/Unlink Functionality**: Complete account linking and unlinking workflow
+- [x] **Security**: Unique constraints prevent duplicate links, JWT authentication required
+
+**Features**:
+- 🔗 **DeviantArt Account Linking**: Link DeviantArt accounts for ownership verification
+- 🔐 **Secure OAuth Flow**: OAuth 2.0 Authorization Code grant with token exchange on server
+- 📋 **Account Management**: View linked accounts, link new accounts, unlink existing accounts
+- 🎨 **Connected Accounts UI**: Professional UI in Edit Profile page with account status display
+- 🔄 **Callback Handling**: Automatic callback processing with success/error feedback
+- 🌐 **Extensible Design**: Provider enum supports future platform integrations (Twitter, Instagram, etc.)
+
+**Technical Implementation**:
+```typescript
+// Backend Components
+- ExternalAccount model (id, userId, provider, providerAccountId, displayName)
+- DeviantArtStrategy: Passport OAuth2 strategy for DeviantArt
+- DeviantArtOAuthController: /auth/deviantart and /auth/deviantart/callback endpoints
+- ExternalAccountsService: Link/unlink business logic with duplicate prevention
+- ExternalAccountsResolver: GraphQL mutations and queries (myExternalAccounts, linkExternalAccount, unlinkExternalAccount)
+
+// Frontend Components
+- DeviantArtCallbackPage: Handles OAuth redirect and completes account linking
+- Edit Profile Connected Accounts section: Display linked accounts with Link/Unlink buttons
+- GraphQL operations: MY_EXTERNAL_ACCOUNTS, LINK_EXTERNAL_ACCOUNT, UNLINK_EXTERNAL_ACCOUNT
+
+// Database Constraints
+- Unique (provider, providerAccountId): One DA account can only link to one user
+- Unique (provider, userId): One user can only link one account per provider
+```
+
+**Security Measures**:
+- ✅ **Server-side Token Exchange**: Client secret never exposed to browser
+- ✅ **JWT Authentication Required**: Users must be authenticated to link accounts
+- ✅ **Duplicate Prevention**: Database constraints prevent account hijacking
+- ✅ **Lazy Strategy Loading**: OAuth strategy only runs on specific endpoints
+- ✅ **Error Handling**: Comprehensive error handling with user feedback
+
 ### **Complete User Profile System**
 **Status**: ✅ **Complete** | **Completion Date**: Current Session
 - [x] **User Profile Viewing**: Rich profile pages with comprehensive user information display
