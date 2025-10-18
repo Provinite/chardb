@@ -164,7 +164,7 @@ const LoginLink = styled(Link)`
 export const SignupPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
-  const { signup } = useAuth();
+  const { signup, user } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -186,6 +186,14 @@ export const SignupPage: React.FC = () => {
       setValue('inviteCode', inviteParam);
     }
   }, [searchParams, setValue]);
+
+  // Redirect to join community page if already logged in with invite code
+  useEffect(() => {
+    const inviteParam = searchParams.get('invite');
+    if (user && inviteParam) {
+      navigate(`/join-community?invite=${inviteParam}`);
+    }
+  }, [user, searchParams, navigate]);
 
   // Query to validate invite code
   const { data: inviteCodeData, loading: inviteCodeLoading, error: inviteCodeError } = useInviteCodeByIdQuery({
