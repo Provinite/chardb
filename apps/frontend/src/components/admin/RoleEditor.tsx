@@ -26,6 +26,7 @@ import {
   useUpdateRoleMutation,
   CreateRoleInput,
   UpdateRoleInput,
+  RolesByCommunityDetailedDocument,
 } from "../../generated/graphql";
 
 /**
@@ -452,6 +453,12 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
             id: editingRole.id,
             input: updateInput,
           },
+          refetchQueries: [
+            {
+              query: RolesByCommunityDetailedDocument,
+              variables: { communityId, first: 50, after: null },
+            },
+          ],
         });
       } else {
         const createInput: CreateRoleInput = {
@@ -464,6 +471,12 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
           variables: {
             input: createInput,
           },
+          refetchQueries: [
+            {
+              query: RolesByCommunityDetailedDocument,
+              variables: { communityId, first: 50, after: null },
+            },
+          ],
         });
       }
 

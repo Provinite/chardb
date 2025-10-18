@@ -18,17 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Role List Cache Invalidation (#69)**: Fixed role list not updating after creating or editing roles without page refresh
 - **Invite Link Redirect for Authenticated Users (#66)**: Fixed invite links redirecting logged-in users to signup page
-  - Root cause: Invite links always redirected to signup page, even when user was already logged in
   - Users had to manually navigate to join community page and re-enter the invite code
-  - Solution: Added authentication detection in SignupPage that redirects to join community page for logged-in users
   - Join community page now accepts and pre-fills invite code from URL parameter
   - Unauthenticated users maintain existing behavior (redirect to signup with pre-filled code)
 - **Birthdate Field Display Issue (#44)**: Fixed birthdate not displaying in edit profile form
-  - Root cause: HTML `<input type="date">` requires YYYY-MM-DD format but received ISO DateTime string
-  - GraphQL was returning `"1990-01-15T00:00:00.000Z"` which the date input couldn't parse
-  - Solution: Convert ISO DateTime to YYYY-MM-DD format when populating the form
-  - Data was always being saved correctly; the issue was purely in the display layer
 
 ## [v2.0.0] - 2025-09-01
 
