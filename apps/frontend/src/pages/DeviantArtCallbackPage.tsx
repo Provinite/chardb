@@ -1,8 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { useMutation } from '@apollo/client';
-import { LINK_EXTERNAL_ACCOUNT } from '../graphql/external-accounts.graphql';
 import toast from 'react-hot-toast';
 
 const Container = styled.div`
@@ -39,7 +37,6 @@ const Spinner = styled.div`
 export function DeviantArtCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [linkExternalAccount] = useMutation(LINK_EXTERNAL_ACCOUNT);
   const [isProcessing, setIsProcessing] = useState(true);
   const hasProcessed = useRef(false);
 
@@ -49,53 +46,31 @@ export function DeviantArtCallbackPage() {
         return;
       }
       hasProcessed.current = true;
+
       const error = searchParams.get('error');
       const success = searchParams.get('success');
-      const providerAccountId = searchParams.get('providerAccountId');
-      const displayName = searchParams.get('displayName');
 
       if (error) {
         toast.error(`Failed to link DeviantArt account: ${error}`);
-        navigate('/profile/edit');
-        return;
-      }
-
-      if (success && providerAccountId && displayName) {
-        try {
-          await linkExternalAccount({
-            variables: {
-              input: {
-                provider: 'DEVIANTART',
-                providerAccountId: decodeURIComponent(providerAccountId),
-                displayName: decodeURIComponent(displayName),
-              },
-            },
-          });
-
-          toast.success('Successfully linked DeviantArt account!');
-          navigate('/profile/edit');
-        } catch (err: any) {
-          console.error('Error linking account:', err);
-          toast.error(err.message || 'Failed to link DeviantArt account');
-          navigate('/profile/edit');
-        }
+      } else if (success) {
+        toast.success('Successfully linked DeviantArt account!');
       } else {
-        toast.error('Invalid callback parameters');
-        navigate('/profile/edit');
+        toast.error('Invalid callback response');
       }
 
       setIsProcessing(false);
+      navigate('/profile/edit');
     };
 
     processCallback();
-  }, [searchParams, linkExternalAccount, navigate]);
+  }, [searchParams, navigate]);
 
   return (
     <Container>
       {isProcessing && (
         <>
           <Spinner />
-          <Message>Linking your DeviantArt account...</Message>
+          <Message>Completing account linking...</Message>
         </>
       )}
     </Container>

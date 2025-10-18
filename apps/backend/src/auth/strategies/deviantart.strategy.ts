@@ -23,10 +23,25 @@ export class DeviantArtStrategy extends PassportStrategy(
         configService.get("DEVIANTART_CALLBACK_URL") ||
         "http://localhost:3000/auth/deviantart/callback",
       scope: ["basic"], // Basic scope for user information
+      passReqToCallback: false,
+      state: true, // Enable state parameter
     });
 
     // Override userProfile to fetch DeviantArt user info
     this.userProfile = this.fetchUserProfile.bind(this);
+  }
+
+  /**
+   * Override authenticate to inject custom state parameter
+   */
+  authenticate(req: any, options?: any) {
+    // If oauthState is set in the request (from controller), use it
+    const state = req.oauthState;
+    if (state) {
+      options = { ...options, state };
+    }
+
+    super.authenticate(req, options);
   }
 
   /**

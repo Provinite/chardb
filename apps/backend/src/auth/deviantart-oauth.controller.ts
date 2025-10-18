@@ -4,12 +4,15 @@ import { Request, Response } from "express";
 import { AllowUnauthenticated } from "./decorators/AllowUnauthenticated";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
+import { ExternalAccountsService } from "../external-accounts/external-accounts.service";
+import { ExternalAccountProvider } from "@prisma/client";
 
 @Controller("auth/deviantart")
 export class DeviantArtOAuthController {
   constructor(
     private configService: ConfigService,
     private jwtService: JwtService,
+    private externalAccountsService: ExternalAccountsService,
   ) {}
 
   /**
@@ -27,14 +30,18 @@ export class DeviantArtOAuthController {
 
     try {
       const payload = this.jwtService.verify(token);
-      // Store user ID in request for the OAuth state parameter
-      (req as any).userId = payload.sub;
+      // Create a state JWT containing the user ID
+      const state = this.jwtService.sign(
+        { sub: payload.sub },
+        { expiresIn: "10m" }
+      );
+      // Store state in request so the strategy can use it
+      (req as any).oauthState = state;
     } catch (error) {
       throw new UnauthorizedException("Invalid or expired token");
     }
 
     // The AuthGuard will handle the redirect to DeviantArt
-    // The userId will be available in the strategy's authenticate method
   }
 
   /**
@@ -44,23 +51,42 @@ export class DeviantArtOAuthController {
   @AllowUnauthenticated()
   @UseGuards(AuthGuard("deviantart"))
   async handleCallback(@Req() req: Request, @Res() res: Response) {
-    // At this point, Passport has validated the OAuth response
-    // req.user contains the validated profile from the strategy
-    const oauthData = req.user as any;
-
-    // Store the OAuth data in the session/query to pass back to frontend
     const frontendUrl = this.configService.get("FRONTEND_URL") || "http://localhost:3000";
 
     try {
-      // The actual account linking will happen via GraphQL mutation from frontend
-      // We just pass the OAuth data back to the frontend
-      const callbackUrl = `${frontendUrl}/auth/deviantart/callback?` +
-        `providerAccountId=${encodeURIComponent(oauthData.providerAccountId)}` +
-        `&displayName=${encodeURIComponent(oauthData.displayName)}` +
-        `&success=true`;
+      // Verify the state parameter to get user ID
+      const state = req.query.state as string;
+      if (!state) {
+        throw new Error("Missing state parameter");
+      }
 
+      let userId: string;
+      try {
+        const statePayload = this.jwtService.verify(state);
+        userId = statePayload.sub;
+      } catch (error) {
+        throw new Error("Invalid or expired state token");
+      }
+
+      // Get the OAuth data from Passport
+      const oauthData = req.user as any;
+      if (!oauthData?.providerAccountId || !oauthData?.displayName) {
+        throw new Error("Invalid OAuth response");
+      }
+
+      // Link the account directly in the backend
+      await this.externalAccountsService.linkExternalAccount(
+        userId,
+        ExternalAccountProvider.DEVIANTART,
+        oauthData.providerAccountId,
+        oauthData.displayName
+      );
+
+      // Redirect to frontend with success status only
+      const callbackUrl = `${frontendUrl}/auth/deviantart/callback?success=true`;
       res.redirect(callbackUrl);
     } catch (error) {
+      // Redirect to frontend with error message
       const errorUrl = `${frontendUrl}/auth/deviantart/callback?error=${encodeURIComponent(error.message)}`;
       res.redirect(errorUrl);
     }
