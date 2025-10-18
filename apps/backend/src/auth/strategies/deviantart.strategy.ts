@@ -53,7 +53,7 @@ export class DeviantArtStrategy extends PassportStrategy(
       const data = await response.json();
 
       const profile: DeviantArtProfile = {
-        uuid: data.uuid,
+        uuid: data.userid,
         username: data.username,
       };
 
