@@ -6,6 +6,8 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { RandomCharacterButton } from '../components/RandomCharacterButton';
 import { FollowButton } from '../components/FollowButton';
 import { MediaGrid } from '../components/MediaGrid';
+import { useQuery } from '@apollo/client';
+import { MY_EXTERNAL_ACCOUNTS } from '../graphql/external-accounts.graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -256,12 +258,55 @@ const EditButton = styled(Link)`
   }
 `;
 
+const ConnectedAccountsSection = styled.div`
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+`;
+
+const ConnectedAccountsTitle = styled.h3`
+  font-size: ${({ theme }) => theme.typography.fontSize.lg};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0 0 ${({ theme }) => theme.spacing.md} 0;
+`;
+
+const ConnectedAccountsList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const ConnectedAccountBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const AccountIcon = styled.span`
+  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  color: ${({ theme }) => theme.colors.primary};
+`;
+
 export const UserProfilePage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
-  
+
   const { data, loading, error } = useGetUserProfileQuery({
     variables: { username: username! },
     skip: !username,
+  });
+
+  // Fetch external accounts only if viewing own profile
+  const { data: externalAccountsData } = useQuery(MY_EXTERNAL_ACCOUNTS, {
+    skip: !data?.userProfile?.isOwnProfile,
   });
 
   if (loading) {
@@ -335,6 +380,23 @@ export const UserProfilePage: React.FC = () => {
           )}
         </ProfileActions>
       </ProfileHeader>
+
+      {/* Connected Accounts - Only shown when viewing own profile */}
+      {isOwnProfile && externalAccountsData?.myExternalAccounts && externalAccountsData.myExternalAccounts.length > 0 && (
+        <ConnectedAccountsSection>
+          <ConnectedAccountsTitle>Connected Accounts</ConnectedAccountsTitle>
+          <ConnectedAccountsList>
+            {externalAccountsData.myExternalAccounts.map((account: any) => (
+              <ConnectedAccountBadge key={account.id}>
+                <AccountIcon>
+                  {account.provider === 'DEVIANTART' ? 'DA' : account.provider.charAt(0)}
+                </AccountIcon>
+                <span>{account.displayName}</span>
+              </ConnectedAccountBadge>
+            ))}
+          </ConnectedAccountsList>
+        </ConnectedAccountsSection>
+      )}
 
       <StatsGrid>
         <StatCard>

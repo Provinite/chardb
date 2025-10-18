@@ -652,6 +652,21 @@ type EnumValueSettingConnection {
   totalCount: Float!
 }
 
+type ExternalAccount {
+  createdAt: DateTime!
+  displayName: String!
+  id: ID!
+  provider: ExternalAccountProvider!
+  providerAccountId: String!
+  updatedAt: DateTime!
+  userId: ID!
+}
+
+"""External account providers supported for account linking"""
+enum ExternalAccountProvider {
+  DEVIANTART
+}
+
 type FollowListResult {
   followers: [User!]!
   following: [User!]!
@@ -1190,6 +1205,9 @@ type Mutation {
   toggleFollow(input: ToggleFollowInput!): FollowResult!
   toggleLike(input: ToggleLikeInput!): LikeResult!
   transferCharacter(id: ID!, input: TransferCharacterInput!): Character!
+
+  """Unlink an external account from the current user"""
+  unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
   updateCharacter(id: ID!, input: UpdateCharacterInput!): Character!
 
   """Update character trait values"""
@@ -1601,6 +1619,9 @@ type Query {
     id: ID!
   ): Media!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
+
+  """Get all external accounts linked to the current user"""
+  myExternalAccounts: [ExternalAccount!]!
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
   myImages(filters: ImageFiltersInput): ImageConnection!
 
@@ -2116,6 +2137,10 @@ input TransferCharacterInput {
   newOwnerId: ID!
 }
 
+input UnlinkExternalAccountInput {
+  provider: ExternalAccountProvider!
+}
+
 input UpdateCharacterInput {
   age: String
   backstory: String
@@ -2349,6 +2374,7 @@ type User {
   dateOfBirth: DateTime
   displayName: String
   email: String!
+  externalAccounts: [ExternalAccount!]!
   followersCount: Int!
   followingCount: Int!
   id: ID!

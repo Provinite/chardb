@@ -66,6 +66,7 @@ export function mapPrismaUserToGraphQL(prismaUser: PrismaUser): User {
     canGrantGlobalPermissions: prismaUser.canGrantGlobalPermissions,
     createdAt: prismaUser.createdAt,
     updatedAt: prismaUser.updatedAt,
+    externalAccounts: [], // Populated by field resolver
   };
 }
 

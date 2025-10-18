@@ -7,6 +7,8 @@ import styled from 'styled-components';
 import toast from 'react-hot-toast';
 import { useMeQuery, useUpdateProfileMutation } from '../generated/graphql';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useQuery, useMutation } from '@apollo/client';
+import { MY_EXTERNAL_ACCOUNTS, UNLINK_EXTERNAL_ACCOUNT } from '../graphql/external-accounts.graphql';
 
 const updateProfileSchema = z.object({
   displayName: z.string().max(100).optional(),
@@ -169,10 +171,118 @@ const HelpText = styled.p`
   margin-top: ${({ theme }) => theme.spacing.xs};
 `;
 
+const Section = styled.div`
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: ${({ theme }) => theme.spacing.xl};
+  margin-top: ${({ theme }) => theme.spacing.xl};
+`;
+
+const SectionTitle = styled.h2`
+  font-size: ${({ theme }) => theme.typography.fontSize.xl};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0 0 ${({ theme }) => theme.spacing.md} 0;
+`;
+
+const SectionDescription = styled.p`
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
+  margin: 0 0 ${({ theme }) => theme.spacing.lg} 0;
+`;
+
+const AccountsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+
+const AccountItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+`;
+
+const AccountInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+
+const AccountIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  font-size: ${({ theme }) => theme.typography.fontSize.lg};
+`;
+
+const AccountDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const AccountName = styled.div`
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const AccountProvider = styled.div`
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
+const SmallButton = styled.button<{ variant?: 'danger' | 'primary' }>`
+  padding: 0.5rem ${({ theme }) => theme.spacing.md};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  border: 2px solid ${({ theme, variant }) =>
+    variant === 'danger' ? theme.colors.error : theme.colors.primary};
+  background: ${({ theme, variant }) =>
+    variant === 'danger' ? theme.colors.background : theme.colors.primary};
+  color: ${({ theme, variant }) =>
+    variant === 'danger' ? theme.colors.error : 'white'};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 0.8;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const EmptyState = styled.div`
+  padding: ${({ theme }) => theme.spacing.xl};
+  text-align: center;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px dashed ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+`;
+
 export const EditProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { data: meData, loading: meLoading } = useMeQuery();
   const [updateProfile, { loading: updating }] = useUpdateProfileMutation();
+
+  // External accounts
+  const { data: externalAccountsData, loading: loadingAccounts, refetch: refetchAccounts } = useQuery(MY_EXTERNAL_ACCOUNTS);
+  const [unlinkAccount, { loading: unlinking }] = useMutation(UNLINK_EXTERNAL_ACCOUNT);
 
   const {
     register,
@@ -227,6 +337,61 @@ export const EditProfilePage: React.FC = () => {
 
   const handleCancel = () => {
     navigate(`/user/${meData?.me?.username}`);
+  };
+
+  const handleLinkDeviantArt = async () => {
+    // Get JWT token from localStorage
+    const token = localStorage.getItem('accessToken');
+
+    if (!token) {
+      toast.error('Please log in to link your DeviantArt account');
+      return;
+    }
+
+    try {
+      // Fetch the OAuth URL from the backend with authentication in header
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${backendUrl}/auth/deviantart`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to initiate OAuth flow');
+      }
+
+      const data = await response.json();
+
+      if (!data.url) {
+        throw new Error('No OAuth URL returned');
+      }
+
+      // Redirect to the OAuth URL (no tokens in URL)
+      window.location.href = data.url;
+    } catch (error: any) {
+      console.error('Error initiating OAuth:', error);
+      toast.error(error.message || 'Failed to start DeviantArt linking');
+    }
+  };
+
+  const handleUnlink = async (provider: string) => {
+    if (!confirm(`Are you sure you want to unlink your ${provider} account?`)) {
+      return;
+    }
+
+    try {
+      await unlinkAccount({
+        variables: {
+          input: { provider },
+        },
+      });
+      toast.success(`${provider} account unlinked successfully`);
+      refetchAccounts();
+    } catch (error: any) {
+      console.error('Error unlinking account:', error);
+      toast.error(error.message || `Failed to unlink ${provider} account`);
+    }
   };
 
   if (meLoading) {
@@ -338,6 +503,59 @@ export const EditProfilePage: React.FC = () => {
           </Button>
         </ButtonGroup>
       </Form>
+
+      {/* Connected Accounts Section */}
+      <Section>
+        <SectionTitle>Connected Accounts</SectionTitle>
+        <SectionDescription>
+          Link your DeviantArt account to verify ownership of your characters and artwork
+        </SectionDescription>
+
+        {loadingAccounts ? (
+          <LoadingContainer style={{ minHeight: '200px' }}>
+            <LoadingSpinner />
+          </LoadingContainer>
+        ) : externalAccountsData?.myExternalAccounts && externalAccountsData.myExternalAccounts.length > 0 ? (
+          <AccountsList>
+            {externalAccountsData.myExternalAccounts.map((account: any) => (
+              <AccountItem key={account.id}>
+                <AccountInfo>
+                  <AccountIcon>
+                    {account.provider === 'DEVIANTART' ? 'DA' : account.provider.charAt(0)}
+                  </AccountIcon>
+                  <AccountDetails>
+                    <AccountName>{account.displayName}</AccountName>
+                    <AccountProvider>{account.provider}</AccountProvider>
+                  </AccountDetails>
+                </AccountInfo>
+                <SmallButton
+                  variant="danger"
+                  onClick={() => handleUnlink(account.provider)}
+                  disabled={unlinking}
+                >
+                  {unlinking ? 'Unlinking...' : 'Unlink'}
+                </SmallButton>
+              </AccountItem>
+            ))}
+          </AccountsList>
+        ) : (
+          <EmptyState>
+            <p>No external accounts linked yet</p>
+            <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+              Link your DeviantArt account to get started
+            </p>
+          </EmptyState>
+        )}
+
+        {/* Show link button if no DeviantArt account linked */}
+        {!externalAccountsData?.myExternalAccounts?.some((acc: any) => acc.provider === 'DEVIANTART') && (
+          <div style={{ marginTop: '1rem' }}>
+            <SmallButton variant="primary" onClick={handleLinkDeviantArt}>
+              Link DeviantArt Account
+            </SmallButton>
+          </div>
+        )}
+      </Section>
     </Container>
   );
 };

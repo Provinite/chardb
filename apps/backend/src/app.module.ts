@@ -29,6 +29,7 @@ import { CommunityMembersModule } from "./community-members/community-members.mo
 import { CommunityInvitationsModule } from "./community-invitations/community-invitations.module";
 import { InviteCodesModule } from "./invite-codes/invite-codes.module";
 import { CharacterOwnershipChangesModule } from "./character-ownership-changes/character-ownership-changes.module";
+import { ExternalAccountsModule } from "./external-accounts/external-accounts.module";
 import { Request, Response } from "express";
 
 @Module({
@@ -203,6 +204,7 @@ import { Request, Response } from "express";
     CommunityInvitationsModule,
     InviteCodesModule,
     CharacterOwnershipChangesModule,
+    ExternalAccountsModule,
   ],
 })
 export class AppModule {}

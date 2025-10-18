@@ -25,6 +25,8 @@ import { Character } from "../characters/entities/character.entity";
 import { Gallery } from "../galleries/entities/gallery.entity";
 import { Media } from "../media/entities/media.entity";
 import { SocialService } from "../social/social.service";
+import { ExternalAccount } from "../external-accounts/entities/external-account.entity";
+import { ExternalAccountsService } from "../external-accounts/external-accounts.service";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowGlobalPermission } from "../auth/decorators/AllowGlobalPermission";
 import { GlobalPermission } from "../auth/GlobalPermission";
@@ -35,7 +37,10 @@ import { GraphQLJSON } from "graphql-type-json";
 
 @Resolver(() => User)
 export class UsersResolver {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly externalAccountsService: ExternalAccountsService,
+  ) {}
 
   @AllowGlobalPermission(GlobalPermission.CanListUsers)
   @Query(() => UserConnection, { name: "users" })
@@ -210,6 +215,13 @@ export class UsersResolver {
     @Parent() user: User,
   ): Promise<boolean> {
     return user.canGrantGlobalPermissions;
+  }
+
+  @AllowGlobalAdmin()
+  @AllowSelf()
+  @ResolveField("externalAccounts", () => [ExternalAccount])
+  async resolveExternalAccounts(@Parent() user: User): Promise<ExternalAccount[]> {
+    return this.externalAccountsService.findByUserId(user.id);
   }
 }
 
