@@ -77,6 +77,14 @@ const mockPrismaService = {
     delete: jest.fn(),
     count: jest.fn(),
   },
+  externalAccount: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+  },
   $transaction: jest.fn((callback: (prisma: any) => any): any =>
     callback(mockPrismaService),
   ),
