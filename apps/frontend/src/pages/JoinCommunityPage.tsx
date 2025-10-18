@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -86,18 +86,28 @@ export const JoinCommunityPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<InviteCodeForm>({
     resolver: zodResolver(inviteCodeSchema),
   });
 
   const inviteCode = watch('inviteCode');
-  
+
+  // Auto-populate invite code from URL parameter (run once on mount)
+  useEffect(() => {
+    const inviteParam = searchParams.get('invite');
+    if (inviteParam) {
+      setValue('inviteCode', inviteParam);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const { data: inviteCodeData, loading: inviteCodeLoading, error: inviteCodeError } = useInviteCodeByIdQuery({
     variables: { id: inviteCode || '' },
     skip: !inviteCode || inviteCode.length < 2,
