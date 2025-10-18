@@ -3,6 +3,7 @@ import { AuthGuard } from "@nestjs/passport";
 import { Request, Response } from "express";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { CurrentUser } from "./decorators/CurrentUser";
+import { AllowUnauthenticated } from "./decorators/AllowUnauthenticated";
 import { User } from "@prisma/client";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
@@ -19,6 +20,7 @@ export class DeviantArtOAuthController {
    * Accepts JWT token as query parameter to maintain user context across OAuth redirect
    */
   @Get()
+  @AllowUnauthenticated()
   @UseGuards(AuthGuard("deviantart"))
   async initiateOAuth(@Query("token") token: string, @Req() req: Request) {
     // Verify the JWT token and extract user ID
@@ -42,6 +44,7 @@ export class DeviantArtOAuthController {
    * Handles the OAuth callback from DeviantArt
    */
   @Get("callback")
+  @AllowUnauthenticated()
   @UseGuards(AuthGuard("deviantart"))
   async handleCallback(@Req() req: Request, @Res() res: Response) {
     // At this point, Passport has validated the OAuth response
