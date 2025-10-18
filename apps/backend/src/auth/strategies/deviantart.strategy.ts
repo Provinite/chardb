@@ -22,9 +22,8 @@ export class DeviantArtStrategy extends PassportStrategy(
       callbackURL:
         configService.get("DEVIANTART_CALLBACK_URL") ||
         "http://localhost:3000/auth/deviantart/callback",
-      scope: ["basic"], // Basic scope for user information
+      scope: ["basic"],
       passReqToCallback: false,
-      state: true, // Enable state parameter
     });
 
     // Override userProfile to fetch DeviantArt user info
