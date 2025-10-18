@@ -15,10 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added connected accounts display showing linked DeviantArt accounts with username
   - Added "Link DeviantArt Account" button with OAuth flow integration
   - Added ability to unlink DeviantArt accounts with confirmation
-  - GraphQL integration for `myExternalAccounts` query and `unlinkExternalAccount` mutation
-  - Success and error handling for OAuth callback with user-friendly messages
 
 ### Fixed
+
 - **Invite Link Redirect for Authenticated Users (#66)**: Fixed invite links redirecting logged-in users to signup page
   - Root cause: Invite links always redirected to signup page, even when user was already logged in
   - Users had to manually navigate to join community page and re-enter the invite code
@@ -36,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### UI Core Entity Management System
+
 - **Species Management Interface**: Comprehensive species creation and editing system
   - `SpeciesManagementPage` for viewing all community species with filtering and search
   - `SpeciesPage` for detailed species information with variant management
@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `TraitValueEditor` for complex trait management with type-specific inputs
 
 #### Enhanced UI Component Library
+
 - **Core Components**: New reusable components with consistent theming
   - `Card` component family (Card, CardHeader, CardTitle, CardContent) with hover effects
   - `Modal` component with overlay, backdrop click handling, and accessibility features
@@ -91,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved form integration with react-hook-form library
 
 #### Advanced GraphQL Integration
+
 - **New Query Files**: Comprehensive GraphQL operations for entity management
   - `enhanced-species.graphql.ts` for advanced species queries with trait relationships
   - `species.graphql.ts` for species CRUD operations and variant management
@@ -101,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Query Optimization**: Efficient data fetching patterns for admin interfaces
 
 #### Community Invitation System
+
 - **Dashboard Integration**: Added "Join Community" quick action button to dashboard for easy access
 - **Invite Code Testing Flow**: Complete end-to-end testing of community invitation system
   - Enter invite code → Real-time validation → Community preview → Join confirmation → Success redirect
@@ -108,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Success notifications and automatic navigation to joined community
 
 #### TypeScript Type Safety Improvements
+
 - `MediaGridItem` interface using deep Pick utility types for minimal required media fields
 - Proper TypeScript interfaces for nested GraphQL entity fields (`owner`, `image`, `textContent`)
 - Enhanced type safety for media component props with strict typing
@@ -116,6 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 #### Media Gallery Issues
+
 - **Media Type Filter Button Visibility (#12)**: Fixed filter buttons disappearing when no content exists for selected type
   - Root cause: Filter counts calculated from filtered results instead of total dataset
   - Solution: Separate GraphQL queries for display data vs. count data
@@ -128,6 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Maintains efficient count retrieval while satisfying backend validation constraints
 
 #### Component Architecture
+
 - **MediaCard Component**: Updated to use proper `MediaGridItem` type instead of full `Media` type
   - Eliminates unnecessary data fetching for display-only components
   - Improved component performance with minimal required props
@@ -137,9 +143,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Media Gallery Behavior
+
 - **Filter Tab Functionality**: Filter tabs now accurately display total counts regardless of active filter
   - "All (5)" tab shows total media count
-  - "Images (3)" tab shows total image count even when text filter is active  
+  - "Images (3)" tab shows total image count even when text filter is active
   - "Text (2)" tab shows total text count even when image filter is active
 - **Query Optimization**: Implemented dual-query strategy for character media gallery
   - Main query fetches filtered media for display with specified limit
@@ -147,21 +154,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reduced client-side computation and improved data consistency
 
 #### Component Props and Interfaces
+
 - **MediaCard Props**: Simplified props interface with strict typing for media item structure
 - **MediaGrid Props**: Enhanced with comprehensive prop validation and default value handling
 - **CharacterMediaGallery Props**: Updated to support new count field requirements
 
 #### Development Experience
+
 - **Type Safety**: Eliminated type casting and `any` usage throughout media components
 - **Code Maintainability**: Improved component interfaces with clear prop definitions and documentation
 - **Error Prevention**: Enhanced TypeScript compilation to catch media-related type mismatches at build time
 
 ### Technical Debt Reduction
+
 - **Removed Type Assertions**: Eliminated unsafe type casting in favor of proper interface definitions
 - **Improved Component Reusability**: MediaGridItem interface allows flexible component usage across different contexts
 - **Enhanced Prop Validation**: Added comprehensive TypeScript validation for all media component props
 
 ### Performance Improvements
+
 - **Reduced Data Fetching**: MediaGridItem interface fetches only required fields for display components
 - **Optimized Query Strategy**: Dual-query approach reduces unnecessary data transfer for count-only requirements
 - **Component Rendering**: Improved rendering performance with minimal prop interfaces and reduced re-renders
@@ -169,6 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v1.1.0] - 2025-08-12
 
 ### Added
+
 - Character and media deletion functionality with confirmation dialogs
 - Reusable `DeleteConfirmationDialog` component with themed styling
 - Delete buttons on character and media detail pages for content owners
@@ -176,16 +188,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Proper Apollo cache invalidation after deletions for real-time UI updates
 
 ### Fixed
+
 - Missing delete options for characters and media (resolves issue #33)
 
 ## [v1.0.0] - 2025-01-12
 
 ### Changed
+
 - Minor internal breaking changes to tag system
 
 ## [v0.2.0] - 2025-01-12
 
 ### Added
+
 - Advanced `TagInput` component with typeahead functionality and integrated chip display
 - Tag chips with remove buttons (X) replacing comma-separated text input
 - Real-time tag search with debounced API calls (300ms delay)
@@ -195,17 +210,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for creating new tags and selecting from existing suggestions
 
 ### Changed
+
 - Replaced comma-separated tag input with modern chip-based interface in character forms
 - Enhanced character creation and editing forms with improved tag UX
 - Updated form validation to handle tags as arrays instead of comma-separated strings
 - Improved tag discoverability and user experience
 
 ### Fixed
+
 - Styled-components DOM prop warnings in TagInput component using transient props
 - Proper focus management and accessibility in tag input interface
 - Form state management for tags in both create and edit character pages
 
 ### Technical
+
 - Enhanced UI package with reusable TagInput component
 - Updated GraphQL integration with new searchTags query
 - Improved TypeScript types and interfaces for tag management
@@ -213,6 +231,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.1.0] - 2025-01-11
 
 ### Added
+
 - Tag editing functionality in character edit form
 - Reusable `Tag` component with multiple variants (default, primary, success, warning, error)
 - Reusable `TagsContainer` component for consistent tag layouts
@@ -223,11 +242,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hover effects and accessibility features (roles, tab indexes)
 
 ### Fixed
+
 - Missing tag editing capability in character edit form
 - Character edit form missing tags field and validation
 - Character detail page not displaying simple tag arrays as fallback
 
 ### Changed
+
 - Enhanced character edit form with Tags section matching create form styling
 - Character detail page now supports both `tags_rel` (complex objects) and `tags` (simple arrays)
 - Improved tag processing with comma-separated string to array conversion
@@ -235,11 +256,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.0.2] - 2025-08-10
 
 ### Changed
+
 - No frontend-specific changes in this release
 
 ## [v0.0.1] - 2025-08-10
 
 ### Added
+
 - React-based user interface with TypeScript
 - Apollo GraphQL client integration
 - Character creation and management pages
@@ -252,12 +275,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive form validation
 
 ### Fixed
+
 - Media edit form schema validation conflicts
 - Character sale price input validation
 - Image URL routing from /image/ to /media/
 - Page scroll behavior in media upload flow
 
 ### Changed
+
 - Updated navigation from "Images" to "Media" for unified content support
 - Simplified character media upload experience
 - Enhanced media editing with artist metadata fields

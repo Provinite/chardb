@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **DeviantArt OAuth 2.0 Integration (#62, #73)**: Complete external account linking system
   - Added `DeviantArtOAuthController` with OAuth flow endpoints (`GET /auth/deviantart` and `GET /auth/deviantart/callback`)
-  - Added `DeviantArtStrategy` for Passport authentication with DeviantArt OAuth 2.0
   - Added `ExternalAccountsModule` and `ExternalAccountsService` for managing linked social accounts
   - Added GraphQL API for external accounts:
     - `myExternalAccounts` query to retrieve all linked accounts for current user
