@@ -100,13 +100,13 @@ export const JoinCommunityPage: React.FC = () => {
 
   const inviteCode = watch('inviteCode');
 
-  // Auto-populate invite code from URL parameter
+  // Auto-populate invite code from URL parameter (run once on mount)
   useEffect(() => {
     const inviteParam = searchParams.get('invite');
     if (inviteParam) {
       setValue('inviteCode', inviteParam);
     }
-  }, [searchParams, setValue]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data: inviteCodeData, loading: inviteCodeLoading, error: inviteCodeError } = useInviteCodeByIdQuery({
     variables: { id: inviteCode || '' },
