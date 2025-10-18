@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useMutation } from '@apollo/client';
@@ -41,9 +41,14 @@ export function DeviantArtCallbackPage() {
   const navigate = useNavigate();
   const [linkExternalAccount] = useMutation(LINK_EXTERNAL_ACCOUNT);
   const [isProcessing, setIsProcessing] = useState(true);
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
     const processCallback = async () => {
+      if (hasProcessed.current) {
+        return;
+      }
+      hasProcessed.current = true;
       const error = searchParams.get('error');
       const success = searchParams.get('success');
       const providerAccountId = searchParams.get('providerAccountId');
