@@ -34,6 +34,10 @@ enum TraitValueType {
   ENUM
 }
 
+enum ExternalAccountProvider {
+  DEVIANTART
+}
+
 
 
 model User {
@@ -86,7 +90,28 @@ model User {
   ownershipChangesFrom   CharacterOwnershipChange[] @relation("CharacterOwnershipChangeFrom")
   ownershipChangesTo     CharacterOwnershipChange[] @relation("CharacterOwnershipChangeTo")
 
+  // External account linking
+  externalAccounts       ExternalAccount[]
+
   @@map("users")
+}
+
+model ExternalAccount {
+  id                 String                  @id @default(uuid())
+  userId             String                  @map("user_id")
+  provider           ExternalAccountProvider
+  providerAccountId  String                  @map("provider_account_id") @db.VarChar(255)
+  displayName        String                  @map("display_name") @db.VarChar(100)
+  createdAt          DateTime                @default(now()) @map("created_at")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Constraints: one provider account can only be linked to one user, and one user can only link one account per provider
+  @@unique([provider, providerAccountId])
+  @@unique([provider, userId])
+  @@map("external_accounts")
 }
 
 model Character {
