@@ -1,11 +1,15 @@
-import { Controller, Get, Req, Res, UseGuards, Query, UnauthorizedException } from "@nestjs/common";
+import { Controller, Get, Req, Res, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { Request, Response } from "express";
 import { AllowUnauthenticated } from "./decorators/AllowUnauthenticated";
+import { AllowAnyAuthenticated } from "./decorators/AllowAnyAuthenticated";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { ExternalAccountsService } from "../external-accounts/external-accounts.service";
 import { ExternalAccountProvider } from "@prisma/client";
+import { CurrentUser } from "./decorators/CurrentUser";
+import { User } from "@prisma/client";
+import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 
 @Controller("auth/deviantart")
 export class DeviantArtOAuthController {
@@ -16,32 +20,33 @@ export class DeviantArtOAuthController {
   ) {}
 
   /**
-   * Initiates the DeviantArt OAuth flow
-   * Accepts JWT token as query parameter to maintain user context across OAuth redirect
+   * Initiates the DeviantArt OAuth flow by returning the OAuth URL
+   * Requires authentication via JWT in Authorization header
    */
   @Get()
-  @AllowUnauthenticated()
-  @UseGuards(AuthGuard("deviantart"))
-  async initiateOAuth(@Query("token") token: string, @Req() req: Request) {
-    // Verify the JWT token and extract user ID
-    if (!token) {
-      throw new UnauthorizedException("Authentication token required");
-    }
+  @AllowAnyAuthenticated()
+  async initiateOAuth(@CurrentUser() user: User) {
+    // Create a state JWT containing the user ID
+    const state = this.jwtService.sign(
+      { sub: user.id },
+      { expiresIn: "10m" }
+    );
 
-    try {
-      const payload = this.jwtService.verify(token);
-      // Create a state JWT containing the user ID
-      const state = this.jwtService.sign(
-        { sub: payload.sub },
-        { expiresIn: "10m" }
-      );
-      // Store state in request so the strategy can use it
-      (req as any).oauthState = state;
-    } catch (error) {
-      throw new UnauthorizedException("Invalid or expired token");
-    }
+    // Manually construct the DeviantArt OAuth URL
+    const clientId = this.configService.get("DEVIANTART_CLIENT_ID");
+    const callbackUrl = this.configService.get("DEVIANTART_CALLBACK_URL") || "http://localhost:4000/auth/deviantart/callback";
 
-    // The AuthGuard will handle the redirect to DeviantArt
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: callbackUrl,
+      response_type: "code",
+      scope: "basic",
+      state: state,
+    });
+
+    const oauthUrl = `https://www.deviantart.com/oauth2/authorize?${params.toString()}`;
+
+    return { url: oauthUrl };
   }
 
   /**

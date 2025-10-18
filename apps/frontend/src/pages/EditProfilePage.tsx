@@ -339,7 +339,7 @@ export const EditProfilePage: React.FC = () => {
     navigate(`/user/${meData?.me?.username}`);
   };
 
-  const handleLinkDeviantArt = () => {
+  const handleLinkDeviantArt = async () => {
     // Get JWT token from localStorage
     const token = localStorage.getItem('accessToken');
 
@@ -348,9 +348,31 @@ export const EditProfilePage: React.FC = () => {
       return;
     }
 
-    // Open OAuth flow in same window (will redirect to backend, then to DA, then back)
-    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-    window.location.href = `${backendUrl}/auth/deviantart?token=${encodeURIComponent(token)}`;
+    try {
+      // Fetch the OAuth URL from the backend with authentication in header
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${backendUrl}/auth/deviantart`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to initiate OAuth flow');
+      }
+
+      const data = await response.json();
+
+      if (!data.url) {
+        throw new Error('No OAuth URL returned');
+      }
+
+      // Redirect to the OAuth URL (no tokens in URL)
+      window.location.href = data.url;
+    } catch (error: any) {
+      console.error('Error initiating OAuth:', error);
+      toast.error(error.message || 'Failed to start DeviantArt linking');
+    }
   };
 
   const handleUnlink = async (provider: string) => {
