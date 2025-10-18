@@ -1,8 +1,6 @@
 import { Resolver, Query, Mutation, Args } from "@nestjs/graphql";
-import { UseGuards } from "@nestjs/common";
 import { ExternalAccountsService } from "./external-accounts.service";
 import { ExternalAccount } from "./entities/external-account.entity";
-import { LinkExternalAccountInput } from "./dto/link-external-account.dto";
 import { UnlinkExternalAccountInput } from "./dto/unlink-external-account.dto";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { User } from "@prisma/client";
@@ -19,22 +17,6 @@ export class ExternalAccountsResolver {
   @AllowAnyAuthenticated()
   async getMyExternalAccounts(@CurrentUser() user: User): Promise<ExternalAccount[]> {
     return this.externalAccountsService.findByUserId(user.id);
-  }
-
-  @Mutation(() => ExternalAccount, {
-    description: "Link an external account to the current user",
-  })
-  @AllowAnyAuthenticated()
-  async linkExternalAccount(
-    @CurrentUser() user: User,
-    @Args("input") input: LinkExternalAccountInput,
-  ): Promise<ExternalAccount> {
-    return this.externalAccountsService.linkExternalAccount(
-      user.id,
-      input.provider,
-      input.providerAccountId,
-      input.displayName,
-    );
   }
 
   @Mutation(() => Boolean, {
