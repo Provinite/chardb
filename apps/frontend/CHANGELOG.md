@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Birthdate Field Display Issue (#44)**: Fixed birthdate not displaying in edit profile form
+  - Root cause: HTML `<input type="date">` requires YYYY-MM-DD format but received ISO DateTime string
+  - GraphQL was returning `"1990-01-15T00:00:00.000Z"` which the date input couldn't parse
+  - Solution: Convert ISO DateTime to YYYY-MM-DD format when populating the form
+  - Data was always being saved correctly; the issue was purely in the display layer
+
 ## [v2.0.0] - 2025-09-01
 
 ### Added

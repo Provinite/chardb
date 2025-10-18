@@ -198,7 +198,9 @@ export const EditProfilePage: React.FC = () => {
         bio: meData.me.bio || '',
         location: meData.me.location || '',
         website: meData.me.website || '',
-        dateOfBirth: meData.me.dateOfBirth || '',
+        dateOfBirth: meData.me.dateOfBirth
+          ? new Date(meData.me.dateOfBirth).toISOString().split('T')[0]
+          : '',
       });
     }
   }, [meData, reset]);
