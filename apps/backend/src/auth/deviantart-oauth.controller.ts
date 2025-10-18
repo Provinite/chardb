@@ -26,13 +26,11 @@ export class DeviantArtOAuthController {
   @Get()
   @AllowAnyAuthenticated()
   async initiateOAuth(@CurrentUser() user: User) {
-    // Create a state JWT containing the user ID
+    const jwtSecret = this.configService.get("JWT_SECRET");
     const state = this.jwtService.sign(
       { sub: user.id },
-      { expiresIn: "10m" }
+      { secret: jwtSecret + "_O", expiresIn: "10m" }
     );
-
-    // Manually construct the DeviantArt OAuth URL
     const clientId = this.configService.get("DEVIANTART_CLIENT_ID");
     const callbackUrl = this.configService.get("DEVIANTART_CALLBACK_URL") || "http://localhost:4000/auth/deviantart/callback";
 
@@ -59,7 +57,6 @@ export class DeviantArtOAuthController {
     const frontendUrl = this.configService.get("FRONTEND_URL") || "http://localhost:3000";
 
     try {
-      // Verify the state parameter to get user ID
       const state = req.query.state as string;
       if (!state) {
         throw new Error("Missing state parameter");
@@ -67,7 +64,8 @@ export class DeviantArtOAuthController {
 
       let userId: string;
       try {
-        const statePayload = this.jwtService.verify(state);
+        const jwtSecret = this.configService.get("JWT_SECRET");
+        const statePayload = this.jwtService.verify(state, { secret: jwtSecret + "_O" });
         userId = statePayload.sub;
       } catch (error) {
         throw new Error("Invalid or expired state token");
