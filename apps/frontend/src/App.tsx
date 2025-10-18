@@ -52,6 +52,7 @@ import { JoinCommunityPage } from "./pages/JoinCommunityPage";
 import { MyCommunitiesPage } from "./pages/MyCommunitiesPage";
 import { CommunityPage } from "./pages/CommunityPage";
 import { SpeciesPage } from "./pages/SpeciesPage";
+import { DeviantArtCallbackPage } from "./pages/DeviantArtCallbackPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
@@ -84,6 +85,9 @@ function App() {
         <Route path="/user/:username/following" element={<FollowingPage />} />
         <Route path="/communities/:communityId" element={<CommunityPage />} />
         <Route path="/species/:speciesId" element={<SpeciesPage />} />
+
+        {/* OAuth callback routes */}
+        <Route path="/auth/deviantart/callback" element={<DeviantArtCallbackPage />} />
 
         {/* Protected routes */}
         <Route
