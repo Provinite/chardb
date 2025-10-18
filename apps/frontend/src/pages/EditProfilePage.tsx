@@ -340,9 +340,17 @@ export const EditProfilePage: React.FC = () => {
   };
 
   const handleLinkDeviantArt = () => {
+    // Get JWT token from localStorage
+    const token = localStorage.getItem('accessToken');
+
+    if (!token) {
+      toast.error('Please log in to link your DeviantArt account');
+      return;
+    }
+
     // Open OAuth flow in same window (will redirect to backend, then to DA, then back)
     const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-    window.location.href = `${backendUrl}/auth/deviantart`;
+    window.location.href = `${backendUrl}/auth/deviantart?token=${encodeURIComponent(token)}`;
   };
 
   const handleUnlink = async (provider: string) => {
