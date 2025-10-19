@@ -121,6 +121,7 @@ const isCommunityRoute = (pathname: string): boolean => {
   const communityRoutes = [
     /^\/communities\/[^/]+/,
     /^\/species\/[^/]+/,  // Species routes also get sidebar
+    /^\/character\/[^/]+/, // Character routes get sidebar if character has species
     // Add more patterns as needed
   ];
   return communityRoutes.some((pattern) => pattern.test(pathname));
@@ -183,12 +184,15 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
     communityId = speciesData.speciesById.community.id;
   }
 
-  // If on character route with species, use that for species context
+  // If on character route with species, use that for species context and community
   if (characterId && characterData?.character?.species) {
     contextSpeciesId = characterData.character.species.id;
     contextSpeciesName = characterData.character.species.name;
-    // Character pages don't automatically get community context from species
-    // They would need their own community association
+
+    // Get community from character's species
+    if (characterData.character.species.community?.id) {
+      communityId = characterData.character.species.community.id;
+    }
   }
 
   const {
