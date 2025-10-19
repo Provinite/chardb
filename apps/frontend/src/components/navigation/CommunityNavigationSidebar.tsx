@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import {
   BarChart3,
   Users,
+  User,
   Mail,
   Settings,
   Dna,
@@ -368,7 +369,7 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
           {contextSpeciesId && (
             <>
               <Divider />
-              <CommunityNavigationGroup title={`Species: ${contextSpeciesName || 'Loading...'}`} icon={Dna} defaultExpanded>
+              <CommunityNavigationGroup title={`Current Species: ${contextSpeciesName || 'Loading...'}`} icon={Dna} defaultExpanded>
                 <CommunityNavigationItem
                   to={`/species/${contextSpeciesId}`}
                   icon={Dna}
@@ -404,6 +405,12 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
             <>
               <Divider />
               <CommunityNavigationGroup title="Species & Characters" icon={Dna}>
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/characters`}
+                  icon={User}
+                  label="Browse Characters"
+                  isNested
+                />
                 <CommunityNavigationItem
                   to={`${communityBasePath}/species`}
                   icon={Dna}
