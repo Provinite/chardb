@@ -1,10 +1,14 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import styled from "styled-components";
-import { Button } from "@chardb/ui";
-import { MediaType, useGetCharacterMediaQuery, useSetCharacterMainMediaMutation } from "../generated/graphql";
-import { MediaGrid } from "./MediaGrid";
-import toast from "react-hot-toast";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import styled from 'styled-components';
+import { Button } from '@chardb/ui';
+import {
+  MediaType,
+  useGetCharacterMediaQuery,
+  useSetCharacterMainMediaMutation,
+} from '../generated/graphql';
+import { MediaGrid } from './MediaGrid';
+import toast from 'react-hot-toast';
 
 const GalleryContainer = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.xl};
@@ -42,19 +46,23 @@ const FilterTab = styled.button.withConfig({
   shouldForwardProp: (prop) => prop !== 'active',
 })<{ active: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.border};
-  background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.background};
-  color: ${props => props.active ? 'white' : props.theme.colors.text.secondary};
+  border: 1px solid
+    ${(props) =>
+      props.active ? props.theme.colors.primary : props.theme.colors.border};
+  background: ${(props) =>
+    props.active ? props.theme.colors.primary : props.theme.colors.background};
+  color: ${(props) =>
+    props.active ? 'white' : props.theme.colors.text.secondary};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   cursor: pointer;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   transition: all 0.2s;
-  
-  &:hover:not([data-active="true"]) {
+
+  &:hover:not([data-active='true']) {
     border-color: ${({ theme }) => theme.colors.primary};
     background: ${({ theme }) => theme.colors.primary}10;
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -84,7 +92,6 @@ const LoadingState = styled.div`
   padding: ${({ theme }) => theme.spacing.xl};
   color: ${({ theme }) => theme.colors.text.muted};
 `;
-
 
 type MediaFilter = 'all' | 'images' | 'text';
 
@@ -117,8 +124,12 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
       characterId,
       filters: {
         limit,
-        mediaType: mediaFilter === 'all' ? undefined : 
-                  mediaFilter === 'images' ? MediaType.Image : MediaType.Text,
+        mediaType:
+          mediaFilter === 'all'
+            ? undefined
+            : mediaFilter === 'images'
+              ? MediaType.Image
+              : MediaType.Text,
       },
     },
   });
@@ -145,7 +156,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
 
   const handleSetAsMain = async (mediaId: string) => {
     if (!canUpload) return;
-    
+
     setIsSettingMain(true);
     try {
       await setCharacterMainMedia({
@@ -165,7 +176,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
 
   const handleRemoveAsMain = async () => {
     if (!canUpload) return;
-    
+
     setIsSettingMain(true);
     try {
       await setCharacterMainMedia({
@@ -197,13 +208,10 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
   if (loading) {
     return (
       <GalleryContainer>
-        <LoadingState>
-          Loading media...
-        </LoadingState>
+        <LoadingState>Loading media...</LoadingState>
       </GalleryContainer>
     );
   }
-
 
   return (
     <GalleryContainer>
@@ -211,7 +219,12 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
         <SectionTitle>Media Gallery</SectionTitle>
         <HeaderActions>
           {canUpload && (
-            <Button as={Link} to={`/upload?character=${characterId}`} variant="primary" size="sm">
+            <Button
+              as={Link}
+              to={`/upload?character=${characterId}`}
+              variant="primary"
+              size="sm"
+            >
               Add Media
             </Button>
           )}
@@ -253,14 +266,14 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
         showOwner={false}
         loading={loading}
         emptyMessage={
-          mediaFilter === 'all' 
-            ? "No media uploaded yet for this character"
+          mediaFilter === 'all'
+            ? 'No media uploaded yet for this character'
             : `No ${mediaFilter} uploaded yet for this character`
         }
         emptyDescription={
-          canUpload 
-            ? "Upload some images or create text content to get started!"
-            : "Check back later for updates."
+          canUpload
+            ? 'Upload some images or create text content to get started!'
+            : 'Check back later for updates.'
         }
         characterId={canUpload ? characterId : undefined}
         currentMainMediaId={currentMainMediaId}
@@ -278,7 +291,6 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
           </Link>
         </ViewAllContainer>
       )}
-
     </GalleryContainer>
   );
 };

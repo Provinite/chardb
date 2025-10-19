@@ -1,7 +1,6 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { DatabaseService } from "../database/database.service";
-import { TraitValueType } from "../shared/enums/trait-value-type.enum";
-import { $Enums, Prisma } from "@chardb/database";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { DatabaseService } from '../database/database.service';
+import { $Enums, Prisma } from '@chardb/database';
 
 /**
  * Service layer input types for traits operations.
@@ -60,7 +59,7 @@ export class TraitsService {
         take: first + 1, // Take one extra to check if there's a next page
         skip,
         cursor,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.trait.count(),
     ]);
@@ -87,7 +86,7 @@ export class TraitsService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.trait.count({
         where: { speciesId },

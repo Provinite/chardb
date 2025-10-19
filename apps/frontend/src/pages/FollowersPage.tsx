@@ -1,10 +1,10 @@
-import React from "react";
-import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@apollo/client";
-import styled from "styled-components";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import { FollowButton } from "../components/FollowButton";
-import { GET_FOLLOWERS } from "../graphql/social.graphql";
+import React from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@apollo/client';
+import styled from 'styled-components';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { FollowButton } from '../components/FollowButton';
+import { GET_FOLLOWERS } from '../graphql/social.graphql';
 
 const Container = styled.div`
   max-width: 800px;
@@ -36,7 +36,7 @@ const BackButton = styled(Link)`
   }
 
   &::before {
-    content: "←";
+    content: '←';
     font-weight: bold;
   }
 `;
@@ -193,7 +193,7 @@ export const FollowersPage: React.FC = () => {
       <Container>
         <ErrorContainer>
           <h3>Error loading followers</h3>
-          <p>{error?.message || "User not found"}</p>
+          <p>{error?.message || 'User not found'}</p>
         </ErrorContainer>
       </Container>
     );
@@ -206,7 +206,7 @@ export const FollowersPage: React.FC = () => {
       <Header>
         <Title>{user.displayName || user.username}'s Followers</Title>
         <Subtitle>
-          {followers.length} {followers.length === 1 ? "follower" : "followers"}
+          {followers.length} {followers.length === 1 ? 'follower' : 'followers'}
         </Subtitle>
       </Header>
 
@@ -229,10 +229,10 @@ export const FollowersPage: React.FC = () => {
                     src={follower.avatarUrl}
                     alt={follower.displayName || follower.username}
                     style={{
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "50%",
-                      objectFit: "cover",
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
                     }}
                   />
                 ) : (

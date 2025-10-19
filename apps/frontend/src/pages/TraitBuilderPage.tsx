@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import styled from "styled-components";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import React, { useState } from 'react';
+import styled from 'styled-components';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Plus,
   Edit,
@@ -10,8 +10,8 @@ import {
   Calendar,
   List,
   Settings,
-} from "lucide-react";
-import { Button, Modal, Input, ErrorMessage } from "@chardb/ui";
+} from 'lucide-react';
+import { Button, Modal, Input, ErrorMessage } from '@chardb/ui';
 import {
   useTraitsBySpeciesQuery,
   useSpeciesByIdQuery,
@@ -20,8 +20,8 @@ import {
   useDeleteTraitMutation,
   TraitValueType,
   TraitsBySpeciesQuery,
-} from "../generated/graphql";
-import { toast } from "react-hot-toast";
+} from '../generated/graphql';
+import { toast } from 'react-hot-toast';
 
 /**
  * Trait Builder Interface for Species Configuration
@@ -198,30 +198,30 @@ const getTraitTypeIcon = (type: TraitValueType) => {
 const getTraitTypeLabel = (type: TraitValueType) => {
   switch (type) {
     case TraitValueType.String:
-      return "Text";
+      return 'Text';
     case TraitValueType.Integer:
-      return "Number";
+      return 'Number';
     case TraitValueType.Timestamp:
-      return "Date/Time";
+      return 'Date/Time';
     case TraitValueType.Enum:
-      return "Selection";
+      return 'Selection';
     default:
-      return "Unknown";
+      return 'Unknown';
   }
 };
 
 const getTraitTypeDescription = (type: TraitValueType) => {
   switch (type) {
     case TraitValueType.String:
-      return "Text-based traits like names, descriptions, or free-form content";
+      return 'Text-based traits like names, descriptions, or free-form content';
     case TraitValueType.Integer:
-      return "Numeric traits for ages, levels, stats, or measurements";
+      return 'Numeric traits for ages, levels, stats, or measurements';
     case TraitValueType.Timestamp:
-      return "Date and time traits for birthdays, events, or milestones";
+      return 'Date and time traits for birthdays, events, or milestones';
     case TraitValueType.Enum:
-      return "Predefined options like colors, rarities, or categories";
+      return 'Predefined options like colors, rarities, or categories';
     default:
-      return "";
+      return '';
   }
 };
 
@@ -230,11 +230,12 @@ const ValueTypeOption = styled.label<{ $selected: boolean }>`
   display: flex;
   align-items: center;
   padding: 0.75rem;
-  border: 1px solid ${({ theme, $selected }) => 
-    $selected ? theme.colors.primary : theme.colors.border};
+  border: 1px solid
+    ${({ theme, $selected }) =>
+      $selected ? theme.colors.primary : theme.colors.border};
   border-radius: 4px;
   cursor: pointer;
-  background-color: ${({ theme, $selected }) => 
+  background-color: ${({ theme, $selected }) =>
     $selected ? theme.colors.primary + '20' : theme.colors.surface};
   transition: all 0.2s ease;
 
@@ -319,7 +320,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
   title,
 }) => {
   const [formData, setFormData] = useState<TraitFormData>({
-    name: trait?.name || "",
+    name: trait?.name || '',
     valueType: trait?.valueType || TraitValueType.String,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -332,11 +333,11 @@ const TraitModal: React.FC<TraitModalProps> = ({
     try {
       await onSubmit(formData);
       if (!trait) {
-        setFormData({ name: "", valueType: TraitValueType.String });
+        setFormData({ name: '', valueType: TraitValueType.String });
       }
       onClose();
     } catch (error) {
-      console.error("Failed to save trait:", error);
+      console.error('Failed to save trait:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -360,7 +361,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
           />
         </FormSection>
 
-        <FormSection style={{ marginBottom: "1.5rem" }}>
+        <FormSection style={{ marginBottom: '1.5rem' }}>
           <FormLabel>Value Type</FormLabel>
           <ValueTypeGrid>
             {Object.values(TraitValueType).map((type) => (
@@ -382,9 +383,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
                 <ValueTypeContent>
                   {getTraitTypeIcon(type)}
                   <div>
-                    <ValueTypeLabel>
-                      {getTraitTypeLabel(type)}
-                    </ValueTypeLabel>
+                    <ValueTypeLabel>{getTraitTypeLabel(type)}</ValueTypeLabel>
                     <ValueTypeDescription>
                       {getTraitTypeDescription(type)}
                     </ValueTypeDescription>
@@ -414,10 +413,10 @@ const TraitModal: React.FC<TraitModalProps> = ({
             disabled={isSubmitting || !formData.name.trim()}
           >
             {isSubmitting
-              ? "Saving..."
+              ? 'Saving...'
               : trait
-                ? "Update Trait"
-                : "Create Trait"}
+                ? 'Update Trait'
+                : 'Create Trait'}
           </Button>
         </FormActions>
       </form>
@@ -429,7 +428,7 @@ export const TraitBuilderPage: React.FC = () => {
   const { speciesId } = useParams<{ speciesId: string }>();
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  
+
   // GraphQL operations
   const {
     data: traitsData,
@@ -442,7 +441,9 @@ export const TraitBuilderPage: React.FC = () => {
   });
 
   const traits = traitsData?.traitsBySpecies?.nodes || [];
-  const [editingTrait, setEditingTrait] = useState<TraitsBySpeciesQuery['traitsBySpecies']['nodes'][0] | null>(null);
+  const [editingTrait, setEditingTrait] = useState<
+    TraitsBySpeciesQuery['traitsBySpecies']['nodes'][0] | null
+  >(null);
 
   if (!speciesId) {
     return (
@@ -518,10 +519,10 @@ export const TraitBuilderPage: React.FC = () => {
     });
   };
 
-  const handleDeleteTrait = async (trait: typeof traits[0]) => {
+  const handleDeleteTrait = async (trait: (typeof traits)[0]) => {
     if (
       !window.confirm(
-        `Are you sure you want to delete the trait "${trait.name}"? This will also delete all associated enum values and character trait data.`
+        `Are you sure you want to delete the trait "${trait.name}"? This will also delete all associated enum values and character trait data.`,
       )
     ) {
       return;
@@ -532,11 +533,11 @@ export const TraitBuilderPage: React.FC = () => {
     });
   };
 
-  const handleEditTrait = (trait: typeof traits[0]) => {
+  const handleEditTrait = (trait: (typeof traits)[0]) => {
     setEditingTrait(trait);
   };
 
-  const handleManageEnumValues = (trait: typeof traits[0]) => {
+  const handleManageEnumValues = (trait: (typeof traits)[0]) => {
     navigate(`/traits/${trait.id}/enum-values`);
   };
 
@@ -574,7 +575,9 @@ export const TraitBuilderPage: React.FC = () => {
   return (
     <Container>
       <Breadcrumb>
-        <Link to={`/communities/${species.communityId}/species`}>Species Management</Link>
+        <Link to={`/communities/${species.communityId}/species`}>
+          Species Management
+        </Link>
         <span>/</span>
         <Link to={`/species/${species.id}`}>{species.name}</Link>
         <span>/</span>
@@ -633,7 +636,7 @@ export const TraitBuilderPage: React.FC = () => {
                     {getTraitTypeLabel(trait.valueType)}
                     {trait.valueType === TraitValueType.Enum && (
                       <span
-                        style={{ marginLeft: "0.5rem", fontSize: "0.75rem" }}
+                        style={{ marginLeft: '0.5rem', fontSize: '0.75rem' }}
                       >
                         (Click "Options" to manage values)
                       </span>
@@ -673,8 +676,8 @@ export const TraitBuilderPage: React.FC = () => {
 
               <div
                 style={{
-                  fontSize: "0.875rem",
-                  fontStyle: "italic",
+                  fontSize: '0.875rem',
+                  fontStyle: 'italic',
                 }}
               >
                 <ValueTypeDescription>

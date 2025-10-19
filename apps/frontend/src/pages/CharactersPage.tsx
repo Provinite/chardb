@@ -1,17 +1,17 @@
-import React, { useState, useCallback } from "react";
-import { useQuery } from "@apollo/client";
-import styled from "styled-components";
+import React, { useState, useCallback } from 'react';
+import { useQuery } from '@apollo/client';
+import styled from 'styled-components';
 import {
   GET_CHARACTERS,
   CharacterFiltersInput,
-} from "../graphql/characters.graphql";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import { CharacterGrid } from "../components/CharacterGrid";
-import { RandomCharacterButton } from "../components/RandomCharacterButton";
+} from '../graphql/characters.graphql';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { CharacterGrid } from '../components/CharacterGrid';
+import { RandomCharacterButton } from '../components/RandomCharacterButton';
 import {
   AdvancedSearchForm,
   AdvancedSearchFilters,
-} from "../components/AdvancedSearchForm";
+} from '../components/AdvancedSearchForm';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -123,7 +123,7 @@ const VisibilityFilter = styled.div`
 `;
 
 const VisibilityButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== "active",
+  shouldForwardProp: (prop) => prop !== 'active',
 })<{ active: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   border: 2px solid
@@ -132,7 +132,7 @@ const VisibilityButton = styled.button.withConfig({
   background: ${(props) =>
     props.active ? props.theme.colors.primary : props.theme.colors.background};
   color: ${(props) =>
-    props.active ? "white" : props.theme.colors.text.secondary};
+    props.active ? 'white' : props.theme.colors.text.secondary};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   cursor: pointer;
@@ -252,11 +252,11 @@ export const CharactersPage: React.FC = () => {
     limit: 12,
     offset: 0,
   });
-  const [searchTerm, setSearchTerm] = useState("");
-  const [speciesFilter, setSpeciesFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [speciesFilter, setSpeciesFilter] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState<
-    "ALL" | "PUBLIC" | "UNLISTED" | "PRIVATE"
-  >("ALL");
+    'ALL' | 'PUBLIC' | 'UNLISTED' | 'PRIVATE'
+  >('ALL');
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [currentAdvancedFilters, setCurrentAdvancedFilters] =
     useState<AdvancedSearchFilters>({});
@@ -264,8 +264,8 @@ export const CharactersPage: React.FC = () => {
   const { data, loading, error, fetchMore } = useQuery(GET_CHARACTERS, {
     variables: { filters },
     notifyOnNetworkStatusChange: true,
-    fetchPolicy: "cache-and-network",
-    errorPolicy: "all",
+    fetchPolicy: 'cache-and-network',
+    errorPolicy: 'all',
     // Use a unique key for each filter combination to prevent cache conflicts
     context: {
       filterKey: JSON.stringify(filters),
@@ -281,7 +281,7 @@ export const CharactersPage: React.FC = () => {
         search: searchTerm || undefined,
         species: speciesFilter || undefined,
         visibility:
-          visibilityFilter === "ALL" ? undefined : (visibilityFilter as any),
+          visibilityFilter === 'ALL' ? undefined : (visibilityFilter as any),
       };
       setFilters(newFilters);
     },
@@ -290,14 +290,14 @@ export const CharactersPage: React.FC = () => {
 
   // Handle visibility filter changes
   const handleVisibilityChange = useCallback(
-    (visibility: "ALL" | "PUBLIC" | "UNLISTED" | "PRIVATE") => {
+    (visibility: 'ALL' | 'PUBLIC' | 'UNLISTED' | 'PRIVATE') => {
       setVisibilityFilter(visibility);
       const newFilters = {
         limit: 12,
         offset: 0,
         search: searchTerm || undefined,
         species: speciesFilter || undefined,
-        visibility: visibility === "ALL" ? undefined : (visibility as any),
+        visibility: visibility === 'ALL' ? undefined : (visibility as any),
       };
       setFilters(newFilters);
     },
@@ -313,18 +313,18 @@ export const CharactersPage: React.FC = () => {
         ...advancedFilters,
         // Convert string boolean values to actual booleans
         isSellable:
-          typeof advancedFilters.isSellable === "string"
-            ? advancedFilters.isSellable === "true"
+          typeof advancedFilters.isSellable === 'string'
+            ? advancedFilters.isSellable === 'true'
               ? true
-              : advancedFilters.isSellable === "false"
+              : advancedFilters.isSellable === 'false'
                 ? false
                 : undefined
             : advancedFilters.isSellable,
         isTradeable:
-          typeof advancedFilters.isTradeable === "string"
-            ? advancedFilters.isTradeable === "true"
+          typeof advancedFilters.isTradeable === 'string'
+            ? advancedFilters.isTradeable === 'true'
               ? true
-              : advancedFilters.isTradeable === "false"
+              : advancedFilters.isTradeable === 'false'
                 ? false
                 : undefined
             : advancedFilters.isTradeable,
@@ -393,11 +393,11 @@ export const CharactersPage: React.FC = () => {
             type="button"
             onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
           >
-            {showAdvancedSearch ? "← Simple Search" : "Advanced Search →"}
+            {showAdvancedSearch ? '← Simple Search' : 'Advanced Search →'}
           </ToggleButton>
 
           {Object.keys(currentAdvancedFilters).length > 0 && (
-            <div style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
               Advanced filters active
             </div>
           )}
@@ -439,7 +439,7 @@ export const CharactersPage: React.FC = () => {
 
       <VisibilityFilter>
         <VisibilityLabel>Visibility:</VisibilityLabel>
-        {(["ALL", "PUBLIC", "UNLISTED"] as const).map((visibility) => (
+        {(['ALL', 'PUBLIC', 'UNLISTED'] as const).map((visibility) => (
           <VisibilityButton
             key={visibility}
             active={visibilityFilter === visibility}
@@ -459,9 +459,9 @@ export const CharactersPage: React.FC = () => {
         <>
           {data?.characters && (
             <ResultsCount>
-              Showing {data.characters.characters.length} of{" "}
+              Showing {data.characters.characters.length} of{' '}
               {data.characters.total} characters
-              {Object.keys(currentAdvancedFilters).length > 0 && " (filtered)"}
+              {Object.keys(currentAdvancedFilters).length > 0 && ' (filtered)'}
             </ResultsCount>
           )}
 
@@ -483,7 +483,7 @@ export const CharactersPage: React.FC = () => {
 
           {data?.characters.hasMore && (
             <LoadMoreButton onClick={handleLoadMore} disabled={loading}>
-              {loading ? "Loading..." : "Load More Characters"}
+              {loading ? 'Loading...' : 'Load More Characters'}
             </LoadMoreButton>
           )}
         </>

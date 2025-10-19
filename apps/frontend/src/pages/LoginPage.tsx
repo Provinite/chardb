@@ -61,11 +61,11 @@ const Input = styled.input`
   background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.text.primary};
   transition: all 0.2s ease;
-  
+
   &::placeholder {
     color: ${({ theme }) => theme.colors.text.muted};
   }
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -88,7 +88,7 @@ const Footer = styled.div`
 const SignupLink = styled(Link)`
   color: ${({ theme }) => theme.colors.primary};
   text-decoration: none;
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -126,7 +126,7 @@ export const LoginPage: React.FC = () => {
     <Container>
       <Card>
         <Title>Welcome Back</Title>
-        
+
         <Form onSubmit={handleSubmit(onSubmit)}>
           <FormGroup>
             <Label htmlFor="email">Email</Label>
@@ -136,7 +136,9 @@ export const LoginPage: React.FC = () => {
               id="email"
               placeholder="Enter your email"
             />
-            {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
+            {errors.email && (
+              <ErrorMessage>{errors.email.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <FormGroup>
@@ -147,7 +149,9 @@ export const LoginPage: React.FC = () => {
               id="password"
               placeholder="Enter your password"
             />
-            {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
+            {errors.password && (
+              <ErrorMessage>{errors.password.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <Button type="submit" loading={isLoading} disabled={isLoading}>

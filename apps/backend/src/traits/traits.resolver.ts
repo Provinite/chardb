@@ -7,30 +7,30 @@ import {
   Int,
   ResolveField,
   Parent,
-} from "@nestjs/graphql";
-import { NotFoundException } from "@nestjs/common";
-import { TraitsService } from "./traits.service";
-import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
-import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
-import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
-import { CommunityPermission } from "../auth/CommunityPermission";
-import { Trait, TraitConnection } from "./entities/trait.entity";
-import { CreateTraitInput, UpdateTraitInput } from "./dto/trait.dto";
+} from '@nestjs/graphql';
+import { NotFoundException } from '@nestjs/common';
+import { TraitsService } from './traits.service';
+import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
+import { AllowGlobalAdmin } from '../auth/decorators/AllowGlobalAdmin';
+import { AllowCommunityPermission } from '../auth/decorators/AllowCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CommunityPermission } from '../auth/CommunityPermission';
+import { Trait, TraitConnection } from './entities/trait.entity';
+import { CreateTraitInput, UpdateTraitInput } from './dto/trait.dto';
 import {
   mapCreateTraitInputToService,
   mapUpdateTraitInputToService,
   mapPrismaTraitToGraphQL,
   mapPrismaTraitConnectionToGraphQL,
-} from "./utils/trait-resolver-mappers";
-import { Species } from "../species/entities/species.entity";
-import { RemovalResponse } from "../shared/entities/removal-response.entity";
-import { SpeciesService } from "../species/species.service";
-import { mapPrismaSpeciesToGraphQL } from "../species/utils/species-resolver-mappers";
-import { EnumValue } from "../enum-values/entities/enum-value.entity";
-import { EnumValuesService } from "../enum-values/enum-values.service";
-import { mapPrismaEnumValueToGraphQL } from "../enum-values/utils/enum-value-resolver-mappers";
-import { TraitValueType } from "../shared/enums/trait-value-type.enum";
+} from './utils/trait-resolver-mappers';
+import { Species } from '../species/entities/species.entity';
+import { RemovalResponse } from '../shared/entities/removal-response.entity';
+import { SpeciesService } from '../species/species.service';
+import { mapPrismaSpeciesToGraphQL } from '../species/utils/species-resolver-mappers';
+import { EnumValue } from '../enum-values/entities/enum-value.entity';
+import { EnumValuesService } from '../enum-values/enum-values.service';
+import { mapPrismaEnumValueToGraphQL } from '../enum-values/utils/enum-value-resolver-mappers';
+import { TraitValueType } from '../shared/enums/trait-value-type.enum';
 
 @Resolver(() => Trait)
 export class TraitsResolver {
@@ -42,10 +42,10 @@ export class TraitsResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
-  @ResolveCommunityFrom({ speciesId: "createTraitInput.speciesId" })
-  @Mutation(() => Trait, { description: "Create a new trait" })
+  @ResolveCommunityFrom({ speciesId: 'createTraitInput.speciesId' })
+  @Mutation(() => Trait, { description: 'Create a new trait' })
   async createTrait(
-    @Args("createTraitInput", { description: "Trait creation data" })
+    @Args('createTraitInput', { description: 'Trait creation data' })
     createTraitInput: CreateTraitInput,
   ): Promise<Trait> {
     const serviceInput = mapCreateTraitInputToService(createTraitInput);
@@ -56,21 +56,21 @@ export class TraitsResolver {
   /** Get all traits with pagination */
   @AllowAnyAuthenticated()
   @Query(() => TraitConnection, {
-    name: "traits",
-    description: "Get all traits with pagination",
+    name: 'traits',
+    description: 'Get all traits with pagination',
   })
   async findAll(
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of traits to return",
+      description: 'Number of traits to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
   ): Promise<TraitConnection> {
@@ -80,25 +80,25 @@ export class TraitsResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.Any)
-  @ResolveCommunityFrom({ speciesId: "speciesId" })
+  @ResolveCommunityFrom({ speciesId: 'speciesId' })
   @Query(() => TraitConnection, {
-    name: "traitsBySpecies",
-    description: "Get traits by species ID with pagination",
+    name: 'traitsBySpecies',
+    description: 'Get traits by species ID with pagination',
   })
   async findBySpecies(
-    @Args("speciesId", { type: () => ID, description: "Species ID" })
+    @Args('speciesId', { type: () => ID, description: 'Species ID' })
     speciesId: string,
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of traits to return",
+      description: 'Number of traits to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
   ): Promise<TraitConnection> {
@@ -112,10 +112,10 @@ export class TraitsResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.Any)
-  @ResolveCommunityFrom({ traitId: "id" })
-  @Query(() => Trait, { name: "traitById", description: "Get a trait by ID" })
+  @ResolveCommunityFrom({ traitId: 'id' })
+  @Query(() => Trait, { name: 'traitById', description: 'Get a trait by ID' })
   async findOne(
-    @Args("id", { type: () => ID, description: "Trait ID" })
+    @Args('id', { type: () => ID, description: 'Trait ID' })
     id: string,
   ): Promise<Trait> {
     const prismaResult = await this.traitsService.findOne(id);
@@ -124,12 +124,12 @@ export class TraitsResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
-  @ResolveCommunityFrom({ traitId: "id" })
-  @Mutation(() => Trait, { description: "Update a trait" })
+  @ResolveCommunityFrom({ traitId: 'id' })
+  @Mutation(() => Trait, { description: 'Update a trait' })
   async updateTrait(
-    @Args("id", { type: () => ID, description: "Trait ID" })
+    @Args('id', { type: () => ID, description: 'Trait ID' })
     id: string,
-    @Args("updateTraitInput", { description: "Trait update data" })
+    @Args('updateTraitInput', { description: 'Trait update data' })
     updateTraitInput: UpdateTraitInput,
   ): Promise<Trait> {
     const serviceInput = mapUpdateTraitInputToService(updateTraitInput);
@@ -139,19 +139,19 @@ export class TraitsResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
-  @ResolveCommunityFrom({ traitId: "id" })
-  @Mutation(() => RemovalResponse, { description: "Remove a trait" })
+  @ResolveCommunityFrom({ traitId: 'id' })
+  @Mutation(() => RemovalResponse, { description: 'Remove a trait' })
   async removeTrait(
-    @Args("id", { type: () => ID, description: "Trait ID" })
+    @Args('id', { type: () => ID, description: 'Trait ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.traitsService.remove(id);
-    return { removed: true, message: "Trait successfully removed" };
+    return { removed: true, message: 'Trait successfully removed' };
   }
 
   // Field resolvers for relations
-  @ResolveField("species", () => Species, {
-    description: "The species this trait belongs to",
+  @ResolveField('species', () => Species, {
+    description: 'The species this trait belongs to',
   })
   async resolveSpecies(@Parent() trait: Trait): Promise<Species | null> {
     try {
@@ -165,8 +165,8 @@ export class TraitsResolver {
     }
   }
 
-  @ResolveField("enumValues", () => [EnumValue], {
-    description: "Enum values for this trait (only populated for ENUM traits)",
+  @ResolveField('enumValues', () => [EnumValue], {
+    description: 'Enum values for this trait (only populated for ENUM traits)',
   })
   async resolveEnumValues(@Parent() trait: Trait): Promise<EnumValue[]> {
     // Only fetch enum values for ENUM traits

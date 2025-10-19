@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 export const GET_CHARACTERS = gql`
   query GetCharacters($filters: CharacterFiltersInput) {
@@ -456,4 +456,4 @@ export {
   type Visibility,
   type Tag,
   type CharacterTag,
-} from "../generated/graphql";
+} from '../generated/graphql';

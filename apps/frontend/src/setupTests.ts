@@ -26,7 +26,7 @@ Object.defineProperty(window, 'sessionStorage', {
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -60,7 +60,7 @@ global.URL.revokeObjectURL = vi.fn();
 (global as any).File = class extends Blob {
   name: string;
   lastModified: number;
-  
+
   constructor(chunks: any[], filename: string, options?: any) {
     super(chunks, options);
     this.name = filename;
@@ -72,12 +72,12 @@ global.URL.revokeObjectURL = vi.fn();
   result: string | ArrayBuffer | null = null;
   error: DOMException | null = null;
   readyState: number = 0;
-  
+
   readAsDataURL = vi.fn();
   readAsText = vi.fn();
   readAsArrayBuffer = vi.fn();
   abort = vi.fn();
-  
+
   static EMPTY = 0;
   static LOADING = 1;
   static DONE = 2;

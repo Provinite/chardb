@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 export const GET_GALLERIES = gql`
   query GetGalleries($filters: GalleryFiltersInput) {
@@ -357,4 +357,4 @@ export {
   type ReorderGalleriesMutation,
   type ReorderGalleriesMutationVariables,
   type Image,
-} from "../generated/graphql";
+} from '../generated/graphql';

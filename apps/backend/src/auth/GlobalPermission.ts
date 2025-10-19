@@ -3,10 +3,10 @@
  */
 
 export enum GlobalPermission {
-  CanCreateCommunity = "canCreateCommunity",
-  CanListUsers = "canListUsers",
-  CanListInviteCodes = "canListInviteCodes",
-  CanCreateInviteCode = "canCreateInviteCode",
-  CanGrantGlobalPermissions = "canGrantGlobalPermissions",
-  IsAdmin = "isAdmin",
+  CanCreateCommunity = 'canCreateCommunity',
+  CanListUsers = 'canListUsers',
+  CanListInviteCodes = 'canListInviteCodes',
+  CanCreateInviteCode = 'canCreateInviteCode',
+  CanGrantGlobalPermissions = 'canGrantGlobalPermissions',
+  IsAdmin = 'isAdmin',
 }

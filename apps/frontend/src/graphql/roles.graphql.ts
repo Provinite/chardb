@@ -1,7 +1,11 @@
 import { gql } from '@apollo/client';
 
 export const ROLES_BY_COMMUNITY = gql`
-  query RolesByCommunityDetailed($communityId: ID!, $first: Int!, $after: String) {
+  query RolesByCommunityDetailed(
+    $communityId: ID!
+    $first: Int!
+    $after: String
+  ) {
     rolesByCommunity(communityId: $communityId, first: $first, after: $after) {
       nodes {
         id
@@ -87,8 +91,16 @@ export const UPDATE_ROLE = gql`
 `;
 
 export const COMMUNITY_MEMBERS_WITH_ROLES = gql`
-  query CommunityMembersWithRoles($communityId: ID!, $first: Int!, $after: String) {
-    communityMembersByCommunity(communityId: $communityId, first: $first, after: $after) {
+  query CommunityMembersWithRoles(
+    $communityId: ID!
+    $first: Int!
+    $after: String
+  ) {
+    communityMembersByCommunity(
+      communityId: $communityId
+      first: $first
+      after: $after
+    ) {
       nodes {
         id
         userId
@@ -125,7 +137,10 @@ export const COMMUNITY_MEMBERS_WITH_ROLES = gql`
 `;
 
 export const UPDATE_COMMUNITY_MEMBER = gql`
-  mutation UpdateCommunityMember($id: ID!, $input: UpdateCommunityMemberInput!) {
+  mutation UpdateCommunityMember(
+    $id: ID!
+    $input: UpdateCommunityMemberInput!
+  ) {
     updateCommunityMember(id: $id, updateCommunityMemberInput: $input) {
       id
       userId

@@ -1,4 +1,4 @@
-import { Reflector } from "@nestjs/core";
+import { Reflector } from '@nestjs/core';
 
 /**
  * Decorator to mark a route/resolver as requiring authentication.

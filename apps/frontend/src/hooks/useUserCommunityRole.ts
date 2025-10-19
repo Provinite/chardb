@@ -31,12 +31,15 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
 
   const userRole = useMemo(() => {
     if (!data || !communityId) {
-      console.log('[useUserCommunityRole] No data or communityId:', { hasData: !!data, communityId });
+      console.log('[useUserCommunityRole] No data or communityId:', {
+        hasData: !!data,
+        communityId,
+      });
       return null;
     }
 
     const membership = data.communityMembersByUser?.nodes?.find(
-      (m: any) => m.role.community.id === communityId
+      (m: any) => m.role.community.id === communityId,
     );
 
     console.log('[useUserCommunityRole] Membership lookup result:', {

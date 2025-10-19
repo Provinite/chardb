@@ -36,8 +36,8 @@ export const NotFoundPage: React.FC = () => {
       <ErrorCode>404</ErrorCode>
       <ErrorTitle>Page Not Found</ErrorTitle>
       <ErrorDescription>
-        The page you're looking for doesn't exist. It might have been moved, deleted, 
-        or you entered the wrong URL.
+        The page you're looking for doesn't exist. It might have been moved,
+        deleted, or you entered the wrong URL.
       </ErrorDescription>
       <Button as={Link} to="/" variant="primary">
         Go Home

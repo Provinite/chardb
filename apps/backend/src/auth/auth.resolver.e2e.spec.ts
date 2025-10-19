@@ -35,10 +35,9 @@ describe('AuthResolver (e2e)', () => {
         displayName: 'New User',
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.SIGNUP,
-        { input }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
@@ -57,7 +56,7 @@ describe('AuthResolver (e2e)', () => {
       const user = await db.user.findUnique({
         where: { email: input.email },
       });
-      
+
       expect(user).toBeTruthy();
       expect(user!.username).toBe(input.username);
     });
@@ -80,10 +79,9 @@ describe('AuthResolver (e2e)', () => {
         displayName: 'User 2',
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.SIGNUP,
-        { input: duplicateInput }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input: duplicateInput,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
@@ -108,14 +106,15 @@ describe('AuthResolver (e2e)', () => {
         displayName: 'User 2',
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.SIGNUP,
-        { input: duplicateInput }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input: duplicateInput,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('username already exists');
+      expect(response.body.errors[0].message).toContain(
+        'username already exists',
+      );
     });
 
     it('should validate email format', async () => {
@@ -126,10 +125,9 @@ describe('AuthResolver (e2e)', () => {
         displayName: 'Test User',
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.SIGNUP,
-        { input }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
@@ -143,10 +141,9 @@ describe('AuthResolver (e2e)', () => {
         displayName: 'Test User',
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.SIGNUP,
-        { input }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
@@ -158,7 +155,7 @@ describe('AuthResolver (e2e)', () => {
       // Create a test user for login tests
       const db = testApp.getDb();
       const passwordHash = await bcrypt.hash('password123', 10);
-      
+
       await db.user.create({
         data: {
           username: 'testuser',
@@ -175,10 +172,9 @@ describe('AuthResolver (e2e)', () => {
         password: 'password123',
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.LOGIN,
-        { input }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
@@ -199,10 +195,9 @@ describe('AuthResolver (e2e)', () => {
         password: 'password123',
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.LOGIN,
-        { input }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
@@ -215,10 +210,9 @@ describe('AuthResolver (e2e)', () => {
         password: 'wrongpassword',
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.LOGIN,
-        { input }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
@@ -245,7 +239,7 @@ describe('AuthResolver (e2e)', () => {
       const response = await testApp.authenticatedGraphqlRequest(
         AUTH_QUERIES.ME,
         {},
-        testToken
+        testToken,
       );
 
       expect(response.status).toBe(200);
@@ -270,7 +264,7 @@ describe('AuthResolver (e2e)', () => {
       const response = await testApp.authenticatedGraphqlRequest(
         AUTH_QUERIES.ME,
         {},
-        'invalid-token'
+        'invalid-token',
       );
 
       expect(response.status).toBe(200);
@@ -291,10 +285,9 @@ describe('AuthResolver (e2e)', () => {
         displayName: 'Test User',
       };
 
-      const signupResponse = await testApp.graphqlRequest(
-        AUTH_QUERIES.SIGNUP,
-        { input }
-      );
+      const signupResponse = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input,
+      });
 
       refreshToken = signupResponse.body.data.signup.refreshToken;
     });
@@ -306,7 +299,7 @@ describe('AuthResolver (e2e)', () => {
             refreshToken(token: $token)
           }
         `,
-        { token: refreshToken }
+        { token: refreshToken },
       );
 
       expect(response.status).toBe(200);
@@ -321,12 +314,14 @@ describe('AuthResolver (e2e)', () => {
             refreshToken(token: $token)
           }
         `,
-        { token: 'invalid-refresh-token' }
+        { token: 'invalid-refresh-token' },
       );
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('Invalid refresh token');
+      expect(response.body.errors[0].message).toContain(
+        'Invalid refresh token',
+      );
     });
   });
 });

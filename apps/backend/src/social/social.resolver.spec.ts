@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SocialService } from './social.service';
-import { 
+import {
   SocialResolver,
   CharacterLikesResolver,
   ImageLikesResolver,
@@ -484,7 +484,9 @@ describe('SocialResolver - Follow System', () => {
 
   describe('followStatus', () => {
     it('should return follow status for authenticated user', async () => {
-      jest.spyOn(service, 'getFollowStatus').mockResolvedValue(mockFollowStatus);
+      jest
+        .spyOn(service, 'getFollowStatus')
+        .mockResolvedValue(mockFollowStatus);
 
       const result = await resolver.followStatus('user-2', mockUser);
 
@@ -493,13 +495,20 @@ describe('SocialResolver - Follow System', () => {
     });
 
     it('should return follow status for authenticated user', async () => {
-      const authStatus = { isFollowing: false, followersCount: 5, followingCount: 3 };
+      const authStatus = {
+        isFollowing: false,
+        followersCount: 5,
+        followingCount: 3,
+      };
       jest.spyOn(service, 'getFollowStatus').mockResolvedValue(authStatus);
 
       const result = await resolver.followStatus('user-2', mockUser);
 
       expect(result).toEqual(authStatus);
-      expect(service.getFollowStatus).toHaveBeenCalledWith('user-2', mockUser.id);
+      expect(service.getFollowStatus).toHaveBeenCalledWith(
+        'user-2',
+        mockUser.id,
+      );
     });
   });
 });
@@ -578,7 +587,10 @@ describe('UserFollowResolver', () => {
       const result = await resolver.userIsFollowing(mockUser, mockCurrentUser);
 
       expect(result).toBe(true);
-      expect(service.getUserIsFollowing).toHaveBeenCalledWith('user-1', 'user-2');
+      expect(service.getUserIsFollowing).toHaveBeenCalledWith(
+        'user-1',
+        'user-2',
+      );
     });
 
     it('should return follow status for authenticated user', async () => {
@@ -587,7 +599,10 @@ describe('UserFollowResolver', () => {
       const result = await resolver.userIsFollowing(mockUser, mockCurrentUser);
 
       expect(result).toBe(false);
-      expect(service.getUserIsFollowing).toHaveBeenCalledWith('user-1', mockCurrentUser.id);
+      expect(service.getUserIsFollowing).toHaveBeenCalledWith(
+        'user-1',
+        mockCurrentUser.id,
+      );
     });
   });
 });

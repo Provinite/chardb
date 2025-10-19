@@ -1,4 +1,4 @@
-import type { JwtStrategy } from "../strategies/jwt.strategy";
+import type { JwtStrategy } from '../strategies/jwt.strategy';
 
 /**
  * Type for the current user in request context.
@@ -7,7 +7,7 @@ import type { JwtStrategy } from "../strategies/jwt.strategy";
  * The user object is populated by the JWT strategy and attached to req.user
  * by Passport.js during authentication.
  */
-export type CurrentUserType = Awaited<ReturnType<JwtStrategy["validate"]>>;
+export type CurrentUserType = Awaited<ReturnType<JwtStrategy['validate']>>;
 export type AuthenticatedCurrentUserType = Exclude<
   CurrentUserType,
   undefined | null

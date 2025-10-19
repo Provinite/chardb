@@ -30,17 +30,17 @@ export interface CommunityResolutionConfig {
 }
 
 export const AllCommunityResolutionKeys = [
-  "characterId",
-  "speciesId",
-  "speciesVariantId",
-  "traitId",
-  "enumValueId",
-  "enumValueSettingId",
-  "traitListEntryId",
-  "communityMemberId",
-  "communityInvitationId",
-  "roleId",
-  "communityId",
+  'characterId',
+  'speciesId',
+  'speciesVariantId',
+  'traitId',
+  'enumValueId',
+  'enumValueSettingId',
+  'traitListEntryId',
+  'communityMemberId',
+  'communityInvitationId',
+  'roleId',
+  'communityId',
 ] as const;
 
 export type CommunityResolutionReference =

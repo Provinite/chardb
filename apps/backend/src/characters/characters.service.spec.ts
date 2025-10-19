@@ -99,7 +99,9 @@ describe('CharactersService', () => {
       const characterId = 'nonexistent';
       db.character.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(characterId)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(characterId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException for private character accessed by non-owner', async () => {
@@ -114,7 +116,9 @@ describe('CharactersService', () => {
 
       db.character.findUnique.mockResolvedValue(mockCharacter);
 
-      await expect(service.findOne(characterId, 'user2')).rejects.toThrow(ForbiddenException);
+      await expect(service.findOne(characterId, 'user2')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should allow owner to access private character', async () => {
@@ -174,8 +178,11 @@ describe('CharactersService', () => {
 
       db.character.findUnique.mockResolvedValue(mockCharacter);
 
-      await expect(service.update(characterId, 'user2', { characterData: { name: 'Hacked' } }))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.update(characterId, 'user2', {
+          characterData: { name: 'Hacked' },
+        }),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -211,16 +218,27 @@ describe('CharactersService', () => {
 
       db.character.findUnique.mockResolvedValue(mockCharacter);
 
-      await expect(service.remove(characterId, 'user2'))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.remove(characterId, 'user2')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
   describe('findAll', () => {
     it('should return paginated characters with proper filtering', async () => {
       const mockCharacters = [
-        { id: 'char1', name: 'Character 1', visibility: Visibility.PUBLIC, customFields: null },
-        { id: 'char2', name: 'Character 2', visibility: Visibility.PUBLIC, customFields: null },
+        {
+          id: 'char1',
+          name: 'Character 1',
+          visibility: Visibility.PUBLIC,
+          customFields: null,
+        },
+        {
+          id: 'char2',
+          name: 'Character 2',
+          visibility: Visibility.PUBLIC,
+          customFields: null,
+        },
       ];
 
       db.character.findMany.mockResolvedValue(mockCharacters);
@@ -236,9 +254,7 @@ describe('CharactersService', () => {
 
       expect(db.character.findMany).toHaveBeenCalledWith({
         where: expect.objectContaining({
-          AND: expect.arrayContaining([
-            { visibility: Visibility.PUBLIC },
-          ]),
+          AND: expect.arrayContaining([{ visibility: Visibility.PUBLIC }]),
         }),
         include: {
           owner: true,
@@ -284,7 +300,9 @@ describe('CharactersService', () => {
       };
 
       db.character.findUnique.mockResolvedValue(mockCharacter);
-      db.tag.upsert.mockResolvedValueOnce(mockTags[0]).mockResolvedValueOnce(mockTags[1]);
+      db.tag.upsert
+        .mockResolvedValueOnce(mockTags[0])
+        .mockResolvedValueOnce(mockTags[1]);
       db.characterTag.upsert.mockResolvedValue({});
       db.character.findUnique.mockResolvedValueOnce(mockUpdatedCharacter);
 

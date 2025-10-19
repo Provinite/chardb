@@ -12,7 +12,11 @@ interface CommunityNavigationItemProps {
   disabled?: boolean;
 }
 
-const StyledNavItem = styled(Link)<{ $isActive: boolean; $isNested?: boolean; $disabled?: boolean }>`
+const StyledNavItem = styled(Link)<{
+  $isActive: boolean;
+  $isNested?: boolean;
+  $disabled?: boolean;
+}>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -31,7 +35,9 @@ const StyledNavItem = styled(Link)<{ $isActive: boolean; $isNested?: boolean; $d
   transition: all 0.2s ease;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme, $isActive }) =>
-    $isActive ? theme.typography.fontWeight.medium : theme.typography.fontWeight.normal};
+    $isActive
+      ? theme.typography.fontWeight.medium
+      : theme.typography.fontWeight.normal};
   background-color: ${({ theme, $isActive }) =>
     $isActive ? `${theme.colors.primary}15` : 'transparent'};
   pointer-events: ${({ $disabled }) => ($disabled ? 'none' : 'auto')};
@@ -72,14 +78,9 @@ const Badge = styled.span`
   text-align: center;
 `;
 
-export const CommunityNavigationItem: React.FC<CommunityNavigationItemProps> = ({
-  to,
-  icon: Icon,
-  label,
-  badge,
-  isNested = false,
-  disabled = false,
-}) => {
+export const CommunityNavigationItem: React.FC<
+  CommunityNavigationItemProps
+> = ({ to, icon: Icon, label, badge, isNested = false, disabled = false }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
 

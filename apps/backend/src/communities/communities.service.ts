@@ -145,7 +145,7 @@ export class CommunitiesService {
     const community = await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.CommunityUpdateInput = {};
-    
+
     if (input.name !== undefined) updateData.name = input.name;
 
     return this.prisma.community.update({

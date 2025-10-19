@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
@@ -44,6 +49,7 @@ export interface SignupServiceInput {
  */
 export interface AuthResponse {
   /** User data without password */
+  // eslint-disable-next-line @typescript-eslint/ban-types
   user: Omit<Prisma.UserGetPayload<{}>, 'passwordHash'>;
   /** JWT access token */
   accessToken: string;
@@ -59,6 +65,7 @@ export interface RefreshTokenResponse {
   accessToken: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 type PrismaUser = Prisma.UserGetPayload<{}>;
 
 @Injectable()
@@ -70,13 +77,20 @@ export class AuthService {
     private prisma: DatabaseService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<Omit<PrismaUser, 'passwordHash'> | null> {
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<Omit<PrismaUser, 'passwordHash'> | null> {
     try {
       const user = await this.usersService.findByEmail(email);
       console.log('validateUser - user found:', !!user);
       console.log('validateUser - passwordHash exists:', !!user?.passwordHash);
-      
-      if (user && user.passwordHash && await bcrypt.compare(password, user.passwordHash)) {
+
+      if (
+        user &&
+        user.passwordHash &&
+        (await bcrypt.compare(password, user.passwordHash))
+      ) {
         const { passwordHash, ...result } = user;
         return result;
       }
@@ -107,14 +121,16 @@ export class AuthService {
   async signup(input: SignupServiceInput): Promise<AuthResponse> {
     return await this.prisma.$transaction(async (tx) => {
       // 1. Validate invite code first (using regular service, not transaction)
-      const inviteCode = await this.inviteCodesService.findOne(input.inviteCode);
+      const inviteCode = await this.inviteCodesService.findOne(
+        input.inviteCode,
+      );
       if (inviteCode.claimCount >= inviteCode.maxClaims) {
         throw new BadRequestException('Invite code has been exhausted');
       }
 
       // 2. Check for existing user by email (within transaction)
       const existingUserByEmail = await tx.user.findUnique({
-        where: { email: input.email }
+        where: { email: input.email },
       });
       if (existingUserByEmail) {
         throw new ConflictException('User with this email already exists');
@@ -122,7 +138,7 @@ export class AuthService {
 
       // 3. Check for existing user by username (within transaction)
       const existingUserByUsername = await tx.user.findUnique({
-        where: { username: input.username }
+        where: { username: input.username },
       });
       if (existingUserByUsername) {
         throw new ConflictException('User with this username already exists');
@@ -160,7 +176,9 @@ export class AuthService {
         } catch (error: any) {
           // Handle unique constraint violation with a more user-friendly error
           if (error.code === 'P2002') {
-            throw new ConflictException('You are already a member of this community');
+            throw new ConflictException(
+              'You are already a member of this community',
+            );
           }
           throw error;
         }
@@ -184,14 +202,14 @@ export class AuthService {
     try {
       const payload = this.jwtService.verify(token);
       const user = await this.usersService.findById(payload.sub);
-      
+
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
 
       const newPayload = { email: user.email, sub: user.id };
       const accessToken = this.jwtService.sign(newPayload);
-      
+
       return { accessToken };
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');

@@ -1,22 +1,22 @@
-import React, { useState } from "react";
-import { useMutation } from "@apollo/client";
-import styled from "styled-components";
-import { Button } from "@chardb/ui";
-import { useAuth } from "../contexts/AuthContext";
-import { UPDATE_COMMENT, DELETE_COMMENT } from "../graphql/social.graphql";
-import { LikeButton } from "./LikeButton";
-import { LikeableType } from "../generated/graphql";
-import toast from "react-hot-toast";
+import React, { useState } from 'react';
+import { useMutation } from '@apollo/client';
+import styled from 'styled-components';
+import { Button } from '@chardb/ui';
+import { useAuth } from '../contexts/AuthContext';
+import { UPDATE_COMMENT, DELETE_COMMENT } from '../graphql/social.graphql';
+import { LikeButton } from './LikeButton';
+import { LikeableType } from '../generated/graphql';
+import toast from 'react-hot-toast';
 
 const CommentContainer = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== "isReply",
+  shouldForwardProp: (prop) => prop !== 'isReply',
 })<{ isReply?: boolean }>`
   padding: ${({ theme }) => theme.spacing.md};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   background: ${({ theme, isReply }) =>
     isReply ? theme.colors.surface : theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  margin-left: ${({ isReply, theme }) => (isReply ? theme.spacing.xl : "0")};
+  margin-left: ${({ isReply, theme }) => (isReply ? theme.spacing.xl : '0')};
 `;
 
 const CommentHeader = styled.div`
@@ -135,7 +135,7 @@ const ReplyButton = styled.button`
   transition: all 0.2s ease-in-out;
 
   &:hover {
-    background: ${({ theme }) => theme.colors.primary + "20"};
+    background: ${({ theme }) => theme.colors.primary + '20'};
   }
 `;
 
@@ -173,7 +173,7 @@ export const Comment: React.FC<CommentProps> = ({
 
   const [updateComment] = useMutation(UPDATE_COMMENT, {
     onCompleted: () => {
-      toast.success("Comment updated successfully");
+      toast.success('Comment updated successfully');
       setIsEditing(false);
       onUpdate?.();
     },
@@ -184,7 +184,7 @@ export const Comment: React.FC<CommentProps> = ({
 
   const [deleteComment] = useMutation(DELETE_COMMENT, {
     onCompleted: () => {
-      toast.success("Comment deleted successfully");
+      toast.success('Comment deleted successfully');
       onUpdate?.();
     },
     onError: (error) => {
@@ -205,7 +205,7 @@ export const Comment: React.FC<CommentProps> = ({
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editContent.trim()) {
-      toast.error("Comment cannot be empty");
+      toast.error('Comment cannot be empty');
       return;
     }
 
@@ -224,7 +224,7 @@ export const Comment: React.FC<CommentProps> = ({
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this comment?")) {
+    if (!window.confirm('Are you sure you want to delete this comment?')) {
       return;
     }
 
@@ -248,15 +248,15 @@ export const Comment: React.FC<CommentProps> = ({
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffMins < 1) return "just now";
+    if (diffMins < 1) return 'just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
 
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
     });
   };
 
@@ -275,10 +275,10 @@ export const Comment: React.FC<CommentProps> = ({
               src={comment.author.avatarUrl}
               alt={comment.author.displayName || comment.author.username}
               style={{
-                width: "100%",
-                height: "100%",
-                borderRadius: "50%",
-                objectFit: "cover",
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                objectFit: 'cover',
               }}
             />
           ) : (
@@ -301,7 +301,7 @@ export const Comment: React.FC<CommentProps> = ({
               Edit
             </ActionButton>
             <ActionButton onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </ActionButton>
           </CommentActions>
         )}

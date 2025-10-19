@@ -1,18 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent, 
-  CardActions, 
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardActions,
   CardBadge,
   Title,
   Subtitle,
   Button,
   SmallText,
-  Heading3
+  Heading3,
 } from '@chardb/ui';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
@@ -37,7 +37,7 @@ const CommunitiesGrid = styled.div`
 
 const CommunityCard = styled(Card)`
   transition: all 0.2s ease;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -48,7 +48,7 @@ const ClickableCommunityCard = styled(Link)`
   text-decoration: none;
   color: inherit;
   display: block;
-  
+
   ${CommunityCard} {
     cursor: pointer;
   }
@@ -108,7 +108,7 @@ const EmptyActions = styled.div`
 
 export const MyCommunitiesPage: React.FC = () => {
   const { user } = useAuth();
-  
+
   const { data, loading, error } = useCommunityMembersByUserQuery({
     variables: { userId: user?.id || '', first: 50 },
     skip: !user?.id,
@@ -121,7 +121,13 @@ export const MyCommunitiesPage: React.FC = () => {
           <Title>My Communities</Title>
           <Subtitle>Communities you're a member of</Subtitle>
         </Header>
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem 0' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '4rem 0',
+          }}
+        >
           <LoadingSpinner size="lg" />
         </div>
       </Container>
@@ -159,10 +165,11 @@ export const MyCommunitiesPage: React.FC = () => {
           <EmptyIcon>🏘️</EmptyIcon>
           <Heading3>No communities yet</Heading3>
           <EmptyDescription>
-            You're not a member of any communities yet. Join a community to connect with other users and access exclusive content.
+            You're not a member of any communities yet. Join a community to
+            connect with other users and access exclusive content.
           </EmptyDescription>
           <EmptyActions>
-            <Button 
+            <Button
               as={Link}
               to="/join-community"
               variant="primary"
@@ -181,14 +188,15 @@ export const MyCommunitiesPage: React.FC = () => {
       <Header>
         <Title>My Communities</Title>
         <Subtitle>
-          You're a member of {communities.length} communit{communities.length === 1 ? 'y' : 'ies'}
+          You're a member of {communities.length} communit
+          {communities.length === 1 ? 'y' : 'ies'}
         </Subtitle>
       </Header>
-      
+
       <CommunitiesGrid>
         {communities.map((membership) => (
-          <ClickableCommunityCard 
-            key={membership.id} 
+          <ClickableCommunityCard
+            key={membership.id}
             to={`/communities/${membership.role.community.id}`}
           >
             <CommunityCard>
@@ -203,7 +211,7 @@ export const MyCommunitiesPage: React.FC = () => {
                   </div>
                 </CommunityTitle>
               </CommunityHeader>
-              
+
               <CardContent>
                 <MetaRow>
                   <Calendar size={14} />
@@ -212,14 +220,14 @@ export const MyCommunitiesPage: React.FC = () => {
                   </SmallText>
                 </MetaRow>
               </CardContent>
-              
+
               <CardActions
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                 }}
               >
-                <Button 
+                <Button
                   as={Link}
                   to={`/communities/${membership.role.community.id}/admin`}
                   variant="primary"

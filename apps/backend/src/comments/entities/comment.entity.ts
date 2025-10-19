@@ -1,8 +1,4 @@
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
-import { User } from '../../users/entities/user.entity';
-import { Character } from '../../characters/entities/character.entity';
-import { Image } from '../../images/entities/image.entity';
-import { Gallery } from '../../galleries/entities/gallery.entity';
 import { CommentableType } from '../dto/comment.dto';
 
 @ObjectType()

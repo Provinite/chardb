@@ -4,7 +4,9 @@ import { IsUUID } from 'class-validator';
 @InputType({ description: 'Input for creating a new community membership' })
 export class CreateCommunityMemberInput {
   /** The role to assign to the member */
-  @Field(() => ID, { description: 'The ID of the role to assign to the member' })
+  @Field(() => ID, {
+    description: 'The ID of the role to assign to the member',
+  })
   @IsUUID(4, { message: 'Role ID must be a valid UUID' })
   roleId!: string;
 
@@ -14,10 +16,14 @@ export class CreateCommunityMemberInput {
   userId!: string;
 }
 
-@InputType({ description: 'Input for updating an existing community membership' })
+@InputType({
+  description: 'Input for updating an existing community membership',
+})
 export class UpdateCommunityMemberInput {
   /** The role to assign to the member */
-  @Field(() => ID, { description: 'The ID of the role to assign to the member' })
+  @Field(() => ID, {
+    description: 'The ID of the role to assign to the member',
+  })
   @IsUUID(4, { message: 'Role ID must be a valid UUID' })
   roleId!: string;
 }

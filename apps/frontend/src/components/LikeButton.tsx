@@ -1,25 +1,25 @@
-import React from "react";
-import styled from "styled-components";
-import { Heart } from "lucide-react";
-import { toast } from "react-hot-toast";
-import { useMutation, useQuery } from "@apollo/client";
-import { LikeableType } from "../generated/graphql";
-import { TOGGLE_LIKE, GET_LIKE_STATUS } from "../graphql/social.graphql";
-import { useAuth } from "../contexts/AuthContext";
+import React from 'react';
+import styled from 'styled-components';
+import { Heart } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { useMutation, useQuery } from '@apollo/client';
+import { LikeableType } from '../generated/graphql';
+import { TOGGLE_LIKE, GET_LIKE_STATUS } from '../graphql/social.graphql';
+import { useAuth } from '../contexts/AuthContext';
 
 // Helper function to map LikeableType to GraphQL type names
 const getEntityTypeName = (entityType: LikeableType): string => {
   switch (entityType) {
     case LikeableType.Character:
-      return "Character";
+      return 'Character';
     case LikeableType.Gallery:
-      return "Gallery";
+      return 'Gallery';
     case LikeableType.Image:
-      return "Image";
+      return 'Image';
     case LikeableType.Comment:
-      return "Comment";
+      return 'Comment';
     default:
-      return "Unknown";
+      return 'Unknown';
   }
 };
 
@@ -28,7 +28,7 @@ interface LikeButtonProps {
   entityId: string;
   className?: string;
   showCount?: boolean;
-  size?: "small" | "medium" | "large";
+  size?: 'small' | 'medium' | 'large';
 }
 
 const ButtonContainer = styled.button<{ $isLiked: boolean; $size: string }>`
@@ -37,12 +37,12 @@ const ButtonContainer = styled.button<{ $isLiked: boolean; $size: string }>`
   gap: 0.5rem;
   padding: ${(props) => {
     switch (props.$size) {
-      case "small":
-        return "0.25rem 0.5rem";
-      case "large":
-        return "0.75rem 1rem";
+      case 'small':
+        return '0.25rem 0.5rem';
+      case 'large':
+        return '0.75rem 1rem';
       default:
-        return "0.5rem 0.75rem";
+        return '0.5rem 0.75rem';
     }
   }};
   border: 1px solid
@@ -50,7 +50,7 @@ const ButtonContainer = styled.button<{ $isLiked: boolean; $size: string }>`
       props.$isLiked ? props.theme.colors.primary : props.theme.colors.border};
   border-radius: ${(props) => props.theme.borderRadius.md};
   background: ${(props) =>
-    props.$isLiked ? props.theme.colors.primary + "10" : "transparent"};
+    props.$isLiked ? props.theme.colors.primary + '10' : 'transparent'};
   color: ${(props) =>
     props.$isLiked
       ? props.theme.colors.primary
@@ -59,18 +59,18 @@ const ButtonContainer = styled.button<{ $isLiked: boolean; $size: string }>`
   transition: all 0.2s ease-in-out;
   font-size: ${(props) => {
     switch (props.$size) {
-      case "small":
-        return "0.875rem";
-      case "large":
-        return "1.125rem";
+      case 'small':
+        return '0.875rem';
+      case 'large':
+        return '1.125rem';
       default:
-        return "1rem";
+        return '1rem';
     }
   }};
 
   &:hover {
     border-color: ${(props) => props.theme.colors.primary};
-    background: ${(props) => props.theme.colors.primary + "15"};
+    background: ${(props) => props.theme.colors.primary + '15'};
     color: ${(props) => props.theme.colors.primary};
     transform: translateY(-1px);
   }
@@ -89,25 +89,25 @@ const ButtonContainer = styled.button<{ $isLiked: boolean; $size: string }>`
 const HeartIcon = styled(Heart)<{ $isLiked: boolean; $size: string }>`
   width: ${(props) => {
     switch (props.$size) {
-      case "small":
-        return "16px";
-      case "large":
-        return "24px";
+      case 'small':
+        return '16px';
+      case 'large':
+        return '24px';
       default:
-        return "20px";
+        return '20px';
     }
   }};
   height: ${(props) => {
     switch (props.$size) {
-      case "small":
-        return "16px";
-      case "large":
-        return "24px";
+      case 'small':
+        return '16px';
+      case 'large':
+        return '24px';
       default:
-        return "20px";
+        return '20px';
     }
   }};
-  fill: ${(props) => (props.$isLiked ? "currentColor" : "none")};
+  fill: ${(props) => (props.$isLiked ? 'currentColor' : 'none')};
   transition: all 0.2s ease-in-out;
 `;
 
@@ -121,7 +121,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
   entityId,
   className,
   showCount = true,
-  size = "medium",
+  size = 'medium',
 }) => {
   const { user } = useAuth();
   const isAuthenticated = !!user;
@@ -150,7 +150,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
         variables: { entityType, entityId },
         data: {
           likeStatus: {
-            __typename: "LikeStatus",
+            __typename: 'LikeStatus',
             isLiked,
             likesCount,
           },
@@ -171,7 +171,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
     },
     optimisticResponse: {
       toggleLike: {
-        __typename: "LikeResult",
+        __typename: 'LikeResult',
         entityId,
         entityType,
         isLiked: !currentIsLiked,
@@ -182,12 +182,12 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
     },
     onCompleted: (data: any) => {
       if (data.toggleLike.isLiked) {
-        toast.success("Added to likes!", { duration: 2000 });
+        toast.success('Added to likes!', { duration: 2000 });
       }
     },
     onError: (error: any) => {
-      console.error("Like toggle error:", error);
-      toast.error("Failed to update like. Please try again.");
+      console.error('Like toggle error:', error);
+      toast.error('Failed to update like. Please try again.');
     },
   });
 
@@ -198,7 +198,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 
   const handleClick = async () => {
     if (!isAuthenticated) {
-      toast.error("Please log in to like content");
+      toast.error('Please log in to like content');
       return;
     }
 
@@ -227,7 +227,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
       disabled={isLoading || !isAuthenticated}
       className={className}
       type="button"
-      aria-label={isLiked ? "Unlike" : "Like"}
+      aria-label={isLiked ? 'Unlike' : 'Like'}
     >
       <HeartIcon $isLiked={isLiked} $size={size} />
       {showCount && <Count>{likesCount}</Count>}

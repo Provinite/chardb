@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { Plus, Copy, Edit2, Trash2, ExternalLink, AlertCircle } from 'lucide-react';
-import { 
-  useInviteCodesQuery, 
-  useCreateInviteCodeMutation, 
+import {
+  Plus,
+  Copy,
+  Edit2,
+  Trash2,
+  ExternalLink,
+  AlertCircle,
+} from 'lucide-react';
+import {
+  useInviteCodesQuery,
+  useCreateInviteCodeMutation,
   useUpdateInviteCodeMutation,
   useRemoveInviteCodeMutation,
   type InviteCodesQuery,
-  type CreateInviteCodeInput
+  type CreateInviteCodeInput,
 } from '../graphql/inviteCodes.graphql';
 import { useMeQuery } from '../graphql/auth.graphql';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -23,7 +30,7 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: ${({ theme }) => theme.spacing.xl};
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     gap: ${({ theme }) => theme.spacing.md};
@@ -61,12 +68,12 @@ const CreateButton = styled.button`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.secondary};
     transform: translateY(-1px);
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -87,7 +94,7 @@ const InviteCodeCard = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
   padding: ${({ theme }) => theme.spacing.lg};
   transition: all 0.2s;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
@@ -123,12 +130,13 @@ const StatusBadge = styled.div<{ $available: boolean }>`
   border-radius: 20px;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  background: ${({ $available, theme }) => 
+  background: ${({ $available, theme }) =>
     $available ? theme.colors.success + '20' : theme.colors.error + '20'};
-  color: ${({ $available, theme }) => 
+  color: ${({ $available, theme }) =>
     $available ? theme.colors.success : theme.colors.error};
-  border: 1px solid ${({ $available, theme }) => 
-    $available ? theme.colors.success + '40' : theme.colors.error + '40'};
+  border: 1px solid
+    ${({ $available, theme }) =>
+      $available ? theme.colors.success + '40' : theme.colors.error + '40'};
 `;
 
 const InviteCodeMeta = styled.div`
@@ -177,7 +185,9 @@ const ActionButtons = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
-const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' | 'danger' }>`
+const ActionButton = styled.button<{
+  $variant?: 'primary' | 'secondary' | 'danger';
+}>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -188,40 +198,53 @@ const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' | 'dange
   background: ${({ theme }) => theme.colors.surface};
   color: ${({ $variant, theme }) => {
     switch ($variant) {
-      case 'primary': return theme.colors.primary;
-      case 'danger': return theme.colors.error;
-      default: return theme.colors.text.secondary;
+      case 'primary':
+        return theme.colors.primary;
+      case 'danger':
+        return theme.colors.error;
+      default:
+        return theme.colors.text.secondary;
     }
   }};
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     background: ${({ $variant, theme }) => {
       switch ($variant) {
-        case 'primary': return theme.colors.primary + '10';
-        case 'danger': return theme.colors.error + '10';
-        default: return theme.colors.text.secondary + '10';
+        case 'primary':
+          return theme.colors.primary + '10';
+        case 'danger':
+          return theme.colors.error + '10';
+        default:
+          return theme.colors.text.secondary + '10';
       }
     }};
     border-color: ${({ $variant, theme }) => {
       switch ($variant) {
-        case 'primary': return theme.colors.primary;
-        case 'danger': return theme.colors.error;
-        default: return theme.colors.text.secondary;
+        case 'primary':
+          return theme.colors.primary;
+        case 'danger':
+          return theme.colors.error;
+        default:
+          return theme.colors.text.secondary;
       }
     }};
     transform: translateY(-1px);
   }
-  
+
   &:focus {
-    outline: 2px solid ${({ $variant, theme }) => {
-      switch ($variant) {
-        case 'primary': return theme.colors.primary;
-        case 'danger': return theme.colors.error;
-        default: return theme.colors.text.secondary;
-      }
-    }};
+    outline: 2px solid
+      ${({ $variant, theme }) => {
+        switch ($variant) {
+          case 'primary':
+            return theme.colors.primary;
+          case 'danger':
+            return theme.colors.error;
+          default:
+            return theme.colors.text.secondary;
+        }
+      }};
     outline-offset: 2px;
   }
 `;
@@ -332,13 +355,13 @@ const Input = styled.input`
   color: ${({ theme }) => theme.colors.text.primary};
   background: ${({ theme }) => theme.colors.background};
   transition: border-color 0.2s;
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
     box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.primary + '20'};
   }
-  
+
   &:disabled {
     background: ${({ theme }) => theme.colors.surface};
     color: ${({ theme }) => theme.colors.text.muted};
@@ -363,7 +386,7 @@ const InfoText = styled.p`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
-  
+
   strong {
     font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   }
@@ -383,7 +406,7 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   cursor: pointer;
   transition: all 0.2s;
-  
+
   ${({ $variant, theme }) => {
     if ($variant === 'primary') {
       return `
@@ -408,10 +431,13 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
       `;
     }
   }}
-  
+
   &:focus {
-    outline: 2px solid ${({ $variant, theme }) => 
-      $variant === 'primary' ? theme.colors.primary : theme.colors.text.secondary};
+    outline: 2px solid
+      ${({ $variant, theme }) =>
+        $variant === 'primary'
+          ? theme.colors.primary
+          : theme.colors.text.secondary};
     outline-offset: 2px;
   }
 `;
@@ -419,40 +445,45 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
 export function SiteInviteCodesPage() {
   const { data: userData } = useMeQuery();
   const { data, loading, error, refetch } = useInviteCodesQuery({
-    variables: { 
-      first: 50, 
-      communityId: null // Only get global invite codes
-    }
+    variables: {
+      first: 50,
+      communityId: null, // Only get global invite codes
+    },
   });
-  
+
   const [createInviteCode] = useCreateInviteCodeMutation();
   const [updateInviteCode] = useUpdateInviteCodeMutation();
   const [removeInviteCode] = useRemoveInviteCodeMutation();
-  
+
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingCode, setEditingCode] = useState<InviteCodesQuery['inviteCodes']['nodes'][0] | null>(null);
+  const [editingCode, setEditingCode] = useState<
+    InviteCodesQuery['inviteCodes']['nodes'][0] | null
+  >(null);
 
   const copyInviteLink = (code: string) => {
     const inviteUrl = `${window.location.origin}/signup?invite=${code}`;
     navigator.clipboard.writeText(inviteUrl);
   };
 
-  const handleCreateInviteCode = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateInviteCode = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
     if (!userData?.me?.id) return;
-    
+
     const formData = new FormData(event.currentTarget);
-    const inviteCodeId = formData.get('code') as string || generateRandomCode();
+    const inviteCodeId =
+      (formData.get('code') as string) || generateRandomCode();
     const maxClaimsStr = formData.get('maxClaims') as string;
     const maxClaims = maxClaimsStr ? parseInt(maxClaimsStr, 10) : 999999;
-    
+
     const input: CreateInviteCodeInput = {
       id: inviteCodeId,
       creatorId: userData.me.id,
       maxClaims,
       // No roleId for global invite codes
     };
-    
+
     try {
       await createInviteCode({ variables: { createInviteCodeInput: input } });
       setShowCreateModal(false);
@@ -463,10 +494,14 @@ export function SiteInviteCodesPage() {
   };
 
   const handleDeleteInviteCode = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this invite code? This action cannot be undone.')) {
+    if (
+      !confirm(
+        'Are you sure you want to delete this invite code? This action cannot be undone.',
+      )
+    ) {
       return;
     }
-    
+
     try {
       await removeInviteCode({ variables: { id } });
       refetch();
@@ -482,7 +517,13 @@ export function SiteInviteCodesPage() {
   if (loading) {
     return (
       <Container>
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem 0' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '4rem 0',
+          }}
+        >
           <LoadingSpinner size="lg" />
         </div>
       </Container>
@@ -510,7 +551,9 @@ export function SiteInviteCodesPage() {
       <Header>
         <HeaderContent>
           <Title>Site Invite Codes</Title>
-          <Subtitle>Manage system-wide invitation codes for user registration</Subtitle>
+          <Subtitle>
+            Manage system-wide invitation codes for user registration
+          </Subtitle>
         </HeaderContent>
         <CreateButton onClick={() => setShowCreateModal(true)}>
           <Plus size={20} />
@@ -541,19 +584,32 @@ export function SiteInviteCodesPage() {
               <InviteCodeMeta>
                 <MetaItem>
                   <MetaLabel>Usage</MetaLabel>
-                  <MetaValue>{inviteCode.claimCount}/{inviteCode.maxClaims}</MetaValue>
-                  <MetaSubValue>{inviteCode.remainingClaims} remaining</MetaSubValue>
+                  <MetaValue>
+                    {inviteCode.claimCount}/{inviteCode.maxClaims}
+                  </MetaValue>
+                  <MetaSubValue>
+                    {inviteCode.remainingClaims} remaining
+                  </MetaSubValue>
                 </MetaItem>
                 <MetaItem>
                   <MetaLabel>Created</MetaLabel>
-                  <MetaValue>{new Date(inviteCode.createdAt).toLocaleDateString()}</MetaValue>
-                  <MetaSubValue>{new Date(inviteCode.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</MetaSubValue>
+                  <MetaValue>
+                    {new Date(inviteCode.createdAt).toLocaleDateString()}
+                  </MetaValue>
+                  <MetaSubValue>
+                    {new Date(inviteCode.createdAt).toLocaleDateString(
+                      'en-US',
+                      { month: 'short', day: 'numeric' },
+                    )}
+                  </MetaSubValue>
                 </MetaItem>
               </InviteCodeMeta>
 
               <InviteCodeActions>
                 <CreatorInfo>
-                  by {inviteCode.creator.displayName || inviteCode.creator.username}
+                  by{' '}
+                  {inviteCode.creator.displayName ||
+                    inviteCode.creator.username}
                 </CreatorInfo>
                 <ActionButtons>
                   <ActionButton
@@ -586,7 +642,8 @@ export function SiteInviteCodesPage() {
           <EmptyIcon>🎫</EmptyIcon>
           <EmptyTitle>No invite codes yet</EmptyTitle>
           <EmptyDescription>
-            No global invite codes have been created yet. Create your first invite code to get started!
+            No global invite codes have been created yet. Create your first
+            invite code to get started!
           </EmptyDescription>
           <CreateButton onClick={() => setShowCreateModal(true)}>
             <Plus size={20} />
@@ -609,7 +666,10 @@ export function SiteInviteCodesPage() {
                   placeholder="WELCOME2024"
                   pattern="[A-Za-z0-9\-_]+"
                 />
-                <HelpText>Leave blank to auto-generate. Only letters, numbers, hyphens, and underscores allowed.</HelpText>
+                <HelpText>
+                  Leave blank to auto-generate. Only letters, numbers, hyphens,
+                  and underscores allowed.
+                </HelpText>
               </FormGroup>
 
               <FormGroup>
@@ -621,26 +681,24 @@ export function SiteInviteCodesPage() {
                   min="1"
                   max="999999"
                 />
-                <HelpText>Leave blank for maximum limit (999,999 uses)</HelpText>
+                <HelpText>
+                  Leave blank for maximum limit (999,999 uses)
+                </HelpText>
               </FormGroup>
 
               <InfoBox>
                 <InfoText>
-                  <strong>Global Invite Code:</strong> This code will allow users to register for the site but won't automatically add them to any community.
+                  <strong>Global Invite Code:</strong> This code will allow
+                  users to register for the site but won't automatically add
+                  them to any community.
                 </InfoText>
               </InfoBox>
 
               <ModalActions>
-                <Button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                >
+                <Button type="button" onClick={() => setShowCreateModal(false)}>
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  $variant="primary"
-                >
+                <Button type="submit" $variant="primary">
                   Create Invite Code
                 </Button>
               </ModalActions>
@@ -654,33 +712,35 @@ export function SiteInviteCodesPage() {
         <Modal>
           <ModalContent>
             <ModalTitle>Edit Invite Code</ModalTitle>
-            <Form onSubmit={async (e) => {
-              e.preventDefault();
-              const formData = new FormData(e.currentTarget);
-              const maxClaimsStr = formData.get('maxClaims') as string;
-              const maxClaims = maxClaimsStr ? parseInt(maxClaimsStr, 10) : editingCode.maxClaims;
-              
-              try {
-                await updateInviteCode({ 
-                  variables: { 
-                    id: editingCode.id, 
-                    updateInviteCodeInput: { maxClaims } 
-                  } 
-                });
-                setEditingCode(null);
-                refetch();
-              } catch (error) {
-                console.error('Failed to update invite code:', error);
-              }
-            }}>
+            <Form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const maxClaimsStr = formData.get('maxClaims') as string;
+                const maxClaims = maxClaimsStr
+                  ? parseInt(maxClaimsStr, 10)
+                  : editingCode.maxClaims;
+
+                try {
+                  await updateInviteCode({
+                    variables: {
+                      id: editingCode.id,
+                      updateInviteCodeInput: { maxClaims },
+                    },
+                  });
+                  setEditingCode(null);
+                  refetch();
+                } catch (error) {
+                  console.error('Failed to update invite code:', error);
+                }
+              }}
+            >
               <FormGroup>
                 <Label>Invite Code</Label>
-                <Input
-                  type="text"
-                  value={editingCode.id}
-                  disabled
-                />
-                <HelpText>Invite code cannot be changed after creation</HelpText>
+                <Input type="text" value={editingCode.id} disabled />
+                <HelpText>
+                  Invite code cannot be changed after creation
+                </HelpText>
               </FormGroup>
 
               <FormGroup>
@@ -698,16 +758,10 @@ export function SiteInviteCodesPage() {
               </FormGroup>
 
               <ModalActions>
-                <Button
-                  type="button"
-                  onClick={() => setEditingCode(null)}
-                >
+                <Button type="button" onClick={() => setEditingCode(null)}>
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  $variant="primary"
-                >
+                <Button type="submit" $variant="primary">
                   Update Invite Code
                 </Button>
               </ModalActions>

@@ -1,7 +1,10 @@
-import { CreateRoleInput, UpdateRoleInput } from "../dto/role.dto";
-import { Role, RoleConnection } from "../entities/role.entity";
-import { CreateRoleServiceInput, UpdateRoleServiceInput } from "../roles.service";
-import { Prisma } from "@chardb/database";
+import { CreateRoleInput, UpdateRoleInput } from '../dto/role.dto';
+import { Role, RoleConnection } from '../entities/role.entity';
+import {
+  CreateRoleServiceInput,
+  UpdateRoleServiceInput,
+} from '../roles.service';
+import { Prisma } from '@chardb/database';
 
 /**
  * Resolver layer mapping functions to convert between GraphQL DTOs and service types
@@ -10,7 +13,9 @@ import { Prisma } from "@chardb/database";
 /**
  * Maps CreateRoleInput to service input format
  */
-export function mapCreateRoleInputToService(input: CreateRoleInput): CreateRoleServiceInput {
+export function mapCreateRoleInputToService(
+  input: CreateRoleInput,
+): CreateRoleServiceInput {
   return {
     name: input.name,
     communityId: input.communityId,
@@ -31,25 +36,38 @@ export function mapCreateRoleInputToService(input: CreateRoleInput): CreateRoleS
 /**
  * Maps UpdateRoleInput to service input format
  */
-export function mapUpdateRoleInputToService(input: UpdateRoleInput): UpdateRoleServiceInput {
+export function mapUpdateRoleInputToService(
+  input: UpdateRoleInput,
+): UpdateRoleServiceInput {
   const result: UpdateRoleServiceInput = {};
 
   if (input.name !== undefined) result.name = input.name;
-  if (input.canCreateSpecies !== undefined) result.canCreateSpecies = input.canCreateSpecies;
-  if (input.canCreateCharacter !== undefined) result.canCreateCharacter = input.canCreateCharacter;
-  if (input.canEditCharacter !== undefined) result.canEditCharacter = input.canEditCharacter;
-  if (input.canEditOwnCharacter !== undefined) result.canEditOwnCharacter = input.canEditOwnCharacter;
-  if (input.canEditSpecies !== undefined) result.canEditSpecies = input.canEditSpecies;
-  if (input.canCreateInviteCode !== undefined) result.canCreateInviteCode = input.canCreateInviteCode;
-  if (input.canListInviteCodes !== undefined) result.canListInviteCodes = input.canListInviteCodes;
-  if (input.canCreateRole !== undefined) result.canCreateRole = input.canCreateRole;
+  if (input.canCreateSpecies !== undefined)
+    result.canCreateSpecies = input.canCreateSpecies;
+  if (input.canCreateCharacter !== undefined)
+    result.canCreateCharacter = input.canCreateCharacter;
+  if (input.canEditCharacter !== undefined)
+    result.canEditCharacter = input.canEditCharacter;
+  if (input.canEditOwnCharacter !== undefined)
+    result.canEditOwnCharacter = input.canEditOwnCharacter;
+  if (input.canEditSpecies !== undefined)
+    result.canEditSpecies = input.canEditSpecies;
+  if (input.canCreateInviteCode !== undefined)
+    result.canCreateInviteCode = input.canCreateInviteCode;
+  if (input.canListInviteCodes !== undefined)
+    result.canListInviteCodes = input.canListInviteCodes;
+  if (input.canCreateRole !== undefined)
+    result.canCreateRole = input.canCreateRole;
   if (input.canEditRole !== undefined) result.canEditRole = input.canEditRole;
-  if (input.canRemoveCommunityMember !== undefined) result.canRemoveCommunityMember = input.canRemoveCommunityMember;
-  if (input.canManageMemberRoles !== undefined) result.canManageMemberRoles = input.canManageMemberRoles;
+  if (input.canRemoveCommunityMember !== undefined)
+    result.canRemoveCommunityMember = input.canRemoveCommunityMember;
+  if (input.canManageMemberRoles !== undefined)
+    result.canManageMemberRoles = input.canManageMemberRoles;
 
   return result;
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 type PrismaRole = Prisma.RoleGetPayload<{}>;
 
 /**

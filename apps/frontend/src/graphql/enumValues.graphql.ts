@@ -3,14 +3,14 @@ import { gql } from '@apollo/client';
 /**
  * GraphQL operations for enum value management in the frontend.
  * Provides comprehensive enum value CRUD operations for ENUM-type traits.
- * 
+ *
  * @example Basic enum values query usage:
  * ```tsx
  * const { data, loading, error } = useEnumValuesByTraitQuery({
  *   variables: { traitId: "trait-uuid", first: 10 }
  * });
  * ```
- * 
+ *
  * @example Creating a new enum value:
  * ```tsx
  * const [createEnumValue] = useCreateEnumValueMutation({
@@ -18,7 +18,7 @@ import { gql } from '@apollo/client';
  *     console.log('Enum value created:', data.createEnumValue);
  *   }
  * });
- * 
+ *
  * await createEnumValue({
  *   variables: {
  *     createEnumValueInput: {
@@ -59,7 +59,7 @@ export const ENUM_VALUE_CONNECTION_FRAGMENT = gql`
 /**
  * Query to fetch enum values by trait ID with pagination.
  * Essential for trait-specific enum value management interfaces.
- * 
+ *
  * @param traitId - ID of the trait to get enum values for
  * @param first - Number of enum values to fetch (default: 20)
  * @param after - Cursor for pagination (optional)
@@ -77,7 +77,7 @@ export const ENUM_VALUES_BY_TRAIT_QUERY = gql`
 /**
  * Query to fetch a single enum value by ID with full details.
  * Used for enum value detail views and editing forms.
- * 
+ *
  * @param id - ID of the enum value to fetch
  * @returns Single EnumValue entity with all fields
  */
@@ -103,7 +103,7 @@ export const ENUM_VALUE_BY_ID_QUERY = gql`
 /**
  * Mutation to create a new enum value for a trait.
  * Automatically associates the enum value with the specified trait.
- * 
+ *
  * @param createEnumValueInput - Enum value creation data including name, trait ID, and order
  * @returns Newly created EnumValue entity
  */
@@ -119,13 +119,16 @@ export const CREATE_ENUM_VALUE_MUTATION = gql`
 /**
  * Mutation to update an existing enum value.
  * Supports partial updates - only provide fields that need to change.
- * 
+ *
  * @param id - ID of the enum value to update
  * @param updateEnumValueInput - Partial enum value update data
  * @returns Updated EnumValue entity
  */
 export const UPDATE_ENUM_VALUE_MUTATION = gql`
-  mutation UpdateEnumValue($id: ID!, $updateEnumValueInput: UpdateEnumValueInput!) {
+  mutation UpdateEnumValue(
+    $id: ID!
+    $updateEnumValueInput: UpdateEnumValueInput!
+  ) {
     updateEnumValue(id: $id, updateEnumValueInput: $updateEnumValueInput) {
       ...EnumValueDetails
     }
@@ -137,7 +140,7 @@ export const UPDATE_ENUM_VALUE_MUTATION = gql`
  * Mutation to delete an enum value.
  * WARNING: This will also delete associated enum value settings and character trait data.
  * Should include confirmation dialogs in UI implementations.
- * 
+ *
  * @param id - ID of the enum value to delete
  * @returns RemovalResponse with success confirmation
  */
@@ -158,7 +161,7 @@ export {
   useCreateEnumValueMutation,
   useUpdateEnumValueMutation,
   useDeleteEnumValueMutation,
-  
+
   // Types
   type EnumValuesByTraitQuery,
   type EnumValuesByTraitQueryVariables,

@@ -1,4 +1,4 @@
-import { Reflector } from "@nestjs/core";
+import { Reflector } from '@nestjs/core';
 
 /**
  * Decorator to explicitly mark a resolver as allowing unauthenticated access.

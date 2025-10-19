@@ -1,6 +1,6 @@
 export enum ValidationGroup {
-  Insert = "insert",
-  Update = "update",
+  Insert = 'insert',
+  Update = 'update',
 }
 
 export const ValidationGroupAll = [

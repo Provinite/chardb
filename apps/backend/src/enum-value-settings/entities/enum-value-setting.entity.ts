@@ -1,11 +1,11 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { EnumValue } from '../../enum-values/entities/enum-value.entity';
-import { SpeciesVariant } from '../../species-variants/entities/species-variant.entity';
 
 @ObjectType()
 export class EnumValueSetting {
   /** Unique identifier for the enum value setting */
-  @Field(() => ID, { description: 'Unique identifier for the enum value setting' })
+  @Field(() => ID, {
+    description: 'Unique identifier for the enum value setting',
+  })
   id: string;
 
   /** ID of the enum value this setting allows */
@@ -13,7 +13,9 @@ export class EnumValueSetting {
   enumValueId: string;
 
   /** ID of the species variant this setting belongs to */
-  @Field(() => ID, { description: 'ID of the species variant this setting belongs to' })
+  @Field(() => ID, {
+    description: 'ID of the species variant this setting belongs to',
+  })
   speciesVariantId: string;
 
   /** When the enum value setting was created */
@@ -28,7 +30,9 @@ export class EnumValueSetting {
 @ObjectType()
 export class EnumValueSettingConnection {
   /** List of enum value settings in this connection */
-  @Field(() => [EnumValueSetting], { description: 'List of enum value settings in this connection' })
+  @Field(() => [EnumValueSetting], {
+    description: 'List of enum value settings in this connection',
+  })
   nodes: EnumValueSetting[];
 
   /** Total number of enum value settings available */
@@ -36,10 +40,14 @@ export class EnumValueSettingConnection {
   totalCount: number;
 
   /** Whether there are more enum value settings after this page */
-  @Field({ description: 'Whether there are more enum value settings after this page' })
+  @Field({
+    description: 'Whether there are more enum value settings after this page',
+  })
   hasNextPage: boolean;
 
   /** Whether there are more enum value settings before this page */
-  @Field({ description: 'Whether there are more enum value settings before this page' })
+  @Field({
+    description: 'Whether there are more enum value settings before this page',
+  })
   hasPreviousPage: boolean;
 }

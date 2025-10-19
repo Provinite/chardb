@@ -1,7 +1,7 @@
-import { Module } from "@nestjs/common";
-import { ExternalAccountsService } from "./external-accounts.service";
-import { ExternalAccountsResolver } from "./external-accounts.resolver";
-import { DatabaseModule } from "../database/database.module";
+import { Module } from '@nestjs/common';
+import { ExternalAccountsService } from './external-accounts.service';
+import { ExternalAccountsResolver } from './external-accounts.resolver';
+import { DatabaseModule } from '../database/database.module';
 
 @Module({
   imports: [DatabaseModule],

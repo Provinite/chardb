@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Plus, Settings, Trash2, ExternalLink, Search } from 'lucide-react';
-import { 
-  useCommunitiesQuery, 
-  useCreateCommunityMutation, 
+import {
+  useCommunitiesQuery,
+  useCreateCommunityMutation,
   useRemoveCommunityMutation,
   type Community,
   type CreateCommunityInput,
@@ -92,7 +92,7 @@ const CommunityCard = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
   padding: ${({ theme }) => theme.spacing.lg};
   transition: all 0.2s;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
@@ -112,7 +112,6 @@ const CommunityName = styled.h3`
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing.xs} 0;
 `;
-
 
 const CommunityStats = styled.div`
   display: flex;
@@ -142,16 +141,16 @@ const ActionButton = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   text-decoration: none;
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.surface};
     color: ${({ theme }) => theme.colors.text.primary};
   }
-  
+
   &.danger {
     color: ${({ theme }) => theme.colors.error};
     border-color: ${({ theme }) => theme.colors.error};
-    
+
     &:hover {
       background: ${({ theme }) => theme.colors.error};
       color: white;
@@ -171,13 +170,11 @@ const Label = styled.label`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
-
 const EmptyState = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.md};
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
-
 
 export function CommunityManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -209,14 +206,14 @@ export function CommunityManagementPage() {
   });
 
   const communities = data?.communities.nodes || [];
-  const filteredCommunities = communities.filter(community =>
-    community.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCommunities = communities.filter((community) =>
+    community.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleCreateCommunity = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    
+
     const input: CreateCommunityInput = {
       name: formData.get('name') as string,
     };
@@ -225,7 +222,11 @@ export function CommunityManagementPage() {
   };
 
   const handleDeleteCommunity = (community: Community) => {
-    if (window.confirm(`Are you sure you want to delete "${community.name}"? This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${community.name}"? This action cannot be undone.`,
+      )
+    ) {
       removeCommunity({ variables: { id: community.id } });
     }
   };
@@ -233,7 +234,9 @@ export function CommunityManagementPage() {
   if (loading) {
     return (
       <Container>
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+        <div
+          style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}
+        >
           <LoadingSpinner size="lg" />
         </div>
       </Container>
@@ -278,7 +281,9 @@ export function CommunityManagementPage() {
 
       {filteredCommunities.length === 0 ? (
         <EmptyState>
-          {searchTerm ? 'No communities match your search.' : 'No communities created yet.'}
+          {searchTerm
+            ? 'No communities match your search.'
+            : 'No communities created yet.'}
         </EmptyState>
       ) : (
         <Grid>
@@ -289,13 +294,13 @@ export function CommunityManagementPage() {
                   <CommunityName>{community.name}</CommunityName>
                 </div>
               </CardHeader>
-              
+
               <CommunityStats>
                 <div>
                   Created {new Date(community.createdAt).toLocaleDateString()}
                 </div>
               </CommunityStats>
-              
+
               <CardActions>
                 <ActionButton
                   as={Link}
@@ -336,9 +341,10 @@ export function CommunityManagementPage() {
               placeholder="Enter community name"
             />
           </FormGroup>
-          
-          
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+
+          <div
+            style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}
+          >
             <Button
               type="button"
               variant="secondary"
@@ -346,11 +352,7 @@ export function CommunityManagementPage() {
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              loading={creating}
-            >
+            <Button type="submit" variant="primary" loading={creating}>
               Create Community
             </Button>
           </div>

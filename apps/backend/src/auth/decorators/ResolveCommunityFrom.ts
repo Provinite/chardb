@@ -1,11 +1,10 @@
-import { SetMetadata } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { CommunityResolutionConfig } from "../types/CommunityResolutionConfig";
+import { Reflector } from '@nestjs/core';
+import { CommunityResolutionConfig } from '../types/CommunityResolutionConfig';
 
 /**
  * Metadata key for community resolution configuration
  */
-export const COMMUNITY_RESOLUTION_KEY = "communityResolution";
+export const COMMUNITY_RESOLUTION_KEY = 'communityResolution';
 
 /**
  * Decorator to specify how to resolve the community context for permission checks.

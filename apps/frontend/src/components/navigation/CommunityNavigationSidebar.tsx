@@ -18,7 +18,10 @@ import { CommunityNavigationItem } from './CommunityNavigationItem';
 import { CommunityNavigationGroup } from './CommunityNavigationGroup';
 import { CommunitySwitcher } from './CommunitySwitcher';
 import { useUserCommunityRole } from '../../hooks/useUserCommunityRole';
-import { useSpeciesByIdQuery, useGetCharacterQuery } from '../../generated/graphql';
+import {
+  useSpeciesByIdQuery,
+  useGetCharacterQuery,
+} from '../../generated/graphql';
 
 interface CommunityNavigationSidebarProps {
   className?: string;
@@ -154,7 +157,7 @@ const SubsectionLabel = styled.div`
 const isCommunityRoute = (pathname: string): boolean => {
   const communityRoutes = [
     /^\/communities\/[^/]+/,
-    /^\/species\/[^/]+/,  // Species routes also get sidebar
+    /^\/species\/[^/]+/, // Species routes also get sidebar
     /^\/character\/[^/]+/, // Character routes get sidebar if character has species
     // Add more patterns as needed
   ];
@@ -186,10 +189,9 @@ const extractCharacterId = (pathname: string): string | undefined => {
   return match ? match[1] : undefined;
 };
 
-export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProps> = ({
-  className,
-  onToggleToGlobal,
-}) => {
+export const CommunityNavigationSidebar: React.FC<
+  CommunityNavigationSidebarProps
+> = ({ className, onToggleToGlobal }) => {
   const location = useLocation();
 
   // Extract communityId from URL path instead of useParams (Layout is outside Routes)
@@ -204,10 +206,11 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   });
 
   // If we're on a character route, fetch the character to get its species
-  const { data: characterData, loading: characterLoading } = useGetCharacterQuery({
-    variables: { id: characterId || '' },
-    skip: !characterId,
-  });
+  const { data: characterData, loading: characterLoading } =
+    useGetCharacterQuery({
+      variables: { id: characterId || '' },
+      skip: !characterId,
+    });
 
   // Determine the species context (either from direct species route or from character)
   let contextSpeciesId: string | undefined = speciesId;
@@ -258,15 +261,25 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
 
   // Only render sidebar for community-scoped routes
   if (!isCommunityRoute(location.pathname)) {
-    console.log('[CommunityNavigationSidebar] Not rendering - not a community route');
+    console.log(
+      '[CommunityNavigationSidebar] Not rendering - not a community route',
+    );
     return null;
   }
 
   // Show loading state while checking membership, species data, or character data
-  if (loading || (speciesId && speciesLoading) || (characterId && characterLoading)) {
+  if (
+    loading ||
+    (speciesId && speciesLoading) ||
+    (characterId && characterLoading)
+  ) {
     console.log('[CommunityNavigationSidebar] Showing loading state');
     return (
-      <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
+      <SidebarContainer
+        className={className}
+        role="navigation"
+        aria-label="Community navigation"
+      >
         <CommunityHeader>
           <LoadingContainer>Loading...</LoadingContainer>
         </CommunityHeader>
@@ -276,7 +289,9 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
 
   // After loading, check if we have a communityId
   if (!communityId) {
-    console.log('[CommunityNavigationSidebar] Not rendering - no communityId after loading');
+    console.log(
+      '[CommunityNavigationSidebar] Not rendering - no communityId after loading',
+    );
     return null;
   }
 
@@ -284,7 +299,11 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   if (error) {
     console.error('[CommunityNavigationSidebar] GraphQL Error:', error);
     return (
-      <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
+      <SidebarContainer
+        className={className}
+        role="navigation"
+        aria-label="Community navigation"
+      >
         <CommunityHeader>
           <LoadingContainer style={{ color: 'red' }}>
             Error loading community data
@@ -296,7 +315,9 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
 
   // Don't render if user is not a member
   if (!isMember) {
-    console.log('[CommunityNavigationSidebar] Not rendering - user is not a member');
+    console.log(
+      '[CommunityNavigationSidebar] Not rendering - user is not a member',
+    );
     return null;
   }
 
@@ -305,11 +326,18 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   const communityBasePath = `/communities/${communityId}`;
 
   return (
-    <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
+    <SidebarContainer
+      className={className}
+      role="navigation"
+      aria-label="Community navigation"
+    >
       <CommunityHeader>
         <CommunitySwitcher communityId={communityId} />
         {onToggleToGlobal && (
-          <ToggleButton onClick={onToggleToGlobal} aria-label="View global navigation">
+          <ToggleButton
+            onClick={onToggleToGlobal}
+            aria-label="View global navigation"
+          >
             <Globe />
             View Global Navigation
           </ToggleButton>
@@ -372,7 +400,9 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
                 {/* Current Species Context - shown when viewing a specific species or character */}
                 {contextSpeciesId && (
                   <>
-                    <SubsectionLabel>Current: {contextSpeciesName || 'Loading...'}</SubsectionLabel>
+                    <SubsectionLabel>
+                      Current: {contextSpeciesName || 'Loading...'}
+                    </SubsectionLabel>
                     <CommunityNavigationItem
                       to={`/species/${contextSpeciesId}`}
                       icon={Dna}

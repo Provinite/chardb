@@ -1,5 +1,4 @@
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
-import { Trait } from '../../traits/entities/trait.entity';
 
 @ObjectType()
 export class EnumValue {
@@ -12,11 +11,15 @@ export class EnumValue {
   name: string;
 
   /** Display order within the trait's enum values */
-  @Field(() => Int, { description: 'Display order within the trait\'s enum values' })
+  @Field(() => Int, {
+    description: "Display order within the trait's enum values",
+  })
   order: number;
 
   /** ID of the trait this enum value belongs to */
-  @Field(() => ID, { description: 'ID of the trait this enum value belongs to' })
+  @Field(() => ID, {
+    description: 'ID of the trait this enum value belongs to',
+  })
   traitId: string;
 
   /** When the enum value was created */
@@ -31,7 +34,9 @@ export class EnumValue {
 @ObjectType()
 export class EnumValueConnection {
   /** List of enum values in this connection */
-  @Field(() => [EnumValue], { description: 'List of enum values in this connection' })
+  @Field(() => [EnumValue], {
+    description: 'List of enum values in this connection',
+  })
   nodes: EnumValue[];
 
   /** Total number of enum values available */

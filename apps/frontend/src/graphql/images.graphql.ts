@@ -1,9 +1,4 @@
-import { gql } from "@apollo/client";
-
-
-
-
-
+import { gql } from '@apollo/client';
 
 export const GET_LIKED_IMAGES = gql`
   query GetLikedImages {
@@ -62,7 +57,7 @@ export interface Image {
   mimeType: string;
   isNsfw: boolean;
   sensitiveContentDescription?: string;
-  visibility: "PUBLIC" | "UNLISTED" | "PRIVATE";
+  visibility: 'PUBLIC' | 'UNLISTED' | 'PRIVATE';
   createdAt: string;
   updatedAt: string;
   uploader: {
@@ -88,5 +83,3 @@ export interface Image {
     description?: string;
   };
 }
-
-

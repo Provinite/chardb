@@ -1,7 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { PassportStrategy } from "@nestjs/passport";
-import { Strategy } from "passport-oauth2";
-import { ConfigService } from "@nestjs/config";
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { Strategy } from 'passport-oauth2';
+import { ConfigService } from '@nestjs/config';
 
 export interface DeviantArtProfile {
   uuid: string;
@@ -11,18 +11,18 @@ export interface DeviantArtProfile {
 @Injectable()
 export class DeviantArtStrategy extends PassportStrategy(
   Strategy,
-  "deviantart",
+  'deviantart',
 ) {
   constructor(configService: ConfigService) {
     super({
-      authorizationURL: "https://www.deviantart.com/oauth2/authorize",
-      tokenURL: "https://www.deviantart.com/oauth2/token",
-      clientID: configService.get("DEVIANTART_CLIENT_ID") || "",
-      clientSecret: configService.get("DEVIANTART_CLIENT_SECRET") || "",
+      authorizationURL: 'https://www.deviantart.com/oauth2/authorize',
+      tokenURL: 'https://www.deviantart.com/oauth2/token',
+      clientID: configService.get('DEVIANTART_CLIENT_ID') || '',
+      clientSecret: configService.get('DEVIANTART_CLIENT_SECRET') || '',
       callbackURL:
-        configService.get("DEVIANTART_CALLBACK_URL") ||
-        "http://localhost:3000/auth/deviantart/callback",
-      scope: ["basic"],
+        configService.get('DEVIANTART_CALLBACK_URL') ||
+        'http://localhost:3000/auth/deviantart/callback',
+      scope: ['basic'],
       passReqToCallback: false,
     });
 
@@ -52,7 +52,7 @@ export class DeviantArtStrategy extends PassportStrategy(
   ) {
     try {
       const response = await fetch(
-        "https://www.deviantart.com/api/v1/oauth2/user/whoami",
+        'https://www.deviantart.com/api/v1/oauth2/user/whoami',
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -61,7 +61,7 @@ export class DeviantArtStrategy extends PassportStrategy(
       );
 
       if (!response.ok) {
-        return done(new Error("Failed to fetch DeviantArt user profile"));
+        return done(new Error('Failed to fetch DeviantArt user profile'));
       }
 
       const data = await response.json();

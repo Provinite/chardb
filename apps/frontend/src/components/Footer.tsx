@@ -19,7 +19,7 @@ const FooterContent = styled.div`
 
 export const Footer: React.FC = () => {
   const version = import.meta.env.VITE_VERSION || 'unknown';
-  
+
   return (
     <FooterContainer>
       <FooterContent>

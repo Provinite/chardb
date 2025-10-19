@@ -4,17 +4,32 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import styled from 'styled-components';
-import { Button, Card, Title, Subtitle, Input, Label, ErrorText } from '@chardb/ui';
+import {
+  Button,
+  Card,
+  Title,
+  Subtitle,
+  Input,
+  Label,
+  ErrorText,
+} from '@chardb/ui';
 import { useAuth } from '../contexts/AuthContext';
-import { useInviteCodeByIdQuery, useClaimInviteCodeMutation } from '../graphql/inviteCodes.graphql';
+import {
+  useInviteCodeByIdQuery,
+  useClaimInviteCodeMutation,
+} from '../graphql/inviteCodes.graphql';
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const inviteCodeSchema = z.object({
-  inviteCode: z.string()
+  inviteCode: z
+    .string()
     .min(1, 'Invite code is required')
     .max(50, 'Invite code must be less than 50 characters')
-    .regex(/^[a-zA-Z0-9_-]+$/, 'Invite code can only contain letters, numbers, underscores, and hyphens'),
+    .regex(
+      /^[a-zA-Z0-9_-]+$/,
+      'Invite code can only contain letters, numbers, underscores, and hyphens',
+    ),
 });
 
 type InviteCodeForm = z.infer<typeof inviteCodeSchema>;
@@ -37,16 +52,21 @@ const FormGroup = styled.div`
   gap: ${({ theme }) => theme.spacing.xs};
 `;
 
-const ValidationMessage = styled.div<{ $status: 'valid' | 'invalid' | 'loading' }>`
+const ValidationMessage = styled.div<{
+  $status: 'valid' | 'invalid' | 'loading';
+}>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   color: ${({ $status, theme }) => {
     switch ($status) {
-      case 'valid': return theme.colors.success;
-      case 'invalid': return theme.colors.error;
-      case 'loading': return theme.colors.text.secondary;
+      case 'valid':
+        return theme.colors.success;
+      case 'invalid':
+        return theme.colors.error;
+      case 'loading':
+        return theme.colors.text.secondary;
     }
   }};
 `;
@@ -108,7 +128,11 @@ export const JoinCommunityPage: React.FC = () => {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { data: inviteCodeData, loading: inviteCodeLoading, error: inviteCodeError } = useInviteCodeByIdQuery({
+  const {
+    data: inviteCodeData,
+    loading: inviteCodeLoading,
+    error: inviteCodeError,
+  } = useInviteCodeByIdQuery({
     variables: { id: inviteCode || '' },
     skip: !inviteCode || inviteCode.length < 2,
   });
@@ -135,7 +159,9 @@ export const JoinCommunityPage: React.FC = () => {
       if (result.data?.claimInviteCode) {
         const claimedCode = result.data.claimInviteCode;
         if (claimedCode.role) {
-          toast.success(`Successfully joined ${claimedCode.role.community.name} as ${claimedCode.role.name}!`);
+          toast.success(
+            `Successfully joined ${claimedCode.role.community.name} as ${claimedCode.role.name}!`,
+          );
           navigate(`/communities/${claimedCode.role.community.id}`);
         } else {
           toast.success('Successfully claimed invite code!');
@@ -157,7 +183,7 @@ export const JoinCommunityPage: React.FC = () => {
 
   const getInviteCodeValidation = () => {
     if (!inviteCode || inviteCode.length < 2) return null;
-    
+
     if (inviteCodeLoading) {
       return (
         <ValidationMessage $status="loading">
@@ -166,7 +192,7 @@ export const JoinCommunityPage: React.FC = () => {
         </ValidationMessage>
       );
     }
-    
+
     if (inviteCodeError || !inviteCodeData?.inviteCodeById) {
       return (
         <ValidationMessage $status="invalid">
@@ -175,7 +201,7 @@ export const JoinCommunityPage: React.FC = () => {
         </ValidationMessage>
       );
     }
-    
+
     const code = inviteCodeData.inviteCodeById;
     if (!code.isAvailable) {
       return (
@@ -185,7 +211,7 @@ export const JoinCommunityPage: React.FC = () => {
         </ValidationMessage>
       );
     }
-    
+
     return (
       <ValidationMessage $status="valid">
         <CheckCircle size={16} />
@@ -211,7 +237,7 @@ export const JoinCommunityPage: React.FC = () => {
       <Card>
         <Title>Join Community</Title>
         <Subtitle>Enter an invite code to join a community</Subtitle>
-        
+
         <Form onSubmit={handleSubmit(onSubmit)}>
           <FormGroup>
             <Label htmlFor="inviteCode">Invite Code</Label>
@@ -222,32 +248,45 @@ export const JoinCommunityPage: React.FC = () => {
               placeholder="Enter your invite code"
               hasError={!!errors.inviteCode}
             />
-            {errors.inviteCode && <ErrorText>{errors.inviteCode.message}</ErrorText>}
+            {errors.inviteCode && (
+              <ErrorText>{errors.inviteCode.message}</ErrorText>
+            )}
             {getInviteCodeValidation()}
             {inviteCodeData?.inviteCodeById?.role && (
               <CommunityPreview>
                 <CommunityInfo>
-                  <CommunityName>{inviteCodeData.inviteCodeById.role.community.name}</CommunityName>
-                  <RoleInfo>as {inviteCodeData.inviteCodeById.role.name}</RoleInfo>
+                  <CommunityName>
+                    {inviteCodeData.inviteCodeById.role.community.name}
+                  </CommunityName>
+                  <RoleInfo>
+                    as {inviteCodeData.inviteCodeById.role.name}
+                  </RoleInfo>
                 </CommunityInfo>
                 <PreviewText>
-                  You'll be joining this community and assigned the {inviteCodeData.inviteCodeById.role.name} role.
+                  You'll be joining this community and assigned the{' '}
+                  {inviteCodeData.inviteCodeById.role.name} role.
                 </PreviewText>
               </CommunityPreview>
             )}
-            {inviteCodeData?.inviteCodeById && !inviteCodeData.inviteCodeById.role && (
-              <CommunityPreview>
-                <PreviewText>
-                  <strong>Site Registration:</strong> This code will give you platform access.
-                </PreviewText>
-              </CommunityPreview>
-            )}
+            {inviteCodeData?.inviteCodeById &&
+              !inviteCodeData.inviteCodeById.role && (
+                <CommunityPreview>
+                  <PreviewText>
+                    <strong>Site Registration:</strong> This code will give you
+                    platform access.
+                  </PreviewText>
+                </CommunityPreview>
+              )}
           </FormGroup>
 
-          <Button 
-            type="submit" 
-            loading={isLoading} 
-            disabled={isLoading || inviteCodeLoading || !inviteCodeData?.inviteCodeById?.isAvailable}
+          <Button
+            type="submit"
+            loading={isLoading}
+            disabled={
+              isLoading ||
+              inviteCodeLoading ||
+              !inviteCodeData?.inviteCodeById?.isAvailable
+            }
           >
             {isLoading ? 'Joining Community...' : 'Join Community'}
           </Button>

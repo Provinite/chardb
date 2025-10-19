@@ -1,33 +1,22 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { 
-  Shield,
-  Users,
-  Settings,
-  Plus,
-  ArrowLeft
-} from 'lucide-react';
-import { 
-  Button,
-  Heading2,
-  SmallText,
-  HelpText
-} from '@chardb/ui';
+import { Shield, Users, Settings, Plus, ArrowLeft } from 'lucide-react';
+import { Button, Heading2, SmallText, HelpText } from '@chardb/ui';
 import { PermissionMatrix } from '../components/admin/PermissionMatrix';
 import { RoleEditor } from '../components/admin/RoleEditor';
 import { RoleManagementTab } from '../components/admin/RoleManagementTab';
-import { 
+import {
   useRolesByCommunityDetailedQuery,
-  RolesByCommunityDetailedQuery
+  RolesByCommunityDetailedQuery,
 } from '../generated/graphql';
 
 /**
  * Permission Management Page
- * 
+ *
  * Comprehensive permission and role management interface for community administrators.
  * Integrates all permission management components in a tabbed interface.
- * 
+ *
  * Features:
  * - Permission matrix for member overview
  * - Role creation and editing
@@ -116,15 +105,15 @@ const Tab = styled.button<{ $active: boolean }>`
   padding: 0.75rem 1.5rem;
   border: none;
   background: none;
-  color: ${({ theme, $active }) => 
+  color: ${({ theme, $active }) =>
     $active ? theme.colors.primary : theme.colors.text.muted};
-  font-weight: ${({ $active }) => $active ? '600' : '500'};
+  font-weight: ${({ $active }) => ($active ? '600' : '500')};
   font-size: 0.875rem;
   cursor: pointer;
-  border-bottom: 2px solid ${({ theme, $active }) => 
-    $active ? theme.colors.primary : 'transparent'};
+  border-bottom: 2px solid
+    ${({ theme, $active }) => ($active ? theme.colors.primary : 'transparent')};
   transition: all 0.2s ease;
-  
+
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
     background: ${({ theme }) => theme.colors.primary}05;
@@ -156,19 +145,21 @@ const ErrorContainer = styled.div`
 
 type TabType = 'overview' | 'roles';
 
-
 export const PermissionManagementPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showRoleEditor, setShowRoleEditor] = useState(false);
-  const [editingRole, setEditingRole] = useState<NonNullable<RolesByCommunityDetailedQuery['rolesByCommunity']>['nodes'][0] | null>(null);
+  const [editingRole, setEditingRole] = useState<
+    | NonNullable<RolesByCommunityDetailedQuery['rolesByCommunity']>['nodes'][0]
+    | null
+  >(null);
 
   // Fetch roles for the community
-  const { 
-    data: rolesData, 
+  const {
+    data: rolesData,
     loading: rolesLoading,
     error: rolesError,
-    refetch: refetchRoles
+    refetch: refetchRoles,
   } = useRolesByCommunityDetailedQuery({
     variables: { communityId: communityId!, first: 100, after: null },
     skip: !communityId,
@@ -189,7 +180,9 @@ export const PermissionManagementPage: React.FC = () => {
       <ErrorContainer>
         <Shield size={48} />
         <Heading2>Access Denied</Heading2>
-        <HelpText>You don't have permission to manage roles in this community.</HelpText>
+        <HelpText>
+          You don't have permission to manage roles in this community.
+        </HelpText>
       </ErrorContainer>
     );
   }
@@ -200,8 +193,8 @@ export const PermissionManagementPage: React.FC = () => {
     setEditingRole(null);
   };
 
-
-  const communityName = rolesData?.rolesByCommunity?.nodes?.[0]?.community?.name || 'Community';
+  const communityName =
+    rolesData?.rolesByCommunity?.nodes?.[0]?.community?.name || 'Community';
   const totalRoles = rolesData?.rolesByCommunity?.totalCount || 0;
 
   return (
@@ -225,7 +218,8 @@ export const PermissionManagementPage: React.FC = () => {
             <HeaderText>
               <Heading2>Permission Management</Heading2>
               <SmallText style={{ margin: 0, color: 'muted' }}>
-                Manage roles and permissions for {communityName} • {totalRoles} roles
+                Manage roles and permissions for {communityName} • {totalRoles}{' '}
+                roles
               </SmallText>
             </HeaderText>
           </HeaderInfo>
@@ -282,7 +276,6 @@ export const PermissionManagementPage: React.FC = () => {
                   onCreateRole={() => setShowRoleEditor(true)}
                 />
               )}
-
             </>
           )}
         </TabContent>

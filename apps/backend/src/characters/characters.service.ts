@@ -2,10 +2,10 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-} from "@nestjs/common";
-import { DatabaseService } from "../database/database.service";
-import { TagsService } from "../tags/tags.service";
-import { Prisma, Visibility } from "@chardb/database";
+} from '@nestjs/common';
+import { DatabaseService } from '../database/database.service';
+import { TagsService } from '../tags/tags.service';
+import { Prisma, Visibility } from '@chardb/database';
 
 // Service layer interfaces
 export interface CharacterServiceFilters {
@@ -38,7 +38,10 @@ export class CharactersService {
 
   async create(
     userId: string,
-    input: { characterData: Omit<Prisma.CharacterCreateInput, 'owner' | 'creator'>; tags?: string[] },
+    input: {
+      characterData: Omit<Prisma.CharacterCreateInput, 'owner' | 'creator'>;
+      tags?: string[];
+    },
   ) {
     const { characterData, tags } = input;
 
@@ -89,9 +92,9 @@ export class CharactersService {
       ageRange,
       minPrice,
       maxPrice,
-      sortBy = "created",
-      sortOrder = "desc",
-      searchFields = "all",
+      sortBy = 'created',
+      sortOrder = 'desc',
+      searchFields = 'all',
     } = filters;
 
     const where: Prisma.CharacterWhereInput = {
@@ -115,11 +118,13 @@ export class CharactersService {
           : {},
 
         // Other filters
-        species ? { species: { name: { contains: species, mode: "insensitive" } } } : {},
+        species
+          ? { species: { name: { contains: species, mode: 'insensitive' } } }
+          : {},
         speciesId ? { speciesId } : {},
         speciesVariantId ? { speciesVariantId } : {},
-        gender ? { gender: { contains: gender, mode: "insensitive" } } : {},
-        ageRange ? { age: { contains: ageRange, mode: "insensitive" } } : {},
+        gender ? { gender: { contains: gender, mode: 'insensitive' } } : {},
+        ageRange ? { age: { contains: ageRange, mode: 'insensitive' } } : {},
         ownerId ? { ownerId } : {},
         visibility !== undefined ? { visibility } : {},
         isSellable !== undefined ? { isSellable } : {},
@@ -173,19 +178,18 @@ export class CharactersService {
     });
 
     if (!character) {
-      throw new NotFoundException("Character not found");
+      throw new NotFoundException('Character not found');
     }
 
     // Check visibility permissions
     if (character.visibility === Visibility.PRIVATE) {
       if (!userId || character.ownerId !== userId) {
-        throw new ForbiddenException("Character is private");
+        throw new ForbiddenException('Character is private');
       }
     }
 
     return character;
   }
-
 
   async update(
     id: string,
@@ -196,7 +200,7 @@ export class CharactersService {
 
     // Check ownership
     if (character.ownerId !== userId) {
-      throw new ForbiddenException("You can only edit your own characters");
+      throw new ForbiddenException('You can only edit your own characters');
     }
 
     const { characterData, tags } = input;
@@ -237,7 +241,7 @@ export class CharactersService {
 
     // Check ownership
     if (character.ownerId !== userId) {
-      throw new ForbiddenException("You can only delete your own characters");
+      throw new ForbiddenException('You can only delete your own characters');
     }
 
     await this.db.character.delete({
@@ -247,16 +251,12 @@ export class CharactersService {
     return true;
   }
 
-  async transfer(
-    id: string,
-    currentOwnerId: string,
-    newOwnerId: string,
-  ) {
+  async transfer(id: string, currentOwnerId: string, newOwnerId: string) {
     const character = await this.findOne(id, currentOwnerId);
 
     // Check ownership
     if (character.ownerId !== currentOwnerId) {
-      throw new ForbiddenException("You can only transfer your own characters");
+      throw new ForbiddenException('You can only transfer your own characters');
     }
 
     // Verify new owner exists
@@ -265,7 +265,7 @@ export class CharactersService {
     });
 
     if (!newOwner) {
-      throw new NotFoundException("New owner not found");
+      throw new NotFoundException('New owner not found');
     }
 
     const transferredCharacter = await this.db.character.update({
@@ -278,23 +278,19 @@ export class CharactersService {
     return transferredCharacter;
   }
 
-  async addTags(
-    characterId: string,
-    userId: string,
-    tagNames: string[],
-  ) {
+  async addTags(characterId: string, userId: string, tagNames: string[]) {
     const character = await this.db.character.findUnique({
       where: { id: characterId },
     });
 
     if (!character) {
-      throw new NotFoundException("Character not found");
+      throw new NotFoundException('Character not found');
     }
 
     // Check ownership
     if (character.ownerId !== userId) {
       throw new ForbiddenException(
-        "You can only modify tags on your own characters",
+        'You can only modify tags on your own characters',
       );
     }
 
@@ -320,23 +316,19 @@ export class CharactersService {
     return character;
   }
 
-  async removeTags(
-    characterId: string,
-    userId: string,
-    tagNames: string[],
-  ) {
+  async removeTags(characterId: string, userId: string, tagNames: string[]) {
     const character = await this.db.character.findUnique({
       where: { id: characterId },
     });
 
     if (!character) {
-      throw new NotFoundException("Character not found");
+      throw new NotFoundException('Character not found');
     }
 
     // Check ownership
     if (character.ownerId !== userId) {
       throw new ForbiddenException(
-        "You can only modify tags on your own characters",
+        'You can only modify tags on your own characters',
       );
     }
 
@@ -362,23 +354,19 @@ export class CharactersService {
    * @throws ForbiddenException if user doesn't own the character or media doesn't belong to character
    * @throws NotFoundException if media doesn't exist
    */
-  async setMainMedia(
-    characterId: string,
-    userId: string,
-    mediaId?: string,
-  ) {
+  async setMainMedia(characterId: string, userId: string, mediaId?: string) {
     const character = await this.db.character.findUnique({
       where: { id: characterId },
     });
 
     if (!character) {
-      throw new NotFoundException("Character not found");
+      throw new NotFoundException('Character not found');
     }
 
     // Check ownership
     if (character.ownerId !== userId) {
       throw new ForbiddenException(
-        "You can only set main media on your own characters",
+        'You can only set main media on your own characters',
       );
     }
 
@@ -389,11 +377,11 @@ export class CharactersService {
       });
 
       if (!media) {
-        throw new NotFoundException("Media not found");
+        throw new NotFoundException('Media not found');
       }
 
       if (media.characterId !== characterId) {
-        throw new ForbiddenException("Media must belong to this character");
+        throw new ForbiddenException('Media must belong to this character');
       }
     }
 
@@ -407,16 +395,16 @@ export class CharactersService {
   }
 
   private buildSearchConditions(search: string, searchFields: string) {
-    const searchTerm = { contains: search, mode: "insensitive" as const };
+    const searchTerm = { contains: search, mode: 'insensitive' as const };
 
     switch (searchFields) {
-      case "name":
+      case 'name':
         return [{ name: searchTerm }];
-      case "description":
+      case 'description':
         return [{ description: searchTerm }];
-      case "personality":
+      case 'personality':
         return [{ personality: searchTerm }];
-      case "backstory":
+      case 'backstory':
         return [{ backstory: searchTerm }];
       default: // 'all'
         return [
@@ -430,14 +418,14 @@ export class CharactersService {
   }
 
   private buildOrderBy(sortBy: string, sortOrder: string) {
-    const order = sortOrder === "asc" ? "asc" : "desc";
+    const order = sortOrder === 'asc' ? 'asc' : 'desc';
 
     switch (sortBy) {
-      case "name":
+      case 'name':
         return { name: order } as const;
-      case "updated":
+      case 'updated':
         return { updatedAt: order } as const;
-      case "price":
+      case 'price':
         return { price: order } as const;
       default: // 'created'
         return { createdAt: order } as const;
@@ -462,7 +450,7 @@ export class CharactersService {
 
     if (character.ownerId !== userId && character.creatorId !== userId) {
       throw new ForbiddenException(
-        "You can only update traits for characters you own or created",
+        'You can only update traits for characters you own or created',
       );
     }
 
@@ -492,5 +480,4 @@ export class CharactersService {
     });
     return !!like;
   }
-
 }

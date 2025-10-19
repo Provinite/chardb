@@ -1,12 +1,12 @@
-import React from "react";
-import { useQuery } from "@apollo/client";
-import { Link } from "react-router-dom";
-import styled from "styled-components";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import { useAuth } from "../contexts/AuthContext";
-import { GET_LIKED_GALLERIES } from "../graphql/galleries.graphql";
-import { LikeButton } from "../components/LikeButton";
-import { LikeableType } from "../generated/graphql";
+import React from 'react';
+import { useQuery } from '@apollo/client';
+import { Link } from 'react-router-dom';
+import styled from 'styled-components';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useAuth } from '../contexts/AuthContext';
+import { GET_LIKED_GALLERIES } from '../graphql/galleries.graphql';
+import { LikeButton } from '../components/LikeButton';
+import { LikeableType } from '../generated/graphql';
 
 const Container = styled.div`
   max-width: 1200px;

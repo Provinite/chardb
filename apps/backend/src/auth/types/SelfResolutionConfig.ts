@@ -10,9 +10,9 @@ export interface SelfResolutionConfig {
   userId?: string;
 }
 
-export const AllSelfResolutionKeys = ["userId"] as const;
+export const AllSelfResolutionKeys = ['userId'] as const;
 
 export type SelfResolutionReference = {
-  type: keyof SelfResolutionConfig | "root" | null;
+  type: keyof SelfResolutionConfig | 'root' | null;
   value: string | null;
 };

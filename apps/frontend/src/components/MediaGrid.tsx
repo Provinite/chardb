@@ -4,15 +4,20 @@ import { Media } from '../generated/graphql';
 import { MediaCard } from './MediaCard';
 
 // Define the minimal Media type that MediaGrid actually needs
-export type MediaGridItem = Pick<Media, 
-  | 'id' 
-  | 'title' 
-  | 'description' 
-  | 'visibility'
+export type MediaGridItem = Pick<
+  Media,
+  'id' | 'title' | 'description' | 'visibility'
 > & {
   owner: Pick<Media['owner'], 'displayName' | 'username'>;
-  image: Media['image'] extends null ? null : Pick<NonNullable<Media['image']>, 'url' | 'thumbnailUrl' | 'altText'> | null;
-  textContent: Media['textContent'] extends null ? null : Pick<NonNullable<Media['textContent']>, 'content' | 'wordCount'> | null;
+  image: Media['image'] extends null
+    ? null
+    : Pick<
+        NonNullable<Media['image']>,
+        'url' | 'thumbnailUrl' | 'altText'
+      > | null;
+  textContent: Media['textContent'] extends null
+    ? null
+    : Pick<NonNullable<Media['textContent']>, 'content' | 'wordCount'> | null;
 };
 
 const Grid = styled.div`
@@ -27,13 +32,13 @@ const EmptyState = styled.div`
   padding: ${({ theme }) => theme.spacing.xxl};
   color: ${({ theme }) => theme.colors.text.muted};
   grid-column: 1 / -1;
-  
+
   h3 {
     font-size: ${({ theme }) => theme.typography.fontSize.xl};
     margin-bottom: ${({ theme }) => theme.spacing.sm};
     color: ${({ theme }) => theme.colors.text.secondary};
   }
-  
+
   p {
     font-size: ${({ theme }) => theme.typography.fontSize.md};
     line-height: 1.5;
@@ -80,7 +85,7 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
   media,
   showOwner = true,
   loading = false,
-  emptyMessage = "No media found",
+  emptyMessage = 'No media found',
   emptyDescription = "Try adjusting your search or filters to find what you're looking for.",
   characterId,
   currentMainMediaId,
@@ -91,9 +96,7 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
   if (loading) {
     return (
       <Grid>
-        <LoadingState>
-          Loading media...
-        </LoadingState>
+        <LoadingState>Loading media...</LoadingState>
       </Grid>
     );
   }

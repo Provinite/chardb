@@ -40,7 +40,7 @@ const DashboardCard = styled.div`
   box-shadow: ${({ theme }) => theme.shadows.md};
   border: 1px solid ${({ theme }) => theme.colors.border};
   transition: all 0.3s ease;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
@@ -81,7 +81,11 @@ const ActionButtons = styled.div`
 `;
 
 const WelcomeCard = styled.div`
-  background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary} 0%, ${({ theme }) => theme.colors.secondary} 100%);
+  background: linear-gradient(
+    135deg,
+    ${({ theme }) => theme.colors.primary} 0%,
+    ${({ theme }) => theme.colors.secondary} 100%
+  );
   color: white;
   padding: ${({ theme }) => theme.spacing.xl};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
@@ -105,10 +109,12 @@ export const DashboardPage: React.FC = () => {
   return (
     <Container>
       <WelcomeCard>
-        <WelcomeTitle>Welcome back, {user?.displayName || user?.username}!</WelcomeTitle>
+        <WelcomeTitle>
+          Welcome back, {user?.displayName || user?.username}!
+        </WelcomeTitle>
         <WelcomeMessage>
-          Ready to bring your characters to life? Create new characters, upload artwork, 
-          or explore what the community has been creating.
+          Ready to bring your characters to life? Create new characters, upload
+          artwork, or explore what the community has been creating.
         </WelcomeMessage>
       </WelcomeCard>
 
@@ -142,8 +148,8 @@ export const DashboardPage: React.FC = () => {
         <DashboardCard>
           <CardTitle>My Characters</CardTitle>
           <CardDescription>
-            View and manage all your character profiles. Edit details, upload new artwork,
-            or create new characters to expand your collection.
+            View and manage all your character profiles. Edit details, upload
+            new artwork, or create new characters to expand your collection.
           </CardDescription>
           <Button as={Link} to="/my/characters" variant="outline" size="sm">
             View Characters
@@ -153,8 +159,8 @@ export const DashboardPage: React.FC = () => {
         <DashboardCard>
           <CardTitle>My Galleries</CardTitle>
           <CardDescription>
-            Organize your artwork into themed galleries. Create collections for different
-            characters, art styles, or projects.
+            Organize your artwork into themed galleries. Create collections for
+            different characters, art styles, or projects.
           </CardDescription>
           <Button as={Link} to="/my/galleries" variant="outline" size="sm">
             View Galleries
@@ -164,8 +170,8 @@ export const DashboardPage: React.FC = () => {
         <DashboardCard>
           <CardTitle>My Media</CardTitle>
           <CardDescription>
-            Browse all your uploaded images and text content. Organize them into galleries
-            or assign them to specific characters.
+            Browse all your uploaded images and text content. Organize them into
+            galleries or assign them to specific characters.
           </CardDescription>
           <Button as={Link} to="/my/media" variant="outline" size="sm">
             View Media
@@ -186,8 +192,8 @@ export const DashboardPage: React.FC = () => {
         <DashboardCard>
           <CardTitle>Activity Feed</CardTitle>
           <CardDescription>
-            See what's happening in your network. View comments, likes, and updates
-            from characters and users you follow.
+            See what's happening in your network. View comments, likes, and
+            updates from characters and users you follow.
           </CardDescription>
           <Button as={Link} to="/feed" variant="outline" size="sm">
             View Feed
@@ -242,8 +248,8 @@ export const DashboardPage: React.FC = () => {
           <DashboardCard>
             <CardTitle>Site Administration</CardTitle>
             <CardDescription>
-              Manage site-wide settings, invite codes, user accounts, and community oversight.
-              Administrative tools for site management.
+              Manage site-wide settings, invite codes, user accounts, and
+              community oversight. Administrative tools for site management.
             </CardDescription>
             <Button as={Link} to="/admin" variant="outline" size="sm">
               Admin Panel

@@ -1,10 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { GqlExecutionContext } from "@nestjs/graphql";
-import { CurrentUserType } from "../decorators/CurrentUser";
-import { GlobalPermission } from "../GlobalPermission";
-import { AllowGlobalPermission } from "../decorators/AllowGlobalPermission";
-import { PermissionService } from "../PermissionService";
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { GqlExecutionContext } from '@nestjs/graphql';
+import { CurrentUserType } from '../decorators/CurrentUser';
+import { AllowGlobalPermission } from '../decorators/AllowGlobalPermission';
+import { PermissionService } from '../PermissionService';
 
 /**
  * Guard that checks if the current user has a specific global permission.
@@ -38,7 +37,7 @@ export class GlobalPermissionGuard implements CanActivate {
     // Get the required permission from metadata
     const requiredPermission = this.reflector.getAllAndOverride(
       AllowGlobalPermission,
-      [context.getHandler(), context.getClass()]
+      [context.getHandler(), context.getClass()],
     );
 
     if (!requiredPermission) {

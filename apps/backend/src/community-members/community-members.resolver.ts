@@ -7,37 +7,37 @@ import {
   Int,
   ResolveField,
   Parent,
-} from "@nestjs/graphql";
-import { NotFoundException, ForbiddenException } from "@nestjs/common";
-import { CommunityMembersService } from "./community-members.service";
-import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
-import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
-import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
-import { CurrentUser } from "../auth/decorators/CurrentUser";
-import { CommunityPermission } from "../auth/CommunityPermission";
-import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
-import { PermissionService } from "../auth/PermissionService";
-import { GlobalPermission } from "../auth/GlobalPermission";
-import { CommunityResolverService } from "../auth/services/community-resolver.service";
+} from '@nestjs/graphql';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { CommunityMembersService } from './community-members.service';
+import { AllowGlobalAdmin } from '../auth/decorators/AllowGlobalAdmin';
+import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
+import { AllowCommunityPermission } from '../auth/decorators/AllowCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CurrentUser } from '../auth/decorators/CurrentUser';
+import { CommunityPermission } from '../auth/CommunityPermission';
+import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
+import { PermissionService } from '../auth/PermissionService';
+import { GlobalPermission } from '../auth/GlobalPermission';
+import { CommunityResolverService } from '../auth/services/community-resolver.service';
 import {
   CommunityMember,
   CommunityMemberConnection,
-} from "./entities/community-member.entity";
+} from './entities/community-member.entity';
 import {
   CreateCommunityMemberInput,
   UpdateCommunityMemberInput,
-} from "./dto/community-member.dto";
-import { User } from "../users/entities/user.entity";
-import { Role } from "../roles/entities/role.entity";
+} from './dto/community-member.dto';
+import { User } from '../users/entities/user.entity';
+import { Role } from '../roles/entities/role.entity';
 import {
   mapCreateCommunityMemberInputToService,
   mapUpdateCommunityMemberInputToService,
   mapPrismaCommunityMemberToGraphQL,
   mapPrismaCommunityMemberConnectionToGraphQL,
-} from "./utils/community-member-resolver-mappers";
-import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
-import { mapPrismaRoleToGraphQL } from "../roles/utils/role-resolver-mappers";
+} from './utils/community-member-resolver-mappers';
+import { mapPrismaUserToGraphQL } from '../users/utils/user-resolver-mappers';
+import { mapPrismaRoleToGraphQL } from '../roles/utils/role-resolver-mappers';
 
 @Resolver(() => CommunityMember)
 export class CommunityMembersResolver {
@@ -49,11 +49,11 @@ export class CommunityMembersResolver {
 
   @AllowGlobalAdmin()
   @Mutation(() => CommunityMember, {
-    description: "Create a new community membership",
+    description: 'Create a new community membership',
   })
   async createCommunityMember(
-    @Args("createCommunityMemberInput", {
-      description: "Community membership creation data",
+    @Args('createCommunityMemberInput', {
+      description: 'Community membership creation data',
     })
     createCommunityMemberInput: CreateCommunityMemberInput,
   ): Promise<CommunityMember> {
@@ -66,21 +66,21 @@ export class CommunityMembersResolver {
 
   @AllowGlobalAdmin()
   @Query(() => CommunityMemberConnection, {
-    name: "communityMembers",
-    description: "Get all community members with pagination",
+    name: 'communityMembers',
+    description: 'Get all community members with pagination',
   })
   async findAll(
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of community members to return",
+      description: 'Number of community members to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
   ): Promise<CommunityMemberConnection> {
@@ -90,25 +90,25 @@ export class CommunityMembersResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.Any)
-  @ResolveCommunityFrom({ communityId: "communityId" })
+  @ResolveCommunityFrom({ communityId: 'communityId' })
   @Query(() => CommunityMemberConnection, {
-    name: "communityMembersByCommunity",
-    description: "Get community members by community ID with pagination",
+    name: 'communityMembersByCommunity',
+    description: 'Get community members by community ID with pagination',
   })
   async findByCommunity(
-    @Args("communityId", { type: () => ID, description: "Community ID" })
+    @Args('communityId', { type: () => ID, description: 'Community ID' })
     communityId: string,
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of community members to return",
+      description: 'Number of community members to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
   ): Promise<CommunityMemberConnection> {
@@ -123,24 +123,24 @@ export class CommunityMembersResolver {
   /** Get community members by user ID with pagination */
   @AllowAnyAuthenticated()
   @Query(() => CommunityMemberConnection, {
-    name: "communityMembersByUser",
-    description: "Get community members by user ID with pagination",
+    name: 'communityMembersByUser',
+    description: 'Get community members by user ID with pagination',
   })
   async findByUser(
-    @Args("userId", { type: () => ID, description: "User ID" })
+    @Args('userId', { type: () => ID, description: 'User ID' })
     userId: string,
     @CurrentUser() currentUser: AuthenticatedCurrentUserType,
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of community members to return",
+      description: 'Number of community members to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
   ): Promise<CommunityMemberConnection> {
@@ -148,12 +148,12 @@ export class CommunityMembersResolver {
     const isSelf = this.permissionService.isSelf(currentUser.id, userId);
     const isAdmin = this.permissionService.hasGlobalPermission(
       currentUser,
-      GlobalPermission.IsAdmin
+      GlobalPermission.IsAdmin,
     );
 
     if (!isSelf && !isAdmin) {
       throw new ForbiddenException(
-        "You can only view your own community memberships"
+        'You can only view your own community memberships',
       );
     }
 
@@ -168,11 +168,11 @@ export class CommunityMembersResolver {
   /** Get a community member by ID */
   @AllowGlobalAdmin()
   @Query(() => CommunityMember, {
-    name: "communityMemberById",
-    description: "Get a community member by ID",
+    name: 'communityMemberById',
+    description: 'Get a community member by ID',
   })
   async findOne(
-    @Args("id", { type: () => ID, description: "Community member ID" })
+    @Args('id', { type: () => ID, description: 'Community member ID' })
     id: string,
   ): Promise<CommunityMember> {
     const result = await this.communityMembersService.findOne(id);
@@ -181,15 +181,15 @@ export class CommunityMembersResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanManageMemberRoles)
-  @ResolveCommunityFrom({ communityMemberId: "id" })
+  @ResolveCommunityFrom({ communityMemberId: 'id' })
   @Mutation(() => CommunityMember, {
-    description: "Update a community membership (change role)",
+    description: 'Update a community membership (change role)',
   })
   async updateCommunityMember(
-    @Args("id", { type: () => ID, description: "Community member ID" })
+    @Args('id', { type: () => ID, description: 'Community member ID' })
     id: string,
-    @Args("updateCommunityMemberInput", {
-      description: "Community membership update data",
+    @Args('updateCommunityMemberInput', {
+      description: 'Community membership update data',
     })
     updateCommunityMemberInput: UpdateCommunityMemberInput,
   ): Promise<CommunityMember> {
@@ -202,10 +202,11 @@ export class CommunityMembersResolver {
 
   @AllowAnyAuthenticated()
   @Mutation(() => CommunityMember, {
-    description: "Remove a community membership (leave community OR remove member with permission)",
+    description:
+      'Remove a community membership (leave community OR remove member with permission)',
   })
   async removeCommunityMember(
-    @Args("id", { type: () => ID, description: "Community member ID" })
+    @Args('id', { type: () => ID, description: 'Community member ID' })
     id: string,
     @CurrentUser() currentUser: AuthenticatedCurrentUserType,
   ): Promise<CommunityMember> {
@@ -213,30 +214,31 @@ export class CommunityMembersResolver {
 
     // Resolve community from membership
     const community = await this.communityResolverService.resolve({
-      type: "communityMemberId",
+      type: 'communityMemberId',
       value: id,
     });
     if (!community) {
-      throw new NotFoundException("Community not found");
+      throw new NotFoundException('Community not found');
     }
 
     // Check all authorization conditions
-    const isSelf = this.permissionService.isSelf(currentUser.id, membership.userId);
+    const isSelf = this.permissionService.isSelf(
+      currentUser.id,
+      membership.userId,
+    );
     const isAdmin = this.permissionService.hasGlobalPermission(
       currentUser,
-      GlobalPermission.IsAdmin
+      GlobalPermission.IsAdmin,
     );
     const hasPermission = await this.permissionService.hasCommunityPermission(
       currentUser.id,
       community.id,
-      CommunityPermission.CanRemoveCommunityMember
+      CommunityPermission.CanRemoveCommunityMember,
     );
 
     // Allow if: self-removal OR admin OR has permission
     if (!isSelf && !isAdmin && !hasPermission) {
-      throw new ForbiddenException(
-        "Cannot remove this community member"
-      );
+      throw new ForbiddenException('Cannot remove this community member');
     }
 
     const result = await this.communityMembersService.remove(id);
@@ -244,7 +246,7 @@ export class CommunityMembersResolver {
   }
 
   /** Resolve the role field */
-  @ResolveField("role", () => Role, { description: "The role this member has" })
+  @ResolveField('role', () => Role, { description: 'The role this member has' })
   async getRole(@Parent() communityMember: CommunityMember): Promise<Role> {
     const result = await this.communityMembersService.getRoleById(
       communityMember.roleId,
@@ -258,8 +260,8 @@ export class CommunityMembersResolver {
   }
 
   /** Resolve the user field */
-  @ResolveField("user", () => User, {
-    description: "The user who is the member",
+  @ResolveField('user', () => User, {
+    description: 'The user who is the member',
   })
   async getUser(@Parent() communityMember: CommunityMember): Promise<User> {
     const result = await this.communityMembersService.getUserById(

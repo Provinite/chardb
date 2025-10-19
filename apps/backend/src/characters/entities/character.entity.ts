@@ -1,12 +1,7 @@
 import { ObjectType, Field, ID, Float, Int } from '@nestjs/graphql';
 import { Visibility } from '@chardb/database';
-import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../shared/entities/tag.entity';
-import { Image } from '../../images/entities/image.entity';
-import { Media } from '../../media/entities/media.entity';
 import { CharacterTraitValue } from '../../shared/types/character-trait.types';
-import { SpeciesVariant } from '../../species-variants/entities/species-variant.entity';
-import { Species } from '../../species/entities/species.entity';
 
 @ObjectType()
 export class CharacterCount {
@@ -22,10 +17,16 @@ export class Character {
   @Field()
   name: string;
 
-  @Field(() => ID, { nullable: true, description: 'ID of the species this character belongs to' })
+  @Field(() => ID, {
+    nullable: true,
+    description: 'ID of the species this character belongs to',
+  })
   speciesId?: string;
 
-  @Field(() => ID, { nullable: true, description: 'ID of the species variant this character belongs to' })
+  @Field(() => ID, {
+    nullable: true,
+    description: 'ID of the species variant this character belongs to',
+  })
   speciesVariantId?: string;
 
   @Field({ nullable: true })
@@ -49,7 +50,10 @@ export class Character {
   @Field(() => ID, { nullable: true })
   creatorId?: string;
 
-  @Field(() => ID, { nullable: true, description: 'ID of the main media item for this character' })
+  @Field(() => ID, {
+    nullable: true,
+    description: 'ID of the main media item for this character',
+  })
   mainMediaId?: string;
 
   @Field(() => Visibility)
@@ -71,7 +75,9 @@ export class Character {
   customFields?: string; // JSON string
 
   /** Trait values assigned to this character */
-  @Field(() => [CharacterTraitValue], { description: 'Trait values assigned to this character' })
+  @Field(() => [CharacterTraitValue], {
+    description: 'Trait values assigned to this character',
+  })
   traitValues!: CharacterTraitValue[];
 
   @Field()

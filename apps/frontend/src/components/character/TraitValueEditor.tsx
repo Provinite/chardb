@@ -1,12 +1,12 @@
-import React from "react";
-import styled from "styled-components";
-import { Type, Hash, Calendar, List, AlertCircle } from "lucide-react";
-import { Input, ErrorMessage } from "@chardb/ui";
+import React from 'react';
+import styled from 'styled-components';
+import { Type, Hash, Calendar, List, AlertCircle } from 'lucide-react';
+import { Input, ErrorMessage } from '@chardb/ui';
+import { TraitValueType, TraitDetailsFragment } from '../../generated/graphql';
 import {
-  TraitValueType,
-  TraitDetailsFragment,
-} from "../../generated/graphql";
-import { useEnumValuesByTraitQuery, useEnumValueSettingsBySpeciesVariantQuery } from "../../generated/graphql";
+  useEnumValuesByTraitQuery,
+  useEnumValueSettingsBySpeciesVariantQuery,
+} from '../../generated/graphql';
 
 /**
  * Dynamic Trait Value Editor Component for Character Creation/Editing
@@ -145,15 +145,15 @@ const getTraitTypeIcon = (type: TraitValueType) => {
 const getTraitTypeDescription = (type: TraitValueType) => {
   switch (type) {
     case TraitValueType.String:
-      return "Enter text (e.g., name, description, or any text value)";
+      return 'Enter text (e.g., name, description, or any text value)';
     case TraitValueType.Integer:
-      return "Enter a whole number (e.g., age, level, count)";
+      return 'Enter a whole number (e.g., age, level, count)';
     case TraitValueType.Timestamp:
-      return "Select a date and time";
+      return 'Select a date and time';
     case TraitValueType.Enum:
-      return "Choose from available options";
+      return 'Choose from available options';
     default:
-      return "";
+      return '';
   }
 };
 
@@ -187,20 +187,18 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
   });
 
   // Fetch enum value settings for variant filtering
-  const {
-    data: enumSettingsData,
-    loading: enumSettingsLoading,
-  } = useEnumValueSettingsBySpeciesVariantQuery({
-    variables: { speciesVariantId: speciesVariantId || "", first: 1000 },
-    skip: !speciesVariantId || trait.valueType !== TraitValueType.Enum,
-  });
+  const { data: enumSettingsData, loading: enumSettingsLoading } =
+    useEnumValueSettingsBySpeciesVariantQuery({
+      variables: { speciesVariantId: speciesVariantId || '', first: 1000 },
+      skip: !speciesVariantId || trait.valueType !== TraitValueType.Enum,
+    });
 
   // Filter enum values based on variant settings
   const availableEnumValues = React.useMemo(() => {
     if (trait.valueType !== TraitValueType.Enum) return [];
 
     const allEnumValues = enumValuesData?.enumValuesByTrait?.nodes || [];
-    
+
     if (!speciesVariantId || !enumSettingsData) {
       // If no variant selected or settings not loaded, show all enum values
       return allEnumValues;
@@ -209,12 +207,12 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
     // Filter enum values based on settings (only show enabled ones)
     const enabledEnumValueIds = new Set(
       enumSettingsData.enumValueSettingsBySpeciesVariant?.nodes?.map(
-        setting => setting.enumValueId
-      ) || []
+        (setting) => setting.enumValueId,
+      ) || [],
     );
 
-    return allEnumValues.filter(enumValue => 
-      enabledEnumValueIds.has(enumValue.id)
+    return allEnumValues.filter((enumValue) =>
+      enabledEnumValueIds.has(enumValue.id),
     );
   }, [trait.valueType, enumValuesData, enumSettingsData, speciesVariantId]);
 
@@ -224,7 +222,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         return (
           <Input
             type="text"
-            value={value || ""}
+            value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={`Enter ${trait.name.toLowerCase()}...`}
             disabled={disabled}
@@ -237,7 +235,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
           <Input
             type="number"
             step="1"
-            value={value || ""}
+            value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={`Enter ${trait.name.toLowerCase()}...`}
             disabled={disabled}
@@ -249,7 +247,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         return (
           <Input
             type="datetime-local"
-            value={value || ""}
+            value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
             hasError={!!error}
@@ -277,10 +275,9 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
           return (
             <Select disabled>
               <LoadingOption>
-                {speciesVariantId 
-                  ? "No options available for this variant"
-                  : "No options configured"
-                }
+                {speciesVariantId
+                  ? 'No options available for this variant'
+                  : 'No options configured'}
               </LoadingOption>
             </Select>
           );
@@ -288,12 +285,14 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
 
         return (
           <Select
-            value={value || ""}
+            value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
           >
             <option value="">
-              {required ? `Select ${trait.name.toLowerCase()}...` : `Optional - Select ${trait.name.toLowerCase()}...`}
+              {required
+                ? `Select ${trait.name.toLowerCase()}...`
+                : `Optional - Select ${trait.name.toLowerCase()}...`}
             </option>
             {[...availableEnumValues]
               .sort((a, b) => a.order - b.order)
@@ -309,7 +308,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         return (
           <Input
             type="text"
-            value={value || ""}
+            value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder="Unknown trait type"
             disabled={true}
@@ -322,18 +321,16 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
   return (
     <Container>
       <Label htmlFor={`trait-${trait.id}`}>
-        <TraitIcon>
-          {getTraitTypeIcon(trait.valueType)}
-        </TraitIcon>
+        <TraitIcon>{getTraitTypeIcon(trait.valueType)}</TraitIcon>
         {trait.name}
         {required && <RequiredIndicator>*</RequiredIndicator>}
       </Label>
-      
+
       <TraitDescription>
         {getTraitTypeDescription(trait.valueType)}
         {trait.valueType === TraitValueType.Enum && speciesVariantId && (
           <>
-            {" • "}Available options are filtered based on the selected variant
+            {' • '}Available options are filtered based on the selected variant
           </>
         )}
       </TraitDescription>
@@ -347,12 +344,14 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         </ValidationHint>
       )}
 
-      {trait.valueType === TraitValueType.Enum && availableEnumValues.length === 0 && speciesVariantId && (
-        <ValidationHint>
-          <AlertCircle size={12} />
-          This trait has no available options for the selected variant
-        </ValidationHint>
-      )}
+      {trait.valueType === TraitValueType.Enum &&
+        availableEnumValues.length === 0 &&
+        speciesVariantId && (
+          <ValidationHint>
+            <AlertCircle size={12} />
+            This trait has no available options for the selected variant
+          </ValidationHint>
+        )}
 
       {error && (
         <ErrorContainer>

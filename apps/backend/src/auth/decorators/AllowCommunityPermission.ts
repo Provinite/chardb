@@ -1,5 +1,5 @@
-import { Reflector } from "@nestjs/core";
-import { CommunityPermission } from "../CommunityPermission";
+import { Reflector } from '@nestjs/core';
+import { CommunityPermission } from '../CommunityPermission';
 
 /**
  * Decorator to require a specific community role permission.

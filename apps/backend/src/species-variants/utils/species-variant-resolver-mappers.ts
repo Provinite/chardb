@@ -1,7 +1,16 @@
-import { CreateSpeciesVariantInput, UpdateSpeciesVariantInput } from "../dto/species-variant.dto";
-import { SpeciesVariant, SpeciesVariantConnection } from "../entities/species-variant.entity";
-import { CreateSpeciesVariantServiceInput, UpdateSpeciesVariantServiceInput } from "../species-variants.service";
-import { Prisma } from "@chardb/database";
+import {
+  CreateSpeciesVariantInput,
+  UpdateSpeciesVariantInput,
+} from '../dto/species-variant.dto';
+import {
+  SpeciesVariant,
+  SpeciesVariantConnection,
+} from '../entities/species-variant.entity';
+import {
+  CreateSpeciesVariantServiceInput,
+  UpdateSpeciesVariantServiceInput,
+} from '../species-variants.service';
+import { Prisma } from '@chardb/database';
 
 /**
  * Resolver layer mapping functions to convert between GraphQL DTOs and service types
@@ -10,7 +19,9 @@ import { Prisma } from "@chardb/database";
 /**
  * Maps CreateSpeciesVariantInput to service input format
  */
-export function mapCreateSpeciesVariantInputToService(input: CreateSpeciesVariantInput): CreateSpeciesVariantServiceInput {
+export function mapCreateSpeciesVariantInputToService(
+  input: CreateSpeciesVariantInput,
+): CreateSpeciesVariantServiceInput {
   return {
     name: input.name,
     speciesId: input.speciesId,
@@ -20,7 +31,9 @@ export function mapCreateSpeciesVariantInputToService(input: CreateSpeciesVarian
 /**
  * Maps UpdateSpeciesVariantInput to service input format
  */
-export function mapUpdateSpeciesVariantInputToService(input: UpdateSpeciesVariantInput): UpdateSpeciesVariantServiceInput {
+export function mapUpdateSpeciesVariantInputToService(
+  input: UpdateSpeciesVariantInput,
+): UpdateSpeciesVariantServiceInput {
   const result: UpdateSpeciesVariantServiceInput = {};
 
   if (input.name !== undefined) result.name = input.name;
@@ -29,13 +42,16 @@ export function mapUpdateSpeciesVariantInputToService(input: UpdateSpeciesVarian
   return result;
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 type PrismaSpeciesVariant = Prisma.SpeciesVariantGetPayload<{}>;
 
 /**
  * Maps Prisma SpeciesVariant result to GraphQL SpeciesVariant entity
  * Only includes scalar fields - relations handled by field resolvers
  */
-export function mapPrismaSpeciesVariantToGraphQL(prismaSpeciesVariant: PrismaSpeciesVariant): SpeciesVariant {
+export function mapPrismaSpeciesVariantToGraphQL(
+  prismaSpeciesVariant: PrismaSpeciesVariant,
+): SpeciesVariant {
   return {
     id: prismaSpeciesVariant.id,
     name: prismaSpeciesVariant.name,

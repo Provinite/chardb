@@ -14,12 +14,12 @@ const Card = styled.div`
   cursor: pointer;
   overflow: hidden;
   position: relative;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -105,22 +105,25 @@ const ImageCount = styled.span`
 `;
 
 const VisibilityBadge = styled.span.withConfig({
-  shouldForwardProp: (prop) => prop !== 'visibility'
+  shouldForwardProp: (prop) => prop !== 'visibility',
 })<{ visibility: string }>`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  background: ${props => 
-    props.visibility === 'PUBLIC' ? props.theme.colors.success + '20' :
-    props.visibility === 'UNLISTED' ? props.theme.colors.warning + '20' : props.theme.colors.error + '20'
-  };
-  color: ${props => 
-    props.visibility === 'PUBLIC' ? props.theme.colors.success :
-    props.visibility === 'UNLISTED' ? props.theme.colors.warning : props.theme.colors.error
-  };
+  background: ${(props) =>
+    props.visibility === 'PUBLIC'
+      ? props.theme.colors.success + '20'
+      : props.visibility === 'UNLISTED'
+        ? props.theme.colors.warning + '20'
+        : props.theme.colors.error + '20'};
+  color: ${(props) =>
+    props.visibility === 'PUBLIC'
+      ? props.theme.colors.success
+      : props.visibility === 'UNLISTED'
+        ? props.theme.colors.warning
+        : props.theme.colors.error};
 `;
-
 
 const EditButton = styled(Link)`
   position: absolute;
@@ -154,10 +157,10 @@ interface CharacterCardProps {
   showEditButton?: boolean;
 }
 
-export const CharacterCard: React.FC<CharacterCardProps> = ({ 
-  character, 
+export const CharacterCard: React.FC<CharacterCardProps> = ({
+  character,
   showOwner = true,
-  showEditButton = false 
+  showEditButton = false,
 }) => {
   const navigate = useNavigate();
 
@@ -185,7 +188,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       aria-label={`View character ${character.name}`}
     >
       {showEditButton && (
-        <EditButton 
+        <EditButton
           to={`/character/${character.id}/edit`}
           onClick={handleEditClick}
         >
@@ -195,16 +198,20 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       <ImageSection>
         {character.mainMedia?.image ? (
           <MainImage
-            src={character.mainMedia.image.thumbnailUrl || character.mainMedia.image.url}
-            alt={character.mainMedia.image.altText || `${character.name} main image`}
+            src={
+              character.mainMedia.image.thumbnailUrl ||
+              character.mainMedia.image.url
+            }
+            alt={
+              character.mainMedia.image.altText ||
+              `${character.name} main image`
+            }
           />
         ) : (
-          <ImagePlaceholder>
-            No main image
-          </ImagePlaceholder>
+          <ImagePlaceholder>No main image</ImagePlaceholder>
         )}
       </ImageSection>
-      
+
       <Content>
         <Name>{character.name}</Name>
         {character.species?.name && (
@@ -217,7 +224,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         {character.description && (
           <Description>{character.description}</Description>
         )}
-        
+
         {character.tags && character.tags.length > 0 && (
           <TagsContainer size="sm" style={{ marginBottom: '0.75rem' }}>
             {character.tags.slice(0, 3).map((tag, index) => (
@@ -232,7 +239,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
             )}
           </TagsContainer>
         )}
-        
+
         <Meta>
           {showOwner ? (
             <OwnerInfo>

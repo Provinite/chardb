@@ -1,5 +1,5 @@
-import { Test } from "@nestjs/testing";
-import { DatabaseService } from "../src/database/database.service";
+import { Test } from '@nestjs/testing';
+import { DatabaseService } from '../src/database/database.service';
 
 // Mock Prisma Client for testing
 const mockPrismaService = {

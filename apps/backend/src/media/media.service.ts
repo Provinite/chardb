@@ -3,11 +3,12 @@ import {
   NotFoundException,
   ForbiddenException,
   Logger,
-} from "@nestjs/common";
-import { DatabaseService } from "../database/database.service";
-import { TagsService } from "../tags/tags.service";
-import type { Prisma, Visibility, TextFormatting } from "@chardb/database";
-import * as path from "path";
+} from '@nestjs/common';
+import { DatabaseService } from '../database/database.service';
+import { TagsService } from '../tags/tags.service';
+import type { Prisma, Visibility, TextFormatting } from '@chardb/database';
+import * as path from 'path';
+import { promises as fs } from 'fs';
 
 /**
  * Service layer input types for media operations.
@@ -20,7 +21,7 @@ import * as path from "path";
  */
 export enum MediaTypeFilter {
   IMAGE = 'IMAGE',
-  TEXT = 'TEXT'
+  TEXT = 'TEXT',
 }
 
 /**
@@ -101,7 +102,7 @@ export interface UpdateTextContentServiceInput {
 @Injectable()
 export class MediaService {
   private readonly logger = new Logger(MediaService.name);
-  
+
   constructor(
     private readonly db: DatabaseService,
     private readonly tagsService: TagsService,
@@ -134,14 +135,14 @@ export class MediaService {
         // Visibility filter - properly handle private content
         {
           OR: [
-            { visibility: "PUBLIC" },
-            { visibility: "UNLISTED" },
+            { visibility: 'PUBLIC' },
+            { visibility: 'UNLISTED' },
             // Private content only visible to owner
             userId
               ? {
-                  AND: [{ visibility: "PRIVATE" }, { ownerId: userId }],
+                  AND: [{ visibility: 'PRIVATE' }, { ownerId: userId }],
                 }
-              : { id: "never-matches" }, // Exclude private content for anonymous users
+              : { id: 'never-matches' }, // Exclude private content for anonymous users
           ],
         },
 
@@ -149,11 +150,11 @@ export class MediaService {
         filters?.search
           ? {
               OR: [
-                { title: { contains: filters.search, mode: "insensitive" } },
+                { title: { contains: filters.search, mode: 'insensitive' } },
                 {
                   description: {
                     contains: filters.search,
-                    mode: "insensitive",
+                    mode: 'insensitive',
                   },
                 },
               ],
@@ -161,8 +162,12 @@ export class MediaService {
           : {},
 
         // Type-specific filters (using new nullable FK structure)
-        filters?.mediaType === MediaTypeFilter.IMAGE ? { imageId: { not: null } } : {},
-        filters?.mediaType === MediaTypeFilter.TEXT ? { textContentId: { not: null } } : {},
+        filters?.mediaType === MediaTypeFilter.IMAGE
+          ? { imageId: { not: null } }
+          : {},
+        filters?.mediaType === MediaTypeFilter.TEXT
+          ? { textContentId: { not: null } }
+          : {},
         filters?.ownerId ? { ownerId: filters.ownerId } : {},
         filters?.characterId ? { characterId: filters.characterId } : {},
         filters?.galleryId ? { galleryId: filters.galleryId } : {},
@@ -173,16 +178,16 @@ export class MediaService {
     const [media, total, imageCount, textCount] = await Promise.all([
       this.db.media.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         take: limit,
         skip: offset,
       }),
       this.db.media.count({ where }),
-      this.db.media.count({ 
-        where: { ...where, imageId: { not: null } } 
+      this.db.media.count({
+        where: { ...where, imageId: { not: null } },
       }),
-      this.db.media.count({ 
-        where: { ...where, textContentId: { not: null } } 
+      this.db.media.count({
+        where: { ...where, textContentId: { not: null } },
       }),
     ]);
 
@@ -204,20 +209,22 @@ export class MediaService {
    * @throws ForbiddenException if user lacks access to private media
    */
   async findOne(id: string, userId?: string) {
-    this.logger.debug(`Finding media with id: ${id}, userId: ${userId || 'anonymous'}`);
-    
+    this.logger.debug(
+      `Finding media with id: ${id}, userId: ${userId || 'anonymous'}`,
+    );
+
     const media = await this.db.media.findUnique({
       where: { id },
     });
 
     if (!media) {
-      throw new NotFoundException("Media not found");
+      throw new NotFoundException('Media not found');
     }
 
     // Check visibility permissions
-    if (media.visibility === "PRIVATE" && media.ownerId !== userId) {
+    if (media.visibility === 'PRIVATE' && media.ownerId !== userId) {
       throw new ForbiddenException(
-        "You do not have permission to view this media",
+        'You do not have permission to view this media',
       );
     }
 
@@ -272,17 +279,21 @@ export class MediaService {
    * @throws NotFoundException if media doesn't exist
    * @throws ForbiddenException if user doesn't own the media
    */
-  async updateMedia(id: string, userId: string, input: UpdateMediaServiceInput) {
+  async updateMedia(
+    id: string,
+    userId: string,
+    input: UpdateMediaServiceInput,
+  ) {
     const media = await this.db.media.findUnique({
       where: { id },
     });
 
     if (!media) {
-      throw new NotFoundException("Media not found");
+      throw new NotFoundException('Media not found');
     }
 
     if (media.ownerId !== userId) {
-      throw new ForbiddenException("You can only update your own media");
+      throw new ForbiddenException('You can only update your own media');
     }
 
     return this.db.media.update({
@@ -295,10 +306,7 @@ export class MediaService {
         visibility: input.visibility,
       },
     });
-
   }
-
-
 
   /**
    * Updates the text content of a text media item
@@ -319,15 +327,15 @@ export class MediaService {
     });
 
     if (!media) {
-      throw new NotFoundException("Media not found");
+      throw new NotFoundException('Media not found');
     }
 
     if (media.ownerId !== userId) {
-      throw new ForbiddenException("You can only update your own media");
+      throw new ForbiddenException('You can only update your own media');
     }
 
     if (media.textContentId === null) {
-      throw new ForbiddenException("This media is not text content");
+      throw new ForbiddenException('This media is not text content');
     }
 
     const updateData: Prisma.TextContentUpdateInput = {};
@@ -363,11 +371,11 @@ export class MediaService {
     });
 
     if (!media) {
-      throw new NotFoundException("Media not found");
+      throw new NotFoundException('Media not found');
     }
 
     if (media.ownerId !== userId) {
-      throw new ForbiddenException("You can only delete your own media");
+      throw new ForbiddenException('You can only delete your own media');
     }
 
     // Handle image file cleanup if this media contains an image
@@ -392,21 +400,31 @@ export class MediaService {
    * Cleans up image files (handles both S3 and local storage)
    * @param image Image record containing file information
    */
+  // eslint-disable-next-line @typescript-eslint/ban-types
   private async cleanupImageFiles(image: Prisma.ImageGetPayload<{}>) {
     try {
       // Check if we're using S3 (URL contains amazonaws.com or other S3 indicators)
-      if (image.url && (image.url.includes('amazonaws.com') || image.url.includes('s3'))) {
+      if (
+        image.url &&
+        (image.url.includes('amazonaws.com') || image.url.includes('s3'))
+      ) {
         await this.deleteFromS3(image.url, image.thumbnailUrl ?? undefined);
       } else if (image.url && image.url.startsWith('data:')) {
         // Base64 encoded image - no file cleanup needed, stored in DB
         this.logger.debug('Base64 image detected, no file cleanup needed');
-      } else if (image.url && (image.url.startsWith('/') || image.url.includes('localhost'))) {
+      } else if (
+        image.url &&
+        (image.url.startsWith('/') || image.url.includes('localhost'))
+      ) {
         // Local file storage
         await this.deleteLocalFiles(image.url, image.thumbnailUrl ?? undefined);
       }
     } catch (error) {
       // Log the error but don't fail the deletion
-      this.logger.error(`Failed to cleanup image files for image ${image.id}:`, error);
+      this.logger.error(
+        `Failed to cleanup image files for image ${image.id}:`,
+        error,
+      );
     }
   }
 
@@ -421,9 +439,9 @@ export class MediaService {
     // 1. Parse the S3 key from the URL
     // 2. Use AWS S3 client to delete the object(s)
     // 3. Handle both main image and thumbnail
-    
+
     this.logger.warn('S3 file cleanup not implemented yet');
-    
+
     // Example implementation:
     // const s3Key = this.extractS3KeyFromUrl(imageUrl);
     // await this.s3Client.deleteObject({ Bucket: this.bucketName, Key: s3Key }).promise();
@@ -439,9 +457,6 @@ export class MediaService {
    * @param thumbnailUrl Optional thumbnail path
    */
   private async deleteLocalFiles(imageUrl: string, thumbnailUrl?: string) {
-    const fs = require('fs').promises;
-    const path = require('path');
-
     try {
       // Convert URL to local file path
       const imagePath = this.urlToLocalPath(imageUrl);
@@ -468,13 +483,13 @@ export class MediaService {
     if (url.startsWith('/')) {
       return path.join(process.cwd(), 'uploads', url.substring(1));
     }
-    
+
     // Handle localhost URLs
     if (url.includes('localhost')) {
       const urlPath = new URL(url).pathname;
       return path.join(process.cwd(), 'uploads', urlPath.substring(1));
     }
-    
+
     return url;
   }
 
@@ -493,11 +508,11 @@ export class MediaService {
     });
 
     if (!media) {
-      throw new NotFoundException("Media not found");
+      throw new NotFoundException('Media not found');
     }
 
     if (media.ownerId !== userId) {
-      throw new ForbiddenException("You can only tag your own media");
+      throw new ForbiddenException('You can only tag your own media');
     }
 
     // Get or create tags
@@ -540,12 +555,12 @@ export class MediaService {
     });
 
     if (!media) {
-      throw new NotFoundException("Media not found");
+      throw new NotFoundException('Media not found');
     }
 
     if (media.ownerId !== userId) {
       throw new ForbiddenException(
-        "You can only remove tags from your own media",
+        'You can only remove tags from your own media',
       );
     }
 
@@ -577,7 +592,7 @@ export class MediaService {
     });
 
     if (!textContent) {
-      throw new NotFoundException("Text content not found");
+      throw new NotFoundException('Text content not found');
     }
 
     return textContent;

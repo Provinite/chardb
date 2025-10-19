@@ -1,11 +1,11 @@
-import { Injectable } from "@nestjs/common";
-import { DatabaseService } from "../../database/database.service";
+import { Injectable } from '@nestjs/common';
+import { DatabaseService } from '../../database/database.service';
 import {
   CommunityResolutionConfig,
   CommunityResolutionReference,
-} from "../types/CommunityResolutionConfig";
-import { Community } from "@chardb/database";
-import { MaybePromise } from "@opentelemetry/resources";
+} from '../types/CommunityResolutionConfig';
+import { Community } from '@chardb/database';
+import { MaybePromise } from '@opentelemetry/resources';
 
 /**
  * Service for resolving which community an entity belongs to.
@@ -224,7 +224,9 @@ export class CommunityResolverService {
    * @returns The community ID
    * @throws Error if community member doesn't exist
    */
-  async getCommunityMemberCommunity(communityMemberId: string): Promise<string> {
+  async getCommunityMemberCommunity(
+    communityMemberId: string,
+  ): Promise<string> {
     const communityMember = await this.prisma.communityMember.findUnique({
       where: { id: communityMemberId },
       select: {
@@ -250,14 +252,19 @@ export class CommunityResolverService {
    * @returns The community ID
    * @throws Error if community invitation doesn't exist
    */
-  async getCommunityInvitationCommunity(communityInvitationId: string): Promise<string> {
-    const communityInvitation = await this.prisma.communityInvitation.findUnique({
-      where: { id: communityInvitationId },
-      select: { communityId: true },
-    });
+  async getCommunityInvitationCommunity(
+    communityInvitationId: string,
+  ): Promise<string> {
+    const communityInvitation =
+      await this.prisma.communityInvitation.findUnique({
+        where: { id: communityInvitationId },
+        select: { communityId: true },
+      });
 
     if (!communityInvitation) {
-      throw new Error(`CommunityInvitation with ID ${communityInvitationId} not found`);
+      throw new Error(
+        `CommunityInvitation with ID ${communityInvitationId} not found`,
+      );
     }
 
     return communityInvitation.communityId;

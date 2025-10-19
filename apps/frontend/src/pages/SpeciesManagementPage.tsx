@@ -1,15 +1,15 @@
-import React, { useState, useMemo } from "react";
-import styled from "styled-components";
-import { useNavigate, useParams, Link } from "react-router-dom";
-import { Search, Plus, Trash2, Edit, Palette, Database } from "lucide-react";
-import { Button, Modal, Input, ErrorMessage } from "@chardb/ui";
+import React, { useState, useMemo } from 'react';
+import styled from 'styled-components';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { Search, Plus, Trash2, Edit, Palette, Database } from 'lucide-react';
+import { Button, Modal, Input, ErrorMessage } from '@chardb/ui';
 import {
   useSpeciesByCommunityQuery,
   useCreateSpeciesMutation,
   useDeleteSpeciesMutation,
   useCommunityByIdQuery,
-} from "../generated/graphql";
-import { toast } from "react-hot-toast";
+} from '../generated/graphql';
+import { toast } from 'react-hot-toast';
 
 /**
  * Species Management Dashboard
@@ -133,7 +133,7 @@ const ClickableCard = styled(Link)`
   text-decoration: none;
   color: inherit;
   display: block;
-  
+
   ${Card} {
     cursor: pointer;
   }
@@ -150,7 +150,6 @@ const SpeciesName = styled.h3`
   margin: 0;
   line-height: 1.2;
 `;
-
 
 const CardMeta = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
@@ -249,7 +248,7 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
   communityName,
 }) => {
   const [formData, setFormData] = useState<CreateSpeciesFormData>({
-    name: "",
+    name: '',
     hasImage: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -262,12 +261,12 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
     try {
       await onSubmit(formData);
       setFormData({
-        name: "",
+        name: '',
         hasImage: false,
       });
       onClose();
     } catch (error) {
-      console.error("Failed to create species:", error);
+      console.error('Failed to create species:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -276,7 +275,7 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Create Species">
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "1rem" }}>
+        <div style={{ marginBottom: '1rem' }}>
           <label htmlFor="species-name">Species Name</label>
           <Input
             id="species-name"
@@ -291,14 +290,12 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
           />
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
+        <div style={{ marginBottom: '1rem' }}>
           <label>Community</label>
-          <CommunityDisplay>
-            {communityName}
-          </CommunityDisplay>
+          <CommunityDisplay>{communityName}</CommunityDisplay>
         </div>
 
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ marginBottom: '1.5rem' }}>
           <label>
             <input
               type="checkbox"
@@ -307,14 +304,14 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
                 setFormData((prev) => ({ ...prev, hasImage: e.target.checked }))
               }
               disabled={isSubmitting}
-              style={{ marginRight: "0.5rem" }}
+              style={{ marginRight: '0.5rem' }}
             />
             Species has associated image
           </label>
         </div>
 
         <div
-          style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}
+          style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}
         >
           <Button
             type="button"
@@ -328,7 +325,7 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
             type="submit"
             disabled={isSubmitting || !formData.name.trim()}
           >
-            {isSubmitting ? "Creating..." : "Create Species"}
+            {isSubmitting ? 'Creating...' : 'Create Species'}
           </Button>
         </div>
       </form>
@@ -350,7 +347,7 @@ export const SpeciesManagementPage: React.FC = () => {
       </Container>
     );
   }
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // GraphQL operations - Always use community-scoped query
@@ -364,18 +361,15 @@ export const SpeciesManagementPage: React.FC = () => {
   });
 
   // Fetch the specific community
-  const {
-    data: communityData,
-    loading: communityLoading,
-  } = useCommunityByIdQuery({
-    variables: { id: communityId },
-  });
-
+  const { data: communityData, loading: communityLoading } =
+    useCommunityByIdQuery({
+      variables: { id: communityId },
+    });
 
   const [createSpeciesMutation] = useCreateSpeciesMutation({
     onCompleted: (data) => {
       toast.success(
-        `Species "${data.createSpecies.name}" created successfully!`
+        `Species "${data.createSpecies.name}" created successfully!`,
       );
       refetch();
     },
@@ -405,7 +399,7 @@ export const SpeciesManagementPage: React.FC = () => {
     if (!searchQuery.trim()) return nodes;
 
     return nodes.filter((species) =>
-      species.name.toLowerCase().includes(searchQuery.toLowerCase())
+      species.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [speciesData, searchQuery]);
 
@@ -422,10 +416,10 @@ export const SpeciesManagementPage: React.FC = () => {
     });
   };
 
-  const handleDeleteSpecies = async (species: typeof filteredSpecies[0]) => {
+  const handleDeleteSpecies = async (species: (typeof filteredSpecies)[0]) => {
     if (
       !window.confirm(
-        `Are you sure you want to delete "${species.name}"? This action cannot be undone and will also delete all associated variants, traits, and character data.`
+        `Are you sure you want to delete "${species.name}"? This action cannot be undone and will also delete all associated variants, traits, and character data.`,
       )
     ) {
       return;
@@ -436,17 +430,17 @@ export const SpeciesManagementPage: React.FC = () => {
     });
   };
 
-  const handleEditSpecies = (species: typeof filteredSpecies[0]) => {
+  const handleEditSpecies = (species: (typeof filteredSpecies)[0]) => {
     // Navigate to species detail/edit page
     navigate(`/species/${species.id}/edit`);
   };
 
-  const handleManageTraits = (species: typeof filteredSpecies[0]) => {
+  const handleManageTraits = (species: (typeof filteredSpecies)[0]) => {
     // Navigate to trait builder for this species
     navigate(`/species/${species.id}/traits`);
   };
 
-  const handleManageVariants = (species: typeof filteredSpecies[0]) => {
+  const handleManageVariants = (species: (typeof filteredSpecies)[0]) => {
     // Navigate to variant management for this species
     navigate(`/species/${species.id}/variants`);
   };
@@ -493,17 +487,15 @@ export const SpeciesManagementPage: React.FC = () => {
       <Header>
         <Title>Species Management</Title>
         <Subtitle>
-          Manage species for {currentCommunity?.name || 'this community'} ({totalCount} species)
+          Manage species for {currentCommunity?.name || 'this community'} (
+          {totalCount} species)
         </Subtitle>
       </Header>
 
       {communityId && currentCommunity && (
         <FilterInfo>
           <p>
-            Explore all species in{' '}
-            <strong>
-              {currentCommunity.name}
-            </strong>
+            Explore all species in <strong>{currentCommunity.name}</strong>
           </p>
         </FilterInfo>
       )}
@@ -534,7 +526,7 @@ export const SpeciesManagementPage: React.FC = () => {
           <p>
             {searchQuery
               ? `No species match your search for "${searchQuery}"`
-              : "Get started by creating your first species"}
+              : 'Get started by creating your first species'}
           </p>
         </EmptyState>
       ) : (
@@ -548,7 +540,7 @@ export const SpeciesManagementPage: React.FC = () => {
 
                 <ImageIndicator hasImage={species.hasImage}>
                   <Palette size={16} />
-                  {species.hasImage ? "Has image" : "No image"}
+                  {species.hasImage ? 'Has image' : 'No image'}
                 </ImageIndicator>
 
                 <CardMeta>
@@ -556,7 +548,7 @@ export const SpeciesManagementPage: React.FC = () => {
                     Created: {new Date(species.createdAt).toLocaleDateString()}
                   </p>
                   <p>
-                    Last updated:{" "}
+                    Last updated:{' '}
                     {new Date(species.updatedAt).toLocaleDateString()}
                   </p>
                 </CardMeta>

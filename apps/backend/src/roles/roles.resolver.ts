@@ -7,26 +7,26 @@ import {
   Int,
   ResolveField,
   Parent,
-} from "@nestjs/graphql";
-import { NotFoundException } from "@nestjs/common";
-import { RolesService } from "./roles.service";
-import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
-import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
-import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
-import { CommunityPermission } from "../auth/CommunityPermission";
-import { Role, RoleConnection } from "./entities/role.entity";
-import { CreateRoleInput, UpdateRoleInput } from "./dto/role.dto";
+} from '@nestjs/graphql';
+import { NotFoundException } from '@nestjs/common';
+import { RolesService } from './roles.service';
+import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
+import { AllowGlobalAdmin } from '../auth/decorators/AllowGlobalAdmin';
+import { AllowCommunityPermission } from '../auth/decorators/AllowCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CommunityPermission } from '../auth/CommunityPermission';
+import { Role, RoleConnection } from './entities/role.entity';
+import { CreateRoleInput, UpdateRoleInput } from './dto/role.dto';
 import {
   mapCreateRoleInputToService,
   mapUpdateRoleInputToService,
   mapPrismaRoleToGraphQL,
   mapPrismaRoleConnectionToGraphQL,
-} from "./utils/role-resolver-mappers";
-import { RemovalResponse } from "../shared/entities/removal-response.entity";
-import { Community } from "../communities/entities/community.entity";
-import { CommunitiesService } from "../communities/communities.service";
-import { mapPrismaCommunityToGraphQL } from "../communities/utils/community-resolver-mappers";
+} from './utils/role-resolver-mappers';
+import { RemovalResponse } from '../shared/entities/removal-response.entity';
+import { Community } from '../communities/entities/community.entity';
+import { CommunitiesService } from '../communities/communities.service';
+import { mapPrismaCommunityToGraphQL } from '../communities/utils/community-resolver-mappers';
 
 @Resolver(() => Role)
 export class RolesResolver {
@@ -37,10 +37,10 @@ export class RolesResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanCreateRole)
-  @ResolveCommunityFrom({ communityId: "createRoleInput.communityId" })
-  @Mutation(() => Role, { description: "Create a new role" })
+  @ResolveCommunityFrom({ communityId: 'createRoleInput.communityId' })
+  @Mutation(() => Role, { description: 'Create a new role' })
   async createRole(
-    @Args("createRoleInput", { description: "Role creation data" })
+    @Args('createRoleInput', { description: 'Role creation data' })
     createRoleInput: CreateRoleInput,
   ): Promise<Role> {
     const serviceInput = mapCreateRoleInputToService(createRoleInput);
@@ -50,21 +50,21 @@ export class RolesResolver {
 
   @AllowGlobalAdmin()
   @Query(() => RoleConnection, {
-    name: "roles",
-    description: "Get all roles with pagination",
+    name: 'roles',
+    description: 'Get all roles with pagination',
   })
   async findAll(
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of roles to return",
+      description: 'Number of roles to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
   ): Promise<RoleConnection> {
@@ -74,23 +74,23 @@ export class RolesResolver {
 
   @AllowAnyAuthenticated()
   @Query(() => RoleConnection, {
-    name: "rolesByCommunity",
-    description: "Get roles by community ID with pagination",
+    name: 'rolesByCommunity',
+    description: 'Get roles by community ID with pagination',
   })
   async findByCommunity(
-    @Args("communityId", { type: () => ID, description: "Community ID" })
+    @Args('communityId', { type: () => ID, description: 'Community ID' })
     communityId: string,
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of roles to return",
+      description: 'Number of roles to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
   ): Promise<RoleConnection> {
@@ -103,9 +103,9 @@ export class RolesResolver {
   }
 
   @AllowAnyAuthenticated()
-  @Query(() => Role, { name: "roleById", description: "Get a role by ID" })
+  @Query(() => Role, { name: 'roleById', description: 'Get a role by ID' })
   async findOne(
-    @Args("id", { type: () => ID, description: "Role ID" })
+    @Args('id', { type: () => ID, description: 'Role ID' })
     id: string,
   ): Promise<Role> {
     const prismaResult = await this.rolesService.findOne(id);
@@ -114,12 +114,12 @@ export class RolesResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditRole)
-  @ResolveCommunityFrom({ roleId: "id" })
-  @Mutation(() => Role, { description: "Update a role" })
+  @ResolveCommunityFrom({ roleId: 'id' })
+  @Mutation(() => Role, { description: 'Update a role' })
   async updateRole(
-    @Args("id", { type: () => ID, description: "Role ID" })
+    @Args('id', { type: () => ID, description: 'Role ID' })
     id: string,
-    @Args("updateRoleInput", { description: "Role update data" })
+    @Args('updateRoleInput', { description: 'Role update data' })
     updateRoleInput: UpdateRoleInput,
   ): Promise<Role> {
     const serviceInput = mapUpdateRoleInputToService(updateRoleInput);
@@ -129,19 +129,19 @@ export class RolesResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditRole)
-  @ResolveCommunityFrom({ roleId: "id" })
-  @Mutation(() => RemovalResponse, { description: "Remove a role" })
+  @ResolveCommunityFrom({ roleId: 'id' })
+  @Mutation(() => RemovalResponse, { description: 'Remove a role' })
   async removeRole(
-    @Args("id", { type: () => ID, description: "Role ID" })
+    @Args('id', { type: () => ID, description: 'Role ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.rolesService.remove(id);
-    return { removed: true, message: "Role successfully removed" };
+    return { removed: true, message: 'Role successfully removed' };
   }
 
   // Field resolver for relations
-  @ResolveField("community", () => Community, {
-    description: "The community this role belongs to",
+  @ResolveField('community', () => Community, {
+    description: 'The community this role belongs to',
   })
   async resolveCommunity(@Parent() role: Role): Promise<Community | null> {
     try {

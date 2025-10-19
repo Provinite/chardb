@@ -2,12 +2,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { FileText, ArrowLeft } from 'lucide-react';
-import { 
-  Button,
-  Heading2,
-  SmallText,
-  HelpText
-} from '@chardb/ui';
+import { Button, Heading2, SmallText, HelpText } from '@chardb/ui';
 
 const Container = styled.div`
   display: flex;
@@ -88,7 +83,9 @@ export const CommunityModerationPage: React.FC = () => {
     return (
       <Container>
         <Heading2>Invalid Community</Heading2>
-        <HelpText>Community ID is required to access moderation tools.</HelpText>
+        <HelpText>
+          Community ID is required to access moderation tools.
+        </HelpText>
       </Container>
     );
   }
@@ -127,8 +124,9 @@ export const CommunityModerationPage: React.FC = () => {
         </PlaceholderIcon>
         <Heading2>Content Moderation</Heading2>
         <HelpText>
-          This feature is under development. Content moderation tools will be available soon.
-          You can review reported content, manage character approvals, and maintain community standards here.
+          This feature is under development. Content moderation tools will be
+          available soon. You can review reported content, manage character
+          approvals, and maintain community standards here.
         </HelpText>
       </PlaceholderContent>
     </Container>

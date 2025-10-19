@@ -1,38 +1,38 @@
-import React, { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation } from "@apollo/client";
-import { toast } from "react-hot-toast";
-import styled from "styled-components";
-import { Button } from "@chardb/ui";
+import React, { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation } from '@apollo/client';
+import { toast } from 'react-hot-toast';
+import styled from 'styled-components';
+import { Button } from '@chardb/ui';
 import {
   CREATE_TEXT_MEDIA,
   GET_CHARACTER_MEDIA,
   GET_MY_MEDIA,
   GET_MEDIA,
-} from "../graphql/media.graphql";
-import { useGetCharacterQuery } from "../graphql/characters.graphql";
-import { useGetMyGalleriesQuery } from "../graphql/galleries.graphql";
-import { TextFormatting, Visibility } from "../generated/graphql";
+} from '../graphql/media.graphql';
+import { useGetCharacterQuery } from '../graphql/characters.graphql';
+import { useGetMyGalleriesQuery } from '../graphql/galleries.graphql';
+import { TextFormatting, Visibility } from '../generated/graphql';
 // import { TextEditor } from '../components/TextEditor';
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from '../contexts/AuthContext';
 
 const textMediaSchema = z.object({
   title: z
     .string()
-    .min(1, "Title is required")
-    .max(255, "Title must be less than 255 characters"),
+    .min(1, 'Title is required')
+    .max(255, 'Title must be less than 255 characters'),
   description: z
     .string()
-    .max(1000, "Description must be less than 1000 characters")
+    .max(1000, 'Description must be less than 1000 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   content: z
     .string()
-    .min(1, "Content is required")
-    .max(50000, "Content must be less than 50,000 characters"),
+    .min(1, 'Content is required')
+    .max(50000, 'Content must be less than 50,000 characters'),
   formatting: z.nativeEnum(TextFormatting),
   visibility: z.nativeEnum(Visibility),
   characterId: z.string().optional(),
@@ -72,7 +72,7 @@ const BackButton = styled.button`
   }
 
   &::before {
-    content: "←";
+    content: '←';
     font-weight: bold;
   }
 `;
@@ -150,7 +150,7 @@ const Input = styled.input`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.error};
   }
 `;
@@ -168,7 +168,7 @@ const Select = styled.select`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.error};
   }
 `;
@@ -188,7 +188,7 @@ const TextArea = styled.textarea`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.error};
   }
 `;
@@ -288,8 +288,8 @@ export const CreateTextPage: React.FC = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const characterId = searchParams.get("character");
-  const galleryId = searchParams.get("gallery");
+  const characterId = searchParams.get('character');
+  const galleryId = searchParams.get('gallery');
 
   const {
     register,
@@ -350,13 +350,13 @@ export const CreateTextPage: React.FC = () => {
     } else if (galleryId) {
       navigate(`/gallery/${galleryId}`);
     } else {
-      navigate("/");
+      navigate('/');
     }
   };
 
   const onSubmit = async (data: TextMediaForm) => {
     if (!user) {
-      toast.error("You must be logged in to create content");
+      toast.error('You must be logged in to create content');
       return;
     }
 
@@ -379,7 +379,7 @@ export const CreateTextPage: React.FC = () => {
         },
       });
 
-      toast.success("Text content created successfully!");
+      toast.success('Text content created successfully!');
 
       // Navigate to the created media or back to character
       if (characterId) {
@@ -390,11 +390,11 @@ export const CreateTextPage: React.FC = () => {
         navigate(`/media/${result.data.createTextMedia.id}`);
       }
     } catch (error) {
-      console.error("Error creating text media:", error);
+      console.error('Error creating text media:', error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to create text content. Please try again.",
+          : 'Failed to create text content. Please try again.',
       );
     } finally {
       setIsSubmitting(false);
@@ -416,10 +416,10 @@ export const CreateTextPage: React.FC = () => {
       <Container>
         <BackButton onClick={handleBackClick}>
           {characterId
-            ? "Back to Character"
+            ? 'Back to Character'
             : galleryId
-              ? "Back to Gallery"
-              : "Back"}
+              ? 'Back to Gallery'
+              : 'Back'}
         </BackButton>
 
         <Title>Create Text Content</Title>
@@ -442,7 +442,7 @@ export const CreateTextPage: React.FC = () => {
               <Label htmlFor="title">Title *</Label>
               <Input
                 id="title"
-                {...register("title")}
+                {...register('title')}
                 aria-invalid={!!errors.title}
                 placeholder="Enter a title for your text content"
               />
@@ -455,7 +455,7 @@ export const CreateTextPage: React.FC = () => {
               <Label htmlFor="description">Description</Label>
               <TextArea
                 id="description"
-                {...register("description")}
+                {...register('description')}
                 aria-invalid={!!errors.description}
                 placeholder="Optional description or summary of your content..."
                 rows={3}
@@ -475,7 +475,7 @@ export const CreateTextPage: React.FC = () => {
                 <Label htmlFor="formatting">Formatting</Label>
                 <Select
                   id="formatting"
-                  {...register("formatting")}
+                  {...register('formatting')}
                   aria-invalid={!!errors.formatting}
                 >
                   <option value={TextFormatting.Markdown}>Markdown</option>
@@ -490,7 +490,7 @@ export const CreateTextPage: React.FC = () => {
                 <Label htmlFor="visibility">Visibility</Label>
                 <Select
                   id="visibility"
-                  {...register("visibility")}
+                  {...register('visibility')}
                   aria-invalid={!!errors.visibility}
                 >
                   <option value={Visibility.Public}>
@@ -516,12 +516,12 @@ export const CreateTextPage: React.FC = () => {
                   <Select id="galleryId" disabled>
                     <option>No galleries yet</option>
                   </Select>
-                  <div style={{ marginTop: "0.5rem" }}>
+                  <div style={{ marginTop: '0.5rem' }}>
                     <a
                       href="/gallery/create"
                       style={{
-                        fontSize: "0.875rem",
-                        color: "var(--color-primary)",
+                        fontSize: '0.875rem',
+                        color: 'var(--color-primary)',
                       }}
                     >
                       Create your first gallery
@@ -531,7 +531,7 @@ export const CreateTextPage: React.FC = () => {
               ) : (
                 <Select
                   id="galleryId"
-                  {...register("galleryId")}
+                  {...register('galleryId')}
                   aria-invalid={!!errors.galleryId}
                 >
                   <option value="">Select a gallery...</option>
@@ -551,10 +551,10 @@ export const CreateTextPage: React.FC = () => {
               <Label htmlFor="content">Content *</Label>
               <TextArea
                 id="content"
-                {...register("content")}
+                {...register('content')}
                 aria-invalid={!!errors.content}
                 placeholder="Write your story, character description, backstory, or any other text content..."
-                style={{ minHeight: "400px" }}
+                style={{ minHeight: '400px' }}
               />
               {errors.content && (
                 <ErrorMessage>{errors.content.message}</ErrorMessage>
@@ -567,7 +567,7 @@ export const CreateTextPage: React.FC = () => {
               Cancel
             </CancelButton>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Text Content"}
+              {isSubmitting ? 'Creating...' : 'Create Text Content'}
             </Button>
           </ButtonRow>
         </Form>

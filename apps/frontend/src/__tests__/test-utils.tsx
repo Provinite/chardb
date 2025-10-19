@@ -24,30 +24,26 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-// Mock react-hot-toast (hoisted to top level) 
+// Mock react-hot-toast (hoisted to top level)
 vi.mock('react-hot-toast', () => ({
-  default: mockToast,  // EditProfilePage uses default import
-  toast: mockToast,    // Backup for named import
+  default: mockToast, // EditProfilePage uses default import
+  toast: mockToast, // Backup for named import
   Toaster: () => React.createElement('div', { 'data-testid': 'toaster' }),
 }));
 
 // Mock AuthContext for testing
-const MockAuthProvider: React.FC<{ children: React.ReactNode; user?: any }> = ({ 
-  children
+const MockAuthProvider: React.FC<{ children: React.ReactNode; user?: any }> = ({
+  children,
 }) => {
-  return (
-    <div data-testid="mock-auth-provider">
-      {children}
-    </div>
-  );
+  return <div data-testid="mock-auth-provider">{children}</div>;
 };
 
 // Mock ThemeProvider for testing
-const MockThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const MockThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   return (
-    <StyledThemeProvider theme={lightTheme}>
-      {children}
-    </StyledThemeProvider>
+    <StyledThemeProvider theme={lightTheme}>{children}</StyledThemeProvider>
   );
 };
 
@@ -58,10 +54,10 @@ interface AllTheProvidersProps {
   initialEntries?: string[];
 }
 
-const AllTheProviders: React.FC<AllTheProvidersProps> = ({ 
-  children, 
-  mocks = [], 
-  user
+const AllTheProviders: React.FC<AllTheProvidersProps> = ({
+  children,
+  mocks = [],
+  user,
 }) => {
   return (
     <MockedProvider mocks={mocks} addTypename={false}>
@@ -83,12 +79,9 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   initialEntries?: string[];
 }
 
-const customRender = (
-  ui: ReactElement,
-  options: CustomRenderOptions = {}
-) => {
+const customRender = (ui: ReactElement, options: CustomRenderOptions = {}) => {
   const { mocks, user, ...renderOptions } = options;
-  
+
   return render(ui, {
     wrapper: ({ children }) => (
       <AllTheProviders mocks={mocks} user={user}>
@@ -98,7 +91,6 @@ const customRender = (
     ...renderOptions,
   });
 };
-
 
 // Re-export everything
 export * from '@testing-library/react';

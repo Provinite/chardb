@@ -1,0 +1,7 @@
+dist
+node_modules
+coverage
+.env
+src/gql/generated.ts
+vitest.config.ts
+vite.config.ts

@@ -1,5 +1,15 @@
-import { Field, InputType, ObjectType, Int, ID } from '@nestjs/graphql';
-import { IsString, IsOptional, IsNumber, IsUUID, IsEnum, MaxLength, Min, Max, IsArray } from 'class-validator';
+import { Field, InputType, Int, ID } from '@nestjs/graphql';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsUUID,
+  IsEnum,
+  MaxLength,
+  Min,
+  Max,
+  IsArray,
+} from 'class-validator';
 import { Visibility } from '@chardb/database';
 
 @InputType()
@@ -93,7 +103,6 @@ export class GalleryFiltersInput {
   @IsEnum(Visibility)
   visibility?: Visibility;
 }
-
 
 @InputType()
 export class ReorderGalleriesInput {

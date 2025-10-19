@@ -73,8 +73,9 @@ describe('GalleriesService', () => {
         ownerId: 'user2', // Different user
       });
 
-      await expect(service.create(userId, input))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.create(userId, input)).rejects.toThrow(
+        ForbiddenException,
+      );
 
       expect(db.character.findUnique).toHaveBeenCalledWith({
         where: { id: 'char1' },
@@ -108,7 +109,9 @@ describe('GalleriesService', () => {
       const galleryId = 'nonexistent';
       db.gallery.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(galleryId)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(galleryId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException for private gallery accessed by non-owner', async () => {
@@ -122,7 +125,9 @@ describe('GalleriesService', () => {
 
       db.gallery.findUnique.mockResolvedValue(mockGallery);
 
-      await expect(service.findOne(galleryId, 'user2')).rejects.toThrow(ForbiddenException);
+      await expect(service.findOne(galleryId, 'user2')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should allow owner to access private gallery', async () => {
@@ -181,8 +186,9 @@ describe('GalleriesService', () => {
 
       db.gallery.findUnique.mockResolvedValue(mockGallery);
 
-      await expect(service.update(galleryId, 'user2', { name: 'Hacked' }))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.update(galleryId, 'user2', { name: 'Hacked' }),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should verify new character ownership when changing character', async () => {
@@ -202,8 +208,9 @@ describe('GalleriesService', () => {
         ownerId: 'user2', // Different user
       });
 
-      await expect(service.update(galleryId, userId, input))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.update(galleryId, userId, input)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -239,8 +246,9 @@ describe('GalleriesService', () => {
 
       db.gallery.findUnique.mockResolvedValue(mockGallery);
 
-      await expect(service.remove(galleryId, 'user2'))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.remove(galleryId, 'user2')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -282,9 +290,7 @@ describe('GalleriesService', () => {
 
       expect(db.gallery.findMany).toHaveBeenCalledWith({
         where: expect.objectContaining({
-          AND: expect.arrayContaining([
-            { characterId },
-          ]),
+          AND: expect.arrayContaining([{ characterId }]),
         }),
         include: expect.any(Object),
         orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
@@ -315,7 +321,9 @@ describe('GalleriesService', () => {
         character: null,
       }));
 
-      db.gallery.findMany.mockResolvedValueOnce(mockGalleries).mockResolvedValueOnce(mockReorderedGalleries);
+      db.gallery.findMany
+        .mockResolvedValueOnce(mockGalleries)
+        .mockResolvedValueOnce(mockReorderedGalleries);
       db.gallery.update.mockResolvedValue({});
 
       const result = await service.reorderGalleries(userId, galleryIds);
@@ -350,8 +358,9 @@ describe('GalleriesService', () => {
 
       db.gallery.findMany.mockResolvedValue(mockGalleries);
 
-      await expect(service.reorderGalleries(userId, galleryIds))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.reorderGalleries(userId, galleryIds),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

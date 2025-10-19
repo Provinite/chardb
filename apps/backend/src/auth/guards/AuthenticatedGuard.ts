@@ -1,7 +1,7 @@
-import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { getUserFromContext } from "../utils/get-user-from-context";
-import { AllowAnyAuthenticated } from "../decorators/AllowAnyAuthenticated";
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { getUserFromContext } from '../utils/get-user-from-context';
+import { AllowAnyAuthenticated } from '../decorators/AllowAnyAuthenticated';
 
 /**
  * Guard that checks if a user is authenticated.

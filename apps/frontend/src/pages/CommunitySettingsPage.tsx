@@ -2,12 +2,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { Settings, ArrowLeft } from 'lucide-react';
-import { 
-  Button,
-  Heading2,
-  SmallText,
-  HelpText
-} from '@chardb/ui';
+import { Button, Heading2, SmallText, HelpText } from '@chardb/ui';
 
 const Container = styled.div`
   display: flex;
@@ -127,8 +122,9 @@ export const CommunitySettingsPage: React.FC = () => {
         </PlaceholderIcon>
         <Heading2>Community Settings</Heading2>
         <HelpText>
-          This feature is under development. Community settings interface will be available soon.
-          You can configure basic community information, appearance, and general settings here.
+          This feature is under development. Community settings interface will
+          be available soon. You can configure basic community information,
+          appearance, and general settings here.
         </HelpText>
       </PlaceholderContent>
     </Container>

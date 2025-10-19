@@ -1,6 +1,10 @@
-import { Injectable, ConflictException, NotFoundException } from "@nestjs/common";
-import { DatabaseService } from "../database/database.service";
-import { ExternalAccountProvider } from "@prisma/client";
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
+import { DatabaseService } from '../database/database.service';
+import { ExternalAccountProvider } from '@prisma/client';
 
 @Injectable()
 export class ExternalAccountsService {
@@ -12,14 +16,17 @@ export class ExternalAccountsService {
   async findByUserId(userId: string) {
     return this.database.externalAccount.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
   /**
    * Find an external account by provider and user ID
    */
-  async findByProviderAndUserId(provider: ExternalAccountProvider, userId: string) {
+  async findByProviderAndUserId(
+    provider: ExternalAccountProvider,
+    userId: string,
+  ) {
     return this.database.externalAccount.findUnique({
       where: {
         provider_userId: {
@@ -51,15 +58,24 @@ export class ExternalAccountsService {
 
     if (existingAccount) {
       if (existingAccount.userId === userId) {
-        throw new ConflictException("This account is already linked to your profile");
+        throw new ConflictException(
+          'This account is already linked to your profile',
+        );
       }
-      throw new ConflictException("This external account is already linked to another user");
+      throw new ConflictException(
+        'This external account is already linked to another user',
+      );
     }
 
     // Check if user already has an account linked for this provider
-    const existingUserLink = await this.findByProviderAndUserId(provider, userId);
+    const existingUserLink = await this.findByProviderAndUserId(
+      provider,
+      userId,
+    );
     if (existingUserLink) {
-      throw new ConflictException(`You already have a ${provider} account linked. Please unlink it first.`);
+      throw new ConflictException(
+        `You already have a ${provider} account linked. Please unlink it first.`,
+      );
     }
 
     // Create the link
@@ -76,11 +92,19 @@ export class ExternalAccountsService {
   /**
    * Unlink an external account from a user
    */
-  async unlinkExternalAccount(userId: string, provider: ExternalAccountProvider) {
-    const existingAccount = await this.findByProviderAndUserId(provider, userId);
+  async unlinkExternalAccount(
+    userId: string,
+    provider: ExternalAccountProvider,
+  ) {
+    const existingAccount = await this.findByProviderAndUserId(
+      provider,
+      userId,
+    );
 
     if (!existingAccount) {
-      throw new NotFoundException(`No ${provider} account found linked to your profile`);
+      throw new NotFoundException(
+        `No ${provider} account found linked to your profile`,
+      );
     }
 
     await this.database.externalAccount.delete({

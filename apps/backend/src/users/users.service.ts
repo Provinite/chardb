@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import { DatabaseService } from "../database/database.service";
-import { Visibility, Prisma } from "@chardb/database";
+import { Injectable } from '@nestjs/common';
+import { DatabaseService } from '../database/database.service';
+import { Visibility, Prisma } from '@chardb/database';
 
 /**
  * Service layer input types for user operations.
@@ -54,6 +54,7 @@ export interface UpdateUserServiceInput {
   privacySettings?: UserPrivacySettings;
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 type PrismaUser = Prisma.UserGetPayload<{}>;
 
 @Injectable()
@@ -76,7 +77,7 @@ export class UsersService {
       this.db.user.findMany({
         take: limit,
         skip: offset,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       }),
       this.db.user.count(),
     ]);
@@ -166,7 +167,11 @@ export class UsersService {
     });
   }
 
-  async getUserRecentCharacters(userId: string, includePrivate = false, limit = 6) {
+  async getUserRecentCharacters(
+    userId: string,
+    includePrivate = false,
+    limit = 6,
+  ) {
     const visibilityFilter = includePrivate
       ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
       : [Visibility.PUBLIC];
@@ -177,11 +182,15 @@ export class UsersService {
         visibility: { in: visibilityFilter },
       },
       take: limit,
-      orderBy: { updatedAt: "desc" },
+      orderBy: { updatedAt: 'desc' },
     });
   }
 
-  async getUserRecentGalleries(userId: string, includePrivate = false, limit = 6) {
+  async getUserRecentGalleries(
+    userId: string,
+    includePrivate = false,
+    limit = 6,
+  ) {
     const visibilityFilter = includePrivate
       ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
       : [Visibility.PUBLIC];
@@ -192,7 +201,7 @@ export class UsersService {
         visibility: { in: visibilityFilter },
       },
       take: limit,
-      orderBy: { updatedAt: "desc" },
+      orderBy: { updatedAt: 'desc' },
     });
   }
 
@@ -203,7 +212,7 @@ export class UsersService {
         imageId: { not: null }, // Only include image media
       },
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -214,7 +223,7 @@ export class UsersService {
         visibility: Visibility.PUBLIC,
       },
       take: limit,
-      orderBy: { updatedAt: "desc" },
+      orderBy: { updatedAt: 'desc' },
     });
   }
 }

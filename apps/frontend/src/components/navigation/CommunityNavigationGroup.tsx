@@ -62,12 +62,9 @@ const GroupContent = styled.div<{ $isExpanded: boolean }>`
   padding-top: ${({ theme }) => theme.spacing.xs};
 `;
 
-export const CommunityNavigationGroup: React.FC<CommunityNavigationGroupProps> = ({
-  title,
-  icon: Icon,
-  children,
-  defaultExpanded = true,
-}) => {
+export const CommunityNavigationGroup: React.FC<
+  CommunityNavigationGroupProps
+> = ({ title, icon: Icon, children, defaultExpanded = true }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (

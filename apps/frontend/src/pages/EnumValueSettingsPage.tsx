@@ -1,15 +1,15 @@
-import React, { useMemo } from "react";
-import styled from "styled-components";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { Check, X, Settings, ArrowLeft, Database, Palette } from "lucide-react";
-import { Button, ErrorMessage } from "@chardb/ui";
+import React, { useMemo } from 'react';
+import styled from 'styled-components';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Check, X, Settings, ArrowLeft, Database, Palette } from 'lucide-react';
+import { Button, ErrorMessage } from '@chardb/ui';
 import {
   useSpeciesVariantWithEnumValueSettingsQuery,
   useCreateEnumValueSettingMutation,
   useDeleteEnumValueSettingMutation,
   TraitValueType,
-} from "../generated/graphql";
-import { toast } from "react-hot-toast";
+} from '../generated/graphql';
+import { toast } from 'react-hot-toast';
 
 /**
  * Enum Value Settings Management Interface
@@ -179,7 +179,7 @@ const ToggleButton = styled(Button)<{ isEnabled: boolean }>`
   background: ${({ theme, isEnabled }) =>
     isEnabled ? theme.colors.success : theme.colors.surface};
   color: ${({ theme, isEnabled }) =>
-    isEnabled ? "#fff" : theme.colors.text.primary};
+    isEnabled ? '#fff' : theme.colors.text.primary};
   border-color: ${({ theme, isEnabled }) =>
     isEnabled ? theme.colors.success : theme.colors.border};
 
@@ -238,18 +238,19 @@ export const EnumValueSettingsPage: React.FC = () => {
 
     const variant = data.speciesVariantById;
     const species = variant.species;
-    
+
     // Filter to only ENUM traits
-    const enumTraits = species?.traits?.filter(trait => 
-      trait.valueType === TraitValueType.Enum
-    ) || [];
+    const enumTraits =
+      species?.traits?.filter(
+        (trait) => trait.valueType === TraitValueType.Enum,
+      ) || [];
 
     // Create lookup for enabled enum value settings
     const settingsLookup = new Map(
-      variant.enumValueSettings?.map(setting => [
-        setting.enumValueId, 
-        setting.id
-      ]) || []
+      variant.enumValueSettings?.map((setting) => [
+        setting.enumValueId,
+        setting.id,
+      ]) || [],
     );
 
     return {
@@ -262,7 +263,7 @@ export const EnumValueSettingsPage: React.FC = () => {
 
   const [createEnumValueSetting] = useCreateEnumValueSettingMutation({
     onCompleted: () => {
-      toast.success("Enum value enabled successfully!");
+      toast.success('Enum value enabled successfully!');
       refetch();
     },
     onError: (error) => {
@@ -272,7 +273,7 @@ export const EnumValueSettingsPage: React.FC = () => {
 
   const [deleteEnumValueSetting] = useDeleteEnumValueSettingMutation({
     onCompleted: () => {
-      toast.success("Enum value disabled successfully!");
+      toast.success('Enum value disabled successfully!');
       refetch();
     },
     onError: (error) => {
@@ -284,7 +285,7 @@ export const EnumValueSettingsPage: React.FC = () => {
   const handleToggleEnumValue = async (
     enumValueId: string,
     isCurrentlyEnabled: boolean,
-    settingId?: string
+    settingId?: string,
   ) => {
     if (isCurrentlyEnabled && settingId) {
       // Disable by deleting the setting
@@ -320,9 +321,7 @@ export const EnumValueSettingsPage: React.FC = () => {
   if (error) {
     return (
       <Container>
-        <ErrorMessage
-          message={`Failed to load data: ${error.message}`}
-        />
+        <ErrorMessage message={`Failed to load data: ${error.message}`} />
       </Container>
     );
   }
@@ -340,9 +339,13 @@ export const EnumValueSettingsPage: React.FC = () => {
   return (
     <Container>
       <Breadcrumb>
-        <Link to={`/communities/${species?.communityId}/species`}>Species Management</Link>
+        <Link to={`/communities/${species?.communityId}/species`}>
+          Species Management
+        </Link>
         <span>/</span>
-        <Link to={`/species/${variant.speciesId}`}>{species?.name || "Species"}</Link>
+        <Link to={`/species/${variant.speciesId}`}>
+          {species?.name || 'Species'}
+        </Link>
         <span>/</span>
         <Link to={`/species/${variant.speciesId}/variants`}>Variants</Link>
         <span>/</span>
@@ -388,8 +391,12 @@ export const EnumValueSettingsPage: React.FC = () => {
       ) : (
         enumTraits.map((trait) => {
           const enumValues = trait.enumValues || [];
-          const sortedEnumValues = [...enumValues].sort((a, b) => a.order - b.order);
-          const enabledCount = sortedEnumValues.filter(ev => settingsLookup.has(ev.id)).length;
+          const sortedEnumValues = [...enumValues].sort(
+            (a, b) => a.order - b.order,
+          );
+          const enabledCount = sortedEnumValues.filter((ev) =>
+            settingsLookup.has(ev.id),
+          ).length;
 
           return (
             <TraitSection key={trait.id}>
@@ -402,7 +409,7 @@ export const EnumValueSettingsPage: React.FC = () => {
                   {enabledCount} of {sortedEnumValues.length} options enabled
                 </TraitMeta>
               </TraitHeader>
-              
+
               <EnumValuesGrid>
                 {sortedEnumValues.map((enumValue) => {
                   const isEnabled = settingsLookup.has(enumValue.id);
@@ -414,11 +421,17 @@ export const EnumValueSettingsPage: React.FC = () => {
                         <EnumValueName>{enumValue.name}</EnumValueName>
                         <EnumValueMeta>Order: {enumValue.order}</EnumValueMeta>
                       </EnumValueInfo>
-                      
+
                       <ToggleButton
                         size="sm"
                         isEnabled={isEnabled}
-                        onClick={() => handleToggleEnumValue(enumValue.id, isEnabled, settingId)}
+                        onClick={() =>
+                          handleToggleEnumValue(
+                            enumValue.id,
+                            isEnabled,
+                            settingId,
+                          )
+                        }
                         icon={isEnabled ? <Check size={14} /> : <X size={14} />}
                       >
                         {isEnabled ? 'Enabled' : 'Disabled'}
@@ -434,4 +447,3 @@ export const EnumValueSettingsPage: React.FC = () => {
     </Container>
   );
 };
-

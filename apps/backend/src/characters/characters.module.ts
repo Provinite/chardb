@@ -10,7 +10,15 @@ import { CharactersService } from './characters.service';
 import { CharactersResolver } from './characters.resolver';
 
 @Module({
-  imports: [DatabaseModule, ImagesModule, TagsModule, UsersModule, forwardRef(() => MediaModule), SpeciesVariantsModule, SpeciesModule],
+  imports: [
+    DatabaseModule,
+    ImagesModule,
+    TagsModule,
+    UsersModule,
+    forwardRef(() => MediaModule),
+    SpeciesVariantsModule,
+    SpeciesModule,
+  ],
   providers: [CharactersService, CharactersResolver],
   exports: [CharactersService],
 })

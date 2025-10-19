@@ -7,40 +7,40 @@ import {
   ResolveField,
   Parent,
   Int,
-} from "@nestjs/graphql";
-import { NotFoundException } from "@nestjs/common";
-import { CurrentUser, CurrentUserType } from "../auth/decorators/CurrentUser";
-import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
-import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
-import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
-import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
-import { GalleriesService } from "./galleries.service";
-import { MediaService } from "../media/media.service";
+} from '@nestjs/graphql';
+import { NotFoundException } from '@nestjs/common';
+import { CurrentUser, CurrentUserType } from '../auth/decorators/CurrentUser';
+import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
+import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
+import { AllowGlobalAdmin } from '../auth/decorators/AllowGlobalAdmin';
+import { AllowEntityOwner } from '../auth/decorators/AllowEntityOwner';
+import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
+import { GalleriesService } from './galleries.service';
+import { MediaService } from '../media/media.service';
 import {
   Gallery,
   GalleryConnection,
   GalleryCount,
-} from "./entities/gallery.entity";
-import { User } from "../users/entities/user.entity";
-import { Character } from "../characters/entities/character.entity";
-import { RemovalResponse } from "../shared/entities/removal-response.entity";
+} from './entities/gallery.entity';
+import { User } from '../users/entities/user.entity';
+import { Character } from '../characters/entities/character.entity';
+import { RemovalResponse } from '../shared/entities/removal-response.entity';
 import {
   CreateGalleryInput,
   UpdateGalleryInput,
   GalleryFiltersInput,
   ReorderGalleriesInput,
-} from "./dto/gallery.dto";
+} from './dto/gallery.dto';
 import {
   mapCreateGalleryInputToService,
   mapUpdateGalleryInputToService,
   mapPrismaGalleryToGraphQL,
   mapPrismaGalleryConnectionToGraphQL,
-} from "./utils/gallery-resolver-mappers";
-import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
-import { mapPrismaCharacterToGraphQL } from "../characters/utils/character-resolver-mappers";
-import { UsersService } from "../users/users.service";
-import { CharactersService } from "../characters/characters.service";
+} from './utils/gallery-resolver-mappers';
+import { mapPrismaUserToGraphQL } from '../users/utils/user-resolver-mappers';
+import { mapPrismaCharacterToGraphQL } from '../characters/utils/character-resolver-mappers';
+import { UsersService } from '../users/users.service';
+import { CharactersService } from '../characters/characters.service';
 
 @Resolver(() => Gallery)
 export class GalleriesResolver {
@@ -54,11 +54,11 @@ export class GalleriesResolver {
   @AllowAnyAuthenticated()
   @Mutation(() => Gallery)
   async createGallery(
-    @Args("input") input: CreateGalleryInput,
+    @Args('input') input: CreateGalleryInput,
     @CurrentUser() user: CurrentUserType,
   ): Promise<Gallery> {
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException('User not found');
     }
     const serviceInput = mapCreateGalleryInputToService(input);
     const prismaResult = await this.galleriesService.create(
@@ -71,7 +71,7 @@ export class GalleriesResolver {
   @AllowUnauthenticated()
   @Query(() => GalleryConnection)
   async galleries(
-    @Args("filters", { nullable: true }) filters?: GalleryFiltersInput,
+    @Args('filters', { nullable: true }) filters?: GalleryFiltersInput,
     @CurrentUser() user?: CurrentUserType,
   ): Promise<GalleryConnection> {
     const serviceResult = await this.galleriesService.findAll(
@@ -84,7 +84,7 @@ export class GalleriesResolver {
   @AllowUnauthenticated()
   @Query(() => Gallery)
   async gallery(
-    @Args("id", { type: () => ID }) id: string,
+    @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user?: CurrentUserType,
   ): Promise<Gallery> {
     const prismaResult = await this.galleriesService.findOne(id, user?.id);
@@ -92,11 +92,11 @@ export class GalleriesResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowEntityOwner({ galleryId: "id" })
+  @AllowEntityOwner({ galleryId: 'id' })
   @Mutation(() => Gallery)
   async updateGallery(
-    @Args("id", { type: () => ID }) id: string,
-    @Args("input") input: UpdateGalleryInput,
+    @Args('id', { type: () => ID }) id: string,
+    @Args('input') input: UpdateGalleryInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<Gallery> {
     const serviceInput = mapUpdateGalleryInputToService(input);
@@ -109,14 +109,14 @@ export class GalleriesResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowEntityOwner({ galleryId: "id" })
+  @AllowEntityOwner({ galleryId: 'id' })
   @Mutation(() => RemovalResponse)
   async deleteGallery(
-    @Args("id", { type: () => ID }) id: string,
+    @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<RemovalResponse> {
     await this.galleriesService.remove(id, user.id);
-    return { removed: true, message: "Gallery successfully deleted" };
+    return { removed: true, message: 'Gallery successfully deleted' };
   }
 
   // NOTE: Image-gallery operations now handled through Media system
@@ -124,7 +124,7 @@ export class GalleriesResolver {
   @AllowAnyAuthenticated()
   @Mutation(() => [Gallery])
   async reorderGalleries(
-    @Args("input") input: ReorderGalleriesInput,
+    @Args('input') input: ReorderGalleriesInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<Gallery[]> {
     const prismaResults = await this.galleriesService.reorderGalleries(
@@ -138,10 +138,10 @@ export class GalleriesResolver {
   @Query(() => GalleryConnection)
   async myGalleries(
     @CurrentUser() user: CurrentUserType,
-    @Args("filters", { nullable: true }) filters?: GalleryFiltersInput,
+    @Args('filters', { nullable: true }) filters?: GalleryFiltersInput,
   ): Promise<GalleryConnection> {
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException('User not found');
     }
     const userFilters = { ...filters, ownerId: user.id };
     const serviceResult = await this.galleriesService.findAll(
@@ -154,8 +154,8 @@ export class GalleriesResolver {
   @AllowUnauthenticated()
   @Query(() => GalleryConnection)
   async userGalleries(
-    @Args("userId", { type: () => ID }) userId: string,
-    @Args("filters", { nullable: true }) filters?: GalleryFiltersInput,
+    @Args('userId', { type: () => ID }) userId: string,
+    @Args('filters', { nullable: true }) filters?: GalleryFiltersInput,
     @CurrentUser() user?: CurrentUserType,
   ): Promise<GalleryConnection> {
     const userFilters = { ...filters, ownerId: userId };
@@ -169,8 +169,8 @@ export class GalleriesResolver {
   @AllowUnauthenticated()
   @Query(() => GalleryConnection)
   async characterGalleries(
-    @Args("characterId", { type: () => ID }) characterId: string,
-    @Args("filters", { nullable: true }) filters?: GalleryFiltersInput,
+    @Args('characterId', { type: () => ID }) characterId: string,
+    @Args('filters', { nullable: true }) filters?: GalleryFiltersInput,
     @CurrentUser() user?: CurrentUserType,
   ): Promise<GalleryConnection> {
     const characterFilters = { ...filters, characterId };
@@ -187,7 +187,7 @@ export class GalleriesResolver {
     @CurrentUser() user: CurrentUserType,
   ): Promise<Gallery[]> {
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException('User not found');
     }
     const prismaResults = await this.galleriesService.findLikedGalleries(
       user.id,
@@ -196,7 +196,7 @@ export class GalleriesResolver {
   }
 
   // Field resolvers for relations and computed properties
-  @ResolveField("owner", () => User)
+  @ResolveField('owner', () => User)
   async resolveOwner(@Parent() gallery: Gallery): Promise<User> {
     const prismaUser = await this.usersService.findById(gallery.ownerId);
     if (!prismaUser) {
@@ -205,7 +205,7 @@ export class GalleriesResolver {
     return mapPrismaUserToGraphQL(prismaUser);
   }
 
-  @ResolveField("character", () => Character, { nullable: true })
+  @ResolveField('character', () => Character, { nullable: true })
   async resolveCharacter(
     @Parent() gallery: Gallery,
   ): Promise<Character | null> {
@@ -224,13 +224,13 @@ export class GalleriesResolver {
     }
   }
 
-  @ResolveField("likesCount", () => Int)
+  @ResolveField('likesCount', () => Int)
   async resolveLikesCount(@Parent() gallery: Gallery): Promise<number> {
     return this.galleriesService.getGalleryLikesCount(gallery.id);
   }
 
   @AllowAnyAuthenticated()
-  @ResolveField("userHasLiked", () => Boolean)
+  @ResolveField('userHasLiked', () => Boolean)
   async resolveUserHasLiked(
     @Parent() gallery: Gallery,
     @CurrentUser() user?: CurrentUserType,
@@ -239,7 +239,7 @@ export class GalleriesResolver {
   }
 
   /** Gallery count field resolver */
-  @ResolveField("_count", () => GalleryCount)
+  @ResolveField('_count', () => GalleryCount)
   async resolveCountField(@Parent() gallery: Gallery): Promise<GalleryCount> {
     const mediaCount = await this.mediaService.getGalleryMediaCount(gallery.id);
     return { media: mediaCount };

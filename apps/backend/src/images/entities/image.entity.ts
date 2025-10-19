@@ -22,11 +22,8 @@ export class Image {
   @Field({ nullable: true })
   altText?: string;
 
-
   @Field(() => ID)
   uploaderId: string;
-
-
 
   // Artist attribution
   @Field(() => ID, { nullable: true })
@@ -59,7 +56,6 @@ export class Image {
   @Field({ nullable: true })
   sensitiveContentDescription?: string;
 
-
   @Field()
   createdAt: Date;
 
@@ -72,8 +68,6 @@ export class Image {
 
   @Field(() => User, { nullable: true })
   artist?: User;
-
-
 
   @Field(() => [ImageTag], { nullable: true })
   tags_rel?: ImageTag[];

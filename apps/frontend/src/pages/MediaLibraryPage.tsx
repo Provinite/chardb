@@ -69,19 +69,23 @@ const FilterTab = styled.button.withConfig({
   shouldForwardProp: (prop) => prop !== 'active',
 })<{ active: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.border};
-  background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.background};
-  color: ${props => props.active ? 'white' : props.theme.colors.text.secondary};
+  border: 1px solid
+    ${(props) =>
+      props.active ? props.theme.colors.primary : props.theme.colors.border};
+  background: ${(props) =>
+    props.active ? props.theme.colors.primary : props.theme.colors.background};
+  color: ${(props) =>
+    props.active ? 'white' : props.theme.colors.text.secondary};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   cursor: pointer;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   transition: all 0.2s;
-  
-  &:hover:not([data-active="true"]) {
+
+  &:hover:not([data-active='true']) {
     border-color: ${({ theme }) => theme.colors.primary};
     background: ${({ theme }) => theme.colors.primary}10;
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -94,8 +98,6 @@ const LoadingContainer = styled.div`
   align-items: center;
   min-height: 200px;
 `;
-
-
 
 type MediaFilter = 'all' | 'images' | 'text';
 
@@ -110,8 +112,12 @@ export const MediaLibraryPage: React.FC = () => {
         limit: 50,
         offset: 0,
         search: searchTerm || undefined,
-        mediaType: mediaFilter === 'all' ? undefined : 
-                  mediaFilter === 'images' ? MediaType.Image : MediaType.Text,
+        mediaType:
+          mediaFilter === 'all'
+            ? undefined
+            : mediaFilter === 'images'
+              ? MediaType.Image
+              : MediaType.Text,
       },
     },
   });
@@ -120,8 +126,8 @@ export const MediaLibraryPage: React.FC = () => {
   const totalCount = data?.media?.total || 0;
 
   // Count media by type for filter tabs
-  const imageCount = media.filter(item => item.image).length;
-  const textCount = media.filter(item => item.textContent).length;
+  const imageCount = media.filter((item) => item.image).length;
+  const textCount = media.filter((item) => item.textContent).length;
 
   if (loading) {
     return (
@@ -158,10 +164,7 @@ export const MediaLibraryPage: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Button
-            variant="primary"
-            onClick={() => navigate('/upload')}
-          >
+          <Button variant="primary" onClick={() => navigate('/upload')}>
             Add Media
           </Button>
         </Controls>
@@ -195,16 +198,16 @@ export const MediaLibraryPage: React.FC = () => {
         showOwner={true}
         loading={loading}
         emptyMessage={
-          searchTerm 
-            ? "No media matches your search criteria" 
-            : mediaFilter === 'all' 
-              ? "No media found" 
+          searchTerm
+            ? 'No media matches your search criteria'
+            : mediaFilter === 'all'
+              ? 'No media found'
               : `No ${mediaFilter} found`
         }
         emptyDescription={
-          searchTerm 
-            ? "Try adjusting your search terms." 
-            : "Start building your collection by uploading your first media."
+          searchTerm
+            ? 'Try adjusting your search terms.'
+            : 'Start building your collection by uploading your first media.'
         }
       />
     </Container>

@@ -5,12 +5,12 @@ import React, {
   useEffect,
   useLayoutEffect,
   ReactNode,
-} from "react";
-import { ThemeProvider as StyledThemeProvider } from "styled-components";
-import { lightTheme, darkTheme, Theme } from "@chardb/ui";
-import { GlobalStyles } from "../components/GlobalStyles";
+} from 'react';
+import { ThemeProvider as StyledThemeProvider } from 'styled-components';
+import { lightTheme, darkTheme, Theme } from '@chardb/ui';
+import { GlobalStyles } from '../components/GlobalStyles';
 
-type ThemeMode = "light" | "dark";
+type ThemeMode = 'light' | 'dark';
 
 interface ThemeContextType {
   mode: ThemeMode;
@@ -25,23 +25,23 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
-const THEME_STORAGE_KEY = "chardb-theme-mode";
+const THEME_STORAGE_KEY = 'chardb-theme-mode';
 
 // Get initial theme outside of React lifecycle
 const getInitialTheme = (): ThemeMode => {
-  if (typeof window !== "undefined") {
+  if (typeof window !== 'undefined') {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === "light" || stored === "dark") {
+    if (stored === 'light' || stored === 'dark') {
       return stored;
     }
 
     // Check system preference
     const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)",
+      '(prefers-color-scheme: dark)',
     ).matches;
-    return prefersDark ? "dark" : "light";
+    return prefersDark ? 'dark' : 'light';
   }
-  return "light";
+  return 'light';
 };
 
 const initialTheme = getInitialTheme();
@@ -51,29 +51,29 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [mode, setMode] = useState<ThemeMode>(initialTheme);
 
   // Get current theme object
-  const theme = mode === "dark" ? darkTheme : lightTheme;
+  const theme = mode === 'dark' ? darkTheme : lightTheme;
 
   // Apply theme immediately to DOM elements to prevent flash
   useLayoutEffect(() => {
-    if (typeof document !== "undefined") {
+    if (typeof document !== 'undefined') {
       // Temporarily disable transitions
       const bodyTransition = document.body.style.transition;
       document.body.style.transition = 'none';
-      
+
       const rootElement = document.getElementById('root');
       const rootTransition = rootElement?.style.transition;
       if (rootElement) {
         rootElement.style.transition = 'none';
       }
-      
+
       // Apply theme colors
       document.body.style.backgroundColor = theme.colors.background;
       document.body.style.color = theme.colors.text.primary;
-      
+
       if (rootElement) {
         rootElement.style.backgroundColor = theme.colors.background;
       }
-      
+
       // Re-enable transitions after a brief delay
       setTimeout(() => {
         document.body.style.transition = bodyTransition;
@@ -86,7 +86,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Toggle between light and dark
   const toggleTheme = () => {
-    const newMode = mode === "light" ? "dark" : "light";
+    const newMode = mode === 'light' ? 'dark' : 'light';
     setMode(newMode);
   };
 
@@ -102,18 +102,18 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Listen for system theme changes
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const handleChange = (e: MediaQueryListEvent) => {
       // Only auto-switch if user hasn't manually set a preference
       const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
       if (!storedTheme) {
-        setMode(e.matches ? "dark" : "light");
+        setMode(e.matches ? 'dark' : 'light');
       }
     };
 
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   const value: ThemeContextType = {
@@ -136,7 +136,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+    throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
 };

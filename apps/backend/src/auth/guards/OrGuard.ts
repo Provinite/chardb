@@ -4,8 +4,8 @@ import {
   Injectable,
   mixin,
   Type,
-} from "@nestjs/common";
-import { ModuleRef } from "@nestjs/core";
+} from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 
 /**
  * Creates a guard that passes if ANY of the provided guards passes (OR logic).
@@ -65,7 +65,7 @@ export function OrGuard(...guards: Type<CanActivate>[]): Type<CanActivate> {
           if (!guard) {
             console.warn(
               `OrGuard: Could not resolve guard ${GuardClass.name} from DI container. ` +
-                "Make sure the guard is provided in a module.",
+                'Make sure the guard is provided in a module.',
             );
             continue;
           }

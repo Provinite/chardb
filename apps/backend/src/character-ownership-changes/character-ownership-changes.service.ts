@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import type { Prisma } from '@chardb/database';
 
 /**
  * Service layer input types for character ownership change operations.
@@ -57,7 +56,9 @@ export class CharacterOwnershipChangesService {
     ]);
 
     const hasNextPage = ownershipChanges.length > first;
-    const nodes = hasNextPage ? ownershipChanges.slice(0, -1) : ownershipChanges;
+    const nodes = hasNextPage
+      ? ownershipChanges.slice(0, -1)
+      : ownershipChanges;
 
     return {
       nodes,
@@ -67,7 +68,11 @@ export class CharacterOwnershipChangesService {
     };
   }
 
-  async findByCharacter(filters: CharacterOwnershipChangeFiltersServiceInput & { characterId: string }) {
+  async findByCharacter(
+    filters: CharacterOwnershipChangeFiltersServiceInput & {
+      characterId: string;
+    },
+  ) {
     const { characterId, first = 20, after } = filters;
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
@@ -86,7 +91,9 @@ export class CharacterOwnershipChangesService {
     ]);
 
     const hasNextPage = ownershipChanges.length > first;
-    const nodes = hasNextPage ? ownershipChanges.slice(0, -1) : ownershipChanges;
+    const nodes = hasNextPage
+      ? ownershipChanges.slice(0, -1)
+      : ownershipChanges;
 
     return {
       nodes,
@@ -96,7 +103,9 @@ export class CharacterOwnershipChangesService {
     };
   }
 
-  async findByUser(filters: CharacterOwnershipChangeFiltersServiceInput & { userId: string }) {
+  async findByUser(
+    filters: CharacterOwnershipChangeFiltersServiceInput & { userId: string },
+  ) {
     const { userId, first = 20, after } = filters;
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
@@ -104,10 +113,7 @@ export class CharacterOwnershipChangesService {
     const [ownershipChanges, totalCount] = await Promise.all([
       this.prisma.characterOwnershipChange.findMany({
         where: {
-          OR: [
-            { fromUserId: userId },
-            { toUserId: userId },
-          ],
+          OR: [{ fromUserId: userId }, { toUserId: userId }],
         },
         take: first + 1,
         skip,
@@ -116,16 +122,15 @@ export class CharacterOwnershipChangesService {
       }),
       this.prisma.characterOwnershipChange.count({
         where: {
-          OR: [
-            { fromUserId: userId },
-            { toUserId: userId },
-          ],
+          OR: [{ fromUserId: userId }, { toUserId: userId }],
         },
       }),
     ]);
 
     const hasNextPage = ownershipChanges.length > first;
-    const nodes = hasNextPage ? ownershipChanges.slice(0, -1) : ownershipChanges;
+    const nodes = hasNextPage
+      ? ownershipChanges.slice(0, -1)
+      : ownershipChanges;
 
     return {
       nodes,
@@ -136,12 +141,15 @@ export class CharacterOwnershipChangesService {
   }
 
   async findOne(id: string) {
-    const ownershipChange = await this.prisma.characterOwnershipChange.findUnique({
-      where: { id },
-    });
+    const ownershipChange =
+      await this.prisma.characterOwnershipChange.findUnique({
+        where: { id },
+      });
 
     if (!ownershipChange) {
-      throw new NotFoundException(`Character ownership change with ID ${id} not found`);
+      throw new NotFoundException(
+        `Character ownership change with ID ${id} not found`,
+      );
     }
 
     return ownershipChange;

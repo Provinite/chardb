@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CommentsService, CommentableTypeFilter } from './comments.service';
 import { DatabaseService } from '../database/database.service';
 import { mockDatabaseService } from '../../test/setup';

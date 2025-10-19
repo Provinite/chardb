@@ -1,5 +1,11 @@
-import { CreateCommunityInvitationInput, RespondToCommunityInvitationInput } from '../dto/community-invitation.dto';
-import { CommunityInvitation, CommunityInvitationConnection } from '../entities/community-invitation.entity';
+import {
+  CreateCommunityInvitationInput,
+  RespondToCommunityInvitationInput,
+} from '../dto/community-invitation.dto';
+import {
+  CommunityInvitation,
+  CommunityInvitationConnection,
+} from '../entities/community-invitation.entity';
 import { Prisma } from '@chardb/database';
 
 /**
@@ -9,7 +15,9 @@ import { Prisma } from '@chardb/database';
 /**
  * Maps CreateCommunityInvitationInput to service input format
  */
-export function mapCreateCommunityInvitationInputToService(input: CreateCommunityInvitationInput) {
+export function mapCreateCommunityInvitationInputToService(
+  input: CreateCommunityInvitationInput,
+) {
   return {
     roleId: input.roleId,
     inviteeId: input.inviteeId,
@@ -21,7 +29,9 @@ export function mapCreateCommunityInvitationInputToService(input: CreateCommunit
 /**
  * Maps RespondToCommunityInvitationInput to service input format
  */
-export function mapRespondToCommunityInvitationInputToService(input: RespondToCommunityInvitationInput) {
+export function mapRespondToCommunityInvitationInputToService(
+  input: RespondToCommunityInvitationInput,
+) {
   return {
     accept: input.accept,
   };
@@ -41,7 +51,9 @@ type PrismaInvitationWithRelations = Prisma.CommunityInvitationGetPayload<{
  * Maps Prisma CommunityInvitation result to GraphQL CommunityInvitation entity
  * Only includes scalar fields - relations are handled by field resolvers
  */
-export function mapPrismaCommunityInvitationToGraphQL(prismaInvitation: PrismaInvitationWithRelations): CommunityInvitation {
+export function mapPrismaCommunityInvitationToGraphQL(
+  prismaInvitation: PrismaInvitationWithRelations,
+): CommunityInvitation {
   return {
     id: prismaInvitation.id,
     roleId: prismaInvitation.roleId,

@@ -1,5 +1,11 @@
 import { InputType, Field, ID } from '@nestjs/graphql';
-import { IsString, IsNotEmpty, Length, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  Length,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
 
 @InputType()
 export class CreateSpeciesVariantInput {
@@ -28,7 +34,10 @@ export class UpdateSpeciesVariantInput {
   name?: string;
 
   /** ID of the species this variant belongs to */
-  @Field(() => ID, { nullable: true, description: 'ID of the species this variant belongs to' })
+  @Field(() => ID, {
+    nullable: true,
+    description: 'ID of the species this variant belongs to',
+  })
   @IsOptional()
   @IsUUID()
   @IsNotEmpty()

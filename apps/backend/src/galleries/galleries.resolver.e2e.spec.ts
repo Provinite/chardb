@@ -46,7 +46,7 @@ describe('GalleriesResolver (e2e)', () => {
       const response = await testApp.authenticatedGraphqlRequest(
         GALLERY_QUERIES.CREATE_GALLERY,
         { input },
-        testToken
+        testToken,
       );
 
       expect(response.status).toBe(200);
@@ -70,7 +70,7 @@ describe('GalleriesResolver (e2e)', () => {
 
       const response = await testApp.graphqlRequest(
         GALLERY_QUERIES.CREATE_GALLERY,
-        { input }
+        { input },
       );
 
       expect(response.status).toBe(200);
@@ -99,7 +99,7 @@ describe('GalleriesResolver (e2e)', () => {
       const response = await testApp.authenticatedGraphqlRequest(
         GALLERY_QUERIES.CREATE_GALLERY,
         { input },
-        testToken
+        testToken,
       );
 
       expect(response.status).toBe(200);
@@ -125,7 +125,7 @@ describe('GalleriesResolver (e2e)', () => {
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
 
       const galleryId = createResponse.body.data.createGallery.id;
@@ -133,7 +133,7 @@ describe('GalleriesResolver (e2e)', () => {
       // Fetch it without authentication
       const fetchResponse = await testApp.graphqlRequest(
         GALLERY_QUERIES.GET_GALLERY,
-        { id: galleryId }
+        { id: galleryId },
       );
 
       expect(fetchResponse.status).toBe(200);
@@ -148,7 +148,7 @@ describe('GalleriesResolver (e2e)', () => {
     it('should return error for non-existent gallery', async () => {
       const response = await testApp.graphqlRequest(
         GALLERY_QUERIES.GET_GALLERY,
-        { id: '12345678-1234-1234-1234-123456789012' }
+        { id: '12345678-1234-1234-1234-123456789012' },
       );
 
       expect(response.status).toBe(200);
@@ -166,7 +166,7 @@ describe('GalleriesResolver (e2e)', () => {
             visibility: Visibility.PRIVATE,
           },
         },
-        testToken
+        testToken,
       );
 
       const galleryId = createResponse.body.data.createGallery.id;
@@ -174,12 +174,14 @@ describe('GalleriesResolver (e2e)', () => {
       // Try to fetch it without authentication
       const fetchResponse = await testApp.graphqlRequest(
         GALLERY_QUERIES.GET_GALLERY,
-        { id: galleryId }
+        { id: galleryId },
       );
 
       expect(fetchResponse.status).toBe(200);
       expect(fetchResponse.body.errors).toBeDefined();
-      expect(fetchResponse.body.errors[0].message).toContain('Gallery is private');
+      expect(fetchResponse.body.errors[0].message).toContain(
+        'Gallery is private',
+      );
     });
   });
 
@@ -195,7 +197,7 @@ describe('GalleriesResolver (e2e)', () => {
             sortOrder: 0,
           },
         },
-        testToken
+        testToken,
       );
 
       await testApp.authenticatedGraphqlRequest(
@@ -207,7 +209,7 @@ describe('GalleriesResolver (e2e)', () => {
             sortOrder: 1,
           },
         },
-        testToken
+        testToken,
       );
 
       await testApp.authenticatedGraphqlRequest(
@@ -219,7 +221,7 @@ describe('GalleriesResolver (e2e)', () => {
             sortOrder: 2,
           },
         },
-        testToken
+        testToken,
       );
     });
 
@@ -231,7 +233,7 @@ describe('GalleriesResolver (e2e)', () => {
             limit: 10,
             offset: 0,
           },
-        }
+        },
       );
 
       expect(response.status).toBe(200);
@@ -252,24 +254,24 @@ describe('GalleriesResolver (e2e)', () => {
             limit: 50,
             offset: 0,
           },
-        }
+        },
       );
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      
+
       // Should not include private galleries in public query
       const privateGalleries = response.body.data.galleries.galleries.filter(
-        (gallery: any) => gallery.visibility === Visibility.PRIVATE
+        (gallery: any) => gallery.visibility === Visibility.PRIVATE,
       );
-      
+
       expect(privateGalleries).toHaveLength(0);
-      
+
       // Should include public galleries
       const publicGalleries = response.body.data.galleries.galleries.filter(
-        (gallery: any) => gallery.visibility === Visibility.PUBLIC
+        (gallery: any) => gallery.visibility === Visibility.PUBLIC,
       );
-      
+
       expect(publicGalleries.length).toBe(2); // We created 2 public galleries
     });
 
@@ -281,14 +283,14 @@ describe('GalleriesResolver (e2e)', () => {
             limit: 10,
             offset: 0,
           },
-        }
+        },
       );
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      
+
       const galleries = response.body.data.galleries.galleries;
-      
+
       // Should be sorted by sortOrder first, then by createdAt desc
       expect(galleries[0].name).toBe('Public Gallery 1'); // sortOrder: 0
       expect(galleries[1].name).toBe('Public Gallery 2'); // sortOrder: 2
@@ -306,7 +308,7 @@ describe('GalleriesResolver (e2e)', () => {
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
 
       const galleryId = createResponse.body.data.createGallery.id;
@@ -329,7 +331,7 @@ describe('GalleriesResolver (e2e)', () => {
             description: 'Updated description',
           },
         },
-        testToken
+        testToken,
       );
 
       expect(updateResponse.status).toBe(200);
@@ -353,7 +355,7 @@ describe('GalleriesResolver (e2e)', () => {
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
 
       const galleryId = createResponse.body.data.createGallery.id;
@@ -366,7 +368,7 @@ describe('GalleriesResolver (e2e)', () => {
           }
         `,
         { id: galleryId },
-        testToken
+        testToken,
       );
 
       expect(deleteResponse.status).toBe(200);
@@ -376,11 +378,13 @@ describe('GalleriesResolver (e2e)', () => {
       // Verify it's deleted
       const fetchResponse = await testApp.graphqlRequest(
         GALLERY_QUERIES.GET_GALLERY,
-        { id: galleryId }
+        { id: galleryId },
       );
 
       expect(fetchResponse.body.errors).toBeDefined();
-      expect(fetchResponse.body.errors[0].message).toContain('Gallery not found');
+      expect(fetchResponse.body.errors[0].message).toContain(
+        'Gallery not found',
+      );
     });
   });
 
@@ -397,7 +401,7 @@ describe('GalleriesResolver (e2e)', () => {
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
 
       const galleryId = galleryResponse.body.data.createGallery.id;
@@ -435,13 +439,15 @@ describe('GalleriesResolver (e2e)', () => {
           galleryId,
           input: { imageId: image.id },
         },
-        testToken
+        testToken,
       );
 
       expect(addResponse.status).toBe(200);
       expect(addResponse.body.errors).toBeUndefined();
       expect(addResponse.body.data.addImageToGallery.images).toHaveLength(1);
-      expect(addResponse.body.data.addImageToGallery.images[0].id).toBe(image.id);
+      expect(addResponse.body.data.addImageToGallery.images[0].id).toBe(
+        image.id,
+      );
     });
   });
 
@@ -457,7 +463,7 @@ describe('GalleriesResolver (e2e)', () => {
             sortOrder: 0,
           },
         },
-        testToken
+        testToken,
       );
 
       const gallery2Response = await testApp.authenticatedGraphqlRequest(
@@ -469,7 +475,7 @@ describe('GalleriesResolver (e2e)', () => {
             sortOrder: 1,
           },
         },
-        testToken
+        testToken,
       );
 
       const gallery1Id = gallery1Response.body.data.createGallery.id;
@@ -491,18 +497,18 @@ describe('GalleriesResolver (e2e)', () => {
             galleryIds: [gallery2Id, gallery1Id], // Reverse order
           },
         },
-        testToken
+        testToken,
       );
 
       expect(reorderResponse.status).toBe(200);
       expect(reorderResponse.body.errors).toBeUndefined();
-      
+
       const reorderedGalleries = reorderResponse.body.data.reorderGalleries;
-      
+
       // Verify new sort orders
       const gallery1 = reorderedGalleries.find((g: any) => g.id === gallery1Id);
       const gallery2 = reorderedGalleries.find((g: any) => g.id === gallery2Id);
-      
+
       expect(gallery2.sortOrder).toBe(0); // Now first
       expect(gallery1.sortOrder).toBe(1); // Now second
     });

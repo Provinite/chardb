@@ -49,7 +49,7 @@ describe('CharactersResolver (e2e)', () => {
       const response = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         { input },
-        testToken
+        testToken,
       );
 
       expect(response.status).toBe(200);
@@ -74,7 +74,7 @@ describe('CharactersResolver (e2e)', () => {
 
       const response = await testApp.graphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
-        { input }
+        { input },
       );
 
       expect(response.status).toBe(200);
@@ -91,7 +91,7 @@ describe('CharactersResolver (e2e)', () => {
       const response = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         { input },
-        testToken
+        testToken,
       );
 
       expect(response.status).toBe(200);
@@ -111,7 +111,7 @@ describe('CharactersResolver (e2e)', () => {
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         { input: createInput },
-        testToken
+        testToken,
       );
 
       expect(createResponse.body.errors).toBeUndefined();
@@ -120,7 +120,7 @@ describe('CharactersResolver (e2e)', () => {
       // Then fetch it without authentication
       const fetchResponse = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
-        { id: characterId }
+        { id: characterId },
       );
 
       expect(fetchResponse.status).toBe(200);
@@ -136,7 +136,7 @@ describe('CharactersResolver (e2e)', () => {
     it('should return error for non-existent character', async () => {
       const response = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
-        { id: 'non-existent-id' }
+        { id: 'non-existent-id' },
       );
 
       expect(response.status).toBe(200);
@@ -155,7 +155,7 @@ describe('CharactersResolver (e2e)', () => {
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         { input: createInput },
-        testToken
+        testToken,
       );
 
       const characterId = createResponse.body.data.createCharacter.id;
@@ -163,12 +163,14 @@ describe('CharactersResolver (e2e)', () => {
       // Try to fetch it without authentication
       const fetchResponse = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
-        { id: characterId }
+        { id: characterId },
       );
 
       expect(fetchResponse.status).toBe(200);
       expect(fetchResponse.body.errors).toBeDefined();
-      expect(fetchResponse.body.errors[0].message).toContain('Character is private');
+      expect(fetchResponse.body.errors[0].message).toContain(
+        'Character is private',
+      );
     });
   });
 
@@ -184,7 +186,7 @@ describe('CharactersResolver (e2e)', () => {
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
 
       await testApp.authenticatedGraphqlRequest(
@@ -196,7 +198,7 @@ describe('CharactersResolver (e2e)', () => {
             visibility: Visibility.PRIVATE,
           },
         },
-        testToken
+        testToken,
       );
     });
 
@@ -208,7 +210,7 @@ describe('CharactersResolver (e2e)', () => {
             limit: 10,
             offset: 0,
           },
-        }
+        },
       );
 
       expect(response.status).toBe(200);
@@ -229,12 +231,12 @@ describe('CharactersResolver (e2e)', () => {
             limit: 10,
             offset: 0,
           },
-        }
+        },
       );
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      
+
       // Should only return Dragon characters
       response.body.data.characters.characters.forEach((char: any) => {
         expect(char.species).toBe('Dragon');
@@ -250,24 +252,24 @@ describe('CharactersResolver (e2e)', () => {
             limit: 50,
             offset: 0,
           },
-        }
+        },
       );
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      
+
       // Should not include private characters in public query
       const privateCharacters = response.body.data.characters.characters.filter(
-        (char: any) => char.visibility === Visibility.PRIVATE
+        (char: any) => char.visibility === Visibility.PRIVATE,
       );
-      
+
       expect(privateCharacters).toHaveLength(0);
-      
+
       // Should include public characters
       const publicCharacters = response.body.data.characters.characters.filter(
-        (char: any) => char.visibility === Visibility.PUBLIC
+        (char: any) => char.visibility === Visibility.PUBLIC,
       );
-      
+
       expect(publicCharacters.length).toBeGreaterThan(0);
     });
   });
@@ -284,7 +286,7 @@ describe('CharactersResolver (e2e)', () => {
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
 
       const characterId = createResponse.body.data.createCharacter.id;
@@ -307,7 +309,7 @@ describe('CharactersResolver (e2e)', () => {
             species: 'Phoenix',
           },
         },
-        testToken
+        testToken,
       );
 
       expect(updateResponse.status).toBe(200);
@@ -332,7 +334,7 @@ describe('CharactersResolver (e2e)', () => {
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
 
       const characterId = createResponse.body.data.createCharacter.id;
@@ -345,7 +347,7 @@ describe('CharactersResolver (e2e)', () => {
           }
         `,
         { id: characterId },
-        testToken
+        testToken,
       );
 
       expect(deleteResponse.status).toBe(200);
@@ -355,11 +357,13 @@ describe('CharactersResolver (e2e)', () => {
       // Verify it's deleted
       const fetchResponse = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
-        { id: characterId }
+        { id: characterId },
       );
 
       expect(fetchResponse.body.errors).toBeDefined();
-      expect(fetchResponse.body.errors[0].message).toContain('Character not found');
+      expect(fetchResponse.body.errors[0].message).toContain(
+        'Character not found',
+      );
     });
   });
 });

@@ -10,7 +10,7 @@ const Hero = styled.section`
   color: white;
   padding: 4rem 0;
   text-align: center;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -18,9 +18,17 @@ const Hero = styled.section`
     left: 0;
     right: 0;
     bottom: 0;
-    background: 
-      radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.3) 0%, transparent 50%);
+    background:
+      radial-gradient(
+        circle at 20% 80%,
+        rgba(59, 130, 246, 0.3) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 80% 20%,
+        rgba(99, 102, 241, 0.3) 0%,
+        transparent 50%
+      );
     pointer-events: none;
   }
 `;
@@ -37,7 +45,7 @@ const HeroTitle = styled.h1`
   font-size: 3rem;
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
   margin-bottom: ${({ theme }) => theme.spacing.lg};
-  
+
   @media (max-width: 768px) {
     font-size: 2rem;
   }
@@ -53,7 +61,7 @@ const HeroActions = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.md};
   justify-content: center;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: center;
@@ -69,7 +77,7 @@ const HeroPrimaryButton = styled(Button)`
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   min-width: 160px;
-  
+
   &:hover:not(:disabled) {
     background: #f8fafc;
     transform: translateY(-2px);
@@ -87,7 +95,7 @@ const HeroSecondaryButton = styled(Button)`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   min-width: 160px;
   backdrop-filter: blur(10px);
-  
+
   &:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.2);
     border-color: rgba(255, 255, 255, 0.5);
@@ -122,7 +130,7 @@ const FeatureCard = styled.div`
   box-shadow: ${({ theme }) => theme.shadows.md};
   text-align: center;
   transition: all 0.3s ease;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
@@ -162,8 +170,9 @@ export const HomePage: React.FC = () => {
         <HeroContent>
           <HeroTitle>Your Characters, Your Stories</HeroTitle>
           <HeroSubtitle>
-            Create, share, and discover amazing characters in our vibrant community.
-            Build your character profiles, showcase artwork, and connect with fellow creators.
+            Create, share, and discover amazing characters in our vibrant
+            community. Build your character profiles, showcase artwork, and
+            connect with fellow creators.
           </HeroSubtitle>
           <HeroActions>
             {user ? (
@@ -197,8 +206,9 @@ export const HomePage: React.FC = () => {
               <FeatureIcon>🎨</FeatureIcon>
               <FeatureTitle>Character Profiles</FeatureTitle>
               <FeatureDescription>
-                Create detailed character profiles with custom fields, personality traits,
-                backstories, and more. Organize everything in one place.
+                Create detailed character profiles with custom fields,
+                personality traits, backstories, and more. Organize everything
+                in one place.
               </FeatureDescription>
             </FeatureCard>
 
@@ -206,8 +216,8 @@ export const HomePage: React.FC = () => {
               <FeatureIcon>🖼️</FeatureIcon>
               <FeatureTitle>Image Galleries</FeatureTitle>
               <FeatureDescription>
-                Upload and organize artwork, reference images, and character art.
-                Create themed galleries and share your visual stories.
+                Upload and organize artwork, reference images, and character
+                art. Create themed galleries and share your visual stories.
               </FeatureDescription>
             </FeatureCard>
 
@@ -242,8 +252,8 @@ export const HomePage: React.FC = () => {
               <FeatureIcon>💱</FeatureIcon>
               <FeatureTitle>Character Trading</FeatureTitle>
               <FeatureDescription>
-                Mark characters as sellable or tradeable. Connect with others
-                to exchange and trade your creative works.
+                Mark characters as sellable or tradeable. Connect with others to
+                exchange and trade your creative works.
               </FeatureDescription>
             </FeatureCard>
           </FeaturesGrid>
