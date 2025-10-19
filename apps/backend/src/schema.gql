@@ -489,8 +489,14 @@ input CreateRoleInput {
   """Whether members with this role can edit species"""
   canEditSpecies: Boolean! = false
 
+  """Whether members with this role can grant items to community members"""
+  canGrantItems: Boolean! = false
+
   """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean! = false
+
+  """Whether members with this role can create, edit, and delete item types"""
+  canManageItems: Boolean! = false
 
   """Whether members with this role can change other members' roles"""
   canManageMemberRoles: Boolean! = false
@@ -1174,6 +1180,8 @@ type Mutation {
   deleteComment(id: ID!): Boolean!
   deleteGallery(id: ID!): RemovalResponse!
   deleteImage(id: ID!): Boolean!
+
+  """Delete an item (admin only)"""
   deleteItem(id: ID!): Boolean!
   deleteItemType(id: ID!): Boolean!
 
@@ -1349,6 +1357,8 @@ type Mutation {
     """Invite code update data"""
     updateInviteCodeInput: UpdateInviteCodeInput!
   ): InviteCode!
+
+  """Update an item (admin only)"""
   updateItem(id: ID!, input: UpdateItemInput!): Item!
   updateItemType(id: ID!, input: UpdateItemTypeInput!): ItemType!
 
@@ -1945,8 +1955,14 @@ type Role {
   """Whether members with this role can edit species"""
   canEditSpecies: Boolean!
 
+  """Whether members with this role can grant items to community members"""
+  canGrantItems: Boolean!
+
   """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean!
+
+  """Whether members with this role can create, edit, and delete item types"""
+  canManageItems: Boolean!
 
   """Whether members with this role can change other members' roles"""
   canManageMemberRoles: Boolean!
@@ -2390,8 +2406,14 @@ input UpdateRoleInput {
   """Whether members with this role can edit species"""
   canEditSpecies: Boolean
 
+  """Whether members with this role can grant items to community members"""
+  canGrantItems: Boolean
+
   """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean
+
+  """Whether members with this role can create, edit, and delete item types"""
+  canManageItems: Boolean
 
   """Whether members with this role can change other members' roles"""
   canManageMemberRoles: Boolean

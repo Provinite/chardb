@@ -150,13 +150,14 @@ export class ItemsResolver {
   }
 
   @AllowAnyAuthenticated()
-  @Mutation(() => ItemEntity)
+  @AllowCommunityPermission(CommunityPermission.CanGrantItems)
+  @ResolveCommunityFrom({ itemId: 'id' })
+  @Mutation(() => ItemEntity, { description: 'Update an item (admin only)' })
   async updateItem(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateItemInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<ItemEntity> {
-    // TODO: Add permission check - user must own the item or be community admin
     const item = await this.itemsService.updateItem(id, {
       quantity: input.quantity,
       metadata: input.metadata,
@@ -166,12 +167,13 @@ export class ItemsResolver {
   }
 
   @AllowAnyAuthenticated()
-  @Mutation(() => Boolean)
+  @AllowCommunityPermission(CommunityPermission.CanGrantItems)
+  @ResolveCommunityFrom({ itemId: 'id' })
+  @Mutation(() => Boolean, { description: 'Delete an item (admin only)' })
   async deleteItem(
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
-    // TODO: Add permission check - user must own the item or be community admin
     return this.itemsService.deleteItem(id);
   }
 
