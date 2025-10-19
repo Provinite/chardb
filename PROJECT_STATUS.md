@@ -620,6 +620,67 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 - [x] **GraphQL Integration**: Complete type safety with automatic code generation
 - [x] **Playwright Testing**: Comprehensive end-to-end testing of all search functionality
 
+### **Community Navigation Sidebar System (Issue #61)**
+**Status**: ✅ **Complete (Phases 1-3)** | **Completion Date**: Current Session
+- [x] **Phase 1: Core Sidebar Structure**: Complete sidebar component with route detection
+- [x] **Phase 2: Permission Integration**: Permission-aware navigation with role-based rendering
+- [x] **Phase 3: Community Switching**: Dropdown component for quick community navigation
+- [ ] **Phase 4: Responsive Design**: Mobile/tablet responsive behavior (Future enhancement)
+
+**Key Features**:
+- 🗂️ **Hierarchical Navigation**: Clear community scoping with nested sections (Community, Species, Administration)
+- 🔐 **Permission-Aware**: Menu items render based on user's role permissions in current community
+- 🔄 **Community Switcher**: Dropdown with search for quick switching between communities
+- 🎯 **Contextual Rendering**: Sidebar only appears on community-scoped routes (/communities/:id/*)
+- 🏠 **Clear Scope Indication**: Sidebar presence indicates community context, absence indicates global
+- 📊 **Smart Organization**: Collapsible sections for Community, Species & Characters, and Administration
+
+**Technical Implementation**:
+```typescript
+// Core Components
+- CommunityNavigationSidebar: Main sidebar with permission checks and route detection
+- CommunityNavigationItem: Individual nav items with active state and badge support
+- CommunityNavigationGroup: Collapsible sections with expand/collapse functionality
+- CommunitySwitcher: Dropdown with search, current selection, and "Browse All" link
+
+// Hooks & Utilities
+- useUserCommunityRole: Custom hook for fetching user's role and permissions in community
+- Permission checks: hasAdminPermissions, hasSpeciesPermissions, hasInvitePermissions
+
+// Permission-Based Rendering
+- Members: Always visible to community members
+- Invite Codes: Requires canCreateInviteCode || canListInviteCodes
+- Settings: Requires admin permissions
+- Species Management: Requires canCreateSpecies || canEditSpecies
+- Permissions: Requires canCreateRole || canEditRole
+- Moderation: Requires canRemoveCommunityMember
+
+// GraphQL Enhancements
+- Updated CommunityMembersByUser query with canRemoveCommunityMember and canManageMemberRoles fields
+- Regenerated GraphQL types for full type safety
+```
+
+**Navigation Hierarchy**:
+- **Overview**: Links to community homepage
+- **Community Section**: Members, Invite Codes (permission-gated), Settings (permission-gated)
+- **Species & Characters**: Species Management (permission-gated)
+- **Administration**: Dashboard, Permissions (permission-gated), Moderation (permission-gated)
+- **Back to Global**: Escape action to return to global navigation
+
+**User Experience**:
+- ✅ **Automatic Detection**: Sidebar appears/disappears based on current route
+- ✅ **Active State**: Current page highlighted with primary color and background
+- ✅ **Loading States**: Graceful loading for community data and permissions
+- ✅ **Non-Member Handling**: Sidebar hidden for non-community members
+- ✅ **Search & Filter**: Community switcher with instant search functionality
+- ✅ **Visual Feedback**: Hover states, smooth transitions, custom scrollbar styling
+- ✅ **Accessibility**: ARIA labels, keyboard navigation, screen reader support
+
+**Commits**:
+- `75f3b35` - feat(frontend): implement Phase 1 of contextual sidebar navigation (GH-61)
+- `dac9520` - feat(frontend): implement Phase 2 permission-aware sidebar navigation (GH-61)
+- `7ffef68` - feat(frontend): implement Phase 3 community switcher dropdown (GH-61)
+
 **Key Features**:
 - 🔍 **Multi-Criteria Search**: Name, description, personality, backstory, species, gender, age filtering
 - 💰 **Price Range Filtering**: Min/max price with sellable/tradeable status options
@@ -926,6 +987,6 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 
 ---
 
-**Last Updated**: Current Session (Post-My Pages Implementation)  
-**Next Review**: After Optional Testing Enhancements  
-**Project Phase**: Phase 1 Complete (100%), Phase 2 Complete (100%), Phase 2.5 Complete (100%), Phase 3 Complete (100%)
+**Last Updated**: Current Session (Post-Community Navigation Sidebar Implementation - Issue #61)
+**Next Review**: After Responsive Design Enhancement
+**Project Phase**: Phase 1 Complete (100%), Phase 2 Complete (100%), Phase 2.5 Complete (100%), Phase 3 Complete (100%), Phase 4A Complete (100%)
