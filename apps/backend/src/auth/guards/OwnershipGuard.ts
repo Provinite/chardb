@@ -1,14 +1,14 @@
-import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { GqlExecutionContext } from "@nestjs/graphql";
-import { getUserFromContext } from "../utils/get-user-from-context";
-import { AllowEntityOwner } from "../decorators/AllowEntityOwner";
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { GqlExecutionContext } from '@nestjs/graphql';
+import { getUserFromContext } from '../utils/get-user-from-context';
+import { AllowEntityOwner } from '../decorators/AllowEntityOwner';
 import {
   OwnershipResolutionConfig,
   OwnershipResolutionReference,
-} from "../types/OwnershipResolutionConfig";
-import { getNestedValue } from "../../common/utils/getNestedValue";
-import { OwnershipService } from "../OwnershipService";
+} from '../types/OwnershipResolutionConfig';
+import { getNestedValue } from '../../common/utils/getNestedValue';
+import { OwnershipService } from '../OwnershipService';
 
 /**
  * Generic guard that checks if the current user owns an entity or has identity relationship.
@@ -28,7 +28,7 @@ import { OwnershipService } from "../OwnershipService";
 export class OwnershipGuard implements CanActivate {
   constructor(
     private ownershipService: OwnershipService,
-    private reflector: Reflector
+    private reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -60,35 +60,35 @@ export class OwnershipGuard implements CanActivate {
     return this.ownershipService.isOwnerOf(
       user.id,
       entityType,
-      resolvedIds.value
+      resolvedIds.value,
     );
   }
 
   private getEntityType(
-    key: keyof OwnershipResolutionConfig
+    key: keyof OwnershipResolutionConfig,
   ):
-    | "character"
-    | "media"
-    | "gallery"
-    | "image"
-    | "inviteeOfInvitation"
-    | "inviterOrInviteeOfInvitation"
-    | "comment"
+    | 'character'
+    | 'media'
+    | 'gallery'
+    | 'image'
+    | 'inviteeOfInvitation'
+    | 'inviterOrInviteeOfInvitation'
+    | 'comment'
     | null {
-    if (key === "characterId") return "character";
-    if (key === "mediaId") return "media";
-    if (key === "galleryId") return "gallery";
-    if (key === "imageId") return "image";
-    if (key === "inviteeOfInvitationId") return "inviteeOfInvitation";
-    if (key === "inviterOrInviteeOfInvitationId")
-      return "inviterOrInviteeOfInvitation";
-    if (key === "commentId") return "comment";
+    if (key === 'characterId') return 'character';
+    if (key === 'mediaId') return 'media';
+    if (key === 'galleryId') return 'gallery';
+    if (key === 'imageId') return 'image';
+    if (key === 'inviteeOfInvitationId') return 'inviteeOfInvitation';
+    if (key === 'inviterOrInviteeOfInvitationId')
+      return 'inviterOrInviteeOfInvitation';
+    if (key === 'commentId') return 'comment';
     return null;
   }
 
   private resolveEntityIds(
     context: ExecutionContext,
-    config: OwnershipResolutionConfig
+    config: OwnershipResolutionConfig,
   ): OwnershipResolutionReference {
     const gqlContext = GqlExecutionContext.create(context);
     const args = gqlContext.getArgs();

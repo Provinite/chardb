@@ -6,8 +6,6 @@ registerEnumType(Visibility, {
   name: 'Visibility',
   description: 'Visibility levels for content',
 });
-import { User } from '../../users/entities/user.entity';
-import { Character } from '../../characters/entities/character.entity';
 
 @ObjectType()
 export class GalleryCount {

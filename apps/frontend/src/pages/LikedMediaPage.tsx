@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import { useQuery } from "@apollo/client";
-import { Link } from "react-router-dom";
-import styled from "styled-components";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import { useAuth } from "../contexts/AuthContext";
-import { GET_LIKED_MEDIA } from "../graphql/media.graphql";
-import { LikeButton } from "../components/LikeButton";
-import { LikeableType } from "../generated/graphql";
+import React, { useState } from 'react';
+import { useQuery } from '@apollo/client';
+import { Link } from 'react-router-dom';
+import styled from 'styled-components';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useAuth } from '../contexts/AuthContext';
+import { GET_LIKED_MEDIA } from '../graphql/media.graphql';
+import { LikeButton } from '../components/LikeButton';
+import { LikeableType } from '../generated/graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -68,7 +68,7 @@ const ImageElement = styled.img`
 `;
 
 const ImageOverlay = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== "isOpen",
+  shouldForwardProp: (prop) => prop !== 'isOpen',
 })<{ isOpen: boolean }>`
   position: fixed;
   top: 0;
@@ -76,7 +76,7 @@ const ImageOverlay = styled.div.withConfig({
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.9);
-  display: ${({ isOpen }) => (isOpen ? "flex" : "none")};
+  display: ${({ isOpen }) => (isOpen ? 'flex' : 'none')};
   align-items: center;
   justify-content: center;
   z-index: 1000;
@@ -255,10 +255,10 @@ export const LikedMediaPage: React.FC = () => {
   }
 
   const formatFileSize = (bytes: number) => {
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    if (bytes === 0) return "0 Bytes";
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    if (bytes === 0) return '0 Bytes';
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
+    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
   return (
@@ -284,6 +284,7 @@ export const LikedMediaPage: React.FC = () => {
           </EmptyState>
         ) : (
           <Grid>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {likedMedia.map((media: any) => (
               <ImageCard key={media.id}>
                 {media.image && (
@@ -300,22 +301,22 @@ export const LikedMediaPage: React.FC = () => {
                 {media.textContent && !media.image && (
                   <div
                     style={{
-                      padding: "16px",
-                      backgroundColor: "#f5f5f5",
-                      minHeight: "200px",
-                      display: "flex",
-                      flexDirection: "column",
+                      padding: '16px',
+                      backgroundColor: '#f5f5f5',
+                      minHeight: '200px',
+                      display: 'flex',
+                      flexDirection: 'column',
                     }}
                   >
-                    <h4 style={{ margin: "0 0 12px 0", color: "#333" }}>
+                    <h4 style={{ margin: '0 0 12px 0', color: '#333' }}>
                       Text Content
                     </h4>
                     <p
                       style={{
                         margin: 0,
-                        fontSize: "14px",
-                        lineHeight: "1.4",
-                        color: "#666",
+                        fontSize: '14px',
+                        lineHeight: '1.4',
+                        color: '#666',
                       }}
                     >
                       {media.textContent.content.slice(0, 200)}...
@@ -324,7 +325,7 @@ export const LikedMediaPage: React.FC = () => {
                 )}
 
                 <CardContent>
-                  <ImageTitle>{media.title || "Untitled"}</ImageTitle>
+                  <ImageTitle>{media.title || 'Untitled'}</ImageTitle>
 
                   <ImageMeta>
                     {media.image && (
@@ -342,7 +343,7 @@ export const LikedMediaPage: React.FC = () => {
 
                   <ImageMeta>
                     <MetaBadge>
-                      by{" "}
+                      by{' '}
                       <UploaderLink to={`/user/${media.owner.id}`}>
                         {media.owner.displayName || media.owner.username}
                       </UploaderLink>

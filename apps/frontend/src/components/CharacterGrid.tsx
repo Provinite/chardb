@@ -16,10 +16,10 @@ interface CharacterGridProps {
   showEditButton?: boolean;
 }
 
-export const CharacterGrid: React.FC<CharacterGridProps> = ({ 
-  characters, 
+export const CharacterGrid: React.FC<CharacterGridProps> = ({
+  characters,
   showOwner = true,
-  showEditButton = false
+  showEditButton = false,
 }) => {
   return (
     <Grid>

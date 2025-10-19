@@ -35,7 +35,7 @@ const ToggleButton = styled.button`
 const Icon = styled.span`
   font-size: 1.25rem;
   transition: transform 0.3s ease;
-  
+
   ${ToggleButton}:hover & {
     transform: rotate(20deg);
   }
@@ -50,9 +50,7 @@ export const ThemeToggle: React.FC = () => {
       aria-label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
       title={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
     >
-      <Icon>
-        {mode === 'light' ? '🌙' : '☀️'}
-      </Icon>
+      <Icon>{mode === 'light' ? '🌙' : '☀️'}</Icon>
     </ToggleButton>
   );
 };

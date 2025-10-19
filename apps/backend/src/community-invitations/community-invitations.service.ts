@@ -1,6 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
 
 /**
  * Service layer input types for community invitations operations.
@@ -47,7 +50,9 @@ export class CommunityInvitationsService {
     });
 
     if (existingInvitation) {
-      throw new BadRequestException('A pending invitation for this role and user already exists');
+      throw new BadRequestException(
+        'A pending invitation for this role and user already exists',
+      );
     }
 
     return this.prisma.communityInvitation.create({
@@ -91,7 +96,9 @@ export class CommunityInvitationsService {
     ]);
 
     const hasNextPage = communityInvitations.length > first;
-    const nodes = hasNextPage ? communityInvitations.slice(0, -1) : communityInvitations;
+    const nodes = hasNextPage
+      ? communityInvitations.slice(0, -1)
+      : communityInvitations;
 
     return {
       nodes,
@@ -102,7 +109,11 @@ export class CommunityInvitationsService {
   }
 
   /** Find community invitations by community ID with pagination */
-  async findByCommunity(communityId: string, first: number = 20, after?: string) {
+  async findByCommunity(
+    communityId: string,
+    first: number = 20,
+    after?: string,
+  ) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -130,7 +141,9 @@ export class CommunityInvitationsService {
     ]);
 
     const hasNextPage = communityInvitations.length > first;
-    const nodes = hasNextPage ? communityInvitations.slice(0, -1) : communityInvitations;
+    const nodes = hasNextPage
+      ? communityInvitations.slice(0, -1)
+      : communityInvitations;
 
     return {
       nodes,
@@ -169,7 +182,9 @@ export class CommunityInvitationsService {
     ]);
 
     const hasNextPage = communityInvitations.length > first;
-    const nodes = hasNextPage ? communityInvitations.slice(0, -1) : communityInvitations;
+    const nodes = hasNextPage
+      ? communityInvitations.slice(0, -1)
+      : communityInvitations;
 
     return {
       nodes,
@@ -208,7 +223,9 @@ export class CommunityInvitationsService {
     ]);
 
     const hasNextPage = communityInvitations.length > first;
-    const nodes = hasNextPage ? communityInvitations.slice(0, -1) : communityInvitations;
+    const nodes = hasNextPage
+      ? communityInvitations.slice(0, -1)
+      : communityInvitations;
 
     return {
       nodes,
@@ -220,33 +237,41 @@ export class CommunityInvitationsService {
 
   /** Find a community invitation by ID */
   async findOne(id: string) {
-    const communityInvitation = await this.prisma.communityInvitation.findUnique({
-      where: { id },
-      include: {
-        role: {
-          include: {
-            community: true,
+    const communityInvitation =
+      await this.prisma.communityInvitation.findUnique({
+        where: { id },
+        include: {
+          role: {
+            include: {
+              community: true,
+            },
           },
+          invitee: true,
+          inviter: true,
+          community: true,
         },
-        invitee: true,
-        inviter: true,
-        community: true,
-      },
-    });
+      });
 
     if (!communityInvitation) {
-      throw new NotFoundException(`Community invitation with ID ${id} not found`);
+      throw new NotFoundException(
+        `Community invitation with ID ${id} not found`,
+      );
     }
 
     return communityInvitation;
   }
 
   /** Respond to a community invitation (accept or decline) */
-  async respond(id: string, respondInput: RespondToCommunityInvitationServiceInput) {
+  async respond(
+    id: string,
+    respondInput: RespondToCommunityInvitationServiceInput,
+  ) {
     const invitation = await this.findOne(id);
 
     if (invitation.acceptedAt || invitation.declinedAt) {
-      throw new BadRequestException('This invitation has already been responded to');
+      throw new BadRequestException(
+        'This invitation has already been responded to',
+      );
     }
 
     const updateData = respondInput.accept

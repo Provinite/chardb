@@ -2,12 +2,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { Users, ArrowLeft } from 'lucide-react';
-import { 
-  Button,
-  Heading2,
-  SmallText,
-  HelpText
-} from '@chardb/ui';
+import { Button, Heading2, SmallText, HelpText } from '@chardb/ui';
 
 const Container = styled.div`
   display: flex;
@@ -127,8 +122,9 @@ export const CommunityMembersPage: React.FC = () => {
         </PlaceholderIcon>
         <Heading2>Member Management</Heading2>
         <HelpText>
-          This feature is under development. Community member management interface will be available soon.
-          You can use the Permission Management page to view and manage member roles.
+          This feature is under development. Community member management
+          interface will be available soon. You can use the Permission
+          Management page to view and manage member roles.
         </HelpText>
       </PlaceholderContent>
     </Container>

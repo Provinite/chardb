@@ -1,0 +1,10 @@
+dist
+node_modules
+coverage
+.env
+
+# Generated code patterns
+src/generated/
+**/generated/
+**/*.generated.*
+**/__generated__/

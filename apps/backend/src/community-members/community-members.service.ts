@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { DatabaseService } from "../database/database.service";
-import { Prisma } from "@chardb/database";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { DatabaseService } from '../database/database.service';
+import { Prisma } from '@chardb/database';
 
 /**
  * Service layer input types for community member operations.
@@ -26,6 +26,7 @@ export interface UpdateCommunityMemberServiceInput {
   roleId?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 type PrismaCommunityMember = Prisma.CommunityMemberGetPayload<{}>;
 
 @Injectable()
@@ -56,7 +57,7 @@ export class CommunityMembersService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.communityMember.count(),
     ]);
@@ -89,7 +90,7 @@ export class CommunityMembersService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.communityMember.count({
         where: { role: { communityId } },
@@ -120,7 +121,7 @@ export class CommunityMembersService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.communityMember.count({
         where: { userId },

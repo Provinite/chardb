@@ -7,38 +7,38 @@ import {
   Int,
   ResolveField,
   Parent,
-} from "@nestjs/graphql";
-import { InviteCodesService } from "./invite-codes.service";
-import { AllowGlobalPermission } from "../auth/decorators/AllowGlobalPermission";
-import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
-import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
-import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
-import { GlobalPermission } from "../auth/GlobalPermission";
-import { CommunityPermission } from "../auth/CommunityPermission";
+} from '@nestjs/graphql';
+import { InviteCodesService } from './invite-codes.service';
+import { AllowGlobalPermission } from '../auth/decorators/AllowGlobalPermission';
+import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
+import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
+import { AllowCommunityPermission } from '../auth/decorators/AllowCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { GlobalPermission } from '../auth/GlobalPermission';
+import { CommunityPermission } from '../auth/CommunityPermission';
 import {
   InviteCode,
   InviteCodeConnection,
-} from "./entities/invite-code.entity";
+} from './entities/invite-code.entity';
 import {
   CreateInviteCodeInput,
   UpdateInviteCodeInput,
   ClaimInviteCodeInput,
-} from "./dto/invite-code.dto";
+} from './dto/invite-code.dto';
 import {
   mapCreateInviteCodeInputToService,
   mapUpdateInviteCodeInputToService,
   mapClaimInviteCodeInputToService,
   mapPrismaInviteCodeToGraphQL,
   mapPrismaInviteCodeConnectionToGraphQL,
-} from "./utils/invite-code-resolver-mappers";
-import { RemovalResponse } from "../shared/entities/removal-response.entity";
-import { User } from "../users/entities/user.entity";
-import { Role } from "../roles/entities/role.entity";
-import { UsersService } from "../users/users.service";
-import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
-import { RolesService } from "../roles/roles.service";
-import { mapPrismaRoleToGraphQL } from "../roles/utils/role-resolver-mappers";
+} from './utils/invite-code-resolver-mappers';
+import { RemovalResponse } from '../shared/entities/removal-response.entity';
+import { User } from '../users/entities/user.entity';
+import { Role } from '../roles/entities/role.entity';
+import { UsersService } from '../users/users.service';
+import { mapPrismaUserToGraphQL } from '../users/utils/user-resolver-mappers';
+import { RolesService } from '../roles/roles.service';
+import { mapPrismaRoleToGraphQL } from '../roles/utils/role-resolver-mappers';
 
 @Resolver(() => InviteCode)
 export class InviteCodesResolver {
@@ -49,9 +49,9 @@ export class InviteCodesResolver {
   ) {}
 
   @AllowGlobalPermission(GlobalPermission.CanCreateInviteCode)
-  @Mutation(() => InviteCode, { description: "Create a new invite code" })
+  @Mutation(() => InviteCode, { description: 'Create a new invite code' })
   async createInviteCode(
-    @Args("createInviteCodeInput", { description: "Invite code creation data" })
+    @Args('createInviteCodeInput', { description: 'Invite code creation data' })
     createInviteCodeInput: CreateInviteCodeInput,
   ): Promise<InviteCode> {
     const serviceInput = mapCreateInviteCodeInputToService(
@@ -64,30 +64,30 @@ export class InviteCodesResolver {
   /** Get all invite codes with pagination */
   @AllowGlobalPermission(GlobalPermission.CanListInviteCodes)
   @AllowCommunityPermission(CommunityPermission.CanListInviteCodes)
-  @ResolveCommunityFrom({ communityId: "communityId" })
+  @ResolveCommunityFrom({ communityId: 'communityId' })
   @Query(() => InviteCodeConnection, {
-    name: "inviteCodes",
-    description: "Get all invite codes with pagination",
+    name: 'inviteCodes',
+    description: 'Get all invite codes with pagination',
   })
   async findAll(
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of invite codes to return",
+      description: 'Number of invite codes to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
-    @Args("communityId", {
+    @Args('communityId', {
       type: () => ID,
       nullable: true,
       description:
-        "Community ID to filter by. If null, returns only global invite codes",
+        'Community ID to filter by. If null, returns only global invite codes',
     })
     communityId?: string,
   ): Promise<InviteCodeConnection> {
@@ -102,23 +102,23 @@ export class InviteCodesResolver {
   /** Get invite codes by creator ID with pagination */
   @AllowGlobalPermission(GlobalPermission.CanListInviteCodes)
   @Query(() => InviteCodeConnection, {
-    name: "inviteCodesByCreator",
-    description: "Get invite codes by creator ID with pagination",
+    name: 'inviteCodesByCreator',
+    description: 'Get invite codes by creator ID with pagination',
   })
   async findByCreator(
-    @Args("creatorId", { type: () => ID, description: "Creator ID" })
+    @Args('creatorId', { type: () => ID, description: 'Creator ID' })
     creatorId: string,
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of invite codes to return",
+      description: 'Number of invite codes to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
   ): Promise<InviteCodeConnection> {
@@ -133,23 +133,23 @@ export class InviteCodesResolver {
   /** Get invite codes by role ID with pagination */
   @AllowGlobalPermission(GlobalPermission.CanListInviteCodes)
   @Query(() => InviteCodeConnection, {
-    name: "inviteCodesByRole",
-    description: "Get invite codes by role ID with pagination",
+    name: 'inviteCodesByRole',
+    description: 'Get invite codes by role ID with pagination',
   })
   async findByRole(
-    @Args("roleId", { type: () => ID, description: "Role ID" })
+    @Args('roleId', { type: () => ID, description: 'Role ID' })
     roleId: string,
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of invite codes to return",
+      description: 'Number of invite codes to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
   ): Promise<InviteCodeConnection> {
@@ -164,11 +164,11 @@ export class InviteCodesResolver {
   /** Get an invite code by ID */
   @AllowUnauthenticated()
   @Query(() => InviteCode, {
-    name: "inviteCodeById",
-    description: "Get an invite code by ID",
+    name: 'inviteCodeById',
+    description: 'Get an invite code by ID',
   })
   async findOne(
-    @Args("id", { type: () => ID, description: "Invite code ID" })
+    @Args('id', { type: () => ID, description: 'Invite code ID' })
     id: string,
   ): Promise<InviteCode> {
     const prismaResult = await this.inviteCodesService.findOne(id);
@@ -176,11 +176,11 @@ export class InviteCodesResolver {
   }
 
   @AllowGlobalPermission(GlobalPermission.CanCreateInviteCode)
-  @Mutation(() => InviteCode, { description: "Update an invite code" })
+  @Mutation(() => InviteCode, { description: 'Update an invite code' })
   async updateInviteCode(
-    @Args("id", { type: () => ID, description: "Invite code ID" })
+    @Args('id', { type: () => ID, description: 'Invite code ID' })
     id: string,
-    @Args("updateInviteCodeInput", { description: "Invite code update data" })
+    @Args('updateInviteCodeInput', { description: 'Invite code update data' })
     updateInviteCodeInput: UpdateInviteCodeInput,
   ): Promise<InviteCode> {
     const serviceInput = mapUpdateInviteCodeInputToService(
@@ -192,12 +192,12 @@ export class InviteCodesResolver {
 
   @AllowAnyAuthenticated()
   @Mutation(() => InviteCode, {
-    description: "Claim an invite code to join a community",
+    description: 'Claim an invite code to join a community',
   })
   async claimInviteCode(
-    @Args("id", { type: () => ID, description: "Invite code ID" })
+    @Args('id', { type: () => ID, description: 'Invite code ID' })
     id: string,
-    @Args("claimInviteCodeInput", { description: "Invite code claim data" })
+    @Args('claimInviteCodeInput', { description: 'Invite code claim data' })
     claimInviteCodeInput: ClaimInviteCodeInput,
   ): Promise<InviteCode> {
     const serviceInput = mapClaimInviteCodeInputToService(claimInviteCodeInput);
@@ -206,41 +206,41 @@ export class InviteCodesResolver {
   }
 
   @AllowGlobalPermission(GlobalPermission.CanCreateInviteCode)
-  @Mutation(() => RemovalResponse, { description: "Remove an invite code" })
+  @Mutation(() => RemovalResponse, { description: 'Remove an invite code' })
   async removeInviteCode(
-    @Args("id", { type: () => ID, description: "Invite code ID" })
+    @Args('id', { type: () => ID, description: 'Invite code ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.inviteCodesService.remove(id);
-    return { removed: true, message: "Invite code successfully removed" };
+    return { removed: true, message: 'Invite code successfully removed' };
   }
 
   // Field resolvers for computed properties
-  @ResolveField("isAvailable", () => Boolean, {
-    description: "Whether this invite code is still available for use",
+  @ResolveField('isAvailable', () => Boolean, {
+    description: 'Whether this invite code is still available for use',
   })
   resolveIsAvailable(@Parent() inviteCode: InviteCode): boolean {
     return inviteCode.claimCount < inviteCode.maxClaims;
   }
 
-  @ResolveField("remainingClaims", () => Int, {
-    description: "Number of remaining uses for this invite code",
+  @ResolveField('remainingClaims', () => Int, {
+    description: 'Number of remaining uses for this invite code',
   })
   resolveRemainingClaims(@Parent() inviteCode: InviteCode): number {
     return Math.max(0, inviteCode.maxClaims - inviteCode.claimCount);
   }
 
   // Field resolvers for relations
-  @ResolveField("creator", () => User, {
-    description: "The user who created this invite code",
+  @ResolveField('creator', () => User, {
+    description: 'The user who created this invite code',
   })
   async resolveCreator(@Parent() inviteCode: InviteCode): Promise<User | null> {
     const prismaUser = await this.usersService.findById(inviteCode.creatorId);
     return prismaUser ? mapPrismaUserToGraphQL(prismaUser) : null;
   }
 
-  @ResolveField("role", () => Role, {
-    description: "The role to grant when this invite code is used",
+  @ResolveField('role', () => Role, {
+    description: 'The role to grant when this invite code is used',
     nullable: true,
   })
   async resolveRole(@Parent() inviteCode: InviteCode): Promise<Role | null> {

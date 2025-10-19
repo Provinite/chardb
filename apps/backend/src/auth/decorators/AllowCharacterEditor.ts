@@ -1,4 +1,4 @@
-import { Reflector } from "@nestjs/core";
+import { Reflector } from '@nestjs/core';
 
 export interface CharacterEditConfig {
   /** Path to character ID in arguments (e.g., 'id', 'input.characterId') */

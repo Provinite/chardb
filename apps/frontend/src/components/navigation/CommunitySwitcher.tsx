@@ -215,7 +215,7 @@ const EmptyState = styled.div`
 
 export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
   className,
-  communityId
+  communityId,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -228,18 +228,22 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
     skip: !user?.id,
   });
 
-  const communities = data?.communityMembersByUser?.nodes?.map((m) => m.role.community) || [];
+  const communities =
+    data?.communityMembersByUser?.nodes?.map((m) => m.role.community) || [];
   const currentCommunity = communities.find((c) => c.id === communityId);
 
   // Filter communities based on search query
   const filteredCommunities = communities.filter((community) =>
-    community.name.toLowerCase().includes(searchQuery.toLowerCase())
+    community.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -274,7 +278,9 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
         aria-label="Switch community"
       >
         <CommunityName>
-          {loading ? 'Loading...' : currentCommunity?.name || 'Select Community'}
+          {loading
+            ? 'Loading...'
+            : currentCommunity?.name || 'Select Community'}
         </CommunityName>
         <ChevronDown />
       </SwitcherButton>
@@ -296,7 +302,9 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
         <CommunityList>
           {filteredCommunities.length === 0 ? (
             <EmptyState>
-              {searchQuery ? 'No communities found' : 'You are not a member of any communities'}
+              {searchQuery
+                ? 'No communities found'
+                : 'You are not a member of any communities'}
             </EmptyState>
           ) : (
             filteredCommunities.map((community) => (

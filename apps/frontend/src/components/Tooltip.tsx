@@ -8,10 +8,10 @@ interface CustomTooltipProps {
   position?: 'top' | 'bottom' | 'left' | 'right';
 }
 
-export const Tooltip: React.FC<CustomTooltipProps> = ({ 
-  label, 
-  children, 
-  position = 'top' 
+export const Tooltip: React.FC<CustomTooltipProps> = ({
+  label,
+  children,
+  position = 'top',
 }) => {
   const theme = useTheme();
 
@@ -33,7 +33,7 @@ export const Tooltip: React.FC<CustomTooltipProps> = ({
         arrow: {
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.border,
-        }
+        },
       }}
     >
       {children}

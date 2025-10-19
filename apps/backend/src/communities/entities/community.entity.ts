@@ -22,7 +22,9 @@ export class Community {
 @ObjectType()
 export class CommunityConnection {
   /** List of communities in this connection */
-  @Field(() => [Community], { description: 'List of communities in this connection' })
+  @Field(() => [Community], {
+    description: 'List of communities in this connection',
+  })
   nodes: Community[];
 
   /** Total number of communities available */

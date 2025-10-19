@@ -11,7 +11,9 @@ export class Species {
   name: string;
 
   /** ID of the community that owns this species */
-  @Field(() => ID, { description: 'ID of the community that owns this species' })
+  @Field(() => ID, {
+    description: 'ID of the community that owns this species',
+  })
   communityId: string;
 
   /** Whether this species has an associated image */
@@ -25,7 +27,6 @@ export class Species {
   /** When the species was last updated */
   @Field({ description: 'When the species was last updated' })
   updatedAt: Date;
-
 }
 
 @ObjectType()

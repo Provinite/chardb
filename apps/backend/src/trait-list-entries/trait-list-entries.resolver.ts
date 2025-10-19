@@ -7,35 +7,35 @@ import {
   Int,
   ResolveField,
   Parent,
-} from "@nestjs/graphql";
-import { TraitListEntriesService } from "./trait-list-entries.service";
-import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
-import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
-import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
-import { CommunityPermission } from "../auth/CommunityPermission";
+} from '@nestjs/graphql';
+import { TraitListEntriesService } from './trait-list-entries.service';
+import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
+import { AllowGlobalAdmin } from '../auth/decorators/AllowGlobalAdmin';
+import { AllowCommunityPermission } from '../auth/decorators/AllowCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CommunityPermission } from '../auth/CommunityPermission';
 import {
   TraitListEntry,
   TraitListEntryConnection,
-} from "./entities/trait-list-entry.entity";
+} from './entities/trait-list-entry.entity';
 import {
   CreateTraitListEntryInput,
   UpdateTraitListEntryInput,
-} from "./dto/trait-list-entry.dto";
+} from './dto/trait-list-entry.dto';
 import {
   mapCreateTraitListEntryInputToService,
   mapUpdateTraitListEntryInputToService,
   mapPrismaTraitListEntryToGraphQL,
   mapPrismaTraitListEntryConnectionToGraphQL,
-} from "./utils/trait-list-entry-resolver-mappers";
-import { RemovalResponse } from "../shared/entities/removal-response.entity";
-import { Trait } from "../traits/entities/trait.entity";
-import { SpeciesVariant } from "../species-variants/entities/species-variant.entity";
-import { TraitValueType } from "../shared/enums/trait-value-type.enum";
-import { TraitsService } from "../traits/traits.service";
-import { mapPrismaTraitToGraphQL } from "../traits/utils/trait-resolver-mappers";
-import { SpeciesVariantsService } from "../species-variants/species-variants.service";
-import { mapPrismaSpeciesVariantToGraphQL } from "../species-variants/utils/species-variant-resolver-mappers";
+} from './utils/trait-list-entry-resolver-mappers';
+import { RemovalResponse } from '../shared/entities/removal-response.entity';
+import { Trait } from '../traits/entities/trait.entity';
+import { SpeciesVariant } from '../species-variants/entities/species-variant.entity';
+import { TraitValueType } from '../shared/enums/trait-value-type.enum';
+import { TraitsService } from '../traits/traits.service';
+import { mapPrismaTraitToGraphQL } from '../traits/utils/trait-resolver-mappers';
+import { SpeciesVariantsService } from '../species-variants/species-variants.service';
+import { mapPrismaSpeciesVariantToGraphQL } from '../species-variants/utils/species-variant-resolver-mappers';
 
 @Resolver(() => TraitListEntry)
 export class TraitListEntriesResolver {
@@ -48,14 +48,14 @@ export class TraitListEntriesResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
   @ResolveCommunityFrom({
-    speciesVariantId: "createTraitListEntryInput.speciesVariantId",
+    speciesVariantId: 'createTraitListEntryInput.speciesVariantId',
   })
   @Mutation(() => TraitListEntry, {
-    description: "Create a new trait list entry",
+    description: 'Create a new trait list entry',
   })
   async createTraitListEntry(
-    @Args("createTraitListEntryInput", {
-      description: "Trait list entry creation data",
+    @Args('createTraitListEntryInput', {
+      description: 'Trait list entry creation data',
     })
     createTraitListEntryInput: CreateTraitListEntryInput,
   ): Promise<TraitListEntry> {
@@ -70,21 +70,21 @@ export class TraitListEntriesResolver {
   /** Get all trait list entries with pagination */
   @AllowAnyAuthenticated()
   @Query(() => TraitListEntryConnection, {
-    name: "traitListEntries",
-    description: "Get all trait list entries with pagination",
+    name: 'traitListEntries',
+    description: 'Get all trait list entries with pagination',
   })
   async findAll(
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of trait list entries to return",
+      description: 'Number of trait list entries to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
   ): Promise<TraitListEntryConnection> {
@@ -97,28 +97,28 @@ export class TraitListEntriesResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.Any)
-  @ResolveCommunityFrom({ speciesVariantId: "speciesVariantId" })
+  @ResolveCommunityFrom({ speciesVariantId: 'speciesVariantId' })
   @Query(() => TraitListEntryConnection, {
-    name: "traitListEntriesBySpeciesVariant",
-    description: "Get trait list entries by species variant ID with pagination",
+    name: 'traitListEntriesBySpeciesVariant',
+    description: 'Get trait list entries by species variant ID with pagination',
   })
   async findBySpeciesVariant(
-    @Args("speciesVariantId", {
+    @Args('speciesVariantId', {
       type: () => ID,
-      description: "Species variant ID",
+      description: 'Species variant ID',
     })
     speciesVariantId: string,
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of trait list entries to return",
+      description: 'Number of trait list entries to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
   ): Promise<TraitListEntryConnection> {
@@ -133,25 +133,25 @@ export class TraitListEntriesResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.Any)
-  @ResolveCommunityFrom({ traitId: "traitId" })
+  @ResolveCommunityFrom({ traitId: 'traitId' })
   @Query(() => TraitListEntryConnection, {
-    name: "traitListEntriesByTrait",
-    description: "Get trait list entries by trait ID with pagination",
+    name: 'traitListEntriesByTrait',
+    description: 'Get trait list entries by trait ID with pagination',
   })
   async findByTrait(
-    @Args("traitId", { type: () => ID, description: "Trait ID" })
+    @Args('traitId', { type: () => ID, description: 'Trait ID' })
     traitId: string,
-    @Args("first", {
+    @Args('first', {
       type: () => Int,
       nullable: true,
-      description: "Number of trait list entries to return",
+      description: 'Number of trait list entries to return',
       defaultValue: 20,
     })
     first?: number,
-    @Args("after", {
+    @Args('after', {
       type: () => String,
       nullable: true,
-      description: "Cursor for pagination",
+      description: 'Cursor for pagination',
     })
     after?: string,
   ): Promise<TraitListEntryConnection> {
@@ -165,13 +165,13 @@ export class TraitListEntriesResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.Any)
-  @ResolveCommunityFrom({ traitListEntryId: "id" })
+  @ResolveCommunityFrom({ traitListEntryId: 'id' })
   @Query(() => TraitListEntry, {
-    name: "traitListEntryById",
-    description: "Get a trait list entry by ID",
+    name: 'traitListEntryById',
+    description: 'Get a trait list entry by ID',
   })
   async findOne(
-    @Args("id", { type: () => ID, description: "Trait list entry ID" })
+    @Args('id', { type: () => ID, description: 'Trait list entry ID' })
     id: string,
   ): Promise<TraitListEntry> {
     const prismaResult = await this.traitListEntriesService.findOne(id);
@@ -180,13 +180,13 @@ export class TraitListEntriesResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
-  @ResolveCommunityFrom({ traitListEntryId: "id" })
-  @Mutation(() => TraitListEntry, { description: "Update a trait list entry" })
+  @ResolveCommunityFrom({ traitListEntryId: 'id' })
+  @Mutation(() => TraitListEntry, { description: 'Update a trait list entry' })
   async updateTraitListEntry(
-    @Args("id", { type: () => ID, description: "Trait list entry ID" })
+    @Args('id', { type: () => ID, description: 'Trait list entry ID' })
     id: string,
-    @Args("updateTraitListEntryInput", {
-      description: "Trait list entry update data",
+    @Args('updateTraitListEntryInput', {
+      description: 'Trait list entry update data',
     })
     updateTraitListEntryInput: UpdateTraitListEntryInput,
   ): Promise<TraitListEntry> {
@@ -202,19 +202,19 @@ export class TraitListEntriesResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
-  @ResolveCommunityFrom({ traitListEntryId: "id" })
-  @Mutation(() => RemovalResponse, { description: "Remove a trait list entry" })
+  @ResolveCommunityFrom({ traitListEntryId: 'id' })
+  @Mutation(() => RemovalResponse, { description: 'Remove a trait list entry' })
   async removeTraitListEntry(
-    @Args("id", { type: () => ID, description: "Trait list entry ID" })
+    @Args('id', { type: () => ID, description: 'Trait list entry ID' })
     id: string,
   ): Promise<RemovalResponse> {
     await this.traitListEntriesService.remove(id);
-    return { removed: true, message: "Trait list entry successfully removed" };
+    return { removed: true, message: 'Trait list entry successfully removed' };
   }
 
   // Field resolvers for relations
-  @ResolveField("trait", () => Trait, {
-    description: "The trait this entry configures",
+  @ResolveField('trait', () => Trait, {
+    description: 'The trait this entry configures',
   })
   async resolveTrait(@Parent() traitListEntry: TraitListEntry): Promise<Trait> {
     const prismaTrait = await this.traitsService.findOne(
@@ -223,8 +223,8 @@ export class TraitListEntriesResolver {
     return mapPrismaTraitToGraphQL(prismaTrait);
   }
 
-  @ResolveField("speciesVariant", () => SpeciesVariant, {
-    description: "The species variant this entry belongs to",
+  @ResolveField('speciesVariant', () => SpeciesVariant, {
+    description: 'The species variant this entry belongs to',
   })
   async resolveSpeciesVariant(
     @Parent() traitListEntry: TraitListEntry,
@@ -236,9 +236,9 @@ export class TraitListEntriesResolver {
   }
 
   // Field resolver for computed properties
-  @ResolveField("defaultDisplayValue", () => String, {
+  @ResolveField('defaultDisplayValue', () => String, {
     nullable: true,
-    description: "Display value for the default value based on type",
+    description: 'Display value for the default value based on type',
   })
   resolveDefaultDisplayValue(
     @Parent() traitListEntry: TraitListEntry,

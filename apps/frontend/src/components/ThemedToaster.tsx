@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 export const ThemedToaster: React.FC = () => {
   const { theme } = useTheme();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getToastStyles = (t: any) => {
     const baseStyles = {
       background: theme.colors.surface,
@@ -46,7 +47,7 @@ export const ThemedToaster: React.FC = () => {
   };
 
   return (
-    <Toaster 
+    <Toaster
       position="top-right"
       gutter={12}
       containerStyle={{
@@ -61,11 +62,13 @@ export const ThemedToaster: React.FC = () => {
       }}
     >
       {(t) => (
-        <div style={{
-          transform: t.visible ? 'translateX(0)' : 'translateX(100%)',
-          opacity: t.visible ? 1 : 0,
-          transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}>
+        <div
+          style={{
+            transform: t.visible ? 'translateX(0)' : 'translateX(100%)',
+            opacity: t.visible ? 1 : 0,
+            transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
           <div style={getToastStyles(t)}>
             <div style={{ flex: 1 }}>
               {typeof t.message === 'function' ? t.message(t) : t.message}
@@ -94,10 +97,12 @@ export const ThemedToaster: React.FC = () => {
                 transition: 'background-color 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.backgroundColor = theme.colors.border;
+                (e.currentTarget as HTMLElement).style.backgroundColor =
+                  theme.colors.border;
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                (e.currentTarget as HTMLElement).style.backgroundColor =
+                  'transparent';
               }}
               aria-label="Dismiss notification"
             >

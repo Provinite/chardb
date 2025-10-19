@@ -1,7 +1,10 @@
-import { CreateSpeciesInput, UpdateSpeciesInput } from "../dto/species.dto";
-import { Species, SpeciesConnection } from "../entities/species.entity";
-import { CreateSpeciesServiceInput, UpdateSpeciesServiceInput } from "../species.service";
-import { Prisma } from "@chardb/database";
+import { CreateSpeciesInput, UpdateSpeciesInput } from '../dto/species.dto';
+import { Species, SpeciesConnection } from '../entities/species.entity';
+import {
+  CreateSpeciesServiceInput,
+  UpdateSpeciesServiceInput,
+} from '../species.service';
+import { Prisma } from '@chardb/database';
 
 /**
  * Resolver layer mapping functions to convert between GraphQL DTOs and service types
@@ -10,7 +13,9 @@ import { Prisma } from "@chardb/database";
 /**
  * Maps CreateSpeciesInput to service input format
  */
-export function mapCreateSpeciesInputToService(input: CreateSpeciesInput): CreateSpeciesServiceInput {
+export function mapCreateSpeciesInputToService(
+  input: CreateSpeciesInput,
+): CreateSpeciesServiceInput {
   return {
     name: input.name,
     communityId: input.communityId,
@@ -21,7 +26,9 @@ export function mapCreateSpeciesInputToService(input: CreateSpeciesInput): Creat
 /**
  * Maps UpdateSpeciesInput to service input format
  */
-export function mapUpdateSpeciesInputToService(input: UpdateSpeciesInput): UpdateSpeciesServiceInput {
+export function mapUpdateSpeciesInputToService(
+  input: UpdateSpeciesInput,
+): UpdateSpeciesServiceInput {
   const result: UpdateSpeciesServiceInput = {};
 
   if (input.name !== undefined) result.name = input.name;
@@ -31,13 +38,16 @@ export function mapUpdateSpeciesInputToService(input: UpdateSpeciesInput): Updat
   return result;
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 type PrismaSpecies = Prisma.SpeciesGetPayload<{}>;
 
 /**
  * Maps Prisma Species result to GraphQL Species entity
  * Only includes scalar fields - relations handled by field resolvers
  */
-export function mapPrismaSpeciesToGraphQL(prismaSpecies: PrismaSpecies): Species {
+export function mapPrismaSpeciesToGraphQL(
+  prismaSpecies: PrismaSpecies,
+): Species {
   return {
     id: prismaSpecies.id,
     name: prismaSpecies.name,

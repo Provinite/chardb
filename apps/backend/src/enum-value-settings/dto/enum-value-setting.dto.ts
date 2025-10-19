@@ -10,7 +10,9 @@ export class CreateEnumValueSettingInput {
   enumValueId: string;
 
   /** ID of the species variant this setting belongs to */
-  @Field(() => ID, { description: 'ID of the species variant this setting belongs to' })
+  @Field(() => ID, {
+    description: 'ID of the species variant this setting belongs to',
+  })
   @IsUUID()
   @IsNotEmpty()
   speciesVariantId: string;
@@ -19,14 +21,20 @@ export class CreateEnumValueSettingInput {
 @InputType()
 export class UpdateEnumValueSettingInput {
   /** ID of the enum value this setting allows */
-  @Field(() => ID, { nullable: true, description: 'ID of the enum value this setting allows' })
+  @Field(() => ID, {
+    nullable: true,
+    description: 'ID of the enum value this setting allows',
+  })
   @IsOptional()
   @IsUUID()
   @IsNotEmpty()
   enumValueId?: string;
 
   /** ID of the species variant this setting belongs to */
-  @Field(() => ID, { nullable: true, description: 'ID of the species variant this setting belongs to' })
+  @Field(() => ID, {
+    nullable: true,
+    description: 'ID of the species variant this setting belongs to',
+  })
   @IsOptional()
   @IsUUID()
   @IsNotEmpty()

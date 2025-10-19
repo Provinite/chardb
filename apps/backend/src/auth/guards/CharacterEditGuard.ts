@@ -1,13 +1,13 @@
-import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { GqlExecutionContext } from "@nestjs/graphql";
-import { DatabaseService } from "../../database/database.service";
-import { PermissionService } from "../PermissionService";
-import { CommunityResolverService } from "../services/community-resolver.service";
-import { getUserFromContext } from "../utils/get-user-from-context";
-import { getNestedValue } from "../../common/utils/getNestedValue";
-import { AllowCharacterEditor } from "../decorators/AllowCharacterEditor";
-import { CommunityPermission } from "../CommunityPermission";
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { GqlExecutionContext } from '@nestjs/graphql';
+import { DatabaseService } from '../../database/database.service';
+import { PermissionService } from '../PermissionService';
+import { CommunityResolverService } from '../services/community-resolver.service';
+import { getUserFromContext } from '../utils/get-user-from-context';
+import { getNestedValue } from '../../common/utils/getNestedValue';
+import { AllowCharacterEditor } from '../decorators/AllowCharacterEditor';
+import { CommunityPermission } from '../CommunityPermission';
 
 /**
  * Guard that checks character edit permissions based on ownership.
@@ -74,7 +74,7 @@ export class CharacterEditGuard implements CanActivate {
 
     // Resolve community from species
     const resolvedIds = {
-      type: "speciesId" as const,
+      type: 'speciesId' as const,
       value: character.speciesId,
     };
     const community = await this.communityResolverService.resolve(resolvedIds);

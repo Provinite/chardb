@@ -37,7 +37,7 @@ const NavLink = styled(Link)`
   color: ${({ theme }) => theme.colors.text.primary};
   text-decoration: none;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  
+
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
   }
@@ -56,7 +56,7 @@ const UserInfo = styled(Link)`
   text-decoration: none;
   color: inherit;
   transition: opacity 0.2s ease;
-  
+
   &:hover {
     opacity: 0.8;
   }
@@ -96,7 +96,9 @@ export const Header: React.FC = () => {
               <NavLink to="/character/create">Create</NavLink>
               <NavLink to="/upload">Upload</NavLink>
               <UserInfo to={`/user/${user.username}`}>
-                {user.avatarUrl && <Avatar src={user.avatarUrl} alt={user.username} />}
+                {user.avatarUrl && (
+                  <Avatar src={user.avatarUrl} alt={user.username} />
+                )}
                 <Username>{user.displayName || user.username}</Username>
               </UserInfo>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
@@ -105,10 +107,18 @@ export const Header: React.FC = () => {
             </UserMenu>
           ) : (
             <UserMenu>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/login')}
+              >
                 Login
               </Button>
-              <Button variant="primary" size="sm" onClick={() => navigate('/signup')}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => navigate('/signup')}
+              >
                 Sign Up
               </Button>
             </UserMenu>

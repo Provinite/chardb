@@ -223,6 +223,22 @@ The application includes GitHub Actions workflows for:
 - Ensure all CI checks pass
 - Update documentation as needed
 
+### Code Quality
+
+The project uses ESLint with Prettier for code quality and formatting:
+
+- **Linting**: `yarn lint` - Enforces code style and catches common errors
+- **Type checking**: `yarn type-check` - Validates TypeScript types
+- **Auto-fix**: `yarn workspace @chardb/backend lint --fix` or `yarn workspace @chardb/frontend lint --fix`
+
+**Pre-commit hooks** automatically run type-checking and linting before each commit.
+
+**Important lint rules**:
+- `unused-imports/no-unused-imports` - Automatically detects and flags unused imports (error)
+- `unused-imports/no-unused-vars` - Detects unused variables (warning, prefix with `_` to allow)
+- `@typescript-eslint/no-explicit-any` - Discourages use of `any` type (warning)
+- `prettier/prettier` - Enforces consistent code formatting (error)
+
 ## 📈 Roadmap
 
 ### Phase 1 (Current) ✅

@@ -1,5 +1,12 @@
 import { InputType, Field, ID } from '@nestjs/graphql';
-import { IsString, IsNotEmpty, Length, IsOptional, IsEnum, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  Length,
+  IsOptional,
+  IsEnum,
+  IsUUID,
+} from 'class-validator';
 import { TraitValueType } from '../../shared/enums/trait-value-type.enum';
 
 @InputType()
@@ -12,7 +19,9 @@ export class CreateTraitInput {
   name: string;
 
   /** Type of values this trait can store */
-  @Field(() => TraitValueType, { description: 'Type of values this trait can store' })
+  @Field(() => TraitValueType, {
+    description: 'Type of values this trait can store',
+  })
   @IsEnum(TraitValueType)
   valueType: TraitValueType;
 
@@ -34,13 +43,19 @@ export class UpdateTraitInput {
   name?: string;
 
   /** Type of values this trait can store */
-  @Field(() => TraitValueType, { nullable: true, description: 'Type of values this trait can store' })
+  @Field(() => TraitValueType, {
+    nullable: true,
+    description: 'Type of values this trait can store',
+  })
   @IsOptional()
   @IsEnum(TraitValueType)
   valueType?: TraitValueType;
 
   /** ID of the species this trait belongs to */
-  @Field(() => ID, { nullable: true, description: 'ID of the species this trait belongs to' })
+  @Field(() => ID, {
+    nullable: true,
+    description: 'ID of the species this trait belongs to',
+  })
   @IsOptional()
   @IsUUID()
   @IsNotEmpty()

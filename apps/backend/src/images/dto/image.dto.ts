@@ -1,5 +1,15 @@
-import { Field, InputType, ObjectType, Int, ID } from '@nestjs/graphql';
-import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, MaxLength, Min, Max } from 'class-validator';
+import { Field, InputType, Int, ID } from '@nestjs/graphql';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsNumber,
+  IsArray,
+  IsUUID,
+  MaxLength,
+  Min,
+  Max,
+} from 'class-validator';
 
 // File upload handled via REST endpoint - this is for GraphQL updates
 @InputType()
@@ -7,9 +17,6 @@ export class CreateImageFromUploadInput {
   @Field()
   @IsString()
   uploadId: string; // Reference to uploaded file
-
-
-
 
   @Field({ nullable: true })
   @IsOptional()
@@ -21,7 +28,6 @@ export class CreateImageFromUploadInput {
   @IsOptional()
   @IsBoolean()
   isNsfw?: boolean;
-
 
   // Artist attribution
   @Field(() => ID, { nullable: true })
@@ -50,7 +56,6 @@ export class CreateImageFromUploadInput {
 
 @InputType()
 export class UpdateImageInput {
-
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
@@ -61,9 +66,6 @@ export class UpdateImageInput {
   @IsOptional()
   @IsBoolean()
   isNsfw?: boolean;
-
-
-
 
   // Artist attribution
   @Field(() => ID, { nullable: true })
@@ -110,13 +112,10 @@ export class ImageFiltersInput {
   @IsUUID()
   uploaderId?: string;
 
-
-
   @Field({ nullable: true })
   @IsOptional()
   @IsBoolean()
   isNsfw?: boolean;
-
 
   @Field({ nullable: true })
   @IsOptional()

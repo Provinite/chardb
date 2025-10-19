@@ -8,7 +8,10 @@ import toast from 'react-hot-toast';
 import { useMeQuery, useUpdateProfileMutation } from '../generated/graphql';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useQuery, useMutation } from '@apollo/client';
-import { MY_EXTERNAL_ACCOUNTS, UNLINK_EXTERNAL_ACCOUNT } from '../graphql/external-accounts.graphql';
+import {
+  MY_EXTERNAL_ACCOUNTS,
+  UNLINK_EXTERNAL_ACCOUNT,
+} from '../graphql/external-accounts.graphql';
 
 const updateProfileSchema = z.object({
   displayName: z.string().max(100).optional(),
@@ -67,8 +70,9 @@ const Input = styled.input.withConfig({
 })<{ hasError?: boolean }>`
   width: 100%;
   padding: 0.75rem ${({ theme }) => theme.spacing.md};
-  border: 2px solid ${({ theme, hasError }) => 
-    hasError ? theme.colors.error : theme.colors.border};
+  border: 2px solid
+    ${({ theme, hasError }) =>
+      hasError ? theme.colors.error : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   background: ${({ theme }) => theme.colors.background};
@@ -91,8 +95,9 @@ const TextArea = styled.textarea.withConfig({
   width: 100%;
   min-height: 120px;
   padding: 0.75rem ${({ theme }) => theme.spacing.md};
-  border: 2px solid ${({ theme, hasError }) => 
-    hasError ? theme.colors.error : theme.colors.border};
+  border: 2px solid
+    ${({ theme, hasError }) =>
+      hasError ? theme.colors.error : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   background: ${({ theme }) => theme.colors.background};
@@ -134,20 +139,21 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  border: 2px solid ${({ theme, variant }) => 
-    variant === 'secondary' ? theme.colors.border : theme.colors.primary};
-  background: ${({ theme, variant }) => 
+  border: 2px solid
+    ${({ theme, variant }) =>
+      variant === 'secondary' ? theme.colors.border : theme.colors.primary};
+  background: ${({ theme, variant }) =>
     variant === 'secondary' ? theme.colors.background : theme.colors.primary};
-  color: ${({ theme, variant }) => 
+  color: ${({ theme, variant }) =>
     variant === 'secondary' ? theme.colors.text.primary : 'white'};
   cursor: pointer;
   transition: all 0.2s ease;
   min-width: 120px;
 
   &:hover:not(:disabled) {
-    background: ${({ theme, variant }) => 
+    background: ${({ theme, variant }) =>
       variant === 'secondary' ? theme.colors.surface : theme.colors.primary};
-    opacity: ${({ variant }) => variant === 'secondary' ? 1 : 0.9};
+    opacity: ${({ variant }) => (variant === 'secondary' ? 1 : 0.9)};
     transform: translateY(-1px);
   }
 
@@ -247,8 +253,9 @@ const SmallButton = styled.button<{ variant?: 'danger' | 'primary' }>`
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  border: 2px solid ${({ theme, variant }) =>
-    variant === 'danger' ? theme.colors.error : theme.colors.primary};
+  border: 2px solid
+    ${({ theme, variant }) =>
+      variant === 'danger' ? theme.colors.error : theme.colors.primary};
   background: ${({ theme, variant }) =>
     variant === 'danger' ? theme.colors.background : theme.colors.primary};
   color: ${({ theme, variant }) =>
@@ -281,8 +288,14 @@ export const EditProfilePage: React.FC = () => {
   const [updateProfile, { loading: updating }] = useUpdateProfileMutation();
 
   // External accounts
-  const { data: externalAccountsData, loading: loadingAccounts, refetch: refetchAccounts } = useQuery(MY_EXTERNAL_ACCOUNTS);
-  const [unlinkAccount, { loading: unlinking }] = useMutation(UNLINK_EXTERNAL_ACCOUNT);
+  const {
+    data: externalAccountsData,
+    loading: loadingAccounts,
+    refetch: refetchAccounts,
+  } = useQuery(MY_EXTERNAL_ACCOUNTS);
+  const [unlinkAccount, { loading: unlinking }] = useMutation(
+    UNLINK_EXTERNAL_ACCOUNT,
+  );
 
   const {
     register,
@@ -319,7 +332,9 @@ export const EditProfilePage: React.FC = () => {
     try {
       // Remove empty strings and undefined values
       const input = Object.fromEntries(
-        Object.entries(data).filter(([_, value]) => value !== '' && value !== undefined)
+        Object.entries(data).filter(
+          ([_, value]) => value !== '' && value !== undefined,
+        ),
       );
 
       await updateProfile({
@@ -350,10 +365,11 @@ export const EditProfilePage: React.FC = () => {
 
     try {
       // Fetch the OAuth URL from the backend with authentication in header
-      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const backendUrl =
+        import.meta.env.VITE_API_URL || 'http://localhost:4000';
       const response = await fetch(`${backendUrl}/auth/deviantart`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -369,6 +385,7 @@ export const EditProfilePage: React.FC = () => {
 
       // Redirect to the OAuth URL (no tokens in URL)
       window.location.href = data.url;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error initiating OAuth:', error);
       toast.error(error.message || 'Failed to start DeviantArt linking');
@@ -388,6 +405,7 @@ export const EditProfilePage: React.FC = () => {
       });
       toast.success(`${provider} account unlinked successfully`);
       refetchAccounts();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error unlinking account:', error);
       toast.error(error.message || `Failed to unlink ${provider} account`);
@@ -443,10 +461,10 @@ export const EditProfilePage: React.FC = () => {
             hasError={!!errors.bio}
             {...register('bio')}
           />
-          {errors.bio && (
-            <ErrorMessage>{errors.bio.message}</ErrorMessage>
-          )}
-          <HelpText>A brief description about yourself (max 1000 characters)</HelpText>
+          {errors.bio && <ErrorMessage>{errors.bio.message}</ErrorMessage>}
+          <HelpText>
+            A brief description about yourself (max 1000 characters)
+          </HelpText>
         </FormGroup>
 
         <FormGroup>
@@ -488,17 +506,17 @@ export const EditProfilePage: React.FC = () => {
           {errors.dateOfBirth && (
             <ErrorMessage>{errors.dateOfBirth.message}</ErrorMessage>
           )}
-          <HelpText>This information is private and helps us provide age-appropriate content</HelpText>
+          <HelpText>
+            This information is private and helps us provide age-appropriate
+            content
+          </HelpText>
         </FormGroup>
 
         <ButtonGroup>
           <Button type="button" variant="secondary" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            disabled={updating || !isDirty}
-          >
+          <Button type="submit" disabled={updating || !isDirty}>
             {updating ? 'Saving...' : 'Save Changes'}
           </Button>
         </ButtonGroup>
@@ -508,20 +526,25 @@ export const EditProfilePage: React.FC = () => {
       <Section>
         <SectionTitle>Connected Accounts</SectionTitle>
         <SectionDescription>
-          Link your DeviantArt account to verify ownership of your characters and artwork
+          Link your DeviantArt account to verify ownership of your characters
+          and artwork
         </SectionDescription>
 
         {loadingAccounts ? (
           <LoadingContainer style={{ minHeight: '200px' }}>
             <LoadingSpinner />
           </LoadingContainer>
-        ) : externalAccountsData?.myExternalAccounts && externalAccountsData.myExternalAccounts.length > 0 ? (
+        ) : externalAccountsData?.myExternalAccounts &&
+          externalAccountsData.myExternalAccounts.length > 0 ? (
           <AccountsList>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {externalAccountsData.myExternalAccounts.map((account: any) => (
               <AccountItem key={account.id}>
                 <AccountInfo>
                   <AccountIcon>
-                    {account.provider === 'DEVIANTART' ? 'DA' : account.provider.charAt(0)}
+                    {account.provider === 'DEVIANTART'
+                      ? 'DA'
+                      : account.provider.charAt(0)}
                   </AccountIcon>
                   <AccountDetails>
                     <AccountName>{account.displayName}</AccountName>
@@ -548,7 +571,10 @@ export const EditProfilePage: React.FC = () => {
         )}
 
         {/* Show link button if no DeviantArt account linked */}
-        {!externalAccountsData?.myExternalAccounts?.some((acc: any) => acc.provider === 'DEVIANTART') && (
+        {!externalAccountsData?.myExternalAccounts?.some(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (acc: any) => acc.provider === 'DEVIANTART',
+        ) && (
           <div style={{ marginTop: '1rem' }}>
             <SmallButton variant="primary" onClick={handleLinkDeviantArt}>
               Link DeviantArt Account

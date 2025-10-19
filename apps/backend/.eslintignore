@@ -1,0 +1,11 @@
+dist
+node_modules
+*.js
+!.eslintrc.js
+coverage
+.env
+
+# Generated code patterns
+**/generated/
+**/*.generated.*
+**/__generated__/

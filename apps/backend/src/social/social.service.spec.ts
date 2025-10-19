@@ -51,10 +51,10 @@ describe('SocialService', () => {
 
       // Mock entity exists
       db.character.findUnique.mockResolvedValue(mockCharacter);
-      
+
       // Mock no existing like
       db.like.findUnique.mockResolvedValue(null);
-      
+
       // Mock transaction
       db.$transaction.mockImplementation(async (callback) => {
         db.like.findUnique.mockResolvedValue(null);
@@ -81,7 +81,7 @@ describe('SocialService', () => {
 
       // Mock entity exists
       db.character.findUnique.mockResolvedValue(mockCharacter);
-      
+
       // Mock transaction with existing like
       db.$transaction.mockImplementation(async (callback) => {
         db.like.findUnique.mockResolvedValue(mockLike);
@@ -127,7 +127,9 @@ describe('SocialService', () => {
           entityId: 'test-id',
         };
 
-        (db as any)[testCase.mock].findUnique.mockResolvedValue({ id: 'test-id' });
+        (db as any)[testCase.mock].findUnique.mockResolvedValue({
+          id: 'test-id',
+        });
         db.$transaction.mockImplementation(async (callback) => {
           db.like.findUnique.mockResolvedValue(null);
           db.like.create.mockResolvedValue(mockLike);
@@ -265,7 +267,7 @@ describe('SocialService', () => {
 
       // Mock target user exists
       db.user.findUnique.mockResolvedValue(mockUser);
-      
+
       // Mock transaction
       db.$transaction.mockImplementation(async (callback) => {
         const txDb = {
@@ -273,7 +275,8 @@ describe('SocialService', () => {
           follow: {
             findUnique: jest.fn().mockResolvedValue(null),
             create: jest.fn().mockResolvedValue(mockFollow),
-            count: jest.fn()
+            count: jest
+              .fn()
               .mockResolvedValueOnce(1) // followers count
               .mockResolvedValueOnce(1), // following count
           },
@@ -296,7 +299,7 @@ describe('SocialService', () => {
 
       // Mock target user exists
       db.user.findUnique.mockResolvedValue(mockUser);
-      
+
       // Mock transaction with existing follow
       db.$transaction.mockImplementation(async (callback) => {
         const txDb = {
@@ -304,7 +307,8 @@ describe('SocialService', () => {
           follow: {
             findUnique: jest.fn().mockResolvedValue(mockFollow),
             delete: jest.fn().mockResolvedValue(mockFollow),
-            count: jest.fn()
+            count: jest
+              .fn()
               .mockResolvedValueOnce(0) // followers count
               .mockResolvedValueOnce(0), // following count
           },
@@ -424,7 +428,7 @@ describe('SocialService', () => {
         followingId: 'user-2',
         createdAt: new Date(),
       };
-      
+
       db.follow.findUnique.mockResolvedValue(mockFollow);
 
       const result = await service.getUserIsFollowing('user-2', 'user-1');

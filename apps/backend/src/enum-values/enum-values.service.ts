@@ -43,8 +43,8 @@ export class EnumValuesService {
         name: input.name,
         order: input.order ?? 0,
         trait: {
-          connect: { id: input.traitId }
-        }
+          connect: { id: input.traitId },
+        },
       },
     });
   }
@@ -122,7 +122,7 @@ export class EnumValuesService {
     await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.EnumValueUpdateInput = {};
-    
+
     if (input.name !== undefined) updateData.name = input.name;
     if (input.order !== undefined) updateData.order = input.order;
     if (input.traitId !== undefined) {

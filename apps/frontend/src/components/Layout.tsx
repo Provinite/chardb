@@ -44,15 +44,18 @@ const isCommunityRoute = (pathname: string): boolean => {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
-  const [sidebarPreference, setSidebarPreference] = useState<SidebarPreference>('auto');
+  const [sidebarPreference, setSidebarPreference] =
+    useState<SidebarPreference>('auto');
 
   const isCommunityScopedRoute = isCommunityRoute(location.pathname);
 
   // Determine which sidebar to show based on preference and route
   const showCommunitySidebar =
-    sidebarPreference === 'community' ? true :
-    sidebarPreference === 'global' ? false :
-    isCommunityScopedRoute; // auto mode - use route detection
+    sidebarPreference === 'community'
+      ? true
+      : sidebarPreference === 'global'
+        ? false
+        : isCommunityScopedRoute; // auto mode - use route detection
 
   // Reset preference to auto when navigating to a different route type
   React.useEffect(() => {
@@ -73,12 +76,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           />
         ) : (
           <GlobalNavigationSidebar
-            onToggleToCommunity={isCommunityScopedRoute ? () => handleToggleSidebar('community') : undefined}
+            onToggleToCommunity={
+              isCommunityScopedRoute
+                ? () => handleToggleSidebar('community')
+                : undefined
+            }
           />
         )}
-        <Main>
-          {children}
-        </Main>
+        <Main>{children}</Main>
       </ContentWrapper>
       <Footer />
     </LayoutContainer>

@@ -12,12 +12,12 @@ const Card = styled.div`
   cursor: pointer;
   overflow: hidden;
   position: relative;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -51,7 +51,7 @@ const TextPreview = styled.div`
   overflow: hidden;
   white-space: pre-wrap;
   position: relative;
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -59,7 +59,10 @@ const TextPreview = styled.div`
     left: 0;
     right: 0;
     height: 20px;
-    background: linear-gradient(transparent, ${({ theme }) => theme.colors.surface});
+    background: linear-gradient(
+      transparent,
+      ${({ theme }) => theme.colors.surface}
+    );
   }
 `;
 
@@ -133,16 +136,12 @@ const Badge = styled.span`
 `;
 
 const TypeBadge = styled(Badge)<{ isImage: boolean }>`
-  background: ${props => 
-    props.isImage 
+  background: ${(props) =>
+    props.isImage
       ? props.theme.colors.primary + '20'
-      : props.theme.colors.secondary + '20'
-  };
-  color: ${props => 
-    props.isImage 
-      ? props.theme.colors.primary
-      : props.theme.colors.secondary
-  };
+      : props.theme.colors.secondary + '20'};
+  color: ${(props) =>
+    props.isImage ? props.theme.colors.primary : props.theme.colors.secondary};
 `;
 
 const VisibilityBadge = styled.span<{ visibility: string }>`
@@ -150,14 +149,18 @@ const VisibilityBadge = styled.span<{ visibility: string }>`
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  background: ${props => 
-    props.visibility === 'PUBLIC' ? props.theme.colors.success + '20' :
-    props.visibility === 'UNLISTED' ? props.theme.colors.warning + '20' : props.theme.colors.error + '20'
-  };
-  color: ${props => 
-    props.visibility === 'PUBLIC' ? props.theme.colors.success :
-    props.visibility === 'UNLISTED' ? props.theme.colors.warning : props.theme.colors.error
-  };
+  background: ${(props) =>
+    props.visibility === 'PUBLIC'
+      ? props.theme.colors.success + '20'
+      : props.visibility === 'UNLISTED'
+        ? props.theme.colors.warning + '20'
+        : props.theme.colors.error + '20'};
+  color: ${(props) =>
+    props.visibility === 'PUBLIC'
+      ? props.theme.colors.success
+      : props.visibility === 'UNLISTED'
+        ? props.theme.colors.warning
+        : props.theme.colors.error};
 `;
 
 const ActionButton = styled.button<{ variant?: 'primary' | 'danger' }>`
@@ -168,17 +171,17 @@ const ActionButton = styled.button<{ variant?: 'primary' | 'danger' }>`
   border: none;
   cursor: pointer;
   transition: all 0.2s;
-  
-  background: ${props => 
-    props.variant === 'danger' ? props.theme.colors.error :
-    props.theme.colors.primary
-  };
+
+  background: ${(props) =>
+    props.variant === 'danger'
+      ? props.theme.colors.error
+      : props.theme.colors.primary};
   color: white;
-  
+
   &:hover {
     opacity: 0.8;
   }
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -194,7 +197,7 @@ const ActionsOverlay = styled.div`
   opacity: 0;
   transition: opacity 0.2s;
   z-index: 1;
-  
+
   ${Card}:hover & {
     opacity: 1;
   }
@@ -234,14 +237,14 @@ interface MediaCardProps {
  * A card component that displays either image or text media with metadata
  * Automatically adapts its layout based on the media type
  */
-export const MediaCard: React.FC<MediaCardProps> = ({ 
-  media, 
+export const MediaCard: React.FC<MediaCardProps> = ({
+  media,
   showOwner = true,
   characterId,
   currentMainMediaId,
   onSetAsMain,
   onRemoveAsMain,
-  isSettingMain = false
+  isSettingMain = false,
 }) => {
   const navigate = useNavigate();
   const isImage = !!media.image;
@@ -259,17 +262,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({
         />
       );
     } else if (isText && media.textContent) {
-      return (
-        <TextPreview>
-          {media.textContent.content}
-        </TextPreview>
-      );
+      return <TextPreview>{media.textContent.content}</TextPreview>;
     } else {
       return (
         <PlaceholderContent>
-          <TextIcon>
-            {isImage ? '🖼️' : '📝'}
-          </TextIcon>
+          <TextIcon>{isImage ? '🖼️' : '📝'}</TextIcon>
           <span>No content available</span>
         </PlaceholderContent>
       );
@@ -311,14 +308,10 @@ export const MediaCard: React.FC<MediaCardProps> = ({
     >
       <MediaSection>
         {renderMediaPreview()}
-        
+
         {/* Main Image Badge */}
-        {isMainMedia && (
-          <MainImageBadge>
-            Main Image
-          </MainImageBadge>
-        )}
-        
+        {isMainMedia && <MainImageBadge>Main Image</MainImageBadge>}
+
         {/* Set as Main Actions */}
         {showSetAsMainActions && (
           <ActionsOverlay>
@@ -343,13 +336,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({
           </ActionsOverlay>
         )}
       </MediaSection>
-      
+
       <Content>
         <Title>{media.title}</Title>
-        {media.description && (
-          <Description>{media.description}</Description>
-        )}
-        
+        {media.description && <Description>{media.description}</Description>}
+
         <Meta>
           {showOwner ? (
             <OwnerInfo>

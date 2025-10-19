@@ -1,5 +1,25 @@
-import { Field, InputType, ObjectType, Int, Float, ID, registerEnumType } from '@nestjs/graphql';
-import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, IsEnum, MinLength, MaxLength, Min, Max } from 'class-validator';
+import {
+  Field,
+  InputType,
+  ObjectType,
+  Int,
+  Float,
+  ID,
+  registerEnumType,
+} from '@nestjs/graphql';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsNumber,
+  IsArray,
+  IsUUID,
+  IsEnum,
+  MinLength,
+  MaxLength,
+  Min,
+  Max,
+} from 'class-validator';
 import { Visibility } from '@chardb/database';
 import { CharacterTraitValueInput } from './character-trait.dto';
 
@@ -88,7 +108,10 @@ export class CreateCharacterInput {
   @IsOptional()
   customFields?: any; // JSON field
 
-  @Field(() => [CharacterTraitValueInput], { defaultValue: [], description: 'Trait values for the character' })
+  @Field(() => [CharacterTraitValueInput], {
+    defaultValue: [],
+    description: 'Trait values for the character',
+  })
   @IsOptional()
   traitValues?: CharacterTraitValueInput[];
 }
@@ -173,7 +196,10 @@ export class UpdateCharacterInput {
   @IsOptional()
   customFields?: any; // JSON field
 
-  @Field(() => [CharacterTraitValueInput], { nullable: true, description: 'Trait values for the character' })
+  @Field(() => [CharacterTraitValueInput], {
+    nullable: true,
+    description: 'Trait values for the character',
+  })
   @IsOptional()
   traitValues?: CharacterTraitValueInput[];
 
@@ -296,7 +322,6 @@ export class ManageTagsInput {
   @IsString({ each: true })
   tagNames: string[];
 }
-
 
 /**
  * Input type for setting a character's main media

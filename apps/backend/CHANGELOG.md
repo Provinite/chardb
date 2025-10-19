@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Unused Imports Linting Rule (#48)**: Enabled automatic detection of unused imports
+  - Added `eslint-plugin-unused-imports` with error-level enforcement
+  - Removed all unused imports from codebase
 - **DeviantArt OAuth 2.0 Integration (#62, #73)**: Complete external account linking system
   - Added `DeviantArtOAuthController` with OAuth flow endpoints (`GET /auth/deviantart` and `GET /auth/deviantart/callback`)
   - Added `ExternalAccountsModule` and `ExternalAccountsService` for managing linked social accounts

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Unused Imports Linting Rule (#48)**: Enabled automatic detection of unused imports
+  - Added `eslint-plugin-unused-imports` with error-level enforcement
+  - Removed all unused imports from codebase
 - **Dual-Sidebar Navigation System (#61)**: Context-aware navigation with community and global sidebars
   - Community sidebar with permission-aware navigation for species, administration, and community management
   - Global sidebar with quick access to personal content, liked items, browse sections, and communities

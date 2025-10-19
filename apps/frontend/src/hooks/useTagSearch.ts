@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
-import { useLazyQuery } from "@apollo/client";
-import { SEARCH_TAGS } from "../graphql/tags.graphql";
-import type { Tag } from "../generated/graphql";
+import { useState, useCallback } from 'react';
+import { useLazyQuery } from '@apollo/client';
+import { SEARCH_TAGS } from '../graphql/tags.graphql';
+import type { Tag } from '../generated/graphql';
 
 // Define the UI Tag interface to match what TagInput expects
 export interface UITag {

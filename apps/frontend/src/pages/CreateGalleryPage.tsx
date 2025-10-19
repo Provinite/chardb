@@ -1,39 +1,39 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation, useQuery } from "@apollo/client";
-import { toast } from "react-hot-toast";
-import styled from "styled-components";
-import { Button } from "@chardb/ui";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation, useQuery } from '@apollo/client';
+import { toast } from 'react-hot-toast';
+import styled from 'styled-components';
+import { Button } from '@chardb/ui';
 import {
   CREATE_GALLERY,
   GET_GALLERIES,
   GET_MY_GALLERIES,
-} from "../graphql/galleries.graphql";
-import { GET_MY_CHARACTERS, Character } from "../graphql/characters.graphql";
+} from '../graphql/galleries.graphql';
+import { GET_MY_CHARACTERS, Character } from '../graphql/characters.graphql';
 
 const gallerySchema = z.object({
   name: z
     .string()
-    .min(1, "Name is required")
-    .max(100, "Name must be less than 100 characters"),
+    .min(1, 'Name is required')
+    .max(100, 'Name must be less than 100 characters'),
   description: z
     .string()
-    .max(2000, "Description must be less than 2000 characters")
+    .max(2000, 'Description must be less than 2000 characters')
     .optional()
-    .or(z.literal("")),
-  characterId: z.string().optional().or(z.literal("")),
-  visibility: z.enum(["PUBLIC", "UNLISTED", "PRIVATE"]),
+    .or(z.literal('')),
+  characterId: z.string().optional().or(z.literal('')),
+  visibility: z.enum(['PUBLIC', 'UNLISTED', 'PRIVATE']),
   sortOrder: z
     .string()
     .optional()
     .refine((val) => {
-      if (!val || val === "") return true;
+      if (!val || val === '') return true;
       const num = parseInt(val);
       return !isNaN(num) && num >= 0;
-    }, "Sort order must be a valid positive number"),
+    }, 'Sort order must be a valid positive number'),
 });
 
 type GalleryForm = z.infer<typeof gallerySchema>;
@@ -69,7 +69,7 @@ const BackButton = styled.button`
   }
 
   &::before {
-    content: "←";
+    content: '←';
     font-weight: bold;
   }
 `;
@@ -143,7 +143,7 @@ const Input = styled.input`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.error};
   }
 `;
@@ -161,7 +161,7 @@ const Select = styled.select`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.error};
   }
 `;
@@ -181,7 +181,7 @@ const TextArea = styled.textarea`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.error};
   }
 `;
@@ -272,7 +272,7 @@ export const CreateGalleryPage: React.FC = () => {
   } = useForm<GalleryForm>({
     resolver: zodResolver(gallerySchema),
     defaultValues: {
-      visibility: "PUBLIC",
+      visibility: 'PUBLIC',
     },
   });
 
@@ -286,7 +286,7 @@ export const CreateGalleryPage: React.FC = () => {
   });
 
   const handleBackClick = () => {
-    navigate("/galleries");
+    navigate('/galleries');
   };
 
   const onSubmit = async (data: GalleryForm) => {
@@ -294,7 +294,7 @@ export const CreateGalleryPage: React.FC = () => {
     try {
       // Process sort order
       const sortOrder =
-        data.sortOrder && data.sortOrder !== ""
+        data.sortOrder && data.sortOrder !== ''
           ? parseInt(data.sortOrder)
           : undefined;
 
@@ -314,14 +314,14 @@ export const CreateGalleryPage: React.FC = () => {
       });
 
       // Navigate to the newly created gallery
-      toast.success("Gallery created successfully!");
+      toast.success('Gallery created successfully!');
       navigate(`/gallery/${result.data.createGallery.id}`);
     } catch (error) {
-      console.error("Error creating gallery:", error);
+      console.error('Error creating gallery:', error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to create gallery. Please try again.",
+          : 'Failed to create gallery. Please try again.',
       );
     } finally {
       setIsSubmitting(false);
@@ -350,7 +350,7 @@ export const CreateGalleryPage: React.FC = () => {
               <Label htmlFor="name">Gallery Name *</Label>
               <Input
                 id="name"
-                {...register("name")}
+                {...register('name')}
                 aria-invalid={!!errors.name}
                 placeholder="Enter gallery name"
               />
@@ -363,7 +363,7 @@ export const CreateGalleryPage: React.FC = () => {
               <Label htmlFor="description">Description</Label>
               <TextArea
                 id="description"
-                {...register("description")}
+                {...register('description')}
                 aria-invalid={!!errors.description}
                 placeholder="Describe your gallery and what kind of images it contains..."
               />
@@ -382,7 +382,7 @@ export const CreateGalleryPage: React.FC = () => {
                 <Label htmlFor="visibility">Visibility</Label>
                 <Select
                   id="visibility"
-                  {...register("visibility")}
+                  {...register('visibility')}
                   aria-invalid={!!errors.visibility}
                 >
                   <option value="PUBLIC">Public - Visible to everyone</option>
@@ -402,7 +402,7 @@ export const CreateGalleryPage: React.FC = () => {
                   id="sortOrder"
                   type="number"
                   min="0"
-                  {...register("sortOrder")}
+                  {...register('sortOrder')}
                   aria-invalid={!!errors.sortOrder}
                   placeholder="0"
                 />
@@ -426,14 +426,14 @@ export const CreateGalleryPage: React.FC = () => {
               </Label>
               <Select
                 id="characterId"
-                {...register("characterId")}
+                {...register('characterId')}
                 aria-invalid={!!errors.characterId}
               >
                 <option value="">No character association</option>
                 {charactersData?.myCharacters.characters.map(
                   (character: Character) => (
                     <option key={character.id} value={character.id}>
-                      {character.name}{" "}
+                      {character.name}{' '}
                       {character.species?.name && `(${character.species.name})`}
                     </option>
                   ),
@@ -454,7 +454,7 @@ export const CreateGalleryPage: React.FC = () => {
               Cancel
             </CancelButton>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Gallery"}
+              {isSubmitting ? 'Creating...' : 'Create Gallery'}
             </Button>
           </ButtonRow>
         </Form>

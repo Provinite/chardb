@@ -462,7 +462,7 @@ export {
   useGetMediaItemQuery,
   useGetCharacterMediaQuery,
   useGetMyMediaQuery,
-  
+
   // Mutation Hooks
   useCreateTextMediaMutation,
   useUpdateMediaMutation,
@@ -471,7 +471,7 @@ export {
   useDeleteMediaMutation,
   useAddMediaTagsMutation,
   useRemoveMediaTagsMutation,
-  
+
   // Types
   type Media,
   type TextContent,

@@ -1,6 +1,6 @@
-import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
-import { GraphQLJSON } from "graphql-type-json";
-import { ExternalAccount } from "../../external-accounts/entities/external-account.entity";
+import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { GraphQLJSON } from 'graphql-type-json';
+import { ExternalAccount } from '../../external-accounts/entities/external-account.entity';
 
 @ObjectType()
 export class User {

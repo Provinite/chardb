@@ -1,5 +1,5 @@
 import { InputType, Field, ID } from '@nestjs/graphql';
-import { IsString, IsUUID, IsOptional, IsBoolean, IsNumber } from 'class-validator';
+import { IsUUID, IsOptional } from 'class-validator';
 
 @InputType({ description: 'Input for setting a character trait value' })
 export class CharacterTraitValueInput {
@@ -9,7 +9,10 @@ export class CharacterTraitValueInput {
   traitId!: string;
 
   /** The value of the trait */
-  @Field(() => String, { description: 'The value of the trait', nullable: true })
+  @Field(() => String, {
+    description: 'The value of the trait',
+    nullable: true,
+  })
   @IsOptional()
   value?: string | number | boolean | null;
 }
@@ -17,6 +20,8 @@ export class CharacterTraitValueInput {
 @InputType({ description: 'Input for updating character trait values' })
 export class UpdateCharacterTraitsInput {
   /** Array of trait values to set for the character */
-  @Field(() => [CharacterTraitValueInput], { description: 'Array of trait values to set for the character' })
+  @Field(() => [CharacterTraitValueInput], {
+    description: 'Array of trait values to set for the character',
+  })
   traitValues!: CharacterTraitValueInput[];
 }

@@ -1,5 +1,13 @@
 import { InputType, Field, ID, Int, registerEnumType } from '@nestjs/graphql';
-import { IsString, IsOptional, IsEnum, IsNotEmpty, MaxLength, IsInt, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsNotEmpty,
+  MaxLength,
+  IsInt,
+  Min,
+} from 'class-validator';
 
 export enum CommentableType {
   CHARACTER = 'CHARACTER',

@@ -67,11 +67,11 @@ export class TraitListEntriesService {
         defaultValueInt: input.defaultValueInt,
         defaultValueTimestamp: input.defaultValueTimestamp,
         trait: {
-          connect: { id: input.traitId }
+          connect: { id: input.traitId },
         },
         speciesVariant: {
-          connect: { id: input.speciesVariantId }
-        }
+          connect: { id: input.speciesVariantId },
+        },
       },
     });
   }
@@ -86,16 +86,15 @@ export class TraitListEntriesService {
         take: first + 1, // Take one extra to check if there's a next page
         skip,
         cursor,
-        orderBy: [
-          { speciesVariant: { name: 'asc' } },
-          { order: 'asc' },
-        ],
+        orderBy: [{ speciesVariant: { name: 'asc' } }, { order: 'asc' }],
       }),
       this.prisma.traitListEntry.count(),
     ]);
 
     const hasNextPage = traitListEntries.length > first;
-    const nodes = hasNextPage ? traitListEntries.slice(0, -1) : traitListEntries;
+    const nodes = hasNextPage
+      ? traitListEntries.slice(0, -1)
+      : traitListEntries;
 
     return {
       nodes,
@@ -106,7 +105,11 @@ export class TraitListEntriesService {
   }
 
   /** Find trait list entries by species variant ID with pagination */
-  async findBySpeciesVariant(speciesVariantId: string, first: number = 20, after?: string) {
+  async findBySpeciesVariant(
+    speciesVariantId: string,
+    first: number = 20,
+    after?: string,
+  ) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -124,7 +127,9 @@ export class TraitListEntriesService {
     ]);
 
     const hasNextPage = traitListEntries.length > first;
-    const nodes = hasNextPage ? traitListEntries.slice(0, -1) : traitListEntries;
+    const nodes = hasNextPage
+      ? traitListEntries.slice(0, -1)
+      : traitListEntries;
 
     return {
       nodes,
@@ -145,10 +150,7 @@ export class TraitListEntriesService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: [
-          { speciesVariant: { name: 'asc' } },
-          { order: 'asc' },
-        ],
+        orderBy: [{ speciesVariant: { name: 'asc' } }, { order: 'asc' }],
       }),
       this.prisma.traitListEntry.count({
         where: { traitId },
@@ -156,7 +158,9 @@ export class TraitListEntriesService {
     ]);
 
     const hasNextPage = traitListEntries.length > first;
-    const nodes = hasNextPage ? traitListEntries.slice(0, -1) : traitListEntries;
+    const nodes = hasNextPage
+      ? traitListEntries.slice(0, -1)
+      : traitListEntries;
 
     return {
       nodes,
@@ -184,14 +188,17 @@ export class TraitListEntriesService {
     const traitListEntry = await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.TraitListEntryUpdateInput = {};
-    
+
     if (input.order !== undefined) updateData.order = input.order;
     if (input.required !== undefined) updateData.required = input.required;
     if (input.valueType !== undefined) updateData.valueType = input.valueType;
-    if (input.defaultValueString !== undefined) updateData.defaultValueString = input.defaultValueString;
-    if (input.defaultValueInt !== undefined) updateData.defaultValueInt = input.defaultValueInt;
-    if (input.defaultValueTimestamp !== undefined) updateData.defaultValueTimestamp = input.defaultValueTimestamp;
-    
+    if (input.defaultValueString !== undefined)
+      updateData.defaultValueString = input.defaultValueString;
+    if (input.defaultValueInt !== undefined)
+      updateData.defaultValueInt = input.defaultValueInt;
+    if (input.defaultValueTimestamp !== undefined)
+      updateData.defaultValueTimestamp = input.defaultValueTimestamp;
+
     if (input.traitId !== undefined) {
       updateData.trait = { connect: { id: input.traitId } };
     }

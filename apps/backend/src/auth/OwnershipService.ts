@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import { DatabaseService } from "../database/database.service";
+import { Injectable } from '@nestjs/common';
+import { DatabaseService } from '../database/database.service';
 
 /**
  * Service for checking entity ownership.
@@ -40,17 +40,17 @@ export class OwnershipService {
   async isOwnerOf(
     userId: string,
     entityType:
-      | "character"
-      | "media"
-      | "gallery"
-      | "image"
-      | "inviteeOfInvitation"
-      | "inviterOrInviteeOfInvitation"
-      | "comment",
+      | 'character'
+      | 'media'
+      | 'gallery'
+      | 'image'
+      | 'inviteeOfInvitation'
+      | 'inviterOrInviteeOfInvitation'
+      | 'comment',
     entityId: string,
   ): Promise<boolean> {
     switch (entityType) {
-      case "character": {
+      case 'character': {
         const character = await this.prisma.character.findUnique({
           where: { id: entityId },
           select: { ownerId: true },
@@ -58,7 +58,7 @@ export class OwnershipService {
         return character?.ownerId === userId;
       }
 
-      case "media": {
+      case 'media': {
         const media = await this.prisma.media.findUnique({
           where: { id: entityId },
           select: { ownerId: true },
@@ -66,7 +66,7 @@ export class OwnershipService {
         return media?.ownerId === userId;
       }
 
-      case "gallery": {
+      case 'gallery': {
         const gallery = await this.prisma.gallery.findUnique({
           where: { id: entityId },
           select: { ownerId: true },
@@ -74,7 +74,7 @@ export class OwnershipService {
         return gallery?.ownerId === userId;
       }
 
-      case "image": {
+      case 'image': {
         const image = await this.prisma.image.findUnique({
           where: { id: entityId },
           select: { uploaderId: true },
@@ -82,7 +82,7 @@ export class OwnershipService {
         return image?.uploaderId === userId;
       }
 
-      case "inviteeOfInvitation": {
+      case 'inviteeOfInvitation': {
         const invitation = await this.prisma.communityInvitation.findUnique({
           where: { id: entityId },
           select: { inviteeId: true },
@@ -90,7 +90,7 @@ export class OwnershipService {
         return invitation?.inviteeId === userId;
       }
 
-      case "inviterOrInviteeOfInvitation": {
+      case 'inviterOrInviteeOfInvitation': {
         const invitation = await this.prisma.communityInvitation.findUnique({
           where: { id: entityId },
           select: { inviterId: true, inviteeId: true },
@@ -100,7 +100,7 @@ export class OwnershipService {
         );
       }
 
-      case "comment": {
+      case 'comment': {
         const comment = await this.prisma.comment.findUnique({
           where: { id: entityId },
           select: { authorId: true },
@@ -129,11 +129,11 @@ export class OwnershipService {
    * ```
    */
   async resolveEntityOwner(
-    entityType: "character" | "media" | "gallery" | "image" | "comment",
+    entityType: 'character' | 'media' | 'gallery' | 'image' | 'comment',
     entityId: string,
   ): Promise<string | null> {
     switch (entityType) {
-      case "character": {
+      case 'character': {
         const character = await this.prisma.character.findUnique({
           where: { id: entityId },
           select: { ownerId: true },
@@ -141,7 +141,7 @@ export class OwnershipService {
         return character?.ownerId ?? null;
       }
 
-      case "media": {
+      case 'media': {
         const media = await this.prisma.media.findUnique({
           where: { id: entityId },
           select: { ownerId: true },
@@ -149,7 +149,7 @@ export class OwnershipService {
         return media?.ownerId ?? null;
       }
 
-      case "gallery": {
+      case 'gallery': {
         const gallery = await this.prisma.gallery.findUnique({
           where: { id: entityId },
           select: { ownerId: true },
@@ -157,7 +157,7 @@ export class OwnershipService {
         return gallery?.ownerId ?? null;
       }
 
-      case "image": {
+      case 'image': {
         const image = await this.prisma.image.findUnique({
           where: { id: entityId },
           select: { uploaderId: true },
@@ -165,7 +165,7 @@ export class OwnershipService {
         return image?.uploaderId ?? null;
       }
 
-      case "comment": {
+      case 'comment': {
         const comment = await this.prisma.comment.findUnique({
           where: { id: entityId },
           select: { authorId: true },

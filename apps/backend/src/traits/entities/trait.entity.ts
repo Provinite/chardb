@@ -1,6 +1,5 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { TraitValueType } from '../../shared/enums/trait-value-type.enum';
-import { Species } from '../../species/entities/species.entity';
 
 @ObjectType()
 export class Trait {
@@ -13,7 +12,9 @@ export class Trait {
   name: string;
 
   /** Type of values this trait can store */
-  @Field(() => TraitValueType, { description: 'Type of values this trait can store' })
+  @Field(() => TraitValueType, {
+    description: 'Type of values this trait can store',
+  })
   valueType: TraitValueType;
 
   /** ID of the species this trait belongs to */
@@ -27,7 +28,6 @@ export class Trait {
   /** When the trait was last updated */
   @Field({ description: 'When the trait was last updated' })
   updatedAt: Date;
-
 }
 
 @ObjectType()

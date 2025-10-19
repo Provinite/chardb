@@ -4,44 +4,39 @@ import {
   Mutation,
   Args,
   ID,
-  Context,
   ResolveField,
   Parent,
   Int,
-} from "@nestjs/graphql";
-import { ForbiddenException } from "@nestjs/common";
-import { CurrentUser } from "../auth/decorators/CurrentUser";
-import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
-import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
-import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
-import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
-import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
-import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
-import { CommunityPermission } from "../auth/CommunityPermission";
-import { AllowCharacterEditor } from "../auth/decorators/AllowCharacterEditor";
-import { CharactersService } from "./characters.service";
-import { TagsService } from "../tags/tags.service";
-import { UsersService } from "../users/users.service";
-import { MediaService } from "../media/media.service";
-import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
-import { mapPrismaMediaToGraphQL } from "../media/utils/media-resolver-mappers";
-import { SpeciesVariantsService } from "../species-variants/species-variants.service";
-import { SpeciesService } from "../species/species.service";
+} from '@nestjs/graphql';
+import { CurrentUser } from '../auth/decorators/CurrentUser';
+import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
+import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
+import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
+import { AllowGlobalAdmin } from '../auth/decorators/AllowGlobalAdmin';
+import { AllowEntityOwner } from '../auth/decorators/AllowEntityOwner';
+import { AllowCommunityPermission } from '../auth/decorators/AllowCommunityPermission';
+import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
+import { CommunityPermission } from '../auth/CommunityPermission';
+import { AllowCharacterEditor } from '../auth/decorators/AllowCharacterEditor';
+import { CharactersService } from './characters.service';
+import { TagsService } from '../tags/tags.service';
+import { UsersService } from '../users/users.service';
+import { MediaService } from '../media/media.service';
+import { mapPrismaUserToGraphQL } from '../users/utils/user-resolver-mappers';
+import { mapPrismaMediaToGraphQL } from '../media/utils/media-resolver-mappers';
+import { SpeciesVariantsService } from '../species-variants/species-variants.service';
+import { SpeciesService } from '../species/species.service';
 import {
   Character as CharacterEntity,
   CharacterConnection,
   CharacterCount,
   CharacterTag,
-} from "./entities/character.entity";
-import { Image } from "../images/entities/image.entity";
-import { Media } from "../media/entities/media.entity";
-import { Tag } from "../shared/entities/tag.entity";
-import { ImagesService } from "../images/images.service";
-import { User } from "../users/entities/user.entity";
-import { SpeciesVariant } from "../species-variants/entities/species-variant.entity";
-import { Species } from "../species/entities/species.entity";
-import type { Prisma } from "@chardb/database";
+} from './entities/character.entity';
+import { Media } from '../media/entities/media.entity';
+import { ImagesService } from '../images/images.service';
+import { User } from '../users/entities/user.entity';
+import { SpeciesVariant } from '../species-variants/entities/species-variant.entity';
+import { Species } from '../species/entities/species.entity';
 import {
   CreateCharacterInput,
   UpdateCharacterInput,
@@ -49,15 +44,15 @@ import {
   TransferCharacterInput,
   ManageTagsInput,
   SetMainMediaInput,
-} from "./dto/character.dto";
-import { UpdateCharacterTraitsInput } from "./dto/character-trait.dto";
+} from './dto/character.dto';
+import { UpdateCharacterTraitsInput } from './dto/character-trait.dto';
 import {
   mapCreateCharacterInputToService,
   mapUpdateCharacterInputToService,
   mapUpdateCharacterTraitsInputToService,
   mapPrismaCharacterToGraphQL,
   mapPrismaCharacterConnectionToGraphQL,
-} from "./utils/character-resolver-mappers";
+} from './utils/character-resolver-mappers';
 
 @Resolver(() => CharacterEntity)
 export class CharactersResolver {
@@ -73,10 +68,10 @@ export class CharactersResolver {
 
   @AllowAnyAuthenticated()
   @AllowCommunityPermission(CommunityPermission.CanCreateCharacter)
-  @ResolveCommunityFrom({ speciesId: "input.speciesId" })
+  @ResolveCommunityFrom({ speciesId: 'input.speciesId' })
   @Mutation(() => CharacterEntity)
   async createCharacter(
-    @Args("input") input: CreateCharacterInput,
+    @Args('input') input: CreateCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
     const serviceInput = mapCreateCharacterInputToService(input);
@@ -90,7 +85,7 @@ export class CharactersResolver {
   @AllowUnauthenticated()
   @Query(() => CharacterConnection)
   async characters(
-    @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
+    @Args('filters', { nullable: true }) filters?: CharacterFiltersInput,
     @CurrentUser() user?: any,
   ) {
     const result = await this.charactersService.findAll(filters, user?.id);
@@ -100,7 +95,7 @@ export class CharactersResolver {
   @AllowUnauthenticated()
   @Query(() => CharacterEntity)
   async character(
-    @Args("id", { type: () => ID }) id: string,
+    @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user?: any,
   ): Promise<CharacterEntity> {
     const character = await this.charactersService.findOne(id, user?.id);
@@ -108,11 +103,11 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterEditor({ characterId: 'id' })
   @Mutation(() => CharacterEntity)
   async updateCharacter(
-    @Args("id", { type: () => ID }) id: string,
-    @Args("input") input: UpdateCharacterInput,
+    @Args('id', { type: () => ID }) id: string,
+    @Args('input') input: UpdateCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
     const serviceInput = mapUpdateCharacterInputToService(input);
@@ -125,56 +120,56 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterEditor({ characterId: 'id' })
   @Mutation(() => Boolean)
   async deleteCharacter(
-    @Args("id", { type: () => ID }) id: string,
+    @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.charactersService.remove(id, user.id);
   }
 
-  @AllowEntityOwner({ characterId: "id" })
+  @AllowEntityOwner({ characterId: 'id' })
   @Mutation(() => CharacterEntity)
   async transferCharacter(
-    @Args("id", { type: () => ID }) id: string,
-    @Args("input") input: TransferCharacterInput,
+    @Args('id', { type: () => ID }) id: string,
+    @Args('input') input: TransferCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
     return this.charactersService.transfer(id, user.id, input.newOwnerId);
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterEditor({ characterId: 'id' })
   @Mutation(() => CharacterEntity)
   async addCharacterTags(
-    @Args("id", { type: () => ID }) id: string,
-    @Args("input") input: ManageTagsInput,
+    @Args('id', { type: () => ID }) id: string,
+    @Args('input') input: ManageTagsInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
     return this.charactersService.addTags(id, user.id, input.tagNames);
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterEditor({ characterId: 'id' })
   @Mutation(() => CharacterEntity)
   async removeCharacterTags(
-    @Args("id", { type: () => ID }) id: string,
-    @Args("input") input: ManageTagsInput,
+    @Args('id', { type: () => ID }) id: string,
+    @Args('input') input: ManageTagsInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
     return this.charactersService.removeTags(id, user.id, input.tagNames);
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterEditor({ characterId: 'id' })
   @Mutation(() => CharacterEntity, {
-    description: "Sets or clears the main media for a character",
+    description: 'Sets or clears the main media for a character',
   })
   async setCharacterMainMedia(
-    @Args("id", { type: () => ID, description: "Character ID to update" })
+    @Args('id', { type: () => ID, description: 'Character ID to update' })
     id: string,
-    @Args("input", { description: "Main media setting parameters" })
+    @Args('input', { description: 'Main media setting parameters' })
     input: SetMainMediaInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<any> {
@@ -185,7 +180,7 @@ export class CharactersResolver {
   @Query(() => CharacterConnection)
   async myCharacters(
     @CurrentUser() user: any,
-    @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
+    @Args('filters', { nullable: true }) filters?: CharacterFiltersInput,
   ): Promise<any> {
     const userFilters = { ...filters, ownerId: user.id };
     const result = await this.charactersService.findAll(userFilters, user.id);
@@ -195,8 +190,8 @@ export class CharactersResolver {
   @AllowUnauthenticated()
   @Query(() => CharacterConnection)
   async userCharacters(
-    @Args("userId", { type: () => ID }) userId: string,
-    @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
+    @Args('userId', { type: () => ID }) userId: string,
+    @Args('filters', { nullable: true }) filters?: CharacterFiltersInput,
     @CurrentUser() user?: any,
   ): Promise<any> {
     const userFilters = { ...filters, ownerId: userId };
@@ -205,14 +200,14 @@ export class CharactersResolver {
   }
 
   // Field resolver to return displayName values for tags string array
-  @ResolveField("tags", () => [String])
+  @ResolveField('tags', () => [String])
   async resolveTagsField(
     @Parent() character: CharacterEntity,
   ): Promise<string[]> {
     return this.tagsService.getCharacterTags(character.id);
   }
 
-  @ResolveField("likesCount", () => Int)
+  @ResolveField('likesCount', () => Int)
   async resolveLikesCountField(
     @Parent() character: CharacterEntity,
   ): Promise<number> {
@@ -221,7 +216,7 @@ export class CharactersResolver {
   }
 
   @AllowAnyAuthenticated()
-  @ResolveField("userHasLiked", () => Boolean)
+  @ResolveField('userHasLiked', () => Boolean)
   async resolveUserHasLikedField(
     @Parent() character: CharacterEntity,
     @CurrentUser() user: AuthenticatedCurrentUserType,
@@ -230,7 +225,7 @@ export class CharactersResolver {
   }
 
   /** Character count field resolver */
-  @ResolveField("_count", () => CharacterCount)
+  @ResolveField('_count', () => CharacterCount)
   async resolveCountField(
     @Parent() character: CharacterEntity,
   ): Promise<CharacterCount> {
@@ -241,7 +236,7 @@ export class CharactersResolver {
   }
 
   /** Character creator field resolver */
-  @ResolveField("creator", () => User, { nullable: true })
+  @ResolveField('creator', () => User, { nullable: true })
   async resolveCreatorField(
     @Parent() character: CharacterEntity,
   ): Promise<User | null> {
@@ -251,17 +246,17 @@ export class CharactersResolver {
   }
 
   /** Character owner field resolver */
-  @ResolveField("owner", () => User)
+  @ResolveField('owner', () => User)
   async resolveOwnerField(@Parent() character: CharacterEntity): Promise<User> {
     const user = await this.usersService.findById(character.ownerId);
-    if (!user) throw new Error("Owner not found");
+    if (!user) throw new Error('Owner not found');
     return mapPrismaUserToGraphQL(user);
   }
 
   /** Main media field resolver */
-  @ResolveField("mainMedia", () => Media, {
+  @ResolveField('mainMedia', () => Media, {
     nullable: true,
-    description: "Main media item for this character (image or text)",
+    description: 'Main media item for this character (image or text)',
   })
   async resolveMainMediaField(
     @Parent() character: CharacterEntity,
@@ -272,7 +267,7 @@ export class CharactersResolver {
   }
 
   /** Character tags relation field resolver */
-  @ResolveField("tags_rel", () => [CharacterTag])
+  @ResolveField('tags_rel', () => [CharacterTag])
   async resolveTagsRelField(
     @Parent() character: CharacterEntity,
   ): Promise<CharacterTag[]> {
@@ -288,9 +283,9 @@ export class CharactersResolver {
   }
 
   /** Species field resolver */
-  @ResolveField("species", () => Species, {
+  @ResolveField('species', () => Species, {
     nullable: true,
-    description: "Species this character belongs to",
+    description: 'Species this character belongs to',
   })
   async resolveSpeciesField(
     @Parent() character: CharacterEntity,
@@ -300,9 +295,9 @@ export class CharactersResolver {
   }
 
   /** Species variant field resolver */
-  @ResolveField("speciesVariant", () => SpeciesVariant, {
+  @ResolveField('speciesVariant', () => SpeciesVariant, {
     nullable: true,
-    description: "Species variant this character belongs to",
+    description: 'Species variant this character belongs to',
   })
   async resolveSpeciesVariantField(
     @Parent() character: CharacterEntity,
@@ -313,13 +308,13 @@ export class CharactersResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditCharacter)
-  @ResolveCommunityFrom({ characterId: "id" })
+  @ResolveCommunityFrom({ characterId: 'id' })
   @Mutation(() => CharacterEntity, {
-    description: "Update character trait values",
+    description: 'Update character trait values',
   })
   async updateCharacterTraits(
-    @Args("id", { type: () => ID }) id: string,
-    @Args("updateCharacterTraitsInput")
+    @Args('id', { type: () => ID }) id: string,
+    @Args('updateCharacterTraitsInput')
     updateCharacterTraitsInput: UpdateCharacterTraitsInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<CharacterEntity> {

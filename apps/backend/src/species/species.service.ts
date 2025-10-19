@@ -43,8 +43,8 @@ export class SpeciesService {
         name: input.name,
         hasImage: input.hasImage ?? false,
         community: {
-          connect: { id: input.communityId }
-        }
+          connect: { id: input.communityId },
+        },
       },
     });
   }
@@ -94,7 +94,11 @@ export class SpeciesService {
   }
 
   /** Find species by community ID with pagination */
-  async findByCommunity(communityId: string, first: number = 20, after?: string) {
+  async findByCommunity(
+    communityId: string,
+    first: number = 20,
+    after?: string,
+  ) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -140,7 +144,7 @@ export class SpeciesService {
     const species = await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.SpeciesUpdateInput = {};
-    
+
     if (input.name !== undefined) updateData.name = input.name;
     if (input.hasImage !== undefined) updateData.hasImage = input.hasImage;
     if (input.communityId !== undefined) {

@@ -1,7 +1,7 @@
-import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import styled from "styled-components";
-import { Users, Calendar, Settings, UserPlus } from "lucide-react";
+import React from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+import { Users, Calendar, Settings, UserPlus } from 'lucide-react';
 import {
   Button,
   Title,
@@ -10,17 +10,17 @@ import {
   SmallText,
   HelpText,
   Card,
-} from "@chardb/ui";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+} from '@chardb/ui';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 import {
   useCommunityByIdQuery,
   useSpeciesByCommunityQuery,
   useGetCharactersQuery,
   useCommunityMembersWithRolesQuery,
   useCommunityMembersByUserQuery,
-} from "../generated/graphql";
-import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+} from '../generated/graphql';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Community Landing Page
@@ -195,8 +195,8 @@ export const CommunityPage: React.FC = () => {
   const { data, loading, error } = useCommunityByIdQuery({
     variables: { id: communityId! },
     skip: !communityId,
-    fetchPolicy: "cache-and-network",
-    errorPolicy: "all",
+    fetchPolicy: 'cache-and-network',
+    errorPolicy: 'all',
   });
 
   // Fetch species count for this community
@@ -223,9 +223,9 @@ export const CommunityPage: React.FC = () => {
 
   // Check if current user is a member of this community
   const { data: userMembershipsData } = useCommunityMembersByUserQuery({
-    variables: { userId: user?.id || "", first: 100 },
+    variables: { userId: user?.id || '', first: 100 },
     skip: !user?.id,
-    fetchPolicy: "cache-and-network",
+    fetchPolicy: 'cache-and-network',
   });
 
   if (loading) {
@@ -271,39 +271,41 @@ export const CommunityPage: React.FC = () => {
   // Get actual counts from GraphQL queries
   const speciesCount = speciesData?.speciesByCommunity?.totalCount || 0;
   const charactersCount = charactersData?.characters?.total || 0;
-  const membersCount = membersData?.communityMembersByCommunity?.totalCount || 0;
+  const membersCount =
+    membersData?.communityMembersByCommunity?.totalCount || 0;
 
   // Check if current user is a member of this community
-  const isMember = userMembershipsData?.communityMembersByUser?.nodes.some(
-    (membership) => membership.role.community.id === communityId
-  ) || false;
+  const isMember =
+    userMembershipsData?.communityMembersByUser?.nodes.some(
+      (membership) => membership.role.community.id === communityId,
+    ) || false;
 
   const sections = [
     {
-      id: "characters",
-      title: "Characters",
+      id: 'characters',
+      title: 'Characters',
       description:
-        "Browse and discover unique characters created by community members",
+        'Browse and discover unique characters created by community members',
       icon: Users,
       path: `/communities/${communityId}/characters`,
       count: charactersCount,
       enabled: true,
     },
     {
-      id: "species",
-      title: "Species",
+      id: 'species',
+      title: 'Species',
       description:
-        "Explore the various species and their traits available in this community",
+        'Explore the various species and their traits available in this community',
       icon: Settings, // Would use a better icon like Dna or similar
       path: `/communities/${communityId}/species`,
       count: speciesCount,
       enabled: true,
     },
     {
-      id: "gallery",
-      title: "Community Gallery",
+      id: 'gallery',
+      title: 'Community Gallery',
       description:
-        "View artwork, stories, and media shared by community members",
+        'View artwork, stories, and media shared by community members',
       icon: Users, // Would use Gallery icon
       path: `/communities/${communityId}/gallery`,
       count: 0, // Would come from media count query when implemented
@@ -330,7 +332,9 @@ export const CommunityPage: React.FC = () => {
               </MetaItem>
               <MetaItem>
                 <Users size={16} />
-                <span>{membersCount} {membersCount === 1 ? 'member' : 'members'}</span>
+                <span>
+                  {membersCount} {membersCount === 1 ? 'member' : 'members'}
+                </span>
               </MetaItem>
             </CommunityMeta>
 
@@ -374,7 +378,7 @@ export const CommunityPage: React.FC = () => {
             <Link
               key={section.id}
               to={section.path}
-              style={{ textDecoration: "none", color: "inherit" }}
+              style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <SectionCard>
                 <SectionHeader>
@@ -400,7 +404,7 @@ export const CommunityPage: React.FC = () => {
       </SectionGrid>
 
       {/* Placeholder for future content sections */}
-      <div style={{ textAlign: "center", padding: "3rem 0" }}>
+      <div style={{ textAlign: 'center', padding: '3rem 0' }}>
         <HelpText>
           More community features and content will appear here as they become
           available.

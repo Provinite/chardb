@@ -1,14 +1,14 @@
-import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@apollo/client";
-import styled from "styled-components";
-import { GET_GALLERY, Gallery } from "../graphql/galleries.graphql";
-import { GET_MEDIA } from "../graphql/media.graphql";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import { LikeButton } from "../components/LikeButton";
-import { CommentList } from "../components/CommentList";
-import { MediaCard } from "../components/MediaCard";
-import { LikeableType, CommentableType, Media } from "../generated/graphql";
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@apollo/client';
+import styled from 'styled-components';
+import { GET_GALLERY, Gallery } from '../graphql/galleries.graphql';
+import { GET_MEDIA } from '../graphql/media.graphql';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { LikeButton } from '../components/LikeButton';
+import { CommentList } from '../components/CommentList';
+import { MediaCard } from '../components/MediaCard';
+import { LikeableType, CommentableType, Media } from '../generated/graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -41,7 +41,7 @@ const BackButton = styled.button`
   }
 
   &::before {
-    content: "←";
+    content: '←';
     font-weight: bold;
   }
 `;
@@ -82,7 +82,7 @@ const GalleryMeta = styled.div`
 `;
 
 const MetaBadge = styled.span<{
-  variant?: "default" | "success" | "warning" | "error" | "primary";
+  variant?: 'default' | 'success' | 'warning' | 'error' | 'primary';
 }>`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
@@ -90,27 +90,27 @@ const MetaBadge = styled.span<{
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   background: ${(props) => {
     switch (props.variant) {
-      case "success":
-        return props.theme.colors.success + "20";
-      case "warning":
-        return props.theme.colors.warning + "20";
-      case "error":
-        return props.theme.colors.error + "20";
-      case "primary":
-        return props.theme.colors.primary + "20";
+      case 'success':
+        return props.theme.colors.success + '20';
+      case 'warning':
+        return props.theme.colors.warning + '20';
+      case 'error':
+        return props.theme.colors.error + '20';
+      case 'primary':
+        return props.theme.colors.primary + '20';
       default:
         return props.theme.colors.surface;
     }
   }};
   color: ${(props) => {
     switch (props.variant) {
-      case "success":
+      case 'success':
         return props.theme.colors.success;
-      case "warning":
+      case 'warning':
         return props.theme.colors.warning;
-      case "error":
+      case 'error':
         return props.theme.colors.error;
-      case "primary":
+      case 'primary':
         return props.theme.colors.primary;
       default:
         return props.theme.colors.text.secondary;
@@ -192,7 +192,7 @@ const ContentText = styled.div`
 `;
 
 const Lightbox = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== "isOpen",
+  shouldForwardProp: (prop) => prop !== 'isOpen',
 })<{ isOpen: boolean }>`
   position: fixed;
   top: 0;
@@ -200,7 +200,7 @@ const Lightbox = styled.div.withConfig({
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.9);
-  display: ${(props) => (props.isOpen ? "flex" : "none")};
+  display: ${(props) => (props.isOpen ? 'flex' : 'none')};
   align-items: center;
   justify-content: center;
   z-index: 1000;
@@ -235,7 +235,7 @@ const LightboxClose = styled.button`
 `;
 
 const CharacterLink = styled.button`
-  background: ${({ theme }) => theme.colors.primary + "20"};
+  background: ${({ theme }) => theme.colors.primary + '20'};
   color: ${({ theme }) => theme.colors.primary};
   border: 2px solid ${({ theme }) => theme.colors.primary};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
@@ -337,7 +337,7 @@ export const GalleryPage: React.FC = () => {
   const mediaItems = mediaData?.media?.media || [];
 
   const handleBackClick = () => {
-    navigate("/galleries");
+    navigate('/galleries');
   };
 
   const handleCharacterClick = () => {
@@ -348,22 +348,22 @@ export const GalleryPage: React.FC = () => {
 
   const getVisibilityVariant = (visibility: string) => {
     switch (visibility) {
-      case "PUBLIC":
-        return "success";
-      case "UNLISTED":
-        return "warning";
-      case "PRIVATE":
-        return "error";
+      case 'PUBLIC':
+        return 'success';
+      case 'UNLISTED':
+        return 'warning';
+      case 'PRIVATE':
+        return 'error';
       default:
-        return "default";
+        return 'default';
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   };
 
@@ -385,7 +385,7 @@ export const GalleryPage: React.FC = () => {
           <h3>Gallery not found</h3>
           <p>
             {error?.message ||
-              "The gallery you are looking for does not exist or you do not have permission to view it."}
+              'The gallery you are looking for does not exist or you do not have permission to view it.'}
           </p>
         </ErrorContainer>
       </Container>
@@ -458,7 +458,7 @@ export const GalleryPage: React.FC = () => {
           {mediaLoading && (
             <MediaLoadingContainer>
               <LoadingSpinner />
-              <span style={{ marginLeft: "12px" }}>
+              <span style={{ marginLeft: '12px' }}>
                 Loading gallery content...
               </span>
             </MediaLoadingContainer>

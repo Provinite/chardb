@@ -1,25 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
-import { 
-  Users, 
-  Shield, 
-  Search, 
-  Check,
-  X,
-  Crown
-} from 'lucide-react';
+import { Users, Shield, Search, Check, X, Crown } from 'lucide-react';
 import {
   useCommunityMembersWithRolesQuery,
   useRolesByCommunityDetailedQuery,
-  useUpdateCommunityMemberMutation
+  useUpdateCommunityMemberMutation,
 } from '../../generated/graphql';
 
 /**
  * Permission Matrix Component
- * 
+ *
  * Displays a comprehensive grid view of community members and their role-based permissions.
  * Provides quick role assignment and permission visibility at a glance.
- * 
+ *
  * Features:
  * - Grid layout with users as rows and permissions as columns
  * - Quick role switching via dropdown
@@ -98,7 +91,7 @@ const SearchInput = styled.input`
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: 0.875rem;
   min-width: 250px;
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -150,14 +143,16 @@ const HeaderCell = styled.th<{ $sticky?: boolean; $width?: string }>`
   border-right: 1px solid ${({ theme }) => theme.colors.border};
   white-space: nowrap;
   width: ${({ $width }) => $width || 'auto'};
-  
-  ${({ $sticky, theme }) => $sticky && `
+
+  ${({ $sticky, theme }) =>
+    $sticky &&
+    `
     position: sticky;
     left: 0;
     z-index: 3;
     background: ${theme.colors.surface};
   `}
-  
+
   &:last-child {
     border-right: none;
   }
@@ -174,19 +169,21 @@ const MatrixRow = styled.tr`
   &:nth-child(even) {
     background: ${({ theme }) => theme.colors.surface}40;
   }
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.primary}10;
   }
-  
+
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 const UserCell = styled.td<{ $sticky?: boolean }>`
   padding: 0.75rem;
   border-right: 1px solid ${({ theme }) => theme.colors.border};
-  
-  ${({ $sticky, theme }) => $sticky && `
+
+  ${({ $sticky, theme }) =>
+    $sticky &&
+    `
     position: sticky;
     left: 0;
     z-index: 2;
@@ -254,7 +251,7 @@ const RoleSelect = styled.select`
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: 0.75rem;
   min-width: 120px;
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -265,7 +262,7 @@ const PermissionCell = styled.td`
   padding: 0.75rem;
   text-align: center;
   border-right: 1px solid ${({ theme }) => theme.colors.border};
-  
+
   &:last-child {
     border-right: none;
   }
@@ -278,11 +275,11 @@ const PermissionIcon = styled.div<{ $granted: boolean }>`
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 4px;
-  background: ${({ $granted, theme }) => 
+  background: ${({ $granted, theme }) =>
     $granted ? theme.colors.success : theme.colors.surface};
-  color: ${({ $granted, theme }) => 
+  color: ${({ $granted, theme }) =>
     $granted ? 'white' : theme.colors.text.muted};
-  
+
   transition: all 0.2s ease;
 `;
 
@@ -326,34 +323,35 @@ const PERMISSION_LABELS = {
   canCreateRole: 'Create Roles',
   canEditRole: 'Edit Roles',
   canRemoveCommunityMember: 'Remove Members',
-  canManageMemberRoles: 'Manage Member Roles'
+  canManageMemberRoles: 'Manage Member Roles',
 } as const;
 
-export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ communityId }) => {
+export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
+  communityId,
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch community members with their roles
-  const { 
-    data: membersData, 
-    loading: membersLoading, 
+  const {
+    data: membersData,
+    loading: membersLoading,
     error: membersError,
-    refetch: refetchMembers 
+    refetch: refetchMembers,
   } = useCommunityMembersWithRolesQuery({
     variables: { communityId, first: 100, after: null },
     skip: !communityId,
   });
 
   // Fetch all roles for the community
-  const { 
-    data: rolesData, 
-    loading: rolesLoading 
-  } = useRolesByCommunityDetailedQuery({
-    variables: { communityId, first: 100, after: null },
-    skip: !communityId,
-  });
+  const { data: rolesData, loading: rolesLoading } =
+    useRolesByCommunityDetailedQuery({
+      variables: { communityId, first: 100, after: null },
+      skip: !communityId,
+    });
 
   // Update community member mutation
-  const [updateCommunityMember, { loading: updating }] = useUpdateCommunityMemberMutation();
+  const [updateCommunityMember, { loading: updating }] =
+    useUpdateCommunityMemberMutation();
 
   const members = membersData?.communityMembersByCommunity?.nodes || [];
   const roles = rolesData?.rolesByCommunity?.nodes || [];
@@ -361,9 +359,9 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ communityId 
   // Filter members based on search term
   const filteredMembers = useMemo(() => {
     if (!searchTerm.trim()) return members;
-    
+
     const term = searchTerm.toLowerCase();
-    return members.filter(member => {
+    return members.filter((member) => {
       const user = member.user;
       const role = member.role;
       return (
@@ -381,10 +379,10 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ communityId 
       await updateCommunityMember({
         variables: {
           id: memberId,
-          input: { roleId: newRoleId }
-        }
+          input: { roleId: newRoleId },
+        },
       });
-      
+
       // Refetch to ensure data consistency
       await refetchMembers();
     } catch (error) {
@@ -394,9 +392,15 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ communityId 
   };
 
   // Get user initials for avatar
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getUserInitials = (user: any) => {
     if (user?.displayName) {
-      return user.displayName.split(' ').map((name: string) => name[0]).join('').toUpperCase().substring(0, 2);
+      return user.displayName
+        .split(' ')
+        .map((name: string) => name[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
     }
     return user?.username?.[0]?.toUpperCase() || '?';
   };
@@ -404,11 +408,14 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ communityId 
   // Calculate statistics
   const stats = useMemo(() => {
     const totalMembers = members.length;
-    const roleDistribution = roles.reduce((acc, role) => {
-      acc[role.id] = members.filter(m => m.roleId === role.id).length;
-      return acc;
-    }, {} as Record<string, number>);
-    
+    const roleDistribution = roles.reduce(
+      (acc, role) => {
+        acc[role.id] = members.filter((m) => m.roleId === role.id).length;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
     return { totalMembers, roleDistribution };
   }, [members, roles]);
 
@@ -457,7 +464,9 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ communityId 
           </TitleIcon>
           <div>
             <TitleText>Permission Matrix</TitleText>
-            <Subtitle>Manage member roles and view permission overview</Subtitle>
+            <Subtitle>
+              Manage member roles and view permission overview
+            </Subtitle>
           </div>
         </Title>
 
@@ -481,7 +490,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ communityId 
           <StatLabel>Total Members</StatLabel>
           <StatValue>{stats.totalMembers}</StatValue>
         </Stat>
-        {roles.map(role => (
+        {roles.map((role) => (
           <Stat key={role.id}>
             <StatLabel>{role.name}</StatLabel>
             <StatValue>{stats.roleDistribution[role.id] || 0}</StatValue>
@@ -494,58 +503,78 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ communityId 
           <MatrixHeader>
             <HeaderRow>
               <HeaderCell $sticky $width="250px">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
+                >
                   <Users size={16} />
                   Member
                 </div>
               </HeaderCell>
               <HeaderCell $width="140px">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
+                >
                   <Crown size={16} />
                   Role
                 </div>
               </HeaderCell>
               {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
-                <PermissionHeader key={key}>
-                  {label}
-                </PermissionHeader>
+                <PermissionHeader key={key}>{label}</PermissionHeader>
               ))}
             </HeaderRow>
           </MatrixHeader>
-          
+
           <MatrixBody>
             {filteredMembers.map((member) => (
               <MatrixRow key={member.id}>
                 <UserCell $sticky>
                   <UserInfo>
-                    <UserAvatar>
-                      {getUserInitials(member.user)}
-                    </UserAvatar>
+                    <UserAvatar>{getUserInitials(member.user)}</UserAvatar>
                     <UserDetails>
-                      <UserName>{member.user?.displayName || member.user?.username}</UserName>
+                      <UserName>
+                        {member.user?.displayName || member.user?.username}
+                      </UserName>
                       <UserEmail>{member.user?.email}</UserEmail>
                     </UserDetails>
                   </UserInfo>
                 </UserCell>
-                
+
                 <RoleCell>
                   <RoleSelect
                     value={member.roleId}
-                    onChange={(e) => handleRoleChange(member.id, e.target.value)}
+                    onChange={(e) =>
+                      handleRoleChange(member.id, e.target.value)
+                    }
                     disabled={updating}
                   >
-                    {roles.map(role => (
+                    {roles.map((role) => (
                       <option key={role.id} value={role.id}>
                         {role.name}
                       </option>
                     ))}
                   </RoleSelect>
                 </RoleCell>
-                
+
                 {Object.keys(PERMISSION_LABELS).map((permission) => (
                   <PermissionCell key={permission}>
-                    <PermissionIcon $granted={!!member.role?.[permission as keyof typeof PERMISSION_LABELS]}>
-                      {member.role?.[permission as keyof typeof PERMISSION_LABELS] ? (
+                    <PermissionIcon
+                      $granted={
+                        !!member.role?.[
+                          permission as keyof typeof PERMISSION_LABELS
+                        ]
+                      }
+                    >
+                      {member.role?.[
+                        permission as keyof typeof PERMISSION_LABELS
+                      ] ? (
                         <Check size={12} />
                       ) : (
                         <X size={12} />

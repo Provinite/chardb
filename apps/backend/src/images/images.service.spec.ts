@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { ImagesService } from './images.service';
 import { DatabaseService } from '../database/database.service';
 import { Visibility } from '@chardb/database';
@@ -114,8 +118,9 @@ describe('ImagesService', () => {
         mimetype: 'text/plain',
       } as Express.Multer.File;
 
-      await expect(service.upload('user1', { file: invalidFile }))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.upload('user1', { file: invalidFile }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should reject files that are too large', async () => {
@@ -124,20 +129,22 @@ describe('ImagesService', () => {
         size: 15 * 1024 * 1024, // 15MB
       } as Express.Multer.File;
 
-      await expect(service.upload('user1', { file: largeFile }))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.upload('user1', { file: largeFile }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should verify character ownership when specified', async () => {
       const input = { characterId: 'char1' };
-      
+
       db.character.findUnique.mockResolvedValue({
         id: 'char1',
         ownerId: 'user2', // Different user
       });
 
-      await expect(service.upload('user1', { file: mockFile, ...input }))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.upload('user1', { file: mockFile, ...input }),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -179,7 +186,9 @@ describe('ImagesService', () => {
 
       db.image.findUnique.mockResolvedValue(mockImage);
 
-      await expect(service.findOne(imageId, 'user2')).rejects.toThrow(ForbiddenException);
+      await expect(service.findOne(imageId, 'user2')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -221,8 +230,9 @@ describe('ImagesService', () => {
 
       db.image.findUnique.mockResolvedValue(mockImage);
 
-      await expect(service.update(imageId, 'user2', { altText: 'Hacked' }))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.update(imageId, 'user2', { altText: 'Hacked' }),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     // NOTE: Character association tests removed - now handled through Media system
@@ -258,8 +268,9 @@ describe('ImagesService', () => {
 
       db.image.findUnique.mockResolvedValue(mockImage);
 
-      await expect(service.remove(imageId, 'user2'))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.remove(imageId, 'user2')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -283,9 +294,7 @@ describe('ImagesService', () => {
 
       expect(db.image.findMany).toHaveBeenCalledWith({
         where: expect.objectContaining({
-          AND: expect.arrayContaining([
-            { visibility: Visibility.PUBLIC },
-          ]),
+          AND: expect.arrayContaining([{ visibility: Visibility.PUBLIC }]),
         }),
         include: {
           uploader: true,
@@ -314,9 +323,7 @@ describe('ImagesService', () => {
 
       expect(db.image.findMany).toHaveBeenCalledWith({
         where: expect.objectContaining({
-          AND: expect.arrayContaining([
-            { characterId },
-          ]),
+          AND: expect.arrayContaining([{ characterId }]),
         }),
         include: {
           uploader: true,

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import styled from "styled-components";
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
 import {
   Settings,
   Shield,
@@ -8,7 +8,7 @@ import {
   Crown,
   AlertCircle,
   Info,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   Button,
   Input,
@@ -20,14 +20,14 @@ import {
   Caption,
   HelpText,
   Label,
-} from "@chardb/ui";
+} from '@chardb/ui';
 import {
   useCreateRoleMutation,
   useUpdateRoleMutation,
   CreateRoleInput,
   UpdateRoleInput,
   RolesByCommunityDetailedDocument,
-} from "../../generated/graphql";
+} from '../../generated/graphql';
 
 /**
  * Role Editor Component
@@ -126,7 +126,7 @@ const PermissionItem = styled.label`
   }
 `;
 
-const PermissionCheckbox = styled.input.attrs({ type: "checkbox" })`
+const PermissionCheckbox = styled.input.attrs({ type: 'checkbox' })`
   width: 1rem;
   height: 1rem;
   margin-top: 0.125rem;
@@ -162,7 +162,7 @@ const TemplateButton = styled.button<{ $selected?: boolean }>`
     ${({ theme, $selected }) =>
       $selected ? theme.colors.primary : theme.colors.border};
   background: ${({ theme, $selected }) =>
-    $selected ? theme.colors.primary + "20" : theme.colors.surface};
+    $selected ? theme.colors.primary + '20' : theme.colors.surface};
   color: ${({ theme, $selected }) =>
     $selected ? theme.colors.primary : theme.colors.text.primary};
   border-radius: 6px;
@@ -194,7 +194,7 @@ const InfoAlert = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.info}40;
   border-radius: 6px;
   margin-bottom: 1rem;
-  
+
   ${Caption} {
     color: ${({ theme }) => theme.colors.text.primary} !important;
   }
@@ -233,81 +233,81 @@ interface RoleEditorProps {
 // Permission groups with descriptions
 const PERMISSION_GROUPS = [
   {
-    id: "content",
-    title: "Content Management",
-    description: "Permissions for managing community content and species",
+    id: 'content',
+    title: 'Content Management',
+    description: 'Permissions for managing community content and species',
     icon: Database,
     permissions: [
       {
-        key: "canCreateSpecies",
-        name: "Create Species",
-        description: "Allow creation of new species and their configuration",
+        key: 'canCreateSpecies',
+        name: 'Create Species',
+        description: 'Allow creation of new species and their configuration',
       },
       {
-        key: "canEditSpecies",
-        name: "Edit Species",
-        description: "Allow editing existing species, traits, and variants",
+        key: 'canEditSpecies',
+        name: 'Edit Species',
+        description: 'Allow editing existing species, traits, and variants',
       },
       {
-        key: "canCreateCharacter",
-        name: "Create Characters",
-        description: "Allow creation of new characters in the community",
+        key: 'canCreateCharacter',
+        name: 'Create Characters',
+        description: 'Allow creation of new characters in the community',
       },
       {
-        key: "canEditCharacter",
-        name: "Edit Any Character",
+        key: 'canEditCharacter',
+        name: 'Edit Any Character',
         description: "Allow editing any community member's characters",
       },
       {
-        key: "canEditOwnCharacter",
-        name: "Edit Own Characters",
-        description: "Allow editing only characters owned by the member",
+        key: 'canEditOwnCharacter',
+        name: 'Edit Own Characters',
+        description: 'Allow editing only characters owned by the member',
       },
     ],
   },
   {
-    id: "community",
-    title: "Community Management",
-    description: "Permissions for managing community members and invitations",
+    id: 'community',
+    title: 'Community Management',
+    description: 'Permissions for managing community members and invitations',
     icon: Users,
     permissions: [
       {
-        key: "canCreateInviteCode",
-        name: "Create Invite Codes",
-        description: "Allow creation of community invitation codes",
+        key: 'canCreateInviteCode',
+        name: 'Create Invite Codes',
+        description: 'Allow creation of community invitation codes',
       },
       {
-        key: "canListInviteCodes",
-        name: "View Invite Codes",
-        description: "Allow viewing and managing existing invite codes",
+        key: 'canListInviteCodes',
+        name: 'View Invite Codes',
+        description: 'Allow viewing and managing existing invite codes',
       },
       {
-        key: "canRemoveCommunityMember",
-        name: "Remove Members",
-        description: "Allow removal of community members",
+        key: 'canRemoveCommunityMember',
+        name: 'Remove Members',
+        description: 'Allow removal of community members',
       },
       {
-        key: "canManageMemberRoles",
-        name: "Manage Member Roles",
-        description: "Allow changing roles of community members",
+        key: 'canManageMemberRoles',
+        name: 'Manage Member Roles',
+        description: 'Allow changing roles of community members',
       },
     ],
   },
   {
-    id: "administration",
-    title: "Role Administration",
-    description: "Permissions for managing community roles and permissions",
+    id: 'administration',
+    title: 'Role Administration',
+    description: 'Permissions for managing community roles and permissions',
     icon: Crown,
     permissions: [
       {
-        key: "canCreateRole",
-        name: "Create Roles",
-        description: "Allow creation of new community roles",
+        key: 'canCreateRole',
+        name: 'Create Roles',
+        description: 'Allow creation of new community roles',
       },
       {
-        key: "canEditRole",
-        name: "Edit Roles",
-        description: "Allow editing existing community roles and permissions",
+        key: 'canEditRole',
+        name: 'Edit Roles',
+        description: 'Allow editing existing community roles and permissions',
       },
     ],
   },
@@ -316,8 +316,8 @@ const PERMISSION_GROUPS = [
 // Role templates for quick configuration
 const ROLE_TEMPLATES = [
   {
-    name: "Member",
-    description: "Basic member with character creation rights",
+    name: 'Member',
+    description: 'Basic member with character creation rights',
     permissions: {
       canCreateCharacter: true,
       canEditOwnCharacter: true,
@@ -333,8 +333,8 @@ const ROLE_TEMPLATES = [
     },
   },
   {
-    name: "Moderator",
-    description: "Trusted member with content moderation abilities",
+    name: 'Moderator',
+    description: 'Trusted member with content moderation abilities',
     permissions: {
       canCreateCharacter: true,
       canEditOwnCharacter: true,
@@ -350,8 +350,8 @@ const ROLE_TEMPLATES = [
     },
   },
   {
-    name: "Admin",
-    description: "Full administrative access to all features",
+    name: 'Admin',
+    description: 'Full administrative access to all features',
     permissions: {
       canCreateCharacter: true,
       canEditOwnCharacter: true,
@@ -375,10 +375,10 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
   communityId,
   editingRole,
 }) => {
-  const [roleName, setRoleName] = useState("");
+  const [roleName, setRoleName] = useState('');
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [error, setError] = useState<string>('');
 
   const [createRole, { loading: creating }] = useCreateRoleMutation();
   const [updateRole, { loading: updating }] = useUpdateRoleMutation();
@@ -405,11 +405,11 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
       });
     } else {
       // Reset form for new role
-      setRoleName("");
+      setRoleName('');
       setPermissions({});
-      setSelectedTemplate("");
+      setSelectedTemplate('');
     }
-    setError("");
+    setError('');
   }, [editingRole, isOpen]);
 
   const handleTemplateSelect = (templateName: string) => {
@@ -429,15 +429,15 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
       [permissionKey]: checked,
     }));
     // Clear template selection when manually changing permissions
-    setSelectedTemplate("");
+    setSelectedTemplate('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
 
     if (!roleName.trim()) {
-      setError("Role name is required");
+      setError('Role name is required');
       return;
     }
 
@@ -482,13 +482,14 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
 
       onSuccess();
       onClose();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      console.error("Failed to save role:", err);
-      setError(err.message || "Failed to save role");
+      console.error('Failed to save role:', err);
+      setError(err.message || 'Failed to save role');
     }
   };
 
-  const modalTitle = isEditing ? "Edit Role" : "Create New Role";
+  const modalTitle = isEditing ? 'Edit Role' : 'Create New Role';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={modalTitle}>
@@ -587,7 +588,7 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
                           onChange={(e) =>
                             handlePermissionChange(
                               permission.key,
-                              e.target.checked
+                              e.target.checked,
                             )
                           }
                           disabled={isLoading}
@@ -628,7 +629,7 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
               disabled={isLoading || !roleName.trim()}
               loading={isLoading}
             >
-              {isEditing ? "Update Role" : "Create Role"}
+              {isEditing ? 'Update Role' : 'Create Role'}
             </Button>
           </FooterButtons>
         </FormContainer>

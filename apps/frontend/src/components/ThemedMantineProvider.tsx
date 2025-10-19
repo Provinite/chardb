@@ -6,12 +6,10 @@ interface ThemedMantineProviderProps {
   children: React.ReactNode;
 }
 
-export const ThemedMantineProvider: React.FC<ThemedMantineProviderProps> = ({ children }) => {
+export const ThemedMantineProvider: React.FC<ThemedMantineProviderProps> = ({
+  children,
+}) => {
   const { mode } = useTheme();
 
-  return (
-    <MantineProvider forceColorScheme={mode}>
-      {children}
-    </MantineProvider>
-  );
+  return <MantineProvider forceColorScheme={mode}>{children}</MantineProvider>;
 };

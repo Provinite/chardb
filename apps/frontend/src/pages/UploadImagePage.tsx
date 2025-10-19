@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { useQuery } from "@apollo/client";
-import styled from "styled-components";
-import { Button } from "@chardb/ui";
-import { useAuth } from "../contexts/AuthContext";
-import { ImageUpload, ImageFile } from "../components/ImageUpload";
-import { GET_MY_GALLERIES } from "../graphql/galleries.graphql";
-import { GET_MY_CHARACTERS } from "../graphql/characters.graphql";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useQuery } from '@apollo/client';
+import styled from 'styled-components';
+import { Button } from '@chardb/ui';
+import { useAuth } from '../contexts/AuthContext';
+import { ImageUpload, ImageFile } from '../components/ImageUpload';
+import { GET_MY_GALLERIES } from '../graphql/galleries.graphql';
+import { GET_MY_CHARACTERS } from '../graphql/characters.graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -112,7 +112,7 @@ const Input = styled.input`
   width: 100%;
   box-sizing: border-box;
 
-  &[as="textarea"] {
+  &[as='textarea'] {
     resize: vertical;
     min-height: 100px;
   }
@@ -133,7 +133,7 @@ const Select = styled.select`
   font-size: ${({ theme }) => theme.typography.fontSize.md};
 `;
 
-const Checkbox = styled.input.attrs({ type: "checkbox" })`
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
   margin-right: ${({ theme }) => theme.spacing.sm};
 `;
 
@@ -198,7 +198,7 @@ const ArtistToggle = styled.div`
 `;
 
 const ArtistToggleButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== "active",
+  shouldForwardProp: (prop) => prop !== 'active',
 })<{ active: boolean }>`
   flex: 1;
   padding: ${({ theme }) => theme.spacing.sm};
@@ -206,7 +206,7 @@ const ArtistToggleButton = styled.button.withConfig({
   background: ${({ theme, active }) =>
     active ? theme.colors.primary : theme.colors.surface};
   color: ${({ theme, active }) =>
-    active ? "white" : theme.colors.text.primary};
+    active ? 'white' : theme.colors.text.primary};
   cursor: pointer;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
@@ -342,18 +342,18 @@ interface UploadFormData {
   galleryId: string;
   characterId: string;
   isNsfw: boolean;
-  visibility: "PUBLIC" | "UNLISTED" | "PRIVATE";
+  visibility: 'PUBLIC' | 'UNLISTED' | 'PRIVATE';
   // Privacy settings
-  authorizedViewers: "full-size" | "watermarked" | "no-access";
-  publicViewers: "full-size" | "watermarked" | "no-access";
-  watermark: "url-fileside" | "url-only" | "none";
+  authorizedViewers: 'full-size' | 'watermarked' | 'no-access';
+  publicViewers: 'full-size' | 'watermarked' | 'no-access';
+  watermark: 'url-fileside' | 'url-only' | 'none';
   // NSFW categories
   nsfwNudity: boolean;
   nsfwGore: boolean;
   nsfwSensitive: boolean;
   sensitiveContentDescription: string;
   // Artist credits
-  artistType: "onsite" | "offsite";
+  artistType: 'onsite' | 'offsite';
   artistLink: string;
   artistLabel: string;
 }
@@ -372,35 +372,35 @@ export const UploadImagePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [formData, setFormData] = useState<UploadFormData>({
-    description: "",
-    altText: "",
-    galleryId: "",
-    characterId: "",
+    description: '',
+    altText: '',
+    galleryId: '',
+    characterId: '',
     isNsfw: false,
-    visibility: "PUBLIC",
+    visibility: 'PUBLIC',
     // Privacy settings
-    authorizedViewers: "full-size",
-    publicViewers: "watermarked",
-    watermark: "url-fileside",
+    authorizedViewers: 'full-size',
+    publicViewers: 'watermarked',
+    watermark: 'url-fileside',
     // NSFW categories
     nsfwNudity: false,
     nsfwGore: false,
     nsfwSensitive: false,
-    sensitiveContentDescription: "",
+    sensitiveContentDescription: '',
     // Artist credits
-    artistType: "onsite",
-    artistLink: "",
-    artistLabel: "",
+    artistType: 'onsite',
+    artistLink: '',
+    artistLabel: '',
   });
 
   // Pre-select gallery and character from URL query parameters
   useEffect(() => {
-    const galleryId = searchParams.get("galleryId");
-    const characterId = searchParams.get("character");
+    const galleryId = searchParams.get('galleryId');
+    const characterId = searchParams.get('character');
 
     if (galleryId) {
       setFormData((prev) => ({ ...prev, galleryId }));
@@ -427,67 +427,68 @@ export const UploadImagePage: React.FC = () => {
     },
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleInputChange = (field: keyof UploadFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleUpload = async (uploadFiles: ImageFile[]) => {
     if (!user) {
-      setError("You must be logged in to upload images");
+      setError('You must be logged in to upload images');
       return;
     }
 
     setUploading(true);
-    setError("");
+    setError('');
 
     try {
       const uploadPromises = uploadFiles.map(async (imageFile) => {
         const formDataToSend = new FormData();
-        formDataToSend.append("file", imageFile.file);
+        formDataToSend.append('file', imageFile.file);
 
         if (formData.description)
-          formDataToSend.append("description", formData.description);
+          formDataToSend.append('description', formData.description);
         if (formData.altText)
-          formDataToSend.append("altText", formData.altText);
+          formDataToSend.append('altText', formData.altText);
         if (formData.galleryId)
-          formDataToSend.append("galleryId", formData.galleryId);
+          formDataToSend.append('galleryId', formData.galleryId);
         if (formData.characterId)
-          formDataToSend.append("characterId", formData.characterId);
+          formDataToSend.append('characterId', formData.characterId);
         // Handle NSFW flags
         const hasNsfwContent =
           formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive;
-        formDataToSend.append("isNsfw", hasNsfwContent.toString());
-        if (formData.nsfwNudity) formDataToSend.append("nsfwNudity", "true");
-        if (formData.nsfwGore) formDataToSend.append("nsfwGore", "true");
+        formDataToSend.append('isNsfw', hasNsfwContent.toString());
+        if (formData.nsfwNudity) formDataToSend.append('nsfwNudity', 'true');
+        if (formData.nsfwGore) formDataToSend.append('nsfwGore', 'true');
         if (formData.nsfwSensitive) {
-          formDataToSend.append("nsfwSensitive", "true");
+          formDataToSend.append('nsfwSensitive', 'true');
           if (formData.sensitiveContentDescription) {
             formDataToSend.append(
-              "sensitiveContentDescription",
+              'sensitiveContentDescription',
               formData.sensitiveContentDescription,
             );
           }
         }
 
         // Handle privacy settings
-        formDataToSend.append("authorizedViewers", formData.authorizedViewers);
-        formDataToSend.append("publicViewers", formData.publicViewers);
-        formDataToSend.append("watermark", formData.watermark);
+        formDataToSend.append('authorizedViewers', formData.authorizedViewers);
+        formDataToSend.append('publicViewers', formData.publicViewers);
+        formDataToSend.append('watermark', formData.watermark);
 
         // Handle artist credits
         if (formData.artistLink) {
-          formDataToSend.append("artistType", formData.artistType);
-          formDataToSend.append("artistLink", formData.artistLink);
+          formDataToSend.append('artistType', formData.artistType);
+          formDataToSend.append('artistLink', formData.artistLink);
           if (formData.artistLabel)
-            formDataToSend.append("artistLabel", formData.artistLabel);
+            formDataToSend.append('artistLabel', formData.artistLabel);
         }
-        formDataToSend.append("visibility", formData.visibility);
+        formDataToSend.append('visibility', formData.visibility);
 
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
         const response = await fetch(`${apiUrl}/images/upload`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
           },
           body: formDataToSend,
         });
@@ -521,17 +522,17 @@ export const UploadImagePage: React.FC = () => {
       // Reset form data except character/gallery selection for convenience
       setFormData((prev) => ({
         ...prev,
-        description: "",
-        altText: "",
+        description: '',
+        altText: '',
         nsfwNudity: false,
         nsfwGore: false,
         nsfwSensitive: false,
-        sensitiveContentDescription: "",
-        artistLink: "",
-        artistLabel: "",
+        sensitiveContentDescription: '',
+        artistLink: '',
+        artistLabel: '',
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(false);
     }
@@ -544,14 +545,16 @@ export const UploadImagePage: React.FC = () => {
   const handleUploadMore = () => {
     setUploadSuccess(false);
     setUploadedImages([]);
-    setError("");
+    setError('');
   };
 
   const renderSuccessState = () => {
     const selectedCharacter = characters.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (c: any) => c.id === formData.characterId,
     );
     const selectedGallery = galleries.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (g: any) => g.id === formData.galleryId,
     );
 
@@ -560,7 +563,7 @@ export const UploadImagePage: React.FC = () => {
         <SuccessTitle>✅ Upload Successful!</SuccessTitle>
         <SuccessMessage>
           {uploadedImages.length === 1
-            ? "Your image has been uploaded successfully."
+            ? 'Your image has been uploaded successfully.'
             : `${uploadedImages.length} images have been uploaded successfully.`}
         </SuccessMessage>
 
@@ -586,7 +589,7 @@ export const UploadImagePage: React.FC = () => {
           <Button variant="primary" onClick={handleUploadMore}>
             Upload More Images
           </Button>
-          <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+          <Button variant="ghost" onClick={() => navigate('/dashboard')}>
             Go to Dashboard
           </Button>
         </SuccessActions>
@@ -663,7 +666,7 @@ export const UploadImagePage: React.FC = () => {
                   placeholder="Describe your image..."
                   value={formData.description}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    handleInputChange("description", e.target.value)
+                    handleInputChange('description', e.target.value)
                   }
                 />
               </Section>
@@ -675,7 +678,7 @@ export const UploadImagePage: React.FC = () => {
                   <Select
                     value={formData.authorizedViewers}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      handleInputChange("authorizedViewers", e.target.value)
+                      handleInputChange('authorizedViewers', e.target.value)
                     }
                   >
                     <option value="full-size">Full Size</option>
@@ -688,7 +691,7 @@ export const UploadImagePage: React.FC = () => {
                   <Select
                     value={formData.publicViewers}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      handleInputChange("publicViewers", e.target.value)
+                      handleInputChange('publicViewers', e.target.value)
                     }
                   >
                     <option value="full-size">Full Size</option>
@@ -701,7 +704,7 @@ export const UploadImagePage: React.FC = () => {
                   <Select
                     value={formData.watermark}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      handleInputChange("watermark", e.target.value)
+                      handleInputChange('watermark', e.target.value)
                     }
                   >
                     <option value="url-fileside">URL, Fileside</option>
@@ -719,7 +722,7 @@ export const UploadImagePage: React.FC = () => {
                       type="checkbox"
                       checked={formData.nsfwNudity}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("nsfwNudity", e.target.checked)
+                        handleInputChange('nsfwNudity', e.target.checked)
                       }
                     />
                     Nudity
@@ -729,7 +732,7 @@ export const UploadImagePage: React.FC = () => {
                       type="checkbox"
                       checked={formData.nsfwGore}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("nsfwGore", e.target.checked)
+                        handleInputChange('nsfwGore', e.target.checked)
                       }
                     />
                     Gore
@@ -739,7 +742,7 @@ export const UploadImagePage: React.FC = () => {
                       type="checkbox"
                       checked={formData.nsfwSensitive}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("nsfwSensitive", e.target.checked)
+                        handleInputChange('nsfwSensitive', e.target.checked)
                       }
                     />
                     Sensitive Content
@@ -755,7 +758,7 @@ export const UploadImagePage: React.FC = () => {
                       value={formData.sensitiveContentDescription}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                         handleInputChange(
-                          "sensitiveContentDescription",
+                          'sensitiveContentDescription',
                           e.target.value,
                         )
                       }
@@ -764,13 +767,13 @@ export const UploadImagePage: React.FC = () => {
                 )}
               </Section>
 
-              <Actions style={{ justifyContent: "center" }}>
+              <Actions style={{ justifyContent: 'center' }}>
                 <UploadButton
                   onClick={() => handleUpload(files)}
                   disabled={uploading || files.length === 0}
                   variant="primary"
                 >
-                  {uploading ? "Uploading..." : "Upload Image"}
+                  {uploading ? 'Uploading...' : 'Upload Image'}
                 </UploadButton>
               </Actions>
             </Form>
@@ -783,25 +786,25 @@ export const UploadImagePage: React.FC = () => {
                 <CharacterCard>
                   <CharacterAvatar>
                     {characters
-                      .find((c: any) => c.id === formData.characterId)
-                      ?.name?.charAt(0) || "?"}
+                      .find((c: any) => c.id === formData.characterId) // eslint-disable-line @typescript-eslint/no-explicit-any
+                      ?.name?.charAt(0) || '?'}
                   </CharacterAvatar>
                   <CharacterInfo>
                     <CharacterName>
                       {characters.find(
-                        (c: any) => c.id === formData.characterId,
-                      )?.name || "Unknown"}
+                        (c: any) => c.id === formData.characterId, // eslint-disable-line @typescript-eslint/no-explicit-any
+                      )?.name || 'Unknown'}
                     </CharacterName>
                     <CharacterMeta>
                       {characters.find(
-                        (c: any) => c.id === formData.characterId,
-                      )?.species?.name || "Unknown species"}
+                        (c: any) => c.id === formData.characterId, // eslint-disable-line @typescript-eslint/no-explicit-any
+                      )?.species?.name || 'Unknown species'}
                     </CharacterMeta>
                   </CharacterInfo>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleInputChange("characterId", "")}
+                    onClick={() => handleInputChange('characterId', '')}
                   >
                     ×
                   </Button>
@@ -811,13 +814,14 @@ export const UploadImagePage: React.FC = () => {
                 <Select
                   value={formData.characterId}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    handleInputChange("characterId", e.target.value)
+                    handleInputChange('characterId', e.target.value)
                   }
                 >
                   <option value="">Select a character...</option>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {characters.map((character: any) => (
                     <option key={character.id} value={character.id}>
-                      {character.name} ({character.species?.name || "Unknown"})
+                      {character.name} ({character.species?.name || 'Unknown'})
                     </option>
                   ))}
                 </Select>
@@ -832,15 +836,15 @@ export const UploadImagePage: React.FC = () => {
               <ArtistToggle>
                 <ArtistToggleButton
                   type="button"
-                  active={formData.artistType === "onsite"}
-                  onClick={() => handleInputChange("artistType", "onsite")}
+                  active={formData.artistType === 'onsite'}
+                  onClick={() => handleInputChange('artistType', 'onsite')}
                 >
                   On-site Artist
                 </ArtistToggleButton>
                 <ArtistToggleButton
                   type="button"
-                  active={formData.artistType === "offsite"}
-                  onClick={() => handleInputChange("artistType", "offsite")}
+                  active={formData.artistType === 'offsite'}
+                  onClick={() => handleInputChange('artistType', 'offsite')}
                 >
                   Off-site Artist
                 </ArtistToggleButton>
@@ -849,13 +853,13 @@ export const UploadImagePage: React.FC = () => {
                 <Label>Link to Artist</Label>
                 <Input
                   placeholder={
-                    formData.artistType === "onsite"
-                      ? "Username or profile..."
-                      : "Artist website or profile..."
+                    formData.artistType === 'onsite'
+                      ? 'Username or profile...'
+                      : 'Artist website or profile...'
                   }
                   value={formData.artistLink}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("artistLink", e.target.value)
+                    handleInputChange('artistLink', e.target.value)
                   }
                 />
               </div>
@@ -865,7 +869,7 @@ export const UploadImagePage: React.FC = () => {
                   placeholder="Artist name or description..."
                   value={formData.artistLabel}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("artistLabel", e.target.value)
+                    handleInputChange('artistLabel', e.target.value)
                   }
                 />
               </div>
@@ -886,9 +890,9 @@ export const UploadImagePage: React.FC = () => {
                     <Link
                       to="/gallery/create"
                       style={{
-                        fontSize: "0.875rem",
-                        marginTop: "0.5rem",
-                        display: "inline-block",
+                        fontSize: '0.875rem',
+                        marginTop: '0.5rem',
+                        display: 'inline-block',
                       }}
                     >
                       Create your first gallery
@@ -898,10 +902,11 @@ export const UploadImagePage: React.FC = () => {
                   <Select
                     value={formData.galleryId}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      handleInputChange("galleryId", e.target.value)
+                      handleInputChange('galleryId', e.target.value)
                     }
                   >
                     <option value="">Select a gallery...</option>
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {galleries.map((gallery: any) => (
                       <option key={gallery.id} value={gallery.id}>
                         {gallery.name}
@@ -916,13 +921,13 @@ export const UploadImagePage: React.FC = () => {
                   placeholder="Alt text for accessibility..."
                   value={formData.altText}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("altText", e.target.value)
+                    handleInputChange('altText', e.target.value)
                   }
                 />
               </div>
             </SidebarSection>
 
-            <div style={{ padding: "0 16px" }}>
+            <div style={{ padding: '0 16px' }}>
               <CancelButton
                 variant="ghost"
                 onClick={handleCancel}

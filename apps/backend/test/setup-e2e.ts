@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import * as request from 'supertest';
 import { DatabaseService } from '../src/database/database.service';
 import { execSync } from 'child_process';
+import * as jwt from 'jsonwebtoken';
 
 // Test utilities for E2E tests
 export class TestApp {
@@ -41,11 +42,13 @@ export class TestApp {
     }).compile();
 
     this.app = this.moduleRef.createNestApplication();
-    this.app.useGlobalPipes(new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }));
+    this.app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
 
     this.db = this.app.get(DatabaseService);
     await this.app.init();
@@ -55,9 +58,13 @@ export class TestApp {
     try {
       // Reset test database
       console.log('Setting up test database...');
-      execSync('yarn workspace @chardb/backend db:push', { 
-        env: { ...process.env, DATABASE_URL: 'postgresql://test_user:test_password@localhost:5440/chardb_test' },
-        stdio: 'inherit' 
+      execSync('yarn workspace @chardb/backend db:push', {
+        env: {
+          ...process.env,
+          DATABASE_URL:
+            'postgresql://test_user:test_password@localhost:5440/chardb_test',
+        },
+        stdio: 'inherit',
       });
       console.log('Test database ready');
     } catch (error) {
@@ -108,9 +115,13 @@ export class TestApp {
       });
   }
 
-  async authenticatedGraphqlRequest(query: string, variables = {}, token: string) {
+  async authenticatedGraphqlRequest(
+    query: string,
+    variables = {},
+    token: string,
+  ) {
     return this.graphqlRequest(query, variables, {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     });
   }
 
@@ -123,18 +134,18 @@ export class TestApp {
       passwordHash: '$2b$10$test.hash.for.testing',
       ...userData,
     };
-    
+
     return this.db.user.create({
       data: defaultUser,
     });
   }
 
   async generateTestToken(userId: string, username?: string) {
-    const jwt = require('jsonwebtoken');
     return jwt.sign(
       { sub: userId, username: username || `testuser_${userId}` },
-      process.env.JWT_SECRET || 'development-jwt-secret-key-change-in-production',
-      { expiresIn: '15m' }
+      process.env.JWT_SECRET ||
+        'development-jwt-secret-key-change-in-production',
+      { expiresIn: '15m' },
     );
   }
 
@@ -168,7 +179,7 @@ export const AUTH_QUERIES = {
       }
     }
   `,
-  
+
   SIGNUP: `
     mutation signup($input: SignupInput!) {
       signup(input: $input) {
@@ -183,7 +194,7 @@ export const AUTH_QUERIES = {
       }
     }
   `,
-  
+
   ME: `
     query me {
       me {
@@ -212,7 +223,7 @@ export const CHARACTER_QUERIES = {
       }
     }
   `,
-  
+
   GET_CHARACTER: `
     query character($id: ID!) {
       character(id: $id) {
@@ -228,7 +239,7 @@ export const CHARACTER_QUERIES = {
       }
     }
   `,
-  
+
   GET_CHARACTERS: `
     query characters($filters: CharacterFiltersInput) {
       characters(filters: $filters) {
@@ -264,7 +275,7 @@ export const GALLERY_QUERIES = {
       }
     }
   `,
-  
+
   GET_GALLERY: `
     query gallery($id: ID!) {
       gallery(id: $id) {
@@ -283,7 +294,7 @@ export const GALLERY_QUERIES = {
       }
     }
   `,
-  
+
   GET_GALLERIES: `
     query galleries($filters: GalleryFiltersInput) {
       galleries(filters: $filters) {

@@ -5,17 +5,17 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-} from "@nestjs/common";
-import { GqlContextType } from "@nestjs/graphql";
-import { Request, Response } from "express";
+} from '@nestjs/common';
+import { GqlContextType } from '@nestjs/graphql';
+import { Request, Response } from 'express';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger("GlobalException");
+  private readonly logger = new Logger('GlobalException');
 
   catch(exception: unknown, host: ArgumentsHost): void {
     // Check if we're in a GraphQL context
-    if (host.getType<GqlContextType>() === "graphql") {
+    if (host.getType<GqlContextType>() === 'graphql') {
       // GraphQL context - just log and rethrow
       this.logError(exception, null, HttpStatus.INTERNAL_SERVER_ERROR);
       throw exception;
@@ -33,7 +33,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const message =
       exception instanceof HttpException
         ? exception.getResponse()
-        : "Internal server error";
+        : 'Internal server error';
 
     // Log detailed error information
     this.logError(exception, request, status);
@@ -41,7 +41,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     response
       .status(status)
       .json(
-        typeof message === "string" ? { message, statusCode: status } : message,
+        typeof message === 'string' ? { message, statusCode: status } : message,
       );
   }
 
@@ -52,23 +52,23 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   ): void {
     const errorInfo = {
       timestamp: new Date().toISOString(),
-      method: request?.method || "unknown",
-      url: request?.url || "unknown",
+      method: request?.method || 'unknown',
+      url: request?.url || 'unknown',
       statusCode: status,
-      userAgent: request?.get?.("user-agent") || "",
-      ip: request?.ip || "unknown",
+      userAgent: request?.get?.('user-agent') || '',
+      ip: request?.ip || 'unknown',
       fileInfo: {
-        originalname: "",
-        mimetype: "",
+        originalname: '',
+        mimetype: '',
         size: 0,
       },
     };
 
     // Add file upload info if it's a multipart request
-    if (request?.is?.("multipart/form-data") && (request as any)?.file) {
+    if (request?.is?.('multipart/form-data') && (request as any)?.file) {
       const file = request.file;
       if (file) {
-        errorInfo["fileInfo"] = {
+        errorInfo['fileInfo'] = {
           originalname: file.originalname,
           mimetype: file.mimetype,
           size: file.size,

@@ -7,33 +7,33 @@ import {
   ID,
   ResolveField,
   Parent,
-} from "@nestjs/graphql";
-import { NotFoundException } from "@nestjs/common";
-import { UsersService } from "./users.service";
-import { User, UserConnection } from "./entities/user.entity";
-import { UserProfile, UserStats } from "./entities/user-profile.entity";
-import { UpdateUserInput } from "./dto/update-user.input";
-import { CurrentUser, CurrentUserType } from "../auth/decorators/CurrentUser";
-import { RemovalResponse } from "../shared/entities/removal-response.entity";
+} from '@nestjs/graphql';
+import { NotFoundException } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { User, UserConnection } from './entities/user.entity';
+import { UserProfile, UserStats } from './entities/user-profile.entity';
+import { UpdateUserInput } from './dto/update-user.input';
+import { CurrentUser, CurrentUserType } from '../auth/decorators/CurrentUser';
+import { RemovalResponse } from '../shared/entities/removal-response.entity';
 import {
   mapUpdateUserInputToService,
   mapPrismaUserToGraphQL,
   mapPrismaUserConnectionToGraphQL,
-} from "./utils/user-resolver-mappers";
-import { mapPrismaCharacterToGraphQL } from "../characters/utils/character-resolver-mappers";
-import { Character } from "../characters/entities/character.entity";
-import { Gallery } from "../galleries/entities/gallery.entity";
-import { Media } from "../media/entities/media.entity";
-import { SocialService } from "../social/social.service";
-import { ExternalAccount } from "../external-accounts/entities/external-account.entity";
-import { ExternalAccountsService } from "../external-accounts/external-accounts.service";
-import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowGlobalPermission } from "../auth/decorators/AllowGlobalPermission";
-import { GlobalPermission } from "../auth/GlobalPermission";
-import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
-import { AllowSelf } from "../auth/decorators/AllowSelf";
-import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
-import { GraphQLJSON } from "graphql-type-json";
+} from './utils/user-resolver-mappers';
+import { mapPrismaCharacterToGraphQL } from '../characters/utils/character-resolver-mappers';
+import { Character } from '../characters/entities/character.entity';
+import { Gallery } from '../galleries/entities/gallery.entity';
+import { Media } from '../media/entities/media.entity';
+import { SocialService } from '../social/social.service';
+import { ExternalAccount } from '../external-accounts/entities/external-account.entity';
+import { ExternalAccountsService } from '../external-accounts/external-accounts.service';
+import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
+import { AllowGlobalPermission } from '../auth/decorators/AllowGlobalPermission';
+import { GlobalPermission } from '../auth/GlobalPermission';
+import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
+import { AllowSelf } from '../auth/decorators/AllowSelf';
+import { AllowGlobalAdmin } from '../auth/decorators/AllowGlobalAdmin';
+import { GraphQLJSON } from 'graphql-type-json';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -43,20 +43,20 @@ export class UsersResolver {
   ) {}
 
   @AllowGlobalPermission(GlobalPermission.CanListUsers)
-  @Query(() => UserConnection, { name: "users" })
+  @Query(() => UserConnection, { name: 'users' })
   async findAll(
-    @Args("limit", { type: () => Int, defaultValue: 20 }) limit: number,
-    @Args("offset", { type: () => Int, defaultValue: 0 }) offset: number,
+    @Args('limit', { type: () => Int, defaultValue: 20 }) limit: number,
+    @Args('offset', { type: () => Int, defaultValue: 0 }) offset: number,
   ): Promise<UserConnection> {
     const serviceResult = await this.usersService.findAll(limit, offset);
     return mapPrismaUserConnectionToGraphQL(serviceResult);
   }
 
   @AllowUnauthenticated()
-  @Query(() => User, { name: "user", nullable: true })
+  @Query(() => User, { name: 'user', nullable: true })
   async findOne(
-    @Args("id", { type: () => ID, nullable: true }) id?: string,
-    @Args("username", { nullable: true }) username?: string,
+    @Args('id', { type: () => ID, nullable: true }) id?: string,
+    @Args('username', { nullable: true }) username?: string,
   ): Promise<User | null> {
     let prismaResult;
     if (id) {
@@ -64,17 +64,17 @@ export class UsersResolver {
     } else if (username) {
       prismaResult = await this.usersService.findByUsername(username);
     } else {
-      throw new Error("Either id or username must be provided");
+      throw new Error('Either id or username must be provided');
     }
 
     return prismaResult ? mapPrismaUserToGraphQL(prismaResult) : null;
   }
 
   @AllowAnyAuthenticated()
-  @Query(() => User, { name: "me" })
+  @Query(() => User, { name: 'me' })
   async getCurrentUser(@CurrentUser() user: CurrentUserType): Promise<User> {
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException('User not found');
     }
     return mapPrismaUserToGraphQL(user);
   }
@@ -82,11 +82,11 @@ export class UsersResolver {
   @AllowAnyAuthenticated()
   @Mutation(() => User)
   async updateProfile(
-    @Args("input") updateUserInput: UpdateUserInput,
+    @Args('input') updateUserInput: UpdateUserInput,
     @CurrentUser() user: CurrentUserType,
   ): Promise<User> {
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException('User not found');
     }
     const serviceInput = mapUpdateUserInputToService(updateUserInput);
     const prismaResult = await this.usersService.update(user.id, serviceInput);
@@ -99,16 +99,16 @@ export class UsersResolver {
     @CurrentUser() user: CurrentUserType,
   ): Promise<RemovalResponse> {
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException('User not found');
     }
     await this.usersService.remove(user.id);
-    return { removed: true, message: "User account successfully deleted" };
+    return { removed: true, message: 'User account successfully deleted' };
   }
 
   @AllowUnauthenticated()
-  @Query(() => UserProfile, { name: "userProfile", nullable: true })
+  @Query(() => UserProfile, { name: 'userProfile', nullable: true })
   async getUserProfile(
-    @Args("username") username: string,
+    @Args('username') username: string,
     @CurrentUser() currentUser?: CurrentUserType,
   ): Promise<UserProfile | null> {
     const user = await this.usersService.findByUsername(username);
@@ -124,9 +124,9 @@ export class UsersResolver {
   }
 
   @AllowUnauthenticated()
-  @Query(() => UserStats, { name: "userStats" })
+  @Query(() => UserStats, { name: 'userStats' })
   async getUserStats(
-    @Args("userId", { type: () => ID }) userId: string,
+    @Args('userId', { type: () => ID }) userId: string,
     @CurrentUser() currentUser?: CurrentUserType,
   ): Promise<UserStats | null> {
     const user = await this.usersService.findById(userId);
@@ -136,20 +136,20 @@ export class UsersResolver {
   }
 
   // Field resolvers for computed properties
-  @ResolveField("followersCount", () => Int)
+  @ResolveField('followersCount', () => Int)
   async resolveFollowersCount(@Parent() user: User): Promise<number> {
     // TODO: Implement when social features are added
     return 0;
   }
 
-  @ResolveField("followingCount", () => Int)
+  @ResolveField('followingCount', () => Int)
   async resolveFollowingCount(@Parent() user: User): Promise<number> {
     // TODO: Implement when social features are added
     return 0;
   }
 
   @AllowAnyAuthenticated()
-  @ResolveField("userIsFollowing", () => Boolean)
+  @ResolveField('userIsFollowing', () => Boolean)
   async resolveUserIsFollowing(
     @Parent() user: User,
     @CurrentUser() currentUser?: CurrentUserType,
@@ -161,56 +161,56 @@ export class UsersResolver {
   // Sensitive field resolvers
   @AllowGlobalAdmin()
   @AllowSelf()
-  @ResolveField("email", () => String)
+  @ResolveField('email', () => String)
   async resolveEmail(@Parent() user: User): Promise<string> {
     return user.email;
   }
 
   @AllowGlobalAdmin()
   @AllowSelf()
-  @ResolveField("dateOfBirth", () => Date, { nullable: true })
+  @ResolveField('dateOfBirth', () => Date, { nullable: true })
   async resolveDateOfBirth(@Parent() user: User): Promise<Date | null> {
     return user.dateOfBirth ?? null;
   }
 
   @AllowGlobalAdmin()
   @AllowSelf()
-  @ResolveField("privacySettings", () => GraphQLJSON)
+  @ResolveField('privacySettings', () => GraphQLJSON)
   async resolvePrivacySettings(@Parent() user: User): Promise<any> {
     return user.privacySettings;
   }
 
   @AllowGlobalAdmin()
   @AllowSelf()
-  @ResolveField("canCreateCommunity", () => Boolean)
+  @ResolveField('canCreateCommunity', () => Boolean)
   async resolveCanCreateCommunity(@Parent() user: User): Promise<boolean> {
     return user.canCreateCommunity;
   }
 
   @AllowGlobalAdmin()
   @AllowSelf()
-  @ResolveField("canListUsers", () => Boolean)
+  @ResolveField('canListUsers', () => Boolean)
   async resolveCanListUsers(@Parent() user: User): Promise<boolean> {
     return user.canListUsers;
   }
 
   @AllowGlobalAdmin()
   @AllowSelf()
-  @ResolveField("canListInviteCodes", () => Boolean)
+  @ResolveField('canListInviteCodes', () => Boolean)
   async resolveCanListInviteCodes(@Parent() user: User): Promise<boolean> {
     return user.canListInviteCodes;
   }
 
   @AllowGlobalAdmin()
   @AllowSelf()
-  @ResolveField("canCreateInviteCode", () => Boolean)
+  @ResolveField('canCreateInviteCode', () => Boolean)
   async resolveCanCreateInviteCode(@Parent() user: User): Promise<boolean> {
     return user.canCreateInviteCode;
   }
 
   @AllowGlobalAdmin()
   @AllowSelf()
-  @ResolveField("canGrantGlobalPermissions", () => Boolean)
+  @ResolveField('canGrantGlobalPermissions', () => Boolean)
   async resolveCanGrantGlobalPermissions(
     @Parent() user: User,
   ): Promise<boolean> {
@@ -219,8 +219,10 @@ export class UsersResolver {
 
   @AllowGlobalAdmin()
   @AllowSelf()
-  @ResolveField("externalAccounts", () => [ExternalAccount])
-  async resolveExternalAccounts(@Parent() user: User): Promise<ExternalAccount[]> {
+  @ResolveField('externalAccounts', () => [ExternalAccount])
+  async resolveExternalAccounts(
+    @Parent() user: User,
+  ): Promise<ExternalAccount[]> {
     return this.externalAccountsService.findByUserId(user.id);
   }
 }
@@ -230,15 +232,15 @@ export class UsersResolver {
 export class UserProfileResolver {
   constructor(private readonly usersService: UsersService) {}
 
-  @ResolveField("stats", () => UserStats, {
-    description: "User statistics including counts and engagement metrics",
+  @ResolveField('stats', () => UserStats, {
+    description: 'User statistics including counts and engagement metrics',
   })
   async resolveStats(@Parent() profile: UserProfile): Promise<UserStats> {
     return { userId: profile.user.id };
   }
 
-  @ResolveField("recentCharacters", () => [Character], {
-    description: "Recently created or updated characters by this user",
+  @ResolveField('recentCharacters', () => [Character], {
+    description: 'Recently created or updated characters by this user',
   })
   async resolveRecentCharacters(
     @Parent() profile: UserProfile,
@@ -253,8 +255,8 @@ export class UserProfileResolver {
     return characters.map(mapPrismaCharacterToGraphQL);
   }
 
-  @ResolveField("recentGalleries", () => [Gallery], {
-    description: "Recently created or updated galleries by this user",
+  @ResolveField('recentGalleries', () => [Gallery], {
+    description: 'Recently created or updated galleries by this user',
   })
   async resolveRecentGalleries(
     @Parent() profile: UserProfile,
@@ -268,15 +270,15 @@ export class UserProfileResolver {
     );
   }
 
-  @ResolveField("recentMedia", () => [Media], {
-    description: "Recently uploaded media (images and text) by this user",
+  @ResolveField('recentMedia', () => [Media], {
+    description: 'Recently uploaded media (images and text) by this user',
   })
   async resolveRecentMedia(@Parent() profile: UserProfile) {
     return this.usersService.getUserRecentMedia(profile.user.id, 12);
   }
 
-  @ResolveField("featuredCharacters", () => [Character], {
-    description: "Characters featured or highlighted by this user",
+  @ResolveField('featuredCharacters', () => [Character], {
+    description: 'Characters featured or highlighted by this user',
   })
   async resolveFeaturedCharacters(@Parent() profile: UserProfile) {
     const characters = await this.usersService.getUserFeaturedCharacters(
@@ -295,8 +297,8 @@ export class UserStatsResolver {
     private readonly socialService: SocialService,
   ) {}
 
-  @ResolveField("charactersCount", () => Int, {
-    description: "Total number of characters owned by this user",
+  @ResolveField('charactersCount', () => Int, {
+    description: 'Total number of characters owned by this user',
   })
   async resolveCharactersCount(
     @Parent() stats: UserStats,
@@ -311,8 +313,8 @@ export class UserStatsResolver {
     );
   }
 
-  @ResolveField("galleriesCount", () => Int, {
-    description: "Total number of galleries created by this user",
+  @ResolveField('galleriesCount', () => Int, {
+    description: 'Total number of galleries created by this user',
   })
   async resolveGalleriesCount(
     @Parent() stats: UserStats,
@@ -327,15 +329,15 @@ export class UserStatsResolver {
     );
   }
 
-  @ResolveField("imagesCount", () => Int, {
-    description: "Total number of images uploaded by this user",
+  @ResolveField('imagesCount', () => Int, {
+    description: 'Total number of images uploaded by this user',
   })
   async resolveImagesCount(@Parent() stats: UserStats) {
     if (!stats.userId) return 0;
     return this.usersService.getUserImagesCount(stats.userId);
   }
 
-  @ResolveField("totalViews", () => Int, {
+  @ResolveField('totalViews', () => Int, {
     description: "Total number of views across all user's content",
   })
   async resolveTotalViews(@Parent() stats: UserStats) {
@@ -343,7 +345,7 @@ export class UserStatsResolver {
     return 0;
   }
 
-  @ResolveField("totalLikes", () => Int, {
+  @ResolveField('totalLikes', () => Int, {
     description: "Total number of likes received across all user's content",
   })
   async resolveTotalLikes(@Parent() stats: UserStats) {
@@ -354,16 +356,16 @@ export class UserStatsResolver {
     return totalLikes;
   }
 
-  @ResolveField("followersCount", () => Int, {
-    description: "Number of users following this user",
+  @ResolveField('followersCount', () => Int, {
+    description: 'Number of users following this user',
   })
   async resolveFollowersCount(@Parent() stats: UserStats) {
     // TODO: Implement when social features are added
     return 0;
   }
 
-  @ResolveField("followingCount", () => Int, {
-    description: "Number of users this user is following",
+  @ResolveField('followingCount', () => Int, {
+    description: 'Number of users this user is following',
   })
   async resolveFollowingCount(@Parent() stats: UserStats) {
     // TODO: Implement when social features are added

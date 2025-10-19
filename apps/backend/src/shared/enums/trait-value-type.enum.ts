@@ -5,7 +5,7 @@ export enum TraitValueType {
   /** String/text value */
   STRING = 'string',
   /** Timestamp/date value */
-  TIMESTAMP = 'timestamp', 
+  TIMESTAMP = 'timestamp',
   /** Integer/numeric value */
   INTEGER = 'integer',
   /** Enumerated value (from predefined list) */

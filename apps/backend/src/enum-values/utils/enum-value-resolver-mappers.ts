@@ -1,6 +1,9 @@
-import { CreateEnumValueInput, UpdateEnumValueInput } from "../dto/enum-value.dto";
-import { EnumValue, EnumValueConnection } from "../entities/enum-value.entity";
-import { Prisma } from "@chardb/database";
+import {
+  CreateEnumValueInput,
+  UpdateEnumValueInput,
+} from '../dto/enum-value.dto';
+import { EnumValue, EnumValueConnection } from '../entities/enum-value.entity';
+import { Prisma } from '@chardb/database';
 
 /**
  * Resolver layer mapping functions to convert between GraphQL DTOs and service types
@@ -34,13 +37,16 @@ export function mapUpdateEnumValueInputToService(input: UpdateEnumValueInput) {
   return result;
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 type PrismaEnumValue = Prisma.EnumValueGetPayload<{}>;
 
 /**
  * Maps Prisma EnumValue result to GraphQL EnumValue entity
  * Only includes scalar fields - relations are handled by field resolvers
  */
-export function mapPrismaEnumValueToGraphQL(prismaEnumValue: PrismaEnumValue): EnumValue {
+export function mapPrismaEnumValueToGraphQL(
+  prismaEnumValue: PrismaEnumValue,
+): EnumValue {
   return {
     id: prismaEnumValue.id,
     name: prismaEnumValue.name,

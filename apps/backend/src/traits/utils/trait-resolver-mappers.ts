@@ -1,8 +1,8 @@
-import { CreateTraitInput, UpdateTraitInput } from "../dto/trait.dto";
-import { Trait, TraitConnection } from "../entities/trait.entity";
-import { TraitValueType } from "../../shared/enums/trait-value-type.enum";
-import { Prisma, $Enums } from "@chardb/database";
-import { assertNever } from "../../shared/utils/assertNever";
+import { CreateTraitInput, UpdateTraitInput } from '../dto/trait.dto';
+import { Trait, TraitConnection } from '../entities/trait.entity';
+import { TraitValueType } from '../../shared/enums/trait-value-type.enum';
+import { Prisma, $Enums } from '@chardb/database';
+import { assertNever } from '../../shared/utils/assertNever';
 
 /**
  * Resolver layer mapping functions to convert between GraphQL DTOs and service types
@@ -11,7 +11,9 @@ import { assertNever } from "../../shared/utils/assertNever";
 /**
  * Converts GraphQL TraitValueType to Prisma TraitValueType
  */
-function mapGraphQLTraitValueTypeToPrisma(gqlType: TraitValueType): $Enums.TraitValueType {
+function mapGraphQLTraitValueTypeToPrisma(
+  gqlType: TraitValueType,
+): $Enums.TraitValueType {
   switch (gqlType) {
     case TraitValueType.STRING:
       return $Enums.TraitValueType.STRING;
@@ -29,7 +31,9 @@ function mapGraphQLTraitValueTypeToPrisma(gqlType: TraitValueType): $Enums.Trait
 /**
  * Converts Prisma TraitValueType to GraphQL TraitValueType
  */
-function mapPrismaTraitValueTypeToGraphQL(prismaType: $Enums.TraitValueType): TraitValueType {
+function mapPrismaTraitValueTypeToGraphQL(
+  prismaType: $Enums.TraitValueType,
+): TraitValueType {
   switch (prismaType) {
     case $Enums.TraitValueType.STRING:
       return TraitValueType.STRING;
@@ -66,12 +70,14 @@ export function mapUpdateTraitInputToService(input: UpdateTraitInput) {
   } = {};
 
   if (input.name !== undefined) result.name = input.name;
-  if (input.valueType !== undefined) result.valueType = mapGraphQLTraitValueTypeToPrisma(input.valueType);
+  if (input.valueType !== undefined)
+    result.valueType = mapGraphQLTraitValueTypeToPrisma(input.valueType);
   if (input.speciesId !== undefined) result.speciesId = input.speciesId;
 
   return result;
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 type PrismaTrait = Prisma.TraitGetPayload<{}>;
 
 /**

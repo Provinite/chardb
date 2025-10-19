@@ -7,7 +7,12 @@ import { CharactersModule } from '../characters/characters.module';
 import { MediaModule } from '../media/media.module';
 
 @Module({
-  imports: [DatabaseModule, UsersModule, forwardRef(() => CharactersModule), forwardRef(() => MediaModule)],
+  imports: [
+    DatabaseModule,
+    UsersModule,
+    forwardRef(() => CharactersModule),
+    forwardRef(() => MediaModule),
+  ],
   providers: [GalleriesService, GalleriesResolver],
   exports: [GalleriesService],
 })

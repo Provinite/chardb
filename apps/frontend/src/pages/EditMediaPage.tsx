@@ -1,70 +1,70 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation } from "@apollo/client";
-import { toast } from "react-hot-toast";
-import styled from "styled-components";
-import { Button } from "@chardb/ui";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation } from '@apollo/client';
+import { toast } from 'react-hot-toast';
+import styled from 'styled-components';
+import { Button } from '@chardb/ui';
 import {
   GET_MEDIA_ITEM,
   UPDATE_MEDIA,
   UPDATE_TEXT_CONTENT,
   UPDATE_IMAGE,
   useGetMediaItemQuery,
-} from "../graphql/media.graphql";
-import { useGetMyGalleriesQuery } from "../graphql/galleries.graphql";
-import { TextFormatting, Visibility } from "../generated/graphql";
-import { useAuth } from "../contexts/AuthContext";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+} from '../graphql/media.graphql';
+import { useGetMyGalleriesQuery } from '../graphql/galleries.graphql';
+import { TextFormatting, Visibility } from '../generated/graphql';
+import { useAuth } from '../contexts/AuthContext';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 
 const mediaSchema = z.object({
   title: z
     .string()
-    .min(1, "Title is required")
-    .max(255, "Title must be less than 255 characters"),
+    .min(1, 'Title is required')
+    .max(255, 'Title must be less than 255 characters'),
   description: z
     .string()
-    .max(1000, "Description must be less than 1000 characters")
+    .max(1000, 'Description must be less than 1000 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   content: z
     .string()
-    .max(50000, "Content must be less than 50,000 characters")
+    .max(50000, 'Content must be less than 50,000 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   formatting: z.nativeEnum(TextFormatting).optional(),
   visibility: z.nativeEnum(Visibility),
   galleryId: z.string().optional(),
   // Image-specific fields
   altText: z
     .string()
-    .max(200, "Alt text must be less than 200 characters")
+    .max(200, 'Alt text must be less than 200 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   isNsfw: z.boolean().optional(),
   artistName: z
     .string()
-    .max(100, "Artist name must be less than 100 characters")
+    .max(100, 'Artist name must be less than 100 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   artistUrl: z
     .string()
     .optional()
     .refine(
-      (val) => !val || val === "" || z.string().url().safeParse(val).success,
+      (val) => !val || val === '' || z.string().url().safeParse(val).success,
       {
-        message: "Artist URL must be a valid URL",
+        message: 'Artist URL must be a valid URL',
       },
     ),
   source: z
     .string()
     .optional()
     .refine(
-      (val) => !val || val === "" || z.string().url().safeParse(val).success,
+      (val) => !val || val === '' || z.string().url().safeParse(val).success,
       {
-        message: "Source URL must be a valid URL",
+        message: 'Source URL must be a valid URL',
       },
     ),
 });
@@ -102,7 +102,7 @@ const BackButton = styled.button`
   }
 
   &::before {
-    content: "←";
+    content: '←';
     font-weight: bold;
   }
 `;
@@ -180,7 +180,7 @@ const Input = styled.input`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.error};
   }
 `;
@@ -198,7 +198,7 @@ const Select = styled.select`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.error};
   }
 `;
@@ -218,7 +218,7 @@ const TextArea = styled.textarea`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.error};
   }
 `;
@@ -287,7 +287,7 @@ const CheckboxLabel = styled.label`
   cursor: pointer;
 `;
 
-const Checkbox = styled.input.attrs({ type: "checkbox" })`
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
   width: 16px;
   height: 16px;
   accent-color: ${({ theme }) => theme.colors.primary};
@@ -330,18 +330,18 @@ export const EditMediaPage: React.FC = () => {
   } = useForm<MediaForm>({
     resolver: zodResolver(mediaSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      content: "",
+      title: '',
+      description: '',
+      content: '',
       formatting: TextFormatting.Markdown,
       visibility: Visibility.Public,
       galleryId: undefined,
       // Image fields
-      altText: "",
+      altText: '',
       isNsfw: false,
-      artistName: "",
-      artistUrl: "",
-      source: "",
+      artistName: '',
+      artistUrl: '',
+      source: '',
     },
   });
 
@@ -362,17 +362,17 @@ export const EditMediaPage: React.FC = () => {
     if (media) {
       reset({
         title: media.title,
-        description: media.description || "",
-        content: media.textContent?.content || "",
+        description: media.description || '',
+        content: media.textContent?.content || '',
         formatting: media.textContent?.formatting || TextFormatting.Markdown,
         visibility: media.visibility,
         galleryId: media.galleryId || undefined,
         // Image fields
-        altText: media.image?.altText || "",
+        altText: media.image?.altText || '',
         isNsfw: media.image?.isNsfw || false,
-        artistName: media.image?.artistName || "",
-        artistUrl: media.image?.artistUrl || "",
-        source: media.image?.source || "",
+        artistName: media.image?.artistName || '',
+        artistUrl: media.image?.artistUrl || '',
+        source: media.image?.source || '',
       });
     }
   }, [media, reset]);
@@ -385,25 +385,25 @@ export const EditMediaPage: React.FC = () => {
     if (!media || !user) return;
 
     // Custom validation for text media content
-    if (isTextMedia && (!data.content || data.content.trim() === "")) {
-      setError("content", {
-        type: "manual",
-        message: "Content is required for text media",
+    if (isTextMedia && (!data.content || data.content.trim() === '')) {
+      setError('content', {
+        type: 'manual',
+        message: 'Content is required for text media',
       });
       return;
     }
 
     // Clear any existing content errors
-    clearErrors("content");
+    clearErrors('content');
 
-    console.log("Form submission started");
-    console.log("Form data:", data);
-    console.log("Is image media:", isImageMedia);
-    console.log("Media object:", media);
+    console.log('Form submission started');
+    console.log('Form data:', data);
+    console.log('Is image media:', isImageMedia);
+    console.log('Media object:', media);
 
     setIsSubmitting(true);
     try {
-      console.log("Step 1: Starting updateMedia mutation");
+      console.log('Step 1: Starting updateMedia mutation');
       // Update basic media information
       const mediaResult = await updateMedia({
         variables: {
@@ -416,11 +416,11 @@ export const EditMediaPage: React.FC = () => {
           },
         },
       });
-      console.log("Step 1: updateMedia completed:", mediaResult);
+      console.log('Step 1: updateMedia completed:', mediaResult);
 
       // Update text content if this is a text media item
       if (isTextMedia && data.content && data.formatting) {
-        console.log("Step 2: Starting updateTextContent mutation");
+        console.log('Step 2: Starting updateTextContent mutation');
         const textResult = await updateTextContent({
           variables: {
             mediaId: media.id,
@@ -430,12 +430,12 @@ export const EditMediaPage: React.FC = () => {
             },
           },
         });
-        console.log("Step 2: updateTextContent completed:", textResult);
+        console.log('Step 2: updateTextContent completed:', textResult);
       }
 
       // Update image metadata if this is an image media item
       if (isImageMedia && media.image) {
-        console.log("Step 3: Starting updateImage mutation");
+        console.log('Step 3: Starting updateImage mutation');
         const imageResult = await updateImage({
           variables: {
             id: media.image.id,
@@ -448,21 +448,21 @@ export const EditMediaPage: React.FC = () => {
             },
           },
         });
-        console.log("Step 3: updateImage completed:", imageResult);
+        console.log('Step 3: updateImage completed:', imageResult);
       }
 
-      console.log("All mutations completed successfully");
-      toast.success("Media updated successfully!");
+      console.log('All mutations completed successfully');
+      toast.success('Media updated successfully!');
       navigate(`/media/${media.id}`);
     } catch (error) {
-      console.error("Error updating media:", error);
+      console.error('Error updating media:', error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to update media. Please try again.",
+          : 'Failed to update media. Please try again.',
       );
     } finally {
-      console.log("Setting isSubmitting to false");
+      console.log('Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
@@ -520,7 +520,7 @@ export const EditMediaPage: React.FC = () => {
             <Label htmlFor="title">Title *</Label>
             <Input
               id="title"
-              {...register("title")}
+              {...register('title')}
               aria-invalid={!!errors.title}
               placeholder="Enter a title for your media"
             />
@@ -533,7 +533,7 @@ export const EditMediaPage: React.FC = () => {
             <Label htmlFor="description">Description</Label>
             <TextArea
               id="description"
-              {...register("description")}
+              {...register('description')}
               aria-invalid={!!errors.description}
               placeholder="Optional description or summary..."
               rows={3}
@@ -553,7 +553,7 @@ export const EditMediaPage: React.FC = () => {
               <Label htmlFor="visibility">Visibility</Label>
               <Select
                 id="visibility"
-                {...register("visibility")}
+                {...register('visibility')}
                 aria-invalid={!!errors.visibility}
               >
                 <option value={Visibility.Public}>
@@ -575,15 +575,15 @@ export const EditMediaPage: React.FC = () => {
               <Label htmlFor="galleryId">Gallery (Optional)</Label>
               {galleries.length === 0 ? (
                 <>
-                  <Select id="galleryId" {...register("galleryId")} disabled>
+                  <Select id="galleryId" {...register('galleryId')} disabled>
                     <option value="">No galleries yet</option>
                   </Select>
-                  <div style={{ marginTop: "0.5rem" }}>
+                  <div style={{ marginTop: '0.5rem' }}>
                     <a
                       href="/gallery/create"
                       style={{
-                        fontSize: "0.875rem",
-                        color: "var(--color-primary)",
+                        fontSize: '0.875rem',
+                        color: 'var(--color-primary)',
                       }}
                     >
                       Create your first gallery
@@ -593,7 +593,7 @@ export const EditMediaPage: React.FC = () => {
               ) : (
                 <Select
                   id="galleryId"
-                  {...register("galleryId")}
+                  {...register('galleryId')}
                   aria-invalid={!!errors.galleryId}
                 >
                   <option value="">Select a gallery...</option>
@@ -620,7 +620,7 @@ export const EditMediaPage: React.FC = () => {
               <Label htmlFor="formatting">Formatting</Label>
               <Select
                 id="formatting"
-                {...register("formatting")}
+                {...register('formatting')}
                 aria-invalid={!!errors.formatting}
               >
                 <option value={TextFormatting.Markdown}>Markdown</option>
@@ -635,7 +635,7 @@ export const EditMediaPage: React.FC = () => {
               <Label htmlFor="content">Content *</Label>
               <ContentTextArea
                 id="content"
-                {...register("content")}
+                {...register('content')}
                 aria-invalid={!!errors.content}
                 placeholder="Write your story, character description, backstory, or any other text content..."
               />
@@ -655,7 +655,7 @@ export const EditMediaPage: React.FC = () => {
               <Label htmlFor="altText">Alt Text</Label>
               <Input
                 id="altText"
-                {...register("altText")}
+                {...register('altText')}
                 aria-invalid={!!errors.altText}
                 placeholder="Describe the image for accessibility..."
               />
@@ -669,7 +669,7 @@ export const EditMediaPage: React.FC = () => {
                 <Label htmlFor="artistName">Artist Name</Label>
                 <Input
                   id="artistName"
-                  {...register("artistName")}
+                  {...register('artistName')}
                   aria-invalid={!!errors.artistName}
                   placeholder="Name of the artist (if known)"
                 />
@@ -682,7 +682,7 @@ export const EditMediaPage: React.FC = () => {
                 <Label htmlFor="artistUrl">Artist URL</Label>
                 <Input
                   id="artistUrl"
-                  {...register("artistUrl")}
+                  {...register('artistUrl')}
                   aria-invalid={!!errors.artistUrl}
                   placeholder="https://artist-website.com"
                 />
@@ -696,7 +696,7 @@ export const EditMediaPage: React.FC = () => {
               <Label htmlFor="source">Source URL</Label>
               <Input
                 id="source"
-                {...register("source")}
+                {...register('source')}
                 aria-invalid={!!errors.source}
                 placeholder="https://original-source.com"
               />
@@ -707,7 +707,7 @@ export const EditMediaPage: React.FC = () => {
 
             <FormGroup>
               <CheckboxLabel>
-                <Checkbox {...register("isNsfw")} />
+                <Checkbox {...register('isNsfw')} />
                 Mark as NSFW (Not Safe for Work)
               </CheckboxLabel>
             </FormGroup>
@@ -719,7 +719,7 @@ export const EditMediaPage: React.FC = () => {
             Cancel
           </CancelButton>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Save Changes"}
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
           </Button>
         </ButtonRow>
       </Form>

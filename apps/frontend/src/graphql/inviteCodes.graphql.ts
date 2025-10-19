@@ -87,7 +87,10 @@ export const CREATE_INVITE_CODE_MUTATION = gql`
 `;
 
 export const UPDATE_INVITE_CODE_MUTATION = gql`
-  mutation UpdateInviteCode($id: ID!, $updateInviteCodeInput: UpdateInviteCodeInput!) {
+  mutation UpdateInviteCode(
+    $id: ID!
+    $updateInviteCodeInput: UpdateInviteCodeInput!
+  ) {
     updateInviteCode(id: $id, updateInviteCodeInput: $updateInviteCodeInput) {
       id
       claimCount
@@ -123,7 +126,10 @@ export const REMOVE_INVITE_CODE_MUTATION = gql`
 `;
 
 export const CLAIM_INVITE_CODE_MUTATION = gql`
-  mutation ClaimInviteCode($id: ID!, $claimInviteCodeInput: ClaimInviteCodeInput!) {
+  mutation ClaimInviteCode(
+    $id: ID!
+    $claimInviteCodeInput: ClaimInviteCodeInput!
+  ) {
     claimInviteCode(id: $id, claimInviteCodeInput: $claimInviteCodeInput) {
       id
       claimCount
@@ -176,7 +182,7 @@ export {
   useRemoveInviteCodeMutation,
   useClaimInviteCodeMutation,
   useRolesByCommunityQuery,
-  
+
   // Types
   type InviteCodesQuery,
   type InviteCodesQueryVariables,

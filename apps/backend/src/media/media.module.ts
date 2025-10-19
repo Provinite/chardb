@@ -10,12 +10,12 @@ import { ImagesModule } from '../images/images.module';
 
 @Module({
   imports: [
-    DatabaseModule, 
-    TagsModule, 
-    UsersModule, 
-    forwardRef(() => CharactersModule), 
-    forwardRef(() => GalleriesModule), 
-    ImagesModule
+    DatabaseModule,
+    TagsModule,
+    UsersModule,
+    forwardRef(() => CharactersModule),
+    forwardRef(() => GalleriesModule),
+    ImagesModule,
   ],
   providers: [MediaService, MediaResolver],
   exports: [MediaService],

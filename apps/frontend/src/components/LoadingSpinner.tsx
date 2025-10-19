@@ -13,16 +13,22 @@ const spin = keyframes`
 const SpinnerContainer = styled.div<{ size: string }>`
   width: ${({ size }) => {
     switch (size) {
-      case 'sm': return '1rem';
-      case 'lg': return '3rem';
-      default: return '2rem';
+      case 'sm':
+        return '1rem';
+      case 'lg':
+        return '3rem';
+      default:
+        return '2rem';
     }
   }};
   height: ${({ size }) => {
     switch (size) {
-      case 'sm': return '1rem';
-      case 'lg': return '3rem';
-      default: return '2rem';
+      case 'sm':
+        return '1rem';
+      case 'lg':
+        return '3rem';
+      default:
+        return '2rem';
     }
   }};
   border: 2px solid ${({ theme }) => theme.colors.border};
@@ -31,6 +37,8 @@ const SpinnerContainer = styled.div<{ size: string }>`
   animation: ${spin} 1s linear infinite;
 `;
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md' }) => {
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+  size = 'md',
+}) => {
   return <SpinnerContainer size={size} />;
 };

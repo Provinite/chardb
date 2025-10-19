@@ -1,9 +1,9 @@
-import React from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { useQuery } from "@apollo/client";
-import styled from "styled-components";
-import { Button } from "@chardb/ui";
-import { GET_CHARACTER } from "../graphql/characters.graphql";
+import React from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@apollo/client';
+import styled from 'styled-components';
+import { Button } from '@chardb/ui';
+import { GET_CHARACTER } from '../graphql/characters.graphql';
 
 const Container = styled.div`
   max-width: 800px;
@@ -91,7 +91,7 @@ const BackLink = styled(Link)`
   }
 
   &::before {
-    content: "← ";
+    content: '← ';
     margin-right: ${({ theme }) => theme.spacing.xs};
   }
 `;
@@ -119,8 +119,8 @@ const CharacterNote = styled.p`
 
 export const CreateMediaPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const characterId = searchParams.get("character");
-  const galleryId = searchParams.get("gallery");
+  const characterId = searchParams.get('character');
+  const galleryId = searchParams.get('gallery');
 
   // Get character info if characterId is provided
   const { data: characterData } = useQuery(GET_CHARACTER, {
@@ -130,8 +130,8 @@ export const CreateMediaPage: React.FC = () => {
 
   const buildUrl = (basePath: string) => {
     const params = new URLSearchParams();
-    if (characterId) params.set("character", characterId);
-    if (galleryId) params.set("gallery", galleryId);
+    if (characterId) params.set('character', characterId);
+    if (galleryId) params.set('gallery', galleryId);
     return params.toString() ? `${basePath}?${params.toString()}` : basePath;
   };
 
@@ -156,7 +156,7 @@ export const CreateMediaPage: React.FC = () => {
       )}
 
       <OptionsGrid>
-        <OptionCard to={buildUrl("/image/upload")}>
+        <OptionCard to={buildUrl('/image/upload')}>
           <OptionIcon>🖼️</OptionIcon>
           <OptionTitle>Upload Image</OptionTitle>
           <OptionDescription>
@@ -167,7 +167,7 @@ export const CreateMediaPage: React.FC = () => {
           <OptionButton variant="primary">Upload Image</OptionButton>
         </OptionCard>
 
-        <OptionCard to={buildUrl("/text/create")}>
+        <OptionCard to={buildUrl('/text/create')}>
           <OptionIcon>📝</OptionIcon>
           <OptionTitle>Create Text Content</OptionTitle>
           <OptionDescription>

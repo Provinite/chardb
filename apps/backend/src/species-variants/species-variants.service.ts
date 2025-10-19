@@ -38,8 +38,8 @@ export class SpeciesVariantsService {
       data: {
         name: input.name,
         species: {
-          connect: { id: input.speciesId }
-        }
+          connect: { id: input.speciesId },
+        },
       },
     });
   }
@@ -117,7 +117,7 @@ export class SpeciesVariantsService {
     const speciesVariant = await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.SpeciesVariantUpdateInput = {};
-    
+
     if (input.name !== undefined) updateData.name = input.name;
     if (input.speciesId !== undefined) {
       updateData.species = { connect: { id: input.speciesId } };

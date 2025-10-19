@@ -1,5 +1,5 @@
-import { GlobalPermission } from "../GlobalPermission";
-import { Reflector } from "@nestjs/core";
+import { GlobalPermission } from '../GlobalPermission';
+import { Reflector } from '@nestjs/core';
 
 /**
  * Decorator to require a specific global permission

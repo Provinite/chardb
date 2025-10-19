@@ -1,5 +1,5 @@
-import { Reflector } from "@nestjs/core";
-import { SelfResolutionConfig } from "../types/SelfResolutionConfig";
+import { Reflector } from '@nestjs/core';
+import { SelfResolutionConfig } from '../types/SelfResolutionConfig';
 
 /**
  * Decorator to require that the current user is accessing their own data.

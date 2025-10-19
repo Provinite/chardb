@@ -14,13 +14,13 @@ const Container = styled.div`
 
 const Message = styled.div`
   font-size: 1.125rem;
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${(props) => props.theme.colors.text.secondary};
   text-align: center;
 `;
 
 const Spinner = styled.div`
-  border: 3px solid ${props => props.theme.colors.border};
-  border-top-color: ${props => props.theme.colors.primary};
+  border: 3px solid ${(props) => props.theme.colors.border};
+  border-top-color: ${(props) => props.theme.colors.primary};
   border-radius: 50%;
   width: 40px;
   height: 40px;

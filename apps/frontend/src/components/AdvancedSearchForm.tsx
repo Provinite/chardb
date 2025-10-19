@@ -42,7 +42,7 @@ const Input = styled.input`
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   background: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.text.primary};
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -58,7 +58,7 @@ const Select = styled.select`
   background: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -171,7 +171,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
             {...register('search')}
           />
         </FormGroup>
-        
+
         <FormGroup>
           <Label htmlFor="searchFields">Search In</Label>
           <Select id="searchFields" {...register('searchFields')}>
@@ -194,7 +194,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
             {...register('species')}
           />
         </FormGroup>
-        
+
         <FormGroup>
           <Label htmlFor="gender">Gender</Label>
           <Input
@@ -204,7 +204,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
             {...register('gender')}
           />
         </FormGroup>
-        
+
         <FormGroup>
           <Label htmlFor="ageRange">Age Range</Label>
           <Input
@@ -237,19 +237,25 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
             />
           </PriceGroup>
         </FormGroup>
-        
+
         <FormGroup>
           <Label htmlFor="isSellable">Status</Label>
-          <Select id="isSellable" {...register('isSellable', { valueAsNumber: false })}>
+          <Select
+            id="isSellable"
+            {...register('isSellable', { valueAsNumber: false })}
+          >
             <option value="">Any Status</option>
             <option value="true">For Sale</option>
             <option value="false">Not For Sale</option>
           </Select>
         </FormGroup>
-        
+
         <FormGroup>
           <Label htmlFor="isTradeable">Trading</Label>
-          <Select id="isTradeable" {...register('isTradeable', { valueAsNumber: false })}>
+          <Select
+            id="isTradeable"
+            {...register('isTradeable', { valueAsNumber: false })}
+          >
             <option value="">Any Trading</option>
             <option value="true">Open to Trades</option>
             <option value="false">Not Trading</option>
@@ -267,7 +273,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
             <option value="price">Price</option>
           </Select>
         </FormGroup>
-        
+
         <FormGroup>
           <Label htmlFor="sortOrder">Order</Label>
           <Select id="sortOrder" {...register('sortOrder')}>

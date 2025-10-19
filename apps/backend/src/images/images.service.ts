@@ -4,14 +4,14 @@ import {
   NotFoundException,
   ForbiddenException,
   Logger,
-} from "@nestjs/common";
-import { DatabaseService } from "../database/database.service";
-import { TagsService } from "../tags/tags.service";
-import { Prisma, Visibility } from "@chardb/database";
-import * as sharp from "sharp";
-import { v4 as uuid } from "uuid";
-import { extname } from "path";
-import type { Image, Media, User } from "@chardb/database";
+} from '@nestjs/common';
+import { DatabaseService } from '../database/database.service';
+import { TagsService } from '../tags/tags.service';
+import { Prisma, Visibility } from '@chardb/database';
+import * as sharp from 'sharp';
+import { v4 as uuid } from 'uuid';
+import { extname } from 'path';
+import type { Image, Media, User } from '@chardb/database';
 
 export interface UploadImageInput {
   file: Express.Multer.File;
@@ -51,11 +51,11 @@ export interface ImageFilters {
 @Injectable()
 export class ImagesService {
   private readonly allowedMimeTypes = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/webp",
-    "image/gif",
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/gif',
   ];
 
   private readonly maxFileSize = 10 * 1024 * 1024; // 10MB
@@ -95,7 +95,7 @@ export class ImagesService {
     if (artistId) {
       const artist = await this.db.user.findUnique({ where: { id: artistId } });
       if (!artist) {
-        throw new BadRequestException("Artist not found");
+        throw new BadRequestException('Artist not found');
       }
     }
 
@@ -110,12 +110,12 @@ export class ImagesService {
 
     // For now, we'll store base64 encoded images in the database
     // In production, you'd upload to S3/CloudStorage and store URLs
-    const imageUrl = `data:${file.mimetype};base64,${processedImage.toString("base64")}`;
+    const imageUrl = `data:${file.mimetype};base64,${processedImage.toString('base64')}`;
 
     // Determine thumbnail MIME type based on original format
     const thumbnailMimeType =
-      file.mimetype === "image/png" ? "image/png" : "image/jpeg";
-    const thumbnailUrl = `data:${thumbnailMimeType};base64,${thumbnail.toString("base64")}`;
+      file.mimetype === 'image/png' ? 'image/png' : 'image/jpeg';
+    const thumbnailUrl = `data:${thumbnailMimeType};base64,${thumbnail.toString('base64')}`;
 
     // Use transaction to create both image and media records
     const result = await this.db.$transaction(async (tx) => {
@@ -161,8 +161,8 @@ export class ImagesService {
           visibility: visibility
             ? (visibility.toUpperCase() as Visibility)
             : isNsfw
-              ? "PRIVATE"
-              : "PUBLIC",
+              ? 'PRIVATE'
+              : 'PUBLIC',
           imageId: image.id, // Link to image record
           textContentId: null, // Null for image media
         },
@@ -173,7 +173,7 @@ export class ImagesService {
       });
 
       if (!media.image) {
-        throw new Error("Failed to create image record");
+        throw new Error('Failed to create image record');
       }
 
       return media as Media & { image: Image; owner: User };
@@ -203,9 +203,9 @@ export class ImagesService {
         search
           ? {
               OR: [
-                { altText: { contains: search, mode: "insensitive" } },
-                { originalFilename: { contains: search, mode: "insensitive" } },
-                { artistName: { contains: search, mode: "insensitive" } },
+                { altText: { contains: search, mode: 'insensitive' } },
+                { originalFilename: { contains: search, mode: 'insensitive' } },
+                { artistName: { contains: search, mode: 'insensitive' } },
               ],
             }
           : {},
@@ -223,7 +223,7 @@ export class ImagesService {
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         take: limit,
         skip: offset,
       }),
@@ -252,7 +252,7 @@ export class ImagesService {
     });
 
     if (!image) {
-      throw new NotFoundException("Image not found");
+      throw new NotFoundException('Image not found');
     }
 
     // NOTE: Visibility now handled through Media system
@@ -269,7 +269,7 @@ export class ImagesService {
 
     // Check ownership
     if (image.uploaderId !== userId) {
-      throw new ForbiddenException("You can only edit your own images");
+      throw new ForbiddenException('You can only edit your own images');
     }
 
     // NOTE: Character/gallery associations now handled through Media system
@@ -280,7 +280,7 @@ export class ImagesService {
         where: { id: input.artistId },
       });
       if (!artist) {
-        throw new BadRequestException("Artist not found");
+        throw new BadRequestException('Artist not found');
       }
     }
 
@@ -304,7 +304,7 @@ export class ImagesService {
 
     // Check ownership
     if (image.uploaderId !== userId) {
-      throw new ForbiddenException("You can only delete your own images");
+      throw new ForbiddenException('You can only delete your own images');
     }
 
     await this.db.image.delete({
@@ -318,12 +318,12 @@ export class ImagesService {
 
   private validateFile(file: Express.Multer.File): void {
     if (!file) {
-      throw new BadRequestException("No file provided");
+      throw new BadRequestException('No file provided');
     }
 
     if (!this.allowedMimeTypes.includes(file.mimetype)) {
       throw new BadRequestException(
-        `Invalid file type. Allowed types: ${this.allowedMimeTypes.join(", ")}`,
+        `Invalid file type. Allowed types: ${this.allowedMimeTypes.join(', ')}`,
       );
     }
 
@@ -335,7 +335,7 @@ export class ImagesService {
   }
 
   private async processImage(buffer: Buffer) {
-    const logger = new Logger("ImageProcessing");
+    const logger = new Logger('ImageProcessing');
 
     try {
       const image = sharp(buffer);
@@ -346,12 +346,12 @@ export class ImagesService {
       );
 
       // For GIFs, preserve original to maintain animations
-      if (metadata.format === "gif") {
+      if (metadata.format === 'gif') {
         // Create static thumbnail only for GIFs
         const thumbnail = image
           .resize(this.thumbnailSize, this.thumbnailSize, {
-            fit: "cover",
-            position: "center",
+            fit: 'cover',
+            position: 'center',
           })
           .jpeg({ quality: 80 });
 
@@ -370,43 +370,43 @@ export class ImagesService {
       // Only resize if larger than 4000px (less aggressive than before)
       if (metadata.width! > 4000 || metadata.height! > 4000) {
         processedImage = image.resize(4000, 4000, {
-          fit: "inside",
+          fit: 'inside',
           withoutEnlargement: true,
         });
       }
 
       // Format-specific optimization with higher quality
-      if (metadata.format === "jpeg") {
+      if (metadata.format === 'jpeg') {
         processedImage = processedImage.jpeg({
           quality: 92,
           progressive: true,
         });
-      } else if (metadata.format === "png") {
+      } else if (metadata.format === 'png') {
         // Minimal compression for PNGs to preserve transparency
         processedImage = processedImage.png({
           compressionLevel: 6,
           adaptiveFiltering: false,
         });
-      } else if (metadata.format === "webp") {
+      } else if (metadata.format === 'webp') {
         processedImage = processedImage.webp({ quality: 95, lossless: false });
       }
 
       // Generate format-appropriate thumbnail
       let thumbnail;
-      if (metadata.format === "png") {
+      if (metadata.format === 'png') {
         // Keep PNG thumbnails as PNG to preserve transparency
         thumbnail = image
           .resize(this.thumbnailSize, this.thumbnailSize, {
-            fit: "cover",
-            position: "center",
+            fit: 'cover',
+            position: 'center',
           })
           .png({ compressionLevel: 6 });
       } else {
         // Use JPEG for other formats
         thumbnail = image
           .resize(this.thumbnailSize, this.thumbnailSize, {
-            fit: "cover",
-            position: "center",
+            fit: 'cover',
+            position: 'center',
           })
           .jpeg({ quality: 85 });
       }
@@ -424,7 +424,7 @@ export class ImagesService {
     } catch (error) {
       logger.error(`Image processing failed:`, error.message || error);
       logger.error(`Stack trace:`, error.stack);
-      throw new BadRequestException("Invalid image file or processing failed");
+      throw new BadRequestException('Invalid image file or processing failed');
     }
   }
 
@@ -438,12 +438,12 @@ export class ImagesService {
     });
 
     if (!character) {
-      throw new NotFoundException("Character not found");
+      throw new NotFoundException('Character not found');
     }
 
     if (character.ownerId !== userId) {
       throw new ForbiddenException(
-        "You can only upload images to your own characters",
+        'You can only upload images to your own characters',
       );
     }
   }
@@ -458,12 +458,12 @@ export class ImagesService {
     });
 
     if (!gallery) {
-      throw new NotFoundException("Gallery not found");
+      throw new NotFoundException('Gallery not found');
     }
 
     if (gallery.ownerId !== userId) {
       throw new ForbiddenException(
-        "You can only upload images to your own galleries",
+        'You can only upload images to your own galleries',
       );
     }
   }

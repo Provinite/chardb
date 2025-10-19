@@ -1,8 +1,11 @@
-import { ObjectType, Field, ID, createUnionType, registerEnumType } from '@nestjs/graphql';
+import {
+  ObjectType,
+  Field,
+  ID,
+  createUnionType,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { TextFormatting, Visibility } from '@chardb/database';
-import { User } from '../../users/entities/user.entity';
-import { Character } from '../../characters/entities/character.entity';
-import { Gallery } from '../../galleries/entities/gallery.entity';
 import { Tag } from '../../shared/entities/tag.entity';
 import { Image } from '../../images/entities/image.entity';
 
@@ -15,7 +18,9 @@ registerEnumType(TextFormatting, {
 /**
  * Text content entity for storing text-based media content
  */
-@ObjectType({ description: 'Text content with formatting and word count information' })
+@ObjectType({
+  description: 'Text content with formatting and word count information',
+})
 export class TextContent {
   /** Unique identifier for the text content */
   @Field(() => ID, { description: 'Unique identifier for the text content' })
@@ -30,14 +35,19 @@ export class TextContent {
   wordCount: number;
 
   /** Formatting type (plaintext or markdown) */
-  @Field(() => TextFormatting, { description: 'Text formatting type (plaintext or markdown)' })
+  @Field(() => TextFormatting, {
+    description: 'Text formatting type (plaintext or markdown)',
+  })
   formatting: TextFormatting;
 }
 
 /**
  * Polymorphic media entity that can represent both images and text content
  */
-@ObjectType({ description: 'Polymorphic media that can represent both images and text content' })
+@ObjectType({
+  description:
+    'Polymorphic media that can represent both images and text content',
+})
 export class Media {
   /** Unique identifier for the media */
   @Field(() => ID, { description: 'Unique identifier for the media' })
@@ -56,11 +66,17 @@ export class Media {
   ownerId: string;
 
   /** Optional ID of the character this media is associated with */
-  @Field(() => ID, { nullable: true, description: 'Optional ID of the character this media is associated with' })
+  @Field(() => ID, {
+    nullable: true,
+    description: 'Optional ID of the character this media is associated with',
+  })
   characterId?: string;
 
   /** Optional ID of the gallery this media belongs to */
-  @Field(() => ID, { nullable: true, description: 'Optional ID of the gallery this media belongs to' })
+  @Field(() => ID, {
+    nullable: true,
+    description: 'Optional ID of the gallery this media belongs to',
+  })
   galleryId?: string;
 
   /** Visibility setting for the media */
@@ -69,11 +85,17 @@ export class Media {
 
   // Content references (nullable FKs)
   /** Foreign key to image content (null for text media) */
-  @Field(() => ID, { nullable: true, description: 'Foreign key to image content (null for text media)' })
+  @Field(() => ID, {
+    nullable: true,
+    description: 'Foreign key to image content (null for text media)',
+  })
   imageId?: string;
 
   /** Foreign key to text content (null for image media) */
-  @Field(() => ID, { nullable: true, description: 'Foreign key to text content (null for image media)' })
+  @Field(() => ID, {
+    nullable: true,
+    description: 'Foreign key to text content (null for image media)',
+  })
   textContentId?: string;
 
   /** When the media was created */
@@ -83,8 +105,6 @@ export class Media {
   /** When the media was last updated */
   @Field({ description: 'When the media was last updated' })
   updatedAt: Date;
-
-
 }
 
 /**
@@ -93,7 +113,10 @@ export class Media {
 @ObjectType({ description: 'Junction entity for media-tag relationships' })
 export class MediaTag {
   /** The media this tag is associated with */
-  @Field(() => Media, { nullable: true, description: 'The media this tag is associated with' })
+  @Field(() => Media, {
+    nullable: true,
+    description: 'The media this tag is associated with',
+  })
   media?: Media;
 
   /** The tag applied to the media */
@@ -115,15 +138,21 @@ export class MediaConnection {
   total: number;
 
   /** Total number of image media items in the full result set */
-  @Field({ description: 'Total number of image media items in the full result set' })
+  @Field({
+    description: 'Total number of image media items in the full result set',
+  })
   imageCount: number;
 
   /** Total number of text media items in the full result set */
-  @Field({ description: 'Total number of text media items in the full result set' })
+  @Field({
+    description: 'Total number of text media items in the full result set',
+  })
   textCount: number;
 
   /** Whether there are more items available after this page */
-  @Field({ description: 'Whether there are more items available after this page' })
+  @Field({
+    description: 'Whether there are more items available after this page',
+  })
   hasMore: boolean;
 }
 

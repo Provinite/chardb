@@ -9,11 +9,11 @@ import { GalleriesModule } from '../galleries/galleries.module';
 
 @Module({
   imports: [
-    DatabaseModule, 
-    UsersModule, 
-    CharactersModule, 
-    ImagesModule, 
-    GalleriesModule
+    DatabaseModule,
+    UsersModule,
+    CharactersModule,
+    ImagesModule,
+    GalleriesModule,
   ],
   providers: [CommentsService, CommentsResolver],
   exports: [CommentsService],

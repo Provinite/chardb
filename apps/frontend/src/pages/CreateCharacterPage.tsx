@@ -1,60 +1,60 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation } from "@apollo/client";
-import { toast } from "react-hot-toast";
-import styled from "styled-components";
-import { Button, TagInput } from "@chardb/ui";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation } from '@apollo/client';
+import { toast } from 'react-hot-toast';
+import styled from 'styled-components';
+import { Button, TagInput } from '@chardb/ui';
 import {
   CREATE_CHARACTER,
   GET_CHARACTERS,
   GET_MY_CHARACTERS,
-} from "../graphql/characters.graphql";
-import { useTagSearch } from "../hooks/useTagSearch";
+} from '../graphql/characters.graphql';
+import { useTagSearch } from '../hooks/useTagSearch';
 
 const characterSchema = z.object({
   name: z
     .string()
-    .min(1, "Name is required")
-    .max(100, "Name must be less than 100 characters"),
+    .min(1, 'Name is required')
+    .max(100, 'Name must be less than 100 characters'),
   age: z
     .string()
-    .max(20, "Age must be less than 20 characters")
+    .max(20, 'Age must be less than 20 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   gender: z
     .string()
-    .max(20, "Gender must be less than 20 characters")
+    .max(20, 'Gender must be less than 20 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   description: z
     .string()
-    .max(2000, "Description must be less than 2000 characters")
+    .max(2000, 'Description must be less than 2000 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   personality: z
     .string()
-    .max(2000, "Personality must be less than 2000 characters")
+    .max(2000, 'Personality must be less than 2000 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   backstory: z
     .string()
-    .max(5000, "Backstory must be less than 5000 characters")
+    .max(5000, 'Backstory must be less than 5000 characters')
     .optional()
-    .or(z.literal("")),
-  visibility: z.enum(["PUBLIC", "UNLISTED", "PRIVATE"]),
+    .or(z.literal('')),
+  visibility: z.enum(['PUBLIC', 'UNLISTED', 'PRIVATE']),
   isSellable: z.boolean(),
   isTradeable: z.boolean(),
   price: z
     .string()
     .optional()
     .refine((val) => {
-      if (!val || val === "") return true;
+      if (!val || val === '') return true;
       const num = parseFloat(val);
       return !isNaN(num) && num >= 0;
-    }, "Price must be a valid positive number"),
+    }, 'Price must be a valid positive number'),
   tags: z.array(z.string()).optional().default([]),
 });
 
@@ -91,7 +91,7 @@ const BackButton = styled.button`
   }
 
   &::before {
-    content: "←";
+    content: '←';
     font-weight: bold;
   }
 `;
@@ -165,7 +165,7 @@ const Input = styled.input`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.error};
   }
 `;
@@ -183,7 +183,7 @@ const Select = styled.select`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.error};
   }
 `;
@@ -203,7 +203,7 @@ const TextArea = styled.textarea`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.error};
   }
 `;
@@ -320,7 +320,7 @@ export const CreateCharacterPage: React.FC = () => {
   } = useForm<CharacterForm>({
     resolver: zodResolver(characterSchema),
     defaultValues: {
-      visibility: "PUBLIC",
+      visibility: 'PUBLIC',
       isSellable: false,
       isTradeable: false,
       tags: [],
@@ -331,10 +331,10 @@ export const CreateCharacterPage: React.FC = () => {
     refetchQueries: [{ query: GET_CHARACTERS }, { query: GET_MY_CHARACTERS }],
   });
 
-  const isSellable = watch("isSellable");
+  const isSellable = watch('isSellable');
 
   const handleBackClick = () => {
-    navigate("/characters");
+    navigate('/characters');
   };
 
   const onSubmit = async (data: CharacterForm) => {
@@ -342,7 +342,7 @@ export const CreateCharacterPage: React.FC = () => {
     try {
       // Process price
       const price =
-        data.price && data.price !== "" ? parseFloat(data.price) : undefined;
+        data.price && data.price !== '' ? parseFloat(data.price) : undefined;
 
       // Clean up empty strings
       const cleanData = {
@@ -366,14 +366,14 @@ export const CreateCharacterPage: React.FC = () => {
       });
 
       // Navigate to the newly created character
-      toast.success("Character created successfully!");
+      toast.success('Character created successfully!');
       navigate(`/character/${result.data.createCharacter.id}`);
     } catch (error) {
-      console.error("Error creating character:", error);
+      console.error('Error creating character:', error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to create character. Please try again.",
+          : 'Failed to create character. Please try again.',
       );
     } finally {
       setIsSubmitting(false);
@@ -402,7 +402,7 @@ export const CreateCharacterPage: React.FC = () => {
               <Label htmlFor="name">Character Name *</Label>
               <Input
                 id="name"
-                {...register("name")}
+                {...register('name')}
                 aria-invalid={!!errors.name}
                 placeholder="Enter character name"
               />
@@ -416,7 +416,7 @@ export const CreateCharacterPage: React.FC = () => {
                 <Label htmlFor="age">Age</Label>
                 <Input
                   id="age"
-                  {...register("age")}
+                  {...register('age')}
                   aria-invalid={!!errors.age}
                   placeholder="e.g., 25, Young Adult"
                 />
@@ -429,7 +429,7 @@ export const CreateCharacterPage: React.FC = () => {
                 <Label htmlFor="gender">Gender</Label>
                 <Input
                   id="gender"
-                  {...register("gender")}
+                  {...register('gender')}
                   aria-invalid={!!errors.gender}
                   placeholder="e.g., Male, Female, Non-binary"
                 />
@@ -448,7 +448,7 @@ export const CreateCharacterPage: React.FC = () => {
               <Label htmlFor="description">Description</Label>
               <TextArea
                 id="description"
-                {...register("description")}
+                {...register('description')}
                 aria-invalid={!!errors.description}
                 placeholder="Describe your character's appearance and general traits..."
               />
@@ -461,7 +461,7 @@ export const CreateCharacterPage: React.FC = () => {
               <Label htmlFor="personality">Personality</Label>
               <TextArea
                 id="personality"
-                {...register("personality")}
+                {...register('personality')}
                 aria-invalid={!!errors.personality}
                 placeholder="Describe your character's personality, quirks, and behavior..."
               />
@@ -474,10 +474,10 @@ export const CreateCharacterPage: React.FC = () => {
               <Label htmlFor="backstory">Backstory</Label>
               <TextArea
                 id="backstory"
-                {...register("backstory")}
+                {...register('backstory')}
                 aria-invalid={!!errors.backstory}
                 placeholder="Share your character's history, background, and story..."
-                style={{ minHeight: "150px" }}
+                style={{ minHeight: '150px' }}
               />
               {errors.backstory && (
                 <ErrorMessage>{errors.backstory.message}</ErrorMessage>
@@ -493,7 +493,7 @@ export const CreateCharacterPage: React.FC = () => {
               <Label htmlFor="visibility">Visibility</Label>
               <Select
                 id="visibility"
-                {...register("visibility")}
+                {...register('visibility')}
                 aria-invalid={!!errors.visibility}
               >
                 <option value="PUBLIC">Public - Visible to everyone</option>
@@ -509,12 +509,12 @@ export const CreateCharacterPage: React.FC = () => {
 
             <CheckboxRow>
               <CheckboxGroup>
-                <Checkbox type="checkbox" {...register("isSellable")} />
+                <Checkbox type="checkbox" {...register('isSellable')} />
                 Available for sale
               </CheckboxGroup>
 
               <CheckboxGroup>
-                <Checkbox type="checkbox" {...register("isTradeable")} />
+                <Checkbox type="checkbox" {...register('isTradeable')} />
                 Open to trades
               </CheckboxGroup>
             </CheckboxRow>
@@ -528,18 +528,18 @@ export const CreateCharacterPage: React.FC = () => {
                   step="0.01"
                   min="0"
                   pattern="^[0-9]*\.?[0-9]*$"
-                  {...register("price")}
+                  {...register('price')}
                   aria-invalid={!!errors.price}
                   placeholder="0.00"
                   onInput={(e) => {
                     const target = e.target as HTMLInputElement;
                     const value = target.value;
                     // Remove any invalid characters, keeping only digits and decimal point
-                    const cleaned = value.replace(/[^0-9.]/g, "");
+                    const cleaned = value.replace(/[^0-9.]/g, '');
                     // Ensure only one decimal point
-                    const parts = cleaned.split(".");
+                    const parts = cleaned.split('.');
                     if (parts.length > 2) {
-                      target.value = parts[0] + "." + parts.slice(1).join("");
+                      target.value = parts[0] + '.' + parts.slice(1).join('');
                     } else {
                       target.value = cleaned;
                     }
@@ -582,7 +582,7 @@ export const CreateCharacterPage: React.FC = () => {
               Cancel
             </CancelButton>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Character"}
+              {isSubmitting ? 'Creating...' : 'Create Character'}
             </Button>
           </ButtonRow>
         </Form>

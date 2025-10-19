@@ -1,12 +1,12 @@
-import React from "react";
-import { useQuery } from "@apollo/client";
-import { Link } from "react-router-dom";
-import styled from "styled-components";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import { useAuth } from "../contexts/AuthContext";
-import { GET_LIKED_CHARACTERS } from "../graphql/characters.graphql";
-import { LikeButton } from "../components/LikeButton";
-import { LikeableType } from "../generated/graphql";
+import React from 'react';
+import { useQuery } from '@apollo/client';
+import { Link } from 'react-router-dom';
+import styled from 'styled-components';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useAuth } from '../contexts/AuthContext';
+import { GET_LIKED_CHARACTERS } from '../graphql/characters.graphql';
+import { LikeButton } from '../components/LikeButton';
+import { LikeableType } from '../generated/graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -215,6 +215,7 @@ export const LikedCharactersPage: React.FC = () => {
         </EmptyState>
       ) : (
         <Grid>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {likedCharacters.map((character: any) => (
             <CharacterCard key={character.id}>
               <CardContent>

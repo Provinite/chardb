@@ -1,22 +1,28 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { toast } from "react-hot-toast";
-import styled from "styled-components";
-import { ArrowLeft, User, FileText, Settings, Tag as TagIcon } from "lucide-react";
-import { Button, TagInput } from "@chardb/ui";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { toast } from 'react-hot-toast';
+import styled from 'styled-components';
+import {
+  ArrowLeft,
+  User,
+  FileText,
+  Settings,
+  Tag as TagIcon,
+} from 'lucide-react';
+import { Button, TagInput } from '@chardb/ui';
 import {
   useCreateCharacterMutation,
   SpeciesDetailsFragment,
   SpeciesVariantDetailsFragment,
   CharacterTraitValueInput,
   Visibility,
-} from "../generated/graphql";
-import { useTagSearch } from "../hooks/useTagSearch";
-import { SpeciesSelector } from "../components/character/SpeciesSelector";
-import { TraitForm } from "../components/character/TraitForm";
+} from '../generated/graphql';
+import { useTagSearch } from '../hooks/useTagSearch';
+import { SpeciesSelector } from '../components/character/SpeciesSelector';
+import { TraitForm } from '../components/character/TraitForm';
 
 /**
  * Enhanced Character Creation Page with Species and Trait Integration
@@ -48,33 +54,33 @@ import { TraitForm } from "../components/character/TraitForm";
 const characterSchema = z.object({
   name: z
     .string()
-    .min(1, "Name is required")
-    .max(100, "Name must be less than 100 characters"),
+    .min(1, 'Name is required')
+    .max(100, 'Name must be less than 100 characters'),
   age: z
     .string()
-    .max(20, "Age must be less than 20 characters")
+    .max(20, 'Age must be less than 20 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   gender: z
     .string()
-    .max(20, "Gender must be less than 20 characters")
+    .max(20, 'Gender must be less than 20 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   description: z
     .string()
-    .max(2000, "Description must be less than 2000 characters")
+    .max(2000, 'Description must be less than 2000 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   personality: z
     .string()
-    .max(2000, "Personality must be less than 2000 characters")
+    .max(2000, 'Personality must be less than 2000 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   backstory: z
     .string()
-    .max(5000, "Backstory must be less than 5000 characters")
+    .max(5000, 'Backstory must be less than 5000 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   visibility: z.nativeEnum(Visibility),
   isSellable: z.boolean(),
   isTradeable: z.boolean(),
@@ -82,14 +88,14 @@ const characterSchema = z.object({
     .string()
     .refine(
       (val) => {
-        if (!val || val === "") return true;
+        if (!val || val === '') return true;
         const num = parseFloat(val);
         return !isNaN(num) && num >= 0 && num <= 999999;
       },
-      { message: "Price must be a valid number between 0 and 999,999" }
+      { message: 'Price must be a valid number between 0 and 999,999' },
     )
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
 });
 
 type CharacterForm = z.infer<typeof characterSchema>;
@@ -193,7 +199,7 @@ const Input = styled.input`
     box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.primary}20;
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.danger};
   }
 `;
@@ -216,7 +222,7 @@ const Textarea = styled.textarea`
     box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.primary}20;
   }
 
-  &[aria-invalid="true"] {
+  &[aria-invalid='true'] {
     border-color: ${({ theme }) => theme.colors.danger};
   }
 `;
@@ -308,12 +314,16 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Species and variant state
-  const [selectedSpecies, setSelectedSpecies] = useState<SpeciesDetailsFragment | null>(null);
-  const [selectedVariant, setSelectedVariant] = useState<SpeciesVariantDetailsFragment | null>(null);
-  
+  const [selectedSpecies, setSelectedSpecies] =
+    useState<SpeciesDetailsFragment | null>(null);
+  const [selectedVariant, setSelectedVariant] =
+    useState<SpeciesVariantDetailsFragment | null>(null);
+
   // Trait values state
-  const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>([]);
-  
+  const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>(
+    [],
+  );
+
   // Tags state
   const [tags, setTags] = useState<string[]>([]);
   const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
@@ -333,12 +343,14 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
     },
   });
 
-  const isSellable = watch("isSellable");
+  const isSellable = watch('isSellable');
 
   // GraphQL mutation
   const [createCharacterMutation] = useCreateCharacterMutation({
     onCompleted: (data) => {
-      toast.success(`Character "${data.createCharacter.name}" created successfully!`);
+      toast.success(
+        `Character "${data.createCharacter.name}" created successfully!`,
+      );
       navigate(`/character/${data.createCharacter.id}`);
     },
     onError: (error) => {
@@ -373,7 +385,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
         },
       });
     } catch (error) {
-      console.error("Character creation failed:", error);
+      console.error('Character creation failed:', error);
       setIsSubmitting(false);
     }
   };
@@ -405,7 +417,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           <FormGroup>
             <Label htmlFor="name">Character Name</Label>
             <Input
-              {...register("name")}
+              {...register('name')}
               id="name"
               type="text"
               placeholder="Enter your character's name..."
@@ -417,7 +429,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           <FormGroup>
             <Label htmlFor="age">Age (Optional)</Label>
             <Input
-              {...register("age")}
+              {...register('age')}
               id="age"
               type="text"
               placeholder="e.g., 25, Young Adult, etc."
@@ -428,12 +440,14 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           <FormGroup>
             <Label htmlFor="gender">Gender (Optional)</Label>
             <Input
-              {...register("gender")}
+              {...register('gender')}
               id="gender"
               type="text"
               placeholder="e.g., Male, Female, Non-binary, etc."
             />
-            {errors.gender && <ErrorMessage>{errors.gender.message}</ErrorMessage>}
+            {errors.gender && (
+              <ErrorMessage>{errors.gender.message}</ErrorMessage>
+            )}
           </FormGroup>
         </Section>
 
@@ -466,40 +480,47 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             Character Details
           </SectionTitle>
           <SectionDescription>
-            Provide additional details about your character's appearance, personality, and background.
+            Provide additional details about your character's appearance,
+            personality, and background.
           </SectionDescription>
 
           <FormGroup>
             <Label htmlFor="description">Description</Label>
             <Textarea
-              {...register("description")}
+              {...register('description')}
               id="description"
               placeholder="Describe your character's appearance and general traits..."
               rows={4}
             />
-            {errors.description && <ErrorMessage>{errors.description.message}</ErrorMessage>}
+            {errors.description && (
+              <ErrorMessage>{errors.description.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <FormGroup>
             <Label htmlFor="personality">Personality</Label>
             <Textarea
-              {...register("personality")}
+              {...register('personality')}
               id="personality"
               placeholder="Describe your character's personality, behavior, and quirks..."
               rows={4}
             />
-            {errors.personality && <ErrorMessage>{errors.personality.message}</ErrorMessage>}
+            {errors.personality && (
+              <ErrorMessage>{errors.personality.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <FormGroup>
             <Label htmlFor="backstory">Backstory</Label>
             <Textarea
-              {...register("backstory")}
+              {...register('backstory')}
               id="backstory"
               placeholder="Tell your character's story, background, and history..."
               rows={6}
             />
-            {errors.backstory && <ErrorMessage>{errors.backstory.message}</ErrorMessage>}
+            {errors.backstory && (
+              <ErrorMessage>{errors.backstory.message}</ErrorMessage>
+            )}
           </FormGroup>
         </Section>
 
@@ -510,22 +531,29 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             Character Settings
           </SectionTitle>
           <SectionDescription>
-            Configure visibility, trading options, and other settings for your character.
+            Configure visibility, trading options, and other settings for your
+            character.
           </SectionDescription>
 
           <FormGroup>
             <Label htmlFor="visibility">Visibility</Label>
-            <Select {...register("visibility")} id="visibility">
-              <option value={Visibility.Public}>Public - Anyone can view</option>
-              <option value={Visibility.Unlisted}>Unlisted - Only via direct link</option>
-              <option value={Visibility.Private}>Private - Only you can view</option>
+            <Select {...register('visibility')} id="visibility">
+              <option value={Visibility.Public}>
+                Public - Anyone can view
+              </option>
+              <option value={Visibility.Unlisted}>
+                Unlisted - Only via direct link
+              </option>
+              <option value={Visibility.Private}>
+                Private - Only you can view
+              </option>
             </Select>
           </FormGroup>
 
           <CheckboxRow>
             <CheckboxGroup>
               <Checkbox
-                {...register("isSellable")}
+                {...register('isSellable')}
                 type="checkbox"
                 id="isSellable"
               />
@@ -534,7 +562,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
 
             <CheckboxGroup>
               <Checkbox
-                {...register("isTradeable")}
+                {...register('isTradeable')}
                 type="checkbox"
                 id="isTradeable"
               />
@@ -546,27 +574,29 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             <FormGroup>
               <Label htmlFor="price">Price</Label>
               <Input
-                {...register("price")}
+                {...register('price')}
                 id="price"
                 type="text"
                 placeholder="0.00"
                 onInput={(e) => {
                   const target = e.target as HTMLInputElement;
-                  let value = target.value.replace(/[^0-9.]/g, "");
-                  const parts = value.split(".");
+                  let value = target.value.replace(/[^0-9.]/g, '');
+                  const parts = value.split('.');
                   if (parts.length > 2) {
-                    value = parts[0] + "." + parts.slice(1).join("");
+                    value = parts[0] + '.' + parts.slice(1).join('');
                   }
                   if (parts[1] && parts[1].length > 2) {
-                    value = parts[0] + "." + parts[1].slice(0, 2);
+                    value = parts[0] + '.' + parts[1].slice(0, 2);
                   }
-                  const cleaned = value.replace(/^0+(?=\d)/, "");
+                  const cleaned = value.replace(/^0+(?=\d)/, '');
                   if (cleaned !== target.value) {
                     target.value = cleaned;
                   }
                 }}
               />
-              {errors.price && <ErrorMessage>{errors.price.message}</ErrorMessage>}
+              {errors.price && (
+                <ErrorMessage>{errors.price.message}</ErrorMessage>
+              )}
             </FormGroup>
           )}
         </Section>
@@ -601,7 +631,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             Cancel
           </CancelButton>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Character"}
+            {isSubmitting ? 'Creating...' : 'Create Character'}
           </Button>
         </ButtonRow>
       </Form>

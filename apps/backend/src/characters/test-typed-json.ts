@@ -2,7 +2,7 @@
  * Quick test to verify typed JSON is working correctly
  * This file can be deleted after testing
  */
-import { PrismaClient } from "@chardb/database";
+import { PrismaClient } from '@chardb/database';
 
 const prisma = new PrismaClient();
 
@@ -11,18 +11,18 @@ async function testTypedJson() {
     // Test creating a character with typed trait values
     const character = await prisma.character.create({
       data: {
-        name: "Test Character",
-        ownerId: "test-user-id",
+        name: 'Test Character',
+        ownerId: 'test-user-id',
         traitValues: [
-          { traitId: "eye-color-trait-id", value: "blue" },
-          { traitId: "height-trait-id", value: 180 },
-          { traitId: "is-magic-trait-id", value: true },
-          { traitId: "notes-trait-id", value: null },
+          { traitId: 'eye-color-trait-id', value: 'blue' },
+          { traitId: 'height-trait-id', value: 180 },
+          { traitId: 'is-magic-trait-id', value: true },
+          { traitId: 'notes-trait-id', value: null },
         ], // This should be fully typed!
       },
     });
 
-    console.log("✅ Character created with typed trait values");
+    console.log('✅ Character created with typed trait values');
 
     // Test reading and accessing typed values
     const found = await prisma.character.findUnique({
@@ -42,9 +42,9 @@ async function testTypedJson() {
       where: { id: character.id },
     });
 
-    console.log("✅ Typed JSON test completed successfully");
+    console.log('✅ Typed JSON test completed successfully');
   } catch (error) {
-    console.error("❌ Typed JSON test failed:", error);
+    console.error('❌ Typed JSON test failed:', error);
   }
 }
 

@@ -24,14 +24,14 @@ export interface OwnershipResolutionConfig {
 }
 
 export const AllOwnershipResolutionKeys = [
-  "characterId",
-  "mediaId",
-  "galleryId",
-  "imageId",
-  "userId",
-  "inviteeOfInvitationId",
-  "inviterOrInviteeOfInvitationId",
-  "commentId",
+  'characterId',
+  'mediaId',
+  'galleryId',
+  'imageId',
+  'userId',
+  'inviteeOfInvitationId',
+  'inviterOrInviteeOfInvitationId',
+  'commentId',
 ] as const;
 
 export type OwnershipResolutionReference = {

@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { DatabaseService } from "../database/database.service";
-import { Prisma } from "@chardb/database";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { DatabaseService } from '../database/database.service';
+import { Prisma } from '@chardb/database';
 
 /**
  * Service layer input types for roles operations.
@@ -107,7 +107,7 @@ export class RolesService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: [{ community: { name: "asc" } }, { name: "asc" }],
+        orderBy: [{ community: { name: 'asc' } }, { name: 'asc' }],
       }),
       this.prisma.role.count(),
     ]);
@@ -138,7 +138,7 @@ export class RolesService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { name: "asc" },
+        orderBy: { name: 'asc' },
       }),
       this.prisma.role.count({
         where: { communityId },

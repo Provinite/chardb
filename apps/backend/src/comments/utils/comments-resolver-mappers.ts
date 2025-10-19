@@ -1,18 +1,18 @@
-import { Prisma } from "@chardb/database";
-import { 
+import { Prisma } from '@chardb/database';
+import {
   CreateCommentInput,
   UpdateCommentInput,
   CommentFiltersInput,
-  CommentableType
-} from "../dto/comment.dto";
-import { Comment, CommentConnection } from "../entities/comment.entity";
-import { 
+  CommentableType,
+} from '../dto/comment.dto';
+import { CommentConnection } from '../entities/comment.entity';
+import {
   CreateCommentServiceInput,
   UpdateCommentServiceInput,
   CommentFiltersServiceInput,
-  CommentableTypeFilter
-} from "../comments.service";
-import { assertNever } from "../../shared/utils/assertNever";
+  CommentableTypeFilter,
+} from '../comments.service';
+import { assertNever } from '../../shared/utils/assertNever';
 
 /**
  * Resolver layer mapping functions to convert between GraphQL DTOs and service types
@@ -21,7 +21,9 @@ import { assertNever } from "../../shared/utils/assertNever";
 /**
  * Maps GraphQL CommentableType to service CommentableTypeFilter
  */
-function mapGraphQLCommentableTypeToService(commentableType: CommentableType): CommentableTypeFilter {
+function mapGraphQLCommentableTypeToService(
+  commentableType: CommentableType,
+): CommentableTypeFilter {
   switch (commentableType) {
     case CommentableType.CHARACTER:
       return CommentableTypeFilter.CHARACTER;
@@ -39,7 +41,9 @@ function mapGraphQLCommentableTypeToService(commentableType: CommentableType): C
 /**
  * Maps service CommentableTypeFilter to GraphQL CommentableType
  */
-function mapServiceCommentableTypeToGraphQL(commentableType: CommentableTypeFilter): CommentableType {
+function mapServiceCommentableTypeToGraphQL(
+  commentableType: CommentableTypeFilter,
+): CommentableType {
   switch (commentableType) {
     case CommentableTypeFilter.CHARACTER:
       return CommentableType.CHARACTER;
@@ -58,7 +62,7 @@ function mapServiceCommentableTypeToGraphQL(commentableType: CommentableTypeFilt
  * Maps GraphQL CreateCommentInput to service input format
  */
 export function mapCreateCommentInputToService(
-  input: CreateCommentInput
+  input: CreateCommentInput,
 ): CreateCommentServiceInput {
   return {
     content: input.content,
@@ -72,7 +76,7 @@ export function mapCreateCommentInputToService(
  * Maps GraphQL UpdateCommentInput to service input format
  */
 export function mapUpdateCommentInputToService(
-  input: UpdateCommentInput
+  input: UpdateCommentInput,
 ): UpdateCommentServiceInput {
   return {
     content: input.content,
@@ -82,11 +86,15 @@ export function mapUpdateCommentInputToService(
 /**
  * Maps GraphQL CommentFiltersInput to service input format
  */
-export function mapCommentFiltersInputToService(input?: CommentFiltersInput): CommentFiltersServiceInput {
+export function mapCommentFiltersInputToService(
+  input?: CommentFiltersInput,
+): CommentFiltersServiceInput {
   if (!input) return {};
-  
+
   return {
-    entityType: input.entityType ? mapGraphQLCommentableTypeToService(input.entityType) : undefined,
+    entityType: input.entityType
+      ? mapGraphQLCommentableTypeToService(input.entityType)
+      : undefined,
     entityId: input.entityId,
     parentId: input.parentId,
     limit: input.limit,
@@ -94,6 +102,7 @@ export function mapCommentFiltersInputToService(input?: CommentFiltersInput): Co
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 type PrismaComment = Prisma.CommentGetPayload<{}>;
 
 /**
@@ -104,7 +113,7 @@ export function mapPrismaCommentToGraphQL(prismaComment: PrismaComment) {
   // Determine commentable type and ID from the Prisma comment
   let commentableType: CommentableType;
   let commentableId: string;
-  
+
   if (prismaComment.characterId) {
     commentableType = CommentableType.CHARACTER;
     commentableId = prismaComment.characterId;

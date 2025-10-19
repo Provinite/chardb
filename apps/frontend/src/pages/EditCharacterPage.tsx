@@ -1,62 +1,62 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { toast } from "react-hot-toast";
-import styled from "styled-components";
-import { Button, TagInput } from "@chardb/ui";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { toast } from 'react-hot-toast';
+import styled from 'styled-components';
+import { Button, TagInput } from '@chardb/ui';
 import {
   useGetCharacterQuery,
   useUpdateCharacterMutation,
   UpdateCharacterInput,
   Visibility,
-} from "../graphql/characters.graphql";
-import { useAuth } from "../contexts/AuthContext";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import { useTagSearch } from "../hooks/useTagSearch";
+} from '../graphql/characters.graphql';
+import { useAuth } from '../contexts/AuthContext';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useTagSearch } from '../hooks/useTagSearch';
 
 const characterSchema = z.object({
   name: z
     .string()
-    .min(1, "Name is required")
-    .max(100, "Name must be less than 100 characters"),
+    .min(1, 'Name is required')
+    .max(100, 'Name must be less than 100 characters'),
   age: z
     .string()
-    .max(20, "Age must be less than 20 characters")
+    .max(20, 'Age must be less than 20 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   gender: z
     .string()
-    .max(20, "Gender must be less than 20 characters")
+    .max(20, 'Gender must be less than 20 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   description: z
     .string()
-    .max(2000, "Description must be less than 2000 characters")
+    .max(2000, 'Description must be less than 2000 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   personality: z
     .string()
-    .max(2000, "Personality must be less than 2000 characters")
+    .max(2000, 'Personality must be less than 2000 characters')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
   backstory: z
     .string()
-    .max(5000, "Backstory must be less than 5000 characters")
+    .max(5000, 'Backstory must be less than 5000 characters')
     .optional()
-    .or(z.literal("")),
-  visibility: z.enum(["PUBLIC", "UNLISTED", "PRIVATE"]),
+    .or(z.literal('')),
+  visibility: z.enum(['PUBLIC', 'UNLISTED', 'PRIVATE']),
   isSellable: z.boolean(),
   isTradeable: z.boolean(),
   price: z
     .string()
     .optional()
     .refine((val) => {
-      if (!val || val === "") return true;
+      if (!val || val === '') return true;
       const num = parseFloat(val);
       return !isNaN(num) && num >= 0;
-    }, "Price must be a valid positive number"),
+    }, 'Price must be a valid positive number'),
   tags: z.array(z.string()).optional().default([]),
 });
 
@@ -93,7 +93,7 @@ const BackButton = styled.button`
   }
 
   &::before {
-    content: "←";
+    content: '←';
     font-weight: bold;
   }
 `;
@@ -228,7 +228,7 @@ const CheckboxLabel = styled.label`
   cursor: pointer;
 `;
 
-const Checkbox = styled.input.attrs({ type: "checkbox" })`
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
   width: 16px;
   height: 16px;
   accent-color: ${({ theme }) => theme.colors.primary};
@@ -293,16 +293,16 @@ export const EditCharacterPage: React.FC = () => {
   } = useForm<CharacterForm>({
     resolver: zodResolver(characterSchema),
     defaultValues: {
-      name: "",
-      age: "",
-      gender: "",
-      description: "",
-      personality: "",
-      backstory: "",
-      visibility: "PUBLIC",
+      name: '',
+      age: '',
+      gender: '',
+      description: '',
+      personality: '',
+      backstory: '',
+      visibility: 'PUBLIC',
       isSellable: false,
       isTradeable: false,
-      price: "",
+      price: '',
       tags: [],
     },
   });
@@ -314,22 +314,22 @@ export const EditCharacterPage: React.FC = () => {
     if (character) {
       reset({
         name: character.name,
-        age: character.age || "",
-        gender: character.gender || "",
-        description: character.description || "",
-        personality: character.personality || "",
-        backstory: character.backstory || "",
+        age: character.age || '',
+        gender: character.gender || '',
+        description: character.description || '',
+        personality: character.personality || '',
+        backstory: character.backstory || '',
         visibility: character.visibility,
         isSellable: character.isSellable,
         isTradeable: character.isTradeable,
-        price: character.price?.toString() || "",
+        price: character.price?.toString() || '',
         tags: [],
       });
       setTags(character.tags || []);
     }
   }, [character, reset]);
 
-  const isSellable = watch("isSellable");
+  const isSellable = watch('isSellable');
 
   const onSubmit = async (data: CharacterForm) => {
     if (!character || !user) return;
@@ -358,14 +358,14 @@ export const EditCharacterPage: React.FC = () => {
         },
       });
 
-      toast.success("Character updated successfully!");
+      toast.success('Character updated successfully!');
       navigate(`/character/${character.id}`);
     } catch (error) {
-      console.error("Failed to update character:", error);
+      console.error('Failed to update character:', error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to update character. Please try again.",
+          : 'Failed to update character. Please try again.',
       );
     } finally {
       setIsSubmitting(false);
@@ -426,7 +426,7 @@ export const EditCharacterPage: React.FC = () => {
             <FormGroup>
               <Label>Name *</Label>
               <Input
-                {...register("name")}
+                {...register('name')}
                 placeholder="Character name"
                 hasError={!!errors.name}
               />
@@ -440,7 +440,7 @@ export const EditCharacterPage: React.FC = () => {
             <FormGroup>
               <Label>Age</Label>
               <Input
-                {...register("age")}
+                {...register('age')}
                 placeholder="e.g., 25, Young Adult"
                 hasError={!!errors.age}
               />
@@ -450,7 +450,7 @@ export const EditCharacterPage: React.FC = () => {
             <FormGroup>
               <Label>Gender</Label>
               <Input
-                {...register("gender")}
+                {...register('gender')}
                 placeholder="e.g., Male, Female, Non-binary"
                 hasError={!!errors.gender}
               />
@@ -467,7 +467,7 @@ export const EditCharacterPage: React.FC = () => {
           <FormGroup>
             <Label>Description</Label>
             <TextArea
-              {...register("description")}
+              {...register('description')}
               placeholder="Brief description of your character's appearance and key traits..."
               hasError={!!errors.description}
             />
@@ -479,7 +479,7 @@ export const EditCharacterPage: React.FC = () => {
           <FormGroup>
             <Label>Personality</Label>
             <TextArea
-              {...register("personality")}
+              {...register('personality')}
               placeholder="Your character's personality traits, quirks, and behavior..."
               hasError={!!errors.personality}
             />
@@ -491,10 +491,10 @@ export const EditCharacterPage: React.FC = () => {
           <FormGroup>
             <Label>Backstory</Label>
             <TextArea
-              {...register("backstory")}
+              {...register('backstory')}
               placeholder="Your character's history, origin story, and background..."
               hasError={!!errors.backstory}
-              style={{ minHeight: "150px" }}
+              style={{ minHeight: '150px' }}
             />
             {errors.backstory && (
               <ErrorMessage>{errors.backstory.message}</ErrorMessage>
@@ -509,7 +509,7 @@ export const EditCharacterPage: React.FC = () => {
             <FormGroup>
               <Label>Visibility</Label>
               <Select
-                {...register("visibility")}
+                {...register('visibility')}
                 hasError={!!errors.visibility}
               >
                 <option value="PUBLIC">Public - Anyone can view</option>
@@ -527,11 +527,11 @@ export const EditCharacterPage: React.FC = () => {
               <Label>Trading Options</Label>
               <CheckboxGroup>
                 <CheckboxLabel>
-                  <Checkbox {...register("isTradeable")} />
+                  <Checkbox {...register('isTradeable')} />
                   Available for trading
                 </CheckboxLabel>
                 <CheckboxLabel>
-                  <Checkbox {...register("isSellable")} />
+                  <Checkbox {...register('isSellable')} />
                   Available for sale
                 </CheckboxLabel>
               </CheckboxGroup>
@@ -542,7 +542,7 @@ export const EditCharacterPage: React.FC = () => {
             <FormGroup>
               <Label>Price (USD)</Label>
               <Input
-                {...register("price")}
+                {...register('price')}
                 placeholder="0.00"
                 type="number"
                 step="0.01"
@@ -553,11 +553,11 @@ export const EditCharacterPage: React.FC = () => {
                   const target = e.target as HTMLInputElement;
                   const value = target.value;
                   // Remove any invalid characters, keeping only digits and decimal point
-                  const cleaned = value.replace(/[^0-9.]/g, "");
+                  const cleaned = value.replace(/[^0-9.]/g, '');
                   // Ensure only one decimal point
-                  const parts = cleaned.split(".");
+                  const parts = cleaned.split('.');
                   if (parts.length > 2) {
-                    target.value = parts[0] + "." + parts.slice(1).join("");
+                    target.value = parts[0] + '.' + parts.slice(1).join('');
                   } else {
                     target.value = cleaned;
                   }
@@ -602,7 +602,7 @@ export const EditCharacterPage: React.FC = () => {
             Cancel
           </Button>
           <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Save Changes"}
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
           </Button>
         </Actions>
       </Form>

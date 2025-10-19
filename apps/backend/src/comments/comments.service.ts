@@ -3,9 +3,9 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
-} from "@nestjs/common";
-import { DatabaseService } from "../database/database.service";
-import type { Prisma } from "@chardb/database";
+} from '@nestjs/common';
+import { DatabaseService } from '../database/database.service';
+import type { Prisma } from '@chardb/database';
 
 /**
  * Service layer input types for comment operations.
@@ -17,10 +17,10 @@ import type { Prisma } from "@chardb/database";
  * Enum for commentable entity types (service layer equivalent)
  */
 export enum CommentableTypeFilter {
-  CHARACTER = "CHARACTER",
-  IMAGE = "IMAGE",
-  GALLERY = "GALLERY",
-  USER = "USER",
+  CHARACTER = 'CHARACTER',
+  IMAGE = 'IMAGE',
+  GALLERY = 'GALLERY',
+  USER = 'USER',
 }
 
 /**
@@ -98,7 +98,7 @@ export class CommentsService {
     });
 
     if (!comment) {
-      throw new NotFoundException("Comment not found");
+      throw new NotFoundException('Comment not found');
     }
 
     return comment;
@@ -125,7 +125,7 @@ export class CommentsService {
       this.databaseService.comment.findMany({
         where,
         orderBy: {
-          createdAt: "desc",
+          createdAt: 'desc',
         },
         take: filters.limit,
         skip: filters.offset,
@@ -146,11 +146,11 @@ export class CommentsService {
     });
 
     if (!existingComment) {
-      throw new NotFoundException("Comment not found");
+      throw new NotFoundException('Comment not found');
     }
 
     if (existingComment.authorId !== authorId) {
-      throw new ForbiddenException("You can only edit your own comments");
+      throw new ForbiddenException('You can only edit your own comments');
     }
 
     const comment = await this.databaseService.comment.update({
@@ -173,7 +173,7 @@ export class CommentsService {
     });
 
     if (!existingComment) {
-      throw new NotFoundException("Comment not found");
+      throw new NotFoundException('Comment not found');
     }
 
     // Check if user is the comment author or an admin
@@ -198,7 +198,7 @@ export class CommentsService {
     }
 
     throw new ForbiddenException(
-      "You can only delete your own comments or comments on content you own",
+      'You can only delete your own comments or comments on content you own',
     );
   }
 
@@ -297,7 +297,7 @@ export class CommentsService {
     });
 
     if (!parentComment) {
-      throw new BadRequestException("Parent comment not found");
+      throw new BadRequestException('Parent comment not found');
     }
 
     // Check if parent comment belongs to the same entity using the new structure
@@ -306,7 +306,7 @@ export class CommentsService {
 
     if (parentEntityType !== entityType || parentEntityId !== entityId) {
       throw new BadRequestException(
-        "Parent comment must belong to the same entity",
+        'Parent comment must belong to the same entity',
       );
     }
   }
@@ -339,16 +339,18 @@ export class CommentsService {
   }
 
   private getEntityTypeFromComment(
+    // eslint-disable-next-line @typescript-eslint/ban-types
     comment: Prisma.CommentGetPayload<{}>,
   ): CommentableTypeFilter {
     if (comment.characterId) return CommentableTypeFilter.CHARACTER;
     if (comment.imageId) return CommentableTypeFilter.IMAGE;
     if (comment.galleryId) return CommentableTypeFilter.GALLERY;
     if (comment.userId) return CommentableTypeFilter.USER;
-    throw new BadRequestException("Comment has no valid entity type");
+    throw new BadRequestException('Comment has no valid entity type');
   }
 
   private getEntityIdFromComment(
+    // eslint-disable-next-line @typescript-eslint/ban-types
     comment: Prisma.CommentGetPayload<{}>,
   ): string {
     const entityId =
@@ -358,7 +360,7 @@ export class CommentsService {
       comment.userId;
 
     if (!entityId) {
-      throw new BadRequestException("Comment has no valid entity reference");
+      throw new BadRequestException('Comment has no valid entity reference');
     }
 
     return entityId;

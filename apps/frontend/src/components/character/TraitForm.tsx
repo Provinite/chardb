@@ -1,13 +1,13 @@
-import React, { useMemo } from "react";
-import styled from "styled-components";
-import { Settings, AlertTriangle, CheckCircle } from "lucide-react";
-import { ErrorMessage } from "@chardb/ui";
+import React, { useMemo } from 'react';
+import styled from 'styled-components';
+import { Settings, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ErrorMessage } from '@chardb/ui';
 import {
   useTraitsBySpeciesQuery,
   CharacterTraitValueInput,
   SpeciesVariantDetailsFragment,
-} from "../../generated/graphql";
-import { TraitValueEditor } from "./TraitValueEditor";
+} from '../../generated/graphql';
+import { TraitValueEditor } from './TraitValueEditor';
 
 /**
  * Comprehensive Trait Form Component for Character Creation/Editing
@@ -80,7 +80,7 @@ const ProgressText = styled.span`
 const TraitGrid = styled.div`
   display: grid;
   gap: 1.5rem;
-  
+
   @media (min-width: 768px) {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
@@ -184,19 +184,23 @@ export const TraitForm: React.FC<TraitFormProps> = ({
   // Calculate completion progress
   const { filledTraits, totalTraits } = useMemo(() => {
     const total = traits.length;
-    const filled = traitValues.filter(tv => tv.value && tv.value.trim() !== "").length;
+    const filled = traitValues.filter(
+      (tv) => tv.value && tv.value.trim() !== '',
+    ).length;
     return { filledTraits: filled, totalTraits: total };
   }, [traits, traitValues]);
 
   // Helper function to get trait value by trait ID
   const getTraitValue = (traitId: string): string => {
-    return traitValues.find(tv => tv.traitId === traitId)?.value || "";
+    return traitValues.find((tv) => tv.traitId === traitId)?.value || '';
   };
 
   // Helper function to update trait value
   const updateTraitValue = (traitId: string, value: string) => {
     const updatedTraitValues = [...traitValues];
-    const existingIndex = updatedTraitValues.findIndex(tv => tv.traitId === traitId);
+    const existingIndex = updatedTraitValues.findIndex(
+      (tv) => tv.traitId === traitId,
+    );
 
     if (existingIndex >= 0) {
       // Update existing trait value
@@ -207,8 +211,8 @@ export const TraitForm: React.FC<TraitFormProps> = ({
     }
 
     // Remove empty trait values to keep the array clean
-    const cleanedTraitValues = updatedTraitValues.filter(tv => 
-      tv.value && tv.value.trim() !== ""
+    const cleanedTraitValues = updatedTraitValues.filter(
+      (tv) => tv.value && tv.value.trim() !== '',
     );
 
     onChange(cleanedTraitValues);
@@ -235,7 +239,9 @@ export const TraitForm: React.FC<TraitFormProps> = ({
           <Settings size={20} />
           Character Traits
         </SectionTitle>
-        <ErrorMessage message={`Failed to load traits: ${traitsError.message}`} />
+        <ErrorMessage
+          message={`Failed to load traits: ${traitsError.message}`}
+        />
       </Container>
     );
   }
@@ -252,8 +258,8 @@ export const TraitForm: React.FC<TraitFormProps> = ({
           <Settings size={48} />
           <h4>No traits configured</h4>
           <p>
-            This species doesn't have any traits configured yet. 
-            Characters can still be created without trait values.
+            This species doesn't have any traits configured yet. Characters can
+            still be created without trait values.
           </p>
         </EmptyState>
       </Container>
@@ -267,8 +273,8 @@ export const TraitForm: React.FC<TraitFormProps> = ({
         Character Traits
       </SectionTitle>
       <SectionDescription>
-        Configure the traits for your character. Each trait defines a specific characteristic
-        or property that makes your character unique.
+        Configure the traits for your character. Each trait defines a specific
+        characteristic or property that makes your character unique.
       </SectionDescription>
 
       {/* Variant Info */}
@@ -296,7 +302,8 @@ export const TraitForm: React.FC<TraitFormProps> = ({
             <AlertTriangle size={16} />
             <ProgressText>
               {filledTraits} of {totalTraits} traits filled
-              {totalTraits > filledTraits && " • Complete remaining traits or leave them blank"}
+              {totalTraits > filledTraits &&
+                ' • Complete remaining traits or leave them blank'}
             </ProgressText>
           </>
         )}

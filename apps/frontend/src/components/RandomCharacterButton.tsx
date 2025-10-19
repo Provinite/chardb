@@ -1,7 +1,7 @@
-import React from "react";
-import styled from "styled-components";
-import { Tooltip } from "./Tooltip";
-import { useRandomCharacter } from "../hooks/useRandomCharacter";
+import React from 'react';
+import styled from 'styled-components';
+import { Tooltip } from './Tooltip';
+import { useRandomCharacter } from '../hooks/useRandomCharacter';
 
 interface Character {
   id: string;
@@ -10,18 +10,18 @@ interface Character {
 interface RandomCharacterButtonProps {
   characters: Character[];
   disabled?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
 }
 
 const getSizeStyles = (size: string) => {
   switch (size) {
-    case "sm":
-      return "1.2rem";
-    case "lg":
-      return "2rem";
-    case "md":
+    case 'sm':
+      return '1.2rem';
+    case 'lg':
+      return '2rem';
+    case 'md':
     default:
-      return "1.5rem";
+      return '1.5rem';
   }
 };
 
@@ -69,7 +69,7 @@ const IconButton = styled.button<{ size: string }>`
 export const RandomCharacterButton: React.FC<RandomCharacterButtonProps> = ({
   characters,
   disabled = false,
-  size = "md",
+  size = 'md',
 }) => {
   const { goToRandomCharacter } = useRandomCharacter();
 
@@ -79,7 +79,7 @@ export const RandomCharacterButton: React.FC<RandomCharacterButtonProps> = ({
 
   const isDisabled = disabled || characters.length === 0;
   const tooltipText = isDisabled
-    ? "No characters available"
+    ? 'No characters available'
     : `Random character (${characters.length} available)`;
 
   return (

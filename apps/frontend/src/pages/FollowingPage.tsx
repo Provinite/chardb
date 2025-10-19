@@ -1,10 +1,10 @@
-import React from "react";
-import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@apollo/client";
-import styled from "styled-components";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import { FollowButton } from "../components/FollowButton";
-import { GET_FOLLOWING } from "../graphql/social.graphql";
+import React from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@apollo/client';
+import styled from 'styled-components';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { FollowButton } from '../components/FollowButton';
+import { GET_FOLLOWING } from '../graphql/social.graphql';
 
 const Container = styled.div`
   max-width: 800px;
@@ -36,7 +36,7 @@ const BackButton = styled(Link)`
   }
 
   &::before {
-    content: "←";
+    content: '←';
     font-weight: bold;
   }
 `;
@@ -193,7 +193,7 @@ export const FollowingPage: React.FC = () => {
       <Container>
         <ErrorContainer>
           <h3>Error loading following</h3>
-          <p>{error?.message || "User not found"}</p>
+          <p>{error?.message || 'User not found'}</p>
         </ErrorContainer>
       </Container>
     );
@@ -206,7 +206,7 @@ export const FollowingPage: React.FC = () => {
       <Header>
         <Title>{user.displayName || user.username} Following</Title>
         <Subtitle>
-          {following.length} {following.length === 1 ? "user" : "users"}{" "}
+          {following.length} {following.length === 1 ? 'user' : 'users'}{' '}
           followed
         </Subtitle>
       </Header>
@@ -222,6 +222,7 @@ export const FollowingPage: React.FC = () => {
         </EmptyState>
       ) : (
         <UserList>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {following.map((followedUser: any) => (
             <UserCard key={followedUser.id}>
               <UserAvatar>
@@ -230,10 +231,10 @@ export const FollowingPage: React.FC = () => {
                     src={followedUser.avatarUrl}
                     alt={followedUser.displayName || followedUser.username}
                     style={{
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "50%",
-                      objectFit: "cover",
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
                     }}
                   />
                 ) : (

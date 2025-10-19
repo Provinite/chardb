@@ -1,14 +1,13 @@
-import { Prisma } from "@chardb/database";
+import { Prisma } from '@chardb/database';
 import {
   CreateCharacterInput,
   UpdateCharacterInput,
-} from "../dto/character.dto";
+} from '../dto/character.dto';
 import {
   UpdateCharacterTraitsInput,
   CharacterTraitValueInput,
-} from "../dto/character-trait.dto";
-import { Character, CharacterConnection } from "../entities/character.entity";
-import { CharacterTraitValue } from "../../shared/types/character-trait.types";
+} from '../dto/character-trait.dto';
+import { Character, CharacterConnection } from '../entities/character.entity';
 
 /**
  * Resolver layer mapping functions to convert GraphQL DTOs to Prisma types
@@ -28,15 +27,22 @@ function mapTraitValues(
 }
 
 export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
-  characterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator">;
+  characterData: Omit<Prisma.CharacterCreateInput, 'owner' | 'creator'>;
   tags?: string[];
 } {
   const { tags, ...characterData } = input;
 
-  const prismaCharacterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator"> = {
+  const prismaCharacterData: Omit<
+    Prisma.CharacterCreateInput,
+    'owner' | 'creator'
+  > = {
     name: characterData.name,
-    species: characterData.speciesId ? { connect: { id: characterData.speciesId } } : undefined,
-    speciesVariant: characterData.speciesVariantId ? { connect: { id: characterData.speciesVariantId } } : undefined,
+    species: characterData.speciesId
+      ? { connect: { id: characterData.speciesId } }
+      : undefined,
+    speciesVariant: characterData.speciesVariantId
+      ? { connect: { id: characterData.speciesVariantId } }
+      : undefined,
     age: characterData.age,
     gender: characterData.gender,
     description: characterData.description,
@@ -113,6 +119,7 @@ export function mapUpdateCharacterTraitsInputToService(
 }
 
 // Define the exact Prisma return type for updateTraits method
+// eslint-disable-next-line @typescript-eslint/ban-types
 type PrismaCharacter = Prisma.CharacterGetPayload<{}>;
 
 /**

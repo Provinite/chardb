@@ -1,10 +1,10 @@
-import { ObjectType, Field, ID, registerEnumType } from "@nestjs/graphql";
-import { ExternalAccountProvider } from "@prisma/client";
+import { ObjectType, Field, ID, registerEnumType } from '@nestjs/graphql';
+import { ExternalAccountProvider } from '@prisma/client';
 
 // Register the enum for GraphQL
 registerEnumType(ExternalAccountProvider, {
-  name: "ExternalAccountProvider",
-  description: "External account providers supported for account linking",
+  name: 'ExternalAccountProvider',
+  description: 'External account providers supported for account linking',
 });
 
 @ObjectType()

@@ -120,7 +120,7 @@ describe('ExternalAccountsService', () => {
 
       // Mock that this provider account is not linked to anyone
       db.externalAccount.findUnique
-        .mockResolvedValueOnce(null)  // First check: provider account not linked
+        .mockResolvedValueOnce(null) // First check: provider account not linked
         .mockResolvedValueOnce(null); // Second check (via findByProviderAndUserId): user doesn't have provider linked
 
       db.externalAccount.create.mockResolvedValue(mockLinkedAccount);
@@ -181,7 +181,12 @@ describe('ExternalAccountsService', () => {
       db.externalAccount.findUnique.mockResolvedValue(existingAccount);
 
       await expect(
-        service.linkExternalAccount(userId, provider, providerAccountId, displayName),
+        service.linkExternalAccount(
+          userId,
+          provider,
+          providerAccountId,
+          displayName,
+        ),
       ).rejects.toThrow(
         new ConflictException('This account is already linked to your profile'),
       );
@@ -208,9 +213,16 @@ describe('ExternalAccountsService', () => {
       db.externalAccount.findUnique.mockResolvedValue(existingAccount);
 
       await expect(
-        service.linkExternalAccount(userId, provider, providerAccountId, displayName),
+        service.linkExternalAccount(
+          userId,
+          provider,
+          providerAccountId,
+          displayName,
+        ),
       ).rejects.toThrow(
-        new ConflictException('This external account is already linked to another user'),
+        new ConflictException(
+          'This external account is already linked to another user',
+        ),
       );
 
       expect(db.externalAccount.create).not.toHaveBeenCalled();
@@ -233,11 +245,16 @@ describe('ExternalAccountsService', () => {
       };
 
       db.externalAccount.findUnique
-        .mockResolvedValueOnce(null)  // First check: provider account not linked to anyone
+        .mockResolvedValueOnce(null) // First check: provider account not linked to anyone
         .mockResolvedValueOnce(existingUserLink); // Second check: user already has this provider
 
       await expect(
-        service.linkExternalAccount(userId, provider, providerAccountId, displayName),
+        service.linkExternalAccount(
+          userId,
+          provider,
+          providerAccountId,
+          displayName,
+        ),
       ).rejects.toThrow(
         new ConflictException(
           `You already have a ${provider} account linked. Please unlink it first.`,
@@ -290,8 +307,12 @@ describe('ExternalAccountsService', () => {
 
       db.externalAccount.findUnique.mockResolvedValue(null);
 
-      await expect(service.unlinkExternalAccount(userId, provider)).rejects.toThrow(
-        new NotFoundException(`No ${provider} account found linked to your profile`),
+      await expect(
+        service.unlinkExternalAccount(userId, provider),
+      ).rejects.toThrow(
+        new NotFoundException(
+          `No ${provider} account found linked to your profile`,
+        ),
       );
 
       expect(db.externalAccount.delete).not.toHaveBeenCalled();

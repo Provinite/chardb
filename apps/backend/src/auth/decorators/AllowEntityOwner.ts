@@ -1,5 +1,5 @@
-import { Reflector } from "@nestjs/core";
-import { OwnershipResolutionConfig } from "../types/OwnershipResolutionConfig";
+import { Reflector } from '@nestjs/core';
+import { OwnershipResolutionConfig } from '../types/OwnershipResolutionConfig';
 
 /**
  * Decorator to require that the current user owns the specified entity.

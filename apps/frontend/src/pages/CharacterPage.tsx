@@ -1,23 +1,23 @@
-import React, { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery } from "@apollo/client";
-import styled from "styled-components";
-import { toast } from "react-hot-toast";
-import { Button } from "@chardb/ui";
+import React, { useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useQuery } from '@apollo/client';
+import styled from 'styled-components';
+import { toast } from 'react-hot-toast';
+import { Button } from '@chardb/ui';
 import {
   GET_CHARACTER,
   GetCharacterQuery,
   useDeleteCharacterMutation,
-} from "../graphql/characters.graphql";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import { useAuth } from "../contexts/AuthContext";
-import { LikeButton } from "../components/LikeButton";
-import { CommentList } from "../components/CommentList";
-import { CharacterMediaGallery } from "../components/CharacterMediaGallery";
-import { Tag } from "../components/Tag";
-import { TagsContainer } from "../components/TagsContainer";
-import { DeleteConfirmationDialog } from "../components/DeleteConfirmationDialog";
-import { LikeableType, CommentableType } from "../generated/graphql";
+} from '../graphql/characters.graphql';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useAuth } from '../contexts/AuthContext';
+import { LikeButton } from '../components/LikeButton';
+import { CommentList } from '../components/CommentList';
+import { CharacterMediaGallery } from '../components/CharacterMediaGallery';
+import { Tag } from '../components/Tag';
+import { TagsContainer } from '../components/TagsContainer';
+import { DeleteConfirmationDialog } from '../components/DeleteConfirmationDialog';
+import { LikeableType, CommentableType } from '../generated/graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -68,7 +68,7 @@ const BackButton = styled.button`
   }
 
   &::before {
-    content: "←";
+    content: '←';
     font-weight: bold;
   }
 `;
@@ -164,7 +164,7 @@ const CharacterMeta = styled.div`
 `;
 
 const MetaBadge = styled.span<{
-  variant?: "default" | "success" | "warning" | "error";
+  variant?: 'default' | 'success' | 'warning' | 'error';
 }>`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
@@ -172,23 +172,23 @@ const MetaBadge = styled.span<{
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   background: ${(props) => {
     switch (props.variant) {
-      case "success":
-        return props.theme.colors.success + "20";
-      case "warning":
-        return props.theme.colors.warning + "20";
-      case "error":
-        return props.theme.colors.error + "20";
+      case 'success':
+        return props.theme.colors.success + '20';
+      case 'warning':
+        return props.theme.colors.warning + '20';
+      case 'error':
+        return props.theme.colors.error + '20';
       default:
         return props.theme.colors.surface;
     }
   }};
   color: ${(props) => {
     switch (props.variant) {
-      case "success":
+      case 'success':
         return props.theme.colors.success;
-      case "warning":
+      case 'warning':
         return props.theme.colors.warning;
-      case "error":
+      case 'error':
         return props.theme.colors.error;
       default:
         return props.theme.colors.text.secondary;
@@ -402,23 +402,23 @@ export const CharacterPage: React.FC = () => {
         toast.success(
           `Character "${character?.name}" has been deleted successfully`,
         );
-        navigate("/characters");
+        navigate('/characters');
       },
       onError: (error) => {
-        console.error("Failed to delete character:", error);
+        console.error('Failed to delete character:', error);
         toast.error(`Failed to delete character: ${error.message}`);
       },
       update: (cache) => {
         // Remove the character from cache
-        cache.evict({ id: cache.identify({ __typename: "Character", id }) });
+        cache.evict({ id: cache.identify({ __typename: 'Character', id }) });
         cache.gc();
       },
     });
 
-  const character: GetCharacterQuery["character"] | undefined = data?.character;
+  const character: GetCharacterQuery['character'] | undefined = data?.character;
 
   const handleBackClick = () => {
-    navigate("/characters");
+    navigate('/characters');
   };
 
   const handleEditClick = () => {
@@ -441,22 +441,22 @@ export const CharacterPage: React.FC = () => {
 
   const getVisibilityVariant = (visibility: string) => {
     switch (visibility) {
-      case "PUBLIC":
-        return "success";
-      case "UNLISTED":
-        return "warning";
-      case "PRIVATE":
-        return "error";
+      case 'PUBLIC':
+        return 'success';
+      case 'UNLISTED':
+        return 'warning';
+      case 'PRIVATE':
+        return 'error';
       default:
-        return "default";
+        return 'default';
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   };
 
@@ -478,7 +478,7 @@ export const CharacterPage: React.FC = () => {
           <h3>Character not found</h3>
           <p>
             {error?.message ||
-              "The character you are looking for does not exist or you do not have permission to view it."}
+              'The character you are looking for does not exist or you do not have permission to view it.'}
           </p>
         </ErrorContainer>
       </Container>
@@ -597,8 +597,8 @@ export const CharacterPage: React.FC = () => {
           </OwnerLink>
           {character.creator && character.creator.id !== character.owner.id && (
             <>
-              <OwnerRole style={{ marginTop: "0.5rem" }}>
-                Created by{" "}
+              <OwnerRole style={{ marginTop: '0.5rem' }}>
+                Created by{' '}
                 {character.creator.displayName || character.creator.username}
               </OwnerRole>
             </>
@@ -662,12 +662,12 @@ export const CharacterPage: React.FC = () => {
           <TradingInfo>
             <TradingRow>
               <TradingLabel>Available for Sale:</TradingLabel>
-              <TradingValue>{character.isSellable ? "Yes" : "No"}</TradingValue>
+              <TradingValue>{character.isSellable ? 'Yes' : 'No'}</TradingValue>
             </TradingRow>
             <TradingRow>
               <TradingLabel>Open to Trades:</TradingLabel>
               <TradingValue>
-                {character.isTradeable ? "Yes" : "No"}
+                {character.isTradeable ? 'Yes' : 'No'}
               </TradingValue>
             </TradingRow>
             {character.price && character.isSellable && (
@@ -680,7 +680,7 @@ export const CharacterPage: React.FC = () => {
         </ContentSection>
       )}
 
-      {character.customFields && character.customFields !== "{}" && (
+      {character.customFields && character.customFields !== '{}' && (
         <ContentSection>
           <SectionTitle>Additional Information</SectionTitle>
           <ContentText>

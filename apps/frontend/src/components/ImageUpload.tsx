@@ -4,20 +4,24 @@ import styled from 'styled-components';
 const UploadContainer = styled.div.withConfig({
   shouldForwardProp: (prop) => !['isDragActive', 'hasError'].includes(prop),
 })<{ isDragActive: boolean; hasError: boolean }>`
-  border: 2px dashed ${({ theme, isDragActive, hasError }) => 
-    hasError ? theme.colors.error : 
-    isDragActive ? theme.colors.primary : 
-    theme.colors.border};
+  border: 2px dashed
+    ${({ theme, isDragActive, hasError }) =>
+      hasError
+        ? theme.colors.error
+        : isDragActive
+          ? theme.colors.primary
+          : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   padding: ${({ theme }) => theme.spacing.xl};
   text-align: center;
-  background-color: ${({ theme, isDragActive }) => 
+  background-color: ${({ theme, isDragActive }) =>
     isDragActive ? `${theme.colors.primary}10` : theme.colors.surface};
   transition: all 0.2s ease;
   cursor: pointer;
-  
+
   &:hover {
-    border-color: ${({ theme, hasError }) => hasError ? theme.colors.error : theme.colors.primary};
+    border-color: ${({ theme, hasError }) =>
+      hasError ? theme.colors.error : theme.colors.primary};
     background-color: ${({ theme }) => `${theme.colors.primary}05`};
   }
 `;
@@ -85,7 +89,7 @@ const RemoveButton = styled.button`
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.error};
     opacity: 0.8;
@@ -116,7 +120,13 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   onFilesChange,
   maxFiles = 10,
   maxSizeMB = 10,
-  acceptedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
+  acceptedTypes = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+  ],
   disabled = false,
 }) => {
   const [isDragActive, setIsDragActive] = useState(false);
@@ -127,52 +137,58 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     if (!acceptedTypes.includes(file.type)) {
       return `File type ${file.type} not supported. Allowed types: ${acceptedTypes.join(', ')}`;
     }
-    
+
     if (file.size > maxSizeMB * 1024 * 1024) {
       return `File size must be less than ${maxSizeMB}MB`;
     }
-    
+
     return null;
   };
 
-  const processFiles = useCallback((fileList: FileList) => {
-    setError('');
-    const newFiles: ImageFile[] = [];
-    
-    for (let i = 0; i < fileList.length; i++) {
-      const file = fileList[i];
-      
-      if (files.length + newFiles.length >= maxFiles) {
-        setError(`Maximum ${maxFiles} files allowed`);
-        break;
-      }
-      
-      const validation = validateFile(file);
-      if (validation) {
-        setError(validation);
-        return;
-      }
-      
-      const preview = URL.createObjectURL(file);
-      newFiles.push({
-        file,
-        preview,
-        id: Math.random().toString(36).substring(7),
-      });
-    }
-    
-    if (newFiles.length > 0) {
-      onFilesChange([...files, ...newFiles]);
-    }
-  }, [files, maxFiles, onFilesChange, acceptedTypes, maxSizeMB]);
+  const processFiles = useCallback(
+    (fileList: FileList) => {
+      setError('');
+      const newFiles: ImageFile[] = [];
 
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!disabled) {
-      setIsDragActive(true);
-    }
-  }, [disabled]);
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+
+        if (files.length + newFiles.length >= maxFiles) {
+          setError(`Maximum ${maxFiles} files allowed`);
+          break;
+        }
+
+        const validation = validateFile(file);
+        if (validation) {
+          setError(validation);
+          return;
+        }
+
+        const preview = URL.createObjectURL(file);
+        newFiles.push({
+          file,
+          preview,
+          id: Math.random().toString(36).substring(7),
+        });
+      }
+
+      if (newFiles.length > 0) {
+        onFilesChange([...files, ...newFiles]);
+      }
+    },
+    [files, maxFiles, onFilesChange, acceptedTypes, maxSizeMB],
+  );
+
+  const handleDragEnter = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!disabled) {
+        setIsDragActive(true);
+      }
+    },
+    [disabled],
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -185,27 +201,33 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     e.stopPropagation();
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragActive(false);
-    
-    if (disabled) return;
-    
-    const droppedFiles = e.dataTransfer.files;
-    if (droppedFiles.length > 0) {
-      processFiles(droppedFiles);
-    }
-  }, [disabled, processFiles]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragActive(false);
 
-  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = e.target.files;
-    if (selectedFiles && selectedFiles.length > 0) {
-      processFiles(selectedFiles);
-    }
-    // Reset input value to allow selecting the same file again
-    e.target.value = '';
-  }, [processFiles]);
+      if (disabled) return;
+
+      const droppedFiles = e.dataTransfer.files;
+      if (droppedFiles.length > 0) {
+        processFiles(droppedFiles);
+      }
+    },
+    [disabled, processFiles],
+  );
+
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedFiles = e.target.files;
+      if (selectedFiles && selectedFiles.length > 0) {
+        processFiles(selectedFiles);
+      }
+      // Reset input value to allow selecting the same file again
+      e.target.value = '';
+    },
+    [processFiles],
+  );
 
   const handleClick = useCallback(() => {
     if (!disabled && fileInputRef.current) {
@@ -213,22 +235,24 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   }, [disabled]);
 
-  const removeFile = useCallback((id: string) => {
-    const updatedFiles = files.filter(file => {
-      if (file.id === id) {
-        URL.revokeObjectURL(file.preview);
-        return false;
-      }
-      return true;
-    });
-    onFilesChange(updatedFiles);
-  }, [files, onFilesChange]);
-
+  const removeFile = useCallback(
+    (id: string) => {
+      const updatedFiles = files.filter((file) => {
+        if (file.id === id) {
+          URL.revokeObjectURL(file.preview);
+          return false;
+        }
+        return true;
+      });
+      onFilesChange(updatedFiles);
+    },
+    [files, onFilesChange],
+  );
 
   // Cleanup object URLs on unmount
   React.useEffect(() => {
     return () => {
-      files.forEach(file => URL.revokeObjectURL(file.preview));
+      files.forEach((file) => URL.revokeObjectURL(file.preview));
     };
   }, [files]);
 
@@ -245,12 +269,18 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       >
         <UploadIcon>📁</UploadIcon>
         <UploadText>
-          {isDragActive ? 'Drop files here' : 'Click to upload or drag and drop'}
+          {isDragActive
+            ? 'Drop files here'
+            : 'Click to upload or drag and drop'}
         </UploadText>
         <UploadSubtext>
-          Supports: {acceptedTypes.map(type => type.split('/')[1].toUpperCase()).join(', ')} (max {maxSizeMB}MB each)
+          Supports:{' '}
+          {acceptedTypes
+            .map((type) => type.split('/')[1].toUpperCase())
+            .join(', ')}{' '}
+          (max {maxSizeMB}MB each)
         </UploadSubtext>
-        
+
         <HiddenInput
           ref={fileInputRef}
           type="file"
@@ -282,7 +312,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           ))}
         </PreviewContainer>
       )}
-
     </div>
   );
 };

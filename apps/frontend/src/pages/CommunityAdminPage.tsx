@@ -1,14 +1,14 @@
-import React from "react";
-import styled from "styled-components";
-import { useParams, Link } from "react-router-dom";
-import { Database, Users, Settings, List, FileText } from "lucide-react";
-import { Title, Subtitle, Card } from "@chardb/ui";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import React from 'react';
+import styled from 'styled-components';
+import { useParams, Link } from 'react-router-dom';
+import { Database, Users, Settings, List, FileText } from 'lucide-react';
+import { Title, Subtitle, Card } from '@chardb/ui';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 import {
   useCommunityByIdQuery,
   useCommunityMembersByUserQuery,
-} from "../generated/graphql";
-import { useAuth } from "../contexts/AuthContext";
+} from '../generated/graphql';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Community Administration Interface
@@ -130,7 +130,7 @@ export const CommunityAdminPage: React.FC = () => {
     error: membershipError,
   } = useCommunityMembersByUserQuery({
     variables: {
-      userId: user?.id || "",
+      userId: user?.id || '',
       first: 50,
     },
     skip: !user?.id,
@@ -165,7 +165,7 @@ export const CommunityAdminPage: React.FC = () => {
           <Subtitle>
             {communityError?.message ||
               membershipError?.message ||
-              "Unable to load community data"}
+              'Unable to load community data'}
           </Subtitle>
         </ErrorContainer>
       </Container>

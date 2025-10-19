@@ -1,5 +1,12 @@
 import { InputType, Field, ID } from '@nestjs/graphql';
-import { IsString, IsNotEmpty, Length, IsOptional, IsBoolean, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  Length,
+  IsOptional,
+  IsBoolean,
+  IsUUID,
+} from 'class-validator';
 
 @InputType()
 export class CreateSpeciesInput {
@@ -11,13 +18,19 @@ export class CreateSpeciesInput {
   name: string;
 
   /** ID of the community that owns this species */
-  @Field(() => ID, { description: 'ID of the community that owns this species' })
+  @Field(() => ID, {
+    description: 'ID of the community that owns this species',
+  })
   @IsUUID()
   @IsNotEmpty()
   communityId: string;
 
   /** Whether this species has an associated image */
-  @Field({ nullable: true, description: 'Whether this species has an associated image', defaultValue: false })
+  @Field({
+    nullable: true,
+    description: 'Whether this species has an associated image',
+    defaultValue: false,
+  })
   @IsOptional()
   @IsBoolean()
   hasImage?: boolean;
@@ -34,14 +47,20 @@ export class UpdateSpeciesInput {
   name?: string;
 
   /** ID of the community that owns this species */
-  @Field(() => ID, { nullable: true, description: 'ID of the community that owns this species' })
+  @Field(() => ID, {
+    nullable: true,
+    description: 'ID of the community that owns this species',
+  })
   @IsOptional()
   @IsUUID()
   @IsNotEmpty()
   communityId?: string;
 
   /** Whether this species has an associated image */
-  @Field({ nullable: true, description: 'Whether this species has an associated image' })
+  @Field({
+    nullable: true,
+    description: 'Whether this species has an associated image',
+  })
   @IsOptional()
   @IsBoolean()
   hasImage?: boolean;

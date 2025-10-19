@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from "react";
-import styled from "styled-components";
-import { Search, Database, Palette } from "lucide-react";
-import { Input, ErrorMessage } from "@chardb/ui";
+import React, { useState, useMemo } from 'react';
+import styled from 'styled-components';
+import { Search, Database, Palette } from 'lucide-react';
+import { Input, ErrorMessage } from '@chardb/ui';
 import {
   useSpeciesQuery,
   useSpeciesVariantsBySpeciesQuery,
   SpeciesDetailsFragment,
   SpeciesVariantDetailsFragment,
-} from "../../generated/graphql";
+} from '../../generated/graphql';
 
 /**
  * Species and Variant Selection Component for Character Creation
@@ -93,8 +93,8 @@ const SelectionCard = styled.div<{ isSelected: boolean; isDisabled?: boolean }>`
       isDisabled
         ? theme.colors.border
         : isSelected
-        ? theme.colors.primary
-        : theme.colors.border};
+          ? theme.colors.primary
+          : theme.colors.border};
   border-radius: 8px;
   background: ${({ theme, isDisabled }) =>
     isDisabled ? `${theme.colors.surface}80` : theme.colors.surface};
@@ -223,7 +223,7 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
   onVariantChange,
   error,
 }) => {
-  const [speciesSearchQuery, setSpeciesSearchQuery] = useState("");
+  const [speciesSearchQuery, setSpeciesSearchQuery] = useState('');
 
   // Fetch species (optionally filtered by community)
   const {
@@ -241,7 +241,7 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
     error: variantsError,
   } = useSpeciesVariantsBySpeciesQuery({
     variables: {
-      speciesId: selectedSpecies?.id || "",
+      speciesId: selectedSpecies?.id || '',
       first: 50,
     },
     skip: !selectedSpecies?.id,
@@ -253,7 +253,7 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
     if (!speciesSearchQuery.trim()) return species;
 
     return species.filter((s) =>
-      s.name.toLowerCase().includes(speciesSearchQuery.toLowerCase())
+      s.name.toLowerCase().includes(speciesSearchQuery.toLowerCase()),
     );
   }, [speciesData, speciesSearchQuery]);
 
@@ -288,7 +288,8 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
           Choose Species
         </SectionTitle>
         <SectionDescription>
-          Select the species for your character. Each species has unique traits and variants available.
+          Select the species for your character. Each species has unique traits
+          and variants available.
         </SectionDescription>
 
         {error && <ErrorMessage message={error} />}
@@ -305,7 +306,9 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
         {speciesLoading ? (
           <LoadingState>Loading available species...</LoadingState>
         ) : speciesError ? (
-          <ErrorMessage message={`Failed to load species: ${speciesError.message}`} />
+          <ErrorMessage
+            message={`Failed to load species: ${speciesError.message}`}
+          />
         ) : filteredSpecies.length === 0 ? (
           <EmptyState>
             <Database size={48} />
@@ -313,7 +316,7 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
             <p>
               {speciesSearchQuery
                 ? `No species match "${speciesSearchQuery}"`
-                : "No species are available for character creation"}
+                : 'No species are available for character creation'}
             </p>
           </EmptyState>
         ) : (
@@ -355,13 +358,18 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
             Choose Variant
           </SectionTitle>
           <SectionDescription>
-            Select a variant of {selectedSpecies.name}. Different variants may have different available trait options.
+            Select a variant of {selectedSpecies.name}. Different variants may
+            have different available trait options.
           </SectionDescription>
 
           {variantsLoading ? (
-            <LoadingState>Loading variants for {selectedSpecies.name}...</LoadingState>
+            <LoadingState>
+              Loading variants for {selectedSpecies.name}...
+            </LoadingState>
           ) : variantsError ? (
-            <ErrorMessage message={`Failed to load variants: ${variantsError.message}`} />
+            <ErrorMessage
+              message={`Failed to load variants: ${variantsError.message}`}
+            />
           ) : variants.length === 0 ? (
             <EmptyState>
               <Palette size={48} />

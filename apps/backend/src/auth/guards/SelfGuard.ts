@@ -1,14 +1,14 @@
-import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { GqlExecutionContext } from "@nestjs/graphql";
-import { AllowSelf } from "../decorators/AllowSelf";
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { GqlExecutionContext } from '@nestjs/graphql';
+import { AllowSelf } from '../decorators/AllowSelf';
 import {
   SelfResolutionConfig,
   AllSelfResolutionKeys,
   SelfResolutionReference,
-} from "../types/SelfResolutionConfig";
-import { getUserFromContext } from "../utils/get-user-from-context";
-import { getNestedValue } from "../../common/utils/getNestedValue";
+} from '../types/SelfResolutionConfig';
+import { getUserFromContext } from '../utils/get-user-from-context';
+import { getNestedValue } from '../../common/utils/getNestedValue';
 
 /**
  * Guard that verifies the current user is accessing their own data.
@@ -51,7 +51,7 @@ export class SelfGuard implements CanActivate {
     const parent = gqlContext.getArgs()[2]; // Parent is 3rd arg in field resolver
 
     if (parent?.id) {
-      return { type: "root", value: parent.id };
+      return { type: 'root', value: parent.id };
     }
 
     return { type: null, value: null };

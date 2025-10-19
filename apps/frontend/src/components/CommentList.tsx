@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { useQuery } from "@apollo/client";
-import styled from "styled-components";
-import { LoadingSpinner } from "./LoadingSpinner";
-import { Comment } from "./Comment";
-import { CommentForm } from "./CommentForm";
-import { GET_COMMENTS } from "../graphql/social.graphql";
-import { CommentableType } from "../generated/graphql";
+import React, { useState } from 'react';
+import { useQuery } from '@apollo/client';
+import styled from 'styled-components';
+import { LoadingSpinner } from './LoadingSpinner';
+import { Comment } from './Comment';
+import { CommentForm } from './CommentForm';
+import { GET_COMMENTS } from '../graphql/social.graphql';
+import { CommentableType } from '../generated/graphql';
 
 const Container = styled.div`
   margin-top: ${({ theme }) => theme.spacing.xl};
@@ -70,8 +70,8 @@ const ErrorContainer = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xl};
   color: ${({ theme }) => theme.colors.error};
-  background: ${({ theme }) => theme.colors.error + "10"};
-  border: 1px solid ${({ theme }) => theme.colors.error + "30"};
+  background: ${({ theme }) => theme.colors.error + '10'};
+  border: 1px solid ${({ theme }) => theme.colors.error + '30'};
   border-radius: ${({ theme }) => theme.borderRadius.md};
 `;
 
@@ -191,7 +191,7 @@ export const CommentList: React.FC<CommentListProps> = ({
           },
         });
       } catch (error) {
-        console.error("Failed to load more comments:", error);
+        console.error('Failed to load more comments:', error);
       } finally {
         setLoadingMore(false);
       }
@@ -199,11 +199,14 @@ export const CommentList: React.FC<CommentListProps> = ({
   };
 
   // Group comments by parent/replies
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const topLevelComments = comments.filter((comment: any) => !comment.parentId);
   const repliesMap = new Map();
 
   comments
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .filter((comment: any) => comment.parentId)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .forEach((reply: any) => {
       const parentId = reply.parentId;
       if (!repliesMap.has(parentId)) {
@@ -244,7 +247,7 @@ export const CommentList: React.FC<CommentListProps> = ({
       <SectionHeader>
         <SectionTitle>Comments</SectionTitle>
         <CommentCount>
-          {total} {total === 1 ? "comment" : "comments"}
+          {total} {total === 1 ? 'comment' : 'comments'}
         </CommentCount>
       </SectionHeader>
 
@@ -266,6 +269,7 @@ export const CommentList: React.FC<CommentListProps> = ({
         </EmptyState>
       ) : (
         <CommentsContainer>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {topLevelComments.map((comment: any) => {
             const replies = repliesMap.get(comment.id) || [];
 
@@ -279,6 +283,7 @@ export const CommentList: React.FC<CommentListProps> = ({
 
                 {replies.length > 0 && (
                   <RepliesContainer>
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {replies.map((reply: any) => (
                       <Comment
                         key={reply.id}
@@ -310,7 +315,7 @@ export const CommentList: React.FC<CommentListProps> = ({
           {hasMore && (
             <LoadMoreButton onClick={handleLoadMore} disabled={loadingMore}>
               {loadingMore
-                ? "Loading more comments..."
+                ? 'Loading more comments...'
                 : `Load ${Math.min(20, total - comments.length)} more comments`}
             </LoadMoreButton>
           )}

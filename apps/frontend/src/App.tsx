@@ -1,59 +1,59 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./contexts/AuthContext";
-import { Layout } from "./components/Layout";
-import { LoadingSpinner } from "./components/LoadingSpinner";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { ScrollToTop } from "./components/ScrollToTop";
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
+import { Layout } from './components/Layout';
+import { LoadingSpinner } from './components/LoadingSpinner';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { ScrollToTop } from './components/ScrollToTop';
 
 // Pages
-import { HomePage } from "./pages/HomePage";
-import { LoginPage } from "./pages/LoginPage";
-import { SignupPage } from "./pages/SignupPage";
-import { DashboardPage } from "./pages/DashboardPage";
-import { UserProfilePage } from "./pages/UserProfilePage";
-import { EditProfilePage } from "./pages/EditProfilePage";
-import { CharacterPage } from "./pages/CharacterPage";
-import { CharactersPage } from "./pages/CharactersPage";
-import { CreateCharacterPageEnhanced as CreateCharacterPage } from "./pages/CreateCharacterPageEnhanced";
-import { EditCharacterPage } from "./pages/EditCharacterPage";
-import { CreateTextPage } from "./pages/CreateTextPage";
-import { CreateMediaPage } from "./pages/CreateMediaPage";
-import { MediaPage } from "./pages/MediaPage";
-import { EditMediaPage } from "./pages/EditMediaPage";
-import { GalleryPage } from "./pages/GalleryPage";
-import { GalleriesPage } from "./pages/GalleriesPage";
-import { CreateGalleryPage } from "./pages/CreateGalleryPage";
-import { UploadImagePage } from "./pages/UploadImagePage";
-import { MediaLibraryPage } from "./pages/MediaLibraryPage";
-import { LikedCharactersPage } from "./pages/LikedCharactersPage";
-import { LikedGalleriesPage } from "./pages/LikedGalleriesPage";
-import { LikedMediaPage } from "./pages/LikedMediaPage";
-import { MyCharactersPage } from "./pages/MyCharactersPage";
-import { MyGalleriesPage } from "./pages/MyGalleriesPage";
-import { MyMediaPage } from "./pages/MyMediaPage";
-import { FollowersPage } from "./pages/FollowersPage";
-import { FollowingPage } from "./pages/FollowingPage";
-import { FeedPage } from "./pages/FeedPage";
-import { SiteAdminPage } from "./pages/SiteAdminPage";
-import { SiteInviteCodesPage } from "./pages/SiteInviteCodesPage";
-import { CommunityInviteCodesPage } from "./pages/CommunityInviteCodesPage";
-import { CommunityManagementPage } from "./pages/CommunityManagementPage";
-import { CommunityAdminPage } from "./pages/CommunityAdminPage";
-import { SpeciesManagementPage } from "./pages/SpeciesManagementPage";
-import { TraitBuilderPage } from "./pages/TraitBuilderPage";
-import { SpeciesVariantManagementPage } from "./pages/SpeciesVariantManagementPage";
-import { EnumValueManagementPage } from "./pages/EnumValueManagementPage";
-import { EnumValueSettingsPage } from "./pages/EnumValueSettingsPage";
-import { PermissionManagementPage } from "./pages/PermissionManagementPage";
-import { CommunityMembersPage } from "./pages/CommunityMembersPage";
-import { CommunitySettingsPage } from "./pages/CommunitySettingsPage";
-import { CommunityModerationPage } from "./pages/CommunityModerationPage";
-import { JoinCommunityPage } from "./pages/JoinCommunityPage";
-import { MyCommunitiesPage } from "./pages/MyCommunitiesPage";
-import { CommunityPage } from "./pages/CommunityPage";
-import { SpeciesPage } from "./pages/SpeciesPage";
-import { DeviantArtCallbackPage } from "./pages/DeviantArtCallbackPage";
-import { NotFoundPage } from "./pages/NotFoundPage";
+import { HomePage } from './pages/HomePage';
+import { LoginPage } from './pages/LoginPage';
+import { SignupPage } from './pages/SignupPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { UserProfilePage } from './pages/UserProfilePage';
+import { EditProfilePage } from './pages/EditProfilePage';
+import { CharacterPage } from './pages/CharacterPage';
+import { CharactersPage } from './pages/CharactersPage';
+import { CreateCharacterPageEnhanced as CreateCharacterPage } from './pages/CreateCharacterPageEnhanced';
+import { EditCharacterPage } from './pages/EditCharacterPage';
+import { CreateTextPage } from './pages/CreateTextPage';
+import { CreateMediaPage } from './pages/CreateMediaPage';
+import { MediaPage } from './pages/MediaPage';
+import { EditMediaPage } from './pages/EditMediaPage';
+import { GalleryPage } from './pages/GalleryPage';
+import { GalleriesPage } from './pages/GalleriesPage';
+import { CreateGalleryPage } from './pages/CreateGalleryPage';
+import { UploadImagePage } from './pages/UploadImagePage';
+import { MediaLibraryPage } from './pages/MediaLibraryPage';
+import { LikedCharactersPage } from './pages/LikedCharactersPage';
+import { LikedGalleriesPage } from './pages/LikedGalleriesPage';
+import { LikedMediaPage } from './pages/LikedMediaPage';
+import { MyCharactersPage } from './pages/MyCharactersPage';
+import { MyGalleriesPage } from './pages/MyGalleriesPage';
+import { MyMediaPage } from './pages/MyMediaPage';
+import { FollowersPage } from './pages/FollowersPage';
+import { FollowingPage } from './pages/FollowingPage';
+import { FeedPage } from './pages/FeedPage';
+import { SiteAdminPage } from './pages/SiteAdminPage';
+import { SiteInviteCodesPage } from './pages/SiteInviteCodesPage';
+import { CommunityInviteCodesPage } from './pages/CommunityInviteCodesPage';
+import { CommunityManagementPage } from './pages/CommunityManagementPage';
+import { CommunityAdminPage } from './pages/CommunityAdminPage';
+import { SpeciesManagementPage } from './pages/SpeciesManagementPage';
+import { TraitBuilderPage } from './pages/TraitBuilderPage';
+import { SpeciesVariantManagementPage } from './pages/SpeciesVariantManagementPage';
+import { EnumValueManagementPage } from './pages/EnumValueManagementPage';
+import { EnumValueSettingsPage } from './pages/EnumValueSettingsPage';
+import { PermissionManagementPage } from './pages/PermissionManagementPage';
+import { CommunityMembersPage } from './pages/CommunityMembersPage';
+import { CommunitySettingsPage } from './pages/CommunitySettingsPage';
+import { CommunityModerationPage } from './pages/CommunityModerationPage';
+import { JoinCommunityPage } from './pages/JoinCommunityPage';
+import { MyCommunitiesPage } from './pages/MyCommunitiesPage';
+import { CommunityPage } from './pages/CommunityPage';
+import { SpeciesPage } from './pages/SpeciesPage';
+import { DeviantArtCallbackPage } from './pages/DeviantArtCallbackPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
   const { loading } = useAuth();
@@ -87,7 +87,10 @@ function App() {
         <Route path="/species/:speciesId" element={<SpeciesPage />} />
 
         {/* OAuth callback routes */}
-        <Route path="/auth/deviantart/callback" element={<DeviantArtCallbackPage />} />
+        <Route
+          path="/auth/deviantart/callback"
+          element={<DeviantArtCallbackPage />}
+        />
 
         {/* Protected routes */}
         <Route

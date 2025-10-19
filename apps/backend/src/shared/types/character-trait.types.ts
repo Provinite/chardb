@@ -7,7 +7,10 @@ export class CharacterTraitValue {
   traitId!: string;
 
   /** The value of the trait (can be string, number, boolean, or null) */
-  @Field(() => String, { description: 'The value of the trait', nullable: true })
+  @Field(() => String, {
+    description: 'The value of the trait',
+    nullable: true,
+  })
   value!: string | number | boolean | null;
 }
 

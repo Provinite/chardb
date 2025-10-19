@@ -8,7 +8,7 @@ export class HealthController {
   @Get()
   healthCheck() {
     const span = this.tracer.startSpan('health_check');
-    
+
     try {
       const health = {
         status: 'ok',
@@ -17,7 +17,8 @@ export class HealthController {
         version: process.env.OTEL_SERVICE_VERSION || '1.0.0',
         tracing: {
           enabled: true,
-          endpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318',
+          endpoint:
+            process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318',
         },
       };
 
@@ -39,19 +40,19 @@ export class HealthController {
   @Get('tracing')
   tracingTest() {
     const span = this.tracer.startSpan('tracing_test');
-    
+
     try {
       // Simulate some work with nested spans
       const childSpan = this.tracer.startSpan('nested_operation');
-      
+
       // Simulate slow operation
       const start = Date.now();
       while (Date.now() - start < 50) {
         // Busy wait for 50ms
       }
-      
+
       childSpan.addEvent('work_completed', {
-        'duration_ms': Date.now() - start,
+        duration_ms: Date.now() - start,
       });
       childSpan.end();
 

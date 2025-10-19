@@ -6,7 +6,11 @@ import { SpeciesModule } from '../species/species.module';
 import { EnumValueSettingsModule } from '../enum-value-settings/enum-value-settings.module';
 
 @Module({
-  imports: [DatabaseModule, SpeciesModule, forwardRef(() => EnumValueSettingsModule)],
+  imports: [
+    DatabaseModule,
+    SpeciesModule,
+    forwardRef(() => EnumValueSettingsModule),
+  ],
   providers: [SpeciesVariantsResolver, SpeciesVariantsService],
   exports: [SpeciesVariantsService],
 })

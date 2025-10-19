@@ -7,35 +7,35 @@ import {
   ResolveField,
   Parent,
   Int,
-} from "@nestjs/graphql";
-import { CurrentUser } from "../auth/decorators/CurrentUser";
-import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
-import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
-import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
-import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
-import { MediaService } from "./media.service";
-import { UsersService } from "../users/users.service";
-import { CharactersService } from "../characters/characters.service";
-import { GalleriesService } from "../galleries/galleries.service";
-import { ImagesService } from "../images/images.service";
+} from '@nestjs/graphql';
+import { CurrentUser } from '../auth/decorators/CurrentUser';
+import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
+import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
+import { AllowGlobalAdmin } from '../auth/decorators/AllowGlobalAdmin';
+import { AllowEntityOwner } from '../auth/decorators/AllowEntityOwner';
+import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
+import { MediaService } from './media.service';
+import { UsersService } from '../users/users.service';
+import { CharactersService } from '../characters/characters.service';
+import { GalleriesService } from '../galleries/galleries.service';
+import { ImagesService } from '../images/images.service';
 import {
   Media as MediaEntity,
   MediaConnection,
   TextContent,
   MediaTag,
-} from "./entities/media.entity";
-import { User } from "../users/entities/user.entity";
-import { Character } from "../characters/entities/character.entity";
-import { Gallery } from "../galleries/entities/gallery.entity";
-import { Image } from "../images/entities/image.entity";
+} from './entities/media.entity';
+import { User } from '../users/entities/user.entity';
+import { Character } from '../characters/entities/character.entity';
+import { Gallery } from '../galleries/entities/gallery.entity';
+import { Image } from '../images/entities/image.entity';
 import {
   MediaFiltersInput,
   CreateTextMediaInput,
   UpdateMediaInput,
   UpdateTextContentInput,
   ManageMediaTagsInput,
-} from "./dto/media.dto";
+} from './dto/media.dto';
 import {
   mapMediaFiltersInputToService,
   mapCreateTextMediaInputToService,
@@ -43,8 +43,8 @@ import {
   mapUpdateTextContentInputToService,
   mapPrismaMediaToGraphQL,
   mapPrismaMediaConnectionToGraphQL,
-} from "./utils/media-resolver-mappers";
-import { mapPrismaGalleryToGraphQL } from "../galleries/utils/gallery-resolver-mappers";
+} from './utils/media-resolver-mappers';
+import { mapPrismaGalleryToGraphQL } from '../galleries/utils/gallery-resolver-mappers';
 
 /**
  * GraphQL resolver for media operations
@@ -62,12 +62,12 @@ export class MediaResolver {
   @AllowUnauthenticated()
   @Query(() => MediaConnection, {
     description:
-      "Retrieves paginated media with filtering and visibility controls",
+      'Retrieves paginated media with filtering and visibility controls',
   })
   async media(
-    @Args("filters", {
+    @Args('filters', {
       nullable: true,
-      description: "Optional filters for media query",
+      description: 'Optional filters for media query',
     })
     filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
@@ -79,10 +79,10 @@ export class MediaResolver {
 
   @AllowUnauthenticated()
   @Query(() => MediaEntity, {
-    description: "Retrieves a single media item by ID",
+    description: 'Retrieves a single media item by ID',
   })
   async mediaItem(
-    @Args("id", { type: () => ID, description: "Media ID to retrieve" })
+    @Args('id', { type: () => ID, description: 'Media ID to retrieve' })
     id: string,
     @CurrentUser() user?: any,
   ): Promise<MediaEntity> {
@@ -92,13 +92,13 @@ export class MediaResolver {
 
   @AllowAnyAuthenticated()
   @Query(() => MediaConnection, {
-    description: "Retrieves media owned by the current authenticated user",
+    description: 'Retrieves media owned by the current authenticated user',
   })
   async myMedia(
     @CurrentUser() user: any,
-    @Args("filters", {
+    @Args('filters', {
       nullable: true,
-      description: "Optional filters for media query",
+      description: 'Optional filters for media query',
     })
     filters?: MediaFiltersInput,
   ): Promise<MediaConnection> {
@@ -112,17 +112,17 @@ export class MediaResolver {
 
   @AllowUnauthenticated()
   @Query(() => MediaConnection, {
-    description: "Retrieves media owned by a specific user",
+    description: 'Retrieves media owned by a specific user',
   })
   async userMedia(
-    @Args("userId", {
+    @Args('userId', {
       type: () => ID,
-      description: "User ID whose media to retrieve",
+      description: 'User ID whose media to retrieve',
     })
     userId: string,
-    @Args("filters", {
+    @Args('filters', {
       nullable: true,
-      description: "Optional filters for media query",
+      description: 'Optional filters for media query',
     })
     filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
@@ -137,17 +137,17 @@ export class MediaResolver {
 
   @AllowUnauthenticated()
   @Query(() => MediaConnection, {
-    description: "Retrieves media associated with a specific character",
+    description: 'Retrieves media associated with a specific character',
   })
   async characterMedia(
-    @Args("characterId", {
+    @Args('characterId', {
       type: () => ID,
-      description: "Character ID whose media to retrieve",
+      description: 'Character ID whose media to retrieve',
     })
     characterId: string,
-    @Args("filters", {
+    @Args('filters', {
       nullable: true,
-      description: "Optional filters for media query",
+      description: 'Optional filters for media query',
     })
     filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
@@ -162,17 +162,17 @@ export class MediaResolver {
 
   @AllowUnauthenticated()
   @Query(() => MediaConnection, {
-    description: "Retrieves media from a specific gallery",
+    description: 'Retrieves media from a specific gallery',
   })
   async galleryMedia(
-    @Args("galleryId", {
+    @Args('galleryId', {
       type: () => ID,
-      description: "Gallery ID whose media to retrieve",
+      description: 'Gallery ID whose media to retrieve',
     })
     galleryId: string,
-    @Args("filters", {
+    @Args('filters', {
       nullable: true,
-      description: "Optional filters for media query",
+      description: 'Optional filters for media query',
     })
     filters?: MediaFiltersInput,
     @CurrentUser() user?: any,
@@ -186,9 +186,9 @@ export class MediaResolver {
   }
 
   @AllowAnyAuthenticated()
-  @Mutation(() => MediaEntity, { description: "Creates a new text media item" })
+  @Mutation(() => MediaEntity, { description: 'Creates a new text media item' })
   async createTextMedia(
-    @Args("input", { description: "Text media creation parameters" })
+    @Args('input', { description: 'Text media creation parameters' })
     input: CreateTextMediaInput,
     @CurrentUser() user: any,
   ): Promise<MediaEntity> {
@@ -201,14 +201,14 @@ export class MediaResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowEntityOwner({ mediaId: "id" })
+  @AllowEntityOwner({ mediaId: 'id' })
   @Mutation(() => MediaEntity, {
-    description: "Updates media metadata (title, description, etc.)",
+    description: 'Updates media metadata (title, description, etc.)',
   })
   async updateMedia(
-    @Args("id", { type: () => ID, description: "Media ID to update" })
+    @Args('id', { type: () => ID, description: 'Media ID to update' })
     id: string,
-    @Args("input", { description: "Updated media parameters" })
+    @Args('input', { description: 'Updated media parameters' })
     input: UpdateMediaInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
@@ -222,17 +222,17 @@ export class MediaResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowEntityOwner({ mediaId: "mediaId" })
+  @AllowEntityOwner({ mediaId: 'mediaId' })
   @Mutation(() => MediaEntity, {
-    description: "Updates the text content of a text media item",
+    description: 'Updates the text content of a text media item',
   })
   async updateTextContent(
-    @Args("mediaId", {
+    @Args('mediaId', {
       type: () => ID,
-      description: "Media ID containing the text content to update",
+      description: 'Media ID containing the text content to update',
     })
     mediaId: string,
-    @Args("input", { description: "Updated text content parameters" })
+    @Args('input', { description: 'Updated text content parameters' })
     input: UpdateTextContentInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
@@ -242,17 +242,17 @@ export class MediaResolver {
       user.id,
       serviceInput,
     );
-    if (!media) throw new Error("Media not found");
+    if (!media) throw new Error('Media not found');
     return mapPrismaMediaToGraphQL(media);
   }
 
   @AllowGlobalAdmin()
-  @AllowEntityOwner({ mediaId: "id" })
+  @AllowEntityOwner({ mediaId: 'id' })
   @Mutation(() => Boolean, {
-    description: "Deletes a media item and its associated content",
+    description: 'Deletes a media item and its associated content',
   })
   async deleteMedia(
-    @Args("id", { type: () => ID, description: "Media ID to delete" })
+    @Args('id', { type: () => ID, description: 'Media ID to delete' })
     id: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
@@ -260,12 +260,12 @@ export class MediaResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowEntityOwner({ mediaId: "id" })
-  @Mutation(() => MediaEntity, { description: "Adds tags to a media item" })
+  @AllowEntityOwner({ mediaId: 'id' })
+  @Mutation(() => MediaEntity, { description: 'Adds tags to a media item' })
   async addMediaTags(
-    @Args("id", { type: () => ID, description: "Media ID to add tags to" })
+    @Args('id', { type: () => ID, description: 'Media ID to add tags to' })
     id: string,
-    @Args("input", { description: "Tags to add to the media" })
+    @Args('input', { description: 'Tags to add to the media' })
     input: ManageMediaTagsInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
@@ -274,14 +274,14 @@ export class MediaResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowEntityOwner({ mediaId: "id" })
+  @AllowEntityOwner({ mediaId: 'id' })
   @Mutation(() => MediaEntity, {
-    description: "Removes tags from a media item",
+    description: 'Removes tags from a media item',
   })
   async removeMediaTags(
-    @Args("id", { type: () => ID, description: "Media ID to remove tags from" })
+    @Args('id', { type: () => ID, description: 'Media ID to remove tags from' })
     id: string,
-    @Args("input", { description: "Tags to remove from the media" })
+    @Args('input', { description: 'Tags to remove from the media' })
     input: ManageMediaTagsInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
@@ -298,7 +298,7 @@ export class MediaResolver {
   /**
    * Resolves the owner of a media item
    */
-  @ResolveField(() => User, { description: "The user who owns this media" })
+  @ResolveField(() => User, { description: 'The user who owns this media' })
   async owner(@Parent() media: MediaEntity) {
     return this.usersService.findById(media.ownerId);
   }
@@ -308,7 +308,7 @@ export class MediaResolver {
    */
   @ResolveField(() => Character, {
     nullable: true,
-    description: "The character this media is associated with, if any",
+    description: 'The character this media is associated with, if any',
   })
   async character(@Parent() media: MediaEntity) {
     if (!media.characterId) return null;
@@ -320,7 +320,7 @@ export class MediaResolver {
    */
   @ResolveField(() => Gallery, {
     nullable: true,
-    description: "The gallery this media belongs to, if any",
+    description: 'The gallery this media belongs to, if any',
   })
   async gallery(@Parent() media: MediaEntity): Promise<Gallery | null> {
     if (!media.galleryId) return null;
@@ -333,7 +333,7 @@ export class MediaResolver {
    */
   @ResolveField(() => Image, {
     nullable: true,
-    description: "Image content (populated for image media)",
+    description: 'Image content (populated for image media)',
   })
   async image(@Parent() media: MediaEntity) {
     if (!media.imageId) return null;
@@ -345,7 +345,7 @@ export class MediaResolver {
    */
   @ResolveField(() => TextContent, {
     nullable: true,
-    description: "Text content (populated for text media)",
+    description: 'Text content (populated for text media)',
   })
   async textContent(@Parent() media: MediaEntity): Promise<TextContent | null> {
     if (!media.textContentId) return null;
@@ -357,7 +357,7 @@ export class MediaResolver {
    */
   @ResolveField(() => [MediaTag], {
     nullable: true,
-    description: "Tag relationships for this media",
+    description: 'Tag relationships for this media',
   })
   async tags_rel(@Parent() media: MediaEntity): Promise<MediaTag[]> {
     const mediaTags = await this.mediaService.findMediaTags(media.id);
@@ -375,7 +375,7 @@ export class MediaResolver {
    * Resolves the likes count for a media item
    */
   @ResolveField(() => Int, {
-    description: "Number of likes this media has received",
+    description: 'Number of likes this media has received',
   })
   async likesCount(@Parent() media: MediaEntity): Promise<number> {
     // TODO: Implement when social features are added
@@ -387,7 +387,7 @@ export class MediaResolver {
    */
   @AllowAnyAuthenticated()
   @ResolveField(() => Boolean, {
-    description: "Whether the current user has liked this media",
+    description: 'Whether the current user has liked this media',
   })
   async userHasLiked(
     @Parent() media: MediaEntity,
@@ -401,7 +401,7 @@ export class MediaResolver {
    * Get the number of galleries this media appears in
    */
   @ResolveField(() => Int, {
-    description: "Number of galleries this media appears in",
+    description: 'Number of galleries this media appears in',
   })
   async galleryCount(@Parent() media: MediaEntity): Promise<number> {
     return this.mediaService.getMediaGalleryCount(media.id);
@@ -411,7 +411,7 @@ export class MediaResolver {
    * Get the number of characters this media is associated with
    */
   @ResolveField(() => Int, {
-    description: "Number of characters this media is associated with",
+    description: 'Number of characters this media is associated with',
   })
   async characterCount(@Parent() media: MediaEntity): Promise<number> {
     return this.mediaService.getMediaCharacterCount(media.id);

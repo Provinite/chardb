@@ -14,7 +14,7 @@
  * ```
  */
 export function getNestedValue(obj: any, path: string): any {
-  const keys = path.split(".");
+  const keys = path.split('.');
   let current = obj;
 
   for (const key of keys) {

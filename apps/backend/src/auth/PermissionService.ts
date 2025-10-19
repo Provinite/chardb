@@ -1,11 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
 import {
   AllCommunityPermissions,
   CommunityPermission,
-} from "./CommunityPermission";
-import { User } from "@chardb/database";
-import { CommunityMembersService } from "../community-members/community-members.service";
-import { GlobalPermission } from "./GlobalPermission";
+} from './CommunityPermission';
+import { User } from '@chardb/database';
+import { CommunityMembersService } from '../community-members/community-members.service';
+import { GlobalPermission } from './GlobalPermission';
 
 /**
  * Service for checking user permissions.
@@ -44,16 +44,18 @@ export class PermissionService {
    * ```
    */
   async getCommunityPermissions(
-    userOrId: string | Pick<User, "id">,
+    userOrId: string | Pick<User, 'id'>,
     communityId: string,
   ) {
-    const userId = typeof userOrId === "string" ? userOrId : userOrId.id;
+    const userId = typeof userOrId === 'string' ? userOrId : userOrId.id;
     const roles = await this.communityMembersService.getUserRolesInCommunity(
       userId,
       communityId,
     );
 
-    const permissions: Partial<Record<CommunityPermission, boolean>> & { hasMembership: boolean } = {
+    const permissions: Partial<Record<CommunityPermission, boolean>> & {
+      hasMembership: boolean;
+    } = {
       hasMembership: roles.length > 0,
     };
 
@@ -94,7 +96,7 @@ export class PermissionService {
    * ```
    */
   async hasCommunityPermission(
-    userOrId: string | Pick<User, "id">,
+    userOrId: string | Pick<User, 'id'>,
     communityId: string,
     permission: CommunityPermission,
   ): Promise<boolean> {

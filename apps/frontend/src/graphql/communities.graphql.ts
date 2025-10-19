@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 export const COMMUNITIES_QUERY = gql`
   query Communities($first: Int, $after: String) {
@@ -132,4 +132,4 @@ export {
   type CommunityMemberConnection,
   type CreateCommunityInput,
   type UpdateCommunityInput,
-} from "../generated/graphql";
+} from '../generated/graphql';

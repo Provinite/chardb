@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { SocialService } from './social.service';
-import { 
+import {
   SocialResolver,
   CharacterLikesResolver,
   ImageLikesResolver,

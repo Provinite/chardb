@@ -8,7 +8,13 @@ import { CommunitiesModule } from '../communities/communities.module';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [DatabaseModule, RolesModule, UsersModule, CommunitiesModule, forwardRef(() => AuthModule)],
+  imports: [
+    DatabaseModule,
+    RolesModule,
+    UsersModule,
+    CommunitiesModule,
+    forwardRef(() => AuthModule),
+  ],
   providers: [CommunityInvitationsResolver, CommunityInvitationsService],
   exports: [CommunityInvitationsService],
 })

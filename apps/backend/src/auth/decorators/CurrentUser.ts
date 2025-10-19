@@ -1,8 +1,8 @@
-import { createParamDecorator, ExecutionContext } from "@nestjs/common";
-import { getUserFromContext } from "../utils/get-user-from-context";
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { getUserFromContext } from '../utils/get-user-from-context';
 
 // Re-export CurrentUserType for backwards compatibility
-export type { CurrentUserType } from "../types/current-user.type";
+export type { CurrentUserType } from '../types/current-user.type';
 
 /**
  * Parameter decorator to inject the current authenticated user into a resolver.

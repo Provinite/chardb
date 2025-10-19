@@ -1,5 +1,5 @@
-import { GlobalPermission } from "../GlobalPermission";
-import { AllowGlobalPermission } from "./AllowGlobalPermission";
+import { GlobalPermission } from '../GlobalPermission';
+import { AllowGlobalPermission } from './AllowGlobalPermission';
 
 /**
  * Decorator to require global admin privileges

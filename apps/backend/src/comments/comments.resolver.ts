@@ -7,38 +7,38 @@ import {
   ResolveField,
   Parent,
   Int,
-} from "@nestjs/graphql";
+} from '@nestjs/graphql';
 import {
   CommentsService,
   CommentFiltersServiceInput,
-} from "./comments.service";
-import { UsersService } from "../users/users.service";
-import { CharactersService } from "../characters/characters.service";
-import { ImagesService } from "../images/images.service";
-import { GalleriesService } from "../galleries/galleries.service";
-import { Comment, CommentConnection } from "./entities/comment.entity";
-import { User } from "../users/entities/user.entity";
-import { Character } from "../characters/entities/character.entity";
-import { Image } from "../images/entities/image.entity";
-import { Gallery } from "../galleries/entities/gallery.entity";
+} from './comments.service';
+import { UsersService } from '../users/users.service';
+import { CharactersService } from '../characters/characters.service';
+import { ImagesService } from '../images/images.service';
+import { GalleriesService } from '../galleries/galleries.service';
+import { Comment, CommentConnection } from './entities/comment.entity';
+import { User } from '../users/entities/user.entity';
+import { Character } from '../characters/entities/character.entity';
+import { Image } from '../images/entities/image.entity';
+import { Gallery } from '../galleries/entities/gallery.entity';
 import {
   CreateCommentInput,
   UpdateCommentInput,
   CommentFiltersInput,
-} from "./dto/comment.dto";
-import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
-import { CurrentUser } from "../auth/decorators/CurrentUser";
-import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
-import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
-import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
+} from './dto/comment.dto';
+import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
+import { AllowUnauthenticated } from '../auth/decorators/AllowUnauthenticated';
+import { CurrentUser } from '../auth/decorators/CurrentUser';
+import { AllowGlobalAdmin } from '../auth/decorators/AllowGlobalAdmin';
+import { AllowEntityOwner } from '../auth/decorators/AllowEntityOwner';
+import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
 import {
   mapCreateCommentInputToService,
   mapUpdateCommentInputToService,
   mapCommentFiltersInputToService,
   mapPrismaCommentToGraphQL,
   mapPrismaCommentConnectionToGraphQL,
-} from "./utils/comments-resolver-mappers";
+} from './utils/comments-resolver-mappers';
 
 @Resolver(() => Comment)
 export class CommentsResolver {
@@ -53,7 +53,7 @@ export class CommentsResolver {
   @AllowAnyAuthenticated()
   @Mutation(() => Comment)
   async createComment(
-    @Args("input") input: CreateCommentInput,
+    @Args('input') input: CreateCommentInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
     const serviceInput = mapCreateCommentInputToService(input);
@@ -63,7 +63,7 @@ export class CommentsResolver {
 
   @AllowUnauthenticated()
   @Query(() => Comment)
-  async comment(@Args("id", { type: () => ID }) id: string) {
+  async comment(@Args('id', { type: () => ID }) id: string) {
     const comment = await this.commentsService.findOne(id);
     return mapPrismaCommentToGraphQL(comment);
   }
@@ -71,7 +71,7 @@ export class CommentsResolver {
   @AllowUnauthenticated()
   @Query(() => CommentConnection)
   async comments(
-    @Args("filters", { type: () => CommentFiltersInput })
+    @Args('filters', { type: () => CommentFiltersInput })
     filters: CommentFiltersInput,
   ) {
     const serviceFilters = mapCommentFiltersInputToService(filters);
@@ -80,11 +80,11 @@ export class CommentsResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowEntityOwner({ commentId: "id" })
+  @AllowEntityOwner({ commentId: 'id' })
   @Mutation(() => Comment)
   async updateComment(
-    @Args("id", { type: () => ID }) id: string,
-    @Args("input") input: UpdateCommentInput,
+    @Args('id', { type: () => ID }) id: string,
+    @Args('input') input: UpdateCommentInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
     const serviceInput = mapUpdateCommentInputToService(input);
@@ -97,10 +97,10 @@ export class CommentsResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowEntityOwner({ commentId: "id" })
+  @AllowEntityOwner({ commentId: 'id' })
   @Mutation(() => Boolean)
   async deleteComment(
-    @Args("id", { type: () => ID }) id: string,
+    @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
     return this.commentsService.remove(id, user.id, user.isAdmin);
@@ -151,7 +151,7 @@ export class CommentsResolver {
    */
   @ResolveField(() => Character, { nullable: true })
   async character(@Parent() comment: Comment) {
-    if (comment.commentableType !== "CHARACTER") return null;
+    if (comment.commentableType !== 'CHARACTER') return null;
     return this.charactersService.findOne(comment.commentableId);
   }
 
@@ -160,7 +160,7 @@ export class CommentsResolver {
    */
   @ResolveField(() => Image, { nullable: true })
   async image(@Parent() comment: Comment) {
-    if (comment.commentableType !== "IMAGE") return null;
+    if (comment.commentableType !== 'IMAGE') return null;
     return this.imagesService.findOne(comment.commentableId);
   }
 
@@ -169,7 +169,7 @@ export class CommentsResolver {
    */
   @ResolveField(() => Gallery, { nullable: true })
   async gallery(@Parent() comment: Comment) {
-    if (comment.commentableType !== "GALLERY") return null;
+    if (comment.commentableType !== 'GALLERY') return null;
     return this.galleriesService.findOne(comment.commentableId);
   }
 
@@ -178,7 +178,7 @@ export class CommentsResolver {
    */
   @ResolveField(() => User, { nullable: true })
   async user(@Parent() comment: Comment) {
-    if (comment.commentableType !== "USER") return null;
+    if (comment.commentableType !== 'USER') return null;
     return this.usersService.findById(comment.commentableId);
   }
 }
