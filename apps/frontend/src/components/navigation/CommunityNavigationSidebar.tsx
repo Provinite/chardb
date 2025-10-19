@@ -1,8 +1,7 @@
 import React from 'react';
-import { useLocation, useParams, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import {
-  Home,
   BarChart3,
   Users,
   Mail,
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react';
 import { CommunityNavigationItem } from './CommunityNavigationItem';
 import { CommunityNavigationGroup } from './CommunityNavigationGroup';
+import { CommunitySwitcher } from './CommunitySwitcher';
 import { useUserCommunityRole } from '../../hooks/useUserCommunityRole';
 
 interface CommunityNavigationSidebarProps {
@@ -63,34 +63,9 @@ const SidebarContent = styled.nav`
 const CommunityHeader = styled.div`
   padding: ${({ theme }) => theme.spacing.md};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-`;
-
-const CommunityName = styled.h2`
-  font-size: ${({ theme }) => theme.typography.fontSize.lg};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const CommunityLink = styled(Link)`
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: ${({ theme }) => theme.spacing.sm};
-  color: ${({ theme }) => theme.colors.text.primary};
-  text-decoration: none;
-  padding: ${({ theme }) => `${theme.spacing.xs} 0`};
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.primary};
-  }
-
-  svg {
-    width: 20px;
-    height: 20px;
-  }
 `;
 
 const LoadingContainer = styled.div`
@@ -156,7 +131,6 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   const navigate = useNavigate();
   const { communityId } = useParams<{ communityId: string }>();
   const {
-    community,
     permissions,
     hasAdminPermissions,
     hasSpeciesPermissions,
@@ -180,10 +154,7 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   return (
     <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
       <CommunityHeader>
-        <CommunityLink to={communityBasePath}>
-          <Home />
-          <CommunityName>{community?.name || 'Loading...'}</CommunityName>
-        </CommunityLink>
+        <CommunitySwitcher />
       </CommunityHeader>
 
       {loading ? (
