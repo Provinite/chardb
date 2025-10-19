@@ -796,6 +796,12 @@ type ImageTag {
   tag: Tag!
 }
 
+type Inventory {
+  communityId: ID!
+  items: [Item!]!
+  totalItems: Float!
+}
+
 """
 An invite code that can be used to join a community with an optional role
 """
@@ -859,20 +865,6 @@ type Item {
   ownerId: ID!
   quantity: Int!
   updatedAt: DateTime!
-}
-
-type ItemConnection {
-  hasMore: Boolean!
-  items: [Item!]!
-  total: Int!
-}
-
-input ItemFiltersInput {
-  communityId: ID
-  itemTypeId: ID
-  limit: Int! = 20
-  offset: Int! = 0
-  ownerId: ID
 }
 
 type ItemType {
@@ -1727,7 +1719,6 @@ type Query {
   myExternalAccounts: [ExternalAccount!]!
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
   myImages(filters: ImageFiltersInput): ImageConnection!
-  myItems(filters: ItemFiltersInput): ItemConnection!
 
   """Retrieves media owned by the current authenticated user"""
   myMedia(
@@ -2513,6 +2504,9 @@ type User {
   followersCount: Int!
   followingCount: Int!
   id: ID!
+
+  """User's inventories across different communities"""
+  inventories(communityId: ID): [Inventory!]!
   isAdmin: Boolean!
   isVerified: Boolean!
   location: String
