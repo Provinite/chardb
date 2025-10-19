@@ -11,6 +11,7 @@ import {
   Lock,
   AlertCircle,
   ArrowLeft,
+  Globe,
 } from 'lucide-react';
 import { CommunityNavigationItem } from './CommunityNavigationItem';
 import { CommunityNavigationGroup } from './CommunityNavigationGroup';
@@ -20,6 +21,7 @@ import { useSpeciesByIdQuery, useGetCharacterQuery } from '../../generated/graph
 
 interface CommunityNavigationSidebarProps {
   className?: string;
+  onToggleToGlobal?: () => void;
 }
 
 const SidebarContainer = styled.aside`
@@ -95,7 +97,6 @@ const BackButton = styled.button`
   border-radius: ${({ theme }) => theme.borderRadius.md};
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-top: auto;
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.surface};
@@ -111,6 +112,38 @@ const BackButton = styled.button`
   svg {
     width: 16px;
     height: 16px;
+  }
+`;
+
+const ToggleButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing.xs};
+  background: ${({ theme }) => theme.colors.primary}15;
+  border: 1px solid ${({ theme }) => theme.colors.primary}40;
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary}25;
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 2px;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
   }
 `;
 
@@ -154,6 +187,7 @@ const extractCharacterId = (pathname: string): string | undefined => {
 
 export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProps> = ({
   className,
+  onToggleToGlobal,
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -274,6 +308,16 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
     <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
       <CommunityHeader>
         <CommunitySwitcher communityId={communityId} />
+        {onToggleToGlobal && (
+          <ToggleButton onClick={onToggleToGlobal} aria-label="View global navigation">
+            <Globe />
+            View Global Navigation
+          </ToggleButton>
+        )}
+        <BackButton onClick={() => navigate('/')}>
+          <ArrowLeft />
+          Back to Global
+        </BackButton>
       </CommunityHeader>
 
       {loading ? (
@@ -401,12 +445,6 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
               )}
             </CommunityNavigationGroup>
           )}
-
-          {/* Back to Global */}
-          <BackButton onClick={() => navigate('/')}>
-            <ArrowLeft />
-            Back to Global
-          </BackButton>
         </SidebarContent>
       )}
     </SidebarContainer>
