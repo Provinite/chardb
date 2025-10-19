@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   BarChart3,
@@ -124,12 +124,22 @@ const isCommunityRoute = (pathname: string): boolean => {
   return communityRoutes.some((pattern) => pattern.test(pathname));
 };
 
+/**
+ * Extract community ID from pathname since Layout is outside Routes
+ * and useParams() won't work
+ */
+const extractCommunityId = (pathname: string): string | undefined => {
+  const match = pathname.match(/^\/communities\/([^/]+)/);
+  return match ? match[1] : undefined;
+};
+
 export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProps> = ({
   className,
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { communityId } = useParams<{ communityId: string }>();
+  // Extract communityId from URL path instead of useParams (Layout is outside Routes)
+  const communityId = extractCommunityId(location.pathname);
   const {
     permissions,
     hasAdminPermissions,
@@ -137,17 +147,59 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
     hasInvitePermissions,
     loading,
     isMember,
+    error,
   } = useUserCommunityRole(communityId);
+
+  // Debug logging
+  console.log('[CommunityNavigationSidebar] Debug Info:', {
+    pathname: location.pathname,
+    communityId,
+    isCommunityRoute: isCommunityRoute(location.pathname),
+    loading,
+    isMember,
+    hasError: !!error,
+    error: error?.message,
+  });
 
   // Only render sidebar for community-scoped routes
   if (!isCommunityRoute(location.pathname) || !communityId) {
+    console.log('[CommunityNavigationSidebar] Not rendering - not a community route or no communityId');
     return null;
   }
 
+  // Show loading state while checking membership
+  if (loading) {
+    console.log('[CommunityNavigationSidebar] Showing loading state');
+    return (
+      <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
+        <CommunityHeader>
+          <LoadingContainer>Loading...</LoadingContainer>
+        </CommunityHeader>
+      </SidebarContainer>
+    );
+  }
+
+  // Show error state if query failed
+  if (error) {
+    console.error('[CommunityNavigationSidebar] GraphQL Error:', error);
+    return (
+      <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
+        <CommunityHeader>
+          <LoadingContainer style={{ color: 'red' }}>
+            Error loading community data
+          </LoadingContainer>
+        </CommunityHeader>
+      </SidebarContainer>
+    );
+  }
+
   // Don't render if user is not a member
-  if (!loading && !isMember) {
+  if (!isMember) {
+    console.log('[CommunityNavigationSidebar] Not rendering - user is not a member');
     return null;
   }
+
+  console.log('[CommunityNavigationSidebar] Rendering full sidebar');
 
   const communityBasePath = `/communities/${communityId}`;
 

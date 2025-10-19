@@ -13,12 +13,37 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
     skip: !user?.id,
   });
 
+  // Debug logging
+  console.log('[useUserCommunityRole] Debug Info:', {
+    communityId,
+    userId: user?.id,
+    loading,
+    hasError: !!error,
+    error: error?.message,
+    hasData: !!data,
+    membershipCount: data?.communityMembersByUser?.nodes?.length || 0,
+    memberships: data?.communityMembersByUser?.nodes?.map((m: any) => ({
+      communityId: m.role.community.id,
+      communityName: m.role.community.name,
+      roleName: m.role.name,
+    })),
+  });
+
   const userRole = useMemo(() => {
-    if (!data || !communityId) return null;
+    if (!data || !communityId) {
+      console.log('[useUserCommunityRole] No data or communityId:', { hasData: !!data, communityId });
+      return null;
+    }
 
     const membership = data.communityMembersByUser?.nodes?.find(
       (m: any) => m.role.community.id === communityId
     );
+
+    console.log('[useUserCommunityRole] Membership lookup result:', {
+      found: !!membership,
+      communityId,
+      roleName: membership?.role?.name,
+    });
 
     return membership?.role || null;
   }, [data, communityId]);
