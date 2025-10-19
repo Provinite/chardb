@@ -46,7 +46,7 @@ export class ItemsResolver {
   // ==================== ItemType Mutations ====================
 
   @AllowAnyAuthenticated()
-  @AllowCommunityPermission(CommunityPermission.CanEditSpecies) // Reusing this permission for now
+  @AllowCommunityPermission(CommunityPermission.CanManageItems)
   @ResolveCommunityFrom({ communityId: 'input.communityId' })
   @Mutation(() => ItemTypeEntity)
   async createItemType(
@@ -74,7 +74,7 @@ export class ItemsResolver {
   }
 
   @AllowAnyAuthenticated()
-  @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
+  @AllowCommunityPermission(CommunityPermission.CanManageItems)
   @ResolveCommunityFrom({ itemTypeId: 'id' })
   @Mutation(() => ItemTypeEntity)
   async updateItemType(
@@ -100,7 +100,7 @@ export class ItemsResolver {
   }
 
   @AllowAnyAuthenticated()
-  @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
+  @AllowCommunityPermission(CommunityPermission.CanManageItems)
   @ResolveCommunityFrom({ itemTypeId: 'id' })
   @Mutation(() => Boolean)
   async deleteItemType(
@@ -132,7 +132,7 @@ export class ItemsResolver {
   // ==================== Item Mutations ====================
 
   @AllowAnyAuthenticated()
-  @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
+  @AllowCommunityPermission(CommunityPermission.CanGrantItems)
   @ResolveCommunityFrom({ itemTypeId: 'input.itemTypeId' })
   @Mutation(() => ItemEntity, { description: 'Grant an item to a user (admin only)' })
   async grantItem(

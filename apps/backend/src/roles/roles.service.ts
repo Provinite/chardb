@@ -38,6 +38,10 @@ export interface CreateRoleServiceInput {
   canRemoveCommunityMember?: boolean;
   /** Permission to manage member roles */
   canManageMemberRoles?: boolean;
+  /** Permission to manage item types */
+  canManageItems?: boolean;
+  /** Permission to grant items to users */
+  canGrantItems?: boolean;
 }
 
 /**
@@ -68,6 +72,10 @@ export interface UpdateRoleServiceInput {
   canRemoveCommunityMember?: boolean;
   /** Permission to manage member roles */
   canManageMemberRoles?: boolean;
+  /** Permission to manage item types */
+  canManageItems?: boolean;
+  /** Permission to grant items to users */
+  canGrantItems?: boolean;
 }
 
 @Injectable()
@@ -90,6 +98,8 @@ export class RolesService {
         canEditRole: input.canEditRole ?? false,
         canRemoveCommunityMember: input.canRemoveCommunityMember ?? false,
         canManageMemberRoles: input.canManageMemberRoles ?? false,
+        canManageItems: input.canManageItems ?? false,
+        canGrantItems: input.canGrantItems ?? false,
         community: {
           connect: { id: input.communityId },
         },
@@ -198,6 +208,10 @@ export class RolesService {
       updateData.canRemoveCommunityMember = input.canRemoveCommunityMember;
     if (input.canManageMemberRoles !== undefined)
       updateData.canManageMemberRoles = input.canManageMemberRoles;
+    if (input.canManageItems !== undefined)
+      updateData.canManageItems = input.canManageItems;
+    if (input.canGrantItems !== undefined)
+      updateData.canGrantItems = input.canGrantItems;
 
     return this.prisma.role.update({
       where: { id },

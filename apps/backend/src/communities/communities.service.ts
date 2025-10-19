@@ -54,6 +54,8 @@ export class CommunitiesService {
           canListInviteCodes: true,
           canCreateRole: true,
           canEditRole: true,
+          canManageItems: true,
+          canGrantItems: true,
         },
       });
 
@@ -70,6 +72,8 @@ export class CommunitiesService {
           canListInviteCodes: false,
           canCreateRole: false,
           canEditRole: false,
+          canManageItems: false,
+          canGrantItems: true,
         },
       });
 
@@ -86,6 +90,8 @@ export class CommunitiesService {
           canListInviteCodes: false,
           canCreateRole: false,
           canEditRole: false,
+          canManageItems: false,
+          canGrantItems: false,
         },
       });
 

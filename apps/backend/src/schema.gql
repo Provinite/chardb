@@ -848,7 +848,7 @@ type Item {
   id: ID!
   itemType: ItemType!
   itemTypeId: ID!
-  metadata: String
+  metadata: JSON
   owner: User!
   ownerId: ID!
   quantity: Int!
@@ -884,7 +884,7 @@ type ItemType {
   isTradeable: Boolean!
   itemType: ItemType!
   maxStackSize: Int
-  metadata: String
+  metadata: JSON
   name: String!
   owner: User!
   updatedAt: DateTime!
