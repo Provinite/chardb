@@ -286,6 +286,28 @@ export class CommunityResolverService {
   }
 
   /**
+   * Get the community ID for an item type.
+   *
+   * ItemTypes have a direct communityId field.
+   *
+   * @param itemTypeId - The item type ID
+   * @returns The community ID
+   * @throws Error if item type doesn't exist
+   */
+  async getItemTypeCommunity(itemTypeId: string): Promise<string> {
+    const itemType = await this.prisma.itemType.findUnique({
+      where: { id: itemTypeId },
+      select: { communityId: true },
+    });
+
+    if (!itemType) {
+      throw new Error(`ItemType with ID ${itemTypeId} not found`);
+    }
+
+    return itemType.communityId;
+  }
+
+  /**
    * Resolve the community for a given entity using resolution configuration.
    *
    * This is the primary method used by guards to determine community context.
@@ -332,6 +354,7 @@ export class CommunityResolverService {
       communityMemberId: this.getCommunityMemberCommunity.bind(this),
       communityInvitationId: this.getCommunityInvitationCommunity.bind(this),
       roleId: this.getRoleCommunity.bind(this),
+      itemTypeId: this.getItemTypeCommunity.bind(this),
     };
 
     if (!config.type) {

@@ -448,6 +448,21 @@ input CreateInviteCodeInput {
   roleId: ID
 }
 
+input CreateItemTypeInput {
+  category: String
+  color: String
+  communityId: ID!
+  description: String
+  iconUrl: String
+  imageUrl: String
+  isConsumable: Boolean! = false
+  isStackable: Boolean! = true
+  isTradeable: Boolean! = true
+  maxStackSize: Int
+  metadata: String
+  name: String!
+}
+
 """Input for creating a new role"""
 input CreateRoleInput {
   """Whether members with this role can create new characters"""
@@ -721,6 +736,13 @@ input GalleryFiltersInput {
   visibility: Visibility
 }
 
+input GrantItemInput {
+  itemTypeId: ID!
+  metadata: String
+  quantity: Int! = 1
+  userId: ID!
+}
+
 type Image {
   altText: String
   artist: User
@@ -819,6 +841,67 @@ type InviteCodeConnection {
 
   """Total count of invite codes matching the query"""
   totalCount: Float!
+}
+
+type Item {
+  createdAt: DateTime!
+  id: ID!
+  itemType: ItemType!
+  itemTypeId: ID!
+  metadata: String
+  owner: User!
+  ownerId: ID!
+  quantity: Int!
+  updatedAt: DateTime!
+}
+
+type ItemConnection {
+  hasMore: Boolean!
+  items: [Item!]!
+  total: Int!
+}
+
+input ItemFiltersInput {
+  communityId: ID
+  itemTypeId: ID
+  limit: Int! = 20
+  offset: Int! = 0
+  ownerId: ID
+}
+
+type ItemType {
+  category: String
+  color: String
+  community: Community
+  communityId: ID!
+  createdAt: DateTime!
+  description: String
+  iconUrl: String
+  id: ID!
+  imageUrl: String
+  isConsumable: Boolean!
+  isStackable: Boolean!
+  isTradeable: Boolean!
+  itemType: ItemType!
+  maxStackSize: Int
+  metadata: String
+  name: String!
+  owner: User!
+  updatedAt: DateTime!
+}
+
+type ItemTypeConnection {
+  hasMore: Boolean!
+  itemTypes: [ItemType!]!
+  total: Int!
+}
+
+input ItemTypeFiltersInput {
+  category: String
+  communityId: ID
+  limit: Int! = 20
+  offset: Int! = 0
+  search: String
 }
 
 """
@@ -1049,6 +1132,7 @@ type Mutation {
     """Invite code creation data"""
     createInviteCodeInput: CreateInviteCodeInput!
   ): InviteCode!
+  createItemType(input: CreateItemTypeInput!): ItemType!
 
   """Create a new role"""
   createRole(
@@ -1090,12 +1174,17 @@ type Mutation {
   deleteComment(id: ID!): Boolean!
   deleteGallery(id: ID!): RemovalResponse!
   deleteImage(id: ID!): Boolean!
+  deleteItem(id: ID!): Boolean!
+  deleteItemType(id: ID!): Boolean!
 
   """Deletes a media item and its associated content"""
   deleteMedia(
     """Media ID to delete"""
     id: ID!
   ): Boolean!
+
+  """Grant an item to a user (admin only)"""
+  grantItem(input: GrantItemInput!): Item!
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): String!
 
@@ -1260,6 +1349,8 @@ type Mutation {
     """Invite code update data"""
     updateInviteCodeInput: UpdateInviteCodeInput!
   ): InviteCode!
+  updateItem(id: ID!, input: UpdateItemInput!): Item!
+  updateItemType(id: ID!, input: UpdateItemTypeInput!): ItemType!
 
   """Updates media metadata (title, description, etc.)"""
   updateMedia(
@@ -1600,6 +1691,10 @@ type Query {
     """Role ID"""
     roleId: ID!
   ): InviteCodeConnection!
+  item(id: ID!): Item!
+  itemType(id: ID!): ItemType!
+  itemTypes(filters: ItemTypeFiltersInput): ItemTypeConnection!
+  items(filters: ItemFiltersInput): ItemConnection!
   likeStatus(entityId: ID!, entityType: LikeableType!): LikeStatus!
   likedCharacters: [Character!]!
   likedGalleries: [Gallery!]!
@@ -1624,6 +1719,7 @@ type Query {
   myExternalAccounts: [ExternalAccount!]!
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
   myImages(filters: ImageFiltersInput): ImageConnection!
+  myItems(filters: ItemFiltersInput): ItemConnection!
 
   """Retrieves media owned by the current authenticated user"""
   myMedia(
@@ -2226,6 +2322,25 @@ input UpdateInviteCodeInput {
 
   """The ID of the role to grant when this invite code is used"""
   roleId: ID
+}
+
+input UpdateItemInput {
+  metadata: String
+  quantity: Int
+}
+
+input UpdateItemTypeInput {
+  category: String
+  color: String
+  description: String
+  iconUrl: String
+  imageUrl: String
+  isConsumable: Boolean
+  isStackable: Boolean
+  isTradeable: Boolean
+  maxStackSize: Int
+  metadata: String
+  name: String
 }
 
 """Input type for updating media metadata"""
