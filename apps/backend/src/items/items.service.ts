@@ -163,6 +163,22 @@ export class ItemsService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
+    // Verify user is a member of the community that owns this item type
+    const membership = await this.db.communityMember.findFirst({
+      where: {
+        userId,
+        role: {
+          communityId: itemType.communityId,
+        },
+      },
+    });
+
+    if (!membership) {
+      throw new BadRequestException(
+        `User is not a member of the community that owns this item type`,
+      );
+    }
+
     // Check if stackable and user already has this item type
     if (itemType.isStackable) {
       const existingItem = await this.db.item.findFirst({
