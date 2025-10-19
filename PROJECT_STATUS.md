@@ -625,27 +625,31 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 - [x] **Phase 1: Core Sidebar Structure**: Complete sidebar component with route detection
 - [x] **Phase 2: Permission Integration**: Permission-aware navigation with role-based rendering
 - [x] **Phase 3: Community Switching**: Dropdown component for quick community navigation
+- [x] **Bug Fixes**: useParams issue, species route support, community name display
 - [ ] **Phase 4: Responsive Design**: Mobile/tablet responsive behavior (Future enhancement)
 
 **Key Features**:
 - 🗂️ **Hierarchical Navigation**: Clear community scoping with nested sections (Community, Species, Administration)
 - 🔐 **Permission-Aware**: Menu items render based on user's role permissions in current community
 - 🔄 **Community Switcher**: Dropdown with search for quick switching between communities
-- 🎯 **Contextual Rendering**: Sidebar only appears on community-scoped routes (/communities/:id/*)
+- 🎯 **Contextual Rendering**: Sidebar appears on both community routes (/communities/:id/*) and species routes (/species/:id/*)
 - 🏠 **Clear Scope Indication**: Sidebar presence indicates community context, absence indicates global
 - 📊 **Smart Organization**: Collapsible sections for Community, Species & Characters, and Administration
 
 **Technical Implementation**:
 ```typescript
 // Core Components
-- CommunityNavigationSidebar: Main sidebar with permission checks and route detection
+- CommunityNavigationSidebar: Main sidebar with permission checks and URL-based route detection
 - CommunityNavigationItem: Individual nav items with active state and badge support
 - CommunityNavigationGroup: Collapsible sections with expand/collapse functionality
-- CommunitySwitcher: Dropdown with search, current selection, and "Browse All" link
+- CommunitySwitcher: Dropdown with search, current community display, and "Browse All" link
 
 // Hooks & Utilities
 - useUserCommunityRole: Custom hook for fetching user's role and permissions in community
 - Permission checks: hasAdminPermissions, hasSpeciesPermissions, hasInvitePermissions
+- extractCommunityId(pathname): Extract community ID from URL (works in Layout outside Routes)
+- extractSpeciesId(pathname): Extract species ID and query for community ID
+- isCommunityRoute(pathname): Detect if current route should display sidebar
 
 // Permission-Based Rendering
 - Members: Always visible to community members
@@ -657,6 +661,7 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 
 // GraphQL Enhancements
 - Updated CommunityMembersByUser query with canRemoveCommunityMember and canManageMemberRoles fields
+- useSpeciesByIdQuery for resolving species routes to community context
 - Regenerated GraphQL types for full type safety
 ```
 
@@ -669,6 +674,8 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 
 **User Experience**:
 - ✅ **Automatic Detection**: Sidebar appears/disappears based on current route
+- ✅ **Multi-Route Support**: Works on both /communities/:id/* and /species/:id/* routes
+- ✅ **Current Community Display**: Switcher shows current community name instead of placeholder
 - ✅ **Active State**: Current page highlighted with primary color and background
 - ✅ **Loading States**: Graceful loading for community data and permissions
 - ✅ **Non-Member Handling**: Sidebar hidden for non-community members
@@ -676,10 +683,21 @@ apps/frontend/src/graphql/* (Refactored to re-export generated operations)
 - ✅ **Visual Feedback**: Hover states, smooth transitions, custom scrollbar styling
 - ✅ **Accessibility**: ARIA labels, keyboard navigation, screen reader support
 
+**Critical Bug Fixes**:
+1. **useParams() Issue**: Layout component is outside Routes, so useParams() returns undefined
+   - **Fix**: URL parsing with regex to extract communityId from pathname directly
+2. **Species Routes**: Sidebar not appearing on /species/:id/* routes
+   - **Fix**: Added species route pattern detection + GraphQL query to resolve species → community
+3. **CommunitySwitcher Display**: Showing "Select Community" instead of current community name
+   - **Fix**: Pass communityId as prop from CommunityNavigationSidebar to CommunitySwitcher
+
 **Commits**:
 - `75f3b35` - feat(frontend): implement Phase 1 of contextual sidebar navigation (GH-61)
 - `dac9520` - feat(frontend): implement Phase 2 permission-aware sidebar navigation (GH-61)
 - `7ffef68` - feat(frontend): implement Phase 3 community switcher dropdown (GH-61)
+- `6b38788` - fix(frontend): fix sidebar rendering with URL-based communityId extraction (GH-61)
+- `28bac55` - fix(frontend): add species route support to community sidebar (GH-61)
+- `7e35f71` - fix(frontend): display current community name in CommunitySwitcher (GH-61)
 
 **Key Features**:
 - 🔍 **Multi-Criteria Search**: Name, description, personality, backstory, species, gender, age filtering
