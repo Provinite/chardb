@@ -581,6 +581,22 @@ export type EnumValueSettingConnection = {
   totalCount: Scalars['Float']['output'];
 };
 
+export type ExternalAccount = {
+  __typename?: 'ExternalAccount';
+  createdAt: Scalars['DateTime']['output'];
+  displayName: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  provider: ExternalAccountProvider;
+  providerAccountId: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  userId: Scalars['ID']['output'];
+};
+
+/** External account providers supported for account linking */
+export enum ExternalAccountProvider {
+  Deviantart = 'DEVIANTART'
+}
+
 export type FollowListResult = {
   __typename?: 'FollowListResult';
   followers: Array<User>;
@@ -916,7 +932,7 @@ export type Mutation = {
   removeCommunity: RemovalResponse;
   /** Remove a community invitation */
   removeCommunityInvitation: CommunityInvitation;
-  /** Remove a community membership */
+  /** Remove a community membership (leave community OR remove member with permission) */
   removeCommunityMember: CommunityMember;
   /** Remove an enum value */
   removeEnumValue: RemovalResponse;
@@ -945,6 +961,8 @@ export type Mutation = {
   toggleFollow: FollowResult;
   toggleLike: LikeResult;
   transferCharacter: Character;
+  /** Unlink an external account from the current user */
+  unlinkExternalAccount: Scalars['Boolean']['output'];
   updateCharacter: Character;
   /** Update character trait values */
   updateCharacterTraits: Character;
@@ -1222,6 +1240,11 @@ export type MutationTransferCharacterArgs = {
 };
 
 
+export type MutationUnlinkExternalAccountArgs = {
+  input: UnlinkExternalAccountInput;
+};
+
+
 export type MutationUpdateCharacterArgs = {
   id: Scalars['ID']['input'];
   input: UpdateCharacterInput;
@@ -1410,6 +1433,8 @@ export type Query = {
   /** Retrieves a single media item by ID */
   mediaItem: Media;
   myCharacters: CharacterConnection;
+  /** Get all external accounts linked to the current user */
+  myExternalAccounts: Array<ExternalAccount>;
   myGalleries: GalleryConnection;
   myImages: ImageConnection;
   /** Retrieves media owned by the current authenticated user */
@@ -2169,6 +2194,10 @@ export type TransferCharacterInput = {
   newOwnerId: Scalars['ID']['input'];
 };
 
+export type UnlinkExternalAccountInput = {
+  provider: ExternalAccountProvider;
+};
+
 export type UpdateCharacterInput = {
   age?: InputMaybe<Scalars['String']['input']>;
   backstory?: InputMaybe<Scalars['String']['input']>;
@@ -2369,6 +2398,7 @@ export type User = {
   dateOfBirth: Maybe<Scalars['DateTime']['output']>;
   displayName: Maybe<Scalars['String']['output']>;
   email: Scalars['String']['output'];
+  externalAccounts: Array<ExternalAccount>;
   followersCount: Scalars['Int']['output'];
   followingCount: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
@@ -2583,7 +2613,7 @@ export type CommunityMembersByUserQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canListInviteCodes: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type SpeciesWithTraitsAndEnumValuesQueryVariables = Exact<{
   speciesId: Scalars['ID']['input'];
@@ -2699,6 +2729,18 @@ export type DeleteEnumValueMutationVariables = Exact<{
 
 
 export type DeleteEnumValueMutation = { __typename?: 'Mutation', removeEnumValue: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
+export type MyExternalAccountsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyExternalAccountsQuery = { __typename?: 'Query', myExternalAccounts: Array<{ __typename?: 'ExternalAccount', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayName: string, createdAt: string, updatedAt: string }> };
+
+export type UnlinkExternalAccountMutationVariables = Exact<{
+  input: UnlinkExternalAccountInput;
+}>;
+
+
+export type UnlinkExternalAccountMutation = { __typename?: 'Mutation', unlinkExternalAccount: boolean };
 
 export type GetGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
@@ -4421,6 +4463,8 @@ export const CommunityMembersByUserDocument = gql`
         canEditCharacter
         canEditOwnCharacter
         canListInviteCodes
+        canRemoveCommunityMember
+        canManageMemberRoles
       }
       user {
         id
@@ -5078,6 +5122,81 @@ export function useDeleteEnumValueMutation(baseOptions?: Apollo.MutationHookOpti
 export type DeleteEnumValueMutationHookResult = ReturnType<typeof useDeleteEnumValueMutation>;
 export type DeleteEnumValueMutationResult = Apollo.MutationResult<DeleteEnumValueMutation>;
 export type DeleteEnumValueMutationOptions = Apollo.BaseMutationOptions<DeleteEnumValueMutation, DeleteEnumValueMutationVariables>;
+export const MyExternalAccountsDocument = gql`
+    query MyExternalAccounts {
+  myExternalAccounts {
+    id
+    provider
+    providerAccountId
+    displayName
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useMyExternalAccountsQuery__
+ *
+ * To run a query within a React component, call `useMyExternalAccountsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMyExternalAccountsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMyExternalAccountsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useMyExternalAccountsQuery(baseOptions?: Apollo.QueryHookOptions<MyExternalAccountsQuery, MyExternalAccountsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MyExternalAccountsQuery, MyExternalAccountsQueryVariables>(MyExternalAccountsDocument, options);
+      }
+export function useMyExternalAccountsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MyExternalAccountsQuery, MyExternalAccountsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MyExternalAccountsQuery, MyExternalAccountsQueryVariables>(MyExternalAccountsDocument, options);
+        }
+export function useMyExternalAccountsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MyExternalAccountsQuery, MyExternalAccountsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<MyExternalAccountsQuery, MyExternalAccountsQueryVariables>(MyExternalAccountsDocument, options);
+        }
+export type MyExternalAccountsQueryHookResult = ReturnType<typeof useMyExternalAccountsQuery>;
+export type MyExternalAccountsLazyQueryHookResult = ReturnType<typeof useMyExternalAccountsLazyQuery>;
+export type MyExternalAccountsSuspenseQueryHookResult = ReturnType<typeof useMyExternalAccountsSuspenseQuery>;
+export type MyExternalAccountsQueryResult = Apollo.QueryResult<MyExternalAccountsQuery, MyExternalAccountsQueryVariables>;
+export const UnlinkExternalAccountDocument = gql`
+    mutation UnlinkExternalAccount($input: UnlinkExternalAccountInput!) {
+  unlinkExternalAccount(input: $input)
+}
+    `;
+export type UnlinkExternalAccountMutationFn = Apollo.MutationFunction<UnlinkExternalAccountMutation, UnlinkExternalAccountMutationVariables>;
+
+/**
+ * __useUnlinkExternalAccountMutation__
+ *
+ * To run a mutation, you first call `useUnlinkExternalAccountMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUnlinkExternalAccountMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [unlinkExternalAccountMutation, { data, loading, error }] = useUnlinkExternalAccountMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUnlinkExternalAccountMutation(baseOptions?: Apollo.MutationHookOptions<UnlinkExternalAccountMutation, UnlinkExternalAccountMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UnlinkExternalAccountMutation, UnlinkExternalAccountMutationVariables>(UnlinkExternalAccountDocument, options);
+      }
+export type UnlinkExternalAccountMutationHookResult = ReturnType<typeof useUnlinkExternalAccountMutation>;
+export type UnlinkExternalAccountMutationResult = Apollo.MutationResult<UnlinkExternalAccountMutation>;
+export type UnlinkExternalAccountMutationOptions = Apollo.BaseMutationOptions<UnlinkExternalAccountMutation, UnlinkExternalAccountMutationVariables>;
 export const GetGalleriesDocument = gql`
     query GetGalleries($filters: GalleryFiltersInput) {
   galleries(filters: $filters) {

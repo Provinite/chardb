@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   Home,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { CommunityNavigationItem } from './CommunityNavigationItem';
 import { CommunityNavigationGroup } from './CommunityNavigationGroup';
+import { useUserCommunityRole } from '../../hooks/useUserCommunityRole';
 
 interface CommunityNavigationSidebarProps {
   className?: string;
@@ -74,7 +75,7 @@ const CommunityName = styled.h2`
   white-space: nowrap;
 `;
 
-const CommunityLink = styled.a`
+const CommunityLink = styled(Link)`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -90,6 +91,13 @@ const CommunityLink = styled.a`
     width: 20px;
     height: 20px;
   }
+`;
+
+const LoadingContainer = styled.div`
+  padding: ${({ theme }) => theme.spacing.md};
+  color: ${({ theme }) => theme.colors.text.muted};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  text-align: center;
 `;
 
 const Divider = styled.div`
@@ -145,10 +153,25 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   className,
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { communityId } = useParams<{ communityId: string }>();
+  const {
+    community,
+    permissions,
+    hasAdminPermissions,
+    hasSpeciesPermissions,
+    hasInvitePermissions,
+    loading,
+    isMember,
+  } = useUserCommunityRole(communityId);
 
   // Only render sidebar for community-scoped routes
   if (!isCommunityRoute(location.pathname) || !communityId) {
+    return null;
+  }
+
+  // Don't render if user is not a member
+  if (!loading && !isMember) {
     return null;
   }
 
@@ -157,82 +180,107 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   return (
     <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
       <CommunityHeader>
-        <CommunityLink href={communityBasePath}>
+        <CommunityLink to={communityBasePath}>
           <Home />
-          <CommunityName>Community Name</CommunityName>
+          <CommunityName>{community?.name || 'Loading...'}</CommunityName>
         </CommunityLink>
       </CommunityHeader>
 
-      <SidebarContent>
-        {/* Overview Section */}
-        <CommunityNavigationItem
-          to={communityBasePath}
-          icon={BarChart3}
-          label="Overview"
-        />
+      {loading ? (
+        <LoadingContainer>Loading navigation...</LoadingContainer>
+      ) : (
+        <SidebarContent>
+          {/* Overview Section - Always visible to members */}
+          <CommunityNavigationItem
+            to={communityBasePath}
+            icon={BarChart3}
+            label="Overview"
+          />
 
-        <Divider />
+          <Divider />
 
-        {/* Community Section */}
-        <CommunityNavigationGroup title="Community" icon={Users}>
-          <CommunityNavigationItem
-            to={`${communityBasePath}/members`}
-            icon={Users}
-            label="Members"
-            isNested
-          />
-          <CommunityNavigationItem
-            to={`${communityBasePath}/invite-codes`}
-            icon={Mail}
-            label="Invite Codes"
-            isNested
-          />
-          <CommunityNavigationItem
-            to={`${communityBasePath}/settings`}
-            icon={Settings}
-            label="Settings"
-            isNested
-          />
-        </CommunityNavigationGroup>
+          {/* Community Section */}
+          <CommunityNavigationGroup title="Community" icon={Users}>
+            {/* Members - visible to all community members */}
+            <CommunityNavigationItem
+              to={`${communityBasePath}/members`}
+              icon={Users}
+              label="Members"
+              isNested
+            />
 
-        {/* Species & Characters Section */}
-        <CommunityNavigationGroup title="Species & Characters" icon={Dna}>
-          <CommunityNavigationItem
-            to={`${communityBasePath}/species`}
-            icon={Dna}
-            label="Species Management"
-            isNested
-          />
-        </CommunityNavigationGroup>
+            {/* Invite Codes - requires invite permissions */}
+            {hasInvitePermissions && (
+              <CommunityNavigationItem
+                to={`${communityBasePath}/invite-codes`}
+                icon={Mail}
+                label="Invite Codes"
+                isNested
+              />
+            )}
 
-        {/* Administration Section */}
-        <CommunityNavigationGroup title="Administration" icon={Shield}>
-          <CommunityNavigationItem
-            to={`${communityBasePath}/admin`}
-            icon={Shield}
-            label="Dashboard"
-            isNested
-          />
-          <CommunityNavigationItem
-            to={`${communityBasePath}/permissions`}
-            icon={Lock}
-            label="Permissions"
-            isNested
-          />
-          <CommunityNavigationItem
-            to={`${communityBasePath}/moderation`}
-            icon={AlertCircle}
-            label="Moderation"
-            isNested
-          />
-        </CommunityNavigationGroup>
+            {/* Settings - requires edit permissions (using admin as proxy for now) */}
+            {hasAdminPermissions && (
+              <CommunityNavigationItem
+                to={`${communityBasePath}/settings`}
+                icon={Settings}
+                label="Settings"
+                isNested
+              />
+            )}
+          </CommunityNavigationGroup>
 
-        {/* Back to Global */}
-        <BackButton onClick={() => window.location.href = '/'}>
-          <ArrowLeft />
-          Back to Global
-        </BackButton>
-      </SidebarContent>
+          {/* Species & Characters Section - requires species permissions */}
+          {hasSpeciesPermissions && (
+            <CommunityNavigationGroup title="Species & Characters" icon={Dna}>
+              <CommunityNavigationItem
+                to={`${communityBasePath}/species`}
+                icon={Dna}
+                label="Species Management"
+                isNested
+              />
+            </CommunityNavigationGroup>
+          )}
+
+          {/* Administration Section - requires admin permissions */}
+          {hasAdminPermissions && (
+            <CommunityNavigationGroup title="Administration" icon={Shield}>
+              <CommunityNavigationItem
+                to={`${communityBasePath}/admin`}
+                icon={Shield}
+                label="Dashboard"
+                isNested
+              />
+
+              {/* Permissions - requires role management permissions */}
+              {(permissions.canCreateRole || permissions.canEditRole) && (
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/permissions`}
+                  icon={Lock}
+                  label="Permissions"
+                  isNested
+                />
+              )}
+
+              {/* Moderation - requires member management permissions */}
+              {permissions.canRemoveCommunityMember && (
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/moderation`}
+                  icon={AlertCircle}
+                  label="Moderation"
+                  isNested
+                />
+              )}
+            </CommunityNavigationGroup>
+          )}
+
+          {/* Back to Global */}
+          <BackButton onClick={() => navigate('/')}>
+            <ArrowLeft />
+            Back to Global
+          </BackButton>
+        </SidebarContent>
+      )}
     </SidebarContainer>
   );
 };
