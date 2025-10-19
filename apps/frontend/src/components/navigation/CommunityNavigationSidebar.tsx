@@ -148,6 +148,16 @@ const ToggleButton = styled.button`
   }
 `;
 
+const SubsectionLabel = styled.div`
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.xl}`};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-style: italic;
+`;
+
 /**
  * Checks if the current route is a community-scoped route
  */
@@ -365,46 +375,42 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
             )}
           </CommunityNavigationGroup>
 
-          {/* Species Context - shown when viewing a specific species or character with species */}
-          {contextSpeciesId && (
-            <>
-              <Divider />
-              <CommunityNavigationGroup title={`Current Species: ${contextSpeciesName || 'Loading...'}`} icon={Dna} defaultExpanded>
-                <CommunityNavigationItem
-                  to={`/species/${contextSpeciesId}`}
-                  icon={Dna}
-                  label="Overview"
-                  isNested
-                />
-
-                {/* Traits - requires species permissions */}
-                {hasSpeciesPermissions && (
-                  <CommunityNavigationItem
-                    to={`/species/${contextSpeciesId}/traits`}
-                    icon={Settings}
-                    label="Traits"
-                    isNested
-                  />
-                )}
-
-                {/* Variants - requires species permissions */}
-                {hasSpeciesPermissions && (
-                  <CommunityNavigationItem
-                    to={`/species/${contextSpeciesId}/variants`}
-                    icon={Dna}
-                    label="Variants"
-                    isNested
-                  />
-                )}
-              </CommunityNavigationGroup>
-            </>
-          )}
-
           {/* Species & Characters Section - requires species permissions */}
           {hasSpeciesPermissions && (
             <>
               <Divider />
               <CommunityNavigationGroup title="Species & Characters" icon={Dna}>
+                {/* Current Species Context - shown when viewing a specific species or character */}
+                {contextSpeciesId && (
+                  <>
+                    <SubsectionLabel>Current: {contextSpeciesName || 'Loading...'}</SubsectionLabel>
+                    <CommunityNavigationItem
+                      to={`/species/${contextSpeciesId}`}
+                      icon={Dna}
+                      label="Overview"
+                      isNested
+                    />
+                    {hasSpeciesPermissions && (
+                      <CommunityNavigationItem
+                        to={`/species/${contextSpeciesId}/traits`}
+                        icon={Settings}
+                        label="Traits"
+                        isNested
+                      />
+                    )}
+                    {hasSpeciesPermissions && (
+                      <CommunityNavigationItem
+                        to={`/species/${contextSpeciesId}/variants`}
+                        icon={Dna}
+                        label="Variants"
+                        isNested
+                      />
+                    )}
+                    <Divider />
+                  </>
+                )}
+
+                {/* Always visible species management links */}
                 <CommunityNavigationItem
                   to={`${communityBasePath}/characters`}
                   icon={User}
