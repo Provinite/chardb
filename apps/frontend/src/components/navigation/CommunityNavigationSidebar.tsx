@@ -16,6 +16,7 @@ import { CommunityNavigationItem } from './CommunityNavigationItem';
 import { CommunityNavigationGroup } from './CommunityNavigationGroup';
 import { CommunitySwitcher } from './CommunitySwitcher';
 import { useUserCommunityRole } from '../../hooks/useUserCommunityRole';
+import { useSpeciesByIdQuery } from '../../generated/graphql';
 
 interface CommunityNavigationSidebarProps {
   className?: string;
@@ -119,6 +120,7 @@ const BackButton = styled.button`
 const isCommunityRoute = (pathname: string): boolean => {
   const communityRoutes = [
     /^\/communities\/[^/]+/,
+    /^\/species\/[^/]+/,  // Species routes also get sidebar
     // Add more patterns as needed
   ];
   return communityRoutes.some((pattern) => pattern.test(pathname));
@@ -133,13 +135,35 @@ const extractCommunityId = (pathname: string): string | undefined => {
   return match ? match[1] : undefined;
 };
 
+/**
+ * Extract species ID from pathname for species-specific routes
+ */
+const extractSpeciesId = (pathname: string): string | undefined => {
+  const match = pathname.match(/^\/species\/([^/]+)/);
+  return match ? match[1] : undefined;
+};
+
 export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProps> = ({
   className,
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+
   // Extract communityId from URL path instead of useParams (Layout is outside Routes)
-  const communityId = extractCommunityId(location.pathname);
+  let communityId = extractCommunityId(location.pathname);
+  const speciesId = extractSpeciesId(location.pathname);
+
+  // If we're on a species route, fetch the species to get its communityId
+  const { data: speciesData, loading: speciesLoading } = useSpeciesByIdQuery({
+    variables: { id: speciesId || '' },
+    skip: !speciesId,
+  });
+
+  // Override communityId if we got it from species data
+  if (speciesId && speciesData?.speciesById?.community?.id) {
+    communityId = speciesData.speciesById.community.id;
+  }
+
   const {
     permissions,
     hasAdminPermissions,
@@ -154,6 +178,8 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   console.log('[CommunityNavigationSidebar] Debug Info:', {
     pathname: location.pathname,
     communityId,
+    speciesId,
+    speciesLoading,
     isCommunityRoute: isCommunityRoute(location.pathname),
     loading,
     isMember,
@@ -162,13 +188,13 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   });
 
   // Only render sidebar for community-scoped routes
-  if (!isCommunityRoute(location.pathname) || !communityId) {
-    console.log('[CommunityNavigationSidebar] Not rendering - not a community route or no communityId');
+  if (!isCommunityRoute(location.pathname)) {
+    console.log('[CommunityNavigationSidebar] Not rendering - not a community route');
     return null;
   }
 
-  // Show loading state while checking membership
-  if (loading) {
+  // Show loading state while checking membership or species data
+  if (loading || (speciesId && speciesLoading)) {
     console.log('[CommunityNavigationSidebar] Showing loading state');
     return (
       <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
@@ -177,6 +203,12 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
         </CommunityHeader>
       </SidebarContainer>
     );
+  }
+
+  // After loading, check if we have a communityId
+  if (!communityId) {
+    console.log('[CommunityNavigationSidebar] Not rendering - no communityId after loading');
+    return null;
   }
 
   // Show error state if query failed
