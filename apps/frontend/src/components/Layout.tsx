@@ -1,8 +1,10 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { CommunityNavigationSidebar } from './navigation/CommunityNavigationSidebar';
+import { GlobalNavigationSidebar } from './navigation/GlobalNavigationSidebar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -26,12 +28,27 @@ const Main = styled.main`
   min-width: 0; /* Prevents flex item from overflowing */
 `;
 
+/**
+ * Checks if the current route is a community-scoped route
+ */
+const isCommunityRoute = (pathname: string): boolean => {
+  const communityRoutes = [
+    /^\/communities\/[^/]+/,
+    /^\/species\/[^/]+/,
+    /^\/character\/[^/]+/,
+  ];
+  return communityRoutes.some((pattern) => pattern.test(pathname));
+};
+
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const location = useLocation();
+  const showCommunitySidebar = isCommunityRoute(location.pathname);
+
   return (
     <LayoutContainer>
       <Header />
       <ContentWrapper>
-        <CommunityNavigationSidebar />
+        {showCommunitySidebar ? <CommunityNavigationSidebar /> : <GlobalNavigationSidebar />}
         <Main>
           {children}
         </Main>

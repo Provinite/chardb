@@ -97,8 +97,6 @@ export const Header: React.FC = () => {
           
           {user ? (
             <UserMenu>
-              <NavLink to="/dashboard">Dashboard</NavLink>
-              <NavLink to="/my/communities">Communities</NavLink>
               <NavLink to="/character/create">Create</NavLink>
               <NavLink to="/upload">Upload</NavLink>
               <UserInfo to={`/user/${user.username}`}>
