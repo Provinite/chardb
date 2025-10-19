@@ -87,14 +87,10 @@ export const Header: React.FC = () => {
     <HeaderContainer>
       <HeaderContent>
         <Logo to="/">CharDB</Logo>
-        
+
         <Nav>
-          <NavLink to="/characters">Characters</NavLink>
-          <NavLink to="/galleries">Galleries</NavLink>
-          <NavLink to="/media">Media</NavLink>
-          
           <ThemeToggle />
-          
+
           {user ? (
             <UserMenu>
               <NavLink to="/character/create">Create</NavLink>
