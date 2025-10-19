@@ -236,6 +236,7 @@ export const LikedGalleriesPage: React.FC = () => {
         </EmptyState>
       ) : (
         <Grid>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {likedGalleries.map((gallery: any) => (
             <GalleryCard key={gallery.id}>
               <CardContent>

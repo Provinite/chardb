@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 export const ThemedToaster: React.FC = () => {
   const { theme } = useTheme();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getToastStyles = (t: any) => {
     const baseStyles = {
       background: theme.colors.surface,

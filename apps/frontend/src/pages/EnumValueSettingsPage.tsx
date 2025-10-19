@@ -219,17 +219,10 @@ export const EnumValueSettingsPage: React.FC = () => {
   const { variantId } = useParams<{ variantId: string }>();
   const navigate = useNavigate();
 
-  if (!variantId) {
-    return (
-      <Container>
-        <ErrorMessage message="Variant ID is required" />
-      </Container>
-    );
-  }
-
   const { data, loading, error, refetch } =
     useSpeciesVariantWithEnumValueSettingsQuery({
-      variables: { variantId },
+      variables: { variantId: variantId || '' },
+      skip: !variantId,
     });
 
   // Process the single query data efficiently
@@ -280,6 +273,14 @@ export const EnumValueSettingsPage: React.FC = () => {
       toast.error(`Failed to disable enum value: ${error.message}`);
     },
   });
+
+  if (!variantId) {
+    return (
+      <Container>
+        <ErrorMessage message="Variant ID is required" />
+      </Container>
+    );
+  }
 
   // Event handlers
   const handleToggleEnumValue = async (

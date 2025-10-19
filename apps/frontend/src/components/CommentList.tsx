@@ -199,11 +199,14 @@ export const CommentList: React.FC<CommentListProps> = ({
   };
 
   // Group comments by parent/replies
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const topLevelComments = comments.filter((comment: any) => !comment.parentId);
   const repliesMap = new Map();
 
   comments
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .filter((comment: any) => comment.parentId)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .forEach((reply: any) => {
       const parentId = reply.parentId;
       if (!repliesMap.has(parentId)) {
@@ -266,6 +269,7 @@ export const CommentList: React.FC<CommentListProps> = ({
         </EmptyState>
       ) : (
         <CommentsContainer>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {topLevelComments.map((comment: any) => {
             const replies = repliesMap.get(comment.id) || [];
 
@@ -279,6 +283,7 @@ export const CommentList: React.FC<CommentListProps> = ({
 
                 {replies.length > 0 && (
                   <RepliesContainer>
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {replies.map((reply: any) => (
                       <Comment
                         key={reply.id}

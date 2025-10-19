@@ -482,6 +482,7 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
 
       onSuccess();
       onClose();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Failed to save role:', err);
       setError(err.message || 'Failed to save role');

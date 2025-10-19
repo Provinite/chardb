@@ -278,6 +278,7 @@ export const FeedPage: React.FC = () => {
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getActivityText = (activity: any) => {
     switch (activity.type) {
       case 'CHARACTER_CREATED':
@@ -299,6 +300,7 @@ export const FeedPage: React.FC = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getContentLink = (activity: any) => {
     switch (activity.type) {
       case 'CHARACTER_CREATED':
@@ -315,6 +317,7 @@ export const FeedPage: React.FC = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getLikeableType = (activity: any) => {
     switch (activity.type) {
       case 'CHARACTER_CREATED':
@@ -350,6 +353,7 @@ export const FeedPage: React.FC = () => {
         </EmptyState>
       ) : (
         <FeedContainer>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {activities.map((activity: any) => (
             <ActivityCard key={activity.id}>
               <ActivityHeader>

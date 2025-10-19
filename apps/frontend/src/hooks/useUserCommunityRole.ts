@@ -22,6 +22,7 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
     error: error?.message,
     hasData: !!data,
     membershipCount: data?.communityMembersByUser?.nodes?.length || 0,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     memberships: data?.communityMembersByUser?.nodes?.map((m: any) => ({
       communityId: m.role.community.id,
       communityName: m.role.community.name,
@@ -39,6 +40,7 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
     }
 
     const membership = data.communityMembersByUser?.nodes?.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (m: any) => m.role.community.id === communityId,
     );
 

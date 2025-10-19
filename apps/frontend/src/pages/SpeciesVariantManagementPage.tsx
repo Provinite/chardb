@@ -212,22 +212,17 @@ export const SpeciesVariantManagementPage: React.FC = () => {
   const { speciesId } = useParams<{ speciesId: string }>();
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingVariant, setEditingVariant] = useState<
+    SpeciesVariantsBySpeciesQuery['speciesVariantsBySpecies']['nodes'][0] | null
+  >(null);
 
-  if (!speciesId) {
-    return (
-      <Container>
-        <ErrorMessage message="Species ID is required" />
-      </Container>
-    );
-  }
-
-  // GraphQL operations
   const {
     data: speciesData,
     loading: speciesLoading,
     error: speciesError,
   } = useSpeciesByIdQuery({
-    variables: { id: speciesId },
+    variables: { id: speciesId || '' },
+    skip: !speciesId,
   });
 
   const {
@@ -236,14 +231,9 @@ export const SpeciesVariantManagementPage: React.FC = () => {
     error: variantsError,
     refetch,
   } = useSpeciesVariantsBySpeciesQuery({
-    variables: { speciesId: speciesId!, first: 100 },
+    variables: { speciesId: speciesId || '', first: 100 },
     skip: !speciesId,
   });
-
-  const variants = variantsData?.speciesVariantsBySpecies?.nodes || [];
-  const [editingVariant, setEditingVariant] = useState<
-    SpeciesVariantsBySpeciesQuery['speciesVariantsBySpecies']['nodes'][0] | null
-  >(null);
 
   const [createVariantMutation] = useCreateSpeciesVariantMutation({
     onCompleted: (data) => {
@@ -278,6 +268,16 @@ export const SpeciesVariantManagementPage: React.FC = () => {
       toast.error(`Failed to delete variant: ${error.message}`);
     },
   });
+
+  if (!speciesId) {
+    return (
+      <Container>
+        <ErrorMessage message="Species ID is required" />
+      </Container>
+    );
+  }
+
+  const variants = variantsData?.speciesVariantsBySpecies?.nodes || [];
 
   // Event handlers
   const handleCreateVariant = async (formData: VariantFormData) => {

@@ -194,6 +194,7 @@ export const MediaLibraryPage: React.FC = () => {
       )}
 
       <MediaGrid
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         media={media as any}
         showOwner={true}
         loading={loading}

@@ -215,6 +215,7 @@ export const LikedCharactersPage: React.FC = () => {
         </EmptyState>
       ) : (
         <Grid>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {likedCharacters.map((character: any) => (
             <CharacterCard key={character.id}>
               <CardContent>

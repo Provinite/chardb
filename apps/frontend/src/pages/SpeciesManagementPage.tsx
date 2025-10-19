@@ -337,16 +337,6 @@ export const SpeciesManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const { communityId } = useParams<{ communityId: string }>();
 
-  if (!communityId) {
-    return (
-      <Container>
-        <Header>
-          <Title>Species Management</Title>
-          <Subtitle>Community ID is required</Subtitle>
-        </Header>
-      </Container>
-    );
-  }
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -357,13 +347,15 @@ export const SpeciesManagementPage: React.FC = () => {
     error: speciesError,
     refetch,
   } = useSpeciesByCommunityQuery({
-    variables: { communityId, first: 50 },
+    variables: { communityId: communityId || '', first: 50 },
+    skip: !communityId,
   });
 
   // Fetch the specific community
   const { data: communityData, loading: communityLoading } =
     useCommunityByIdQuery({
-      variables: { id: communityId },
+      variables: { id: communityId || '' },
+      skip: !communityId,
     });
 
   const [createSpeciesMutation] = useCreateSpeciesMutation({
@@ -402,6 +394,17 @@ export const SpeciesManagementPage: React.FC = () => {
       species.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [speciesData, searchQuery]);
+
+  if (!communityId) {
+    return (
+      <Container>
+        <Header>
+          <Title>Species Management</Title>
+          <Subtitle>Community ID is required</Subtitle>
+        </Header>
+      </Container>
+    );
+  }
 
   // Event handlers
   const handleCreateSpecies = async (formData: CreateSpeciesFormData) => {

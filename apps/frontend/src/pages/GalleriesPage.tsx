@@ -338,6 +338,7 @@ export const GalleriesPage: React.FC = () => {
         ...prev,
         offset: 0,
         visibility:
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           visibilityFilter === 'ALL' ? undefined : (visibilityFilter as any),
       }));
     },

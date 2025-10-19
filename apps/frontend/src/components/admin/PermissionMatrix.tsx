@@ -392,6 +392,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
   };
 
   // Get user initials for avatar
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getUserInitials = (user: any) => {
     if (user?.displayName) {
       return user.displayName

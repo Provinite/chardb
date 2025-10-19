@@ -303,22 +303,14 @@ export const EnumValueManagementPage: React.FC = () => {
     EnumValuesByTraitQuery['enumValuesByTrait']['nodes'][0] | null
   >(null);
 
-  if (!traitId) {
-    return (
-      <Container>
-        <ErrorMessage message="Trait ID is required" />
-      </Container>
-    );
-  }
-
-  // GraphQL operations
   const {
     data: enumValuesData,
     loading: enumValuesLoading,
     error: enumValuesError,
     refetch,
   } = useEnumValuesByTraitQuery({
-    variables: { traitId, first: 100 },
+    variables: { traitId: traitId || '', first: 100 },
+    skip: !traitId,
   });
 
   const {
@@ -326,7 +318,8 @@ export const EnumValueManagementPage: React.FC = () => {
     loading: traitLoading,
     error: traitError,
   } = useTraitByIdQuery({
-    variables: { id: traitId },
+    variables: { id: traitId || '' },
+    skip: !traitId,
   });
 
   const [createEnumValueMutation] = useCreateEnumValueMutation({
@@ -362,6 +355,14 @@ export const EnumValueManagementPage: React.FC = () => {
       toast.error(`Failed to delete option: ${error.message}`);
     },
   });
+
+  if (!traitId) {
+    return (
+      <Container>
+        <ErrorMessage message="Trait ID is required" />
+      </Container>
+    );
+  }
 
   const enumValues = enumValuesData?.enumValuesByTrait?.nodes || [];
   const sortedEnumValues = [...enumValues].sort((a, b) => a.order - b.order);

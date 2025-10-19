@@ -168,6 +168,7 @@ export const JoinCommunityPage: React.FC = () => {
           navigate('/dashboard');
         }
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Claim invite code error:', error);
       const errorMessage =

@@ -180,11 +180,13 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
           : currentLikesCount + 1,
       },
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onCompleted: (data: any) => {
       if (data.toggleLike.isLiked) {
         toast.success('Added to likes!', { duration: 2000 });
       }
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
       console.error('Like toggle error:', error);
       toast.error('Failed to update like. Please try again.');

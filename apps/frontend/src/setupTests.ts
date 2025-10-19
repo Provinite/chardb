@@ -57,10 +57,12 @@ global.URL.createObjectURL = vi.fn(() => 'mocked-object-url');
 global.URL.revokeObjectURL = vi.fn();
 
 // Mock File and FileReader
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (global as any).File = class extends Blob {
   name: string;
   lastModified: number;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(chunks: any[], filename: string, options?: any) {
     super(chunks, options);
     this.name = filename;
@@ -68,6 +70,7 @@ global.URL.revokeObjectURL = vi.fn();
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (global as any).FileReader = class extends EventTarget {
   result: string | ArrayBuffer | null = null;
   error: DOMException | null = null;

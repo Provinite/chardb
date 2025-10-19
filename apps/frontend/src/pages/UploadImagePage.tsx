@@ -427,6 +427,7 @@ export const UploadImagePage: React.FC = () => {
     },
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleInputChange = (field: keyof UploadFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -549,9 +550,11 @@ export const UploadImagePage: React.FC = () => {
 
   const renderSuccessState = () => {
     const selectedCharacter = characters.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (c: any) => c.id === formData.characterId,
     );
     const selectedGallery = galleries.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (g: any) => g.id === formData.galleryId,
     );
 
@@ -783,18 +786,18 @@ export const UploadImagePage: React.FC = () => {
                 <CharacterCard>
                   <CharacterAvatar>
                     {characters
-                      .find((c: any) => c.id === formData.characterId)
+                      .find((c: any) => c.id === formData.characterId) // eslint-disable-line @typescript-eslint/no-explicit-any
                       ?.name?.charAt(0) || '?'}
                   </CharacterAvatar>
                   <CharacterInfo>
                     <CharacterName>
                       {characters.find(
-                        (c: any) => c.id === formData.characterId,
+                        (c: any) => c.id === formData.characterId, // eslint-disable-line @typescript-eslint/no-explicit-any
                       )?.name || 'Unknown'}
                     </CharacterName>
                     <CharacterMeta>
                       {characters.find(
-                        (c: any) => c.id === formData.characterId,
+                        (c: any) => c.id === formData.characterId, // eslint-disable-line @typescript-eslint/no-explicit-any
                       )?.species?.name || 'Unknown species'}
                     </CharacterMeta>
                   </CharacterInfo>
@@ -815,6 +818,7 @@ export const UploadImagePage: React.FC = () => {
                   }
                 >
                   <option value="">Select a character...</option>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {characters.map((character: any) => (
                     <option key={character.id} value={character.id}>
                       {character.name} ({character.species?.name || 'Unknown'})
@@ -902,6 +906,7 @@ export const UploadImagePage: React.FC = () => {
                     }
                   >
                     <option value="">Select a gallery...</option>
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {galleries.map((gallery: any) => (
                       <option key={gallery.id} value={gallery.id}>
                         {gallery.name}

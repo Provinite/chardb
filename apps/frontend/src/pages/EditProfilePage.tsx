@@ -385,6 +385,7 @@ export const EditProfilePage: React.FC = () => {
 
       // Redirect to the OAuth URL (no tokens in URL)
       window.location.href = data.url;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error initiating OAuth:', error);
       toast.error(error.message || 'Failed to start DeviantArt linking');
@@ -404,6 +405,7 @@ export const EditProfilePage: React.FC = () => {
       });
       toast.success(`${provider} account unlinked successfully`);
       refetchAccounts();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error unlinking account:', error);
       toast.error(error.message || `Failed to unlink ${provider} account`);
@@ -535,6 +537,7 @@ export const EditProfilePage: React.FC = () => {
         ) : externalAccountsData?.myExternalAccounts &&
           externalAccountsData.myExternalAccounts.length > 0 ? (
           <AccountsList>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {externalAccountsData.myExternalAccounts.map((account: any) => (
               <AccountItem key={account.id}>
                 <AccountInfo>
@@ -569,6 +572,7 @@ export const EditProfilePage: React.FC = () => {
 
         {/* Show link button if no DeviantArt account linked */}
         {!externalAccountsData?.myExternalAccounts?.some(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (acc: any) => acc.provider === 'DEVIANTART',
         ) && (
           <div style={{ marginTop: '1rem' }}>

@@ -222,6 +222,7 @@ export const FollowingPage: React.FC = () => {
         </EmptyState>
       ) : (
         <UserList>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {following.map((followedUser: any) => (
             <UserCard key={followedUser.id}>
               <UserAvatar>

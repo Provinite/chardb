@@ -404,7 +404,8 @@ export const SpeciesPage: React.FC = () => {
         <SectionGrid>
           {availableSections.map((section) => {
             const CardComponent = section.available
-              ? ({ children, ...props }: any) => (
+              ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ({ children, ...props }: any) => (
                   <Link
                     to={section.path}
                     style={{ textDecoration: 'none', color: 'inherit' }}

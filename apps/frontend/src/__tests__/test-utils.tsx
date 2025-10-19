@@ -32,6 +32,7 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 // Mock AuthContext for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const MockAuthProvider: React.FC<{ children: React.ReactNode; user?: any }> = ({
   children,
 }) => {
@@ -50,6 +51,7 @@ const MockThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 interface AllTheProvidersProps {
   children: React.ReactNode;
   mocks?: readonly MockedResponse[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   user?: any;
   initialEntries?: string[];
 }
@@ -75,6 +77,7 @@ const AllTheProviders: React.FC<AllTheProvidersProps> = ({
 
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   mocks?: readonly MockedResponse[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   user?: any;
   initialEntries?: string[];
 }

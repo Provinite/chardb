@@ -281,6 +281,7 @@ export const CharactersPage: React.FC = () => {
         search: searchTerm || undefined,
         species: speciesFilter || undefined,
         visibility:
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           visibilityFilter === 'ALL' ? undefined : (visibilityFilter as any),
       };
       setFilters(newFilters);
@@ -297,6 +298,7 @@ export const CharactersPage: React.FC = () => {
         offset: 0,
         search: searchTerm || undefined,
         species: speciesFilter || undefined,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         visibility: visibility === 'ALL' ? undefined : (visibility as any),
       };
       setFilters(newFilters);

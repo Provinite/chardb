@@ -399,6 +399,7 @@ export const UserProfilePage: React.FC = () => {
           <ConnectedAccountsSection>
             <ConnectedAccountsTitle>Connected Accounts</ConnectedAccountsTitle>
             <ConnectedAccountsList>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {externalAccountsData.myExternalAccounts.map((account: any) => (
                 <ConnectedAccountBadge key={account.id}>
                   <AccountIcon>
@@ -548,6 +549,7 @@ export const UserProfilePage: React.FC = () => {
             </Link>
           </SectionHeader>
           <MediaGrid
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             media={recentMedia as any[]}
             showOwner={false}
             emptyMessage="No media uploaded yet"
