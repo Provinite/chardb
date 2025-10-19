@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   User,
@@ -57,7 +58,7 @@ const SidebarContent = styled.nav`
   gap: ${({ theme }) => theme.spacing.md};
 `;
 
-const SidebarHeader = styled.div`
+const SidebarHeader = styled(Link)`
   padding: ${({ theme}) => theme.spacing.md};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   display: flex;
@@ -65,6 +66,12 @@ const SidebarHeader = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.surface};
+  }
 `;
 
 const Divider = styled.div`
@@ -95,9 +102,9 @@ export const GlobalNavigationSidebar: React.FC<GlobalNavigationSidebarProps> = (
 
   return (
     <SidebarContainer className={className} role="navigation" aria-label="Global navigation">
-      <SidebarHeader>
+      <SidebarHeader to="/dashboard">
         <LayoutGrid size={20} />
-        Navigation
+        Dashboard
       </SidebarHeader>
 
       <SidebarContent>
@@ -157,9 +164,9 @@ export const GlobalNavigationSidebar: React.FC<GlobalNavigationSidebarProps> = (
         />
 
         <CommunityNavigationItem
-          to="/profile/edit"
+          to={`/user/${user?.username || ''}`}
           icon={User}
-          label="Edit Profile"
+          label="My Profile"
         />
 
         <Divider />
