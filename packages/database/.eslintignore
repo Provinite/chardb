@@ -1,11 +1,10 @@
 dist
 node_modules
-*.js
-!.eslintrc.js
 coverage
 .env
 
 # Generated code patterns
+src/generated/
 **/generated/
 **/*.generated.*
 **/__generated__/

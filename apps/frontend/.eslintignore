@@ -2,6 +2,11 @@ dist
 node_modules
 coverage
 .env
-src/gql/generated.ts
 vitest.config.ts
 vite.config.ts
+
+# Generated code patterns
+src/generated/
+**/generated/
+**/*.generated.*
+**/__generated__/
