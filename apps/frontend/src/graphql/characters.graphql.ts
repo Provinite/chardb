@@ -67,6 +67,11 @@ export const GET_CHARACTER = gql`
       species {
         id
         name
+        communityId
+        community {
+          id
+          name
+        }
       }
       age
       gender

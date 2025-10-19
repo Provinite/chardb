@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Dual-Sidebar Navigation System (#61)**: Context-aware navigation with community and global sidebars
+  - Community sidebar with permission-aware navigation for species, administration, and community management
+  - Global sidebar with quick access to personal content, liked items, browse sections, and communities
 - **DeviantArt OAuth Account Linking (#62, #73)**: Complete external account linking UI
   - Added DeviantArt OAuth callback page (`/auth/deviantart/callback`) for handling OAuth redirects
   - Added external accounts management section to Edit Profile page

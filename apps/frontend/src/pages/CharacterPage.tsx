@@ -25,6 +25,24 @@ const Container = styled.div`
   padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.md};
 `;
 
+const Breadcrumb = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.text.muted};
+
+  a {
+    color: ${({ theme }) => theme.colors.primary};
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
 const BackButton = styled.button`
   display: flex;
   align-items: center;
@@ -469,6 +487,27 @@ export const CharacterPage: React.FC = () => {
 
   return (
     <Container>
+      {/* Breadcrumb navigation */}
+      {character.species?.community ? (
+        <Breadcrumb>
+          <Link to={`/communities/${character.species.community.id}`}>
+            {character.species.community.name}
+          </Link>
+          <span>/</span>
+          <Link to={`/species/${character.species.id}`}>
+            {character.species.name}
+          </Link>
+          <span>/</span>
+          <span>{character.name}</span>
+        </Breadcrumb>
+      ) : (
+        <Breadcrumb>
+          <Link to="/characters">All Characters</Link>
+          <span>/</span>
+          <span>{character.name}</span>
+        </Breadcrumb>
+      )}
+
       <BackButton onClick={handleBackClick}>Back to Characters</BackButton>
 
       <CharacterHeader>
