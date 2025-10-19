@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   BarChart3,
@@ -11,8 +11,8 @@ import {
   Shield,
   Lock,
   AlertCircle,
-  ArrowLeft,
   Globe,
+  LayoutGrid,
 } from 'lucide-react';
 import { CommunityNavigationItem } from './CommunityNavigationItem';
 import { CommunityNavigationGroup } from './CommunityNavigationGroup';
@@ -85,34 +85,24 @@ const Divider = styled.div`
   margin: ${({ theme }) => `${theme.spacing.sm} 0`};
 `;
 
-const BackButton = styled.button`
+const DashboardLink = styled(Link)`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
-  width: 100%;
   padding: ${({ theme }) => theme.spacing.sm};
-  background: transparent;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  text-decoration: none;
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.surface};
-    border-color: ${({ theme }) => theme.colors.primary};
-    color: ${({ theme }) => theme.colors.primary};
-  }
-
-  &:focus-visible {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
-    outline-offset: 2px;
   }
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
 `;
 
@@ -201,7 +191,6 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   onToggleToGlobal,
 }) => {
   const location = useLocation();
-  const navigate = useNavigate();
 
   // Extract communityId from URL path instead of useParams (Layout is outside Routes)
   let communityId = extractCommunityId(location.pathname);
@@ -325,10 +314,10 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
             View Global Navigation
           </ToggleButton>
         )}
-        <BackButton onClick={() => navigate('/')}>
-          <ArrowLeft />
-          Back to Global
-        </BackButton>
+        <DashboardLink to="/dashboard">
+          <LayoutGrid />
+          Dashboard
+        </DashboardLink>
       </CommunityHeader>
 
       {loading ? (
