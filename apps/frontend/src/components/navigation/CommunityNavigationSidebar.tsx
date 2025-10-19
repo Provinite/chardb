@@ -16,7 +16,7 @@ import { CommunityNavigationItem } from './CommunityNavigationItem';
 import { CommunityNavigationGroup } from './CommunityNavigationGroup';
 import { CommunitySwitcher } from './CommunitySwitcher';
 import { useUserCommunityRole } from '../../hooks/useUserCommunityRole';
-import { useSpeciesByIdQuery } from '../../generated/graphql';
+import { useSpeciesByIdQuery, useGetCharacterQuery } from '../../generated/graphql';
 
 interface CommunityNavigationSidebarProps {
   className?: string;
@@ -143,6 +143,14 @@ const extractSpeciesId = (pathname: string): string | undefined => {
   return match ? match[1] : undefined;
 };
 
+/**
+ * Extract character ID from pathname for character pages
+ */
+const extractCharacterId = (pathname: string): string | undefined => {
+  const match = pathname.match(/^\/character\/([^/]+)/);
+  return match ? match[1] : undefined;
+};
+
 export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProps> = ({
   className,
 }) => {
@@ -152,6 +160,7 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   // Extract communityId from URL path instead of useParams (Layout is outside Routes)
   let communityId = extractCommunityId(location.pathname);
   const speciesId = extractSpeciesId(location.pathname);
+  const characterId = extractCharacterId(location.pathname);
 
   // If we're on a species route, fetch the species to get its communityId
   const { data: speciesData, loading: speciesLoading } = useSpeciesByIdQuery({
@@ -159,9 +168,27 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
     skip: !speciesId,
   });
 
+  // If we're on a character route, fetch the character to get its species
+  const { data: characterData, loading: characterLoading } = useGetCharacterQuery({
+    variables: { id: characterId || '' },
+    skip: !characterId,
+  });
+
+  // Determine the species context (either from direct species route or from character)
+  let contextSpeciesId: string | undefined = speciesId;
+  let contextSpeciesName: string | undefined = speciesData?.speciesById?.name;
+
   // Override communityId if we got it from species data
   if (speciesId && speciesData?.speciesById?.community?.id) {
     communityId = speciesData.speciesById.community.id;
+  }
+
+  // If on character route with species, use that for species context
+  if (characterId && characterData?.character?.species) {
+    contextSpeciesId = characterData.character.species.id;
+    contextSpeciesName = characterData.character.species.name;
+    // Character pages don't automatically get community context from species
+    // They would need their own community association
   }
 
   const {
@@ -179,7 +206,11 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
     pathname: location.pathname,
     communityId,
     speciesId,
+    characterId,
+    contextSpeciesId,
+    contextSpeciesName,
     speciesLoading,
+    characterLoading,
     isCommunityRoute: isCommunityRoute(location.pathname),
     loading,
     isMember,
@@ -193,8 +224,8 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
     return null;
   }
 
-  // Show loading state while checking membership or species data
-  if (loading || (speciesId && speciesLoading)) {
+  // Show loading state while checking membership, species data, or character data
+  if (loading || (speciesId && speciesLoading) || (characterId && characterLoading)) {
     console.log('[CommunityNavigationSidebar] Showing loading state');
     return (
       <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
@@ -285,16 +316,54 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
             )}
           </CommunityNavigationGroup>
 
+          {/* Species Context - shown when viewing a specific species or character with species */}
+          {contextSpeciesId && (
+            <>
+              <Divider />
+              <CommunityNavigationGroup title={`Species: ${contextSpeciesName || 'Loading...'}`} icon={Dna} defaultExpanded>
+                <CommunityNavigationItem
+                  to={`/species/${contextSpeciesId}`}
+                  icon={Dna}
+                  label="Overview"
+                  isNested
+                />
+
+                {/* Traits - requires species permissions */}
+                {hasSpeciesPermissions && (
+                  <CommunityNavigationItem
+                    to={`/species/${contextSpeciesId}/traits`}
+                    icon={Settings}
+                    label="Traits"
+                    isNested
+                  />
+                )}
+
+                {/* Variants - requires species permissions */}
+                {hasSpeciesPermissions && (
+                  <CommunityNavigationItem
+                    to={`/species/${contextSpeciesId}/variants`}
+                    icon={Dna}
+                    label="Variants"
+                    isNested
+                  />
+                )}
+              </CommunityNavigationGroup>
+            </>
+          )}
+
           {/* Species & Characters Section - requires species permissions */}
           {hasSpeciesPermissions && (
-            <CommunityNavigationGroup title="Species & Characters" icon={Dna}>
-              <CommunityNavigationItem
-                to={`${communityBasePath}/species`}
-                icon={Dna}
-                label="Species Management"
-                isNested
-              />
-            </CommunityNavigationGroup>
+            <>
+              <Divider />
+              <CommunityNavigationGroup title="Species & Characters" icon={Dna}>
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/species`}
+                  icon={Dna}
+                  label="Species Management"
+                  isNested
+                />
+              </CommunityNavigationGroup>
+            </>
           )}
 
           {/* Administration Section - requires admin permissions */}
