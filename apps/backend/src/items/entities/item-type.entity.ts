@@ -1,4 +1,5 @@
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
+import { GraphQLJSON } from 'graphql-type-json';
 import { Community } from '../../communities/entities/community.entity';
 
 @ObjectType()
@@ -39,8 +40,8 @@ export class ItemType {
   @Field({ nullable: true })
   color?: string;
 
-  @Field(() => String, { nullable: true })
-  metadata?: string; // JSON string
+  @Field(() => GraphQLJSON, { nullable: true })
+  metadata?: any; // JSON object
 
   @Field()
   createdAt: Date;
