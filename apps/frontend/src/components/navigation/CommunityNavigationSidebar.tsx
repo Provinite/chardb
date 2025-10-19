@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Globe,
   LayoutGrid,
+  Package,
 } from 'lucide-react';
 import { CommunityNavigationItem } from './CommunityNavigationItem';
 import { CommunityNavigationGroup } from './CommunityNavigationGroup';
@@ -343,6 +344,14 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
               isNested
             />
 
+            {/* Inventory - visible to all community members */}
+            <CommunityNavigationItem
+              to={`${communityBasePath}/inventory`}
+              icon={Package}
+              label="Inventory"
+              isNested
+            />
+
             {/* Invite Codes - requires invite permissions */}
             {hasInvitePermissions && (
               <CommunityNavigationItem
@@ -423,6 +432,14 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
                 to={`${communityBasePath}/admin`}
                 icon={Shield}
                 label="Dashboard"
+                isNested
+              />
+
+              {/* Items - requires admin permissions */}
+              <CommunityNavigationItem
+                to={`${communityBasePath}/admin/items`}
+                icon={Package}
+                label="Items"
                 isNested
               />
 
