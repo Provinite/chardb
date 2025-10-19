@@ -238,7 +238,7 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   return (
     <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
       <CommunityHeader>
-        <CommunitySwitcher />
+        <CommunitySwitcher communityId={communityId} />
       </CommunityHeader>
 
       {loading ? (

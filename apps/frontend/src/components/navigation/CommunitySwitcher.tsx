@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { ChevronDown, Check, Search } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,6 +7,7 @@ import { useCommunityMembersByUserQuery } from '../../generated/graphql';
 
 interface CommunitySwitcherProps {
   className?: string;
+  communityId?: string;
 }
 
 const SwitcherContainer = styled.div`
@@ -212,12 +213,14 @@ const EmptyState = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
-export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({ className }) => {
+export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
+  className,
+  communityId
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { communityId } = useParams<{ communityId: string }>();
   const { user } = useAuth();
 
   const { data, loading } = useCommunityMembersByUserQuery({
