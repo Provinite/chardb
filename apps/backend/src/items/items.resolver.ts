@@ -177,35 +177,6 @@ export class ItemsResolver {
     return this.itemsService.deleteItem(id);
   }
 
-  // ==================== Item Queries ====================
-
-  @AllowUnauthenticated()
-  @Query(() => ItemConnection)
-  async items(
-    @Args('filters', { nullable: true }) filters?: ItemFiltersInput,
-  ): Promise<any> {
-    return this.itemsService.findAllItems(filters);
-  }
-
-  @AllowUnauthenticated()
-  @Query(() => ItemEntity)
-  async item(
-    @Args('id', { type: () => ID }) id: string,
-  ): Promise<any> {
-    const item = await this.itemsService.findItemById(id);
-    return item;
-  }
-
-  @AllowAnyAuthenticated()
-  @Query(() => ItemConnection)
-  async myItems(
-    @CurrentUser() user: AuthenticatedCurrentUserType,
-    @Args('filters', { nullable: true }) filters?: ItemFiltersInput,
-  ): Promise<any> {
-    const userFilters = { ...filters, ownerId: user.id };
-    return this.itemsService.findAllItems(userFilters);
-  }
-
   // ==================== Field Resolvers ====================
 
   @ResolveField(() => Community, { nullable: true })

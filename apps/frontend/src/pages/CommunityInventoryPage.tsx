@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { Package } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useQuery } from "@apollo/client";
-import { GET_MY_ITEMS } from "../graphql/items.graphql";
+import { GET_MY_INVENTORY } from "../graphql/items.graphql";
 import { useCommunityByIdQuery } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -160,8 +160,8 @@ export const CommunityInventoryPage: React.FC = () => {
       skip: !communityId,
     });
 
-  const { data: itemsData, loading: itemsLoading } = useQuery(GET_MY_ITEMS, {
-    variables: { filters: { communityId } },
+  const { data: inventoryData, loading: inventoryLoading } = useQuery(GET_MY_INVENTORY, {
+    variables: { communityId },
     skip: !communityId || !user,
   });
 
@@ -178,7 +178,7 @@ export const CommunityInventoryPage: React.FC = () => {
     );
   }
 
-  if (communityLoading || itemsLoading) {
+  if (communityLoading || inventoryLoading) {
     return (
       <LoadingContainer>
         <LoadingSpinner />
@@ -186,7 +186,9 @@ export const CommunityInventoryPage: React.FC = () => {
     );
   }
 
-  const items = itemsData?.myItems?.items || [];
+  // Get the inventory for this community (will be first and only one since we filtered by communityId)
+  const inventory = inventoryData?.me?.inventories?.[0];
+  const items = inventory?.items || [];
 
   return (
     <Container>

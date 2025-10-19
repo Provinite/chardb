@@ -1701,10 +1701,8 @@ type Query {
     """Role ID"""
     roleId: ID!
   ): InviteCodeConnection!
-  item(id: ID!): Item!
   itemType(id: ID!): ItemType!
   itemTypes(filters: ItemTypeFiltersInput): ItemTypeConnection!
-  items(filters: ItemFiltersInput): ItemConnection!
   likeStatus(entityId: ID!, entityType: LikeableType!): LikeStatus!
   likedCharacters: [Character!]!
   likedGalleries: [Gallery!]!

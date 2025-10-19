@@ -100,41 +100,32 @@ export const DELETE_ITEM_TYPE = gql`
   }
 `;
 
-// ==================== Item Queries ====================
+// ==================== Inventory Fragments ====================
 
-export const GET_ITEMS = gql`
-  query GetItems($filters: ItemFiltersInput) {
-    items(filters: $filters) {
-      items {
-        ...ItemFields
-      }
-      total
-      hasMore
-    }
-  }
-  ${ITEM_FRAGMENT}
-`;
-
-export const GET_MY_ITEMS = gql`
-  query GetMyItems($filters: ItemFiltersInput) {
-    myItems(filters: $filters) {
-      items {
-        ...ItemFields
-      }
-      total
-      hasMore
-    }
-  }
-  ${ITEM_FRAGMENT}
-`;
-
-export const GET_ITEM = gql`
-  query GetItem($id: ID!) {
-    item(id: $id) {
+export const INVENTORY_FRAGMENT = gql`
+  fragment InventoryFields on Inventory {
+    communityId
+    totalItems
+    items {
       ...ItemFields
     }
   }
   ${ITEM_FRAGMENT}
+`;
+
+// ==================== Item Queries ====================
+
+export const GET_MY_INVENTORY = gql`
+  query GetMyInventory($communityId: ID) {
+    me {
+      id
+      username
+      inventories(communityId: $communityId) {
+        ...InventoryFields
+      }
+    }
+  }
+  ${INVENTORY_FRAGMENT}
 `;
 
 // ==================== Item Mutations ====================
