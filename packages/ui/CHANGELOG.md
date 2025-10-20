@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.0.0] - 2025-10-19
+
 ### Added
 
 - **UserTypeahead Component**: Reusable user search and selection component with autocomplete
