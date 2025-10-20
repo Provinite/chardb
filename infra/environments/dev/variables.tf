@@ -67,6 +67,24 @@ variable "frontend_route53_zone_id" {
   default     = null
 }
 
+# DeviantArt OAuth Configuration
+variable "deviantart_client_id" {
+  description = "DeviantArt OAuth client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "deviantart_client_secret" {
+  description = "DeviantArt OAuth client secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "deviantart_callback_url" {
+  description = "DeviantArt OAuth callback URL"
+  type        = string
+}
+
 # SSH key is now auto-generated during deployment
 
 # Note: Using default VPC, no need to specify VPC/subnet variables

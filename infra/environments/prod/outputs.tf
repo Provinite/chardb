@@ -74,6 +74,23 @@ output "backend_jwt_secret" {
   sensitive   = true
 }
 
+output "backend_deviantart_client_id" {
+  description = "DeviantArt OAuth client ID for backend"
+  value       = module.backend.deviantart_client_id
+  sensitive   = true
+}
+
+output "backend_deviantart_client_secret" {
+  description = "DeviantArt OAuth client secret for backend"
+  value       = module.backend.deviantart_client_secret
+  sensitive   = true
+}
+
+output "backend_deviantart_callback_url" {
+  description = "DeviantArt OAuth callback URL for backend"
+  value       = module.backend.deviantart_callback_url
+}
+
 # Frontend infrastructure outputs
 output "frontend_bucket_name" {
   description = "Name of the frontend S3 bucket"

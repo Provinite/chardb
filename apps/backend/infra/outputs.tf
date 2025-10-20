@@ -76,3 +76,20 @@ output "jwt_secret" {
   value       = module.backend_docker_host.jwt_secret
   sensitive   = true
 }
+
+output "deviantart_client_id" {
+  description = "DeviantArt OAuth client ID"
+  value       = module.backend_docker_host.deviantart_client_id
+  sensitive   = true
+}
+
+output "deviantart_client_secret" {
+  description = "DeviantArt OAuth client secret"
+  value       = module.backend_docker_host.deviantart_client_secret
+  sensitive   = true
+}
+
+output "deviantart_callback_url" {
+  description = "DeviantArt OAuth callback URL"
+  value       = module.backend_docker_host.deviantart_callback_url
+}

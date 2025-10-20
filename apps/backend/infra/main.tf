@@ -13,17 +13,22 @@ module "backend_docker_host" {
 
   name          = "${var.project_name}-backend-${var.environment}"
   instance_type = var.instance_type
-  
+
   ssh_allowed_cidr_blocks = var.ssh_allowed_cidr_blocks
-  
+
   ecr_repository_url = var.backend_ecr_repository_url
   aws_region         = var.aws_region
   root_volume_size   = var.root_volume_size
-  
+
   # API Gateway integration
   enable_api_gateway = var.enable_api_gateway
   backend_port       = var.backend_port
-  
+
+  # DeviantArt OAuth Configuration
+  deviantart_client_id     = var.deviantart_client_id
+  deviantart_client_secret = var.deviantart_client_secret
+  deviantart_callback_url  = var.deviantart_callback_url
+
   tags = local.common_tags
 }
 

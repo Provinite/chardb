@@ -94,11 +94,16 @@ module "backend" {
   ssh_allowed_cidr_blocks    = var.backend_ssh_allowed_cidr_blocks
   enable_api_gateway         = var.backend_enable_api_gateway
   backend_ecr_repository_url = module.backend_ecr.repository_url
-  
+
   # Custom domain configuration (if domain_name is provided)
   api_custom_domain_name   = var.domain_name != null ? "api.${var.domain_name}" : ""
   api_acm_certificate_arn  = var.domain_name != null ? aws_acm_certificate_validation.main[0].certificate_arn : ""
   api_route53_zone_id      = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : ""
+
+  # DeviantArt OAuth Configuration
+  deviantart_client_id     = var.deviantart_client_id
+  deviantart_client_secret = var.deviantart_client_secret
+  deviantart_callback_url  = var.deviantart_callback_url
 }
 
 # Frontend infrastructure

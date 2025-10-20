@@ -35,25 +35,25 @@ data "aws_subnet" "default" {
 }
 
 # Get latest Amazon Linux 2023 AMI
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["amazon"]
+# data "aws_ami" "amazon_linux" {
+#   most_recent = true
+#   owners      = ["amazon"]
 
-  filter {
-    name   = "name"
-    values = ["al2023-ami-2023.7.20250527.1-kernel-6.12-arm64"]
-  }
+#   filter {
+#     name   = "name"
+#     values = ["al2023-ami-2023.7.20250527.1-kernel-6.12-arm64"]
+#   }
 
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
+#   filter {
+#     name   = "virtualization-type"
+#     values = ["hvm"]
+#   }
 
-  filter {
-    name   = "architecture"
-    values = ["arm64"]
-  }
-}
+#   filter {
+#     name   = "architecture"
+#     values = ["arm64"]
+#   }
+# }
 
 # Security Group
 resource "aws_security_group" "docker_host" {
@@ -201,7 +201,8 @@ resource "aws_eip" "docker_host" {
 
 # EC2 Instance
 resource "aws_instance" "docker_host" {
-  ami                    = data.aws_ami.amazon_linux.id
+  # ami                    = data.aws_ami.amazon_linux.id
+  ami                    = "ami-03ce2e1fd33992750"
   instance_type          = var.instance_type
   key_name               = aws_key_pair.docker_host.key_name
   vpc_security_group_ids = [aws_security_group.docker_host.id]
