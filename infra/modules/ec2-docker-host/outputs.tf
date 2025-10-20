@@ -61,3 +61,20 @@ output "jwt_secret" {
   value       = random_password.jwt_secret.result
   sensitive   = true
 }
+
+output "deviantart_client_id" {
+  description = "DeviantArt OAuth client ID"
+  value       = var.deviantart_client_id
+  sensitive   = true
+}
+
+output "deviantart_client_secret" {
+  description = "DeviantArt OAuth client secret"
+  value       = var.deviantart_client_secret
+  sensitive   = true
+}
+
+output "deviantart_callback_url" {
+  description = "DeviantArt OAuth callback URL"
+  value       = var.deviantart_callback_url
+}

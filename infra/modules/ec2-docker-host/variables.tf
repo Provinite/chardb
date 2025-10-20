@@ -70,3 +70,21 @@ variable "db_user" {
   type        = string
   default     = "app"
 }
+
+# DeviantArt OAuth Configuration
+variable "deviantart_client_id" {
+  description = "DeviantArt OAuth client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "deviantart_client_secret" {
+  description = "DeviantArt OAuth client secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "deviantart_callback_url" {
+  description = "DeviantArt OAuth callback URL"
+  type        = string
+}

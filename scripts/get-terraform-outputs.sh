@@ -49,6 +49,11 @@ ECR_REPOSITORY_URL=$(terraform output -raw backend_ecr_repository_url 2>/dev/nul
 DB_PASSWORD=$(terraform output -raw backend_db_password 2>/dev/null || echo "")
 JWT_SECRET=$(terraform output -raw backend_jwt_secret 2>/dev/null || echo "")
 
+# Get DeviantArt OAuth credentials
+DEVIANTART_CLIENT_ID=$(terraform output -raw backend_deviantart_client_id 2>/dev/null || echo "")
+DEVIANTART_CLIENT_SECRET=$(terraform output -raw backend_deviantart_client_secret 2>/dev/null || echo "")
+DEVIANTART_CALLBACK_URL=$(terraform output -raw backend_deviantart_callback_url 2>/dev/null || echo "")
+
 # Get backend URL for frontend
 BACKEND_URL=$(terraform output -raw backend_url 2>/dev/null || echo "")
 BACKEND_IP=$(terraform output -raw backend_public_ip 2>/dev/null || echo "")
@@ -60,6 +65,9 @@ echo "   SSH Key: $SSH_KEY_PATH"
 echo "   ECR Repository: $ECR_REPOSITORY_URL"
 echo "   Database Password: [REDACTED]"
 echo "   JWT Secret: [REDACTED]"
+echo "   DeviantArt Client ID: [REDACTED]"
+echo "   DeviantArt Client Secret: [REDACTED]"
+echo "   DeviantArt Callback URL: $DEVIANTART_CALLBACK_URL"
 echo ""
 echo "Export these variables:"
 echo "export SERVER_IP='$SERVER_IP'"
@@ -68,5 +76,8 @@ echo "export SSH_KEY_PATH='$SSH_KEY_PATH'"
 echo "export ECR_REPOSITORY_URL='$ECR_REPOSITORY_URL'"
 echo "export POSTGRES_PASSWORD='$DB_PASSWORD'"
 echo "export JWT_SECRET='$JWT_SECRET'"
+echo "export DEVIANTART_CLIENT_ID='$DEVIANTART_CLIENT_ID'"
+echo "export DEVIANTART_CLIENT_SECRET='$DEVIANTART_CLIENT_SECRET'"
+echo "export DEVIANTART_CALLBACK_URL='$DEVIANTART_CALLBACK_URL'"
 echo "export DATABASE_URL='postgresql://app:\$POSTGRES_PASSWORD@localhost:5432/app'"
 echo "export FRONTEND_URL='http://$BACKEND_IP:3000'"
