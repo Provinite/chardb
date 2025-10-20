@@ -236,10 +236,18 @@ export type Community = {
   createdAt: Scalars['DateTime']['output'];
   /** Unique identifier for the community */
   id: Scalars['ID']['output'];
+  /** Community members with optional search filtering */
+  members: Array<User>;
   /** Name of the community */
   name: Scalars['String']['output'];
   /** When the community was last updated */
   updatedAt: Scalars['DateTime']['output'];
+};
+
+
+export type CommunityMembersArgs = {
+  limit?: Scalars['Int']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CommunityConnection = {
@@ -427,6 +435,21 @@ export type CreateInviteCodeInput = {
   roleId?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type CreateItemTypeInput = {
+  category?: InputMaybe<Scalars['String']['input']>;
+  color?: InputMaybe<Scalars['String']['input']>;
+  communityId: Scalars['ID']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  iconUrl?: InputMaybe<Scalars['String']['input']>;
+  imageUrl?: InputMaybe<Scalars['String']['input']>;
+  isConsumable?: Scalars['Boolean']['input'];
+  isStackable?: Scalars['Boolean']['input'];
+  isTradeable?: Scalars['Boolean']['input'];
+  maxStackSize?: InputMaybe<Scalars['Int']['input']>;
+  metadata?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+};
+
 /** Input for creating a new role */
 export type CreateRoleInput = {
   /** Whether members with this role can create new characters */
@@ -445,8 +468,12 @@ export type CreateRoleInput = {
   canEditRole?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit species */
   canEditSpecies?: Scalars['Boolean']['input'];
+  /** Whether members with this role can grant items to community members */
+  canGrantItems?: Scalars['Boolean']['input'];
   /** Whether members with this role can list invite codes */
   canListInviteCodes?: Scalars['Boolean']['input'];
+  /** Whether members with this role can create, edit, and delete item types */
+  canManageItems?: Scalars['Boolean']['input'];
   /** Whether members with this role can change other members' roles */
   canManageMemberRoles?: Scalars['Boolean']['input'];
   /** Whether members with this role can remove community members */
@@ -657,6 +684,13 @@ export type GalleryFiltersInput = {
   visibility?: InputMaybe<Visibility>;
 };
 
+export type GrantItemInput = {
+  itemTypeId: Scalars['ID']['input'];
+  metadata?: InputMaybe<Scalars['String']['input']>;
+  quantity?: Scalars['Int']['input'];
+  userId: Scalars['ID']['input'];
+};
+
 export type Image = {
   __typename?: 'Image';
   altText: Maybe<Scalars['String']['output']>;
@@ -707,6 +741,13 @@ export type ImageTag = {
   tag: Tag;
 };
 
+export type Inventory = {
+  __typename?: 'Inventory';
+  communityId: Scalars['ID']['output'];
+  items: Array<Item>;
+  totalItems: Scalars['Float']['output'];
+};
+
 /** An invite code that can be used to join a community with an optional role */
 export type InviteCode = {
   __typename?: 'InviteCode';
@@ -745,6 +786,56 @@ export type InviteCodeConnection = {
   nodes: Array<InviteCode>;
   /** Total count of invite codes matching the query */
   totalCount: Scalars['Float']['output'];
+};
+
+export type Item = {
+  __typename?: 'Item';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  itemType: ItemType;
+  itemTypeId: Scalars['ID']['output'];
+  metadata: Maybe<Scalars['JSON']['output']>;
+  owner: User;
+  ownerId: Scalars['ID']['output'];
+  quantity: Scalars['Int']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type ItemType = {
+  __typename?: 'ItemType';
+  category: Maybe<Scalars['String']['output']>;
+  color: Maybe<Scalars['String']['output']>;
+  community: Maybe<Community>;
+  communityId: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  description: Maybe<Scalars['String']['output']>;
+  iconUrl: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  imageUrl: Maybe<Scalars['String']['output']>;
+  isConsumable: Scalars['Boolean']['output'];
+  isStackable: Scalars['Boolean']['output'];
+  isTradeable: Scalars['Boolean']['output'];
+  itemType: ItemType;
+  maxStackSize: Maybe<Scalars['Int']['output']>;
+  metadata: Maybe<Scalars['JSON']['output']>;
+  name: Scalars['String']['output'];
+  owner: User;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type ItemTypeConnection = {
+  __typename?: 'ItemTypeConnection';
+  hasMore: Scalars['Boolean']['output'];
+  itemTypes: Array<ItemType>;
+  total: Scalars['Int']['output'];
+};
+
+export type ItemTypeFiltersInput = {
+  category?: InputMaybe<Scalars['String']['input']>;
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+  limit?: Scalars['Int']['input'];
+  offset?: Scalars['Int']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type LikeResult = {
@@ -904,6 +995,7 @@ export type Mutation = {
   createGallery: Gallery;
   /** Create a new invite code */
   createInviteCode: InviteCode;
+  createItemType: ItemType;
   /** Create a new role */
   createRole: Role;
   /** Create a new species */
@@ -921,8 +1013,13 @@ export type Mutation = {
   deleteComment: Scalars['Boolean']['output'];
   deleteGallery: RemovalResponse;
   deleteImage: Scalars['Boolean']['output'];
+  /** Delete an item (admin only) */
+  deleteItem: Scalars['Boolean']['output'];
+  deleteItemType: Scalars['Boolean']['output'];
   /** Deletes a media item and its associated content */
   deleteMedia: Scalars['Boolean']['output'];
+  /** Grant an item to a user (admin only) */
+  grantItem: Item;
   login: AuthPayload;
   refreshToken: Scalars['String']['output'];
   /** Remove a character ownership change record */
@@ -979,6 +1076,9 @@ export type Mutation = {
   updateImage: Image;
   /** Update an invite code */
   updateInviteCode: InviteCode;
+  /** Update an item (admin only) */
+  updateItem: Item;
+  updateItemType: ItemType;
   /** Updates media metadata (title, description, etc.) */
   updateMedia: Media;
   updateProfile: User;
@@ -1065,6 +1165,11 @@ export type MutationCreateInviteCodeArgs = {
 };
 
 
+export type MutationCreateItemTypeArgs = {
+  input: CreateItemTypeInput;
+};
+
+
 export type MutationCreateRoleArgs = {
   createRoleInput: CreateRoleInput;
 };
@@ -1115,8 +1220,23 @@ export type MutationDeleteImageArgs = {
 };
 
 
+export type MutationDeleteItemArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteItemTypeArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteMediaArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationGrantItemArgs = {
+  input: GrantItemInput;
 };
 
 
@@ -1305,6 +1425,18 @@ export type MutationUpdateInviteCodeArgs = {
 };
 
 
+export type MutationUpdateItemArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateItemInput;
+};
+
+
+export type MutationUpdateItemTypeArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateItemTypeInput;
+};
+
+
 export type MutationUpdateMediaArgs = {
   id: Scalars['ID']['input'];
   input: UpdateMediaInput;
@@ -1422,6 +1554,8 @@ export type Query = {
   inviteCodesByCreator: InviteCodeConnection;
   /** Get invite codes by role ID with pagination */
   inviteCodesByRole: InviteCodeConnection;
+  itemType: ItemType;
+  itemTypes: ItemTypeConnection;
   likeStatus: LikeStatus;
   likedCharacters: Array<Character>;
   likedGalleries: Array<Gallery>;
@@ -1730,6 +1864,16 @@ export type QueryInviteCodesByRoleArgs = {
 };
 
 
+export type QueryItemTypeArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryItemTypesArgs = {
+  filters?: InputMaybe<ItemTypeFiltersInput>;
+};
+
+
 export type QueryLikeStatusArgs = {
   entityId: Scalars['ID']['input'];
   entityType: LikeableType;
@@ -1957,8 +2101,12 @@ export type Role = {
   canEditRole: Scalars['Boolean']['output'];
   /** Whether members with this role can edit species */
   canEditSpecies: Scalars['Boolean']['output'];
+  /** Whether members with this role can grant items to community members */
+  canGrantItems: Scalars['Boolean']['output'];
   /** Whether members with this role can list invite codes */
   canListInviteCodes: Scalars['Boolean']['output'];
+  /** Whether members with this role can create, edit, and delete item types */
+  canManageItems: Scalars['Boolean']['output'];
   /** Whether members with this role can change other members' roles */
   canManageMemberRoles: Scalars['Boolean']['output'];
   /** Whether members with this role can remove community members */
@@ -2280,6 +2428,25 @@ export type UpdateInviteCodeInput = {
   roleId?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type UpdateItemInput = {
+  metadata?: InputMaybe<Scalars['String']['input']>;
+  quantity?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type UpdateItemTypeInput = {
+  category?: InputMaybe<Scalars['String']['input']>;
+  color?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  iconUrl?: InputMaybe<Scalars['String']['input']>;
+  imageUrl?: InputMaybe<Scalars['String']['input']>;
+  isConsumable?: InputMaybe<Scalars['Boolean']['input']>;
+  isStackable?: InputMaybe<Scalars['Boolean']['input']>;
+  isTradeable?: InputMaybe<Scalars['Boolean']['input']>;
+  maxStackSize?: InputMaybe<Scalars['Int']['input']>;
+  metadata?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
 /** Input type for updating media metadata */
 export type UpdateMediaInput = {
   /** Updated character association */
@@ -2314,8 +2481,12 @@ export type UpdateRoleInput = {
   canEditRole?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit species */
   canEditSpecies?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can grant items to community members */
+  canGrantItems?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can list invite codes */
   canListInviteCodes?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can create, edit, and delete item types */
+  canManageItems?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can change other members' roles */
   canManageMemberRoles?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can remove community members */
@@ -2402,6 +2573,8 @@ export type User = {
   followersCount: Scalars['Int']['output'];
   followingCount: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
+  /** User's inventories across different communities */
+  inventories: Array<Inventory>;
   isAdmin: Scalars['Boolean']['output'];
   isVerified: Scalars['Boolean']['output'];
   location: Maybe<Scalars['String']['output']>;
@@ -2410,6 +2583,11 @@ export type User = {
   userIsFollowing: Scalars['Boolean']['output'];
   username: Scalars['String']['output'];
   website: Maybe<Scalars['String']['output']>;
+};
+
+
+export type UserInventoriesArgs = {
+  communityId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UserConnection = {
@@ -2569,6 +2747,8 @@ export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, _count: { __typename?: 'CharacterCount', media: number } }> };
 
+export type CommunityMemberUserFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null };
+
 export type CommunitiesQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
   after?: InputMaybe<Scalars['String']['input']>;
@@ -2583,6 +2763,15 @@ export type CommunityByIdQueryVariables = Exact<{
 
 
 export type CommunityByIdQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } };
+
+export type GetCommunityMembersQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetCommunityMembersQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, members: Array<{ __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }> } };
 
 export type CreateCommunityMutationVariables = Exact<{
   createCommunityInput: CreateCommunityInput;
@@ -2872,6 +3061,77 @@ export type RolesByCommunityQueryVariables = Exact<{
 
 
 export type RolesByCommunityQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Role', id: string, name: string, canCreateInviteCode: boolean, community: { __typename?: 'Community', id: string, name: string } }> } };
+
+export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string };
+
+export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } };
+
+export type GetItemTypesQueryVariables = Exact<{
+  filters?: InputMaybe<ItemTypeFiltersInput>;
+}>;
+
+
+export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }> } };
+
+export type GetItemTypeQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null } };
+
+export type CreateItemTypeMutationVariables = Exact<{
+  input: CreateItemTypeInput;
+}>;
+
+
+export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string } };
+
+export type UpdateItemTypeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateItemTypeInput;
+}>;
+
+
+export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string } };
+
+export type DeleteItemTypeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteItemTypeMutation = { __typename?: 'Mutation', deleteItemType: boolean };
+
+export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> };
+
+export type GetMyInventoryQueryVariables = Exact<{
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> }> } };
+
+export type GrantItemMutationVariables = Exact<{
+  input: GrantItemInput;
+}>;
+
+
+export type GrantItemMutation = { __typename?: 'Mutation', grantItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
+
+export type UpdateItemMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateItemInput;
+}>;
+
+
+export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
+
+export type DeleteItemMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteItemMutation = { __typename?: 'Mutation', deleteItem: boolean };
 
 export type GetMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -3254,6 +3514,14 @@ export type UpdateProfileMutationVariables = Exact<{
 
 export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, createdAt: string, updatedAt: string } };
 
+export const CommunityMemberUserFragmentDoc = gql`
+    fragment CommunityMemberUser on User {
+  id
+  username
+  displayName
+  avatarUrl
+}
+    `;
 export const EnumValueSettingDetailsFragmentDoc = gql`
     fragment EnumValueSettingDetails on EnumValueSetting {
   id
@@ -3293,6 +3561,54 @@ export const EnumValueConnectionDetailsFragmentDoc = gql`
   totalCount
 }
     ${EnumValueDetailsFragmentDoc}`;
+export const ItemTypeFieldsFragmentDoc = gql`
+    fragment ItemTypeFields on ItemType {
+  id
+  name
+  description
+  communityId
+  category
+  isStackable
+  maxStackSize
+  isTradeable
+  isConsumable
+  imageUrl
+  iconUrl
+  color
+  metadata
+  createdAt
+  updatedAt
+}
+    `;
+export const ItemFieldsFragmentDoc = gql`
+    fragment ItemFields on Item {
+  id
+  itemTypeId
+  ownerId
+  quantity
+  metadata
+  createdAt
+  updatedAt
+  itemType {
+    ...ItemTypeFields
+  }
+  owner {
+    id
+    username
+    displayName
+    avatarUrl
+  }
+}
+    ${ItemTypeFieldsFragmentDoc}`;
+export const InventoryFieldsFragmentDoc = gql`
+    fragment InventoryFields on Inventory {
+  communityId
+  totalItems
+  items {
+    ...ItemFields
+  }
+}
+    ${ItemFieldsFragmentDoc}`;
 export const SpeciesDetailsFragmentDoc = gql`
     fragment SpeciesDetails on Species {
   id
@@ -4335,6 +4651,51 @@ export type CommunityByIdQueryHookResult = ReturnType<typeof useCommunityByIdQue
 export type CommunityByIdLazyQueryHookResult = ReturnType<typeof useCommunityByIdLazyQuery>;
 export type CommunityByIdSuspenseQueryHookResult = ReturnType<typeof useCommunityByIdSuspenseQuery>;
 export type CommunityByIdQueryResult = Apollo.QueryResult<CommunityByIdQuery, CommunityByIdQueryVariables>;
+export const GetCommunityMembersDocument = gql`
+    query GetCommunityMembers($communityId: ID!, $search: String, $limit: Int) {
+  community(id: $communityId) {
+    id
+    members(search: $search, limit: $limit) {
+      ...CommunityMemberUser
+    }
+  }
+}
+    ${CommunityMemberUserFragmentDoc}`;
+
+/**
+ * __useGetCommunityMembersQuery__
+ *
+ * To run a query within a React component, call `useGetCommunityMembersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCommunityMembersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCommunityMembersQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      search: // value for 'search'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function useGetCommunityMembersQuery(baseOptions: Apollo.QueryHookOptions<GetCommunityMembersQuery, GetCommunityMembersQueryVariables> & ({ variables: GetCommunityMembersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCommunityMembersQuery, GetCommunityMembersQueryVariables>(GetCommunityMembersDocument, options);
+      }
+export function useGetCommunityMembersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCommunityMembersQuery, GetCommunityMembersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCommunityMembersQuery, GetCommunityMembersQueryVariables>(GetCommunityMembersDocument, options);
+        }
+export function useGetCommunityMembersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCommunityMembersQuery, GetCommunityMembersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCommunityMembersQuery, GetCommunityMembersQueryVariables>(GetCommunityMembersDocument, options);
+        }
+export type GetCommunityMembersQueryHookResult = ReturnType<typeof useGetCommunityMembersQuery>;
+export type GetCommunityMembersLazyQueryHookResult = ReturnType<typeof useGetCommunityMembersLazyQuery>;
+export type GetCommunityMembersSuspenseQueryHookResult = ReturnType<typeof useGetCommunityMembersSuspenseQuery>;
+export type GetCommunityMembersQueryResult = Apollo.QueryResult<GetCommunityMembersQuery, GetCommunityMembersQueryVariables>;
 export const CreateCommunityDocument = gql`
     mutation CreateCommunity($createCommunityInput: CreateCommunityInput!) {
   createCommunity(createCommunityInput: $createCommunityInput) {
@@ -6243,6 +6604,334 @@ export type RolesByCommunityQueryHookResult = ReturnType<typeof useRolesByCommun
 export type RolesByCommunityLazyQueryHookResult = ReturnType<typeof useRolesByCommunityLazyQuery>;
 export type RolesByCommunitySuspenseQueryHookResult = ReturnType<typeof useRolesByCommunitySuspenseQuery>;
 export type RolesByCommunityQueryResult = Apollo.QueryResult<RolesByCommunityQuery, RolesByCommunityQueryVariables>;
+export const GetItemTypesDocument = gql`
+    query GetItemTypes($filters: ItemTypeFiltersInput) {
+  itemTypes(filters: $filters) {
+    itemTypes {
+      ...ItemTypeFields
+    }
+    total
+    hasMore
+  }
+}
+    ${ItemTypeFieldsFragmentDoc}`;
+
+/**
+ * __useGetItemTypesQuery__
+ *
+ * To run a query within a React component, call `useGetItemTypesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetItemTypesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetItemTypesQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useGetItemTypesQuery(baseOptions?: Apollo.QueryHookOptions<GetItemTypesQuery, GetItemTypesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetItemTypesQuery, GetItemTypesQueryVariables>(GetItemTypesDocument, options);
+      }
+export function useGetItemTypesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetItemTypesQuery, GetItemTypesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetItemTypesQuery, GetItemTypesQueryVariables>(GetItemTypesDocument, options);
+        }
+export function useGetItemTypesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetItemTypesQuery, GetItemTypesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetItemTypesQuery, GetItemTypesQueryVariables>(GetItemTypesDocument, options);
+        }
+export type GetItemTypesQueryHookResult = ReturnType<typeof useGetItemTypesQuery>;
+export type GetItemTypesLazyQueryHookResult = ReturnType<typeof useGetItemTypesLazyQuery>;
+export type GetItemTypesSuspenseQueryHookResult = ReturnType<typeof useGetItemTypesSuspenseQuery>;
+export type GetItemTypesQueryResult = Apollo.QueryResult<GetItemTypesQuery, GetItemTypesQueryVariables>;
+export const GetItemTypeDocument = gql`
+    query GetItemType($id: ID!) {
+  itemType(id: $id) {
+    ...ItemTypeFields
+    community {
+      id
+      name
+    }
+  }
+}
+    ${ItemTypeFieldsFragmentDoc}`;
+
+/**
+ * __useGetItemTypeQuery__
+ *
+ * To run a query within a React component, call `useGetItemTypeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetItemTypeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetItemTypeQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetItemTypeQuery(baseOptions: Apollo.QueryHookOptions<GetItemTypeQuery, GetItemTypeQueryVariables> & ({ variables: GetItemTypeQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetItemTypeQuery, GetItemTypeQueryVariables>(GetItemTypeDocument, options);
+      }
+export function useGetItemTypeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetItemTypeQuery, GetItemTypeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetItemTypeQuery, GetItemTypeQueryVariables>(GetItemTypeDocument, options);
+        }
+export function useGetItemTypeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetItemTypeQuery, GetItemTypeQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetItemTypeQuery, GetItemTypeQueryVariables>(GetItemTypeDocument, options);
+        }
+export type GetItemTypeQueryHookResult = ReturnType<typeof useGetItemTypeQuery>;
+export type GetItemTypeLazyQueryHookResult = ReturnType<typeof useGetItemTypeLazyQuery>;
+export type GetItemTypeSuspenseQueryHookResult = ReturnType<typeof useGetItemTypeSuspenseQuery>;
+export type GetItemTypeQueryResult = Apollo.QueryResult<GetItemTypeQuery, GetItemTypeQueryVariables>;
+export const CreateItemTypeDocument = gql`
+    mutation CreateItemType($input: CreateItemTypeInput!) {
+  createItemType(input: $input) {
+    ...ItemTypeFields
+  }
+}
+    ${ItemTypeFieldsFragmentDoc}`;
+export type CreateItemTypeMutationFn = Apollo.MutationFunction<CreateItemTypeMutation, CreateItemTypeMutationVariables>;
+
+/**
+ * __useCreateItemTypeMutation__
+ *
+ * To run a mutation, you first call `useCreateItemTypeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateItemTypeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createItemTypeMutation, { data, loading, error }] = useCreateItemTypeMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateItemTypeMutation(baseOptions?: Apollo.MutationHookOptions<CreateItemTypeMutation, CreateItemTypeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateItemTypeMutation, CreateItemTypeMutationVariables>(CreateItemTypeDocument, options);
+      }
+export type CreateItemTypeMutationHookResult = ReturnType<typeof useCreateItemTypeMutation>;
+export type CreateItemTypeMutationResult = Apollo.MutationResult<CreateItemTypeMutation>;
+export type CreateItemTypeMutationOptions = Apollo.BaseMutationOptions<CreateItemTypeMutation, CreateItemTypeMutationVariables>;
+export const UpdateItemTypeDocument = gql`
+    mutation UpdateItemType($id: ID!, $input: UpdateItemTypeInput!) {
+  updateItemType(id: $id, input: $input) {
+    ...ItemTypeFields
+  }
+}
+    ${ItemTypeFieldsFragmentDoc}`;
+export type UpdateItemTypeMutationFn = Apollo.MutationFunction<UpdateItemTypeMutation, UpdateItemTypeMutationVariables>;
+
+/**
+ * __useUpdateItemTypeMutation__
+ *
+ * To run a mutation, you first call `useUpdateItemTypeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateItemTypeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateItemTypeMutation, { data, loading, error }] = useUpdateItemTypeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateItemTypeMutation(baseOptions?: Apollo.MutationHookOptions<UpdateItemTypeMutation, UpdateItemTypeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateItemTypeMutation, UpdateItemTypeMutationVariables>(UpdateItemTypeDocument, options);
+      }
+export type UpdateItemTypeMutationHookResult = ReturnType<typeof useUpdateItemTypeMutation>;
+export type UpdateItemTypeMutationResult = Apollo.MutationResult<UpdateItemTypeMutation>;
+export type UpdateItemTypeMutationOptions = Apollo.BaseMutationOptions<UpdateItemTypeMutation, UpdateItemTypeMutationVariables>;
+export const DeleteItemTypeDocument = gql`
+    mutation DeleteItemType($id: ID!) {
+  deleteItemType(id: $id)
+}
+    `;
+export type DeleteItemTypeMutationFn = Apollo.MutationFunction<DeleteItemTypeMutation, DeleteItemTypeMutationVariables>;
+
+/**
+ * __useDeleteItemTypeMutation__
+ *
+ * To run a mutation, you first call `useDeleteItemTypeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteItemTypeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteItemTypeMutation, { data, loading, error }] = useDeleteItemTypeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteItemTypeMutation(baseOptions?: Apollo.MutationHookOptions<DeleteItemTypeMutation, DeleteItemTypeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteItemTypeMutation, DeleteItemTypeMutationVariables>(DeleteItemTypeDocument, options);
+      }
+export type DeleteItemTypeMutationHookResult = ReturnType<typeof useDeleteItemTypeMutation>;
+export type DeleteItemTypeMutationResult = Apollo.MutationResult<DeleteItemTypeMutation>;
+export type DeleteItemTypeMutationOptions = Apollo.BaseMutationOptions<DeleteItemTypeMutation, DeleteItemTypeMutationVariables>;
+export const GetMyInventoryDocument = gql`
+    query GetMyInventory($communityId: ID) {
+  me {
+    id
+    username
+    inventories(communityId: $communityId) {
+      ...InventoryFields
+    }
+  }
+}
+    ${InventoryFieldsFragmentDoc}`;
+
+/**
+ * __useGetMyInventoryQuery__
+ *
+ * To run a query within a React component, call `useGetMyInventoryQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMyInventoryQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMyInventoryQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useGetMyInventoryQuery(baseOptions?: Apollo.QueryHookOptions<GetMyInventoryQuery, GetMyInventoryQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMyInventoryQuery, GetMyInventoryQueryVariables>(GetMyInventoryDocument, options);
+      }
+export function useGetMyInventoryLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyInventoryQuery, GetMyInventoryQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMyInventoryQuery, GetMyInventoryQueryVariables>(GetMyInventoryDocument, options);
+        }
+export function useGetMyInventorySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyInventoryQuery, GetMyInventoryQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMyInventoryQuery, GetMyInventoryQueryVariables>(GetMyInventoryDocument, options);
+        }
+export type GetMyInventoryQueryHookResult = ReturnType<typeof useGetMyInventoryQuery>;
+export type GetMyInventoryLazyQueryHookResult = ReturnType<typeof useGetMyInventoryLazyQuery>;
+export type GetMyInventorySuspenseQueryHookResult = ReturnType<typeof useGetMyInventorySuspenseQuery>;
+export type GetMyInventoryQueryResult = Apollo.QueryResult<GetMyInventoryQuery, GetMyInventoryQueryVariables>;
+export const GrantItemDocument = gql`
+    mutation GrantItem($input: GrantItemInput!) {
+  grantItem(input: $input) {
+    ...ItemFields
+  }
+}
+    ${ItemFieldsFragmentDoc}`;
+export type GrantItemMutationFn = Apollo.MutationFunction<GrantItemMutation, GrantItemMutationVariables>;
+
+/**
+ * __useGrantItemMutation__
+ *
+ * To run a mutation, you first call `useGrantItemMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGrantItemMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [grantItemMutation, { data, loading, error }] = useGrantItemMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useGrantItemMutation(baseOptions?: Apollo.MutationHookOptions<GrantItemMutation, GrantItemMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GrantItemMutation, GrantItemMutationVariables>(GrantItemDocument, options);
+      }
+export type GrantItemMutationHookResult = ReturnType<typeof useGrantItemMutation>;
+export type GrantItemMutationResult = Apollo.MutationResult<GrantItemMutation>;
+export type GrantItemMutationOptions = Apollo.BaseMutationOptions<GrantItemMutation, GrantItemMutationVariables>;
+export const UpdateItemDocument = gql`
+    mutation UpdateItem($id: ID!, $input: UpdateItemInput!) {
+  updateItem(id: $id, input: $input) {
+    ...ItemFields
+  }
+}
+    ${ItemFieldsFragmentDoc}`;
+export type UpdateItemMutationFn = Apollo.MutationFunction<UpdateItemMutation, UpdateItemMutationVariables>;
+
+/**
+ * __useUpdateItemMutation__
+ *
+ * To run a mutation, you first call `useUpdateItemMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateItemMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateItemMutation, { data, loading, error }] = useUpdateItemMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateItemMutation(baseOptions?: Apollo.MutationHookOptions<UpdateItemMutation, UpdateItemMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateItemMutation, UpdateItemMutationVariables>(UpdateItemDocument, options);
+      }
+export type UpdateItemMutationHookResult = ReturnType<typeof useUpdateItemMutation>;
+export type UpdateItemMutationResult = Apollo.MutationResult<UpdateItemMutation>;
+export type UpdateItemMutationOptions = Apollo.BaseMutationOptions<UpdateItemMutation, UpdateItemMutationVariables>;
+export const DeleteItemDocument = gql`
+    mutation DeleteItem($id: ID!) {
+  deleteItem(id: $id)
+}
+    `;
+export type DeleteItemMutationFn = Apollo.MutationFunction<DeleteItemMutation, DeleteItemMutationVariables>;
+
+/**
+ * __useDeleteItemMutation__
+ *
+ * To run a mutation, you first call `useDeleteItemMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteItemMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteItemMutation, { data, loading, error }] = useDeleteItemMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteItemMutation(baseOptions?: Apollo.MutationHookOptions<DeleteItemMutation, DeleteItemMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteItemMutation, DeleteItemMutationVariables>(DeleteItemDocument, options);
+      }
+export type DeleteItemMutationHookResult = ReturnType<typeof useDeleteItemMutation>;
+export type DeleteItemMutationResult = Apollo.MutationResult<DeleteItemMutation>;
+export type DeleteItemMutationOptions = Apollo.BaseMutationOptions<DeleteItemMutation, DeleteItemMutationVariables>;
 export const GetMediaDocument = gql`
     query GetMedia($filters: MediaFiltersInput) {
   media(filters: $filters) {

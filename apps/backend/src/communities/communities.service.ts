@@ -168,4 +168,37 @@ export class CommunitiesService {
       where: { id },
     });
   }
+
+  /** Get community members with optional search filtering */
+  async getMembers(
+    communityId: string,
+    filters: { search?: string; limit?: number },
+  ) {
+    const where: Prisma.UserWhereInput = {
+      communityMemberships: {
+        some: {
+          role: { communityId },
+        },
+      },
+    };
+
+    if (filters.search) {
+      where.OR = [
+        { username: { contains: filters.search, mode: 'insensitive' } },
+        { displayName: { contains: filters.search, mode: 'insensitive' } },
+      ];
+    }
+
+    return this.prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        username: true,
+        displayName: true,
+        avatarUrl: true,
+      },
+      take: Math.min(filters.limit || 10, 20), // Max 20
+      orderBy: { username: 'asc' },
+    });
+  }
 }

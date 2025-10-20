@@ -219,6 +219,9 @@ type Community {
   """Unique identifier for the community"""
   id: ID!
 
+  """Community members with optional search filtering"""
+  members(limit: Int! = 10, search: String): [User!]!
+
   """Name of the community"""
   name: String!
 
@@ -444,6 +447,21 @@ input CreateInviteCodeInput {
   roleId: ID
 }
 
+input CreateItemTypeInput {
+  category: String
+  color: String
+  communityId: ID!
+  description: String
+  iconUrl: String
+  imageUrl: String
+  isConsumable: Boolean! = false
+  isStackable: Boolean! = true
+  isTradeable: Boolean! = true
+  maxStackSize: Int
+  metadata: String
+  name: String!
+}
+
 """Input for creating a new role"""
 input CreateRoleInput {
   """Whether members with this role can create new characters"""
@@ -470,8 +488,20 @@ input CreateRoleInput {
   """Whether members with this role can edit species"""
   canEditSpecies: Boolean! = false
 
+  """Whether members with this role can grant items to community members"""
+  canGrantItems: Boolean! = false
+
   """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean! = false
+
+  """Whether members with this role can create, edit, and delete item types"""
+  canManageItems: Boolean! = false
+
+  """Whether members with this role can change other members' roles"""
+  canManageMemberRoles: Boolean! = false
+
+  """Whether members with this role can remove community members"""
+  canRemoveCommunityMember: Boolean! = false
 
   """The ID of the community this role belongs to"""
   communityId: ID!
@@ -642,6 +672,21 @@ type EnumValueSettingConnection {
   totalCount: Float!
 }
 
+type ExternalAccount {
+  createdAt: DateTime!
+  displayName: String!
+  id: ID!
+  provider: ExternalAccountProvider!
+  providerAccountId: String!
+  updatedAt: DateTime!
+  userId: ID!
+}
+
+"""External account providers supported for account linking"""
+enum ExternalAccountProvider {
+  DEVIANTART
+}
+
 type FollowListResult {
   followers: [User!]!
   following: [User!]!
@@ -696,6 +741,13 @@ input GalleryFiltersInput {
   visibility: Visibility
 }
 
+input GrantItemInput {
+  itemTypeId: ID!
+  metadata: String
+  quantity: Int! = 1
+  userId: ID!
+}
+
 type Image {
   altText: String
   artist: User
@@ -741,6 +793,12 @@ input ImageFiltersInput {
 type ImageTag {
   image: Image!
   tag: Tag!
+}
+
+type Inventory {
+  communityId: ID!
+  items: [Item!]!
+  totalItems: Float!
 }
 
 """
@@ -794,6 +852,53 @@ type InviteCodeConnection {
 
   """Total count of invite codes matching the query"""
   totalCount: Float!
+}
+
+type Item {
+  createdAt: DateTime!
+  id: ID!
+  itemType: ItemType!
+  itemTypeId: ID!
+  metadata: JSON
+  owner: User!
+  ownerId: ID!
+  quantity: Int!
+  updatedAt: DateTime!
+}
+
+type ItemType {
+  category: String
+  color: String
+  community: Community
+  communityId: ID!
+  createdAt: DateTime!
+  description: String
+  iconUrl: String
+  id: ID!
+  imageUrl: String
+  isConsumable: Boolean!
+  isStackable: Boolean!
+  isTradeable: Boolean!
+  itemType: ItemType!
+  maxStackSize: Int
+  metadata: JSON
+  name: String!
+  owner: User!
+  updatedAt: DateTime!
+}
+
+type ItemTypeConnection {
+  hasMore: Boolean!
+  itemTypes: [ItemType!]!
+  total: Int!
+}
+
+input ItemTypeFiltersInput {
+  category: String
+  communityId: ID
+  limit: Int! = 20
+  offset: Int! = 0
+  search: String
 }
 
 """
@@ -1024,6 +1129,7 @@ type Mutation {
     """Invite code creation data"""
     createInviteCodeInput: CreateInviteCodeInput!
   ): InviteCode!
+  createItemType(input: CreateItemTypeInput!): ItemType!
 
   """Create a new role"""
   createRole(
@@ -1066,11 +1172,18 @@ type Mutation {
   deleteGallery(id: ID!): RemovalResponse!
   deleteImage(id: ID!): Boolean!
 
+  """Delete an item (admin only)"""
+  deleteItem(id: ID!): Boolean!
+  deleteItemType(id: ID!): Boolean!
+
   """Deletes a media item and its associated content"""
   deleteMedia(
     """Media ID to delete"""
     id: ID!
   ): Boolean!
+
+  """Grant an item to a user (admin only)"""
+  grantItem(input: GrantItemInput!): Item!
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): String!
 
@@ -1093,7 +1206,9 @@ type Mutation {
     id: ID!
   ): CommunityInvitation!
 
-  """Remove a community membership"""
+  """
+  Remove a community membership (leave community OR remove member with permission)
+  """
   removeCommunityMember(
     """Community member ID"""
     id: ID!
@@ -1178,6 +1293,9 @@ type Mutation {
   toggleFollow(input: ToggleFollowInput!): FollowResult!
   toggleLike(input: ToggleLikeInput!): LikeResult!
   transferCharacter(id: ID!, input: TransferCharacterInput!): Character!
+
+  """Unlink an external account from the current user"""
+  unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
   updateCharacter(id: ID!, input: UpdateCharacterInput!): Character!
 
   """Update character trait values"""
@@ -1230,6 +1348,10 @@ type Mutation {
     """Invite code update data"""
     updateInviteCodeInput: UpdateInviteCodeInput!
   ): InviteCode!
+
+  """Update an item (admin only)"""
+  updateItem(id: ID!, input: UpdateItemInput!): Item!
+  updateItemType(id: ID!, input: UpdateItemTypeInput!): ItemType!
 
   """Updates media metadata (title, description, etc.)"""
   updateMedia(
@@ -1407,18 +1529,6 @@ type Query {
     inviteeId: ID!
   ): CommunityInvitationConnection!
 
-  """Get community invitations by inviter ID with pagination"""
-  communityInvitationsByInviter(
-    """Cursor for pagination"""
-    after: String
-
-    """Number of community invitations to return"""
-    first: Int = 20
-
-    """Inviter ID"""
-    inviterId: ID!
-  ): CommunityInvitationConnection!
-
   """Get a community member by ID"""
   communityMemberById(
     """Community member ID"""
@@ -1582,6 +1692,8 @@ type Query {
     """Role ID"""
     roleId: ID!
   ): InviteCodeConnection!
+  itemType(id: ID!): ItemType!
+  itemTypes(filters: ItemTypeFiltersInput): ItemTypeConnection!
   likeStatus(entityId: ID!, entityType: LikeableType!): LikeStatus!
   likedCharacters: [Character!]!
   likedGalleries: [Gallery!]!
@@ -1601,6 +1713,9 @@ type Query {
     id: ID!
   ): Media!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
+
+  """Get all external accounts linked to the current user"""
+  myExternalAccounts: [ExternalAccount!]!
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
   myImages(filters: ImageFiltersInput): ImageConnection!
 
@@ -1828,8 +1943,20 @@ type Role {
   """Whether members with this role can edit species"""
   canEditSpecies: Boolean!
 
+  """Whether members with this role can grant items to community members"""
+  canGrantItems: Boolean!
+
   """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean!
+
+  """Whether members with this role can create, edit, and delete item types"""
+  canManageItems: Boolean!
+
+  """Whether members with this role can change other members' roles"""
+  canManageMemberRoles: Boolean!
+
+  """Whether members with this role can remove community members"""
+  canRemoveCommunityMember: Boolean!
 
   """The community this role belongs to"""
   community: Community!
@@ -2110,6 +2237,10 @@ input TransferCharacterInput {
   newOwnerId: ID!
 }
 
+input UnlinkExternalAccountInput {
+  provider: ExternalAccountProvider!
+}
+
 input UpdateCharacterInput {
   age: String
   backstory: String
@@ -2197,6 +2328,25 @@ input UpdateInviteCodeInput {
   roleId: ID
 }
 
+input UpdateItemInput {
+  metadata: String
+  quantity: Int
+}
+
+input UpdateItemTypeInput {
+  category: String
+  color: String
+  description: String
+  iconUrl: String
+  imageUrl: String
+  isConsumable: Boolean
+  isStackable: Boolean
+  isTradeable: Boolean
+  maxStackSize: Int
+  metadata: String
+  name: String
+}
+
 """Input type for updating media metadata"""
 input UpdateMediaInput {
   """Updated character association"""
@@ -2244,8 +2394,20 @@ input UpdateRoleInput {
   """Whether members with this role can edit species"""
   canEditSpecies: Boolean
 
+  """Whether members with this role can grant items to community members"""
+  canGrantItems: Boolean
+
   """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean
+
+  """Whether members with this role can create, edit, and delete item types"""
+  canManageItems: Boolean
+
+  """Whether members with this role can change other members' roles"""
+  canManageMemberRoles: Boolean
+
+  """Whether members with this role can remove community members"""
+  canRemoveCommunityMember: Boolean
 
   """The name of the role"""
   name: String
@@ -2337,9 +2499,13 @@ type User {
   dateOfBirth: DateTime
   displayName: String
   email: String!
+  externalAccounts: [ExternalAccount!]!
   followersCount: Int!
   followingCount: Int!
   id: ID!
+
+  """User's inventories across different communities"""
+  inventories(communityId: ID): [Inventory!]!
   isAdmin: Boolean!
   isVerified: Boolean!
   location: String

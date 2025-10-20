@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { useParams } from "react-router-dom";
 import { Package, Plus, Edit2, Trash2, Gift } from "lucide-react";
-import { Button, Card } from "@chardb/ui";
+import { Button, Card, UserTypeahead } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useQuery, useMutation } from "@apollo/client";
 import {
@@ -12,7 +12,10 @@ import {
   DELETE_ITEM_TYPE,
   GRANT_ITEM,
 } from "../graphql/items.graphql";
-import { useCommunityByIdQuery } from "../generated/graphql";
+import {
+  useCommunityByIdQuery,
+  useGetCommunityMembersQuery,
+} from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -296,6 +299,17 @@ export const CommunityItemsAdminPage: React.FC = () => {
     itemTypeId: "",
     userId: "",
     quantity: "1",
+  });
+
+  const [userSearch, setUserSearch] = useState("");
+
+  const { data: membersData, loading: membersLoading } = useGetCommunityMembersQuery({
+    variables: {
+      communityId: communityId!,
+      search: userSearch,
+      limit: 10,
+    },
+    skip: !communityId || !userSearch || userSearch.length < 2,
   });
 
   const handleCreateItemType = async (e: React.FormEvent) => {
@@ -701,14 +715,16 @@ export const CommunityItemsAdminPage: React.FC = () => {
           <ModalTitle>Grant Item</ModalTitle>
           <Form onSubmit={handleGrantItem}>
             <FormGroup>
-              <Label>User ID *</Label>
-              <Input
-                required
+              <UserTypeahead
+                label="User *"
                 value={grantFormData.userId}
-                onChange={(e) =>
-                  setGrantFormData({ ...grantFormData, userId: e.target.value })
-                }
-                placeholder="Enter user ID"
+                onChange={(userId: string | null) => {
+                  setGrantFormData({ ...grantFormData, userId: userId || "" });
+                }}
+                onSearch={(query: string) => setUserSearch(query)}
+                users={membersData?.community?.members || []}
+                loading={membersLoading}
+                placeholder="Search by username..."
               />
             </FormGroup>
 

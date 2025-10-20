@@ -1,5 +1,18 @@
 import { gql } from "@apollo/client";
 
+// ==================== Fragments ====================
+
+export const COMMUNITY_MEMBER_USER_FRAGMENT = gql`
+  fragment CommunityMemberUser on User {
+    id
+    username
+    displayName
+    avatarUrl
+  }
+`;
+
+// ==================== Queries ====================
+
 export const COMMUNITIES_QUERY = gql`
   query Communities($first: Int, $after: String) {
     communities(first: $first, after: $after) {
@@ -26,6 +39,20 @@ export const COMMUNITY_BY_ID_QUERY = gql`
     }
   }
 `;
+
+export const GET_COMMUNITY_MEMBERS_QUERY = gql`
+  query GetCommunityMembers($communityId: ID!, $search: String, $limit: Int) {
+    community(id: $communityId) {
+      id
+      members(search: $search, limit: $limit) {
+        ...CommunityMemberUser
+      }
+    }
+  }
+  ${COMMUNITY_MEMBER_USER_FRAGMENT}
+`;
+
+// ==================== Mutations ====================
 
 export const CREATE_COMMUNITY_MUTATION = gql`
   mutation CreateCommunity($createCommunityInput: CreateCommunityInput!) {
@@ -108,6 +135,7 @@ export {
   // Hooks
   useCommunitiesQuery,
   useCommunityByIdQuery,
+  useGetCommunityMembersQuery,
   useCreateCommunityMutation,
   useUpdateCommunityMutation,
   useRemoveCommunityMutation,
@@ -118,6 +146,8 @@ export {
   type CommunitiesQueryVariables,
   type CommunityByIdQuery,
   type CommunityByIdQueryVariables,
+  type GetCommunityMembersQuery,
+  type GetCommunityMembersQueryVariables,
   type CreateCommunityMutation,
   type CreateCommunityMutationVariables,
   type UpdateCommunityMutation,
