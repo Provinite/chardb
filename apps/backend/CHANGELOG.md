@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `unlinkExternalAccount` mutation to remove account linkage
   - Added `ExternalAccount` Prisma model with support for multiple providers (DEVIANTART)
   - OAuth flow uses JWT-based state parameter for CSRF protection and user identification
+- Added Terraform configuration for DeviantArt OAuth credentials with environment-specific deployment support
 
 ### Security
 
