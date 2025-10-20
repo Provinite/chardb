@@ -281,6 +281,18 @@ const ALL_PERMISSIONS: Permission[] = [
     description: 'Allow editing only characters owned by the member',
     category: 'content'
   },
+  {
+    key: 'canManageItems',
+    name: 'Manage Items',
+    description: 'Allow creation, editing, and deletion of item types',
+    category: 'content'
+  },
+  {
+    key: 'canGrantItems',
+    name: 'Grant Items',
+    description: 'Allow granting items to community members',
+    category: 'content'
+  },
   // Community Management
   {
     key: 'canCreateInviteCode',

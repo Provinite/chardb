@@ -12,6 +12,8 @@ export const ROLES_BY_COMMUNITY = gql`
         canEditCharacter
         canEditOwnCharacter
         canEditSpecies
+        canManageItems
+        canGrantItems
         canCreateInviteCode
         canListInviteCodes
         canCreateRole
@@ -109,6 +111,8 @@ export const COMMUNITY_MEMBERS_WITH_ROLES = gql`
           canEditCharacter
           canEditOwnCharacter
           canEditSpecies
+          canManageItems
+          canGrantItems
           canCreateInviteCode
           canListInviteCodes
           canCreateRole
@@ -146,6 +150,8 @@ export const UPDATE_COMMUNITY_MEMBER = gql`
         canEditCharacter
         canEditOwnCharacter
         canEditSpecies
+        canManageItems
+        canGrantItems
         canCreateInviteCode
         canListInviteCodes
         canCreateRole
