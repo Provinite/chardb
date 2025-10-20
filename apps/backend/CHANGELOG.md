@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Community Members Search (#43)**: Added searchable community members field resolver
+  - Added `Community.members` field resolver with search filtering and limit parameters
+  - Added `getMembers` service method with case-insensitive username and displayName search
+  - Supports efficient member lookup with max 20 results and alphabetical ordering
+  - Enables performant user typeahead functionality in frontend
 - **Community Item System (#43)**: Complete inventory management with items and item types
   - Added `ItemType` entity for defining reusable items within communities (name, description, category, stackable, tradeable, consumable properties)
   - Added `Item` entity for user-owned item instances with automatic stacking logic and quantity tracking
