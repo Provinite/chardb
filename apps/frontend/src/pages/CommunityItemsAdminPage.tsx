@@ -270,13 +270,14 @@ export const CommunityItemsAdminPage: React.FC = () => {
       skip: !communityId,
     });
 
-  const { data: itemTypesData, loading: itemTypesLoading, refetch: refetchItemTypes } = useQuery(
-    GET_ITEM_TYPES,
-    {
-      variables: { filters: { communityId } },
-      skip: !communityId,
-    }
-  );
+  const {
+    data: itemTypesData,
+    loading: itemTypesLoading,
+    refetch: refetchItemTypes,
+  } = useQuery(GET_ITEM_TYPES, {
+    variables: { filters: { communityId } },
+    skip: !communityId,
+  });
 
   const [createItemType] = useMutation(CREATE_ITEM_TYPE);
   const [updateItemType] = useMutation(UPDATE_ITEM_TYPE);
@@ -304,14 +305,15 @@ export const CommunityItemsAdminPage: React.FC = () => {
 
   const [userSearch, setUserSearch] = useState("");
 
-  const { data: membersData, loading: membersLoading } = useGetCommunityMembersQuery({
-    variables: {
-      communityId: communityId!,
-      search: userSearch,
-      limit: 10,
-    },
-    skip: !communityId || !userSearch || userSearch.length < 2,
-  });
+  const { data: membersData, loading: membersLoading } =
+    useGetCommunityMembersQuery({
+      variables: {
+        communityId: communityId!,
+        search: userSearch,
+        limit: 10,
+      },
+      skip: !communityId || !userSearch || userSearch.length < 2,
+    });
 
   const handleCreateItemType = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -321,7 +323,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
           input: {
             ...formData,
             communityId,
-            maxStackSize: formData.maxStackSize ? parseInt(formData.maxStackSize) : null,
+            maxStackSize: formData.maxStackSize
+              ? parseInt(formData.maxStackSize)
+              : null,
           },
         },
       });
@@ -354,7 +358,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
           id: selectedItemType.id,
           input: {
             ...formData,
-            maxStackSize: formData.maxStackSize ? parseInt(formData.maxStackSize) : null,
+            maxStackSize: formData.maxStackSize
+              ? parseInt(formData.maxStackSize)
+              : null,
           },
         },
       });
@@ -367,7 +373,8 @@ export const CommunityItemsAdminPage: React.FC = () => {
   };
 
   const handleDeleteItemType = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this item type?")) return;
+    if (!window.confirm("Are you sure you want to delete this item type?"))
+      return;
 
     try {
       await deleteItemType({ variables: { id } });
@@ -397,7 +404,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to grant item:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to grant item");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to grant item",
+      );
     }
   };
 
@@ -441,7 +450,8 @@ export const CommunityItemsAdminPage: React.FC = () => {
       <Header>
         <Title>Item Types Administration</Title>
         <Subtitle>
-          Manage item types and grant items to users in {communityData?.community?.name}
+          Manage item types and grant items to users in{" "}
+          {communityData?.community?.name}
         </Subtitle>
       </Header>
 
@@ -455,7 +465,10 @@ export const CommunityItemsAdminPage: React.FC = () => {
 
         {itemTypes.length === 0 ? (
           <EmptyState>
-            <Package size={48} style={{ margin: "0 auto 1rem", opacity: 0.5 }} />
+            <Package
+              size={48}
+              style={{ margin: "0 auto 1rem", opacity: 0.5 }}
+            />
             <p>No item types yet. Create one to get started!</p>
           </EmptyState>
         ) : (
@@ -465,7 +478,10 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 <ItemTypeHeader>
                   <ItemTypeIcon color={itemType.color}>
                     {itemType.iconUrl ? (
-                      <ItemTypeImage src={itemType.iconUrl} alt={itemType.name} />
+                      <ItemTypeImage
+                        src={itemType.iconUrl}
+                        alt={itemType.name}
+                      />
                     ) : (
                       <Package size={24} />
                     )}
@@ -479,23 +495,39 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 </ItemTypeHeader>
 
                 {itemType.description && (
-                  <ItemTypeDescription>{itemType.description}</ItemTypeDescription>
+                  <ItemTypeDescription>
+                    {itemType.description}
+                  </ItemTypeDescription>
                 )}
 
                 <ItemTypeProperties>
-                  {itemType.isStackable && <PropertyBadge>Stackable</PropertyBadge>}
+                  {itemType.isStackable && (
+                    <PropertyBadge>Stackable</PropertyBadge>
+                  )}
                   {itemType.maxStackSize && (
                     <PropertyBadge>Max: {itemType.maxStackSize}</PropertyBadge>
                   )}
-                  {itemType.isTradeable && <PropertyBadge>Tradeable</PropertyBadge>}
-                  {itemType.isConsumable && <PropertyBadge>Consumable</PropertyBadge>}
+                  {itemType.isTradeable && (
+                    <PropertyBadge>Tradeable</PropertyBadge>
+                  )}
+                  {itemType.isConsumable && (
+                    <PropertyBadge>Consumable</PropertyBadge>
+                  )}
                 </ItemTypeProperties>
 
                 <ItemTypeActions>
-                  <Button size="sm" variant="secondary" onClick={() => openGrantModal(itemType)}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => openGrantModal(itemType)}
+                  >
                     <Gift size={14} /> Grant
                   </Button>
-                  <Button size="sm" variant="secondary" onClick={() => openEditModal(itemType)}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => openEditModal(itemType)}
+                  >
                     <Edit2 size={14} /> Edit
                   </Button>
                   <Button
@@ -522,7 +554,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Input
                 required
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
               />
             </FormGroup>
 
@@ -530,7 +564,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Label>Description</Label>
               <TextArea
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
               />
             </FormGroup>
 
@@ -538,7 +574,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Label>Category</Label>
               <Input
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
               />
             </FormGroup>
 
@@ -546,7 +584,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <CheckboxLabel>
                 <Checkbox
                   checked={formData.isStackable}
-                  onChange={(e) => setFormData({ ...formData, isStackable: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isStackable: e.target.checked })
+                  }
                 />
                 Stackable
               </CheckboxLabel>
@@ -559,7 +599,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
                   type="number"
                   min="1"
                   value={formData.maxStackSize}
-                  onChange={(e) => setFormData({ ...formData, maxStackSize: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, maxStackSize: e.target.value })
+                  }
                 />
               </FormGroup>
             )}
@@ -568,7 +610,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <CheckboxLabel>
                 <Checkbox
                   checked={formData.isTradeable}
-                  onChange={(e) => setFormData({ ...formData, isTradeable: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isTradeable: e.target.checked })
+                  }
                 />
                 Tradeable
               </CheckboxLabel>
@@ -578,7 +622,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <CheckboxLabel>
                 <Checkbox
                   checked={formData.isConsumable}
-                  onChange={(e) => setFormData({ ...formData, isConsumable: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isConsumable: e.target.checked })
+                  }
                 />
                 Consumable
               </CheckboxLabel>
@@ -589,7 +635,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Input
                 type="url"
                 value={formData.iconUrl}
-                onChange={(e) => setFormData({ ...formData, iconUrl: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, iconUrl: e.target.value })
+                }
               />
             </FormGroup>
 
@@ -598,12 +646,18 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Input
                 type="color"
                 value={formData.color}
-                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, color: e.target.value })
+                }
               />
             </FormGroup>
 
             <FormActions>
-              <Button type="button" variant="ghost" onClick={() => setIsCreateModalOpen(false)}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsCreateModalOpen(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit">Create</Button>
@@ -622,7 +676,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Input
                 required
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
               />
             </FormGroup>
 
@@ -630,7 +686,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Label>Description</Label>
               <TextArea
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
               />
             </FormGroup>
 
@@ -638,7 +696,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Label>Category</Label>
               <Input
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
               />
             </FormGroup>
 
@@ -646,7 +706,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <CheckboxLabel>
                 <Checkbox
                   checked={formData.isStackable}
-                  onChange={(e) => setFormData({ ...formData, isStackable: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isStackable: e.target.checked })
+                  }
                 />
                 Stackable
               </CheckboxLabel>
@@ -659,7 +721,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
                   type="number"
                   min="1"
                   value={formData.maxStackSize}
-                  onChange={(e) => setFormData({ ...formData, maxStackSize: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, maxStackSize: e.target.value })
+                  }
                 />
               </FormGroup>
             )}
@@ -668,7 +732,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <CheckboxLabel>
                 <Checkbox
                   checked={formData.isTradeable}
-                  onChange={(e) => setFormData({ ...formData, isTradeable: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isTradeable: e.target.checked })
+                  }
                 />
                 Tradeable
               </CheckboxLabel>
@@ -678,7 +744,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <CheckboxLabel>
                 <Checkbox
                   checked={formData.isConsumable}
-                  onChange={(e) => setFormData({ ...formData, isConsumable: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isConsumable: e.target.checked })
+                  }
                 />
                 Consumable
               </CheckboxLabel>
@@ -689,7 +757,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Input
                 type="url"
                 value={formData.iconUrl}
-                onChange={(e) => setFormData({ ...formData, iconUrl: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, iconUrl: e.target.value })
+                }
               />
             </FormGroup>
 
@@ -698,12 +768,18 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Input
                 type="color"
                 value={formData.color}
-                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, color: e.target.value })
+                }
               />
             </FormGroup>
 
             <FormActions>
-              <Button type="button" variant="ghost" onClick={() => setIsEditModalOpen(false)}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsEditModalOpen(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit">Save Changes</Button>
@@ -727,7 +803,6 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 onSearch={(query: string) => setUserSearch(query)}
                 users={membersData?.community?.members || []}
                 loading={membersLoading}
-                placeholder="Search by username..."
               />
             </FormGroup>
 
@@ -739,13 +814,20 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 min="1"
                 value={grantFormData.quantity}
                 onChange={(e) =>
-                  setGrantFormData({ ...grantFormData, quantity: e.target.value })
+                  setGrantFormData({
+                    ...grantFormData,
+                    quantity: e.target.value,
+                  })
                 }
               />
             </FormGroup>
 
             <FormActions>
-              <Button type="button" variant="ghost" onClick={() => setIsGrantModalOpen(false)}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsGrantModalOpen(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit">Grant Item</Button>

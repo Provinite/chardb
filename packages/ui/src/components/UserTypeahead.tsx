@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import styled from "styled-components";
 
 export interface SelectedUser {
   id: string;
@@ -39,22 +39,27 @@ const InputWrapper = styled.div<{ $hasError?: boolean; $disabled?: boolean }>`
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  border: 2px solid ${({ theme, $hasError }) => $hasError ? theme.colors.error : theme.colors.border};
+  border: 2px solid
+    ${({ theme, $hasError }) =>
+      $hasError ? theme.colors.error : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  background: ${({ theme, $disabled }) => $disabled ? theme.colors.surface : theme.colors.background};
-  cursor: ${({ $disabled }) => $disabled ? 'not-allowed' : 'text'};
+  background: ${({ theme, $disabled }) =>
+    $disabled ? theme.colors.surface : theme.colors.background};
+  cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "text")};
   transition: border-color 0.2s;
 
   &:focus-within {
-    border-color: ${({ theme, $hasError }) => $hasError ? theme.colors.error : theme.colors.primary};
+    border-color: ${({ theme, $hasError }) =>
+      $hasError ? theme.colors.error : theme.colors.primary};
   }
 
   &:hover:not(:focus-within) {
     border-color: ${({ theme, $hasError, $disabled }) =>
-      $disabled ? theme.colors.border :
-      $hasError ? theme.colors.error :
-      theme.colors.text.muted
-    };
+      $disabled
+        ? theme.colors.border
+        : $hasError
+          ? theme.colors.error
+          : theme.colors.text.muted};
   }
 `;
 
@@ -105,12 +110,12 @@ const DisplayName = styled.div`
 `;
 
 const Input = styled.input.attrs<{
-  'data-lpignore'?: string;
-  'data-form-type'?: string;
+  "data-lpignore"?: string;
+  "data-form-type"?: string;
   autoComplete?: string;
 }>((props) => ({
-  'data-lpignore': props['data-lpignore'],
-  'data-form-type': props['data-form-type'],
+  "data-lpignore": props["data-lpignore"],
+  "data-form-type": props["data-form-type"],
   autoComplete: props.autoComplete,
 }))`
   flex: 1;
@@ -170,7 +175,7 @@ const Dropdown = styled.div<{ $isOpen: boolean }>`
   z-index: 1000;
   max-height: 300px;
   overflow-y: auto;
-  display: ${({ $isOpen }) => $isOpen ? 'block' : 'none'};
+  display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
 `;
 
 const UserItem = styled.button<{ $isHighlighted: boolean }>`
@@ -178,7 +183,7 @@ const UserItem = styled.button<{ $isHighlighted: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   border: none;
   background: ${({ theme, $isHighlighted }) =>
-    $isHighlighted ? theme.colors.surface : 'transparent'};
+    $isHighlighted ? theme.colors.surface : "transparent"};
   cursor: pointer;
   transition: background 0.2s;
   display: flex;
@@ -226,12 +231,12 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
   onSearch,
   users = [],
   loading = false,
-  placeholder = "Search by username...",
+  placeholder = "Search...",
   disabled = false,
   error,
   label,
 }) => {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
@@ -239,11 +244,16 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Debounced search
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
+    null,
+  );
 
-  const performSearch = useCallback((query: string) => {
-    onSearch(query);
-  }, [onSearch]);
+  const performSearch = useCallback(
+    (query: string) => {
+      onSearch(query);
+    },
+    [onSearch],
+  );
 
   useEffect(() => {
     if (searchTimeout) {
@@ -267,20 +277,23 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
   // Handle clicks outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
         setHighlightedIndex(-1);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const selectUser = (user: SelectedUser) => {
     setSelectedUser(user);
     onChange(user.id, user);
-    setInputValue('');
+    setInputValue("");
     setIsOpen(false);
     setHighlightedIndex(-1);
   };
@@ -288,7 +301,7 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
   const clearSelection = () => {
     setSelectedUser(null);
     onChange(null, null);
-    setInputValue('');
+    setInputValue("");
     inputRef.current?.focus();
   };
 
@@ -301,28 +314,28 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     switch (e.key) {
-      case 'Enter':
+      case "Enter":
         e.preventDefault();
         if (highlightedIndex >= 0 && users[highlightedIndex]) {
           selectUser(users[highlightedIndex]);
         }
         break;
 
-      case 'Escape':
+      case "Escape":
         setIsOpen(false);
         setHighlightedIndex(-1);
         break;
 
-      case 'ArrowDown':
+      case "ArrowDown":
         e.preventDefault();
-        setHighlightedIndex(prev =>
-          prev < users.length - 1 ? prev + 1 : prev
+        setHighlightedIndex((prev) =>
+          prev < users.length - 1 ? prev + 1 : prev,
         );
         break;
 
-      case 'ArrowUp':
+      case "ArrowUp":
         e.preventDefault();
-        setHighlightedIndex(prev => prev > -1 ? prev - 1 : -1);
+        setHighlightedIndex((prev) => (prev > -1 ? prev - 1 : -1));
         break;
     }
   };
@@ -344,7 +357,10 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
     );
   };
 
-  const shouldShowDropdown = isOpen && !selectedUser && (loading || users.length > 0 || inputValue.length >= 2);
+  const shouldShowDropdown =
+    isOpen &&
+    !selectedUser &&
+    (loading || users.length > 0 || inputValue.length >= 2);
 
   return (
     <Container ref={containerRef}>
