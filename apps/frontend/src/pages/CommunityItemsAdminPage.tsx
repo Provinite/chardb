@@ -534,6 +534,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
                     size="sm"
                     variant="secondary"
                     onClick={() => handleDeleteItemType(itemType.id)}
+                    disabled
                   >
                     <Trash2 size={14} /> Delete
                   </Button>
