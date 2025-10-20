@@ -214,6 +214,8 @@ type EditableRole = {
   canEditCharacter: boolean;
   canEditOwnCharacter: boolean;
   canEditSpecies: boolean;
+  canManageItems: boolean;
+  canGrantItems: boolean;
   canCreateInviteCode: boolean;
   canListInviteCodes: boolean;
   canCreateRole: boolean;
@@ -262,6 +264,16 @@ const PERMISSION_GROUPS = [
         key: "canEditOwnCharacter",
         name: "Edit Own Characters",
         description: "Allow editing only characters owned by the member",
+      },
+      {
+        key: "canManageItems",
+        name: "Manage Items",
+        description: "Allow creation, editing, and deletion of item types",
+      },
+      {
+        key: "canGrantItems",
+        name: "Grant Items",
+        description: "Allow granting items to community members",
       },
     ],
   },
@@ -324,6 +336,8 @@ const ROLE_TEMPLATES = [
       canCreateSpecies: false,
       canEditSpecies: false,
       canEditCharacter: false,
+      canManageItems: false,
+      canGrantItems: false,
       canCreateInviteCode: false,
       canListInviteCodes: false,
       canCreateRole: false,
@@ -341,6 +355,8 @@ const ROLE_TEMPLATES = [
       canEditCharacter: true,
       canCreateSpecies: false,
       canEditSpecies: true,
+      canManageItems: false,
+      canGrantItems: true,
       canCreateInviteCode: true,
       canListInviteCodes: true,
       canCreateRole: false,
@@ -358,6 +374,8 @@ const ROLE_TEMPLATES = [
       canEditCharacter: true,
       canCreateSpecies: true,
       canEditSpecies: true,
+      canManageItems: true,
+      canGrantItems: true,
       canCreateInviteCode: true,
       canListInviteCodes: true,
       canCreateRole: true,
@@ -396,6 +414,8 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
         canEditCharacter: editingRole.canEditCharacter,
         canEditOwnCharacter: editingRole.canEditOwnCharacter,
         canEditSpecies: editingRole.canEditSpecies,
+        canManageItems: editingRole.canManageItems,
+        canGrantItems: editingRole.canGrantItems,
         canCreateInviteCode: editingRole.canCreateInviteCode,
         canListInviteCodes: editingRole.canListInviteCodes,
         canCreateRole: editingRole.canCreateRole,
