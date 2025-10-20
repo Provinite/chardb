@@ -104,7 +104,15 @@ const DisplayName = styled.div`
   white-space: nowrap;
 `;
 
-const Input = styled.input`
+const Input = styled.input.attrs<{
+  'data-lpignore'?: string;
+  'data-form-type'?: string;
+  autoComplete?: string;
+}>((props) => ({
+  'data-lpignore': props['data-lpignore'],
+  'data-form-type': props['data-form-type'],
+  autoComplete: props.autoComplete,
+}))`
   flex: 1;
   border: none;
   background: transparent;
