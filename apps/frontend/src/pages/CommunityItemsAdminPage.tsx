@@ -5,6 +5,7 @@ import { Package, Plus, Edit2, Trash2, Gift } from "lucide-react";
 import { Button, Card, UserTypeahead } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useQuery, useMutation } from "@apollo/client";
+import { toast } from "react-hot-toast";
 import {
   GET_ITEM_TYPES,
   CREATE_ITEM_TYPE,
@@ -387,6 +388,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
           },
         },
       });
+      toast.success("Item granted successfully!");
       setIsGrantModalOpen(false);
       setGrantFormData({
         itemTypeId: "",
@@ -395,6 +397,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to grant item:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to grant item");
     }
   };
 
@@ -489,15 +492,15 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 </ItemTypeProperties>
 
                 <ItemTypeActions>
-                  <Button size="sm" variant="ghost" onClick={() => openGrantModal(itemType)}>
+                  <Button size="sm" variant="secondary" onClick={() => openGrantModal(itemType)}>
                     <Gift size={14} /> Grant
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => openEditModal(itemType)}>
+                  <Button size="sm" variant="secondary" onClick={() => openEditModal(itemType)}>
                     <Edit2 size={14} /> Edit
                   </Button>
                   <Button
                     size="sm"
-                    variant="ghost"
+                    variant="secondary"
                     onClick={() => handleDeleteItemType(itemType.id)}
                   >
                     <Trash2 size={14} /> Delete

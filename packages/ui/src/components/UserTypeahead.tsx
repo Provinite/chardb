@@ -374,6 +374,9 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
             placeholder={placeholder}
             disabled={disabled}
             aria-label="Search for user"
+            autoComplete="off"
+            data-lpignore="true"
+            data-form-type="other"
           />
         )}
       </InputWrapper>
