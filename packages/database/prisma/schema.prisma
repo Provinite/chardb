@@ -93,6 +93,9 @@ model User {
   // External account linking
   externalAccounts       ExternalAccount[]
 
+  // Inventory relations
+  items                  Item[]           @relation("UserItems")
+
   @@map("users")
 }
 
@@ -399,6 +402,7 @@ model Community {
   species              Species[]
   roles                Role[]
   communityInvitations CommunityInvitation[]
+  itemTypes            ItemType[]
 
   @@map("communities")
 }
@@ -422,6 +426,8 @@ model Role {
   canEditRole              Boolean @default(false) @map("can_edit_role")
   canRemoveCommunityMember Boolean @default(false) @map("can_remove_community_member")
   canManageMemberRoles     Boolean @default(false) @map("can_manage_member_roles")
+  canManageItems           Boolean @default(false) @map("can_manage_items")
+  canGrantItems            Boolean @default(false) @map("can_grant_items")
 
   // Relations
   community            Community             @relation(fields: [communityId], references: [id], onDelete: Cascade)
@@ -496,6 +502,57 @@ model CharacterOwnershipChange {
   toUser    User      @relation("CharacterOwnershipChangeTo", fields: [toUserId], references: [id], onDelete: Cascade)
 
   @@map("character_ownership_changes")
+}
+
+model ItemType {
+  id          String  @id @default(uuid())
+  name        String  @db.VarChar(100)
+  description String? @db.Text
+  communityId String  @map("community_id")
+  category    String? @db.VarChar(50)
+
+  // Item properties
+  isStackable    Boolean @default(true) @map("is_stackable")
+  maxStackSize   Int?    @map("max_stack_size")
+  isTradeable    Boolean @default(true) @map("is_tradeable")
+  isConsumable   Boolean @default(false) @map("is_consumable")
+
+  // Visual properties
+  imageUrl       String? @db.VarChar(500) @map("image_url")
+  iconUrl        String? @db.VarChar(500) @map("icon_url")
+  color          String? @db.VarChar(7)   // Hex color code
+
+  // Metadata
+  metadata       Json    @default("{}") // Flexible properties
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  community      Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  items          Item[]
+
+  @@unique([name, communityId])
+  @@map("item_types")
+}
+
+model Item {
+  id           String  @id @default(uuid())
+  itemTypeId   String  @map("item_type_id")
+  ownerId      String  @map("owner_id")
+  quantity     Int     @default(1)
+
+  // Item state
+  metadata     Json    @default("{}") // Instance-specific data
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  itemType     ItemType @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
+  owner        User     @relation("UserItems", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@map("items")
 }
 
 model Species {

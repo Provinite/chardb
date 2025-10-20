@@ -57,6 +57,14 @@ export class Role {
   @Field(() => Boolean, { description: 'Whether members with this role can change other members\' roles' })
   canManageMemberRoles!: boolean;
 
+  /** Permission to manage item types */
+  @Field(() => Boolean, { description: 'Whether members with this role can create, edit, and delete item types' })
+  canManageItems!: boolean;
+
+  /** Permission to grant items to users */
+  @Field(() => Boolean, { description: 'Whether members with this role can grant items to community members' })
+  canGrantItems!: boolean;
+
   /** When the role was created */
   @Field(() => Date, { description: 'When the role was created' })
   createdAt!: Date;

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Community Item System** (#43): Virtual item management for communities
+  - Community administrators can create item types and grant items to members
+  - Users can view their community inventories with automatic item stacking
+  - Support for stackable, tradeable, and consumable items with custom metadata
 - **DeviantArt Account Linking** (#62): OAuth-based external account linking system
   - Link DeviantArt accounts to CloverCoin user profiles for ownership verification
   - Secure OAuth 2.0 Authorization Code flow implementation

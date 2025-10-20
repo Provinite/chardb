@@ -25,6 +25,10 @@ export interface CommunityResolutionConfig {
   communityInvitationId?: string;
   /** Path to role ID in arguments */
   roleId?: string;
+  /** Path to item type ID in arguments */
+  itemTypeId?: string;
+  /** Path to item ID in arguments */
+  itemId?: string;
   /** Path to community ID in arguments (direct) */
   communityId?: string;
 }
@@ -40,6 +44,8 @@ export const AllCommunityResolutionKeys = [
   "communityMemberId",
   "communityInvitationId",
   "roleId",
+  "itemTypeId",
+  "itemId",
   "communityId",
 ] as const;
 

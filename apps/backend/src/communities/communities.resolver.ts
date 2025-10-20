@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Args, ID, Int } from "@nestjs/graphql";
+import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from "@nestjs/graphql";
 import { CommunitiesService } from "./communities.service";
 import { Community, CommunityConnection } from "./entities/community.entity";
 import {
@@ -18,6 +18,8 @@ import { AllowGlobalPermission } from "../auth/decorators/AllowGlobalPermission"
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { GlobalPermission } from "../auth/GlobalPermission";
+import { User } from "../users/entities/user.entity";
+import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
 
 @Resolver(() => Community)
 export class CommunitiesResolver {
@@ -96,5 +98,21 @@ export class CommunitiesResolver {
   ): Promise<RemovalResponse> {
     await this.communitiesService.remove(id);
     return { removed: true, message: "Community successfully removed" };
+  }
+
+  @AllowAnyAuthenticated()
+  @ResolveField("members", () => [User], {
+    description: "Community members with optional search filtering",
+  })
+  async resolveMembers(
+    @Parent() community: Community,
+    @Args("search", { type: () => String, nullable: true }) search?: string,
+    @Args("limit", { type: () => Int, defaultValue: 10 }) limit?: number,
+  ): Promise<User[]> {
+    const members = await this.communitiesService.getMembers(community.id, {
+      search,
+      limit,
+    });
+    return members.map(mapPrismaUserToGraphQL);
   }
 }

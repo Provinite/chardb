@@ -53,6 +53,8 @@ import { MyCommunitiesPage } from "./pages/MyCommunitiesPage";
 import { CommunityPage } from "./pages/CommunityPage";
 import { SpeciesPage } from "./pages/SpeciesPage";
 import { DeviantArtCallbackPage } from "./pages/DeviantArtCallbackPage";
+import { CommunityItemsAdminPage } from "./pages/CommunityItemsAdminPage";
+import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
@@ -315,6 +317,22 @@ function App() {
           element={
             <ProtectedRoute>
               <CommunitySettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/admin/items"
+          element={
+            <ProtectedRoute>
+              <CommunityItemsAdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/inventory"
+          element={
+            <ProtectedRoute>
+              <CommunityInventoryPage />
             </ProtectedRoute>
           }
         />

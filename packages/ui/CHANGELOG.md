@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **UserTypeahead Component**: Reusable user search and selection component with autocomplete
+  - Debounced search input (300ms) with configurable minimum character requirement
+  - Keyboard navigation support (Arrow keys, Enter, Escape)
+  - Avatar display with fallback to initial letter for users without avatars
+  - Visual user selection showing username and displayName
+  - Single-select mode with clear selection button
+  - Loading states and empty state messaging
+  - Error state support with visual feedback
+  - Dropdown positioning with max-height scrolling
+  - Accessibility features with proper ARIA labels and focus management
+  - Theme integration for consistent styling
+
 ## [v2.0.0] - 2025-09-01
 
 ### Added

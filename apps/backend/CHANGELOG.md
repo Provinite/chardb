@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Community Members Search (#43)**: Added searchable community members field resolver
+  - Added `Community.members` field resolver with search filtering and limit parameters
+  - Added `getMembers` service method with case-insensitive username and displayName search
+  - Supports efficient member lookup with max 20 results and alphabetical ordering
+  - Enables performant user typeahead functionality in frontend
+- **Community Item System (#43)**: Complete inventory management with items and item types
+  - Added `ItemType` entity for defining reusable items within communities (name, description, category, stackable, tradeable, consumable properties)
+  - Added `Item` entity for user-owned item instances with automatic stacking logic and quantity tracking
+  - Added community permissions: `CanManageItems` (create/edit item types), `CanGrantItems` (grant items to users)
+  - Added GraphQL API with proper graph design:
+    - `User.inventories(communityId)` field resolver returning conceptual Inventory objects
+    - `Inventory` type (not database-backed) providing community-scoped item grouping
+    - Item type CRUD operations: `itemTypes`, `itemType`, `createItemType`, `updateItemType`, `deleteItemType`
+    - Item granting: `grantItem` mutation with automatic stacking and community membership validation
+  - Database migration grants item permissions to existing Admin and Moderator roles
+  - JSON metadata support for both ItemType and Item using GraphQLJSON scalar
+  - Circular dependency handling between UsersModule and ItemsModule using forwardRef
 - **DeviantArt OAuth 2.0 Integration (#62, #73)**: Complete external account linking system
   - Added `DeviantArtOAuthController` with OAuth flow endpoints (`GET /auth/deviantart` and `GET /auth/deviantart/callback`)
   - Added `ExternalAccountsModule` and `ExternalAccountsService` for managing linked social accounts

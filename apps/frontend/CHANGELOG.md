@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **User Selection Typeahead (#43)**: Added performant user search and selection component
+  - Integrated UserTypeahead component in Grant Item form replacing manual user ID entry
+  - Added `GET_COMMUNITY_MEMBERS` GraphQL query with search and limit parameters
+  - Implemented debounced search (300ms) with 2-character minimum for performance
+  - Added visual user selection with avatar display and username/displayName
+  - Improved UX for item granting workflow with intuitive user lookup
+- **Community Item System UI (#43)**: Complete inventory management interface
+  - Added Item Types Administration page (`/communities/{id}/admin/items`) for creating and managing item types
+  - Added User Inventory page (`/communities/{id}/inventory`) displaying community-scoped items with quantity badges
+  - Added Grant Item interface for admins to grant items to community members
+  - Added visual item cards with color coding, icons, and category labels
+  - GraphQL integration using `User.inventories(communityId)` query pattern
+  - Item fragments and proper Apollo Client cache management
 - **Dual-Sidebar Navigation System (#61)**: Context-aware navigation with community and global sidebars
   - Community sidebar with permission-aware navigation for species, administration, and community management
   - Global sidebar with quick access to personal content, liked items, browse sections, and communities

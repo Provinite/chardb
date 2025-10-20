@@ -34,12 +34,15 @@ import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowSelf } from "../auth/decorators/AllowSelf";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { GraphQLJSON } from "graphql-type-json";
+import { Inventory } from "../items/entities/inventory.entity";
+import { ItemsService } from "../items/items.service";
 
 @Resolver(() => User)
 export class UsersResolver {
   constructor(
     private readonly usersService: UsersService,
     private readonly externalAccountsService: ExternalAccountsService,
+    private readonly itemsService: ItemsService,
   ) {}
 
   @AllowGlobalPermission(GlobalPermission.CanListUsers)
@@ -222,6 +225,47 @@ export class UsersResolver {
   @ResolveField("externalAccounts", () => [ExternalAccount])
   async resolveExternalAccounts(@Parent() user: User): Promise<ExternalAccount[]> {
     return this.externalAccountsService.findByUserId(user.id);
+  }
+
+  @AllowAnyAuthenticated()
+  @ResolveField("inventories", () => [Inventory], {
+    description: "User's inventories across different communities",
+  })
+  async resolveInventories(
+    @Parent() user: User,
+    @Args("communityId", { type: () => ID, nullable: true }) communityId?: string,
+  ): Promise<Inventory[]> {
+    // Get items for the user, optionally filtered by community
+    const result = await this.itemsService.findAllItems({
+      ownerId: user.id,
+      communityId,
+    });
+
+    if (!communityId) {
+      // Group items by community
+      const itemsByCommunity = new Map<string, any[]>();
+      for (const item of result.items) {
+        const commId = (item as any).itemType.communityId;
+        if (!itemsByCommunity.has(commId)) {
+          itemsByCommunity.set(commId, []);
+        }
+        itemsByCommunity.get(commId)!.push(item);
+      }
+
+      // Return an inventory for each community
+      return Array.from(itemsByCommunity.entries()).map(([commId, items]) => ({
+        communityId: commId,
+        items: items as any,
+        totalItems: items.length,
+      }));
+    }
+
+    // Return single inventory for the specified community
+    return [{
+      communityId,
+      items: result.items as any,
+      totalItems: result.items.length,
+    }];
   }
 }
 

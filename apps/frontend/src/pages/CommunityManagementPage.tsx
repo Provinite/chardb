@@ -224,7 +224,7 @@ export function CommunityManagementPage() {
     createCommunity({ variables: { createCommunityInput: input } });
   };
 
-  const handleDeleteCommunity = (community: Community) => {
+  const handleDeleteCommunity = (community: Pick<Community, 'id' | 'name'>) => {
     if (window.confirm(`Are you sure you want to delete "${community.name}"? This action cannot be undone.`)) {
       removeCommunity({ variables: { id: community.id } });
     }

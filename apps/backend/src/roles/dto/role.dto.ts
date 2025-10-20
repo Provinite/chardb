@@ -79,6 +79,18 @@ export class CreateRoleInput {
   @IsBoolean()
   @IsOptional()
   canManageMemberRoles?: boolean = false;
+
+  /** Permission to manage item types */
+  @Field(() => Boolean, { description: 'Whether members with this role can create, edit, and delete item types', defaultValue: false })
+  @IsBoolean()
+  @IsOptional()
+  canManageItems?: boolean = false;
+
+  /** Permission to grant items to users */
+  @Field(() => Boolean, { description: 'Whether members with this role can grant items to community members', defaultValue: false })
+  @IsBoolean()
+  @IsOptional()
+  canGrantItems?: boolean = false;
 }
 
 @InputType({ description: 'Input for updating an existing role' })
@@ -155,4 +167,16 @@ export class UpdateRoleInput {
   @IsOptional()
   @IsBoolean()
   canManageMemberRoles?: boolean;
+
+  /** Permission to manage item types */
+  @Field(() => Boolean, { description: 'Whether members with this role can create, edit, and delete item types', nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  canManageItems?: boolean;
+
+  /** Permission to grant items to users */
+  @Field(() => Boolean, { description: 'Whether members with this role can grant items to community members', nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  canGrantItems?: boolean;
 }

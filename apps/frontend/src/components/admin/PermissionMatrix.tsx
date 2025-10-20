@@ -321,6 +321,8 @@ const PERMISSION_LABELS = {
   canEditCharacter: 'Edit Characters',
   canEditOwnCharacter: 'Edit Own Characters',
   canEditSpecies: 'Edit Species',
+  canManageItems: 'Manage Items',
+  canGrantItems: 'Grant Items',
   canCreateInviteCode: 'Create Invites',
   canListInviteCodes: 'List Invites',
   canCreateRole: 'Create Roles',
