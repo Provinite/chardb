@@ -113,6 +113,17 @@ export class ItemsService {
   }
 
   async deleteItemType(id: string) {
+    // Check if any items exist with this item type
+    const itemCount = await this.db.item.count({
+      where: { itemTypeId: id },
+    });
+
+    if (itemCount > 0) {
+      throw new ConflictException(
+        `Cannot delete item type: ${itemCount} item(s) of this type exist. Remove all items of this type before deleting.`,
+      );
+    }
+
     try {
       await this.db.itemType.delete({
         where: { id },
