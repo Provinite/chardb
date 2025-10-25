@@ -47,14 +47,26 @@ export class SelfGuard implements CanActivate {
    * Resolve user ID from root/parent object (for field resolvers)
    */
   private resolveFromRoot(context: ExecutionContext): SelfResolutionReference {
-    const gqlContext = GqlExecutionContext.create(context);
-    const parent = gqlContext.getArgs()[2]; // Parent is 3rd arg in field resolver
+    try {
+      const gqlContext = GqlExecutionContext.create(context);
+      const args = gqlContext.getArgs();
 
-    if (parent?.id) {
-      return { type: "root", value: parent.id };
+      // If args is undefined or doesn't have index 2, this is likely a REST endpoint
+      if (!args || args.length < 3) {
+        return { type: null, value: null };
+      }
+
+      const parent = args[2]; // Parent is 3rd arg in field resolver
+
+      if (parent?.id) {
+        return { type: "root", value: parent.id };
+      }
+
+      return { type: null, value: null };
+    } catch (error) {
+      // Not a GraphQL context (e.g., REST endpoint), skip this guard
+      return { type: null, value: null };
     }
-
-    return { type: null, value: null };
   }
 
   /**
@@ -64,19 +76,29 @@ export class SelfGuard implements CanActivate {
     context: ExecutionContext,
     config: SelfResolutionConfig,
   ): SelfResolutionReference {
-    const gqlContext = GqlExecutionContext.create(context);
-    const args = gqlContext.getArgs();
+    try {
+      const gqlContext = GqlExecutionContext.create(context);
+      const args = gqlContext.getArgs();
 
-    for (const key of AllSelfResolutionKeys) {
-      const path = config[key];
-      if (!path) continue;
-
-      const value = getNestedValue(args, path);
-      if (value) {
-        return { type: key, value };
+      // If args is undefined, this is likely a REST endpoint
+      if (!args) {
+        return { type: null, value: null };
       }
-    }
 
-    return { type: null, value: null };
+      for (const key of AllSelfResolutionKeys) {
+        const path = config[key];
+        if (!path) continue;
+
+        const value = getNestedValue(args, path);
+        if (value) {
+          return { type: key, value };
+        }
+      }
+
+      return { type: null, value: null };
+    } catch (error) {
+      // Not a GraphQL context (e.g., REST endpoint), skip this guard
+      return { type: null, value: null };
+    }
   }
 }
