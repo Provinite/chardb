@@ -13,7 +13,11 @@ import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated"
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
-import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
+import {
+  AuthenticatedCurrentUserType,
+  CurrentUserType,
+} from "../auth/types/current-user.type";
+import { ForbiddenException } from "@nestjs/common";
 import { MediaService } from "./media.service";
 import { UsersService } from "../users/users.service";
 import { CharactersService } from "../characters/characters.service";
@@ -310,9 +314,23 @@ export class MediaResolver {
     nullable: true,
     description: "The character this media is associated with, if any",
   })
-  async character(@Parent() media: MediaEntity) {
+  async character(
+    @Parent() media: MediaEntity,
+    @CurrentUser() user?: CurrentUserType,
+  ) {
     if (!media.characterId) return null;
-    return this.charactersService.findOne(media.characterId);
+
+    try {
+      return await this.charactersService.findOne(media.characterId, user?.id);
+    } catch (error) {
+      // If character is private and user doesn't have access, return null
+      // instead of failing the entire query. This allows PUBLIC media to be
+      // shown even when its character is PRIVATE.
+      if (error instanceof ForbiddenException) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   /**
@@ -322,10 +340,27 @@ export class MediaResolver {
     nullable: true,
     description: "The gallery this media belongs to, if any",
   })
-  async gallery(@Parent() media: MediaEntity): Promise<Gallery | null> {
+  async gallery(
+    @Parent() media: MediaEntity,
+    @CurrentUser() user?: CurrentUserType,
+  ): Promise<Gallery | null> {
     if (!media.galleryId) return null;
-    const gallery = await this.galleriesService.findOne(media.galleryId);
-    return gallery ? mapPrismaGalleryToGraphQL(gallery) : null;
+
+    try {
+      const gallery = await this.galleriesService.findOne(
+        media.galleryId,
+        user?.id,
+      );
+      return gallery ? mapPrismaGalleryToGraphQL(gallery) : null;
+    } catch (error) {
+      // If gallery is private and user doesn't have access, return null
+      // instead of failing the entire query. This allows PUBLIC media to be
+      // shown even when its gallery is PRIVATE.
+      if (error instanceof ForbiddenException) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   /**

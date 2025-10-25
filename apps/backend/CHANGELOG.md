@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Media Query with Private Characters (#90)**: Fixed GraphQL error when querying media associated with private characters/galleries. Character and gallery field resolvers now pass current user context and gracefully return `null` for inaccessible private entities instead of failing the entire query. This allows PUBLIC media to display even when associated character/gallery is PRIVATE. Thanks @Owlscape!
 - **Image Upload Crash (#89)**: Fixed SelfGuard crashing on REST endpoints like image upload. SelfGuard now gracefully handles non-GraphQL contexts instead of attempting to access undefined GraphQL arguments. Thanks @Owlscape!
 
 ## [v3.0.0] - 2025-10-19
