@@ -52,6 +52,7 @@ import { JoinCommunityPage } from "./pages/JoinCommunityPage";
 import { MyCommunitiesPage } from "./pages/MyCommunitiesPage";
 import { CommunityPage } from "./pages/CommunityPage";
 import { SpeciesPage } from "./pages/SpeciesPage";
+import { EditSpeciesPage } from "./pages/EditSpeciesPage";
 import { DeviantArtCallbackPage } from "./pages/DeviantArtCallbackPage";
 import { CommunityItemsAdminPage } from "./pages/CommunityItemsAdminPage";
 import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
@@ -346,6 +347,14 @@ function App() {
         />
 
         {/* Species-specific routes (can be accessed from community context) */}
+        <Route
+          path="/species/:speciesId/edit"
+          element={
+            <ProtectedRoute>
+              <EditSpeciesPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/species/:speciesId/traits"
           element={
