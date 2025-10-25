@@ -132,14 +132,14 @@ const Badge = styled.span`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
 `;
 
-const TypeBadge = styled(Badge)<{ isImage: boolean }>`
-  background: ${props => 
-    props.isImage 
+const TypeBadge = styled(Badge)<{ $isImage: boolean }>`
+  background: ${props =>
+    props.$isImage
       ? props.theme.colors.primary + '20'
       : props.theme.colors.secondary + '20'
   };
-  color: ${props => 
-    props.isImage 
+  color: ${props =>
+    props.$isImage
       ? props.theme.colors.primary
       : props.theme.colors.secondary
   };
@@ -359,7 +359,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
             <div />
           )}
           <MetaContainer>
-            <TypeBadge isImage={isImage}>
+            <TypeBadge $isImage={isImage}>
               {isImage ? 'image' : 'text'}
             </TypeBadge>
             {isText && media.textContent && (
