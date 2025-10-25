@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Prisma } from '@chardb/database';
 
@@ -156,6 +156,17 @@ export class SpeciesService {
   /** Remove a species */
   async remove(id: string) {
     await this.findOne(id); // This will throw if not found
+
+    // Check if any characters are using this species
+    const characterCount = await this.prisma.character.count({
+      where: { speciesId: id }
+    });
+
+    if (characterCount > 0) {
+      throw new BadRequestException(
+        `Cannot delete species. ${characterCount} character${characterCount === 1 ? '' : 's'} ${characterCount === 1 ? 'is' : 'are'} using this species. Please delete or reassign ${characterCount === 1 ? 'this character' : 'these characters'} before deleting the species.`
+      );
+    }
 
     return this.prisma.species.delete({
       where: { id },
