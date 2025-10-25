@@ -1,7 +1,6 @@
 import {
   Controller,
   Post,
-  UseGuards,
   UseInterceptors,
   UploadedFile,
   Body,
@@ -9,7 +8,6 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ImagesService } from "./images.service";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 
