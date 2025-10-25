@@ -128,12 +128,19 @@ EOF
 # Copy deployment files to server
 echo "📦 Copying deployment files..."
 scp -i "$SSH_KEY_PATH" docker/docker-compose.prod.yml ec2-user@$SERVER_IP:~/app/compose.yaml
+echo "1/7"
 scp -i "$SSH_KEY_PATH" docker/docker-compose.overrides.prod.yml ec2-user@$SERVER_IP:~/app/compose.override.yaml
+echo "2/7"
 scp -i "$SSH_KEY_PATH" -r docker/services/ ec2-user@$SERVER_IP:~/app/
+echo "3/7"
 scp -i "$SSH_KEY_PATH" docker/otel-collector-config.yml ec2-user@$SERVER_IP:~/app/services/otel-collector-config.yml
+echo "4/7"
 scp -i "$SSH_KEY_PATH" scripts/ecr-login.sh ec2-user@$SERVER_IP:~/app/ecr-login.sh
+echo "5/7"
 scp -i "$SSH_KEY_PATH" .tmp/.env ec2-user@$SERVER_IP:~/app/.env
+echo "6/7"
 scp -i "$SSH_KEY_PATH" .tmp/deploy-remote.sh ec2-user@$SERVER_IP:~/app/deploy-remote.sh
+echo "7/7"
 
 # Execute deployment script
 echo "🚀 Executing deployment on server..."
