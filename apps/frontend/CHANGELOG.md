@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v4.0.1] - 2025-10-26
+
 ### Fixed
 
 - **Enum Trait Management in Variant Detail Page (#116)**: Fixed three critical bugs preventing enum trait configuration
