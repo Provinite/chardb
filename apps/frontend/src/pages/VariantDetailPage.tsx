@@ -182,12 +182,11 @@ export const VariantDetailPage: React.FC = () => {
     data: entriesData,
     loading: entriesLoading,
     error: entriesError,
-    refetch: refetchEntries,
   } = useTraitListEntriesByVariantQuery({
     variables: { variantId, first: 100 },
   });
 
-  // Update entries state whenever entriesData changes
+  // Initialize/reset entries state when query data changes (from initial load or refetch)
   React.useEffect(() => {
     if (entriesData?.traitListEntriesBySpeciesVariant?.nodes) {
       setEntries([...entriesData.traitListEntriesBySpeciesVariant.nodes]);
@@ -203,7 +202,7 @@ export const VariantDetailPage: React.FC = () => {
     skip: !speciesId,
   });
 
-  const { data: enumSettingsData, refetch: refetchEnumSettings } =
+  const { data: enumSettingsData } =
     useSpeciesVariantWithEnumValueSettingsQuery({
       variables: { variantId },
     });
@@ -219,9 +218,9 @@ export const VariantDetailPage: React.FC = () => {
   });
 
   const [createTraitListEntry] = useCreateTraitListEntryMutation({
+    refetchQueries: ['TraitListEntriesByVariant'],
     onCompleted: () => {
       toast.success('Trait added to variant!');
-      refetchEntries();
     },
     onError: (error) => {
       toast.error(`Failed to add trait: ${error.message}`);
@@ -229,9 +228,9 @@ export const VariantDetailPage: React.FC = () => {
   });
 
   const [updateTraitListEntry] = useUpdateTraitListEntryMutation({
+    refetchQueries: ['TraitListEntriesByVariant'],
     onCompleted: () => {
       toast.success('Trait configuration updated!');
-      refetchEntries();
     },
     onError: (error) => {
       toast.error(`Failed to update trait: ${error.message}`);
@@ -239,9 +238,9 @@ export const VariantDetailPage: React.FC = () => {
   });
 
   const [removeTraitListEntry] = useRemoveTraitListEntryMutation({
+    refetchQueries: ['TraitListEntriesByVariant'],
     onCompleted: () => {
       toast.success('Trait removed from variant!');
-      refetchEntries();
     },
     onError: (error) => {
       toast.error(`Failed to remove trait: ${error.message}`);
@@ -249,10 +248,10 @@ export const VariantDetailPage: React.FC = () => {
   });
 
   const [updateTraitOrders] = useUpdateTraitOrdersMutation({
+    refetchQueries: ['TraitListEntriesByVariant'],
     onCompleted: () => {
       toast.success('Trait order updated!');
       setHasOrderChanges(false);
-      refetchEntries();
     },
     onError: (error) => {
       toast.error(`Failed to update order: ${error.message}`);
@@ -260,9 +259,9 @@ export const VariantDetailPage: React.FC = () => {
   });
 
   const [createEnumValueSetting] = useCreateEnumValueSettingMutation({
+    refetchQueries: ['SpeciesVariantWithEnumValueSettings'],
     onCompleted: () => {
       toast.success('Enum value enabled!');
-      refetchEnumSettings();
     },
     onError: (error) => {
       toast.error(`Failed to enable enum value: ${error.message}`);
@@ -270,9 +269,9 @@ export const VariantDetailPage: React.FC = () => {
   });
 
   const [deleteEnumValueSetting] = useDeleteEnumValueSettingMutation({
+    refetchQueries: ['SpeciesVariantWithEnumValueSettings'],
     onCompleted: () => {
       toast.success('Enum value disabled!');
-      refetchEnumSettings();
     },
     onError: (error) => {
       toast.error(`Failed to disable enum value: ${error.message}`);
