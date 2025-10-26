@@ -185,13 +185,15 @@ export const VariantDetailPage: React.FC = () => {
     refetch: refetchEntries,
   } = useTraitListEntriesByVariantQuery({
     variables: { variantId, first: 100 },
-    onCompleted: (data) => {
-      if (data.traitListEntriesBySpeciesVariant?.nodes) {
-        setEntries([...data.traitListEntriesBySpeciesVariant.nodes]);
-        setHasOrderChanges(false);
-      }
-    },
   });
+
+  // Update entries state whenever entriesData changes
+  React.useEffect(() => {
+    if (entriesData?.traitListEntriesBySpeciesVariant?.nodes) {
+      setEntries([...entriesData.traitListEntriesBySpeciesVariant.nodes]);
+      setHasOrderChanges(false);
+    }
+  }, [entriesData]);
 
   const variant = variantData?.speciesVariantById;
   const speciesId = variant?.speciesId;
