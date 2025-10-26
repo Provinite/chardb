@@ -15,4 +15,4 @@ export const TRUTHY_NULL = Symbol("TRUTHY_NULL");
  * Represents an empty string that is truthy for NestJS exception filters.
  * Will be transformed to actual empty string by SentinelValueInterceptor.
  */
-export const TRUTHY_EMPTY_STRING = "$$__EMPTY__STRING__$$";
+export const TRUTHY_EMPTY_STRING = Symbol("TRUTHY_EMPTY_STRING");
