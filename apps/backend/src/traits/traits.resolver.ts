@@ -11,6 +11,7 @@ import {
 import { NotFoundException } from "@nestjs/common";
 import { TraitsService } from "./traits.service";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
@@ -150,6 +151,7 @@ export class TraitsResolver {
   }
 
   // Field resolvers for relations
+  @AllowUnauthenticated()
   @ResolveField("species", () => Species, {
     description: "The species this trait belongs to",
   })
@@ -165,6 +167,7 @@ export class TraitsResolver {
     }
   }
 
+  @AllowUnauthenticated()
   @ResolveField("enumValues", () => [EnumValue], {
     description: "Enum values for this trait (only populated for ENUM traits)",
   })

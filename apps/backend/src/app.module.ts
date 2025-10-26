@@ -54,9 +54,9 @@ import { Request, Response } from "express";
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), "src/schema.gql"),
       sortSchema: true,
-      playground: process.env.GRAPHQL_PLAYGROUND === "true",
+      graphiql: process.env.GRAPHQL_PLAYGROUND === "true",
       introspection: process.env.GRAPHQL_INTROSPECTION === "true",
-      fieldResolverEnhancers: ["guards"],
+      fieldResolverEnhancers: ["guards", "interceptors"],
       context: ({ req, res }: { req: Request; res: Response }) => ({
         req,
         res,

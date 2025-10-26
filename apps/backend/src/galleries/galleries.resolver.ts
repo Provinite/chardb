@@ -196,6 +196,7 @@ export class GalleriesResolver {
   }
 
   // Field resolvers for relations and computed properties
+  @AllowUnauthenticated()
   @ResolveField("owner", () => User)
   async resolveOwner(@Parent() gallery: Gallery): Promise<User> {
     const prismaUser = await this.usersService.findById(gallery.ownerId);
@@ -205,6 +206,7 @@ export class GalleriesResolver {
     return mapPrismaUserToGraphQL(prismaUser);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("character", () => Character, { nullable: true })
   async resolveCharacter(
     @Parent() gallery: Gallery,
@@ -224,6 +226,7 @@ export class GalleriesResolver {
     }
   }
 
+  @AllowUnauthenticated()
   @ResolveField("likesCount", () => Int)
   async resolveLikesCount(@Parent() gallery: Gallery): Promise<number> {
     return this.galleriesService.getGalleryLikesCount(gallery.id);
@@ -239,6 +242,7 @@ export class GalleriesResolver {
   }
 
   /** Gallery count field resolver */
+  @AllowUnauthenticated()
   @ResolveField("_count", () => GalleryCount)
   async resolveCountField(@Parent() gallery: Gallery): Promise<GalleryCount> {
     const mediaCount = await this.mediaService.getGalleryMediaCount(gallery.id);

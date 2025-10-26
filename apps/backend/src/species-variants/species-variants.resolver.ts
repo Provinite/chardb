@@ -11,6 +11,7 @@ import {
 import { NotFoundException } from "@nestjs/common";
 import { SpeciesVariantsService } from "./species-variants.service";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
@@ -177,6 +178,7 @@ export class SpeciesVariantsResolver {
   }
 
   // Field resolvers for relations
+  @AllowUnauthenticated()
   @ResolveField("species", () => Species, {
     description: "The species this variant belongs to",
   })
@@ -196,6 +198,7 @@ export class SpeciesVariantsResolver {
     }
   }
 
+  @AllowUnauthenticated()
   @ResolveField("enumValueSettings", () => [EnumValueSetting], {
     description: "Enum value settings for this species variant",
   })

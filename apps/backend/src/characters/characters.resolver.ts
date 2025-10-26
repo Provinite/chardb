@@ -4,12 +4,10 @@ import {
   Mutation,
   Args,
   ID,
-  Context,
   ResolveField,
   Parent,
   Int,
 } from "@nestjs/graphql";
-import { ForbiddenException } from "@nestjs/common";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
@@ -34,14 +32,11 @@ import {
   CharacterCount,
   CharacterTag,
 } from "./entities/character.entity";
-import { Image } from "../images/entities/image.entity";
 import { Media } from "../media/entities/media.entity";
-import { Tag } from "../shared/entities/tag.entity";
 import { ImagesService } from "../images/images.service";
 import { User } from "../users/entities/user.entity";
 import { SpeciesVariant } from "../species-variants/entities/species-variant.entity";
 import { Species } from "../species/entities/species.entity";
-import type { Prisma } from "@chardb/database";
 import {
   CreateCharacterInput,
   UpdateCharacterInput,
@@ -205,6 +200,7 @@ export class CharactersResolver {
   }
 
   // Field resolver to return displayName values for tags string array
+  @AllowUnauthenticated()
   @ResolveField("tags", () => [String])
   async resolveTagsField(
     @Parent() character: CharacterEntity,
@@ -212,6 +208,7 @@ export class CharactersResolver {
     return this.tagsService.getCharacterTags(character.id);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("likesCount", () => Int)
   async resolveLikesCountField(
     @Parent() character: CharacterEntity,
@@ -230,6 +227,7 @@ export class CharactersResolver {
   }
 
   /** Character count field resolver */
+  @AllowUnauthenticated()
   @ResolveField("_count", () => CharacterCount)
   async resolveCountField(
     @Parent() character: CharacterEntity,
@@ -241,6 +239,7 @@ export class CharactersResolver {
   }
 
   /** Character creator field resolver */
+  @AllowUnauthenticated()
   @ResolveField("creator", () => User, { nullable: true })
   async resolveCreatorField(
     @Parent() character: CharacterEntity,
@@ -251,6 +250,7 @@ export class CharactersResolver {
   }
 
   /** Character owner field resolver */
+  @AllowUnauthenticated()
   @ResolveField("owner", () => User)
   async resolveOwnerField(@Parent() character: CharacterEntity): Promise<User> {
     const user = await this.usersService.findById(character.ownerId);
@@ -259,6 +259,7 @@ export class CharactersResolver {
   }
 
   /** Main media field resolver */
+  @AllowUnauthenticated()
   @ResolveField("mainMedia", () => Media, {
     nullable: true,
     description: "Main media item for this character (image or text)",
@@ -272,6 +273,7 @@ export class CharactersResolver {
   }
 
   /** Character tags relation field resolver */
+  @AllowUnauthenticated()
   @ResolveField("tags_rel", () => [CharacterTag])
   async resolveTagsRelField(
     @Parent() character: CharacterEntity,
@@ -288,6 +290,7 @@ export class CharactersResolver {
   }
 
   /** Species field resolver */
+  @AllowUnauthenticated()
   @ResolveField("species", () => Species, {
     nullable: true,
     description: "Species this character belongs to",
@@ -300,6 +303,7 @@ export class CharactersResolver {
   }
 
   /** Species variant field resolver */
+  @AllowUnauthenticated()
   @ResolveField("speciesVariant", () => SpeciesVariant, {
     nullable: true,
     description: "Species variant this character belongs to",

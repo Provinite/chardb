@@ -27,7 +27,6 @@ import { OptionalJwtAuthGuard } from "./guards/optional-jwt-auth.guard";
 import { CustomThrottlerGuard } from "../middleware/custom-throttler.guard";
 import { OrGuard } from "./guards/OrGuard";
 import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
-import { NullOnForbiddenInterceptor } from "./interceptors/NullOnForbiddenInterceptor";
 
 @Module({
   imports: [
@@ -64,7 +63,6 @@ import { NullOnForbiddenInterceptor } from "./interceptors/NullOnForbiddenInterc
     AuthenticatedGuard,
     OptionalJwtAuthGuard,
     CustomThrottlerGuard,
-    NullOnForbiddenInterceptor,
     {
       provide: "PERMISSION_OR_GUARD",
       useClass: OrGuard(
@@ -88,7 +86,6 @@ import { NullOnForbiddenInterceptor } from "./interceptors/NullOnForbiddenInterc
     GlobalPermissionGuard,
     OptionalJwtAuthGuard,
     CustomThrottlerGuard,
-    NullOnForbiddenInterceptor,
     "PERMISSION_OR_GUARD",
   ],
 })

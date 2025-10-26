@@ -111,6 +111,7 @@ export class CommentsResolver {
   /**
    * Resolves the author of a comment
    */
+  @AllowUnauthenticated()
   @ResolveField(() => User)
   async author(@Parent() comment: Comment) {
     return this.usersService.findById(comment.authorId);
@@ -119,6 +120,7 @@ export class CommentsResolver {
   /**
    * Resolves the parent comment (for replies)
    */
+  @AllowUnauthenticated()
   @ResolveField(() => Comment, { nullable: true })
   async parent(@Parent() comment: Comment) {
     if (!comment.parentId) return null;
@@ -129,6 +131,7 @@ export class CommentsResolver {
   /**
    * Resolves the replies to a comment
    */
+  @AllowUnauthenticated()
   @ResolveField(() => [Comment])
   async replies(@Parent() comment: Comment) {
     const serviceFilters: CommentFiltersServiceInput = { parentId: comment.id };
@@ -139,6 +142,7 @@ export class CommentsResolver {
   /**
    * Resolves the replies count
    */
+  @AllowUnauthenticated()
   @ResolveField(() => Int)
   async repliesCount(@Parent() comment: Comment) {
     const serviceFilters: CommentFiltersServiceInput = { parentId: comment.id };
@@ -149,6 +153,7 @@ export class CommentsResolver {
   /**
    * Resolves the character this comment is on (if applicable)
    */
+  @AllowUnauthenticated()
   @ResolveField(() => Character, { nullable: true })
   async character(@Parent() comment: Comment) {
     if (comment.commentableType !== "CHARACTER") return null;
@@ -158,6 +163,7 @@ export class CommentsResolver {
   /**
    * Resolves the image this comment is on (if applicable)
    */
+  @AllowUnauthenticated()
   @ResolveField(() => Image, { nullable: true })
   async image(@Parent() comment: Comment) {
     if (comment.commentableType !== "IMAGE") return null;
@@ -167,6 +173,7 @@ export class CommentsResolver {
   /**
    * Resolves the gallery this comment is on (if applicable)
    */
+  @AllowUnauthenticated()
   @ResolveField(() => Gallery, { nullable: true })
   async gallery(@Parent() comment: Comment) {
     if (comment.commentableType !== "GALLERY") return null;
@@ -176,6 +183,7 @@ export class CommentsResolver {
   /**
    * Resolves the user this comment is on (if applicable)
    */
+  @AllowUnauthenticated()
   @ResolveField(() => User, { nullable: true })
   async user(@Parent() comment: Comment) {
     if (comment.commentableType !== "USER") return null;

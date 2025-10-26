@@ -8,7 +8,7 @@ import {
   ResolveField,
   Parent,
 } from "@nestjs/graphql";
-import { NotFoundException } from "@nestjs/common";
+import { NotFoundException, UseFilters } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { User, UserConnection } from "./entities/user.entity";
 import { UserProfile, UserStats } from "./entities/user-profile.entity";
@@ -36,6 +36,7 @@ import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { GraphQLJSON } from "graphql-type-json";
 import { Inventory } from "../items/entities/inventory.entity";
 import { ItemsService } from "../items/items.service";
+import { NullOnForbiddenFilter } from "../auth/filters/NullOnForbiddenFilter";
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -164,6 +165,7 @@ export class UsersResolver {
   // Sensitive field resolvers
   @AllowGlobalAdmin()
   @AllowSelf()
+  @UseFilters(NullOnForbiddenFilter)
   @ResolveField("email", () => String)
   async resolveEmail(@Parent() user: User): Promise<string> {
     return user.email;
@@ -223,7 +225,9 @@ export class UsersResolver {
   @AllowGlobalAdmin()
   @AllowSelf()
   @ResolveField("externalAccounts", () => [ExternalAccount])
-  async resolveExternalAccounts(@Parent() user: User): Promise<ExternalAccount[]> {
+  async resolveExternalAccounts(
+    @Parent() user: User,
+  ): Promise<ExternalAccount[]> {
     return this.externalAccountsService.findByUserId(user.id);
   }
 
@@ -233,7 +237,8 @@ export class UsersResolver {
   })
   async resolveInventories(
     @Parent() user: User,
-    @Args("communityId", { type: () => ID, nullable: true }) communityId?: string,
+    @Args("communityId", { type: () => ID, nullable: true })
+    communityId?: string,
   ): Promise<Inventory[]> {
     // Get items for the user, optionally filtered by community
     const result = await this.itemsService.findAllItems({
@@ -261,11 +266,13 @@ export class UsersResolver {
     }
 
     // Return single inventory for the specified community
-    return [{
-      communityId,
-      items: result.items as any,
-      totalItems: result.items.length,
-    }];
+    return [
+      {
+        communityId,
+        items: result.items as any,
+        totalItems: result.items.length,
+      },
+    ];
   }
 }
 

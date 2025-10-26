@@ -216,6 +216,7 @@ export class InviteCodesResolver {
   }
 
   // Field resolvers for computed properties
+  @AllowUnauthenticated()
   @ResolveField("isAvailable", () => Boolean, {
     description: "Whether this invite code is still available for use",
   })
@@ -223,6 +224,7 @@ export class InviteCodesResolver {
     return inviteCode.claimCount < inviteCode.maxClaims;
   }
 
+  @AllowUnauthenticated()
   @ResolveField("remainingClaims", () => Int, {
     description: "Number of remaining uses for this invite code",
   })
@@ -231,6 +233,7 @@ export class InviteCodesResolver {
   }
 
   // Field resolvers for relations
+  @AllowUnauthenticated()
   @ResolveField("creator", () => User, {
     description: "The user who created this invite code",
   })
@@ -239,6 +242,7 @@ export class InviteCodesResolver {
     return prismaUser ? mapPrismaUserToGraphQL(prismaUser) : null;
   }
 
+  @AllowUnauthenticated()
   @ResolveField("role", () => Role, {
     description: "The role to grant when this invite code is used",
     nullable: true,

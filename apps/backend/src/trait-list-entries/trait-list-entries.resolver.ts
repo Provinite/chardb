@@ -10,6 +10,7 @@ import {
 } from "@nestjs/graphql";
 import { TraitListEntriesService } from "./trait-list-entries.service";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
@@ -213,6 +214,7 @@ export class TraitListEntriesResolver {
   }
 
   // Field resolvers for relations
+  @AllowUnauthenticated()
   @ResolveField("trait", () => Trait, {
     description: "The trait this entry configures",
   })
@@ -223,6 +225,7 @@ export class TraitListEntriesResolver {
     return mapPrismaTraitToGraphQL(prismaTrait);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("speciesVariant", () => SpeciesVariant, {
     description: "The species variant this entry belongs to",
   })
@@ -236,6 +239,7 @@ export class TraitListEntriesResolver {
   }
 
   // Field resolver for computed properties
+  @AllowUnauthenticated()
   @ResolveField("defaultDisplayValue", () => String, {
     nullable: true,
     description: "Display value for the default value based on type",

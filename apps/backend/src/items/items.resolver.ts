@@ -179,6 +179,7 @@ export class ItemsResolver {
 
   // ==================== Field Resolvers ====================
 
+  @AllowUnauthenticated()
   @ResolveField(() => Community, { nullable: true })
   async community(@Parent() itemType: ItemTypeEntity): Promise<Community | null> {
     if (itemType.community) {
@@ -187,6 +188,7 @@ export class ItemsResolver {
     return this.communitiesService.findOne(itemType.communityId);
   }
 
+  @AllowUnauthenticated()
   @ResolveField(() => ItemTypeEntity, { name: 'itemType' })
   async resolveItemType(@Parent() item: ItemEntity): Promise<any> {
     if (item.itemType) {
@@ -195,6 +197,7 @@ export class ItemsResolver {
     return this.itemsService.findItemTypeById(item.itemTypeId);
   }
 
+  @AllowUnauthenticated()
   @ResolveField(() => User, { name: 'owner' })
   async resolveOwner(@Parent() item: ItemEntity): Promise<any> {
     if (item.owner) {

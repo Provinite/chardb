@@ -11,4 +11,13 @@ import { SelfResolutionConfig } from "../types/SelfResolutionConfig";
  *
  * Verifies: `targetUserId === currentUser.id`
  */
-export const AllowSelf = Reflector.createDecorator<SelfResolutionConfig>();
+export const AllowSelf = Reflector.createDecorator<SelfResolutionConfig>({
+  transform: (v) => {
+    if (!v) {
+      return {
+        userId: "$root.id",
+      };
+    }
+    return v;
+  },
+});
