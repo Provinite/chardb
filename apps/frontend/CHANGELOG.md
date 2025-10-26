@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Character Edit Page with Species and Trait Management (#101)**: Added species/variant selection and comprehensive trait editing with read-only species display after assignment
+- **Character Details Editor (#109)**: Added markdown editor component with live preview, syntax hints, and character counter for unified character details
 
 ### Changed
 
 - **Auth Flow (#98)**: Login/signup now fetch user data via separate 'me' query instead of returning it directly, enabling field-level authorization
+- **Character Fields (#109)**: Removed description/personality/backstory displays from character cards and profile pages in favor of unified markdown details field
 
 ### Fixed
 

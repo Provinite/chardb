@@ -35,13 +35,7 @@ export class Character {
   gender?: string;
 
   @Field({ nullable: true })
-  description?: string;
-
-  @Field({ nullable: true })
-  personality?: string;
-
-  @Field({ nullable: true })
-  backstory?: string;
+  details?: string;
 
   @Field(() => ID)
   ownerId: string;

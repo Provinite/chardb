@@ -443,9 +443,6 @@ export const UserProfilePage: React.FC = () => {
               <Card key={character.id} to={`/character/${character.id}`}>
                 <CardTitle>{character.name}</CardTitle>
                 <CardDescription>{character.species?.name}</CardDescription>
-                {character.description && (
-                  <CardDescription>{character.description}</CardDescription>
-                )}
               </Card>
             ))}
           </Grid>
@@ -476,9 +473,6 @@ export const UserProfilePage: React.FC = () => {
               <Card key={character.id} to={`/character/${character.id}`}>
                 <CardTitle>{character.name}</CardTitle>
                 <CardDescription>{character.species?.name}</CardDescription>
-                {character.description && (
-                  <CardDescription>{character.description}</CardDescription>
-                )}
               </Card>
             ))}
           </Grid>

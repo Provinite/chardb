@@ -21,6 +21,7 @@ import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
 import { TraitForm } from "../components/character/TraitForm";
 import { SpeciesDetailsFragment, SpeciesVariantDetailsFragment } from "../generated/graphql";
+import { CharacterDetailsEditor } from "../components/character/CharacterDetailsEditor";
 
 const characterSchema = z.object({
   name: z
@@ -37,19 +38,9 @@ const characterSchema = z.object({
     .max(20, "Gender must be less than 20 characters")
     .optional()
     .or(z.literal("")),
-  description: z
+  details: z
     .string()
-    .max(2000, "Description must be less than 2000 characters")
-    .optional()
-    .or(z.literal("")),
-  personality: z
-    .string()
-    .max(2000, "Personality must be less than 2000 characters")
-    .optional()
-    .or(z.literal("")),
-  backstory: z
-    .string()
-    .max(5000, "Backstory must be less than 5000 characters")
+    .max(15000, "Details must be less than 15000 characters")
     .optional()
     .or(z.literal("")),
   visibility: z.enum(["PUBLIC", "UNLISTED", "PRIVATE"]),
@@ -163,31 +154,6 @@ const Input = styled.input<{ hasError?: boolean }>`
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   background: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.text.primary};
-  transition: border-color 0.2s;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme, hasError }) =>
-      hasError ? theme.colors.error : theme.colors.primary};
-  }
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.text.muted};
-  }
-`;
-
-const TextArea = styled.textarea<{ hasError?: boolean }>`
-  padding: ${({ theme }) => theme.spacing.sm};
-  border: 2px solid
-    ${({ theme, hasError }) =>
-      hasError ? theme.colors.error : theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  background: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-family: inherit;
-  resize: vertical;
-  min-height: 100px;
   transition: border-color 0.2s;
 
   &:focus {
@@ -361,15 +327,14 @@ export const EditCharacterPage: React.FC = () => {
     formState: { errors },
     reset,
     watch,
+    setValue,
   } = useForm<CharacterForm>({
     resolver: zodResolver(characterSchema),
     defaultValues: {
       name: "",
       age: "",
       gender: "",
-      description: "",
-      personality: "",
-      backstory: "",
+      details: "",
       visibility: "PUBLIC",
       isSellable: false,
       isTradeable: false,
@@ -387,9 +352,7 @@ export const EditCharacterPage: React.FC = () => {
         name: character.name,
         age: character.age || "",
         gender: character.gender || "",
-        description: character.description || "",
-        personality: character.personality || "",
-        backstory: character.backstory || "",
+        details: character.details || "",
         visibility: character.visibility,
         isSellable: character.isSellable,
         isTradeable: character.isTradeable,
@@ -427,9 +390,7 @@ export const EditCharacterPage: React.FC = () => {
         name: data.name,
         age: data.age || undefined,
         gender: data.gender || undefined,
-        description: data.description || undefined,
-        personality: data.personality || undefined,
-        backstory: data.backstory || undefined,
+        details: data.details || undefined,
         visibility: data.visibility as Visibility,
         isSellable: data.isSellable,
         isTradeable: data.isTradeable,
@@ -582,40 +543,13 @@ export const EditCharacterPage: React.FC = () => {
           <SectionTitle>Character Details</SectionTitle>
 
           <FormGroup>
-            <Label>Description</Label>
-            <TextArea
-              {...register("description")}
-              placeholder="Brief description of your character's appearance and key traits..."
-              hasError={!!errors.description}
+            <Label>Character Details</Label>
+            <CharacterDetailsEditor
+              value={watch("details") || ""}
+              onChange={(value) => setValue("details", value, { shouldValidate: true })}
+              error={errors.details?.message}
+              maxLength={15000}
             />
-            {errors.description && (
-              <ErrorMessage>{errors.description.message}</ErrorMessage>
-            )}
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Personality</Label>
-            <TextArea
-              {...register("personality")}
-              placeholder="Your character's personality traits, quirks, and behavior..."
-              hasError={!!errors.personality}
-            />
-            {errors.personality && (
-              <ErrorMessage>{errors.personality.message}</ErrorMessage>
-            )}
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Backstory</Label>
-            <TextArea
-              {...register("backstory")}
-              placeholder="Your character's history, origin story, and background..."
-              hasError={!!errors.backstory}
-              style={{ minHeight: "150px" }}
-            />
-            {errors.backstory && (
-              <ErrorMessage>{errors.backstory.message}</ErrorMessage>
-            )}
           </FormGroup>
         </FormSection>
 

@@ -13,6 +13,7 @@ import {
   GET_MY_CHARACTERS,
 } from "../graphql/characters.graphql";
 import { useTagSearch } from "../hooks/useTagSearch";
+import { CharacterDetailsEditor } from "../components/character/CharacterDetailsEditor";
 
 const characterSchema = z.object({
   name: z
@@ -29,19 +30,9 @@ const characterSchema = z.object({
     .max(20, "Gender must be less than 20 characters")
     .optional()
     .or(z.literal("")),
-  description: z
+  details: z
     .string()
-    .max(2000, "Description must be less than 2000 characters")
-    .optional()
-    .or(z.literal("")),
-  personality: z
-    .string()
-    .max(2000, "Personality must be less than 2000 characters")
-    .optional()
-    .or(z.literal("")),
-  backstory: z
-    .string()
-    .max(5000, "Backstory must be less than 5000 characters")
+    .max(15000, "Details must be less than 15000 characters")
     .optional()
     .or(z.literal("")),
   visibility: z.enum(["PUBLIC", "UNLISTED", "PRIVATE"]),
@@ -188,26 +179,6 @@ const Select = styled.select`
   }
 `;
 
-const TextArea = styled.textarea`
-  padding: 0.75rem ${({ theme }) => theme.spacing.md};
-  border: 2px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  resize: vertical;
-  min-height: 120px;
-  font-family: inherit;
-  transition: border-color 0.2s;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-  }
-
-  &[aria-invalid="true"] {
-    border-color: ${({ theme }) => theme.colors.error};
-  }
-`;
-
 const CheckboxRow = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -317,6 +288,7 @@ export const CreateCharacterPage: React.FC = () => {
     handleSubmit,
     formState: { errors },
     watch,
+    setValue,
   } = useForm<CharacterForm>({
     resolver: zodResolver(characterSchema),
     defaultValues: {
@@ -324,6 +296,7 @@ export const CreateCharacterPage: React.FC = () => {
       isSellable: false,
       isTradeable: false,
       tags: [],
+      details: "",
     },
   });
 
@@ -349,9 +322,7 @@ export const CreateCharacterPage: React.FC = () => {
         name: data.name,
         age: data.age || undefined,
         gender: data.gender || undefined,
-        description: data.description || undefined,
-        personality: data.personality || undefined,
-        backstory: data.backstory || undefined,
+        details: data.details || undefined,
         visibility: data.visibility,
         isSellable: data.isSellable,
         isTradeable: data.isTradeable,
@@ -445,43 +416,13 @@ export const CreateCharacterPage: React.FC = () => {
             <SectionTitle>Character Details</SectionTitle>
 
             <FormGroup>
-              <Label htmlFor="description">Description</Label>
-              <TextArea
-                id="description"
-                {...register("description")}
-                aria-invalid={!!errors.description}
-                placeholder="Describe your character's appearance and general traits..."
+              <Label htmlFor="details">Details</Label>
+              <CharacterDetailsEditor
+                value={watch("details") || ""}
+                onChange={(value) => setValue("details", value, { shouldValidate: true })}
+                error={errors.details?.message}
+                maxLength={15000}
               />
-              {errors.description && (
-                <ErrorMessage>{errors.description.message}</ErrorMessage>
-              )}
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="personality">Personality</Label>
-              <TextArea
-                id="personality"
-                {...register("personality")}
-                aria-invalid={!!errors.personality}
-                placeholder="Describe your character's personality, quirks, and behavior..."
-              />
-              {errors.personality && (
-                <ErrorMessage>{errors.personality.message}</ErrorMessage>
-              )}
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="backstory">Backstory</Label>
-              <TextArea
-                id="backstory"
-                {...register("backstory")}
-                aria-invalid={!!errors.backstory}
-                placeholder="Share your character's history, background, and story..."
-                style={{ minHeight: "150px" }}
-              />
-              {errors.backstory && (
-                <ErrorMessage>{errors.backstory.message}</ErrorMessage>
-              )}
             </FormGroup>
           </Section>
 

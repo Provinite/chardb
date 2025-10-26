@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Character Species Assignment Validation (#101)**: Prevent species changes once assigned to maintain data integrity and protect trait data
+- **Character Details Field (#109)**: Added unified markdown `details` field (15,000 char max) to replace separate description/personality/backstory fields
 
 ### Changed
 
 - **Dependencies (#98)**: Upgraded Apollo Server to v5 and NestJS to v11/v13 for improved field-level authorization support
+- **Character Text Fields (#109)**: BREAKING - Removed `description`, `personality`, and `backstory` fields in favor of unified markdown `details` field
 
 ### Fixed
 

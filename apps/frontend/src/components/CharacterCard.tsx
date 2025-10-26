@@ -66,17 +66,6 @@ const Species = styled.p`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
 `;
 
-const Description = styled.p`
-  color: ${({ theme }) => theme.colors.text.muted};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  line-height: 1.5;
-  margin: 0 0 ${({ theme }) => theme.spacing.md} 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-`;
-
 const Meta = styled.div`
   display: flex;
   justify-content: space-between;
@@ -214,10 +203,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
             {character.age && ` • ${character.age}`}
           </Species>
         )}
-        {character.description && (
-          <Description>{character.description}</Description>
-        )}
-        
+
         {character.tags && character.tags.length > 0 && (
           <TagsContainer size="sm" style={{ marginBottom: '0.75rem' }}>
             {character.tags.slice(0, 3).map((tag, index) => (

@@ -42,20 +42,8 @@ export class CreateCharacterInput {
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  @MaxLength(5000)
-  description?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(3000)
-  personality?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(5000)
-  backstory?: string;
+  @MaxLength(15000)
+  details?: string;
 
   @Field(() => Visibility, { defaultValue: Visibility.PUBLIC })
   @IsOptional()
@@ -127,20 +115,8 @@ export class UpdateCharacterInput {
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  @MaxLength(5000)
-  description?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(3000)
-  personality?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(5000)
-  backstory?: string;
+  @MaxLength(15000)
+  details?: string;
 
   @Field(() => Visibility, { nullable: true })
   @IsOptional()

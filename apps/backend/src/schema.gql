@@ -30,12 +30,11 @@ type AuthPayload {
 type Character {
   _count: CharacterCount!
   age: String
-  backstory: String
   createdAt: DateTime!
   creator: User
   creatorId: ID
   customFields: String
-  description: String
+  details: String
   gender: String
   id: ID!
   isSellable: Boolean!
@@ -50,7 +49,6 @@ type Character {
   name: String!
   owner: User!
   ownerId: ID!
-  personality: String
   price: Float
 
   """Species this character belongs to"""
@@ -342,14 +340,12 @@ type CommunityMemberConnection {
 
 input CreateCharacterInput {
   age: String
-  backstory: String
   customFields: String
-  description: String
+  details: String
   gender: String
   isSellable: Boolean! = false
   isTradeable: Boolean! = false
   name: String!
-  personality: String
   price: Float
   speciesId: ID
   speciesVariantId: ID
@@ -2246,15 +2242,13 @@ input UnlinkExternalAccountInput {
 
 input UpdateCharacterInput {
   age: String
-  backstory: String
   customFields: String
-  description: String
+  details: String
   gender: String
   isSellable: Boolean
   isTradeable: Boolean
   mainMediaId: ID
   name: String
-  personality: String
   price: Float
   speciesId: ID
   speciesVariantId: ID
