@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Missing Sidebar on Character Pages (#112)**: Fixed no sidebar appearing on character pages without species/community. Global navigation now shown as fallback.
 - **Species Edit 404 Error (#91)**: Fixed Edit button in Species Management navigating to non-existent route. Added EditSpeciesPage for editing species name and hasImage flag. Thanks @Owlscape!
 
 ## [v3.0.0] - 2025-10-19
