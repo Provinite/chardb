@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Enum Trait Default Display Value (#116)**: Fixed `resolveDefaultDisplayValue` field resolver returning null for ENUM type traits instead of returning the default value from `defaultValueString` field
+
 ## [v4.0.0] - 2025-10-26
 
 ### Added
