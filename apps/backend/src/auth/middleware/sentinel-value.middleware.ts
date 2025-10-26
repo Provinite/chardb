@@ -4,11 +4,12 @@ import { TRUTHY_NULL, TRUTHY_EMPTY_STRING } from "../constants/sentinel-values";
 /**
  * GraphQL field middleware that transforms sentinel values to their actual values.
  *
- * This works in conjunction with NullOnForbiddenFilter, which returns
- * truthy sentinel values when catching ForbiddenException. This middleware
+ * This works in conjunction with NullOnForbiddenFilter and EmptyStringOnForbiddenFilter,
+ * which return truthy sentinel values when catching ForbiddenException. This middleware
  * then transforms those sentinels back to their actual null/empty string values.
  *
- * Apply with @Extensions({ middleware: [sentinelValueMiddleware] })
+ * Apply by passing to the middleware option in @ResolveField:
+ * @ResolveField("fieldName", () => String, { middleware: [sentinelValueMiddleware] })
  */
 export const sentinelValueMiddleware: FieldMiddleware = async (
   ctx: MiddlewareContext,

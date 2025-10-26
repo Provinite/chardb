@@ -37,7 +37,7 @@ import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { GraphQLJSON } from "graphql-type-json";
 import { Inventory } from "../items/entities/inventory.entity";
 import { ItemsService } from "../items/items.service";
-import { NullOnForbiddenFilter } from "../auth/filters/NullOnForbiddenFilter";
+import { EmptyStringOnForbiddenFilter } from "../auth/filters/EmptyStringOnForbiddenFilter";
 import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
 
 @Resolver(() => User)
@@ -167,9 +167,10 @@ export class UsersResolver {
   // Sensitive field resolvers
   @AllowGlobalAdmin()
   @AllowSelf()
-  @UseFilters(NullOnForbiddenFilter)
-  @Extensions({ middleware: [sentinelValueMiddleware] })
-  @ResolveField("email", () => String)
+  @UseFilters(EmptyStringOnForbiddenFilter)
+  @ResolveField("email", () => String, {
+    middleware: [sentinelValueMiddleware],
+  })
   async resolveEmail(@Parent() user: User): Promise<string> {
     return user.email;
   }
