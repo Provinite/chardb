@@ -323,7 +323,7 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
               defaultValueString={localDefaults.defaultValueString}
               defaultValueInt={localDefaults.defaultValueInt}
               defaultValueTimestamp={localDefaults.defaultValueTimestamp}
-              enumValues={sortedEnumValues.filter(ev => settingsLookup.has(ev.id))}
+              enumValues={sortedEnumValues}
               onChange={setLocalDefaults}
               disabled={disabled}
             />

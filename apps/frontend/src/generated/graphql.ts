@@ -3517,7 +3517,7 @@ export type SearchTagsQueryVariables = Exact<{
 
 export type SearchTagsQuery = { __typename?: 'Query', searchTags: Array<{ __typename?: 'Tag', id: string, name: string, displayName: string, category: string | null, color: string | null, createdAt: string }> };
 
-export type TraitListEntryDetailsFragment = { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType } };
+export type TraitListEntryDetailsFragment = { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> } };
 
 export type TraitListEntriesByVariantQueryVariables = Exact<{
   variantId: Scalars['ID']['input'];
@@ -3525,7 +3525,7 @@ export type TraitListEntriesByVariantQueryVariables = Exact<{
 }>;
 
 
-export type TraitListEntriesByVariantQuery = { __typename?: 'Query', traitListEntriesBySpeciesVariant: { __typename?: 'TraitListEntryConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType } }> } };
+export type TraitListEntriesByVariantQuery = { __typename?: 'Query', traitListEntriesBySpeciesVariant: { __typename?: 'TraitListEntryConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> } }> } };
 
 export type UpdateTraitOrdersMutationVariables = Exact<{
   input: UpdateTraitOrdersInput;
@@ -3539,7 +3539,7 @@ export type CreateTraitListEntryMutationVariables = Exact<{
 }>;
 
 
-export type CreateTraitListEntryMutation = { __typename?: 'Mutation', createTraitListEntry: { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType } } };
+export type CreateTraitListEntryMutation = { __typename?: 'Mutation', createTraitListEntry: { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> } } };
 
 export type UpdateTraitListEntryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3547,7 +3547,7 @@ export type UpdateTraitListEntryMutationVariables = Exact<{
 }>;
 
 
-export type UpdateTraitListEntryMutation = { __typename?: 'Mutation', updateTraitListEntry: { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType } } };
+export type UpdateTraitListEntryMutation = { __typename?: 'Mutation', updateTraitListEntry: { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> } } };
 
 export type RemoveTraitListEntryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3748,6 +3748,11 @@ export const TraitListEntryDetailsFragmentDoc = gql`
     id
     name
     valueType
+    enumValues {
+      id
+      name
+      order
+    }
   }
 }
     `;
