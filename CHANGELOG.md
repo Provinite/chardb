@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v4.0.0] - 2025-10-26
+
 ### Changed
 
 - **Character Text Fields (#109)**: BREAKING - Database migration removes `description`, `personality`, and `backstory` columns from characters table. All character details now use unified markdown `details` field with 15,000 character limit.
