@@ -284,6 +284,8 @@ export class TraitListEntriesResolver {
       return traitListEntry.defaultValueTimestamp
         ? traitListEntry.defaultValueTimestamp.toISOString()
         : null;
+    } else if (traitListEntry.valueType === TraitValueType.ENUM) {
+      return traitListEntry.defaultValueString || null;
     } else {
       return null;
     }

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Enum Trait Management in Variant Detail Page (#116)**: Fixed three critical bugs preventing enum trait configuration
+  - Added `enumValues` field to GraphQL `TraitListEntryDetails` fragment to fetch enum options
+  - Changed default value dropdown to show all trait enum values instead of only enabled ones
+  - Fixed backend `resolveDefaultDisplayValue` resolver to return enum default values instead of null
+  - Enum Options section now renders with enable/disable toggles for each enum value
+  - Users can set default enum values independently of which values are enabled/disabled
+
 ## [v4.0.0] - 2025-10-26
 
 ### Added

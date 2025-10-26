@@ -13,7 +13,7 @@
 - Jaeger trace analysis is available at http://localhost:16686
 - You cannot directly start the servers with the dev command. The servers run indefinitely, and you will get stuck waiting for the logs. If you need the servers running, or details from the logs, just ask the user directly instead.
 - The `gh` cli is configured for github interactions beyond simple `git` cli commands
-- Local Development Credentials: test@example.com / password123
+- Local Development Credentials: test@example.com / test123
 - Use the .tmp folder in the package root for temporary files (like image uploads).
 - App-specific changes should go in the appropriate CHANGELOG.md. The root-level CHANGELOG.md is for tracking cross-cutting changes and non-app-specific changes (like CI for example)
 - PSQL credentials are in the backend .env file

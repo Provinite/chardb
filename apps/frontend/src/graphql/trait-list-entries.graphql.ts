@@ -20,6 +20,11 @@ export const TRAIT_LIST_ENTRY_DETAILS = gql`
       id
       name
       valueType
+      enumValues {
+        id
+        name
+        order
+      }
     }
   }
 `;
