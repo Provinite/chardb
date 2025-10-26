@@ -81,7 +81,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (data?.login) {
         localStorage.setItem("accessToken", data.login.accessToken);
         localStorage.setItem("refreshToken", data.login.refreshToken);
-        setUser(data.login.user);
+        // Fetch user data via authenticated 'me' query
+        await refetchMe();
         toast.success("Welcome back!");
         return true;
       }
@@ -113,7 +114,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (data?.signup) {
         localStorage.setItem("accessToken", data.signup.accessToken);
         localStorage.setItem("refreshToken", data.signup.refreshToken);
-        setUser(data.signup.user);
+        // Fetch user data via authenticated 'me' query
+        await refetchMe();
         toast.success("Account created successfully!");
         return true;
       }

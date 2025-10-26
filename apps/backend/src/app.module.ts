@@ -56,6 +56,7 @@ import { Request, Response } from "express";
       sortSchema: true,
       playground: process.env.GRAPHQL_PLAYGROUND === "true",
       introspection: process.env.GRAPHQL_INTROSPECTION === "true",
+      fieldResolverEnhancers: ["guards"],
       context: ({ req, res }: { req: Request; res: Response }) => ({
         req,
         res,

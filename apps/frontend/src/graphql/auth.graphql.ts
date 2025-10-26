@@ -5,16 +5,6 @@ export const LOGIN_MUTATION = gql`
     login(input: $input) {
       accessToken
       refreshToken
-      user {
-        id
-        username
-        email
-        displayName
-        avatarUrl
-        isAdmin
-        isVerified
-        createdAt
-      }
     }
   }
 `;
@@ -24,16 +14,6 @@ export const SIGNUP_MUTATION = gql`
     signup(input: $input) {
       accessToken
       refreshToken
-      user {
-        id
-        username
-        email
-        displayName
-        avatarUrl
-        isAdmin
-        isVerified
-        createdAt
-      }
     }
   }
 `;
