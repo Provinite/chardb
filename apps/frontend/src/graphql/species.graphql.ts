@@ -340,15 +340,16 @@ export const TRAIT_CONNECTION_FRAGMENT = gql`
 /**
  * Query to fetch traits by species ID with pagination.
  * Core query for trait builder interfaces.
- * 
+ *
  * @param speciesId - ID of the species to get traits for
  * @param first - Number of traits to fetch (default: 20)
  * @param after - Cursor for pagination (optional)
- * @returns TraitConnection filtered by species
+ * @param variantId - Optional variant ID for ordered trait display (optional)
+ * @returns TraitConnection filtered by species, optionally ordered by variant-specific order
  */
 export const TRAITS_BY_SPECIES_QUERY = gql`
-  query TraitsBySpecies($speciesId: ID!, $first: Int, $after: String) {
-    traitsBySpecies(speciesId: $speciesId, first: $first, after: $after) {
+  query TraitsBySpecies($speciesId: ID!, $first: Int, $after: String, $variantId: ID) {
+    traitsBySpecies(speciesId: $speciesId, first: $first, after: $after, variantId: $variantId) {
       ...TraitConnectionDetails
     }
   }

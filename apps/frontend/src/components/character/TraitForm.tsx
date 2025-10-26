@@ -169,13 +169,17 @@ export const TraitForm: React.FC<TraitFormProps> = ({
   errors = {},
   disabled = false,
 }) => {
-  // Fetch traits for the selected species
+  // Fetch traits for the selected species, optionally ordered by variant
   const {
     data: traitsData,
     loading: traitsLoading,
     error: traitsError,
   } = useTraitsBySpeciesQuery({
-    variables: { speciesId, first: 100 },
+    variables: {
+      speciesId,
+      first: 100,
+      variantId: speciesVariant?.id,
+    },
     skip: !speciesId,
   });
 

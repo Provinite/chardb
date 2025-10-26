@@ -1415,6 +1415,12 @@ type Mutation {
     """Trait list entry update data"""
     updateTraitListEntryInput: UpdateTraitListEntryInput!
   ): TraitListEntry!
+
+  """Batch update trait display orders for a species variant"""
+  updateTraitOrders(
+    """Trait order updates for a species variant"""
+    input: UpdateTraitOrdersInput!
+  ): [TraitListEntry!]!
 }
 
 type Query {
@@ -1868,7 +1874,9 @@ type Query {
     first: Int = 20
   ): TraitConnection!
 
-  """Get traits by species ID with pagination"""
+  """
+  Get traits by species ID with pagination, optionally ordered by variant-specific order
+  """
   traitsBySpecies(
     """Cursor for pagination"""
     after: String
@@ -1878,6 +1886,9 @@ type Query {
 
     """Species ID"""
     speciesId: ID!
+
+    """Optional species variant ID for ordered trait display"""
+    variantId: ID
   ): TraitConnection!
   user(id: ID, username: String): User
   userCharacters(filters: CharacterFiltersInput, userId: ID!): CharacterConnection!
@@ -2217,6 +2228,14 @@ type TraitListEntryConnection {
   totalCount: Float!
 }
 
+input TraitOrderInput {
+  """New display order for this trait"""
+  order: Int!
+
+  """ID of the trait"""
+  traitId: ID!
+}
+
 """Types of values that traits can store"""
 enum TraitValueType {
   """Enumerated value from predefined list"""
@@ -2473,6 +2492,14 @@ input UpdateTraitListEntryInput {
 
   """Type of values this trait stores"""
   valueType: TraitValueType
+}
+
+input UpdateTraitOrdersInput {
+  """Array of trait order updates"""
+  traitOrders: [TraitOrderInput!]!
+
+  """ID of the species variant"""
+  variantId: ID!
 }
 
 input UpdateUserInput {

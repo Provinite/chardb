@@ -84,7 +84,7 @@ export class TraitsResolver {
   @ResolveCommunityFrom({ speciesId: "speciesId" })
   @Query(() => TraitConnection, {
     name: "traitsBySpecies",
-    description: "Get traits by species ID with pagination",
+    description: "Get traits by species ID with pagination, optionally ordered by variant-specific order",
   })
   async findBySpecies(
     @Args("speciesId", { type: () => ID, description: "Species ID" })
@@ -102,11 +102,18 @@ export class TraitsResolver {
       description: "Cursor for pagination",
     })
     after?: string,
+    @Args("variantId", {
+      type: () => ID,
+      nullable: true,
+      description: "Optional species variant ID for ordered trait display",
+    })
+    variantId?: string,
   ): Promise<TraitConnection> {
     const serviceResult = await this.traitsService.findBySpecies(
       speciesId,
       first,
       after,
+      variantId,
     );
     return mapPrismaTraitConnectionToGraphQL(serviceResult);
   }

@@ -76,18 +76,89 @@ export class TraitsService {
     };
   }
 
-  /** Find traits by species ID with pagination */
-  async findBySpecies(speciesId: string, first: number = 20, after?: string) {
+  /** Find traits by species ID with pagination, optionally ordered by variant-specific order */
+  async findBySpecies(
+    speciesId: string,
+    first: number = 20,
+    after?: string,
+    variantId?: string,
+  ) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
+    // When variantId is provided, fetch traits with their TraitListEntry order
+    if (variantId) {
+      const [traitsWithOrder, totalCount] = await Promise.all([
+        this.prisma.trait.findMany({
+          where: {
+            speciesId,
+            traitListEntries: {
+              some: {
+                speciesVariantId: variantId,
+              },
+            },
+          },
+          take: first + 1,
+          skip,
+          cursor,
+          include: {
+            traitListEntries: {
+              where: {
+                speciesVariantId: variantId,
+              },
+              select: {
+                order: true,
+              },
+            },
+          },
+        }),
+        this.prisma.trait.count({
+          where: {
+            speciesId,
+            traitListEntries: {
+              some: {
+                speciesVariantId: variantId,
+              },
+            },
+          },
+        }),
+      ]);
+
+      // Sort by TraitListEntry order, then by trait name for ties
+      const sortedTraits = traitsWithOrder.sort((a, b) => {
+        const orderA = a.traitListEntries[0]?.order ?? 0;
+        const orderB = b.traitListEntries[0]?.order ?? 0;
+
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+
+        // Tiebreaker: alphabetical by name
+        return a.name.localeCompare(b.name);
+      });
+
+      const hasNextPage = sortedTraits.length > first;
+      const nodes = hasNextPage ? sortedTraits.slice(0, -1) : sortedTraits;
+
+      // Remove the traitListEntries from response (internal use only)
+      const cleanNodes = nodes.map(({ traitListEntries, ...trait }) => trait);
+
+      return {
+        nodes: cleanNodes,
+        totalCount,
+        hasNextPage,
+        hasPreviousPage: !!after,
+      };
+    }
+
+    // Fallback: no variant specified, order alphabetically by name
     const [traits, totalCount] = await Promise.all([
       this.prisma.trait.findMany({
         where: { speciesId },
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: "desc" },
+        orderBy: { name: "asc" },
       }),
       this.prisma.trait.count({
         where: { speciesId },

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Trait Ordering System (#105)**: Custom trait display order management for species variants
+  - Added `updateTraitOrders` mutation for batch updating trait display order in species variants
+  - Extended `traitsBySpecies` query with optional `variantId` parameter for variant-specific trait ordering
+  - Traits ordered by `TraitListEntry.order` field (ascending) with alphabetical tiebreaker by trait name
+  - When no variant specified, traits default to alphabetical ordering by name
+  - Enables species admins to control trait display order in character forms per variant
 - **Character Species Assignment Validation (#101)**: Prevent species changes once assigned to maintain data integrity and protect trait data
 - **Character Details Field (#109)**: Added unified markdown `details` field (15,000 char max) to replace separate description/personality/backstory fields
 

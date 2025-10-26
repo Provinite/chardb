@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Trait Ordering Interface (#105)**: Visual trait display order management for species variants
+  - Added `TraitOrderManager` component with drag-and-drop functionality using @dnd-kit library
+  - Integrated trait order management into Species Variant Management Page
+  - Visual drag handles, order badges, and real-time reordering preview
+  - Save/reset controls for batch updating trait display order
+  - Empty state messaging and loading indicators
+  - Only accessible to species admins with proper permissions
+  - Enables custom trait ordering in character creation/editing forms per variant
 - **Character Edit Page with Species and Trait Management (#101)**: Added species/variant selection and comprehensive trait editing with read-only species display after assignment
 - **Character Details Editor (#109)**: Added markdown editor component with live preview, syntax hints, and character counter for unified character details
 

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Settings, Palette, Database } from 'lucide-react';
-import { 
-  Button, Modal, Input, ErrorMessage, 
+import { Plus, Edit, Trash2, Settings, Palette, Database, ListOrdered } from 'lucide-react';
+import {
+  Button, Modal, Input, ErrorMessage,
   Card, CardHeader, CardMeta, CardActions, CardSection, CardSectionTitle, CardSectionContent,
   Title, Subtitle
 } from '@chardb/ui';
-import { 
+import {
   useSpeciesByIdQuery,
   useSpeciesVariantsBySpeciesQuery,
   useCreateSpeciesVariantMutation,
@@ -16,6 +16,7 @@ import {
   SpeciesVariantsBySpeciesQuery,
 } from '../generated/graphql';
 import { toast } from 'react-hot-toast';
+import { TraitOrderManager } from '../components/species/TraitOrderManager';
 
 /**
  * Species Variant Management Interface
@@ -94,15 +95,25 @@ const EmptyState = styled.div`
   text-align: center;
   padding: 3rem 1rem;
   color: ${({ theme }) => theme.colors.text.muted};
-  
+
   h3 {
     margin: 0 0 0.5rem 0;
     color: ${({ theme }) => theme.colors.text.primary};
   }
-  
+
   p {
     margin: 0 0 1rem 0;
   }
+`;
+
+const ExpandableSection = styled.div<{ $isExpanded: boolean }>`
+  max-height: ${({ $isExpanded }) => ($isExpanded ? '1000px' : '0')};
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  border-top: ${({ $isExpanded, theme }) =>
+    $isExpanded ? `1px solid ${theme.colors.border}` : 'none'};
+  margin-top: ${({ $isExpanded }) => ($isExpanded ? '1rem' : '0')};
+  padding-top: ${({ $isExpanded }) => ($isExpanded ? '1rem' : '0')};
 `;
 
 // Create/Edit Variant Modal
@@ -192,6 +203,7 @@ export const SpeciesVariantManagementPage: React.FC = () => {
   const { speciesId } = useParams<{ speciesId: string }>();
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [expandedTraitOrderVariantId, setExpandedTraitOrderVariantId] = useState<string | null>(null);
 
   if (!speciesId) {
     return (
@@ -289,6 +301,10 @@ export const SpeciesVariantManagementPage: React.FC = () => {
 
   const handleManageEnumSettings = (variant: typeof variants[0]) => {
     navigate(`/variants/${variant.id}/enum-settings`);
+  };
+
+  const handleToggleTraitOrder = (variantId: string) => {
+    setExpandedTraitOrderVariantId(prev => prev === variantId ? null : variantId);
   };
 
   // Loading states
@@ -416,6 +432,14 @@ export const SpeciesVariantManagementPage: React.FC = () => {
                 <ActionButton
                   variant="secondary"
                   size="sm"
+                  onClick={() => handleToggleTraitOrder(variant.id)}
+                  icon={<ListOrdered size={14} />}
+                >
+                  {expandedTraitOrderVariantId === variant.id ? 'Hide Order' : 'Order'}
+                </ActionButton>
+                <ActionButton
+                  variant="secondary"
+                  size="sm"
                   onClick={() => handleEditVariant(variant)}
                   icon={<Edit size={14} />}
                 >
@@ -430,6 +454,15 @@ export const SpeciesVariantManagementPage: React.FC = () => {
                   Delete
                 </ActionButton>
               </CardActions>
+
+              <ExpandableSection $isExpanded={expandedTraitOrderVariantId === variant.id}>
+                {expandedTraitOrderVariantId === variant.id && (
+                  <TraitOrderManager
+                    variantId={variant.id}
+                    variantName={variant.name}
+                  />
+                )}
+              </ExpandableSection>
             </Card>
           ))}
         </Grid>

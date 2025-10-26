@@ -213,4 +213,25 @@ export class TraitListEntriesService {
       where: { id },
     });
   }
+
+  /** Batch update trait orders for a specific species variant */
+  async updateTraitOrders(
+    variantId: string,
+    traitOrders: Array<{ traitId: string; order: number }>,
+  ) {
+    // Use a transaction to ensure all updates succeed or fail together
+    return this.prisma.$transaction(
+      traitOrders.map(({ traitId, order }) =>
+        this.prisma.traitListEntry.updateMany({
+          where: {
+            speciesVariantId: variantId,
+            traitId: traitId,
+          },
+          data: {
+            order: order,
+          },
+        }),
+      ),
+    );
+  }
 }
