@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Comprehensive Variant Management Page (#105)**: Unified interface for all variant configuration in single page
+  - New `VariantDetailPage` consolidating trait ordering, enum settings, and trait configuration
+  - Drag-and-drop trait ordering with real-time visual feedback
+  - Expandable trait rows showing required toggle, default values, and enum options
+  - Inline variant name editing
+  - Add/remove traits to/from variants with instant feedback
+  - Separated active and inactive traits sections
+  - Compact enum value management within trait rows
+  - New reusable components: `TraitListEntryRow`, `TraitDefaultValueInput`, `InactiveTraitCard`
+  - Simplified Species Variant Management page with single "Manage" button per variant
 - **Trait Ordering Interface (#105)**: Visual trait display order management for species variants
   - Added `TraitOrderManager` component with drag-and-drop functionality using @dnd-kit library
   - Integrated trait order management into Species Variant Management Page

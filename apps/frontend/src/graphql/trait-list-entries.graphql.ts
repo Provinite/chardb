@@ -9,6 +9,13 @@ export const TRAIT_LIST_ENTRY_DETAILS = gql`
     order
     required
     valueType
+    defaultValueString
+    defaultValueInt
+    defaultValueTimestamp
+    traitId
+    speciesVariantId
+    createdAt
+    updatedAt
     trait {
       id
       name
@@ -49,6 +56,42 @@ export const UPDATE_TRAIT_ORDERS = gql`
         id
         name
       }
+    }
+  }
+`;
+
+/**
+ * Mutation to create a new trait list entry (add trait to variant)
+ */
+export const CREATE_TRAIT_LIST_ENTRY = gql`
+  mutation CreateTraitListEntry($input: CreateTraitListEntryInput!) {
+    createTraitListEntry(createTraitListEntryInput: $input) {
+      ...TraitListEntryDetails
+    }
+  }
+  ${TRAIT_LIST_ENTRY_DETAILS}
+`;
+
+/**
+ * Mutation to update a trait list entry (required, defaults, etc.)
+ */
+export const UPDATE_TRAIT_LIST_ENTRY = gql`
+  mutation UpdateTraitListEntry($id: ID!, $input: UpdateTraitListEntryInput!) {
+    updateTraitListEntry(id: $id, updateTraitListEntryInput: $input) {
+      ...TraitListEntryDetails
+    }
+  }
+  ${TRAIT_LIST_ENTRY_DETAILS}
+`;
+
+/**
+ * Mutation to remove a trait list entry (remove trait from variant)
+ */
+export const REMOVE_TRAIT_LIST_ENTRY = gql`
+  mutation RemoveTraitListEntry($id: ID!) {
+    removeTraitListEntry(id: $id) {
+      removed
+      message
     }
   }
 `;
