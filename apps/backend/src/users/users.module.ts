@@ -8,7 +8,7 @@ import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    AuthModule,
+    forwardRef(() => AuthModule),
     SocialModule,
     ExternalAccountsModule,
     forwardRef(() => ItemsModule),
