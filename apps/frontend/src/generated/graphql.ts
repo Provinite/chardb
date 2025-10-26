@@ -1089,6 +1089,8 @@ export type Mutation = {
   updateTrait: Trait;
   /** Update a trait list entry */
   updateTraitListEntry: TraitListEntry;
+  /** Batch update trait display orders for a species variant */
+  updateTraitOrders: Array<TraitListEntry>;
 };
 
 
@@ -1478,6 +1480,11 @@ export type MutationUpdateTraitListEntryArgs = {
   updateTraitListEntryInput: UpdateTraitListEntryInput;
 };
 
+
+export type MutationUpdateTraitOrdersArgs = {
+  input: UpdateTraitOrdersInput;
+};
+
 export type Query = {
   __typename?: 'Query';
   activityFeed: Array<ActivityItem>;
@@ -1600,7 +1607,7 @@ export type Query = {
   traitListEntryById: TraitListEntry;
   /** Get all traits with pagination */
   traits: TraitConnection;
-  /** Get traits by species ID with pagination */
+  /** Get traits by species ID with pagination, optionally ordered by variant-specific order */
   traitsBySpecies: TraitConnection;
   user: Maybe<User>;
   userCharacters: CharacterConnection;
@@ -2010,6 +2017,7 @@ export type QueryTraitsBySpeciesArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   speciesId: Scalars['ID']['input'];
+  variantId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -2321,6 +2329,13 @@ export type TraitListEntryConnection = {
   totalCount: Scalars['Float']['output'];
 };
 
+export type TraitOrderInput = {
+  /** New display order for this trait */
+  order: Scalars['Int']['input'];
+  /** ID of the trait */
+  traitId: Scalars['ID']['input'];
+};
+
 /** Types of values that traits can store */
 export enum TraitValueType {
   /** Enumerated value from predefined list */
@@ -2538,6 +2553,13 @@ export type UpdateTraitListEntryInput = {
   traitId?: InputMaybe<Scalars['ID']['input']>;
   /** Type of values this trait stores */
   valueType?: InputMaybe<TraitValueType>;
+};
+
+export type UpdateTraitOrdersInput = {
+  /** Array of trait order updates */
+  traitOrders: Array<TraitOrderInput>;
+  /** ID of the species variant */
+  variantId: Scalars['ID']['input'];
 };
 
 export type UpdateUserInput = {
@@ -3452,6 +3474,7 @@ export type TraitsBySpeciesQueryVariables = Exact<{
   speciesId: Scalars['ID']['input'];
   first?: InputMaybe<Scalars['Int']['input']>;
   after?: InputMaybe<Scalars['String']['input']>;
+  variantId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
@@ -3493,6 +3516,45 @@ export type SearchTagsQueryVariables = Exact<{
 
 
 export type SearchTagsQuery = { __typename?: 'Query', searchTags: Array<{ __typename?: 'Tag', id: string, name: string, displayName: string, category: string | null, color: string | null, createdAt: string }> };
+
+export type TraitListEntryDetailsFragment = { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType } };
+
+export type TraitListEntriesByVariantQueryVariables = Exact<{
+  variantId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type TraitListEntriesByVariantQuery = { __typename?: 'Query', traitListEntriesBySpeciesVariant: { __typename?: 'TraitListEntryConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType } }> } };
+
+export type UpdateTraitOrdersMutationVariables = Exact<{
+  input: UpdateTraitOrdersInput;
+}>;
+
+
+export type UpdateTraitOrdersMutation = { __typename?: 'Mutation', updateTraitOrders: Array<{ __typename?: 'TraitListEntry', id: string, order: number, trait: { __typename?: 'Trait', id: string, name: string } }> };
+
+export type CreateTraitListEntryMutationVariables = Exact<{
+  input: CreateTraitListEntryInput;
+}>;
+
+
+export type CreateTraitListEntryMutation = { __typename?: 'Mutation', createTraitListEntry: { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType } } };
+
+export type UpdateTraitListEntryMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateTraitListEntryInput;
+}>;
+
+
+export type UpdateTraitListEntryMutation = { __typename?: 'Mutation', updateTraitListEntry: { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType } } };
+
+export type RemoveTraitListEntryMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveTraitListEntryMutation = { __typename?: 'Mutation', removeTraitListEntry: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
 export type GetUserProfileQueryVariables = Exact<{
   username: Scalars['String']['input'];
@@ -3669,6 +3731,26 @@ export const TraitConnectionDetailsFragmentDoc = gql`
   totalCount
 }
     ${TraitDetailsFragmentDoc}`;
+export const TraitListEntryDetailsFragmentDoc = gql`
+    fragment TraitListEntryDetails on TraitListEntry {
+  id
+  order
+  required
+  valueType
+  defaultValueString
+  defaultValueInt
+  defaultValueTimestamp
+  traitId
+  speciesVariantId
+  createdAt
+  updatedAt
+  trait {
+    id
+    name
+    valueType
+  }
+}
+    `;
 export const LoginDocument = gql`
     mutation Login($input: LoginInput!) {
   login(input: $input) {
@@ -9046,8 +9128,13 @@ export type DeleteSpeciesVariantMutationHookResult = ReturnType<typeof useDelete
 export type DeleteSpeciesVariantMutationResult = Apollo.MutationResult<DeleteSpeciesVariantMutation>;
 export type DeleteSpeciesVariantMutationOptions = Apollo.BaseMutationOptions<DeleteSpeciesVariantMutation, DeleteSpeciesVariantMutationVariables>;
 export const TraitsBySpeciesDocument = gql`
-    query TraitsBySpecies($speciesId: ID!, $first: Int, $after: String) {
-  traitsBySpecies(speciesId: $speciesId, first: $first, after: $after) {
+    query TraitsBySpecies($speciesId: ID!, $first: Int, $after: String, $variantId: ID) {
+  traitsBySpecies(
+    speciesId: $speciesId
+    first: $first
+    after: $after
+    variantId: $variantId
+  ) {
     ...TraitConnectionDetails
   }
 }
@@ -9068,6 +9155,7 @@ export const TraitsBySpeciesDocument = gql`
  *      speciesId: // value for 'speciesId'
  *      first: // value for 'first'
  *      after: // value for 'after'
+ *      variantId: // value for 'variantId'
  *   },
  * });
  */
@@ -9279,6 +9367,190 @@ export type SearchTagsQueryHookResult = ReturnType<typeof useSearchTagsQuery>;
 export type SearchTagsLazyQueryHookResult = ReturnType<typeof useSearchTagsLazyQuery>;
 export type SearchTagsSuspenseQueryHookResult = ReturnType<typeof useSearchTagsSuspenseQuery>;
 export type SearchTagsQueryResult = Apollo.QueryResult<SearchTagsQuery, SearchTagsQueryVariables>;
+export const TraitListEntriesByVariantDocument = gql`
+    query TraitListEntriesByVariant($variantId: ID!, $first: Int) {
+  traitListEntriesBySpeciesVariant(speciesVariantId: $variantId, first: $first) {
+    nodes {
+      ...TraitListEntryDetails
+    }
+    totalCount
+    hasNextPage
+  }
+}
+    ${TraitListEntryDetailsFragmentDoc}`;
+
+/**
+ * __useTraitListEntriesByVariantQuery__
+ *
+ * To run a query within a React component, call `useTraitListEntriesByVariantQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTraitListEntriesByVariantQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTraitListEntriesByVariantQuery({
+ *   variables: {
+ *      variantId: // value for 'variantId'
+ *      first: // value for 'first'
+ *   },
+ * });
+ */
+export function useTraitListEntriesByVariantQuery(baseOptions: Apollo.QueryHookOptions<TraitListEntriesByVariantQuery, TraitListEntriesByVariantQueryVariables> & ({ variables: TraitListEntriesByVariantQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<TraitListEntriesByVariantQuery, TraitListEntriesByVariantQueryVariables>(TraitListEntriesByVariantDocument, options);
+      }
+export function useTraitListEntriesByVariantLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TraitListEntriesByVariantQuery, TraitListEntriesByVariantQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<TraitListEntriesByVariantQuery, TraitListEntriesByVariantQueryVariables>(TraitListEntriesByVariantDocument, options);
+        }
+export function useTraitListEntriesByVariantSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TraitListEntriesByVariantQuery, TraitListEntriesByVariantQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<TraitListEntriesByVariantQuery, TraitListEntriesByVariantQueryVariables>(TraitListEntriesByVariantDocument, options);
+        }
+export type TraitListEntriesByVariantQueryHookResult = ReturnType<typeof useTraitListEntriesByVariantQuery>;
+export type TraitListEntriesByVariantLazyQueryHookResult = ReturnType<typeof useTraitListEntriesByVariantLazyQuery>;
+export type TraitListEntriesByVariantSuspenseQueryHookResult = ReturnType<typeof useTraitListEntriesByVariantSuspenseQuery>;
+export type TraitListEntriesByVariantQueryResult = Apollo.QueryResult<TraitListEntriesByVariantQuery, TraitListEntriesByVariantQueryVariables>;
+export const UpdateTraitOrdersDocument = gql`
+    mutation UpdateTraitOrders($input: UpdateTraitOrdersInput!) {
+  updateTraitOrders(input: $input) {
+    id
+    order
+    trait {
+      id
+      name
+    }
+  }
+}
+    `;
+export type UpdateTraitOrdersMutationFn = Apollo.MutationFunction<UpdateTraitOrdersMutation, UpdateTraitOrdersMutationVariables>;
+
+/**
+ * __useUpdateTraitOrdersMutation__
+ *
+ * To run a mutation, you first call `useUpdateTraitOrdersMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateTraitOrdersMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateTraitOrdersMutation, { data, loading, error }] = useUpdateTraitOrdersMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateTraitOrdersMutation(baseOptions?: Apollo.MutationHookOptions<UpdateTraitOrdersMutation, UpdateTraitOrdersMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateTraitOrdersMutation, UpdateTraitOrdersMutationVariables>(UpdateTraitOrdersDocument, options);
+      }
+export type UpdateTraitOrdersMutationHookResult = ReturnType<typeof useUpdateTraitOrdersMutation>;
+export type UpdateTraitOrdersMutationResult = Apollo.MutationResult<UpdateTraitOrdersMutation>;
+export type UpdateTraitOrdersMutationOptions = Apollo.BaseMutationOptions<UpdateTraitOrdersMutation, UpdateTraitOrdersMutationVariables>;
+export const CreateTraitListEntryDocument = gql`
+    mutation CreateTraitListEntry($input: CreateTraitListEntryInput!) {
+  createTraitListEntry(createTraitListEntryInput: $input) {
+    ...TraitListEntryDetails
+  }
+}
+    ${TraitListEntryDetailsFragmentDoc}`;
+export type CreateTraitListEntryMutationFn = Apollo.MutationFunction<CreateTraitListEntryMutation, CreateTraitListEntryMutationVariables>;
+
+/**
+ * __useCreateTraitListEntryMutation__
+ *
+ * To run a mutation, you first call `useCreateTraitListEntryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateTraitListEntryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createTraitListEntryMutation, { data, loading, error }] = useCreateTraitListEntryMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateTraitListEntryMutation(baseOptions?: Apollo.MutationHookOptions<CreateTraitListEntryMutation, CreateTraitListEntryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateTraitListEntryMutation, CreateTraitListEntryMutationVariables>(CreateTraitListEntryDocument, options);
+      }
+export type CreateTraitListEntryMutationHookResult = ReturnType<typeof useCreateTraitListEntryMutation>;
+export type CreateTraitListEntryMutationResult = Apollo.MutationResult<CreateTraitListEntryMutation>;
+export type CreateTraitListEntryMutationOptions = Apollo.BaseMutationOptions<CreateTraitListEntryMutation, CreateTraitListEntryMutationVariables>;
+export const UpdateTraitListEntryDocument = gql`
+    mutation UpdateTraitListEntry($id: ID!, $input: UpdateTraitListEntryInput!) {
+  updateTraitListEntry(id: $id, updateTraitListEntryInput: $input) {
+    ...TraitListEntryDetails
+  }
+}
+    ${TraitListEntryDetailsFragmentDoc}`;
+export type UpdateTraitListEntryMutationFn = Apollo.MutationFunction<UpdateTraitListEntryMutation, UpdateTraitListEntryMutationVariables>;
+
+/**
+ * __useUpdateTraitListEntryMutation__
+ *
+ * To run a mutation, you first call `useUpdateTraitListEntryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateTraitListEntryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateTraitListEntryMutation, { data, loading, error }] = useUpdateTraitListEntryMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateTraitListEntryMutation(baseOptions?: Apollo.MutationHookOptions<UpdateTraitListEntryMutation, UpdateTraitListEntryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateTraitListEntryMutation, UpdateTraitListEntryMutationVariables>(UpdateTraitListEntryDocument, options);
+      }
+export type UpdateTraitListEntryMutationHookResult = ReturnType<typeof useUpdateTraitListEntryMutation>;
+export type UpdateTraitListEntryMutationResult = Apollo.MutationResult<UpdateTraitListEntryMutation>;
+export type UpdateTraitListEntryMutationOptions = Apollo.BaseMutationOptions<UpdateTraitListEntryMutation, UpdateTraitListEntryMutationVariables>;
+export const RemoveTraitListEntryDocument = gql`
+    mutation RemoveTraitListEntry($id: ID!) {
+  removeTraitListEntry(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type RemoveTraitListEntryMutationFn = Apollo.MutationFunction<RemoveTraitListEntryMutation, RemoveTraitListEntryMutationVariables>;
+
+/**
+ * __useRemoveTraitListEntryMutation__
+ *
+ * To run a mutation, you first call `useRemoveTraitListEntryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveTraitListEntryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeTraitListEntryMutation, { data, loading, error }] = useRemoveTraitListEntryMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useRemoveTraitListEntryMutation(baseOptions?: Apollo.MutationHookOptions<RemoveTraitListEntryMutation, RemoveTraitListEntryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveTraitListEntryMutation, RemoveTraitListEntryMutationVariables>(RemoveTraitListEntryDocument, options);
+      }
+export type RemoveTraitListEntryMutationHookResult = ReturnType<typeof useRemoveTraitListEntryMutation>;
+export type RemoveTraitListEntryMutationResult = Apollo.MutationResult<RemoveTraitListEntryMutation>;
+export type RemoveTraitListEntryMutationOptions = Apollo.BaseMutationOptions<RemoveTraitListEntryMutation, RemoveTraitListEntryMutationVariables>;
 export const GetUserProfileDocument = gql`
     query GetUserProfile($username: String!) {
   userProfile(username: $username) {

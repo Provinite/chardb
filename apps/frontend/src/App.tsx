@@ -42,6 +42,7 @@ import { CommunityAdminPage } from "./pages/CommunityAdminPage";
 import { SpeciesManagementPage } from "./pages/SpeciesManagementPage";
 import { TraitBuilderPage } from "./pages/TraitBuilderPage";
 import { SpeciesVariantManagementPage } from "./pages/SpeciesVariantManagementPage";
+import { VariantDetailPage } from "./pages/VariantDetailPage";
 import { EnumValueManagementPage } from "./pages/EnumValueManagementPage";
 import { EnumValueSettingsPage } from "./pages/EnumValueSettingsPage";
 import { PermissionManagementPage } from "./pages/PermissionManagementPage";
@@ -376,6 +377,14 @@ function App() {
           element={
             <ProtectedRoute>
               <EnumValueManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/variants/:variantId/manage"
+          element={
+            <ProtectedRoute>
+              <VariantDetailPage />
             </ProtectedRoute>
           }
         />

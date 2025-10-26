@@ -20,7 +20,12 @@ import { CommunityNavigationGroup } from './CommunityNavigationGroup';
 import { CommunitySwitcher } from './CommunitySwitcher';
 import { GlobalNavigationSidebar } from './GlobalNavigationSidebar';
 import { useUserCommunityRole } from '../../hooks/useUserCommunityRole';
-import { useSpeciesByIdQuery, useGetCharacterQuery } from '../../generated/graphql';
+import {
+  useSpeciesByIdQuery,
+  useGetCharacterQuery,
+  useSpeciesVariantByIdQuery,
+  useTraitByIdQuery,
+} from '../../generated/graphql';
 
 interface CommunityNavigationSidebarProps {
   className?: string;
@@ -156,9 +161,10 @@ const SubsectionLabel = styled.div`
 const isCommunityRoute = (pathname: string): boolean => {
   const communityRoutes = [
     /^\/communities\/[^/]+/,
-    /^\/species\/[^/]+/,  // Species routes also get sidebar
-    /^\/character\/[^/]+/, // Character routes get sidebar if character has species
-    // Add more patterns as needed
+    /^\/species\/[^/]+/,
+    /^\/character\/[^/]+/,
+    /^\/variants\/[^/]+/,
+    /^\/traits\/[^/]+/,
   ];
   return communityRoutes.some((pattern) => pattern.test(pathname));
 };
@@ -188,6 +194,22 @@ const extractCharacterId = (pathname: string): string | undefined => {
   return match ? match[1] : undefined;
 };
 
+/**
+ * Extract variant ID from pathname for variant pages
+ */
+const extractVariantId = (pathname: string): string | undefined => {
+  const match = pathname.match(/^\/variants\/([^/]+)/);
+  return match ? match[1] : undefined;
+};
+
+/**
+ * Extract trait ID from pathname for trait pages
+ */
+const extractTraitId = (pathname: string): string | undefined => {
+  const match = pathname.match(/^\/traits\/([^/]+)/);
+  return match ? match[1] : undefined;
+};
+
 export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProps> = ({
   className,
   onToggleToGlobal,
@@ -198,6 +220,8 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   let communityId = extractCommunityId(location.pathname);
   const speciesId = extractSpeciesId(location.pathname);
   const characterId = extractCharacterId(location.pathname);
+  const variantId = extractVariantId(location.pathname);
+  const traitId = extractTraitId(location.pathname);
 
   // If we're on a species route, fetch the species to get its communityId
   const { data: speciesData, loading: speciesLoading } = useSpeciesByIdQuery({
@@ -211,7 +235,19 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
     skip: !characterId,
   });
 
-  // Determine the species context (either from direct species route or from character)
+  // If we're on a variant route, fetch the variant to get its species
+  const { data: variantData, loading: variantLoading } = useSpeciesVariantByIdQuery({
+    variables: { id: variantId || '' },
+    skip: !variantId,
+  });
+
+  // If we're on a trait route, fetch the trait to get its species
+  const { data: traitData, loading: traitLoading } = useTraitByIdQuery({
+    variables: { id: traitId || '' },
+    skip: !traitId,
+  });
+
+  // Determine the species context (from species route, character, variant, or trait)
   let contextSpeciesId: string | undefined = speciesId;
   let contextSpeciesName: string | undefined = speciesData?.speciesById?.name;
 
@@ -231,6 +267,24 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
     }
   }
 
+  // If on variant route, use its species for context and community
+  if (variantId && variantData?.speciesVariantById?.species) {
+    contextSpeciesId = variantData.speciesVariantById.species.id;
+    contextSpeciesName = variantData.speciesVariantById.species.name;
+
+    // Get community from variant's species
+    communityId = variantData.speciesVariantById.species.communityId;
+  }
+
+  // If on trait route, use its species for context and community
+  if (traitId && traitData?.traitById?.species) {
+    contextSpeciesId = traitData.traitById.species.id;
+    contextSpeciesName = traitData.traitById.species.name;
+
+    // Get community from trait's species
+    communityId = traitData.traitById.species.communityId;
+  }
+
   const {
     permissions,
     hasAdminPermissions,
@@ -247,10 +301,14 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
     communityId,
     speciesId,
     characterId,
+    variantId,
+    traitId,
     contextSpeciesId,
     contextSpeciesName,
     speciesLoading,
     characterLoading,
+    variantLoading,
+    traitLoading,
     isCommunityRoute: isCommunityRoute(location.pathname),
     loading,
     isMember,
@@ -264,8 +322,14 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
     return <GlobalNavigationSidebar onToggleToCommunity={undefined} />;
   }
 
-  // Show loading state while checking membership, species data, or character data
-  if (loading || (speciesId && speciesLoading) || (characterId && characterLoading)) {
+  // Show loading state while checking membership, species data, character data, variant data, or trait data
+  if (
+    loading ||
+    (speciesId && speciesLoading) ||
+    (characterId && characterLoading) ||
+    (variantId && variantLoading) ||
+    (traitId && traitLoading)
+  ) {
     console.log('[CommunityNavigationSidebar] Showing loading state');
     return (
       <SidebarContainer className={className} role="navigation" aria-label="Community navigation">

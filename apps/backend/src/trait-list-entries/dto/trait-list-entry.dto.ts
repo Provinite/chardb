@@ -1,5 +1,6 @@
 import { InputType, Field, ID, Int } from '@nestjs/graphql';
-import { IsString, IsNotEmpty, IsOptional, IsUUID, IsInt, Min, IsBoolean, IsEnum, IsDate } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsUUID, IsInt, Min, IsBoolean, IsEnum, IsDate, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { TraitValueType } from '../../shared/enums/trait-value-type.enum';
 
 @InputType()
@@ -103,4 +104,35 @@ export class UpdateTraitListEntryInput {
   @IsOptional()
   @IsDate()
   defaultValueTimestamp?: Date;
+}
+
+@InputType()
+export class TraitOrderInput {
+  /** ID of the trait */
+  @Field(() => ID, { description: 'ID of the trait' })
+  @IsUUID()
+  @IsNotEmpty()
+  traitId: string;
+
+  /** New display order for this trait */
+  @Field(() => Int, { description: 'New display order for this trait' })
+  @IsInt()
+  @Min(0)
+  order: number;
+}
+
+@InputType()
+export class UpdateTraitOrdersInput {
+  /** ID of the species variant */
+  @Field(() => ID, { description: 'ID of the species variant' })
+  @IsUUID()
+  @IsNotEmpty()
+  variantId: string;
+
+  /** Array of trait order updates */
+  @Field(() => [TraitOrderInput], { description: 'Array of trait order updates' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TraitOrderInput)
+  traitOrders: TraitOrderInput[];
 }

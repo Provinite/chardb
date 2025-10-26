@@ -22,6 +22,7 @@ import {
 import {
   CreateTraitListEntryInput,
   UpdateTraitListEntryInput,
+  UpdateTraitOrdersInput,
 } from "./dto/trait-list-entry.dto";
 import {
   mapCreateTraitListEntryInputToService,
@@ -211,6 +212,31 @@ export class TraitListEntriesResolver {
   ): Promise<RemovalResponse> {
     await this.traitListEntriesService.remove(id);
     return { removed: true, message: "Trait list entry successfully removed" };
+  }
+
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ speciesVariantId: "input.variantId" })
+  @Mutation(() => [TraitListEntry], {
+    description: "Batch update trait display orders for a species variant",
+  })
+  async updateTraitOrders(
+    @Args("input", {
+      description: "Trait order updates for a species variant",
+    })
+    input: UpdateTraitOrdersInput,
+  ): Promise<TraitListEntry[]> {
+    await this.traitListEntriesService.updateTraitOrders(
+      input.variantId,
+      input.traitOrders,
+    );
+
+    // Fetch and return the updated trait list entries
+    const result = await this.traitListEntriesService.findBySpeciesVariant(
+      input.variantId,
+      100, // Fetch all for the variant
+    );
+    return result.nodes.map(mapPrismaTraitListEntryToGraphQL);
   }
 
   // Field resolvers for relations

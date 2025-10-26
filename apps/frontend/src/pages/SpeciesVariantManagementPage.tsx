@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Settings, Palette, Database } from 'lucide-react';
-import { 
-  Button, Modal, Input, ErrorMessage, 
-  Card, CardHeader, CardMeta, CardActions, CardSection, CardSectionTitle, CardSectionContent,
+import { Plus, Trash2, Palette, Database, Settings } from 'lucide-react';
+import {
+  Button, Modal, Input, ErrorMessage,
+  Card, CardHeader, CardMeta, CardActions,
   Title, Subtitle
 } from '@chardb/ui';
-import { 
+import {
   useSpeciesByIdQuery,
   useSpeciesVariantsBySpeciesQuery,
   useCreateSpeciesVariantMutation,
-  useUpdateSpeciesVariantMutation,
   useDeleteSpeciesVariantMutation,
-  SpeciesVariantsBySpeciesQuery,
 } from '../generated/graphql';
 import { toast } from 'react-hot-toast';
 
@@ -94,18 +92,18 @@ const EmptyState = styled.div`
   text-align: center;
   padding: 3rem 1rem;
   color: ${({ theme }) => theme.colors.text.muted};
-  
+
   h3 {
     margin: 0 0 0.5rem 0;
     color: ${({ theme }) => theme.colors.text.primary};
   }
-  
+
   p {
     margin: 0 0 1rem 0;
   }
 `;
 
-// Create/Edit Variant Modal
+// Create Variant Modal
 interface VariantFormData {
   name: string;
 }
@@ -114,19 +112,15 @@ interface VariantModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: VariantFormData) => void;
-  variant?: SpeciesVariantsBySpeciesQuery['speciesVariantsBySpecies']['nodes'][0];
-  title: string;
 }
 
 const VariantModal: React.FC<VariantModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  variant,
-  title
 }) => {
   const [formData, setFormData] = useState<VariantFormData>({
-    name: variant?.name || ''
+    name: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -137,19 +131,17 @@ const VariantModal: React.FC<VariantModalProps> = ({
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
-      if (!variant) {
-        setFormData({ name: '' });
-      }
+      setFormData({ name: '' });
       onClose();
     } catch (error) {
-      console.error('Failed to save variant:', error);
+      console.error('Failed to create variant:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Create New Variant">
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '1.5rem' }}>
           <label htmlFor="variant-name">Variant Name</label>
@@ -180,7 +172,7 @@ const VariantModal: React.FC<VariantModalProps> = ({
             type="submit"
             disabled={isSubmitting || !formData.name.trim()}
           >
-            {isSubmitting ? 'Saving...' : variant ? 'Update Variant' : 'Create Variant'}
+            {isSubmitting ? 'Creating...' : 'Create Variant'}
           </Button>
         </div>
       </form>
@@ -212,7 +204,6 @@ export const SpeciesVariantManagementPage: React.FC = () => {
   });
 
   const variants = variantsData?.speciesVariantsBySpecies?.nodes || [];
-  const [editingVariant, setEditingVariant] = useState<SpeciesVariantsBySpeciesQuery['speciesVariantsBySpecies']['nodes'][0] | null>(null);
 
   const [createVariantMutation] = useCreateSpeciesVariantMutation({
     onCompleted: (data) => {
@@ -221,16 +212,6 @@ export const SpeciesVariantManagementPage: React.FC = () => {
     },
     onError: (error) => {
       toast.error(`Failed to create variant: ${error.message}`);
-    }
-  });
-
-  const [updateVariantMutation] = useUpdateSpeciesVariantMutation({
-    onCompleted: (data) => {
-      toast.success(`Variant "${data.updateSpeciesVariant.name}" updated successfully!`);
-      refetch();
-    },
-    onError: (error) => {
-      toast.error(`Failed to update variant: ${error.message}`);
     }
   });
 
@@ -256,19 +237,6 @@ export const SpeciesVariantManagementPage: React.FC = () => {
     });
   };
 
-  const handleUpdateVariant = async (formData: VariantFormData) => {
-    if (!editingVariant) return;
-    
-    await updateVariantMutation({
-      variables: {
-        id: editingVariant.id,
-        updateSpeciesVariantInput: {
-          name: formData.name
-        }
-      }
-    });
-  };
-
   const handleDeleteVariant = async (variant: typeof variants[0]) => {
     if (!window.confirm(`Are you sure you want to delete the variant "${variant.name}"? This will also delete all associated trait configurations and character data.`)) {
       return;
@@ -279,16 +247,8 @@ export const SpeciesVariantManagementPage: React.FC = () => {
     });
   };
 
-  const handleEditVariant = (variant: typeof variants[0]) => {
-    setEditingVariant(variant);
-  };
-
-  const handleConfigureTraits = (variant: typeof variants[0]) => {
-    navigate(`/variants/${variant.id}/trait-config`);
-  };
-
-  const handleManageEnumSettings = (variant: typeof variants[0]) => {
-    navigate(`/variants/${variant.id}/enum-settings`);
+  const handleManageVariant = (variant: typeof variants[0]) => {
+    navigate(`/variants/${variant.id}/manage`);
   };
 
   // Loading states
@@ -385,41 +345,14 @@ export const SpeciesVariantManagementPage: React.FC = () => {
                 <p>Last updated: {new Date(variant.updatedAt).toLocaleDateString()}</p>
               </CardMeta>
 
-              <CardSection>
-                <CardSectionTitle>
-                  <Settings size={14} />
-                  Trait Configuration
-                </CardSectionTitle>
-                <CardSectionContent>
-                  Configure which traits are available for this variant and their default values.
-                  Set up enum value restrictions and inheritance rules.
-                </CardSectionContent>
-              </CardSection>
-
               <CardActions>
                 <ActionButton
-                  variant="secondary"
+                  variant="primary"
                   size="sm"
-                  onClick={() => handleConfigureTraits(variant)}
-                  icon={<Database size={14} />}
-                >
-                  Traits
-                </ActionButton>
-                <ActionButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleManageEnumSettings(variant)}
+                  onClick={() => handleManageVariant(variant)}
                   icon={<Settings size={14} />}
                 >
-                  Options
-                </ActionButton>
-                <ActionButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleEditVariant(variant)}
-                  icon={<Edit size={14} />}
-                >
-                  Edit
+                  Manage
                 </ActionButton>
                 <ActionButton
                   variant="danger"
@@ -440,16 +373,6 @@ export const SpeciesVariantManagementPage: React.FC = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateVariant}
-        title="Create New Variant"
-      />
-
-      {/* Edit Variant Modal */}
-      <VariantModal
-        isOpen={!!editingVariant}
-        onClose={() => setEditingVariant(null)}
-        onSubmit={handleUpdateVariant}
-        variant={editingVariant || undefined}
-        title="Edit Variant"
       />
     </Container>
   );
