@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Character Edit Page with Species and Trait Management (#101)**: Comprehensive character editing interface
+  - Added species and variant selection for characters without species assignment
+  - Integrated existing `SpeciesSelector` component for species/variant selection
+  - Added read-only species display for characters that already have a species
+  - Clear warning UI indicating that species assignment is permanent
+  - Added comprehensive trait editing section using existing `TraitForm` component
+  - Separate "Save Traits" button for independent trait updates
+  - Shows trait completion status (e.g., "4 of 12 traits filled")
+  - Updated `GET_CHARACTER` query to include `speciesId`, `speciesVariantId`, and `traitValues`
+  - Added `UPDATE_CHARACTER_TRAITS` mutation with proper type generation
+  - Proper state management for species, variant, and trait values throughout the edit flow
+
 ### Fixed
 
 - **Species Edit 404 Error (#91)**: Fixed Edit button in Species Management navigating to non-existent route. Added EditSpeciesPage for editing species name and hasImage flag. Thanks @Owlscape!
