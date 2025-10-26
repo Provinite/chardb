@@ -17,6 +17,7 @@ import {
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
 import { TraitForm } from "../components/character/TraitForm";
+import { CharacterDetailsEditor } from "../components/character/CharacterDetailsEditor";
 
 /**
  * Enhanced Character Creation Page with Species and Trait Integration
@@ -31,14 +32,14 @@ import { TraitForm } from "../components/character/TraitForm";
  * - Dynamic trait forms based on species selection
  * - Trait value validation and type-specific inputs
  * - Integration with EnumValueSettings for variant-specific options
- * - Preserved character metadata (description, personality, backstory)
+ * - Preserved character metadata (details with markdown support)
  * - Tag management with autocomplete
  * - Visibility and trading settings
  * - Form validation and error handling
  * - Responsive design with step-by-step flow
  *
  * New Workflow:
- * 1. Basic character info (name, description)
+ * 1. Basic character info (name, details)
  * 2. Species and variant selection
  * 3. Trait configuration
  * 4. Character settings (visibility, trading)
@@ -60,19 +61,9 @@ const characterSchema = z.object({
     .max(20, "Gender must be less than 20 characters")
     .optional()
     .or(z.literal("")),
-  description: z
+  details: z
     .string()
-    .max(2000, "Description must be less than 2000 characters")
-    .optional()
-    .or(z.literal("")),
-  personality: z
-    .string()
-    .max(2000, "Personality must be less than 2000 characters")
-    .optional()
-    .or(z.literal("")),
-  backstory: z
-    .string()
-    .max(5000, "Backstory must be less than 5000 characters")
+    .max(15000, "Details must be less than 15000 characters")
     .optional()
     .or(z.literal("")),
   visibility: z.nativeEnum(Visibility),
@@ -198,29 +189,6 @@ const Input = styled.input`
   }
 `;
 
-const Textarea = styled.textarea`
-  padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 6px;
-  background: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: 0.875rem;
-  font-family: inherit;
-  resize: vertical;
-  min-height: 100px;
-  transition: all 0.2s;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.primary}20;
-  }
-
-  &[aria-invalid="true"] {
-    border-color: ${({ theme }) => theme.colors.danger};
-  }
-`;
-
 const Select = styled.select`
   padding: 0.75rem;
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -323,6 +291,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<CharacterForm>({
     resolver: zodResolver(characterSchema),
@@ -330,6 +299,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
       visibility: Visibility.Public,
       isSellable: false,
       isTradeable: false,
+      details: "",
     },
   });
 
@@ -358,9 +328,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             name: data.name,
             age: data.age || undefined,
             gender: data.gender || undefined,
-            description: data.description || undefined,
-            personality: data.personality || undefined,
-            backstory: data.backstory || undefined,
+            details: data.details || undefined,
             visibility: data.visibility,
             isSellable: data.isSellable,
             isTradeable: data.isTradeable,
@@ -466,40 +434,17 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             Character Details
           </SectionTitle>
           <SectionDescription>
-            Provide additional details about your character's appearance, personality, and background.
+            Provide details about your character using markdown formatting for rich text.
           </SectionDescription>
 
           <FormGroup>
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              {...register("description")}
-              id="description"
-              placeholder="Describe your character's appearance and general traits..."
-              rows={4}
+            <Label htmlFor="details">Character Details</Label>
+            <CharacterDetailsEditor
+              value={watch("details") || ""}
+              onChange={(value) => setValue("details", value, { shouldValidate: true })}
+              error={errors.details?.message}
+              maxLength={15000}
             />
-            {errors.description && <ErrorMessage>{errors.description.message}</ErrorMessage>}
-          </FormGroup>
-
-          <FormGroup>
-            <Label htmlFor="personality">Personality</Label>
-            <Textarea
-              {...register("personality")}
-              id="personality"
-              placeholder="Describe your character's personality, behavior, and quirks..."
-              rows={4}
-            />
-            {errors.personality && <ErrorMessage>{errors.personality.message}</ErrorMessage>}
-          </FormGroup>
-
-          <FormGroup>
-            <Label htmlFor="backstory">Backstory</Label>
-            <Textarea
-              {...register("backstory")}
-              id="backstory"
-              placeholder="Tell your character's story, background, and history..."
-              rows={6}
-            />
-            {errors.backstory && <ErrorMessage>{errors.backstory.message}</ErrorMessage>}
           </FormGroup>
         </Section>
 

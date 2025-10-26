@@ -15,6 +15,7 @@ export const GET_CHARACTERS = gql`
         description
         personality
         backstory
+        details
         ownerId
         creatorId
         mainMediaId
@@ -88,6 +89,7 @@ export const GET_CHARACTER = gql`
       description
       personality
       backstory
+      details
       ownerId
       creatorId
       visibility
@@ -152,6 +154,7 @@ export const GET_MY_CHARACTERS = gql`
         description
         personality
         backstory
+        details
         ownerId
         creatorId
         mainMediaId
@@ -210,6 +213,7 @@ export const CREATE_CHARACTER = gql`
       description
       personality
       backstory
+      details
       ownerId
       creatorId
       visibility
@@ -253,6 +257,7 @@ export const UPDATE_CHARACTER = gql`
       description
       personality
       backstory
+      details
       ownerId
       creatorId
       visibility
@@ -302,6 +307,7 @@ export const TRANSFER_CHARACTER = gql`
       description
       personality
       backstory
+      details
       ownerId
       creatorId
       visibility
