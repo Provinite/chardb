@@ -16,6 +16,12 @@ async function main() {
       displayName: 'Administrator',
       isAdmin: true,
       isVerified: true,
+      // Grant all global permissions
+      canCreateCommunity: true,
+      canListUsers: true,
+      canListInviteCodes: true,
+      canCreateInviteCode: true,
+      canGrantGlobalPermissions: true,
     },
   });
 
