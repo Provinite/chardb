@@ -42,6 +42,7 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     description: characterData.description,
     personality: characterData.personality,
     backstory: characterData.backstory,
+    details: characterData.details,
     visibility: characterData.visibility,
     isSellable: characterData.isSellable,
     isTradeable: characterData.isTradeable,
@@ -82,6 +83,8 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
     characterData.personality = inputData.personality;
   if (inputData.backstory !== undefined)
     characterData.backstory = inputData.backstory;
+  if (inputData.details !== undefined)
+    characterData.details = inputData.details;
   if (inputData.visibility !== undefined)
     characterData.visibility = inputData.visibility;
   if (inputData.isSellable !== undefined)
@@ -132,6 +135,7 @@ export function mapPrismaCharacterToGraphQL(
     description: prismaCharacter.description ?? undefined,
     personality: prismaCharacter.personality ?? undefined,
     backstory: prismaCharacter.backstory ?? undefined,
+    details: prismaCharacter.details ?? undefined,
     ownerId: prismaCharacter.ownerId,
     creatorId: prismaCharacter.creatorId ?? undefined,
     mainMediaId: prismaCharacter.mainMediaId ?? undefined,

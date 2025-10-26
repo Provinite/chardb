@@ -43,6 +43,9 @@ export class Character {
   @Field({ nullable: true })
   backstory?: string;
 
+  @Field({ nullable: true })
+  details?: string;
+
   @Field(() => ID)
   ownerId: string;
 

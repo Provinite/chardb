@@ -57,6 +57,12 @@ export class CreateCharacterInput {
   @MaxLength(5000)
   backstory?: string;
 
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(15000)
+  details?: string;
+
   @Field(() => Visibility, { defaultValue: Visibility.PUBLIC })
   @IsOptional()
   @IsEnum(Visibility)
@@ -141,6 +147,12 @@ export class UpdateCharacterInput {
   @IsString()
   @MaxLength(5000)
   backstory?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(15000)
+  details?: string;
 
   @Field(() => Visibility, { nullable: true })
   @IsOptional()

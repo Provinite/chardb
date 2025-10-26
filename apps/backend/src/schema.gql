@@ -36,6 +36,7 @@ type Character {
   creatorId: ID
   customFields: String
   description: String
+  details: String
   gender: String
   id: ID!
   isSellable: Boolean!
@@ -345,6 +346,7 @@ input CreateCharacterInput {
   backstory: String
   customFields: String
   description: String
+  details: String
   gender: String
   isSellable: Boolean! = false
   isTradeable: Boolean! = false
@@ -2249,6 +2251,7 @@ input UpdateCharacterInput {
   backstory: String
   customFields: String
   description: String
+  details: String
   gender: String
   isSellable: Boolean
   isTradeable: Boolean

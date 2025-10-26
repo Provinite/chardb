@@ -127,6 +127,7 @@ model Character {
   description       String?    @db.Text
   personality       String?    @db.Text
   backstory         String?    @db.Text
+  details           String?    @db.Text
   ownerId           String     @map("owner_id")
   creatorId         String?    @map("creator_id")
   mainMediaId       String?    @map("main_media_id")
