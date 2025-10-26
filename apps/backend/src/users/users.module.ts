@@ -4,9 +4,11 @@ import { UsersResolver, UserProfileResolver, UserStatsResolver } from './users.r
 import { SocialModule } from '../social/social.module';
 import { ExternalAccountsModule } from '../external-accounts/external-accounts.module';
 import { ItemsModule } from '../items/items.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
+    AuthModule,
     SocialModule,
     ExternalAccountsModule,
     forwardRef(() => ItemsModule),
