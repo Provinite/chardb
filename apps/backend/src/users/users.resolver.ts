@@ -355,6 +355,7 @@ export class UserStatsResolver {
     private readonly socialService: SocialService,
   ) {}
 
+  @AllowUnauthenticated()
   @ResolveField("charactersCount", () => Int, {
     description: "Total number of characters owned by this user",
   })
@@ -371,6 +372,7 @@ export class UserStatsResolver {
     );
   }
 
+  @AllowUnauthenticated()
   @ResolveField("galleriesCount", () => Int, {
     description: "Total number of galleries created by this user",
   })
@@ -387,6 +389,7 @@ export class UserStatsResolver {
     );
   }
 
+  @AllowUnauthenticated()
   @ResolveField("imagesCount", () => Int, {
     description: "Total number of images uploaded by this user",
   })
@@ -395,6 +398,7 @@ export class UserStatsResolver {
     return this.usersService.getUserImagesCount(stats.userId);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("totalViews", () => Int, {
     description: "Total number of views across all user's content",
   })
@@ -403,6 +407,7 @@ export class UserStatsResolver {
     return 0;
   }
 
+  @AllowUnauthenticated()
   @ResolveField("totalLikes", () => Int, {
     description: "Total number of likes received across all user's content",
   })
@@ -414,6 +419,7 @@ export class UserStatsResolver {
     return totalLikes;
   }
 
+  @AllowUnauthenticated()
   @ResolveField("followersCount", () => Int, {
     description: "Number of users following this user",
   })
@@ -422,6 +428,7 @@ export class UserStatsResolver {
     return 0;
   }
 
+  @AllowUnauthenticated()
   @ResolveField("followingCount", () => Int, {
     description: "Number of users this user is following",
   })
