@@ -7,8 +7,9 @@ import {
   ID,
   ResolveField,
   Parent,
+  Extensions,
 } from "@nestjs/graphql";
-import { NotFoundException, UseFilters, UseInterceptors } from "@nestjs/common";
+import { NotFoundException, UseFilters } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { User, UserConnection } from "./entities/user.entity";
 import { UserProfile, UserStats } from "./entities/user-profile.entity";
@@ -37,7 +38,7 @@ import { GraphQLJSON } from "graphql-type-json";
 import { Inventory } from "../items/entities/inventory.entity";
 import { ItemsService } from "../items/items.service";
 import { NullOnForbiddenFilter } from "../auth/filters/NullOnForbiddenFilter";
-import { SentinelValueInterceptor } from "../auth/interceptors/SentinelValueInterceptor";
+import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -167,7 +168,7 @@ export class UsersResolver {
   @AllowGlobalAdmin()
   @AllowSelf()
   @UseFilters(NullOnForbiddenFilter)
-  @UseInterceptors(SentinelValueInterceptor)
+  @Extensions({ middleware: [sentinelValueMiddleware] })
   @ResolveField("email", () => String)
   async resolveEmail(@Parent() user: User): Promise<string> {
     return user.email;
