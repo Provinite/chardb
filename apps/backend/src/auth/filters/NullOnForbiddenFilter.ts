@@ -4,14 +4,17 @@ import {
   ArgumentsHost,
   ForbiddenException,
 } from "@nestjs/common";
-import { GqlContextType, GqlArgumentsHost } from "@nestjs/graphql";
-import { GraphQLError } from "graphql";
+import { GqlContextType } from "@nestjs/graphql";
+import { TRUTHY_EMPTY_STRING } from "../constants/sentinel-values";
 
 /**
  * Exception filter that catches ForbiddenException in GraphQL field resolvers
- * and returns null instead of throwing an error.
+ * and returns a sentinel value instead of throwing an error.
  *
- * Apply with @UseFilters(NullOnForbiddenFilter)
+ * Returns TRUTHY_EMPTY_STRING which will be transformed back to an actual
+ * empty string (or null) by SentinelValueInterceptor.
+ *
+ * Apply with @UseFilters(NullOnForbiddenFilter) and @UseInterceptors(SentinelValueInterceptor)
  */
 @Catch(ForbiddenException)
 export class NullOnForbiddenFilter implements ExceptionFilter {
@@ -21,11 +24,6 @@ export class NullOnForbiddenFilter implements ExceptionFilter {
       throw exception;
     }
 
-    const gqlHost = GqlArgumentsHost.create(host);
-    const info = gqlHost.getInfo();
-
-    // Return null for the field resolver
-    // GraphQL will handle this gracefully as a null field value
-    return null;
+    return TRUTHY_EMPTY_STRING;
   }
 }
