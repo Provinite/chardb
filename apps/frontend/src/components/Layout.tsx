@@ -38,6 +38,8 @@ const isCommunityRoute = (pathname: string): boolean => {
     /^\/communities\/[^/]+/,
     /^\/species\/[^/]+/,
     /^\/character\/[^/]+/,
+    /^\/variants\/[^/]+/,
+    /^\/traits\/[^/]+/,
   ];
   return communityRoutes.some((pattern) => pattern.test(pathname));
 };
