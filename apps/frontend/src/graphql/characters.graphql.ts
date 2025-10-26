@@ -64,6 +64,8 @@ export const GET_CHARACTER = gql`
     character(id: $id) {
       id
       name
+      speciesId
+      speciesVariantId
       species {
         id
         name
@@ -72,6 +74,14 @@ export const GET_CHARACTER = gql`
           id
           name
         }
+      }
+      speciesVariant {
+        id
+        name
+      }
+      traitValues {
+        traitId
+        value
       }
       age
       gender
@@ -378,6 +388,19 @@ export const SET_CHARACTER_MAIN_MEDIA = gql`
   }
 `;
 
+export const UPDATE_CHARACTER_TRAITS = gql`
+  mutation UpdateCharacterTraits($id: ID!, $updateCharacterTraitsInput: UpdateCharacterTraitsInput!) {
+    updateCharacterTraits(id: $id, updateCharacterTraitsInput: $updateCharacterTraitsInput) {
+      id
+      name
+      traitValues {
+        traitId
+        value
+      }
+    }
+  }
+`;
+
 export const GET_LIKED_CHARACTERS = gql`
   query GetLikedCharacters {
     likedCharacters {
@@ -423,6 +446,7 @@ export {
   useAddCharacterTagsMutation,
   useRemoveCharacterTagsMutation,
   useSetCharacterMainMediaMutation,
+  useUpdateCharacterTraitsMutation,
 
   // Types
   type Character,
@@ -433,6 +457,8 @@ export {
   type TransferCharacterInput,
   type ManageTagsInput,
   type SetMainMediaInput,
+  type UpdateCharacterTraitsInput,
+  type CharacterTraitValueInput,
   type GetCharactersQuery,
   type GetCharactersQueryVariables,
   type GetCharacterQuery,
@@ -453,6 +479,8 @@ export {
   type RemoveCharacterTagsMutationVariables,
   type SetCharacterMainMediaMutation,
   type SetCharacterMainMediaMutationVariables,
+  type UpdateCharacterTraitsMutation,
+  type UpdateCharacterTraitsMutationVariables,
   type Visibility,
   type Tag,
   type CharacterTag,

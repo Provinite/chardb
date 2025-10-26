@@ -2679,7 +2679,7 @@ export type GetCharacterQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string } } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, speciesId: string | null, speciesVariantId: string | null, age: string | null, gender: string | null, description: string | null, personality: string | null, backstory: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null }>, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -2741,6 +2741,14 @@ export type SetCharacterMainMediaMutationVariables = Exact<{
 
 
 export type SetCharacterMainMediaMutation = { __typename?: 'Mutation', setCharacterMainMedia: { __typename?: 'Character', id: string, name: string, mainMediaId: string | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
+
+export type UpdateCharacterTraitsMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  updateCharacterTraitsInput: UpdateCharacterTraitsInput;
+}>;
+
+
+export type UpdateCharacterTraitsMutation = { __typename?: 'Mutation', updateCharacterTraits: { __typename?: 'Character', id: string, name: string, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null }> } };
 
 export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -3940,6 +3948,8 @@ export const GetCharacterDocument = gql`
   character(id: $id) {
     id
     name
+    speciesId
+    speciesVariantId
     species {
       id
       name
@@ -3948,6 +3958,14 @@ export const GetCharacterDocument = gql`
         id
         name
       }
+    }
+    speciesVariant {
+      id
+      name
+    }
+    traitValues {
+      traitId
+      value
     }
     age
     gender
@@ -4498,6 +4516,48 @@ export function useSetCharacterMainMediaMutation(baseOptions?: Apollo.MutationHo
 export type SetCharacterMainMediaMutationHookResult = ReturnType<typeof useSetCharacterMainMediaMutation>;
 export type SetCharacterMainMediaMutationResult = Apollo.MutationResult<SetCharacterMainMediaMutation>;
 export type SetCharacterMainMediaMutationOptions = Apollo.BaseMutationOptions<SetCharacterMainMediaMutation, SetCharacterMainMediaMutationVariables>;
+export const UpdateCharacterTraitsDocument = gql`
+    mutation UpdateCharacterTraits($id: ID!, $updateCharacterTraitsInput: UpdateCharacterTraitsInput!) {
+  updateCharacterTraits(
+    id: $id
+    updateCharacterTraitsInput: $updateCharacterTraitsInput
+  ) {
+    id
+    name
+    traitValues {
+      traitId
+      value
+    }
+  }
+}
+    `;
+export type UpdateCharacterTraitsMutationFn = Apollo.MutationFunction<UpdateCharacterTraitsMutation, UpdateCharacterTraitsMutationVariables>;
+
+/**
+ * __useUpdateCharacterTraitsMutation__
+ *
+ * To run a mutation, you first call `useUpdateCharacterTraitsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCharacterTraitsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCharacterTraitsMutation, { data, loading, error }] = useUpdateCharacterTraitsMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      updateCharacterTraitsInput: // value for 'updateCharacterTraitsInput'
+ *   },
+ * });
+ */
+export function useUpdateCharacterTraitsMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCharacterTraitsMutation, UpdateCharacterTraitsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateCharacterTraitsMutation, UpdateCharacterTraitsMutationVariables>(UpdateCharacterTraitsDocument, options);
+      }
+export type UpdateCharacterTraitsMutationHookResult = ReturnType<typeof useUpdateCharacterTraitsMutation>;
+export type UpdateCharacterTraitsMutationResult = Apollo.MutationResult<UpdateCharacterTraitsMutation>;
+export type UpdateCharacterTraitsMutationOptions = Apollo.BaseMutationOptions<UpdateCharacterTraitsMutation, UpdateCharacterTraitsMutationVariables>;
 export const GetLikedCharactersDocument = gql`
     query GetLikedCharacters {
   likedCharacters {

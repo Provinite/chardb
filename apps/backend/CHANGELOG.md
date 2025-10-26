@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Character Species Assignment Validation (#101)**: Prevent species changes once assigned to maintain data integrity and protect trait data
+
 ### Fixed
 
+- **Character Trait DTO Validation (#101)**: Fixed ValidationPipe error when updating character traits by adding missing `@Type` decorator and `@IsString()` validator
 - **DeviantArt OAuth Redirect (#100)**: Fixed deployment script to use proper frontend domain instead of backend IP address for FRONTEND_URL environment variable, resolving OAuth redirect failures.
 - **Species Deletion with Characters (#86)**: Prevent deletion of species when characters are using them. The species `removeSpecies` mutation now validates that no characters exist for the species before allowing deletion. Returns a user-friendly error message indicating how many characters are affected and suggesting to delete or reassign them first. This prevents data integrity issues and accidental orphaning of characters.
 - **Media Query with Private Characters (#90)**: Fixed GraphQL error when querying media associated with private characters/galleries. Character and gallery field resolvers now pass current user context and gracefully return `null` for inaccessible private entities instead of failing the entire query. This allows PUBLIC media to display even when associated character/gallery is PRIVATE. Thanks @Owlscape!
