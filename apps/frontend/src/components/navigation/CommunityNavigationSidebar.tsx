@@ -18,6 +18,7 @@ import {
 import { CommunityNavigationItem } from './CommunityNavigationItem';
 import { CommunityNavigationGroup } from './CommunityNavigationGroup';
 import { CommunitySwitcher } from './CommunitySwitcher';
+import { GlobalNavigationSidebar } from './GlobalNavigationSidebar';
 import { useUserCommunityRole } from '../../hooks/useUserCommunityRole';
 import { useSpeciesByIdQuery, useGetCharacterQuery } from '../../generated/graphql';
 
@@ -259,8 +260,8 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
 
   // Only render sidebar for community-scoped routes
   if (!isCommunityRoute(location.pathname)) {
-    console.log('[CommunityNavigationSidebar] Not rendering - not a community route');
-    return null;
+    console.log('[CommunityNavigationSidebar] Not rendering - not a community route, showing global sidebar');
+    return <GlobalNavigationSidebar onToggleToCommunity={undefined} />;
   }
 
   // Show loading state while checking membership, species data, or character data
@@ -277,8 +278,8 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
 
   // After loading, check if we have a communityId
   if (!communityId) {
-    console.log('[CommunityNavigationSidebar] Not rendering - no communityId after loading');
-    return null;
+    console.log('[CommunityNavigationSidebar] Not rendering - no communityId after loading, showing global sidebar');
+    return <GlobalNavigationSidebar onToggleToCommunity={undefined} />;
   }
 
   // Show error state if query failed
@@ -297,8 +298,8 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
 
   // Don't render if user is not a member
   if (!isMember) {
-    console.log('[CommunityNavigationSidebar] Not rendering - user is not a member');
-    return null;
+    console.log('[CommunityNavigationSidebar] Not rendering - user is not a member, showing global sidebar');
+    return <GlobalNavigationSidebar onToggleToCommunity={undefined} />;
   }
 
   console.log('[CommunityNavigationSidebar] Rendering full sidebar');
