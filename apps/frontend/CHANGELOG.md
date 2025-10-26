@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v4.0.0] - 2025-10-26
+
 ### Added
 
 - **Comprehensive Variant Management Page (#105)**: Unified interface for all variant configuration in single page
