@@ -285,6 +285,7 @@ export class UsersResolver {
 export class UserProfileResolver {
   constructor(private readonly usersService: UsersService) {}
 
+  @AllowUnauthenticated()
   @ResolveField("stats", () => UserStats, {
     description: "User statistics including counts and engagement metrics",
   })
@@ -292,6 +293,7 @@ export class UserProfileResolver {
     return { userId: profile.user.id };
   }
 
+  @AllowUnauthenticated()
   @ResolveField("recentCharacters", () => [Character], {
     description: "Recently created or updated characters by this user",
   })
@@ -308,6 +310,7 @@ export class UserProfileResolver {
     return characters.map(mapPrismaCharacterToGraphQL);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("recentGalleries", () => [Gallery], {
     description: "Recently created or updated galleries by this user",
   })
@@ -323,6 +326,7 @@ export class UserProfileResolver {
     );
   }
 
+  @AllowUnauthenticated()
   @ResolveField("recentMedia", () => [Media], {
     description: "Recently uploaded media (images and text) by this user",
   })
@@ -330,6 +334,7 @@ export class UserProfileResolver {
     return this.usersService.getUserRecentMedia(profile.user.id, 12);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("featuredCharacters", () => [Character], {
     description: "Characters featured or highlighted by this user",
   })
