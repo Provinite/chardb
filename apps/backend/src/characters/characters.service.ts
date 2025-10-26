@@ -201,6 +201,20 @@ export class CharactersService {
 
     const { characterData, tags } = input;
 
+    // Prevent changing species once it's set
+    if (characterData.species !== undefined && character.speciesId) {
+      // The species field in the update input is either {connect: {id}} or {disconnect: true}
+      const speciesUpdate = characterData.species as any;
+
+      // If trying to connect to a different species or disconnect
+      if (speciesUpdate?.disconnect ||
+          (speciesUpdate?.connect?.id && speciesUpdate.connect.id !== character.speciesId)) {
+        throw new ForbiddenException(
+          "Cannot change species once it has been set. Species assignment is permanent."
+        );
+      }
+    }
+
     const updatedCharacter = await this.db.character.update({
       where: { id },
       data: characterData,

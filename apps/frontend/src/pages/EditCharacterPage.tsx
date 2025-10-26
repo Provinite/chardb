@@ -5,16 +5,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
+import { AlertTriangle } from "lucide-react";
 import { Button, TagInput } from "@chardb/ui";
 import {
   useGetCharacterQuery,
   useUpdateCharacterMutation,
+  useUpdateCharacterTraitsMutation,
   UpdateCharacterInput,
+  CharacterTraitValueInput,
   Visibility,
 } from "../graphql/characters.graphql";
 import { useAuth } from "../contexts/AuthContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useTagSearch } from "../hooks/useTagSearch";
+import { SpeciesSelector } from "../components/character/SpeciesSelector";
+import { TraitForm } from "../components/character/TraitForm";
+import { SpeciesDetailsFragment, SpeciesVariantDetailsFragment } from "../generated/graphql";
 
 const characterSchema = z.object({
   name: z
@@ -268,12 +274,76 @@ const ErrorContainer = styled.div`
   color: ${({ theme }) => theme.colors.error};
 `;
 
+const WarningBox = styled.div`
+  padding: ${({ theme }) => theme.spacing.md};
+  background: #fef3cd;
+  border: 1px solid #ffd700;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: #856404;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+  display: flex;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.sm};
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+`;
+
+const InfoBox = styled.div`
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.primary}10;
+  border: 1px solid ${({ theme }) => theme.colors.primary}30;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+`;
+
+const CurrentSpeciesDisplay = styled.div`
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.surface};
+  border: 2px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+
+  strong {
+    color: ${({ theme }) => theme.colors.text.primary};
+    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  }
+
+  p {
+    margin: 0;
+    color: ${({ theme }) => theme.colors.text.secondary};
+    font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  }
+`;
+
+const TraitActions = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.md};
+  justify-content: flex-end;
+  margin-top: ${({ theme }) => theme.spacing.lg};
+  padding-top: ${({ theme }) => theme.spacing.md};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
 export const EditCharacterPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
+
+  // Species and variant selection state
+  const [selectedSpecies, setSelectedSpecies] = useState<SpeciesDetailsFragment | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<SpeciesVariantDetailsFragment | null>(null);
+
+  // Trait values state
+  const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>([]);
+  const [isSubmittingTraits, setIsSubmittingTraits] = useState(false);
 
   const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
 
@@ -283,6 +353,7 @@ export const EditCharacterPage: React.FC = () => {
   });
 
   const [updateCharacter] = useUpdateCharacterMutation();
+  const [updateCharacterTraits] = useUpdateCharacterTraitsMutation();
 
   const {
     register,
@@ -326,6 +397,22 @@ export const EditCharacterPage: React.FC = () => {
         tags: [],
       });
       setTags(character.tags || []);
+
+      // Set species and variant if they exist
+      if (character.species) {
+        setSelectedSpecies(character.species as any);
+      }
+      if (character.speciesVariant) {
+        setSelectedVariant(character.speciesVariant as any);
+      }
+
+      // Set trait values if they exist
+      if (character.traitValues) {
+        setTraitValues(character.traitValues.map(tv => ({
+          traitId: tv.traitId,
+          value: tv.value || "",
+        })));
+      }
     }
   }, [character, reset]);
 
@@ -349,6 +436,9 @@ export const EditCharacterPage: React.FC = () => {
         price:
           data.price && data.isSellable ? parseFloat(data.price) : undefined,
         tags, // Use the tags state directly
+        // Only include species if it's being set for the first time (character doesn't have one yet)
+        speciesId: !character.speciesId && selectedSpecies ? selectedSpecies.id : undefined,
+        speciesVariantId: !character.speciesId && selectedVariant ? selectedVariant.id : undefined,
       };
 
       await updateCharacter({
@@ -369,6 +459,33 @@ export const EditCharacterPage: React.FC = () => {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveTraits = async () => {
+    if (!character || !user) return;
+
+    setIsSubmittingTraits(true);
+    try {
+      await updateCharacterTraits({
+        variables: {
+          id: character.id,
+          updateCharacterTraitsInput: {
+            traitValues,
+          },
+        },
+      });
+
+      toast.success("Traits updated successfully!");
+    } catch (error) {
+      console.error("Failed to update traits:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update traits. Please try again.",
+      );
+    } finally {
+      setIsSubmittingTraits(false);
     }
   };
 
@@ -591,6 +708,71 @@ export const EditCharacterPage: React.FC = () => {
             {errors.tags && <ErrorMessage>{errors.tags.message}</ErrorMessage>}
           </FormGroup>
         </FormSection>
+
+        {/* Species Selection Section */}
+        <FormSection>
+          <SectionTitle>Species</SectionTitle>
+
+          {character.speciesId ? (
+            // Character already has a species - show it as read-only
+            <>
+              <InfoBox>
+                Species assignment is permanent and cannot be changed once set.
+              </InfoBox>
+              <CurrentSpeciesDisplay>
+                <p>
+                  <strong>Current Species:</strong> {character.species?.name || "Unknown"}
+                </p>
+                {character.speciesVariant && (
+                  <p style={{ marginTop: "0.5rem" }}>
+                    <strong>Variant:</strong> {character.speciesVariant.name}
+                  </p>
+                )}
+              </CurrentSpeciesDisplay>
+            </>
+          ) : (
+            // Character doesn't have a species yet - allow selection
+            <>
+              <WarningBox>
+                <AlertTriangle size={20} />
+                <div>
+                  <strong>Important:</strong> Once you assign a species to this character,
+                  it cannot be changed. Choose carefully!
+                </div>
+              </WarningBox>
+              <SpeciesSelector
+                selectedSpecies={selectedSpecies}
+                selectedVariant={selectedVariant}
+                onSpeciesChange={setSelectedSpecies}
+                onVariantChange={setSelectedVariant}
+              />
+            </>
+          )}
+        </FormSection>
+
+        {/* Traits Section - only show if character has a species */}
+        {character.speciesId && (
+          <FormSection>
+            <SectionTitle>Character Traits</SectionTitle>
+            <TraitForm
+              speciesId={character.speciesId}
+              speciesVariant={character.speciesVariant as SpeciesVariantDetailsFragment | null}
+              traitValues={traitValues}
+              onChange={setTraitValues}
+              disabled={isSubmittingTraits}
+            />
+            <TraitActions>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleSaveTraits}
+                disabled={isSubmittingTraits}
+              >
+                {isSubmittingTraits ? "Saving Traits..." : "Save Traits"}
+              </Button>
+            </TraitActions>
+          </FormSection>
+        )}
 
         <Actions>
           <Button
