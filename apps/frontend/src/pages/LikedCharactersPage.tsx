@@ -66,17 +66,6 @@ const CharacterSpecies = styled.p`
   margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
 `;
 
-const CharacterDescription = styled.p`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0 0 ${({ theme }) => theme.spacing.md} 0;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-`;
-
 const CardActions = styled.div`
   display: flex;
   justify-content: space-between;
@@ -221,11 +210,6 @@ export const LikedCharactersPage: React.FC = () => {
                 <CharacterName>{character.name}</CharacterName>
                 {character.species?.name && (
                   <CharacterSpecies>{character.species.name}</CharacterSpecies>
-                )}
-                {character.description && (
-                  <CharacterDescription>
-                    {character.description}
-                  </CharacterDescription>
                 )}
 
                 <CardActions>

@@ -47,9 +47,14 @@ async function main() {
       name: 'Aria Moonwhisper',
       age: '23',
       gender: 'Female',
-      description: 'A mysterious wolf with silver fur and glowing blue eyes.',
-      personality: 'Quiet, observant, and fiercely loyal to her friends.',
-      backstory: 'Born in the northern mountains, Aria learned magic from the ancient spirits.',
+      details: `# Description
+A mysterious wolf with silver fur and glowing blue eyes.
+
+# Personality
+Quiet, observant, and fiercely loyal to her friends.
+
+# Backstory
+Born in the northern mountains, Aria learned magic from the ancient spirits.`,
       ownerId: testUser.id,
       creatorId: testUser.id,
     },

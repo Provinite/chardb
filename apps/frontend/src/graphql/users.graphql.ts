@@ -30,7 +30,6 @@ export const GET_USER_PROFILE = gql`
           id
           name
         }
-        description
         createdAt
         updatedAt
         owner {
@@ -82,7 +81,6 @@ export const GET_USER_PROFILE = gql`
           id
           name
         }
-        description
         createdAt
         updatedAt
         owner {

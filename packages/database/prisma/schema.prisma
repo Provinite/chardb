@@ -124,9 +124,6 @@ model Character {
   speciesVariantId  String?    @map("species_variant_id")
   age               String?    @db.VarChar(20)
   gender            String?    @db.VarChar(30)
-  description       String?    @db.Text
-  personality       String?    @db.Text
-  backstory         String?    @db.Text
   details           String?    @db.Text
   ownerId           String     @map("owner_id")
   creatorId         String?    @map("creator_id")

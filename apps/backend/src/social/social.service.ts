@@ -722,7 +722,6 @@ export class SocialService {
         user: character.owner,
         content: {
           name: character.name,
-          description: character.description,
         },
       })),
       ...galleries.map(gallery => ({

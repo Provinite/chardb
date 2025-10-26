@@ -12,9 +12,6 @@ export const GET_CHARACTERS = gql`
         }
         age
         gender
-        description
-        personality
-        backstory
         details
         ownerId
         creatorId
@@ -86,9 +83,6 @@ export const GET_CHARACTER = gql`
       }
       age
       gender
-      description
-      personality
-      backstory
       details
       ownerId
       creatorId
@@ -151,9 +145,6 @@ export const GET_MY_CHARACTERS = gql`
         }
         age
         gender
-        description
-        personality
-        backstory
         details
         ownerId
         creatorId
@@ -210,9 +201,6 @@ export const CREATE_CHARACTER = gql`
       }
       age
       gender
-      description
-      personality
-      backstory
       details
       ownerId
       creatorId
@@ -254,9 +242,6 @@ export const UPDATE_CHARACTER = gql`
       }
       age
       gender
-      description
-      personality
-      backstory
       details
       ownerId
       creatorId
@@ -304,9 +289,6 @@ export const TRANSFER_CHARACTER = gql`
       }
       age
       gender
-      description
-      personality
-      backstory
       details
       ownerId
       creatorId
@@ -418,7 +400,6 @@ export const GET_LIKED_CHARACTERS = gql`
       }
       age
       gender
-      description
       visibility
       createdAt
       updatedAt

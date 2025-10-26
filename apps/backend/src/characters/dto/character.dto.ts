@@ -42,24 +42,6 @@ export class CreateCharacterInput {
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  @MaxLength(5000)
-  description?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(3000)
-  personality?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(5000)
-  backstory?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
   @MaxLength(15000)
   details?: string;
 
@@ -129,24 +111,6 @@ export class UpdateCharacterInput {
   @IsString()
   @MaxLength(30)
   gender?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(5000)
-  description?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(3000)
-  personality?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(5000)
-  backstory?: string;
 
   @Field({ nullable: true })
   @IsOptional()

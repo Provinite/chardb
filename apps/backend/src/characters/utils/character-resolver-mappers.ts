@@ -39,9 +39,6 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     speciesVariant: characterData.speciesVariantId ? { connect: { id: characterData.speciesVariantId } } : undefined,
     age: characterData.age,
     gender: characterData.gender,
-    description: characterData.description,
-    personality: characterData.personality,
-    backstory: characterData.backstory,
     details: characterData.details,
     visibility: characterData.visibility,
     isSellable: characterData.isSellable,
@@ -77,12 +74,6 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
   }
   if (inputData.age !== undefined) characterData.age = inputData.age;
   if (inputData.gender !== undefined) characterData.gender = inputData.gender;
-  if (inputData.description !== undefined)
-    characterData.description = inputData.description;
-  if (inputData.personality !== undefined)
-    characterData.personality = inputData.personality;
-  if (inputData.backstory !== undefined)
-    characterData.backstory = inputData.backstory;
   if (inputData.details !== undefined)
     characterData.details = inputData.details;
   if (inputData.visibility !== undefined)
@@ -132,9 +123,6 @@ export function mapPrismaCharacterToGraphQL(
     speciesVariantId: prismaCharacter.speciesVariantId ?? undefined,
     age: prismaCharacter.age ?? undefined,
     gender: prismaCharacter.gender ?? undefined,
-    description: prismaCharacter.description ?? undefined,
-    personality: prismaCharacter.personality ?? undefined,
-    backstory: prismaCharacter.backstory ?? undefined,
     details: prismaCharacter.details ?? undefined,
     ownerId: prismaCharacter.ownerId,
     creatorId: prismaCharacter.creatorId ?? undefined,
