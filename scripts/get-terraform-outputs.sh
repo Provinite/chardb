@@ -58,9 +58,13 @@ DEVIANTART_CALLBACK_URL=$(terraform output -raw backend_deviantart_callback_url 
 BACKEND_URL=$(terraform output -raw backend_url 2>/dev/null || echo "")
 BACKEND_IP=$(terraform output -raw backend_public_ip 2>/dev/null || echo "")
 
+# Get frontend URL from Terraform outputs
+FRONTEND_URL=$(terraform output -raw frontend_website_url 2>/dev/null || echo "")
+
 echo "✅ Terraform outputs retrieved:"
 echo "   Server IP: $SERVER_IP"
 echo "   Backend URL: $BACKEND_URL"
+echo "   Frontend URL: $FRONTEND_URL"
 echo "   SSH Key: $SSH_KEY_PATH"
 echo "   ECR Repository: $ECR_REPOSITORY_URL"
 echo "   Database Password: [REDACTED]"
@@ -80,4 +84,4 @@ echo "export DEVIANTART_CLIENT_ID='$DEVIANTART_CLIENT_ID'"
 echo "export DEVIANTART_CLIENT_SECRET='$DEVIANTART_CLIENT_SECRET'"
 echo "export DEVIANTART_CALLBACK_URL='$DEVIANTART_CALLBACK_URL'"
 echo "export DATABASE_URL='postgresql://app:\$POSTGRES_PASSWORD@localhost:5432/app'"
-echo "export FRONTEND_URL='http://$BACKEND_IP:3000'"
+echo "export FRONTEND_URL='$FRONTEND_URL'"
