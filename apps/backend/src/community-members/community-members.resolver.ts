@@ -12,6 +12,7 @@ import { NotFoundException, ForbiddenException } from "@nestjs/common";
 import { CommunityMembersService } from "./community-members.service";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
@@ -244,6 +245,7 @@ export class CommunityMembersResolver {
   }
 
   /** Resolve the role field */
+  @AllowUnauthenticated()
   @ResolveField("role", () => Role, { description: "The role this member has" })
   async getRole(@Parent() communityMember: CommunityMember): Promise<Role> {
     const result = await this.communityMembersService.getRoleById(
@@ -258,6 +260,7 @@ export class CommunityMembersResolver {
   }
 
   /** Resolve the user field */
+  @AllowUnauthenticated()
   @ResolveField("user", () => User, {
     description: "The user who is the member",
   })

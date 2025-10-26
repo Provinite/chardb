@@ -302,6 +302,7 @@ export class MediaResolver {
   /**
    * Resolves the owner of a media item
    */
+  @AllowUnauthenticated()
   @ResolveField(() => User, { description: "The user who owns this media" })
   async owner(@Parent() media: MediaEntity) {
     return this.usersService.findById(media.ownerId);
@@ -310,6 +311,7 @@ export class MediaResolver {
   /**
    * Resolves the character associated with a media item
    */
+  @AllowUnauthenticated()
   @ResolveField(() => Character, {
     nullable: true,
     description: "The character this media is associated with, if any",
@@ -336,6 +338,7 @@ export class MediaResolver {
   /**
    * Resolves the gallery containing a media item
    */
+  @AllowUnauthenticated()
   @ResolveField(() => Gallery, {
     nullable: true,
     description: "The gallery this media belongs to, if any",
@@ -366,6 +369,7 @@ export class MediaResolver {
   /**
    * Resolves the image content for image media
    */
+  @AllowUnauthenticated()
   @ResolveField(() => Image, {
     nullable: true,
     description: "Image content (populated for image media)",
@@ -378,6 +382,7 @@ export class MediaResolver {
   /**
    * Resolves the text content for text media
    */
+  @AllowUnauthenticated()
   @ResolveField(() => TextContent, {
     nullable: true,
     description: "Text content (populated for text media)",
@@ -390,6 +395,7 @@ export class MediaResolver {
   /**
    * Resolves the tag relationships for a media item
    */
+  @AllowUnauthenticated()
   @ResolveField(() => [MediaTag], {
     nullable: true,
     description: "Tag relationships for this media",
@@ -409,6 +415,7 @@ export class MediaResolver {
   /**
    * Resolves the likes count for a media item
    */
+  @AllowUnauthenticated()
   @ResolveField(() => Int, {
     description: "Number of likes this media has received",
   })
@@ -435,6 +442,7 @@ export class MediaResolver {
   /**
    * Get the number of galleries this media appears in
    */
+  @AllowUnauthenticated()
   @ResolveField(() => Int, {
     description: "Number of galleries this media appears in",
   })
@@ -445,6 +453,7 @@ export class MediaResolver {
   /**
    * Get the number of characters this media is associated with
    */
+  @AllowUnauthenticated()
   @ResolveField(() => Int, {
     description: "Number of characters this media is associated with",
   })

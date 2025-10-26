@@ -1,7 +1,5 @@
 import { LoginInput, SignupInput, AuthPayload } from "../dto/auth.dto";
 import { LoginServiceInput, SignupServiceInput, AuthResponse } from "../auth.service";
-import { mapPrismaUserToGraphQL } from "../../users/utils/user-resolver-mappers";
-import { Prisma } from "@chardb/database";
 
 /**
  * Resolver layer mapping functions to convert between GraphQL DTOs and service types
@@ -32,10 +30,11 @@ export function mapSignupInputToService(input: SignupInput): SignupServiceInput 
 
 /**
  * Maps auth service response to GraphQL AuthPayload
+ * Note: User data is not included to prevent bypassing field-level authorization.
+ * Clients should fetch user data via the authenticated 'me' query after login.
  */
 export function mapAuthResponseToGraphQL(serviceResponse: AuthResponse): AuthPayload {
   return {
-    user: mapPrismaUserToGraphQL(serviceResponse.user as Prisma.UserGetPayload<{}>),
     accessToken: serviceResponse.accessToken,
     refreshToken: serviceResponse.refreshToken,
   };

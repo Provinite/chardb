@@ -10,6 +10,7 @@ import {
 } from "@nestjs/graphql";
 import { EnumValueSettingsService } from "./enum-value-settings.service";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
@@ -221,6 +222,7 @@ export class EnumValueSettingsResolver {
   }
 
   // Field resolvers for relations
+  @AllowUnauthenticated()
   @ResolveField("enumValue", () => EnumValue, {
     description: "The enum value this setting allows",
   })
@@ -233,6 +235,7 @@ export class EnumValueSettingsResolver {
     return mapPrismaEnumValueToGraphQL(prismaEnumValue);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("speciesVariant", () => SpeciesVariant, {
     description: "The species variant this setting belongs to",
   })

@@ -25,7 +25,6 @@ type ActivityItem {
 type AuthPayload {
   accessToken: String!
   refreshToken: String!
-  user: User!
 }
 
 type Character {

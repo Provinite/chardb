@@ -11,6 +11,7 @@ import {
 import { ForbiddenException } from "@nestjs/common";
 import { CommunityInvitationsService } from "./community-invitations.service";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
@@ -248,6 +249,7 @@ export class CommunityInvitationsResolver {
   }
 
   // Field resolvers for computed properties
+  @AllowUnauthenticated()
   @ResolveField("accepted", () => Boolean, {
     description: "Whether the invitation has been accepted",
   })
@@ -255,6 +257,7 @@ export class CommunityInvitationsResolver {
     return Boolean(invitation.acceptedAt);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("declined", () => Boolean, {
     description: "Whether the invitation has been declined",
   })
@@ -262,6 +265,7 @@ export class CommunityInvitationsResolver {
     return Boolean(invitation.declinedAt);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("pending", () => Boolean, {
     description: "Whether the invitation is still pending",
   })
@@ -271,12 +275,14 @@ export class CommunityInvitationsResolver {
 
   // Field resolvers for relations - these would fetch the related entities
   // For now, returning null until other services are refactored
+  @AllowUnauthenticated()
   @ResolveField("role", () => Role, { nullable: true })
   async resolveRole(@Parent() invitation: CommunityInvitation): Promise<Role> {
     const prismaRole = await this.rolesService.findOne(invitation.roleId);
     return mapPrismaRoleToGraphQL(prismaRole);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("invitee", () => User, { nullable: true })
   async resolveInvitee(
     @Parent() invitation: CommunityInvitation,
@@ -285,6 +291,7 @@ export class CommunityInvitationsResolver {
     return prismaUser ? mapPrismaUserToGraphQL(prismaUser) : null;
   }
 
+  @AllowUnauthenticated()
   @ResolveField("inviter", () => User, { nullable: true })
   async resolveInviter(
     @Parent() invitation: CommunityInvitation,
@@ -293,6 +300,7 @@ export class CommunityInvitationsResolver {
     return prismaUser ? mapPrismaUserToGraphQL(prismaUser) : null;
   }
 
+  @AllowUnauthenticated()
   @ResolveField("community", () => Community, { nullable: true })
   async resolveCommunity(
     @Parent() invitation: CommunityInvitation,

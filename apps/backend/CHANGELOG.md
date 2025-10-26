@@ -11,7 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Character Species Assignment Validation (#101)**: Prevent species changes once assigned to maintain data integrity and protect trait data
 
+### Changed
+
+- **Dependencies (#98)**: Upgraded Apollo Server to v5 and NestJS to v11/v13 for improved field-level authorization support
+
 ### Fixed
+
+- **Email Exposure (#98)**: Sensitive user fields (email) now return empty values instead of errors when accessed by unauthorized users using field-level authorization with sentinel values
 
 - **Character Trait DTO Validation (#101)**: Fixed ValidationPipe error when updating character traits by adding missing `@Type` decorator and `@IsString()` validator
 - **DeviantArt OAuth Redirect (#100)**: Fixed deployment script to use proper frontend domain instead of backend IP address for FRONTEND_URL environment variable, resolving OAuth redirect failures.

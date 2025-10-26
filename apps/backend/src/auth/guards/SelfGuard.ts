@@ -31,8 +31,10 @@ export class SelfGuard implements CanActivate {
       context.getClass(),
     ]);
 
+    const useRootId = config && config.userId === "$root.id";
+
     // If no config provided, try to use root object's id
-    const resolvedIds = config
+    const resolvedIds = !useRootId
       ? this.resolveUserIds(context, config)
       : this.resolveFromRoot(context);
 
@@ -49,14 +51,7 @@ export class SelfGuard implements CanActivate {
   private resolveFromRoot(context: ExecutionContext): SelfResolutionReference {
     try {
       const gqlContext = GqlExecutionContext.create(context);
-      const args = gqlContext.getArgs();
-
-      // If args is undefined or doesn't have index 2, this is likely a REST endpoint
-      if (!args || args.length < 3) {
-        return { type: null, value: null };
-      }
-
-      const parent = args[2]; // Parent is 3rd arg in field resolver
+      const parent = gqlContext.getRoot();
 
       if (parent?.id) {
         return { type: "root", value: parent.id };

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Character Edit Page with Species and Trait Management (#101)**: Added species/variant selection and comprehensive trait editing with read-only species display after assignment
 
+### Changed
+
+- **Auth Flow (#98)**: Login/signup now fetch user data via separate 'me' query instead of returning it directly, enabling field-level authorization
+
 ### Fixed
 
 - **Species Edit 404 Error (#91)**: Fixed Edit button in Species Management navigating to non-existent route. Added EditSpeciesPage for editing species name and hasImage flag. Thanks @Owlscape!

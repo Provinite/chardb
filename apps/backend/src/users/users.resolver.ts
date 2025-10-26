@@ -7,8 +7,9 @@ import {
   ID,
   ResolveField,
   Parent,
+  Extensions,
 } from "@nestjs/graphql";
-import { NotFoundException } from "@nestjs/common";
+import { NotFoundException, UseFilters } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { User, UserConnection } from "./entities/user.entity";
 import { UserProfile, UserStats } from "./entities/user-profile.entity";
@@ -36,6 +37,8 @@ import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { GraphQLJSON } from "graphql-type-json";
 import { Inventory } from "../items/entities/inventory.entity";
 import { ItemsService } from "../items/items.service";
+import { EmptyStringOnForbiddenFilter } from "../auth/filters/EmptyStringOnForbiddenFilter";
+import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -164,7 +167,10 @@ export class UsersResolver {
   // Sensitive field resolvers
   @AllowGlobalAdmin()
   @AllowSelf()
-  @ResolveField("email", () => String)
+  @UseFilters(EmptyStringOnForbiddenFilter)
+  @ResolveField("email", () => String, {
+    middleware: [sentinelValueMiddleware],
+  })
   async resolveEmail(@Parent() user: User): Promise<string> {
     return user.email;
   }
@@ -223,7 +229,9 @@ export class UsersResolver {
   @AllowGlobalAdmin()
   @AllowSelf()
   @ResolveField("externalAccounts", () => [ExternalAccount])
-  async resolveExternalAccounts(@Parent() user: User): Promise<ExternalAccount[]> {
+  async resolveExternalAccounts(
+    @Parent() user: User,
+  ): Promise<ExternalAccount[]> {
     return this.externalAccountsService.findByUserId(user.id);
   }
 
@@ -233,7 +241,8 @@ export class UsersResolver {
   })
   async resolveInventories(
     @Parent() user: User,
-    @Args("communityId", { type: () => ID, nullable: true }) communityId?: string,
+    @Args("communityId", { type: () => ID, nullable: true })
+    communityId?: string,
   ): Promise<Inventory[]> {
     // Get items for the user, optionally filtered by community
     const result = await this.itemsService.findAllItems({
@@ -261,11 +270,13 @@ export class UsersResolver {
     }
 
     // Return single inventory for the specified community
-    return [{
-      communityId,
-      items: result.items as any,
-      totalItems: result.items.length,
-    }];
+    return [
+      {
+        communityId,
+        items: result.items as any,
+        totalItems: result.items.length,
+      },
+    ];
   }
 }
 
@@ -274,6 +285,7 @@ export class UsersResolver {
 export class UserProfileResolver {
   constructor(private readonly usersService: UsersService) {}
 
+  @AllowUnauthenticated()
   @ResolveField("stats", () => UserStats, {
     description: "User statistics including counts and engagement metrics",
   })
@@ -281,6 +293,7 @@ export class UserProfileResolver {
     return { userId: profile.user.id };
   }
 
+  @AllowUnauthenticated()
   @ResolveField("recentCharacters", () => [Character], {
     description: "Recently created or updated characters by this user",
   })
@@ -297,6 +310,7 @@ export class UserProfileResolver {
     return characters.map(mapPrismaCharacterToGraphQL);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("recentGalleries", () => [Gallery], {
     description: "Recently created or updated galleries by this user",
   })
@@ -312,6 +326,7 @@ export class UserProfileResolver {
     );
   }
 
+  @AllowUnauthenticated()
   @ResolveField("recentMedia", () => [Media], {
     description: "Recently uploaded media (images and text) by this user",
   })
@@ -319,6 +334,7 @@ export class UserProfileResolver {
     return this.usersService.getUserRecentMedia(profile.user.id, 12);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("featuredCharacters", () => [Character], {
     description: "Characters featured or highlighted by this user",
   })
@@ -339,6 +355,7 @@ export class UserStatsResolver {
     private readonly socialService: SocialService,
   ) {}
 
+  @AllowUnauthenticated()
   @ResolveField("charactersCount", () => Int, {
     description: "Total number of characters owned by this user",
   })
@@ -355,6 +372,7 @@ export class UserStatsResolver {
     );
   }
 
+  @AllowUnauthenticated()
   @ResolveField("galleriesCount", () => Int, {
     description: "Total number of galleries created by this user",
   })
@@ -371,6 +389,7 @@ export class UserStatsResolver {
     );
   }
 
+  @AllowUnauthenticated()
   @ResolveField("imagesCount", () => Int, {
     description: "Total number of images uploaded by this user",
   })
@@ -379,6 +398,7 @@ export class UserStatsResolver {
     return this.usersService.getUserImagesCount(stats.userId);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("totalViews", () => Int, {
     description: "Total number of views across all user's content",
   })
@@ -387,6 +407,7 @@ export class UserStatsResolver {
     return 0;
   }
 
+  @AllowUnauthenticated()
   @ResolveField("totalLikes", () => Int, {
     description: "Total number of likes received across all user's content",
   })
@@ -398,6 +419,7 @@ export class UserStatsResolver {
     return totalLikes;
   }
 
+  @AllowUnauthenticated()
   @ResolveField("followersCount", () => Int, {
     description: "Number of users following this user",
   })
@@ -406,6 +428,7 @@ export class UserStatsResolver {
     return 0;
   }
 
+  @AllowUnauthenticated()
   @ResolveField("followingCount", () => Int, {
     description: "Number of users this user is following",
   })
