@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
@@ -325,6 +325,24 @@ const TraitModal: React.FC<TraitModalProps> = ({
     allowsMultipleValues: trait?.allowsMultipleValues || false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync form data when trait prop changes
+  useEffect(() => {
+    if (trait) {
+      setFormData({
+        name: trait.name,
+        valueType: trait.valueType,
+        allowsMultipleValues: trait.allowsMultipleValues || false,
+      });
+    } else {
+      // Reset to defaults for create mode
+      setFormData({
+        name: "",
+        valueType: TraitValueType.String,
+        allowsMultipleValues: false,
+      });
+    }
+  }, [trait]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
