@@ -17,6 +17,8 @@ export interface CreateTraitServiceInput {
   name: string;
   /** Type of values this trait can store */
   valueType: $Enums.TraitValueType;
+  /** Whether this trait allows multiple values per character */
+  allowsMultipleValues?: boolean;
   /** ID of the species this trait belongs to */
   speciesId: string;
 }
@@ -29,6 +31,8 @@ export interface UpdateTraitServiceInput {
   name?: string;
   /** Type of values this trait can store */
   valueType?: $Enums.TraitValueType;
+  /** Whether this trait allows multiple values per character */
+  allowsMultipleValues?: boolean;
   /** ID of the species this trait belongs to */
   speciesId?: string;
 }
@@ -43,6 +47,7 @@ export class TraitsService {
       data: {
         name: input.name,
         valueType: input.valueType,
+        allowsMultipleValues: input.allowsMultipleValues ?? false,
         species: {
           connect: { id: input.speciesId },
         },
@@ -197,6 +202,7 @@ export class TraitsService {
 
     if (input.name !== undefined) updateData.name = input.name;
     if (input.valueType !== undefined) updateData.valueType = input.valueType;
+    if (input.allowsMultipleValues !== undefined) updateData.allowsMultipleValues = input.allowsMultipleValues;
     if (input.speciesId !== undefined) {
       updateData.species = { connect: { id: input.speciesId } };
     }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
@@ -301,6 +301,7 @@ const FormActions = styled.div`
 interface TraitFormData {
   name: string;
   valueType: TraitValueType;
+  allowsMultipleValues?: boolean;
 }
 
 interface TraitModalProps {
@@ -321,8 +322,27 @@ const TraitModal: React.FC<TraitModalProps> = ({
   const [formData, setFormData] = useState<TraitFormData>({
     name: trait?.name || "",
     valueType: trait?.valueType || TraitValueType.String,
+    allowsMultipleValues: trait?.allowsMultipleValues || false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync form data when trait prop changes
+  useEffect(() => {
+    if (trait) {
+      setFormData({
+        name: trait.name,
+        valueType: trait.valueType,
+        allowsMultipleValues: trait.allowsMultipleValues || false,
+      });
+    } else {
+      // Reset to defaults for create mode
+      setFormData({
+        name: "",
+        valueType: TraitValueType.String,
+        allowsMultipleValues: false,
+      });
+    }
+  }, [trait]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -332,7 +352,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
     try {
       await onSubmit(formData);
       if (!trait) {
-        setFormData({ name: "", valueType: TraitValueType.String });
+        setFormData({ name: "", valueType: TraitValueType.String, allowsMultipleValues: false });
       }
       onClose();
     } catch (error) {
@@ -398,6 +418,37 @@ const TraitModal: React.FC<TraitModalProps> = ({
               Note: Cannot change value type for existing traits
             </FormNote>
           )}
+        </FormSection>
+
+        <FormSection>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={formData.allowsMultipleValues || false}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  allowsMultipleValues: e.target.checked,
+                }))
+              }
+              disabled={isSubmitting}
+              style={{ width: "18px", height: "18px", cursor: "pointer" }}
+            />
+            <span style={{ fontSize: "0.875rem" }}>
+              Allow multiple values
+            </span>
+          </label>
+          <FormNote>
+            When enabled, characters can have multiple values for this trait
+            (e.g., "Stitching" and "Patches")
+          </FormNote>
         </FormSection>
 
         <FormActions>
@@ -498,6 +549,7 @@ export const TraitBuilderPage: React.FC = () => {
         createTraitInput: {
           name: formData.name,
           valueType: formData.valueType,
+          allowsMultipleValues: formData.allowsMultipleValues || false,
           speciesId,
         },
       },
@@ -512,6 +564,7 @@ export const TraitBuilderPage: React.FC = () => {
         id: editingTrait.id,
         updateTraitInput: {
           name: formData.name,
+          allowsMultipleValues: formData.allowsMultipleValues,
           // Note: valueType cannot be changed for existing traits
         },
       },

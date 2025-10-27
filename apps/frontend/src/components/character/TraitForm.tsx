@@ -185,37 +185,39 @@ export const TraitForm: React.FC<TraitFormProps> = ({
 
   const traits = traitsData?.traitsBySpecies?.nodes || [];
 
-  // Calculate completion progress
+  // Calculate completion progress (count unique traits with at least one value)
   const { filledTraits, totalTraits } = useMemo(() => {
     const total = traits.length;
-    const filled = traitValues.filter(tv => tv.value && tv.value.trim() !== "").length;
+    const uniqueTraitIdsWithValues = new Set(
+      traitValues
+        .filter(tv => tv.value && tv.value.trim() !== "")
+        .map(tv => tv.traitId)
+    );
+    const filled = uniqueTraitIdsWithValues.size;
     return { filledTraits: filled, totalTraits: total };
   }, [traits, traitValues]);
 
-  // Helper function to get trait value by trait ID
-  const getTraitValue = (traitId: string): string => {
-    return traitValues.find(tv => tv.traitId === traitId)?.value || "";
+  // Helper function to get trait values by trait ID (returns array for multi-value support)
+  const getTraitValues = (traitId: string): string[] => {
+    return traitValues
+      .filter(tv => tv.traitId === traitId && tv.value)
+      .map(tv => tv.value!)
+      .filter(v => v.trim() !== "");
   };
 
-  // Helper function to update trait value
-  const updateTraitValue = (traitId: string, value: string) => {
-    const updatedTraitValues = [...traitValues];
-    const existingIndex = updatedTraitValues.findIndex(tv => tv.traitId === traitId);
+  // Helper function to update trait values (handles both single and multi-value traits)
+  const updateTraitValues = (traitId: string, values: string[]) => {
+    // Remove all existing values for this trait
+    let updatedTraitValues = traitValues.filter(tv => tv.traitId !== traitId);
 
-    if (existingIndex >= 0) {
-      // Update existing trait value
-      updatedTraitValues[existingIndex] = { traitId, value };
-    } else {
-      // Add new trait value
-      updatedTraitValues.push({ traitId, value });
-    }
+    // Add new values (creates duplicate entries for multi-value traits)
+    const newTraitValues = values
+      .filter(value => value && value.trim() !== "")
+      .map(value => ({ traitId, value }));
 
-    // Remove empty trait values to keep the array clean
-    const cleanedTraitValues = updatedTraitValues.filter(tv => 
-      tv.value && tv.value.trim() !== ""
-    );
+    updatedTraitValues = [...updatedTraitValues, ...newTraitValues];
 
-    onChange(cleanedTraitValues);
+    onChange(updatedTraitValues);
   };
 
   // Loading state
@@ -312,8 +314,8 @@ export const TraitForm: React.FC<TraitFormProps> = ({
           <TraitCard key={trait.id}>
             <TraitValueEditor
               trait={trait}
-              value={getTraitValue(trait.id)}
-              onChange={(value) => updateTraitValue(trait.id, value)}
+              values={getTraitValues(trait.id)}
+              onChange={(values) => updateTraitValues(trait.id, values)}
               speciesVariantId={speciesVariant?.id}
               error={errors[trait.id]}
               disabled={disabled}
