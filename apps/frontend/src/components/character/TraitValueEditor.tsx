@@ -1,12 +1,13 @@
 import React from "react";
 import styled from "styled-components";
-import { Type, Hash, Calendar, List, AlertCircle } from "lucide-react";
-import { Input, ErrorMessage } from "@chardb/ui";
+import { Type, Hash, Calendar, List, AlertCircle, Plus } from "lucide-react";
+import { Input, ErrorMessage, Button } from "@chardb/ui";
 import {
   TraitValueType,
   TraitDetailsFragment,
 } from "../../generated/graphql";
 import { useEnumValuesByTraitQuery, useEnumValueSettingsBySpeciesVariantQuery } from "../../generated/graphql";
+import { TraitValueChip } from "./TraitValueChip";
 
 /**
  * Dynamic Trait Value Editor Component for Character Creation/Editing
@@ -125,6 +126,30 @@ const ErrorContainer = styled.div`
   margin-top: 0.25rem;
 `;
 
+const ValuesContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+`;
+
+const AddValueContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+`;
+
+const InputWrapper = styled.div`
+  flex: 1;
+`;
+
+const MultiValueIndicator = styled.span`
+  font-size: 0.75rem;
+  color: ${({ theme }) => theme.colors.primary};
+  font-weight: 500;
+  margin-left: auto;
+`;
+
 // Helper function to get trait type icon
 const getTraitTypeIcon = (type: TraitValueType) => {
   switch (type) {
@@ -159,8 +184,8 @@ const getTraitTypeDescription = (type: TraitValueType) => {
 
 interface TraitValueEditorProps {
   trait: TraitDetailsFragment;
-  value?: string;
-  onChange: (value: string) => void;
+  values: string[];
+  onChange: (values: string[]) => void;
   speciesVariantId?: string;
   error?: string;
   required?: boolean;
@@ -169,13 +194,16 @@ interface TraitValueEditorProps {
 
 export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
   trait,
-  value,
+  values,
   onChange,
   speciesVariantId,
   error,
   required = false,
   disabled = false,
 }) => {
+  // Local state for current input value (used when adding new values for multi-value traits)
+  const [currentValue, setCurrentValue] = React.useState("");
+
   // Fetch enum values for ENUM-type traits
   const {
     data: enumValuesData,
@@ -194,6 +222,34 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
     variables: { speciesVariantId: speciesVariantId || "", first: 1000 },
     skip: !speciesVariantId || trait.valueType !== TraitValueType.Enum,
   });
+
+  // Helper to add a new value to the values array
+  const handleAddValue = () => {
+    if (!currentValue.trim()) return;
+
+    // For single-value traits, replace the existing value
+    if (!trait.allowsMultipleValues) {
+      onChange([currentValue]);
+      setCurrentValue("");
+      return;
+    }
+
+    // For multi-value traits, add to the array if not already present
+    if (!values.includes(currentValue)) {
+      onChange([...values, currentValue]);
+    }
+    setCurrentValue("");
+  };
+
+  // Helper to remove a value from the values array
+  const handleRemoveValue = (valueToRemove: string) => {
+    onChange(values.filter(v => v !== valueToRemove));
+  };
+
+  // For single-value traits, update directly when input changes
+  const handleSingleValueChange = (newValue: string) => {
+    onChange([newValue]);
+  };
 
   // Filter enum values based on variant settings
   const availableEnumValues = React.useMemo(() => {
@@ -219,13 +275,47 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
   }, [trait.valueType, enumValuesData, enumSettingsData, speciesVariantId]);
 
   const renderInput = () => {
+    // For multi-value traits, use Add button pattern
+    const isMultiValue = trait.allowsMultipleValues;
+    const singleValue = values.length > 0 ? values[0] : "";
+
     switch (trait.valueType) {
       case TraitValueType.String:
+        if (isMultiValue) {
+          return (
+            <AddValueContainer>
+              <InputWrapper>
+                <Input
+                  type="text"
+                  value={currentValue}
+                  onChange={(e) => setCurrentValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddValue();
+                    }
+                  }}
+                  placeholder={`Enter ${trait.name.toLowerCase()}...`}
+                  disabled={disabled}
+                  hasError={!!error}
+                />
+              </InputWrapper>
+              <Button
+                onClick={handleAddValue}
+                disabled={disabled || !currentValue.trim()}
+                variant="secondary"
+              >
+                <Plus size={16} />
+                Add
+              </Button>
+            </AddValueContainer>
+          );
+        }
         return (
           <Input
             type="text"
-            value={value || ""}
-            onChange={(e) => onChange(e.target.value)}
+            value={singleValue}
+            onChange={(e) => handleSingleValueChange(e.target.value)}
             placeholder={`Enter ${trait.name.toLowerCase()}...`}
             disabled={disabled}
             hasError={!!error}
@@ -233,12 +323,43 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         );
 
       case TraitValueType.Integer:
+        if (isMultiValue) {
+          return (
+            <AddValueContainer>
+              <InputWrapper>
+                <Input
+                  type="number"
+                  step="1"
+                  value={currentValue}
+                  onChange={(e) => setCurrentValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddValue();
+                    }
+                  }}
+                  placeholder={`Enter ${trait.name.toLowerCase()}...`}
+                  disabled={disabled}
+                  hasError={!!error}
+                />
+              </InputWrapper>
+              <Button
+                onClick={handleAddValue}
+                disabled={disabled || !currentValue.trim()}
+                variant="secondary"
+              >
+                <Plus size={16} />
+                Add
+              </Button>
+            </AddValueContainer>
+          );
+        }
         return (
           <Input
             type="number"
             step="1"
-            value={value || ""}
-            onChange={(e) => onChange(e.target.value)}
+            value={singleValue}
+            onChange={(e) => handleSingleValueChange(e.target.value)}
             placeholder={`Enter ${trait.name.toLowerCase()}...`}
             disabled={disabled}
             hasError={!!error}
@@ -246,11 +367,34 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         );
 
       case TraitValueType.Timestamp:
+        if (isMultiValue) {
+          return (
+            <AddValueContainer>
+              <InputWrapper>
+                <Input
+                  type="datetime-local"
+                  value={currentValue}
+                  onChange={(e) => setCurrentValue(e.target.value)}
+                  disabled={disabled}
+                  hasError={!!error}
+                />
+              </InputWrapper>
+              <Button
+                onClick={handleAddValue}
+                disabled={disabled || !currentValue.trim()}
+                variant="secondary"
+              >
+                <Plus size={16} />
+                Add
+              </Button>
+            </AddValueContainer>
+          );
+        }
         return (
           <Input
             type="datetime-local"
-            value={value || ""}
-            onChange={(e) => onChange(e.target.value)}
+            value={singleValue}
+            onChange={(e) => handleSingleValueChange(e.target.value)}
             disabled={disabled}
             hasError={!!error}
           />
@@ -277,7 +421,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
           return (
             <Select disabled>
               <LoadingOption>
-                {speciesVariantId 
+                {speciesVariantId
                   ? "No options available for this variant"
                   : "No options configured"
                 }
@@ -286,10 +430,44 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
           );
         }
 
+        if (isMultiValue) {
+          return (
+            <AddValueContainer>
+              <InputWrapper>
+                <Select
+                  value={currentValue}
+                  onChange={(e) => setCurrentValue(e.target.value)}
+                  disabled={disabled}
+                >
+                  <option value="">
+                    {required ? `Select ${trait.name.toLowerCase()}...` : `Optional - Select ${trait.name.toLowerCase()}...`}
+                  </option>
+                  {[...availableEnumValues]
+                    .sort((a, b) => a.order - b.order)
+                    .filter(enumValue => !values.includes(enumValue.id)) // Filter out already selected values
+                    .map((enumValue) => (
+                      <EnumValueOption key={enumValue.id} value={enumValue.id}>
+                        {enumValue.name}
+                      </EnumValueOption>
+                    ))}
+                </Select>
+              </InputWrapper>
+              <Button
+                onClick={handleAddValue}
+                disabled={disabled || !currentValue}
+                variant="secondary"
+              >
+                <Plus size={16} />
+                Add
+              </Button>
+            </AddValueContainer>
+          );
+        }
+
         return (
           <Select
-            value={value || ""}
-            onChange={(e) => onChange(e.target.value)}
+            value={singleValue}
+            onChange={(e) => handleSingleValueChange(e.target.value)}
             disabled={disabled}
           >
             <option value="">
@@ -309,14 +487,21 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         return (
           <Input
             type="text"
-            value={value || ""}
-            onChange={(e) => onChange(e.target.value)}
+            value={singleValue}
+            onChange={(e) => handleSingleValueChange(e.target.value)}
             placeholder="Unknown trait type"
             disabled={true}
             hasError={!!error}
           />
         );
     }
+  };
+
+  // Get display names for enum values
+  const getEnumValueName = (enumValueId: string): string => {
+    if (trait.valueType !== TraitValueType.Enum) return enumValueId;
+    const enumValue = availableEnumValues.find(ev => ev.id === enumValueId);
+    return enumValue?.name || enumValueId;
   };
 
   return (
@@ -327,8 +512,11 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         </TraitIcon>
         {trait.name}
         {required && <RequiredIndicator>*</RequiredIndicator>}
+        {trait.allowsMultipleValues && (
+          <MultiValueIndicator>Multi-value</MultiValueIndicator>
+        )}
       </Label>
-      
+
       <TraitDescription>
         {getTraitTypeDescription(trait.valueType)}
         {trait.valueType === TraitValueType.Enum && speciesVariantId && (
@@ -337,6 +525,20 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
           </>
         )}
       </TraitDescription>
+
+      {/* Display existing values as chips for multi-value traits */}
+      {trait.allowsMultipleValues && values.length > 0 && (
+        <ValuesContainer>
+          {values.map((value, index) => (
+            <TraitValueChip
+              key={`${value}-${index}`}
+              value={trait.valueType === TraitValueType.Enum ? getEnumValueName(value) : value}
+              onRemove={() => handleRemoveValue(value)}
+              disabled={disabled}
+            />
+          ))}
+        </ValuesContainer>
+      )}
 
       {renderInput()}
 
