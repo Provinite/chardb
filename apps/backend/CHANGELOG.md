@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Character Trait Value Field Resolvers**: Added GraphQL field resolvers for trait metadata and enum value names on CharacterTraitValue to enable rich trait display
+
 ## [v4.0.1] - 2025-10-26
 
 ### Fixed
