@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v4.1.0] - 2025-10-27
+
 ### Added
 
 - **Character Trait Display**: Added trait visualization to character detail pages with type icons, multi-value chip display, and enum value name resolution
