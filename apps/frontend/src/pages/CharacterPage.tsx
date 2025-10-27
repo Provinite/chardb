@@ -17,6 +17,7 @@ import { CharacterMediaGallery } from "../components/CharacterMediaGallery";
 import { Tag } from "../components/Tag";
 import { TagsContainer } from "../components/TagsContainer";
 import { DeleteConfirmationDialog } from "../components/DeleteConfirmationDialog";
+import { CharacterTraitsDisplay } from "../components/character/CharacterTraitsDisplay";
 import { LikeableType, CommentableType } from "../generated/graphql";
 
 const Container = styled.div`
@@ -685,6 +686,13 @@ export const CharacterPage: React.FC = () => {
           <ImageCount>{character._count.media}</ImageCount>
           <ImageLabel>Media in Gallery</ImageLabel>
         </ImageStats>
+      )}
+
+      {character.traitValues && character.traitValues.length > 0 && (
+        <ContentSection>
+          <SectionTitle>Character Traits</SectionTitle>
+          <CharacterTraitsDisplay traitValues={character.traitValues} />
+        </ContentSection>
       )}
 
       {character.details && (

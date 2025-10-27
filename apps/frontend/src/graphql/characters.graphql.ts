@@ -80,6 +80,14 @@ export const GET_CHARACTER = gql`
       traitValues {
         traitId
         value
+        trait {
+          name
+          valueType
+          allowsMultipleValues
+        }
+        enumValue {
+          name
+        }
       }
       age
       gender
@@ -384,6 +392,14 @@ export const UPDATE_CHARACTER_TRAITS = gql`
       traitValues {
         traitId
         value
+        trait {
+          name
+          valueType
+          allowsMultipleValues
+        }
+        enumValue {
+          name
+        }
       }
     }
   }

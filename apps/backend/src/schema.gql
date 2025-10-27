@@ -147,6 +147,9 @@ type CharacterTag {
 
 """A trait value assigned to a character"""
 type CharacterTraitValue {
+  enumValue: EnumValue
+  trait: Trait
+
   """The ID of the trait this value belongs to"""
   traitId: ID!
 
