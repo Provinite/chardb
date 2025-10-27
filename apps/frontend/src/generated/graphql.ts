@@ -516,6 +516,8 @@ export type CreateTextMediaInput = {
 };
 
 export type CreateTraitInput = {
+  /** Whether this trait allows multiple values per character */
+  allowsMultipleValues?: InputMaybe<Scalars['Boolean']['input']>;
   /** Name of the trait */
   name: Scalars['String']['input'];
   /** ID of the species this trait belongs to */
@@ -2255,6 +2257,8 @@ export type ToggleLikeInput = {
 
 export type Trait = {
   __typename?: 'Trait';
+  /** Whether this trait allows multiple values per character */
+  allowsMultipleValues: Scalars['Boolean']['output'];
   /** When the trait was created */
   createdAt: Scalars['DateTime']['output'];
   /** Enum values for this trait (only populated for ENUM traits) */
@@ -2528,6 +2532,8 @@ export type UpdateTextContentInput = {
 };
 
 export type UpdateTraitInput = {
+  /** Whether this trait allows multiple values per character */
+  allowsMultipleValues?: InputMaybe<Scalars['Boolean']['input']>;
   /** Name of the trait */
   name?: InputMaybe<Scalars['String']['input']>;
   /** ID of the species this trait belongs to */
@@ -3466,9 +3472,9 @@ export type DeleteSpeciesVariantMutationVariables = Exact<{
 
 export type DeleteSpeciesVariantMutation = { __typename?: 'Mutation', removeSpeciesVariant: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
-export type TraitDetailsFragment = { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string };
+export type TraitDetailsFragment = { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, createdAt: string, updatedAt: string };
 
-export type TraitConnectionDetailsFragment = { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string }> };
+export type TraitConnectionDetailsFragment = { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, createdAt: string, updatedAt: string }> };
 
 export type TraitsBySpeciesQueryVariables = Exact<{
   speciesId: Scalars['ID']['input'];
@@ -3478,21 +3484,21 @@ export type TraitsBySpeciesQueryVariables = Exact<{
 }>;
 
 
-export type TraitsBySpeciesQuery = { __typename?: 'Query', traitsBySpecies: { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string }> } };
+export type TraitsBySpeciesQuery = { __typename?: 'Query', traitsBySpecies: { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, createdAt: string, updatedAt: string }> } };
 
 export type TraitByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string } } };
+export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string } } };
 
 export type CreateTraitMutationVariables = Exact<{
   createTraitInput: CreateTraitInput;
 }>;
 
 
-export type CreateTraitMutation = { __typename?: 'Mutation', createTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string } };
+export type CreateTraitMutation = { __typename?: 'Mutation', createTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, createdAt: string, updatedAt: string } };
 
 export type UpdateTraitMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3500,7 +3506,7 @@ export type UpdateTraitMutationVariables = Exact<{
 }>;
 
 
-export type UpdateTraitMutation = { __typename?: 'Mutation', updateTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string } };
+export type UpdateTraitMutation = { __typename?: 'Mutation', updateTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, createdAt: string, updatedAt: string } };
 
 export type DeleteTraitMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3716,6 +3722,7 @@ export const TraitDetailsFragmentDoc = gql`
   id
   name
   valueType
+  allowsMultipleValues
   speciesId
   createdAt
   updatedAt

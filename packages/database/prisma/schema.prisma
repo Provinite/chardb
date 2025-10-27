@@ -571,12 +571,13 @@ model Species {
 }
 
 model Trait {
-  id        String         @id @default(uuid())
-  name      String         @db.VarChar(100)
-  valueType TraitValueType @map("value_type")
-  speciesId String         @map("species_id")
-  createdAt DateTime       @default(now()) @map("created_at")
-  updatedAt DateTime       @updatedAt @map("updated_at")
+  id                   String         @id @default(uuid())
+  name                 String         @db.VarChar(100)
+  valueType            TraitValueType @map("value_type")
+  allowsMultipleValues Boolean        @default(false) @map("allows_multiple_values")
+  speciesId            String         @map("species_id")
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
 
   // Relations
   species          Species          @relation(fields: [speciesId], references: [id], onDelete: Cascade)

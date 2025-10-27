@@ -51,6 +51,7 @@ export function mapCreateTraitInputToService(input: CreateTraitInput) {
   return {
     name: input.name,
     valueType: mapGraphQLTraitValueTypeToPrisma(input.valueType),
+    allowsMultipleValues: input.allowsMultipleValues,
     speciesId: input.speciesId,
   };
 }
@@ -62,11 +63,13 @@ export function mapUpdateTraitInputToService(input: UpdateTraitInput) {
   const result: {
     name?: string;
     valueType?: $Enums.TraitValueType;
+    allowsMultipleValues?: boolean;
     speciesId?: string;
   } = {};
 
   if (input.name !== undefined) result.name = input.name;
   if (input.valueType !== undefined) result.valueType = mapGraphQLTraitValueTypeToPrisma(input.valueType);
+  if (input.allowsMultipleValues !== undefined) result.allowsMultipleValues = input.allowsMultipleValues;
   if (input.speciesId !== undefined) result.speciesId = input.speciesId;
 
   return result;
@@ -83,6 +86,7 @@ export function mapPrismaTraitToGraphQL(prismaTrait: PrismaTrait): Trait {
     id: prismaTrait.id,
     name: prismaTrait.name,
     valueType: mapPrismaTraitValueTypeToGraphQL(prismaTrait.valueType),
+    allowsMultipleValues: prismaTrait.allowsMultipleValues,
     speciesId: prismaTrait.speciesId,
     createdAt: prismaTrait.createdAt,
     updatedAt: prismaTrait.updatedAt,

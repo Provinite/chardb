@@ -16,6 +16,10 @@ export class Trait {
   @Field(() => TraitValueType, { description: 'Type of values this trait can store' })
   valueType: TraitValueType;
 
+  /** Whether this trait allows multiple values per character */
+  @Field(() => Boolean, { description: 'Whether this trait allows multiple values per character' })
+  allowsMultipleValues: boolean;
+
   /** ID of the species this trait belongs to */
   @Field(() => ID, { description: 'ID of the species this trait belongs to' })
   speciesId: string;

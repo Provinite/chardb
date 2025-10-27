@@ -316,6 +316,7 @@ export const TRAIT_FRAGMENT = gql`
     id
     name
     valueType
+    allowsMultipleValues
     speciesId
     createdAt
     updatedAt
