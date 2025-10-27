@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
@@ -41,6 +42,14 @@ export class CharactersService {
     input: { characterData: Omit<Prisma.CharacterCreateInput, 'owner' | 'creator'>; tags?: string[] },
   ) {
     const { characterData, tags } = input;
+
+    // Validate trait values if species and trait values are provided
+    const speciesId = (characterData.species as any)?.connect?.id;
+    const traitValues = characterData.traitValues as PrismaJson.CharacterTraitValuesJson | undefined;
+
+    if (speciesId && traitValues && Array.isArray(traitValues) && traitValues.length > 0) {
+      await this.validateTraitValues(speciesId, traitValues);
+    }
 
     const character = await this.db.character.create({
       data: {
@@ -458,6 +467,69 @@ export class CharactersService {
     }
   }
 
+  /**
+   * Validates that trait values respect the allowsMultipleValues constraint
+   * @param speciesId The species ID to fetch traits for
+   * @param traitValues The trait values to validate
+   * @throws BadRequestException if any single-value trait has multiple values
+   */
+  private async validateTraitValues(
+    speciesId: string,
+    traitValues: PrismaJson.CharacterTraitValuesJson,
+  ) {
+    // Fetch all traits for this species
+    const traits = await this.db.trait.findMany({
+      where: { speciesId },
+      select: {
+        id: true,
+        name: true,
+        allowsMultipleValues: true,
+      },
+    });
+
+    // Build a map of traitId -> trait info
+    const traitMap = new Map(
+      traits.map(t => [t.id, { name: t.name, allowsMultipleValues: t.allowsMultipleValues }])
+    );
+
+    // Group trait values by traitId and count occurrences
+    const traitValueCounts = new Map<string, { count: number; values: string[] }>();
+
+    for (const tv of traitValues) {
+      if (!traitValueCounts.has(tv.traitId)) {
+        traitValueCounts.set(tv.traitId, { count: 0, values: [] });
+      }
+      const entry = traitValueCounts.get(tv.traitId)!;
+      entry.count++;
+      // Convert value to string for display in error messages
+      entry.values.push(String(tv.value));
+    }
+
+    // Check for violations
+    const violations: string[] = [];
+    for (const [traitId, { count, values }] of traitValueCounts.entries()) {
+      const traitInfo = traitMap.get(traitId);
+
+      if (!traitInfo) {
+        // Trait doesn't exist for this species
+        violations.push(`Trait with ID '${traitId}' does not exist for this species`);
+        continue;
+      }
+
+      if (!traitInfo.allowsMultipleValues && count > 1) {
+        violations.push(
+          `Trait '${traitInfo.name}' does not allow multiple values. Found ${count} values: ${values.map(v => `'${v}'`).join(', ')}`
+        );
+      }
+    }
+
+    if (violations.length > 0) {
+      throw new BadRequestException(
+        `Trait validation failed:\n${violations.join('\n')}`
+      );
+    }
+  }
+
   /** Update character trait values */
   async updateTraits(
     id: string,
@@ -467,7 +539,7 @@ export class CharactersService {
     // First verify user owns or created this character
     const character = await this.db.character.findUnique({
       where: { id },
-      select: { ownerId: true, creatorId: true },
+      select: { ownerId: true, creatorId: true, speciesId: true },
     });
 
     if (!character) {
@@ -478,6 +550,11 @@ export class CharactersService {
       throw new ForbiddenException(
         "You can only update traits for characters you own or created",
       );
+    }
+
+    // Validate trait values if character has a species
+    if (character.speciesId && updateData.traitValues.length > 0) {
+      await this.validateTraitValues(character.speciesId, updateData.traitValues);
     }
 
     // Update the character with new trait values
