@@ -87,6 +87,10 @@ export const GET_CHARACTER = gql`
         }
         enumValue {
           name
+          color {
+            id
+            hexCode
+          }
         }
       }
       age
@@ -399,6 +403,10 @@ export const UPDATE_CHARACTER_TRAITS = gql`
         }
         enumValue {
           name
+          color {
+            id
+            hexCode
+          }
         }
       }
     }

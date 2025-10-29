@@ -10,6 +10,7 @@ import {
 } from "@nestjs/graphql";
 import { EnumValuesService } from "./enum-values.service";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
@@ -154,6 +155,7 @@ export class EnumValuesResolver {
   }
 
   // Field resolver for trait relation
+  @AllowUnauthenticated()
   @ResolveField("trait", () => Trait, {
     description: "The trait this enum value belongs to",
   })
@@ -162,6 +164,7 @@ export class EnumValuesResolver {
     return mapPrismaTraitToGraphQL(prismaTrait);
   }
 
+  @AllowUnauthenticated()
   @ResolveField("color", () => CommunityColor, {
     nullable: true,
     description: "The color associated with this enum value",
