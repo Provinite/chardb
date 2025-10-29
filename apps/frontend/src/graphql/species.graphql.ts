@@ -180,6 +180,12 @@ export const SPECIES_VARIANT_FRAGMENT = gql`
     id
     name
     speciesId
+    colorId
+    color {
+      id
+      name
+      hexCode
+    }
     createdAt
     updatedAt
   }

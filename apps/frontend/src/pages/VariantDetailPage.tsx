@@ -18,6 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Button, Input, ErrorMessage } from '@chardb/ui';
+import { ColorSelector } from '../components/colors';
 import {
   useSpeciesVariantByIdQuery,
   useTraitListEntriesByVariantQuery,
@@ -154,6 +155,7 @@ export const VariantDetailPage: React.FC = () => {
 
   // State
   const [variantName, setVariantName] = useState('');
+  const [variantColorId, setVariantColorId] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [entries, setEntries] = useState<TraitListEntryDetailsFragment[]>([]);
   const [hasOrderChanges, setHasOrderChanges] = useState(false);
@@ -174,6 +176,7 @@ export const VariantDetailPage: React.FC = () => {
       onCompleted: (data) => {
         if (data.speciesVariantById) {
           setVariantName(data.speciesVariantById.name);
+          setVariantColorId(data.speciesVariantById.colorId || null);
         }
       },
     });
@@ -298,13 +301,19 @@ export const VariantDetailPage: React.FC = () => {
 
   // Handlers
   const handleSaveVariantName = async () => {
-    if (!variant || variantName === variant.name) return;
+    if (!variant) return;
+
+    const hasNameChange = variantName !== variant.name;
+    const hasColorChange = variantColorId !== variant.colorId;
+
+    if (!hasNameChange && !hasColorChange) return;
 
     await updateVariantName({
       variables: {
         id: variantId,
         updateSpeciesVariantInput: {
           name: variantName,
+          colorId: variantColorId,
         },
       },
     });
@@ -445,6 +454,8 @@ export const VariantDetailPage: React.FC = () => {
   }
 
   const hasNameChanges = variantName !== variant.name;
+  const hasColorChanges = variantColorId !== variant.colorId;
+  const hasChanges = hasNameChanges || hasColorChanges;
 
   return (
     <Container>
@@ -469,14 +480,21 @@ export const VariantDetailPage: React.FC = () => {
               onChange={(e) => setVariantName(e.target.value)}
               placeholder="Variant name..."
             />
-            {hasNameChanges && (
+            <ColorSelector
+              communityId={variant.species?.communityId || ''}
+              value={variantColorId}
+              onChange={setVariantColorId}
+              label=""
+              placeholder="No color"
+            />
+            {hasChanges && (
               <Button
                 variant="primary"
                 size="sm"
                 onClick={handleSaveVariantName}
                 icon={<Save size={14} />}
               >
-                Save Name
+                Save Changes
               </Button>
             )}
           </HeaderLeft>
