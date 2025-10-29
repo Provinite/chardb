@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Prisma } from '@chardb/database';
+import { CommunityColorsService } from '../community-colors/community-colors.service';
 
 /**
  * Service layer input types for enum values operations.
@@ -11,19 +12,21 @@ import { Prisma } from '@chardb/database';
 /**
  * Input data for creating a new enum value
  */
-interface CreateEnumValueServiceInput {
+export interface CreateEnumValueServiceInput {
   /** Name/display text of this enum value */
   name: string;
   /** Display order within the trait's enum values */
   order?: number;
   /** ID of the trait this enum value belongs to */
   traitId: string;
+  /** ID of the color for this enum value */
+  colorId?: string | null;
 }
 
 /**
  * Input data for updating an enum value
  */
-interface UpdateEnumValueServiceInput {
+export interface UpdateEnumValueServiceInput {
   /** Name/display text of this enum value */
   name?: string;
   /** Display order within the trait's enum values */
@@ -36,17 +39,44 @@ interface UpdateEnumValueServiceInput {
 
 @Injectable()
 export class EnumValuesService {
-  constructor(private prisma: DatabaseService) {}
+  constructor(
+    private prisma: DatabaseService,
+    private communityColorsService: CommunityColorsService,
+  ) {}
 
   /** Create a new enum value */
   async create(input: CreateEnumValueServiceInput) {
+    // Validate colorId if provided
+    if (input.colorId) {
+      // Get the trait and its species to find the communityId
+      const trait = await this.prisma.trait.findUnique({
+        where: { id: input.traitId },
+        include: { species: { select: { communityId: true } } },
+      });
+
+      if (!trait) {
+        throw new NotFoundException(`Trait with ID ${input.traitId} not found`);
+      }
+
+      // Validate the color belongs to the same community
+      await this.communityColorsService.validateColorBelongsToCommunity(
+        input.colorId,
+        trait.species.communityId,
+      );
+    }
+
     return this.prisma.enumValue.create({
       data: {
         name: input.name,
         order: input.order ?? 0,
         trait: {
           connect: { id: input.traitId }
-        }
+        },
+        ...(input.colorId && {
+          color: {
+            connect: { id: input.colorId },
+          },
+        }),
       },
     });
   }
@@ -121,16 +151,35 @@ export class EnumValuesService {
 
   /** Update an enum value */
   async update(id: string, input: UpdateEnumValueServiceInput) {
-    await this.findOne(id); // This will throw if not found
+    const enumValue = await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.EnumValueUpdateInput = {};
-    
+
     if (input.name !== undefined) updateData.name = input.name;
     if (input.order !== undefined) updateData.order = input.order;
     if (input.traitId !== undefined) {
       updateData.trait = { connect: { id: input.traitId } };
     }
     if (input.colorId !== undefined) {
+      // Validate colorId if it's being set (not null)
+      if (input.colorId) {
+        // Get the trait and its species to find the communityId
+        const trait = await this.prisma.trait.findUnique({
+          where: { id: enumValue.traitId },
+          include: { species: { select: { communityId: true } } },
+        });
+
+        if (!trait) {
+          throw new NotFoundException(`Trait with ID ${enumValue.traitId} not found`);
+        }
+
+        // Validate the color belongs to the same community
+        await this.communityColorsService.validateColorBelongsToCommunity(
+          input.colorId,
+          trait.species.communityId,
+        );
+      }
+
       updateData.color = input.colorId ? { connect: { id: input.colorId } } : { disconnect: true };
     }
 

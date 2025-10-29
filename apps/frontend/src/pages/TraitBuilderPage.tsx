@@ -22,7 +22,7 @@ import {
   TraitsBySpeciesQuery,
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
-import { ColorSelector } from "../components/colors";
+import { ColorSelector, ColorPip } from "../components/colors";
 
 /**
  * Trait Builder Interface for Species Configuration
@@ -145,11 +145,23 @@ const TraitInfo = styled.div`
   flex: 1;
 `;
 
+const TraitNameRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+`;
+
+const ColorPipWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+`;
+
 const TraitName = styled.h3`
   font-size: 1.25rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 0.5rem 0;
+  margin: 0;
 `;
 
 const TraitType = styled.div`
@@ -705,7 +717,14 @@ export const TraitBuilderPage: React.FC = () => {
             <TraitCard key={trait.id}>
               <TraitHeader>
                 <TraitInfo>
-                  <TraitName>{trait.name}</TraitName>
+                  <TraitNameRow>
+                    {trait.color && (
+                      <ColorPipWrapper>
+                        <ColorPip color={trait.color.hexCode} size="md" />
+                      </ColorPipWrapper>
+                    )}
+                    <TraitName>{trait.name}</TraitName>
+                  </TraitNameRow>
                   <TraitType>
                     {getTraitTypeIcon(trait.valueType)}
                     {getTraitTypeLabel(trait.valueType)}
