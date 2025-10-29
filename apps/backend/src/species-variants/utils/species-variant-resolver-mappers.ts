@@ -14,6 +14,7 @@ export function mapCreateSpeciesVariantInputToService(input: CreateSpeciesVarian
   return {
     name: input.name,
     speciesId: input.speciesId,
+    colorId: input.colorId,
   };
 }
 
@@ -25,6 +26,7 @@ export function mapUpdateSpeciesVariantInputToService(input: UpdateSpeciesVarian
 
   if (input.name !== undefined) result.name = input.name;
   if (input.speciesId !== undefined) result.speciesId = input.speciesId;
+  if (input.colorId !== undefined) result.colorId = input.colorId;
 
   return result;
 }
@@ -40,6 +42,7 @@ export function mapPrismaSpeciesVariantToGraphQL(prismaSpeciesVariant: PrismaSpe
     id: prismaSpeciesVariant.id,
     name: prismaSpeciesVariant.name,
     speciesId: prismaSpeciesVariant.speciesId,
+    colorId: prismaSpeciesVariant.colorId ?? undefined,
     createdAt: prismaSpeciesVariant.createdAt,
     updatedAt: prismaSpeciesVariant.updatedAt,
   };

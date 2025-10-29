@@ -22,6 +22,12 @@ export class CreateEnumValueInput {
   @IsUUID()
   @IsNotEmpty()
   traitId: string;
+
+  /** ID of the color for this enum value */
+  @Field(() => ID, { nullable: true, description: 'ID of the color for this enum value' })
+  @IsOptional()
+  @IsUUID()
+  colorId?: string;
 }
 
 @InputType()
@@ -47,4 +53,10 @@ export class UpdateEnumValueInput {
   @IsUUID()
   @IsNotEmpty()
   traitId?: string;
+
+  /** ID of the color for this enum value */
+  @Field(() => ID, { nullable: true, description: 'ID of the color for this enum value' })
+  @IsOptional()
+  @IsUUID()
+  colorId?: string;
 }

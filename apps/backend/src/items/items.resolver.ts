@@ -7,6 +7,7 @@ import {
   ResolveField,
   Parent,
 } from '@nestjs/graphql';
+import { NotFoundException } from '@nestjs/common';
 import { CurrentUser } from '../auth/decorators/CurrentUser';
 import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
 import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
@@ -17,6 +18,7 @@ import { CommunityPermission } from '../auth/CommunityPermission';
 import { ItemsService } from './items.service';
 import { CommunitiesService } from '../communities/communities.service';
 import { UsersService } from '../users/users.service';
+import { CommunityColorsService } from '../community-colors/community-colors.service';
 import {
   ItemType as ItemTypeEntity,
   ItemTypeConnection,
@@ -24,6 +26,7 @@ import {
 import { Item as ItemEntity, ItemConnection } from './entities/item.entity';
 import { Community } from '../communities/entities/community.entity';
 import { User } from '../users/entities/user.entity';
+import { CommunityColor } from '../community-colors/entities/community-color.entity';
 import {
   CreateItemTypeInput,
   UpdateItemTypeInput,
@@ -41,6 +44,7 @@ export class ItemsResolver {
     private readonly itemsService: ItemsService,
     private readonly communitiesService: CommunitiesService,
     private readonly usersService: UsersService,
+    private readonly communityColorsService: CommunityColorsService,
   ) {}
 
   // ==================== ItemType Mutations ====================
@@ -206,5 +210,22 @@ export class ItemsResolver {
       return item.owner;
     }
     return this.usersService.findById(item.ownerId);
+  }
+
+  @AllowUnauthenticated()
+  @ResolveField(() => CommunityColor, { name: 'color', nullable: true })
+  async resolveColor(@Parent() itemType: ItemTypeEntity): Promise<CommunityColor | null> {
+    if (!itemType.colorId) {
+      return null;
+    }
+
+    try {
+      return await this.communityColorsService.findCommunityColorById(itemType.colorId) as CommunityColor;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return null;
+      }
+      throw error;
+    }
   }
 }

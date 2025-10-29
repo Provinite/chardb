@@ -424,6 +424,9 @@ input CreateCommunityMemberInput {
 }
 
 input CreateEnumValueInput {
+  """ID of the color for this enum value"""
+  colorId: ID
+
   """Name/display text of this enum value"""
   name: String!
 
@@ -540,6 +543,9 @@ input CreateSpeciesInput {
 }
 
 input CreateSpeciesVariantInput {
+  """ID of the color for this species variant"""
+  colorId: ID
+
   """Name of the species variant"""
   name: String!
 
@@ -623,6 +629,12 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 scalar DateTime
 
 type EnumValue {
+  """The color associated with this enum value"""
+  color: CommunityColor
+
+  """ID of the color for this enum value"""
+  colorId: ID
+
   """When the enum value was created"""
   createdAt: DateTime!
 
@@ -2086,6 +2098,12 @@ type SpeciesConnection {
 }
 
 type SpeciesVariant {
+  """The color associated with this species variant"""
+  color: CommunityColor
+
+  """ID of the color for this species variant"""
+  colorId: ID
+
   """When the species variant was created"""
   createdAt: DateTime!
 
@@ -2345,6 +2363,9 @@ input UpdateCommunityMemberInput {
 }
 
 input UpdateEnumValueInput {
+  """ID of the color for this enum value"""
+  colorId: ID
+
   """Name/display text of this enum value"""
   name: String
 
@@ -2486,6 +2507,9 @@ input UpdateSpeciesInput {
 }
 
 input UpdateSpeciesVariantInput {
+  """ID of the color for this species variant"""
+  colorId: ID
+
   """Name of the species variant"""
   name: String
 

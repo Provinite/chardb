@@ -14,6 +14,7 @@ export function mapCreateEnumValueInputToService(input: CreateEnumValueInput) {
     name: input.name,
     order: input.order,
     traitId: input.traitId,
+    colorId: input.colorId,
   };
 }
 
@@ -25,11 +26,13 @@ export function mapUpdateEnumValueInputToService(input: UpdateEnumValueInput) {
     name?: string;
     order?: number;
     traitId?: string;
+    colorId?: string | null;
   } = {};
 
   if (input.name !== undefined) result.name = input.name;
   if (input.order !== undefined) result.order = input.order;
   if (input.traitId !== undefined) result.traitId = input.traitId;
+  if (input.colorId !== undefined) result.colorId = input.colorId;
 
   return result;
 }
@@ -46,6 +49,7 @@ export function mapPrismaEnumValueToGraphQL(prismaEnumValue: PrismaEnumValue): E
     name: prismaEnumValue.name,
     order: prismaEnumValue.order,
     traitId: prismaEnumValue.traitId,
+    colorId: prismaEnumValue.colorId ?? undefined,
     createdAt: prismaEnumValue.createdAt,
     updatedAt: prismaEnumValue.updatedAt,
     // Relations handled by field resolvers

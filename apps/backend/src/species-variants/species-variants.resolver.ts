@@ -37,6 +37,8 @@ import { mapPrismaSpeciesToGraphQL } from "../species/utils/species-resolver-map
 import { EnumValueSetting } from "../enum-value-settings/entities/enum-value-setting.entity";
 import { EnumValueSettingsService } from "../enum-value-settings/enum-value-settings.service";
 import { mapPrismaEnumValueSettingToGraphQL } from "../enum-value-settings/utils/enum-value-setting-resolver-mappers";
+import { CommunityColor } from "../community-colors/entities/community-color.entity";
+import { CommunityColorsService } from "../community-colors/community-colors.service";
 
 @Resolver(() => SpeciesVariant)
 export class SpeciesVariantsResolver {
@@ -44,6 +46,7 @@ export class SpeciesVariantsResolver {
     private readonly speciesVariantsService: SpeciesVariantsService,
     private readonly speciesService: SpeciesService,
     private readonly enumValueSettingsService: EnumValueSettingsService,
+    private readonly communityColorsService: CommunityColorsService,
   ) {}
 
   /** Create a new species variant */
@@ -211,5 +214,25 @@ export class SpeciesVariantsResolver {
         1000,
       ); // Get up to 1000 settings
     return serviceResult.nodes.map(mapPrismaEnumValueSettingToGraphQL);
+  }
+
+  @AllowUnauthenticated()
+  @ResolveField("color", () => CommunityColor, {
+    nullable: true,
+    description: "The color associated with this species variant",
+  })
+  async resolveColor(@Parent() speciesVariant: SpeciesVariant): Promise<CommunityColor | null> {
+    if (!speciesVariant.colorId) {
+      return null;
+    }
+
+    try {
+      return await this.communityColorsService.findCommunityColorById(speciesVariant.colorId) as CommunityColor;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return null;
+      }
+      throw error;
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { CommunityColor } from '../../community-colors/entities/community-color.entity';
 
 @ObjectType()
 export class SpeciesVariant {
@@ -14,6 +15,10 @@ export class SpeciesVariant {
   @Field(() => ID, { description: 'ID of the species this variant belongs to' })
   speciesId: string;
 
+  /** ID of the color for this species variant */
+  @Field(() => ID, { nullable: true, description: 'ID of the color for this species variant' })
+  colorId?: string;
+
   /** When the species variant was created */
   @Field({ description: 'When the species variant was created' })
   createdAt: Date;
@@ -21,6 +26,10 @@ export class SpeciesVariant {
   /** When the species variant was last updated */
   @Field({ description: 'When the species variant was last updated' })
   updatedAt: Date;
+
+  /** Color associated with this species variant */
+  @Field(() => CommunityColor, { nullable: true, description: 'Color associated with this species variant' })
+  color?: CommunityColor;
 
 }
 

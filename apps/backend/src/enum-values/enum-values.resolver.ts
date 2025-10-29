@@ -29,12 +29,16 @@ import { RemovalResponse } from "../shared/entities/removal-response.entity";
 import { Trait } from "../traits/entities/trait.entity";
 import { TraitsService } from "../traits/traits.service";
 import { mapPrismaTraitToGraphQL } from "../traits/utils/trait-resolver-mappers";
+import { CommunityColor } from "../community-colors/entities/community-color.entity";
+import { CommunityColorsService } from "../community-colors/community-colors.service";
+import { NotFoundException } from "@nestjs/common";
 
 @Resolver(() => EnumValue)
 export class EnumValuesResolver {
   constructor(
     private readonly enumValuesService: EnumValuesService,
     private readonly traitsService: TraitsService,
+    private readonly communityColorsService: CommunityColorsService,
   ) {}
 
   @AllowGlobalAdmin()
@@ -156,5 +160,24 @@ export class EnumValuesResolver {
   async resolveTrait(@Parent() enumValue: EnumValue): Promise<Trait> {
     const prismaTrait = await this.traitsService.findOne(enumValue.traitId);
     return mapPrismaTraitToGraphQL(prismaTrait);
+  }
+
+  @ResolveField("color", () => CommunityColor, {
+    nullable: true,
+    description: "The color associated with this enum value",
+  })
+  async resolveColor(@Parent() enumValue: EnumValue): Promise<CommunityColor | null> {
+    if (!enumValue.colorId) {
+      return null;
+    }
+
+    try {
+      return await this.communityColorsService.findCommunityColorById(enumValue.colorId) as CommunityColor;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return null;
+      }
+      throw error;
+    }
   }
 }

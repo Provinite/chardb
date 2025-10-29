@@ -16,6 +16,8 @@ export interface CreateSpeciesVariantServiceInput {
   name: string;
   /** ID of the species this variant belongs to */
   speciesId: string;
+  /** ID of the color for this species variant */
+  colorId?: string;
 }
 
 /**
@@ -26,6 +28,8 @@ export interface UpdateSpeciesVariantServiceInput {
   name?: string;
   /** ID of the species this variant belongs to */
   speciesId?: string;
+  /** ID of the color for this species variant */
+  colorId?: string | null;
 }
 
 @Injectable()

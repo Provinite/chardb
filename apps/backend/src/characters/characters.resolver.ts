@@ -25,6 +25,7 @@ import { MediaService } from "../media/media.service";
 import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
 import { mapPrismaMediaToGraphQL } from "../media/utils/media-resolver-mappers";
 import { SpeciesVariantsService } from "../species-variants/species-variants.service";
+import { mapPrismaSpeciesVariantToGraphQL } from "../species-variants/utils/species-variant-resolver-mappers";
 import { SpeciesService } from "../species/species.service";
 import {
   Character as CharacterEntity,
@@ -312,7 +313,8 @@ export class CharactersResolver {
     @Parent() character: CharacterEntity,
   ): Promise<SpeciesVariant | null> {
     if (!character.speciesVariantId) return null;
-    return this.speciesVariantsService.findOne(character.speciesVariantId);
+    const prismaResult = await this.speciesVariantsService.findOne(character.speciesVariantId);
+    return mapPrismaSpeciesVariantToGraphQL(prismaResult);
   }
 
   @AllowGlobalAdmin()
