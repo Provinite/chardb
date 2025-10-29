@@ -30,6 +30,8 @@ interface UpdateEnumValueServiceInput {
   order?: number;
   /** ID of the trait this enum value belongs to */
   traitId?: string;
+  /** ID of the color for this enum value */
+  colorId?: string | null;
 }
 
 @Injectable()
@@ -127,6 +129,9 @@ export class EnumValuesService {
     if (input.order !== undefined) updateData.order = input.order;
     if (input.traitId !== undefined) {
       updateData.trait = { connect: { id: input.traitId } };
+    }
+    if (input.colorId !== undefined) {
+      updateData.color = input.colorId ? { connect: { id: input.colorId } } : { disconnect: true };
     }
 
     return this.prisma.enumValue.update({

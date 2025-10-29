@@ -126,6 +126,9 @@ export class SpeciesVariantsService {
     if (input.speciesId !== undefined) {
       updateData.species = { connect: { id: input.speciesId } };
     }
+    if (input.colorId !== undefined) {
+      updateData.color = input.colorId ? { connect: { id: input.colorId } } : { disconnect: true };
+    }
 
     return this.prisma.speciesVariant.update({
       where: { id },

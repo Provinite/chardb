@@ -35,6 +35,8 @@ export interface UpdateTraitServiceInput {
   allowsMultipleValues?: boolean;
   /** ID of the species this trait belongs to */
   speciesId?: string;
+  /** ID of the color for this trait */
+  colorId?: string | null;
 }
 
 @Injectable()
@@ -205,6 +207,9 @@ export class TraitsService {
     if (input.allowsMultipleValues !== undefined) updateData.allowsMultipleValues = input.allowsMultipleValues;
     if (input.speciesId !== undefined) {
       updateData.species = { connect: { id: input.speciesId } };
+    }
+    if (input.colorId !== undefined) {
+      updateData.color = input.colorId ? { connect: { id: input.colorId } } : { disconnect: true };
     }
 
     return this.prisma.trait.update({
