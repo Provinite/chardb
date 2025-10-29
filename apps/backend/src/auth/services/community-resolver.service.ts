@@ -25,6 +25,7 @@ import { MaybePromise } from "@opentelemetry/resources";
  * - CommunityMember → Role → Community
  * - CommunityInvitation → Community (direct)
  * - Role → Community (direct)
+ * - CommunityColor → Community (direct)
  */
 @Injectable()
 export class CommunityResolverService {
@@ -332,6 +333,28 @@ export class CommunityResolverService {
   }
 
   /**
+   * Get the community ID for a community color.
+   *
+   * CommunityColors have a direct communityId field.
+   *
+   * @param communityColorId - The community color ID
+   * @returns The community ID
+   * @throws Error if community color doesn't exist
+   */
+  async getCommunityColorCommunity(communityColorId: string): Promise<string> {
+    const communityColor = await this.prisma.communityColor.findUnique({
+      where: { id: communityColorId },
+      select: { communityId: true },
+    });
+
+    if (!communityColor) {
+      throw new Error(`CommunityColor with ID ${communityColorId} not found`);
+    }
+
+    return communityColor.communityId;
+  }
+
+  /**
    * Resolve the community for a given entity using resolution configuration.
    *
    * This is the primary method used by guards to determine community context.
@@ -380,6 +403,7 @@ export class CommunityResolverService {
       roleId: this.getRoleCommunity.bind(this),
       itemTypeId: this.getItemTypeCommunity.bind(this),
       itemId: this.getItemCommunity.bind(this),
+      communityColorId: this.getCommunityColorCommunity.bind(this),
     };
 
     if (!config.type) {

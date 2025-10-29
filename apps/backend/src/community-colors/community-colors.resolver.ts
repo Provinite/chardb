@@ -33,7 +33,7 @@ export class CommunityColorsResolver {
 
   // ==================== Mutations ====================
 
-  @AllowAnyAuthenticated()
+  @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
   @ResolveCommunityFrom({ communityId: 'input.communityId' })
   @Mutation(() => CommunityColor)
@@ -53,6 +53,8 @@ export class CommunityColorsResolver {
   }
 
   @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ communityColorId: 'id' })
   @Mutation(() => CommunityColor)
   async updateCommunityColor(
     @Args('id', { type: () => ID }) id: string,
@@ -67,6 +69,8 @@ export class CommunityColorsResolver {
   }
 
   @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ communityColorId: 'id' })
   @Mutation(() => Boolean)
   async deleteCommunityColor(
     @Args('id', { type: () => ID }) id: string,
