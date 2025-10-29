@@ -233,6 +233,16 @@ type Community {
   updatedAt: DateTime!
 }
 
+type CommunityColor {
+  community: Community
+  communityId: ID!
+  createdAt: DateTime!
+  hexCode: String!
+  id: ID!
+  name: String!
+  updatedAt: DateTime!
+}
+
 type CommunityConnection {
   """Whether there are more communities after this page"""
   hasNextPage: Boolean!
@@ -378,6 +388,12 @@ input CreateCommentInput {
   parentId: ID
 }
 
+input CreateCommunityColorInput {
+  communityId: ID!
+  hexCode: String!
+  name: String!
+}
+
 input CreateCommunityInput {
   """Name of the community"""
   name: String!
@@ -408,6 +424,9 @@ input CreateCommunityMemberInput {
 }
 
 input CreateEnumValueInput {
+  """ID of the color for this enum value"""
+  colorId: ID
+
   """Name/display text of this enum value"""
   name: String!
 
@@ -451,7 +470,7 @@ input CreateInviteCodeInput {
 
 input CreateItemTypeInput {
   category: String
-  color: String
+  colorId: ID
   communityId: ID!
   description: String
   iconUrl: String
@@ -524,6 +543,9 @@ input CreateSpeciesInput {
 }
 
 input CreateSpeciesVariantInput {
+  """ID of the color for this species variant"""
+  colorId: ID
+
   """Name of the species variant"""
   name: String!
 
@@ -561,6 +583,9 @@ input CreateTextMediaInput {
 input CreateTraitInput {
   """Whether this trait allows multiple values per character"""
   allowsMultipleValues: Boolean = false
+
+  """ID of the color for this trait"""
+  colorId: ID
 
   """Name of the trait"""
   name: String!
@@ -604,6 +629,12 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 scalar DateTime
 
 type EnumValue {
+  """The color associated with this enum value"""
+  color: CommunityColor
+
+  """ID of the color for this enum value"""
+  colorId: ID
+
   """When the enum value was created"""
   createdAt: DateTime!
 
@@ -873,7 +904,8 @@ type Item {
 
 type ItemType {
   category: String
-  color: String
+  color: CommunityColor
+  colorId: ID
   community: Community
   communityId: ID!
   createdAt: DateTime!
@@ -1103,6 +1135,7 @@ type Mutation {
     """Community creation data"""
     createCommunityInput: CreateCommunityInput!
   ): Community!
+  createCommunityColor(input: CreateCommunityColorInput!): CommunityColor!
 
   """Create a new community invitation"""
   createCommunityInvitation(
@@ -1174,6 +1207,7 @@ type Mutation {
   deleteAccount: RemovalResponse!
   deleteCharacter(id: ID!): Boolean!
   deleteComment(id: ID!): Boolean!
+  deleteCommunityColor(id: ID!): Boolean!
   deleteGallery(id: ID!): RemovalResponse!
   deleteImage(id: ID!): Boolean!
 
@@ -1315,6 +1349,7 @@ type Mutation {
     """Community update data"""
     updateCommunityInput: UpdateCommunityInput!
   ): Community!
+  updateCommunityColor(id: ID!, input: UpdateCommunityColorInput!): CommunityColor!
 
   """Update a community membership (change role)"""
   updateCommunityMember(
@@ -1500,6 +1535,8 @@ type Query {
     """Community ID"""
     id: ID!
   ): Community!
+  communityColor(id: ID!): CommunityColor!
+  communityColors(communityId: ID!): [CommunityColor!]!
 
   """Get a community invitation by ID"""
   communityInvitationById(
@@ -2061,6 +2098,12 @@ type SpeciesConnection {
 }
 
 type SpeciesVariant {
+  """The color associated with this species variant"""
+  color: CommunityColor
+
+  """ID of the color for this species variant"""
+  colorId: ID
+
   """When the species variant was created"""
   createdAt: DateTime!
 
@@ -2139,6 +2182,12 @@ input ToggleLikeInput {
 type Trait {
   """Whether this trait allows multiple values per character"""
   allowsMultipleValues: Boolean!
+
+  """The color associated with this trait"""
+  color: CommunityColor
+
+  """ID of the color for this trait"""
+  colorId: ID
 
   """When the trait was created"""
   createdAt: DateTime!
@@ -2297,6 +2346,11 @@ input UpdateCommentInput {
   content: String!
 }
 
+input UpdateCommunityColorInput {
+  hexCode: String
+  name: String
+}
+
 input UpdateCommunityInput {
   """Name of the community"""
   name: String
@@ -2309,6 +2363,9 @@ input UpdateCommunityMemberInput {
 }
 
 input UpdateEnumValueInput {
+  """ID of the color for this enum value"""
+  colorId: ID
+
   """Name/display text of this enum value"""
   name: String
 
@@ -2360,7 +2417,7 @@ input UpdateItemInput {
 
 input UpdateItemTypeInput {
   category: String
-  color: String
+  colorId: ID
   description: String
   iconUrl: String
   imageUrl: String
@@ -2450,6 +2507,9 @@ input UpdateSpeciesInput {
 }
 
 input UpdateSpeciesVariantInput {
+  """ID of the color for this species variant"""
+  colorId: ID
+
   """Name of the species variant"""
   name: String
 
@@ -2469,6 +2529,9 @@ input UpdateTextContentInput {
 input UpdateTraitInput {
   """Whether this trait allows multiple values per character"""
   allowsMultipleValues: Boolean
+
+  """ID of the color for this trait"""
+  colorId: ID
 
   """Name of the trait"""
   name: String

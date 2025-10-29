@@ -4,9 +4,10 @@ import { TraitsResolver } from './traits.resolver';
 import { DatabaseModule } from '../database/database.module';
 import { SpeciesModule } from '../species/species.module';
 import { EnumValuesModule } from '../enum-values/enum-values.module';
+import { CommunityColorsModule } from '../community-colors/community-colors.module';
 
 @Module({
-  imports: [DatabaseModule, forwardRef(() => SpeciesModule), EnumValuesModule],
+  imports: [DatabaseModule, forwardRef(() => SpeciesModule), EnumValuesModule, CommunityColorsModule],
   providers: [TraitsResolver, TraitsService],
   exports: [TraitsService],
 })

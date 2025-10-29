@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { Package, Plus, Edit2, Trash2, Gift } from "lucide-react";
 import { Button, Card, UserTypeahead } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { ColorSelector, ColorPip } from "../components/colors";
 import { useQuery, useMutation } from "@apollo/client";
 import { toast } from "react-hot-toast";
 import {
@@ -294,7 +295,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
     isConsumable: false,
     imageUrl: "",
     iconUrl: "",
-    color: "",
+    colorId: null as string | null,
   });
 
   const [grantFormData, setGrantFormData] = useState({
@@ -340,7 +341,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
         isConsumable: false,
         imageUrl: "",
         iconUrl: "",
-        color: "",
+        colorId: null,
       });
       refetchItemTypes();
     } catch (error) {
@@ -426,7 +427,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
       isConsumable: itemType.isConsumable,
       imageUrl: itemType.imageUrl || "",
       iconUrl: itemType.iconUrl || "",
-      color: itemType.color || "",
+      colorId: itemType.colorId || null,
     });
     setIsEditModalOpen(true);
   };
@@ -480,7 +481,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
             {itemTypes.map((itemType: any) => (
               <ItemTypeCard key={itemType.id}>
                 <ItemTypeHeader>
-                  <ItemTypeIcon color={itemType.color}>
+                  <ItemTypeIcon color={itemType.color?.hexCode}>
                     {itemType.iconUrl ? (
                       <ItemTypeImage
                         src={itemType.iconUrl}
@@ -491,7 +492,12 @@ export const CommunityItemsAdminPage: React.FC = () => {
                     )}
                   </ItemTypeIcon>
                   <ItemTypeInfo>
-                    <ItemTypeName>{itemType.name}</ItemTypeName>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <ItemTypeName>{itemType.name}</ItemTypeName>
+                      {itemType.color && (
+                        <ColorPip color={itemType.color.hexCode} size="sm" />
+                      )}
+                    </div>
                     {itemType.category && (
                       <ItemTypeCategory>{itemType.category}</ItemTypeCategory>
                     )}
@@ -645,16 +651,13 @@ export const CommunityItemsAdminPage: React.FC = () => {
               />
             </FormGroup>
 
-            <FormGroup>
-              <Label>Color (hex code)</Label>
-              <Input
-                type="color"
-                value={formData.color}
-                onChange={(e) =>
-                  setFormData({ ...formData, color: e.target.value })
-                }
-              />
-            </FormGroup>
+            <ColorSelector
+              communityId={communityId!}
+              value={formData.colorId}
+              onChange={(colorId) => setFormData({ ...formData, colorId })}
+              label="Color (optional)"
+              placeholder="No color"
+            />
 
             <FormActions>
               <Button
@@ -767,16 +770,13 @@ export const CommunityItemsAdminPage: React.FC = () => {
               />
             </FormGroup>
 
-            <FormGroup>
-              <Label>Color (hex code)</Label>
-              <Input
-                type="color"
-                value={formData.color}
-                onChange={(e) =>
-                  setFormData({ ...formData, color: e.target.value })
-                }
-              />
-            </FormGroup>
+            <ColorSelector
+              communityId={communityId!}
+              value={formData.colorId}
+              onChange={(colorId) => setFormData({ ...formData, colorId })}
+              label="Color (optional)"
+              placeholder="No color"
+            />
 
             <FormActions>
               <Button

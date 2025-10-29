@@ -22,6 +22,7 @@ import {
   TraitsBySpeciesQuery,
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
+import { ColorSelector, ColorPip } from "../components/colors";
 
 /**
  * Trait Builder Interface for Species Configuration
@@ -144,11 +145,23 @@ const TraitInfo = styled.div`
   flex: 1;
 `;
 
+const TraitNameRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+`;
+
+const ColorPipWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+`;
+
 const TraitName = styled.h3`
   font-size: 1.25rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 0.5rem 0;
+  margin: 0;
 `;
 
 const TraitType = styled.div`
@@ -302,6 +315,7 @@ interface TraitFormData {
   name: string;
   valueType: TraitValueType;
   allowsMultipleValues?: boolean;
+  colorId?: string | null;
 }
 
 interface TraitModalProps {
@@ -310,6 +324,7 @@ interface TraitModalProps {
   onSubmit: (data: TraitFormData) => void;
   trait?: TraitsBySpeciesQuery['traitsBySpecies']['nodes'][0];
   title: string;
+  communityId: string;
 }
 
 const TraitModal: React.FC<TraitModalProps> = ({
@@ -318,11 +333,13 @@ const TraitModal: React.FC<TraitModalProps> = ({
   onSubmit,
   trait,
   title,
+  communityId,
 }) => {
   const [formData, setFormData] = useState<TraitFormData>({
     name: trait?.name || "",
     valueType: trait?.valueType || TraitValueType.String,
     allowsMultipleValues: trait?.allowsMultipleValues || false,
+    colorId: trait?.colorId || null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -333,6 +350,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
         name: trait.name,
         valueType: trait.valueType,
         allowsMultipleValues: trait.allowsMultipleValues || false,
+        colorId: trait.colorId || null,
       });
     } else {
       // Reset to defaults for create mode
@@ -340,6 +358,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
         name: "",
         valueType: TraitValueType.String,
         allowsMultipleValues: false,
+        colorId: null,
       });
     }
   }, [trait]);
@@ -451,6 +470,22 @@ const TraitModal: React.FC<TraitModalProps> = ({
           </FormNote>
         </FormSection>
 
+        <FormSection>
+          <ColorSelector
+            communityId={communityId}
+            value={formData.colorId}
+            onChange={(colorId) =>
+              setFormData((prev) => ({ ...prev, colorId }))
+            }
+            label="Color (optional)"
+            placeholder="No color"
+            disabled={isSubmitting}
+          />
+          <FormNote>
+            Assign a color to this trait for visual organization
+          </FormNote>
+        </FormSection>
+
         <FormActions>
           <Button
             type="button"
@@ -550,6 +585,7 @@ export const TraitBuilderPage: React.FC = () => {
           name: formData.name,
           valueType: formData.valueType,
           allowsMultipleValues: formData.allowsMultipleValues || false,
+          colorId: formData.colorId,
           speciesId,
         },
       },
@@ -565,6 +601,7 @@ export const TraitBuilderPage: React.FC = () => {
         updateTraitInput: {
           name: formData.name,
           allowsMultipleValues: formData.allowsMultipleValues,
+          colorId: formData.colorId,
           // Note: valueType cannot be changed for existing traits
         },
       },
@@ -680,7 +717,14 @@ export const TraitBuilderPage: React.FC = () => {
             <TraitCard key={trait.id}>
               <TraitHeader>
                 <TraitInfo>
-                  <TraitName>{trait.name}</TraitName>
+                  <TraitNameRow>
+                    {trait.color && (
+                      <ColorPipWrapper>
+                        <ColorPip color={trait.color.hexCode} size="md" />
+                      </ColorPipWrapper>
+                    )}
+                    <TraitName>{trait.name}</TraitName>
+                  </TraitNameRow>
                   <TraitType>
                     {getTraitTypeIcon(trait.valueType)}
                     {getTraitTypeLabel(trait.valueType)}
@@ -745,6 +789,7 @@ export const TraitBuilderPage: React.FC = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateTrait}
         title="Create New Trait"
+        communityId={species.communityId}
       />
 
       {/* Edit Trait Modal */}
@@ -754,6 +799,7 @@ export const TraitBuilderPage: React.FC = () => {
         onSubmit={handleUpdateTrait}
         trait={editingTrait || undefined}
         title="Edit Trait"
+        communityId={species.communityId}
       />
     </Container>
   );

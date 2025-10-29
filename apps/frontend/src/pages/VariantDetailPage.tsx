@@ -18,6 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Button, Input, ErrorMessage } from '@chardb/ui';
+import { ColorSelector } from '../components/colors';
 import {
   useSpeciesVariantByIdQuery,
   useTraitListEntriesByVariantQuery,
@@ -95,6 +96,20 @@ const HeaderRight = styled.div`
   gap: 0.5rem;
 `;
 
+const ColorRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
+const ColorLabel = styled.label`
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+  min-width: 100px;
+`;
+
 const Section = styled.div`
   margin-bottom: 2rem;
 `;
@@ -154,6 +169,7 @@ export const VariantDetailPage: React.FC = () => {
 
   // State
   const [variantName, setVariantName] = useState('');
+  const [variantColorId, setVariantColorId] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [entries, setEntries] = useState<TraitListEntryDetailsFragment[]>([]);
   const [hasOrderChanges, setHasOrderChanges] = useState(false);
@@ -174,6 +190,7 @@ export const VariantDetailPage: React.FC = () => {
       onCompleted: (data) => {
         if (data.speciesVariantById) {
           setVariantName(data.speciesVariantById.name);
+          setVariantColorId(data.speciesVariantById.colorId || null);
         }
       },
     });
@@ -210,10 +227,10 @@ export const VariantDetailPage: React.FC = () => {
   // Mutations
   const [updateVariantName] = useUpdateSpeciesVariantMutation({
     onCompleted: () => {
-      toast.success('Variant name updated successfully!');
+      toast.success('Variant updated successfully!');
     },
     onError: (error) => {
-      toast.error(`Failed to update variant name: ${error.message}`);
+      toast.error(`Failed to update variant: ${error.message}`);
     },
   });
 
@@ -298,13 +315,19 @@ export const VariantDetailPage: React.FC = () => {
 
   // Handlers
   const handleSaveVariantName = async () => {
-    if (!variant || variantName === variant.name) return;
+    if (!variant) return;
+
+    const hasNameChange = variantName !== variant.name;
+    const hasColorChange = variantColorId !== variant.colorId;
+
+    if (!hasNameChange && !hasColorChange) return;
 
     await updateVariantName({
       variables: {
         id: variantId,
         updateSpeciesVariantInput: {
           name: variantName,
+          colorId: variantColorId,
         },
       },
     });
@@ -445,6 +468,8 @@ export const VariantDetailPage: React.FC = () => {
   }
 
   const hasNameChanges = variantName !== variant.name;
+  const hasColorChanges = variantColorId !== variant.colorId;
+  const hasChanges = hasNameChanges || hasColorChanges;
 
   return (
     <Container>
@@ -469,19 +494,19 @@ export const VariantDetailPage: React.FC = () => {
               onChange={(e) => setVariantName(e.target.value)}
               placeholder="Variant name..."
             />
-            {hasNameChanges && (
+          </HeaderLeft>
+
+          <HeaderRight>
+            {hasChanges && (
               <Button
                 variant="primary"
                 size="sm"
                 onClick={handleSaveVariantName}
                 icon={<Save size={14} />}
               >
-                Save Name
+                Save Changes
               </Button>
             )}
-          </HeaderLeft>
-
-          <HeaderRight>
             <Button
               variant="secondary"
               onClick={() => navigate(`/species/${variant.speciesId}/variants`)}
@@ -491,6 +516,22 @@ export const VariantDetailPage: React.FC = () => {
             </Button>
           </HeaderRight>
         </HeaderTop>
+
+        <ColorRow>
+          <ColorLabel>Species:</ColorLabel>
+          <span>{variant.species?.name}</span>
+        </ColorRow>
+
+        <ColorRow>
+          <ColorLabel>Color:</ColorLabel>
+          <ColorSelector
+            communityId={variant.species?.communityId || ''}
+            value={variantColorId}
+            onChange={setVariantColorId}
+            label=""
+            placeholder="No color"
+          />
+        </ColorRow>
       </Header>
 
       <Section>

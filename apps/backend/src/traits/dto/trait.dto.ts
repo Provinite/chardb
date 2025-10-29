@@ -31,6 +31,12 @@ export class CreateTraitInput {
   @IsUUID()
   @IsNotEmpty()
   speciesId: string;
+
+  /** ID of the color for this trait */
+  @Field(() => ID, { nullable: true, description: 'ID of the color for this trait' })
+  @IsOptional()
+  @IsUUID()
+  colorId?: string;
 }
 
 @InputType()
@@ -64,4 +70,10 @@ export class UpdateTraitInput {
   @IsUUID()
   @IsNotEmpty()
   speciesId?: string;
+
+  /** ID of the color for this trait */
+  @Field(() => ID, { nullable: true, description: 'ID of the color for this trait' })
+  @IsOptional()
+  @IsUUID()
+  colorId?: string;
 }

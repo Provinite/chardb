@@ -32,6 +32,8 @@ import { EnumValue } from "../enum-values/entities/enum-value.entity";
 import { EnumValuesService } from "../enum-values/enum-values.service";
 import { mapPrismaEnumValueToGraphQL } from "../enum-values/utils/enum-value-resolver-mappers";
 import { TraitValueType } from "../shared/enums/trait-value-type.enum";
+import { CommunityColor } from "../community-colors/entities/community-color.entity";
+import { CommunityColorsService } from "../community-colors/community-colors.service";
 
 @Resolver(() => Trait)
 export class TraitsResolver {
@@ -39,6 +41,7 @@ export class TraitsResolver {
     private readonly traitsService: TraitsService,
     private readonly speciesService: SpeciesService,
     private readonly enumValuesService: EnumValuesService,
+    private readonly communityColorsService: CommunityColorsService,
   ) {}
 
   @AllowGlobalAdmin()
@@ -189,5 +192,25 @@ export class TraitsResolver {
       100,
     ); // Get up to 100 enum values
     return serviceResult.nodes.map(mapPrismaEnumValueToGraphQL);
+  }
+
+  @AllowUnauthenticated()
+  @ResolveField("color", () => CommunityColor, {
+    nullable: true,
+    description: "The color associated with this trait",
+  })
+  async resolveColor(@Parent() trait: Trait): Promise<CommunityColor | null> {
+    if (!trait.colorId) {
+      return null;
+    }
+
+    try {
+      return await this.communityColorsService.findCommunityColorById(trait.colorId) as CommunityColor;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return null;
+      }
+      throw error;
+    }
   }
 }

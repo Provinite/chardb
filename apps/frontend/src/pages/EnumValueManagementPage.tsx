@@ -12,6 +12,7 @@ import {
   EnumValuesByTraitQuery,
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
+import { ColorSelector, ColorPip } from "../components/colors";
 
 /**
  * Enum Value Management Interface for ENUM-type Traits
@@ -173,6 +174,7 @@ const EmptyState = styled.div`
 interface EnumValueFormData {
   name: string;
   order: number;
+  colorId?: string | null;
 }
 
 interface EnumValueModalProps {
@@ -182,6 +184,7 @@ interface EnumValueModalProps {
   enumValue?: EnumValuesByTraitQuery['enumValuesByTrait']['nodes'][0];
   title: string;
   maxOrder: number;
+  communityId: string;
 }
 
 const EnumValueModal: React.FC<EnumValueModalProps> = ({
@@ -191,12 +194,30 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
   enumValue,
   title,
   maxOrder,
+  communityId,
 }) => {
   const [formData, setFormData] = useState<EnumValueFormData>({
     name: enumValue?.name || "",
     order: enumValue?.order || maxOrder + 1,
+    colorId: enumValue?.colorId || null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Reset form data when enumValue changes (e.g., when opening edit modal for a different enum value)
+  React.useEffect(() => {
+    setFormData({
+      name: enumValue?.name || "",
+      order: enumValue?.order || maxOrder + 1,
+      colorId: enumValue?.colorId || null,
+    });
+  }, [enumValue, maxOrder]);
+
+  // Check if form has changes (for edit mode)
+  const hasChanges = enumValue
+    ? formData.name !== enumValue.name ||
+      formData.order !== enumValue.order ||
+      formData.colorId !== enumValue.colorId
+    : true; // For create mode, always allow submission if name is filled
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,7 +227,7 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
     try {
       await onSubmit(formData);
       if (!enumValue) {
-        setFormData({ name: "", order: maxOrder + 1 });
+        setFormData({ name: "", order: maxOrder + 1, colorId: null });
       }
       onClose();
     } catch (error) {
@@ -252,6 +273,22 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
           </p>
         </div>
 
+        <div style={{ marginBottom: "1.5rem" }}>
+          <ColorSelector
+            communityId={communityId}
+            value={formData.colorId}
+            onChange={(colorId) =>
+              setFormData((prev) => ({ ...prev, colorId }))
+            }
+            label="Color (Optional)"
+            placeholder="No color"
+            disabled={isSubmitting}
+          />
+          <p style={{ fontSize: "0.875rem", color: "#666", margin: "0.25rem 0 0 0" }}>
+            Assign a color to help visually distinguish this option
+          </p>
+        </div>
+
         <div
           style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}
         >
@@ -265,7 +302,7 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting || !formData.name.trim()}
+            disabled={isSubmitting || !formData.name.trim() || !hasChanges}
           >
             {isSubmitting
               ? "Saving..."
@@ -353,6 +390,7 @@ export const EnumValueManagementPage: React.FC = () => {
           name: formData.name,
           order: formData.order,
           traitId,
+          colorId: formData.colorId,
         },
       },
     });
@@ -367,6 +405,7 @@ export const EnumValueManagementPage: React.FC = () => {
         updateEnumValueInput: {
           name: formData.name,
           order: formData.order,
+          colorId: formData.colorId,
         },
       },
     });
@@ -506,7 +545,12 @@ export const EnumValueManagementPage: React.FC = () => {
               <EnumValueInfo>
                 <OrderBadge>#{enumValue.order}</OrderBadge>
                 <div>
-                  <EnumValueName>{enumValue.name}</EnumValueName>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <EnumValueName>{enumValue.name}</EnumValueName>
+                    {enumValue.color && (
+                      <ColorPip color={enumValue.color.hexCode} size="sm" />
+                    )}
+                  </div>
                   <EnumValueMeta>
                     Created: {new Date(enumValue.createdAt).toLocaleDateString()}
                   </EnumValueMeta>
@@ -561,6 +605,7 @@ export const EnumValueManagementPage: React.FC = () => {
         onSubmit={handleCreateEnumValue}
         title="Create New Option"
         maxOrder={maxOrder}
+        communityId={trait.species?.communityId || ''}
       />
 
       {/* Edit Enum Value Modal */}
@@ -571,6 +616,7 @@ export const EnumValueManagementPage: React.FC = () => {
         enumValue={editingEnumValue || undefined}
         title="Edit Option"
         maxOrder={maxOrder}
+        communityId={trait.species?.communityId || ''}
       />
     </Container>
   );

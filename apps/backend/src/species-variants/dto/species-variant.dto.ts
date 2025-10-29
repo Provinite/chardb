@@ -15,6 +15,12 @@ export class CreateSpeciesVariantInput {
   @IsUUID()
   @IsNotEmpty()
   speciesId: string;
+
+  /** ID of the color for this species variant */
+  @Field(() => ID, { nullable: true, description: 'ID of the color for this species variant' })
+  @IsOptional()
+  @IsUUID()
+  colorId?: string;
 }
 
 @InputType()
@@ -33,4 +39,10 @@ export class UpdateSpeciesVariantInput {
   @IsUUID()
   @IsNotEmpty()
   speciesId?: string;
+
+  /** ID of the color for this species variant */
+  @Field(() => ID, { nullable: true, description: 'ID of the color for this species variant' })
+  @IsOptional()
+  @IsUUID()
+  colorId?: string;
 }

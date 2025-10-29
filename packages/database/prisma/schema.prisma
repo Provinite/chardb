@@ -401,8 +401,28 @@ model Community {
   roles                Role[]
   communityInvitations CommunityInvitation[]
   itemTypes            ItemType[]
+  communityColors      CommunityColor[]
 
   @@map("communities")
+}
+
+model CommunityColor {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(50)
+  hexCode     String   @map("hex_code") @db.VarChar(7)
+  communityId String   @map("community_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  community       Community        @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  traits          Trait[]
+  enumValues      EnumValue[]
+  speciesVariants SpeciesVariant[]
+  itemTypes       ItemType[]
+
+  @@unique([communityId, name])
+  @@map("community_colors")
 }
 
 model Role {
@@ -518,7 +538,7 @@ model ItemType {
   // Visual properties
   imageUrl       String? @db.VarChar(500) @map("image_url")
   iconUrl        String? @db.VarChar(500) @map("icon_url")
-  color          String? @db.VarChar(7)   // Hex color code
+  colorId        String? @map("color_id")
 
   // Metadata
   metadata       Json    @default("{}") // Flexible properties
@@ -527,7 +547,8 @@ model ItemType {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  community      Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  community      Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  color          CommunityColor? @relation(fields: [colorId], references: [id], onDelete: SetNull)
   items          Item[]
 
   @@unique([name, communityId])
@@ -576,11 +597,13 @@ model Trait {
   valueType            TraitValueType @map("value_type")
   allowsMultipleValues Boolean        @default(false) @map("allows_multiple_values")
   speciesId            String         @map("species_id")
+  colorId              String?        @map("color_id")
   createdAt            DateTime       @default(now()) @map("created_at")
   updatedAt            DateTime       @updatedAt @map("updated_at")
 
   // Relations
   species          Species          @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+  color            CommunityColor?  @relation(fields: [colorId], references: [id], onDelete: SetNull)
   enumValues       EnumValue[]
   traitListEntries TraitListEntry[]
 
@@ -593,11 +616,13 @@ model EnumValue {
   name      String   @db.VarChar(100)
   order     Int      @default(0)
   traitId   String   @map("trait_id")
+  colorId   String?  @map("color_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   trait             Trait              @relation(fields: [traitId], references: [id], onDelete: Cascade)
+  color             CommunityColor?    @relation(fields: [colorId], references: [id], onDelete: SetNull)
   enumValueSettings EnumValueSetting[]
 
   @@unique([traitId, name])
@@ -609,11 +634,13 @@ model SpeciesVariant {
   id        String   @id @default(uuid())
   name      String   @db.VarChar(100)
   speciesId String   @map("species_id")
+  colorId   String?  @map("color_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   species           Species            @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+  color             CommunityColor?    @relation(fields: [colorId], references: [id], onDelete: SetNull)
   characters        Character[]
   traitListEntries  TraitListEntry[]
   enumValueSettings EnumValueSetting[]

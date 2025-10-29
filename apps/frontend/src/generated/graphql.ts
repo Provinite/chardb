@@ -249,6 +249,17 @@ export type CommunityMembersArgs = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CommunityColor = {
+  __typename?: 'CommunityColor';
+  community: Maybe<Community>;
+  communityId: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  hexCode: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
 export type CommunityConnection = {
   __typename?: 'CommunityConnection';
   /** Whether there are more communities after this page */
@@ -371,6 +382,12 @@ export type CreateCommentInput = {
   parentId?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type CreateCommunityColorInput = {
+  communityId: Scalars['ID']['input'];
+  hexCode: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type CreateCommunityInput = {
   /** Name of the community */
   name: Scalars['String']['input'];
@@ -397,6 +414,8 @@ export type CreateCommunityMemberInput = {
 };
 
 export type CreateEnumValueInput = {
+  /** ID of the color for this enum value */
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name/display text of this enum value */
   name: Scalars['String']['input'];
   /** Display order within the trait's enum values */
@@ -434,7 +453,7 @@ export type CreateInviteCodeInput = {
 
 export type CreateItemTypeInput = {
   category?: InputMaybe<Scalars['String']['input']>;
-  color?: InputMaybe<Scalars['String']['input']>;
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   communityId: Scalars['ID']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   iconUrl?: InputMaybe<Scalars['String']['input']>;
@@ -491,6 +510,8 @@ export type CreateSpeciesInput = {
 };
 
 export type CreateSpeciesVariantInput = {
+  /** ID of the color for this species variant */
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name of the species variant */
   name: Scalars['String']['input'];
   /** ID of the species this variant belongs to */
@@ -520,6 +541,8 @@ export type CreateTextMediaInput = {
 export type CreateTraitInput = {
   /** Whether this trait allows multiple values per character */
   allowsMultipleValues?: InputMaybe<Scalars['Boolean']['input']>;
+  /** ID of the color for this trait */
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name of the trait */
   name: Scalars['String']['input'];
   /** ID of the species this trait belongs to */
@@ -549,6 +572,10 @@ export type CreateTraitListEntryInput = {
 
 export type EnumValue = {
   __typename?: 'EnumValue';
+  /** The color associated with this enum value */
+  color: Maybe<CommunityColor>;
+  /** ID of the color for this enum value */
+  colorId: Maybe<Scalars['ID']['output']>;
   /** When the enum value was created */
   createdAt: Scalars['DateTime']['output'];
   /** Unique identifier for the enum value */
@@ -803,7 +830,8 @@ export type Item = {
 export type ItemType = {
   __typename?: 'ItemType';
   category: Maybe<Scalars['String']['output']>;
-  color: Maybe<Scalars['String']['output']>;
+  color: Maybe<CommunityColor>;
+  colorId: Maybe<Scalars['ID']['output']>;
   community: Maybe<Community>;
   communityId: Scalars['ID']['output'];
   createdAt: Scalars['DateTime']['output'];
@@ -983,6 +1011,7 @@ export type Mutation = {
   createComment: Comment;
   /** Create a new community */
   createCommunity: Community;
+  createCommunityColor: CommunityColor;
   /** Create a new community invitation */
   createCommunityInvitation: CommunityInvitation;
   /** Create a new community membership */
@@ -1010,6 +1039,7 @@ export type Mutation = {
   deleteAccount: RemovalResponse;
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
+  deleteCommunityColor: Scalars['Boolean']['output'];
   deleteGallery: RemovalResponse;
   deleteImage: Scalars['Boolean']['output'];
   /** Delete an item (admin only) */
@@ -1065,6 +1095,7 @@ export type Mutation = {
   updateComment: Comment;
   /** Update a community */
   updateCommunity: Community;
+  updateCommunityColor: CommunityColor;
   /** Update a community membership (change role) */
   updateCommunityMember: CommunityMember;
   /** Update an enum value */
@@ -1133,6 +1164,11 @@ export type MutationCreateCommentArgs = {
 
 export type MutationCreateCommunityArgs = {
   createCommunityInput: CreateCommunityInput;
+};
+
+
+export type MutationCreateCommunityColorArgs = {
+  input: CreateCommunityColorInput;
 };
 
 
@@ -1207,6 +1243,11 @@ export type MutationDeleteCharacterArgs = {
 
 
 export type MutationDeleteCommentArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteCommunityColorArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -1390,6 +1431,12 @@ export type MutationUpdateCommunityArgs = {
 };
 
 
+export type MutationUpdateCommunityColorArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateCommunityColorInput;
+};
+
+
 export type MutationUpdateCommunityMemberArgs = {
   id: Scalars['ID']['input'];
   updateCommunityMemberInput: UpdateCommunityMemberInput;
@@ -1512,6 +1559,8 @@ export type Query = {
   communities: CommunityConnection;
   /** Get a community by ID */
   community: Community;
+  communityColor: CommunityColor;
+  communityColors: Array<CommunityColor>;
   /** Get a community invitation by ID */
   communityInvitationById: CommunityInvitation;
   /** Get all community invitations with pagination */
@@ -1701,6 +1750,16 @@ export type QueryCommunitiesArgs = {
 
 export type QueryCommunityArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityColorArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityColorsArgs = {
+  communityId: Scalars['ID']['input'];
 };
 
 
@@ -2191,6 +2250,10 @@ export type SpeciesConnection = {
 
 export type SpeciesVariant = {
   __typename?: 'SpeciesVariant';
+  /** The color associated with this species variant */
+  color: Maybe<CommunityColor>;
+  /** ID of the color for this species variant */
+  colorId: Maybe<Scalars['ID']['output']>;
   /** When the species variant was created */
   createdAt: Scalars['DateTime']['output'];
   /** Enum value settings for this species variant */
@@ -2261,6 +2324,10 @@ export type Trait = {
   __typename?: 'Trait';
   /** Whether this trait allows multiple values per character */
   allowsMultipleValues: Scalars['Boolean']['output'];
+  /** The color associated with this trait */
+  color: Maybe<CommunityColor>;
+  /** ID of the color for this trait */
+  colorId: Maybe<Scalars['ID']['output']>;
   /** When the trait was created */
   createdAt: Scalars['DateTime']['output'];
   /** Enum values for this trait (only populated for ENUM traits) */
@@ -2390,6 +2457,11 @@ export type UpdateCommentInput = {
   content: Scalars['String']['input'];
 };
 
+export type UpdateCommunityColorInput = {
+  hexCode?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateCommunityInput = {
   /** Name of the community */
   name?: InputMaybe<Scalars['String']['input']>;
@@ -2402,6 +2474,8 @@ export type UpdateCommunityMemberInput = {
 };
 
 export type UpdateEnumValueInput = {
+  /** ID of the color for this enum value */
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name/display text of this enum value */
   name?: InputMaybe<Scalars['String']['input']>;
   /** Display order within the trait's enum values */
@@ -2449,7 +2523,7 @@ export type UpdateItemInput = {
 
 export type UpdateItemTypeInput = {
   category?: InputMaybe<Scalars['String']['input']>;
-  color?: InputMaybe<Scalars['String']['input']>;
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   iconUrl?: InputMaybe<Scalars['String']['input']>;
   imageUrl?: InputMaybe<Scalars['String']['input']>;
@@ -2519,6 +2593,8 @@ export type UpdateSpeciesInput = {
 };
 
 export type UpdateSpeciesVariantInput = {
+  /** ID of the color for this species variant */
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name of the species variant */
   name?: InputMaybe<Scalars['String']['input']>;
   /** ID of the species this variant belongs to */
@@ -2536,6 +2612,8 @@ export type UpdateTextContentInput = {
 export type UpdateTraitInput = {
   /** Whether this trait allows multiple values per character */
   allowsMultipleValues?: InputMaybe<Scalars['Boolean']['input']>;
+  /** ID of the color for this trait */
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name of the trait */
   name?: InputMaybe<Scalars['String']['input']>;
   /** ID of the species this trait belongs to */
@@ -2702,7 +2780,7 @@ export type GetCharacterQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, speciesId: string | null, speciesVariantId: string | null, age: string | null, gender: string | null, details: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string } | null }>, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, speciesId: string | null, speciesVariantId: string | null, age: string | null, gender: string | null, details: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -2771,7 +2849,7 @@ export type UpdateCharacterTraitsMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCharacterTraitsMutation = { __typename?: 'Mutation', updateCharacterTraits: { __typename?: 'Character', id: string, name: string, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string } | null }> } };
+export type UpdateCharacterTraitsMutation = { __typename?: 'Mutation', updateCharacterTraits: { __typename?: 'Character', id: string, name: string, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> } };
 
 export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2834,6 +2912,37 @@ export type CommunityMembersByUserQueryVariables = Exact<{
 
 
 export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+
+export type CommunityColorFieldsFragment = { __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string };
+
+export type GetCommunityColorsQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type GetCommunityColorsQuery = { __typename?: 'Query', communityColors: Array<{ __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string }> };
+
+export type CreateCommunityColorMutationVariables = Exact<{
+  input: CreateCommunityColorInput;
+}>;
+
+
+export type CreateCommunityColorMutation = { __typename?: 'Mutation', createCommunityColor: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string } };
+
+export type UpdateCommunityColorMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateCommunityColorInput;
+}>;
+
+
+export type UpdateCommunityColorMutation = { __typename?: 'Mutation', updateCommunityColor: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string } };
+
+export type DeleteCommunityColorMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteCommunityColorMutation = { __typename?: 'Mutation', deleteCommunityColor: boolean };
 
 export type SpeciesWithTraitsAndEnumValuesQueryVariables = Exact<{
   speciesId: Scalars['ID']['input'];
@@ -2908,9 +3017,9 @@ export type DeleteEnumValueSettingMutationVariables = Exact<{
 
 export type DeleteEnumValueSettingMutation = { __typename?: 'Mutation', removeEnumValueSetting: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
-export type EnumValueDetailsFragment = { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string };
+export type EnumValueDetailsFragment = { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
 
-export type EnumValueConnectionDetailsFragment = { __typename?: 'EnumValueConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string }> };
+export type EnumValueConnectionDetailsFragment = { __typename?: 'EnumValueConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> };
 
 export type EnumValuesByTraitQueryVariables = Exact<{
   traitId: Scalars['ID']['input'];
@@ -2919,21 +3028,21 @@ export type EnumValuesByTraitQueryVariables = Exact<{
 }>;
 
 
-export type EnumValuesByTraitQuery = { __typename?: 'Query', enumValuesByTrait: { __typename?: 'EnumValueConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string }> } };
+export type EnumValuesByTraitQuery = { __typename?: 'Query', enumValuesByTrait: { __typename?: 'EnumValueConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type EnumValueByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type EnumValueByIdQuery = { __typename?: 'Query', enumValueById: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, species: { __typename?: 'Species', id: string, name: string, communityId: string } } } };
+export type EnumValueByIdQuery = { __typename?: 'Query', enumValueById: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, colorId: string | null, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, species: { __typename?: 'Species', id: string, name: string, communityId: string } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateEnumValueMutationVariables = Exact<{
   createEnumValueInput: CreateEnumValueInput;
 }>;
 
 
-export type CreateEnumValueMutation = { __typename?: 'Mutation', createEnumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string } };
+export type CreateEnumValueMutation = { __typename?: 'Mutation', createEnumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type UpdateEnumValueMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2941,7 +3050,7 @@ export type UpdateEnumValueMutationVariables = Exact<{
 }>;
 
 
-export type UpdateEnumValueMutation = { __typename?: 'Mutation', updateEnumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string } };
+export type UpdateEnumValueMutation = { __typename?: 'Mutation', updateEnumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type DeleteEnumValueMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3093,30 +3202,30 @@ export type RolesByCommunityQueryVariables = Exact<{
 
 export type RolesByCommunityQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Role', id: string, name: string, canCreateInviteCode: boolean, community: { __typename?: 'Community', id: string, name: string } }> } };
 
-export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string };
+export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
 
-export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } };
+export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } };
 
 export type GetItemTypesQueryVariables = Exact<{
   filters?: InputMaybe<ItemTypeFiltersInput>;
 }>;
 
 
-export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }> } };
+export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type GetItemTypeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null } };
+export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateItemTypeMutationVariables = Exact<{
   input: CreateItemTypeInput;
 }>;
 
 
-export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string } };
+export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type UpdateItemTypeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3124,7 +3233,7 @@ export type UpdateItemTypeMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string } };
+export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type DeleteItemTypeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3133,21 +3242,21 @@ export type DeleteItemTypeMutationVariables = Exact<{
 
 export type DeleteItemTypeMutation = { __typename?: 'Mutation', deleteItemType: boolean };
 
-export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> };
+export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> };
 
 export type GetMyInventoryQueryVariables = Exact<{
   communityId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> }> } };
+export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> }> } };
 
 export type GrantItemMutationVariables = Exact<{
   input: GrantItemInput;
 }>;
 
 
-export type GrantItemMutation = { __typename?: 'Mutation', grantItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
+export type GrantItemMutation = { __typename?: 'Mutation', grantItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
 
 export type UpdateItemMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3155,7 +3264,7 @@ export type UpdateItemMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
+export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
 
 export type DeleteItemMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3424,9 +3533,9 @@ export type DeleteSpeciesMutationVariables = Exact<{
 
 export type DeleteSpeciesMutation = { __typename?: 'Mutation', removeSpecies: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
-export type SpeciesVariantDetailsFragment = { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string };
+export type SpeciesVariantDetailsFragment = { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
 
-export type SpeciesVariantConnectionDetailsFragment = { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string }> };
+export type SpeciesVariantConnectionDetailsFragment = { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> };
 
 export type SpeciesVariantsQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -3434,7 +3543,7 @@ export type SpeciesVariantsQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesVariantsQuery = { __typename?: 'Query', speciesVariants: { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string }> } };
+export type SpeciesVariantsQuery = { __typename?: 'Query', speciesVariants: { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type SpeciesVariantsBySpeciesQueryVariables = Exact<{
   speciesId: Scalars['ID']['input'];
@@ -3443,21 +3552,21 @@ export type SpeciesVariantsBySpeciesQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesVariantsBySpeciesQuery = { __typename?: 'Query', speciesVariantsBySpecies: { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string }> } };
+export type SpeciesVariantsBySpeciesQuery = { __typename?: 'Query', speciesVariantsBySpecies: { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type SpeciesVariantByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type SpeciesVariantByIdQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string } } };
+export type SpeciesVariantByIdQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateSpeciesVariantMutationVariables = Exact<{
   createSpeciesVariantInput: CreateSpeciesVariantInput;
 }>;
 
 
-export type CreateSpeciesVariantMutation = { __typename?: 'Mutation', createSpeciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string } };
+export type CreateSpeciesVariantMutation = { __typename?: 'Mutation', createSpeciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type UpdateSpeciesVariantMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3465,7 +3574,7 @@ export type UpdateSpeciesVariantMutationVariables = Exact<{
 }>;
 
 
-export type UpdateSpeciesVariantMutation = { __typename?: 'Mutation', updateSpeciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string } };
+export type UpdateSpeciesVariantMutation = { __typename?: 'Mutation', updateSpeciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type DeleteSpeciesVariantMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3474,9 +3583,9 @@ export type DeleteSpeciesVariantMutationVariables = Exact<{
 
 export type DeleteSpeciesVariantMutation = { __typename?: 'Mutation', removeSpeciesVariant: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
-export type TraitDetailsFragment = { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, createdAt: string, updatedAt: string };
+export type TraitDetailsFragment = { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
 
-export type TraitConnectionDetailsFragment = { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, createdAt: string, updatedAt: string }> };
+export type TraitConnectionDetailsFragment = { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> };
 
 export type TraitsBySpeciesQueryVariables = Exact<{
   speciesId: Scalars['ID']['input'];
@@ -3486,21 +3595,21 @@ export type TraitsBySpeciesQueryVariables = Exact<{
 }>;
 
 
-export type TraitsBySpeciesQuery = { __typename?: 'Query', traitsBySpecies: { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, createdAt: string, updatedAt: string }> } };
+export type TraitsBySpeciesQuery = { __typename?: 'Query', traitsBySpecies: { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type TraitByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string } } };
+export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateTraitMutationVariables = Exact<{
   createTraitInput: CreateTraitInput;
 }>;
 
 
-export type CreateTraitMutation = { __typename?: 'Mutation', createTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, createdAt: string, updatedAt: string } };
+export type CreateTraitMutation = { __typename?: 'Mutation', createTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type UpdateTraitMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3508,7 +3617,7 @@ export type UpdateTraitMutationVariables = Exact<{
 }>;
 
 
-export type UpdateTraitMutation = { __typename?: 'Mutation', updateTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, createdAt: string, updatedAt: string } };
+export type UpdateTraitMutation = { __typename?: 'Mutation', updateTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type DeleteTraitMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3593,6 +3702,16 @@ export const CommunityMemberUserFragmentDoc = gql`
   avatarUrl
 }
     `;
+export const CommunityColorFieldsFragmentDoc = gql`
+    fragment CommunityColorFields on CommunityColor {
+  id
+  name
+  hexCode
+  communityId
+  createdAt
+  updatedAt
+}
+    `;
 export const EnumValueSettingDetailsFragmentDoc = gql`
     fragment EnumValueSettingDetails on EnumValueSetting {
   id
@@ -3618,6 +3737,12 @@ export const EnumValueDetailsFragmentDoc = gql`
   name
   order
   traitId
+  colorId
+  color {
+    id
+    name
+    hexCode
+  }
   createdAt
   updatedAt
 }
@@ -3645,7 +3770,12 @@ export const ItemTypeFieldsFragmentDoc = gql`
   isConsumable
   imageUrl
   iconUrl
-  color
+  colorId
+  color {
+    id
+    name
+    hexCode
+  }
   metadata
   createdAt
   updatedAt
@@ -3705,6 +3835,12 @@ export const SpeciesVariantDetailsFragmentDoc = gql`
   id
   name
   speciesId
+  colorId
+  color {
+    id
+    name
+    hexCode
+  }
   createdAt
   updatedAt
 }
@@ -3726,6 +3862,12 @@ export const TraitDetailsFragmentDoc = gql`
   valueType
   allowsMultipleValues
   speciesId
+  colorId
+  color {
+    id
+    name
+    hexCode
+  }
   createdAt
   updatedAt
 }
@@ -4040,6 +4182,10 @@ export const GetCharacterDocument = gql`
       }
       enumValue {
         name
+        color {
+          id
+          hexCode
+        }
       }
     }
     age
@@ -4599,6 +4745,10 @@ export const UpdateCharacterTraitsDocument = gql`
       }
       enumValue {
         name
+        color {
+          id
+          hexCode
+        }
       }
     }
   }
@@ -5011,6 +5161,144 @@ export type CommunityMembersByUserQueryHookResult = ReturnType<typeof useCommuni
 export type CommunityMembersByUserLazyQueryHookResult = ReturnType<typeof useCommunityMembersByUserLazyQuery>;
 export type CommunityMembersByUserSuspenseQueryHookResult = ReturnType<typeof useCommunityMembersByUserSuspenseQuery>;
 export type CommunityMembersByUserQueryResult = Apollo.QueryResult<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>;
+export const GetCommunityColorsDocument = gql`
+    query GetCommunityColors($communityId: ID!) {
+  communityColors(communityId: $communityId) {
+    ...CommunityColorFields
+  }
+}
+    ${CommunityColorFieldsFragmentDoc}`;
+
+/**
+ * __useGetCommunityColorsQuery__
+ *
+ * To run a query within a React component, call `useGetCommunityColorsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCommunityColorsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCommunityColorsQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useGetCommunityColorsQuery(baseOptions: Apollo.QueryHookOptions<GetCommunityColorsQuery, GetCommunityColorsQueryVariables> & ({ variables: GetCommunityColorsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCommunityColorsQuery, GetCommunityColorsQueryVariables>(GetCommunityColorsDocument, options);
+      }
+export function useGetCommunityColorsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCommunityColorsQuery, GetCommunityColorsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCommunityColorsQuery, GetCommunityColorsQueryVariables>(GetCommunityColorsDocument, options);
+        }
+export function useGetCommunityColorsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCommunityColorsQuery, GetCommunityColorsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCommunityColorsQuery, GetCommunityColorsQueryVariables>(GetCommunityColorsDocument, options);
+        }
+export type GetCommunityColorsQueryHookResult = ReturnType<typeof useGetCommunityColorsQuery>;
+export type GetCommunityColorsLazyQueryHookResult = ReturnType<typeof useGetCommunityColorsLazyQuery>;
+export type GetCommunityColorsSuspenseQueryHookResult = ReturnType<typeof useGetCommunityColorsSuspenseQuery>;
+export type GetCommunityColorsQueryResult = Apollo.QueryResult<GetCommunityColorsQuery, GetCommunityColorsQueryVariables>;
+export const CreateCommunityColorDocument = gql`
+    mutation CreateCommunityColor($input: CreateCommunityColorInput!) {
+  createCommunityColor(input: $input) {
+    ...CommunityColorFields
+  }
+}
+    ${CommunityColorFieldsFragmentDoc}`;
+export type CreateCommunityColorMutationFn = Apollo.MutationFunction<CreateCommunityColorMutation, CreateCommunityColorMutationVariables>;
+
+/**
+ * __useCreateCommunityColorMutation__
+ *
+ * To run a mutation, you first call `useCreateCommunityColorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCommunityColorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCommunityColorMutation, { data, loading, error }] = useCreateCommunityColorMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateCommunityColorMutation(baseOptions?: Apollo.MutationHookOptions<CreateCommunityColorMutation, CreateCommunityColorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateCommunityColorMutation, CreateCommunityColorMutationVariables>(CreateCommunityColorDocument, options);
+      }
+export type CreateCommunityColorMutationHookResult = ReturnType<typeof useCreateCommunityColorMutation>;
+export type CreateCommunityColorMutationResult = Apollo.MutationResult<CreateCommunityColorMutation>;
+export type CreateCommunityColorMutationOptions = Apollo.BaseMutationOptions<CreateCommunityColorMutation, CreateCommunityColorMutationVariables>;
+export const UpdateCommunityColorDocument = gql`
+    mutation UpdateCommunityColor($id: ID!, $input: UpdateCommunityColorInput!) {
+  updateCommunityColor(id: $id, input: $input) {
+    ...CommunityColorFields
+  }
+}
+    ${CommunityColorFieldsFragmentDoc}`;
+export type UpdateCommunityColorMutationFn = Apollo.MutationFunction<UpdateCommunityColorMutation, UpdateCommunityColorMutationVariables>;
+
+/**
+ * __useUpdateCommunityColorMutation__
+ *
+ * To run a mutation, you first call `useUpdateCommunityColorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCommunityColorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCommunityColorMutation, { data, loading, error }] = useUpdateCommunityColorMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateCommunityColorMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCommunityColorMutation, UpdateCommunityColorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateCommunityColorMutation, UpdateCommunityColorMutationVariables>(UpdateCommunityColorDocument, options);
+      }
+export type UpdateCommunityColorMutationHookResult = ReturnType<typeof useUpdateCommunityColorMutation>;
+export type UpdateCommunityColorMutationResult = Apollo.MutationResult<UpdateCommunityColorMutation>;
+export type UpdateCommunityColorMutationOptions = Apollo.BaseMutationOptions<UpdateCommunityColorMutation, UpdateCommunityColorMutationVariables>;
+export const DeleteCommunityColorDocument = gql`
+    mutation DeleteCommunityColor($id: ID!) {
+  deleteCommunityColor(id: $id)
+}
+    `;
+export type DeleteCommunityColorMutationFn = Apollo.MutationFunction<DeleteCommunityColorMutation, DeleteCommunityColorMutationVariables>;
+
+/**
+ * __useDeleteCommunityColorMutation__
+ *
+ * To run a mutation, you first call `useDeleteCommunityColorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteCommunityColorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteCommunityColorMutation, { data, loading, error }] = useDeleteCommunityColorMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteCommunityColorMutation(baseOptions?: Apollo.MutationHookOptions<DeleteCommunityColorMutation, DeleteCommunityColorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteCommunityColorMutation, DeleteCommunityColorMutationVariables>(DeleteCommunityColorDocument, options);
+      }
+export type DeleteCommunityColorMutationHookResult = ReturnType<typeof useDeleteCommunityColorMutation>;
+export type DeleteCommunityColorMutationResult = Apollo.MutationResult<DeleteCommunityColorMutation>;
+export type DeleteCommunityColorMutationOptions = Apollo.BaseMutationOptions<DeleteCommunityColorMutation, DeleteCommunityColorMutationVariables>;
 export const SpeciesWithTraitsAndEnumValuesDocument = gql`
     query SpeciesWithTraitsAndEnumValues($speciesId: ID!) {
   speciesById(id: $speciesId) {

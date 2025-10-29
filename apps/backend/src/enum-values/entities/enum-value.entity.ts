@@ -1,5 +1,6 @@
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { Trait } from '../../traits/entities/trait.entity';
+import { CommunityColor } from '../../community-colors/entities/community-color.entity';
 
 @ObjectType()
 export class EnumValue {
@@ -19,6 +20,10 @@ export class EnumValue {
   @Field(() => ID, { description: 'ID of the trait this enum value belongs to' })
   traitId: string;
 
+  /** ID of the color for this enum value */
+  @Field(() => ID, { nullable: true, description: 'ID of the color for this enum value' })
+  colorId?: string;
+
   /** When the enum value was created */
   @Field({ description: 'When the enum value was created' })
   createdAt: Date;
@@ -26,6 +31,10 @@ export class EnumValue {
   /** When the enum value was last updated */
   @Field({ description: 'When the enum value was last updated' })
   updatedAt: Date;
+
+  /** Color associated with this enum value */
+  @Field(() => CommunityColor, { nullable: true, description: 'Color associated with this enum value' })
+  color?: CommunityColor;
 }
 
 @ObjectType()

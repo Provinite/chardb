@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { X } from 'lucide-react';
+import { ColorPip } from '../colors/ColorPip';
 
 /**
  * Trait Value Chip Component
@@ -54,6 +55,11 @@ const ValueText = styled.span`
   white-space: nowrap;
 `;
 
+const ColorPipWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+`;
+
 const RemoveButton = styled.button<{ $disabled?: boolean }>`
   display: flex;
   align-items: center;
@@ -81,15 +87,23 @@ interface TraitValueChipProps {
   onRemove: () => void;
   /** Whether the chip is disabled (prevents removal) */
   disabled?: boolean;
+  /** Optional color hex code to display as a color pip */
+  color?: string | null;
 }
 
 export const TraitValueChip: React.FC<TraitValueChipProps> = ({
   value,
   onRemove,
   disabled = false,
+  color,
 }) => {
   return (
     <Chip $disabled={disabled}>
+      {color && (
+        <ColorPipWrapper>
+          <ColorPip color={color} size="sm" />
+        </ColorPipWrapper>
+      )}
       <ValueText title={value}>{value}</ValueText>
       <RemoveButton
         onClick={onRemove}

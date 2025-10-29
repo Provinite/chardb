@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Prisma } from '@chardb/database';
+import { CommunityColorsService } from '../community-colors/community-colors.service';
 
 /**
  * Service layer input types for species variants operations.
@@ -16,6 +17,8 @@ export interface CreateSpeciesVariantServiceInput {
   name: string;
   /** ID of the species this variant belongs to */
   speciesId: string;
+  /** ID of the color for this species variant */
+  colorId?: string;
 }
 
 /**
@@ -26,20 +29,49 @@ export interface UpdateSpeciesVariantServiceInput {
   name?: string;
   /** ID of the species this variant belongs to */
   speciesId?: string;
+  /** ID of the color for this species variant */
+  colorId?: string | null;
 }
 
 @Injectable()
 export class SpeciesVariantsService {
-  constructor(private prisma: DatabaseService) {}
+  constructor(
+    private prisma: DatabaseService,
+    private communityColorsService: CommunityColorsService,
+  ) {}
 
   /** Create a new species variant */
   async create(input: CreateSpeciesVariantServiceInput) {
+    // Validate colorId if provided
+    if (input.colorId) {
+      // Get the species to find its communityId
+      const species = await this.prisma.species.findUnique({
+        where: { id: input.speciesId },
+        select: { communityId: true },
+      });
+
+      if (!species) {
+        throw new NotFoundException(`Species with ID ${input.speciesId} not found`);
+      }
+
+      // Validate the color belongs to the same community
+      await this.communityColorsService.validateColorBelongsToCommunity(
+        input.colorId,
+        species.communityId,
+      );
+    }
+
     return this.prisma.speciesVariant.create({
       data: {
         name: input.name,
         species: {
           connect: { id: input.speciesId }
-        }
+        },
+        ...(input.colorId && {
+          color: {
+            connect: { id: input.colorId },
+          },
+        }),
       },
     });
   }
@@ -117,10 +149,32 @@ export class SpeciesVariantsService {
     const speciesVariant = await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.SpeciesVariantUpdateInput = {};
-    
+
     if (input.name !== undefined) updateData.name = input.name;
     if (input.speciesId !== undefined) {
       updateData.species = { connect: { id: input.speciesId } };
+    }
+    if (input.colorId !== undefined) {
+      // Validate colorId if it's being set (not null)
+      if (input.colorId) {
+        // Get the species to find its communityId
+        const species = await this.prisma.species.findUnique({
+          where: { id: speciesVariant.speciesId },
+          select: { communityId: true },
+        });
+
+        if (!species) {
+          throw new NotFoundException(`Species with ID ${speciesVariant.speciesId} not found`);
+        }
+
+        // Validate the color belongs to the same community
+        await this.communityColorsService.validateColorBelongsToCommunity(
+          input.colorId,
+          species.communityId,
+        );
+      }
+
+      updateData.color = input.colorId ? { connect: { id: input.colorId } } : { disconnect: true };
     }
 
     return this.prisma.speciesVariant.update({

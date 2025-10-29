@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Community Color Palette System**: Community administrators can now create custom color palettes and assign colors to species entities for visual organization and branding
+  - Colors can be assigned to Traits, Species Variants, Enum Values, and Item Types
+  - Visual color pip indicators displayed throughout the application
+  - Backend validation ensures colors can only be assigned within the same community
+  - Database schema includes new `CommunityColor` table with proper foreign key relationships
+
 ## [v4.0.0] - 2025-10-26
 
 ### Changed

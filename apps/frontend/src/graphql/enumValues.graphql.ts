@@ -38,6 +38,12 @@ export const ENUM_VALUE_FRAGMENT = gql`
     name
     order
     traitId
+    colorId
+    color {
+      id
+      name
+      hexCode
+    }
     createdAt
     updatedAt
   }

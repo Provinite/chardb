@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { Type, Hash, Calendar, List } from 'lucide-react';
 import { GetCharacterQuery, TraitValueType } from '../../generated/graphql';
+import { ColorPip } from '../colors/ColorPip';
 
 /**
  * Character Traits Display Component
@@ -94,6 +95,12 @@ const ValueChip = styled.span`
   font-weight: 500;
 `;
 
+const ColorPipWrapper = styled.span`
+  margin-right: 0.75rem;
+  display: inline-block;
+  vertical-align: middle;
+`;
+
 const EmptyState = styled.div`
   text-align: center;
   padding: 2rem 1rem;
@@ -130,7 +137,11 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
   const groupedTraits = useMemo(() => {
     const grouped = new Map<string, {
       trait: NonNullable<CharacterTraitValue['trait']>;
-      values: Array<{ value: string | number | boolean | null; enumValueName?: string | null }>;
+      values: Array<{
+        value: string | number | boolean | null;
+        enumValueName?: string | null;
+        enumValueColor?: string | null;
+      }>;
     }>();
 
     for (const tv of traitValues) {
@@ -148,6 +159,7 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
       entry.values.push({
         value: tv.value,
         enumValueName: tv.enumValue?.name,
+        enumValueColor: tv.enumValue?.color?.hexCode,
       });
     }
 
@@ -187,6 +199,11 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
                     const displayValue = v.enumValueName || String(v.value);
                     return (
                       <ValueChip key={`${v.value}-${index}`}>
+                        {v.enumValueColor && (
+                          <ColorPipWrapper>
+                            <ColorPip color={v.enumValueColor} size="sm" />
+                          </ColorPipWrapper>
+                        )}
                         {displayValue}
                       </ValueChip>
                     );
@@ -194,6 +211,11 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
                 ) : (
                   // Display as plain text for single-value traits
                   <TraitValue>
+                    {values[0]?.enumValueColor && (
+                      <ColorPipWrapper>
+                        <ColorPip color={values[0].enumValueColor} size="sm" />
+                      </ColorPipWrapper>
+                    )}
                     {values[0]?.enumValueName || String(values[0]?.value)}
                   </TraitValue>
                 )}
