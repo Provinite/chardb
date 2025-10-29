@@ -203,6 +203,22 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Reset form data when enumValue changes (e.g., when opening edit modal for a different enum value)
+  React.useEffect(() => {
+    setFormData({
+      name: enumValue?.name || "",
+      order: enumValue?.order || maxOrder + 1,
+      colorId: enumValue?.colorId || null,
+    });
+  }, [enumValue, maxOrder]);
+
+  // Check if form has changes (for edit mode)
+  const hasChanges = enumValue
+    ? formData.name !== enumValue.name ||
+      formData.order !== enumValue.order ||
+      formData.colorId !== enumValue.colorId
+    : true; // For create mode, always allow submission if name is filled
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
@@ -211,7 +227,7 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
     try {
       await onSubmit(formData);
       if (!enumValue) {
-        setFormData({ name: "", order: maxOrder + 1 });
+        setFormData({ name: "", order: maxOrder + 1, colorId: null });
       }
       onClose();
     } catch (error) {
@@ -286,7 +302,7 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting || !formData.name.trim()}
+            disabled={isSubmitting || !formData.name.trim() || !hasChanges}
           >
             {isSubmitting
               ? "Saving..."
