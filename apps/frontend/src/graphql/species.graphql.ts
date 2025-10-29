@@ -318,6 +318,12 @@ export const TRAIT_FRAGMENT = gql`
     valueType
     allowsMultipleValues
     speciesId
+    colorId
+    color {
+      id
+      name
+      hexCode
+    }
     createdAt
     updatedAt
   }
