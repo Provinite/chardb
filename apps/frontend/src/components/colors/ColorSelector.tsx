@@ -143,14 +143,18 @@ export const ColorSelector: React.FC<ColorSelectorProps> = ({
           </Option>
         ))}
       </Select>
-      {selectedColor && (
-        <PreviewContainer>
-          <ColorPip color={selectedColor.hexCode} size="md" />
-          <PreviewText>
-            {selectedColor.name} ({selectedColor.hexCode})
-          </PreviewText>
-        </PreviewContainer>
-      )}
+      <PreviewContainer>
+        {selectedColor ? (
+          <>
+            <ColorPip color={selectedColor.hexCode} size="md" />
+            <PreviewText>
+              {selectedColor.name} ({selectedColor.hexCode})
+            </PreviewText>
+          </>
+        ) : (
+          <PreviewText>{placeholder}</PreviewText>
+        )}
+      </PreviewContainer>
     </SelectContainer>
   );
 };
