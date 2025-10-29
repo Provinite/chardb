@@ -14,6 +14,7 @@ import {
   useDeleteSpeciesVariantMutation,
 } from '../generated/graphql';
 import { toast } from 'react-hot-toast';
+import { ColorPip } from '../components/colors';
 
 /**
  * Species Variant Management Interface
@@ -337,7 +338,12 @@ export const SpeciesVariantManagementPage: React.FC = () => {
           {variants.map((variant) => (
             <Card key={variant.id}>
               <CardHeader>
-                <VariantName>{variant.name}</VariantName>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <VariantName>{variant.name}</VariantName>
+                  {variant.color && (
+                    <ColorPip color={variant.color.hexCode} size="sm" />
+                  )}
+                </div>
               </CardHeader>
 
               <CardMeta>

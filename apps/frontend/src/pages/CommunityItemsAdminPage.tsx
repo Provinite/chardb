@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { Package, Plus, Edit2, Trash2, Gift } from "lucide-react";
 import { Button, Card, UserTypeahead } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { ColorSelector } from "../components/colors";
+import { ColorSelector, ColorPip } from "../components/colors";
 import { useQuery, useMutation } from "@apollo/client";
 import { toast } from "react-hot-toast";
 import {
@@ -481,7 +481,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
             {itemTypes.map((itemType: any) => (
               <ItemTypeCard key={itemType.id}>
                 <ItemTypeHeader>
-                  <ItemTypeIcon color={itemType.color}>
+                  <ItemTypeIcon color={itemType.color?.hexCode}>
                     {itemType.iconUrl ? (
                       <ItemTypeImage
                         src={itemType.iconUrl}
@@ -492,7 +492,12 @@ export const CommunityItemsAdminPage: React.FC = () => {
                     )}
                   </ItemTypeIcon>
                   <ItemTypeInfo>
-                    <ItemTypeName>{itemType.name}</ItemTypeName>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <ItemTypeName>{itemType.name}</ItemTypeName>
+                      {itemType.color && (
+                        <ColorPip color={itemType.color.hexCode} size="sm" />
+                      )}
+                    </div>
                     {itemType.category && (
                       <ItemTypeCategory>{itemType.category}</ItemTypeCategory>
                     )}
