@@ -504,6 +504,13 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
     return enumValue?.name || enumValueId;
   };
 
+  // Get color hex code for enum values
+  const getEnumValueColor = (enumValueId: string): string | null => {
+    if (trait.valueType !== TraitValueType.Enum) return null;
+    const enumValue = availableEnumValues.find(ev => ev.id === enumValueId);
+    return enumValue?.color?.hexCode || null;
+  };
+
   return (
     <Container>
       <Label htmlFor={`trait-${trait.id}`}>
@@ -535,6 +542,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
               value={trait.valueType === TraitValueType.Enum ? getEnumValueName(value) : value}
               onRemove={() => handleRemoveValue(value)}
               disabled={disabled}
+              color={trait.valueType === TraitValueType.Enum ? getEnumValueColor(value) : null}
             />
           ))}
         </ValuesContainer>
