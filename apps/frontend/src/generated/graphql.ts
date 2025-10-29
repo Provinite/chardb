@@ -249,6 +249,17 @@ export type CommunityMembersArgs = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CommunityColor = {
+  __typename?: 'CommunityColor';
+  community: Maybe<Community>;
+  communityId: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  hexCode: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
 export type CommunityConnection = {
   __typename?: 'CommunityConnection';
   /** Whether there are more communities after this page */
@@ -371,6 +382,12 @@ export type CreateCommentInput = {
   parentId?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type CreateCommunityColorInput = {
+  communityId: Scalars['ID']['input'];
+  hexCode: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type CreateCommunityInput = {
   /** Name of the community */
   name: Scalars['String']['input'];
@@ -397,6 +414,8 @@ export type CreateCommunityMemberInput = {
 };
 
 export type CreateEnumValueInput = {
+  /** ID of the color for this enum value */
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name/display text of this enum value */
   name: Scalars['String']['input'];
   /** Display order within the trait's enum values */
@@ -434,7 +453,7 @@ export type CreateInviteCodeInput = {
 
 export type CreateItemTypeInput = {
   category?: InputMaybe<Scalars['String']['input']>;
-  color?: InputMaybe<Scalars['String']['input']>;
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   communityId: Scalars['ID']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   iconUrl?: InputMaybe<Scalars['String']['input']>;
@@ -491,6 +510,8 @@ export type CreateSpeciesInput = {
 };
 
 export type CreateSpeciesVariantInput = {
+  /** ID of the color for this species variant */
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name of the species variant */
   name: Scalars['String']['input'];
   /** ID of the species this variant belongs to */
@@ -520,6 +541,8 @@ export type CreateTextMediaInput = {
 export type CreateTraitInput = {
   /** Whether this trait allows multiple values per character */
   allowsMultipleValues?: InputMaybe<Scalars['Boolean']['input']>;
+  /** ID of the color for this trait */
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name of the trait */
   name: Scalars['String']['input'];
   /** ID of the species this trait belongs to */
@@ -549,6 +572,10 @@ export type CreateTraitListEntryInput = {
 
 export type EnumValue = {
   __typename?: 'EnumValue';
+  /** The color associated with this enum value */
+  color: Maybe<CommunityColor>;
+  /** ID of the color for this enum value */
+  colorId: Maybe<Scalars['ID']['output']>;
   /** When the enum value was created */
   createdAt: Scalars['DateTime']['output'];
   /** Unique identifier for the enum value */
@@ -803,7 +830,8 @@ export type Item = {
 export type ItemType = {
   __typename?: 'ItemType';
   category: Maybe<Scalars['String']['output']>;
-  color: Maybe<Scalars['String']['output']>;
+  color: Maybe<CommunityColor>;
+  colorId: Maybe<Scalars['ID']['output']>;
   community: Maybe<Community>;
   communityId: Scalars['ID']['output'];
   createdAt: Scalars['DateTime']['output'];
@@ -983,6 +1011,7 @@ export type Mutation = {
   createComment: Comment;
   /** Create a new community */
   createCommunity: Community;
+  createCommunityColor: CommunityColor;
   /** Create a new community invitation */
   createCommunityInvitation: CommunityInvitation;
   /** Create a new community membership */
@@ -1010,6 +1039,7 @@ export type Mutation = {
   deleteAccount: RemovalResponse;
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
+  deleteCommunityColor: Scalars['Boolean']['output'];
   deleteGallery: RemovalResponse;
   deleteImage: Scalars['Boolean']['output'];
   /** Delete an item (admin only) */
@@ -1065,6 +1095,7 @@ export type Mutation = {
   updateComment: Comment;
   /** Update a community */
   updateCommunity: Community;
+  updateCommunityColor: CommunityColor;
   /** Update a community membership (change role) */
   updateCommunityMember: CommunityMember;
   /** Update an enum value */
@@ -1133,6 +1164,11 @@ export type MutationCreateCommentArgs = {
 
 export type MutationCreateCommunityArgs = {
   createCommunityInput: CreateCommunityInput;
+};
+
+
+export type MutationCreateCommunityColorArgs = {
+  input: CreateCommunityColorInput;
 };
 
 
@@ -1207,6 +1243,11 @@ export type MutationDeleteCharacterArgs = {
 
 
 export type MutationDeleteCommentArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteCommunityColorArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -1390,6 +1431,12 @@ export type MutationUpdateCommunityArgs = {
 };
 
 
+export type MutationUpdateCommunityColorArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateCommunityColorInput;
+};
+
+
 export type MutationUpdateCommunityMemberArgs = {
   id: Scalars['ID']['input'];
   updateCommunityMemberInput: UpdateCommunityMemberInput;
@@ -1512,6 +1559,8 @@ export type Query = {
   communities: CommunityConnection;
   /** Get a community by ID */
   community: Community;
+  communityColor: CommunityColor;
+  communityColors: Array<CommunityColor>;
   /** Get a community invitation by ID */
   communityInvitationById: CommunityInvitation;
   /** Get all community invitations with pagination */
@@ -1701,6 +1750,16 @@ export type QueryCommunitiesArgs = {
 
 export type QueryCommunityArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityColorArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityColorsArgs = {
+  communityId: Scalars['ID']['input'];
 };
 
 
@@ -2191,6 +2250,10 @@ export type SpeciesConnection = {
 
 export type SpeciesVariant = {
   __typename?: 'SpeciesVariant';
+  /** The color associated with this species variant */
+  color: Maybe<CommunityColor>;
+  /** ID of the color for this species variant */
+  colorId: Maybe<Scalars['ID']['output']>;
   /** When the species variant was created */
   createdAt: Scalars['DateTime']['output'];
   /** Enum value settings for this species variant */
@@ -2261,6 +2324,10 @@ export type Trait = {
   __typename?: 'Trait';
   /** Whether this trait allows multiple values per character */
   allowsMultipleValues: Scalars['Boolean']['output'];
+  /** The color associated with this trait */
+  color: Maybe<CommunityColor>;
+  /** ID of the color for this trait */
+  colorId: Maybe<Scalars['ID']['output']>;
   /** When the trait was created */
   createdAt: Scalars['DateTime']['output'];
   /** Enum values for this trait (only populated for ENUM traits) */
@@ -2390,6 +2457,11 @@ export type UpdateCommentInput = {
   content: Scalars['String']['input'];
 };
 
+export type UpdateCommunityColorInput = {
+  hexCode?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateCommunityInput = {
   /** Name of the community */
   name?: InputMaybe<Scalars['String']['input']>;
@@ -2402,6 +2474,8 @@ export type UpdateCommunityMemberInput = {
 };
 
 export type UpdateEnumValueInput = {
+  /** ID of the color for this enum value */
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name/display text of this enum value */
   name?: InputMaybe<Scalars['String']['input']>;
   /** Display order within the trait's enum values */
@@ -2449,7 +2523,7 @@ export type UpdateItemInput = {
 
 export type UpdateItemTypeInput = {
   category?: InputMaybe<Scalars['String']['input']>;
-  color?: InputMaybe<Scalars['String']['input']>;
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   iconUrl?: InputMaybe<Scalars['String']['input']>;
   imageUrl?: InputMaybe<Scalars['String']['input']>;
@@ -2519,6 +2593,8 @@ export type UpdateSpeciesInput = {
 };
 
 export type UpdateSpeciesVariantInput = {
+  /** ID of the color for this species variant */
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name of the species variant */
   name?: InputMaybe<Scalars['String']['input']>;
   /** ID of the species this variant belongs to */
@@ -2536,6 +2612,8 @@ export type UpdateTextContentInput = {
 export type UpdateTraitInput = {
   /** Whether this trait allows multiple values per character */
   allowsMultipleValues?: InputMaybe<Scalars['Boolean']['input']>;
+  /** ID of the color for this trait */
+  colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name of the trait */
   name?: InputMaybe<Scalars['String']['input']>;
   /** ID of the species this trait belongs to */
@@ -3093,30 +3171,30 @@ export type RolesByCommunityQueryVariables = Exact<{
 
 export type RolesByCommunityQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Role', id: string, name: string, canCreateInviteCode: boolean, community: { __typename?: 'Community', id: string, name: string } }> } };
 
-export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string };
+export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
 
-export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } };
+export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } };
 
 export type GetItemTypesQueryVariables = Exact<{
   filters?: InputMaybe<ItemTypeFiltersInput>;
 }>;
 
 
-export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }> } };
+export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type GetItemTypeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null } };
+export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateItemTypeMutationVariables = Exact<{
   input: CreateItemTypeInput;
 }>;
 
 
-export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string } };
+export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type UpdateItemTypeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3124,7 +3202,7 @@ export type UpdateItemTypeMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string } };
+export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type DeleteItemTypeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3133,21 +3211,21 @@ export type DeleteItemTypeMutationVariables = Exact<{
 
 export type DeleteItemTypeMutation = { __typename?: 'Mutation', deleteItemType: boolean };
 
-export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> };
+export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> };
 
 export type GetMyInventoryQueryVariables = Exact<{
   communityId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> }> } };
+export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> }> } };
 
 export type GrantItemMutationVariables = Exact<{
   input: GrantItemInput;
 }>;
 
 
-export type GrantItemMutation = { __typename?: 'Mutation', grantItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
+export type GrantItemMutation = { __typename?: 'Mutation', grantItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
 
 export type UpdateItemMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3155,7 +3233,7 @@ export type UpdateItemMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, color: string | null, metadata: any | null, createdAt: string, updatedAt: string }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
+export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
 
 export type DeleteItemMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3645,7 +3723,12 @@ export const ItemTypeFieldsFragmentDoc = gql`
   isConsumable
   imageUrl
   iconUrl
-  color
+  colorId
+  color {
+    id
+    name
+    hexCode
+  }
   metadata
   createdAt
   updatedAt
