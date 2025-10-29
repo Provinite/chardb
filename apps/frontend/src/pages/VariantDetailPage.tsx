@@ -497,6 +497,16 @@ export const VariantDetailPage: React.FC = () => {
           </HeaderLeft>
 
           <HeaderRight>
+            {hasChanges && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSaveVariantName}
+                icon={<Save size={14} />}
+              >
+                Save Changes
+              </Button>
+            )}
             <Button
               variant="secondary"
               onClick={() => navigate(`/species/${variant.speciesId}/variants`)}
@@ -521,16 +531,6 @@ export const VariantDetailPage: React.FC = () => {
             label=""
             placeholder="No color"
           />
-          {hasChanges && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleSaveVariantName}
-              icon={<Save size={14} />}
-            >
-              Save Changes
-            </Button>
-          )}
         </ColorRow>
       </Header>
 
