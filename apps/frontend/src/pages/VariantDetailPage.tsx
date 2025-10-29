@@ -96,6 +96,20 @@ const HeaderRight = styled.div`
   gap: 0.5rem;
 `;
 
+const ColorRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
+const ColorLabel = styled.label`
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+  min-width: 100px;
+`;
+
 const Section = styled.div`
   margin-bottom: 2rem;
 `;
@@ -480,23 +494,6 @@ export const VariantDetailPage: React.FC = () => {
               onChange={(e) => setVariantName(e.target.value)}
               placeholder="Variant name..."
             />
-            <ColorSelector
-              communityId={variant.species?.communityId || ''}
-              value={variantColorId}
-              onChange={setVariantColorId}
-              label=""
-              placeholder="No color"
-            />
-            {hasChanges && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleSaveVariantName}
-                icon={<Save size={14} />}
-              >
-                Save Changes
-              </Button>
-            )}
           </HeaderLeft>
 
           <HeaderRight>
@@ -509,6 +506,32 @@ export const VariantDetailPage: React.FC = () => {
             </Button>
           </HeaderRight>
         </HeaderTop>
+
+        <ColorRow>
+          <ColorLabel>Species:</ColorLabel>
+          <span>{variant.species?.name}</span>
+        </ColorRow>
+
+        <ColorRow>
+          <ColorLabel>Color:</ColorLabel>
+          <ColorSelector
+            communityId={variant.species?.communityId || ''}
+            value={variantColorId}
+            onChange={setVariantColorId}
+            label=""
+            placeholder="No color"
+          />
+          {hasChanges && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSaveVariantName}
+              icon={<Save size={14} />}
+            >
+              Save Changes
+            </Button>
+          )}
+        </ColorRow>
       </Header>
 
       <Section>
