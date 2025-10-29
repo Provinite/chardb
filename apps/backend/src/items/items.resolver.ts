@@ -63,7 +63,7 @@ export class ItemsResolver {
       isConsumable: input.isConsumable ?? false,
       imageUrl: input.imageUrl,
       iconUrl: input.iconUrl,
-      color: input.color,
+      color: input.colorId ? { connect: { id: input.colorId } } : undefined,
       metadata: input.metadata || {},
       community: {
         connect: { id: input.communityId },
@@ -92,7 +92,9 @@ export class ItemsResolver {
       isConsumable: input.isConsumable,
       imageUrl: input.imageUrl,
       iconUrl: input.iconUrl,
-      color: input.color,
+      color: input.colorId !== undefined
+        ? (input.colorId ? { connect: { id: input.colorId } } : { disconnect: true })
+        : undefined,
       metadata: input.metadata,
     });
 

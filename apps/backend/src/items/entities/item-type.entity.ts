@@ -1,6 +1,7 @@
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-type-json';
 import { Community } from '../../communities/entities/community.entity';
+import { CommunityColor } from '../../community-colors/entities/community-color.entity';
 
 @ObjectType()
 export class ItemType {
@@ -37,8 +38,8 @@ export class ItemType {
   @Field({ nullable: true })
   iconUrl?: string;
 
-  @Field({ nullable: true })
-  color?: string;
+  @Field(() => ID, { nullable: true })
+  colorId?: string;
 
   @Field(() => GraphQLJSON, { nullable: true })
   metadata?: any; // JSON object
@@ -52,6 +53,9 @@ export class ItemType {
   // Relations handled by field resolvers
   @Field(() => Community, { nullable: true })
   community?: Community;
+
+  @Field(() => CommunityColor, { nullable: true })
+  color?: CommunityColor;
 }
 
 @ObjectType()
