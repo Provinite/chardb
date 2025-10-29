@@ -2913,6 +2913,37 @@ export type CommunityMembersByUserQueryVariables = Exact<{
 
 export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
+export type CommunityColorFieldsFragment = { __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string };
+
+export type GetCommunityColorsQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type GetCommunityColorsQuery = { __typename?: 'Query', communityColors: Array<{ __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string }> };
+
+export type CreateCommunityColorMutationVariables = Exact<{
+  input: CreateCommunityColorInput;
+}>;
+
+
+export type CreateCommunityColorMutation = { __typename?: 'Mutation', createCommunityColor: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string } };
+
+export type UpdateCommunityColorMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateCommunityColorInput;
+}>;
+
+
+export type UpdateCommunityColorMutation = { __typename?: 'Mutation', updateCommunityColor: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string } };
+
+export type DeleteCommunityColorMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteCommunityColorMutation = { __typename?: 'Mutation', deleteCommunityColor: boolean };
+
 export type SpeciesWithTraitsAndEnumValuesQueryVariables = Exact<{
   speciesId: Scalars['ID']['input'];
 }>;
@@ -3669,6 +3700,16 @@ export const CommunityMemberUserFragmentDoc = gql`
   username
   displayName
   avatarUrl
+}
+    `;
+export const CommunityColorFieldsFragmentDoc = gql`
+    fragment CommunityColorFields on CommunityColor {
+  id
+  name
+  hexCode
+  communityId
+  createdAt
+  updatedAt
 }
     `;
 export const EnumValueSettingDetailsFragmentDoc = gql`
@@ -5094,6 +5135,144 @@ export type CommunityMembersByUserQueryHookResult = ReturnType<typeof useCommuni
 export type CommunityMembersByUserLazyQueryHookResult = ReturnType<typeof useCommunityMembersByUserLazyQuery>;
 export type CommunityMembersByUserSuspenseQueryHookResult = ReturnType<typeof useCommunityMembersByUserSuspenseQuery>;
 export type CommunityMembersByUserQueryResult = Apollo.QueryResult<CommunityMembersByUserQuery, CommunityMembersByUserQueryVariables>;
+export const GetCommunityColorsDocument = gql`
+    query GetCommunityColors($communityId: ID!) {
+  communityColors(communityId: $communityId) {
+    ...CommunityColorFields
+  }
+}
+    ${CommunityColorFieldsFragmentDoc}`;
+
+/**
+ * __useGetCommunityColorsQuery__
+ *
+ * To run a query within a React component, call `useGetCommunityColorsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCommunityColorsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCommunityColorsQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useGetCommunityColorsQuery(baseOptions: Apollo.QueryHookOptions<GetCommunityColorsQuery, GetCommunityColorsQueryVariables> & ({ variables: GetCommunityColorsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCommunityColorsQuery, GetCommunityColorsQueryVariables>(GetCommunityColorsDocument, options);
+      }
+export function useGetCommunityColorsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCommunityColorsQuery, GetCommunityColorsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCommunityColorsQuery, GetCommunityColorsQueryVariables>(GetCommunityColorsDocument, options);
+        }
+export function useGetCommunityColorsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCommunityColorsQuery, GetCommunityColorsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCommunityColorsQuery, GetCommunityColorsQueryVariables>(GetCommunityColorsDocument, options);
+        }
+export type GetCommunityColorsQueryHookResult = ReturnType<typeof useGetCommunityColorsQuery>;
+export type GetCommunityColorsLazyQueryHookResult = ReturnType<typeof useGetCommunityColorsLazyQuery>;
+export type GetCommunityColorsSuspenseQueryHookResult = ReturnType<typeof useGetCommunityColorsSuspenseQuery>;
+export type GetCommunityColorsQueryResult = Apollo.QueryResult<GetCommunityColorsQuery, GetCommunityColorsQueryVariables>;
+export const CreateCommunityColorDocument = gql`
+    mutation CreateCommunityColor($input: CreateCommunityColorInput!) {
+  createCommunityColor(input: $input) {
+    ...CommunityColorFields
+  }
+}
+    ${CommunityColorFieldsFragmentDoc}`;
+export type CreateCommunityColorMutationFn = Apollo.MutationFunction<CreateCommunityColorMutation, CreateCommunityColorMutationVariables>;
+
+/**
+ * __useCreateCommunityColorMutation__
+ *
+ * To run a mutation, you first call `useCreateCommunityColorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCommunityColorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCommunityColorMutation, { data, loading, error }] = useCreateCommunityColorMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateCommunityColorMutation(baseOptions?: Apollo.MutationHookOptions<CreateCommunityColorMutation, CreateCommunityColorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateCommunityColorMutation, CreateCommunityColorMutationVariables>(CreateCommunityColorDocument, options);
+      }
+export type CreateCommunityColorMutationHookResult = ReturnType<typeof useCreateCommunityColorMutation>;
+export type CreateCommunityColorMutationResult = Apollo.MutationResult<CreateCommunityColorMutation>;
+export type CreateCommunityColorMutationOptions = Apollo.BaseMutationOptions<CreateCommunityColorMutation, CreateCommunityColorMutationVariables>;
+export const UpdateCommunityColorDocument = gql`
+    mutation UpdateCommunityColor($id: ID!, $input: UpdateCommunityColorInput!) {
+  updateCommunityColor(id: $id, input: $input) {
+    ...CommunityColorFields
+  }
+}
+    ${CommunityColorFieldsFragmentDoc}`;
+export type UpdateCommunityColorMutationFn = Apollo.MutationFunction<UpdateCommunityColorMutation, UpdateCommunityColorMutationVariables>;
+
+/**
+ * __useUpdateCommunityColorMutation__
+ *
+ * To run a mutation, you first call `useUpdateCommunityColorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCommunityColorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCommunityColorMutation, { data, loading, error }] = useUpdateCommunityColorMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateCommunityColorMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCommunityColorMutation, UpdateCommunityColorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateCommunityColorMutation, UpdateCommunityColorMutationVariables>(UpdateCommunityColorDocument, options);
+      }
+export type UpdateCommunityColorMutationHookResult = ReturnType<typeof useUpdateCommunityColorMutation>;
+export type UpdateCommunityColorMutationResult = Apollo.MutationResult<UpdateCommunityColorMutation>;
+export type UpdateCommunityColorMutationOptions = Apollo.BaseMutationOptions<UpdateCommunityColorMutation, UpdateCommunityColorMutationVariables>;
+export const DeleteCommunityColorDocument = gql`
+    mutation DeleteCommunityColor($id: ID!) {
+  deleteCommunityColor(id: $id)
+}
+    `;
+export type DeleteCommunityColorMutationFn = Apollo.MutationFunction<DeleteCommunityColorMutation, DeleteCommunityColorMutationVariables>;
+
+/**
+ * __useDeleteCommunityColorMutation__
+ *
+ * To run a mutation, you first call `useDeleteCommunityColorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteCommunityColorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteCommunityColorMutation, { data, loading, error }] = useDeleteCommunityColorMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteCommunityColorMutation(baseOptions?: Apollo.MutationHookOptions<DeleteCommunityColorMutation, DeleteCommunityColorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteCommunityColorMutation, DeleteCommunityColorMutationVariables>(DeleteCommunityColorDocument, options);
+      }
+export type DeleteCommunityColorMutationHookResult = ReturnType<typeof useDeleteCommunityColorMutation>;
+export type DeleteCommunityColorMutationResult = Apollo.MutationResult<DeleteCommunityColorMutation>;
+export type DeleteCommunityColorMutationOptions = Apollo.BaseMutationOptions<DeleteCommunityColorMutation, DeleteCommunityColorMutationVariables>;
 export const SpeciesWithTraitsAndEnumValuesDocument = gql`
     query SpeciesWithTraitsAndEnumValues($speciesId: ID!) {
   speciesById(id: $speciesId) {

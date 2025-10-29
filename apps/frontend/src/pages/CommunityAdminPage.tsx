@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { useParams, Link } from "react-router-dom";
-import { Database, Users, Settings, List, FileText } from "lucide-react";
+import { Database, Users, Settings, List, FileText, Palette } from "lucide-react";
 import { Title, Subtitle, Card } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import {
@@ -247,6 +247,20 @@ export const CommunityAdminPage: React.FC = () => {
             <CardDescription>
               Create and configure species, traits, and variants for your
               community. Define character templates and customization options.
+            </CardDescription>
+          </AdminCard>
+        )}
+
+        {/* Color Palette Management */}
+        {userRole.canEditSpecies && (
+          <AdminCard to={`/communities/${communityId}/admin/colors`}>
+            <CardIcon>
+              <Palette size={24} />
+            </CardIcon>
+            <CardTitle>Color Palette</CardTitle>
+            <CardDescription>
+              Manage your community's color palette. Create and organize colors
+              that can be used for traits, variants, and items.
             </CardDescription>
           </AdminCard>
         )}

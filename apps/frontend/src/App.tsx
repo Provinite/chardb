@@ -57,6 +57,7 @@ import { EditSpeciesPage } from "./pages/EditSpeciesPage";
 import { DeviantArtCallbackPage } from "./pages/DeviantArtCallbackPage";
 import { CommunityItemsAdminPage } from "./pages/CommunityItemsAdminPage";
 import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
+import { CommunityColorPalettePage } from "./pages/CommunityColorPalettePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
@@ -327,6 +328,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CommunityItemsAdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/admin/colors"
+          element={
+            <ProtectedRoute>
+              <CommunityColorPalettePage />
             </ProtectedRoute>
           }
         />
