@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Community Color Palette Management**: Visual color palette administration interface
+  - `CommunityColorPalettePage` for creating, editing, and deleting community colors
+  - Color picker with hex code input and live preview
+  - Real-time color palette updates with sortable color list
+- **Color Assignment System**: Color selection and display across entity management
+  - `ColorSelector` component for color dropdown with preview
+  - `ColorPip` component for visual color indicators (small/medium/large sizes)
+  - Color assignment integrated in trait builder, variant management, enum value editor, and item type admin
+- **Color Display Features**: Visual color indicators throughout the application
+  - Color pips on character detail pages for enum trait values
+  - Color pips on character edit pages for multi-value trait chips
+  - Color pips on trait cards in trait builder
+  - Color pips on variant cards and item type cards
+  - Consistent color pip sizing and positioning across all displays
+
+### Changed
+
+- **GraphQL Fragments**: Updated fragments to include color fields for Traits, SpeciesVariants, EnumValues, and ItemTypes
+
+### Fixed
+
+- **Enum Value Modal**: Fixed form not detecting changes when only color is modified
+- **Enum Value Form Reset**: Fixed form not resetting when switching between different enum values
+- **Variant Color UI**: Improved variant color management layout
+- **ColorSelector Layout**: Prevented layout shift in color preview
+- **Save Button Placement**: Moved Save Changes button to header for better UX clarity
+
 ## [v4.1.0] - 2025-10-27
 
 ### Added

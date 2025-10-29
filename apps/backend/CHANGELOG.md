@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Community Color Palette System**: Community-level color management and entity color assignment
+  - New `CommunityColor` model with GraphQL CRUD operations
+  - Color support for Traits, SpeciesVariants, EnumValues, and ItemTypes
+  - Field resolvers for color relationships across all entity types
+  - `CommunityColorsService` with community validation logic
+  - Database schema migrations for color system tables and foreign keys
+
+### Changed
+
+- **Entity Services**: Updated create/update methods to validate color assignments
+  - `TraitsService`: Validates trait colors belong to species community
+  - `SpeciesVariantsService`: Validates variant colors belong to species community
+  - `EnumValuesService`: Validates enum value colors belong to trait's species community
+  - `ItemTypesService`: Validates item type colors belong to item type community
+
+### Security
+
+- **Community Color Permissions**: Enforced `CanEditSpecies` permission for all community color operations
+  - Added `communityColorId` resolution to auth system
+  - Color create/update/delete now require community membership with proper permissions
+  - Extended `CommunityResolverService` with `getCommunityColorCommunity()` method
+
 ## [v4.1.0] - 2025-10-27
 
 ### Added
