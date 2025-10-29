@@ -227,10 +227,10 @@ export const VariantDetailPage: React.FC = () => {
   // Mutations
   const [updateVariantName] = useUpdateSpeciesVariantMutation({
     onCompleted: () => {
-      toast.success('Variant name updated successfully!');
+      toast.success('Variant updated successfully!');
     },
     onError: (error) => {
-      toast.error(`Failed to update variant name: ${error.message}`);
+      toast.error(`Failed to update variant: ${error.message}`);
     },
   });
 
