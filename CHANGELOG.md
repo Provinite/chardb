@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v4.2.0] - 2025-10-28
+
 ### Added
 
 - **Community Color Palette System**: Community administrators can now create custom color palettes and assign colors to species entities for visual organization and branding
