@@ -721,6 +721,7 @@ type ExternalAccount {
 """External account providers supported for account linking"""
 enum ExternalAccountProvider {
   DEVIANTART
+  DISCORD
 }
 
 type FollowListResult {

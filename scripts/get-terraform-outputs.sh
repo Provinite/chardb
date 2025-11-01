@@ -54,6 +54,11 @@ DEVIANTART_CLIENT_ID=$(terraform output -raw backend_deviantart_client_id 2>/dev
 DEVIANTART_CLIENT_SECRET=$(terraform output -raw backend_deviantart_client_secret 2>/dev/null || echo "")
 DEVIANTART_CALLBACK_URL=$(terraform output -raw backend_deviantart_callback_url 2>/dev/null || echo "")
 
+# Get Discord OAuth credentials
+DISCORD_CLIENT_ID=$(terraform output -raw backend_discord_client_id 2>/dev/null || echo "")
+DISCORD_CLIENT_SECRET=$(terraform output -raw backend_discord_client_secret 2>/dev/null || echo "")
+DISCORD_CALLBACK_URL=$(terraform output -raw backend_discord_callback_url 2>/dev/null || echo "")
+
 # Get backend URL for frontend
 BACKEND_URL=$(terraform output -raw backend_url 2>/dev/null || echo "")
 BACKEND_IP=$(terraform output -raw backend_public_ip 2>/dev/null || echo "")
@@ -72,6 +77,9 @@ echo "   JWT Secret: [REDACTED]"
 echo "   DeviantArt Client ID: [REDACTED]"
 echo "   DeviantArt Client Secret: [REDACTED]"
 echo "   DeviantArt Callback URL: $DEVIANTART_CALLBACK_URL"
+echo "   Discord Client ID: [REDACTED]"
+echo "   Discord Client Secret: [REDACTED]"
+echo "   Discord Callback URL: $DISCORD_CALLBACK_URL"
 echo ""
 echo "Export these variables:"
 echo "export SERVER_IP='$SERVER_IP'"
@@ -83,5 +91,8 @@ echo "export JWT_SECRET='$JWT_SECRET'"
 echo "export DEVIANTART_CLIENT_ID='$DEVIANTART_CLIENT_ID'"
 echo "export DEVIANTART_CLIENT_SECRET='$DEVIANTART_CLIENT_SECRET'"
 echo "export DEVIANTART_CALLBACK_URL='$DEVIANTART_CALLBACK_URL'"
+echo "export DISCORD_CLIENT_ID='$DISCORD_CLIENT_ID'"
+echo "export DISCORD_CLIENT_SECRET='$DISCORD_CLIENT_SECRET'"
+echo "export DISCORD_CALLBACK_URL='$DISCORD_CALLBACK_URL'"
 echo "export DATABASE_URL='postgresql://app:\$POSTGRES_PASSWORD@localhost:5432/app'"
 echo "export FRONTEND_URL='$FRONTEND_URL'"

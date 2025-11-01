@@ -91,6 +91,23 @@ output "backend_deviantart_callback_url" {
   value       = module.backend.deviantart_callback_url
 }
 
+output "backend_discord_client_id" {
+  description = "Discord OAuth client ID for backend"
+  value       = module.backend.discord_client_id
+  sensitive   = true
+}
+
+output "backend_discord_client_secret" {
+  description = "Discord OAuth client secret for backend"
+  value       = module.backend.discord_client_secret
+  sensitive   = true
+}
+
+output "backend_discord_callback_url" {
+  description = "Discord OAuth callback URL for backend"
+  value       = module.backend.discord_callback_url
+}
+
 # Frontend infrastructure outputs
 output "frontend_bucket_name" {
   description = "Name of the frontend S3 bucket"

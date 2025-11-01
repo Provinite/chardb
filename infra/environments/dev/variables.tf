@@ -85,6 +85,24 @@ variable "deviantart_callback_url" {
   type        = string
 }
 
+# Discord OAuth Configuration
+variable "discord_client_id" {
+  description = "Discord OAuth client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "discord_client_secret" {
+  description = "Discord OAuth client secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "discord_callback_url" {
+  description = "Discord OAuth callback URL"
+  type        = string
+}
+
 # SSH key is now auto-generated during deployment
 
 # Note: Using default VPC, no need to specify VPC/subnet variables

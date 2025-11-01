@@ -78,3 +78,20 @@ output "deviantart_callback_url" {
   description = "DeviantArt OAuth callback URL"
   value       = var.deviantart_callback_url
 }
+
+output "discord_client_id" {
+  description = "Discord OAuth client ID"
+  value       = var.discord_client_id
+  sensitive   = true
+}
+
+output "discord_client_secret" {
+  description = "Discord OAuth client secret"
+  value       = var.discord_client_secret
+  sensitive   = true
+}
+
+output "discord_callback_url" {
+  description = "Discord OAuth callback URL"
+  value       = var.discord_callback_url
+}
