@@ -150,6 +150,7 @@ export class ItemsResolver {
       userId: input.userId,
       quantity: input.quantity ?? 1,
       metadata: input.metadata,
+      pendingOwner: input.pendingOwner,
     });
 
     return item as any;

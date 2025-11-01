@@ -7,6 +7,7 @@ import {
   Min,
   Max
 } from 'class-validator';
+import { PendingOwnerInput } from '../../pending-ownership/dto/pending-ownership.dto';
 
 @InputType()
 export class GrantItemInput {
@@ -14,9 +15,10 @@ export class GrantItemInput {
   @IsUUID()
   itemTypeId: string;
 
-  @Field(() => ID)
+  @Field(() => ID, { nullable: true, description: 'User ID to grant item to. Omit for orphaned items.' })
+  @IsOptional()
   @IsUUID()
-  userId: string;
+  userId?: string;
 
   @Field(() => Int, { defaultValue: 1 })
   @IsOptional()
@@ -28,6 +30,10 @@ export class GrantItemInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   metadata?: any; // JSON field for instance-specific data
+
+  @Field(() => PendingOwnerInput, { nullable: true, description: 'Create item with pending ownership for an external account' })
+  @IsOptional()
+  pendingOwner?: PendingOwnerInput;
 }
 
 @InputType()

@@ -786,8 +786,13 @@ input GalleryFiltersInput {
 input GrantItemInput {
   itemTypeId: ID!
   metadata: String
+
+  """Create item with pending ownership for an external account"""
+  pendingOwner: PendingOwnerInput
   quantity: Int! = 1
-  userId: ID!
+
+  """User ID to grant item to. Omit for orphaned items."""
+  userId: ID
 }
 
 type Image {

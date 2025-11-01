@@ -5,13 +5,22 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
+import { PendingOwnershipService } from '../pending-ownership/pending-ownership.service';
+import { Prisma, ExternalAccountProvider } from '@chardb/database';
 import { ItemTypeFilters } from './dto/item-type.dto';
 import { ItemFilters } from './dto/item.dto';
 
+export interface PendingOwnerInput {
+  provider: ExternalAccountProvider;
+  providerAccountId: string;
+}
+
 @Injectable()
 export class ItemsService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly pendingOwnershipService: PendingOwnershipService,
+  ) {}
 
   // ==================== ItemType Methods ====================
 
@@ -143,14 +152,20 @@ export class ItemsService {
    * Grant an item to a user. If the item type is stackable and the user
    * already has that item type, increment the quantity instead of creating
    * a new item.
+   *
+   * Can also create orphaned items (userId = null) or items with pending ownership.
    */
   async grantItem(input: {
     itemTypeId: string;
-    userId: string;
+    userId?: string | null; // Optional for orphaned items
     quantity: number;
     metadata?: any;
+    pendingOwner?: PendingOwnerInput; // For pending ownership
   }) {
-    const { itemTypeId, userId, quantity, metadata } = input;
+    const { itemTypeId, userId, quantity, metadata, pendingOwner } = input;
+
+    // Determine actual owner: null if pending, otherwise userId
+    const actualOwnerId = pendingOwner ? null : userId;
 
     if (quantity < 1) {
       throw new BadRequestException('Quantity must be at least 1');
@@ -165,37 +180,39 @@ export class ItemsService {
       throw new NotFoundException(`ItemType with ID ${itemTypeId} not found`);
     }
 
-    // Verify user exists
-    const user = await this.db.user.findUnique({
-      where: { id: userId },
-    });
+    // Verify user exists and is member of community (skip for orphaned items)
+    if (actualOwnerId) {
+      const user = await this.db.user.findUnique({
+        where: { id: actualOwnerId },
+      });
 
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
+      if (!user) {
+        throw new NotFoundException(`User with ID ${actualOwnerId} not found`);
+      }
 
-    // Verify user is a member of the community that owns this item type
-    const membership = await this.db.communityMember.findFirst({
-      where: {
-        userId,
-        role: {
-          communityId: itemType.communityId,
+      // Verify user is a member of the community that owns this item type
+      const membership = await this.db.communityMember.findFirst({
+        where: {
+          userId: actualOwnerId,
+          role: {
+            communityId: itemType.communityId,
+          },
         },
-      },
-    });
+      });
 
-    if (!membership) {
-      throw new BadRequestException(
-        `User is not a member of the community that owns this item type`,
-      );
+      if (!membership) {
+        throw new BadRequestException(
+          `User is not a member of the community that owns this item type`,
+        );
+      }
     }
 
-    // Check if stackable and user already has this item type
-    if (itemType.isStackable) {
+    // Check if stackable and user already has this item type (skip for orphaned/pending items)
+    if (itemType.isStackable && actualOwnerId) {
       const existingItem = await this.db.item.findFirst({
         where: {
           itemTypeId,
-          ownerId: userId,
+          ownerId: actualOwnerId,
         },
       });
 
@@ -226,14 +243,13 @@ export class ItemsService {
     }
 
     // Create new item
-    return await this.db.item.create({
+    const item = await this.db.item.create({
       data: {
         itemType: {
           connect: { id: itemTypeId },
         },
-        owner: {
-          connect: { id: userId },
-        },
+        // Owner connection (may be null for orphaned items)
+        ...(actualOwnerId ? { owner: { connect: { id: actualOwnerId } } } : {}),
         quantity,
         metadata: metadata || {},
       },
@@ -246,6 +262,17 @@ export class ItemsService {
         owner: true,
       },
     });
+
+    // Create pending ownership record if provided
+    if (pendingOwner) {
+      await this.pendingOwnershipService.createForItem(
+        item.id,
+        pendingOwner.provider,
+        pendingOwner.providerAccountId,
+      );
+    }
+
+    return item;
   }
 
   async findAllItems(filters: ItemFilters = {}) {
