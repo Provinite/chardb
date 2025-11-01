@@ -389,7 +389,7 @@ export const UserProfilePage: React.FC = () => {
             {externalAccountsData.myExternalAccounts.map((account: any) => (
               <ConnectedAccountBadge key={account.id}>
                 <AccountIcon>
-                  {account.provider === 'DEVIANTART' ? 'DA' : account.provider.charAt(0)}
+                  {account.provider === 'DEVIANTART' ? 'DA' : account.provider === 'DISCORD' ? 'DC' : account.provider.charAt(0)}
                 </AccountIcon>
                 <span>{account.displayName}</span>
               </ConnectedAccountBadge>

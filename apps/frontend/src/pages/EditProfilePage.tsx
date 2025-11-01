@@ -375,6 +375,42 @@ export const EditProfilePage: React.FC = () => {
     }
   };
 
+  const handleLinkDiscord = async () => {
+    // Get JWT token from localStorage
+    const token = localStorage.getItem('accessToken');
+
+    if (!token) {
+      toast.error('Please log in to link your Discord account');
+      return;
+    }
+
+    try {
+      // Fetch the OAuth URL from the backend with authentication in header
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${backendUrl}/auth/discord`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to initiate OAuth flow');
+      }
+
+      const data = await response.json();
+
+      if (!data.url) {
+        throw new Error('No OAuth URL returned');
+      }
+
+      // Redirect to the OAuth URL (no tokens in URL)
+      window.location.href = data.url;
+    } catch (error: any) {
+      console.error('Error initiating OAuth:', error);
+      toast.error(error.message || 'Failed to start Discord linking');
+    }
+  };
+
   const handleUnlink = async (provider: string) => {
     if (!confirm(`Are you sure you want to unlink your ${provider} account?`)) {
       return;
@@ -508,7 +544,7 @@ export const EditProfilePage: React.FC = () => {
       <Section>
         <SectionTitle>Connected Accounts</SectionTitle>
         <SectionDescription>
-          Link your DeviantArt account to verify ownership of your characters and artwork
+          Link your external accounts (DeviantArt, Discord) to verify ownership and connect with the community
         </SectionDescription>
 
         {loadingAccounts ? (
@@ -521,7 +557,7 @@ export const EditProfilePage: React.FC = () => {
               <AccountItem key={account.id}>
                 <AccountInfo>
                   <AccountIcon>
-                    {account.provider === 'DEVIANTART' ? 'DA' : account.provider.charAt(0)}
+                    {account.provider === 'DEVIANTART' ? 'DA' : account.provider === 'DISCORD' ? 'DC' : account.provider.charAt(0)}
                   </AccountIcon>
                   <AccountDetails>
                     <AccountName>{account.displayName}</AccountName>
@@ -542,19 +578,24 @@ export const EditProfilePage: React.FC = () => {
           <EmptyState>
             <p>No external accounts linked yet</p>
             <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-              Link your DeviantArt account to get started
+              Link your DeviantArt or Discord account to get started
             </p>
           </EmptyState>
         )}
 
-        {/* Show link button if no DeviantArt account linked */}
-        {!externalAccountsData?.myExternalAccounts?.some((acc: any) => acc.provider === 'DEVIANTART') && (
-          <div style={{ marginTop: '1rem' }}>
+        {/* Show link buttons for accounts not yet linked */}
+        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {!externalAccountsData?.myExternalAccounts?.some((acc: any) => acc.provider === 'DEVIANTART') && (
             <SmallButton variant="primary" onClick={handleLinkDeviantArt}>
               Link DeviantArt Account
             </SmallButton>
-          </div>
-        )}
+          )}
+          {!externalAccountsData?.myExternalAccounts?.some((acc: any) => acc.provider === 'DISCORD') && (
+            <SmallButton variant="primary" onClick={handleLinkDiscord}>
+              Link Discord Account
+            </SmallButton>
+          )}
+        </div>
       </Section>
     </Container>
   );

@@ -8,7 +8,9 @@ import { AuthResolver } from "./auth.resolver";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { LocalStrategy } from "./strategies/local.strategy";
 import { DeviantArtStrategy } from "./strategies/deviantart.strategy";
+import { DiscordStrategy } from "./strategies/discord.strategy";
 import { DeviantArtOAuthController } from "./deviantart-oauth.controller";
+import { DiscordOAuthController } from "./discord-oauth.controller";
 import { UsersModule } from "../users/users.module";
 import { InviteCodesModule } from "../invite-codes/invite-codes.module";
 import { DatabaseModule } from "../database/database.module";
@@ -44,13 +46,14 @@ import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
     ExternalAccountsModule,
     CommunityMembersModule,
   ],
-  controllers: [DeviantArtOAuthController],
+  controllers: [DeviantArtOAuthController, DiscordOAuthController],
   providers: [
     AuthService,
     AuthResolver,
     JwtStrategy,
     LocalStrategy,
     DeviantArtStrategy,
+    DiscordStrategy,
     PermissionService,
     OwnershipService,
     CommunityResolverService,

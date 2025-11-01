@@ -55,6 +55,7 @@ import { CommunityPage } from "./pages/CommunityPage";
 import { SpeciesPage } from "./pages/SpeciesPage";
 import { EditSpeciesPage } from "./pages/EditSpeciesPage";
 import { DeviantArtCallbackPage } from "./pages/DeviantArtCallbackPage";
+import { DiscordCallbackPage } from "./pages/DiscordCallbackPage";
 import { CommunityItemsAdminPage } from "./pages/CommunityItemsAdminPage";
 import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
 import { CommunityColorPalettePage } from "./pages/CommunityColorPalettePage";
@@ -93,6 +94,7 @@ function App() {
 
         {/* OAuth callback routes */}
         <Route path="/auth/deviantart/callback" element={<DeviantArtCallbackPage />} />
+        <Route path="/auth/discord/callback" element={<DiscordCallbackPage />} />
 
         {/* Protected routes */}
         <Route
