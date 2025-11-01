@@ -344,8 +344,7 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCommunityPermission(CommunityPermission.CanEditCharacter)
-  @ResolveCommunityFrom({ characterId: "id" })
+  @AllowCharacterEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity, {
     description: "Update character trait values",
   })

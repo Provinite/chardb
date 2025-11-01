@@ -255,11 +255,6 @@ export class CharactersService {
   ) {
     const character = await this.findOne(id, userId);
 
-    // Check ownership
-    if (character.ownerId !== userId) {
-      throw new ForbiddenException("You can only edit your own characters");
-    }
-
     const { characterData, tags } = input;
 
     // Prevent changing species once it's set
@@ -309,11 +304,6 @@ export class CharactersService {
 
   async remove(id: string, userId: string): Promise<boolean> {
     const character = await this.findOne(id, userId);
-
-    // Check ownership
-    if (character.ownerId !== userId) {
-      throw new ForbiddenException("You can only delete your own characters");
-    }
 
     await this.db.character.delete({
       where: { id },
@@ -384,13 +374,6 @@ export class CharactersService {
       throw new NotFoundException("Character not found");
     }
 
-    // Check ownership
-    if (character.ownerId !== userId) {
-      throw new ForbiddenException(
-        "You can only modify tags on your own characters",
-      );
-    }
-
     // Create tags if they don't exist and connect them
     const tags = await this.tagsService.findOrCreateTags(tagNames);
 
@@ -426,13 +409,6 @@ export class CharactersService {
       throw new NotFoundException("Character not found");
     }
 
-    // Check ownership
-    if (character.ownerId !== userId) {
-      throw new ForbiddenException(
-        "You can only modify tags on your own characters",
-      );
-    }
-
     // Remove tag connections
     await this.db.characterTag.deleteMany({
       where: {
@@ -466,13 +442,6 @@ export class CharactersService {
 
     if (!character) {
       throw new NotFoundException("Character not found");
-    }
-
-    // Check ownership
-    if (character.ownerId !== userId) {
-      throw new ForbiddenException(
-        "You can only set main media on your own characters",
-      );
     }
 
     // If mediaId is provided, verify the media exists and belongs to this character
@@ -606,20 +575,14 @@ export class CharactersService {
     updateData: { traitValues: PrismaJson.CharacterTraitValuesJson },
     userId: string,
   ) {
-    // First verify user owns or created this character
+    // Fetch character to validate species
     const character = await this.db.character.findUnique({
       where: { id },
-      select: { ownerId: true, creatorId: true, speciesId: true },
+      select: { speciesId: true },
     });
 
     if (!character) {
       throw new NotFoundException(`Character with ID ${id} not found`);
-    }
-
-    if (character.ownerId !== userId && character.creatorId !== userId) {
-      throw new ForbiddenException(
-        "You can only update traits for characters you own or created",
-      );
     }
 
     // Validate trait values if character has a species
