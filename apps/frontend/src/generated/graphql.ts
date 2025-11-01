@@ -235,6 +235,10 @@ export type Community = {
   __typename?: 'Community';
   /** When the community was created */
   createdAt: Scalars['DateTime']['output'];
+  /** Discord guild (server) ID linked to this community */
+  discordGuildId: Maybe<Scalars['String']['output']>;
+  /** Discord guild (server) name for display */
+  discordGuildName: Maybe<Scalars['String']['output']>;
   /** Unique identifier for the community */
   id: Scalars['ID']['output'];
   /** Community members with optional search filtering */
@@ -574,6 +578,16 @@ export type CreateTraitListEntryInput = {
   traitId: Scalars['ID']['input'];
   /** Type of values this trait stores */
   valueType: TraitValueType;
+};
+
+export type DiscordGuildInfo = {
+  __typename?: 'DiscordGuildInfo';
+  /** Whether the bot has access to this guild */
+  botHasAccess: Scalars['Boolean']['output'];
+  /** Discord guild ID */
+  id: Scalars['ID']['output'];
+  /** Discord guild name */
+  name: Scalars['String']['output'];
 };
 
 export type EnumValue = {
@@ -1058,6 +1072,8 @@ export type Mutation = {
   deleteMedia: Scalars['Boolean']['output'];
   /** Grant an item to a user (admin only) */
   grantItem: Item;
+  /** Link a Discord guild to a community */
+  linkDiscordGuild: Community;
   login: AuthPayload;
   refreshToken: Scalars['String']['output'];
   /** Remove a character ownership change record */
@@ -1096,6 +1112,8 @@ export type Mutation = {
   toggleFollow: FollowResult;
   toggleLike: LikeResult;
   transferCharacter: Character;
+  /** Unlink a Discord guild from a community */
+  unlinkDiscordGuild: Community;
   /** Unlink an external account from the current user */
   unlinkExternalAccount: Scalars['Boolean']['output'];
   updateCharacter: Character;
@@ -1291,6 +1309,12 @@ export type MutationGrantItemArgs = {
 };
 
 
+export type MutationLinkDiscordGuildArgs = {
+  communityId: Scalars['ID']['input'];
+  guildId: Scalars['ID']['input'];
+};
+
+
 export type MutationLoginArgs = {
   input: LoginInput;
 };
@@ -1408,6 +1432,11 @@ export type MutationToggleLikeArgs = {
 export type MutationTransferCharacterArgs = {
   id: Scalars['ID']['input'];
   input: TransferCharacterInput;
+};
+
+
+export type MutationUnlinkDiscordGuildArgs = {
+  communityId: Scalars['ID']['input'];
 };
 
 
@@ -1615,6 +1644,8 @@ export type Query = {
   communityMembersByCommunity: CommunityMemberConnection;
   /** Get community members by user ID with pagination */
   communityMembersByUser: CommunityMemberConnection;
+  /** Get the Discord bot invite URL */
+  discordBotInviteUrl: Scalars['String']['output'];
   /** Get an enum value by ID */
   enumValueById: EnumValue;
   /** Get an enum value setting by ID */
@@ -1709,6 +1740,8 @@ export type Query = {
   userProfile: Maybe<UserProfile>;
   userStats: UserStats;
   users: UserConnection;
+  /** Validate that the bot has access to a Discord guild */
+  validateDiscordGuild: DiscordGuildInfo;
 };
 
 
@@ -2165,6 +2198,11 @@ export type QueryUserStatsArgs = {
 export type QueryUsersArgs = {
   limit?: Scalars['Int']['input'];
   offset?: Scalars['Int']['input'];
+};
+
+
+export type QueryValidateDiscordGuildArgs = {
+  guildId: Scalars['ID']['input'];
 };
 
 /** Response confirming successful removal of an entity */
@@ -2912,7 +2950,7 @@ export type CommunityByIdQueryVariables = Exact<{
 }>;
 
 
-export type CommunityByIdQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } };
+export type CommunityByIdQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null, createdAt: string, updatedAt: string } };
 
 export type GetCommunityMembersQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -2944,6 +2982,33 @@ export type RemoveCommunityMutationVariables = Exact<{
 
 
 export type RemoveCommunityMutation = { __typename?: 'Mutation', removeCommunity: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
+export type DiscordBotInviteUrlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DiscordBotInviteUrlQuery = { __typename?: 'Query', discordBotInviteUrl: string };
+
+export type ValidateDiscordGuildQueryVariables = Exact<{
+  guildId: Scalars['ID']['input'];
+}>;
+
+
+export type ValidateDiscordGuildQuery = { __typename?: 'Query', validateDiscordGuild: { __typename?: 'DiscordGuildInfo', id: string, name: string, botHasAccess: boolean } };
+
+export type LinkDiscordGuildMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  guildId: Scalars['ID']['input'];
+}>;
+
+
+export type LinkDiscordGuildMutation = { __typename?: 'Mutation', linkDiscordGuild: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null, createdAt: string, updatedAt: string } };
+
+export type UnlinkDiscordGuildMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type UnlinkDiscordGuildMutation = { __typename?: 'Mutation', unlinkDiscordGuild: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null, createdAt: string, updatedAt: string } };
 
 export type CommunityMembersByUserQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -3524,9 +3589,9 @@ export type GetActivityFeedQueryVariables = Exact<{
 
 export type GetActivityFeedQuery = { __typename?: 'Query', activityFeed: Array<{ __typename?: 'ActivityItem', id: string, type: string, entityId: string, createdAt: string, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, content: { __typename?: 'ActivityContent', name: string | null, title: string | null, description: string | null } | null }> };
 
-export type SpeciesDetailsFragment = { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string };
+export type SpeciesDetailsFragment = { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } };
 
-export type SpeciesConnectionDetailsFragment = { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string }> };
+export type SpeciesConnectionDetailsFragment = { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }> };
 
 export type SpeciesQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -3534,7 +3599,7 @@ export type SpeciesQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesQuery = { __typename?: 'Query', species: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string }> } };
+export type SpeciesQuery = { __typename?: 'Query', species: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }> } };
 
 export type SpeciesByCommunityQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -3543,21 +3608,21 @@ export type SpeciesByCommunityQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesByCommunityQuery = { __typename?: 'Query', speciesByCommunity: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string }> } };
+export type SpeciesByCommunityQuery = { __typename?: 'Query', speciesByCommunity: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }> } };
 
 export type SpeciesByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type SpeciesByIdQuery = { __typename?: 'Query', speciesById: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+export type SpeciesByIdQuery = { __typename?: 'Query', speciesById: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } };
 
 export type CreateSpeciesMutationVariables = Exact<{
   createSpeciesInput: CreateSpeciesInput;
 }>;
 
 
-export type CreateSpeciesMutation = { __typename?: 'Mutation', createSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string } };
+export type CreateSpeciesMutation = { __typename?: 'Mutation', createSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } };
 
 export type UpdateSpeciesMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3565,7 +3630,7 @@ export type UpdateSpeciesMutationVariables = Exact<{
 }>;
 
 
-export type UpdateSpeciesMutation = { __typename?: 'Mutation', updateSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string } };
+export type UpdateSpeciesMutation = { __typename?: 'Mutation', updateSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } };
 
 export type DeleteSpeciesMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3600,7 +3665,7 @@ export type SpeciesVariantByIdQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesVariantByIdQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type SpeciesVariantByIdQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateSpeciesVariantMutationVariables = Exact<{
   createSpeciesVariantInput: CreateSpeciesVariantInput;
@@ -3643,7 +3708,7 @@ export type TraitByIdQueryVariables = Exact<{
 }>;
 
 
-export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateTraitMutationVariables = Exact<{
   createTraitInput: CreateTraitInput;
@@ -3865,6 +3930,12 @@ export const SpeciesDetailsFragmentDoc = gql`
   hasImage
   createdAt
   updatedAt
+  community {
+    id
+    name
+    discordGuildId
+    discordGuildName
+  }
 }
     `;
 export const SpeciesConnectionDetailsFragmentDoc = gql`
@@ -4972,6 +5043,8 @@ export const CommunityByIdDocument = gql`
   community(id: $id) {
     id
     name
+    discordGuildId
+    discordGuildName
     createdAt
     updatedAt
   }
@@ -5162,6 +5235,162 @@ export function useRemoveCommunityMutation(baseOptions?: Apollo.MutationHookOpti
 export type RemoveCommunityMutationHookResult = ReturnType<typeof useRemoveCommunityMutation>;
 export type RemoveCommunityMutationResult = Apollo.MutationResult<RemoveCommunityMutation>;
 export type RemoveCommunityMutationOptions = Apollo.BaseMutationOptions<RemoveCommunityMutation, RemoveCommunityMutationVariables>;
+export const DiscordBotInviteUrlDocument = gql`
+    query DiscordBotInviteUrl {
+  discordBotInviteUrl
+}
+    `;
+
+/**
+ * __useDiscordBotInviteUrlQuery__
+ *
+ * To run a query within a React component, call `useDiscordBotInviteUrlQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDiscordBotInviteUrlQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDiscordBotInviteUrlQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useDiscordBotInviteUrlQuery(baseOptions?: Apollo.QueryHookOptions<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>(DiscordBotInviteUrlDocument, options);
+      }
+export function useDiscordBotInviteUrlLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>(DiscordBotInviteUrlDocument, options);
+        }
+export function useDiscordBotInviteUrlSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>(DiscordBotInviteUrlDocument, options);
+        }
+export type DiscordBotInviteUrlQueryHookResult = ReturnType<typeof useDiscordBotInviteUrlQuery>;
+export type DiscordBotInviteUrlLazyQueryHookResult = ReturnType<typeof useDiscordBotInviteUrlLazyQuery>;
+export type DiscordBotInviteUrlSuspenseQueryHookResult = ReturnType<typeof useDiscordBotInviteUrlSuspenseQuery>;
+export type DiscordBotInviteUrlQueryResult = Apollo.QueryResult<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>;
+export const ValidateDiscordGuildDocument = gql`
+    query ValidateDiscordGuild($guildId: ID!) {
+  validateDiscordGuild(guildId: $guildId) {
+    id
+    name
+    botHasAccess
+  }
+}
+    `;
+
+/**
+ * __useValidateDiscordGuildQuery__
+ *
+ * To run a query within a React component, call `useValidateDiscordGuildQuery` and pass it any options that fit your needs.
+ * When your component renders, `useValidateDiscordGuildQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useValidateDiscordGuildQuery({
+ *   variables: {
+ *      guildId: // value for 'guildId'
+ *   },
+ * });
+ */
+export function useValidateDiscordGuildQuery(baseOptions: Apollo.QueryHookOptions<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables> & ({ variables: ValidateDiscordGuildQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>(ValidateDiscordGuildDocument, options);
+      }
+export function useValidateDiscordGuildLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>(ValidateDiscordGuildDocument, options);
+        }
+export function useValidateDiscordGuildSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>(ValidateDiscordGuildDocument, options);
+        }
+export type ValidateDiscordGuildQueryHookResult = ReturnType<typeof useValidateDiscordGuildQuery>;
+export type ValidateDiscordGuildLazyQueryHookResult = ReturnType<typeof useValidateDiscordGuildLazyQuery>;
+export type ValidateDiscordGuildSuspenseQueryHookResult = ReturnType<typeof useValidateDiscordGuildSuspenseQuery>;
+export type ValidateDiscordGuildQueryResult = Apollo.QueryResult<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>;
+export const LinkDiscordGuildDocument = gql`
+    mutation LinkDiscordGuild($communityId: ID!, $guildId: ID!) {
+  linkDiscordGuild(communityId: $communityId, guildId: $guildId) {
+    id
+    name
+    discordGuildId
+    discordGuildName
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type LinkDiscordGuildMutationFn = Apollo.MutationFunction<LinkDiscordGuildMutation, LinkDiscordGuildMutationVariables>;
+
+/**
+ * __useLinkDiscordGuildMutation__
+ *
+ * To run a mutation, you first call `useLinkDiscordGuildMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLinkDiscordGuildMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [linkDiscordGuildMutation, { data, loading, error }] = useLinkDiscordGuildMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      guildId: // value for 'guildId'
+ *   },
+ * });
+ */
+export function useLinkDiscordGuildMutation(baseOptions?: Apollo.MutationHookOptions<LinkDiscordGuildMutation, LinkDiscordGuildMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LinkDiscordGuildMutation, LinkDiscordGuildMutationVariables>(LinkDiscordGuildDocument, options);
+      }
+export type LinkDiscordGuildMutationHookResult = ReturnType<typeof useLinkDiscordGuildMutation>;
+export type LinkDiscordGuildMutationResult = Apollo.MutationResult<LinkDiscordGuildMutation>;
+export type LinkDiscordGuildMutationOptions = Apollo.BaseMutationOptions<LinkDiscordGuildMutation, LinkDiscordGuildMutationVariables>;
+export const UnlinkDiscordGuildDocument = gql`
+    mutation UnlinkDiscordGuild($communityId: ID!) {
+  unlinkDiscordGuild(communityId: $communityId) {
+    id
+    name
+    discordGuildId
+    discordGuildName
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type UnlinkDiscordGuildMutationFn = Apollo.MutationFunction<UnlinkDiscordGuildMutation, UnlinkDiscordGuildMutationVariables>;
+
+/**
+ * __useUnlinkDiscordGuildMutation__
+ *
+ * To run a mutation, you first call `useUnlinkDiscordGuildMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUnlinkDiscordGuildMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [unlinkDiscordGuildMutation, { data, loading, error }] = useUnlinkDiscordGuildMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useUnlinkDiscordGuildMutation(baseOptions?: Apollo.MutationHookOptions<UnlinkDiscordGuildMutation, UnlinkDiscordGuildMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UnlinkDiscordGuildMutation, UnlinkDiscordGuildMutationVariables>(UnlinkDiscordGuildDocument, options);
+      }
+export type UnlinkDiscordGuildMutationHookResult = ReturnType<typeof useUnlinkDiscordGuildMutation>;
+export type UnlinkDiscordGuildMutationResult = Apollo.MutationResult<UnlinkDiscordGuildMutation>;
+export type UnlinkDiscordGuildMutationOptions = Apollo.BaseMutationOptions<UnlinkDiscordGuildMutation, UnlinkDiscordGuildMutationVariables>;
 export const CommunityMembersByUserDocument = gql`
     query CommunityMembersByUser($userId: ID!, $first: Int, $after: String) {
   communityMembersByUser(userId: $userId, first: $first, after: $after) {
@@ -9161,6 +9390,8 @@ export const SpeciesByIdDocument = gql`
     community {
       id
       name
+      discordGuildId
+      discordGuildName
     }
   }
 }
@@ -9390,6 +9621,12 @@ export const SpeciesVariantByIdDocument = gql`
       id
       name
       communityId
+      community {
+        id
+        name
+        discordGuildId
+        discordGuildName
+      }
     }
   }
 }
@@ -9587,6 +9824,12 @@ export const TraitByIdDocument = gql`
       id
       name
       communityId
+      community {
+        id
+        name
+        discordGuildId
+        discordGuildName
+      }
     }
   }
 }

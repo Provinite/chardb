@@ -24,6 +24,10 @@ export interface CreateCommunityServiceInput {
 export interface UpdateCommunityServiceInput {
   /** Name of the community (must be unique) */
   name?: string;
+  /** Discord guild (server) ID */
+  discordGuildId?: string | null;
+  /** Discord guild (server) name for display */
+  discordGuildName?: string | null;
 }
 
 @Injectable()
@@ -151,8 +155,10 @@ export class CommunitiesService {
     const community = await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.CommunityUpdateInput = {};
-    
+
     if (input.name !== undefined) updateData.name = input.name;
+    if (input.discordGuildId !== undefined) updateData.discordGuildId = input.discordGuildId;
+    if (input.discordGuildName !== undefined) updateData.discordGuildName = input.discordGuildName;
 
     return this.prisma.community.update({
       where: { id },
@@ -200,5 +206,37 @@ export class CommunitiesService {
       take: Math.min(filters.limit || 10, 20), // Max 20
       orderBy: { username: 'asc' },
     });
+  }
+
+  /**
+   * Check if a user has permission to edit a community
+   * Currently checks if user is an admin of the community (has role with canEditRole or canCreateRole permission)
+   */
+  async userCanEditCommunity(userId: string, communityId: string): Promise<boolean> {
+    // Check if user is a global admin
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+
+    if (user?.isAdmin) {
+      return true;
+    }
+
+    // Check if user has a role in this community with edit permissions
+    const membership = await this.prisma.communityMember.findFirst({
+      where: {
+        userId,
+        role: {
+          communityId,
+          OR: [
+            { canEditRole: true },
+            { canCreateRole: true },
+          ],
+        },
+      },
+    });
+
+    return !!membership;
   }
 }

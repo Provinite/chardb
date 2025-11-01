@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { PendingOwnershipService } from '../pending-ownership/pending-ownership.service';
+import { DiscordService } from '../discord/discord.service';
 import { Prisma, ExternalAccountProvider } from '@chardb/database';
 import { ItemTypeFilters } from './dto/item-type.dto';
 import { ItemFilters } from './dto/item.dto';
@@ -20,6 +21,7 @@ export class ItemsService {
   constructor(
     private readonly db: DatabaseService,
     private readonly pendingOwnershipService: PendingOwnershipService,
+    private readonly discordService: DiscordService,
   ) {}
 
   // ==================== ItemType Methods ====================
@@ -265,10 +267,20 @@ export class ItemsService {
 
     // Create pending ownership record if provided
     if (pendingOwner) {
+      let resolvedAccountId = pendingOwner.providerAccountId;
+
+      // Resolve Discord username to ID if necessary
+      if (pendingOwner.provider === ExternalAccountProvider.DISCORD) {
+        resolvedAccountId = await this.resolveDiscordIdentifier(
+          itemType.communityId,
+          pendingOwner.providerAccountId,
+        );
+      }
+
       await this.pendingOwnershipService.createForItem(
         item.id,
         pendingOwner.provider,
-        pendingOwner.providerAccountId,
+        resolvedAccountId,
       );
     }
 
@@ -368,5 +380,56 @@ export class ItemsService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Resolve a Discord identifier (username or ID) to a Discord user ID
+   * @param communityId The community ID to get the Discord guild from
+   * @param identifier The Discord username or user ID
+   * @returns The Discord user ID
+   * @throws BadRequestException if guild not connected or username not found
+   */
+  private async resolveDiscordIdentifier(
+    communityId: string,
+    identifier: string,
+  ): Promise<string> {
+    // Check if identifier is already a numeric ID (18-19 digits)
+    if (/^\d{17,19}$/.test(identifier)) {
+      return identifier;
+    }
+
+    // It's a username - need to resolve it
+    // Get the community to find the Discord guild
+    const community = await this.db.community.findUnique({
+      where: { id: communityId },
+      select: {
+        discordGuildId: true,
+        name: true,
+      },
+    });
+
+    if (!community) {
+      throw new NotFoundException(`Community with ID ${communityId} not found`);
+    }
+
+    if (!community.discordGuildId) {
+      throw new BadRequestException(
+        `Cannot use Discord username: Community "${community.name}" has no Discord server connected. Please use numeric Discord User ID or ask an admin to connect the Discord server.`,
+      );
+    }
+
+    // Resolve username to ID
+    const userId = await this.discordService.resolveUsernameToId(
+      community.discordGuildId,
+      identifier,
+    );
+
+    if (!userId) {
+      throw new NotFoundException(
+        `Discord user "${identifier}" not found in community's Discord server`,
+      );
+    }
+
+    return userId;
   }
 }

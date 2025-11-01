@@ -20,10 +20,16 @@ import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { GlobalPermission } from "../auth/GlobalPermission";
 import { User } from "../users/entities/user.entity";
 import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
+import { DiscordService } from "../discord/discord.service";
+import { DiscordGuildInfo } from "./dto/discord-guild-info.dto";
+import { ForbiddenException, BadRequestException } from "@nestjs/common";
 
 @Resolver(() => Community)
 export class CommunitiesResolver {
-  constructor(private readonly communitiesService: CommunitiesService) {}
+  constructor(
+    private readonly communitiesService: CommunitiesService,
+    private readonly discordService: DiscordService,
+  ) {}
 
   @AllowGlobalPermission(GlobalPermission.CanCreateCommunity)
   @Mutation(() => Community, { description: "Create a new community" })
@@ -114,5 +120,114 @@ export class CommunitiesResolver {
       limit,
     });
     return members.map(mapPrismaUserToGraphQL);
+  }
+
+  // Discord Integration
+
+  @AllowAnyAuthenticated()
+  @Query(() => String, {
+    name: "discordBotInviteUrl",
+    description: "Get the Discord bot invite URL",
+  })
+  async getDiscordBotInviteUrl(): Promise<string> {
+    return this.discordService.generateBotInviteUrl();
+  }
+
+  @AllowAnyAuthenticated()
+  @Query(() => DiscordGuildInfo, {
+    name: "validateDiscordGuild",
+    description: "Validate that the bot has access to a Discord guild",
+  })
+  async validateDiscordGuild(
+    @Args("guildId", { type: () => ID, description: "Discord guild ID" })
+    guildId: string,
+  ): Promise<DiscordGuildInfo> {
+    const guildInfo = await this.discordService.getGuildInfo(guildId);
+
+    if (!guildInfo) {
+      throw new BadRequestException("Unable to access Discord guild");
+    }
+
+    return guildInfo;
+  }
+
+  @AllowAnyAuthenticated()
+  @Mutation(() => Community, {
+    name: "linkDiscordGuild",
+    description: "Link a Discord guild to a community",
+  })
+  async linkDiscordGuild(
+    @Args("communityId", { type: () => ID, description: "Community ID" })
+    communityId: string,
+    @Args("guildId", { type: () => ID, description: "Discord guild ID" })
+    guildId: string,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<Community> {
+    // Check if user has permission to edit this community
+    // For now, using global permission as a simple check
+    // TODO: Implement community-specific permission checking
+    const hasPermission = await this.communitiesService.userCanEditCommunity(
+      user.id,
+      communityId,
+    );
+
+    if (!hasPermission) {
+      throw new ForbiddenException(
+        "You do not have permission to edit this community",
+      );
+    }
+
+    // Verify bot has access to the guild
+    const hasAccess = await this.discordService.verifyGuildAccess(guildId);
+    if (!hasAccess) {
+      throw new BadRequestException(
+        "Bot does not have access to this Discord server. Please add the bot first.",
+      );
+    }
+
+    // Get guild info
+    const guildInfo = await this.discordService.getGuildInfo(guildId);
+    if (!guildInfo) {
+      throw new BadRequestException("Unable to fetch Discord guild information");
+    }
+
+    // Update community with guild info
+    const prismaResult = await this.communitiesService.update(communityId, {
+      discordGuildId: guildId,
+      discordGuildName: guildInfo.name,
+    });
+
+    return mapPrismaCommunityToGraphQL(prismaResult);
+  }
+
+  @AllowAnyAuthenticated()
+  @Mutation(() => Community, {
+    name: "unlinkDiscordGuild",
+    description: "Unlink a Discord guild from a community",
+  })
+  async unlinkDiscordGuild(
+    @Args("communityId", { type: () => ID, description: "Community ID" })
+    communityId: string,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<Community> {
+    // Check if user has permission to edit this community
+    const hasPermission = await this.communitiesService.userCanEditCommunity(
+      user.id,
+      communityId,
+    );
+
+    if (!hasPermission) {
+      throw new ForbiddenException(
+        "You do not have permission to edit this community",
+      );
+    }
+
+    // Remove guild association
+    const prismaResult = await this.communitiesService.update(communityId, {
+      discordGuildId: null,
+      discordGuildName: null,
+    });
+
+    return mapPrismaCommunityToGraphQL(prismaResult);
   }
 }

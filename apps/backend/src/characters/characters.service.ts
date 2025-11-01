@@ -7,6 +7,7 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import { DiscordService } from "../discord/discord.service";
 import { Prisma, Visibility, ExternalAccountProvider } from "@chardb/database";
 
 export interface PendingOwnerInput {
@@ -42,6 +43,7 @@ export class CharactersService {
     private readonly db: DatabaseService,
     private readonly tagsService: TagsService,
     private readonly pendingOwnershipService: PendingOwnershipService,
+    private readonly discordService: DiscordService,
   ) {}
 
   async create(
@@ -97,10 +99,20 @@ export class CharactersService {
 
     // Create pending ownership record if provided
     if (pendingOwner) {
+      let resolvedAccountId = pendingOwner.providerAccountId;
+
+      // Resolve Discord username to ID if necessary
+      if (pendingOwner.provider === ExternalAccountProvider.DISCORD) {
+        resolvedAccountId = await this.resolveDiscordIdentifier(
+          speciesId,
+          pendingOwner.providerAccountId,
+        );
+      }
+
       await this.pendingOwnershipService.createForCharacter(
         character.id,
         pendingOwner.provider,
-        pendingOwner.providerAccountId,
+        resolvedAccountId,
       );
     }
 
@@ -658,6 +670,62 @@ export class CharactersService {
     });
 
     return !!membership;
+  }
+
+  /**
+   * Resolve a Discord identifier (username or ID) to a Discord user ID
+   * @param speciesId The species ID to get the community from
+   * @param identifier The Discord username or user ID
+   * @returns The Discord user ID
+   * @throws BadRequestException if guild not connected or username not found
+   */
+  private async resolveDiscordIdentifier(
+    speciesId: string,
+    identifier: string,
+  ): Promise<string> {
+    // Check if identifier is already a numeric ID (18-19 digits)
+    if (/^\d{17,19}$/.test(identifier)) {
+      return identifier;
+    }
+
+    // It's a username - need to resolve it
+    // First get the species to find the community
+    const species = await this.db.species.findUnique({
+      where: { id: speciesId },
+      select: {
+        communityId: true,
+        community: {
+          select: {
+            discordGuildId: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!species) {
+      throw new NotFoundException(`Species with ID ${speciesId} not found`);
+    }
+
+    if (!species.community.discordGuildId) {
+      throw new BadRequestException(
+        `Cannot use Discord username: Community "${species.community.name}" has no Discord server connected. Please use numeric Discord User ID or ask an admin to connect the Discord server.`,
+      );
+    }
+
+    // Resolve username to ID
+    const userId = await this.discordService.resolveUsernameToId(
+      species.community.discordGuildId,
+      identifier,
+    );
+
+    if (!userId) {
+      throw new NotFoundException(
+        `Discord user "${identifier}" not found in community's Discord server`,
+      );
+    }
+
+    return userId;
   }
 
 }

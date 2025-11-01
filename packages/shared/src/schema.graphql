@@ -219,6 +219,12 @@ type Community {
   """When the community was created"""
   createdAt: DateTime!
 
+  """Discord guild (server) ID linked to this community"""
+  discordGuildId: String
+
+  """Discord guild (server) name for display"""
+  discordGuildName: String
+
   """Unique identifier for the community"""
   id: ID!
 
@@ -632,6 +638,17 @@ input CreateTraitListEntryInput {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type DiscordGuildInfo {
+  """Whether the bot has access to this guild"""
+  botHasAccess: Boolean!
+
+  """Discord guild ID"""
+  id: ID!
+
+  """Discord guild name"""
+  name: String!
+}
 
 type EnumValue {
   """The color associated with this enum value"""
@@ -1233,6 +1250,15 @@ type Mutation {
 
   """Grant an item to a user (admin only)"""
   grantItem(input: GrantItemInput!): Item!
+
+  """Link a Discord guild to a community"""
+  linkDiscordGuild(
+    """Community ID"""
+    communityId: ID!
+
+    """Discord guild ID"""
+    guildId: ID!
+  ): Community!
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): String!
 
@@ -1342,6 +1368,12 @@ type Mutation {
   toggleFollow(input: ToggleFollowInput!): FollowResult!
   toggleLike(input: ToggleLikeInput!): LikeResult!
   transferCharacter(id: ID!, input: TransferCharacterInput!): Character!
+
+  """Unlink a Discord guild from a community"""
+  unlinkDiscordGuild(
+    """Community ID"""
+    communityId: ID!
+  ): Community!
 
   """Unlink an external account from the current user"""
   unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
@@ -1663,6 +1695,9 @@ type Query {
     """User ID"""
     userId: ID!
   ): CommunityMemberConnection!
+
+  """Get the Discord bot invite URL"""
+  discordBotInviteUrl: String!
 
   """Get an enum value by ID"""
   enumValueById(
@@ -1997,6 +2032,12 @@ type Query {
   userProfile(username: String!): UserProfile
   userStats(userId: ID!): UserStats!
   users(limit: Int! = 20, offset: Int! = 0): UserConnection!
+
+  """Validate that the bot has access to a Discord guild"""
+  validateDiscordGuild(
+    """Discord guild ID"""
+    guildId: ID!
+  ): DiscordGuildInfo!
 }
 
 """Response confirming successful removal of an entity"""

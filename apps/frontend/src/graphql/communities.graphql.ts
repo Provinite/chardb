@@ -34,6 +34,8 @@ export const COMMUNITY_BY_ID_QUERY = gql`
     community(id: $id) {
       id
       name
+      discordGuildId
+      discordGuildName
       createdAt
       updatedAt
     }
@@ -84,6 +86,50 @@ export const REMOVE_COMMUNITY_MUTATION = gql`
     removeCommunity(id: $id) {
       removed
       message
+    }
+  }
+`;
+
+// ==================== Discord Integration ====================
+
+export const DISCORD_BOT_INVITE_URL_QUERY = gql`
+  query DiscordBotInviteUrl {
+    discordBotInviteUrl
+  }
+`;
+
+export const VALIDATE_DISCORD_GUILD_QUERY = gql`
+  query ValidateDiscordGuild($guildId: ID!) {
+    validateDiscordGuild(guildId: $guildId) {
+      id
+      name
+      botHasAccess
+    }
+  }
+`;
+
+export const LINK_DISCORD_GUILD_MUTATION = gql`
+  mutation LinkDiscordGuild($communityId: ID!, $guildId: ID!) {
+    linkDiscordGuild(communityId: $communityId, guildId: $guildId) {
+      id
+      name
+      discordGuildId
+      discordGuildName
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const UNLINK_DISCORD_GUILD_MUTATION = gql`
+  mutation UnlinkDiscordGuild($communityId: ID!) {
+    unlinkDiscordGuild(communityId: $communityId) {
+      id
+      name
+      discordGuildId
+      discordGuildName
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -140,6 +186,10 @@ export {
   useUpdateCommunityMutation,
   useRemoveCommunityMutation,
   useCommunityMembersByUserQuery,
+  useDiscordBotInviteUrlQuery,
+  useValidateDiscordGuildQuery,
+  useLinkDiscordGuildMutation,
+  useUnlinkDiscordGuildMutation,
 
   // Types
   type CommunitiesQuery,
@@ -156,10 +206,19 @@ export {
   type RemoveCommunityMutationVariables,
   type CommunityMembersByUserQuery,
   type CommunityMembersByUserQueryVariables,
+  type DiscordBotInviteUrlQuery,
+  type DiscordBotInviteUrlQueryVariables,
+  type ValidateDiscordGuildQuery,
+  type ValidateDiscordGuildQueryVariables,
+  type LinkDiscordGuildMutation,
+  type LinkDiscordGuildMutationVariables,
+  type UnlinkDiscordGuildMutation,
+  type UnlinkDiscordGuildMutationVariables,
   type Community,
   type CommunityConnection,
   type CommunityMember,
   type CommunityMemberConnection,
   type CreateCommunityInput,
   type UpdateCommunityInput,
+  type DiscordGuildInfo,
 } from "../generated/graphql";

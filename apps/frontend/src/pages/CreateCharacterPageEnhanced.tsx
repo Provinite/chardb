@@ -290,6 +290,20 @@ const HelpText = styled.p`
   line-height: 1.5;
 `;
 
+const WarningBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: ${({ theme }) => theme.colors.warning}20;
+  border: 1px solid ${({ theme }) => theme.colors.warning};
+  border-radius: 6px;
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-top: 0.75rem;
+`;
+
 export const CreateCharacterPageEnhanced: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -515,14 +529,16 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
 
                 <FormGroup>
                   <Label htmlFor="pendingOwnerAccountId">
-                    {pendingOwnerProvider === ExternalAccountProvider.Discord ? 'Discord User ID' : 'DeviantArt Username'}
+                    {pendingOwnerProvider === ExternalAccountProvider.Discord
+                      ? (selectedSpecies?.community?.discordGuildId ? 'Discord Username or User ID' : 'Discord User ID')
+                      : 'DeviantArt Username'}
                   </Label>
                   <Input
                     id="pendingOwnerAccountId"
                     type="text"
                     placeholder={
                       pendingOwnerProvider === ExternalAccountProvider.Discord
-                        ? "e.g., 123456789012345678"
+                        ? (selectedSpecies?.community?.discordGuildId ? "e.g., @username or 123456789012345678" : "e.g., 123456789012345678")
                         : "e.g., username"
                     }
                     value={pendingOwnerAccountId}
@@ -530,9 +546,20 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
                   />
                   <HelpText>
                     {pendingOwnerProvider === ExternalAccountProvider.Discord
-                      ? "Enter the Discord user ID (not the username). You can find this by enabling Developer Mode in Discord settings and right-clicking the user."
+                      ? (selectedSpecies?.community?.discordGuildId
+                          ? `Enter the Discord username (with or without @) or numeric user ID. The bot will look up usernames in ${selectedSpecies.community.discordGuildName || 'your Discord server'}.`
+                          : "Enter the Discord numeric user ID. You can find this by enabling Developer Mode in Discord settings and right-clicking the user.")
                       : "Enter the DeviantArt username of the person who will claim this character."}
                   </HelpText>
+                  {pendingOwnerProvider === ExternalAccountProvider.Discord && !selectedSpecies?.community?.discordGuildId && (
+                    <WarningBox>
+                      <strong>Discord server not connected</strong>
+                      <span>
+                        This community doesn't have a Discord server linked. Only numeric Discord User IDs are supported.
+                        Ask a community admin to link a Discord server in the community settings to enable username lookups.
+                      </span>
+                    </WarningBox>
+                  )}
                 </FormGroup>
               </>
             )}

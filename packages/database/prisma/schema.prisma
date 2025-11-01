@@ -398,10 +398,12 @@ model MediaTag {
 }
 
 model Community {
-  id        String   @id @default(uuid())
-  name      String   @unique @db.VarChar(100)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid())
+  name             String   @unique @db.VarChar(100)
+  discordGuildId   String?  @map("discord_guild_id") @db.VarChar(30)
+  discordGuildName String?  @map("discord_guild_name") @db.VarChar(100)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   // Relations
   species              Species[]
