@@ -20,6 +20,8 @@ export interface CreateRoleServiceInput {
   canCreateSpecies?: boolean;
   /** Permission to create new characters */
   canCreateCharacter?: boolean;
+  /** Permission to create orphaned characters */
+  canCreateOrphanedCharacter?: boolean;
   /** Permission to edit characters */
   canEditCharacter?: boolean;
   /** Permission to edit own characters only */
@@ -54,6 +56,8 @@ export interface UpdateRoleServiceInput {
   canCreateSpecies?: boolean;
   /** Permission to create new characters */
   canCreateCharacter?: boolean;
+  /** Permission to create orphaned characters */
+  canCreateOrphanedCharacter?: boolean;
   /** Permission to edit characters */
   canEditCharacter?: boolean;
   /** Permission to edit own characters only */
@@ -89,6 +93,7 @@ export class RolesService {
         name: input.name,
         canCreateSpecies: input.canCreateSpecies ?? false,
         canCreateCharacter: input.canCreateCharacter ?? false,
+        canCreateOrphanedCharacter: input.canCreateOrphanedCharacter ?? false,
         canEditCharacter: input.canEditCharacter ?? false,
         canEditOwnCharacter: input.canEditOwnCharacter ?? false,
         canEditSpecies: input.canEditSpecies ?? false,
@@ -190,6 +195,8 @@ export class RolesService {
       updateData.canCreateSpecies = input.canCreateSpecies;
     if (input.canCreateCharacter !== undefined)
       updateData.canCreateCharacter = input.canCreateCharacter;
+    if (input.canCreateOrphanedCharacter !== undefined)
+      updateData.canCreateOrphanedCharacter = input.canCreateOrphanedCharacter;
     if (input.canEditCharacter !== undefined)
       updateData.canEditCharacter = input.canEditCharacter;
     if (input.canEditOwnCharacter !== undefined)

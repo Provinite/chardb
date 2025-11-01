@@ -16,6 +16,7 @@ export function mapCreateRoleInputToService(input: CreateRoleInput): CreateRoleS
     communityId: input.communityId,
     canCreateSpecies: input.canCreateSpecies,
     canCreateCharacter: input.canCreateCharacter,
+    canCreateOrphanedCharacter: input.canCreateOrphanedCharacter,
     canEditCharacter: input.canEditCharacter,
     canEditOwnCharacter: input.canEditOwnCharacter,
     canEditSpecies: input.canEditSpecies,
@@ -39,6 +40,7 @@ export function mapUpdateRoleInputToService(input: UpdateRoleInput): UpdateRoleS
   if (input.name !== undefined) result.name = input.name;
   if (input.canCreateSpecies !== undefined) result.canCreateSpecies = input.canCreateSpecies;
   if (input.canCreateCharacter !== undefined) result.canCreateCharacter = input.canCreateCharacter;
+  if (input.canCreateOrphanedCharacter !== undefined) result.canCreateOrphanedCharacter = input.canCreateOrphanedCharacter;
   if (input.canEditCharacter !== undefined) result.canEditCharacter = input.canEditCharacter;
   if (input.canEditOwnCharacter !== undefined) result.canEditOwnCharacter = input.canEditOwnCharacter;
   if (input.canEditSpecies !== undefined) result.canEditSpecies = input.canEditSpecies;

@@ -26,6 +26,12 @@ export class CreateRoleInput {
   @IsOptional()
   canCreateCharacter?: boolean = false;
 
+  /** Permission to create orphaned characters */
+  @Field(() => Boolean, { description: 'Whether members with this role can create orphaned characters', defaultValue: false })
+  @IsBoolean()
+  @IsOptional()
+  canCreateOrphanedCharacter?: boolean = false;
+
   /** Permission to edit characters */
   @Field(() => Boolean, { description: 'Whether members with this role can edit characters', defaultValue: false })
   @IsBoolean()
@@ -113,6 +119,12 @@ export class UpdateRoleInput {
   @IsOptional()
   @IsBoolean()
   canCreateCharacter?: boolean;
+
+  /** Permission to create orphaned characters */
+  @Field(() => Boolean, { description: 'Whether members with this role can create orphaned characters', nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  canCreateOrphanedCharacter?: boolean;
 
   /** Permission to edit characters */
   @Field(() => Boolean, { description: 'Whether members with this role can edit characters', nullable: true })
