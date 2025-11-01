@@ -6,7 +6,13 @@ import {
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
-import { Prisma, Visibility } from "@chardb/database";
+import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import { Prisma, Visibility, ExternalAccountProvider } from "@chardb/database";
+
+export interface PendingOwnerInput {
+  provider: ExternalAccountProvider;
+  providerAccountId: string;
+}
 
 // Service layer interfaces
 export interface CharacterServiceFilters {
@@ -35,13 +41,25 @@ export class CharactersService {
   constructor(
     private readonly db: DatabaseService,
     private readonly tagsService: TagsService,
+    private readonly pendingOwnershipService: PendingOwnershipService,
   ) {}
 
   async create(
     userId: string,
-    input: { characterData: Omit<Prisma.CharacterCreateInput, 'owner' | 'creator'>; tags?: string[] },
+    input: {
+      characterData: Omit<Prisma.CharacterCreateInput, 'owner' | 'creator'>;
+      tags?: string[];
+      ownerId?: string | null; // Explicit owner ID (null for orphaned characters)
+      pendingOwner?: PendingOwnerInput; // Pending ownership info
+    },
   ) {
-    const { characterData, tags } = input;
+    const { characterData, tags, ownerId, pendingOwner } = input;
+
+    // Determine the actual owner:
+    // - If pendingOwner is provided, character is orphaned (ownerId = null)
+    // - If ownerId is explicitly null, character is orphaned
+    // - Otherwise, use provided ownerId or default to userId (current user)
+    const actualOwnerId = pendingOwner ? null : (ownerId !== undefined ? ownerId : userId);
 
     // Validate trait values if species and trait values are provided
     const speciesId = (characterData.species as any)?.connect?.id;
@@ -53,9 +71,9 @@ export class CharactersService {
 
     const character = await this.db.character.create({
       data: {
-        owner: {
-          connect: { id: userId },
-        },
+        // Owner connection (may be null for orphaned characters)
+        ...(actualOwnerId ? { owner: { connect: { id: actualOwnerId } } } : {}),
+        // Creator is always the user creating the character
         creator: {
           connect: { id: userId },
         },
@@ -75,6 +93,15 @@ export class CharactersService {
           },
         });
       }
+    }
+
+    // Create pending ownership record if provided
+    if (pendingOwner) {
+      await this.pendingOwnershipService.createForCharacter(
+        character.id,
+        pendingOwner.provider,
+        pendingOwner.providerAccountId,
+      );
     }
 
     // Return the created character
@@ -272,12 +299,19 @@ export class CharactersService {
 
   async transfer(
     id: string,
-    currentOwnerId: string,
+    currentOwnerId: string | null,
     newOwnerId: string,
   ) {
-    const character = await this.findOne(id, currentOwnerId);
+    // For orphaned characters, currentOwnerId can be null
+    const character = currentOwnerId
+      ? await this.findOne(id, currentOwnerId)
+      : await this.db.character.findUnique({ where: { id } });
 
-    // Check ownership
+    if (!character) {
+      throw new NotFoundException("Character not found");
+    }
+
+    // Check ownership (allow transfer from null for orphaned characters)
     if (character.ownerId !== currentOwnerId) {
       throw new ForbiddenException("You can only transfer your own characters");
     }
@@ -291,6 +325,7 @@ export class CharactersService {
       throw new NotFoundException("New owner not found");
     }
 
+    // Update character ownership and create ownership change record
     const transferredCharacter = await this.db.character.update({
       where: { id },
       data: {
@@ -298,6 +333,16 @@ export class CharactersService {
         // Keep original creator
       },
     });
+
+    // Create ownership change record
+    await this.db.characterOwnershipChange.create({
+      data: {
+        characterId: id,
+        fromUserId: currentOwnerId, // Can be null for orphaned characters
+        toUserId: newOwnerId,
+      },
+    });
+
     return transferredCharacter;
   }
 
@@ -582,6 +627,37 @@ export class CharactersService {
       },
     });
     return !!like;
+  }
+
+  /**
+   * Check if a user has permission to create orphaned characters in a species' community
+   */
+  async userHasOrphanedCharacterPermission(
+    userId: string,
+    speciesId: string,
+  ): Promise<boolean> {
+    // Get the community for this species
+    const species = await this.db.species.findUnique({
+      where: { id: speciesId },
+      include: { community: true },
+    });
+
+    if (!species) {
+      return false;
+    }
+
+    // Check if user has a role with canCreateOrphanedCharacter permission
+    const membership = await this.db.communityMember.findFirst({
+      where: {
+        userId,
+        role: {
+          communityId: species.communityId,
+          canCreateOrphanedCharacter: true,
+        },
+      },
+    });
+
+    return !!membership;
   }
 
 }

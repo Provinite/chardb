@@ -30,8 +30,9 @@ function mapTraitValues(
 export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
   characterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator">;
   tags?: string[];
+  pendingOwner?: { provider: any; providerAccountId: string };
 } {
-  const { tags, ...characterData } = input;
+  const { tags, pendingOwner, ...characterData } = input;
 
   const prismaCharacterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator"> = {
     name: characterData.name,
@@ -51,6 +52,7 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
   return {
     characterData: prismaCharacterData,
     tags,
+    pendingOwner,
   };
 }
 

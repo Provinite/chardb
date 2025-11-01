@@ -2,6 +2,7 @@ import { Field, InputType, ObjectType, Int, Float, ID, registerEnumType } from '
 import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, IsEnum, MinLength, MaxLength, Min, Max } from 'class-validator';
 import { Visibility } from '@chardb/database';
 import { CharacterTraitValueInput } from './character-trait.dto';
+import { PendingOwnerInput } from '../../pending-ownership/dto/pending-ownership.dto';
 
 // Register enum for GraphQL
 registerEnumType(Visibility, {
@@ -79,6 +80,10 @@ export class CreateCharacterInput {
   @Field(() => [CharacterTraitValueInput], { defaultValue: [], description: 'Trait values for the character' })
   @IsOptional()
   traitValues?: CharacterTraitValueInput[];
+
+  @Field(() => PendingOwnerInput, { nullable: true, description: 'Create character with pending ownership for an external account' })
+  @IsOptional()
+  pendingOwner?: PendingOwnerInput;
 }
 
 @InputType()

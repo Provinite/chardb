@@ -75,6 +75,17 @@ export class CharactersResolver {
     @Args("input") input: CreateCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
+    // If creating orphaned character (pending owner), require canCreateOrphanedCharacter permission
+    if (input.pendingOwner) {
+      const hasPermission = await this.charactersService.userHasOrphanedCharacterPermission(
+        user.id,
+        input.speciesId!,
+      );
+      if (!hasPermission) {
+        throw new Error("You do not have permission to create orphaned characters");
+      }
+    }
+
     const serviceInput = mapCreateCharacterInputToService(input);
     const character = await this.charactersService.create(
       user.id,

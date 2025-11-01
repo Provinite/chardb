@@ -361,6 +361,9 @@ input CreateCharacterInput {
   isSellable: Boolean! = false
   isTradeable: Boolean! = false
   name: String!
+
+  """Create character with pending ownership for an external account"""
+  pendingOwner: PendingOwnerInput
   price: Float
   speciesId: ID
   speciesVariantId: ID
@@ -1465,6 +1468,16 @@ type Mutation {
     """Trait order updates for a species variant"""
     input: UpdateTraitOrdersInput!
   ): [TraitListEntry!]!
+}
+
+input PendingOwnerInput {
+  """The external account provider"""
+  provider: ExternalAccountProvider!
+
+  """
+  The account identifier on the external provider (Discord user ID, DeviantArt username, etc.)
+  """
+  providerAccountId: String!
 }
 
 type Query {
