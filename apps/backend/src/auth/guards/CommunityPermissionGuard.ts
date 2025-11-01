@@ -75,10 +75,19 @@ export class CommunityPermissionGuard implements CanActivate {
     config: CommunityResolutionConfig,
   ): CommunityResolutionReference {
     const gqlContext = GqlExecutionContext.create(context);
-    const args = gqlContext.getArgs();
 
     for (const [key, path] of Object.entries(config)) {
-      if (path) {
+      if (!path) continue;
+
+      // Handle $root.id syntax for field resolvers
+      if (path === "$root.id") {
+        const parent = gqlContext.getRoot();
+        if (parent?.id) {
+          return { type: key as keyof CommunityResolutionConfig, value: parent.id };
+        }
+      } else {
+        // Handle normal argument paths
+        const args = gqlContext.getArgs();
         const value = getNestedValue(args, path);
         if (value) {
           return { type: key as keyof CommunityResolutionConfig, value };

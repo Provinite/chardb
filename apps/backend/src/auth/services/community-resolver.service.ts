@@ -355,6 +355,52 @@ export class CommunityResolverService {
   }
 
   /**
+   * Get the community ID for a pending ownership.
+   *
+   * Resolution path: pendingOwnership → character → species → community
+   *                  OR pendingOwnership → item → itemType → community
+   *
+   * @param pendingOwnershipId - The pending ownership ID
+   * @returns The community ID
+   * @throws Error if pending ownership doesn't exist or has no associated community
+   */
+  async getPendingOwnershipCommunity(pendingOwnershipId: string): Promise<string> {
+    const pending = await this.prisma.pendingOwnership.findUnique({
+      where: { id: pendingOwnershipId },
+      select: {
+        character: {
+          select: {
+            species: {
+              select: { communityId: true },
+            },
+          },
+        },
+        item: {
+          select: {
+            itemType: {
+              select: { communityId: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!pending) {
+      throw new Error(`PendingOwnership with ID ${pendingOwnershipId} not found`);
+    }
+
+    const communityId =
+      pending.character?.species?.communityId ||
+      pending.item?.itemType?.communityId;
+
+    if (!communityId) {
+      throw new Error("PendingOwnership has no associated community");
+    }
+
+    return communityId;
+  }
+
+  /**
    * Resolve the community for a given entity using resolution configuration.
    *
    * This is the primary method used by guards to determine community context.
@@ -404,6 +450,7 @@ export class CommunityResolverService {
       itemTypeId: this.getItemTypeCommunity.bind(this),
       itemId: this.getItemCommunity.bind(this),
       communityColorId: this.getCommunityColorCommunity.bind(this),
+      pendingOwnershipId: this.getPendingOwnershipCommunity.bind(this),
     };
 
     if (!config.type) {

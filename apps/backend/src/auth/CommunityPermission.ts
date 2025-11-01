@@ -7,6 +7,7 @@ export enum CommunityPermission {
   Any = "__ANY__",
   CanCreateSpecies = "canCreateSpecies",
   CanCreateCharacter = "canCreateCharacter",
+  CanCreateOrphanedCharacter = "canCreateOrphanedCharacter",
   CanEditCharacter = "canEditCharacter",
   CanEditOwnCharacter = "canEditOwnCharacter",
   CanEditSpecies = "canEditSpecies",
