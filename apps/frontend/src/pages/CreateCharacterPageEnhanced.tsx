@@ -378,6 +378,8 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             speciesId: selectedSpecies?.id || undefined,
             speciesVariantId: selectedVariant?.id || undefined,
             traitValues: traitValues.length > 0 ? traitValues : undefined,
+            // Set isOrphaned flag for community characters
+            isOrphaned: isOrphaned,
             // Add pending owner if orphaned and account ID is provided
             pendingOwner: isOrphaned && pendingOwnerAccountId.trim()
               ? {

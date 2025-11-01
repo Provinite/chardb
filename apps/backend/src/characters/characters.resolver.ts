@@ -79,8 +79,8 @@ export class CharactersResolver {
     @Args("input") input: CreateCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
-    // If creating orphaned character (pending owner), require canCreateOrphanedCharacter permission
-    if (input.pendingOwner) {
+    // If creating orphaned character, require canCreateOrphanedCharacter permission
+    if (input.isOrphaned || input.pendingOwner) {
       const hasPermission = await this.charactersService.userHasOrphanedCharacterPermission(
         user.id,
         input.speciesId!,
@@ -92,8 +92,8 @@ export class CharactersResolver {
 
     const serviceInput = mapCreateCharacterInputToService(input);
     const character = await this.charactersService.create(
-      user.id,
-      serviceInput,
+      user.id,  // Creator is always the current user
+      serviceInput,  // ownerId comes from serviceInput (null for orphaned)
     );
     return mapPrismaCharacterToGraphQL(character);
   }

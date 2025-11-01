@@ -355,6 +355,8 @@ export type CreateCharacterInput = {
   customFields?: InputMaybe<Scalars['String']['input']>;
   details?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<Scalars['String']['input']>;
+  /** Create character without an owner (orphaned/community character) */
+  isOrphaned?: Scalars['Boolean']['input'];
   isSellable?: Scalars['Boolean']['input'];
   isTradeable?: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
@@ -2812,7 +2814,7 @@ export type GetCharactersQueryVariables = Exact<{
 }>;
 
 
-export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
+export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
 
 export type GetCharacterQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4144,6 +4146,12 @@ export const GetCharactersDocument = gql`
       customFields
       createdAt
       updatedAt
+      pendingOwnership {
+        id
+        provider
+        providerAccountId
+        createdAt
+      }
       owner {
         id
         username

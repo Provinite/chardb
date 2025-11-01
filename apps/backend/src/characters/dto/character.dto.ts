@@ -84,6 +84,11 @@ export class CreateCharacterInput {
   @Field(() => PendingOwnerInput, { nullable: true, description: 'Create character with pending ownership for an external account' })
   @IsOptional()
   pendingOwner?: PendingOwnerInput;
+
+  @Field({ defaultValue: false, description: 'Create character without an owner (orphaned/community character)' })
+  @IsOptional()
+  @IsBoolean()
+  isOrphaned?: boolean;
 }
 
 @InputType()
