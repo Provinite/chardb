@@ -5,7 +5,7 @@ import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
-import { NullOnForbiddenFilter } from "../auth/filters/NullOnForbiddenFilter";
+import { EmptyStringOnForbiddenFilter } from "../auth/filters/EmptyStringOnForbiddenFilter";
 import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CommunityPermissionGuard } from "../auth/guards/CommunityPermissionGuard";
@@ -17,20 +17,20 @@ import { CommunityPermissionGuard } from "../auth/guards/CommunityPermissionGuar
  * (providerAccountId, displayIdentifier) that should only be visible to users
  * with the CanCreateOrphanedCharacter permission in the relevant community.
  *
- * Users without permission will see null for these fields instead of an error.
+ * Users without permission will see empty strings for these fields instead of an error.
  */
 @Resolver(() => PendingOwnership)
 export class PendingOwnershipResolver {
   /**
    * Resolve the providerAccountId field with permission checking.
    *
-   * Returns null if the user doesn't have CanCreateOrphanedCharacter permission.
+   * Returns empty string if the user doesn't have CanCreateOrphanedCharacter permission.
    */
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanCreateOrphanedCharacter)
   @ResolveCommunityFrom({ pendingOwnershipId: "$root.id" })
   @UseGuards(JwtAuthGuard, CommunityPermissionGuard)
-  @UseFilters(NullOnForbiddenFilter)
+  @UseFilters(EmptyStringOnForbiddenFilter)
   @ResolveField("providerAccountId", () => String, {
     middleware: [sentinelValueMiddleware],
   })
@@ -43,13 +43,13 @@ export class PendingOwnershipResolver {
   /**
    * Resolve the displayIdentifier field with permission checking.
    *
-   * Returns null if the user doesn't have CanCreateOrphanedCharacter permission.
+   * Returns empty string if the user doesn't have CanCreateOrphanedCharacter permission.
    */
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanCreateOrphanedCharacter)
   @ResolveCommunityFrom({ pendingOwnershipId: "$root.id" })
   @UseGuards(JwtAuthGuard, CommunityPermissionGuard)
-  @UseFilters(NullOnForbiddenFilter)
+  @UseFilters(EmptyStringOnForbiddenFilter)
   @ResolveField("displayIdentifier", () => String, {
     nullable: true,
     middleware: [sentinelValueMiddleware],
