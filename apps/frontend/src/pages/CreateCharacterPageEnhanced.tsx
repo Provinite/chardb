@@ -311,13 +311,15 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   const [pendingOwnerProvider, setPendingOwnerProvider] = useState<ExternalAccountProvider>(ExternalAccountProvider.Discord);
   const [pendingOwnerAccountId, setPendingOwnerAccountId] = useState("");
 
-  // Check if user has permission to create orphaned characters
+  // Check if user has permission to create orphaned characters in the selected species' community
   const canCreateOrphanedCharacter = useMemo(() => {
-    if (!user) return false;
+    if (!user || !selectedSpecies) return false;
     return user.communityMemberships?.some(
-      (membership) => membership.role.canCreateOrphanedCharacter
+      (membership) =>
+        membership.role.communityId === selectedSpecies.communityId &&
+        membership.role.canCreateOrphanedCharacter
     ) || false;
-  }, [user]);
+  }, [user, selectedSpecies]);
 
   // Form handling
   const {
