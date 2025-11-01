@@ -49,7 +49,7 @@ export class CharactersService {
   async create(
     userId: string,
     input: {
-      characterData: Omit<Prisma.CharacterCreateInput, 'owner' | 'creator'>;
+      characterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator">;
       tags?: string[];
       ownerId?: string | null; // Explicit owner ID (null for orphaned characters)
       pendingOwner?: PendingOwnerInput; // Pending ownership info
@@ -61,13 +61,22 @@ export class CharactersService {
     // - If pendingOwner is provided, character is orphaned (ownerId = null)
     // - If ownerId is explicitly null, character is orphaned
     // - Otherwise, use provided ownerId or default to userId (current user)
-    const actualOwnerId = pendingOwner ? null : (ownerId !== undefined ? ownerId : userId);
+    const actualOwnerId = pendingOwner
+      ? null
+      : ownerId !== undefined
+        ? ownerId
+        : userId;
 
     // Validate trait values if species and trait values are provided
-    const speciesId = (characterData.species as any)?.connect?.id;
-    const traitValues = characterData.traitValues as PrismaJson.CharacterTraitValuesJson | undefined;
+    const speciesId = characterData.species?.connect?.id;
+    const traitValues = characterData.traitValues;
 
-    if (speciesId && traitValues && Array.isArray(traitValues) && traitValues.length > 0) {
+    if (
+      speciesId &&
+      traitValues &&
+      Array.isArray(traitValues) &&
+      traitValues.length > 0
+    ) {
       await this.validateTraitValues(speciesId, traitValues);
     }
 
@@ -98,7 +107,7 @@ export class CharactersService {
     }
 
     // Create pending ownership record if provided
-    if (pendingOwner) {
+    if (pendingOwner && speciesId) {
       let resolvedAccountId = pendingOwner.providerAccountId;
       let displayIdentifier: string | undefined;
 
@@ -176,7 +185,9 @@ export class CharactersService {
           : {},
 
         // Other filters
-        species ? { species: { name: { contains: species, mode: "insensitive" } } } : {},
+        species
+          ? { species: { name: { contains: species, mode: "insensitive" } } }
+          : {},
         speciesId ? { speciesId } : {},
         speciesVariantId ? { speciesVariantId } : {},
         gender ? { gender: { contains: gender, mode: "insensitive" } } : {},
@@ -247,7 +258,6 @@ export class CharactersService {
     return character;
   }
 
-
   async update(
     id: string,
     userId: string,
@@ -263,10 +273,13 @@ export class CharactersService {
       const speciesUpdate = characterData.species as any;
 
       // If trying to connect to a different species or disconnect
-      if (speciesUpdate?.disconnect ||
-          (speciesUpdate?.connect?.id && speciesUpdate.connect.id !== character.speciesId)) {
+      if (
+        speciesUpdate?.disconnect ||
+        (speciesUpdate?.connect?.id &&
+          speciesUpdate.connect.id !== character.speciesId)
+      ) {
         throw new ForbiddenException(
-          "Cannot change species once it has been set. Species assignment is permanent."
+          "Cannot change species once it has been set. Species assignment is permanent.",
         );
       }
     }
@@ -361,11 +374,7 @@ export class CharactersService {
     return transferredCharacter;
   }
 
-  async addTags(
-    characterId: string,
-    userId: string,
-    tagNames: string[],
-  ) {
+  async addTags(characterId: string, userId: string, tagNames: string[]) {
     const character = await this.db.character.findUnique({
       where: { id: characterId },
     });
@@ -396,11 +405,7 @@ export class CharactersService {
     return character;
   }
 
-  async removeTags(
-    characterId: string,
-    userId: string,
-    tagNames: string[],
-  ) {
+  async removeTags(characterId: string, userId: string, tagNames: string[]) {
     const character = await this.db.character.findUnique({
       where: { id: characterId },
     });
@@ -431,11 +436,7 @@ export class CharactersService {
    * @throws ForbiddenException if user doesn't own the character or media doesn't belong to character
    * @throws NotFoundException if media doesn't exist
    */
-  async setMainMedia(
-    characterId: string,
-    userId: string,
-    mediaId?: string,
-  ) {
+  async setMainMedia(characterId: string, userId: string, mediaId?: string) {
     const character = await this.db.character.findUnique({
       where: { id: characterId },
     });
@@ -528,11 +529,17 @@ export class CharactersService {
 
     // Build a map of traitId -> trait info
     const traitMap = new Map(
-      traits.map(t => [t.id, { name: t.name, allowsMultipleValues: t.allowsMultipleValues }])
+      traits.map((t) => [
+        t.id,
+        { name: t.name, allowsMultipleValues: t.allowsMultipleValues },
+      ]),
     );
 
     // Group trait values by traitId and count occurrences
-    const traitValueCounts = new Map<string, { count: number; values: string[] }>();
+    const traitValueCounts = new Map<
+      string,
+      { count: number; values: string[] }
+    >();
 
     for (const tv of traitValues) {
       if (!traitValueCounts.has(tv.traitId)) {
@@ -551,20 +558,22 @@ export class CharactersService {
 
       if (!traitInfo) {
         // Trait doesn't exist for this species
-        violations.push(`Trait with ID '${traitId}' does not exist for this species`);
+        violations.push(
+          `Trait with ID '${traitId}' does not exist for this species`,
+        );
         continue;
       }
 
       if (!traitInfo.allowsMultipleValues && count > 1) {
         violations.push(
-          `Trait '${traitInfo.name}' does not allow multiple values. Found ${count} values: ${values.map(v => `'${v}'`).join(', ')}`
+          `Trait '${traitInfo.name}' does not allow multiple values. Found ${count} values: ${values.map((v) => `'${v}'`).join(", ")}`,
         );
       }
     }
 
     if (violations.length > 0) {
       throw new BadRequestException(
-        `Trait validation failed:\n${violations.join('\n')}`
+        `Trait validation failed:\n${violations.join("\n")}`,
       );
     }
   }
@@ -587,7 +596,10 @@ export class CharactersService {
 
     // Validate trait values if character has a species
     if (character.speciesId && updateData.traitValues.length > 0) {
-      await this.validateTraitValues(character.speciesId, updateData.traitValues);
+      await this.validateTraitValues(
+        character.speciesId,
+        updateData.traitValues,
+      );
     }
 
     // Update the character with new trait values
@@ -703,5 +715,4 @@ export class CharactersService {
 
     return userId;
   }
-
 }
