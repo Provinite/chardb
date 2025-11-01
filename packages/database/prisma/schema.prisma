@@ -542,6 +542,7 @@ model PendingOwnership {
   // External account info
   provider           ExternalAccountProvider
   providerAccountId  String   @map("provider_account_id") @db.VarChar(255)
+  displayIdentifier  String?  @map("display_identifier") @db.VarChar(255)
 
   // Claiming info
   createdAt          DateTime @default(now()) @map("created_at")

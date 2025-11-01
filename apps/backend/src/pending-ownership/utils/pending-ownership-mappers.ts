@@ -16,6 +16,7 @@ export function mapPrismaPendingOwnershipToGraphQL(
     itemId: prismaPendingOwnership.itemId ?? undefined,
     provider: prismaPendingOwnership.provider,
     providerAccountId: prismaPendingOwnership.providerAccountId,
+    displayIdentifier: prismaPendingOwnership.displayIdentifier,
     createdAt: prismaPendingOwnership.createdAt,
     claimedAt: prismaPendingOwnership.claimedAt ?? undefined,
     claimedByUserId: prismaPendingOwnership.claimedByUserId ?? undefined,

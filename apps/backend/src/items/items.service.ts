@@ -268,19 +268,32 @@ export class ItemsService {
     // Create pending ownership record if provided
     if (pendingOwner) {
       let resolvedAccountId = pendingOwner.providerAccountId;
+      let displayIdentifier: string | undefined;
 
       // Resolve Discord username to ID if necessary
       if (pendingOwner.provider === ExternalAccountProvider.DISCORD) {
+        // Check if the input is already a numeric ID
+        const isNumericId = /^\d{17,19}$/.test(pendingOwner.providerAccountId);
+
+        // If it's not an ID (i.e., it's a username), store it as displayIdentifier
+        if (!isNumericId) {
+          displayIdentifier = pendingOwner.providerAccountId;
+        }
+
         resolvedAccountId = await this.resolveDiscordIdentifier(
           itemType.communityId,
           pendingOwner.providerAccountId,
         );
+      } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
+        // DeviantArt uses usernames, so always store as displayIdentifier
+        displayIdentifier = pendingOwner.providerAccountId;
       }
 
       await this.pendingOwnershipService.createForItem(
         item.id,
         pendingOwner.provider,
         resolvedAccountId,
+        displayIdentifier,
       );
     }
 

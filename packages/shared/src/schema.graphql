@@ -1531,6 +1531,9 @@ type PendingOwnership {
 
   """When this pending ownership was created"""
   createdAt: DateTime!
+
+  """Display-friendly identifier (username) if available"""
+  displayIdentifier: String
   id: ID!
   item: Item
 

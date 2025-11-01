@@ -27,6 +27,9 @@ export class PendingOwnership {
   @Field({ description: 'The account identifier on the external provider' })
   providerAccountId: string;
 
+  @Field(() => String, { nullable: true, description: 'Display-friendly identifier (username) if available' })
+  displayIdentifier: string | null;
+
   @Field({ description: 'When this pending ownership was created' })
   createdAt: Date;
 

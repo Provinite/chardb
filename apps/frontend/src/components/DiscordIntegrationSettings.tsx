@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { ExternalLink, Link as LinkIcon, Unlink, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import React, { useState } from "react";
+import styled from "styled-components";
 import {
-  Button,
-  Input,
-  HelpText,
-  Heading3,
-} from '@chardb/ui';
+  ExternalLink,
+  Link as LinkIcon,
+  Unlink,
+  AlertCircle,
+  CheckCircle,
+  Loader,
+} from "lucide-react";
+import { Button, Input, HelpText, Heading3 } from "@chardb/ui";
 import {
   useDiscordBotInviteUrlQuery,
   useValidateDiscordGuildQuery,
   useLinkDiscordGuildMutation,
   useUnlinkDiscordGuildMutation,
   type Community,
-} from '../graphql/communities.graphql';
-import { toast } from 'react-hot-toast';
+} from "../graphql/communities.graphql";
+import { toast } from "react-hot-toast";
 
 const Container = styled.div`
   display: flex;
@@ -39,7 +41,7 @@ const Row = styled.div`
   flex-wrap: wrap;
 `;
 
-const StatusBadge = styled.div<{ status: 'connected' | 'disconnected' }>`
+const StatusBadge = styled.div<{ status: "connected" | "disconnected" }>`
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -49,7 +51,7 @@ const StatusBadge = styled.div<{ status: 'connected' | 'disconnected' }>`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
 
   ${({ status, theme }) =>
-    status === 'connected'
+    status === "connected"
       ? `
         background: ${theme.colors.success}20;
         color: ${theme.colors.success};
@@ -78,7 +80,7 @@ const GuildName = styled.div`
 const GuildId = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   color: ${({ theme }) => theme.colors.text.secondary};
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 `;
 
 const LinkButton = styled.a`
@@ -95,7 +97,7 @@ const LinkButton = styled.a`
   }
 `;
 
-const ValidationMessage = styled.div<{ type: 'success' | 'error' | 'info' }>`
+const ValidationMessage = styled.div<{ type: "success" | "error" | "info" }>`
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
@@ -104,12 +106,12 @@ const ValidationMessage = styled.div<{ type: 'success' | 'error' | 'info' }>`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 
   ${({ type, theme }) => {
-    if (type === 'success') {
+    if (type === "success") {
       return `
         background: ${theme.colors.success}20;
         color: ${theme.colors.success};
       `;
-    } else if (type === 'error') {
+    } else if (type === "error") {
       return `
         background: ${theme.colors.error}20;
         color: ${theme.colors.error};
@@ -143,22 +145,28 @@ const Label = styled.label`
 `;
 
 interface DiscordIntegrationSettingsProps {
-  community: Pick<Community, 'id' | 'name' | 'discordGuildId' | 'discordGuildName'>;
+  community: Pick<
+    Community,
+    "id" | "name" | "discordGuildId" | "discordGuildName"
+  >;
   onUpdate?: () => void;
 }
 
-export const DiscordIntegrationSettings: React.FC<DiscordIntegrationSettingsProps> = ({
-  community,
-  onUpdate,
-}) => {
-  const [guildIdInput, setGuildIdInput] = useState('');
+export const DiscordIntegrationSettings: React.FC<
+  DiscordIntegrationSettingsProps
+> = ({ community, onUpdate }) => {
+  const [guildIdInput, setGuildIdInput] = useState("");
   const [validationAttempted, setValidationAttempted] = useState(false);
 
   // Fetch bot invite URL
   const { data: inviteData } = useDiscordBotInviteUrlQuery();
 
   // Validate guild (only when user clicks validate)
-  const { data: validationData, loading: validating, refetch: validateGuild } = useValidateDiscordGuildQuery({
+  const {
+    data: validationData,
+    loading: validating,
+    refetch: validateGuild,
+  } = useValidateDiscordGuildQuery({
     variables: { guildId: guildIdInput },
     skip: !validationAttempted || !guildIdInput,
   });
@@ -166,29 +174,29 @@ export const DiscordIntegrationSettings: React.FC<DiscordIntegrationSettingsProp
   // Mutations
   const [linkGuild, { loading: linking }] = useLinkDiscordGuildMutation({
     onCompleted: () => {
-      toast.success('Discord server linked successfully!');
-      setGuildIdInput('');
+      toast.success("Discord server linked successfully!");
+      setGuildIdInput("");
       setValidationAttempted(false);
       onUpdate?.();
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to link Discord server');
+      toast.error(error.message || "Failed to link Discord server");
     },
   });
 
   const [unlinkGuild, { loading: unlinking }] = useUnlinkDiscordGuildMutation({
     onCompleted: () => {
-      toast.success('Discord server unlinked successfully');
+      toast.success("Discord server unlinked successfully");
       onUpdate?.();
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to unlink Discord server');
+      toast.error(error.message || "Failed to unlink Discord server");
     },
   });
 
   const handleValidate = async () => {
     if (!guildIdInput.trim()) {
-      toast.error('Please enter a Discord Server ID');
+      toast.error("Please enter a Discord Server ID");
       return;
     }
     setValidationAttempted(true);
@@ -197,12 +205,14 @@ export const DiscordIntegrationSettings: React.FC<DiscordIntegrationSettingsProp
 
   const handleLink = async () => {
     if (!guildIdInput.trim()) {
-      toast.error('Please enter a Discord Server ID');
+      toast.error("Please enter a Discord Server ID");
       return;
     }
 
     if (!validationData?.validateDiscordGuild?.botHasAccess) {
-      toast.error('Bot does not have access to this server. Please validate first.');
+      toast.error(
+        "Bot does not have access to this server. Please validate first.",
+      );
       return;
     }
 
@@ -215,7 +225,11 @@ export const DiscordIntegrationSettings: React.FC<DiscordIntegrationSettingsProp
   };
 
   const handleUnlink = async () => {
-    if (window.confirm('Are you sure you want to unlink this Discord server? Users will no longer be able to use Discord usernames when creating orphaned characters or items.')) {
+    if (
+      window.confirm(
+        "Are you sure you want to unlink this Discord server? Users will no longer be able to use Discord usernames when creating orphaned characters or items.",
+      )
+    ) {
       await unlinkGuild({
         variables: {
           communityId: community.id,
@@ -232,14 +246,14 @@ export const DiscordIntegrationSettings: React.FC<DiscordIntegrationSettingsProp
       <Section>
         <Heading3>Discord Integration</Heading3>
         <HelpText>
-          Link a Discord server to your community to enable username-based character and item creation.
-          This allows users to create orphaned characters/items using Discord usernames instead of numeric IDs.
+          Link a Discord server to your community to enable username-based
+          character and item creation.
         </HelpText>
       </Section>
 
       <Section>
         <Row>
-          <StatusBadge status={isConnected ? 'connected' : 'disconnected'}>
+          <StatusBadge status={isConnected ? "connected" : "disconnected"}>
             {isConnected ? (
               <>
                 <CheckCircle size={16} />
@@ -267,24 +281,32 @@ export const DiscordIntegrationSettings: React.FC<DiscordIntegrationSettingsProp
           <Section>
             <Heading3>Step 1: Add Bot to Your Server</Heading3>
             <HelpText>
-              First, add the CharDB Bot to your Discord server using the invite link below.
-              The bot needs to be in your server to look up usernames.
+              First, add the CharDB Bot to your Discord server using the invite
+              link below. The bot needs to be in your server to look up
+              usernames.
             </HelpText>
             {botInviteUrl ? (
-              <LinkButton href={botInviteUrl} target="_blank" rel="noopener noreferrer">
+              <LinkButton
+                href={botInviteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <ExternalLink size={16} />
                 Open Bot Invite Link
               </LinkButton>
             ) : (
-              <HelpText style={{ color: 'error' }}>Failed to load bot invite URL</HelpText>
+              <HelpText style={{ color: "error" }}>
+                Failed to load bot invite URL
+              </HelpText>
             )}
           </Section>
 
           <Section>
             <Heading3>Step 2: Link Your Server</Heading3>
             <HelpText>
-              After adding the bot, enter your Discord Server ID below. You can find this by right-clicking
-              your server icon in Discord (with Developer Mode enabled) and selecting "Copy Server ID".
+              After adding the bot, enter your Discord Server ID below. You can
+              find this by right-clicking your server icon in Discord (with
+              Developer Mode enabled) and selecting "Copy Server ID".
             </HelpText>
 
             <InputRow>
@@ -303,9 +325,11 @@ export const DiscordIntegrationSettings: React.FC<DiscordIntegrationSettingsProp
                 variant="outline"
                 onClick={handleValidate}
                 disabled={!guildIdInput.trim() || validating || linking}
-                icon={validating ? <Loader size={16} className="spin" /> : undefined}
+                icon={
+                  validating ? <Loader size={16} className="spin" /> : undefined
+                }
               >
-                {validating ? 'Validating...' : 'Validate'}
+                {validating ? "Validating..." : "Validate"}
               </Button>
             </InputRow>
 
@@ -315,16 +339,18 @@ export const DiscordIntegrationSettings: React.FC<DiscordIntegrationSettingsProp
                   <ValidationMessage type="success">
                     <CheckCircle size={16} />
                     <div>
-                      Bot has access to server "{validationData.validateDiscordGuild.name}".
-                      You can now link this server to your community.
+                      Bot has access to server "
+                      {validationData.validateDiscordGuild.name}". You can now
+                      link this server to your community.
                     </div>
                   </ValidationMessage>
                 ) : (
                   <ValidationMessage type="error">
                     <AlertCircle size={16} />
                     <div>
-                      Bot does not have access to this server. Please make sure you've added the bot
-                      to your server using the invite link above.
+                      Bot does not have access to this server. Please make sure
+                      you've added the bot to your server using the invite link
+                      above.
                     </div>
                   </ValidationMessage>
                 )}
@@ -337,9 +363,15 @@ export const DiscordIntegrationSettings: React.FC<DiscordIntegrationSettingsProp
                   variant="primary"
                   onClick={handleLink}
                   disabled={linking}
-                  icon={linking ? <Loader size={16} className="spin" /> : <LinkIcon size={16} />}
+                  icon={
+                    linking ? (
+                      <Loader size={16} className="spin" />
+                    ) : (
+                      <LinkIcon size={16} />
+                    )
+                  }
                 >
-                  {linking ? 'Linking...' : 'Link Server'}
+                  {linking ? "Linking..." : "Link Server"}
                 </Button>
               </Row>
             )}
@@ -348,8 +380,8 @@ export const DiscordIntegrationSettings: React.FC<DiscordIntegrationSettingsProp
       ) : (
         <Section>
           <HelpText>
-            This Discord server is currently linked to your community. Users can now use Discord usernames
-            when creating orphaned characters and items.
+            This Discord server is currently linked to your community. This
+            allows enhanced integrations with discord features.
           </HelpText>
           <Row>
             <Button
@@ -358,7 +390,7 @@ export const DiscordIntegrationSettings: React.FC<DiscordIntegrationSettingsProp
               disabled={unlinking}
               icon={<Unlink size={16} />}
             >
-              {unlinking ? 'Unlinking...' : 'Unlink Server'}
+              {unlinking ? "Unlinking..." : "Unlink Server"}
             </Button>
           </Row>
         </Section>

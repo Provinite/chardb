@@ -13,6 +13,7 @@ export class PendingOwnershipService {
     characterId: string,
     provider: ExternalAccountProvider,
     providerAccountId: string,
+    displayIdentifier?: string,
   ): Promise<PendingOwnership> {
     // Check if character exists
     const character = await this.prisma.character.findUnique({
@@ -37,6 +38,7 @@ export class PendingOwnershipService {
         characterId,
         provider,
         providerAccountId,
+        displayIdentifier,
       },
     });
   }
@@ -48,6 +50,7 @@ export class PendingOwnershipService {
     itemId: string,
     provider: ExternalAccountProvider,
     providerAccountId: string,
+    displayIdentifier?: string,
   ): Promise<PendingOwnership> {
     // Check if item exists
     const item = await this.prisma.item.findUnique({
@@ -72,6 +75,7 @@ export class PendingOwnershipService {
         itemId,
         provider,
         providerAccountId,
+        displayIdentifier,
       },
     });
   }

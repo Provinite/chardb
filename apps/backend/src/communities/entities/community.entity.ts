@@ -12,11 +12,11 @@ export class Community {
 
   /** Discord guild (server) ID linked to this community */
   @Field(() => String, { nullable: true, description: 'Discord guild (server) ID linked to this community' })
-  discordGuildId?: string | null;
+  discordGuildId: string | null;
 
   /** Discord guild (server) name for display */
   @Field(() => String, { nullable: true, description: 'Discord guild (server) name for display' })
-  discordGuildName?: string | null;
+  discordGuildName: string | null;
 
   /** When the community was created */
   @Field({ description: 'When the community was created' })

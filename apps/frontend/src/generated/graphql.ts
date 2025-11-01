@@ -1593,6 +1593,8 @@ export type PendingOwnership = {
   claimedByUserId: Maybe<Scalars['ID']['output']>;
   /** When this pending ownership was created */
   createdAt: Scalars['DateTime']['output'];
+  /** Display-friendly identifier (username) if available */
+  displayIdentifier: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   item: Maybe<Item>;
   /** Item ID if this is a pending item ownership */
