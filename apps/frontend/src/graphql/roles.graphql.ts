@@ -9,6 +9,7 @@ export const ROLES_BY_COMMUNITY = gql`
         communityId
         canCreateSpecies
         canCreateCharacter
+        canCreateOrphanedCharacter
         canEditCharacter
         canEditOwnCharacter
         canEditSpecies
@@ -42,9 +43,12 @@ export const CREATE_ROLE = gql`
       communityId
       canCreateSpecies
       canCreateCharacter
+      canCreateOrphanedCharacter
       canEditCharacter
       canEditOwnCharacter
       canEditSpecies
+      canManageItems
+      canGrantItems
       canCreateInviteCode
       canListInviteCodes
       canCreateRole
@@ -69,9 +73,12 @@ export const UPDATE_ROLE = gql`
       communityId
       canCreateSpecies
       canCreateCharacter
+      canCreateOrphanedCharacter
       canEditCharacter
       canEditOwnCharacter
       canEditSpecies
+      canManageItems
+      canGrantItems
       canCreateInviteCode
       canListInviteCodes
       canCreateRole
@@ -108,6 +115,7 @@ export const COMMUNITY_MEMBERS_WITH_ROLES = gql`
           name
           canCreateSpecies
           canCreateCharacter
+          canCreateOrphanedCharacter
           canEditCharacter
           canEditOwnCharacter
           canEditSpecies
@@ -147,6 +155,7 @@ export const UPDATE_COMMUNITY_MEMBER = gql`
         name
         canCreateSpecies
         canCreateCharacter
+        canCreateOrphanedCharacter
         canEditCharacter
         canEditOwnCharacter
         canEditSpecies

@@ -318,6 +318,7 @@ interface PermissionMatrixProps {
 const PERMISSION_LABELS = {
   canCreateSpecies: 'Create Species',
   canCreateCharacter: 'Create Character',
+  canCreateOrphanedCharacter: 'Create Orphaned Characters',
   canEditCharacter: 'Edit Characters',
   canEditOwnCharacter: 'Edit Own Characters',
   canEditSpecies: 'Edit Species',
