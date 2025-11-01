@@ -104,6 +104,11 @@ module "backend" {
   deviantart_client_id     = var.deviantart_client_id
   deviantart_client_secret = var.deviantart_client_secret
   deviantart_callback_url  = var.deviantart_callback_url
+
+  # Discord OAuth Configuration
+  discord_client_id        = var.discord_client_id
+  discord_client_secret    = var.discord_client_secret
+  discord_callback_url     = var.discord_callback_url
 }
 
 # Frontend infrastructure

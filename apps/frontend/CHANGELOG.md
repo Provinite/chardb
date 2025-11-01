@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Discord OAuth Account Linking (#127)**: Added Discord account linking functionality
+  - Added Discord OAuth callback page (`/auth/discord/callback`) for handling OAuth redirects
+  - Added "Link Discord Account" button to Edit Profile page
+  - Added Discord accounts display with "DC" badge icon
+  - Supports both modern (@username) and legacy (username#1234) Discord username formats
+  - Follows same OAuth security pattern as DeviantArt integration
+
 ## [v4.2.0] - 2025-10-28
 
 ### Added

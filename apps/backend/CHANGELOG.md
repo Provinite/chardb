@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Discord OAuth Account Linking (#127)**: Added Discord as external account provider
+  - Added `DISCORD` to `ExternalAccountProvider` enum with database migration
+  - Implemented `DiscordStrategy` with Discord OAuth2 flow and user profile fetching
+  - Added `DiscordOAuthController` with endpoints (`GET /auth/discord` and `GET /auth/discord/callback`)
+  - Support for both modern (@username) and legacy (username#1234) Discord username formats
+  - Uses Discord API v10 `/users/@me` endpoint with `identify` scope
+  - Follows same OAuth security pattern as DeviantArt (JWT state parameter, 10min expiration)
+
 ## [v4.2.0] - 2025-10-28
 
 ### Added
