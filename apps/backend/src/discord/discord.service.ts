@@ -68,7 +68,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Generate the Discord bot invite URL
-   * Permissions: View Channels (268435456)
+   * Permissions: View Channels (1024) - Minimum permission needed to access guild and read members
    */
   generateBotInviteUrl(): string {
     const clientId = this.configService.get<string>('DISCORD_CLIENT_ID');
@@ -77,7 +77,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       throw new Error('DISCORD_CLIENT_ID not configured');
     }
 
-    const permissions = '268435456'; // View Channels
+    const permissions = '1024'; // VIEW_CHANNEL - required to access guild and read member list
     const scopes = 'bot';
 
     return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=${permissions}&scope=${scopes}`;
