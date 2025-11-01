@@ -39,6 +39,8 @@ import { Inventory } from "../items/entities/inventory.entity";
 import { ItemsService } from "../items/items.service";
 import { EmptyStringOnForbiddenFilter } from "../auth/filters/EmptyStringOnForbiddenFilter";
 import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
+import { CommunityMember } from "../community-members/entities/community-member.entity";
+import { DatabaseService } from "../database/database.service";
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -46,6 +48,7 @@ export class UsersResolver {
     private readonly usersService: UsersService,
     private readonly externalAccountsService: ExternalAccountsService,
     private readonly itemsService: ItemsService,
+    private readonly database: DatabaseService,
   ) {}
 
   @AllowGlobalPermission(GlobalPermission.CanListUsers)
@@ -233,6 +236,18 @@ export class UsersResolver {
     @Parent() user: User,
   ): Promise<ExternalAccount[]> {
     return this.externalAccountsService.findByUserId(user.id);
+  }
+
+  @AllowGlobalAdmin()
+  @AllowSelf()
+  @ResolveField("communityMemberships", () => [CommunityMember])
+  async resolveCommunityMemberships(
+    @Parent() user: User,
+  ): Promise<CommunityMember[]> {
+    return this.database.communityMember.findMany({
+      where: { userId: user.id },
+      include: { role: true },
+    }) as any;
   }
 
   @AllowAnyAuthenticated()

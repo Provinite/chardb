@@ -51,6 +51,7 @@ type Character {
 
   """ID of the owner. Null for orphaned/community-owned characters."""
   ownerId: ID
+  pendingOwnership: PendingOwnership
   price: Float
 
   """Species this character belongs to"""
@@ -723,7 +724,7 @@ type ExternalAccount {
   userId: ID!
 }
 
-"""External account providers supported for account linking"""
+"""The external account provider type"""
 enum ExternalAccountProvider {
   DEVIANTART
   DISCORD
@@ -907,8 +908,9 @@ type Item {
   itemType: ItemType!
   itemTypeId: ID!
   metadata: JSON
-  owner: User!
+  owner: User
   ownerId: ID!
+  pendingOwnership: PendingOwnership
   quantity: Int!
   updatedAt: DateTime!
 }
@@ -927,11 +929,9 @@ type ItemType {
   isConsumable: Boolean!
   isStackable: Boolean!
   isTradeable: Boolean!
-  itemType: ItemType!
   maxStackSize: Int
   metadata: JSON
   name: String!
-  owner: User!
   updatedAt: DateTime!
 }
 
@@ -1485,6 +1485,34 @@ input PendingOwnerInput {
   providerAccountId: String!
 }
 
+type PendingOwnership {
+  character: Character
+
+  """Character ID if this is a pending character ownership"""
+  characterId: ID
+
+  """When this pending ownership was claimed"""
+  claimedAt: DateTime
+  claimedByUser: User
+
+  """User who claimed this pending ownership"""
+  claimedByUserId: ID
+
+  """When this pending ownership was created"""
+  createdAt: DateTime!
+  id: ID!
+  item: Item
+
+  """Item ID if this is a pending item ownership"""
+  itemId: ID
+
+  """The external account provider (Discord, DeviantArt, etc.)"""
+  provider: ExternalAccountProvider!
+
+  """The account identifier on the external provider"""
+  providerAccountId: String!
+}
+
 type Query {
   activityFeed(input: ActivityFeedInput): [ActivityItem!]!
   character(id: ID!): Character!
@@ -1998,6 +2026,9 @@ type Role {
 
   """Whether members with this role can create invite codes"""
   canCreateInviteCode: Boolean!
+
+  """Whether members with this role can create orphaned characters"""
+  canCreateOrphanedCharacter: Boolean!
 
   """Whether members with this role can create new roles"""
   canCreateRole: Boolean!
@@ -2615,6 +2646,7 @@ type User {
   canGrantGlobalPermissions: Boolean!
   canListInviteCodes: Boolean!
   canListUsers: Boolean!
+  communityMemberships: [CommunityMember!]!
   createdAt: DateTime!
   dateOfBirth: DateTime
   displayName: String

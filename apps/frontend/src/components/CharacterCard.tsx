@@ -222,7 +222,11 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         <Meta>
           {showOwner ? (
             <OwnerInfo>
-              by {character.owner.displayName || character.owner.username}
+              {character.owner ? (
+                <>by {character.owner.displayName || character.owner.username}</>
+              ) : (
+                <>Community Character</>
+              )}
             </OwnerInfo>
           ) : (
             <div />

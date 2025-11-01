@@ -65,6 +65,10 @@ export class Role {
   @Field(() => Boolean, { description: 'Whether members with this role can grant items to community members' })
   canGrantItems!: boolean;
 
+  /** Permission to create orphaned characters */
+  @Field(() => Boolean, { description: 'Whether members with this role can create orphaned characters' })
+  canCreateOrphanedCharacter!: boolean;
+
   /** When the role was created */
   @Field(() => Date, { description: 'When the role was created' })
   createdAt!: Date;

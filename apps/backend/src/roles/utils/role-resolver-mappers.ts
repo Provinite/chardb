@@ -78,6 +78,7 @@ export function mapPrismaRoleToGraphQL(prismaRole: PrismaRole): Role {
     canManageMemberRoles: prismaRole.canManageMemberRoles,
     canManageItems: prismaRole.canManageItems,
     canGrantItems: prismaRole.canGrantItems,
+    canCreateOrphanedCharacter: prismaRole.canCreateOrphanedCharacter,
     createdAt: prismaRole.createdAt,
     updatedAt: prismaRole.updatedAt,
   };

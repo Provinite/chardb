@@ -19,6 +19,10 @@ export class CommunityMember {
   @Field(() => ID, { description: "The ID of the user who is the member" })
   userId!: string;
 
+  /** The role object */
+  @Field(() => Role, { description: "The role this member has" })
+  role?: Role;
+
   /** When the membership was created */
   @Field(() => Date, { description: "When the membership was created" })
   createdAt!: Date;

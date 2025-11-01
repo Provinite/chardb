@@ -6,3 +6,5 @@ export * from './Modal';
 export * from './Input';
 export * from './Card';
 export * from './Typography';
+export * from './RadioGroup';
+export * from './Alert';

@@ -182,6 +182,24 @@ export class PendingOwnershipService {
   }
 
   /**
+   * Find pending ownership for a character
+   */
+  async findByCharacterId(characterId: string): Promise<PendingOwnership | null> {
+    return this.prisma.pendingOwnership.findUnique({
+      where: { characterId },
+    });
+  }
+
+  /**
+   * Find pending ownership for an item
+   */
+  async findByItemId(itemId: string): Promise<PendingOwnership | null> {
+    return this.prisma.pendingOwnership.findUnique({
+      where: { itemId },
+    });
+  }
+
+  /**
    * Find all pending ownership records with optional filters
    */
   async findAll(filters?: {

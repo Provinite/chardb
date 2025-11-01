@@ -27,6 +27,9 @@ import { mapPrismaMediaToGraphQL } from "../media/utils/media-resolver-mappers";
 import { SpeciesVariantsService } from "../species-variants/species-variants.service";
 import { mapPrismaSpeciesVariantToGraphQL } from "../species-variants/utils/species-variant-resolver-mappers";
 import { SpeciesService } from "../species/species.service";
+import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import { PendingOwnership } from "../pending-ownership/entities/pending-ownership.entity";
+import { mapPrismaPendingOwnershipToGraphQL } from "../pending-ownership/utils/pending-ownership-mappers";
 import {
   Character as CharacterEntity,
   CharacterConnection,
@@ -65,6 +68,7 @@ export class CharactersResolver {
     private readonly mediaService: MediaService,
     private readonly speciesVariantsService: SpeciesVariantsService,
     private readonly speciesService: SpeciesService,
+    private readonly pendingOwnershipService: PendingOwnershipService,
   ) {}
 
   @AllowAnyAuthenticated()
@@ -269,6 +273,16 @@ export class CharactersResolver {
     const user = await this.usersService.findById(character.ownerId);
     if (!user) throw new Error("Owner not found");
     return mapPrismaUserToGraphQL(user);
+  }
+
+  /** Pending ownership field resolver */
+  @AllowUnauthenticated()
+  @ResolveField("pendingOwnership", () => PendingOwnership, { nullable: true })
+  async resolvePendingOwnershipField(
+    @Parent() character: CharacterEntity,
+  ): Promise<PendingOwnership | null> {
+    const pending = await this.pendingOwnershipService.findByCharacterId(character.id);
+    return pending ? mapPrismaPendingOwnershipToGraphQL(pending) : null;
   }
 
   /** Main media field resolver */

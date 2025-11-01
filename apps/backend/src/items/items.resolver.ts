@@ -19,6 +19,9 @@ import { ItemsService } from './items.service';
 import { CommunitiesService } from '../communities/communities.service';
 import { UsersService } from '../users/users.service';
 import { CommunityColorsService } from '../community-colors/community-colors.service';
+import { PendingOwnershipService } from '../pending-ownership/pending-ownership.service';
+import { PendingOwnership } from '../pending-ownership/entities/pending-ownership.entity';
+import { mapPrismaPendingOwnershipToGraphQL } from '../pending-ownership/utils/pending-ownership-mappers';
 import {
   ItemType as ItemTypeEntity,
   ItemTypeConnection,
@@ -45,6 +48,7 @@ export class ItemsResolver {
     private readonly communitiesService: CommunitiesService,
     private readonly usersService: UsersService,
     private readonly communityColorsService: CommunityColorsService,
+    private readonly pendingOwnershipService: PendingOwnershipService,
   ) {}
 
   // ==================== ItemType Mutations ====================
@@ -196,24 +200,6 @@ export class ItemsResolver {
   }
 
   @AllowUnauthenticated()
-  @ResolveField(() => ItemTypeEntity, { name: 'itemType' })
-  async resolveItemType(@Parent() item: ItemEntity): Promise<any> {
-    if (item.itemType) {
-      return item.itemType;
-    }
-    return this.itemsService.findItemTypeById(item.itemTypeId);
-  }
-
-  @AllowUnauthenticated()
-  @ResolveField(() => User, { name: 'owner' })
-  async resolveOwner(@Parent() item: ItemEntity): Promise<any> {
-    if (item.owner) {
-      return item.owner;
-    }
-    return this.usersService.findById(item.ownerId);
-  }
-
-  @AllowUnauthenticated()
   @ResolveField(() => CommunityColor, { name: 'color', nullable: true })
   async resolveColor(@Parent() itemType: ItemTypeEntity): Promise<CommunityColor | null> {
     if (!itemType.colorId) {
@@ -228,5 +214,41 @@ export class ItemsResolver {
       }
       throw error;
     }
+  }
+}
+
+// Separate resolver for Item entity fields
+@Resolver(() => ItemEntity)
+export class ItemFieldsResolver {
+  constructor(
+    private readonly itemsService: ItemsService,
+    private readonly usersService: UsersService,
+    private readonly pendingOwnershipService: PendingOwnershipService,
+  ) {}
+
+  @AllowUnauthenticated()
+  @ResolveField(() => ItemTypeEntity, { name: 'itemType' })
+  async resolveItemType(@Parent() item: ItemEntity): Promise<any> {
+    if (item.itemType) {
+      return item.itemType;
+    }
+    return this.itemsService.findItemTypeById(item.itemTypeId);
+  }
+
+  @AllowUnauthenticated()
+  @ResolveField(() => User, { name: 'owner', nullable: true })
+  async resolveOwner(@Parent() item: ItemEntity): Promise<any> {
+    if (!item.ownerId) return null; // Orphaned item
+    if (item.owner) {
+      return item.owner;
+    }
+    return this.usersService.findById(item.ownerId);
+  }
+
+  @AllowUnauthenticated()
+  @ResolveField(() => PendingOwnership, { name: 'pendingOwnership', nullable: true })
+  async resolvePendingOwnership(@Parent() item: ItemEntity): Promise<PendingOwnership | null> {
+    const pending = await this.pendingOwnershipService.findByItemId(item.id);
+    return pending ? mapPrismaPendingOwnershipToGraphQL(pending) : null;
   }
 }

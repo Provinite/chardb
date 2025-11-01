@@ -455,7 +455,7 @@ export const EditCharacterPage: React.FC = () => {
   };
 
   // Check if user owns this character
-  if (character && user && character.owner.id !== user.id) {
+  if (character && user && (!character.owner || character.owner.id !== user.id)) {
     return (
       <Container>
         <ErrorContainer>

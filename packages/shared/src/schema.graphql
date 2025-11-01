@@ -43,8 +43,11 @@ type Character {
   """ID of the main media item for this character"""
   mainMediaId: ID
   name: String!
-  owner: User!
-  ownerId: ID!
+  owner: User
+
+  """ID of the owner. Null for orphaned/community-owned characters."""
+  ownerId: ID
+  pendingOwnership: PendingOwnership
   price: Float
 
   """Species this character belongs to"""
@@ -143,6 +146,9 @@ type CharacterTag {
 
 """A trait value assigned to a character"""
 type CharacterTraitValue {
+  enumValue: EnumValue
+  trait: Trait
+
   """The ID of the trait this value belongs to"""
   traitId: ID!
 
@@ -223,6 +229,16 @@ type Community {
   name: String!
 
   """When the community was last updated"""
+  updatedAt: DateTime!
+}
+
+type CommunityColor {
+  community: Community
+  communityId: ID!
+  createdAt: DateTime!
+  hexCode: String!
+  id: ID!
+  name: String!
   updatedAt: DateTime!
 }
 
@@ -342,6 +358,9 @@ input CreateCharacterInput {
   isSellable: Boolean! = false
   isTradeable: Boolean! = false
   name: String!
+
+  """Create character with pending ownership for an external account"""
+  pendingOwner: PendingOwnerInput
   price: Float
   speciesId: ID
   speciesVariantId: ID
@@ -369,6 +388,12 @@ input CreateCommentInput {
   entityId: ID!
   entityType: CommentableType!
   parentId: ID
+}
+
+input CreateCommunityColorInput {
+  communityId: ID!
+  hexCode: String!
+  name: String!
 }
 
 input CreateCommunityInput {
@@ -401,6 +426,9 @@ input CreateCommunityMemberInput {
 }
 
 input CreateEnumValueInput {
+  """ID of the color for this enum value"""
+  colorId: ID
+
   """Name/display text of this enum value"""
   name: String!
 
@@ -444,7 +472,7 @@ input CreateInviteCodeInput {
 
 input CreateItemTypeInput {
   category: String
-  color: String
+  colorId: ID
   communityId: ID!
   description: String
   iconUrl: String
@@ -517,6 +545,9 @@ input CreateSpeciesInput {
 }
 
 input CreateSpeciesVariantInput {
+  """ID of the color for this species variant"""
+  colorId: ID
+
   """Name of the species variant"""
   name: String!
 
@@ -554,6 +585,9 @@ input CreateTextMediaInput {
 input CreateTraitInput {
   """Whether this trait allows multiple values per character"""
   allowsMultipleValues: Boolean = false
+
+  """ID of the color for this trait"""
+  colorId: ID
 
   """Name of the trait"""
   name: String!
@@ -597,6 +631,12 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 scalar DateTime
 
 type EnumValue {
+  """The color associated with this enum value"""
+  color: CommunityColor
+
+  """ID of the color for this enum value"""
+  colorId: ID
+
   """When the enum value was created"""
   createdAt: DateTime!
 
@@ -680,9 +720,10 @@ type ExternalAccount {
   userId: ID!
 }
 
-"""External account providers supported for account linking"""
+"""The external account provider type"""
 enum ExternalAccountProvider {
   DEVIANTART
+  DISCORD
 }
 
 type FollowListResult {
@@ -742,8 +783,13 @@ input GalleryFiltersInput {
 input GrantItemInput {
   itemTypeId: ID!
   metadata: String
+
+  """Create item with pending ownership for an external account"""
+  pendingOwner: PendingOwnerInput
   quantity: Int! = 1
-  userId: ID!
+
+  """User ID to grant item to. Omit for orphaned items."""
+  userId: ID
 }
 
 type Image {
@@ -858,15 +904,17 @@ type Item {
   itemType: ItemType!
   itemTypeId: ID!
   metadata: JSON
-  owner: User!
+  owner: User
   ownerId: ID!
+  pendingOwnership: PendingOwnership
   quantity: Int!
   updatedAt: DateTime!
 }
 
 type ItemType {
   category: String
-  color: String
+  color: CommunityColor
+  colorId: ID
   community: Community
   communityId: ID!
   createdAt: DateTime!
@@ -877,11 +925,9 @@ type ItemType {
   isConsumable: Boolean!
   isStackable: Boolean!
   isTradeable: Boolean!
-  itemType: ItemType!
   maxStackSize: Int
   metadata: JSON
   name: String!
-  owner: User!
   updatedAt: DateTime!
 }
 
@@ -1096,6 +1142,7 @@ type Mutation {
     """Community creation data"""
     createCommunityInput: CreateCommunityInput!
   ): Community!
+  createCommunityColor(input: CreateCommunityColorInput!): CommunityColor!
 
   """Create a new community invitation"""
   createCommunityInvitation(
@@ -1167,6 +1214,7 @@ type Mutation {
   deleteAccount: RemovalResponse!
   deleteCharacter(id: ID!): Boolean!
   deleteComment(id: ID!): Boolean!
+  deleteCommunityColor(id: ID!): Boolean!
   deleteGallery(id: ID!): RemovalResponse!
   deleteImage(id: ID!): Boolean!
 
@@ -1308,6 +1356,7 @@ type Mutation {
     """Community update data"""
     updateCommunityInput: UpdateCommunityInput!
   ): Community!
+  updateCommunityColor(id: ID!, input: UpdateCommunityColorInput!): CommunityColor!
 
   """Update a community membership (change role)"""
   updateCommunityMember(
@@ -1422,6 +1471,44 @@ type Mutation {
   ): [TraitListEntry!]!
 }
 
+input PendingOwnerInput {
+  """The external account provider"""
+  provider: ExternalAccountProvider!
+
+  """
+  The account identifier on the external provider (Discord user ID, DeviantArt username, etc.)
+  """
+  providerAccountId: String!
+}
+
+type PendingOwnership {
+  character: Character
+
+  """Character ID if this is a pending character ownership"""
+  characterId: ID
+
+  """When this pending ownership was claimed"""
+  claimedAt: DateTime
+  claimedByUser: User
+
+  """User who claimed this pending ownership"""
+  claimedByUserId: ID
+
+  """When this pending ownership was created"""
+  createdAt: DateTime!
+  id: ID!
+  item: Item
+
+  """Item ID if this is a pending item ownership"""
+  itemId: ID
+
+  """The external account provider (Discord, DeviantArt, etc.)"""
+  provider: ExternalAccountProvider!
+
+  """The account identifier on the external provider"""
+  providerAccountId: String!
+}
+
 type Query {
   activityFeed(input: ActivityFeedInput): [ActivityItem!]!
   character(id: ID!): Character!
@@ -1493,6 +1580,8 @@ type Query {
     """Community ID"""
     id: ID!
   ): Community!
+  communityColor(id: ID!): CommunityColor!
+  communityColors(communityId: ID!): [CommunityColor!]!
 
   """Get a community invitation by ID"""
   communityInvitationById(
@@ -1934,6 +2023,9 @@ type Role {
   """Whether members with this role can create invite codes"""
   canCreateInviteCode: Boolean!
 
+  """Whether members with this role can create orphaned characters"""
+  canCreateOrphanedCharacter: Boolean!
+
   """Whether members with this role can create new roles"""
   canCreateRole: Boolean!
 
@@ -2054,6 +2146,12 @@ type SpeciesConnection {
 }
 
 type SpeciesVariant {
+  """The color associated with this species variant"""
+  color: CommunityColor
+
+  """ID of the color for this species variant"""
+  colorId: ID
+
   """When the species variant was created"""
   createdAt: DateTime!
 
@@ -2132,6 +2230,12 @@ input ToggleLikeInput {
 type Trait {
   """Whether this trait allows multiple values per character"""
   allowsMultipleValues: Boolean!
+
+  """The color associated with this trait"""
+  color: CommunityColor
+
+  """ID of the color for this trait"""
+  colorId: ID
 
   """When the trait was created"""
   createdAt: DateTime!
@@ -2290,6 +2394,11 @@ input UpdateCommentInput {
   content: String!
 }
 
+input UpdateCommunityColorInput {
+  hexCode: String
+  name: String
+}
+
 input UpdateCommunityInput {
   """Name of the community"""
   name: String
@@ -2302,6 +2411,9 @@ input UpdateCommunityMemberInput {
 }
 
 input UpdateEnumValueInput {
+  """ID of the color for this enum value"""
+  colorId: ID
+
   """Name/display text of this enum value"""
   name: String
 
@@ -2353,7 +2465,7 @@ input UpdateItemInput {
 
 input UpdateItemTypeInput {
   category: String
-  color: String
+  colorId: ID
   description: String
   iconUrl: String
   imageUrl: String
@@ -2443,6 +2555,9 @@ input UpdateSpeciesInput {
 }
 
 input UpdateSpeciesVariantInput {
+  """ID of the color for this species variant"""
+  colorId: ID
+
   """Name of the species variant"""
   name: String
 
@@ -2462,6 +2577,9 @@ input UpdateTextContentInput {
 input UpdateTraitInput {
   """Whether this trait allows multiple values per character"""
   allowsMultipleValues: Boolean
+
+  """ID of the color for this trait"""
+  colorId: ID
 
   """Name of the trait"""
   name: String
@@ -2524,6 +2642,7 @@ type User {
   canGrantGlobalPermissions: Boolean!
   canListInviteCodes: Boolean!
   canListUsers: Boolean!
+  communityMemberships: [CommunityMember!]!
   createdAt: DateTime!
   dateOfBirth: DateTime
   displayName: String

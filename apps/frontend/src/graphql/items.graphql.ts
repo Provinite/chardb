@@ -38,6 +38,12 @@ export const ITEM_FRAGMENT = gql`
     metadata
     createdAt
     updatedAt
+    pendingOwnership {
+      id
+      provider
+      providerAccountId
+      createdAt
+    }
     itemType {
       ...ItemTypeFields
     }
