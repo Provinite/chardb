@@ -457,7 +457,17 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           </FormGroup>
         </Section>
 
-        {/* Orphaned Character Option */}
+        {/* Species Selection */}
+        <Section>
+          <SpeciesSelector
+            selectedSpecies={selectedSpecies}
+            selectedVariant={selectedVariant}
+            onSpeciesChange={setSelectedSpecies}
+            onVariantChange={setSelectedVariant}
+          />
+        </Section>
+
+        {/* Character Ownership */}
         {canCreateOrphanedCharacter && (
           <Section>
             <SectionTitle>
@@ -528,16 +538,6 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             )}
           </Section>
         )}
-
-        {/* Species Selection */}
-        <Section>
-          <SpeciesSelector
-            selectedSpecies={selectedSpecies}
-            selectedVariant={selectedVariant}
-            onSpeciesChange={setSelectedSpecies}
-            onVariantChange={setSelectedVariant}
-          />
-        </Section>
 
         {/* Trait Configuration */}
         {selectedSpecies && (
