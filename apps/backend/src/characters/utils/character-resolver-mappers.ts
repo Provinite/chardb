@@ -124,7 +124,7 @@ export function mapPrismaCharacterToGraphQL(
     age: prismaCharacter.age ?? undefined,
     gender: prismaCharacter.gender ?? undefined,
     details: prismaCharacter.details ?? undefined,
-    ownerId: prismaCharacter.ownerId,
+    ownerId: prismaCharacter.ownerId ?? undefined,
     creatorId: prismaCharacter.creatorId ?? undefined,
     mainMediaId: prismaCharacter.mainMediaId ?? undefined,
     visibility: prismaCharacter.visibility,

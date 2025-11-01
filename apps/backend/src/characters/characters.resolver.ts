@@ -252,8 +252,9 @@ export class CharactersResolver {
 
   /** Character owner field resolver */
   @AllowUnauthenticated()
-  @ResolveField("owner", () => User)
-  async resolveOwnerField(@Parent() character: CharacterEntity): Promise<User> {
+  @ResolveField("owner", () => User, { nullable: true })
+  async resolveOwnerField(@Parent() character: CharacterEntity): Promise<User | null> {
+    if (!character.ownerId) return null; // Orphaned character
     const user = await this.usersService.findById(character.ownerId);
     if (!user) throw new Error("Owner not found");
     return mapPrismaUserToGraphQL(user);

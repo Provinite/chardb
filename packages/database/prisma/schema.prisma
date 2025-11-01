@@ -97,6 +97,9 @@ model User {
   // Inventory relations
   items                  Item[]           @relation("UserItems")
 
+  // Pending ownership claims
+  claimedPendingItems    PendingOwnership[]
+
   @@map("users")
 }
 
@@ -126,7 +129,7 @@ model Character {
   age               String?    @db.VarChar(20)
   gender            String?    @db.VarChar(30)
   details           String?    @db.Text
-  ownerId           String     @map("owner_id")
+  ownerId           String?    @map("owner_id")
   creatorId         String?    @map("creator_id")
   mainMediaId       String?    @map("main_media_id")
   visibility        Visibility @default(PUBLIC)
@@ -140,7 +143,7 @@ model Character {
   updatedAt         DateTime   @updatedAt @map("updated_at")
 
   // Relations
-  owner          User            @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  owner          User?           @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   creator        User?           @relation("CharacterCreator", fields: [creatorId], references: [id], onDelete: SetNull)
   mainMedia      Media?          @relation("CharacterMainMedia", fields: [mainMediaId], references: [id], onDelete: SetNull)
   species        Species?        @relation(fields: [speciesId], references: [id], onDelete: SetNull)
@@ -154,6 +157,9 @@ model Character {
 
   // Ownership change tracking
   ownershipChanges CharacterOwnershipChange[]
+
+  // Pending ownership
+  pendingOwnership PendingOwnership?
 
   @@index([traitValues], type: Gin, map: "character_traitvalues_gin_idx")
   @@map("characters")
@@ -436,6 +442,7 @@ model Role {
   // Community-scoped permissions
   canCreateSpecies         Boolean @default(false) @map("can_create_species")
   canCreateCharacter       Boolean @default(false) @map("can_create_character")
+  canCreateOrphanedCharacter Boolean @default(false) @map("can_create_orphaned_character")
   canEditCharacter         Boolean @default(false) @map("can_edit_character")
   canEditOwnCharacter      Boolean @default(false) @map("can_edit_own_character")
   canEditSpecies           Boolean @default(false) @map("can_edit_species")
@@ -523,6 +530,32 @@ model CharacterOwnershipChange {
   @@map("character_ownership_changes")
 }
 
+model PendingOwnership {
+  id                 String   @id @default(uuid())
+
+  // Exactly one must be set (enforced by CHECK constraint)
+  characterId        String?  @unique @map("character_id")
+  itemId             String?  @unique @map("item_id")
+
+  // External account info
+  provider           ExternalAccountProvider
+  providerAccountId  String   @map("provider_account_id") @db.VarChar(255)
+
+  // Claiming info
+  createdAt          DateTime @default(now()) @map("created_at")
+  claimedAt          DateTime? @map("claimed_at")
+  claimedByUserId    String?  @map("claimed_by_user_id")
+
+  // Relations
+  character     Character? @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  item          Item?      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  claimedByUser User?      @relation(fields: [claimedByUserId], references: [id], onDelete: SetNull)
+
+  // Constraints
+  @@index([provider, providerAccountId])
+  @@map("pending_ownership")
+}
+
 model ItemType {
   id          String  @id @default(uuid())
   name        String  @db.VarChar(100)
@@ -559,7 +592,7 @@ model ItemType {
 model Item {
   id           String  @id @default(uuid())
   itemTypeId   String  @map("item_type_id")
-  ownerId      String  @map("owner_id")
+  ownerId      String? @map("owner_id")
   quantity     Int     @default(1)
 
   // Item state
@@ -570,7 +603,10 @@ model Item {
 
   // Relations
   itemType     ItemType @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
-  owner        User     @relation("UserItems", fields: [ownerId], references: [id], onDelete: Cascade)
+  owner        User?    @relation("UserItems", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Pending ownership
+  pendingOwnership PendingOwnership?
 
   @@map("items")
 }

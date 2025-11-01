@@ -47,8 +47,10 @@ type Character {
   """ID of the main media item for this character"""
   mainMediaId: ID
   name: String!
-  owner: User!
-  ownerId: ID!
+  owner: User
+
+  """ID of the owner. Null for orphaned/community-owned characters."""
+  ownerId: ID
   price: Float
 
   """Species this character belongs to"""
