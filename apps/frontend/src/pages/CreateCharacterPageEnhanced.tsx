@@ -1,19 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
-import { ArrowLeft, User, FileText, Settings, Tag as TagIcon } from "lucide-react";
-import { Button, TagInput } from "@chardb/ui";
+import { ArrowLeft, User, FileText, Settings, Tag as TagIcon, Users } from "lucide-react";
+import { Button, TagInput, RadioGroup, Radio } from "@chardb/ui";
 import {
   useCreateCharacterMutation,
   SpeciesDetailsFragment,
   SpeciesVariantDetailsFragment,
   CharacterTraitValueInput,
   Visibility,
+  ExternalAccountProvider,
 } from "../generated/graphql";
+import { useAuth } from "../contexts/AuthContext";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
 import { TraitForm } from "../components/character/TraitForm";
@@ -221,12 +223,6 @@ const CheckboxGroup = styled.label`
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
-const Checkbox = styled.input`
-  width: 18px;
-  height: 18px;
-  accent-color: ${({ theme }) => theme.colors.primary};
-`;
-
 const ErrorMessage = styled.span`
   font-size: 0.75rem;
   color: ${({ theme }) => theme.colors.danger};
@@ -271,20 +267,57 @@ const TagsHelp = styled.p`
   margin: 0.25rem 0 0 0;
 `;
 
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 1rem;
+`;
+
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: ${({ theme }) => theme.colors.primary};
+`;
+
+const HelpText = styled.p`
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin: 0.5rem 0 0 0;
+  line-height: 1.5;
+`;
+
 export const CreateCharacterPageEnhanced: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Species and variant state
   const [selectedSpecies, setSelectedSpecies] = useState<SpeciesDetailsFragment | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<SpeciesVariantDetailsFragment | null>(null);
-  
+
   // Trait values state
   const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>([]);
-  
+
   // Tags state
   const [tags, setTags] = useState<string[]>([]);
   const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
+
+  // Orphaned character state
+  const [isOrphaned, setIsOrphaned] = useState(false);
+  const [pendingOwnerProvider, setPendingOwnerProvider] = useState<ExternalAccountProvider>(ExternalAccountProvider.Discord);
+  const [pendingOwnerAccountId, setPendingOwnerAccountId] = useState("");
+
+  // Check if user has permission to create orphaned characters
+  const canCreateOrphanedCharacter = useMemo(() => {
+    if (!user) return false;
+    return user.communityMemberships?.some(
+      (membership) => membership.role.canCreateOrphanedCharacter
+    ) || false;
+  }, [user]);
 
   // Form handling
   const {
@@ -319,6 +352,14 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
 
   // Form submission
   const onSubmit = async (data: CharacterForm) => {
+    // Validate pending ownership fields if orphaned and pending owner is set
+    if (isOrphaned && pendingOwnerAccountId) {
+      if (!pendingOwnerAccountId.trim()) {
+        toast.error("Please enter a valid account ID for pending ownership");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -337,6 +378,13 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             speciesId: selectedSpecies?.id || undefined,
             speciesVariantId: selectedVariant?.id || undefined,
             traitValues: traitValues.length > 0 ? traitValues : undefined,
+            // Add pending owner if orphaned and account ID is provided
+            pendingOwner: isOrphaned && pendingOwnerAccountId.trim()
+              ? {
+                  provider: pendingOwnerProvider,
+                  providerAccountId: pendingOwnerAccountId.trim(),
+                }
+              : undefined,
           },
         },
       });
@@ -404,6 +452,78 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             {errors.gender && <ErrorMessage>{errors.gender.message}</ErrorMessage>}
           </FormGroup>
         </Section>
+
+        {/* Orphaned Character Option */}
+        {canCreateOrphanedCharacter && (
+          <Section>
+            <SectionTitle>
+              <Users size={20} />
+              Character Ownership
+            </SectionTitle>
+            <SectionDescription>
+              Choose whether this character will be owned by you or created as an orphaned/community character.
+            </SectionDescription>
+
+            <CheckboxLabel>
+              <Checkbox
+                checked={isOrphaned}
+                onChange={(e) => setIsOrphaned(e.target.checked)}
+              />
+              <span>Create as orphaned character (no owner)</span>
+            </CheckboxLabel>
+
+            {isOrphaned && (
+              <>
+                <HelpText>
+                  This character will be created without an owner. You can optionally assign pending ownership
+                  to an external account (Discord or DeviantArt). When that user links their account, they will
+                  automatically claim this character.
+                </HelpText>
+
+                <FormGroup style={{ marginTop: '1rem' }}>
+                  <Label>Pending Ownership (Optional)</Label>
+                  <HelpText style={{ marginTop: '0.25rem', marginBottom: '0.75rem' }}>
+                    Leave blank to create a community character with no pending owner.
+                  </HelpText>
+
+                  <RadioGroup
+                    value={pendingOwnerProvider}
+                    onChange={(value: string) => setPendingOwnerProvider(value as ExternalAccountProvider)}
+                  >
+                    <Radio value={ExternalAccountProvider.Discord}>
+                      Discord Account
+                    </Radio>
+                    <Radio value={ExternalAccountProvider.Deviantart}>
+                      DeviantArt Account
+                    </Radio>
+                  </RadioGroup>
+                </FormGroup>
+
+                <FormGroup>
+                  <Label htmlFor="pendingOwnerAccountId">
+                    {pendingOwnerProvider === ExternalAccountProvider.Discord ? 'Discord User ID' : 'DeviantArt Username'}
+                  </Label>
+                  <Input
+                    id="pendingOwnerAccountId"
+                    type="text"
+                    placeholder={
+                      pendingOwnerProvider === ExternalAccountProvider.Discord
+                        ? "e.g., 123456789012345678"
+                        : "e.g., username"
+                    }
+                    value={pendingOwnerAccountId}
+                    onChange={(e) => setPendingOwnerAccountId(e.target.value)}
+                  />
+                  <HelpText>
+                    {pendingOwnerProvider === ExternalAccountProvider.Discord
+                      ? "Enter the Discord user ID (not the username). You can find this by enabling Developer Mode in Discord settings and right-clicking the user."
+                      : "Enter the DeviantArt username of the person who will claim this character."}
+                  </HelpText>
+                </FormGroup>
+              </>
+            )}
+          </Section>
+        )}
 
         {/* Species Selection */}
         <Section>

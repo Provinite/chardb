@@ -24,6 +24,12 @@ export const GET_CHARACTERS = gql`
         customFields
         createdAt
         updatedAt
+        pendingOwnership {
+          id
+          provider
+          providerAccountId
+          createdAt
+        }
         owner {
           id
           username

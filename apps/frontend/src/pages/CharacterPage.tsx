@@ -606,6 +606,14 @@ export const CharacterPage: React.FC = () => {
             <MetaBadge variant={getVisibilityVariant(character.visibility)}>
               {character.visibility}
             </MetaBadge>
+            {!character.owner && !character.pendingOwnership && (
+              <MetaBadge variant="default">Community Character</MetaBadge>
+            )}
+            {character.pendingOwnership && (
+              <MetaBadge variant="warning">
+                Pending: {character.pendingOwnership.provider === 'DISCORD' ? '🎮' : '🎨'} {character.pendingOwnership.providerAccountId}
+              </MetaBadge>
+            )}
             {character.isSellable && (
               <MetaBadge variant="success">For Sale</MetaBadge>
             )}
