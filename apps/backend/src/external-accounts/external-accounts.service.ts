@@ -1,10 +1,22 @@
-import { Injectable, ConflictException, NotFoundException } from "@nestjs/common";
+import { Injectable, ConflictException, NotFoundException, Logger } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import { ExternalAccountProvider } from "@prisma/client";
+import { ExternalAccount, ExternalAccountProvider } from "@chardb/database";
+import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+
+export interface LinkAccountResult {
+  externalAccount: ExternalAccount;
+  claimedCharacterIds: string[];
+  claimedItemIds: string[];
+}
 
 @Injectable()
 export class ExternalAccountsService {
-  constructor(private database: DatabaseService) {}
+  private readonly logger = new Logger(ExternalAccountsService.name);
+
+  constructor(
+    private database: DatabaseService,
+    private pendingOwnershipService: PendingOwnershipService,
+  ) {}
 
   /**
    * Find all external accounts for a user
@@ -32,13 +44,14 @@ export class ExternalAccountsService {
 
   /**
    * Link an external account to a user
+   * Automatically claims any pending items/characters for this account
    */
   async linkExternalAccount(
     userId: string,
     provider: ExternalAccountProvider,
     providerAccountId: string,
     displayName: string,
-  ) {
+  ): Promise<LinkAccountResult> {
     // Check if this provider account is already linked to another user
     const existingAccount = await this.database.externalAccount.findUnique({
       where: {
@@ -63,7 +76,7 @@ export class ExternalAccountsService {
     }
 
     // Create the link
-    return this.database.externalAccount.create({
+    const externalAccount = await this.database.externalAccount.create({
       data: {
         userId,
         provider,
@@ -71,6 +84,36 @@ export class ExternalAccountsService {
         displayName,
       },
     });
+
+    // Automatically claim any pending items/characters for this account
+    this.logger.log(`Checking for pending items for ${provider}:${providerAccountId}...`);
+    const claimedItems = await this.pendingOwnershipService.claimAllForAccount(
+      userId,
+      provider,
+      providerAccountId,
+    );
+
+    const claimedCharacterIds = claimedItems
+      .filter((item) => item.characterId)
+      .map((item) => item.characterId!);
+
+    const claimedItemIds = claimedItems
+      .filter((item) => item.itemId)
+      .map((item) => item.itemId!);
+
+    if (claimedItems.length > 0) {
+      this.logger.log(
+        `Claimed ${claimedCharacterIds.length} characters and ${claimedItemIds.length} items for user ${userId}`,
+      );
+    } else {
+      this.logger.log(`No pending items found for ${provider}:${providerAccountId}`);
+    }
+
+    return {
+      externalAccount,
+      claimedCharacterIds,
+      claimedItemIds,
+    };
   }
 
   /**

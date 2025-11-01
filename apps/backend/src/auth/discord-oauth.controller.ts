@@ -77,17 +77,24 @@ export class DiscordOAuthController {
         throw new Error("Invalid OAuth response");
       }
 
-      // Link the account directly in the backend
-      await this.externalAccountsService.linkExternalAccount(
+      // Link the account directly in the backend (this automatically claims pending items)
+      const result = await this.externalAccountsService.linkExternalAccount(
         userId,
         ExternalAccountProvider.DISCORD,
         oauthData.providerAccountId,
         oauthData.displayName
       );
 
-      // Redirect to frontend with success status only
-      const callbackUrl = `${frontendUrl}/auth/discord/callback?success=true`;
-      res.redirect(callbackUrl);
+      // Redirect to frontend with success status and claimed items info
+      const callbackUrl = new URL(`${frontendUrl}/auth/discord/callback`);
+      callbackUrl.searchParams.set('success', 'true');
+      if (result.claimedCharacterIds.length > 0) {
+        callbackUrl.searchParams.set('claimedCharacters', result.claimedCharacterIds.length.toString());
+      }
+      if (result.claimedItemIds.length > 0) {
+        callbackUrl.searchParams.set('claimedItems', result.claimedItemIds.length.toString());
+      }
+      res.redirect(callbackUrl.toString());
     } catch (error) {
       // Redirect to frontend with error message
       const errorUrl = `${frontendUrl}/auth/discord/callback?error=${encodeURIComponent(error.message)}`;
