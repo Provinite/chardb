@@ -36,20 +36,43 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
 
       // Create promise that resolves when bot is ready
       this.readyPromise = new Promise((resolve, reject) => {
-        // Set up ready event
-        this.client.once('ready', () => {
+        let settled = false;
+        let timeoutId: NodeJS.Timeout;
+
+        // Cleanup function to prevent memory leaks and multiple settlements
+        const cleanup = () => {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+        };
+
+        // Handle successful connection
+        const handleResolve = () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
           this.logger.log(`Discord bot connected as ${this.client.user?.tag}`);
           resolve();
-        });
+        };
 
-        // Set up error handler
-        this.client.on('error', (error) => {
-          this.logger.error('Discord client error:', error);
-        });
+        // Handle connection errors
+        const handleReject = (error: Error) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          this.logger.error('Discord client initialization error:', error);
+          reject(error);
+        };
+
+        // Set up ready event
+        this.client.once('ready', handleResolve);
+
+        // Set up error handler for initialization errors - reject promise on error
+        this.client.once('error', handleReject);
 
         // Timeout after 30 seconds
-        setTimeout(() => {
-          reject(new Error('Discord bot connection timeout after 30 seconds'));
+        timeoutId = setTimeout(() => {
+          handleReject(new Error('Discord bot connection timeout after 30 seconds'));
         }, 30000);
       });
 
