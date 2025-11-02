@@ -394,9 +394,8 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             speciesId: selectedSpecies?.id || undefined,
             speciesVariantId: selectedVariant?.id || undefined,
             traitValues: traitValues.length > 0 ? traitValues : undefined,
-            // Set isOrphaned flag for community characters
-            isOrphaned: isOrphaned,
             // Add pending owner if orphaned and account ID is provided
+            // Note: isOrphaned is a computed field on the backend (ownerId === null)
             pendingOwner: isOrphaned && pendingOwnerAccountId.trim()
               ? {
                   provider: pendingOwnerProvider,
