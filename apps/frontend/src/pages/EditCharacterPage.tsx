@@ -775,9 +775,6 @@ export const EditCharacterPage: React.FC = () => {
                     checked={clearPendingOwnership}
                     onChange={(e) => {
                       setClearPendingOwnership(e.target.checked);
-                      if (e.target.checked) {
-                        setPendingOwnerAccountId("");
-                      }
                     }}
                   />
                   Clear pending ownership
