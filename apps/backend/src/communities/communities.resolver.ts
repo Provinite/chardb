@@ -1,4 +1,13 @@
-import { Resolver, Query, Mutation, Args, ID, Int, ResolveField, Parent } from "@nestjs/graphql";
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Args,
+  ID,
+  Int,
+  ResolveField,
+  Parent,
+} from "@nestjs/graphql";
 import { CommunitiesService } from "./communities.service";
 import { Community, CommunityConnection } from "./entities/community.entity";
 import {
@@ -12,17 +21,19 @@ import {
   mapPrismaCommunityConnectionToGraphQL,
 } from "./utils/community-resolver-mappers";
 import { RemovalResponse } from "../shared/entities/removal-response.entity";
-import { CurrentUser, CurrentUserType } from "../auth/decorators/CurrentUser";
+import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowGlobalPermission } from "../auth/decorators/AllowGlobalPermission";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { GlobalPermission } from "../auth/GlobalPermission";
 import { User } from "../users/entities/user.entity";
 import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
 import { DiscordService } from "../discord/discord.service";
 import { DiscordGuildInfo } from "./dto/discord-guild-info.dto";
-import { ForbiddenException, BadRequestException } from "@nestjs/common";
+import { BadRequestException } from "@nestjs/common";
+import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
+import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
+import { CommunityPermission } from "../auth/CommunityPermission";
 
 @Resolver(() => Community)
 export class CommunitiesResolver {
@@ -133,7 +144,10 @@ export class CommunitiesResolver {
     return this.discordService.generateBotInviteUrl();
   }
 
-  @AllowAnyAuthenticated()
+  @ResolveCommunityFrom({
+    communityId: "communityId",
+  })
+  @AllowCommunityPermission(CommunityPermission.CanEditRole)
   @Query(() => DiscordGuildInfo, {
     name: "validateDiscordGuild",
     description: "Validate that the bot has access to a Discord guild",
@@ -151,7 +165,10 @@ export class CommunitiesResolver {
     return guildInfo;
   }
 
-  @AllowAnyAuthenticated()
+  @ResolveCommunityFrom({
+    communityId: "communityId",
+  })
+  @AllowCommunityPermission(CommunityPermission.CanEditRole)
   @Mutation(() => Community, {
     name: "linkDiscordGuild",
     description: "Link a Discord guild to a community",
@@ -161,22 +178,7 @@ export class CommunitiesResolver {
     communityId: string,
     @Args("guildId", { type: () => ID, description: "Discord guild ID" })
     guildId: string,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<Community> {
-    // Check if user has permission to edit this community
-    // For now, using global permission as a simple check
-    // TODO: Implement community-specific permission checking
-    const hasPermission = await this.communitiesService.userCanEditCommunity(
-      user.id,
-      communityId,
-    );
-
-    if (!hasPermission) {
-      throw new ForbiddenException(
-        "You do not have permission to edit this community",
-      );
-    }
-
     // Verify bot has access to the guild
     const hasAccess = await this.discordService.verifyGuildAccess(guildId);
     if (!hasAccess) {
@@ -188,7 +190,9 @@ export class CommunitiesResolver {
     // Get guild info
     const guildInfo = await this.discordService.getGuildInfo(guildId);
     if (!guildInfo) {
-      throw new BadRequestException("Unable to fetch Discord guild information");
+      throw new BadRequestException(
+        "Unable to fetch Discord guild information",
+      );
     }
 
     // Update community with guild info
@@ -200,7 +204,10 @@ export class CommunitiesResolver {
     return mapPrismaCommunityToGraphQL(prismaResult);
   }
 
-  @AllowAnyAuthenticated()
+  @ResolveCommunityFrom({
+    communityId: "communityId",
+  })
+  @AllowCommunityPermission(CommunityPermission.CanEditRole)
   @Mutation(() => Community, {
     name: "unlinkDiscordGuild",
     description: "Unlink a Discord guild from a community",
@@ -208,20 +215,7 @@ export class CommunitiesResolver {
   async unlinkDiscordGuild(
     @Args("communityId", { type: () => ID, description: "Community ID" })
     communityId: string,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<Community> {
-    // Check if user has permission to edit this community
-    const hasPermission = await this.communitiesService.userCanEditCommunity(
-      user.id,
-      communityId,
-    );
-
-    if (!hasPermission) {
-      throw new ForbiddenException(
-        "You do not have permission to edit this community",
-      );
-    }
-
     // Remove guild association
     const prismaResult = await this.communitiesService.update(communityId, {
       discordGuildId: null,

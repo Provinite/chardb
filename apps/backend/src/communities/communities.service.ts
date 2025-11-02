@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { Prisma } from "@chardb/database";
 
 /**
  * Service layer input types for communities operations.
@@ -47,7 +47,7 @@ export class CommunitiesService {
       // 2. Create default roles
       const adminRole = await prisma.role.create({
         data: {
-          name: 'Admin',
+          name: "Admin",
           communityId: community.id,
           canCreateSpecies: true,
           canCreateCharacter: true,
@@ -65,7 +65,7 @@ export class CommunitiesService {
 
       const moderatorRole = await prisma.role.create({
         data: {
-          name: 'Moderator',
+          name: "Moderator",
           communityId: community.id,
           canCreateSpecies: false,
           canCreateCharacter: true,
@@ -83,7 +83,7 @@ export class CommunitiesService {
 
       const memberRole = await prisma.role.create({
         data: {
-          name: 'Member',
+          name: "Member",
           communityId: community.id,
           canCreateSpecies: false,
           canCreateCharacter: true,
@@ -121,7 +121,7 @@ export class CommunitiesService {
         take: first + 1, // Take one extra to check if there's a next page
         skip,
         cursor,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.community.count(),
     ]);
@@ -157,8 +157,10 @@ export class CommunitiesService {
     const updateData: Prisma.CommunityUpdateInput = {};
 
     if (input.name !== undefined) updateData.name = input.name;
-    if (input.discordGuildId !== undefined) updateData.discordGuildId = input.discordGuildId;
-    if (input.discordGuildName !== undefined) updateData.discordGuildName = input.discordGuildName;
+    if (input.discordGuildId !== undefined)
+      updateData.discordGuildId = input.discordGuildId;
+    if (input.discordGuildName !== undefined)
+      updateData.discordGuildName = input.discordGuildName;
 
     return this.prisma.community.update({
       where: { id },
@@ -190,8 +192,8 @@ export class CommunitiesService {
 
     if (filters.search) {
       where.OR = [
-        { username: { contains: filters.search, mode: 'insensitive' } },
-        { displayName: { contains: filters.search, mode: 'insensitive' } },
+        { username: { contains: filters.search, mode: "insensitive" } },
+        { displayName: { contains: filters.search, mode: "insensitive" } },
       ];
     }
 
@@ -204,39 +206,7 @@ export class CommunitiesService {
         avatarUrl: true,
       },
       take: Math.min(filters.limit || 10, 20), // Max 20
-      orderBy: { username: 'asc' },
+      orderBy: { username: "asc" },
     });
-  }
-
-  /**
-   * Check if a user has permission to edit a community
-   * Currently checks if user is an admin of the community (has role with canEditRole or canCreateRole permission)
-   */
-  async userCanEditCommunity(userId: string, communityId: string): Promise<boolean> {
-    // Check if user is a global admin
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-
-    if (user?.isAdmin) {
-      return true;
-    }
-
-    // Check if user has a role in this community with edit permissions
-    const membership = await this.prisma.communityMember.findFirst({
-      where: {
-        userId,
-        role: {
-          communityId,
-          OR: [
-            { canEditRole: true },
-            { canCreateRole: true },
-          ],
-        },
-      },
-    });
-
-    return !!membership;
   }
 }
