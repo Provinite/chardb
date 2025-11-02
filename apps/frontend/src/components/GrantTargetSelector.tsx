@@ -496,9 +496,9 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
                 <HelpText>
                   {provider === 'DISCORD'
                     ? discordGuildId
-                      ? `Enter Discord username (with @) or numeric user ID. Server: ${discordGuildName || 'Connected'}`
+                      ? `Enter Discord handle (with @) or numeric user ID. Server: ${discordGuildName || 'Connected'}`
                       : 'Enter numeric Discord user ID (17-19 digits). No Discord server connected to this community.'
-                    : 'Enter DeviantArt username'}
+                    : 'Enter DeviantArt account name'}
                 </HelpText>
               </InputWrapper>
               {provider === 'DISCORD' && (
@@ -530,7 +530,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
           {!discordGuildId && provider === 'DISCORD' && (
             <Alert variant="warning">
               No Discord server is linked to this community. You must use numeric
-              Discord user IDs. Username resolution requires a connected Discord
+              Discord user IDs. Handle resolution requires a connected Discord
               server.
             </Alert>
           )}
