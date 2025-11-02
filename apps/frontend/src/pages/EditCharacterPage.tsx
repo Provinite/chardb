@@ -6,7 +6,7 @@ import { z } from "zod";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
 import { AlertTriangle } from "lucide-react";
-import { Button, TagInput } from "@chardb/ui";
+import { Button, TagInput, Input } from "@chardb/ui";
 import {
   useGetCharacterQuery,
   useUpdateCharacterMutation,
@@ -145,36 +145,6 @@ const Label = styled.label`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-`;
-
-const Input = styled.input<{ hasError?: boolean }>`
-  padding: ${({ theme }) => theme.spacing.sm};
-  border: 2px solid
-    ${({ theme, hasError }) =>
-      hasError ? theme.colors.error : theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  background: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text.primary};
-  transition: border-color 0.2s;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme, hasError }) =>
-      hasError ? theme.colors.error : theme.colors.primary};
-  }
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.text.muted};
-  }
-
-  &:disabled {
-    background: ${({ theme }) => theme.colors.surface};
-    color: ${({ theme }) => theme.colors.text.muted};
-    opacity: 0.6;
-    cursor: not-allowed;
-    border-color: ${({ theme }) => theme.colors.border};
-  }
 `;
 
 const Select = styled.select<{ hasError?: boolean }>`
