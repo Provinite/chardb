@@ -167,6 +167,14 @@ const Input = styled.input<{ hasError?: boolean }>`
   &::placeholder {
     color: ${({ theme }) => theme.colors.text.muted};
   }
+
+  &:disabled {
+    background: ${({ theme }) => theme.colors.surface};
+    color: ${({ theme }) => theme.colors.text.muted};
+    opacity: 0.6;
+    cursor: not-allowed;
+    border-color: ${({ theme }) => theme.colors.border};
+  }
 `;
 
 const Select = styled.select<{ hasError?: boolean }>`
