@@ -714,8 +714,10 @@ export const EditCharacterPage: React.FC = () => {
           <FormSection>
             <SectionTitle>Orphaned Character Transfer</SectionTitle>
             <InfoBox>
-              This character is orphaned (has no owner). You can set a pending owner to transfer
-              it to someone who hasn't registered yet, or leave it unassigned for now.
+              This character is orphaned (has no owner). You can:
+              <br />• Leave it unassigned (no pending owner)
+              <br />• Assign it to a registered user in this community
+              <br />• Set a pending owner for someone who hasn't registered yet (Discord/DeviantArt)
             </InfoBox>
 
             <GrantTargetSelector
@@ -727,7 +729,8 @@ export const EditCharacterPage: React.FC = () => {
               allowPendingOwner={true}
               discordGuildId={character.species?.community?.discordGuildId}
               discordGuildName={character.species?.community?.discordGuildName}
-              userLabel="No Pending Owner (Unassigned)"
+              unassignedLabel="Leave Unassigned"
+              userLabel="Assign to Registered User"
               pendingOwnerLabel="Set Pending Owner"
               communityId={character.species?.community?.id || ''}
               onValidationChange={setIsGrantTargetValid}
@@ -771,7 +774,7 @@ export const EditCharacterPage: React.FC = () => {
           <Button
             type="submit"
             variant="primary"
-            disabled={isSubmitting || (characterTarget?.type === 'pending' && !isGrantTargetValid)}
+            disabled={isSubmitting || !isGrantTargetValid}
           >
             {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>

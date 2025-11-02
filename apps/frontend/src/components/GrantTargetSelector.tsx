@@ -10,9 +10,10 @@ import { useResolveDiscordUserLazyQuery } from '../graphql/communities.graphql';
  * GrantTargetSelector - Component for selecting a grant/ownership target
  *
  * Provides a unified interface for selecting who should receive an item or character.
- * Supports two modes:
- * 1. User Assignment - Assign to a specific registered user
- * 2. Pending Owner - Create orphaned with pending ownership for external account (Discord/DeviantArt)
+ * Supports three modes:
+ * 1. Leave Unassigned - No owner/target selected (for orphaned characters/items)
+ * 2. User Assignment - Assign to a specific registered user
+ * 3. Pending Owner - Create orphaned with pending ownership for external account (Discord/DeviantArt)
  *
  * Features:
  * - Integrated user search via UserTypeahead
@@ -87,6 +88,9 @@ export interface GrantTargetSelectorProps {
 
   /** Discord guild name for display */
   discordGuildName?: string | null;
+
+  /** Label for unassigned mode */
+  unassignedLabel?: string;
 
   /** Label for user selection mode */
   userLabel?: string;
@@ -217,6 +221,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   allowPendingOwner = false,
   discordGuildId,
   discordGuildName,
+  unassignedLabel = 'Leave Unassigned',
   userLabel = 'Assign to User',
   pendingOwnerLabel = 'Orphaned with Pending Owner',
   disabled = false,
@@ -227,7 +232,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   const [resolveDiscordUser] = useResolveDiscordUserLazyQuery();
 
   // Component state
-  const [selectionMode, setSelectionMode] = useState<'user' | 'pending'>('user');
+  const [selectionMode, setSelectionMode] = useState<'user' | 'pending' | 'unassigned'>('user');
   const [provider, setProvider] = useState<'DISCORD' | 'DEVIANTART'>('DISCORD');
   const [accountId, setAccountId] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -241,6 +246,10 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
   // Calculate validation state
   const isValid = useMemo(() => {
+    if (selectionMode === 'unassigned') {
+      // Unassigned mode: always valid, no value required
+      return true;
+    }
     if (selectionMode === 'user') {
       // User mode: valid if a user is selected
       return !!value;
@@ -268,8 +277,8 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   // Initialize state from value
   useEffect(() => {
     if (!value) {
-      // Only clear provider and account fields, preserve selectionMode
-      // This allows provider switching to work without resetting the entire mode
+      // No value means unassigned mode
+      setSelectionMode('unassigned');
       setProvider('DISCORD');
       setAccountId('');
       setValidationError(null);
@@ -390,7 +399,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
   // Handle selection mode change
   const handleModeChange = (mode: string) => {
-    setSelectionMode(mode as 'user' | 'pending');
+    setSelectionMode(mode as 'user' | 'pending' | 'unassigned');
     setValidationError(null);
     setCheckError(null);
     setResolvedUser(null);
@@ -406,6 +415,9 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
       <Section>
         <Label>Grant Target</Label>
         <RadioGroup value={selectionMode} onChange={handleModeChange}>
+          <Radio value="unassigned" disabled={disabled}>
+            {unassignedLabel}
+          </Radio>
           <Radio value="user" disabled={disabled}>
             {userLabel}
           </Radio>
