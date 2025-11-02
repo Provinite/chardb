@@ -128,6 +128,7 @@ describe('CharacterLikesResolver', () => {
     id: 'character-1',
     name: 'Test Character',
     ownerId: 'user-1',
+    isOrphaned: false,
     visibility: 'PUBLIC' as any,
     isSellable: false,
     isTradeable: false,

@@ -51,21 +51,15 @@ export class CharactersService {
     input: {
       characterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator">;
       tags?: string[];
-      ownerId?: string | null; // Explicit owner ID (null for orphaned characters)
       pendingOwner?: PendingOwnerInput; // Pending ownership info
     },
   ) {
-    const { characterData, tags, ownerId, pendingOwner } = input;
+    const { characterData, tags, pendingOwner } = input;
 
     // Determine the actual owner:
     // - If pendingOwner is provided, character is orphaned (ownerId = null)
-    // - If ownerId is explicitly null, character is orphaned
-    // - Otherwise, use provided ownerId or default to userId (current user)
-    const actualOwnerId = pendingOwner
-      ? null
-      : ownerId !== undefined
-        ? ownerId
-        : userId;
+    // - Otherwise, owner is the current user (userId)
+    const actualOwnerId = pendingOwner ? null : userId;
 
     // Validate trait values if species and trait values are provided
     const speciesId = characterData.species?.connect?.id;

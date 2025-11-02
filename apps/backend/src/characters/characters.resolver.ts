@@ -79,8 +79,8 @@ export class CharactersResolver {
     @Args("input") input: CreateCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
-    // If creating orphaned character, require canCreateOrphanedCharacter permission
-    if (input.isOrphaned || input.pendingOwner) {
+    // If creating orphaned character (with pending ownership), require canCreateOrphanedCharacter permission
+    if (input.pendingOwner) {
       const hasPermission = await this.charactersService.userHasOrphanedCharacterPermission(
         user.id,
         input.speciesId!,
@@ -222,6 +222,14 @@ export class CharactersResolver {
     @Parent() character: CharacterEntity,
   ): Promise<string[]> {
     return this.tagsService.getCharacterTags(character.id);
+  }
+
+  @AllowUnauthenticated()
+  @ResolveField("isOrphaned", () => Boolean)
+  async resolveIsOrphanedField(
+    @Parent() character: CharacterEntity,
+  ): Promise<boolean> {
+    return character.ownerId === null || character.ownerId === undefined;
   }
 
   @AllowUnauthenticated()

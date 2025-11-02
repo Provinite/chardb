@@ -30,10 +30,9 @@ function mapTraitValues(
 export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
   characterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator">;
   tags?: string[];
-  ownerId?: string | null;
   pendingOwner?: { provider: any; providerAccountId: string };
 } {
-  const { tags, pendingOwner, isOrphaned, ...characterData } = input;
+  const { tags, pendingOwner, ...characterData } = input;
 
   const prismaCharacterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator"> = {
     name: characterData.name,
@@ -53,7 +52,6 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
   return {
     characterData: prismaCharacterData,
     tags,
-    ownerId: isOrphaned ? null : undefined,  // null for orphaned, undefined for normal
     pendingOwner,
   };
 }
@@ -129,6 +127,7 @@ export function mapPrismaCharacterToGraphQL(
     gender: prismaCharacter.gender ?? undefined,
     details: prismaCharacter.details ?? undefined,
     ownerId: prismaCharacter.ownerId ?? undefined,
+    isOrphaned: prismaCharacter.ownerId === null,
     creatorId: prismaCharacter.creatorId ?? undefined,
     mainMediaId: prismaCharacter.mainMediaId ?? undefined,
     visibility: prismaCharacter.visibility,

@@ -37,6 +37,7 @@ type Character {
   details: String
   gender: String
   id: ID!
+  isOrphaned: Boolean!
   isSellable: Boolean!
   isTradeable: Boolean!
   likesCount: Int!
@@ -365,9 +366,6 @@ input CreateCharacterInput {
   customFields: String
   details: String
   gender: String
-
-  """Create character without an owner (orphaned/community character)"""
-  isOrphaned: Boolean! = false
   isSellable: Boolean! = false
   isTradeable: Boolean! = false
   name: String!
