@@ -103,6 +103,12 @@ variable "discord_callback_url" {
   type        = string
 }
 
+variable "discord_bot_token" {
+  description = "Discord bot token for bot integration"
+  type        = string
+  sensitive   = true
+}
+
 # SSH key is now auto-generated during deployment
 
 # Note: Using default VPC, no need to specify VPC/subnet variables

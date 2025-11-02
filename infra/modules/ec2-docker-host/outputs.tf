@@ -95,3 +95,9 @@ output "discord_callback_url" {
   description = "Discord OAuth callback URL"
   value       = var.discord_callback_url
 }
+
+output "discord_bot_token" {
+  description = "Discord bot token for bot integration"
+  value       = var.discord_bot_token
+  sensitive   = true
+}

@@ -93,3 +93,26 @@ output "deviantart_callback_url" {
   description = "DeviantArt OAuth callback URL"
   value       = module.backend_docker_host.deviantart_callback_url
 }
+
+output "discord_client_id" {
+  description = "Discord OAuth client ID"
+  value       = module.backend_docker_host.discord_client_id
+  sensitive   = true
+}
+
+output "discord_client_secret" {
+  description = "Discord OAuth client secret"
+  value       = module.backend_docker_host.discord_client_secret
+  sensitive   = true
+}
+
+output "discord_callback_url" {
+  description = "Discord OAuth callback URL"
+  value       = module.backend_docker_host.discord_callback_url
+}
+
+output "discord_bot_token" {
+  description = "Discord bot token for bot integration"
+  value       = module.backend_docker_host.discord_bot_token
+  sensitive   = true
+}

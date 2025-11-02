@@ -86,3 +86,26 @@ variable "deviantart_callback_url" {
   description = "DeviantArt OAuth callback URL"
   type        = string
 }
+
+variable "discord_client_id" {
+  description = "Discord OAuth client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "discord_client_secret" {
+  description = "Discord OAuth client secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "discord_callback_url" {
+  description = "Discord OAuth callback URL"
+  type        = string
+}
+
+variable "discord_bot_token" {
+  description = "Discord bot token for bot integration"
+  type        = string
+  sensitive   = true
+}

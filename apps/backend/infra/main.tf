@@ -29,6 +29,12 @@ module "backend_docker_host" {
   deviantart_client_secret = var.deviantart_client_secret
   deviantart_callback_url  = var.deviantart_callback_url
 
+  # Discord Configuration
+  discord_client_id     = var.discord_client_id
+  discord_client_secret = var.discord_client_secret
+  discord_callback_url  = var.discord_callback_url
+  discord_bot_token     = var.discord_bot_token
+
   tags = local.common_tags
 }
 
