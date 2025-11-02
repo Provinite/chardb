@@ -829,6 +829,17 @@ export const EditCharacterPage: React.FC = () => {
               pendingOwnerLabel="Set Pending Owner"
               communityId={character.species?.community?.id || ""}
               onValidationChange={setIsGrantTargetValid}
+              currentUser={
+                character.owner
+                  ? {
+                      id: character.owner.id,
+                      username: character.owner.username,
+                      displayName: character.owner.displayName || undefined,
+                      avatarUrl: character.owner.avatarUrl || undefined,
+                    }
+                  : undefined
+              }
+              includeSelf={true}
             />
           </FormSection>
         )}
