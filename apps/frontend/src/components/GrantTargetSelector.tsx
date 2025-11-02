@@ -408,6 +408,15 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
                   type="text"
                   value={accountId}
                   onChange={(e) => handleAccountIdChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      // Optionally trigger Check for Discord
+                      if (provider === 'DISCORD' && accountId.trim()) {
+                        handleCheckDiscordUser();
+                      }
+                    }
+                  }}
                   placeholder={
                     provider === 'DISCORD'
                       ? discordGuildId
