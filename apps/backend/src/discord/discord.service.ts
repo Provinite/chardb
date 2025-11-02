@@ -3,9 +3,11 @@ import {
   Logger,
   OnModuleInit,
   OnModuleDestroy,
+  NotFoundException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Client, GatewayIntentBits, Guild } from "discord.js";
+import { DiscordUserInfo } from "./dto/discord-user-info.dto";
 
 export interface DiscordGuildInfo {
   id: string;
@@ -236,6 +238,33 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       return true;
     } catch (error) {
       return false;
+    }
+  }
+
+  /**
+   * Get Discord user information by user ID
+   * Fetches publicly available user data including avatar
+   * @param userId The Discord user ID (snowflake)
+   * @returns Discord user information
+   * @throws NotFoundException if user is not found
+   */
+  async getUserInfo(userId: string): Promise<DiscordUserInfo> {
+    await this.ensureReady();
+
+    try {
+      const user = await this.client.users.fetch(userId);
+
+      return {
+        userId: user.id,
+        username: user.username,
+        displayName: user.displayName || undefined,
+        avatarUrl: user.avatarURL() || undefined,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to fetch Discord user ${userId}:`, error);
+      throw new NotFoundException(
+        `Discord user not found. The user ID may be invalid or the user may have deleted their account.`,
+      );
     }
   }
 }

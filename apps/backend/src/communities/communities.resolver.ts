@@ -30,7 +30,8 @@ import { User } from "../users/entities/user.entity";
 import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
 import { DiscordService } from "../discord/discord.service";
 import { DiscordGuildInfo } from "./dto/discord-guild-info.dto";
-import { BadRequestException } from "@nestjs/common";
+import { DiscordUserInfo } from "../discord/dto/discord-user-info.dto";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { CommunityPermission } from "../auth/CommunityPermission";
@@ -223,5 +224,64 @@ export class CommunitiesResolver {
     });
 
     return mapPrismaCommunityToGraphQL(prismaResult);
+  }
+
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @AllowCommunityPermission(CommunityPermission.CanCreateOrphanedCharacter)
+  @Query(() => DiscordUserInfo, {
+    name: "resolveDiscordUser",
+    description:
+      "Resolve a Discord username or user ID to full user information. Requires permission to create orphaned characters.",
+  })
+  async resolveDiscordUser(
+    @Args("identifier", {
+      description: "Discord username (@handle), display name, or numeric user ID",
+    })
+    identifier: string,
+    @Args("communityId", {
+      type: () => ID,
+      description: "Community ID (for guild context)",
+    })
+    communityId: string,
+  ): Promise<DiscordUserInfo> {
+    // Get community to access Discord guild
+    const community = await this.communitiesService.findOne(communityId);
+
+    if (!community) {
+      throw new NotFoundException(`Community with ID ${communityId} not found`);
+    }
+
+    if (!community.discordGuildId) {
+      throw new BadRequestException(
+        "This community does not have a Discord server connected. You must use a numeric Discord user ID (17-19 digits).",
+      );
+    }
+
+    // Resolve identifier to user ID
+    let userId: string;
+    const trimmedIdentifier = identifier.trim();
+
+    // Check if it's already a numeric ID (17-19 digits)
+    if (/^\d{17,19}$/.test(trimmedIdentifier)) {
+      userId = trimmedIdentifier;
+    } else {
+      // It's a username - resolve via guild
+      const resolvedId = await this.discordService.resolveUsernameToId(
+        community.discordGuildId,
+        trimmedIdentifier,
+      );
+
+      if (!resolvedId) {
+        throw new NotFoundException(
+          `Discord user "${trimmedIdentifier}" not found in the server "${community.discordGuildName || community.discordGuildId}". ` +
+            `Make sure the user is a member of the server and the username is spelled correctly.`,
+        );
+      }
+
+      userId = resolvedId;
+    }
+
+    // Fetch and return user info
+    return await this.discordService.getUserInfo(userId);
   }
 }

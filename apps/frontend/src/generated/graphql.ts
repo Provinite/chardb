@@ -591,6 +591,19 @@ export type DiscordGuildInfo = {
   name: Scalars['String']['output'];
 };
 
+/** Resolved Discord user information */
+export type DiscordUserInfo = {
+  __typename?: 'DiscordUserInfo';
+  /** URL to user avatar image */
+  avatarUrl: Maybe<Scalars['String']['output']>;
+  /** Discord display name (may differ from username) */
+  displayName: Maybe<Scalars['String']['output']>;
+  /** Discord user ID (snowflake) */
+  userId: Scalars['ID']['output'];
+  /** Discord username */
+  username: Scalars['String']['output'];
+};
+
 export type EnumValue = {
   __typename?: 'EnumValue';
   /** The color associated with this enum value */
@@ -1698,6 +1711,8 @@ export type Query = {
   myImages: ImageConnection;
   /** Retrieves media owned by the current authenticated user */
   myMedia: MediaConnection;
+  /** Resolve a Discord username or user ID to full user information. Requires permission to create orphaned characters. */
+  resolveDiscordUser: DiscordUserInfo;
   /** Get a role by ID */
   roleById: Role;
   /** Get all roles with pagination */
@@ -2049,6 +2064,12 @@ export type QueryMyImagesArgs = {
 
 export type QueryMyMediaArgs = {
   filters?: InputMaybe<MediaFiltersInput>;
+};
+
+
+export type QueryResolveDiscordUserArgs = {
+  communityId: Scalars['ID']['input'];
+  identifier: Scalars['String']['input'];
 };
 
 
@@ -3014,6 +3035,14 @@ export type UnlinkDiscordGuildMutationVariables = Exact<{
 
 
 export type UnlinkDiscordGuildMutation = { __typename?: 'Mutation', unlinkDiscordGuild: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null, createdAt: string, updatedAt: string } };
+
+export type ResolveDiscordUserQueryVariables = Exact<{
+  identifier: Scalars['String']['input'];
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type ResolveDiscordUserQuery = { __typename?: 'Query', resolveDiscordUser: { __typename?: 'DiscordUserInfo', userId: string, username: string, displayName: string | null, avatarUrl: string | null } };
 
 export type CommunityMembersByUserQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -5407,6 +5436,50 @@ export function useUnlinkDiscordGuildMutation(baseOptions?: Apollo.MutationHookO
 export type UnlinkDiscordGuildMutationHookResult = ReturnType<typeof useUnlinkDiscordGuildMutation>;
 export type UnlinkDiscordGuildMutationResult = Apollo.MutationResult<UnlinkDiscordGuildMutation>;
 export type UnlinkDiscordGuildMutationOptions = Apollo.BaseMutationOptions<UnlinkDiscordGuildMutation, UnlinkDiscordGuildMutationVariables>;
+export const ResolveDiscordUserDocument = gql`
+    query ResolveDiscordUser($identifier: String!, $communityId: ID!) {
+  resolveDiscordUser(identifier: $identifier, communityId: $communityId) {
+    userId
+    username
+    displayName
+    avatarUrl
+  }
+}
+    `;
+
+/**
+ * __useResolveDiscordUserQuery__
+ *
+ * To run a query within a React component, call `useResolveDiscordUserQuery` and pass it any options that fit your needs.
+ * When your component renders, `useResolveDiscordUserQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useResolveDiscordUserQuery({
+ *   variables: {
+ *      identifier: // value for 'identifier'
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useResolveDiscordUserQuery(baseOptions: Apollo.QueryHookOptions<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables> & ({ variables: ResolveDiscordUserQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables>(ResolveDiscordUserDocument, options);
+      }
+export function useResolveDiscordUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables>(ResolveDiscordUserDocument, options);
+        }
+export function useResolveDiscordUserSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables>(ResolveDiscordUserDocument, options);
+        }
+export type ResolveDiscordUserQueryHookResult = ReturnType<typeof useResolveDiscordUserQuery>;
+export type ResolveDiscordUserLazyQueryHookResult = ReturnType<typeof useResolveDiscordUserLazyQuery>;
+export type ResolveDiscordUserSuspenseQueryHookResult = ReturnType<typeof useResolveDiscordUserSuspenseQuery>;
+export type ResolveDiscordUserQueryResult = Apollo.QueryResult<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables>;
 export const CommunityMembersByUserDocument = gql`
     query CommunityMembersByUser($userId: ID!, $first: Int, $after: String) {
   communityMembersByUser(userId: $userId, first: $first, after: $after) {

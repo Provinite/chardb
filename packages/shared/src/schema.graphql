@@ -651,6 +651,21 @@ type DiscordGuildInfo {
   name: String!
 }
 
+"""Resolved Discord user information"""
+type DiscordUserInfo {
+  """URL to user avatar image"""
+  avatarUrl: String
+
+  """Discord display name (may differ from username)"""
+  displayName: String
+
+  """Discord user ID (snowflake)"""
+  userId: ID!
+
+  """Discord username"""
+  username: String!
+}
+
 type EnumValue {
   """The color associated with this enum value"""
   color: CommunityColor
@@ -1855,6 +1870,17 @@ type Query {
     """Optional filters for media query"""
     filters: MediaFiltersInput
   ): MediaConnection!
+
+  """
+  Resolve a Discord username or user ID to full user information. Requires permission to create orphaned characters.
+  """
+  resolveDiscordUser(
+    """Community ID (for guild context)"""
+    communityId: ID!
+
+    """Discord username (@handle), display name, or numeric user ID"""
+    identifier: String!
+  ): DiscordUserInfo!
 
   """Get a role by ID"""
   roleById(

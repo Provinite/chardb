@@ -55,6 +55,13 @@ export type GrantTarget =
       providerAccountId: string;
     };
 
+export interface ResolvedDiscordUser {
+  userId: string;
+  username: string;
+  displayName?: string;
+  avatarUrl?: string;
+}
+
 export interface GrantTargetSelectorProps {
   /** Current selected target */
   value: GrantTarget | null;
@@ -88,6 +95,12 @@ export interface GrantTargetSelectorProps {
 
   /** Whether the component is disabled */
   disabled?: boolean;
+
+  /** Callback to resolve Discord user (optional - enables Check button) */
+  onCheckDiscordUser?: (identifier: string) => Promise<ResolvedDiscordUser>;
+
+  /** Community ID for Discord resolution */
+  communityId?: string;
 }
 
 const Container = styled.div`
@@ -120,6 +133,80 @@ const ErrorText = styled.p`
   margin: 0;
 `;
 
+const InputRow = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.sm};
+  align-items: flex-start;
+`;
+
+const InputWrapper = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+
+const CheckButton = styled.button`
+  padding: 0.5rem 1rem;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  color: ${({ theme }) => theme.colors.text.primary};
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.primary};
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  align-self: flex-start;
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.primary};
+    color: white;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const ResolvedUserCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.primary};
+  border-radius: 6px;
+  margin-top: ${({ theme }) => theme.spacing.sm};
+`;
+
+const Avatar = styled.img`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  flex: 1;
+`;
+
+const Username = styled.div`
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const UserId = styled.div`
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.muted};
+  font-family: monospace;
+`;
+
 export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   value,
   onChange,
@@ -132,11 +219,16 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   userLabel = 'Assign to User',
   pendingOwnerLabel = 'Orphaned with Pending Owner',
   disabled = false,
+  onCheckDiscordUser,
+  communityId,
 }) => {
   const [selectionMode, setSelectionMode] = useState<'user' | 'pending'>('user');
   const [provider, setProvider] = useState<'DISCORD' | 'DEVIANTART'>('DISCORD');
   const [accountId, setAccountId] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [resolvedUser, setResolvedUser] = useState<ResolvedDiscordUser | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
+  const [checkError, setCheckError] = useState<string | null>(null);
 
   // Initialize state from value
   useEffect(() => {
@@ -168,6 +260,8 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   // Handle provider change
   const handleProviderChange = (newProvider: string) => {
     setValidationError(null);
+    setCheckError(null);
+    setResolvedUser(null);
     setProvider(newProvider as 'DISCORD' | 'DEVIANTART');
     // Clear account ID when switching providers
     setAccountId('');
@@ -178,6 +272,8 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   const handleAccountIdChange = (value: string) => {
     setAccountId(value);
     setValidationError(null);
+    setCheckError(null);
+    setResolvedUser(null);
 
     const trimmed = value.trim();
     if (!trimmed) {
@@ -207,10 +303,35 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     });
   };
 
+  // Handle Check button click
+  const handleCheckDiscordUser = async () => {
+    if (!onCheckDiscordUser || !accountId.trim() || !communityId) {
+      return;
+    }
+
+    setIsChecking(true);
+    setCheckError(null);
+    setResolvedUser(null);
+
+    try {
+      const resolved = await onCheckDiscordUser(accountId.trim());
+      setResolvedUser(resolved);
+      setCheckError(null);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to resolve Discord user';
+      setCheckError(errorMessage);
+      setResolvedUser(null);
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
   // Handle selection mode change
   const handleModeChange = (mode: string) => {
     setSelectionMode(mode as 'user' | 'pending');
     setValidationError(null);
+    setCheckError(null);
+    setResolvedUser(null);
     onChange(null);
   };
 
@@ -267,29 +388,57 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
                 ? 'Search Discord Account'
                 : 'Search DeviantArt Account'}
             </Label>
-            <Input
-              type="text"
-              value={accountId}
-              onChange={(e) => handleAccountIdChange(e.target.value)}
-              placeholder={
-                provider === 'DISCORD'
-                  ? discordGuildId
-                    ? 'Search by @handle or numeric ID'
-                    : 'Numeric Discord ID (17-19 digits)'
-                  : 'Search by account name'
-              }
-              autoComplete="off"
-              disabled={disabled}
-              hasError={!!validationError}
-            />
-            {validationError && <ErrorText>{validationError}</ErrorText>}
-            <HelpText>
-              {provider === 'DISCORD'
-                ? discordGuildId
-                  ? `Enter Discord username (with @) or numeric user ID. Server: ${discordGuildName || 'Connected'}`
-                  : 'Enter numeric Discord user ID (17-19 digits). No Discord server connected to this community.'
-                : 'Enter DeviantArt username'}
-            </HelpText>
+            <InputRow>
+              <InputWrapper>
+                <Input
+                  type="text"
+                  value={accountId}
+                  onChange={(e) => handleAccountIdChange(e.target.value)}
+                  placeholder={
+                    provider === 'DISCORD'
+                      ? discordGuildId
+                        ? 'Search by @handle or numeric ID'
+                        : 'Numeric Discord ID (17-19 digits)'
+                      : 'Search by account name'
+                  }
+                  autoComplete="off"
+                  disabled={disabled}
+                  hasError={!!validationError || !!checkError}
+                />
+                {validationError && <ErrorText>{validationError}</ErrorText>}
+                {checkError && <ErrorText>{checkError}</ErrorText>}
+                <HelpText>
+                  {provider === 'DISCORD'
+                    ? discordGuildId
+                      ? `Enter Discord username (with @) or numeric user ID. Server: ${discordGuildName || 'Connected'}`
+                      : 'Enter numeric Discord user ID (17-19 digits). No Discord server connected to this community.'
+                    : 'Enter DeviantArt username'}
+                </HelpText>
+              </InputWrapper>
+              {provider === 'DISCORD' && onCheckDiscordUser && communityId && (
+                <CheckButton
+                  onClick={handleCheckDiscordUser}
+                  disabled={disabled || isChecking || !accountId.trim()}
+                  type="button"
+                >
+                  {isChecking ? 'Checking...' : 'Check'}
+                </CheckButton>
+              )}
+            </InputRow>
+
+            {resolvedUser && (
+              <ResolvedUserCard>
+                {resolvedUser.avatarUrl && (
+                  <Avatar src={resolvedUser.avatarUrl} alt={resolvedUser.username} />
+                )}
+                <UserInfo>
+                  <Username>
+                    {resolvedUser.displayName || resolvedUser.username}
+                  </Username>
+                  <UserId>Resolved to ID: {resolvedUser.userId}</UserId>
+                </UserInfo>
+              </ResolvedUserCard>
+            )}
           </Section>
 
           {!discordGuildId && provider === 'DISCORD' && (

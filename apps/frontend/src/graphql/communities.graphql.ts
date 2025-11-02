@@ -134,6 +134,17 @@ export const UNLINK_DISCORD_GUILD_MUTATION = gql`
   }
 `;
 
+export const RESOLVE_DISCORD_USER_QUERY = gql`
+  query ResolveDiscordUser($identifier: String!, $communityId: ID!) {
+    resolveDiscordUser(identifier: $identifier, communityId: $communityId) {
+      userId
+      username
+      displayName
+      avatarUrl
+    }
+  }
+`;
+
 export const COMMUNITY_MEMBERS_BY_USER_QUERY = gql`
   query CommunityMembersByUser($userId: ID!, $first: Int, $after: String) {
     communityMembersByUser(userId: $userId, first: $first, after: $after) {
@@ -191,6 +202,7 @@ export {
   useValidateDiscordGuildQuery,
   useLinkDiscordGuildMutation,
   useUnlinkDiscordGuildMutation,
+  useResolveDiscordUserLazyQuery,
 
   // Types
   type CommunitiesQuery,
@@ -215,6 +227,8 @@ export {
   type LinkDiscordGuildMutationVariables,
   type UnlinkDiscordGuildMutation,
   type UnlinkDiscordGuildMutationVariables,
+  type ResolveDiscordUserQuery,
+  type ResolveDiscordUserQueryVariables,
   type Community,
   type CommunityConnection,
   type CommunityMember,
@@ -222,4 +236,5 @@ export {
   type CreateCommunityInput,
   type UpdateCommunityInput,
   type DiscordGuildInfo,
+  type DiscordUserInfo,
 } from "../generated/graphql";

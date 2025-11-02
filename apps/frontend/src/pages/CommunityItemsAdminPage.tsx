@@ -17,7 +17,8 @@ import {
 import {
   useCommunityByIdQuery,
   useGetCommunityMembersQuery,
-} from "../generated/graphql";
+  useResolveDiscordUserLazyQuery,
+} from "../graphql/communities.graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -284,6 +285,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
   const [updateItemType] = useMutation(UPDATE_ITEM_TYPE);
   const [deleteItemType] = useMutation(DELETE_ITEM_TYPE);
   const [grantItem] = useMutation(GRANT_ITEM);
+  const [resolveDiscordUser] = useResolveDiscordUserLazyQuery();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -387,6 +389,28 @@ export const CommunityItemsAdminPage: React.FC = () => {
         error instanceof Error ? error.message : "Failed to delete item type",
       );
     }
+  };
+
+  const handleCheckDiscordUser = async (identifier: string) => {
+    if (!communityId) {
+      throw new Error("Community ID is required");
+    }
+
+    const result = await resolveDiscordUser({
+      variables: { identifier, communityId },
+    });
+
+    if (!result.data?.resolveDiscordUser) {
+      throw new Error("Failed to resolve Discord user");
+    }
+
+    const user = result.data.resolveDiscordUser;
+    return {
+      userId: user.userId,
+      username: user.username,
+      displayName: user.displayName || undefined,
+      avatarUrl: user.avatarUrl || undefined,
+    };
   };
 
   const handleGrantItem = async (e: React.FormEvent) => {
@@ -826,6 +850,8 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 discordGuildName={communityData?.community?.discordGuildName}
                 userLabel="Assign to User"
                 pendingOwnerLabel="Orphaned with Pending Owner"
+                onCheckDiscordUser={handleCheckDiscordUser}
+                communityId={communityId}
               />
             </FormGroup>
 
