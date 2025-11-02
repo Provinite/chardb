@@ -141,7 +141,8 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   // Initialize state from value
   useEffect(() => {
     if (!value) {
-      setSelectionMode('user');
+      // Only clear provider and account fields, preserve selectionMode
+      // This allows provider switching to work without resetting the entire mode
       setProvider('DISCORD');
       setAccountId('');
       setValidationError(null);
