@@ -77,6 +77,8 @@ export const GET_CHARACTER = gql`
         community {
           id
           name
+          discordGuildId
+          discordGuildName
         }
       }
       speciesVariant {

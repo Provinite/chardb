@@ -33,6 +33,7 @@ type Character {
   details: String
   gender: String
   id: ID!
+  isOrphaned: Boolean!
   isSellable: Boolean!
   isTradeable: Boolean!
   likesCount: Int!
@@ -361,9 +362,6 @@ input CreateCharacterInput {
   customFields: String
   details: String
   gender: String
-
-  """Create character without an owner (orphaned/community character)"""
-  isOrphaned: Boolean! = false
   isSellable: Boolean! = false
   isTradeable: Boolean! = false
   name: String!
@@ -501,6 +499,9 @@ input CreateRoleInput {
 
   """Whether members with this role can create invite codes"""
   canCreateInviteCode: Boolean! = false
+
+  """Whether members with this role can create orphaned characters"""
+  canCreateOrphanedCharacter: Boolean! = false
 
   """Whether members with this role can create new roles"""
   canCreateRole: Boolean! = false
@@ -925,7 +926,7 @@ type Item {
   itemTypeId: ID!
   metadata: JSON
   owner: User
-  ownerId: ID!
+  ownerId: ID
   pendingOwnership: PendingOwnership
   quantity: Int!
   updatedAt: DateTime!
@@ -1531,8 +1532,6 @@ type PendingOwnership {
 
   """When this pending ownership was created"""
   createdAt: DateTime!
-
-  """Display-friendly identifier (username) if available"""
   displayIdentifier: String
   id: ID!
   item: Item
@@ -1542,8 +1541,6 @@ type PendingOwnership {
 
   """The external account provider (Discord, DeviantArt, etc.)"""
   provider: ExternalAccountProvider!
-
-  """The account identifier on the external provider"""
   providerAccountId: String!
 }
 
@@ -2421,6 +2418,9 @@ input UpdateCharacterInput {
   isTradeable: Boolean
   mainMediaId: ID
   name: String
+
+  """Update pending ownership for orphaned character"""
+  pendingOwner: PendingOwnerInput
   price: Float
   speciesId: ID
   speciesVariantId: ID
@@ -2552,6 +2552,9 @@ input UpdateRoleInput {
 
   """Whether members with this role can create invite codes"""
   canCreateInviteCode: Boolean
+
+  """Whether members with this role can create orphaned characters"""
+  canCreateOrphanedCharacter: Boolean
 
   """Whether members with this role can create new roles"""
   canCreateRole: Boolean

@@ -6,14 +6,13 @@ import { z } from "zod";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
 import { ArrowLeft, User, FileText, Settings, Tag as TagIcon, Users } from "lucide-react";
-import { Button, TagInput, RadioGroup, Radio } from "@chardb/ui";
+import { Button, TagInput, GrantTargetSelector, GrantTarget } from "@chardb/ui";
 import {
   useCreateCharacterMutation,
   SpeciesDetailsFragment,
   SpeciesVariantDetailsFragment,
   CharacterTraitValueInput,
   Visibility,
-  ExternalAccountProvider,
 } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 import { useTagSearch } from "../hooks/useTagSearch";
@@ -223,6 +222,13 @@ const CheckboxGroup = styled.label`
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: ${({ theme }) => theme.colors.primary};
+`;
+
 const ErrorMessage = styled.span`
   font-size: 0.75rem;
   color: ${({ theme }) => theme.colors.danger};
@@ -267,42 +273,6 @@ const TagsHelp = styled.p`
   margin: 0.25rem 0 0 0;
 `;
 
-const CheckboxLabel = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  user-select: none;
-  margin-bottom: 1rem;
-`;
-
-const Checkbox = styled.input.attrs({ type: 'checkbox' })`
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: ${({ theme }) => theme.colors.primary};
-`;
-
-const HelpText = styled.p`
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0.5rem 0 0 0;
-  line-height: 1.5;
-`;
-
-const WarningBox = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: ${({ theme }) => theme.colors.warning}20;
-  border: 1px solid ${({ theme }) => theme.colors.warning};
-  border-radius: 6px;
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: 0.875rem;
-  line-height: 1.5;
-  margin-top: 0.75rem;
-`;
 
 export const CreateCharacterPageEnhanced: React.FC = () => {
   const navigate = useNavigate();
@@ -320,10 +290,8 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   const [tags, setTags] = useState<string[]>([]);
   const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
 
-  // Orphaned character state
-  const [isOrphaned, setIsOrphaned] = useState(false);
-  const [pendingOwnerProvider, setPendingOwnerProvider] = useState<ExternalAccountProvider>(ExternalAccountProvider.Discord);
-  const [pendingOwnerAccountId, setPendingOwnerAccountId] = useState("");
+  // Character ownership/grant target state
+  const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(null);
 
   // Check if user has permission to create orphaned characters in the selected species' community
   const canCreateOrphanedCharacter = useMemo(() => {
@@ -368,14 +336,6 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
 
   // Form submission
   const onSubmit = async (data: CharacterForm) => {
-    // Validate pending ownership fields if orphaned and pending owner is set
-    if (isOrphaned && pendingOwnerAccountId) {
-      if (!pendingOwnerAccountId.trim()) {
-        toast.error("Please enter a valid account ID for pending ownership");
-        return;
-      }
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -394,12 +354,11 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             speciesId: selectedSpecies?.id || undefined,
             speciesVariantId: selectedVariant?.id || undefined,
             traitValues: traitValues.length > 0 ? traitValues : undefined,
-            // Add pending owner if orphaned and account ID is provided
-            // Note: isOrphaned is a computed field on the backend (ownerId === null)
-            pendingOwner: isOrphaned && pendingOwnerAccountId.trim()
+            // Add pending owner based on characterTarget
+            pendingOwner: characterTarget?.type === 'pending'
               ? {
-                  provider: pendingOwnerProvider,
-                  providerAccountId: pendingOwnerAccountId.trim(),
+                  provider: characterTarget.provider as any,
+                  providerAccountId: characterTarget.providerAccountId,
                 }
               : undefined,
           },
@@ -488,80 +447,19 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
               Character Ownership
             </SectionTitle>
             <SectionDescription>
-              Choose whether this character will be owned by you or created as an orphaned/community character.
+              Choose whether this character will be owned by you or created as an orphaned character with pending ownership.
             </SectionDescription>
 
-            <CheckboxLabel>
-              <Checkbox
-                checked={isOrphaned}
-                onChange={(e) => setIsOrphaned(e.target.checked)}
-              />
-              <span>Create as orphaned character (no owner)</span>
-            </CheckboxLabel>
-
-            {isOrphaned && (
-              <>
-                <HelpText>
-                  This character will be created without an owner. You can optionally assign pending ownership
-                  to an external account (Discord or DeviantArt). When that user links their account, they will
-                  automatically claim this character.
-                </HelpText>
-
-                <FormGroup style={{ marginTop: '1rem' }}>
-                  <Label>Pending Ownership (Optional)</Label>
-                  <HelpText style={{ marginTop: '0.25rem', marginBottom: '0.75rem' }}>
-                    Leave blank to create a community character with no pending owner.
-                  </HelpText>
-
-                  <RadioGroup
-                    value={pendingOwnerProvider}
-                    onChange={(value: string) => setPendingOwnerProvider(value as ExternalAccountProvider)}
-                  >
-                    <Radio value={ExternalAccountProvider.Discord}>
-                      Discord Account
-                    </Radio>
-                    <Radio value={ExternalAccountProvider.Deviantart}>
-                      DeviantArt Account
-                    </Radio>
-                  </RadioGroup>
-                </FormGroup>
-
-                <FormGroup>
-                  <Label htmlFor="pendingOwnerAccountId">
-                    {pendingOwnerProvider === ExternalAccountProvider.Discord
-                      ? (selectedSpecies?.community?.discordGuildId ? 'Discord Username or User ID' : 'Discord User ID')
-                      : 'DeviantArt Username'}
-                  </Label>
-                  <Input
-                    id="pendingOwnerAccountId"
-                    type="text"
-                    placeholder={
-                      pendingOwnerProvider === ExternalAccountProvider.Discord
-                        ? (selectedSpecies?.community?.discordGuildId ? "e.g., @username or 123456789012345678" : "e.g., 123456789012345678")
-                        : "e.g., username"
-                    }
-                    value={pendingOwnerAccountId}
-                    onChange={(e) => setPendingOwnerAccountId(e.target.value)}
-                  />
-                  <HelpText>
-                    {pendingOwnerProvider === ExternalAccountProvider.Discord
-                      ? (selectedSpecies?.community?.discordGuildId
-                          ? `Enter the Discord username (with or without @) or numeric user ID. The bot will look up usernames in ${selectedSpecies.community.discordGuildName || 'your Discord server'}.`
-                          : "Enter the Discord numeric user ID. You can find this by enabling Developer Mode in Discord settings and right-clicking the user.")
-                      : "Enter the DeviantArt username of the person who will claim this character."}
-                  </HelpText>
-                  {pendingOwnerProvider === ExternalAccountProvider.Discord && !selectedSpecies?.community?.discordGuildId && (
-                    <WarningBox>
-                      <strong>Discord server not connected</strong>
-                      <span>
-                        This community doesn't have a Discord server linked. Only numeric Discord User IDs are supported.
-                        Ask a community admin to link a Discord server in the community settings to enable username lookups.
-                      </span>
-                    </WarningBox>
-                  )}
-                </FormGroup>
-              </>
-            )}
+            <GrantTargetSelector
+              value={characterTarget}
+              onChange={setCharacterTarget}
+              onUserSearch={() => {}} // No user search needed for character creation (always current user or orphaned)
+              allowPendingOwner={true}
+              discordGuildId={selectedSpecies?.community?.discordGuildId}
+              discordGuildName={selectedSpecies?.community?.discordGuildName}
+              userLabel="Owned by me"
+              pendingOwnerLabel="Orphaned with Pending Owner"
+            />
           </Section>
         )}
 

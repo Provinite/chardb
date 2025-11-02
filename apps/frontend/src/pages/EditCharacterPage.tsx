@@ -6,7 +6,7 @@ import { z } from "zod";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
 import { AlertTriangle } from "lucide-react";
-import { Button, TagInput, Input } from "@chardb/ui";
+import { Button, TagInput, Input, GrantTargetSelector, GrantTarget } from "@chardb/ui";
 import {
   useGetCharacterQuery,
   useUpdateCharacterMutation,
@@ -292,9 +292,7 @@ export const EditCharacterPage: React.FC = () => {
   const [isSubmittingTraits, setIsSubmittingTraits] = useState(false);
 
   // Pending ownership state
-  const [pendingOwnerProvider, setPendingOwnerProvider] = useState<string>("DISCORD");
-  const [pendingOwnerAccountId, setPendingOwnerAccountId] = useState("");
-  const [clearPendingOwnership, setClearPendingOwnership] = useState(false);
+  const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(null);
 
   const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
 
@@ -369,13 +367,13 @@ export const EditCharacterPage: React.FC = () => {
 
       // Initialize pending ownership state
       if (character.pendingOwnership) {
-        setPendingOwnerProvider(character.pendingOwnership.provider);
-        setPendingOwnerAccountId(character.pendingOwnership.displayIdentifier || character.pendingOwnership.providerAccountId);
-        setClearPendingOwnership(false);
+        setCharacterTarget({
+          type: 'pending',
+          provider: character.pendingOwnership.provider as 'DISCORD' | 'DEVIANTART',
+          providerAccountId: character.pendingOwnership.displayIdentifier || character.pendingOwnership.providerAccountId,
+        });
       } else {
-        setPendingOwnerProvider("DISCORD");
-        setPendingOwnerAccountId("");
-        setClearPendingOwnership(false);
+        setCharacterTarget(null);
       }
     }
   }, [character, reset]);
@@ -389,13 +387,14 @@ export const EditCharacterPage: React.FC = () => {
     try {
       // Build pending owner input
       let pendingOwnerInput: any = undefined;
-      if (clearPendingOwnership) {
-        pendingOwnerInput = null; // Explicitly clear
-      } else if (pendingOwnerAccountId.trim()) {
+      if (characterTarget?.type === 'pending') {
         pendingOwnerInput = {
-          provider: pendingOwnerProvider,
-          providerAccountId: pendingOwnerAccountId.trim(),
+          provider: characterTarget.provider,
+          providerAccountId: characterTarget.providerAccountId,
         };
+      } else if (character.pendingOwnership && !characterTarget) {
+        // Clear existing pending ownership if target is null
+        pendingOwnerInput = null;
       }
 
       const input: UpdateCharacterInput = {
@@ -705,60 +704,16 @@ export const EditCharacterPage: React.FC = () => {
               Set a pending owner if this character will be transferred to someone who hasn't registered yet.
             </InfoBox>
 
-            <FormGroup>
-              <Label>Account Provider</Label>
-              <Select
-                value={pendingOwnerProvider}
-                onChange={(e) => setPendingOwnerProvider(e.target.value)}
-                disabled={clearPendingOwnership}
-              >
-                <option value="DISCORD">Discord</option>
-                <option value="DEVIANTART">DeviantArt</option>
-              </Select>
-            </FormGroup>
-
-            <FormGroup>
-              <Label>
-                {pendingOwnerProvider === "DISCORD" ? "Search Discord Account" : "Search DeviantArt Account"}
-              </Label>
-              <Input
-                type="text"
-                value={pendingOwnerAccountId}
-                onChange={(e) => {
-                  setPendingOwnerAccountId(e.target.value);
-                  // Clear the clear flag when user starts typing
-                  if (clearPendingOwnership) {
-                    setClearPendingOwnership(false);
-                  }
-                }}
-                placeholder={
-                  pendingOwnerProvider === "DISCORD"
-                    ? "Search by @handle or numeric ID"
-                    : "Search by account name"
-                }
-                autoComplete="off"
-                disabled={clearPendingOwnership}
-              />
-              <TagsHelp>
-                {pendingOwnerProvider === "DISCORD"
-                  ? "Enter Discord username (with @) or numeric user ID"
-                  : "Enter DeviantArt username"}
-              </TagsHelp>
-            </FormGroup>
-
-            {character.pendingOwnership && (
-              <FormGroup>
-                <CheckboxLabel>
-                  <Checkbox
-                    checked={clearPendingOwnership}
-                    onChange={(e) => {
-                      setClearPendingOwnership(e.target.checked);
-                    }}
-                  />
-                  Clear pending ownership
-                </CheckboxLabel>
-              </FormGroup>
-            )}
+            <GrantTargetSelector
+              value={characterTarget}
+              onChange={setCharacterTarget}
+              onUserSearch={() => {}} // No user search needed for editing
+              allowPendingOwner={true}
+              discordGuildId={character.species?.community?.discordGuildId}
+              discordGuildName={character.species?.community?.discordGuildName}
+              userLabel="No Pending Owner"
+              pendingOwnerLabel="Set Pending Owner"
+            />
           </FormSection>
         )}
 
