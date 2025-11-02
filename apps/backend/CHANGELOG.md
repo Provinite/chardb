@@ -16,6 +16,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for both modern (@username) and legacy (username#1234) Discord username formats
   - Uses Discord API v10 `/users/@me` endpoint with `identify` scope
   - Follows same OAuth security pattern as DeviantArt (JWT state parameter, 10min expiration)
+- **Orphaned Characters and Items System (#125)**: Allow creation of entities without immediate owner assignment
+  - Added `isOrphaned` computed field to Character entity for ownership status tracking
+  - Added community-specific `canCreateOrphanedCharacter` permission to Role model
+  - Modified character and item creation to support optional owner assignment
+  - Enhanced GraphQL schema with orphaned entity support
+  - Database migrations grant orphaned character creation permission to Admin and Moderator roles by default
+- **Pending Ownership System (#125)**: Automatic ownership claiming via external account linking
+  - New `PendingOwnershipModule` with GraphQL API for managing ownership claims
+  - Automatic claiming when users link external accounts (DeviantArt, Discord)
+  - `displayIdentifier` field for privacy-friendly display of pending owner information
+  - Field-level authorization protecting sensitive pending ownership data
+  - `claimAllForAccount` mutation for batch claiming characters/items
+  - Database schema with `PendingOwnership` table linking to external accounts
+- **Discord Bot Integration (#125)**: Discord username resolution and guild linking
+  - Added `DiscordModule` with Discord.js bot integration
+  - Community Discord guild linking via guild ID configuration
+  - Automatic Discord username resolution from user IDs for pending ownership display
+  - Bot requires `VIEW_CHANNEL` permission for username lookups
+  - `discordGuildInfo` query returning guild name and member count
+  - Added `DISCORD_BOT_TOKEN` environment variable to deployment pipeline
+
+### Fixed
+
+- **Discord Bot Memory Leak (#125)**: Fixed memory leak by limiting Discord member fetch results to 50 members with query-based filtering
+- **Discord Initialization (#125)**: Properly reject promises on bot initialization errors instead of silent failures
+- **Pending Ownership Race Condition (#125)**: Eliminated race condition in `claimAllForAccount` by using proper transaction handling
+- **Orphaned Character Permissions (#125)**: Fixed critical permission bugs in `CharacterEditGuard` preventing proper orphaned character editing authorization
+- **Nested DTO Validation (#125)**: Added `@ValidateNested()` and `@Type()` decorators to pending owner fields for proper validation
+- **Discord User Validation (#125)**: Added validation to ensure numeric Discord user IDs exist before creating pending ownership records
 
 ## [v4.2.0] - 2025-10-28
 

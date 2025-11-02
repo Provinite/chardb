@@ -15,6 +15,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added Discord accounts display with "DC" badge icon
   - Supports both modern (@username) and legacy (username#1234) Discord username formats
   - Follows same OAuth security pattern as DeviantArt integration
+- **Orphaned Character Creation (#125)**: Added ability to create characters without immediate owner assignment
+  - Radio button interface for selecting "Assign to me" vs "Create without owner"
+  - Pending ownership section for specifying external account (DeviantArt or Discord username)
+  - Integration with community permission system (`canCreateOrphanedCharacter`)
+  - Character cards display pending ownership status when orphaned
+- **Discord Guild Integration (#125)**: Community Discord server linking for pending ownership
+  - Discord Integration Settings in Community Settings page
+  - Guild ID configuration with live guild name and member count display
+  - Automatic username resolution for pending ownership claims
+- **Permission Management UI (#125)**: Added orphaned character permission to role management
+  - `canCreateOrphanedCharacter` toggle in Permission Matrix
+  - Role Editor integration for permission assignment
+  - Role list display shows orphaned character permission status
+- **UI Component Library Enhancement (#125)**: Added reusable form components
+  - `RadioGroup` component for radio button groups with label support
+  - `Alert` component for informational messages with variant support (info, warning, error, success)
+
+### Changed
+
+- **Character Creation UX (#125)**: Moved Character Ownership section below Species Selection for more logical form flow
 
 ## [v4.2.0] - 2025-10-28
 
