@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException, Logger } from "@nestjs/common";
+import { Injectable, ConflictException, NotFoundException, Logger, Inject, forwardRef } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { ExternalAccount, ExternalAccountProvider } from "@chardb/database";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
@@ -15,6 +15,7 @@ export class ExternalAccountsService {
 
   constructor(
     private database: DatabaseService,
+    @Inject(forwardRef(() => PendingOwnershipService))
     private pendingOwnershipService: PendingOwnershipService,
   ) {}
 

@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { ExternalAccountProvider, PendingOwnership, Prisma } from '@chardb/database';
 import { ExternalAccountsService } from '../external-accounts/external-accounts.service';
@@ -7,6 +7,7 @@ import { ExternalAccountsService } from '../external-accounts/external-accounts.
 export class PendingOwnershipService {
   constructor(
     private prisma: DatabaseService,
+    @Inject(forwardRef(() => ExternalAccountsService))
     private externalAccountsService: ExternalAccountsService,
   ) {}
 
