@@ -83,6 +83,9 @@ export interface GrantTargetSelectorProps {
   /** Whether to allow pending owner selection (requires permission) */
   allowPendingOwner?: boolean;
 
+  /** Whether to allow unassigned/orphaned mode (default: true). Set to false for items which must have ownership. */
+  allowUnassigned?: boolean;
+
   /** Discord guild ID for username resolution */
   discordGuildId?: string | null;
 
@@ -231,6 +234,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   users,
   usersLoading,
   allowPendingOwner = false,
+  allowUnassigned = true,
   discordGuildId,
   discordGuildName,
   unassignedLabel = 'Leave Unassigned',
@@ -472,9 +476,11 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
       <Section>
         <Label>Grant Target</Label>
         <RadioGroup value={selectionMode} onChange={handleModeChange}>
-          <Radio value="unassigned" disabled={disabled}>
-            {unassignedLabel}
-          </Radio>
+          {allowUnassigned && (
+            <Radio value="unassigned" disabled={disabled}>
+              {unassignedLabel}
+            </Radio>
+          )}
           <Radio value="user" disabled={disabled}>
             {userLabel}
           </Radio>

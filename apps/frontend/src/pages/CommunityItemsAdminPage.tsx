@@ -829,6 +829,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 users={membersData?.community?.members || []}
                 usersLoading={membersLoading}
                 allowPendingOwner={true}
+                allowUnassigned={false}
                 discordGuildId={communityData?.community?.discordGuildId}
                 discordGuildName={communityData?.community?.discordGuildName}
                 userLabel="Assign to User"

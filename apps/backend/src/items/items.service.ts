@@ -168,6 +168,14 @@ export class ItemsService {
     const { itemTypeId, userId, quantity, metadata } = input;
     let pendingOwner = input.pendingOwner;
 
+    // VALIDATION: Items must have either an owner or pending owner
+    // Unlike characters, items cannot be fully orphaned
+    if (!userId && !pendingOwner) {
+      throw new BadRequestException(
+        'Items must have either an owner or pending owner. Cannot create fully orphaned items.',
+      );
+    }
+
     // Determine actual owner: null if pending, otherwise userId
     // Can be reassigned if external account is already claimed
     let actualOwnerId = pendingOwner ? null : userId;

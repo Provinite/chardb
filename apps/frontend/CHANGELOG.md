@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Item Grant UI (#125)**: Removed ability to create fully orphaned items
+  - Added `allowUnassigned` prop to GrantTargetSelector (default: true for backwards compatibility)
+  - Set `allowUnassigned={false}` when granting items (items must have owner or pending owner)
+  - "Leave Unassigned" option no longer appears in item grant flow
+  - Prevents data integrity issues with orphaned items
+
 ### Added
 
 - **Character Ownership Editing (#125)**: Users with `canCreateOrphanedCharacter` permission can now edit ownership of any character (not just orphaned ones)

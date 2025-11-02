@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Item Ownership Validation (#125)**: Prevent creating fully orphaned items
+  - Items must now have either an owner or pending owner (cannot be completely orphaned)
+  - Added validation in `ItemsService.grantItem()` to enforce rule
+  - Added DTO validation using `@ValidateIf` to ensure at least one ownership field is provided
+  - Returns clear error message when attempting to create item without ownership
+
 ### Changed
 
 - **Centralized Auto-Claim Logic (#125)**: Moved pending ownership auto-claim logic into PendingOwnershipService

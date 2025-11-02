@@ -6,7 +6,9 @@ import {
   IsUUID,
   Min,
   Max,
-  ValidateNested
+  ValidateNested,
+  IsNotEmpty,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PendingOwnerInput } from '../../pending-ownership/dto/pending-ownership.dto';
@@ -17,8 +19,9 @@ export class GrantItemInput {
   @IsUUID()
   itemTypeId: string;
 
-  @Field(() => ID, { nullable: true, description: 'User ID to grant item to. Omit for orphaned items.' })
-  @IsOptional()
+  @Field(() => ID, { nullable: true, description: 'User ID to grant item to. Required if pendingOwner is not provided.' })
+  @ValidateIf((o) => !o.pendingOwner)
+  @IsNotEmpty({ message: 'Items must have either userId or pendingOwner' })
   @IsUUID()
   userId?: string;
 
