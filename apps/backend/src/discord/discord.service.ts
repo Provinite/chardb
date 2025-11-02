@@ -210,6 +210,23 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Validate that a Discord user ID exists
+   * @param userId The Discord user ID to validate
+   * @returns true if user exists, false otherwise
+   */
+  async validateUserId(userId: string): Promise<boolean> {
+    await this.ensureReady();
+
+    try {
+      await this.client.users.fetch(userId);
+      return true;
+    } catch (error) {
+      this.logger.debug(`Discord user ID ${userId} not found or invalid`);
+      return false;
+    }
+  }
+
+  /**
    * Verify that the bot has access to a guild
    */
   async verifyGuildAccess(guildId: string): Promise<boolean> {

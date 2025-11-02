@@ -408,6 +408,13 @@ export class ItemsService {
   ): Promise<string> {
     // Check if identifier is already a numeric ID (18-19 digits)
     if (/^\d{17,19}$/.test(identifier)) {
+      // Validate the numeric ID exists in Discord
+      const isValid = await this.discordService.validateUserId(identifier);
+      if (!isValid) {
+        throw new NotFoundException(
+          `Discord user with ID "${identifier}" not found. Please verify the ID is correct.`,
+        );
+      }
       return identifier;
     }
 
