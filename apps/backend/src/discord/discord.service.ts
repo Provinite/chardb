@@ -143,8 +143,9 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       // Fetch the guild
       const guild: Guild = await this.client.guilds.fetch(guildId);
 
-      // Fetch all members (required for searching)
-      await guild.members.fetch();
+      // Fetch members matching the username query (limit to 50 for performance)
+      // This prevents memory issues on large servers while still finding exact matches
+      await guild.members.fetch({ query: normalizedUsername, limit: 50 });
 
       // Search for member by username
       const member = guild.members.cache.find(
