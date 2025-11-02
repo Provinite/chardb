@@ -490,6 +490,8 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
               communityId={selectedSpecies?.communityId || ''}
               onValidationChange={setIsGrantTargetValid}
               currentUser={currentUser}
+              defaultToSelf={true}
+              includeSelf={false}
             />
           </Section>
         )}

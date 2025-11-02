@@ -107,8 +107,14 @@ export interface GrantTargetSelectorProps {
   /** Callback when validation state changes */
   onValidationChange?: (isValid: boolean) => void;
 
-  /** Current user to auto-select in user mode */
+  /** Current user to make available for selection */
   currentUser?: SelectedUser;
+
+  /** Whether to always include currentUser in available users (default: false) */
+  includeSelf?: boolean;
+
+  /** Whether to auto-select currentUser on mount (default: false) */
+  defaultToSelf?: boolean;
 }
 
 const Container = styled.div`
@@ -231,6 +237,8 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   communityId,
   onValidationChange,
   currentUser,
+  includeSelf = false,
+  defaultToSelf = false,
 }) => {
   // GraphQL hook for Discord resolution
   const [resolveDiscordUser] = useResolveDiscordUserLazyQuery();
@@ -294,9 +302,9 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     // This allows auto-select logic to work on initial mount
   }, [value]);
 
-  // Auto-select currentUser when switching to user mode (only once)
+  // Auto-select currentUser when switching to user mode (only once, and only if defaultToSelf is true)
   useEffect(() => {
-    if (selectionMode === 'user' && currentUser && !value && !hasAutoSelected.current) {
+    if (defaultToSelf && selectionMode === 'user' && currentUser && !value && !hasAutoSelected.current) {
       hasAutoSelected.current = true; // Mark that we've done the initial auto-select
       onChange({
         type: 'user',
@@ -304,7 +312,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
         user: currentUser,
       });
     }
-  }, [selectionMode, currentUser, value, onChange]);
+  }, [defaultToSelf, selectionMode, currentUser, value, onChange]);
 
   // Reset auto-select flag when selection mode changes away from 'user'
   useEffect(() => {
@@ -316,15 +324,24 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   // Combine currentUser with users list for UserTypeahead
   const availableUsers = useMemo(() => {
     if (!currentUser) return users;
-    if (!users || users.length === 0) return [currentUser];
 
-    // Check if currentUser is already in the users list
-    const isCurrentUserInList = users.some(u => u.id === currentUser.id);
-    if (isCurrentUserInList) return users;
+    // If includeSelf is true, always include currentUser in results
+    if (includeSelf) {
+      if (!users || users.length === 0) return [currentUser];
+      const isCurrentUserInList = users.some(u => u.id === currentUser.id);
+      if (isCurrentUserInList) return users;
+      return [currentUser, ...users];
+    }
 
-    // Add currentUser to the beginning of the list
-    return [currentUser, ...users];
-  }, [currentUser, users]);
+    // If defaultToSelf is true but includeSelf is false:
+    // Include currentUser ONLY when there are no search results (for initial auto-select)
+    if (defaultToSelf && (!users || users.length === 0)) {
+      return [currentUser];
+    }
+
+    // Otherwise, just return search results without currentUser
+    return users;
+  }, [currentUser, users, includeSelf, defaultToSelf]);
 
   // Handle user selection
   const handleUserChange = (userId: string | null, user: SelectedUser | null) => {
