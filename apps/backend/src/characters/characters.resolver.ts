@@ -347,7 +347,10 @@ export class CharactersResolver {
     const pending = await this.pendingOwnershipService.findByCharacterId(
       character.id,
     );
-    return pending ? mapPrismaPendingOwnershipToGraphQL(pending) : null;
+    // Only return unclaimed pending ownerships
+    return pending && !pending.claimedAt
+      ? mapPrismaPendingOwnershipToGraphQL(pending)
+      : null;
   }
 
   /** Main media field resolver */
