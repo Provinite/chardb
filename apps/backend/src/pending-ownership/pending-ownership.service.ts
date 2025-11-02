@@ -111,20 +111,27 @@ export class PendingOwnershipService {
     provider: ExternalAccountProvider,
     providerAccountId: string,
   ): Promise<PendingOwnership[]> {
-    const pendingItems = await this.findUnclaimedByAccount(
-      provider,
-      providerAccountId,
-    );
-
-    if (pendingItems.length === 0) {
-      return [];
-    }
-
-    const now = new Date();
-
-    // Use a transaction to ensure atomicity
+    // Use a transaction to ensure atomicity and prevent race conditions
     const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Query for unclaimed items INSIDE transaction to ensure consistent snapshot
+      const pendingItems = await tx.pendingOwnership.findMany({
+        where: {
+          provider,
+          providerAccountId,
+          claimedAt: null,
+        },
+        include: {
+          character: true,
+          item: true,
+        },
+      });
+
+      if (pendingItems.length === 0) {
+        return [];
+      }
+
       const claimed: PendingOwnership[] = [];
+      const now = new Date();
 
       for (const pending of pendingItems) {
         // Transfer ownership based on entity type
