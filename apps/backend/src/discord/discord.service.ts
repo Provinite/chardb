@@ -28,8 +28,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
     const botToken = this.configService.get<string>('DISCORD_BOT_TOKEN');
 
     if (!botToken) {
-      this.logger.warn('DISCORD_BOT_TOKEN not configured. Discord features will be disabled.');
-      return;
+      throw new Error('DISCORD_BOT_TOKEN is required but not configured. Set the DISCORD_BOT_TOKEN environment variable.');
     }
 
     try {
