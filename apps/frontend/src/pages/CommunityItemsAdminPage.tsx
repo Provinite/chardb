@@ -305,6 +305,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
   });
 
   const [grantTarget, setGrantTarget] = useState<GrantTarget | null>(null);
+  const [isGrantTargetValid, setIsGrantTargetValid] = useState(false);
   const [userSearch, setUserSearch] = useState("");
 
   const { data: membersData, loading: membersLoading } =
@@ -395,6 +396,11 @@ export const CommunityItemsAdminPage: React.FC = () => {
 
     if (!grantTarget) {
       toast.error("Please select a grant target");
+      return;
+    }
+
+    if (grantTarget.type === 'pending' && !isGrantTargetValid) {
+      toast.error("Please verify the Discord account before granting");
       return;
     }
 
@@ -828,6 +834,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 userLabel="Assign to User"
                 pendingOwnerLabel="Orphaned with Pending Owner"
                 communityId={communityId!}
+                onValidationChange={setIsGrantTargetValid}
               />
             </FormGroup>
 
@@ -855,7 +862,12 @@ export const CommunityItemsAdminPage: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit">Grant Item</Button>
+              <Button
+                type="submit"
+                disabled={grantTarget?.type === 'pending' && !isGrantTargetValid}
+              >
+                Grant Item
+              </Button>
             </FormActions>
           </Form>
         </ModalContent>

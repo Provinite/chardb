@@ -294,6 +294,7 @@ export const EditCharacterPage: React.FC = () => {
 
   // Pending ownership state
   const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(null);
+  const [isGrantTargetValid, setIsGrantTargetValid] = useState(true); // true by default for edit mode
 
   const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
 
@@ -715,6 +716,7 @@ export const EditCharacterPage: React.FC = () => {
               userLabel="No Pending Owner"
               pendingOwnerLabel="Set Pending Owner"
               communityId={character.species?.community?.id || ''}
+              onValidationChange={setIsGrantTargetValid}
             />
           </FormSection>
         )}
@@ -752,7 +754,11 @@ export const EditCharacterPage: React.FC = () => {
           >
             Cancel
           </Button>
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isSubmitting || (characterTarget?.type === 'pending' && !isGrantTargetValid)}
+          >
             {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>
         </Actions>

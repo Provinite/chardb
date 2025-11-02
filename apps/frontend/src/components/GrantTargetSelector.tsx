@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import { UserTypeahead, SelectedUser } from '@chardb/ui';
 import { RadioGroup, Radio } from '@chardb/ui';
@@ -99,6 +99,9 @@ export interface GrantTargetSelectorProps {
 
   /** Community ID (required for Discord resolution) */
   communityId: string;
+
+  /** Callback when validation state changes */
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 const Container = styled.div`
@@ -218,6 +221,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   pendingOwnerLabel = 'Orphaned with Pending Owner',
   disabled = false,
   communityId,
+  onValidationChange,
 }) => {
   // GraphQL hook for Discord resolution
   const [resolveDiscordUser] = useResolveDiscordUserLazyQuery();
@@ -230,6 +234,36 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   const [resolvedUser, setResolvedUser] = useState<ResolvedDiscordUser | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [checkError, setCheckError] = useState<string | null>(null);
+
+  // Check validation state
+  const [checkedAccountId, setCheckedAccountId] = useState<string | null>(null);
+  const [hasSuccessfulCheck, setHasSuccessfulCheck] = useState(false);
+
+  // Calculate validation state
+  const isValid = useMemo(() => {
+    if (selectionMode === 'user') {
+      // User mode: valid if a user is selected
+      return !!value;
+    }
+    if (selectionMode === 'pending') {
+      // Pending mode: must have a value
+      if (!value) return false;
+
+      // Discord pending owner: must have successful check
+      if (provider === 'DISCORD') {
+        return hasSuccessfulCheck && !!value;
+      }
+
+      // DeviantArt: just needs a value (no check button)
+      return !!value;
+    }
+    return false;
+  }, [selectionMode, value, provider, hasSuccessfulCheck]);
+
+  // Notify parent when validation state changes
+  useEffect(() => {
+    onValidationChange?.(isValid);
+  }, [isValid, onValidationChange]);
 
   // Initialize state from value
   useEffect(() => {
@@ -266,6 +300,9 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     setProvider(newProvider as 'DISCORD' | 'DEVIANTART');
     // Clear account ID when switching providers
     setAccountId('');
+    // Reset check state
+    setHasSuccessfulCheck(false);
+    setCheckedAccountId(null);
     onChange(null);
   };
 
@@ -276,7 +313,12 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     setCheckError(null);
     setResolvedUser(null);
 
+    // Reset check state if accountId changes from the checked value
     const trimmed = value.trim();
+    if (trimmed !== checkedAccountId) {
+      setHasSuccessfulCheck(false);
+      setCheckedAccountId(null);
+    }
     if (!trimmed) {
       onChange(null);
       return;
@@ -331,10 +373,16 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
         avatarUrl: user.avatarUrl || undefined,
       });
       setCheckError(null);
+      // Mark this accountId as successfully checked
+      setCheckedAccountId(accountId.trim());
+      setHasSuccessfulCheck(true);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to resolve Discord user';
       setCheckError(errorMessage);
       setResolvedUser(null);
+      // Reset check state on error
+      setCheckedAccountId(null);
+      setHasSuccessfulCheck(false);
     } finally {
       setIsChecking(false);
     }
@@ -346,6 +394,9 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     setValidationError(null);
     setCheckError(null);
     setResolvedUser(null);
+    // Reset check state
+    setHasSuccessfulCheck(false);
+    setCheckedAccountId(null);
     onChange(null);
   };
 
@@ -441,10 +492,10 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
               {provider === 'DISCORD' && (
                 <CheckButton
                   onClick={handleCheckDiscordUser}
-                  disabled={disabled || isChecking || !accountId.trim()}
+                  disabled={disabled || isChecking || !accountId.trim() || hasSuccessfulCheck}
                   type="button"
                 >
-                  {isChecking ? 'Checking...' : 'Check'}
+                  {isChecking ? 'Checking...' : hasSuccessfulCheck ? 'Check ✓' : 'Check'}
                 </CheckButton>
               )}
             </InputRow>

@@ -293,6 +293,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
 
   // Character ownership/grant target state
   const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(null);
+  const [isGrantTargetValid, setIsGrantTargetValid] = useState(false);
 
   // Check if user has permission to create orphaned characters in the selected species' community
   const canCreateOrphanedCharacter = useMemo(() => {
@@ -461,6 +462,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
               userLabel="Owned by me"
               pendingOwnerLabel="Orphaned with Pending Owner"
               communityId={selectedSpecies?.communityId || ''}
+              onValidationChange={setIsGrantTargetValid}
             />
           </Section>
         )}
@@ -595,7 +597,10 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           <CancelButton type="button" onClick={handleBackClick}>
             Cancel
           </CancelButton>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={isSubmitting || (characterTarget?.type === 'pending' && !isGrantTargetValid)}
+          >
             {isSubmitting ? "Creating..." : "Create Character"}
           </Button>
         </ButtonRow>
