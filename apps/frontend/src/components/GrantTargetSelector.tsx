@@ -115,6 +115,9 @@ export interface GrantTargetSelectorProps {
 
   /** Whether to auto-select currentUser on mount (default: false) */
   defaultToSelf?: boolean;
+
+  /** Current search query to distinguish initial state from empty search results */
+  searchQuery?: string;
 }
 
 const Container = styled.div`
@@ -239,6 +242,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   currentUser,
   includeSelf = false,
   defaultToSelf = false,
+  searchQuery,
 }) => {
   // GraphQL hook for Discord resolution
   const [resolveDiscordUser] = useResolveDiscordUserLazyQuery();
@@ -334,14 +338,15 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     }
 
     // If defaultToSelf is true but includeSelf is false:
-    // Include currentUser ONLY when there are no search results (for initial auto-select)
-    if (defaultToSelf && (!users || users.length === 0)) {
+    // Include currentUser ONLY in initial state (no search query, no results)
+    // Don't include when there's an active search that returned no results
+    if (defaultToSelf && !searchQuery && (!users || users.length === 0)) {
       return [currentUser];
     }
 
     // Otherwise, just return search results without currentUser
     return users;
-  }, [currentUser, users, includeSelf, defaultToSelf]);
+  }, [currentUser, users, includeSelf, defaultToSelf, searchQuery]);
 
   // Handle user selection
   const handleUserChange = (userId: string | null, user: SelectedUser | null) => {

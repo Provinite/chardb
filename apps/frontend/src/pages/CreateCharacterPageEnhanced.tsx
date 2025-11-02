@@ -492,6 +492,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
               currentUser={currentUser}
               defaultToSelf={true}
               includeSelf={false}
+              searchQuery={userSearch}
             />
           </Section>
         )}
