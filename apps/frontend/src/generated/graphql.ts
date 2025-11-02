@@ -1588,11 +1588,21 @@ export type MutationUpdateTraitOrdersArgs = {
   input: UpdateTraitOrdersInput;
 };
 
+export type OwnerIdUpdate = {
+  /** Set owner ID (null = orphan character) */
+  set?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export type PendingOwnerInput = {
   /** The external account provider */
   provider: ExternalAccountProvider;
   /** The account identifier on the external provider (Discord user ID, DeviantArt username, etc.) */
   providerAccountId: Scalars['String']['input'];
+};
+
+export type PendingOwnerUpdate = {
+  /** Set pending owner (null = clear pending owner) */
+  set?: InputMaybe<PendingOwnerInput>;
 };
 
 export type PendingOwnership = {
@@ -2538,8 +2548,10 @@ export type UpdateCharacterInput = {
   isTradeable?: InputMaybe<Scalars['Boolean']['input']>;
   mainMediaId?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
-  /** Update pending ownership for orphaned character */
-  pendingOwner?: InputMaybe<PendingOwnerInput>;
+  /** Update character ownership (requires canCreateOrphanedCharacter permission) */
+  ownerIdUpdate?: InputMaybe<OwnerIdUpdate>;
+  /** Update pending ownership (requires canCreateOrphanedCharacter permission) */
+  pendingOwnerUpdate?: InputMaybe<PendingOwnerUpdate>;
   price?: InputMaybe<Scalars['Float']['input']>;
   speciesId?: InputMaybe<Scalars['ID']['input']>;
   speciesVariantId?: InputMaybe<Scalars['ID']['input']>;

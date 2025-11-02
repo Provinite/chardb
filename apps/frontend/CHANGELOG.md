@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Character Ownership Editing (#125)**: Users with `canCreateOrphanedCharacter` permission can now edit ownership of any character (not just orphaned ones)
+  - Ownership section now appears for all characters with a species (removed orphaned-only restriction)
+  - Support for three ownership states: orphaned (no owner), assigned to registered user, or orphaned with pending external claim
+  - Ownership changes create audit trail records (`CharacterOwnershipChange`)
+  - Uses GraphQL wrapper input types (`ownerIdUpdate`, `pendingOwnerUpdate`) to properly distinguish "set to null" from "don't change"
+  - Backend permission validation ensures only authorized users can modify ownership
+
 - **Discord OAuth Account Linking (#127)**: Added Discord account linking functionality
   - Added Discord OAuth callback page (`/auth/discord/callback`) for handling OAuth redirects
   - Added "Link Discord Account" button to Edit Profile page

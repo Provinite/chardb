@@ -1526,6 +1526,11 @@ type Mutation {
   ): [TraitListEntry!]!
 }
 
+input OwnerIdUpdate {
+  """Set owner ID (null = orphan character)"""
+  set: ID
+}
+
 input PendingOwnerInput {
   """The external account provider"""
   provider: ExternalAccountProvider!
@@ -1534,6 +1539,11 @@ input PendingOwnerInput {
   The account identifier on the external provider (Discord user ID, DeviantArt username, etc.)
   """
   providerAccountId: String!
+}
+
+input PendingOwnerUpdate {
+  """Set pending owner (null = clear pending owner)"""
+  set: PendingOwnerInput
 }
 
 type PendingOwnership {
@@ -2449,8 +2459,15 @@ input UpdateCharacterInput {
   mainMediaId: ID
   name: String
 
-  """Update pending ownership for orphaned character"""
-  pendingOwner: PendingOwnerInput
+  """
+  Update character ownership (requires canCreateOrphanedCharacter permission)
+  """
+  ownerIdUpdate: OwnerIdUpdate
+
+  """
+  Update pending ownership (requires canCreateOrphanedCharacter permission)
+  """
+  pendingOwnerUpdate: PendingOwnerUpdate
   price: Float
   speciesId: ID
   speciesVariantId: ID

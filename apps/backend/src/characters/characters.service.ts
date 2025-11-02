@@ -288,11 +288,11 @@ export class CharactersService {
   async update(
     id: string,
     userId: string,
-    input: { characterData: Prisma.CharacterUpdateInput; tags?: string[]; pendingOwner?: PendingOwnerInput | null },
+    input: { characterData: Prisma.CharacterUpdateInput; tags?: string[]; pendingOwner?: PendingOwnerInput | null; ownerId?: string | null },
   ) {
     const character = await this.findOne(id, userId);
 
-    const { characterData, tags, pendingOwner } = input;
+    const { characterData, tags, pendingOwner, ownerId } = input;
 
     // Prevent changing species once it's set
     if (characterData.species !== undefined && character.speciesId) {
@@ -334,6 +334,50 @@ export class CharactersService {
               tagId: tag.id,
             },
           });
+        }
+      }
+    }
+
+    // Handle ownership changes (if ownerId is being modified)
+    if (ownerId !== undefined) {
+      const oldOwnerId = character.ownerId;
+
+      // Only update if ownership is actually changing
+      if (oldOwnerId !== ownerId) {
+        // Verify new owner exists if setting to a user
+        if (ownerId !== null) {
+          const newOwner = await this.db.user.findUnique({
+            where: { id: ownerId },
+          });
+          if (!newOwner) {
+            throw new NotFoundException("New owner not found");
+          }
+        }
+
+        // Update character ownership
+        await this.db.character.update({
+          where: { id },
+          data: { ownerId },
+        });
+
+        // Create ownership change audit record (only when transferring to a user)
+        // Note: We don't create audit records for orphaning (toUserId null) since the schema requires toUserId
+        if (ownerId !== null) {
+          await this.db.characterOwnershipChange.create({
+            data: {
+              characterId: id,
+              fromUserId: oldOwnerId,
+              toUserId: ownerId,
+            },
+          });
+        }
+
+        // If setting an actual owner, clear any pending ownership
+        if (ownerId !== null) {
+          const existingPending = await this.pendingOwnershipService.findByCharacterId(id);
+          if (existingPending) {
+            await this.pendingOwnershipService.remove(existingPending.id);
+          }
         }
       }
     }
@@ -396,8 +440,12 @@ export class CharactersService {
       }
     }
 
-    // Return the updated character
-    return updatedCharacter;
+    // Return the updated character (re-fetch to get latest state)
+    const finalCharacter = await this.db.character.findUnique({ where: { id } });
+    if (!finalCharacter) {
+      throw new NotFoundException('Character not found after update');
+    }
+    return finalCharacter;
   }
 
   async remove(id: string, userId: string): Promise<boolean> {

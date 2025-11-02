@@ -141,8 +141,8 @@ export class CharactersResolver {
     @Args("input") input: UpdateCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<CharacterEntity> {
-    // If updating pending ownership, require canCreateOrphanedCharacter permission
-    if (input.pendingOwner !== undefined) {
+    // If updating ownership or pending ownership, require canCreateOrphanedCharacter permission
+    if (input.ownerIdUpdate !== undefined || input.pendingOwnerUpdate !== undefined) {
       let speciesId = input.speciesId;
 
       // If speciesId not in input, fetch from existing character
@@ -154,7 +154,7 @@ export class CharactersResolver {
       // Validate that character has a species
       if (!speciesId) {
         throw new BadRequestException(
-          'Cannot set pending ownership on a character without a species',
+          'Cannot manage ownership on a character without a species',
         );
       }
 
@@ -166,7 +166,7 @@ export class CharactersResolver {
         );
       if (!hasPermission) {
         throw new ForbiddenException(
-          'You do not have permission to manage orphaned characters',
+          'You do not have permission to manage character ownership',
         );
       }
     }

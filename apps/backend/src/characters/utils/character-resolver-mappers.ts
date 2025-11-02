@@ -71,8 +71,9 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
   characterData: Prisma.CharacterUpdateInput;
   tags?: string[];
   pendingOwner?: PendingOwnerInput | null;
+  ownerId?: string | null;
 } {
-  const { tags, pendingOwner, ...inputData } = input;
+  const { tags, pendingOwnerUpdate, ownerIdUpdate, ...inputData } = input;
   const characterData: Prisma.CharacterUpdateInput = {};
 
   if (inputData.name !== undefined) characterData.name = inputData.name;
@@ -107,7 +108,11 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
       : { disconnect: true };
   }
 
-  return { characterData, tags, pendingOwner };
+  // Extract values from wrapper types
+  const pendingOwner = pendingOwnerUpdate?.set;
+  const ownerId = ownerIdUpdate?.set;
+
+  return { characterData, tags, pendingOwner, ownerId };
 }
 
 export function mapUpdateCharacterTraitsInputToService(

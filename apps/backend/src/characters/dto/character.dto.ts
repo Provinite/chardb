@@ -89,6 +89,31 @@ export class CreateCharacterInput {
   pendingOwner?: PendingOwnerInput;
 }
 
+/**
+ * Wrapper type to distinguish "set owner to value/null" from "don't change owner"
+ * Absent field = no change, present with value = change to that value
+ */
+@InputType()
+export class OwnerIdUpdate {
+  @Field(() => ID, { nullable: true, description: 'Set owner ID (null = orphan character)' })
+  @IsOptional()
+  @IsUUID()
+  set?: string | null;
+}
+
+/**
+ * Wrapper type to distinguish "set pending owner" from "don't change pending owner"
+ * Absent field = no change, present with value = change to that value
+ */
+@InputType()
+export class PendingOwnerUpdate {
+  @Field(() => PendingOwnerInput, { nullable: true, description: 'Set pending owner (null = clear pending owner)' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PendingOwnerInput)
+  set?: PendingOwnerInput | null;
+}
+
 @InputType()
 export class UpdateCharacterInput {
   @Field({ nullable: true })
@@ -166,11 +191,17 @@ export class UpdateCharacterInput {
   @IsUUID()
   mainMediaId?: string;
 
-  @Field(() => PendingOwnerInput, { nullable: true, description: 'Update pending ownership for orphaned character' })
+  @Field(() => OwnerIdUpdate, { nullable: true, description: 'Update character ownership (requires canCreateOrphanedCharacter permission)' })
   @IsOptional()
   @ValidateNested()
-  @Type(() => PendingOwnerInput)
-  pendingOwner?: PendingOwnerInput | null;
+  @Type(() => OwnerIdUpdate)
+  ownerIdUpdate?: OwnerIdUpdate;
+
+  @Field(() => PendingOwnerUpdate, { nullable: true, description: 'Update pending ownership (requires canCreateOrphanedCharacter permission)' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PendingOwnerUpdate)
+  pendingOwnerUpdate?: PendingOwnerUpdate;
 }
 
 @InputType()

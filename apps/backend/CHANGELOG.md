@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Character Ownership Management via Update Mutation (#125)**: Enhanced `updateCharacter` mutation with ownership control
+  - Added `OwnerIdUpdate` and `PendingOwnerUpdate` wrapper input types to distinguish "set to null" from "don't change"
+  - Users with `canCreateOrphanedCharacter` permission can modify ownership of any character (not just orphaned)
+  - Support for orphaning characters (setting owner to null), transferring to users, and setting pending ownership
+  - Ownership changes create audit trail records via `CharacterOwnershipChange` (except when orphaning)
+  - Automatic pending ownership clearing when assigning actual owner
+  - Backend permission validation in both resolver and service layers for defense-in-depth security
+
 - **Discord OAuth Account Linking (#127)**: Added Discord as external account provider
   - Added `DISCORD` to `ExternalAccountProvider` enum with database migration
   - Implemented `DiscordStrategy` with Discord OAuth2 flow and user profile fetching
