@@ -8,6 +8,7 @@ import {
   Parent,
   Int,
 } from "@nestjs/graphql";
+import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
@@ -81,12 +82,18 @@ export class CharactersResolver {
   ) {
     // If creating orphaned character (with pending ownership), require canCreateOrphanedCharacter permission
     if (input.pendingOwner) {
+      // Validate that speciesId is provided when creating orphaned characters
+      if (!input.speciesId) {
+        throw new BadRequestException('speciesId is required when creating orphaned characters');
+      }
+
+      // Check permissions
       const hasPermission = await this.charactersService.userHasOrphanedCharacterPermission(
         user.id,
-        input.speciesId!,
+        input.speciesId,
       );
       if (!hasPermission) {
-        throw new Error("You do not have permission to create orphaned characters");
+        throw new ForbiddenException('You do not have permission to create orphaned characters');
       }
     }
 
