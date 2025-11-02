@@ -16,6 +16,7 @@ import {
   CharacterTraitValueInput,
   Visibility,
 } from "../graphql/characters.graphql";
+import { useGetCommunityMembersQuery } from "../graphql/communities.graphql";
 import { useAuth } from "../contexts/AuthContext";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import { canUserEditCharacter } from "../lib/characterPermissions";
@@ -295,12 +296,24 @@ export const EditCharacterPage: React.FC = () => {
   // Pending ownership state
   const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(null);
   const [isGrantTargetValid, setIsGrantTargetValid] = useState(true); // true by default for edit mode
+  const [userSearch, setUserSearch] = useState("");
 
   const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
 
   const { data, loading, error } = useGetCharacterQuery({
     variables: { id: id! },
     skip: !id,
+  });
+
+  // Fetch community members for user search in pending ownership section
+  const character = data?.character;
+  const { data: membersData, loading: membersLoading } = useGetCommunityMembersQuery({
+    variables: {
+      communityId: character?.species?.community?.id || '',
+      search: userSearch,
+      limit: 10,
+    },
+    skip: !character?.species?.community?.id || !userSearch || userSearch.length < 2,
   });
 
   const [updateCharacter] = useUpdateCharacterMutation();
@@ -327,8 +340,6 @@ export const EditCharacterPage: React.FC = () => {
       tags: [],
     },
   });
-
-  const character = data?.character;
 
   // Get user's permissions in the character's community
   const { permissions } = useUserCommunityRole(
@@ -710,7 +721,9 @@ export const EditCharacterPage: React.FC = () => {
             <GrantTargetSelector
               value={characterTarget}
               onChange={setCharacterTarget}
-              onUserSearch={() => {}} // No user search needed for editing
+              onUserSearch={setUserSearch}
+              users={membersData?.community?.members || []}
+              usersLoading={membersLoading}
               allowPendingOwner={true}
               discordGuildId={character.species?.community?.discordGuildId}
               discordGuildName={character.species?.community?.discordGuildName}
