@@ -828,7 +828,7 @@ input GrantItemInput {
   pendingOwner: PendingOwnerInput
   quantity: Int! = 1
 
-  """User ID to grant item to. Omit for orphaned items."""
+  """User ID to grant item to. Required if pendingOwner is not provided."""
   userId: ID
 }
 
