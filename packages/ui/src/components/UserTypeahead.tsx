@@ -292,7 +292,7 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
 
   // Sync value prop with internal selectedUser state
   useEffect(() => {
-    if (value && users.length > 0) {
+    if (value && users && users.length > 0) {
       const user = users.find((u) => u.id === value);
       if (user) {
         setSelectedUser(user);

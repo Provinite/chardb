@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { UserTypeahead, SelectedUser } from '@chardb/ui';
 import { RadioGroup, Radio } from '@chardb/ui';
@@ -248,6 +248,9 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   const [checkedAccountId, setCheckedAccountId] = useState<string | null>(null);
   const [hasSuccessfulCheck, setHasSuccessfulCheck] = useState(false);
 
+  // Track if we've done the initial auto-select to prevent re-selecting after user clears
+  const hasAutoSelected = useRef(false);
+
   // Calculate validation state
   const isValid = useMemo(() => {
     if (selectionMode === 'unassigned') {
@@ -291,10 +294,10 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     // This allows auto-select logic to work on initial mount
   }, [value]);
 
-  // Auto-select currentUser when switching to user mode
+  // Auto-select currentUser when switching to user mode (only once)
   useEffect(() => {
-    if (selectionMode === 'user' && currentUser && !value) {
-      // Automatically select the current user
+    if (selectionMode === 'user' && currentUser && !value && !hasAutoSelected.current) {
+      hasAutoSelected.current = true; // Mark that we've done the initial auto-select
       onChange({
         type: 'user',
         userId: currentUser.id,
@@ -302,6 +305,13 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
       });
     }
   }, [selectionMode, currentUser, value, onChange]);
+
+  // Reset auto-select flag when selection mode changes away from 'user'
+  useEffect(() => {
+    if (selectionMode !== 'user') {
+      hasAutoSelected.current = false;
+    }
+  }, [selectionMode]);
 
   // Combine currentUser with users list for UserTypeahead
   const availableUsers = useMemo(() => {

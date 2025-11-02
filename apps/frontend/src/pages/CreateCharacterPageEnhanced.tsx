@@ -15,6 +15,7 @@ import {
   CharacterTraitValueInput,
   Visibility,
 } from "../generated/graphql";
+import { useGetCommunityMembersQuery } from "../graphql/communities.graphql";
 import { useAuth } from "../contexts/AuthContext";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
@@ -294,10 +295,22 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   // Character ownership/grant target state
   const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(null);
   const [isGrantTargetValid, setIsGrantTargetValid] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+
+  // Query community members for user search (only when species is selected)
+  const { data: membersData, loading: membersLoading } = useGetCommunityMembersQuery({
+    variables: {
+      communityId: selectedSpecies?.communityId || '',
+      search: userSearch,
+      limit: 10,
+    },
+    skip: !selectedSpecies?.communityId || !userSearch || userSearch.length < 2,
+  });
 
   // Convert current user to SelectedUser format for GrantTargetSelector
   const currentUser = useMemo(() => {
     if (!user) return undefined;
+
     return {
       id: user.id,
       username: user.username,
@@ -466,7 +479,9 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             <GrantTargetSelector
               value={characterTarget}
               onChange={setCharacterTarget}
-              onUserSearch={() => {}} // No user search needed for character creation (always current user or orphaned)
+              onUserSearch={setUserSearch}
+              users={membersData?.community?.members || []}
+              usersLoading={membersLoading}
               allowPendingOwner={true}
               discordGuildId={selectedSpecies?.community?.discordGuildId}
               discordGuildName={selectedSpecies?.community?.discordGuildName}
