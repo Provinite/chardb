@@ -6,7 +6,8 @@ import { z } from "zod";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
 import { ArrowLeft, User, FileText, Settings, Tag as TagIcon, Users } from "lucide-react";
-import { Button, TagInput, GrantTargetSelector, GrantTarget } from "@chardb/ui";
+import { Button, TagInput } from "@chardb/ui";
+import { GrantTargetSelector, GrantTarget } from "../components/GrantTargetSelector";
 import {
   useCreateCharacterMutation,
   SpeciesDetailsFragment,
@@ -459,6 +460,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
               discordGuildName={selectedSpecies?.community?.discordGuildName}
               userLabel="Owned by me"
               pendingOwnerLabel="Orphaned with Pending Owner"
+              communityId={selectedSpecies?.communityId || ''}
             />
           </Section>
         )}

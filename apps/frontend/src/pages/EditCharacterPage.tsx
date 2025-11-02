@@ -6,7 +6,8 @@ import { z } from "zod";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
 import { AlertTriangle } from "lucide-react";
-import { Button, TagInput, Input, GrantTargetSelector, GrantTarget } from "@chardb/ui";
+import { Button, TagInput, Input } from "@chardb/ui";
+import { GrantTargetSelector, GrantTarget } from "../components/GrantTargetSelector";
 import {
   useGetCharacterQuery,
   useUpdateCharacterMutation,
@@ -713,6 +714,7 @@ export const EditCharacterPage: React.FC = () => {
               discordGuildName={character.species?.community?.discordGuildName}
               userLabel="No Pending Owner"
               pendingOwnerLabel="Set Pending Owner"
+              communityId={character.species?.community?.id || ''}
             />
           </FormSection>
         )}

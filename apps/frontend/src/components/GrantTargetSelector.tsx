@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { UserTypeahead, SelectedUser } from './UserTypeahead';
-import { RadioGroup, Radio } from './RadioGroup';
-import { Input } from './Input';
-import { Alert } from './Alert';
+import { UserTypeahead, SelectedUser } from '@chardb/ui';
+import { RadioGroup, Radio } from '@chardb/ui';
+import { Input } from '@chardb/ui';
+import { Alert } from '@chardb/ui';
+import { useResolveDiscordUserLazyQuery } from '../graphql/communities.graphql';
 
 /**
  * GrantTargetSelector - Component for selecting a grant/ownership target
@@ -96,11 +97,8 @@ export interface GrantTargetSelectorProps {
   /** Whether the component is disabled */
   disabled?: boolean;
 
-  /** Callback to resolve Discord user (optional - enables Check button) */
-  onCheckDiscordUser?: (identifier: string) => Promise<ResolvedDiscordUser>;
-
-  /** Community ID for Discord resolution */
-  communityId?: string;
+  /** Community ID (required for Discord resolution) */
+  communityId: string;
 }
 
 const Container = styled.div`
@@ -219,9 +217,12 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   userLabel = 'Assign to User',
   pendingOwnerLabel = 'Orphaned with Pending Owner',
   disabled = false,
-  onCheckDiscordUser,
   communityId,
 }) => {
+  // GraphQL hook for Discord resolution
+  const [resolveDiscordUser] = useResolveDiscordUserLazyQuery();
+
+  // Component state
   const [selectionMode, setSelectionMode] = useState<'user' | 'pending'>('user');
   const [provider, setProvider] = useState<'DISCORD' | 'DEVIANTART'>('DISCORD');
   const [accountId, setAccountId] = useState('');
@@ -305,7 +306,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
   // Handle Check button click
   const handleCheckDiscordUser = async () => {
-    if (!onCheckDiscordUser || !accountId.trim() || !communityId) {
+    if (!accountId.trim() || !communityId) {
       return;
     }
 
@@ -314,8 +315,21 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     setResolvedUser(null);
 
     try {
-      const resolved = await onCheckDiscordUser(accountId.trim());
-      setResolvedUser(resolved);
+      const result = await resolveDiscordUser({
+        variables: { identifier: accountId.trim(), communityId },
+      });
+
+      if (!result.data?.resolveDiscordUser) {
+        throw new Error('Failed to resolve Discord user');
+      }
+
+      const user = result.data.resolveDiscordUser;
+      setResolvedUser({
+        userId: user.userId,
+        username: user.username,
+        displayName: user.displayName || undefined,
+        avatarUrl: user.avatarUrl || undefined,
+      });
       setCheckError(null);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to resolve Discord user';
@@ -415,7 +429,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
                     : 'Enter DeviantArt username'}
                 </HelpText>
               </InputWrapper>
-              {provider === 'DISCORD' && onCheckDiscordUser && communityId && (
+              {provider === 'DISCORD' && (
                 <CheckButton
                   onClick={handleCheckDiscordUser}
                   disabled={disabled || isChecking || !accountId.trim()}

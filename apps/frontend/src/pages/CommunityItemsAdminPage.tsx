@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { useParams } from "react-router-dom";
 import { Package, Plus, Edit2, Trash2, Gift } from "lucide-react";
-import { Button, Card, GrantTargetSelector, GrantTarget } from "@chardb/ui";
+import { Button, Card } from "@chardb/ui";
+import { GrantTargetSelector, GrantTarget } from "../components/GrantTargetSelector";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ColorSelector, ColorPip } from "../components/colors";
 import { useQuery, useMutation } from "@apollo/client";
@@ -17,7 +18,6 @@ import {
 import {
   useCommunityByIdQuery,
   useGetCommunityMembersQuery,
-  useResolveDiscordUserLazyQuery,
 } from "../graphql/communities.graphql";
 
 const Container = styled.div`
@@ -285,7 +285,6 @@ export const CommunityItemsAdminPage: React.FC = () => {
   const [updateItemType] = useMutation(UPDATE_ITEM_TYPE);
   const [deleteItemType] = useMutation(DELETE_ITEM_TYPE);
   const [grantItem] = useMutation(GRANT_ITEM);
-  const [resolveDiscordUser] = useResolveDiscordUserLazyQuery();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -389,28 +388,6 @@ export const CommunityItemsAdminPage: React.FC = () => {
         error instanceof Error ? error.message : "Failed to delete item type",
       );
     }
-  };
-
-  const handleCheckDiscordUser = async (identifier: string) => {
-    if (!communityId) {
-      throw new Error("Community ID is required");
-    }
-
-    const result = await resolveDiscordUser({
-      variables: { identifier, communityId },
-    });
-
-    if (!result.data?.resolveDiscordUser) {
-      throw new Error("Failed to resolve Discord user");
-    }
-
-    const user = result.data.resolveDiscordUser;
-    return {
-      userId: user.userId,
-      username: user.username,
-      displayName: user.displayName || undefined,
-      avatarUrl: user.avatarUrl || undefined,
-    };
   };
 
   const handleGrantItem = async (e: React.FormEvent) => {
@@ -850,8 +827,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 discordGuildName={communityData?.community?.discordGuildName}
                 userLabel="Assign to User"
                 pendingOwnerLabel="Orphaned with Pending Owner"
-                onCheckDiscordUser={handleCheckDiscordUser}
-                communityId={communityId}
+                communityId={communityId!}
               />
             </FormGroup>
 
