@@ -741,7 +741,7 @@ export const EditCharacterPage: React.FC = () => {
 
             <FormGroup>
               <Label>
-                {pendingOwnerProvider === "DISCORD" ? "Discord Username or ID" : "DeviantArt Username"}
+                {pendingOwnerProvider === "DISCORD" ? "Search Discord Account" : "Search DeviantArt Account"}
               </Label>
               <Input
                 type="text"
@@ -755,9 +755,10 @@ export const EditCharacterPage: React.FC = () => {
                 }}
                 placeholder={
                   pendingOwnerProvider === "DISCORD"
-                    ? "@username or numeric ID"
-                    : "DeviantArt username"
+                    ? "Search by @handle or numeric ID"
+                    : "Search by account name"
                 }
+                autoComplete="off"
                 disabled={clearPendingOwnership}
               />
               <TagsHelp>
