@@ -12,7 +12,7 @@ export interface DiscordGuildInfo {
 export class DiscordService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DiscordService.name);
   private client: Client;
-  private isReady = false;
+  private readyPromise: Promise<void>;
 
   constructor(private configService: ConfigService) {
     // Initialize Discord client with necessary intents
@@ -34,20 +34,33 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
     try {
       this.logger.log('Connecting Discord bot...');
 
-      // Set up ready event
-      this.client.once('ready', () => {
-        this.isReady = true;
-        this.logger.log(`Discord bot connected as ${this.client.user?.tag}`);
+      // Create promise that resolves when bot is ready
+      this.readyPromise = new Promise((resolve, reject) => {
+        // Set up ready event
+        this.client.once('ready', () => {
+          this.logger.log(`Discord bot connected as ${this.client.user?.tag}`);
+          resolve();
+        });
+
+        // Set up error handler
+        this.client.on('error', (error) => {
+          this.logger.error('Discord client error:', error);
+        });
+
+        // Timeout after 30 seconds
+        setTimeout(() => {
+          reject(new Error('Discord bot connection timeout after 30 seconds'));
+        }, 30000);
       });
 
-      // Set up error handler
-      this.client.on('error', (error) => {
-        this.logger.error('Discord client error:', error);
-      });
-
+      // Start login process
       await this.client.login(botToken);
+
+      // Wait for ready event before continuing
+      await this.readyPromise;
     } catch (error) {
       this.logger.error('Failed to connect Discord bot:', error);
+      throw error;
     }
   }
 
@@ -59,10 +72,18 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Ensure the Discord bot is ready, waiting if necessary
+   * @throws Error if bot failed to connect
+   */
+  private async ensureReady(): Promise<void> {
+    await this.readyPromise;
+  }
+
+  /**
    * Check if the Discord bot is ready and connected
    */
   isConnected(): boolean {
-    return this.isReady;
+    return this.client.isReady();
   }
 
   /**
@@ -86,9 +107,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
    * Get guild information and verify bot access
    */
   async getGuildInfo(guildId: string): Promise<DiscordGuildInfo | null> {
-    if (!this.isReady) {
-      throw new Error('Discord bot is not connected');
-    }
+    await this.ensureReady();
 
     try {
       const guild = await this.client.guilds.fetch(guildId);
@@ -115,9 +134,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
    * @returns The Discord user ID, or null if not found
    */
   async resolveUsernameToId(guildId: string, username: string): Promise<string | null> {
-    if (!this.isReady) {
-      throw new Error('Discord bot is not connected');
-    }
+    await this.ensureReady();
 
     // Normalize username (remove @ if present)
     const normalizedUsername = username.startsWith('@') ? username.slice(1) : username;
@@ -151,11 +168,8 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
    * Verify that the bot has access to a guild
    */
   async verifyGuildAccess(guildId: string): Promise<boolean> {
-    if (!this.isReady) {
-      return false;
-    }
-
     try {
+      await this.ensureReady();
       await this.client.guilds.fetch(guildId);
       return true;
     } catch (error) {
