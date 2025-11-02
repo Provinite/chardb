@@ -280,19 +280,15 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
   // Initialize state from value
   useEffect(() => {
-    if (!value) {
-      // No value means unassigned mode
-      setSelectionMode('unassigned');
-      setProvider('DISCORD');
-      setAccountId('');
-      setValidationError(null);
-    } else if (value.type === 'user') {
+    if (value?.type === 'user') {
       setSelectionMode('user');
-    } else if (value.type === 'pending') {
+    } else if (value?.type === 'pending') {
       setSelectionMode('pending');
       setProvider(value.provider);
       setAccountId(value.providerAccountId);
     }
+    // Don't change selectionMode if value is null - let it stay at default
+    // This allows auto-select logic to work on initial mount
   }, [value]);
 
   // Auto-select currentUser when switching to user mode
