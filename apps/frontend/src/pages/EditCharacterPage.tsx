@@ -698,12 +698,13 @@ export const EditCharacterPage: React.FC = () => {
           )}
         </FormSection>
 
-        {/* Pending Ownership Section - only show for orphaned characters with permission */}
+        {/* Orphaned Character Transfer Section - only show for orphaned characters with permission */}
         {!character.owner && character.speciesId && permissions.canCreateOrphanedCharacter && (
           <FormSection>
-            <SectionTitle>Pending Ownership</SectionTitle>
+            <SectionTitle>Orphaned Character Transfer</SectionTitle>
             <InfoBox>
-              Set a pending owner if this character will be transferred to someone who hasn't registered yet.
+              This character is orphaned (has no owner). You can set a pending owner to transfer
+              it to someone who hasn't registered yet, or leave it unassigned for now.
             </InfoBox>
 
             <GrantTargetSelector
@@ -713,7 +714,7 @@ export const EditCharacterPage: React.FC = () => {
               allowPendingOwner={true}
               discordGuildId={character.species?.community?.discordGuildId}
               discordGuildName={character.species?.community?.discordGuildName}
-              userLabel="No Pending Owner"
+              userLabel="No Pending Owner (Unassigned)"
               pendingOwnerLabel="Set Pending Owner"
               communityId={character.species?.community?.id || ''}
               onValidationChange={setIsGrantTargetValid}
