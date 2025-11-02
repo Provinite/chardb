@@ -43,6 +43,24 @@ export class ExternalAccountsService {
   }
 
   /**
+   * Find an external account by provider and account ID
+   * Used to check if an external account has been claimed by a user
+   */
+  async findByProviderAndAccountId(
+    provider: ExternalAccountProvider,
+    providerAccountId: string,
+  ) {
+    return this.database.externalAccount.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider,
+          providerAccountId,
+        },
+      },
+    });
+  }
+
+  /**
    * Link an external account to a user
    * Automatically claims any pending items/characters for this account
    */

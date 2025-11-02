@@ -54,12 +54,14 @@ export class CharactersService {
       pendingOwner?: PendingOwnerInput; // Pending ownership info
     },
   ) {
-    const { characterData, tags, pendingOwner } = input;
+    const { characterData, tags } = input;
+    let pendingOwner = input.pendingOwner;
 
     // Determine the actual owner:
     // - If pendingOwner is provided, character is orphaned (ownerId = null)
     // - Otherwise, owner is the current user (userId)
-    const actualOwnerId = pendingOwner ? null : userId;
+    // - Can be reassigned if external account is already claimed
+    let actualOwnerId = pendingOwner ? null : userId;
 
     // Extract speciesId early for validation and Discord resolution
     const speciesId = characterData.species?.connect?.id;
@@ -107,6 +109,21 @@ export class CharactersService {
         // DeviantArt uses usernames, so always store as displayIdentifier
         displayIdentifier = pendingOwner.providerAccountId;
         resolvedAccountId = pendingOwner.providerAccountId;
+      }
+
+      // Check if the external account has already been claimed by a user
+      // If so, assign directly to that user instead of creating pending ownership
+      if (resolvedAccountId) {
+        const claimedUserId = await this.pendingOwnershipService.checkIfAccountClaimed(
+          pendingOwner.provider,
+          resolvedAccountId,
+        );
+
+        if (claimedUserId) {
+          // Account is already claimed - assign to the user who claimed it
+          actualOwnerId = claimedUserId;
+          pendingOwner = undefined; // Don't create pending ownership
+        }
       }
     }
 

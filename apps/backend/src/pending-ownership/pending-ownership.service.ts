@@ -1,10 +1,14 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { ExternalAccountProvider, PendingOwnership, Prisma } from '@chardb/database';
+import { ExternalAccountsService } from '../external-accounts/external-accounts.service';
 
 @Injectable()
 export class PendingOwnershipService {
-  constructor(private prisma: DatabaseService) {}
+  constructor(
+    private prisma: DatabaseService,
+    private externalAccountsService: ExternalAccountsService,
+  ) {}
 
   /**
    * Create a pending ownership record for a character
@@ -78,6 +82,22 @@ export class PendingOwnershipService {
         displayIdentifier,
       },
     });
+  }
+
+  /**
+   * Check if an external account has already been claimed by a user.
+   * Returns the userId if the account is claimed, null otherwise.
+   * Used to prevent creating pending ownership for already-registered users.
+   */
+  async checkIfAccountClaimed(
+    provider: ExternalAccountProvider,
+    providerAccountId: string,
+  ): Promise<string | null> {
+    const externalAccount = await this.externalAccountsService.findByProviderAndAccountId(
+      provider,
+      providerAccountId,
+    );
+    return externalAccount?.userId ?? null;
   }
 
   /**

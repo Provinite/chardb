@@ -14,6 +14,7 @@ import { ItemFilters } from './dto/item.dto';
 export interface PendingOwnerInput {
   provider: ExternalAccountProvider;
   providerAccountId: string;
+  displayIdentifier?: string;
 }
 
 @Injectable()
@@ -164,10 +165,12 @@ export class ItemsService {
     metadata?: any;
     pendingOwner?: PendingOwnerInput; // For pending ownership
   }) {
-    const { itemTypeId, userId, quantity, metadata, pendingOwner } = input;
+    const { itemTypeId, userId, quantity, metadata } = input;
+    let pendingOwner = input.pendingOwner;
 
     // Determine actual owner: null if pending, otherwise userId
-    const actualOwnerId = pendingOwner ? null : userId;
+    // Can be reassigned if external account is already claimed
+    let actualOwnerId = pendingOwner ? null : userId;
 
     if (quantity < 1) {
       throw new BadRequestException('Quantity must be at least 1');
@@ -180,6 +183,54 @@ export class ItemsService {
 
     if (!itemType) {
       throw new NotFoundException(`ItemType with ID ${itemTypeId} not found`);
+    }
+
+    // PRE-VALIDATION: Resolve external account and check if claimed BEFORE creating item
+    if (pendingOwner) {
+      let resolvedAccountId: string;
+      let displayIdentifier: string | undefined;
+
+      // Resolve Discord username to ID if necessary
+      if (pendingOwner.provider === ExternalAccountProvider.DISCORD) {
+        // Check if the input is already a numeric ID
+        const isNumericId = /^\d{17,19}$/.test(pendingOwner.providerAccountId);
+
+        // If it's not an ID (i.e., it's a username), store it as displayIdentifier
+        if (!isNumericId) {
+          displayIdentifier = pendingOwner.providerAccountId;
+        }
+
+        resolvedAccountId = await this.resolveDiscordIdentifier(
+          itemType.communityId,
+          pendingOwner.providerAccountId,
+        );
+      } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
+        // DeviantArt uses usernames, so always store as displayIdentifier
+        displayIdentifier = pendingOwner.providerAccountId;
+        resolvedAccountId = pendingOwner.providerAccountId;
+      } else {
+        throw new BadRequestException(`Unsupported provider: ${pendingOwner.provider}`);
+      }
+
+      // Check if the external account has already been claimed by a user
+      // If so, assign directly to that user instead of creating pending ownership
+      const claimedUserId = await this.pendingOwnershipService.checkIfAccountClaimed(
+        pendingOwner.provider,
+        resolvedAccountId,
+      );
+
+      if (claimedUserId) {
+        // Account is already claimed - assign directly to that user
+        actualOwnerId = claimedUserId;
+        pendingOwner = undefined; // Don't create pending ownership
+      } else {
+        // Store resolved data for later use
+        pendingOwner = {
+          ...pendingOwner,
+          providerAccountId: resolvedAccountId,
+          displayIdentifier,
+        };
+      }
     }
 
     // Verify user exists and is member of community (skip for orphaned items)
@@ -265,35 +316,13 @@ export class ItemsService {
       },
     });
 
-    // Create pending ownership record if provided
+    // Create pending ownership record if still needed (not claimed)
     if (pendingOwner) {
-      let resolvedAccountId = pendingOwner.providerAccountId;
-      let displayIdentifier: string | undefined;
-
-      // Resolve Discord username to ID if necessary
-      if (pendingOwner.provider === ExternalAccountProvider.DISCORD) {
-        // Check if the input is already a numeric ID
-        const isNumericId = /^\d{17,19}$/.test(pendingOwner.providerAccountId);
-
-        // If it's not an ID (i.e., it's a username), store it as displayIdentifier
-        if (!isNumericId) {
-          displayIdentifier = pendingOwner.providerAccountId;
-        }
-
-        resolvedAccountId = await this.resolveDiscordIdentifier(
-          itemType.communityId,
-          pendingOwner.providerAccountId,
-        );
-      } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
-        // DeviantArt uses usernames, so always store as displayIdentifier
-        displayIdentifier = pendingOwner.providerAccountId;
-      }
-
       await this.pendingOwnershipService.createForItem(
         item.id,
         pendingOwner.provider,
-        resolvedAccountId,
-        displayIdentifier,
+        pendingOwner.providerAccountId, // Already resolved earlier
+        pendingOwner.displayIdentifier,
       );
     }
 
