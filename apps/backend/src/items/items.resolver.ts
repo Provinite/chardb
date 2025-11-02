@@ -26,7 +26,7 @@ import {
   ItemType as ItemTypeEntity,
   ItemTypeConnection,
 } from "./entities/item-type.entity";
-import { Item as ItemEntity, ItemConnection } from "./entities/item.entity";
+import { Item as ItemEntity } from "./entities/item.entity";
 import { Community } from "../communities/entities/community.entity";
 import { User } from "../users/entities/user.entity";
 import { CommunityColor } from "../community-colors/entities/community-color.entity";
@@ -40,6 +40,12 @@ import {
   UpdateItemInput,
   ItemFiltersInput,
 } from "./dto/item.dto";
+import {
+  mapPrismaItemTypeConnectionToGraphQL,
+  mapPrismaItemTypeToGraphQL,
+} from "./utils/item-type-resolver-mappers";
+import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
+import { mapPrismaItemToGraphQL } from "./utils/item-resolver-mappers";
 
 @Resolver(() => ItemTypeEntity)
 export class ItemsResolver {
@@ -78,7 +84,7 @@ export class ItemsResolver {
       },
     });
 
-    return itemType as ItemTypeEntity;
+    return mapPrismaItemTypeToGraphQL(itemType);
   }
 
   @AllowAnyAuthenticated()
@@ -88,7 +94,6 @@ export class ItemsResolver {
   async updateItemType(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: UpdateItemTypeInput,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<ItemTypeEntity> {
     const itemType = await this.itemsService.updateItemType(id, {
       name: input.name,
@@ -109,7 +114,7 @@ export class ItemsResolver {
       metadata: input.metadata,
     });
 
-    return itemType as ItemTypeEntity;
+    return mapPrismaItemTypeToGraphQL(itemType);
   }
 
   @AllowAnyAuthenticated()
@@ -118,7 +123,6 @@ export class ItemsResolver {
   @Mutation(() => Boolean)
   async deleteItemType(
     @Args("id", { type: () => ID }) id: string,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.itemsService.deleteItemType(id);
   }
@@ -129,8 +133,9 @@ export class ItemsResolver {
   @Query(() => ItemTypeConnection)
   async itemTypes(
     @Args("filters", { nullable: true }) filters?: ItemTypeFiltersInput,
-  ): Promise<any> {
-    return this.itemsService.findAllItemTypes(filters);
+  ): Promise<ItemTypeConnection> {
+    const items = await this.itemsService.findAllItemTypes(filters);
+    return mapPrismaItemTypeConnectionToGraphQL(items);
   }
 
   @AllowUnauthenticated()
@@ -139,7 +144,7 @@ export class ItemsResolver {
     @Args("id", { type: () => ID }) id: string,
   ): Promise<ItemTypeEntity> {
     const itemType = await this.itemsService.findItemTypeById(id);
-    return itemType as ItemTypeEntity;
+    return mapPrismaItemTypeToGraphQL(itemType);
   }
 
   // ==================== Item Mutations ====================
@@ -162,7 +167,7 @@ export class ItemsResolver {
       pendingOwner: input.pendingOwner,
     });
 
-    return item as any;
+    return mapPrismaItemToGraphQL(item);
   }
 
   @AllowAnyAuthenticated()
@@ -172,14 +177,13 @@ export class ItemsResolver {
   async updateItem(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: UpdateItemInput,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<ItemEntity> {
     const item = await this.itemsService.updateItem(id, {
       quantity: input.quantity,
       metadata: input.metadata,
     });
 
-    return item as any;
+    return mapPrismaItemToGraphQL(item);
   }
 
   @AllowAnyAuthenticated()
@@ -188,7 +192,6 @@ export class ItemsResolver {
   @Mutation(() => Boolean, { description: "Delete an item (admin only)" })
   async deleteItem(
     @Args("id", { type: () => ID }) id: string,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.itemsService.deleteItem(id);
   }
@@ -239,21 +242,20 @@ export class ItemFieldsResolver {
 
   @AllowUnauthenticated()
   @ResolveField(() => ItemTypeEntity, { name: "itemType" })
-  async resolveItemType(@Parent() item: ItemEntity): Promise<any> {
-    if (item.itemType) {
-      return item.itemType;
-    }
-    return this.itemsService.findItemTypeById(item.itemTypeId);
+  async resolveItemType(@Parent() item: ItemEntity): Promise<ItemTypeEntity> {
+    const itemType = await this.itemsService.findItemTypeById(item.itemTypeId);
+    return mapPrismaItemTypeToGraphQL(itemType);
   }
 
   @AllowUnauthenticated()
   @ResolveField(() => User, { name: "owner", nullable: true })
-  async resolveOwner(@Parent() item: ItemEntity): Promise<any> {
+  async resolveOwner(@Parent() item: ItemEntity): Promise<User | null> {
     if (!item.ownerId) return null; // Orphaned item
-    if (item.owner) {
-      return item.owner;
+    const user = await this.usersService.findById(item.ownerId);
+    if (!user) {
+      return null;
     }
-    return this.usersService.findById(item.ownerId);
+    return mapPrismaUserToGraphQL(user);
   }
 
   @AllowUnauthenticated()

@@ -264,7 +264,7 @@ export class CharactersService {
     // Prevent changing species once it's set
     if (characterData.species !== undefined && character.speciesId) {
       // The species field in the update input is either {connect: {id}} or {disconnect: true}
-      const speciesUpdate = characterData.species as any;
+      const speciesUpdate = characterData.species;
 
       // If trying to connect to a different species or disconnect
       if (

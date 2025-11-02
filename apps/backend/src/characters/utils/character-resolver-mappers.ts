@@ -1,4 +1,4 @@
-import { Prisma } from "@chardb/database";
+import { ExternalAccountProvider, Prisma } from "@chardb/database";
 import {
   CreateCharacterInput,
   UpdateCharacterInput,
@@ -30,14 +30,24 @@ function mapTraitValues(
 export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
   characterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator">;
   tags?: string[];
-  pendingOwner?: { provider: any; providerAccountId: string };
+  pendingOwner?: {
+    provider: ExternalAccountProvider;
+    providerAccountId: string;
+  };
 } {
   const { tags, pendingOwner, ...characterData } = input;
 
-  const prismaCharacterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator"> = {
+  const prismaCharacterData: Omit<
+    Prisma.CharacterCreateInput,
+    "owner" | "creator"
+  > = {
     name: characterData.name,
-    species: characterData.speciesId ? { connect: { id: characterData.speciesId } } : undefined,
-    speciesVariant: characterData.speciesVariantId ? { connect: { id: characterData.speciesVariantId } } : undefined,
+    species: characterData.speciesId
+      ? { connect: { id: characterData.speciesId } }
+      : undefined,
+    speciesVariant: characterData.speciesVariantId
+      ? { connect: { id: characterData.speciesVariantId } }
+      : undefined,
     age: characterData.age,
     gender: characterData.gender,
     details: characterData.details,

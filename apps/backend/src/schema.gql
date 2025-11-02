@@ -930,7 +930,7 @@ type Item {
   itemTypeId: ID!
   metadata: JSON
   owner: User
-  ownerId: ID!
+  ownerId: ID
   pendingOwnership: PendingOwnership
   quantity: Int!
   updatedAt: DateTime!

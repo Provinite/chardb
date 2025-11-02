@@ -10,7 +10,10 @@ import {
 } from "@nestjs/graphql";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
-import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
+import {
+  AuthenticatedCurrentUserType,
+  CurrentUserType,
+} from "../auth/types/current-user.type";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
@@ -84,23 +87,28 @@ export class CharactersResolver {
     if (input.pendingOwner) {
       // Validate that speciesId is provided when creating orphaned characters
       if (!input.speciesId) {
-        throw new BadRequestException('speciesId is required when creating orphaned characters');
+        throw new BadRequestException(
+          "speciesId is required when creating orphaned characters",
+        );
       }
 
       // Check permissions
-      const hasPermission = await this.charactersService.userHasOrphanedCharacterPermission(
-        user.id,
-        input.speciesId,
-      );
+      const hasPermission =
+        await this.charactersService.userHasOrphanedCharacterPermission(
+          user.id,
+          input.speciesId,
+        );
       if (!hasPermission) {
-        throw new ForbiddenException('You do not have permission to create orphaned characters');
+        throw new ForbiddenException(
+          "You do not have permission to create orphaned characters",
+        );
       }
     }
 
     const serviceInput = mapCreateCharacterInputToService(input);
     const character = await this.charactersService.create(
-      user.id,  // Creator is always the current user
-      serviceInput,  // ownerId comes from serviceInput (null for orphaned)
+      user.id, // Creator is always the current user
+      serviceInput, // ownerId comes from serviceInput (null for orphaned)
     );
     return mapPrismaCharacterToGraphQL(character);
   }
@@ -109,7 +117,7 @@ export class CharactersResolver {
   @Query(() => CharacterConnection)
   async characters(
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ) {
     const result = await this.charactersService.findAll(filters, user?.id);
     return mapPrismaCharacterConnectionToGraphQL(result);
@@ -119,7 +127,7 @@ export class CharactersResolver {
   @Query(() => CharacterEntity)
   async character(
     @Args("id", { type: () => ID }) id: string,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<CharacterEntity> {
     const character = await this.charactersService.findOne(id, user?.id);
     return mapPrismaCharacterToGraphQL(character);
@@ -132,7 +140,7 @@ export class CharactersResolver {
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: UpdateCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<any> {
+  ): Promise<CharacterEntity> {
     const serviceInput = mapUpdateCharacterInputToService(input);
     const character = await this.charactersService.update(
       id,
@@ -158,8 +166,10 @@ export class CharactersResolver {
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: TransferCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<any> {
-    return this.charactersService.transfer(id, user.id, input.newOwnerId);
+  ): Promise<CharacterEntity> {
+    await this.charactersService.transfer(id, user.id, input.newOwnerId);
+    const char = await this.charactersService.findOne(id, user.id);
+    return mapPrismaCharacterToGraphQL(char);
   }
 
   @AllowGlobalAdmin()
@@ -169,8 +179,10 @@ export class CharactersResolver {
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: ManageTagsInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<any> {
-    return this.charactersService.addTags(id, user.id, input.tagNames);
+  ): Promise<CharacterEntity> {
+    await this.charactersService.addTags(id, user.id, input.tagNames);
+    const char = await this.charactersService.findOne(id, user.id);
+    return mapPrismaCharacterToGraphQL(char);
   }
 
   @AllowGlobalAdmin()
@@ -180,8 +192,10 @@ export class CharactersResolver {
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: ManageTagsInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<any> {
-    return this.charactersService.removeTags(id, user.id, input.tagNames);
+  ): Promise<CharacterEntity> {
+    await this.charactersService.removeTags(id, user.id, input.tagNames);
+    const char = await this.charactersService.findOne(id, user.id);
+    return mapPrismaCharacterToGraphQL(char);
   }
 
   @AllowGlobalAdmin()
@@ -195,16 +209,18 @@ export class CharactersResolver {
     @Args("input", { description: "Main media setting parameters" })
     input: SetMainMediaInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<any> {
-    return this.charactersService.setMainMedia(id, user.id, input.mediaId);
+  ): Promise<CharacterEntity> {
+    await this.charactersService.setMainMedia(id, user.id, input.mediaId);
+    const char = await this.charactersService.findOne(id, user.id);
+    return mapPrismaCharacterToGraphQL(char);
   }
 
   @AllowAnyAuthenticated()
   @Query(() => CharacterConnection)
   async myCharacters(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
-  ): Promise<any> {
+  ): Promise<CharacterConnection> {
     const userFilters = { ...filters, ownerId: user.id };
     const result = await this.charactersService.findAll(userFilters, user.id);
     return mapPrismaCharacterConnectionToGraphQL(result);
@@ -215,8 +231,8 @@ export class CharactersResolver {
   async userCharacters(
     @Args("userId", { type: () => ID }) userId: string,
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
-    @CurrentUser() user?: any,
-  ): Promise<any> {
+    @CurrentUser() user?: CurrentUserType,
+  ): Promise<CharacterConnection> {
     const userFilters = { ...filters, ownerId: userId };
     const result = await this.charactersService.findAll(userFilters, user?.id);
     return mapPrismaCharacterConnectionToGraphQL(result);
@@ -283,7 +299,9 @@ export class CharactersResolver {
   /** Character owner field resolver */
   @AllowUnauthenticated()
   @ResolveField("owner", () => User, { nullable: true })
-  async resolveOwnerField(@Parent() character: CharacterEntity): Promise<User | null> {
+  async resolveOwnerField(
+    @Parent() character: CharacterEntity,
+  ): Promise<User | null> {
     if (!character.ownerId) return null; // Orphaned character
     const user = await this.usersService.findById(character.ownerId);
     if (!user) throw new Error("Owner not found");
@@ -296,7 +314,9 @@ export class CharactersResolver {
   async resolvePendingOwnershipField(
     @Parent() character: CharacterEntity,
   ): Promise<PendingOwnership | null> {
-    const pending = await this.pendingOwnershipService.findByCharacterId(character.id);
+    const pending = await this.pendingOwnershipService.findByCharacterId(
+      character.id,
+    );
     return pending ? mapPrismaPendingOwnershipToGraphQL(pending) : null;
   }
 
@@ -354,7 +374,9 @@ export class CharactersResolver {
     @Parent() character: CharacterEntity,
   ): Promise<SpeciesVariant | null> {
     if (!character.speciesVariantId) return null;
-    const prismaResult = await this.speciesVariantsService.findOne(character.speciesVariantId);
+    const prismaResult = await this.speciesVariantsService.findOne(
+      character.speciesVariantId,
+    );
     return mapPrismaSpeciesVariantToGraphQL(prismaResult);
   }
 
