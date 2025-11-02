@@ -12,14 +12,19 @@ export class PendingOwnershipService {
   ) {}
 
   /**
-   * Create a pending ownership record for a character
+   * Create a pending ownership record for a character, with auto-claim if account is already linked.
+   *
+   * If the external account is already linked to a user, the character is automatically claimed
+   * (assigned to that user) instead of creating a pending ownership record.
+   *
+   * @returns Object indicating if character was claimed or pending ownership was created
    */
   async createForCharacter(
     characterId: string,
     provider: ExternalAccountProvider,
     providerAccountId: string,
     displayIdentifier?: string,
-  ): Promise<PendingOwnership> {
+  ): Promise<{ claimed: boolean; ownerId?: string; pendingOwnership?: PendingOwnership }> {
     // Check if character exists
     const character = await this.prisma.character.findUnique({
       where: { id: characterId },
@@ -38,7 +43,24 @@ export class PendingOwnershipService {
       );
     }
 
-    return this.prisma.pendingOwnership.create({
+    // Check if the external account is already linked to a user (auto-claim check)
+    const claimedUserId = await this.checkIfAccountClaimed(provider, providerAccountId);
+
+    if (claimedUserId) {
+      // Account is already claimed - assign character to the user who owns the account
+      await this.prisma.character.update({
+        where: { id: characterId },
+        data: { ownerId: claimedUserId },
+      });
+
+      return {
+        claimed: true,
+        ownerId: claimedUserId,
+      };
+    }
+
+    // Account not claimed - create pending ownership record
+    const pendingOwnership = await this.prisma.pendingOwnership.create({
       data: {
         characterId,
         provider,
@@ -46,17 +68,27 @@ export class PendingOwnershipService {
         displayIdentifier,
       },
     });
+
+    return {
+      claimed: false,
+      pendingOwnership,
+    };
   }
 
   /**
-   * Create a pending ownership record for an item
+   * Create a pending ownership record for an item, with auto-claim if account is already linked.
+   *
+   * If the external account is already linked to a user, the item is automatically claimed
+   * (assigned to that user) instead of creating a pending ownership record.
+   *
+   * @returns Object indicating if item was claimed or pending ownership was created
    */
   async createForItem(
     itemId: string,
     provider: ExternalAccountProvider,
     providerAccountId: string,
     displayIdentifier?: string,
-  ): Promise<PendingOwnership> {
+  ): Promise<{ claimed: boolean; ownerId?: string; pendingOwnership?: PendingOwnership }> {
     // Check if item exists
     const item = await this.prisma.item.findUnique({
       where: { id: itemId },
@@ -75,7 +107,24 @@ export class PendingOwnershipService {
       );
     }
 
-    return this.prisma.pendingOwnership.create({
+    // Check if the external account is already linked to a user (auto-claim check)
+    const claimedUserId = await this.checkIfAccountClaimed(provider, providerAccountId);
+
+    if (claimedUserId) {
+      // Account is already claimed - assign item to the user who owns the account
+      await this.prisma.item.update({
+        where: { id: itemId },
+        data: { ownerId: claimedUserId },
+      });
+
+      return {
+        claimed: true,
+        ownerId: claimedUserId,
+      };
+    }
+
+    // Account not claimed - create pending ownership record
+    const pendingOwnership = await this.prisma.pendingOwnership.create({
       data: {
         itemId,
         provider,
@@ -83,6 +132,11 @@ export class PendingOwnershipService {
         displayIdentifier,
       },
     });
+
+    return {
+      claimed: false,
+      pendingOwnership,
+    };
   }
 
   /**

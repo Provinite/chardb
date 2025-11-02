@@ -111,20 +111,7 @@ export class CharactersService {
         resolvedAccountId = pendingOwner.providerAccountId;
       }
 
-      // Check if the external account has already been claimed by a user
-      // If so, assign directly to that user instead of creating pending ownership
-      if (resolvedAccountId) {
-        const claimedUserId = await this.pendingOwnershipService.checkIfAccountClaimed(
-          pendingOwner.provider,
-          resolvedAccountId,
-        );
-
-        if (claimedUserId) {
-          // Account is already claimed - assign to the user who claimed it
-          actualOwnerId = claimedUserId;
-          pendingOwner = undefined; // Don't create pending ownership
-        }
-      }
+      // Note: Auto-claim logic is now handled inside createForCharacter
     }
 
     // Now create the character (only if all validations passed)
@@ -154,8 +141,9 @@ export class CharactersService {
       }
     }
 
-    // Create pending ownership record if provided
+    // Create pending ownership record if provided (with auto-claim)
     // Note: resolvedAccountId is already validated above
+    // createForCharacter will auto-claim if the account is already linked
     if (pendingOwner && resolvedAccountId) {
       await this.pendingOwnershipService.createForCharacter(
         character.id,
@@ -430,13 +418,21 @@ export class CharactersService {
           await this.pendingOwnershipService.remove(existingPending.id);
         }
 
-        // Create new pending ownership
-        await this.pendingOwnershipService.createForCharacter(
+        // Create new pending ownership (with auto-claim if account is already linked)
+        // The service will auto-claim if the external account is already linked to a user
+        const result = await this.pendingOwnershipService.createForCharacter(
           id,
           provider,
           resolvedAccountId,
           displayIdentifier,
         );
+
+        // If the character was auto-claimed, update the ownerId that was set earlier
+        // This ensures the character ownership reflects the auto-claim
+        if (result.claimed && result.ownerId) {
+          // Character was auto-claimed - ownership is already updated by the service
+          // No additional action needed
+        }
       }
     }
 

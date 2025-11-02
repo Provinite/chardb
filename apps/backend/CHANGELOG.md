@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Centralized Auto-Claim Logic (#125)**: Moved pending ownership auto-claim logic into PendingOwnershipService
+  - `createForCharacter` and `createForItem` now automatically claim if external account is already linked
+  - Auto-claim works consistently for both character/item creation and updates
+  - Removed inline auto-claim logic from character service (single source of truth)
+  - Returns result indicating if entity was claimed or pending ownership was created
+
 ### Added
 
 - **Character Ownership Management via Update Mutation (#125)**: Enhanced `updateCharacter` mutation with ownership control
