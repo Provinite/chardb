@@ -295,6 +295,17 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(null);
   const [isGrantTargetValid, setIsGrantTargetValid] = useState(false);
 
+  // Convert current user to SelectedUser format for GrantTargetSelector
+  const currentUser = useMemo(() => {
+    if (!user) return undefined;
+    return {
+      id: user.id,
+      username: user.username,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
+    };
+  }, [user]);
+
   // Check if user has permission to create orphaned characters in the selected species' community
   const canCreateOrphanedCharacter = useMemo(() => {
     if (!user || !selectedSpecies) return false;
@@ -459,10 +470,11 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
               allowPendingOwner={true}
               discordGuildId={selectedSpecies?.community?.discordGuildId}
               discordGuildName={selectedSpecies?.community?.discordGuildName}
-              userLabel="Owned by me"
+              userLabel="Owned By..."
               pendingOwnerLabel="Orphaned with Pending Owner"
               communityId={selectedSpecies?.communityId || ''}
               onValidationChange={setIsGrantTargetValid}
+              currentUser={currentUser}
             />
           </Section>
         )}

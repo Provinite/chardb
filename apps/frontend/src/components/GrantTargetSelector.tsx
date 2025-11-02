@@ -106,6 +106,9 @@ export interface GrantTargetSelectorProps {
 
   /** Callback when validation state changes */
   onValidationChange?: (isValid: boolean) => void;
+
+  /** Current user to auto-select in user mode */
+  currentUser?: SelectedUser;
 }
 
 const Container = styled.div`
@@ -227,6 +230,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   disabled = false,
   communityId,
   onValidationChange,
+  currentUser,
 }) => {
   // GraphQL hook for Discord resolution
   const [resolveDiscordUser] = useResolveDiscordUserLazyQuery();
@@ -290,6 +294,31 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
       setAccountId(value.providerAccountId);
     }
   }, [value]);
+
+  // Auto-select currentUser when switching to user mode
+  useEffect(() => {
+    if (selectionMode === 'user' && currentUser && !value) {
+      // Automatically select the current user
+      onChange({
+        type: 'user',
+        userId: currentUser.id,
+        user: currentUser,
+      });
+    }
+  }, [selectionMode, currentUser, value, onChange]);
+
+  // Combine currentUser with users list for UserTypeahead
+  const availableUsers = useMemo(() => {
+    if (!currentUser) return users;
+    if (!users || users.length === 0) return [currentUser];
+
+    // Check if currentUser is already in the users list
+    const isCurrentUserInList = users.some(u => u.id === currentUser.id);
+    if (isCurrentUserInList) return users;
+
+    // Add currentUser to the beginning of the list
+    return [currentUser, ...users];
+  }, [currentUser, users]);
 
   // Handle user selection
   const handleUserChange = (userId: string | null, user: SelectedUser | null) => {
@@ -436,7 +465,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
             value={value?.type === 'user' ? value.userId : null}
             onChange={handleUserChange}
             onSearch={onUserSearch}
-            users={users}
+            users={availableUsers}
             loading={usersLoading}
             placeholder="Search for a user..."
             disabled={disabled}
