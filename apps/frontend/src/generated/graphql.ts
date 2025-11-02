@@ -3020,7 +3020,7 @@ export type CommunityMembersByUserQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canCreateOrphanedCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type CommunityColorFieldsFragment = { __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string };
 
@@ -5419,6 +5419,7 @@ export const CommunityMembersByUserDocument = gql`
         canEditRole
         canEditCharacter
         canEditOwnCharacter
+        canCreateOrphanedCharacter
         canListInviteCodes
         canRemoveCommunityMember
         canManageMemberRoles

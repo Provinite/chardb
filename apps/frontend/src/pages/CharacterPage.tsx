@@ -11,6 +11,7 @@ import {
 } from "../graphql/characters.graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
+import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import { LikeButton } from "../components/LikeButton";
 import { CommentList } from "../components/CommentList";
 import { CharacterMediaGallery } from "../components/CharacterMediaGallery";
@@ -460,6 +461,13 @@ export const CharacterPage: React.FC = () => {
     skip: !id,
   });
 
+  const character: GetCharacterQuery["character"] | undefined = data?.character;
+
+  // Get user's permissions in the character's community
+  const { permissions } = useUserCommunityRole(
+    character?.species?.community?.id,
+  );
+
   const [deleteCharacter, { loading: deleteLoading }] =
     useDeleteCharacterMutation({
       onCompleted: () => {
@@ -478,8 +486,6 @@ export const CharacterPage: React.FC = () => {
         cache.gc();
       },
     });
-
-  const character: GetCharacterQuery["character"] | undefined = data?.character;
 
   const handleBackClick = () => {
     navigate("/characters");
@@ -691,7 +697,15 @@ export const CharacterPage: React.FC = () => {
           </OwnerInfo>
         )}
 
-        {user && character.owner && user.id === character.owner.id && (
+        {user && (
+          // User owns the character
+          (character.owner && user.id === character.owner.id) ||
+          // OR character is orphaned AND user has permission
+          (!character.owner && (
+            permissions.canCreateOrphanedCharacter ||
+            permissions.canEditCharacter
+          ))
+        ) && (
           <HeaderActions>
             <Button variant="primary" size="sm" onClick={handleEditClick}>
               Edit Character
