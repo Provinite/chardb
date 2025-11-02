@@ -2517,6 +2517,8 @@ export type UpdateCharacterInput = {
   isTradeable?: InputMaybe<Scalars['Boolean']['input']>;
   mainMediaId?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Update pending ownership for orphaned character */
+  pendingOwner?: InputMaybe<PendingOwnerInput>;
   price?: InputMaybe<Scalars['Float']['input']>;
   speciesId?: InputMaybe<Scalars['ID']['input']>;
   speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
@@ -2862,7 +2864,7 @@ export type GetCharacterQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, speciesId: string | null, speciesVariantId: string | null, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, speciesId: string | null, speciesVariantId: string | null, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -2876,7 +2878,7 @@ export type CreateCharacterMutationVariables = Exact<{
 }>;
 
 
-export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
+export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type UpdateCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2884,7 +2886,7 @@ export type UpdateCharacterMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCharacterMutation = { __typename?: 'Mutation', updateCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
+export type UpdateCharacterMutation = { __typename?: 'Mutation', updateCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type DeleteCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4344,6 +4346,7 @@ export const GetCharacterDocument = gql`
       id
       provider
       providerAccountId
+      displayIdentifier
       createdAt
     }
     owner {
@@ -4532,6 +4535,7 @@ export const CreateCharacterDocument = gql`
       id
       provider
       providerAccountId
+      displayIdentifier
       createdAt
     }
     owner {
@@ -4600,6 +4604,13 @@ export const UpdateCharacterDocument = gql`
     customFields
     createdAt
     updatedAt
+    pendingOwnership {
+      id
+      provider
+      providerAccountId
+      displayIdentifier
+      createdAt
+    }
     owner {
       id
       username

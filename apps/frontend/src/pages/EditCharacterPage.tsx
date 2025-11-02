@@ -313,6 +313,11 @@ export const EditCharacterPage: React.FC = () => {
   const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>([]);
   const [isSubmittingTraits, setIsSubmittingTraits] = useState(false);
 
+  // Pending ownership state
+  const [pendingOwnerProvider, setPendingOwnerProvider] = useState<string>("DISCORD");
+  const [pendingOwnerAccountId, setPendingOwnerAccountId] = useState("");
+  const [clearPendingOwnership, setClearPendingOwnership] = useState(false);
+
   const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
 
   const { data, loading, error } = useGetCharacterQuery({
@@ -383,6 +388,17 @@ export const EditCharacterPage: React.FC = () => {
           value: tv.value || "",
         })));
       }
+
+      // Initialize pending ownership state
+      if (character.pendingOwnership) {
+        setPendingOwnerProvider(character.pendingOwnership.provider);
+        setPendingOwnerAccountId(character.pendingOwnership.displayIdentifier || character.pendingOwnership.providerAccountId);
+        setClearPendingOwnership(false);
+      } else {
+        setPendingOwnerProvider("DISCORD");
+        setPendingOwnerAccountId("");
+        setClearPendingOwnership(false);
+      }
     }
   }, [character, reset]);
 
@@ -393,6 +409,17 @@ export const EditCharacterPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      // Build pending owner input
+      let pendingOwnerInput: any = undefined;
+      if (clearPendingOwnership) {
+        pendingOwnerInput = null; // Explicitly clear
+      } else if (pendingOwnerAccountId.trim()) {
+        pendingOwnerInput = {
+          provider: pendingOwnerProvider,
+          providerAccountId: pendingOwnerAccountId.trim(),
+        };
+      }
+
       const input: UpdateCharacterInput = {
         name: data.name,
         age: data.age || undefined,
@@ -407,6 +434,7 @@ export const EditCharacterPage: React.FC = () => {
         // Only include species if it's being set for the first time (character doesn't have one yet)
         speciesId: !character.speciesId && selectedSpecies ? selectedSpecies.id : undefined,
         speciesVariantId: !character.speciesId && selectedVariant ? selectedVariant.id : undefined,
+        pendingOwner: pendingOwnerInput,
       };
 
       await updateCharacter({
@@ -690,6 +718,73 @@ export const EditCharacterPage: React.FC = () => {
             </>
           )}
         </FormSection>
+
+        {/* Pending Ownership Section - only show for orphaned characters with permission */}
+        {!character.owner && character.speciesId && permissions.canCreateOrphanedCharacter && (
+          <FormSection>
+            <SectionTitle>Pending Ownership</SectionTitle>
+            <InfoBox>
+              Set a pending owner if this character will be transferred to someone who hasn't registered yet.
+            </InfoBox>
+
+            <FormGroup>
+              <Label>Account Provider</Label>
+              <Select
+                value={pendingOwnerProvider}
+                onChange={(e) => setPendingOwnerProvider(e.target.value)}
+                disabled={clearPendingOwnership}
+              >
+                <option value="DISCORD">Discord</option>
+                <option value="DEVIANTART">DeviantArt</option>
+              </Select>
+            </FormGroup>
+
+            <FormGroup>
+              <Label>
+                {pendingOwnerProvider === "DISCORD" ? "Discord Username or ID" : "DeviantArt Username"}
+              </Label>
+              <Input
+                type="text"
+                value={pendingOwnerAccountId}
+                onChange={(e) => {
+                  setPendingOwnerAccountId(e.target.value);
+                  // Clear the clear flag when user starts typing
+                  if (clearPendingOwnership) {
+                    setClearPendingOwnership(false);
+                  }
+                }}
+                placeholder={
+                  pendingOwnerProvider === "DISCORD"
+                    ? "@username or numeric ID"
+                    : "DeviantArt username"
+                }
+                disabled={clearPendingOwnership}
+              />
+              <TagsHelp>
+                {pendingOwnerProvider === "DISCORD"
+                  ? "Enter Discord username (with @) or numeric user ID"
+                  : "Enter DeviantArt username"}
+              </TagsHelp>
+            </FormGroup>
+
+            {character.pendingOwnership && (
+              <FormGroup>
+                <CheckboxLabel>
+                  <Checkbox
+                    checked={clearPendingOwnership}
+                    onChange={(e) => {
+                      setClearPendingOwnership(e.target.checked);
+                      if (e.target.checked) {
+                        setPendingOwnerAccountId("");
+                      }
+                    }}
+                  />
+                  Clear pending ownership
+                </CheckboxLabel>
+              </FormGroup>
+            )}
+          </FormSection>
+        )}
 
         {/* Traits Section - only show if character has a species */}
         {character.speciesId && (

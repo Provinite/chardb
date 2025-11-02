@@ -2422,6 +2422,9 @@ input UpdateCharacterInput {
   isTradeable: Boolean
   mainMediaId: ID
   name: String
+
+  """Update pending ownership for orphaned character"""
+  pendingOwner: PendingOwnerInput
   price: Float
   speciesId: ID
   speciesVariantId: ID

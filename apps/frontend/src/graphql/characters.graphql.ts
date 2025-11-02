@@ -116,6 +116,7 @@ export const GET_CHARACTER = gql`
         id
         provider
         providerAccountId
+        displayIdentifier
         createdAt
       }
       owner {
@@ -240,6 +241,7 @@ export const CREATE_CHARACTER = gql`
         id
         provider
         providerAccountId
+        displayIdentifier
         createdAt
       }
       owner {
@@ -283,6 +285,13 @@ export const UPDATE_CHARACTER = gql`
       customFields
       createdAt
       updatedAt
+      pendingOwnership {
+        id
+        provider
+        providerAccountId
+        displayIdentifier
+        createdAt
+      }
       owner {
         id
         username

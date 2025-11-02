@@ -165,6 +165,12 @@ export class UpdateCharacterInput {
   @IsOptional()
   @IsUUID()
   mainMediaId?: string;
+
+  @Field(() => PendingOwnerInput, { nullable: true, description: 'Update pending ownership for orphaned character' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PendingOwnerInput)
+  pendingOwner?: PendingOwnerInput | null;
 }
 
 @InputType()

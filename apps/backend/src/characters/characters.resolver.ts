@@ -141,6 +141,36 @@ export class CharactersResolver {
     @Args("input") input: UpdateCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<CharacterEntity> {
+    // If updating pending ownership, require canCreateOrphanedCharacter permission
+    if (input.pendingOwner !== undefined) {
+      let speciesId = input.speciesId;
+
+      // If speciesId not in input, fetch from existing character
+      if (!speciesId) {
+        const char = await this.charactersService.findOne(id, user.id);
+        speciesId = char.speciesId ?? undefined;
+      }
+
+      // Validate that character has a species
+      if (!speciesId) {
+        throw new BadRequestException(
+          'Cannot set pending ownership on a character without a species',
+        );
+      }
+
+      // Check permissions
+      const hasPermission =
+        await this.charactersService.userHasOrphanedCharacterPermission(
+          user.id,
+          speciesId,
+        );
+      if (!hasPermission) {
+        throw new ForbiddenException(
+          'You do not have permission to manage orphaned characters',
+        );
+      }
+    }
+
     const serviceInput = mapUpdateCharacterInputToService(input);
     const character = await this.charactersService.update(
       id,

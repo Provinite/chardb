@@ -3,6 +3,7 @@ import {
   CreateCharacterInput,
   UpdateCharacterInput,
 } from "../dto/character.dto";
+import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
 import {
   UpdateCharacterTraitsInput,
   CharacterTraitValueInput,
@@ -69,8 +70,9 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
 export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
   characterData: Prisma.CharacterUpdateInput;
   tags?: string[];
+  pendingOwner?: PendingOwnerInput | null;
 } {
-  const { tags, ...inputData } = input;
+  const { tags, pendingOwner, ...inputData } = input;
   const characterData: Prisma.CharacterUpdateInput = {};
 
   if (inputData.name !== undefined) characterData.name = inputData.name;
@@ -105,7 +107,7 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
       : { disconnect: true };
   }
 
-  return { characterData, tags };
+  return { characterData, tags, pendingOwner };
 }
 
 export function mapUpdateCharacterTraitsInputToService(

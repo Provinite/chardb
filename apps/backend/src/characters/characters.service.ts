@@ -255,11 +255,11 @@ export class CharactersService {
   async update(
     id: string,
     userId: string,
-    input: { characterData: Prisma.CharacterUpdateInput; tags?: string[] },
+    input: { characterData: Prisma.CharacterUpdateInput; tags?: string[]; pendingOwner?: PendingOwnerInput | null },
   ) {
     const character = await this.findOne(id, userId);
 
-    const { characterData, tags } = input;
+    const { characterData, tags, pendingOwner } = input;
 
     // Prevent changing species once it's set
     if (characterData.species !== undefined && character.speciesId) {
@@ -302,6 +302,64 @@ export class CharactersService {
             },
           });
         }
+      }
+    }
+
+    // Handle pending ownership updates
+    if (pendingOwner !== undefined) {
+      // Get existing pending ownership
+      const existingPending = await this.pendingOwnershipService.findByCharacterId(id);
+
+      if (pendingOwner === null) {
+        // Clear pending ownership
+        if (existingPending) {
+          await this.pendingOwnershipService.remove(existingPending.id);
+        }
+      } else {
+        // Set or update pending ownership
+        const { provider, providerAccountId } = pendingOwner;
+
+        // Ensure character has a species
+        if (!updatedCharacter.speciesId) {
+          throw new BadRequestException(
+            'Cannot set pending ownership on a character without a species',
+          );
+        }
+
+        let resolvedAccountId = providerAccountId;
+        let displayIdentifier: string | undefined;
+
+        // Resolve Discord username to ID if necessary
+        if (provider === ExternalAccountProvider.DISCORD) {
+          // Check if the input is already a numeric ID
+          const isNumericId = /^\d{17,19}$/.test(providerAccountId);
+
+          // If it's not an ID (i.e., it's a username), store it as displayIdentifier
+          if (!isNumericId) {
+            displayIdentifier = providerAccountId;
+          }
+
+          resolvedAccountId = await this.resolveDiscordIdentifier(
+            updatedCharacter.speciesId,
+            providerAccountId,
+          );
+        } else if (provider === ExternalAccountProvider.DEVIANTART) {
+          // DeviantArt uses usernames, so always store as displayIdentifier
+          displayIdentifier = providerAccountId;
+        }
+
+        // Remove old pending ownership if exists
+        if (existingPending) {
+          await this.pendingOwnershipService.remove(existingPending.id);
+        }
+
+        // Create new pending ownership
+        await this.pendingOwnershipService.createForCharacter(
+          id,
+          provider,
+          resolvedAccountId,
+          displayIdentifier,
+        );
       }
     }
 
