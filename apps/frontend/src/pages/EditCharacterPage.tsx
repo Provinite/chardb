@@ -16,6 +16,8 @@ import {
   Visibility,
 } from "../graphql/characters.graphql";
 import { useAuth } from "../contexts/AuthContext";
+import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { canUserEditCharacter } from "../lib/characterPermissions";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
@@ -345,6 +347,11 @@ export const EditCharacterPage: React.FC = () => {
 
   const character = data?.character;
 
+  // Get user's permissions in the character's community
+  const { permissions } = useUserCommunityRole(
+    character?.species?.community?.id
+  );
+
   // Reset form when character data loads
   useEffect(() => {
     if (character) {
@@ -454,13 +461,13 @@ export const EditCharacterPage: React.FC = () => {
     navigate(`/character/${id}`);
   };
 
-  // Check if user owns this character
-  if (character && user && (!character.owner || character.owner.id !== user.id)) {
+  // Check if user has permission to edit this character
+  if (character && !canUserEditCharacter(character, user, permissions)) {
     return (
       <Container>
         <ErrorContainer>
           <h3>Access Denied</h3>
-          <p>You can only edit your own characters.</p>
+          <p>You do not have permission to edit this character.</p>
         </ErrorContainer>
       </Container>
     );

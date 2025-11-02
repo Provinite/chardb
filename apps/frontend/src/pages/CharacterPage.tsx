@@ -12,6 +12,7 @@ import {
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { canUserEditCharacter } from "../lib/characterPermissions";
 import { LikeButton } from "../components/LikeButton";
 import { CommentList } from "../components/CommentList";
 import { CharacterMediaGallery } from "../components/CharacterMediaGallery";
@@ -697,15 +698,7 @@ export const CharacterPage: React.FC = () => {
           </OwnerInfo>
         )}
 
-        {user && (
-          // User owns the character
-          (character.owner && user.id === character.owner.id) ||
-          // OR character is orphaned AND user has permission
-          (!character.owner && (
-            permissions.canCreateOrphanedCharacter ||
-            permissions.canEditCharacter
-          ))
-        ) && (
+        {canUserEditCharacter(character, user, permissions) && (
           <HeaderActions>
             <Button variant="primary" size="sm" onClick={handleEditClick}>
               Edit Character
@@ -794,7 +787,7 @@ export const CharacterPage: React.FC = () => {
 
       <CharacterMediaGallery
         characterId={character.id}
-        canUpload={!!(user && character.owner && user.id === character.owner.id)}
+        canUpload={canUserEditCharacter(character, user, permissions)}
         limit={8}
         currentMainMediaId={character.mainMediaId || undefined}
       />
