@@ -1,6 +1,11 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Client, GatewayIntentBits, Guild } from 'discord.js';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Client, GatewayIntentBits, Guild } from "discord.js";
 
 export interface DiscordGuildInfo {
   id: string;
@@ -17,22 +22,21 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
   constructor(private configService: ConfigService) {
     // Initialize Discord client with necessary intents
     this.client = new Client({
-      intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMembers,
-      ],
+      intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
     });
   }
 
   async onModuleInit() {
-    const botToken = this.configService.get<string>('DISCORD_BOT_TOKEN');
+    const botToken = this.configService.get<string>("DISCORD_BOT_TOKEN");
 
     if (!botToken) {
-      throw new Error('DISCORD_BOT_TOKEN is required but not configured. Set the DISCORD_BOT_TOKEN environment variable.');
+      throw new Error(
+        "DISCORD_BOT_TOKEN is required but not configured. Set the DISCORD_BOT_TOKEN environment variable.",
+      );
     }
 
     try {
-      this.logger.log('Connecting Discord bot...');
+      this.logger.log("Connecting Discord bot...");
 
       // Create promise that resolves when bot is ready
       this.readyPromise = new Promise((resolve, reject) => {
@@ -60,19 +64,21 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
           if (settled) return;
           settled = true;
           cleanup();
-          this.logger.error('Discord client initialization error:', error);
+          this.logger.error("Discord client initialization error:", error);
           reject(error);
         };
 
         // Set up ready event
-        this.client.once('ready', handleResolve);
+        this.client.once("ready", handleResolve);
 
         // Set up error handler for initialization errors - reject promise on error
-        this.client.once('error', handleReject);
+        this.client.once("error", handleReject);
 
         // Timeout after 30 seconds
         timeoutId = setTimeout(() => {
-          handleReject(new Error('Discord bot connection timeout after 30 seconds'));
+          handleReject(
+            new Error("Discord bot connection timeout after 30 seconds"),
+          );
         }, 30000);
       });
 
@@ -82,14 +88,14 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       // Wait for ready event before continuing
       await this.readyPromise;
     } catch (error) {
-      this.logger.error('Failed to connect Discord bot:', error);
+      this.logger.error("Failed to connect Discord bot:", error);
       throw error;
     }
   }
 
   async onModuleDestroy() {
     if (this.client) {
-      this.logger.log('Disconnecting Discord bot...');
+      this.logger.log("Disconnecting Discord bot...");
       await this.client.destroy();
     }
   }
@@ -114,14 +120,14 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
    * Permissions: View Channels (1024) - Minimum permission needed to access guild and read members
    */
   generateBotInviteUrl(): string {
-    const clientId = this.configService.get<string>('DISCORD_CLIENT_ID');
+    const clientId = this.configService.get<string>("DISCORD_CLIENT_ID");
 
     if (!clientId) {
-      throw new Error('DISCORD_CLIENT_ID not configured');
+      throw new Error("DISCORD_CLIENT_ID not configured");
     }
 
-    const permissions = '1024'; // VIEW_CHANNEL - required to access guild and read member list
-    const scopes = 'bot';
+    const permissions = "1024"; // VIEW_CHANNEL - required to access guild and read member list
+    const scopes = "bot";
 
     return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=${permissions}&scope=${scopes}`;
   }
@@ -144,7 +150,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       // Bot doesn't have access to this guild
       return {
         id: guildId,
-        name: 'Unknown',
+        name: "Unknown",
         botHasAccess: false,
       };
     }
@@ -156,11 +162,16 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
    * @param username The username to resolve (with or without @ prefix)
    * @returns The Discord user ID, or null if not found
    */
-  async resolveUsernameToId(guildId: string, username: string): Promise<string | null> {
+  async resolveUsernameToId(
+    guildId: string,
+    username: string,
+  ): Promise<string | null> {
     await this.ensureReady();
 
     // Normalize username (remove @ if present)
-    const normalizedUsername = username.startsWith('@') ? username.slice(1) : username;
+    const normalizedUsername = username.startsWith("@")
+      ? username.slice(1)
+      : username;
 
     try {
       // Fetch the guild
@@ -172,19 +183,29 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
 
       // Search for member by username
       const member = guild.members.cache.find(
-        (m) => m.user.username.toLowerCase() === normalizedUsername.toLowerCase()
+        (m) =>
+          m.user.username.toLowerCase() === normalizedUsername.toLowerCase(),
       );
 
       if (!member) {
-        this.logger.debug(`User "${normalizedUsername}" not found in guild ${guildId}`);
+        this.logger.debug(
+          `User "${normalizedUsername}" not found in guild ${guildId}`,
+        );
         return null;
       }
 
-      this.logger.debug(`Resolved "${normalizedUsername}" to ID ${member.user.id}`);
+      this.logger.debug(
+        `Resolved "${normalizedUsername}" to ID ${member.user.id}`,
+      );
       return member.user.id;
     } catch (error) {
-      this.logger.error(`Failed to resolve username in guild ${guildId}:`, error);
-      throw new Error('Failed to search Discord server. Bot may not have access to this server.');
+      this.logger.error(
+        `Failed to resolve username in guild ${guildId}:`,
+        error,
+      );
+      throw new Error(
+        "Failed to search Discord server. Bot may not have access to this server.",
+      );
     }
   }
 
