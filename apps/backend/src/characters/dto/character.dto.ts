@@ -1,5 +1,6 @@
 import { Field, InputType, ObjectType, Int, Float, ID, registerEnumType } from '@nestjs/graphql';
-import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, IsEnum, MinLength, MaxLength, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, IsEnum, MinLength, MaxLength, Min, Max, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { Visibility } from '@chardb/database';
 import { CharacterTraitValueInput } from './character-trait.dto';
 import { PendingOwnerInput } from '../../pending-ownership/dto/pending-ownership.dto';
@@ -83,6 +84,8 @@ export class CreateCharacterInput {
 
   @Field(() => PendingOwnerInput, { nullable: true, description: 'Create character with pending ownership for an external account' })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => PendingOwnerInput)
   pendingOwner?: PendingOwnerInput;
 }
 

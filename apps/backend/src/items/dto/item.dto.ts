@@ -5,8 +5,10 @@ import {
   IsNumber,
   IsUUID,
   Min,
-  Max
+  Max,
+  ValidateNested
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { PendingOwnerInput } from '../../pending-ownership/dto/pending-ownership.dto';
 
 @InputType()
@@ -33,6 +35,8 @@ export class GrantItemInput {
 
   @Field(() => PendingOwnerInput, { nullable: true, description: 'Create item with pending ownership for an external account' })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => PendingOwnerInput)
   pendingOwner?: PendingOwnerInput;
 }
 
