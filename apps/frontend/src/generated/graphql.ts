@@ -751,7 +751,7 @@ export type GrantItemInput = {
   /** Create item with pending ownership for an external account */
   pendingOwner?: InputMaybe<PendingOwnerInput>;
   quantity?: Scalars['Int']['input'];
-  /** User ID to grant item to. Omit for orphaned items. */
+  /** User ID to grant item to. Required if pendingOwner is not provided. */
   userId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -2234,6 +2234,7 @@ export type QueryUsersArgs = {
 
 
 export type QueryValidateDiscordGuildArgs = {
+  communityId: Scalars['ID']['input'];
   guildId: Scalars['ID']['input'];
 };
 
@@ -3027,6 +3028,7 @@ export type DiscordBotInviteUrlQueryVariables = Exact<{ [key: string]: never; }>
 export type DiscordBotInviteUrlQuery = { __typename?: 'Query', discordBotInviteUrl: string };
 
 export type ValidateDiscordGuildQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
   guildId: Scalars['ID']['input'];
 }>;
 
@@ -5330,8 +5332,8 @@ export type DiscordBotInviteUrlLazyQueryHookResult = ReturnType<typeof useDiscor
 export type DiscordBotInviteUrlSuspenseQueryHookResult = ReturnType<typeof useDiscordBotInviteUrlSuspenseQuery>;
 export type DiscordBotInviteUrlQueryResult = Apollo.QueryResult<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>;
 export const ValidateDiscordGuildDocument = gql`
-    query ValidateDiscordGuild($guildId: ID!) {
-  validateDiscordGuild(guildId: $guildId) {
+    query ValidateDiscordGuild($communityId: ID!, $guildId: ID!) {
+  validateDiscordGuild(communityId: $communityId, guildId: $guildId) {
     id
     name
     botHasAccess
@@ -5351,6 +5353,7 @@ export const ValidateDiscordGuildDocument = gql`
  * @example
  * const { data, loading, error } = useValidateDiscordGuildQuery({
  *   variables: {
+ *      communityId: // value for 'communityId'
  *      guildId: // value for 'guildId'
  *   },
  * });

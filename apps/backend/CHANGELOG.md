@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Discord Guild Validation (#133)**: Fixed `validateDiscordGuild` query missing `communityId` parameter that `@ResolveCommunityFrom` decorator was expecting, preventing proper permission validation
+
 ## [v5.0.0] - 2025-11-02
 
 ### Fixed

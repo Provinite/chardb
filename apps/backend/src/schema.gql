@@ -2075,6 +2075,9 @@ type Query {
 
   """Validate that the bot has access to a Discord guild"""
   validateDiscordGuild(
+    """Community ID"""
+    communityId: ID!
+
     """Discord guild ID"""
     guildId: ID!
   ): DiscordGuildInfo!

@@ -99,8 +99,8 @@ export const DISCORD_BOT_INVITE_URL_QUERY = gql`
 `;
 
 export const VALIDATE_DISCORD_GUILD_QUERY = gql`
-  query ValidateDiscordGuild($guildId: ID!) {
-    validateDiscordGuild(guildId: $guildId) {
+  query ValidateDiscordGuild($communityId: ID!, $guildId: ID!) {
+    validateDiscordGuild(communityId: $communityId, guildId: $guildId) {
       id
       name
       botHasAccess
