@@ -813,7 +813,7 @@ export const CharacterPage: React.FC = () => {
 
             return (
               <ContentSection>
-                <SectionTitle>Custom Fields</SectionTitle>
+                <SectionTitle>Fields</SectionTitle>
                 <TradingInfo>
                   {fieldEntries.map(([key, value]) => (
                     <CustomFieldsRow key={key}>
