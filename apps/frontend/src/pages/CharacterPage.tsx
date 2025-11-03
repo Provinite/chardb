@@ -407,15 +407,17 @@ const CustomFieldsRow = styled.div`
 `;
 
 const CustomFieldKey = styled.span`
-  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  text-transform: capitalize;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  color: ${({ theme }) => theme.colors.text.muted};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 `;
 
 const CustomFieldValue = styled.span`
   color: ${({ theme }) => theme.colors.text.primary};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
 `;
 
 const ErrorContainer = styled.div`
