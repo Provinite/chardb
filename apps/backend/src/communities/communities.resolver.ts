@@ -154,6 +154,8 @@ export class CommunitiesResolver {
     description: "Validate that the bot has access to a Discord guild",
   })
   async validateDiscordGuild(
+    @Args("communityId", { type: () => ID, description: "Community ID" })
+    communityId: string,
     @Args("guildId", { type: () => ID, description: "Discord guild ID" })
     guildId: string,
   ): Promise<DiscordGuildInfo> {

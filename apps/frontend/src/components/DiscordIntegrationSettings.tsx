@@ -167,7 +167,7 @@ export const DiscordIntegrationSettings: React.FC<
     loading: validating,
     refetch: validateGuild,
   } = useValidateDiscordGuildQuery({
-    variables: { guildId: guildIdInput },
+    variables: { communityId: community.id, guildId: guildIdInput },
     skip: !validationAttempted || !guildIdInput,
   });
 
