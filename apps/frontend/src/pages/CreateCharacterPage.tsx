@@ -298,11 +298,31 @@ export const CreateCharacterPage: React.FC = () => {
       const price =
         data.price && data.price !== "" ? parseFloat(data.price) : undefined;
 
+      // Filter out empty keys from custom fields
+      let cleanedCustomFields = data.customFields;
+      if (data.customFields) {
+        try {
+          const parsed = JSON.parse(data.customFields);
+          const filtered = Object.entries(parsed).reduce((acc, [key, value]) => {
+            // Remove temporary keys and empty keys
+            if (key && !key.startsWith('__empty_') && key.trim()) {
+              acc[key] = value;
+            }
+            return acc;
+          }, {} as Record<string, unknown>);
+          cleanedCustomFields = Object.keys(filtered).length > 0
+            ? JSON.stringify(filtered)
+            : undefined;
+        } catch {
+          cleanedCustomFields = undefined;
+        }
+      }
+
       // Clean up empty strings
       const cleanData = {
         name: data.name,
         details: data.details || undefined,
-        customFields: data.customFields || undefined,
+        customFields: cleanedCustomFields,
         visibility: data.visibility,
         isSellable: data.isSellable,
         isTradeable: data.isTradeable,

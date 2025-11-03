@@ -125,7 +125,8 @@ export const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
 
       if (typeof parsed === 'object' && !Array.isArray(parsed)) {
         return Object.entries(parsed).map(([key, value]) => ({
-          key,
+          // Convert temporary keys back to empty strings
+          key: key.startsWith('__empty_') ? '' : key,
           value: String(value),
         }));
       }
@@ -136,10 +137,11 @@ export const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
   }, [customFieldsValue]);
 
   const updateCustomFields = (newFields: CustomField[]) => {
-    const fieldsObject = newFields.reduce((acc, field) => {
-      if (field.key.trim()) {
-        acc[field.key] = field.value;
-      }
+    const fieldsObject = newFields.reduce((acc, field, index) => {
+      // Allow empty keys in state - they'll be filtered on submit
+      // Use temporary key for empty fields to preserve them
+      const key = field.key.trim() || `__empty_${index}`;
+      acc[key] = field.value;
       return acc;
     }, {} as Record<string, string>);
 

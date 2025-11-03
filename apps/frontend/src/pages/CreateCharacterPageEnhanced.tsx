@@ -357,12 +357,32 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Filter out empty keys from custom fields
+      let cleanedCustomFields = data.customFields;
+      if (data.customFields) {
+        try {
+          const parsed = JSON.parse(data.customFields);
+          const filtered = Object.entries(parsed).reduce((acc, [key, value]) => {
+            // Remove temporary keys and empty keys
+            if (key && !key.startsWith('__empty_') && key.trim()) {
+              acc[key] = value;
+            }
+            return acc;
+          }, {} as Record<string, unknown>);
+          cleanedCustomFields = Object.keys(filtered).length > 0
+            ? JSON.stringify(filtered)
+            : undefined;
+        } catch {
+          cleanedCustomFields = undefined;
+        }
+      }
+
       await createCharacterMutation({
         variables: {
           input: {
             name: data.name,
             details: data.details || undefined,
-            customFields: data.customFields || undefined,
+            customFields: cleanedCustomFields,
             visibility: data.visibility,
             isSellable: data.isSellable,
             isTradeable: data.isTradeable,
