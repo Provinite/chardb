@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v5.0.1] - 2025-11-02
+
+### Fixed
+
+- **Discord Guild Validation (#133)**: Fixed backend `validateDiscordGuild` query configuration issue
+
 ## [v5.0.0] - 2025-11-02
 
 ## [v4.2.0] - 2025-10-28
