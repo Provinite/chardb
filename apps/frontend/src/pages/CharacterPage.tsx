@@ -279,13 +279,6 @@ const SectionTitle = styled.h3`
   border-bottom: 2px solid ${({ theme }) => theme.colors.border};
 `;
 
-const ContentText = styled.div`
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  line-height: 1.6;
-  color: ${({ theme }) => theme.colors.text.primary};
-  white-space: pre-wrap;
-`;
-
 const MarkdownContent = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   line-height: 1.6;
@@ -636,18 +629,6 @@ export const CharacterPage: React.FC = () => {
           </CharacterMeta>
 
           <InfoGrid>
-            {character.age && (
-              <InfoItem>
-                <InfoLabel>Age</InfoLabel>
-                <InfoValue>{character.age}</InfoValue>
-              </InfoItem>
-            )}
-            {character.gender && (
-              <InfoItem>
-                <InfoLabel>Gender</InfoLabel>
-                <InfoValue>{character.gender}</InfoValue>
-              </InfoItem>
-            )}
             {character._count && (
               <InfoItem>
                 <InfoLabel>Media</InfoLabel>
@@ -768,16 +749,29 @@ export const CharacterPage: React.FC = () => {
         </ContentSection>
       )}
 
-      {character.customFields && character.customFields !== "{}" && (
-        <ContentSection>
-          <SectionTitle>Additional Information</SectionTitle>
-          <ContentText>
-            <pre>
-              {JSON.stringify(JSON.parse(character.customFields), null, 2)}
-            </pre>
-          </ContentText>
-        </ContentSection>
-      )}
+      {character.customFields && character.customFields !== "{}" && (() => {
+        try {
+          const fields = JSON.parse(character.customFields);
+          const fieldEntries = Object.entries(fields);
+          if (fieldEntries.length === 0) return null;
+
+          return (
+            <ContentSection>
+              <SectionTitle>Custom Fields</SectionTitle>
+              <InfoGrid>
+                {fieldEntries.map(([key, value]) => (
+                  <InfoItem key={key}>
+                    <InfoLabel>{key}</InfoLabel>
+                    <InfoValue>{String(value)}</InfoValue>
+                  </InfoItem>
+                ))}
+              </InfoGrid>
+            </ContentSection>
+          );
+        } catch {
+          return null;
+        }
+      })()}
 
       {!character.details && (
           <EmptySection>

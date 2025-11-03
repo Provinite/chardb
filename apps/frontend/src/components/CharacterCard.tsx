@@ -199,8 +199,6 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         {character.species?.name && (
           <Species>
             {character.species.name}
-            {character.gender && ` • ${character.gender}`}
-            {character.age && ` • ${character.age}`}
           </Species>
         )}
 

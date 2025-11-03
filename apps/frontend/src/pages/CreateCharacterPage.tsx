@@ -14,27 +14,19 @@ import {
 } from "../graphql/characters.graphql";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { CharacterDetailsEditor } from "../components/character/CharacterDetailsEditor";
+import { CustomFieldsEditor } from "../components/CustomFieldsEditor";
 
 const characterSchema = z.object({
   name: z
     .string()
     .min(1, "Name is required")
     .max(100, "Name must be less than 100 characters"),
-  age: z
-    .string()
-    .max(20, "Age must be less than 20 characters")
-    .optional()
-    .or(z.literal("")),
-  gender: z
-    .string()
-    .max(20, "Gender must be less than 20 characters")
-    .optional()
-    .or(z.literal("")),
   details: z
     .string()
     .max(15000, "Details must be less than 15000 characters")
     .optional()
     .or(z.literal("")),
+  customFields: z.string().optional(),
   visibility: z.enum(["PUBLIC", "UNLISTED", "PRIVATE"]),
   isSellable: z.boolean(),
   isTradeable: z.boolean(),
@@ -114,17 +106,6 @@ const SectionTitle = styled.h2`
   margin: 0 0 ${({ theme }) => theme.spacing.lg} 0;
   padding-bottom: ${({ theme }) => theme.spacing.sm};
   border-bottom: 2px solid ${({ theme }) => theme.colors.border};
-`;
-
-const FormRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-
-  &:last-child {
-    margin-bottom: 0;
-  }
 `;
 
 const FormGroup = styled.div`
@@ -320,9 +301,8 @@ export const CreateCharacterPage: React.FC = () => {
       // Clean up empty strings
       const cleanData = {
         name: data.name,
-        age: data.age || undefined,
-        gender: data.gender || undefined,
         details: data.details || undefined,
+        customFields: data.customFields || undefined,
         visibility: data.visibility,
         isSellable: data.isSellable,
         isTradeable: data.isTradeable,
@@ -382,33 +362,11 @@ export const CreateCharacterPage: React.FC = () => {
               )}
             </FormGroup>
 
-            <FormRow>
-              <FormGroup>
-                <Label htmlFor="age">Age</Label>
-                <Input
-                  id="age"
-                  {...register("age")}
-                  aria-invalid={!!errors.age}
-                  placeholder="e.g., 25, Young Adult"
-                />
-                {errors.age && (
-                  <ErrorMessage>{errors.age.message}</ErrorMessage>
-                )}
-              </FormGroup>
-
-              <FormGroup>
-                <Label htmlFor="gender">Gender</Label>
-                <Input
-                  id="gender"
-                  {...register("gender")}
-                  aria-invalid={!!errors.gender}
-                  placeholder="e.g., Male, Female, Non-binary"
-                />
-                {errors.gender && (
-                  <ErrorMessage>{errors.gender.message}</ErrorMessage>
-                )}
-              </FormGroup>
-            </FormRow>
+            <CustomFieldsEditor
+              register={register}
+              setValue={setValue}
+              watch={watch}
+            />
           </Section>
 
           {/* Character Details */}
