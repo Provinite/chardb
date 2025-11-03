@@ -10,8 +10,6 @@ export const GET_CHARACTERS = gql`
           id
           name
         }
-        age
-        gender
         details
         ownerId
         creatorId
@@ -101,8 +99,6 @@ export const GET_CHARACTER = gql`
           }
         }
       }
-      age
-      gender
       details
       ownerId
       creatorId
@@ -170,8 +166,6 @@ export const GET_MY_CHARACTERS = gql`
           id
           name
         }
-        age
-        gender
         details
         ownerId
         creatorId
@@ -226,8 +220,6 @@ export const CREATE_CHARACTER = gql`
         id
         name
       }
-      age
-      gender
       details
       ownerId
       creatorId
@@ -274,8 +266,6 @@ export const UPDATE_CHARACTER = gql`
         id
         name
       }
-      age
-      gender
       details
       ownerId
       creatorId
@@ -328,8 +318,6 @@ export const TRANSFER_CHARACTER = gql`
         id
         name
       }
-      age
-      gender
       details
       ownerId
       creatorId
@@ -451,8 +439,6 @@ export const GET_LIKED_CHARACTERS = gql`
         id
         name
       }
-      age
-      gender
       visibility
       createdAt
       updatedAt

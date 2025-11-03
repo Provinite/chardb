@@ -21,6 +21,7 @@ import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
 import { TraitForm } from "../components/character/TraitForm";
 import { CharacterDetailsEditor } from "../components/character/CharacterDetailsEditor";
+import { CustomFieldsEditor } from "../components/CustomFieldsEditor";
 
 /**
  * Enhanced Character Creation Page with Species and Trait Integration
@@ -54,21 +55,12 @@ const characterSchema = z.object({
     .string()
     .min(1, "Name is required")
     .max(100, "Name must be less than 100 characters"),
-  age: z
-    .string()
-    .max(20, "Age must be less than 20 characters")
-    .optional()
-    .or(z.literal("")),
-  gender: z
-    .string()
-    .max(20, "Gender must be less than 20 characters")
-    .optional()
-    .or(z.literal("")),
   details: z
     .string()
     .max(15000, "Details must be less than 15000 characters")
     .optional()
     .or(z.literal("")),
+  customFields: z.string().optional(),
   visibility: z.nativeEnum(Visibility),
   isSellable: z.boolean(),
   isTradeable: z.boolean(),
@@ -365,13 +357,32 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Filter out empty keys from custom fields
+      let cleanedCustomFields = data.customFields;
+      if (data.customFields) {
+        try {
+          const parsed = JSON.parse(data.customFields);
+          const filtered = Object.entries(parsed).reduce((acc, [key, value]) => {
+            // Remove temporary keys and empty keys
+            if (key && !key.startsWith('__empty_') && key.trim()) {
+              acc[key] = value;
+            }
+            return acc;
+          }, {} as Record<string, unknown>);
+          cleanedCustomFields = Object.keys(filtered).length > 0
+            ? JSON.stringify(filtered)
+            : undefined;
+        } catch {
+          cleanedCustomFields = undefined;
+        }
+      }
+
       await createCharacterMutation({
         variables: {
           input: {
             name: data.name,
-            age: data.age || undefined,
-            gender: data.gender || undefined,
             details: data.details || undefined,
+            customFields: cleanedCustomFields,
             visibility: data.visibility,
             isSellable: data.isSellable,
             isTradeable: data.isTradeable,
@@ -432,27 +443,11 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             {errors.name && <ErrorMessage>{errors.name.message}</ErrorMessage>}
           </FormGroup>
 
-          <FormGroup>
-            <Label htmlFor="age">Age (Optional)</Label>
-            <Input
-              {...register("age")}
-              id="age"
-              type="text"
-              placeholder="e.g., 25, Young Adult, etc."
-            />
-            {errors.age && <ErrorMessage>{errors.age.message}</ErrorMessage>}
-          </FormGroup>
-
-          <FormGroup>
-            <Label htmlFor="gender">Gender (Optional)</Label>
-            <Input
-              {...register("gender")}
-              id="gender"
-              type="text"
-              placeholder="e.g., Male, Female, Non-binary, etc."
-            />
-            {errors.gender && <ErrorMessage>{errors.gender.message}</ErrorMessage>}
-          </FormGroup>
+          <CustomFieldsEditor
+            register={register}
+            setValue={setValue}
+            watch={watch}
+          />
         </Section>
 
         {/* Species Selection */}

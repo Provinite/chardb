@@ -49,14 +49,14 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     speciesVariant: characterData.speciesVariantId
       ? { connect: { id: characterData.speciesVariantId } }
       : undefined,
-    age: characterData.age,
-    gender: characterData.gender,
     details: characterData.details,
     visibility: characterData.visibility,
     isSellable: characterData.isSellable,
     isTradeable: characterData.isTradeable,
     price: characterData.price,
-    customFields: characterData.customFields,
+    customFields: characterData.customFields
+      ? JSON.parse(characterData.customFields)
+      : undefined,
     traitValues: mapTraitValues(characterData.traitValues),
   };
 
@@ -87,8 +87,6 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
       ? { connect: { id: inputData.speciesVariantId } }
       : { disconnect: true };
   }
-  if (inputData.age !== undefined) characterData.age = inputData.age;
-  if (inputData.gender !== undefined) characterData.gender = inputData.gender;
   if (inputData.details !== undefined)
     characterData.details = inputData.details;
   if (inputData.visibility !== undefined)
@@ -98,8 +96,11 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
   if (inputData.isTradeable !== undefined)
     characterData.isTradeable = inputData.isTradeable;
   if (inputData.price !== undefined) characterData.price = inputData.price;
-  if (inputData.customFields !== undefined)
-    characterData.customFields = inputData.customFields;
+  if (inputData.customFields !== undefined) {
+    characterData.customFields = inputData.customFields
+      ? JSON.parse(inputData.customFields)
+      : undefined;
+  }
   if (inputData.traitValues !== undefined)
     characterData.traitValues = mapTraitValues(inputData.traitValues);
   if (inputData.mainMediaId !== undefined) {
@@ -140,8 +141,6 @@ export function mapPrismaCharacterToGraphQL(
     name: prismaCharacter.name,
     speciesId: prismaCharacter.speciesId ?? undefined,
     speciesVariantId: prismaCharacter.speciesVariantId ?? undefined,
-    age: prismaCharacter.age ?? undefined,
-    gender: prismaCharacter.gender ?? undefined,
     details: prismaCharacter.details ?? undefined,
     ownerId: prismaCharacter.ownerId ?? undefined,
     isOrphaned: prismaCharacter.ownerId === null,

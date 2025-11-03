@@ -32,18 +32,6 @@ export class CreateCharacterInput {
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  @MaxLength(20)
-  age?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
-  gender?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
   @MaxLength(15000)
   details?: string;
 
@@ -132,18 +120,6 @@ export class UpdateCharacterInput {
   @IsOptional()
   @IsUUID()
   speciesVariantId?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(20)
-  age?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
-  gender?: string;
 
   @Field({ nullable: true })
   @IsOptional()
@@ -265,16 +241,6 @@ export class CharacterFiltersInput {
   @IsBoolean()
   isTradeable?: boolean;
 
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  gender?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  ageRange?: string; // "young", "adult", "elder", etc.
-
   @Field(() => Float, { nullable: true })
   @IsOptional()
   @IsNumber()
@@ -359,8 +325,6 @@ export interface CharacterFilters {
   visibility?: Visibility;
   isSellable?: boolean;
   isTradeable?: boolean;
-  gender?: string;
-  ageRange?: string;
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;

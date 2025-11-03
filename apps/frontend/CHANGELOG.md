@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Custom Fields System (#130)**: Replaced hardcoded age/gender fields with flexible custom fields
+  - New `CustomFieldsEditor` component for managing key-value pairs
+  - Users can add, edit, and remove custom fields dynamically
+  - Works across Create, CreateEnhanced, and Edit character pages
+  - Clean vertical label-above-value display layout
+  - UPPERCASE field labels with strong visual hierarchy
+  - Fields displayed in dedicated "Fields" section on character detail page
+
+### Fixed
+
+- **Custom Fields Editor (#130)**: Fixed "+ Add Field" button not working
+  - Used temporary placeholder keys (`__empty_${index}`) to preserve empty fields in state
+  - Filter out temporary keys during form submission
+- **Custom Fields Display (#130)**: Fixed character-by-character JSON display issue
+  - Resolved double-encoding bug where `customFields` was stringified twice
+  - Backend now parses JSON string before storing in Prisma to prevent double-encoding
+  - Display now correctly shows key-value pairs instead of individual JSON characters
+
 ## [v5.0.0] - 2025-11-02
 
 ### Added

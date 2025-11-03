@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Custom Fields System (#130)**: Removed hardcoded age and gender fields from Character model
+  - Removed `age` and `gender` columns from database schema via migration
+  - Existing `customFields` JSON column now used for flexible key-value data
+  - Updated GraphQL schema to remove age/gender fields from all types and inputs
+  - Updated seed data to use `customFields` for age/gender information
+
+### Fixed
+
+- **Custom Fields Encoding (#130)**: Fixed double-encoding issue in character resolver mappers
+  - Now parses incoming JSON string before passing to Prisma's Json field
+  - Prevents double-stringification that caused frontend display issues
+  - Applies to both create and update character operations
+
 ## [v5.0.1] - 2025-11-02
 
 ### Fixed

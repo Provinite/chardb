@@ -29,13 +29,11 @@ type AuthPayload {
 
 type Character {
   _count: CharacterCount!
-  age: String
   createdAt: DateTime!
   creator: User
   creatorId: ID
   customFields: String
   details: String
-  gender: String
   id: ID!
   isOrphaned: Boolean!
   isSellable: Boolean!
@@ -87,8 +85,6 @@ type CharacterCount {
 }
 
 input CharacterFiltersInput {
-  ageRange: String
-  gender: String
   isSellable: Boolean
   isTradeable: Boolean
   limit: Int! = 20
@@ -362,10 +358,8 @@ type CommunityMemberConnection {
 }
 
 input CreateCharacterInput {
-  age: String
   customFields: String
   details: String
-  gender: String
   isSellable: Boolean! = false
   isTradeable: Boolean! = false
   name: String!
@@ -2453,10 +2447,8 @@ input UnlinkExternalAccountInput {
 }
 
 input UpdateCharacterInput {
-  age: String
   customFields: String
   details: String
-  gender: String
   isSellable: Boolean
   isTradeable: Boolean
   mainMediaId: ID

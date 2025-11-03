@@ -29,12 +29,6 @@ export class Character {
   speciesVariantId?: string;
 
   @Field({ nullable: true })
-  age?: string;
-
-  @Field({ nullable: true })
-  gender?: string;
-
-  @Field({ nullable: true })
   details?: string;
 
   @Field(() => ID, { nullable: true, description: 'ID of the owner. Null for orphaned/community-owned characters.' })
