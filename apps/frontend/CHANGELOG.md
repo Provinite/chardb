@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v6.0.0] - 2025-11-03
+
 ### Added
 
 - **Custom Fields System (#130)**: Replaced hardcoded age/gender fields with flexible custom fields

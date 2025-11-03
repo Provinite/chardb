@@ -1,6 +1,6 @@
 {
   "name": "@chardb/backend",
-  "version": "5.0.1",
+  "version": "6.0.0",
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",
