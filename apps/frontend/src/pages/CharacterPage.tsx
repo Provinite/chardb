@@ -395,14 +395,13 @@ const Price = styled.span`
 `;
 
 const CustomFieldsRow = styled.div`
-  display: grid;
-  grid-template-columns: minmax(120px, auto) 1fr;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.sm} 0;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border}20;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
 
   &:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
   }
 `;
 
@@ -416,7 +415,7 @@ const CustomFieldKey = styled.span`
 
 const CustomFieldValue = styled.span`
   color: ${({ theme }) => theme.colors.text.primary};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
 `;
 
