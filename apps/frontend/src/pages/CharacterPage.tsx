@@ -394,6 +394,30 @@ const Price = styled.span`
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
 `;
 
+const CustomFieldsRow = styled.div`
+  display: grid;
+  grid-template-columns: minmax(120px, auto) 1fr;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.sm} 0;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border}20;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const CustomFieldKey = styled.span`
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  text-transform: capitalize;
+`;
+
+const CustomFieldValue = styled.span`
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+`;
+
 const ErrorContainer = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xxl};
@@ -791,10 +815,10 @@ export const CharacterPage: React.FC = () => {
                 <SectionTitle>Custom Fields</SectionTitle>
                 <TradingInfo>
                   {fieldEntries.map(([key, value]) => (
-                    <TradingRow key={key}>
-                      <TradingLabel>{key}:</TradingLabel>
-                      <TradingValue>{String(value)}</TradingValue>
-                    </TradingRow>
+                    <CustomFieldsRow key={key}>
+                      <CustomFieldKey>{key}</CustomFieldKey>
+                      <CustomFieldValue>{String(value)}</CustomFieldValue>
+                    </CustomFieldsRow>
                   ))}
                 </TradingInfo>
               </ContentSection>
