@@ -407,8 +407,8 @@ const CustomFieldsRow = styled.div`
 `;
 
 const CustomFieldKey = styled.span`
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  color: ${({ theme }) => theme.colors.text.muted};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  color: ${({ theme }) => theme.colors.text.secondary};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   text-transform: uppercase;
   letter-spacing: 0.05em;
