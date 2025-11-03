@@ -34,6 +34,8 @@ export const COMMUNITY_BY_ID_QUERY = gql`
     community(id: $id) {
       id
       name
+      discordGuildId
+      discordGuildName
       createdAt
       updatedAt
     }
@@ -88,6 +90,61 @@ export const REMOVE_COMMUNITY_MUTATION = gql`
   }
 `;
 
+// ==================== Discord Integration ====================
+
+export const DISCORD_BOT_INVITE_URL_QUERY = gql`
+  query DiscordBotInviteUrl {
+    discordBotInviteUrl
+  }
+`;
+
+export const VALIDATE_DISCORD_GUILD_QUERY = gql`
+  query ValidateDiscordGuild($guildId: ID!) {
+    validateDiscordGuild(guildId: $guildId) {
+      id
+      name
+      botHasAccess
+    }
+  }
+`;
+
+export const LINK_DISCORD_GUILD_MUTATION = gql`
+  mutation LinkDiscordGuild($communityId: ID!, $guildId: ID!) {
+    linkDiscordGuild(communityId: $communityId, guildId: $guildId) {
+      id
+      name
+      discordGuildId
+      discordGuildName
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const UNLINK_DISCORD_GUILD_MUTATION = gql`
+  mutation UnlinkDiscordGuild($communityId: ID!) {
+    unlinkDiscordGuild(communityId: $communityId) {
+      id
+      name
+      discordGuildId
+      discordGuildName
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const RESOLVE_DISCORD_USER_QUERY = gql`
+  query ResolveDiscordUser($identifier: String!, $communityId: ID!) {
+    resolveDiscordUser(identifier: $identifier, communityId: $communityId) {
+      userId
+      username
+      displayName
+      avatarUrl
+    }
+  }
+`;
+
 export const COMMUNITY_MEMBERS_BY_USER_QUERY = gql`
   query CommunityMembersByUser($userId: ID!, $first: Int, $after: String) {
     communityMembersByUser(userId: $userId, first: $first, after: $after) {
@@ -113,6 +170,7 @@ export const COMMUNITY_MEMBERS_BY_USER_QUERY = gql`
           canEditRole
           canEditCharacter
           canEditOwnCharacter
+          canCreateOrphanedCharacter
           canListInviteCodes
           canRemoveCommunityMember
           canManageMemberRoles
@@ -140,6 +198,11 @@ export {
   useUpdateCommunityMutation,
   useRemoveCommunityMutation,
   useCommunityMembersByUserQuery,
+  useDiscordBotInviteUrlQuery,
+  useValidateDiscordGuildQuery,
+  useLinkDiscordGuildMutation,
+  useUnlinkDiscordGuildMutation,
+  useResolveDiscordUserLazyQuery,
 
   // Types
   type CommunitiesQuery,
@@ -156,10 +219,22 @@ export {
   type RemoveCommunityMutationVariables,
   type CommunityMembersByUserQuery,
   type CommunityMembersByUserQueryVariables,
+  type DiscordBotInviteUrlQuery,
+  type DiscordBotInviteUrlQueryVariables,
+  type ValidateDiscordGuildQuery,
+  type ValidateDiscordGuildQueryVariables,
+  type LinkDiscordGuildMutation,
+  type LinkDiscordGuildMutationVariables,
+  type UnlinkDiscordGuildMutation,
+  type UnlinkDiscordGuildMutationVariables,
+  type ResolveDiscordUserQuery,
+  type ResolveDiscordUserQueryVariables,
   type Community,
   type CommunityConnection,
   type CommunityMember,
   type CommunityMemberConnection,
   type CreateCommunityInput,
   type UpdateCommunityInput,
+  type DiscordGuildInfo,
+  type DiscordUserInfo,
 } from "../generated/graphql";

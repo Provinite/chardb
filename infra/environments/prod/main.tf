@@ -109,6 +109,7 @@ module "backend" {
   discord_client_id        = var.discord_client_id
   discord_client_secret    = var.discord_client_secret
   discord_callback_url     = var.discord_callback_url
+  discord_bot_token        = var.discord_bot_token
 }
 
 # Frontend infrastructure

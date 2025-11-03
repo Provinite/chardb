@@ -48,6 +48,12 @@ export const SPECIES_FRAGMENT = gql`
     hasImage
     createdAt
     updatedAt
+    community {
+      id
+      name
+      discordGuildId
+      discordGuildName
+    }
   }
 `;
 
@@ -113,6 +119,8 @@ export const SPECIES_BY_ID_QUERY = gql`
       community {
         id
         name
+        discordGuildId
+        discordGuildName
       }
     }
   }
@@ -256,6 +264,12 @@ export const SPECIES_VARIANT_BY_ID_QUERY = gql`
         id
         name
         communityId
+        community {
+          id
+          name
+          discordGuildId
+          discordGuildName
+        }
       }
     }
   }
@@ -384,6 +398,12 @@ export const TRAIT_BY_ID_QUERY = gql`
         id
         name
         communityId
+        community {
+          id
+          name
+          discordGuildId
+          discordGuildName
+        }
       }
     }
   }

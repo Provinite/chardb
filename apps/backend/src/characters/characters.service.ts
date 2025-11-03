@@ -6,7 +6,14 @@ import {
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
-import { Prisma, Visibility } from "@chardb/database";
+import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import { DiscordService } from "../discord/discord.service";
+import { Prisma, Visibility, ExternalAccountProvider } from "@chardb/database";
+
+export interface PendingOwnerInput {
+  provider: ExternalAccountProvider;
+  providerAccountId: string;
+}
 
 // Service layer interfaces
 export interface CharacterServiceFilters {
@@ -35,27 +42,84 @@ export class CharactersService {
   constructor(
     private readonly db: DatabaseService,
     private readonly tagsService: TagsService,
+    private readonly pendingOwnershipService: PendingOwnershipService,
+    private readonly discordService: DiscordService,
   ) {}
 
   async create(
     userId: string,
-    input: { characterData: Omit<Prisma.CharacterCreateInput, 'owner' | 'creator'>; tags?: string[] },
+    input: {
+      characterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator">;
+      tags?: string[];
+      pendingOwner?: PendingOwnerInput; // Pending ownership info
+    },
   ) {
     const { characterData, tags } = input;
+    let pendingOwner = input.pendingOwner;
+
+    // Determine the actual owner:
+    // - If pendingOwner is provided, character is orphaned (ownerId = null)
+    // - Otherwise, owner is the current user (userId)
+    // - Can be reassigned if external account is already claimed
+    let actualOwnerId = pendingOwner ? null : userId;
+
+    // Extract speciesId early for validation and Discord resolution
+    const speciesId = characterData.species?.connect?.id;
+    const traitValues = characterData.traitValues;
 
     // Validate trait values if species and trait values are provided
-    const speciesId = (characterData.species as any)?.connect?.id;
-    const traitValues = characterData.traitValues as PrismaJson.CharacterTraitValuesJson | undefined;
-
-    if (speciesId && traitValues && Array.isArray(traitValues) && traitValues.length > 0) {
+    if (
+      speciesId &&
+      traitValues &&
+      Array.isArray(traitValues) &&
+      traitValues.length > 0
+    ) {
       await this.validateTraitValues(speciesId, traitValues);
     }
 
+    // PRE-VALIDATION: Resolve Discord identifier BEFORE creating character
+    // This ensures atomicity - if Discord lookup fails, no character is created
+    let resolvedAccountId: string | undefined;
+    let displayIdentifier: string | undefined;
+
+    if (pendingOwner) {
+      if (!speciesId) {
+        throw new BadRequestException(
+          'Species ID is required when creating a character with pending ownership',
+        );
+      }
+
+      // Resolve Discord username to ID if necessary
+      if (pendingOwner.provider === ExternalAccountProvider.DISCORD) {
+        // Check if the input is already a numeric ID
+        const isNumericId = /^\d{17,19}$/.test(pendingOwner.providerAccountId);
+
+        // If it's not an ID (i.e., it's a username), store it as displayIdentifier
+        if (!isNumericId) {
+          displayIdentifier = pendingOwner.providerAccountId;
+        }
+
+        // CRITICAL: This happens BEFORE character creation
+        // If this throws an error, no character will be created
+        resolvedAccountId = await this.resolveDiscordIdentifier(
+          speciesId,
+          pendingOwner.providerAccountId,
+        );
+      } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
+        // DeviantArt uses usernames, so always store as displayIdentifier
+        displayIdentifier = pendingOwner.providerAccountId;
+        resolvedAccountId = pendingOwner.providerAccountId;
+      }
+
+      // Note: Auto-claim logic is now handled inside createForCharacter
+    }
+
+    // Now create the character (only if all validations passed)
     const character = await this.db.character.create({
       data: {
-        owner: {
-          connect: { id: userId },
-        },
+        // Owner connection (may be null for orphaned characters)
+        ...(actualOwnerId ? { owner: { connect: { id: actualOwnerId } } } : {}),
+        // Creator is always the user creating the character
         creator: {
           connect: { id: userId },
         },
@@ -75,6 +139,18 @@ export class CharactersService {
           },
         });
       }
+    }
+
+    // Create pending ownership record if provided (with auto-claim)
+    // Note: resolvedAccountId is already validated above
+    // createForCharacter will auto-claim if the account is already linked
+    if (pendingOwner && resolvedAccountId) {
+      await this.pendingOwnershipService.createForCharacter(
+        character.id,
+        pendingOwner.provider,
+        resolvedAccountId,
+        displayIdentifier,
+      );
     }
 
     // Return the created character
@@ -124,7 +200,9 @@ export class CharactersService {
           : {},
 
         // Other filters
-        species ? { species: { name: { contains: species, mode: "insensitive" } } } : {},
+        species
+          ? { species: { name: { contains: species, mode: "insensitive" } } }
+          : {},
         speciesId ? { speciesId } : {},
         speciesVariantId ? { speciesVariantId } : {},
         gender ? { gender: { contains: gender, mode: "insensitive" } } : {},
@@ -195,31 +273,28 @@ export class CharactersService {
     return character;
   }
 
-
   async update(
     id: string,
     userId: string,
-    input: { characterData: Prisma.CharacterUpdateInput; tags?: string[] },
+    input: { characterData: Prisma.CharacterUpdateInput; tags?: string[]; pendingOwner?: PendingOwnerInput | null; ownerId?: string | null },
   ) {
     const character = await this.findOne(id, userId);
 
-    // Check ownership
-    if (character.ownerId !== userId) {
-      throw new ForbiddenException("You can only edit your own characters");
-    }
-
-    const { characterData, tags } = input;
+    const { characterData, tags, pendingOwner, ownerId } = input;
 
     // Prevent changing species once it's set
     if (characterData.species !== undefined && character.speciesId) {
       // The species field in the update input is either {connect: {id}} or {disconnect: true}
-      const speciesUpdate = characterData.species as any;
+      const speciesUpdate = characterData.species;
 
       // If trying to connect to a different species or disconnect
-      if (speciesUpdate?.disconnect ||
-          (speciesUpdate?.connect?.id && speciesUpdate.connect.id !== character.speciesId)) {
+      if (
+        speciesUpdate?.disconnect ||
+        (speciesUpdate?.connect?.id &&
+          speciesUpdate.connect.id !== character.speciesId)
+      ) {
         throw new ForbiddenException(
-          "Cannot change species once it has been set. Species assignment is permanent."
+          "Cannot change species once it has been set. Species assignment is permanent.",
         );
       }
     }
@@ -251,17 +326,126 @@ export class CharactersService {
       }
     }
 
-    // Return the updated character
-    return updatedCharacter;
+    // Handle ownership changes (if ownerId is being modified)
+    if (ownerId !== undefined) {
+      const oldOwnerId = character.ownerId;
+
+      // Only update if ownership is actually changing
+      if (oldOwnerId !== ownerId) {
+        // Verify new owner exists if setting to a user
+        if (ownerId !== null) {
+          const newOwner = await this.db.user.findUnique({
+            where: { id: ownerId },
+          });
+          if (!newOwner) {
+            throw new NotFoundException("New owner not found");
+          }
+        }
+
+        // Update character ownership
+        await this.db.character.update({
+          where: { id },
+          data: { ownerId },
+        });
+
+        // Create ownership change audit record (only when transferring to a user)
+        // Note: We don't create audit records for orphaning (toUserId null) since the schema requires toUserId
+        if (ownerId !== null) {
+          await this.db.characterOwnershipChange.create({
+            data: {
+              characterId: id,
+              fromUserId: oldOwnerId,
+              toUserId: ownerId,
+            },
+          });
+        }
+
+        // If setting an actual owner, clear any pending ownership
+        if (ownerId !== null) {
+          const existingPending = await this.pendingOwnershipService.findByCharacterId(id);
+          if (existingPending) {
+            await this.pendingOwnershipService.remove(existingPending.id);
+          }
+        }
+      }
+    }
+
+    // Handle pending ownership updates
+    if (pendingOwner !== undefined) {
+      // Get existing pending ownership
+      const existingPending = await this.pendingOwnershipService.findByCharacterId(id);
+
+      if (pendingOwner === null) {
+        // Clear pending ownership
+        if (existingPending) {
+          await this.pendingOwnershipService.remove(existingPending.id);
+        }
+      } else {
+        // Set or update pending ownership
+        const { provider, providerAccountId } = pendingOwner;
+
+        // Ensure character has a species
+        if (!updatedCharacter.speciesId) {
+          throw new BadRequestException(
+            'Cannot set pending ownership on a character without a species',
+          );
+        }
+
+        let resolvedAccountId = providerAccountId;
+        let displayIdentifier: string | undefined;
+
+        // Resolve Discord username to ID if necessary
+        if (provider === ExternalAccountProvider.DISCORD) {
+          // Check if the input is already a numeric ID
+          const isNumericId = /^\d{17,19}$/.test(providerAccountId);
+
+          // If it's not an ID (i.e., it's a username), store it as displayIdentifier
+          if (!isNumericId) {
+            displayIdentifier = providerAccountId;
+          }
+
+          resolvedAccountId = await this.resolveDiscordIdentifier(
+            updatedCharacter.speciesId,
+            providerAccountId,
+          );
+        } else if (provider === ExternalAccountProvider.DEVIANTART) {
+          // DeviantArt uses usernames, so always store as displayIdentifier
+          displayIdentifier = providerAccountId;
+        }
+
+        // Remove old pending ownership if exists
+        if (existingPending) {
+          await this.pendingOwnershipService.remove(existingPending.id);
+        }
+
+        // Create new pending ownership (with auto-claim if account is already linked)
+        // The service will auto-claim if the external account is already linked to a user
+        const result = await this.pendingOwnershipService.createForCharacter(
+          id,
+          provider,
+          resolvedAccountId,
+          displayIdentifier,
+        );
+
+        // If the character was auto-claimed, update the ownerId that was set earlier
+        // This ensures the character ownership reflects the auto-claim
+        if (result.claimed && result.ownerId) {
+          // Character was auto-claimed - ownership is already updated by the service
+          // No additional action needed
+        }
+      }
+    }
+
+    // Return the updated character (re-fetch to get latest state)
+    const finalCharacter = await this.db.character.findUnique({ where: { id } });
+    if (!finalCharacter) {
+      throw new NotFoundException('Character not found after update');
+    }
+    return finalCharacter;
   }
 
   async remove(id: string, userId: string): Promise<boolean> {
     const character = await this.findOne(id, userId);
-
-    // Check ownership
-    if (character.ownerId !== userId) {
-      throw new ForbiddenException("You can only delete your own characters");
-    }
 
     await this.db.character.delete({
       where: { id },
@@ -272,12 +456,19 @@ export class CharactersService {
 
   async transfer(
     id: string,
-    currentOwnerId: string,
+    currentOwnerId: string | null,
     newOwnerId: string,
   ) {
-    const character = await this.findOne(id, currentOwnerId);
+    // For orphaned characters, currentOwnerId can be null
+    const character = currentOwnerId
+      ? await this.findOne(id, currentOwnerId)
+      : await this.db.character.findUnique({ where: { id } });
 
-    // Check ownership
+    if (!character) {
+      throw new NotFoundException("Character not found");
+    }
+
+    // Check ownership (allow transfer from null for orphaned characters)
     if (character.ownerId !== currentOwnerId) {
       throw new ForbiddenException("You can only transfer your own characters");
     }
@@ -291,6 +482,7 @@ export class CharactersService {
       throw new NotFoundException("New owner not found");
     }
 
+    // Update character ownership and create ownership change record
     const transferredCharacter = await this.db.character.update({
       where: { id },
       data: {
@@ -298,27 +490,26 @@ export class CharactersService {
         // Keep original creator
       },
     });
+
+    // Create ownership change record
+    await this.db.characterOwnershipChange.create({
+      data: {
+        characterId: id,
+        fromUserId: currentOwnerId, // Can be null for orphaned characters
+        toUserId: newOwnerId,
+      },
+    });
+
     return transferredCharacter;
   }
 
-  async addTags(
-    characterId: string,
-    userId: string,
-    tagNames: string[],
-  ) {
+  async addTags(characterId: string, userId: string, tagNames: string[]) {
     const character = await this.db.character.findUnique({
       where: { id: characterId },
     });
 
     if (!character) {
       throw new NotFoundException("Character not found");
-    }
-
-    // Check ownership
-    if (character.ownerId !== userId) {
-      throw new ForbiddenException(
-        "You can only modify tags on your own characters",
-      );
     }
 
     // Create tags if they don't exist and connect them
@@ -343,24 +534,13 @@ export class CharactersService {
     return character;
   }
 
-  async removeTags(
-    characterId: string,
-    userId: string,
-    tagNames: string[],
-  ) {
+  async removeTags(characterId: string, userId: string, tagNames: string[]) {
     const character = await this.db.character.findUnique({
       where: { id: characterId },
     });
 
     if (!character) {
       throw new NotFoundException("Character not found");
-    }
-
-    // Check ownership
-    if (character.ownerId !== userId) {
-      throw new ForbiddenException(
-        "You can only modify tags on your own characters",
-      );
     }
 
     // Remove tag connections
@@ -385,24 +565,13 @@ export class CharactersService {
    * @throws ForbiddenException if user doesn't own the character or media doesn't belong to character
    * @throws NotFoundException if media doesn't exist
    */
-  async setMainMedia(
-    characterId: string,
-    userId: string,
-    mediaId?: string,
-  ) {
+  async setMainMedia(characterId: string, userId: string, mediaId?: string) {
     const character = await this.db.character.findUnique({
       where: { id: characterId },
     });
 
     if (!character) {
       throw new NotFoundException("Character not found");
-    }
-
-    // Check ownership
-    if (character.ownerId !== userId) {
-      throw new ForbiddenException(
-        "You can only set main media on your own characters",
-      );
     }
 
     // If mediaId is provided, verify the media exists and belongs to this character
@@ -489,11 +658,17 @@ export class CharactersService {
 
     // Build a map of traitId -> trait info
     const traitMap = new Map(
-      traits.map(t => [t.id, { name: t.name, allowsMultipleValues: t.allowsMultipleValues }])
+      traits.map((t) => [
+        t.id,
+        { name: t.name, allowsMultipleValues: t.allowsMultipleValues },
+      ]),
     );
 
     // Group trait values by traitId and count occurrences
-    const traitValueCounts = new Map<string, { count: number; values: string[] }>();
+    const traitValueCounts = new Map<
+      string,
+      { count: number; values: string[] }
+    >();
 
     for (const tv of traitValues) {
       if (!traitValueCounts.has(tv.traitId)) {
@@ -512,20 +687,22 @@ export class CharactersService {
 
       if (!traitInfo) {
         // Trait doesn't exist for this species
-        violations.push(`Trait with ID '${traitId}' does not exist for this species`);
+        violations.push(
+          `Trait with ID '${traitId}' does not exist for this species`,
+        );
         continue;
       }
 
       if (!traitInfo.allowsMultipleValues && count > 1) {
         violations.push(
-          `Trait '${traitInfo.name}' does not allow multiple values. Found ${count} values: ${values.map(v => `'${v}'`).join(', ')}`
+          `Trait '${traitInfo.name}' does not allow multiple values. Found ${count} values: ${values.map((v) => `'${v}'`).join(", ")}`,
         );
       }
     }
 
     if (violations.length > 0) {
       throw new BadRequestException(
-        `Trait validation failed:\n${violations.join('\n')}`
+        `Trait validation failed:\n${violations.join("\n")}`,
       );
     }
   }
@@ -536,25 +713,22 @@ export class CharactersService {
     updateData: { traitValues: PrismaJson.CharacterTraitValuesJson },
     userId: string,
   ) {
-    // First verify user owns or created this character
+    // Fetch character to validate species
     const character = await this.db.character.findUnique({
       where: { id },
-      select: { ownerId: true, creatorId: true, speciesId: true },
+      select: { speciesId: true },
     });
 
     if (!character) {
       throw new NotFoundException(`Character with ID ${id} not found`);
     }
 
-    if (character.ownerId !== userId && character.creatorId !== userId) {
-      throw new ForbiddenException(
-        "You can only update traits for characters you own or created",
-      );
-    }
-
     // Validate trait values if character has a species
     if (character.speciesId && updateData.traitValues.length > 0) {
-      await this.validateTraitValues(character.speciesId, updateData.traitValues);
+      await this.validateTraitValues(
+        character.speciesId,
+        updateData.traitValues,
+      );
     }
 
     // Update the character with new trait values
@@ -584,4 +758,97 @@ export class CharactersService {
     return !!like;
   }
 
+  /**
+   * Check if a user has permission to create orphaned characters in a species' community
+   */
+  async userHasOrphanedCharacterPermission(
+    userId: string,
+    speciesId: string,
+  ): Promise<boolean> {
+    // Get the community for this species
+    const species = await this.db.species.findUnique({
+      where: { id: speciesId },
+      include: { community: true },
+    });
+
+    if (!species) {
+      return false;
+    }
+
+    // Check if user has a role with canCreateOrphanedCharacter permission
+    const membership = await this.db.communityMember.findFirst({
+      where: {
+        userId,
+        role: {
+          communityId: species.communityId,
+          canCreateOrphanedCharacter: true,
+        },
+      },
+    });
+
+    return !!membership;
+  }
+
+  /**
+   * Resolve a Discord identifier (username or ID) to a Discord user ID
+   * @param speciesId The species ID to get the community from
+   * @param identifier The Discord username or user ID
+   * @returns The Discord user ID
+   * @throws BadRequestException if guild not connected or username not found
+   */
+  private async resolveDiscordIdentifier(
+    speciesId: string,
+    identifier: string,
+  ): Promise<string> {
+    // Check if identifier is already a numeric ID (18-19 digits)
+    if (/^\d{17,19}$/.test(identifier)) {
+      // Validate the numeric ID exists in Discord
+      const isValid = await this.discordService.validateUserId(identifier);
+      if (!isValid) {
+        throw new NotFoundException(
+          `Discord user with ID "${identifier}" not found. Please verify the ID is correct.`,
+        );
+      }
+      return identifier;
+    }
+
+    // It's a username - need to resolve it
+    // First get the species to find the community
+    const species = await this.db.species.findUnique({
+      where: { id: speciesId },
+      select: {
+        communityId: true,
+        community: {
+          select: {
+            discordGuildId: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!species) {
+      throw new NotFoundException(`Species with ID ${speciesId} not found`);
+    }
+
+    if (!species.community.discordGuildId) {
+      throw new BadRequestException(
+        `Cannot use Discord username: Community "${species.community.name}" has no Discord server connected. Please use numeric Discord User ID or ask an admin to connect the Discord server.`,
+      );
+    }
+
+    // Resolve username to ID
+    const userId = await this.discordService.resolveUsernameToId(
+      species.community.discordGuildId,
+      identifier,
+    );
+
+    if (!userId) {
+      throw new NotFoundException(
+        `Discord user "${identifier}" not found in community's Discord server`,
+      );
+    }
+
+    return userId;
+  }
 }

@@ -5,13 +5,25 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
+import { PendingOwnershipService } from '../pending-ownership/pending-ownership.service';
+import { DiscordService } from '../discord/discord.service';
+import { Prisma, ExternalAccountProvider } from '@chardb/database';
 import { ItemTypeFilters } from './dto/item-type.dto';
 import { ItemFilters } from './dto/item.dto';
 
+export interface PendingOwnerInput {
+  provider: ExternalAccountProvider;
+  providerAccountId: string;
+  displayIdentifier?: string;
+}
+
 @Injectable()
 export class ItemsService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly pendingOwnershipService: PendingOwnershipService,
+    private readonly discordService: DiscordService,
+  ) {}
 
   // ==================== ItemType Methods ====================
 
@@ -143,14 +155,30 @@ export class ItemsService {
    * Grant an item to a user. If the item type is stackable and the user
    * already has that item type, increment the quantity instead of creating
    * a new item.
+   *
+   * Can also create orphaned items (userId = null) or items with pending ownership.
    */
   async grantItem(input: {
     itemTypeId: string;
-    userId: string;
+    userId?: string | null; // Optional for orphaned items
     quantity: number;
     metadata?: any;
+    pendingOwner?: PendingOwnerInput; // For pending ownership
   }) {
     const { itemTypeId, userId, quantity, metadata } = input;
+    let pendingOwner = input.pendingOwner;
+
+    // VALIDATION: Items must have either an owner or pending owner
+    // Unlike characters, items cannot be fully orphaned
+    if (!userId && !pendingOwner) {
+      throw new BadRequestException(
+        'Items must have either an owner or pending owner. Cannot create fully orphaned items.',
+      );
+    }
+
+    // Determine actual owner: null if pending, otherwise userId
+    // Can be reassigned if external account is already claimed
+    let actualOwnerId = pendingOwner ? null : userId;
 
     if (quantity < 1) {
       throw new BadRequestException('Quantity must be at least 1');
@@ -165,37 +193,87 @@ export class ItemsService {
       throw new NotFoundException(`ItemType with ID ${itemTypeId} not found`);
     }
 
-    // Verify user exists
-    const user = await this.db.user.findUnique({
-      where: { id: userId },
-    });
+    // PRE-VALIDATION: Resolve external account and check if claimed BEFORE creating item
+    if (pendingOwner) {
+      let resolvedAccountId: string;
+      let displayIdentifier: string | undefined;
 
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
+      // Resolve Discord username to ID if necessary
+      if (pendingOwner.provider === ExternalAccountProvider.DISCORD) {
+        // Check if the input is already a numeric ID
+        const isNumericId = /^\d{17,19}$/.test(pendingOwner.providerAccountId);
 
-    // Verify user is a member of the community that owns this item type
-    const membership = await this.db.communityMember.findFirst({
-      where: {
-        userId,
-        role: {
-          communityId: itemType.communityId,
-        },
-      },
-    });
+        // If it's not an ID (i.e., it's a username), store it as displayIdentifier
+        if (!isNumericId) {
+          displayIdentifier = pendingOwner.providerAccountId;
+        }
 
-    if (!membership) {
-      throw new BadRequestException(
-        `User is not a member of the community that owns this item type`,
+        resolvedAccountId = await this.resolveDiscordIdentifier(
+          itemType.communityId,
+          pendingOwner.providerAccountId,
+        );
+      } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
+        // DeviantArt uses usernames, so always store as displayIdentifier
+        displayIdentifier = pendingOwner.providerAccountId;
+        resolvedAccountId = pendingOwner.providerAccountId;
+      } else {
+        throw new BadRequestException(`Unsupported provider: ${pendingOwner.provider}`);
+      }
+
+      // Check if the external account has already been claimed by a user
+      // If so, assign directly to that user instead of creating pending ownership
+      const claimedUserId = await this.pendingOwnershipService.checkIfAccountClaimed(
+        pendingOwner.provider,
+        resolvedAccountId,
       );
+
+      if (claimedUserId) {
+        // Account is already claimed - assign directly to that user
+        actualOwnerId = claimedUserId;
+        pendingOwner = undefined; // Don't create pending ownership
+      } else {
+        // Store resolved data for later use
+        pendingOwner = {
+          ...pendingOwner,
+          providerAccountId: resolvedAccountId,
+          displayIdentifier,
+        };
+      }
     }
 
-    // Check if stackable and user already has this item type
-    if (itemType.isStackable) {
+    // Verify user exists and is member of community (skip for orphaned items)
+    if (actualOwnerId) {
+      const user = await this.db.user.findUnique({
+        where: { id: actualOwnerId },
+      });
+
+      if (!user) {
+        throw new NotFoundException(`User with ID ${actualOwnerId} not found`);
+      }
+
+      // Verify user is a member of the community that owns this item type
+      const membership = await this.db.communityMember.findFirst({
+        where: {
+          userId: actualOwnerId,
+          role: {
+            communityId: itemType.communityId,
+          },
+        },
+      });
+
+      if (!membership) {
+        throw new BadRequestException(
+          `User is not a member of the community that owns this item type`,
+        );
+      }
+    }
+
+    // Check if stackable and user already has this item type (skip for orphaned/pending items)
+    if (itemType.isStackable && actualOwnerId) {
       const existingItem = await this.db.item.findFirst({
         where: {
           itemTypeId,
-          ownerId: userId,
+          ownerId: actualOwnerId,
         },
       });
 
@@ -226,14 +304,13 @@ export class ItemsService {
     }
 
     // Create new item
-    return await this.db.item.create({
+    const item = await this.db.item.create({
       data: {
         itemType: {
           connect: { id: itemTypeId },
         },
-        owner: {
-          connect: { id: userId },
-        },
+        // Owner connection (may be null for orphaned items)
+        ...(actualOwnerId ? { owner: { connect: { id: actualOwnerId } } } : {}),
         quantity,
         metadata: metadata || {},
       },
@@ -246,6 +323,18 @@ export class ItemsService {
         owner: true,
       },
     });
+
+    // Create pending ownership record if still needed (not claimed)
+    if (pendingOwner) {
+      await this.pendingOwnershipService.createForItem(
+        item.id,
+        pendingOwner.provider,
+        pendingOwner.providerAccountId, // Already resolved earlier
+        pendingOwner.displayIdentifier,
+      );
+    }
+
+    return item;
   }
 
   async findAllItems(filters: ItemFilters = {}) {
@@ -341,5 +430,63 @@ export class ItemsService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Resolve a Discord identifier (username or ID) to a Discord user ID
+   * @param communityId The community ID to get the Discord guild from
+   * @param identifier The Discord username or user ID
+   * @returns The Discord user ID
+   * @throws BadRequestException if guild not connected or username not found
+   */
+  private async resolveDiscordIdentifier(
+    communityId: string,
+    identifier: string,
+  ): Promise<string> {
+    // Check if identifier is already a numeric ID (18-19 digits)
+    if (/^\d{17,19}$/.test(identifier)) {
+      // Validate the numeric ID exists in Discord
+      const isValid = await this.discordService.validateUserId(identifier);
+      if (!isValid) {
+        throw new NotFoundException(
+          `Discord user with ID "${identifier}" not found. Please verify the ID is correct.`,
+        );
+      }
+      return identifier;
+    }
+
+    // It's a username - need to resolve it
+    // Get the community to find the Discord guild
+    const community = await this.db.community.findUnique({
+      where: { id: communityId },
+      select: {
+        discordGuildId: true,
+        name: true,
+      },
+    });
+
+    if (!community) {
+      throw new NotFoundException(`Community with ID ${communityId} not found`);
+    }
+
+    if (!community.discordGuildId) {
+      throw new BadRequestException(
+        `Cannot use Discord username: Community "${community.name}" has no Discord server connected. Please use numeric Discord User ID or ask an admin to connect the Discord server.`,
+      );
+    }
+
+    // Resolve username to ID
+    const userId = await this.discordService.resolveUsernameToId(
+      community.discordGuildId,
+      identifier,
+    );
+
+    if (!userId) {
+      throw new NotFoundException(
+        `Discord user "${identifier}" not found in community's Discord server`,
+      );
+    }
+
+    return userId;
   }
 }

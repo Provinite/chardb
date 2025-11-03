@@ -37,6 +37,7 @@ type Character {
   details: String
   gender: String
   id: ID!
+  isOrphaned: Boolean!
   isSellable: Boolean!
   isTradeable: Boolean!
   likesCount: Int!
@@ -47,8 +48,11 @@ type Character {
   """ID of the main media item for this character"""
   mainMediaId: ID
   name: String!
-  owner: User!
-  ownerId: ID!
+  owner: User
+
+  """ID of the owner. Null for orphaned/community-owned characters."""
+  ownerId: ID
+  pendingOwnership: PendingOwnership
   price: Float
 
   """Species this character belongs to"""
@@ -220,6 +224,12 @@ type Community {
   """When the community was created"""
   createdAt: DateTime!
 
+  """Discord guild (server) ID linked to this community"""
+  discordGuildId: String
+
+  """Discord guild (server) name for display"""
+  discordGuildName: String
+
   """Unique identifier for the community"""
   id: ID!
 
@@ -359,6 +369,9 @@ input CreateCharacterInput {
   isSellable: Boolean! = false
   isTradeable: Boolean! = false
   name: String!
+
+  """Create character with pending ownership for an external account"""
+  pendingOwner: PendingOwnerInput
   price: Float
   speciesId: ID
   speciesVariantId: ID
@@ -490,6 +503,9 @@ input CreateRoleInput {
 
   """Whether members with this role can create invite codes"""
   canCreateInviteCode: Boolean! = false
+
+  """Whether members with this role can create orphaned characters"""
+  canCreateOrphanedCharacter: Boolean! = false
 
   """Whether members with this role can create new roles"""
   canCreateRole: Boolean! = false
@@ -628,6 +644,32 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type DiscordGuildInfo {
+  """Whether the bot has access to this guild"""
+  botHasAccess: Boolean!
+
+  """Discord guild ID"""
+  id: ID!
+
+  """Discord guild name"""
+  name: String!
+}
+
+"""Resolved Discord user information"""
+type DiscordUserInfo {
+  """URL to user avatar image"""
+  avatarUrl: String
+
+  """Discord display name (may differ from username)"""
+  displayName: String
+
+  """Discord user ID (snowflake)"""
+  userId: ID!
+
+  """Discord username"""
+  username: String!
+}
+
 type EnumValue {
   """The color associated with this enum value"""
   color: CommunityColor
@@ -718,7 +760,7 @@ type ExternalAccount {
   userId: ID!
 }
 
-"""External account providers supported for account linking"""
+"""The external account provider type"""
 enum ExternalAccountProvider {
   DEVIANTART
   DISCORD
@@ -781,8 +823,13 @@ input GalleryFiltersInput {
 input GrantItemInput {
   itemTypeId: ID!
   metadata: String
+
+  """Create item with pending ownership for an external account"""
+  pendingOwner: PendingOwnerInput
   quantity: Int! = 1
-  userId: ID!
+
+  """User ID to grant item to. Required if pendingOwner is not provided."""
+  userId: ID
 }
 
 type Image {
@@ -897,8 +944,9 @@ type Item {
   itemType: ItemType!
   itemTypeId: ID!
   metadata: JSON
-  owner: User!
-  ownerId: ID!
+  owner: User
+  ownerId: ID
+  pendingOwnership: PendingOwnership
   quantity: Int!
   updatedAt: DateTime!
 }
@@ -917,11 +965,9 @@ type ItemType {
   isConsumable: Boolean!
   isStackable: Boolean!
   isTradeable: Boolean!
-  itemType: ItemType!
   maxStackSize: Int
   metadata: JSON
   name: String!
-  owner: User!
   updatedAt: DateTime!
 }
 
@@ -1224,6 +1270,15 @@ type Mutation {
 
   """Grant an item to a user (admin only)"""
   grantItem(input: GrantItemInput!): Item!
+
+  """Link a Discord guild to a community"""
+  linkDiscordGuild(
+    """Community ID"""
+    communityId: ID!
+
+    """Discord guild ID"""
+    guildId: ID!
+  ): Community!
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): String!
 
@@ -1333,6 +1388,12 @@ type Mutation {
   toggleFollow(input: ToggleFollowInput!): FollowResult!
   toggleLike(input: ToggleLikeInput!): LikeResult!
   transferCharacter(id: ID!, input: TransferCharacterInput!): Character!
+
+  """Unlink a Discord guild from a community"""
+  unlinkDiscordGuild(
+    """Community ID"""
+    communityId: ID!
+  ): Community!
 
   """Unlink an external account from the current user"""
   unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
@@ -1463,6 +1524,53 @@ type Mutation {
     """Trait order updates for a species variant"""
     input: UpdateTraitOrdersInput!
   ): [TraitListEntry!]!
+}
+
+input OwnerIdUpdate {
+  """Set owner ID (null = orphan character)"""
+  set: ID
+}
+
+input PendingOwnerInput {
+  """The external account provider"""
+  provider: ExternalAccountProvider!
+
+  """
+  The account identifier on the external provider (Discord user ID, DeviantArt username, etc.)
+  """
+  providerAccountId: String!
+}
+
+input PendingOwnerUpdate {
+  """Set pending owner (null = clear pending owner)"""
+  set: PendingOwnerInput
+}
+
+type PendingOwnership {
+  character: Character
+
+  """Character ID if this is a pending character ownership"""
+  characterId: ID
+
+  """When this pending ownership was claimed"""
+  claimedAt: DateTime
+  claimedByUser: User
+
+  """User who claimed this pending ownership"""
+  claimedByUserId: ID
+
+  """When this pending ownership was created"""
+  createdAt: DateTime!
+  displayIdentifier: String
+  id: ID!
+  item: Item
+
+  """Item ID if this is a pending item ownership"""
+  itemId: ID
+
+  """The external account provider (Discord, DeviantArt, etc.)"""
+  provider: ExternalAccountProvider!
+  providerAccountId: String!
 }
 
 type Query {
@@ -1616,6 +1724,9 @@ type Query {
     """User ID"""
     userId: ID!
   ): CommunityMemberConnection!
+
+  """Get the Discord bot invite URL"""
+  discordBotInviteUrl: String!
 
   """Get an enum value by ID"""
   enumValueById(
@@ -1773,6 +1884,17 @@ type Query {
     """Optional filters for media query"""
     filters: MediaFiltersInput
   ): MediaConnection!
+
+  """
+  Resolve a Discord username or user ID to full user information. Requires permission to create orphaned characters.
+  """
+  resolveDiscordUser(
+    """Community ID (for guild context)"""
+    communityId: ID!
+
+    """Discord username (@handle), display name, or numeric user ID"""
+    identifier: String!
+  ): DiscordUserInfo!
 
   """Get a role by ID"""
   roleById(
@@ -1950,6 +2072,12 @@ type Query {
   userProfile(username: String!): UserProfile
   userStats(userId: ID!): UserStats!
   users(limit: Int! = 20, offset: Int! = 0): UserConnection!
+
+  """Validate that the bot has access to a Discord guild"""
+  validateDiscordGuild(
+    """Discord guild ID"""
+    guildId: ID!
+  ): DiscordGuildInfo!
 }
 
 """Response confirming successful removal of an entity"""
@@ -1978,6 +2106,9 @@ type Role {
 
   """Whether members with this role can create invite codes"""
   canCreateInviteCode: Boolean!
+
+  """Whether members with this role can create orphaned characters"""
+  canCreateOrphanedCharacter: Boolean!
 
   """Whether members with this role can create new roles"""
   canCreateRole: Boolean!
@@ -2327,6 +2458,16 @@ input UpdateCharacterInput {
   isTradeable: Boolean
   mainMediaId: ID
   name: String
+
+  """
+  Update character ownership (requires canCreateOrphanedCharacter permission)
+  """
+  ownerIdUpdate: OwnerIdUpdate
+
+  """
+  Update pending ownership (requires canCreateOrphanedCharacter permission)
+  """
+  pendingOwnerUpdate: PendingOwnerUpdate
   price: Float
   speciesId: ID
   speciesVariantId: ID
@@ -2458,6 +2599,9 @@ input UpdateRoleInput {
 
   """Whether members with this role can create invite codes"""
   canCreateInviteCode: Boolean
+
+  """Whether members with this role can create orphaned characters"""
+  canCreateOrphanedCharacter: Boolean
 
   """Whether members with this role can create new roles"""
   canCreateRole: Boolean
@@ -2595,6 +2739,7 @@ type User {
   canGrantGlobalPermissions: Boolean!
   canListInviteCodes: Boolean!
   canListUsers: Boolean!
+  communityMemberships: [CommunityMember!]!
   createdAt: DateTime!
   dateOfBirth: DateTime
   displayName: String

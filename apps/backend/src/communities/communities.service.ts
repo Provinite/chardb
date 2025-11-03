@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { Prisma } from "@chardb/database";
 
 /**
  * Service layer input types for communities operations.
@@ -24,6 +24,10 @@ export interface CreateCommunityServiceInput {
 export interface UpdateCommunityServiceInput {
   /** Name of the community (must be unique) */
   name?: string;
+  /** Discord guild (server) ID */
+  discordGuildId?: string | null;
+  /** Discord guild (server) name for display */
+  discordGuildName?: string | null;
 }
 
 @Injectable()
@@ -43,7 +47,7 @@ export class CommunitiesService {
       // 2. Create default roles
       const adminRole = await prisma.role.create({
         data: {
-          name: 'Admin',
+          name: "Admin",
           communityId: community.id,
           canCreateSpecies: true,
           canCreateCharacter: true,
@@ -61,7 +65,7 @@ export class CommunitiesService {
 
       const moderatorRole = await prisma.role.create({
         data: {
-          name: 'Moderator',
+          name: "Moderator",
           communityId: community.id,
           canCreateSpecies: false,
           canCreateCharacter: true,
@@ -79,7 +83,7 @@ export class CommunitiesService {
 
       const memberRole = await prisma.role.create({
         data: {
-          name: 'Member',
+          name: "Member",
           communityId: community.id,
           canCreateSpecies: false,
           canCreateCharacter: true,
@@ -117,7 +121,7 @@ export class CommunitiesService {
         take: first + 1, // Take one extra to check if there's a next page
         skip,
         cursor,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.community.count(),
     ]);
@@ -151,8 +155,12 @@ export class CommunitiesService {
     const community = await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.CommunityUpdateInput = {};
-    
+
     if (input.name !== undefined) updateData.name = input.name;
+    if (input.discordGuildId !== undefined)
+      updateData.discordGuildId = input.discordGuildId;
+    if (input.discordGuildName !== undefined)
+      updateData.discordGuildName = input.discordGuildName;
 
     return this.prisma.community.update({
       where: { id },
@@ -184,8 +192,8 @@ export class CommunitiesService {
 
     if (filters.search) {
       where.OR = [
-        { username: { contains: filters.search, mode: 'insensitive' } },
-        { displayName: { contains: filters.search, mode: 'insensitive' } },
+        { username: { contains: filters.search, mode: "insensitive" } },
+        { displayName: { contains: filters.search, mode: "insensitive" } },
       ];
     }
 
@@ -198,7 +206,7 @@ export class CommunitiesService {
         avatarUrl: true,
       },
       take: Math.min(filters.limit || 10, 20), // Max 20
-      orderBy: { username: 'asc' },
+      orderBy: { username: "asc" },
     });
   }
 }

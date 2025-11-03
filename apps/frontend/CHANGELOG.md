@@ -9,12 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Character Ownership Editing (#125)**: Users with `canCreateOrphanedCharacter` permission can now edit ownership of any character (not just orphaned ones)
+
+  - Ownership section now appears for all characters with a species (removed orphaned-only restriction)
+  - Support for three ownership states: orphaned (no owner), assigned to registered user, or orphaned with pending external claim
+  - Ownership changes create audit trail records (`CharacterOwnershipChange`)
+  - Uses GraphQL wrapper input types (`ownerIdUpdate`, `pendingOwnerUpdate`) to properly distinguish "set to null" from "don't change"
+  - Backend permission validation ensures only authorized users can modify ownership
+
 - **Discord OAuth Account Linking (#127)**: Added Discord account linking functionality
   - Added Discord OAuth callback page (`/auth/discord/callback`) for handling OAuth redirects
   - Added "Link Discord Account" button to Edit Profile page
   - Added Discord accounts display with "DC" badge icon
   - Supports both modern (@username) and legacy (username#1234) Discord username formats
   - Follows same OAuth security pattern as DeviantArt integration
+- **Orphaned Character Creation (#125)**: Added ability to create characters without immediate owner assignment
+  - Radio button interface for selecting "Assign to me" vs "Create without owner"
+  - Pending ownership section for specifying external account (DeviantArt or Discord username)
+  - Integration with community permission system (`canCreateOrphanedCharacter`)
+  - Character cards display pending ownership status when orphaned
+- **Discord Guild Integration (#125)**: Community Discord server linking for pending ownership
+  - Discord Integration Settings in Community Settings page
+  - Guild ID configuration with live guild name and member count display
+  - Automatic username resolution for pending ownership claims
+- **Permission Management UI (#125)**: Added orphaned character permission to role management
+  - `canCreateOrphanedCharacter` toggle in Permission Matrix
+  - Role Editor integration for permission assignment
+  - Role list display shows orphaned character permission status
+
+### Changed
+
+- **Character Creation UX (#125)**: Moved Character Ownership section below Species Selection for more logical form flow
 
 ## [v4.2.0] - 2025-10-28
 

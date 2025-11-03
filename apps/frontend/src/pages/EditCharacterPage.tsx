@@ -6,7 +6,11 @@ import { z } from "zod";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
 import { AlertTriangle } from "lucide-react";
-import { Button, TagInput } from "@chardb/ui";
+import { Button, TagInput, Input } from "@chardb/ui";
+import {
+  GrantTargetSelector,
+  GrantTarget,
+} from "../components/GrantTargetSelector";
 import {
   useGetCharacterQuery,
   useUpdateCharacterMutation,
@@ -15,12 +19,19 @@ import {
   CharacterTraitValueInput,
   Visibility,
 } from "../graphql/characters.graphql";
+import { ExternalAccountProvider } from "../generated/graphql";
+import { useGetCommunityMembersQuery } from "../graphql/communities.graphql";
 import { useAuth } from "../contexts/AuthContext";
+import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { canUserEditCharacter } from "../lib/characterPermissions";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
 import { TraitForm } from "../components/character/TraitForm";
-import { SpeciesDetailsFragment, SpeciesVariantDetailsFragment } from "../generated/graphql";
+import {
+  SpeciesDetailsFragment,
+  SpeciesVariantDetailsFragment,
+} from "../generated/graphql";
 import { CharacterDetailsEditor } from "../components/character/CharacterDetailsEditor";
 
 const characterSchema = z.object({
@@ -143,28 +154,6 @@ const Label = styled.label`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-`;
-
-const Input = styled.input<{ hasError?: boolean }>`
-  padding: ${({ theme }) => theme.spacing.sm};
-  border: 2px solid
-    ${({ theme, hasError }) =>
-      hasError ? theme.colors.error : theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  background: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text.primary};
-  transition: border-color 0.2s;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme, hasError }) =>
-      hasError ? theme.colors.error : theme.colors.primary};
-  }
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.text.muted};
-  }
 `;
 
 const Select = styled.select<{ hasError?: boolean }>`
@@ -304,12 +293,23 @@ export const EditCharacterPage: React.FC = () => {
   const [tags, setTags] = useState<string[]>([]);
 
   // Species and variant selection state
-  const [selectedSpecies, setSelectedSpecies] = useState<SpeciesDetailsFragment | null>(null);
-  const [selectedVariant, setSelectedVariant] = useState<SpeciesVariantDetailsFragment | null>(null);
+  const [selectedSpecies, setSelectedSpecies] =
+    useState<SpeciesDetailsFragment | null>(null);
+  const [selectedVariant, setSelectedVariant] =
+    useState<SpeciesVariantDetailsFragment | null>(null);
 
   // Trait values state
-  const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>([]);
+  const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>(
+    [],
+  );
   const [isSubmittingTraits, setIsSubmittingTraits] = useState(false);
+
+  // Pending ownership state
+  const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(
+    null,
+  );
+  const [isGrantTargetValid, setIsGrantTargetValid] = useState(true); // true by default for edit mode
+  const [userSearch, setUserSearch] = useState("");
 
   const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
 
@@ -317,6 +317,21 @@ export const EditCharacterPage: React.FC = () => {
     variables: { id: id! },
     skip: !id,
   });
+
+  // Fetch community members for user search in pending ownership section
+  const character = data?.character;
+  const { data: membersData, loading: membersLoading } =
+    useGetCommunityMembersQuery({
+      variables: {
+        communityId: character?.species?.community?.id || "",
+        search: userSearch,
+        limit: 10,
+      },
+      skip:
+        !character?.species?.community?.id ||
+        !userSearch ||
+        userSearch.length < 2,
+    });
 
   const [updateCharacter] = useUpdateCharacterMutation();
   const [updateCharacterTraits] = useUpdateCharacterTraitsMutation();
@@ -343,7 +358,10 @@ export const EditCharacterPage: React.FC = () => {
     },
   });
 
-  const character = data?.character;
+  // Get user's permissions in the character's community
+  const { permissions } = useUserCommunityRole(
+    character?.species?.community?.id,
+  );
 
   // Reset form when character data loads
   useEffect(() => {
@@ -371,10 +389,41 @@ export const EditCharacterPage: React.FC = () => {
 
       // Set trait values if they exist
       if (character.traitValues) {
-        setTraitValues(character.traitValues.map(tv => ({
-          traitId: tv.traitId,
-          value: tv.value || "",
-        })));
+        setTraitValues(
+          character.traitValues.map((tv) => ({
+            traitId: tv.traitId,
+            value: tv.value || "",
+          })),
+        );
+      }
+
+      // Initialize ownership state
+      if (character.owner) {
+        // Character has an owner
+        setCharacterTarget({
+          type: "user",
+          userId: character.owner.id,
+          user: {
+            id: character.owner.id,
+            username: character.owner.username,
+            displayName: character.owner.displayName || undefined,
+            avatarUrl: character.owner.avatarUrl || undefined,
+          },
+        });
+      } else if (character.pendingOwnership) {
+        // Character is orphaned with pending ownership
+        setCharacterTarget({
+          type: "pending",
+          provider: character.pendingOwnership.provider as
+            | "DISCORD"
+            | "DEVIANTART",
+          providerAccountId:
+            character.pendingOwnership.displayIdentifier ||
+            character.pendingOwnership.providerAccountId,
+        });
+      } else {
+        // Character is orphaned with no pending ownership
+        setCharacterTarget(null);
       }
     }
   }, [character, reset]);
@@ -386,6 +435,65 @@ export const EditCharacterPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      // Determine if ownership/pending ownership changed
+      const initialOwnerId = character.ownerId;
+      const initialPendingOwner = character.pendingOwnership;
+
+      // Build ownership update using wrapper type
+      let ownerIdUpdate: { set: string | null } | undefined = undefined;
+      let pendingOwnerUpdate:
+        | {
+            set: {
+              provider: ExternalAccountProvider;
+              providerAccountId: string;
+            } | null;
+          }
+        | undefined = undefined;
+
+      if (characterTarget?.type === "user") {
+        // User selected: set owner to user, clear pending owner
+        if (initialOwnerId !== characterTarget.userId) {
+          ownerIdUpdate = { set: characterTarget.userId };
+        }
+        // Pending owner will be cleared automatically by backend when setting actual owner
+      } else if (characterTarget?.type === "pending") {
+        // Pending owner selected: set owner to null (orphan), set pending owner
+
+        const provider = {
+          DISCORD: ExternalAccountProvider.Discord,
+          DEVIANTART: ExternalAccountProvider.Deviantart,
+        }[characterTarget.provider];
+        const pendingOwnerData = {
+          provider: provider,
+          providerAccountId: characterTarget.providerAccountId,
+        };
+
+        // Check if pending owner changed
+        const pendingOwnerChanged =
+          !initialPendingOwner ||
+          initialPendingOwner.provider !== characterTarget.provider ||
+          (initialPendingOwner.displayIdentifier ||
+            initialPendingOwner.providerAccountId) !==
+            characterTarget.providerAccountId;
+
+        if (pendingOwnerChanged) {
+          pendingOwnerUpdate = { set: pendingOwnerData };
+        }
+
+        // If character has owner, orphan it
+        if (initialOwnerId) {
+          ownerIdUpdate = { set: null };
+        }
+      } else if (characterTarget === null) {
+        // Unassigned selected: orphan character, clear pending owner
+        if (initialOwnerId) {
+          ownerIdUpdate = { set: null };
+        }
+        if (initialPendingOwner) {
+          pendingOwnerUpdate = { set: null };
+        }
+      }
+
       const input: UpdateCharacterInput = {
         name: data.name,
         age: data.age || undefined,
@@ -398,8 +506,16 @@ export const EditCharacterPage: React.FC = () => {
           data.price && data.isSellable ? parseFloat(data.price) : undefined,
         tags, // Use the tags state directly
         // Only include species if it's being set for the first time (character doesn't have one yet)
-        speciesId: !character.speciesId && selectedSpecies ? selectedSpecies.id : undefined,
-        speciesVariantId: !character.speciesId && selectedVariant ? selectedVariant.id : undefined,
+        speciesId:
+          !character.speciesId && selectedSpecies
+            ? selectedSpecies.id
+            : undefined,
+        speciesVariantId:
+          !character.speciesId && selectedVariant
+            ? selectedVariant.id
+            : undefined,
+        ownerIdUpdate,
+        pendingOwnerUpdate,
       };
 
       await updateCharacter({
@@ -454,13 +570,13 @@ export const EditCharacterPage: React.FC = () => {
     navigate(`/character/${id}`);
   };
 
-  // Check if user owns this character
-  if (character && user && character.owner.id !== user.id) {
+  // Check if user has permission to edit this character
+  if (character && !canUserEditCharacter(character, user, permissions)) {
     return (
       <Container>
         <ErrorContainer>
           <h3>Access Denied</h3>
-          <p>You can only edit your own characters.</p>
+          <p>You do not have permission to edit this character.</p>
         </ErrorContainer>
       </Container>
     );
@@ -546,7 +662,9 @@ export const EditCharacterPage: React.FC = () => {
             <Label>Character Details</Label>
             <CharacterDetailsEditor
               value={watch("details") || ""}
-              onChange={(value) => setValue("details", value, { shouldValidate: true })}
+              onChange={(value) =>
+                setValue("details", value, { shouldValidate: true })
+              }
               error={errors.details?.message}
               maxLength={15000}
             />
@@ -655,7 +773,8 @@ export const EditCharacterPage: React.FC = () => {
               </InfoBox>
               <CurrentSpeciesDisplay>
                 <p>
-                  <strong>Current Species:</strong> {character.species?.name || "Unknown"}
+                  <strong>Current Species:</strong>{" "}
+                  {character.species?.name || "Unknown"}
                 </p>
                 {character.speciesVariant && (
                   <p style={{ marginTop: "0.5rem" }}>
@@ -670,8 +789,8 @@ export const EditCharacterPage: React.FC = () => {
               <WarningBox>
                 <AlertTriangle size={20} />
                 <div>
-                  <strong>Important:</strong> Once you assign a species to this character,
-                  it cannot be changed. Choose carefully!
+                  <strong>Important:</strong> Once you assign a species to this
+                  character, it cannot be changed. Choose carefully!
                 </div>
               </WarningBox>
               <SpeciesSelector
@@ -684,13 +803,56 @@ export const EditCharacterPage: React.FC = () => {
           )}
         </FormSection>
 
+        {/* Character Ownership Section - show for all characters with species and permission */}
+        {character.speciesId && permissions.canCreateOrphanedCharacter && (
+          <FormSection>
+            <SectionTitle>Character Ownership</SectionTitle>
+            <InfoBox>
+              Manage this character's ownership. You can:
+              <br />• Leave it unassigned (orphaned, no pending owner)
+              <br />• Assign it to a registered user in this community
+              <br />• Set a pending owner for someone who hasn't registered yet
+              (Discord/DeviantArt)
+            </InfoBox>
+
+            <GrantTargetSelector
+              value={characterTarget}
+              onChange={setCharacterTarget}
+              onUserSearch={setUserSearch}
+              users={membersData?.community?.members || []}
+              usersLoading={membersLoading}
+              allowPendingOwner={true}
+              discordGuildId={character.species?.community?.discordGuildId}
+              discordGuildName={character.species?.community?.discordGuildName}
+              unassignedLabel="Leave Unassigned"
+              userLabel="Assign to Registered User"
+              pendingOwnerLabel="Set Pending Owner"
+              communityId={character.species?.community?.id || ""}
+              onValidationChange={setIsGrantTargetValid}
+              currentUser={
+                character.owner
+                  ? {
+                      id: character.owner.id,
+                      username: character.owner.username,
+                      displayName: character.owner.displayName || undefined,
+                      avatarUrl: character.owner.avatarUrl || undefined,
+                    }
+                  : undefined
+              }
+              includeSelf={true}
+            />
+          </FormSection>
+        )}
+
         {/* Traits Section - only show if character has a species */}
         {character.speciesId && (
           <FormSection>
             <SectionTitle>Character Traits</SectionTitle>
             <TraitForm
               speciesId={character.speciesId}
-              speciesVariant={character.speciesVariant as SpeciesVariantDetailsFragment | null}
+              speciesVariant={
+                character.speciesVariant as SpeciesVariantDetailsFragment | null
+              }
               traitValues={traitValues}
               onChange={setTraitValues}
               disabled={isSubmittingTraits}
@@ -717,7 +879,11 @@ export const EditCharacterPage: React.FC = () => {
           >
             Cancel
           </Button>
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isSubmitting || !isGrantTargetValid}
+          >
             {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>
         </Actions>

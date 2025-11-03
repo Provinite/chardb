@@ -106,3 +106,9 @@ variable "discord_callback_url" {
   description = "Discord OAuth callback URL"
   type        = string
 }
+
+variable "discord_bot_token" {
+  description = "Discord bot token for bot integration"
+  type        = string
+  sensitive   = true
+}

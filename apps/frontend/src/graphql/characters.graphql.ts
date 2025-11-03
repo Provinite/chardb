@@ -24,6 +24,12 @@ export const GET_CHARACTERS = gql`
         customFields
         createdAt
         updatedAt
+        pendingOwnership {
+          id
+          provider
+          providerAccountId
+          createdAt
+        }
         owner {
           id
           username
@@ -71,6 +77,8 @@ export const GET_CHARACTER = gql`
         community {
           id
           name
+          discordGuildId
+          discordGuildName
         }
       }
       speciesVariant {
@@ -106,6 +114,13 @@ export const GET_CHARACTER = gql`
       customFields
       createdAt
       updatedAt
+      pendingOwnership {
+        id
+        provider
+        providerAccountId
+        displayIdentifier
+        createdAt
+      }
       owner {
         id
         username
@@ -224,6 +239,13 @@ export const CREATE_CHARACTER = gql`
       customFields
       createdAt
       updatedAt
+      pendingOwnership {
+        id
+        provider
+        providerAccountId
+        displayIdentifier
+        createdAt
+      }
       owner {
         id
         username
@@ -265,6 +287,13 @@ export const UPDATE_CHARACTER = gql`
       customFields
       createdAt
       updatedAt
+      pendingOwnership {
+        id
+        provider
+        providerAccountId
+        displayIdentifier
+        createdAt
+      }
       owner {
         id
         username

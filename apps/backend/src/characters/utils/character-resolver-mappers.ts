@@ -1,8 +1,9 @@
-import { Prisma } from "@chardb/database";
+import { ExternalAccountProvider, Prisma } from "@chardb/database";
 import {
   CreateCharacterInput,
   UpdateCharacterInput,
 } from "../dto/character.dto";
+import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
 import {
   UpdateCharacterTraitsInput,
   CharacterTraitValueInput,
@@ -30,13 +31,24 @@ function mapTraitValues(
 export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
   characterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator">;
   tags?: string[];
+  pendingOwner?: {
+    provider: ExternalAccountProvider;
+    providerAccountId: string;
+  };
 } {
-  const { tags, ...characterData } = input;
+  const { tags, pendingOwner, ...characterData } = input;
 
-  const prismaCharacterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator"> = {
+  const prismaCharacterData: Omit<
+    Prisma.CharacterCreateInput,
+    "owner" | "creator"
+  > = {
     name: characterData.name,
-    species: characterData.speciesId ? { connect: { id: characterData.speciesId } } : undefined,
-    speciesVariant: characterData.speciesVariantId ? { connect: { id: characterData.speciesVariantId } } : undefined,
+    species: characterData.speciesId
+      ? { connect: { id: characterData.speciesId } }
+      : undefined,
+    speciesVariant: characterData.speciesVariantId
+      ? { connect: { id: characterData.speciesVariantId } }
+      : undefined,
     age: characterData.age,
     gender: characterData.gender,
     details: characterData.details,
@@ -51,14 +63,17 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
   return {
     characterData: prismaCharacterData,
     tags,
+    pendingOwner,
   };
 }
 
 export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
   characterData: Prisma.CharacterUpdateInput;
   tags?: string[];
+  pendingOwner?: PendingOwnerInput | null;
+  ownerId?: string | null;
 } {
-  const { tags, ...inputData } = input;
+  const { tags, pendingOwnerUpdate, ownerIdUpdate, ...inputData } = input;
   const characterData: Prisma.CharacterUpdateInput = {};
 
   if (inputData.name !== undefined) characterData.name = inputData.name;
@@ -93,7 +108,11 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
       : { disconnect: true };
   }
 
-  return { characterData, tags };
+  // Extract values from wrapper types
+  const pendingOwner = pendingOwnerUpdate?.set;
+  const ownerId = ownerIdUpdate?.set;
+
+  return { characterData, tags, pendingOwner, ownerId };
 }
 
 export function mapUpdateCharacterTraitsInputToService(
@@ -124,7 +143,8 @@ export function mapPrismaCharacterToGraphQL(
     age: prismaCharacter.age ?? undefined,
     gender: prismaCharacter.gender ?? undefined,
     details: prismaCharacter.details ?? undefined,
-    ownerId: prismaCharacter.ownerId,
+    ownerId: prismaCharacter.ownerId ?? undefined,
+    isOrphaned: prismaCharacter.ownerId === null,
     creatorId: prismaCharacter.creatorId ?? undefined,
     mainMediaId: prismaCharacter.mainMediaId ?? undefined,
     visibility: prismaCharacter.visibility,

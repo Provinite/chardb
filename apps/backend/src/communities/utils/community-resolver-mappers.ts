@@ -38,6 +38,8 @@ export function mapPrismaCommunityToGraphQL(prismaCommunity: PrismaCommunity): C
   return {
     id: prismaCommunity.id,
     name: prismaCommunity.name,
+    discordGuildId: prismaCommunity.discordGuildId,
+    discordGuildName: prismaCommunity.discordGuildName,
     createdAt: prismaCommunity.createdAt,
     updatedAt: prismaCommunity.updatedAt,
   };

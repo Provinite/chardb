@@ -10,6 +10,14 @@ export class Community {
   @Field({ description: 'Name of the community' })
   name: string;
 
+  /** Discord guild (server) ID linked to this community */
+  @Field(() => String, { nullable: true, description: 'Discord guild (server) ID linked to this community' })
+  discordGuildId: string | null;
+
+  /** Discord guild (server) name for display */
+  @Field(() => String, { nullable: true, description: 'Discord guild (server) name for display' })
+  discordGuildName: string | null;
+
   /** When the community was created */
   @Field({ description: 'When the community was created' })
   createdAt: Date;

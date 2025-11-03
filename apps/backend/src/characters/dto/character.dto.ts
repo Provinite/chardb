@@ -1,7 +1,9 @@
 import { Field, InputType, ObjectType, Int, Float, ID, registerEnumType } from '@nestjs/graphql';
-import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, IsEnum, MinLength, MaxLength, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, IsUUID, IsEnum, MinLength, MaxLength, Min, Max, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { Visibility } from '@chardb/database';
 import { CharacterTraitValueInput } from './character-trait.dto';
+import { PendingOwnerInput } from '../../pending-ownership/dto/pending-ownership.dto';
 
 // Register enum for GraphQL
 registerEnumType(Visibility, {
@@ -79,6 +81,37 @@ export class CreateCharacterInput {
   @Field(() => [CharacterTraitValueInput], { defaultValue: [], description: 'Trait values for the character' })
   @IsOptional()
   traitValues?: CharacterTraitValueInput[];
+
+  @Field(() => PendingOwnerInput, { nullable: true, description: 'Create character with pending ownership for an external account' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PendingOwnerInput)
+  pendingOwner?: PendingOwnerInput;
+}
+
+/**
+ * Wrapper type to distinguish "set owner to value/null" from "don't change owner"
+ * Absent field = no change, present with value = change to that value
+ */
+@InputType()
+export class OwnerIdUpdate {
+  @Field(() => ID, { nullable: true, description: 'Set owner ID (null = orphan character)' })
+  @IsOptional()
+  @IsUUID()
+  set?: string | null;
+}
+
+/**
+ * Wrapper type to distinguish "set pending owner" from "don't change pending owner"
+ * Absent field = no change, present with value = change to that value
+ */
+@InputType()
+export class PendingOwnerUpdate {
+  @Field(() => PendingOwnerInput, { nullable: true, description: 'Set pending owner (null = clear pending owner)' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PendingOwnerInput)
+  set?: PendingOwnerInput | null;
 }
 
 @InputType()
@@ -157,6 +190,18 @@ export class UpdateCharacterInput {
   @IsOptional()
   @IsUUID()
   mainMediaId?: string;
+
+  @Field(() => OwnerIdUpdate, { nullable: true, description: 'Update character ownership (requires canCreateOrphanedCharacter permission)' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => OwnerIdUpdate)
+  ownerIdUpdate?: OwnerIdUpdate;
+
+  @Field(() => PendingOwnerUpdate, { nullable: true, description: 'Update pending ownership (requires canCreateOrphanedCharacter permission)' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PendingOwnerUpdate)
+  pendingOwnerUpdate?: PendingOwnerUpdate;
 }
 
 @InputType()

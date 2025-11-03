@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { useParams } from "react-router-dom";
 import { Package, Plus, Edit2, Trash2, Gift } from "lucide-react";
-import { Button, Card, UserTypeahead } from "@chardb/ui";
+import { Button, Card } from "@chardb/ui";
+import { GrantTargetSelector, GrantTarget } from "../components/GrantTargetSelector";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ColorSelector, ColorPip } from "../components/colors";
 import { useQuery, useMutation } from "@apollo/client";
@@ -17,7 +18,7 @@ import {
 import {
   useCommunityByIdQuery,
   useGetCommunityMembersQuery,
-} from "../generated/graphql";
+} from "../graphql/communities.graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -300,10 +301,11 @@ export const CommunityItemsAdminPage: React.FC = () => {
 
   const [grantFormData, setGrantFormData] = useState({
     itemTypeId: "",
-    userId: "",
     quantity: "1",
   });
 
+  const [grantTarget, setGrantTarget] = useState<GrantTarget | null>(null);
+  const [isGrantTargetValid, setIsGrantTargetValid] = useState(false);
   const [userSearch, setUserSearch] = useState("");
 
   const { data: membersData, loading: membersLoading } =
@@ -391,22 +393,44 @@ export const CommunityItemsAdminPage: React.FC = () => {
 
   const handleGrantItem = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!grantTarget) {
+      toast.error("Please select a grant target");
+      return;
+    }
+
+    if (grantTarget.type === 'pending' && !isGrantTargetValid) {
+      toast.error("Please verify the Discord account before granting");
+      return;
+    }
+
     try {
+      // Build mutation input based on target type
+      const input: any = {
+        itemTypeId: grantFormData.itemTypeId,
+        quantity: parseInt(grantFormData.quantity),
+      };
+
+      if (grantTarget.type === 'user') {
+        input.userId = grantTarget.userId;
+      } else if (grantTarget.type === 'pending') {
+        input.userId = null; // Orphaned item
+        input.pendingOwner = {
+          provider: grantTarget.provider,
+          providerAccountId: grantTarget.providerAccountId,
+        };
+      }
+
       await grantItem({
-        variables: {
-          input: {
-            ...grantFormData,
-            quantity: parseInt(grantFormData.quantity),
-          },
-        },
+        variables: { input },
       });
       toast.success("Item granted successfully!");
       setIsGrantModalOpen(false);
       setGrantFormData({
         itemTypeId: "",
-        userId: "",
         quantity: "1",
       });
+      setGrantTarget(null);
     } catch (error) {
       console.error("Failed to grant item:", error);
       toast.error(
@@ -798,15 +822,20 @@ export const CommunityItemsAdminPage: React.FC = () => {
           <ModalTitle>Grant Item</ModalTitle>
           <Form onSubmit={handleGrantItem}>
             <FormGroup>
-              <UserTypeahead
-                label="User *"
-                value={grantFormData.userId}
-                onChange={(userId: string | null) => {
-                  setGrantFormData({ ...grantFormData, userId: userId || "" });
-                }}
-                onSearch={(query: string) => setUserSearch(query)}
+              <GrantTargetSelector
+                value={grantTarget}
+                onChange={setGrantTarget}
+                onUserSearch={setUserSearch}
                 users={membersData?.community?.members || []}
-                loading={membersLoading}
+                usersLoading={membersLoading}
+                allowPendingOwner={true}
+                allowUnassigned={false}
+                discordGuildId={communityData?.community?.discordGuildId}
+                discordGuildName={communityData?.community?.discordGuildName}
+                userLabel="Assign to User"
+                pendingOwnerLabel="Orphaned with Pending Owner"
+                communityId={communityId!}
+                onValidationChange={setIsGrantTargetValid}
               />
             </FormGroup>
 
@@ -834,7 +863,12 @@ export const CommunityItemsAdminPage: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit">Grant Item</Button>
+              <Button
+                type="submit"
+                disabled={grantTarget?.type === 'pending' && !isGrantTargetValid}
+              >
+                Grant Item
+              </Button>
             </FormActions>
           </Form>
         </ModalContent>

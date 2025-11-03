@@ -211,6 +211,7 @@ type EditableRole = {
   name: string;
   canCreateSpecies: boolean;
   canCreateCharacter: boolean;
+  canCreateOrphanedCharacter: boolean;
   canEditCharacter: boolean;
   canEditOwnCharacter: boolean;
   canEditSpecies: boolean;
@@ -254,6 +255,11 @@ const PERMISSION_GROUPS = [
         key: "canCreateCharacter",
         name: "Create Characters",
         description: "Allow creation of new characters in the community",
+      },
+      {
+        key: "canCreateOrphanedCharacter",
+        name: "Create Orphaned Characters",
+        description: "Allow creation of characters without an owner (community/orphaned characters)",
       },
       {
         key: "canEditCharacter",
@@ -332,6 +338,7 @@ const ROLE_TEMPLATES = [
     description: "Basic member with character creation rights",
     permissions: {
       canCreateCharacter: true,
+      canCreateOrphanedCharacter: false,
       canEditOwnCharacter: true,
       canCreateSpecies: false,
       canEditSpecies: false,
@@ -351,6 +358,7 @@ const ROLE_TEMPLATES = [
     description: "Trusted member with content moderation abilities",
     permissions: {
       canCreateCharacter: true,
+      canCreateOrphanedCharacter: false,
       canEditOwnCharacter: true,
       canEditCharacter: true,
       canCreateSpecies: false,
@@ -370,6 +378,7 @@ const ROLE_TEMPLATES = [
     description: "Full administrative access to all features",
     permissions: {
       canCreateCharacter: true,
+      canCreateOrphanedCharacter: true,
       canEditOwnCharacter: true,
       canEditCharacter: true,
       canCreateSpecies: true,
@@ -411,6 +420,7 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
       setPermissions({
         canCreateSpecies: editingRole.canCreateSpecies,
         canCreateCharacter: editingRole.canCreateCharacter,
+        canCreateOrphanedCharacter: editingRole.canCreateOrphanedCharacter,
         canEditCharacter: editingRole.canEditCharacter,
         canEditOwnCharacter: editingRole.canEditOwnCharacter,
         canEditSpecies: editingRole.canEditSpecies,

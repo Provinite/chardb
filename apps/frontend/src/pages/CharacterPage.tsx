@@ -11,6 +11,8 @@ import {
 } from "../graphql/characters.graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
+import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { canUserEditCharacter } from "../lib/characterPermissions";
 import { LikeButton } from "../components/LikeButton";
 import { CommentList } from "../components/CommentList";
 import { CharacterMediaGallery } from "../components/CharacterMediaGallery";
@@ -460,6 +462,13 @@ export const CharacterPage: React.FC = () => {
     skip: !id,
   });
 
+  const character: GetCharacterQuery["character"] | undefined = data?.character;
+
+  // Get user's permissions in the character's community
+  const { permissions } = useUserCommunityRole(
+    character?.species?.community?.id,
+  );
+
   const [deleteCharacter, { loading: deleteLoading }] =
     useDeleteCharacterMutation({
       onCompleted: () => {
@@ -478,8 +487,6 @@ export const CharacterPage: React.FC = () => {
         cache.gc();
       },
     });
-
-  const character: GetCharacterQuery["character"] | undefined = data?.character;
 
   const handleBackClick = () => {
     navigate("/characters");
@@ -606,6 +613,14 @@ export const CharacterPage: React.FC = () => {
             <MetaBadge variant={getVisibilityVariant(character.visibility)}>
               {character.visibility}
             </MetaBadge>
+            {!character.owner && !character.pendingOwnership && (
+              <MetaBadge variant="default">Community Character</MetaBadge>
+            )}
+            {character.pendingOwnership && (
+              <MetaBadge variant="warning">
+                Pending: {character.pendingOwnership.provider === 'DISCORD' ? '🎮' : '🎨'} {character.pendingOwnership.providerAccountId}
+              </MetaBadge>
+            )}
             {character.isSellable && (
               <MetaBadge variant="success">For Sale</MetaBadge>
             )}
@@ -642,34 +657,48 @@ export const CharacterPage: React.FC = () => {
           </InfoGrid>
         </CharacterBasics>
 
-        <OwnerInfo>
-          <OwnerLink to={`/user/${character.owner.username}`}>
-            <OwnerAvatar>
-              {character.owner.avatarUrl ? (
-                <img
-                  src={character.owner.avatarUrl}
-                  alt={character.owner.displayName || character.owner.username}
-                />
-              ) : (
-                character.owner.displayName?.[0] || character.owner.username[0]
-              )}
-            </OwnerAvatar>
-            <OwnerName>
-              {character.owner.displayName || character.owner.username}
-            </OwnerName>
-            <OwnerRole>Character Owner</OwnerRole>
-          </OwnerLink>
-          {character.creator && character.creator.id !== character.owner.id && (
-            <>
-              <OwnerRole style={{ marginTop: "0.5rem" }}>
-                Created by{" "}
-                {character.creator.displayName || character.creator.username}
-              </OwnerRole>
-            </>
-          )}
-        </OwnerInfo>
+        {character.owner ? (
+          <OwnerInfo>
+            <OwnerLink to={`/user/${character.owner.username}`}>
+              <OwnerAvatar>
+                {character.owner.avatarUrl ? (
+                  <img
+                    src={character.owner.avatarUrl}
+                    alt={character.owner.displayName || character.owner.username}
+                  />
+                ) : (
+                  character.owner.displayName?.[0] || character.owner.username[0]
+                )}
+              </OwnerAvatar>
+              <OwnerName>
+                {character.owner.displayName || character.owner.username}
+              </OwnerName>
+              <OwnerRole>Character Owner</OwnerRole>
+            </OwnerLink>
+            {character.creator && character.creator.id !== character.owner.id && (
+              <>
+                <OwnerRole style={{ marginTop: "0.5rem" }}>
+                  Created by{" "}
+                  {character.creator.displayName || character.creator.username}
+                </OwnerRole>
+              </>
+            )}
+          </OwnerInfo>
+        ) : (
+          <OwnerInfo>
+            <OwnerRole>Community Character (No Owner)</OwnerRole>
+            {character.creator && (
+              <>
+                <OwnerRole style={{ marginTop: "0.5rem" }}>
+                  Created by{" "}
+                  {character.creator.displayName || character.creator.username}
+                </OwnerRole>
+              </>
+            )}
+          </OwnerInfo>
+        )}
 
-        {user && user.id === character.owner.id && (
+        {canUserEditCharacter(character, user, permissions) && (
           <HeaderActions>
             <Button variant="primary" size="sm" onClick={handleEditClick}>
               Edit Character
@@ -758,7 +787,7 @@ export const CharacterPage: React.FC = () => {
 
       <CharacterMediaGallery
         characterId={character.id}
-        canUpload={!!(user && user.id === character.owner.id)}
+        canUpload={canUserEditCharacter(character, user, permissions)}
         limit={8}
         currentMainMediaId={character.mainMediaId || undefined}
       />

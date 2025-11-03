@@ -67,6 +67,7 @@ export function mapPrismaUserToGraphQL(prismaUser: PrismaUser): User {
     createdAt: prismaUser.createdAt,
     updatedAt: prismaUser.updatedAt,
     externalAccounts: [], // Populated by field resolver
+    communityMemberships: [], // Populated by field resolver
   };
 }
 

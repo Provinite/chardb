@@ -37,8 +37,11 @@ export class Character {
   @Field({ nullable: true })
   details?: string;
 
-  @Field(() => ID)
-  ownerId: string;
+  @Field(() => ID, { nullable: true, description: 'ID of the owner. Null for orphaned/community-owned characters.' })
+  ownerId?: string;
+
+  @Field({ description: 'Whether this character is orphaned (no owner)' })
+  isOrphaned: boolean;
 
   @Field(() => ID, { nullable: true })
   creatorId?: string;

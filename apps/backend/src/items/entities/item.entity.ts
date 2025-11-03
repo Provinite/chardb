@@ -1,7 +1,7 @@
-import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
-import { GraphQLJSON } from 'graphql-type-json';
-import { ItemType } from './item-type.entity';
-import { User } from '../../users/entities/user.entity';
+import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
+import { GraphQLJSON } from "graphql-type-json";
+import { ItemType } from "./item-type.entity";
+import { User } from "../../users/entities/user.entity";
 
 @ObjectType()
 export class Item {
@@ -11,8 +11,8 @@ export class Item {
   @Field(() => ID)
   itemTypeId: string;
 
-  @Field(() => ID)
-  ownerId: string;
+  @Field(() => ID, { nullable: true })
+  ownerId?: string;
 
   @Field(() => Int)
   quantity: number;
@@ -25,13 +25,6 @@ export class Item {
 
   @Field()
   updatedAt: Date;
-
-  // Relations handled by field resolvers
-  @Field(() => ItemType)
-  itemType: ItemType;
-
-  @Field(() => User)
-  owner: User;
 }
 
 @ObjectType()

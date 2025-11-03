@@ -65,6 +65,46 @@ export class CharacterEditGuard implements CanActivate {
       return false;
     }
 
+    const isOrphaned = character.ownerId === null;
+
+    // Handle orphaned characters (no owner)
+    if (isOrphaned) {
+      // Orphaned characters without species cannot be edited
+      if (!character.speciesId) {
+        return false;
+      }
+
+      // Resolve community from species
+      const resolvedIds = {
+        type: "speciesId" as const,
+        value: character.speciesId,
+      };
+      const community =
+        await this.communityResolverService.resolve(resolvedIds);
+
+      if (!community) {
+        return false;
+      }
+
+      // For orphaned characters, check if user has permission to manage orphaned characters
+      // OR has general edit permission
+      const hasOrphanedPermission =
+        await this.permissionService.hasCommunityPermission(
+          user.id,
+          community.id,
+          CommunityPermission.CanCreateOrphanedCharacter,
+        );
+      const hasEditPermission =
+        await this.permissionService.hasCommunityPermission(
+          user.id,
+          community.id,
+          CommunityPermission.CanEditCharacter,
+        );
+
+      return hasOrphanedPermission || hasEditPermission;
+    }
+
+    // Handle owned characters (existing logic)
     const isOwner = character.ownerId === user.id;
 
     // If no species, only owner can edit

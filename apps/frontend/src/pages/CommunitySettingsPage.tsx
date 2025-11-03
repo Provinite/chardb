@@ -2,12 +2,16 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { Settings, ArrowLeft } from 'lucide-react';
-import { 
+import {
   Button,
   Heading2,
   SmallText,
-  HelpText
+  HelpText,
+  ErrorMessage
 } from '@chardb/ui';
+import { useCommunityByIdQuery } from '../graphql/communities.graphql';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { DiscordIntegrationSettings } from '../components/DiscordIntegrationSettings';
 
 const Container = styled.div`
   display: flex;
@@ -65,24 +69,26 @@ const HeaderText = styled.div`
   gap: 0.25rem;
 `;
 
-const PlaceholderContent = styled.div`
+const Content = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem;
-  gap: 1rem;
-  text-align: center;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  gap: 1.5rem;
 `;
 
-const PlaceholderIcon = styled.div`
-  color: ${({ theme }) => theme.colors.text.muted};
-  opacity: 0.5;
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
 `;
 
 export const CommunitySettingsPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
+
+  const { data, loading, error, refetch } = useCommunityByIdQuery({
+    variables: { id: communityId || '' },
+    skip: !communityId,
+  });
 
   if (!communityId) {
     return (
@@ -92,6 +98,37 @@ export const CommunitySettingsPage: React.FC = () => {
       </Container>
     );
   }
+
+  if (loading) {
+    return (
+      <Container>
+        <LoadingContainer>
+          <LoadingSpinner size="lg" />
+        </LoadingContainer>
+      </Container>
+    );
+  }
+
+  if (error || !data?.community) {
+    return (
+      <Container>
+        <Header>
+          <HeaderTop>
+            <BackButton
+              variant="outline"
+              onClick={() => window.history.back()}
+              icon={<ArrowLeft size={16} />}
+            >
+              Back
+            </BackButton>
+          </HeaderTop>
+        </Header>
+        <ErrorMessage message={error?.message || 'Community not found'} />
+      </Container>
+    );
+  }
+
+  const community = data.community;
 
   return (
     <Container>
@@ -112,7 +149,7 @@ export const CommunitySettingsPage: React.FC = () => {
               <Settings size={24} />
             </HeaderIcon>
             <HeaderText>
-              <Heading2>Community Settings</Heading2>
+              <Heading2>{community.name} Settings</Heading2>
               <SmallText style={{ margin: 0, color: 'muted' }}>
                 Configure community information and preferences
               </SmallText>
@@ -121,16 +158,9 @@ export const CommunitySettingsPage: React.FC = () => {
         </HeaderContent>
       </Header>
 
-      <PlaceholderContent>
-        <PlaceholderIcon>
-          <Settings size={48} />
-        </PlaceholderIcon>
-        <Heading2>Community Settings</Heading2>
-        <HelpText>
-          This feature is under development. Community settings interface will be available soon.
-          You can configure basic community information, appearance, and general settings here.
-        </HelpText>
-      </PlaceholderContent>
+      <Content>
+        <DiscordIntegrationSettings community={community} onUpdate={() => refetch()} />
+      </Content>
     </Container>
   );
 };

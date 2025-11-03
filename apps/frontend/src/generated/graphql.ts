@@ -60,6 +60,7 @@ export type Character = {
   details: Maybe<Scalars['String']['output']>;
   gender: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  isOrphaned: Scalars['Boolean']['output'];
   isSellable: Scalars['Boolean']['output'];
   isTradeable: Scalars['Boolean']['output'];
   likesCount: Scalars['Int']['output'];
@@ -68,8 +69,10 @@ export type Character = {
   /** ID of the main media item for this character */
   mainMediaId: Maybe<Scalars['ID']['output']>;
   name: Scalars['String']['output'];
-  owner: User;
-  ownerId: Scalars['ID']['output'];
+  owner: Maybe<User>;
+  /** ID of the owner. Null for orphaned/community-owned characters. */
+  ownerId: Maybe<Scalars['ID']['output']>;
+  pendingOwnership: Maybe<PendingOwnership>;
   price: Maybe<Scalars['Float']['output']>;
   /** Species this character belongs to */
   species: Maybe<Species>;
@@ -233,6 +236,10 @@ export type Community = {
   __typename?: 'Community';
   /** When the community was created */
   createdAt: Scalars['DateTime']['output'];
+  /** Discord guild (server) ID linked to this community */
+  discordGuildId: Maybe<Scalars['String']['output']>;
+  /** Discord guild (server) name for display */
+  discordGuildName: Maybe<Scalars['String']['output']>;
   /** Unique identifier for the community */
   id: Scalars['ID']['output'];
   /** Community members with optional search filtering */
@@ -356,6 +363,8 @@ export type CreateCharacterInput = {
   isSellable?: Scalars['Boolean']['input'];
   isTradeable?: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
+  /** Create character with pending ownership for an external account */
+  pendingOwner?: InputMaybe<PendingOwnerInput>;
   price?: InputMaybe<Scalars['Float']['input']>;
   speciesId?: InputMaybe<Scalars['ID']['input']>;
   speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
@@ -472,6 +481,8 @@ export type CreateRoleInput = {
   canCreateCharacter?: Scalars['Boolean']['input'];
   /** Whether members with this role can create invite codes */
   canCreateInviteCode?: Scalars['Boolean']['input'];
+  /** Whether members with this role can create orphaned characters */
+  canCreateOrphanedCharacter?: Scalars['Boolean']['input'];
   /** Whether members with this role can create new roles */
   canCreateRole?: Scalars['Boolean']['input'];
   /** Whether members with this role can create new species */
@@ -570,6 +581,29 @@ export type CreateTraitListEntryInput = {
   valueType: TraitValueType;
 };
 
+export type DiscordGuildInfo = {
+  __typename?: 'DiscordGuildInfo';
+  /** Whether the bot has access to this guild */
+  botHasAccess: Scalars['Boolean']['output'];
+  /** Discord guild ID */
+  id: Scalars['ID']['output'];
+  /** Discord guild name */
+  name: Scalars['String']['output'];
+};
+
+/** Resolved Discord user information */
+export type DiscordUserInfo = {
+  __typename?: 'DiscordUserInfo';
+  /** URL to user avatar image */
+  avatarUrl: Maybe<Scalars['String']['output']>;
+  /** Discord display name (may differ from username) */
+  displayName: Maybe<Scalars['String']['output']>;
+  /** Discord user ID (snowflake) */
+  userId: Scalars['ID']['output'];
+  /** Discord username */
+  username: Scalars['String']['output'];
+};
+
 export type EnumValue = {
   __typename?: 'EnumValue';
   /** The color associated with this enum value */
@@ -645,9 +679,10 @@ export type ExternalAccount = {
   userId: Scalars['ID']['output'];
 };
 
-/** External account providers supported for account linking */
+/** The external account provider type */
 export enum ExternalAccountProvider {
-  Deviantart = 'DEVIANTART'
+  Deviantart = 'DEVIANTART',
+  Discord = 'DISCORD'
 }
 
 export type FollowListResult = {
@@ -713,8 +748,11 @@ export type GalleryFiltersInput = {
 export type GrantItemInput = {
   itemTypeId: Scalars['ID']['input'];
   metadata?: InputMaybe<Scalars['String']['input']>;
+  /** Create item with pending ownership for an external account */
+  pendingOwner?: InputMaybe<PendingOwnerInput>;
   quantity?: Scalars['Int']['input'];
-  userId: Scalars['ID']['input'];
+  /** User ID to grant item to. Omit for orphaned items. */
+  userId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type Image = {
@@ -821,8 +859,9 @@ export type Item = {
   itemType: ItemType;
   itemTypeId: Scalars['ID']['output'];
   metadata: Maybe<Scalars['JSON']['output']>;
-  owner: User;
-  ownerId: Scalars['ID']['output'];
+  owner: Maybe<User>;
+  ownerId: Maybe<Scalars['ID']['output']>;
+  pendingOwnership: Maybe<PendingOwnership>;
   quantity: Scalars['Int']['output'];
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -842,11 +881,9 @@ export type ItemType = {
   isConsumable: Scalars['Boolean']['output'];
   isStackable: Scalars['Boolean']['output'];
   isTradeable: Scalars['Boolean']['output'];
-  itemType: ItemType;
   maxStackSize: Maybe<Scalars['Int']['output']>;
   metadata: Maybe<Scalars['JSON']['output']>;
   name: Scalars['String']['output'];
-  owner: User;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -1049,6 +1086,8 @@ export type Mutation = {
   deleteMedia: Scalars['Boolean']['output'];
   /** Grant an item to a user (admin only) */
   grantItem: Item;
+  /** Link a Discord guild to a community */
+  linkDiscordGuild: Community;
   login: AuthPayload;
   refreshToken: Scalars['String']['output'];
   /** Remove a character ownership change record */
@@ -1087,6 +1126,8 @@ export type Mutation = {
   toggleFollow: FollowResult;
   toggleLike: LikeResult;
   transferCharacter: Character;
+  /** Unlink a Discord guild from a community */
+  unlinkDiscordGuild: Community;
   /** Unlink an external account from the current user */
   unlinkExternalAccount: Scalars['Boolean']['output'];
   updateCharacter: Character;
@@ -1282,6 +1323,12 @@ export type MutationGrantItemArgs = {
 };
 
 
+export type MutationLinkDiscordGuildArgs = {
+  communityId: Scalars['ID']['input'];
+  guildId: Scalars['ID']['input'];
+};
+
+
 export type MutationLoginArgs = {
   input: LoginInput;
 };
@@ -1399,6 +1446,11 @@ export type MutationToggleLikeArgs = {
 export type MutationTransferCharacterArgs = {
   id: Scalars['ID']['input'];
   input: TransferCharacterInput;
+};
+
+
+export type MutationUnlinkDiscordGuildArgs = {
+  communityId: Scalars['ID']['input'];
 };
 
 
@@ -1536,6 +1588,45 @@ export type MutationUpdateTraitOrdersArgs = {
   input: UpdateTraitOrdersInput;
 };
 
+export type OwnerIdUpdate = {
+  /** Set owner ID (null = orphan character) */
+  set?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type PendingOwnerInput = {
+  /** The external account provider */
+  provider: ExternalAccountProvider;
+  /** The account identifier on the external provider (Discord user ID, DeviantArt username, etc.) */
+  providerAccountId: Scalars['String']['input'];
+};
+
+export type PendingOwnerUpdate = {
+  /** Set pending owner (null = clear pending owner) */
+  set?: InputMaybe<PendingOwnerInput>;
+};
+
+export type PendingOwnership = {
+  __typename?: 'PendingOwnership';
+  character: Maybe<Character>;
+  /** Character ID if this is a pending character ownership */
+  characterId: Maybe<Scalars['ID']['output']>;
+  /** When this pending ownership was claimed */
+  claimedAt: Maybe<Scalars['DateTime']['output']>;
+  claimedByUser: Maybe<User>;
+  /** User who claimed this pending ownership */
+  claimedByUserId: Maybe<Scalars['ID']['output']>;
+  /** When this pending ownership was created */
+  createdAt: Scalars['DateTime']['output'];
+  displayIdentifier: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  item: Maybe<Item>;
+  /** Item ID if this is a pending item ownership */
+  itemId: Maybe<Scalars['ID']['output']>;
+  /** The external account provider (Discord, DeviantArt, etc.) */
+  provider: ExternalAccountProvider;
+  providerAccountId: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   activityFeed: Array<ActivityItem>;
@@ -1577,6 +1668,8 @@ export type Query = {
   communityMembersByCommunity: CommunityMemberConnection;
   /** Get community members by user ID with pagination */
   communityMembersByUser: CommunityMemberConnection;
+  /** Get the Discord bot invite URL */
+  discordBotInviteUrl: Scalars['String']['output'];
   /** Get an enum value by ID */
   enumValueById: EnumValue;
   /** Get an enum value setting by ID */
@@ -1628,6 +1721,8 @@ export type Query = {
   myImages: ImageConnection;
   /** Retrieves media owned by the current authenticated user */
   myMedia: MediaConnection;
+  /** Resolve a Discord username or user ID to full user information. Requires permission to create orphaned characters. */
+  resolveDiscordUser: DiscordUserInfo;
   /** Get a role by ID */
   roleById: Role;
   /** Get all roles with pagination */
@@ -1671,6 +1766,8 @@ export type Query = {
   userProfile: Maybe<UserProfile>;
   userStats: UserStats;
   users: UserConnection;
+  /** Validate that the bot has access to a Discord guild */
+  validateDiscordGuild: DiscordGuildInfo;
 };
 
 
@@ -1980,6 +2077,12 @@ export type QueryMyMediaArgs = {
 };
 
 
+export type QueryResolveDiscordUserArgs = {
+  communityId: Scalars['ID']['input'];
+  identifier: Scalars['String']['input'];
+};
+
+
 export type QueryRoleByIdArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2129,6 +2232,11 @@ export type QueryUsersArgs = {
   offset?: Scalars['Int']['input'];
 };
 
+
+export type QueryValidateDiscordGuildArgs = {
+  guildId: Scalars['ID']['input'];
+};
+
 /** Response confirming successful removal of an entity */
 export type RemovalResponse = {
   __typename?: 'RemovalResponse';
@@ -2155,6 +2263,8 @@ export type Role = {
   canCreateCharacter: Scalars['Boolean']['output'];
   /** Whether members with this role can create invite codes */
   canCreateInviteCode: Scalars['Boolean']['output'];
+  /** Whether members with this role can create orphaned characters */
+  canCreateOrphanedCharacter: Scalars['Boolean']['output'];
   /** Whether members with this role can create new roles */
   canCreateRole: Scalars['Boolean']['output'];
   /** Whether members with this role can create new species */
@@ -2438,6 +2548,10 @@ export type UpdateCharacterInput = {
   isTradeable?: InputMaybe<Scalars['Boolean']['input']>;
   mainMediaId?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Update character ownership (requires canCreateOrphanedCharacter permission) */
+  ownerIdUpdate?: InputMaybe<OwnerIdUpdate>;
+  /** Update pending ownership (requires canCreateOrphanedCharacter permission) */
+  pendingOwnerUpdate?: InputMaybe<PendingOwnerUpdate>;
   price?: InputMaybe<Scalars['Float']['input']>;
   speciesId?: InputMaybe<Scalars['ID']['input']>;
   speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
@@ -2557,6 +2671,8 @@ export type UpdateRoleInput = {
   canCreateCharacter?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can create invite codes */
   canCreateInviteCode?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can create orphaned characters */
+  canCreateOrphanedCharacter?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can create new roles */
   canCreateRole?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can create new species */
@@ -2666,6 +2782,7 @@ export type User = {
   canGrantGlobalPermissions: Scalars['Boolean']['output'];
   canListInviteCodes: Scalars['Boolean']['output'];
   canListUsers: Scalars['Boolean']['output'];
+  communityMemberships: Array<CommunityMember>;
   createdAt: Scalars['DateTime']['output'];
   dateOfBirth: Maybe<Scalars['DateTime']['output']>;
   displayName: Maybe<Scalars['String']['output']>;
@@ -2766,35 +2883,35 @@ export type RefreshTokenMutation = { __typename?: 'Mutation', refreshToken: stri
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, communityMemberships: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canEditCharacter: boolean, canCreateOrphanedCharacter: boolean } }> } };
 
 export type GetCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
 
 
-export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
+export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
 
 export type GetCharacterQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, speciesId: string | null, speciesVariantId: string | null, age: string | null, gender: string | null, details: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, speciesId: string | null, speciesVariantId: string | null, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
 
 
-export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
+export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, url: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
 
 export type CreateCharacterMutationVariables = Exact<{
   input: CreateCharacterInput;
 }>;
 
 
-export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
+export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type UpdateCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2802,7 +2919,7 @@ export type UpdateCharacterMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCharacterMutation = { __typename?: 'Mutation', updateCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
+export type UpdateCharacterMutation = { __typename?: 'Mutation', updateCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type DeleteCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2817,7 +2934,7 @@ export type TransferCharacterMutationVariables = Exact<{
 }>;
 
 
-export type TransferCharacterMutation = { __typename?: 'Mutation', transferCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
+export type TransferCharacterMutation = { __typename?: 'Mutation', transferCharacter: { __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type AddCharacterTagsMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -2854,7 +2971,7 @@ export type UpdateCharacterTraitsMutation = { __typename?: 'Mutation', updateCha
 export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, _count: { __typename?: 'CharacterCount', media: number } }> };
+export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, age: string | null, gender: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> };
 
 export type CommunityMemberUserFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null };
 
@@ -2871,7 +2988,7 @@ export type CommunityByIdQueryVariables = Exact<{
 }>;
 
 
-export type CommunityByIdQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } };
+export type CommunityByIdQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null, createdAt: string, updatedAt: string } };
 
 export type GetCommunityMembersQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -2904,6 +3021,41 @@ export type RemoveCommunityMutationVariables = Exact<{
 
 export type RemoveCommunityMutation = { __typename?: 'Mutation', removeCommunity: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
+export type DiscordBotInviteUrlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DiscordBotInviteUrlQuery = { __typename?: 'Query', discordBotInviteUrl: string };
+
+export type ValidateDiscordGuildQueryVariables = Exact<{
+  guildId: Scalars['ID']['input'];
+}>;
+
+
+export type ValidateDiscordGuildQuery = { __typename?: 'Query', validateDiscordGuild: { __typename?: 'DiscordGuildInfo', id: string, name: string, botHasAccess: boolean } };
+
+export type LinkDiscordGuildMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  guildId: Scalars['ID']['input'];
+}>;
+
+
+export type LinkDiscordGuildMutation = { __typename?: 'Mutation', linkDiscordGuild: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null, createdAt: string, updatedAt: string } };
+
+export type UnlinkDiscordGuildMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type UnlinkDiscordGuildMutation = { __typename?: 'Mutation', unlinkDiscordGuild: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null, createdAt: string, updatedAt: string } };
+
+export type ResolveDiscordUserQueryVariables = Exact<{
+  identifier: Scalars['String']['input'];
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type ResolveDiscordUserQuery = { __typename?: 'Query', resolveDiscordUser: { __typename?: 'DiscordUserInfo', userId: string, username: string, displayName: string | null, avatarUrl: string | null } };
+
 export type CommunityMembersByUserQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -2911,7 +3063,7 @@ export type CommunityMembersByUserQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canCreateOrphanedCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type CommunityColorFieldsFragment = { __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string };
 
@@ -3204,7 +3356,7 @@ export type RolesByCommunityQuery = { __typename?: 'Query', rolesByCommunity: { 
 
 export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
 
-export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } };
+export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null };
 
 export type GetItemTypesQueryVariables = Exact<{
   filters?: InputMaybe<ItemTypeFiltersInput>;
@@ -3242,21 +3394,21 @@ export type DeleteItemTypeMutationVariables = Exact<{
 
 export type DeleteItemTypeMutation = { __typename?: 'Mutation', deleteItemType: boolean };
 
-export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> };
+export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> };
 
 export type GetMyInventoryQueryVariables = Exact<{
   communityId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> }> } };
+export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> }> } };
 
 export type GrantItemMutationVariables = Exact<{
   input: GrantItemInput;
 }>;
 
 
-export type GrantItemMutation = { __typename?: 'Mutation', grantItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
+export type GrantItemMutation = { __typename?: 'Mutation', grantItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null } };
 
 export type UpdateItemMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3264,7 +3416,7 @@ export type UpdateItemMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
+export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null } };
 
 export type DeleteItemMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3370,14 +3522,14 @@ export type RolesByCommunityDetailedQueryVariables = Exact<{
 }>;
 
 
-export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
+export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
 
 export type CreateRoleMutationVariables = Exact<{
   input: CreateRoleInput;
 }>;
 
 
-export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
 
 export type UpdateRoleMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3385,7 +3537,7 @@ export type UpdateRoleMutationVariables = Exact<{
 }>;
 
 
-export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
 
 export type CommunityMembersWithRolesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -3394,7 +3546,7 @@ export type CommunityMembersWithRolesQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
+export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
 
 export type UpdateCommunityMemberMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3402,7 +3554,7 @@ export type UpdateCommunityMemberMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
+export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
 
 export type ToggleLikeMutationVariables = Exact<{
   input: ToggleLikeInput;
@@ -3483,9 +3635,9 @@ export type GetActivityFeedQueryVariables = Exact<{
 
 export type GetActivityFeedQuery = { __typename?: 'Query', activityFeed: Array<{ __typename?: 'ActivityItem', id: string, type: string, entityId: string, createdAt: string, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, content: { __typename?: 'ActivityContent', name: string | null, title: string | null, description: string | null } | null }> };
 
-export type SpeciesDetailsFragment = { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string };
+export type SpeciesDetailsFragment = { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } };
 
-export type SpeciesConnectionDetailsFragment = { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string }> };
+export type SpeciesConnectionDetailsFragment = { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }> };
 
 export type SpeciesQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -3493,7 +3645,7 @@ export type SpeciesQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesQuery = { __typename?: 'Query', species: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string }> } };
+export type SpeciesQuery = { __typename?: 'Query', species: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }> } };
 
 export type SpeciesByCommunityQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -3502,21 +3654,21 @@ export type SpeciesByCommunityQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesByCommunityQuery = { __typename?: 'Query', speciesByCommunity: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string }> } };
+export type SpeciesByCommunityQuery = { __typename?: 'Query', speciesByCommunity: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }> } };
 
 export type SpeciesByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type SpeciesByIdQuery = { __typename?: 'Query', speciesById: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+export type SpeciesByIdQuery = { __typename?: 'Query', speciesById: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } };
 
 export type CreateSpeciesMutationVariables = Exact<{
   createSpeciesInput: CreateSpeciesInput;
 }>;
 
 
-export type CreateSpeciesMutation = { __typename?: 'Mutation', createSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string } };
+export type CreateSpeciesMutation = { __typename?: 'Mutation', createSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } };
 
 export type UpdateSpeciesMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3524,7 +3676,7 @@ export type UpdateSpeciesMutationVariables = Exact<{
 }>;
 
 
-export type UpdateSpeciesMutation = { __typename?: 'Mutation', updateSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string } };
+export type UpdateSpeciesMutation = { __typename?: 'Mutation', updateSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } };
 
 export type DeleteSpeciesMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3559,7 +3711,7 @@ export type SpeciesVariantByIdQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesVariantByIdQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type SpeciesVariantByIdQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateSpeciesVariantMutationVariables = Exact<{
   createSpeciesVariantInput: CreateSpeciesVariantInput;
@@ -3602,7 +3754,7 @@ export type TraitByIdQueryVariables = Exact<{
 }>;
 
 
-export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateTraitMutationVariables = Exact<{
   createTraitInput: CreateTraitInput;
@@ -3678,7 +3830,7 @@ export type GetUserProfileQueryVariables = Exact<{
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, filename: string, url: string, thumbnailUrl: string | null } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> } | null };
+export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, filename: string, url: string, thumbnailUrl: string | null } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> } | null };
 
 export type GetUserStatsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -3790,6 +3942,12 @@ export const ItemFieldsFragmentDoc = gql`
   metadata
   createdAt
   updatedAt
+  pendingOwnership {
+    id
+    provider
+    providerAccountId
+    createdAt
+  }
   itemType {
     ...ItemTypeFields
   }
@@ -3818,6 +3976,12 @@ export const SpeciesDetailsFragmentDoc = gql`
   hasImage
   createdAt
   updatedAt
+  community {
+    id
+    name
+    discordGuildId
+    discordGuildName
+  }
 }
     `;
 export const SpeciesConnectionDetailsFragmentDoc = gql`
@@ -4028,6 +4192,18 @@ export const MeDocument = gql`
     privacySettings
     createdAt
     updatedAt
+    communityMemberships {
+      id
+      roleId
+      userId
+      role {
+        id
+        name
+        communityId
+        canEditCharacter
+        canCreateOrphanedCharacter
+      }
+    }
   }
 }
     `;
@@ -4087,6 +4263,12 @@ export const GetCharactersDocument = gql`
       customFields
       createdAt
       updatedAt
+      pendingOwnership {
+        id
+        provider
+        providerAccountId
+        createdAt
+      }
       owner {
         id
         username
@@ -4166,6 +4348,8 @@ export const GetCharacterDocument = gql`
       community {
         id
         name
+        discordGuildId
+        discordGuildName
       }
     }
     speciesVariant {
@@ -4201,6 +4385,13 @@ export const GetCharacterDocument = gql`
     customFields
     createdAt
     updatedAt
+    pendingOwnership {
+      id
+      provider
+      providerAccountId
+      displayIdentifier
+      createdAt
+    }
     owner {
       id
       username
@@ -4383,6 +4574,13 @@ export const CreateCharacterDocument = gql`
     customFields
     createdAt
     updatedAt
+    pendingOwnership {
+      id
+      provider
+      providerAccountId
+      displayIdentifier
+      createdAt
+    }
     owner {
       id
       username
@@ -4449,6 +4647,13 @@ export const UpdateCharacterDocument = gql`
     customFields
     createdAt
     updatedAt
+    pendingOwnership {
+      id
+      provider
+      providerAccountId
+      displayIdentifier
+      createdAt
+    }
     owner {
       id
       username
@@ -4895,6 +5100,8 @@ export const CommunityByIdDocument = gql`
   community(id: $id) {
     id
     name
+    discordGuildId
+    discordGuildName
     createdAt
     updatedAt
   }
@@ -5085,6 +5292,206 @@ export function useRemoveCommunityMutation(baseOptions?: Apollo.MutationHookOpti
 export type RemoveCommunityMutationHookResult = ReturnType<typeof useRemoveCommunityMutation>;
 export type RemoveCommunityMutationResult = Apollo.MutationResult<RemoveCommunityMutation>;
 export type RemoveCommunityMutationOptions = Apollo.BaseMutationOptions<RemoveCommunityMutation, RemoveCommunityMutationVariables>;
+export const DiscordBotInviteUrlDocument = gql`
+    query DiscordBotInviteUrl {
+  discordBotInviteUrl
+}
+    `;
+
+/**
+ * __useDiscordBotInviteUrlQuery__
+ *
+ * To run a query within a React component, call `useDiscordBotInviteUrlQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDiscordBotInviteUrlQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDiscordBotInviteUrlQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useDiscordBotInviteUrlQuery(baseOptions?: Apollo.QueryHookOptions<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>(DiscordBotInviteUrlDocument, options);
+      }
+export function useDiscordBotInviteUrlLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>(DiscordBotInviteUrlDocument, options);
+        }
+export function useDiscordBotInviteUrlSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>(DiscordBotInviteUrlDocument, options);
+        }
+export type DiscordBotInviteUrlQueryHookResult = ReturnType<typeof useDiscordBotInviteUrlQuery>;
+export type DiscordBotInviteUrlLazyQueryHookResult = ReturnType<typeof useDiscordBotInviteUrlLazyQuery>;
+export type DiscordBotInviteUrlSuspenseQueryHookResult = ReturnType<typeof useDiscordBotInviteUrlSuspenseQuery>;
+export type DiscordBotInviteUrlQueryResult = Apollo.QueryResult<DiscordBotInviteUrlQuery, DiscordBotInviteUrlQueryVariables>;
+export const ValidateDiscordGuildDocument = gql`
+    query ValidateDiscordGuild($guildId: ID!) {
+  validateDiscordGuild(guildId: $guildId) {
+    id
+    name
+    botHasAccess
+  }
+}
+    `;
+
+/**
+ * __useValidateDiscordGuildQuery__
+ *
+ * To run a query within a React component, call `useValidateDiscordGuildQuery` and pass it any options that fit your needs.
+ * When your component renders, `useValidateDiscordGuildQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useValidateDiscordGuildQuery({
+ *   variables: {
+ *      guildId: // value for 'guildId'
+ *   },
+ * });
+ */
+export function useValidateDiscordGuildQuery(baseOptions: Apollo.QueryHookOptions<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables> & ({ variables: ValidateDiscordGuildQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>(ValidateDiscordGuildDocument, options);
+      }
+export function useValidateDiscordGuildLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>(ValidateDiscordGuildDocument, options);
+        }
+export function useValidateDiscordGuildSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>(ValidateDiscordGuildDocument, options);
+        }
+export type ValidateDiscordGuildQueryHookResult = ReturnType<typeof useValidateDiscordGuildQuery>;
+export type ValidateDiscordGuildLazyQueryHookResult = ReturnType<typeof useValidateDiscordGuildLazyQuery>;
+export type ValidateDiscordGuildSuspenseQueryHookResult = ReturnType<typeof useValidateDiscordGuildSuspenseQuery>;
+export type ValidateDiscordGuildQueryResult = Apollo.QueryResult<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>;
+export const LinkDiscordGuildDocument = gql`
+    mutation LinkDiscordGuild($communityId: ID!, $guildId: ID!) {
+  linkDiscordGuild(communityId: $communityId, guildId: $guildId) {
+    id
+    name
+    discordGuildId
+    discordGuildName
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type LinkDiscordGuildMutationFn = Apollo.MutationFunction<LinkDiscordGuildMutation, LinkDiscordGuildMutationVariables>;
+
+/**
+ * __useLinkDiscordGuildMutation__
+ *
+ * To run a mutation, you first call `useLinkDiscordGuildMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLinkDiscordGuildMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [linkDiscordGuildMutation, { data, loading, error }] = useLinkDiscordGuildMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      guildId: // value for 'guildId'
+ *   },
+ * });
+ */
+export function useLinkDiscordGuildMutation(baseOptions?: Apollo.MutationHookOptions<LinkDiscordGuildMutation, LinkDiscordGuildMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LinkDiscordGuildMutation, LinkDiscordGuildMutationVariables>(LinkDiscordGuildDocument, options);
+      }
+export type LinkDiscordGuildMutationHookResult = ReturnType<typeof useLinkDiscordGuildMutation>;
+export type LinkDiscordGuildMutationResult = Apollo.MutationResult<LinkDiscordGuildMutation>;
+export type LinkDiscordGuildMutationOptions = Apollo.BaseMutationOptions<LinkDiscordGuildMutation, LinkDiscordGuildMutationVariables>;
+export const UnlinkDiscordGuildDocument = gql`
+    mutation UnlinkDiscordGuild($communityId: ID!) {
+  unlinkDiscordGuild(communityId: $communityId) {
+    id
+    name
+    discordGuildId
+    discordGuildName
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type UnlinkDiscordGuildMutationFn = Apollo.MutationFunction<UnlinkDiscordGuildMutation, UnlinkDiscordGuildMutationVariables>;
+
+/**
+ * __useUnlinkDiscordGuildMutation__
+ *
+ * To run a mutation, you first call `useUnlinkDiscordGuildMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUnlinkDiscordGuildMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [unlinkDiscordGuildMutation, { data, loading, error }] = useUnlinkDiscordGuildMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useUnlinkDiscordGuildMutation(baseOptions?: Apollo.MutationHookOptions<UnlinkDiscordGuildMutation, UnlinkDiscordGuildMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UnlinkDiscordGuildMutation, UnlinkDiscordGuildMutationVariables>(UnlinkDiscordGuildDocument, options);
+      }
+export type UnlinkDiscordGuildMutationHookResult = ReturnType<typeof useUnlinkDiscordGuildMutation>;
+export type UnlinkDiscordGuildMutationResult = Apollo.MutationResult<UnlinkDiscordGuildMutation>;
+export type UnlinkDiscordGuildMutationOptions = Apollo.BaseMutationOptions<UnlinkDiscordGuildMutation, UnlinkDiscordGuildMutationVariables>;
+export const ResolveDiscordUserDocument = gql`
+    query ResolveDiscordUser($identifier: String!, $communityId: ID!) {
+  resolveDiscordUser(identifier: $identifier, communityId: $communityId) {
+    userId
+    username
+    displayName
+    avatarUrl
+  }
+}
+    `;
+
+/**
+ * __useResolveDiscordUserQuery__
+ *
+ * To run a query within a React component, call `useResolveDiscordUserQuery` and pass it any options that fit your needs.
+ * When your component renders, `useResolveDiscordUserQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useResolveDiscordUserQuery({
+ *   variables: {
+ *      identifier: // value for 'identifier'
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useResolveDiscordUserQuery(baseOptions: Apollo.QueryHookOptions<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables> & ({ variables: ResolveDiscordUserQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables>(ResolveDiscordUserDocument, options);
+      }
+export function useResolveDiscordUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables>(ResolveDiscordUserDocument, options);
+        }
+export function useResolveDiscordUserSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables>(ResolveDiscordUserDocument, options);
+        }
+export type ResolveDiscordUserQueryHookResult = ReturnType<typeof useResolveDiscordUserQuery>;
+export type ResolveDiscordUserLazyQueryHookResult = ReturnType<typeof useResolveDiscordUserLazyQuery>;
+export type ResolveDiscordUserSuspenseQueryHookResult = ReturnType<typeof useResolveDiscordUserSuspenseQuery>;
+export type ResolveDiscordUserQueryResult = Apollo.QueryResult<ResolveDiscordUserQuery, ResolveDiscordUserQueryVariables>;
 export const CommunityMembersByUserDocument = gql`
     query CommunityMembersByUser($userId: ID!, $first: Int, $after: String) {
   communityMembersByUser(userId: $userId, first: $first, after: $after) {
@@ -5110,6 +5517,7 @@ export const CommunityMembersByUserDocument = gql`
         canEditRole
         canEditCharacter
         canEditOwnCharacter
+        canCreateOrphanedCharacter
         canListInviteCodes
         canRemoveCommunityMember
         canManageMemberRoles
@@ -8157,6 +8565,7 @@ export const RolesByCommunityDetailedDocument = gql`
       communityId
       canCreateSpecies
       canCreateCharacter
+      canCreateOrphanedCharacter
       canEditCharacter
       canEditOwnCharacter
       canEditSpecies
@@ -8224,9 +8633,12 @@ export const CreateRoleDocument = gql`
     communityId
     canCreateSpecies
     canCreateCharacter
+    canCreateOrphanedCharacter
     canEditCharacter
     canEditOwnCharacter
     canEditSpecies
+    canManageItems
+    canGrantItems
     canCreateInviteCode
     canListInviteCodes
     canCreateRole
@@ -8276,9 +8688,12 @@ export const UpdateRoleDocument = gql`
     communityId
     canCreateSpecies
     canCreateCharacter
+    canCreateOrphanedCharacter
     canEditCharacter
     canEditOwnCharacter
     canEditSpecies
+    canManageItems
+    canGrantItems
     canCreateInviteCode
     canListInviteCodes
     canCreateRole
@@ -8345,6 +8760,7 @@ export const CommunityMembersWithRolesDocument = gql`
         name
         canCreateSpecies
         canCreateCharacter
+        canCreateOrphanedCharacter
         canEditCharacter
         canEditOwnCharacter
         canEditSpecies
@@ -8418,6 +8834,7 @@ export const UpdateCommunityMemberDocument = gql`
       name
       canCreateSpecies
       canCreateCharacter
+      canCreateOrphanedCharacter
       canEditCharacter
       canEditOwnCharacter
       canEditSpecies
@@ -9075,6 +9492,8 @@ export const SpeciesByIdDocument = gql`
     community {
       id
       name
+      discordGuildId
+      discordGuildName
     }
   }
 }
@@ -9304,6 +9723,12 @@ export const SpeciesVariantByIdDocument = gql`
       id
       name
       communityId
+      community {
+        id
+        name
+        discordGuildId
+        discordGuildName
+      }
     }
   }
 }
@@ -9501,6 +9926,12 @@ export const TraitByIdDocument = gql`
       id
       name
       communityId
+      community {
+        id
+        name
+        discordGuildId
+        discordGuildName
+      }
     }
   }
 }

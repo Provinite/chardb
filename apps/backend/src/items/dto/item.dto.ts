@@ -5,8 +5,13 @@ import {
   IsNumber,
   IsUUID,
   Min,
-  Max
+  Max,
+  ValidateNested,
+  IsNotEmpty,
+  ValidateIf,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { PendingOwnerInput } from '../../pending-ownership/dto/pending-ownership.dto';
 
 @InputType()
 export class GrantItemInput {
@@ -14,9 +19,11 @@ export class GrantItemInput {
   @IsUUID()
   itemTypeId: string;
 
-  @Field(() => ID)
+  @Field(() => ID, { nullable: true, description: 'User ID to grant item to. Required if pendingOwner is not provided.' })
+  @ValidateIf((o) => !o.pendingOwner)
+  @IsNotEmpty({ message: 'Items must have either userId or pendingOwner' })
   @IsUUID()
-  userId: string;
+  userId?: string;
 
   @Field(() => Int, { defaultValue: 1 })
   @IsOptional()
@@ -28,6 +35,12 @@ export class GrantItemInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   metadata?: any; // JSON field for instance-specific data
+
+  @Field(() => PendingOwnerInput, { nullable: true, description: 'Create item with pending ownership for an external account' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PendingOwnerInput)
+  pendingOwner?: PendingOwnerInput;
 }
 
 @InputType()

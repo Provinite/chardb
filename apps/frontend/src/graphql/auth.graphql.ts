@@ -46,6 +46,18 @@ export const ME_QUERY = gql`
       privacySettings
       createdAt
       updatedAt
+      communityMemberships {
+        id
+        roleId
+        userId
+        role {
+          id
+          name
+          communityId
+          canEditCharacter
+          canCreateOrphanedCharacter
+        }
+      }
     }
   }
 `;

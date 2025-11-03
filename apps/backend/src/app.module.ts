@@ -32,6 +32,8 @@ import { CharacterOwnershipChangesModule } from "./character-ownership-changes/c
 import { ExternalAccountsModule } from "./external-accounts/external-accounts.module";
 import { ItemsModule } from "./items/items.module";
 import { CommunityColorsModule } from "./community-colors/community-colors.module";
+import { PendingOwnershipModule } from "./pending-ownership/pending-ownership.module";
+import { DiscordModule } from "./discord/discord.module";
 import { Request, Response } from "express";
 
 @Module({
@@ -210,6 +212,8 @@ import { Request, Response } from "express";
     ExternalAccountsModule,
     ItemsModule,
     CommunityColorsModule,
+    PendingOwnershipModule,
+    DiscordModule,
   ],
 })
 export class AppModule {}

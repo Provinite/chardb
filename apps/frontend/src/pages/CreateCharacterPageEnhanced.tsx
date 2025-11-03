@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
-import { ArrowLeft, User, FileText, Settings, Tag as TagIcon } from "lucide-react";
+import { ArrowLeft, User, FileText, Settings, Tag as TagIcon, Users } from "lucide-react";
 import { Button, TagInput } from "@chardb/ui";
+import { GrantTargetSelector, GrantTarget } from "../components/GrantTargetSelector";
 import {
   useCreateCharacterMutation,
   SpeciesDetailsFragment,
@@ -14,6 +15,8 @@ import {
   CharacterTraitValueInput,
   Visibility,
 } from "../generated/graphql";
+import { useGetCommunityMembersQuery } from "../graphql/communities.graphql";
+import { useAuth } from "../contexts/AuthContext";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
 import { TraitForm } from "../components/character/TraitForm";
@@ -221,9 +224,10 @@ const CheckboxGroup = styled.label`
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
-const Checkbox = styled.input`
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
   width: 18px;
   height: 18px;
+  cursor: pointer;
   accent-color: ${({ theme }) => theme.colors.primary};
 `;
 
@@ -271,20 +275,59 @@ const TagsHelp = styled.p`
   margin: 0.25rem 0 0 0;
 `;
 
+
 export const CreateCharacterPageEnhanced: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Species and variant state
   const [selectedSpecies, setSelectedSpecies] = useState<SpeciesDetailsFragment | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<SpeciesVariantDetailsFragment | null>(null);
-  
+
   // Trait values state
   const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>([]);
-  
+
   // Tags state
   const [tags, setTags] = useState<string[]>([]);
   const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
+
+  // Character ownership/grant target state
+  const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(null);
+  const [isGrantTargetValid, setIsGrantTargetValid] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+
+  // Query community members for user search (only when species is selected)
+  const { data: membersData, loading: membersLoading } = useGetCommunityMembersQuery({
+    variables: {
+      communityId: selectedSpecies?.communityId || '',
+      search: userSearch,
+      limit: 10,
+    },
+    skip: !selectedSpecies?.communityId || !userSearch || userSearch.length < 2,
+  });
+
+  // Convert current user to SelectedUser format for GrantTargetSelector
+  const currentUser = useMemo(() => {
+    if (!user) return undefined;
+
+    return {
+      id: user.id,
+      username: user.username,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
+    };
+  }, [user]);
+
+  // Check if user has permission to create orphaned characters in the selected species' community
+  const canCreateOrphanedCharacter = useMemo(() => {
+    if (!user || !selectedSpecies) return false;
+    return user.communityMemberships?.some(
+      (membership) =>
+        membership.role.communityId === selectedSpecies.communityId &&
+        membership.role.canCreateOrphanedCharacter
+    ) || false;
+  }, [user, selectedSpecies]);
 
   // Form handling
   const {
@@ -337,6 +380,13 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             speciesId: selectedSpecies?.id || undefined,
             speciesVariantId: selectedVariant?.id || undefined,
             traitValues: traitValues.length > 0 ? traitValues : undefined,
+            // Add pending owner based on characterTarget
+            pendingOwner: characterTarget?.type === 'pending'
+              ? {
+                  provider: characterTarget.provider as any,
+                  providerAccountId: characterTarget.providerAccountId,
+                }
+              : undefined,
           },
         },
       });
@@ -414,6 +464,38 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             onVariantChange={setSelectedVariant}
           />
         </Section>
+
+        {/* Character Ownership */}
+        {canCreateOrphanedCharacter && (
+          <Section>
+            <SectionTitle>
+              <Users size={20} />
+              Character Ownership
+            </SectionTitle>
+            <SectionDescription>
+              Choose whether this character will be owned by you or created as an orphaned character with pending ownership.
+            </SectionDescription>
+
+            <GrantTargetSelector
+              value={characterTarget}
+              onChange={setCharacterTarget}
+              onUserSearch={setUserSearch}
+              users={membersData?.community?.members || []}
+              usersLoading={membersLoading}
+              allowPendingOwner={true}
+              discordGuildId={selectedSpecies?.community?.discordGuildId}
+              discordGuildName={selectedSpecies?.community?.discordGuildName}
+              userLabel="Owned By..."
+              pendingOwnerLabel="Orphaned with Pending Owner"
+              communityId={selectedSpecies?.communityId || ''}
+              onValidationChange={setIsGrantTargetValid}
+              currentUser={currentUser}
+              defaultToSelf={true}
+              includeSelf={false}
+              searchQuery={userSearch}
+            />
+          </Section>
+        )}
 
         {/* Trait Configuration */}
         {selectedSpecies && (
@@ -545,7 +627,10 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           <CancelButton type="button" onClick={handleBackClick}>
             Cancel
           </CancelButton>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={isSubmitting || (characterTarget?.type === 'pending' && !isGrantTargetValid)}
+          >
             {isSubmitting ? "Creating..." : "Create Character"}
           </Button>
         </ButtonRow>

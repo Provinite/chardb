@@ -108,6 +108,12 @@ output "backend_discord_callback_url" {
   value       = module.backend.discord_callback_url
 }
 
+output "backend_discord_bot_token" {
+  description = "Discord bot token for backend"
+  value       = module.backend.discord_bot_token
+  sensitive   = true
+}
+
 # Frontend infrastructure outputs
 output "frontend_bucket_name" {
   description = "Name of the frontend S3 bucket"

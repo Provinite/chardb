@@ -290,6 +290,18 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Sync value prop with internal selectedUser state
+  useEffect(() => {
+    if (value && users && users.length > 0) {
+      const user = users.find((u) => u.id === value);
+      if (user) {
+        setSelectedUser(user);
+      }
+    } else if (!value) {
+      setSelectedUser(null);
+    }
+  }, [value, users]);
+
   const selectUser = (user: SelectedUser) => {
     setSelectedUser(user);
     onChange(user.id, user);
