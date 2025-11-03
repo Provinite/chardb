@@ -284,22 +284,40 @@ const MarkdownContent = styled.div`
   line-height: 1.6;
   color: ${({ theme }) => theme.colors.text.primary};
 
-  h1, h2, h3, h4, h5, h6 {
-    margin: ${({ theme }) => theme.spacing.md} 0 ${({ theme }) => theme.spacing.sm};
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: ${({ theme }) => theme.spacing.md} 0
+      ${({ theme }) => theme.spacing.sm};
     font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
   }
 
-  h1 { font-size: ${({ theme }) => theme.typography.fontSize.xl}; }
-  h2 { font-size: ${({ theme }) => theme.typography.fontSize.lg}; }
-  h3 { font-size: ${({ theme}) => theme.typography.fontSize.md}; }
+  h1 {
+    font-size: ${({ theme }) => theme.typography.fontSize.xl};
+  }
+  h2 {
+    font-size: ${({ theme }) => theme.typography.fontSize.lg};
+  }
+  h3 {
+    font-size: ${({ theme }) => theme.typography.fontSize.md};
+  }
 
   p {
     margin: ${({ theme }) => theme.spacing.sm} 0;
   }
 
-  strong { font-weight: bold; }
-  em { font-style: italic; }
-  s { text-decoration: line-through; }
+  strong {
+    font-weight: bold;
+  }
+  em {
+    font-style: italic;
+  }
+  s {
+    text-decoration: line-through;
+  }
 
   code {
     background: ${({ theme }) => theme.colors.surface};
@@ -322,24 +340,24 @@ const MarkdownContent = styled.div`
  */
 const renderMarkdown = (text: string): string => {
   return text
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/__(.*?)__/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/_(.*?)_/g, '<em>$1</em>')
-    .replace(/~~(.*?)~~/g, '<s>$1</s>')
-    .replace(/`(.*?)`/g, '<code>$1</code>')
-    .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[h|p|blockquote])/, '<p>')
-    .replace(/(?<![h|p|blockquote]>)$/, '</p>')
-    .replace(/<p><\/p>/g, '')
-    .replace(/<p>(<h[1-3]>)/g, '$1')
-    .replace(/(<\/h[1-3]>)<\/p>/g, '$1')
-    .replace(/<p>(<blockquote>)/g, '$1')
-    .replace(/(<\/blockquote>)<\/p>/g, '$1');
+    .replace(/^### (.*$)/gim, "<h3>$1</h3>")
+    .replace(/^## (.*$)/gim, "<h2>$1</h2>")
+    .replace(/^# (.*$)/gim, "<h1>$1</h1>")
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/__(.*?)__/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/_(.*?)_/g, "<em>$1</em>")
+    .replace(/~~(.*?)~~/g, "<s>$1</s>")
+    .replace(/`(.*?)`/g, "<code>$1</code>")
+    .replace(/^> (.*$)/gim, "<blockquote>$1</blockquote>")
+    .replace(/\n\n/g, "</p><p>")
+    .replace(/^(?!<[h|p|blockquote])/, "<p>")
+    .replace(/(?<![h|p|blockquote]>)$/, "</p>")
+    .replace(/<p><\/p>/g, "")
+    .replace(/<p>(<h[1-3]>)/g, "$1")
+    .replace(/(<\/h[1-3]>)<\/p>/g, "$1")
+    .replace(/<p>(<blockquote>)/g, "$1")
+    .replace(/(<\/blockquote>)<\/p>/g, "$1");
 };
 
 const TradingInfo = styled.div`
@@ -611,7 +629,11 @@ export const CharacterPage: React.FC = () => {
             )}
             {character.pendingOwnership && (
               <MetaBadge variant="warning">
-                Pending: {character.pendingOwnership.provider === 'DISCORD' ? '🎮' : '🎨'} {character.pendingOwnership.providerAccountId}
+                Pending:{" "}
+                {character.pendingOwnership.provider === "DISCORD"
+                  ? "🎮"
+                  : "🎨"}{" "}
+                {character.pendingOwnership.providerAccountId}
               </MetaBadge>
             )}
             {character.isSellable && (
@@ -645,10 +667,13 @@ export const CharacterPage: React.FC = () => {
                 {character.owner.avatarUrl ? (
                   <img
                     src={character.owner.avatarUrl}
-                    alt={character.owner.displayName || character.owner.username}
+                    alt={
+                      character.owner.displayName || character.owner.username
+                    }
                   />
                 ) : (
-                  character.owner.displayName?.[0] || character.owner.username[0]
+                  character.owner.displayName?.[0] ||
+                  character.owner.username[0]
                 )}
               </OwnerAvatar>
               <OwnerName>
@@ -656,14 +681,16 @@ export const CharacterPage: React.FC = () => {
               </OwnerName>
               <OwnerRole>Character Owner</OwnerRole>
             </OwnerLink>
-            {character.creator && character.creator.id !== character.owner.id && (
-              <>
-                <OwnerRole style={{ marginTop: "0.5rem" }}>
-                  Created by{" "}
-                  {character.creator.displayName || character.creator.username}
-                </OwnerRole>
-              </>
-            )}
+            {character.creator &&
+              character.creator.id !== character.owner.id && (
+                <>
+                  <OwnerRole style={{ marginTop: "0.5rem" }}>
+                    Created by{" "}
+                    {character.creator.displayName ||
+                      character.creator.username}
+                  </OwnerRole>
+                </>
+              )}
           </OwnerInfo>
         ) : (
           <OwnerInfo>
@@ -709,7 +736,9 @@ export const CharacterPage: React.FC = () => {
         <ContentSection>
           <SectionTitle>Character Details</SectionTitle>
           <MarkdownContent
-            dangerouslySetInnerHTML={{ __html: renderMarkdown(character.details) }}
+            dangerouslySetInnerHTML={{
+              __html: renderMarkdown(character.details),
+            }}
           />
         </ContentSection>
       )}
@@ -749,35 +778,37 @@ export const CharacterPage: React.FC = () => {
         </ContentSection>
       )}
 
-      {character.customFields && character.customFields !== "{}" && (() => {
-        try {
-          const fields = JSON.parse(character.customFields);
-          const fieldEntries = Object.entries(fields);
-          if (fieldEntries.length === 0) return null;
+      {character.customFields &&
+        character.customFields !== "{}" &&
+        (() => {
+          try {
+            const fields = JSON.parse(character.customFields);
+            const fieldEntries = Object.entries(fields);
+            if (fieldEntries.length === 0) return null;
 
-          return (
-            <ContentSection>
-              <SectionTitle>Custom Fields</SectionTitle>
-              <InfoGrid>
-                {fieldEntries.map(([key, value]) => (
-                  <InfoItem key={key}>
-                    <InfoLabel>{key}</InfoLabel>
-                    <InfoValue>{String(value)}</InfoValue>
-                  </InfoItem>
-                ))}
-              </InfoGrid>
-            </ContentSection>
-          );
-        } catch {
-          return null;
-        }
-      })()}
+            return (
+              <ContentSection>
+                <SectionTitle>Custom Fields</SectionTitle>
+                <TradingInfo>
+                  {fieldEntries.map(([key, value]) => (
+                    <TradingRow key={key}>
+                      <TradingLabel>{key}:</TradingLabel>
+                      <TradingValue>{String(value)}</TradingValue>
+                    </TradingRow>
+                  ))}
+                </TradingInfo>
+              </ContentSection>
+            );
+          } catch {
+            return null;
+          }
+        })()}
 
       {!character.details && (
-          <EmptySection>
-            <p>This character doesn't have any detailed information yet.</p>
-          </EmptySection>
-        )}
+        <EmptySection>
+          <p>This character doesn't have any detailed information yet.</p>
+        </EmptySection>
+      )}
 
       <CharacterMediaGallery
         characterId={character.id}
