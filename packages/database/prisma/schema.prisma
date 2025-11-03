@@ -126,8 +126,6 @@ model Character {
   name              String     @db.VarChar(100)
   speciesId         String?    @map("species_id")
   speciesVariantId  String?    @map("species_variant_id")
-  age               String?    @db.VarChar(20)
-  gender            String?    @db.VarChar(30)
   details           String?    @db.Text
   ownerId           String?    @map("owner_id")
   creatorId         String?    @map("creator_id")

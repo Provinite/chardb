@@ -28,8 +28,6 @@ export interface CharacterServiceFilters {
   visibility?: Visibility;
   isSellable?: boolean;
   isTradeable?: boolean;
-  gender?: string;
-  ageRange?: string;
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;
@@ -170,8 +168,6 @@ export class CharactersService {
       visibility,
       isSellable,
       isTradeable,
-      gender,
-      ageRange,
       minPrice,
       maxPrice,
       sortBy = "created",
@@ -205,8 +201,6 @@ export class CharactersService {
           : {},
         speciesId ? { speciesId } : {},
         speciesVariantId ? { speciesVariantId } : {},
-        gender ? { gender: { contains: gender, mode: "insensitive" } } : {},
-        ageRange ? { age: { contains: ageRange, mode: "insensitive" } } : {},
         ownerId ? { ownerId } : {},
         visibility !== undefined ? { visibility } : {},
         isSellable !== undefined ? { isSellable } : {},
