@@ -33,27 +33,19 @@ import {
   SpeciesVariantDetailsFragment,
 } from "../generated/graphql";
 import { CharacterDetailsEditor } from "../components/character/CharacterDetailsEditor";
+import { CustomFieldsEditor } from "../components/CustomFieldsEditor";
 
 const characterSchema = z.object({
   name: z
     .string()
     .min(1, "Name is required")
     .max(100, "Name must be less than 100 characters"),
-  age: z
-    .string()
-    .max(20, "Age must be less than 20 characters")
-    .optional()
-    .or(z.literal("")),
-  gender: z
-    .string()
-    .max(20, "Gender must be less than 20 characters")
-    .optional()
-    .or(z.literal("")),
   details: z
     .string()
     .max(15000, "Details must be less than 15000 characters")
     .optional()
     .or(z.literal("")),
+  customFields: z.string().optional(),
   visibility: z.enum(["PUBLIC", "UNLISTED", "PRIVATE"]),
   isSellable: z.boolean(),
   isTradeable: z.boolean(),
@@ -347,9 +339,8 @@ export const EditCharacterPage: React.FC = () => {
     resolver: zodResolver(characterSchema),
     defaultValues: {
       name: "",
-      age: "",
-      gender: "",
       details: "",
+      customFields: "{}",
       visibility: "PUBLIC",
       isSellable: false,
       isTradeable: false,
@@ -368,9 +359,8 @@ export const EditCharacterPage: React.FC = () => {
     if (character) {
       reset({
         name: character.name,
-        age: character.age || "",
-        gender: character.gender || "",
         details: character.details || "",
+        customFields: character.customFields || "{}",
         visibility: character.visibility,
         isSellable: character.isSellable,
         isTradeable: character.isTradeable,
@@ -496,9 +486,8 @@ export const EditCharacterPage: React.FC = () => {
 
       const input: UpdateCharacterInput = {
         name: data.name,
-        age: data.age || undefined,
-        gender: data.gender || undefined,
         details: data.details || undefined,
+        customFields: data.customFields || undefined,
         visibility: data.visibility as Visibility,
         isSellable: data.isSellable,
         isTradeable: data.isTradeable,
@@ -630,29 +619,11 @@ export const EditCharacterPage: React.FC = () => {
             </FormGroup>
           </FormRow>
 
-          <FormRow>
-            <FormGroup>
-              <Label>Age</Label>
-              <Input
-                {...register("age")}
-                placeholder="e.g., 25, Young Adult"
-                hasError={!!errors.age}
-              />
-              {errors.age && <ErrorMessage>{errors.age.message}</ErrorMessage>}
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Gender</Label>
-              <Input
-                {...register("gender")}
-                placeholder="e.g., Male, Female, Non-binary"
-                hasError={!!errors.gender}
-              />
-              {errors.gender && (
-                <ErrorMessage>{errors.gender.message}</ErrorMessage>
-              )}
-            </FormGroup>
-          </FormRow>
+          <CustomFieldsEditor
+            register={register}
+            setValue={setValue}
+            watch={watch}
+          />
         </FormSection>
 
         <FormSection>
