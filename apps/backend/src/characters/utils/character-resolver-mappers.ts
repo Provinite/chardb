@@ -54,7 +54,9 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     isSellable: characterData.isSellable,
     isTradeable: characterData.isTradeable,
     price: characterData.price,
-    customFields: characterData.customFields,
+    customFields: characterData.customFields
+      ? JSON.parse(characterData.customFields)
+      : undefined,
     traitValues: mapTraitValues(characterData.traitValues),
   };
 
@@ -94,8 +96,11 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
   if (inputData.isTradeable !== undefined)
     characterData.isTradeable = inputData.isTradeable;
   if (inputData.price !== undefined) characterData.price = inputData.price;
-  if (inputData.customFields !== undefined)
-    characterData.customFields = inputData.customFields;
+  if (inputData.customFields !== undefined) {
+    characterData.customFields = inputData.customFields
+      ? JSON.parse(inputData.customFields)
+      : undefined;
+  }
   if (inputData.traitValues !== undefined)
     characterData.traitValues = mapTraitValues(inputData.traitValues);
   if (inputData.mainMediaId !== undefined) {
