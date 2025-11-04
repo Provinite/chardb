@@ -217,7 +217,8 @@ output "discord_callback_url" {
 
 output "deployment_info" {
   description = "Information for deploying the application"
-  value = <<-EOT
+  sensitive   = true
+  value       = <<-EOT
 Production Infrastructure Deployed Successfully!
 
 VPC:
