@@ -49,6 +49,88 @@ resource "random_password" "jwt_secret" {
   special = true
 }
 
+##############################################################################
+# AWS Secrets Manager - Store sensitive application secrets
+##############################################################################
+
+# Database password secret
+resource "aws_secretsmanager_secret" "db_password" {
+  name        = "${var.project_name}-${var.environment}-db-password"
+  description = "RDS database password for ${var.project_name}"
+
+  tags = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "db_password" {
+  secret_id     = aws_secretsmanager_secret.db_password.id
+  secret_string = module.rds.db_password
+}
+
+# JWT secret
+resource "aws_secretsmanager_secret" "jwt_secret" {
+  name        = "${var.project_name}-${var.environment}-jwt-secret"
+  description = "JWT secret for authentication"
+
+  tags = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "jwt_secret" {
+  secret_id     = aws_secretsmanager_secret.jwt_secret.id
+  secret_string = random_password.jwt_secret.result
+}
+
+# DeviantArt client secret
+resource "aws_secretsmanager_secret" "deviantart_client_secret" {
+  name        = "${var.project_name}-${var.environment}-deviantart-secret"
+  description = "DeviantArt OAuth client secret"
+
+  tags = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "deviantart_client_secret" {
+  secret_id     = aws_secretsmanager_secret.deviantart_client_secret.id
+  secret_string = var.deviantart_client_secret
+}
+
+# Discord client secret
+resource "aws_secretsmanager_secret" "discord_client_secret" {
+  name        = "${var.project_name}-${var.environment}-discord-secret"
+  description = "Discord OAuth client secret"
+
+  tags = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "discord_client_secret" {
+  secret_id     = aws_secretsmanager_secret.discord_client_secret.id
+  secret_string = var.discord_client_secret
+}
+
+# Discord bot token
+resource "aws_secretsmanager_secret" "discord_bot_token" {
+  name        = "${var.project_name}-${var.environment}-discord-bot-token"
+  description = "Discord bot token for bot integration"
+
+  tags = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "discord_bot_token" {
+  secret_id     = aws_secretsmanager_secret.discord_bot_token.id
+  secret_string = var.discord_bot_token
+}
+
+# Database URL (complete connection string)
+resource "aws_secretsmanager_secret" "database_url" {
+  name        = "${var.project_name}-${var.environment}-database-url"
+  description = "Complete PostgreSQL connection URL for Prisma"
+
+  tags = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "database_url" {
+  secret_id     = aws_secretsmanager_secret.database_url.id
+  secret_string = "postgresql://${module.rds.db_username}:${urlencode(module.rds.db_password)}@${module.rds.db_address}:${module.rds.db_port}/${module.rds.db_name}"
+}
+
 # ACM Certificate for frontend (root domain) - must be in us-east-1 for CloudFront
 resource "aws_acm_certificate" "frontend" {
   count             = var.domain_name != null ? 1 : 0
@@ -254,7 +336,7 @@ module "ecs" {
   desired_count    = var.ecs_desired_count
   assign_public_ip = true
 
-  # Environment Variables
+  # Environment Variables (non-sensitive)
   environment_variables = [
     {
       name  = "NODE_ENV"
@@ -265,36 +347,8 @@ module "ecs" {
       value = tostring(var.backend_container_port)
     },
     {
-      name  = "DATABASE_HOST"
-      value = module.rds.db_address
-    },
-    {
-      name  = "DATABASE_PORT"
-      value = tostring(module.rds.db_port)
-    },
-    {
-      name  = "DATABASE_NAME"
-      value = module.rds.db_name
-    },
-    {
-      name  = "DATABASE_USER"
-      value = module.rds.db_username
-    },
-    {
-      name  = "DATABASE_PASSWORD"
-      value = module.rds.db_password
-    },
-    {
-      name  = "JWT_SECRET"
-      value = random_password.jwt_secret.result
-    },
-    {
       name  = "DEVIANTART_CLIENT_ID"
       value = var.deviantart_client_id
-    },
-    {
-      name  = "DEVIANTART_CLIENT_SECRET"
-      value = var.deviantart_client_secret
     },
     {
       name  = "DEVIANTART_CALLBACK_URL"
@@ -305,16 +359,8 @@ module "ecs" {
       value = var.discord_client_id
     },
     {
-      name  = "DISCORD_CLIENT_SECRET"
-      value = var.discord_client_secret
-    },
-    {
       name  = "DISCORD_CALLBACK_URL"
       value = var.discord_callback_url
-    },
-    {
-      name  = "DISCORD_BOT_TOKEN"
-      value = var.discord_bot_token
     },
     {
       name  = "API_URL"
@@ -324,6 +370,39 @@ module "ecs" {
       name  = "FRONTEND_URL"
       value = var.domain_name != null ? "https://${var.domain_name}" : ""
     },
+  ]
+
+  # Secrets from AWS Secrets Manager
+  secret_variables = [
+    {
+      name      = "DATABASE_URL"
+      valueFrom = aws_secretsmanager_secret.database_url.arn
+    },
+    {
+      name      = "JWT_SECRET"
+      valueFrom = aws_secretsmanager_secret.jwt_secret.arn
+    },
+    {
+      name      = "DEVIANTART_CLIENT_SECRET"
+      valueFrom = aws_secretsmanager_secret.deviantart_client_secret.arn
+    },
+    {
+      name      = "DISCORD_CLIENT_SECRET"
+      valueFrom = aws_secretsmanager_secret.discord_client_secret.arn
+    },
+    {
+      name      = "DISCORD_BOT_TOKEN"
+      valueFrom = aws_secretsmanager_secret.discord_bot_token.arn
+    },
+  ]
+
+  # Secret ARNs for IAM permissions
+  secrets_arns = [
+    aws_secretsmanager_secret.database_url.arn,
+    aws_secretsmanager_secret.jwt_secret.arn,
+    aws_secretsmanager_secret.deviantart_client_secret.arn,
+    aws_secretsmanager_secret.discord_client_secret.arn,
+    aws_secretsmanager_secret.discord_bot_token.arn,
   ]
 
   # Logging
