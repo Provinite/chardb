@@ -206,7 +206,7 @@ variable "nlb_enable_deletion_protection" {
 variable "cloudfront_price_class" {
   description = "CloudFront price class"
   type        = string
-  default     = "PriceClass_All"
+  default     = "PriceClass_100"
 }
 
 ##############################################################################
@@ -251,4 +251,20 @@ variable "discord_bot_token" {
   description = "Discord bot token for bot integration"
   type        = string
   sensitive   = true
+}
+
+##############################################################################
+# OpenTelemetry Configuration
+##############################################################################
+
+variable "otel_exporter_endpoint" {
+  description = "OpenTelemetry collector endpoint (e.g., http://otel-collector:4318)"
+  type        = string
+  default     = ""
+}
+
+variable "otel_log_level" {
+  description = "OpenTelemetry log level"
+  type        = string
+  default     = "info"
 }

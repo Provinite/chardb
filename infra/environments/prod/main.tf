@@ -370,6 +370,52 @@ module "ecs" {
       name  = "FRONTEND_URL"
       value = var.domain_name != null ? "https://${var.domain_name}" : ""
     },
+    # GraphQL Security Configuration
+    {
+      name  = "GRAPHQL_PLAYGROUND"
+      value = "false"
+    },
+    {
+      name  = "GRAPHQL_INTROSPECTION"
+      value = "false"
+    },
+    {
+      name  = "GRAPHQL_CSRF_PREVENTION"
+      value = "true"
+    },
+    # OpenTelemetry Configuration
+    {
+      name  = "OTEL_SERVICE_NAME"
+      value = "${var.project_name}-backend"
+    },
+    {
+      name  = "OTEL_SERVICE_VERSION"
+      value = local.backend_version
+    },
+    {
+      name  = "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"
+      value = var.otel_exporter_endpoint
+    },
+    {
+      name  = "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"
+      value = var.otel_exporter_endpoint
+    },
+    {
+      name  = "OTEL_EXPORTER_OTLP_PROTOCOL"
+      value = "http/protobuf"
+    },
+    {
+      name  = "OTEL_TRACES_EXPORTER"
+      value = "otlp"
+    },
+    {
+      name  = "OTEL_METRICS_EXPORTER"
+      value = "otlp"
+    },
+    {
+      name  = "OTEL_LOG_LEVEL"
+      value = var.otel_log_level
+    },
   ]
 
   # Secrets from AWS Secrets Manager
@@ -499,4 +545,8 @@ locals {
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
+
+  # Read backend version from package.json
+  backend_package_json = jsondecode(file("${path.module}/../../../apps/backend/package.json"))
+  backend_version      = local.backend_package_json.version
 }
