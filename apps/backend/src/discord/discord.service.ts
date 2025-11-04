@@ -71,7 +71,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
         };
 
         // Set up ready event
-        this.client.once("ready", handleResolve);
+        this.client.once("clientReady", handleResolve);
 
         // Set up error handler for initialization errors - reject promise on error
         this.client.once("error", handleReject);
