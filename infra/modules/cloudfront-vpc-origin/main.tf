@@ -1,9 +1,8 @@
 /**
- * CloudFront for Internal NLB Module
+ * CloudFront for NLB Module
  *
- * Creates a CloudFront distribution pointing to an internal NLB.
+ * Creates a CloudFront distribution pointing to an NLB.
  * Note: This uses standard CloudFront origin configuration.
- * For true VPC Origins (private NLB), AWS PrivateLink or VPC Peering may be needed.
  */
 
 # Look up Route53 hosted zone
@@ -64,7 +63,7 @@ resource "aws_cloudfront_cache_policy" "api_no_cache" {
 
   parameters_in_cache_key_and_forwarded_to_origin {
     cookies_config {
-      cookie_behavior = "all"
+      cookie_behavior = "none"
     }
 
     headers_config {
@@ -72,11 +71,11 @@ resource "aws_cloudfront_cache_policy" "api_no_cache" {
     }
 
     query_strings_config {
-      query_string_behavior = "all"
+      query_string_behavior = "none"
     }
 
-    enable_accept_encoding_brotli = true
-    enable_accept_encoding_gzip   = true
+    enable_accept_encoding_brotli = false
+    enable_accept_encoding_gzip   = false
   }
 }
 
@@ -135,7 +134,18 @@ resource "aws_cloudfront_response_headers_policy" "security_headers" {
     access_control_allow_credentials = true
 
     access_control_allow_headers {
-      items = ["*"]
+      items = [
+        "Content-Type",
+        "Authorization",
+        "X-Apollo-Operation-Name",
+        "Apollo-Require-Preflight",
+        "Accept",
+        "Accept-Language",
+        "Origin",
+        "Referer",
+        "User-Agent",
+        "X-Requested-With"
+      ]
     }
 
     access_control_allow_methods {
@@ -209,10 +219,6 @@ resource "aws_cloudfront_distribution" "api" {
       Name = "${var.name_prefix}-cloudfront"
     }
   )
-
-  depends_on = [
-    aws_acm_certificate_validation.cloudfront
-  ]
 }
 
 # Route53 A Record for CloudFront
