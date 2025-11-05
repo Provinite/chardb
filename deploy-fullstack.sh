@@ -66,15 +66,19 @@ echo "🔗 Backend URL: $BACKEND_URL"
 if [ "$DEPLOY_FRONTEND" = "true" ]; then
     echo ""
     echo "🎨 Building and deploying frontend..."
-    
+
+    # Get frontend version from package.json
+    FRONTEND_VERSION=$(node -p "require('./apps/frontend/package.json').version")
+    echo "📋 Frontend version: $FRONTEND_VERSION"
+
     # Build frontend with backend URL and version
     echo "🏗️  Building frontend..."
-    ./scripts/build-frontend.sh "$ENVIRONMENT" "$BACKEND_URL" "$IMAGE_TAG"
-    
+    ./scripts/build-frontend.sh "$ENVIRONMENT" "$BACKEND_URL" "$FRONTEND_VERSION"
+
     # Deploy to S3
     echo "📤 Deploying frontend to S3..."
     ./scripts/deploy-frontend.sh "$ENVIRONMENT"
-    
+
     echo "✅ Frontend deployment completed!"
 else
     echo "⏭️  Skipping frontend deployment"
