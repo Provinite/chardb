@@ -4,12 +4,17 @@ variable "name_prefix" {
 }
 
 variable "domain_name" {
-  description = "Root domain name (for Route53 zone lookup)"
+  description = "Root domain name (used for ACM certificate)"
   type        = string
 }
 
 variable "subdomain" {
   description = "Full subdomain for the API (e.g., api.example.com)"
+  type        = string
+}
+
+variable "route53_zone_id" {
+  description = "Route53 hosted zone ID for creating DNS records"
   type        = string
 }
 

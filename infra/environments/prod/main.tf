@@ -427,7 +427,7 @@ module "ecs" {
     },
     {
       name  = "OTEL_RESOURCE_ATTRIBUTES"
-      value = "service.name=api,service.namespace=${var.project_name},deployment.environment=${var.environment}"
+      value = "service.name=${var.project_name}-backend,service.namespace=${var.project_name},deployment.environment=${var.environment}"
     },
     {
       name  = "OTEL_NODE_RESOURCE_DETECTORS"
@@ -530,10 +530,11 @@ module "api_cloudfront" {
     aws.us_east_1 = aws.us_east_1
   }
 
-  name_prefix  = "${var.project_name}-${var.environment}-api"
-  domain_name  = var.domain_name
-  subdomain    = "api.${var.domain_name}"
-  nlb_dns_name = module.nlb.nlb_dns_name
+  name_prefix     = "${var.project_name}-${var.environment}-api"
+  domain_name     = var.domain_name
+  subdomain       = "api.${var.domain_name}"
+  route53_zone_id = data.aws_route53_zone.main[0].zone_id
+  nlb_dns_name    = module.nlb.nlb_dns_name
 
   # CloudFront Configuration
   price_class              = var.cloudfront_price_class

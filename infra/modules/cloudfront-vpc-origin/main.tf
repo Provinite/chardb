@@ -5,11 +5,6 @@
  * Note: This uses standard CloudFront origin configuration.
  */
 
-# Look up Route53 hosted zone
-data "aws_route53_zone" "main" {
-  name = var.domain_name
-}
-
 # ACM Certificate (must be in us-east-1 for CloudFront)
 resource "aws_acm_certificate" "cloudfront" {
   provider          = aws.us_east_1
@@ -43,7 +38,7 @@ resource "aws_route53_record" "cert_validation" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = data.aws_route53_zone.main.zone_id
+  zone_id         = var.route53_zone_id
 }
 
 # Certificate validation
@@ -160,7 +155,7 @@ resource "aws_cloudfront_distribution" "api" {
 
 # Route53 A Record for CloudFront
 resource "aws_route53_record" "cloudfront" {
-  zone_id = data.aws_route53_zone.main.zone_id
+  zone_id = var.route53_zone_id
   name    = var.subdomain
   type    = "A"
 

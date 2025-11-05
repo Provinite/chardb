@@ -55,6 +55,7 @@ fi
 echo "📋 Getting backend URL for frontend..."
 source <(./scripts/get-terraform-outputs.sh "$ENVIRONMENT" | grep "^export")
 
+
 if [ -z "$BACKEND_URL" ]; then
     echo "❌ Could not get backend URL. Make sure backend infrastructure is deployed."
     exit 1
