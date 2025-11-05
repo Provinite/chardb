@@ -67,13 +67,6 @@ variable "geo_restriction_locations" {
   default     = []
 }
 
-# CORS Configuration
-variable "cors_allowed_origins" {
-  description = "List of allowed origins for CORS"
-  type        = list(string)
-  default     = ["*"]
-}
-
 variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)

@@ -97,71 +97,8 @@ resource "aws_cloudfront_origin_request_policy" "api_forward_all" {
   }
 }
 
-# Response Headers Policy (security headers and CORS)
-resource "aws_cloudfront_response_headers_policy" "security_headers" {
-  name    = "${var.name_prefix}-security-headers"
-  comment = "Security headers for API responses"
-
-  security_headers_config {
-    strict_transport_security {
-      access_control_max_age_sec = 31536000
-      include_subdomains         = true
-      override                   = true
-    }
-
-    content_type_options {
-      override = true
-    }
-
-    frame_options {
-      frame_option = "DENY"
-      override     = true
-    }
-
-    xss_protection {
-      mode_block = true
-      protection = true
-      override   = true
-    }
-
-    referrer_policy {
-      referrer_policy = "strict-origin-when-cross-origin"
-      override        = true
-    }
-  }
-
-  cors_config {
-    access_control_allow_credentials = true
-
-    access_control_allow_headers {
-      items = [
-        "Content-Type",
-        "Authorization",
-        "X-Apollo-Operation-Name",
-        "Apollo-Require-Preflight",
-        "Accept",
-        "Accept-Language",
-        "Origin",
-        "Referer",
-        "User-Agent",
-        "X-Requested-With"
-      ]
-    }
-
-    access_control_allow_methods {
-      items = ["GET", "HEAD", "OPTIONS", "POST", "PUT", "DELETE", "PATCH"]
-    }
-
-    access_control_allow_origins {
-      items = var.cors_allowed_origins
-    }
-
-    access_control_max_age_sec = 3600
-    origin_override            = true
-  }
-}
-
 # CloudFront Distribution
+# Note: No response headers policy - backend handles CORS
 resource "aws_cloudfront_distribution" "api" {
   enabled         = true
   is_ipv6_enabled = true
@@ -195,9 +132,9 @@ resource "aws_cloudfront_distribution" "api" {
     viewer_protocol_policy = "redirect-to-https"
     compress               = true
 
-    cache_policy_id            = aws_cloudfront_cache_policy.api_no_cache.id
-    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_forward_all.id
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
+    cache_policy_id          = aws_cloudfront_cache_policy.api_no_cache.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.api_forward_all.id
+    # No response headers policy - let backend handle CORS
   }
 
   restrictions {

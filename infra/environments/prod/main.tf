@@ -410,14 +410,6 @@ module "ecs" {
       value = var.otel_exporter_endpoint
     },
     {
-      name  = "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"
-      value = "${var.otel_exporter_endpoint}/v1/traces"
-    },
-    {
-      name  = "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"
-      value = "${var.otel_exporter_endpoint}/v1/metrics"
-    },
-    {
       name  = "OTEL_EXPORTER_OTLP_PROTOCOL"
       value = "http/protobuf"
     },
@@ -435,7 +427,7 @@ module "ecs" {
     },
     {
       name  = "OTEL_RESOURCE_ATTRIBUTES"
-      value = "service.name=${var.project_name}-api,service.namespace=${var.project_name},deployment.environment=${var.environment}"
+      value = "service.name=api,service.namespace=${var.project_name},deployment.environment=${var.environment}"
     },
     {
       name  = "OTEL_NODE_RESOURCE_DETECTORS"
@@ -537,11 +529,6 @@ module "api_cloudfront" {
   # CloudFront Configuration
   price_class              = var.cloudfront_price_class
   cloudfront_secret_header = random_password.cloudfront_secret.result
-
-  # CORS Configuration
-  cors_allowed_origins = [
-    var.domain_name != null ? "https://${var.domain_name}" : "*",
-  ]
 
   tags = local.common_tags
 
