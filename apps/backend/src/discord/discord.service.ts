@@ -1,12 +1,7 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleInit,
-  OnModuleDestroy,
-  NotFoundException,
-} from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { Client, GatewayIntentBits, Guild } from "discord.js";
+import { REST } from "@discordjs/rest";
+import { API } from "@discordjs/core";
 import { DiscordUserInfo } from "./dto/discord-user-info.dto";
 
 export interface DiscordGuildInfo {
@@ -15,20 +10,17 @@ export interface DiscordGuildInfo {
   botHasAccess: boolean;
 }
 
+/**
+ * Discord service using REST-only approach (no persistent Gateway connection)
+ * All Discord API interactions are done via HTTP REST calls
+ */
 @Injectable()
-export class DiscordService implements OnModuleInit, OnModuleDestroy {
+export class DiscordService {
   private readonly logger = new Logger(DiscordService.name);
-  private client: Client;
-  private readyPromise: Promise<void>;
+  private readonly rest: REST;
+  private readonly api: API;
 
   constructor(private configService: ConfigService) {
-    // Initialize Discord client with necessary intents
-    this.client = new Client({
-      intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
-    });
-  }
-
-  async onModuleInit() {
     const botToken = this.configService.get<string>("DISCORD_BOT_TOKEN");
 
     if (!botToken) {
@@ -37,84 +29,13 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       );
     }
 
-    try {
-      this.logger.log("Connecting Discord bot...");
+    // Initialize REST client with bot token
+    this.rest = new REST({ version: "10" }).setToken(botToken);
 
-      // Create promise that resolves when bot is ready
-      this.readyPromise = new Promise((resolve, reject) => {
-        let settled = false;
-        let timeoutId: NodeJS.Timeout;
+    // Initialize API wrapper around REST client
+    this.api = new API(this.rest);
 
-        // Cleanup function to prevent memory leaks and multiple settlements
-        const cleanup = () => {
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-          }
-        };
-
-        // Handle successful connection
-        const handleResolve = () => {
-          if (settled) return;
-          settled = true;
-          cleanup();
-          this.logger.log(`Discord bot connected as ${this.client.user?.tag}`);
-          resolve();
-        };
-
-        // Handle connection errors
-        const handleReject = (error: Error) => {
-          if (settled) return;
-          settled = true;
-          cleanup();
-          this.logger.error("Discord client initialization error:", error);
-          reject(error);
-        };
-
-        // Set up ready event
-        this.client.once("clientReady", handleResolve);
-
-        // Set up error handler for initialization errors - reject promise on error
-        this.client.once("error", handleReject);
-
-        // Timeout after 30 seconds
-        timeoutId = setTimeout(() => {
-          handleReject(
-            new Error("Discord bot connection timeout after 30 seconds"),
-          );
-        }, 30000);
-      });
-
-      // Start login process
-      await this.client.login(botToken);
-
-      // Wait for ready event before continuing
-      await this.readyPromise;
-    } catch (error) {
-      this.logger.error("Failed to connect Discord bot:", error);
-      throw error;
-    }
-  }
-
-  async onModuleDestroy() {
-    if (this.client) {
-      this.logger.log("Disconnecting Discord bot...");
-      await this.client.destroy();
-    }
-  }
-
-  /**
-   * Ensure the Discord bot is ready, waiting if necessary
-   * @throws Error if bot failed to connect
-   */
-  private async ensureReady(): Promise<void> {
-    await this.readyPromise;
-  }
-
-  /**
-   * Check if the Discord bot is ready and connected
-   */
-  isConnected(): boolean {
-    return this.client.isReady();
+    this.logger.log("Discord REST client initialized");
   }
 
   /**
@@ -138,10 +59,8 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
    * Get guild information and verify bot access
    */
   async getGuildInfo(guildId: string): Promise<DiscordGuildInfo | null> {
-    await this.ensureReady();
-
     try {
-      const guild = await this.client.guilds.fetch(guildId);
+      const guild = await this.api.guilds.get(guildId);
 
       return {
         id: guild.id,
@@ -150,6 +69,10 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
       };
     } catch (error) {
       // Bot doesn't have access to this guild
+      this.logger.debug(
+        `Bot doesn't have access to guild ${guildId}:`,
+        error,
+      );
       return {
         id: guildId,
         name: "Unknown",
@@ -168,28 +91,24 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
     guildId: string,
     username: string,
   ): Promise<string | null> {
-    await this.ensureReady();
-
     // Normalize username (remove @ if present)
     const normalizedUsername = username.startsWith("@")
       ? username.slice(1)
       : username;
 
     try {
-      // Fetch the guild
-      const guild: Guild = await this.client.guilds.fetch(guildId);
+      // Search for members matching the username query (limit to 50 for performance)
+      const members = await this.api.guilds.searchForMembers(guildId, {
+        query: normalizedUsername,
+        limit: 50,
+      });
 
-      // Fetch members matching the username query (limit to 50 for performance)
-      // This prevents memory issues on large servers while still finding exact matches
-      await guild.members.fetch({ query: normalizedUsername, limit: 50 });
-
-      // Search for member by username
-      const member = guild.members.cache.find(
-        (m) =>
-          m.user.username.toLowerCase() === normalizedUsername.toLowerCase(),
+      // Find exact match (case-insensitive)
+      const member = members.find(
+        (m) => m.user?.username.toLowerCase() === normalizedUsername.toLowerCase(),
       );
 
-      if (!member) {
+      if (!member || !member.user) {
         this.logger.debug(
           `User "${normalizedUsername}" not found in guild ${guildId}`,
         );
@@ -217,10 +136,8 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
    * @returns true if user exists, false otherwise
    */
   async validateUserId(userId: string): Promise<boolean> {
-    await this.ensureReady();
-
     try {
-      await this.client.users.fetch(userId);
+      await this.api.users.get(userId);
       return true;
     } catch (error) {
       this.logger.debug(`Discord user ID ${userId} not found or invalid`);
@@ -233,8 +150,7 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
    */
   async verifyGuildAccess(guildId: string): Promise<boolean> {
     try {
-      await this.ensureReady();
-      await this.client.guilds.fetch(guildId);
+      await this.api.guilds.get(guildId);
       return true;
     } catch (error) {
       return false;
@@ -249,16 +165,21 @@ export class DiscordService implements OnModuleInit, OnModuleDestroy {
    * @throws NotFoundException if user is not found
    */
   async getUserInfo(userId: string): Promise<DiscordUserInfo> {
-    await this.ensureReady();
-
     try {
-      const user = await this.client.users.fetch(userId);
+      const user = await this.api.users.get(userId);
+
+      // Build avatar URL if avatar hash exists
+      const avatarUrl = user.avatar
+        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${
+            user.avatar.startsWith("a_") ? "gif" : "png"
+          }`
+        : undefined;
 
       return {
         userId: user.id,
         username: user.username,
-        displayName: user.displayName || undefined,
-        avatarUrl: user.avatarURL() || undefined,
+        displayName: user.global_name || undefined,
+        avatarUrl,
       };
     } catch (error) {
       this.logger.error(`Failed to fetch Discord user ${userId}:`, error);
