@@ -258,9 +258,15 @@ variable "discord_bot_token" {
 ##############################################################################
 
 variable "otel_exporter_endpoint" {
-  description = "OpenTelemetry collector endpoint (e.g., http://otel-collector:4318)"
+  description = "OpenTelemetry OTLP exporter base endpoint (e.g., https://otlp-gateway-prod-us-east-2.grafana.net/otlp)"
   type        = string
   default     = ""
+}
+
+variable "otel_otlp_headers" {
+  description = "OpenTelemetry OTLP exporter headers for authentication (e.g., Authorization=Basic ...)"
+  type        = string
+  sensitive   = true
 }
 
 variable "otel_log_level" {

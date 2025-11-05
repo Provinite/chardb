@@ -131,6 +131,19 @@ resource "aws_secretsmanager_secret_version" "database_url" {
   secret_string = "postgresql://${module.rds.db_username}:${urlencode(module.rds.db_password)}@${module.rds.db_address}:${module.rds.db_port}/${module.rds.db_name}"
 }
 
+# OpenTelemetry OTLP headers
+resource "aws_secretsmanager_secret" "otel_otlp_headers" {
+  name        = "${var.project_name}-${var.environment}-otel-otlp-headers"
+  description = "OpenTelemetry OTLP exporter headers for authentication"
+
+  tags = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "otel_otlp_headers" {
+  secret_id     = aws_secretsmanager_secret.otel_otlp_headers.id
+  secret_string = var.otel_otlp_headers
+}
+
 # ACM Certificate for frontend (root domain) - must be in us-east-1 for CloudFront
 resource "aws_acm_certificate" "frontend" {
   count             = var.domain_name != null ? 1 : 0
@@ -393,12 +406,16 @@ module "ecs" {
       value = local.backend_version
     },
     {
-      name  = "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"
+      name  = "OTEL_EXPORTER_OTLP_ENDPOINT"
       value = var.otel_exporter_endpoint
     },
     {
+      name  = "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"
+      value = "${var.otel_exporter_endpoint}/v1/traces"
+    },
+    {
       name  = "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"
-      value = var.otel_exporter_endpoint
+      value = "${var.otel_exporter_endpoint}/v1/metrics"
     },
     {
       name  = "OTEL_EXPORTER_OTLP_PROTOCOL"
@@ -415,6 +432,14 @@ module "ecs" {
     {
       name  = "OTEL_LOG_LEVEL"
       value = var.otel_log_level
+    },
+    {
+      name  = "OTEL_RESOURCE_ATTRIBUTES"
+      value = "service.name=${var.project_name}-api,service.namespace=${var.project_name},deployment.environment=${var.environment}"
+    },
+    {
+      name  = "OTEL_NODE_RESOURCE_DETECTORS"
+      value = "env,host,os"
     },
   ]
 
@@ -440,6 +465,10 @@ module "ecs" {
       name      = "DISCORD_BOT_TOKEN"
       valueFrom = aws_secretsmanager_secret.discord_bot_token.arn
     },
+    {
+      name      = "OTEL_EXPORTER_OTLP_HEADERS"
+      valueFrom = aws_secretsmanager_secret.otel_otlp_headers.arn
+    },
   ]
 
   # Secret ARNs for IAM permissions
@@ -449,6 +478,7 @@ module "ecs" {
     aws_secretsmanager_secret.deviantart_client_secret.arn,
     aws_secretsmanager_secret.discord_client_secret.arn,
     aws_secretsmanager_secret.discord_bot_token.arn,
+    aws_secretsmanager_secret.otel_otlp_headers.arn,
   ]
 
   # Logging
