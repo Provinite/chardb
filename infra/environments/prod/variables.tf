@@ -64,7 +64,7 @@ variable "rds_storage_type" {
 variable "rds_engine_version" {
   description = "PostgreSQL engine version"
   type        = string
-  default     = "16.3"
+  default     = "17.6"
 }
 
 variable "rds_database_name" {
