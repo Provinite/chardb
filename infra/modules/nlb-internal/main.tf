@@ -1,8 +1,7 @@
 /**
- * Internal Network Load Balancer Module
+ * Network Load Balancer Module
  *
- * Creates an internal NLB for ECS Fargate services.
- * Designed to work with CloudFront VPC Origins.
+ * Creates an NLB for ECS Fargate services.
  */
 
 # Security Group for NLB
@@ -60,7 +59,7 @@ resource "aws_vpc_security_group_egress_rule" "all" {
 # Network Load Balancer
 resource "aws_lb" "nlb" {
   name               = "${var.name_prefix}-nlb"
-  internal           = true
+  internal           = false
   load_balancer_type = "network"
   subnets            = var.subnet_ids
 

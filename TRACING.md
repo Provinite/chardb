@@ -17,17 +17,20 @@ Frontend → Backend → OTEL Collector → Jaeger
 ## 🚀 Quick Start
 
 1. **Start the observability stack**:
+
    ```bash
    docker compose up jaeger otel-collector -d
    ```
 
 2. **Install backend dependencies**:
+
    ```bash
    cd apps/backend
    yarn install
    ```
 
 3. **Start the instrumented backend**:
+
    ```bash
    yarn workspace @chardb/backend dev
    ```
@@ -40,28 +43,29 @@ Frontend → Backend → OTEL Collector → Jaeger
 ## 📊 Available Endpoints
 
 ### Jaeger UI
+
 - **URL**: http://localhost:16686
 - **Purpose**: View traces, analyze performance, find bottlenecks
 
 ### Health Check
+
 - **URL**: http://localhost:4000/health
 - **Purpose**: Verify backend and tracing status
 
-### Tracing Test
-- **URL**: http://localhost:4000/health/tracing
-- **Purpose**: Generate test traces to verify setup
-
 ### OTEL Collector Metrics
+
 - **URL**: http://localhost:8889/metrics
 - **Purpose**: Prometheus metrics from the collector
 
 ## 🔍 Debugging CORS Issues
 
 ### Target Problem
+
 - OPTIONS requests taking 2000ms
 - Need to identify bottleneck location
 
 ### Tracing Coverage
+
 - ✅ HTTP request/response timing
 - ✅ Express middleware execution
 - ✅ GraphQL resolver performance
@@ -70,6 +74,7 @@ Frontend → Backend → OTEL Collector → Jaeger
 - ✅ Slow request detection (>1000ms warnings)
 
 ### Key Traces to Look For
+
 1. **HTTP Traces**: Look for `OPTIONS /graphql` spans
 2. **Middleware Traces**: Check NestJS middleware execution
 3. **Database Traces**: Prisma client connection/query timing
@@ -78,17 +83,20 @@ Frontend → Backend → OTEL Collector → Jaeger
 ## 📈 Instrumentation Details
 
 ### Auto-Instrumentations
+
 - **HTTP**: Request/response timing with headers
 - **Express**: Middleware execution timing
 - **GraphQL**: Resolver execution and query analysis
 - **NestJS Core**: Controller and guard timing
 
 ### Custom Spans
+
 - **CORS Preflight**: Special tracking for OPTIONS requests
 - **Slow Request Detection**: Automatic warnings for >1000ms requests
 - **Request Metadata**: Origin, user-agent, content-length tracking
 
 ### Environment Variables
+
 ```bash
 OTEL_SERVICE_NAME="chardb-backend"
 OTEL_SERVICE_VERSION="1.0.0"
@@ -102,12 +110,14 @@ OTEL_LOG_LEVEL="info"
 ## 🐛 Troubleshooting
 
 ### No Traces Appearing
+
 1. Check backend logs for tracing initialization messages
 2. Verify OTEL collector is running: `docker ps`
 3. Check collector logs: `docker logs chardb-otel-collector`
 4. Verify Jaeger is accessible: http://localhost:16686
 
 ### Performance Analysis Steps
+
 1. Make a slow OPTIONS request to trigger the issue
 2. Go to Jaeger UI → Find Traces
 3. Filter by service "chardb-backend" and operation "OPTIONS /graphql"
@@ -116,6 +126,7 @@ OTEL_LOG_LEVEL="info"
 6. Check for database connection delays, middleware overhead, or authentication issues
 
 ### Expected Trace Structure
+
 ```
 HTTP OPTIONS /graphql (2000ms)
 ├── cors_preflight_start (event)
@@ -131,13 +142,17 @@ HTTP OPTIONS /graphql (2000ms)
 ## 🔧 Configuration
 
 ### Collector Configuration
+
 Located in `docker/otel-collector-config.yml`:
+
 - Receives traces on ports 4317 (gRPC) and 4318 (HTTP)
 - Exports to Jaeger on port 14250
 - Exports metrics to Prometheus on port 8889
 
 ### Custom Middleware
+
 `src/middleware/tracing.middleware.ts`:
+
 - Tracks all HTTP requests with timing
 - Special CORS preflight detection
 - Automatic slow request warnings
@@ -146,6 +161,7 @@ Located in `docker/otel-collector-config.yml`:
 ## 💡 Next Steps
 
 After identifying the bottleneck:
+
 1. **Database Issues**: Add connection pooling, optimize queries
 2. **Middleware Issues**: Optimize or remove problematic middleware
 3. **CORS Issues**: Configure proper caching headers

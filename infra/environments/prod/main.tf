@@ -473,6 +473,15 @@ module "ecs" {
     aws_secretsmanager_secret.otel_otlp_headers.arn,
   ]
 
+  # Container Health Check
+  health_check = {
+    command     = ["CMD-SHELL", "curl -f http://localhost:${var.backend_container_port}/health || exit 1"]
+    interval    = 30
+    timeout     = 3
+    retries     = 3
+    startPeriod = 5
+  }
+
   # Logging
   log_retention_days        = var.ecs_log_retention_days
   enable_container_insights = var.ecs_enable_container_insights
