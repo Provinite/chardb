@@ -6,6 +6,8 @@ import {
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_VERSION,
 } from "@opentelemetry/semantic-conventions";
+import { WinstonInstrumentation } from "@opentelemetry/instrumentation-winston";
+import { SeverityNumber } from "@opentelemetry/api-logs";
 
 // Initialize OpenTelemetry SDK with simplified configuration
 const sdk = new NodeSDK({
@@ -62,6 +64,11 @@ const sdk = new NodeSDK({
       "@opentelemetry/instrumentation-graphql": {
         enabled: true,
       },
+    }),
+    // Winston instrumentation for automatic log correlation with traces
+    new WinstonInstrumentation({
+      enabled: true,
+      logSeverity: SeverityNumber.INFO,
     }),
   ],
 });

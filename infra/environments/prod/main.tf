@@ -422,6 +422,10 @@ module "ecs" {
       value = "otlp"
     },
     {
+      name  = "OTEL_LOGS_EXPORTER"
+      value = "otlp"
+    },
+    {
       name  = "OTEL_LOG_LEVEL"
       value = var.otel_log_level
     },

@@ -7,10 +7,12 @@ import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { CustomThrottlerGuard } from './middleware/custom-throttler.guard';
 import { OptionalJwtAuthGuard } from './auth/guards/optional-jwt-auth.guard';
+import { WinstonModule } from 'nest-winston';
+import { loggerConfig } from './logger.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['log', 'error', 'warn', 'debug', 'verbose'],
+    logger: WinstonModule.createLogger(loggerConfig),
   });
   
   // Enable request logging middleware
