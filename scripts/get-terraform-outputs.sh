@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Get Terraform Outputs Script
-# Extracts server IP and SSH key from Terraform state
+# Extracts infrastructure details from Terraform state
+# Handles both dev (EC2) and prod (ECS) environments
 
 set -e
 
@@ -19,28 +20,32 @@ echo "📋 Getting Terraform outputs for environment: $ENVIRONMENT"
 
 cd "$TERRAFORM_DIR"
 
-# Get server IP
+# Get server IP (dev only - EC2)
 SERVER_IP=$(terraform output -raw backend_public_ip 2>/dev/null || echo "")
-if [ -z "$SERVER_IP" ]; then
-    echo "❌ Could not get server IP from Terraform outputs"
+if [ -z "$SERVER_IP" ] && [ "$ENVIRONMENT" = "dev" ]; then
+    echo "❌ Could not get server IP from Terraform outputs (required for dev)"
     echo "Available outputs:"
     terraform output
     exit 1
 fi
 
-# Get SSH key content and save it
+# Get SSH key content and save it (dev only)
 SSH_KEY_CONTENT=$(terraform output -raw backend_ssh_private_key 2>/dev/null || echo "")
 SSH_KEY_NAME=$(terraform output -raw backend_ssh_key_name 2>/dev/null || echo "")
 
-if [ -z "$SSH_KEY_CONTENT" ]; then
-    echo "❌ Could not get SSH key from Terraform outputs"
-    exit 1
-fi
+if [ "$ENVIRONMENT" = "dev" ]; then
+    if [ -z "$SSH_KEY_CONTENT" ]; then
+        echo "❌ Could not get SSH key from Terraform outputs (required for dev)"
+        exit 1
+    fi
 
-# Create SSH key file
-SSH_KEY_PATH="$HOME/.ssh/${SSH_KEY_NAME}.pem"
-echo "$SSH_KEY_CONTENT" > "$SSH_KEY_PATH"
-chmod 600 "$SSH_KEY_PATH"
+    # Create SSH key file
+    SSH_KEY_PATH="$HOME/.ssh/${SSH_KEY_NAME}.pem"
+    echo "$SSH_KEY_CONTENT" > "$SSH_KEY_PATH"
+    chmod 600 "$SSH_KEY_PATH"
+else
+    SSH_KEY_PATH=""
+fi
 
 # Get ECR repository URL
 ECR_REPOSITORY_URL=$(terraform output -raw backend_ecr_repository_url 2>/dev/null || echo "")
@@ -61,8 +66,15 @@ DISCORD_CALLBACK_URL=$(terraform output -raw backend_discord_callback_url 2>/dev
 DISCORD_BOT_TOKEN=$(terraform output -raw backend_discord_bot_token 2>/dev/null || echo "")
 
 # Get backend URL for frontend
-BACKEND_URL=$(terraform output -raw backend_url 2>/dev/null || echo "")
-BACKEND_IP=$(terraform output -raw backend_public_ip 2>/dev/null || echo "")
+if [ "$ENVIRONMENT" = "prod" ]; then
+    # Prod uses CloudFront API endpoint
+    BACKEND_URL=$(terraform output -raw api_url 2>/dev/null || echo "")
+    BACKEND_IP=""
+else
+    # Dev uses EC2 direct IP
+    BACKEND_URL=$(terraform output -raw backend_url 2>/dev/null || echo "")
+    BACKEND_IP=$(terraform output -raw backend_public_ip 2>/dev/null || echo "")
+fi
 
 # Get frontend URL from Terraform outputs
 FRONTEND_URL=$(terraform output -raw frontend_website_url 2>/dev/null || echo "")

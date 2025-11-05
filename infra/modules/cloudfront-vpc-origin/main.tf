@@ -1,0 +1,167 @@
+/**
+ * CloudFront for NLB Module
+ *
+ * Creates a CloudFront distribution pointing to an NLB.
+ * Note: This uses standard CloudFront origin configuration.
+ */
+
+# ACM Certificate (must be in us-east-1 for CloudFront)
+resource "aws_acm_certificate" "cloudfront" {
+  provider          = aws.us_east_1
+  domain_name       = var.subdomain
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name_prefix}-cloudfront-cert"
+    }
+  )
+}
+
+# DNS validation records
+resource "aws_route53_record" "cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.cloudfront.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = var.route53_zone_id
+}
+
+# Certificate validation
+resource "aws_acm_certificate_validation" "cloudfront" {
+  provider                = aws.us_east_1
+  certificate_arn         = aws_acm_certificate.cloudfront.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+# Cache Policy - No caching for API
+resource "aws_cloudfront_cache_policy" "api_no_cache" {
+  name        = "${var.name_prefix}-api-no-cache"
+  comment     = "No caching policy for API requests"
+  default_ttl = 0
+  max_ttl     = 0
+  min_ttl     = 0
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    cookies_config {
+      cookie_behavior = "none"
+    }
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "none"
+    }
+
+    enable_accept_encoding_brotli = false
+    enable_accept_encoding_gzip   = false
+  }
+}
+
+# Origin Request Policy - Forward all
+resource "aws_cloudfront_origin_request_policy" "api_forward_all" {
+  name    = "${var.name_prefix}-api-forward-all"
+  comment = "Forward all headers, cookies, and query strings to origin"
+
+  cookies_config {
+    cookie_behavior = "all"
+  }
+
+  headers_config {
+    header_behavior = "allViewer"
+  }
+
+  query_strings_config {
+    query_string_behavior = "all"
+  }
+}
+
+# CloudFront Distribution
+# Note: No response headers policy - backend handles CORS
+resource "aws_cloudfront_distribution" "api" {
+  enabled         = true
+  is_ipv6_enabled = true
+  comment         = "CloudFront distribution for ${var.subdomain}"
+  aliases         = [var.subdomain]
+  price_class     = var.price_class
+
+  origin {
+    domain_name = var.nlb_dns_name
+    origin_id   = "nlb-origin"
+
+    custom_origin_config {
+      http_port                = 80
+      https_port               = 443
+      origin_protocol_policy   = "https-only"
+      origin_ssl_protocols     = ["TLSv1.2"]
+      origin_keepalive_timeout = var.origin_keepalive_timeout
+      origin_read_timeout      = var.origin_read_timeout
+    }
+
+    custom_header {
+      name  = "X-CloudFront-Secret"
+      value = var.cloudfront_secret_header
+    }
+  }
+
+  default_cache_behavior {
+    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "nlb-origin"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    cache_policy_id          = aws_cloudfront_cache_policy.api_no_cache.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.api_forward_all.id
+    # No response headers policy - let backend handle CORS
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = var.geo_restriction_type
+      locations        = var.geo_restriction_locations
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate_validation.cloudfront.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name_prefix}-cloudfront"
+    }
+  )
+}
+
+# Route53 A Record for CloudFront
+resource "aws_route53_record" "cloudfront" {
+  zone_id = var.route53_zone_id
+  name    = var.subdomain
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.api.domain_name
+    zone_id                = aws_cloudfront_distribution.api.hosted_zone_id
+    evaluate_target_health = false
+  }
+}

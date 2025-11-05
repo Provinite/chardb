@@ -1,13 +1,16 @@
 #!/bin/bash
 
 # CharDB Deployment Script
-# This script deploys the application to the EC2 instance after infrastructure is provisioned
+# Deploys the backend to the target environment
+# - dev: EC2 instance with Docker Compose
+# - prod: ECS Fargate
 
 set -e
 
 # Configuration
 ENVIRONMENT=$1
 IMAGE_TAG=${2:-latest}
+AWS_REGION=${AWS_REGION:-us-east-1}
 
 if [ -z "$ENVIRONMENT" ]; then
     echo "❌ Environment is required"
@@ -21,6 +24,60 @@ if [ "$ENVIRONMENT" != "dev" ] && [ "$ENVIRONMENT" != "prod" ]; then
     exit 1
 fi
 
+##############################################################################
+# Production Deployment (ECS Fargate)
+##############################################################################
+if [ "$ENVIRONMENT" = "prod" ]; then
+    echo "🚀 Deploying backend to ECS Fargate (environment: $ENVIRONMENT, tag: $IMAGE_TAG)"
+
+    echo "📋 Getting ECS infrastructure details from Terraform..."
+    cd "infra/environments/prod"
+
+    if ! CLUSTER_NAME=$(terraform output -raw ecs_cluster_name 2>/dev/null); then
+        echo "❌ Failed to get ECS cluster name from Terraform"
+        echo "Make sure you've run 'terraform apply' first"
+        exit 1
+    fi
+
+    if ! SERVICE_NAME=$(terraform output -raw ecs_service_name 2>/dev/null); then
+        echo "❌ Failed to get ECS service name from Terraform"
+        exit 1
+    fi
+
+    cd ../../..
+
+    echo "📦 ECS Configuration:"
+    echo "   Cluster: $CLUSTER_NAME"
+    echo "   Service: $SERVICE_NAME"
+    echo "   Image Tag: $IMAGE_TAG"
+
+    # Update ECS service to trigger deployment
+    echo ""
+    echo "🔄 Triggering ECS service update..."
+    aws ecs update-service \
+        --cluster "$CLUSTER_NAME" \
+        --service "$SERVICE_NAME" \
+        --force-new-deployment \
+        --region "$AWS_REGION" \
+        --no-cli-pager \
+        > /dev/null
+
+    echo "✅ ECS deployment triggered successfully!"
+    echo ""
+    echo "📊 Monitor deployment:"
+    echo "   aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME --region $AWS_REGION"
+    echo ""
+    echo "📋 View logs:"
+    echo "   aws logs tail /ecs/chardb-prod --follow --region $AWS_REGION"
+    echo ""
+    echo "⏳ ECS is deploying new tasks with migrations (takes ~2-3 minutes)"
+
+    exit 0
+fi
+
+##############################################################################
+# Dev Deployment (EC2 with Docker Compose)
+##############################################################################
 # Source the outputs
 source <(./scripts/get-terraform-outputs.sh "$ENVIRONMENT" | grep "^export")
 

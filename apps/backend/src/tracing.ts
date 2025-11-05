@@ -6,6 +6,8 @@ import {
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_VERSION,
 } from "@opentelemetry/semantic-conventions";
+import { WinstonInstrumentation } from "@opentelemetry/instrumentation-winston";
+import { SeverityNumber } from "@opentelemetry/api-logs";
 
 // Initialize OpenTelemetry SDK with simplified configuration
 const sdk = new NodeSDK({
@@ -15,11 +17,7 @@ const sdk = new NodeSDK({
   }),
 
   // Trace exporter
-  traceExporter: new OTLPTraceExporter({
-    url:
-      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
-      "http://localhost:4318/v1/traces",
-  }),
+  traceExporter: new OTLPTraceExporter({}),
 
   // Auto-instrumentations with simplified config
   instrumentations: [
@@ -67,6 +65,11 @@ const sdk = new NodeSDK({
         enabled: true,
       },
     }),
+    // Winston instrumentation for automatic log correlation with traces
+    new WinstonInstrumentation({
+      enabled: true,
+      logSeverity: SeverityNumber.INFO,
+    }),
   ],
 });
 
@@ -75,7 +78,7 @@ try {
   sdk.start();
   console.log("🔍 OpenTelemetry tracing initialized successfully");
   console.log(
-    `📊 Traces will be sent to: ${process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || "http://localhost:4318"}`
+    `📊 Traces will be sent to: ${process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || "http://localhost:4318"}`,
   );
   console.log("🖥️  Jaeger UI available at: http://localhost:16686");
 } catch (error) {
@@ -88,7 +91,7 @@ process.on("SIGTERM", () => {
     .shutdown()
     .then(() => console.log("📊 OpenTelemetry terminated"))
     .catch((error) =>
-      console.error("❌ Error terminating OpenTelemetry", error)
+      console.error("❌ Error terminating OpenTelemetry", error),
     )
     .finally(() => process.exit(0));
 });
