@@ -63,6 +63,39 @@ const sdk = new NodeSDK({
 
       "@opentelemetry/instrumentation-graphql": {
         enabled: true,
+        // Sanitize sensitive fields from GraphQL variables in traces
+        responseHook: (span, data) => {
+          if (data.args?.variableValues) {
+            const sensitiveFields = [
+              "password",
+              "oldPassword",
+              "newPassword",
+              "token",
+              "refreshToken",
+            ];
+
+            const sanitizeObject = (obj: any): any => {
+              if (!obj || typeof obj !== "object") return obj;
+
+              const sanitized = Array.isArray(obj) ? [...obj] : { ...obj };
+
+              for (const key in sanitized) {
+                if (sensitiveFields.includes(key)) {
+                  sanitized[key] = "[REDACTED]";
+                } else if (typeof sanitized[key] === "object") {
+                  sanitized[key] = sanitizeObject(sanitized[key]);
+                }
+              }
+
+              return sanitized;
+            };
+
+            const sanitized = sanitizeObject(data.args.variableValues);
+
+            // Set sanitized variables as span attribute
+            span.setAttribute("graphql.variables", JSON.stringify(sanitized));
+          }
+        },
       },
     }),
     // Winston instrumentation for automatic log correlation with traces
