@@ -38,6 +38,7 @@ describe("DiscordService", () => {
 
   const mockBotToken = "test-bot-token";
   const mockClientId = "test-client-id";
+  const mockClientSecret = "test-client-secret";
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -49,6 +50,7 @@ describe("DiscordService", () => {
             get: jest.fn((key: string) => {
               if (key === "DISCORD_BOT_TOKEN") return mockBotToken;
               if (key === "DISCORD_CLIENT_ID") return mockClientId;
+              if (key === "DISCORD_CLIENT_SECRET") return mockClientSecret;
               return null;
             }),
           },
@@ -84,6 +86,45 @@ describe("DiscordService", () => {
         }).compile(),
       ).rejects.toThrow("DISCORD_BOT_TOKEN is required but not configured");
     });
+
+    it("should throw error if DISCORD_CLIENT_ID is not configured", async () => {
+      await expect(
+        Test.createTestingModule({
+          providers: [
+            DiscordService,
+            {
+              provide: ConfigService,
+              useValue: {
+                get: jest.fn((key: string) => {
+                  if (key === "DISCORD_BOT_TOKEN") return mockBotToken;
+                  return null;
+                }),
+              },
+            },
+          ],
+        }).compile(),
+      ).rejects.toThrow("DISCORD_CLIENT_ID is required but not configured");
+    });
+
+    it("should throw error if DISCORD_CLIENT_SECRET is not configured", async () => {
+      await expect(
+        Test.createTestingModule({
+          providers: [
+            DiscordService,
+            {
+              provide: ConfigService,
+              useValue: {
+                get: jest.fn((key: string) => {
+                  if (key === "DISCORD_BOT_TOKEN") return mockBotToken;
+                  if (key === "DISCORD_CLIENT_ID") return mockClientId;
+                  return null;
+                }),
+              },
+            },
+          ],
+        }).compile(),
+      ).rejects.toThrow("DISCORD_CLIENT_SECRET is required but not configured");
+    });
   });
 
   describe("generateBotInviteUrl", () => {
@@ -91,28 +132,6 @@ describe("DiscordService", () => {
       const url = service.generateBotInviteUrl();
       expect(url).toBe(
         `https://discord.com/api/oauth2/authorize?client_id=${mockClientId}&permissions=1024&scope=bot`,
-      );
-    });
-
-    it("should throw error if DISCORD_CLIENT_ID is not configured", async () => {
-      const module = await Test.createTestingModule({
-        providers: [
-          DiscordService,
-          {
-            provide: ConfigService,
-            useValue: {
-              get: jest.fn((key: string) => {
-                if (key === "DISCORD_BOT_TOKEN") return mockBotToken;
-                return null;
-              }),
-            },
-          },
-        ],
-      }).compile();
-
-      const testService = module.get<DiscordService>(DiscordService);
-      expect(() => testService.generateBotInviteUrl()).toThrow(
-        "DISCORD_CLIENT_ID not configured",
       );
     });
   });

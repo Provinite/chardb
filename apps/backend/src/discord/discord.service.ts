@@ -22,10 +22,25 @@ export class DiscordService {
 
   constructor(private configService: ConfigService) {
     const botToken = this.configService.get<string>("DISCORD_BOT_TOKEN");
+    const clientId = this.configService.get<string>("DISCORD_CLIENT_ID");
+    const clientSecret = this.configService.get<string>("DISCORD_CLIENT_SECRET");
 
+    // Validate all required Discord configuration
     if (!botToken) {
       throw new Error(
         "DISCORD_BOT_TOKEN is required but not configured. Set the DISCORD_BOT_TOKEN environment variable.",
+      );
+    }
+
+    if (!clientId) {
+      throw new Error(
+        "DISCORD_CLIENT_ID is required but not configured. Set the DISCORD_CLIENT_ID environment variable.",
+      );
+    }
+
+    if (!clientSecret) {
+      throw new Error(
+        "DISCORD_CLIENT_SECRET is required but not configured. Set the DISCORD_CLIENT_SECRET environment variable.",
       );
     }
 
@@ -44,11 +59,6 @@ export class DiscordService {
    */
   generateBotInviteUrl(): string {
     const clientId = this.configService.get<string>("DISCORD_CLIENT_ID");
-
-    if (!clientId) {
-      throw new Error("DISCORD_CLIENT_ID not configured");
-    }
-
     const permissions = "1024"; // VIEW_CHANNEL - required to access guild and read member list
     const scopes = "bot";
 
