@@ -383,6 +383,10 @@ module "ecs" {
       name  = "FRONTEND_URL"
       value = var.domain_name != null ? "https://${var.domain_name}" : ""
     },
+    {
+      name  = "EMAIL_FROM"
+      value = var.email_from
+    },
     # GraphQL Security Configuration
     {
       name  = "GRAPHQL_PLAYGROUND"

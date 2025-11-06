@@ -274,3 +274,13 @@ variable "otel_log_level" {
   type        = string
   default     = "info"
 }
+
+##############################################################################
+# Email Configuration
+##############################################################################
+
+variable "email_from" {
+  description = "Email address used as the sender for outbound emails"
+  type        = string
+  default     = "noreply@chardb.cc"
+}
