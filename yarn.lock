@@ -1969,7 +1969,6 @@ __metadata:
     graphql: "npm:^16.8.0"
     graphql-type-json: "npm:^0.3.2"
     graphql-upload: "npm:^16.0.0"
-    handlebars: "npm:^4.7.8"
     jest: "npm:^29.5.0"
     multer: "npm:^1.4.5-lts.1"
     nest-winston: "npm:^1.10.2"
