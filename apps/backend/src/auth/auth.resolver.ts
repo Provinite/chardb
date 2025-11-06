@@ -1,6 +1,12 @@
 import { Resolver, Mutation, Args } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
-import { LoginInput, SignupInput, AuthPayload } from './dto/auth.dto';
+import {
+  LoginInput,
+  SignupInput,
+  AuthPayload,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+} from './dto/auth.dto';
 import {
   mapLoginInputToService,
   mapSignupInputToService,
@@ -33,5 +39,24 @@ export class AuthResolver {
   async refreshToken(@Args('token') token: string): Promise<string> {
     const result = await this.authService.refreshToken(token);
     return result.accessToken;
+  }
+
+  @AllowUnauthenticated()
+  @Mutation(() => Boolean)
+  async forgotPassword(
+    @Args('input') input: ForgotPasswordInput,
+  ): Promise<boolean> {
+    await this.authService.requestPasswordReset(input.email);
+    // Always return true to prevent email enumeration
+    return true;
+  }
+
+  @AllowUnauthenticated()
+  @Mutation(() => Boolean)
+  async resetPassword(
+    @Args('input') input: ResetPasswordInput,
+  ): Promise<boolean> {
+    await this.authService.resetPassword(input.token, input.newPassword);
+    return true;
   }
 }

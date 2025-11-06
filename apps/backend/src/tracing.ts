@@ -63,6 +63,7 @@ const sdk = new NodeSDK({
 
       "@opentelemetry/instrumentation-graphql": {
         enabled: true,
+        allowValues: false,
       },
     }),
     // Winston instrumentation for automatic log correlation with traces

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Password Reset (#64)**: Implemented forgot password and password reset functionality
+  - Created email service with MailHog (dev) and AWS SES (production) support
+  - Added password reset token model with SHA-256 hashing and 1-hour expiration
+  - Implemented database-based rate limiting (3 requests per 15 minutes per user)
+  - Email notifications sent for password reset requests and successful password changes
+  - Frontend pages for forgot password and reset password flows
+  - Added forgotPassword and resetPassword GraphQL mutations
+
 ### Changed
 
 - **Discord Integration (#137)**: Migrated to REST-only approach (removed persistent WebSocket connection)

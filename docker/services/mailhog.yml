@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
+
+# MailHog Email Testing Service
+#
+# Email testing tool for development environment. Captures all outgoing emails
+# and provides a web interface to view them. Used for testing password reset
+# emails and other email notifications without sending actual emails.
+#
+# Features:
+# - SMTP server on port 1025 for application to send emails
+# - Web UI on port 8025 for viewing captured emails
+# - No configuration required - works out of the box
+#
+# Access web UI at: http://localhost:8025
+
+version: '3.8'
+
+services:
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: chardb-mailhog
+    ports:
+      - "1025:1025" # SMTP server
+      - "8025:8025" # Web UI
+    restart: unless-stopped
