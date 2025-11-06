@@ -179,6 +179,43 @@ resource "aws_route53_record" "ses_dkim" {
   records = ["${aws_sesv2_email_identity.domain.dkim_signing_attributes[0].tokens[count.index]}.dkim.amazonses.com"]
 }
 
+# Custom MAIL FROM domain configuration
+resource "aws_sesv2_email_identity_mail_from_attributes" "domain" {
+  email_identity         = aws_sesv2_email_identity.domain.email_identity
+  mail_from_domain       = "mail.${var.domain_name}"
+  behavior_on_mx_failure = "USE_DEFAULT_VALUE"
+}
+
+# MX record for custom MAIL FROM domain
+resource "aws_route53_record" "ses_mail_from_mx" {
+  count   = var.domain_name != null ? 1 : 0
+  zone_id = data.aws_route53_zone.main[0].zone_id
+  name    = "mail.${var.domain_name}"
+  type    = "MX"
+  ttl     = 600
+  records = ["10 feedback-smtp.${data.aws_region.current.name}.amazonses.com"]
+}
+
+# SPF record for custom MAIL FROM domain
+resource "aws_route53_record" "ses_mail_from_spf" {
+  count   = var.domain_name != null ? 1 : 0
+  zone_id = data.aws_route53_zone.main[0].zone_id
+  name    = "mail.${var.domain_name}"
+  type    = "TXT"
+  ttl     = 600
+  records = ["v=spf1 include:amazonses.com ~all"]
+}
+
+# DMARC record for main domain (monitoring mode, no reports)
+resource "aws_route53_record" "dmarc" {
+  count   = var.domain_name != null ? 1 : 0
+  zone_id = data.aws_route53_zone.main[0].zone_id
+  name    = "_dmarc.${var.domain_name}"
+  type    = "TXT"
+  ttl     = 600
+  records = ["v=DMARC1; p=none;"]
+}
+
 # IAM policy for ECS task to send emails via SES
 data "aws_iam_policy_document" "ecs_task_ses" {
   statement {
