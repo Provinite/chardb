@@ -546,9 +546,6 @@ module "ecs" {
   log_retention_days        = var.ecs_log_retention_days
   enable_container_insights = var.ecs_enable_container_insights
 
-  # IAM permissions for task role
-  task_role_policy_json = data.aws_iam_policy_document.ecs_task_ses.json
-
   tags = local.common_tags
 
   depends_on = [
@@ -580,6 +577,21 @@ resource "aws_vpc_security_group_ingress_rule" "rds_from_ecs" {
   to_port                      = 5432
   ip_protocol                  = "tcp"
   referenced_security_group_id = module.ecs.security_group_id
+}
+
+##############################################################################
+# ECS Task IAM Permissions
+##############################################################################
+
+# SES permissions for ECS task role
+resource "aws_iam_role_policy" "ecs_task_ses" {
+  name   = "${var.project_name}-${var.environment}-ecs-task-ses"
+  role   = module.ecs.task_role_name
+  policy = data.aws_iam_policy_document.ecs_task_ses.json
+
+  depends_on = [
+    module.ecs,
+  ]
 }
 
 ##############################################################################
