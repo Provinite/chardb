@@ -24,6 +24,18 @@ export const REFRESH_TOKEN_MUTATION = gql`
   }
 `;
 
+export const FORGOT_PASSWORD_MUTATION = gql`
+  mutation ForgotPassword($input: ForgotPasswordInput!) {
+    forgotPassword(input: $input)
+  }
+`;
+
+export const RESET_PASSWORD_MUTATION = gql`
+  mutation ResetPassword($input: ResetPasswordInput!) {
+    resetPassword(input: $input)
+  }
+`;
+
 export const ME_QUERY = gql`
   query Me {
     me {
@@ -68,8 +80,10 @@ export {
   useLoginMutation,
   useSignupMutation,
   useRefreshTokenMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
   useMeQuery,
-  
+
   // Types
   type LoginMutation,
   type LoginMutationVariables,
@@ -77,10 +91,16 @@ export {
   type SignupMutationVariables,
   type RefreshTokenMutation,
   type RefreshTokenMutationVariables,
+  type ForgotPasswordMutation,
+  type ForgotPasswordMutationVariables,
+  type ResetPasswordMutation,
+  type ResetPasswordMutationVariables,
   type MeQuery,
   type MeQueryVariables,
   type User,
   type AuthPayload,
   type LoginInput,
   type SignupInput,
+  type ForgotPasswordInput,
+  type ResetPasswordInput,
 } from '../generated/graphql';

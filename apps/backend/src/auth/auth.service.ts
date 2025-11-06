@@ -1,10 +1,12 @@
 import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 import { UsersService } from '../users/users.service';
 import { InviteCodesService } from '../invite-codes/invite-codes.service';
 import { DatabaseService } from '../database/database.service';
+import { EmailService } from '../email/email.service';
 import { Prisma } from '@chardb/database';
 
 /**
@@ -68,6 +70,7 @@ export class AuthService {
     private jwtService: JwtService,
     private inviteCodesService: InviteCodesService,
     private prisma: DatabaseService,
+    private emailService: EmailService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<Omit<PrismaUser, 'passwordHash'> | null> {
@@ -184,17 +187,120 @@ export class AuthService {
     try {
       const payload = this.jwtService.verify(token);
       const user = await this.usersService.findById(payload.sub);
-      
+
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
 
       const newPayload = { email: user.email, sub: user.id };
       const accessToken = this.jwtService.sign(newPayload);
-      
+
       return { accessToken };
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  /**
+   * Request a password reset for the given email address
+   * Implements database-based rate limiting and silent failure for non-existent users
+   * @param email User's email address
+   */
+  async requestPasswordReset(email: string): Promise<void> {
+    // Find user by email - silently fail if user doesn't exist (don't leak user existence)
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      // Don't reveal that user doesn't exist - return silently
+      return;
+    }
+
+    // Database-based rate limiting: check for recent reset requests (last 15 minutes)
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const recentTokens = await this.prisma.passwordResetToken.count({
+      where: {
+        userId: user.id,
+        createdAt: {
+          gte: fifteenMinutesAgo,
+        },
+      },
+    });
+
+    if (recentTokens >= 3) {
+      // Rate limit exceeded - silently fail to prevent abuse
+      return;
+    }
+
+    // Generate a secure random token
+    const token = crypto.randomBytes(32).toString('hex');
+
+    // Hash the token before storing (SHA-256)
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Calculate expiry time (1 hour from now)
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    // Store the hashed token in the database
+    await this.prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiresAt,
+      },
+    });
+
+    // Send password reset email with the unhashed token
+    await this.emailService.sendPasswordResetEmail(email, token, user.username);
+  }
+
+  /**
+   * Reset user's password using a valid reset token
+   * @param token Password reset token from email
+   * @param newPassword New password to set
+   */
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    // Hash the provided token to look it up
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Find the token in the database
+    const resetToken = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+
+    // Validate token exists
+    if (!resetToken) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    // Validate token hasn't been used
+    if (resetToken.used) {
+      throw new BadRequestException('This reset token has already been used');
+    }
+
+    // Validate token hasn't expired
+    if (resetToken.expiresAt < new Date()) {
+      throw new BadRequestException('This reset token has expired');
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user's password and mark token as used in a transaction
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: resetToken.userId },
+        data: { passwordHash: hashedPassword },
+      }),
+      this.prisma.passwordResetToken.update({
+        where: { tokenHash },
+        data: { used: true },
+      }),
+    ]);
+
+    // Send password changed notification
+    await this.emailService.sendPasswordChangedNotification(
+      resetToken.user.email,
+      resetToken.user.username,
+    );
   }
 }

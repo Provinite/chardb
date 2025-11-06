@@ -15,6 +15,7 @@ import { UsersModule } from "../users/users.module";
 import { InviteCodesModule } from "../invite-codes/invite-codes.module";
 import { DatabaseModule } from "../database/database.module";
 import { ExternalAccountsModule } from "../external-accounts/external-accounts.module";
+import { EmailModule } from "../email/email.module";
 import { PermissionService } from "./PermissionService";
 import { OwnershipService } from "./OwnershipService";
 import { CommunityResolverService } from "./services/community-resolver.service";
@@ -44,6 +45,7 @@ import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
     InviteCodesModule,
     DatabaseModule,
     ExternalAccountsModule,
+    EmailModule,
     CommunityMembersModule,
   ],
   controllers: [DeviantArtOAuthController, DiscordOAuthController],

@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import styled from 'styled-components';
+import toast from 'react-hot-toast';
 import { Button } from '@chardb/ui';
-import { useAuth } from '../contexts/AuthContext';
+import { useForgotPasswordMutation } from '../graphql/auth.graphql';
 
-const loginSchema = z.object({
+const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email'),
-  password: z.string().min(1, 'Password is required'),
 });
 
-type LoginForm = z.infer<typeof loginSchema>;
+type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
 
 const Container = styled.div`
   max-width: 400px;
@@ -32,8 +32,14 @@ const Title = styled.h1`
   font-size: ${({ theme }) => theme.typography.fontSize.xxl};
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
   text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
   color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const Description = styled.p`
+  text-align: center;
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
 const Form = styled.form`
@@ -61,11 +67,11 @@ const Input = styled.input`
   background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.text.primary};
   transition: all 0.2s ease;
-  
+
   &::placeholder {
     color: ${({ theme }) => theme.colors.text.muted};
   }
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -79,54 +85,88 @@ const ErrorMessage = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
+const SuccessMessage = styled.div`
+  background: ${({ theme }) => theme.colors.success}20;
+  border: 1px solid ${({ theme }) => theme.colors.success};
+  color: ${({ theme }) => theme.colors.success};
+  padding: ${({ theme }) => theme.spacing.md};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  text-align: center;
+`;
+
 const Footer = styled.div`
   text-align: center;
   margin-top: ${({ theme }) => theme.spacing.lg};
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-const SignupLink = styled(Link)`
+const BackLink = styled(Link)`
   color: ${({ theme }) => theme.colors.primary};
   text-decoration: none;
-  
+
   &:hover {
     text-decoration: underline;
   }
 `;
 
-export const LoginPage: React.FC = () => {
+export const ForgotPasswordPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const from = location.state?.from?.pathname || '/dashboard';
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [forgotPassword] = useForgotPasswordMutation();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<ForgotPasswordForm>({
+    resolver: zodResolver(forgotPasswordSchema),
   });
 
-  const onSubmit = async (data: LoginForm) => {
+  const onSubmit = async (data: ForgotPasswordForm) => {
     setIsLoading(true);
     try {
-      const success = await login(data.email, data.password);
-      if (success) {
-        navigate(from, { replace: true });
-      }
+      await forgotPassword({
+        variables: {
+          input: {
+            email: data.email,
+          },
+        },
+      });
+      setIsSuccess(true);
+      toast.success('Password reset email sent successfully');
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      toast.error('Failed to send reset email. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (isSuccess) {
+    return (
+      <Container>
+        <Card>
+          <Title>Check Your Email</Title>
+          <SuccessMessage>
+            If an account exists with that email address, you will receive a password reset link shortly.
+            The link will expire in 1 hour.
+          </SuccessMessage>
+          <Footer>
+            <BackLink to="/login">Back to login</BackLink>
+          </Footer>
+        </Card>
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <Card>
-        <Title>Welcome Back</Title>
-        
+        <Title>Forgot Password</Title>
+        <Description>
+          Enter your email address and we'll send you a link to reset your password.
+        </Description>
+
         <Form onSubmit={handleSubmit(onSubmit)}>
           <FormGroup>
             <Label htmlFor="email">Email</Label>
@@ -139,29 +179,14 @@ export const LoginPage: React.FC = () => {
             {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
           </FormGroup>
 
-          <FormGroup>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              {...register('password')}
-              type="password"
-              id="password"
-              placeholder="Enter your password"
-            />
-            {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
-          </FormGroup>
-
           <Button type="submit" loading={isLoading} disabled={isLoading}>
-            {isLoading ? 'Signing In...' : 'Sign In'}
+            {isLoading ? 'Sending...' : 'Send Reset Link'}
           </Button>
         </Form>
 
         <Footer>
-          <SignupLink to="/forgot-password">Forgot password?</SignupLink>
-        </Footer>
-
-        <Footer>
-          Don't have an account?{' '}
-          <SignupLink to="/signup">Sign up here</SignupLink>
+          Remember your password?{' '}
+          <BackLink to="/login">Back to login</BackLink>
         </Footer>
       </Card>
     </Container>

@@ -50,3 +50,24 @@ export class AuthPayload {
   @Field()
   refreshToken: string;
 }
+
+@InputType()
+export class ForgotPasswordInput {
+  @Field()
+  @IsEmail()
+  email: string;
+}
+
+@InputType()
+export class ResetPasswordInput {
+  @Field()
+  @IsString()
+  @MinLength(1)
+  token: string;
+
+  @Field()
+  @IsString()
+  @MinLength(8)
+  @MaxLength(100)
+  newPassword: string;
+}

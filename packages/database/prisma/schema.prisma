@@ -100,6 +100,9 @@ model User {
   // Pending ownership claims
   claimedPendingItems    PendingOwnership[]
 
+  // Password reset tokens
+  passwordResetTokens    PasswordResetToken[]
+
   @@map("users")
 }
 
@@ -119,6 +122,22 @@ model ExternalAccount {
   @@unique([provider, providerAccountId])
   @@unique([provider, userId])
   @@map("external_accounts")
+}
+
+model PasswordResetToken {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  tokenHash  String   @unique @map("token_hash") @db.VarChar(64)
+  expiresAt  DateTime @map("expires_at")
+  used       Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 model Character {
