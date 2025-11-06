@@ -70,21 +70,19 @@ describe("DiscordService", () => {
     });
 
     it("should throw error if DISCORD_BOT_TOKEN is not configured", async () => {
-      const module = await Test.createTestingModule({
-        providers: [
-          DiscordService,
-          {
-            provide: ConfigService,
-            useValue: {
-              get: jest.fn(() => null),
+      await expect(
+        Test.createTestingModule({
+          providers: [
+            DiscordService,
+            {
+              provide: ConfigService,
+              useValue: {
+                get: jest.fn(() => null),
+              },
             },
-          },
-        ],
-      }).compile();
-
-      expect(() => module.get<DiscordService>(DiscordService)).toThrow(
-        "DISCORD_BOT_TOKEN is required but not configured",
-      );
+          ],
+        }).compile(),
+      ).rejects.toThrow("DISCORD_BOT_TOKEN is required but not configured");
     });
   });
 
