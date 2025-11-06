@@ -210,11 +210,12 @@ resource "aws_instance" "docker_host" {
   iam_instance_profile   = aws_iam_instance_profile.docker_host.name
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    db_password = random_password.db_password.result
-    jwt_secret  = random_password.jwt_secret.result
-    db_host     = var.db_host
-    db_name     = var.db_name
-    db_user     = var.db_user
+    db_password    = random_password.db_password.result
+    jwt_secret     = random_password.jwt_secret.result
+    db_host        = var.db_host
+    db_name        = var.db_name
+    db_user        = var.db_user
+    sqs_queue_url  = var.sqs_queue_url
   }))
 
   root_block_device {

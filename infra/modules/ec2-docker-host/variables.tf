@@ -112,3 +112,9 @@ variable "discord_bot_token" {
   type        = string
   sensitive   = true
 }
+
+variable "sqs_queue_url" {
+  description = "SQS queue URL for prize distribution (optional)"
+  type        = string
+  default     = ""
+}

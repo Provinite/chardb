@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **SQS Queue Consumer**: Implemented prize distribution system for Discord bot integration
+  - Created queue consumer module that polls SQS for prize award events
+  - Added item prize handler for granting existing item types to Discord users
+  - Added character prize handler for transferring orphaned character ownership
+  - Integrated with existing pending ownership system for auto-claiming
+  - Implemented OpenTelemetry tracing for queue message processing
+  - Added retry logic with Dead Letter Queue after 3 failed attempts
+  - Created Terraform module for SQS queue, DLQ, IAM policies, and CloudWatch alarms
+  - Supports both `ITEM_AWARDED` and `CHARACTER_AWARDED` event types
+  - Configurable via `AWS_SQS_ENABLED` and `AWS_SQS_QUEUE_URL` environment variables
+  - Conservative polling: 5 messages per batch, 5 second wait time
+
 ## [v6.1.0] - 2025-11-06
 
 ### Added

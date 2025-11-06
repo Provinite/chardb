@@ -19,6 +19,7 @@
     "@apollo/server": "^5.0.0",
     "@as-integrations/express5": "1.1.2",
     "@aws-sdk/client-ses": "^3.925.0",
+    "@aws-sdk/client-sqs": "^3.925.0",
     "@chardb/database": "workspace:*",
     "@chardb/shared": "workspace:*",
     "@discordjs/core": "^2.3.0",
