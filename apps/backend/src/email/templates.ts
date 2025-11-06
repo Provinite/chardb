@@ -45,7 +45,7 @@ export const passwordResetTemplate = (
         }
         .button {
             display: inline-block;
-            background-color: #3498db;
+            background-color: #8b5cf6;
             color: white;
             padding: 12px 30px;
             text-decoration: none;
@@ -54,7 +54,7 @@ export const passwordResetTemplate = (
             font-weight: bold;
         }
         .button:hover {
-            background-color: #2980b9;
+            background-color: #7c3aed;
         }
         .warning {
             background-color: #fff3cd;
@@ -70,13 +70,13 @@ export const passwordResetTemplate = (
             padding-top: 20px;
         }
         .link {
-            color: #3498db;
+            color: #8b5cf6;
             word-break: break-all;
         }
         .header {
             text-align: center;
             padding: 20px 0;
-            border-bottom: 2px solid #3498db;
+            border-bottom: 2px solid #8b5cf6;
             margin-bottom: 30px;
         }
         .brand {
@@ -149,13 +149,13 @@ export const passwordChangedTemplate = (
             margin-top: 20px;
         }
         h1 {
-            color: #27ae60;
+            color: #059669;
             font-size: 24px;
             margin-bottom: 20px;
         }
         .success-icon {
             font-size: 48px;
-            color: #27ae60;
+            color: #059669;
             text-align: center;
             margin-bottom: 20px;
         }
@@ -184,7 +184,7 @@ export const passwordChangedTemplate = (
         .header {
             text-align: center;
             padding: 20px 0;
-            border-bottom: 2px solid #27ae60;
+            border-bottom: 2px solid #059669;
             margin-bottom: 30px;
         }
         .brand {
