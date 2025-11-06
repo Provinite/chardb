@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { SESClient } from '@aws-sdk/client-ses';
 import { EmailService } from './email.service';
 
 @Module({
@@ -9,23 +10,35 @@ import { EmailService } from './email.service';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
-        const nodeEnv = configService.get<string>('NODE_ENV');
-        const isDevelopment = nodeEnv === 'development';
+        const smtpHost = configService.get<string>('SMTP_HOST');
+        const awsRegion = configService.get<string>('AWS_REGION', 'us-east-1');
+
+        // If SMTP_HOST is configured, use SMTP (for development with MailHog)
+        // Otherwise, use AWS SES with IAM role authentication (for production)
+        const transport = smtpHost
+          ? {
+              host: smtpHost,
+              port: configService.get<number>('SMTP_PORT', 1025),
+              secure: false,
+              auth: configService.get<string>('SMTP_USER')
+                ? {
+                    user: configService.get<string>('SMTP_USER'),
+                    pass: configService.get<string>('SMTP_PASSWORD'),
+                  }
+                : undefined,
+            }
+          : {
+              SES: {
+                ses: new SESClient({
+                  region: awsRegion,
+                  // Credentials automatically loaded from ECS task role
+                }),
+                aws: { SendRawEmail: true },
+              },
+            };
 
         return {
-          transport: {
-            host: configService.get<string>('SMTP_HOST', 'localhost'),
-            port: configService.get<number>('SMTP_PORT', 1025),
-            secure: false, // true for 465, false for other ports (MailHog uses 1025)
-            auth: isDevelopment
-              ? undefined // MailHog doesn't require authentication
-              : {
-                  // AWS SES SMTP credentials would go here in production
-                  // For now, we'll use nodemailer's SES transport in the service
-                  user: configService.get<string>('SMTP_USER'),
-                  pass: configService.get<string>('SMTP_PASSWORD'),
-                },
-          },
+          transport,
           defaults: {
             from: configService.get<string>(
               'EMAIL_FROM',

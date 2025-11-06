@@ -144,6 +144,54 @@ resource "aws_secretsmanager_secret_version" "otel_otlp_headers" {
   secret_string = var.otel_otlp_headers
 }
 
+##############################################################################
+# AWS SES - Email Identity & DKIM Configuration
+##############################################################################
+
+# SES Email Identity for domain verification
+resource "aws_sesv2_email_identity" "domain" {
+  email_identity = var.domain_name
+
+  dkim_signing_attributes {
+    next_signing_key_length = "RSA_2048_BIT"
+  }
+
+  tags = local.common_tags
+}
+
+# Route53 DNS records for SES domain verification
+resource "aws_route53_record" "ses_verification" {
+  count   = var.domain_name != null ? 1 : 0
+  zone_id = data.aws_route53_zone.main[0].zone_id
+  name    = "_amazonses.${var.domain_name}"
+  type    = "TXT"
+  ttl     = 600
+  records = [aws_sesv2_email_identity.domain.dkim_signing_attributes[0].tokens[0]]
+}
+
+# Route53 DNS records for DKIM signing (3 CNAME records)
+resource "aws_route53_record" "ses_dkim" {
+  count   = var.domain_name != null ? 3 : 0
+  zone_id = data.aws_route53_zone.main[0].zone_id
+  name    = "${aws_sesv2_email_identity.domain.dkim_signing_attributes[0].tokens[count.index]}._domainkey.${var.domain_name}"
+  type    = "CNAME"
+  ttl     = 600
+  records = ["${aws_sesv2_email_identity.domain.dkim_signing_attributes[0].tokens[count.index]}.dkim.amazonses.com"]
+}
+
+# IAM policy for ECS task to send emails via SES
+data "aws_iam_policy_document" "ecs_task_ses" {
+  statement {
+    actions = [
+      "ses:SendEmail",
+      "ses:SendRawEmail",
+    ]
+    resources = [
+      aws_sesv2_email_identity.domain.arn,
+    ]
+  }
+}
+
 # ACM Certificate for frontend (root domain) - must be in us-east-1 for CloudFront
 resource "aws_acm_certificate" "frontend" {
   count             = var.domain_name != null ? 1 : 0
@@ -387,6 +435,10 @@ module "ecs" {
       name  = "EMAIL_FROM"
       value = var.email_from
     },
+    {
+      name  = "AWS_REGION"
+      value = data.aws_region.current.name
+    },
     # GraphQL Security Configuration
     {
       name  = "GRAPHQL_PLAYGROUND"
@@ -493,6 +545,9 @@ module "ecs" {
   # Logging
   log_retention_days        = var.ecs_log_retention_days
   enable_container_insights = var.ecs_enable_container_insights
+
+  # IAM permissions for task role
+  task_role_policy_json = data.aws_iam_policy_document.ecs_task_ses.json
 
   tags = local.common_tags
 
