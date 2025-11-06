@@ -116,6 +116,7 @@ DATABASE_URL="postgresql://app:$ENCODED_PASSWORD@postgres:5432/app"
 JWT_SECRET="${JWT_SECRET//$/\\$}"
 NODE_ENV=production
 FRONTEND_URL="$FRONTEND_URL"
+EMAIL_FROM="noreply@dev.chardb.cc"
 
 # DeviantArt OAuth
 DEVIANTART_CLIENT_ID="${DEVIANTART_CLIENT_ID//$/\\$}"
