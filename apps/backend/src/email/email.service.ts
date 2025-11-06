@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
+import {
+  passwordResetTemplate,
+  passwordChangedTemplate,
+} from './templates';
 
 @Injectable()
 export class EmailService {
@@ -34,12 +38,11 @@ export class EmailService {
       await this.mailerService.sendMail({
         to: email,
         subject: 'Reset Your Password',
-        template: 'password-reset',
-        context: {
+        html: passwordResetTemplate({
           username,
           resetUrl,
           expiryHours: 1,
-        },
+        }),
       });
 
       this.logger.log(`Password reset email sent to ${email}`);
@@ -65,14 +68,13 @@ export class EmailService {
       await this.mailerService.sendMail({
         to: email,
         subject: 'Your Password Has Been Changed',
-        template: 'password-changed',
-        context: {
+        html: passwordChangedTemplate({
           username,
           supportEmail: this.configService.get<string>(
             'EMAIL_FROM',
             'noreply@example.com',
           ),
-        },
+        }),
       });
 
       this.logger.log(`Password changed notification sent to ${email}`);
