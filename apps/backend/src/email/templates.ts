@@ -73,15 +73,35 @@ export const passwordResetTemplate = (
             color: #3498db;
             word-break: break-all;
         }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #3498db;
+            margin-bottom: 30px;
+        }
+        .brand {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .brand-domain {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
+    <div class="header">
+        <div class="brand">CharDB</div>
+        <div class="brand-domain">chardb.cc</div>
+    </div>
     <div class="container">
         <h1>Reset Your Password</h1>
 
         <p>Hi ${context.username},</p>
 
-        <p>We received a request to reset your password. Click the button below to create a new password:</p>
+        <p>We received a request to reset your CharDB password. Click the button below to create a new password:</p>
 
         <a href="${context.resetUrl}" class="button">Reset Password</a>
 
@@ -96,7 +116,7 @@ export const passwordResetTemplate = (
     </div>
 
     <div class="footer">
-        <p>This is an automated email. Please do not reply to this message.</p>
+        <p>This is an automated email from <strong>CharDB.cc</strong>. Please do not reply to this message.</p>
         <p>If you have any questions, please contact our support team.</p>
     </div>
 </body>
@@ -161,16 +181,36 @@ export const passwordChangedTemplate = (
             border-radius: 5px;
             margin-top: 20px;
         }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #27ae60;
+            margin-bottom: 30px;
+        }
+        .brand {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .brand-domain {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
+    <div class="header">
+        <div class="brand">CharDB</div>
+        <div class="brand-domain">chardb.cc</div>
+    </div>
     <div class="container">
         <div class="success-icon">✓</div>
         <h1>Password Changed Successfully</h1>
 
         <p>Hi ${context.username},</p>
 
-        <p>This email confirms that your password was successfully changed.</p>
+        <p>This email confirms that your CharDB password was successfully changed.</p>
 
         <div class="alert">
             <strong>Did you make this change?</strong><br>
@@ -191,7 +231,7 @@ export const passwordChangedTemplate = (
     </div>
 
     <div class="footer">
-        <p>This is an automated security notification. Please do not reply to this message.</p>
+        <p>This is an automated security notification from <strong>CharDB.cc</strong>. Please do not reply to this message.</p>
         <p>If you have concerns about your account security, please contact our support team.</p>
     </div>
 </body>
