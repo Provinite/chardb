@@ -22,9 +22,9 @@ variable "max_message_size" {
 }
 
 variable "receive_wait_time" {
-  description = "Wait time for ReceiveMessage calls (short polling if 0, long polling if > 0)"
+  description = "Wait time for ReceiveMessage calls in seconds (0-20). Long polling (5-20s) reduces API calls and costs."
   type        = number
-  default     = 0
+  default     = 5
 }
 
 variable "max_receive_count" {

@@ -41,7 +41,7 @@ resource "aws_sqs_queue" "dlq" {
 # IAM Policy for Queue Access
 resource "aws_iam_policy" "queue_consumer" {
   name        = "${var.queue_name}-consumer-policy"
-  description = "Allow consuming messages from ${var.queue_name} and its DLQ"
+  description = "Allow consuming messages from ${var.queue_name}"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -56,17 +56,6 @@ resource "aws_iam_policy" "queue_consumer" {
         ]
         Resource = [
           aws_sqs_queue.main.arn
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "sqs:SendMessage",
-          "sqs:GetQueueAttributes",
-          "sqs:GetQueueUrl"
-        ]
-        Resource = [
-          aws_sqs_queue.dlq.arn
         ]
       }
     ]

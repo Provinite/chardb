@@ -16,7 +16,7 @@ module "prize_distribution_queue" {
   message_retention     = 345600  # 4 days
   max_receive_count     = 3
   dlq_message_retention = 1209600 # 14 days
-  receive_wait_time     = 0       # Short polling for consumer
+  receive_wait_time     = 5       # Long polling - reduces API calls and costs
 
   tags = local.common_tags
 }
