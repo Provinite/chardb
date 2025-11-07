@@ -158,14 +158,14 @@ The backend EC2 instance role is automatically attached to the consumer policy, 
 
 ### OpenTelemetry Tracing
 
-Message processing is traced with spans:
-- `sqs.process_message`: Main handler span created in PrizeQueueHandler
-- `handle_item_prize`: Item award handler span
-- `handle_character_prize`: Character transfer handler span
+High-level message processing is traced at the entry point:
+- `sqs.process_message`: Single span per message in PrizeQueueHandler
+- Includes: message ID, event type, Discord guild/user IDs
+- Captures success/failure and error details
 
 View traces in Jaeger: http://localhost:16686
 
-Note: Polling is handled by `@ssut/nestjs-sqs` library and is not directly traced. Message processing traces begin when handler is invoked.
+Note: Individual handler methods (ItemPrizeHandler, CharacterPrizeHandler) are not traced to avoid boilerplate. Database operations and HTTP calls are auto-instrumented by OpenTelemetry. Use logging for detailed debugging.
 
 ### Logging
 
