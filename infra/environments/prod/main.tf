@@ -378,6 +378,23 @@ module "rds" {
 }
 
 ##############################################################################
+# SQS Queue for Discord Bot Prize Distribution
+##############################################################################
+
+module "prize_distribution_queue" {
+  source = "../../modules/sqs-queue"
+
+  queue_name            = "${var.project_name}-prize-distribution-${var.environment}"
+  visibility_timeout    = 30
+  message_retention     = 345600  # 4 days
+  max_receive_count     = 3
+  dlq_message_retention = 1209600 # 14 days
+  receive_wait_time     = 5       # Long polling - reduces API calls and costs
+
+  tags = local.common_tags
+}
+
+##############################################################################
 # Internal Network Load Balancer
 ##############################################################################
 
@@ -475,6 +492,15 @@ module "ecs" {
     {
       name  = "AWS_REGION"
       value = data.aws_region.current.name
+    },
+    # SQS Queue Configuration
+    {
+      name  = "AWS_SQS_ENABLED"
+      value = "true"
+    },
+    {
+      name  = "AWS_SQS_QUEUE_URL"
+      value = module.prize_distribution_queue.queue_url
     },
     # GraphQL Security Configuration
     {
@@ -625,6 +651,16 @@ resource "aws_iam_role_policy" "ecs_task_ses" {
   name   = "${var.project_name}-${var.environment}-ecs-task-ses"
   role   = module.ecs.task_role_name
   policy = data.aws_iam_policy_document.ecs_task_ses.json
+
+  depends_on = [
+    module.ecs,
+  ]
+}
+
+# SQS consumer permissions for ECS task role
+resource "aws_iam_role_policy_attachment" "ecs_task_sqs_consumer" {
+  role       = module.ecs.task_role_name
+  policy_arn = module.prize_distribution_queue.consumer_policy_arn
 
   depends_on = [
     module.ecs,
