@@ -5,27 +5,29 @@ This module implements an SQS queue consumer that processes prize distribution e
 ## Overview
 
 The queue consumer:
-- Polls an SQS queue for prize distribution messages
+- Polls an SQS queue for prize distribution messages using `@ssut/nestjs-sqs` library
 - Validates and routes messages to appropriate handlers
 - Awards items or transfers character ownership
 - Supports pending ownership for users who haven't linked Discord accounts
 - Includes OpenTelemetry tracing for observability
-- Implements retry logic with exponential backoff via SQS
+- Automatic retry logic with exponential backoff via SQS
+- Automatic message deletion on success
 
 ## Architecture
 
 ```
-Discord Bot → SQS Queue → Backend Consumer → Database
+Discord Bot → SQS Queue → @ssut/nestjs-sqs → PrizeQueueHandler → Database
                 ↓
              Dead Letter Queue (after 3 retries)
 ```
 
 ### Components
 
-- **QueueConsumerService**: Main service that polls SQS and routes messages
+- **PrizeQueueHandler**: Main handler decorated with `@SqsMessageHandler` that routes messages
 - **ItemPrizeHandler**: Handles `ITEM_AWARDED` events
 - **CharacterPrizeHandler**: Handles `CHARACTER_AWARDED` events
 - **PrizeEventDto**: Message validation schema
+- **SqsModule**: Library module that manages polling, retries, and message lifecycle
 
 ## Message Format
 
@@ -90,18 +92,22 @@ Messages must be valid JSON with the following structure:
 
 ## Error Handling
 
-### Permanent Errors (sent to DLQ)
-- Validation failures
+All errors thrown from the handler are automatically retried by SQS based on visibility timeout. The `@ssut/nestjs-sqs` library handles:
+- Automatic message retry on failure
+- Exponential backoff via SQS redrive policy
+- Message deletion on successful processing
+- Sending to DLQ after 3 failed attempts
+
+Common errors that trigger retries:
+- Validation failures (invalid JSON, missing fields)
 - Not found errors (community, item type, character)
 - Character already owned
 - Bad request errors
-
-### Transient Errors (retried)
 - Network failures
 - Database timeouts
 - Temporary AWS service issues
 
-Messages are retried up to 3 times before being sent to the Dead Letter Queue.
+Messages are automatically retried up to 3 times (based on `maxReceiveCount` in Terraform) before being sent to the Dead Letter Queue for manual review.
 
 ## Configuration
 
@@ -118,10 +124,11 @@ AWS_SQS_ENABLED=true  # Set to false to disable consumer
 
 ### Queue Parameters
 
-- **MaxMessages**: 5 messages per poll
-- **WaitTimeSeconds**: 5 seconds (short polling)
-- **VisibilityTimeout**: 30 seconds
-- **MaxReceiveCount**: 3 retries before DLQ
+Configured in `QueueConsumerModule.registerAsync()`:
+- **batchSize**: 5 messages per poll (matches previous `MaxNumberOfMessages`)
+- **waitTimeSeconds**: 5 seconds (long polling, matches queue-level setting)
+- **VisibilityTimeout**: 30 seconds (configured at queue level via Terraform)
+- **MaxReceiveCount**: 3 retries before DLQ (configured at queue level via Terraform)
 
 ## Infrastructure
 
@@ -151,21 +158,22 @@ The backend EC2 instance role is automatically attached to the consumer policy, 
 
 ### OpenTelemetry Tracing
 
-All message processing is traced with spans:
-- `sqs.poll`: Polling operation
-- `sqs.process_message`: Individual message processing
-- `handle_item_prize`: Item award handler
-- `handle_character_prize`: Character transfer handler
+Message processing is traced with spans:
+- `sqs.process_message`: Main handler span created in PrizeQueueHandler
+- `handle_item_prize`: Item award handler span
+- `handle_character_prize`: Character transfer handler span
 
 View traces in Jaeger: http://localhost:16686
+
+Note: Polling is handled by `@ssut/nestjs-sqs` library and is not directly traced. Message processing traces begin when handler is invoked.
 
 ### Logging
 
 Logs include:
-- Message receipt
+- Message receipt and processing start
 - Processing success/failure
 - Error details with stack traces
-- Retry attempts
+- Automatic retry handled by SQS (visible in CloudWatch metrics)
 
 ## Development
 
