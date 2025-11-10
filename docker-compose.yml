@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # LocalStack - Local AWS cloud stack for development
+  # Provides S3, SES, and other AWS services locally
+  localstack:
+    image: localstack/localstack:latest
+    container_name: chardb-localstack
+    ports:
+      - "4566:4566"      # LocalStack Gateway (all services)
+      - "4510-4559:4510-4559"  # External services port range
+    environment:
+      - SERVICES=s3,ses
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - "${TMPDIR:-/tmp}/localstack:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./scripts/localstack-init.sh:/etc/localstack/init/ready.d/init.sh"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - chardb-network
+
+  # MailHog - SMTP server for testing emails in development
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: chardb-mailhog
+    ports:
+      - "1025:1025"      # SMTP server
+      - "8025:8025"      # Web UI
+    networks:
+      - chardb-network
+
+  # Jaeger - OpenTelemetry tracing backend
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: chardb-jaeger
+    ports:
+      - "16686:16686"    # Jaeger UI
+      - "4317:4317"      # OTLP gRPC receiver
+      - "4318:4318"      # OTLP HTTP receiver
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - chardb-network
+
+networks:
+  chardb-network:
+    driver: bridge
