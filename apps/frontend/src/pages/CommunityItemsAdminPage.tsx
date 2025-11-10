@@ -277,7 +277,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
     loading: itemTypesLoading,
     refetch: refetchItemTypes,
   } = useQuery(GET_ITEM_TYPES, {
-    variables: { filters: { communityId } },
+    variables: { filters: { communityId, limit: 100 } },
     skip: !communityId,
   });
 
