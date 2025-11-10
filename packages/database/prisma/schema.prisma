@@ -186,7 +186,7 @@ model Image {
   id               String     @id @default(uuid())
   filename         String     @db.VarChar(255)
   originalFilename String     @map("original_filename") @db.VarChar(255)
-  url              String     @db.Text
+  originalUrl      String     @map("original_url") @db.Text
   thumbnailUrl     String?    @map("thumbnail_url") @db.Text
   altText          String?    @map("alt_text") @db.VarChar(200)
   uploaderId       String     @map("uploader_id")

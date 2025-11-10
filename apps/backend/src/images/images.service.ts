@@ -105,28 +105,35 @@ export class ImagesService {
     const fileExtension = extname(file.originalname);
     const filename = `${uuid()}${fileExtension}`;
 
-    // Process image with Sharp
-    const { processedImage, thumbnail, metadata } = await this.processImage(
-      file.buffer,
-    );
+    // Generate thumbnail from original buffer
+    const { thumbnail, metadata } = await this.processImage(file.buffer);
 
-    // Upload processed image and thumbnail to S3
-    const [imageUploadResult, thumbnailUploadResult] = await Promise.all([
+    // Generate a shared base key for all size variants of this upload
+    const baseKey = `${Date.now()}-${uuid()}`;
+
+    // Upload original (unprocessed) and thumbnail to S3 with shared base key
+    const [originalUploadResult, thumbnailUploadResult] = await Promise.all([
+      // Upload original unprocessed buffer
       this.s3Service.uploadImage({
-        buffer: processedImage,
+        buffer: file.buffer,
         filename: file.originalname,
         mimeType: file.mimetype,
         userId,
+        sizeVariant: 'original',
+        baseKey,
       }),
+      // Upload thumbnail with same base key
       this.s3Service.uploadImage({
         buffer: thumbnail,
-        filename: `thumbnail-${file.originalname}`,
+        filename: file.originalname,
         mimeType: file.mimetype === "image/png" ? "image/png" : "image/jpeg",
         userId,
+        sizeVariant: 'thumbnail',
+        baseKey,
       }),
     ]);
 
-    const imageUrl = imageUploadResult.url;
+    const originalUrl = originalUploadResult.url;
     const thumbnailUrl = thumbnailUploadResult.url;
 
     // Use transaction to create both image and media records
@@ -136,7 +143,7 @@ export class ImagesService {
         data: {
           filename,
           originalFilename: file.originalname,
-          url: imageUrl,
+          originalUrl,
           thumbnailUrl,
           altText,
           uploaderId: userId,

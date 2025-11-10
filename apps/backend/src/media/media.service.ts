@@ -397,14 +397,14 @@ export class MediaService {
   private async cleanupImageFiles(image: Prisma.ImageGetPayload<{}>) {
     try {
       // Check if we're using S3 (URL contains amazonaws.com or other S3 indicators)
-      if (image.url && (image.url.includes('amazonaws.com') || image.url.includes('s3'))) {
-        await this.deleteFromS3(image.url, image.thumbnailUrl ?? undefined);
-      } else if (image.url && image.url.startsWith('data:')) {
+      if (image.originalUrl && (image.originalUrl.includes('amazonaws.com') || image.originalUrl.includes('s3'))) {
+        await this.deleteFromS3(image.originalUrl, image.thumbnailUrl ?? undefined);
+      } else if (image.originalUrl && image.originalUrl.startsWith('data:')) {
         // Base64 encoded image - no file cleanup needed, stored in DB
         this.logger.debug('Base64 image detected, no file cleanup needed');
-      } else if (image.url && (image.url.startsWith('/') || image.url.includes('localhost'))) {
+      } else if (image.originalUrl && (image.originalUrl.startsWith('/') || image.originalUrl.includes('localhost'))) {
         // Local file storage
-        await this.deleteLocalFiles(image.url, image.thumbnailUrl ?? undefined);
+        await this.deleteLocalFiles(image.originalUrl, image.thumbnailUrl ?? undefined);
       }
     } catch (error) {
       // Log the error but don't fail the deletion

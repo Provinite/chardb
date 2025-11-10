@@ -13,11 +13,14 @@ export interface UploadImageOptions {
   filename: string;
   mimeType: string;
   userId: string;
+  sizeVariant?: 'original' | 'thumbnail' | 'medium' | 'full';
+  baseKey?: string; // For consistent keys across size variants
 }
 
 export interface UploadImageResult {
   key: string;
   url: string;
+  baseKey: string; // The base key for generating other variants
 }
 
 @Injectable()
@@ -59,13 +62,17 @@ export class S3Service {
    * Upload an image to S3
    */
   async uploadImage(options: UploadImageOptions): Promise<UploadImageResult> {
-    const { buffer, filename, mimeType, userId } = options;
+    const { buffer, filename, mimeType, userId, sizeVariant, baseKey } = options;
 
-    // Generate S3 key: {userId}/{timestamp}-{uuid}-{sanitizedFilename}
-    const timestamp = Date.now();
-    const uuid = randomUUID();
-    const sanitizedFilename = this.sanitizeFilename(filename);
-    const key = `${userId}/${timestamp}-${uuid}-${sanitizedFilename}`;
+    // Generate or use provided base key
+    const base = baseKey || `${Date.now()}-${randomUUID()}`;
+
+    // Extract file extension
+    const extension = this.getExtension(filename, mimeType);
+
+    // Generate S3 key with suffix pattern: {userId}/{baseKey}-{variant}.{ext}
+    const variantSuffix = sizeVariant || 'original';
+    const key = `${userId}/${base}-${variantSuffix}.${extension}`;
 
     // Prepare upload parameters
     const uploadParams: PutObjectCommandInput = {
@@ -86,7 +93,7 @@ export class S3Service {
 
       this.logger.log(`Successfully uploaded image to S3: ${key}`);
 
-      return { key, url };
+      return { key, url, baseKey: base };
     } catch (error) {
       this.logger.error(`Failed to upload image to S3: ${error.message}`, error.stack);
       throw new Error(`Failed to upload image: ${error.message}`);
@@ -177,6 +184,28 @@ export class S3Service {
       this.logger.error(`Failed to parse URL: ${url}`, error.stack);
       return null;
     }
+  }
+
+  /**
+   * Get file extension from filename or mime type
+   */
+  private getExtension(filename: string, mimeType: string): string {
+    // Try to extract from filename first
+    const match = filename.match(/\.([^.]+)$/);
+    if (match) {
+      return match[1].toLowerCase();
+    }
+
+    // Fall back to mime type
+    const mimeExtMap: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/jpg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/gif": "gif",
+    };
+
+    return mimeExtMap[mimeType] || "jpg";
   }
 
   /**
