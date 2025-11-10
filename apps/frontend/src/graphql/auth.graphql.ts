@@ -66,6 +66,7 @@ export const ME_QUERY = gql`
           id
           name
           communityId
+          canCreateCharacter
           canEditCharacter
           canCreateOrphanedCharacter
         }
