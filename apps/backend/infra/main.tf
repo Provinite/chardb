@@ -24,6 +24,9 @@ module "backend_docker_host" {
   enable_api_gateway = var.enable_api_gateway
   backend_port       = var.backend_port
 
+  # S3 image storage
+  s3_images_bucket_arn = var.s3_images_bucket_arn
+
   # DeviantArt OAuth Configuration
   deviantart_client_id     = var.deviantart_client_id
   deviantart_client_secret = var.deviantart_client_secret
