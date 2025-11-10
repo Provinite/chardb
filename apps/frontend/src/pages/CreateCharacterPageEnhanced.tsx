@@ -457,6 +457,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             selectedVariant={selectedVariant}
             onSpeciesChange={setSelectedSpecies}
             onVariantChange={setSelectedVariant}
+            error={!selectedSpecies ? "Species selection is required. Non-species character creation coming soon to all users!" : undefined}
           />
         </Section>
 
@@ -624,7 +625,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           </CancelButton>
           <Button
             type="submit"
-            disabled={isSubmitting || (characterTarget?.type === 'pending' && !isGrantTargetValid)}
+            disabled={isSubmitting || !selectedSpecies || (characterTarget?.type === 'pending' && !isGrantTargetValid)}
           >
             {isSubmitting ? "Creating..." : "Create Character"}
           </Button>
