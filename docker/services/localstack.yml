@@ -1,0 +1,38 @@
+# LocalStack - Local AWS Cloud Stack
+# Provides local S3 for development and testing
+#
+# Services:
+# - S3 (Simple Storage Service) for image uploads
+#
+# Access:
+# - S3 API: http://localhost:4566
+# - Health: http://localhost:4566/_localstack/health
+#
+# AWS CLI usage:
+#   aws --endpoint-url=http://localhost:4566 s3 ls
+#
+# Configuration is in init-aws.sh which runs on startup
+
+services:
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: chardb-localstack
+    ports:
+      - "4566:4566"            # LocalStack Gateway
+      - "4510-4559:4510-4559"  # External services port range
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - "./localstack:/etc/localstack/init/ready.d"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - chardb-network
+
+networks:
+  chardb-network:
+    external: true
