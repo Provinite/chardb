@@ -8,6 +8,7 @@ import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import type { Prisma, Visibility, TextFormatting } from "@chardb/database";
 import * as path from "path";
+import { S3Service } from "../images/s3.service";
 
 /**
  * Service layer input types for media operations.
@@ -105,6 +106,7 @@ export class MediaService {
   constructor(
     private readonly db: DatabaseService,
     private readonly tagsService: TagsService,
+    private readonly s3Service: S3Service,
   ) {}
 
   /**
@@ -416,21 +418,18 @@ export class MediaService {
    * @param thumbnailUrl Optional thumbnail URL
    */
   private async deleteFromS3(imageUrl: string, thumbnailUrl?: string) {
-    // TODO: Implement S3 deletion using AWS SDK (https://github.com/Provinite/chardb/issues/49)
-    // This would require:
-    // 1. Parse the S3 key from the URL
-    // 2. Use AWS S3 client to delete the object(s)
-    // 3. Handle both main image and thumbnail
-    
-    this.logger.warn('S3 file cleanup not implemented yet');
-    
-    // Example implementation:
-    // const s3Key = this.extractS3KeyFromUrl(imageUrl);
-    // await this.s3Client.deleteObject({ Bucket: this.bucketName, Key: s3Key }).promise();
-    // if (thumbnailUrl) {
-    //   const thumbnailKey = this.extractS3KeyFromUrl(thumbnailUrl);
-    //   await this.s3Client.deleteObject({ Bucket: this.bucketName, Key: thumbnailKey }).promise();
-    // }
+    try {
+      const urlsToDelete = [imageUrl];
+      if (thumbnailUrl) {
+        urlsToDelete.push(thumbnailUrl);
+      }
+
+      await this.s3Service.deleteImages(urlsToDelete);
+      this.logger.log(`Deleted ${urlsToDelete.length} image(s) from S3`);
+    } catch (error) {
+      this.logger.error(`Failed to delete images from S3: ${error.message}`, error.stack);
+      // Don't throw - deletion failures shouldn't break the application
+    }
   }
 
   /**

@@ -12,6 +12,7 @@ import * as sharp from "sharp";
 import { v4 as uuid } from "uuid";
 import { extname } from "path";
 import type { Image, Media, User } from "@chardb/database";
+import { S3Service } from "./s3.service";
 
 export interface UploadImageInput {
   file: Express.Multer.File;
@@ -65,6 +66,7 @@ export class ImagesService {
   constructor(
     private readonly db: DatabaseService,
     private readonly tagsService: TagsService,
+    private readonly s3Service: S3Service,
   ) {}
 
   async upload(
@@ -108,14 +110,24 @@ export class ImagesService {
       file.buffer,
     );
 
-    // For now, we'll store base64 encoded images in the database
-    // In production, you'd upload to S3/CloudStorage and store URLs
-    const imageUrl = `data:${file.mimetype};base64,${processedImage.toString("base64")}`;
+    // Upload processed image and thumbnail to S3
+    const [imageUploadResult, thumbnailUploadResult] = await Promise.all([
+      this.s3Service.uploadImage({
+        buffer: processedImage,
+        filename: file.originalname,
+        mimeType: file.mimetype,
+        userId,
+      }),
+      this.s3Service.uploadImage({
+        buffer: thumbnail,
+        filename: `thumbnail-${file.originalname}`,
+        mimeType: file.mimetype === "image/png" ? "image/png" : "image/jpeg",
+        userId,
+      }),
+    ]);
 
-    // Determine thumbnail MIME type based on original format
-    const thumbnailMimeType =
-      file.mimetype === "image/png" ? "image/png" : "image/jpeg";
-    const thumbnailUrl = `data:${thumbnailMimeType};base64,${thumbnail.toString("base64")}`;
+    const imageUrl = imageUploadResult.url;
+    const thumbnailUrl = thumbnailUploadResult.url;
 
     // Use transaction to create both image and media records
     const result = await this.db.$transaction(async (tx) => {
