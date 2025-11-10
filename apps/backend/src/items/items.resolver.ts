@@ -31,6 +31,7 @@ import { Community } from "../communities/entities/community.entity";
 import { Image } from "../images/entities/image.entity";
 import { User } from "../users/entities/user.entity";
 import { DatabaseService } from "../database/database.service";
+import { mapPrismaImageToGraphQL } from "../images/utils/image-resolver-mappers";
 import { CommunityColor } from "../community-colors/entities/community-color.entity";
 import {
   CreateItemTypeInput,
@@ -80,6 +81,7 @@ export class ItemsResolver {
       isConsumable: input.isConsumable ?? false,
       imageUrl: input.imageUrl,
       iconUrl: input.iconUrl,
+      image: input.imageId ? { connect: { id: input.imageId } } : undefined,
       color: input.colorId ? { connect: { id: input.colorId } } : undefined,
       metadata: input.metadata || {},
       community: {
@@ -108,6 +110,12 @@ export class ItemsResolver {
       isConsumable: input.isConsumable,
       imageUrl: input.imageUrl,
       iconUrl: input.iconUrl,
+      image:
+        input.imageId !== undefined
+          ? input.imageId
+            ? { connect: { id: input.imageId } }
+            : { disconnect: true }
+          : undefined,
       color:
         input.colorId !== undefined
           ? input.colorId
@@ -238,16 +246,22 @@ export class ItemsResolver {
   async resolveImage(
     @Parent() itemType: ItemTypeEntity,
   ): Promise<Image | null> {
-    if (!('imageId' in itemType) || !(itemType as any).imageId) {
+    if (!itemType.imageId) {
       return null;
     }
-    return this.database.image.findUnique({
-      where: { id: (itemType as any).imageId },
+    const prismaImage = await this.database.image.findUnique({
+      where: { id: itemType.imageId },
       include: {
         uploader: true,
         artist: true,
       },
-    }) as any;
+    });
+
+    if (!prismaImage) {
+      return null;
+    }
+
+    return mapPrismaImageToGraphQL(prismaImage);
   }
 }
 

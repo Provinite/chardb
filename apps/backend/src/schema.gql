@@ -481,6 +481,7 @@ input CreateItemTypeInput {
   communityId: ID!
   description: String
   iconUrl: String
+  imageId: ID
   imageUrl: String
   isConsumable: Boolean! = false
   isStackable: Boolean! = true
@@ -2569,6 +2570,7 @@ input UpdateItemTypeInput {
   colorId: ID
   description: String
   iconUrl: String
+  imageId: ID
   imageUrl: String
   isConsumable: Boolean
   isStackable: Boolean

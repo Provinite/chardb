@@ -42,6 +42,7 @@ import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middl
 import { CommunityMember } from "../community-members/entities/community-member.entity";
 import { DatabaseService } from "../database/database.service";
 import { Image } from "../images/entities/image.entity";
+import { mapPrismaImageToGraphQL } from "../images/utils/image-resolver-mappers";
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -254,16 +255,22 @@ export class UsersResolver {
   @AllowUnauthenticated()
   @ResolveField("avatarImage", () => Image, { nullable: true })
   async resolveAvatarImage(@Parent() user: User): Promise<Image | null> {
-    if (!('avatarImageId' in user) || !(user as any).avatarImageId) {
+    if (!user.avatarImageId) {
       return null;
     }
-    return this.database.image.findUnique({
-      where: { id: (user as any).avatarImageId },
+    const prismaImage = await this.database.image.findUnique({
+      where: { id: user.avatarImageId },
       include: {
         uploader: true,
         artist: true,
       },
-    }) as any;
+    });
+
+    if (!prismaImage) {
+      return null;
+    }
+
+    return mapPrismaImageToGraphQL(prismaImage);
   }
 
   @AllowAnyAuthenticated()

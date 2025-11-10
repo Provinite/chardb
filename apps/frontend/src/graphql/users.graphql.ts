@@ -8,7 +8,12 @@ export const GET_USER_PROFILE = gql`
         username
         displayName
         bio
-        avatarUrl
+        avatarImage {
+          id
+          originalUrl
+          thumbnailUrl
+          altText
+        }
         location
         website
         isVerified
@@ -117,7 +122,12 @@ export const UPDATE_PROFILE = gql`
       username
       displayName
       bio
-      avatarUrl
+      avatarImage {
+        id
+        originalUrl
+        thumbnailUrl
+        altText
+      }
       location
       website
       dateOfBirth

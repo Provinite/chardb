@@ -3385,30 +3385,30 @@ export type RolesByCommunityQueryVariables = Exact<{
 
 export type RolesByCommunityQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Role', id: string, name: string, canCreateInviteCode: boolean, community: { __typename?: 'Community', id: string, name: string } }> } };
 
-export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
+export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
 
-export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null };
+export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null };
 
 export type GetItemTypesQueryVariables = Exact<{
   filters?: InputMaybe<ItemTypeFiltersInput>;
 }>;
 
 
-export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
+export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type GetItemTypeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateItemTypeMutationVariables = Exact<{
   input: CreateItemTypeInput;
 }>;
 
 
-export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type UpdateItemTypeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3416,7 +3416,7 @@ export type UpdateItemTypeMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type DeleteItemTypeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3425,21 +3425,21 @@ export type DeleteItemTypeMutationVariables = Exact<{
 
 export type DeleteItemTypeMutation = { __typename?: 'Mutation', deleteItemType: boolean };
 
-export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> };
+export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> };
 
 export type GetMyInventoryQueryVariables = Exact<{
   communityId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> }> } };
+export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> }> } };
 
 export type GrantItemMutationVariables = Exact<{
   input: GrantItemInput;
 }>;
 
 
-export type GrantItemMutation = { __typename?: 'Mutation', grantItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null } };
+export type GrantItemMutation = { __typename?: 'Mutation', grantItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null } };
 
 export type UpdateItemMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3447,7 +3447,7 @@ export type UpdateItemMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null } };
+export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, imageUrl: string | null, iconUrl: string | null, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null } };
 
 export type DeleteItemMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3861,7 +3861,7 @@ export type GetUserProfileQueryVariables = Exact<{
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, filename: string, originalUrl: string, thumbnailUrl: string | null } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> } | null };
+export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, filename: string, originalUrl: string, thumbnailUrl: string | null } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> } | null };
 
 export type GetUserStatsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -3875,7 +3875,7 @@ export type UpdateProfileMutationVariables = Exact<{
 }>;
 
 
-export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, createdAt: string, updatedAt: string } };
+export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } };
 
 export const CommunityMemberUserFragmentDoc = gql`
     fragment CommunityMemberUser on User {
@@ -3953,6 +3953,12 @@ export const ItemTypeFieldsFragmentDoc = gql`
   isConsumable
   imageUrl
   iconUrl
+  image {
+    id
+    originalUrl
+    thumbnailUrl
+    altText
+  }
   colorId
   color {
     id
@@ -10389,7 +10395,12 @@ export const GetUserProfileDocument = gql`
       username
       displayName
       bio
-      avatarUrl
+      avatarImage {
+        id
+        originalUrl
+        thumbnailUrl
+        altText
+      }
       location
       website
       isVerified
@@ -10562,7 +10573,12 @@ export const UpdateProfileDocument = gql`
     username
     displayName
     bio
-    avatarUrl
+    avatarImage {
+      id
+      originalUrl
+      thumbnailUrl
+      altText
+    }
     location
     website
     dateOfBirth

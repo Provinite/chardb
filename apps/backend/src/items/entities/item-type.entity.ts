@@ -39,6 +39,9 @@ export class ItemType {
   @Field({ nullable: true })
   iconUrl?: string;
 
+  // Not a GraphQL field - used internally by field resolver
+  imageId?: string;
+
   @Field(() => Image, { nullable: true })
   image?: Image;
 

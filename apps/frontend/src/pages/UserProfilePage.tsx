@@ -335,8 +335,11 @@ export const UserProfilePage: React.FC = () => {
   return (
     <Container>
       <ProfileHeader>
-        {user.avatarUrl ? (
-          <Avatar src={user.avatarUrl} alt={`${user.username}'s avatar`} />
+        {user.avatarImage ? (
+          <Avatar
+            src={user.avatarImage.thumbnailUrl || user.avatarImage.originalUrl}
+            alt={user.avatarImage.altText || `${user.username}'s avatar`}
+          />
         ) : (
           <AvatarPlaceholder>
             {user.displayName?.[0] || user.username[0]}

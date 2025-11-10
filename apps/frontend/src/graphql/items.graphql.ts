@@ -15,6 +15,12 @@ export const ITEM_TYPE_FRAGMENT = gql`
     isConsumable
     imageUrl
     iconUrl
+    image {
+      id
+      originalUrl
+      thumbnailUrl
+      altText
+    }
     colorId
     color {
       id

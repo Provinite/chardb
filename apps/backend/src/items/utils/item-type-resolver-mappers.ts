@@ -25,6 +25,7 @@ export function mapPrismaItemTypeToGraphQL(
     isConsumable: prismaItemType.isConsumable,
     imageUrl: prismaItemType.imageUrl ?? undefined,
     iconUrl: prismaItemType.iconUrl ?? undefined,
+    imageId: prismaItemType.imageId ?? undefined,
     colorId: prismaItemType.colorId ?? undefined,
     metadata: prismaItemType.metadata,
     createdAt: prismaItemType.createdAt,

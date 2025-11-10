@@ -53,6 +53,7 @@ export function mapPrismaUserToGraphQL(prismaUser: PrismaUser): User {
     displayName: prismaUser.displayName ?? undefined,
     bio: prismaUser.bio ?? undefined,
     avatarUrl: prismaUser.avatarUrl ?? undefined,
+    avatarImageId: prismaUser.avatarImageId ?? undefined,
     location: prismaUser.location ?? undefined,
     website: prismaUser.website ?? undefined,
     dateOfBirth: prismaUser.dateOfBirth ?? undefined,

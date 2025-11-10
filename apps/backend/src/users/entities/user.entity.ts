@@ -24,6 +24,9 @@ export class User {
   @Field({ nullable: true })
   avatarUrl?: string;
 
+  // Not a GraphQL field - used internally by field resolver
+  avatarImageId?: string;
+
   @Field(() => Image, { nullable: true })
   avatarImage?: Image;
 
