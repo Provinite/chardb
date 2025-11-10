@@ -517,7 +517,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
                   </ItemTypeIcon>
                   <ItemTypeInfo>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <ItemTypeName>{itemType.name}</ItemTypeName>
+                      <ItemTypeName title={itemType.name}>{itemType.name}</ItemTypeName>
                       {itemType.color && (
                         <ColorPip color={itemType.color.hexCode} size="sm" />
                       )}

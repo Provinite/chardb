@@ -227,7 +227,7 @@ export const CommunityInventoryPage: React.FC = () => {
               </ItemIconContainer>
 
               <ItemInfo>
-                <ItemName>{item.itemType.name}</ItemName>
+                <ItemName title={item.itemType.name}>{item.itemType.name}</ItemName>
                 {item.itemType.category && (
                   <ItemCategory>{item.itemType.category}</ItemCategory>
                 )}
