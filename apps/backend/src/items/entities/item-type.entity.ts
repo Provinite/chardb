@@ -33,12 +33,6 @@ export class ItemType {
   @Field()
   isConsumable: boolean;
 
-  @Field({ nullable: true })
-  imageUrl?: string;
-
-  @Field({ nullable: true })
-  iconUrl?: string;
-
   // Not a GraphQL field - used internally by field resolver
   imageId?: string;
 

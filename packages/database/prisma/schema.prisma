@@ -48,7 +48,6 @@ model User {
   passwordHash    String    @map("password_hash") @db.VarChar(255)
   displayName     String?   @map("display_name") @db.VarChar(100)
   bio             String?   @db.Text
-  avatarUrl       String?   @map("avatar_url") @db.VarChar(500)
   avatarImageId   String?   @map("avatar_image_id")
   location        String?   @db.VarChar(100)
   website         String?   @db.VarChar(500)
@@ -594,8 +593,6 @@ model ItemType {
   isConsumable   Boolean @default(false) @map("is_consumable")
 
   // Visual properties
-  imageUrl       String? @db.VarChar(500) @map("image_url")
-  iconUrl        String? @db.VarChar(500) @map("icon_url")
   imageId        String? @map("image_id")
   colorId        String? @map("color_id")
 

@@ -958,10 +958,8 @@ type ItemType {
   communityId: ID!
   createdAt: DateTime!
   description: String
-  iconUrl: String
   id: ID!
   image: Image
-  imageUrl: String
   isConsumable: Boolean!
   isStackable: Boolean!
   isTradeable: Boolean!
@@ -2742,7 +2740,6 @@ input UpdateUserInput {
 
 type User {
   avatarImage: Image
-  avatarUrl: String
   bio: String
   canCreateCommunity: Boolean!
   canCreateInviteCode: Boolean!
