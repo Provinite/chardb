@@ -458,6 +458,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             onSpeciesChange={setSelectedSpecies}
             onVariantChange={setSelectedVariant}
             error={!selectedSpecies ? "Species selection is required. Non-species character creation coming soon to all users!" : undefined}
+            userCommunityMemberships={user?.communityMemberships}
           />
         </Section>
 
