@@ -1,21 +1,37 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { LikeableType, ToggleLikeInput, LikeResult, LikeStatus } from './dto/like.dto';
-import { ToggleFollowInput, FollowResult, FollowStatus } from './dto/follow.dto';
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import {
+  LikeableType,
+  ToggleLikeInput,
+  LikeResult,
+  LikeStatus,
+} from "./dto/like.dto";
+import {
+  ToggleFollowInput,
+  FollowResult,
+  FollowStatus,
+} from "./dto/follow.dto";
 
 @Injectable()
 export class SocialService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async toggleLike(userId: string, input: ToggleLikeInput): Promise<LikeResult> {
+  async toggleLike(
+    userId: string,
+    input: ToggleLikeInput,
+  ): Promise<LikeResult> {
     // Validate that the entity exists
     await this.validateEntity(input.entityType, input.entityId);
 
     // Use transaction for atomicity
     const result = await this.databaseService.$transaction(async (tx) => {
       // Build where clause based on entity type
-      const whereClause = this.buildLikeWhereClause(userId, input.entityType, input.entityId);
-      
+      const whereClause = this.buildLikeWhereClause(
+        userId,
+        input.entityType,
+        input.entityId,
+      );
+
       const existingLike = await tx.like.findUnique({
         where: whereClause,
       });
@@ -30,7 +46,11 @@ export class SocialService {
         isLiked = false;
       } else {
         // Like - create new like
-        const createData = this.buildLikeCreateData(userId, input.entityType, input.entityId);
+        const createData = this.buildLikeCreateData(
+          userId,
+          input.entityType,
+          input.entityId,
+        );
         await tx.like.create({
           data: createData,
         });
@@ -38,7 +58,10 @@ export class SocialService {
       }
 
       // Get updated count
-      const countWhere = this.buildLikeCountWhereClause(input.entityType, input.entityId);
+      const countWhere = this.buildLikeCountWhereClause(
+        input.entityType,
+        input.entityId,
+      );
       const likesCount = await tx.like.count({
         where: countWhere,
       });
@@ -68,7 +91,11 @@ export class SocialService {
     // Check if user has liked (if user is provided)
     let isLiked = false;
     if (userId) {
-      const whereClause = this.buildLikeWhereClause(userId, entityType, entityId);
+      const whereClause = this.buildLikeWhereClause(
+        userId,
+        entityType,
+        entityId,
+      );
       const userLike = await this.databaseService.like.findUnique({
         where: whereClause,
       });
@@ -81,7 +108,10 @@ export class SocialService {
     };
   }
 
-  async getLikesCount(entityType: LikeableType, entityId: string): Promise<number> {
+  async getLikesCount(
+    entityType: LikeableType,
+    entityId: string,
+  ): Promise<number> {
     const countWhere = this.buildLikeCountWhereClause(entityType, entityId);
     return this.databaseService.like.count({
       where: countWhere,
@@ -105,7 +135,11 @@ export class SocialService {
     return !!userLike;
   }
 
-  private buildLikeWhereClause(userId: string, entityType: LikeableType, entityId: string) {
+  private buildLikeWhereClause(
+    userId: string,
+    entityType: LikeableType,
+    entityId: string,
+  ) {
     switch (entityType) {
       case LikeableType.CHARACTER:
         return { userId_characterId: { userId, characterId: entityId } };
@@ -122,7 +156,11 @@ export class SocialService {
     }
   }
 
-  private buildLikeCreateData(userId: string, entityType: LikeableType, entityId: string) {
+  private buildLikeCreateData(
+    userId: string,
+    entityType: LikeableType,
+    entityId: string,
+  ) {
     const baseData = { userId };
     switch (entityType) {
       case LikeableType.CHARACTER:
@@ -140,7 +178,10 @@ export class SocialService {
     }
   }
 
-  private buildLikeCountWhereClause(entityType: LikeableType, entityId: string) {
+  private buildLikeCountWhereClause(
+    entityType: LikeableType,
+    entityId: string,
+  ) {
     switch (entityType) {
       case LikeableType.CHARACTER:
         return { characterId: entityId };
@@ -157,7 +198,10 @@ export class SocialService {
     }
   }
 
-  private async validateEntity(entityType: LikeableType, entityId: string): Promise<void> {
+  private async validateEntity(
+    entityType: LikeableType,
+    entityId: string,
+  ): Promise<void> {
     let exists = false;
 
     switch (entityType) {
@@ -200,12 +244,15 @@ export class SocialService {
 
   // Follow System Methods
 
-  async toggleFollow(userId: string, input: ToggleFollowInput): Promise<FollowResult> {
+  async toggleFollow(
+    userId: string,
+    input: ToggleFollowInput,
+  ): Promise<FollowResult> {
     const { targetUserId } = input;
 
     // Prevent self-following
     if (userId === targetUserId) {
-      throw new BadRequestException('Users cannot follow themselves');
+      throw new BadRequestException("Users cannot follow themselves");
     }
 
     // Validate that the target user exists
@@ -333,7 +380,7 @@ export class SocialService {
     });
 
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException("User not found");
     }
   }
 
@@ -349,8 +396,8 @@ export class SocialService {
       },
     });
 
-    const characterIds = likes.map(like => like.characterId).filter(Boolean);
-    
+    const characterIds = likes.map((like) => like.characterId).filter(Boolean);
+
     if (characterIds.length === 0) {
       return [];
     }
@@ -358,7 +405,7 @@ export class SocialService {
     return this.databaseService.character.findMany({
       where: {
         id: { in: characterIds.filter((id): id is string => id !== null) },
-        visibility: 'PUBLIC', // Only return public characters
+        visibility: "PUBLIC", // Only return public characters
       },
       include: {
         owner: true,
@@ -374,7 +421,7 @@ export class SocialService {
         },
       },
       orderBy: {
-        updatedAt: 'desc',
+        updatedAt: "desc",
       },
     });
   }
@@ -390,8 +437,8 @@ export class SocialService {
       },
     });
 
-    const galleryIds = likes.map(like => like.galleryId).filter(Boolean);
-    
+    const galleryIds = likes.map((like) => like.galleryId).filter(Boolean);
+
     if (galleryIds.length === 0) {
       return [];
     }
@@ -399,18 +446,17 @@ export class SocialService {
     return this.databaseService.gallery.findMany({
       where: {
         id: { in: galleryIds.filter((id): id is string => id !== null) },
-        visibility: 'PUBLIC', // Only return public galleries
+        visibility: "PUBLIC", // Only return public galleries
       },
       include: {
         owner: true,
         character: true,
         _count: {
-          select: {
-          },
+          select: {},
         },
       },
       orderBy: {
-        updatedAt: 'desc',
+        updatedAt: "desc",
       },
     });
   }
@@ -426,8 +472,8 @@ export class SocialService {
       },
     });
 
-    const imageIds = likes.map(like => like.imageId).filter(Boolean);
-    
+    const imageIds = likes.map((like) => like.imageId).filter(Boolean);
+
     if (imageIds.length === 0) {
       return [];
     }
@@ -441,7 +487,7 @@ export class SocialService {
         artist: true,
       },
       orderBy: {
-        updatedAt: 'desc',
+        updatedAt: "desc",
       },
     });
   }
@@ -460,14 +506,28 @@ export class SocialService {
     // Add additional filters if provided
     const where = {
       ...baseWhere,
-      ...(filters?.search ? {
-        OR: [
-          { title: { contains: filters.search, mode: 'insensitive' as const } },
-          { description: { contains: filters.search, mode: 'insensitive' as const } },
-        ],
-      } : {}),
-      ...(filters?.mediaType === 'IMAGE' ? { imageId: { not: null } } : {}),
-      ...(filters?.mediaType === 'TEXT' ? { textContentId: { not: null } } : {}),
+      ...(filters?.search
+        ? {
+            OR: [
+              {
+                title: {
+                  contains: filters.search,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                description: {
+                  contains: filters.search,
+                  mode: "insensitive" as const,
+                },
+              },
+            ],
+          }
+        : {}),
+      ...(filters?.mediaType === "IMAGE" ? { imageId: { not: null } } : {}),
+      ...(filters?.mediaType === "TEXT"
+        ? { textContentId: { not: null } }
+        : {}),
       ...(filters?.characterId ? { characterId: filters.characterId } : {}),
       ...(filters?.galleryId ? { galleryId: filters.galleryId } : {}),
       ...(filters?.visibility ? { visibility: filters.visibility } : {}),
@@ -504,7 +564,7 @@ export class SocialService {
           },
         },
         orderBy: {
-          updatedAt: 'desc',
+          updatedAt: "desc",
         },
         take: limit,
         skip: offset,
@@ -520,7 +580,9 @@ export class SocialService {
   }
 
   // Methods for follow lists and activity feed
-  async getFollowers(username: string): Promise<{ user: any; followers: any[] }> {
+  async getFollowers(
+    username: string,
+  ): Promise<{ user: any; followers: any[] }> {
     // First find the user by username
     const user = await this.databaseService.user.findUnique({
       where: { username },
@@ -532,7 +594,7 @@ export class SocialService {
     });
 
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException("User not found");
     }
 
     // Get all followers
@@ -546,17 +608,17 @@ export class SocialService {
             id: true,
             username: true,
             displayName: true,
-            avatarUrl: true,
+            avatarImageId: true,
             bio: true,
           },
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
-    const followers = follows.map(follow => follow.follower);
+    const followers = follows.map((follow) => follow.follower);
 
     return {
       user,
@@ -564,7 +626,9 @@ export class SocialService {
     };
   }
 
-  async getFollowing(username: string): Promise<{ user: any; following: any[] }> {
+  async getFollowing(
+    username: string,
+  ): Promise<{ user: any; following: any[] }> {
     // First find the user by username
     const user = await this.databaseService.user.findUnique({
       where: { username },
@@ -576,7 +640,7 @@ export class SocialService {
     });
 
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException("User not found");
     }
 
     // Get all users this user is following
@@ -590,17 +654,17 @@ export class SocialService {
             id: true,
             username: true,
             displayName: true,
-            avatarUrl: true,
+            avatarImageId: true,
             bio: true,
           },
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
-    const following = follows.map(follow => follow.following);
+    const following = follows.map((follow) => follow.following);
 
     return {
       user,
@@ -623,7 +687,11 @@ export class SocialService {
     });
   }
 
-  async getActivityFeed(userId: string, limit = 20, offset = 0): Promise<any[]> {
+  async getActivityFeed(
+    userId: string,
+    limit = 20,
+    offset = 0,
+  ): Promise<any[]> {
     // Get list of users that the current user follows
     const following = await this.databaseService.follow.findMany({
       where: {
@@ -634,8 +702,8 @@ export class SocialService {
       },
     });
 
-    const followingUserIds = following.map(f => f.followingId);
-    
+    const followingUserIds = following.map((f) => f.followingId);
+
     if (followingUserIds.length === 0) {
       return [];
     }
@@ -656,12 +724,12 @@ export class SocialService {
               id: true,
               username: true,
               displayName: true,
-              avatarUrl: true,
+              avatarImageId: true,
             },
           },
         },
         orderBy: {
-          createdAt: 'desc',
+          createdAt: "desc",
         },
         take: Math.floor(limit / 3),
         skip: Math.floor(offset / 3),
@@ -678,12 +746,12 @@ export class SocialService {
               id: true,
               username: true,
               displayName: true,
-              avatarUrl: true,
+              avatarImageId: true,
             },
           },
         },
         orderBy: {
-          createdAt: 'desc',
+          createdAt: "desc",
         },
         take: Math.floor(limit / 3),
         skip: Math.floor(offset / 3),
@@ -700,12 +768,12 @@ export class SocialService {
               id: true,
               username: true,
               displayName: true,
-              avatarUrl: true,
+              avatarImageId: true,
             },
           },
         },
         orderBy: {
-          createdAt: 'desc',
+          createdAt: "desc",
         },
         take: Math.floor(limit / 3),
         skip: Math.floor(offset / 3),
@@ -714,9 +782,9 @@ export class SocialService {
 
     // Transform into activity feed format
     const activities = [
-      ...characters.map(character => ({
+      ...characters.map((character) => ({
         id: `character_${character.id}`,
-        type: 'CHARACTER_CREATED',
+        type: "CHARACTER_CREATED",
         entityId: character.id,
         createdAt: character.createdAt,
         user: character.owner,
@@ -724,9 +792,9 @@ export class SocialService {
           name: character.name,
         },
       })),
-      ...galleries.map(gallery => ({
+      ...galleries.map((gallery) => ({
         id: `gallery_${gallery.id}`,
-        type: 'GALLERY_CREATED',
+        type: "GALLERY_CREATED",
         entityId: gallery.id,
         createdAt: gallery.createdAt,
         user: gallery.owner,
@@ -735,9 +803,9 @@ export class SocialService {
           description: gallery.description,
         },
       })),
-      ...images.map(image => ({
+      ...images.map((image) => ({
         id: `image_${image.id}`,
-        type: 'IMAGE_UPLOADED',
+        type: "IMAGE_UPLOADED",
         entityId: image.id,
         createdAt: image.createdAt,
         user: image.uploader,
@@ -750,7 +818,10 @@ export class SocialService {
 
     // Sort by creation date and limit results
     return activities
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
       .slice(0, limit);
   }
 }

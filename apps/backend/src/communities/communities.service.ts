@@ -203,7 +203,7 @@ export class CommunitiesService {
         id: true,
         username: true,
         displayName: true,
-        avatarUrl: true,
+        avatarImageId: true,
       },
       take: Math.min(filters.limit || 10, 20), // Max 20
       orderBy: { username: "asc" },

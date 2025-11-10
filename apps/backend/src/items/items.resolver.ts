@@ -79,8 +79,6 @@ export class ItemsResolver {
       maxStackSize: input.maxStackSize,
       isTradeable: input.isTradeable ?? true,
       isConsumable: input.isConsumable ?? false,
-      imageUrl: input.imageUrl,
-      iconUrl: input.iconUrl,
       image: input.imageId ? { connect: { id: input.imageId } } : undefined,
       color: input.colorId ? { connect: { id: input.colorId } } : undefined,
       metadata: input.metadata || {},
@@ -108,8 +106,6 @@ export class ItemsResolver {
       maxStackSize: input.maxStackSize,
       isTradeable: input.isTradeable,
       isConsumable: input.isConsumable,
-      imageUrl: input.imageUrl,
-      iconUrl: input.iconUrl,
       image:
         input.imageId !== undefined
           ? input.imageId
