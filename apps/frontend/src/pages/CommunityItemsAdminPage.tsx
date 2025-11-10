@@ -506,10 +506,10 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <ItemTypeCard key={itemType.id}>
                 <ItemTypeHeader>
                   <ItemTypeIcon color={itemType.color?.hexCode}>
-                    {itemType.iconUrl ? (
+                    {itemType.image ? (
                       <ItemTypeImage
-                        src={itemType.iconUrl}
-                        alt={itemType.name}
+                        src={itemType.image.thumbnailUrl || itemType.image.originalUrl}
+                        alt={itemType.image.altText || itemType.name}
                       />
                     ) : (
                       <Package size={24} />

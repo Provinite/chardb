@@ -460,6 +460,7 @@ export type CreateItemTypeInput = {
   communityId: Scalars['ID']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   iconUrl?: InputMaybe<Scalars['String']['input']>;
+  imageId?: InputMaybe<Scalars['ID']['input']>;
   imageUrl?: InputMaybe<Scalars['String']['input']>;
   isConsumable?: Scalars['Boolean']['input'];
   isStackable?: Scalars['Boolean']['input'];
@@ -2655,6 +2656,7 @@ export type UpdateItemTypeInput = {
   colorId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   iconUrl?: InputMaybe<Scalars['String']['input']>;
+  imageId?: InputMaybe<Scalars['ID']['input']>;
   imageUrl?: InputMaybe<Scalars['String']['input']>;
   isConsumable?: InputMaybe<Scalars['Boolean']['input']>;
   isStackable?: InputMaybe<Scalars['Boolean']['input']>;
@@ -2913,7 +2915,7 @@ export type ResetPasswordMutation = { __typename?: 'Mutation', resetPassword: bo
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, avatarUrl: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, communityMemberships: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateCharacter: boolean, canEditCharacter: boolean, canCreateOrphanedCharacter: boolean } }> } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, location: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, communityMemberships: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateCharacter: boolean, canEditCharacter: boolean, canCreateOrphanedCharacter: boolean } }> } };
 
 export type GetCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -3003,7 +3005,7 @@ export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> };
 
-export type CommunityMemberUserFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null };
+export type CommunityMemberUserFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
 export type CommunitiesQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -3027,7 +3029,7 @@ export type GetCommunityMembersQueryVariables = Exact<{
 }>;
 
 
-export type GetCommunityMembersQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, members: Array<{ __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }> } };
+export type GetCommunityMembersQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, members: Array<{ __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }> } };
 
 export type CreateCommunityMutationVariables = Exact<{
   createCommunityInput: CreateCommunityInput;
@@ -3587,6 +3589,8 @@ export type UpdateCommunityMemberMutationVariables = Exact<{
 
 export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
 
+export type UserWithAvatarFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
+
 export type ToggleLikeMutationVariables = Exact<{
   input: ToggleLikeInput;
 }>;
@@ -3621,7 +3625,7 @@ export type CreateCommentMutationVariables = Exact<{
 }>;
 
 
-export type CreateCommentMutation = { __typename?: 'Mutation', createComment: { __typename?: 'Comment', id: string, content: string, createdAt: string, authorId: string, commentableId: string, commentableType: CommentableType, parentId: string | null, isHidden: boolean, likesCount: number, author: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, replies: Array<{ __typename?: 'Comment', id: string, content: string, createdAt: string, authorId: string, parentId: string | null, isHidden: boolean, likesCount: number, author: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> } };
+export type CreateCommentMutation = { __typename?: 'Mutation', createComment: { __typename?: 'Comment', id: string, content: string, createdAt: string, authorId: string, commentableId: string, commentableType: CommentableType, parentId: string | null, isHidden: boolean, likesCount: number, author: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, replies: Array<{ __typename?: 'Comment', id: string, content: string, createdAt: string, authorId: string, parentId: string | null, isHidden: boolean, likesCount: number, author: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } }> } };
 
 export type UpdateCommentMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3629,7 +3633,7 @@ export type UpdateCommentMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCommentMutation = { __typename?: 'Mutation', updateComment: { __typename?: 'Comment', id: string, content: string, createdAt: string, authorId: string, commentableId: string, commentableType: CommentableType, parentId: string | null, isHidden: boolean, likesCount: number, author: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } } };
+export type UpdateCommentMutation = { __typename?: 'Mutation', updateComment: { __typename?: 'Comment', id: string, content: string, createdAt: string, authorId: string, commentableId: string, commentableType: CommentableType, parentId: string | null, isHidden: boolean, likesCount: number, author: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } } };
 
 export type DeleteCommentMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3643,28 +3647,28 @@ export type GetCommentsQueryVariables = Exact<{
 }>;
 
 
-export type GetCommentsQuery = { __typename?: 'Query', comments: { __typename?: 'CommentConnection', total: number, comments: Array<{ __typename?: 'Comment', id: string, content: string, createdAt: string, authorId: string, commentableId: string, commentableType: CommentableType, parentId: string | null, isHidden: boolean, likesCount: number, author: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, replies: Array<{ __typename?: 'Comment', id: string, content: string, createdAt: string, authorId: string, parentId: string | null, isHidden: boolean, likesCount: number, author: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } }> }> } };
+export type GetCommentsQuery = { __typename?: 'Query', comments: { __typename?: 'CommentConnection', total: number, comments: Array<{ __typename?: 'Comment', id: string, content: string, createdAt: string, authorId: string, commentableId: string, commentableType: CommentableType, parentId: string | null, isHidden: boolean, likesCount: number, author: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, replies: Array<{ __typename?: 'Comment', id: string, content: string, createdAt: string, authorId: string, parentId: string | null, isHidden: boolean, likesCount: number, author: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } }> }> } };
 
 export type GetFollowersQueryVariables = Exact<{
   username: Scalars['String']['input'];
 }>;
 
 
-export type GetFollowersQuery = { __typename?: 'Query', getFollowers: { __typename?: 'FollowListResult', user: { __typename?: 'User', id: string, username: string, displayName: string | null }, followers: Array<{ __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null, bio: string | null }> } };
+export type GetFollowersQuery = { __typename?: 'Query', getFollowers: { __typename?: 'FollowListResult', user: { __typename?: 'User', id: string, username: string, displayName: string | null }, followers: Array<{ __typename?: 'User', bio: string | null, id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }> } };
 
 export type GetFollowingQueryVariables = Exact<{
   username: Scalars['String']['input'];
 }>;
 
 
-export type GetFollowingQuery = { __typename?: 'Query', getFollowing: { __typename?: 'FollowListResult', user: { __typename?: 'User', id: string, username: string, displayName: string | null }, following: Array<{ __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null, bio: string | null }> } };
+export type GetFollowingQuery = { __typename?: 'Query', getFollowing: { __typename?: 'FollowListResult', user: { __typename?: 'User', id: string, username: string, displayName: string | null }, following: Array<{ __typename?: 'User', bio: string | null, id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }> } };
 
 export type GetActivityFeedQueryVariables = Exact<{
   input?: InputMaybe<ActivityFeedInput>;
 }>;
 
 
-export type GetActivityFeedQuery = { __typename?: 'Query', activityFeed: Array<{ __typename?: 'ActivityItem', id: string, type: string, entityId: string, createdAt: string, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, content: { __typename?: 'ActivityContent', name: string | null, title: string | null, description: string | null } | null }> };
+export type GetActivityFeedQuery = { __typename?: 'Query', activityFeed: Array<{ __typename?: 'ActivityItem', id: string, type: string, entityId: string, createdAt: string, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, content: { __typename?: 'ActivityContent', name: string | null, title: string | null, description: string | null } | null }> };
 
 export type SpeciesDetailsFragment = { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } };
 
@@ -3856,12 +3860,14 @@ export type RemoveTraitListEntryMutationVariables = Exact<{
 
 export type RemoveTraitListEntryMutation = { __typename?: 'Mutation', removeTraitListEntry: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
+export type UserBasicFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
+
 export type GetUserProfileQueryVariables = Exact<{
   username: Scalars['String']['input'];
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null }, image: { __typename?: 'Image', id: string, filename: string, originalUrl: string, thumbnailUrl: string | null } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarUrl: string | null } | null }> } | null };
+export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, image: { __typename?: 'Image', id: string, filename: string, originalUrl: string, thumbnailUrl: string | null } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } | null };
 
 export type GetUserStatsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -3882,7 +3888,12 @@ export const CommunityMemberUserFragmentDoc = gql`
   id
   username
   displayName
-  avatarUrl
+  avatarImage {
+    id
+    originalUrl
+    thumbnailUrl
+    altText
+  }
 }
     `;
 export const CommunityColorFieldsFragmentDoc = gql`
@@ -4005,6 +4016,19 @@ export const InventoryFieldsFragmentDoc = gql`
   }
 }
     ${ItemFieldsFragmentDoc}`;
+export const UserWithAvatarFragmentDoc = gql`
+    fragment UserWithAvatar on User {
+  id
+  username
+  displayName
+  avatarImage {
+    id
+    originalUrl
+    thumbnailUrl
+    altText
+  }
+}
+    `;
 export const SpeciesDetailsFragmentDoc = gql`
     fragment SpeciesDetails on Species {
   id
@@ -4105,6 +4129,19 @@ export const TraitListEntryDetailsFragmentDoc = gql`
       name
       order
     }
+  }
+}
+    `;
+export const UserBasicFragmentDoc = gql`
+    fragment UserBasic on User {
+  id
+  username
+  displayName
+  avatarImage {
+    id
+    originalUrl
+    thumbnailUrl
+    altText
   }
 }
     `;
@@ -4277,7 +4314,12 @@ export const MeDocument = gql`
     email
     displayName
     bio
-    avatarUrl
+    avatarImage {
+      id
+      originalUrl
+      thumbnailUrl
+      altText
+    }
     location
     website
     dateOfBirth
@@ -9133,10 +9175,7 @@ export const CreateCommentDocument = gql`
     isHidden
     likesCount
     author {
-      id
-      username
-      displayName
-      avatarUrl
+      ...UserWithAvatar
     }
     replies {
       id
@@ -9147,15 +9186,12 @@ export const CreateCommentDocument = gql`
       isHidden
       likesCount
       author {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserWithAvatar
       }
     }
   }
 }
-    `;
+    ${UserWithAvatarFragmentDoc}`;
 export type CreateCommentMutationFn = Apollo.MutationFunction<CreateCommentMutation, CreateCommentMutationVariables>;
 
 /**
@@ -9195,14 +9231,11 @@ export const UpdateCommentDocument = gql`
     isHidden
     likesCount
     author {
-      id
-      username
-      displayName
-      avatarUrl
+      ...UserWithAvatar
     }
   }
 }
-    `;
+    ${UserWithAvatarFragmentDoc}`;
 export type UpdateCommentMutationFn = Apollo.MutationFunction<UpdateCommentMutation, UpdateCommentMutationVariables>;
 
 /**
@@ -9275,10 +9308,7 @@ export const GetCommentsDocument = gql`
       isHidden
       likesCount
       author {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserWithAvatar
       }
       replies {
         id
@@ -9289,17 +9319,14 @@ export const GetCommentsDocument = gql`
         isHidden
         likesCount
         author {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserWithAvatar
         }
       }
     }
     total
   }
 }
-    `;
+    ${UserWithAvatarFragmentDoc}`;
 
 /**
  * __useGetCommentsQuery__
@@ -9342,15 +9369,12 @@ export const GetFollowersDocument = gql`
       displayName
     }
     followers {
-      id
-      username
-      displayName
-      avatarUrl
+      ...UserWithAvatar
       bio
     }
   }
 }
-    `;
+    ${UserWithAvatarFragmentDoc}`;
 
 /**
  * __useGetFollowersQuery__
@@ -9393,15 +9417,12 @@ export const GetFollowingDocument = gql`
       displayName
     }
     following {
-      id
-      username
-      displayName
-      avatarUrl
+      ...UserWithAvatar
       bio
     }
   }
 }
-    `;
+    ${UserWithAvatarFragmentDoc}`;
 
 /**
  * __useGetFollowingQuery__
@@ -9443,10 +9464,7 @@ export const GetActivityFeedDocument = gql`
     entityId
     createdAt
     user {
-      id
-      username
-      displayName
-      avatarUrl
+      ...UserWithAvatar
     }
     content {
       name
@@ -9455,7 +9473,7 @@ export const GetActivityFeedDocument = gql`
     }
   }
 }
-    `;
+    ${UserWithAvatarFragmentDoc}`;
 
 /**
  * __useGetActivityFeedQuery__
@@ -10425,10 +10443,7 @@ export const GetUserProfileDocument = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
     }
     recentGalleries {
@@ -10438,10 +10453,7 @@ export const GetUserProfileDocument = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       character {
         id
@@ -10454,10 +10466,7 @@ export const GetUserProfileDocument = gql`
       description
       createdAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       image {
         id
@@ -10476,17 +10485,14 @@ export const GetUserProfileDocument = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
     }
     isOwnProfile
     canViewPrivateContent
   }
 }
-    `;
+    ${UserBasicFragmentDoc}`;
 
 /**
  * __useGetUserProfileQuery__

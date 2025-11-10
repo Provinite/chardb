@@ -96,7 +96,12 @@ export const Header: React.FC = () => {
               <NavLink to="/character/create">Create Character</NavLink>
               <NavLink to="/upload">Upload</NavLink>
               <UserInfo to={`/user/${user.username}`}>
-                {user.avatarUrl && <Avatar src={user.avatarUrl} alt={user.username} />}
+                {user.avatarImage && (
+                  <Avatar
+                    src={user.avatarImage.thumbnailUrl || user.avatarImage.originalUrl}
+                    alt={user.avatarImage.altText || user.username}
+                  />
+                )}
                 <Username>{user.displayName || user.username}</Username>
               </UserInfo>
               <Button variant="ghost" size="sm" onClick={handleLogout}>

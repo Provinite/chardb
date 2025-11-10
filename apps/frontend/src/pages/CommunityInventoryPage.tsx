@@ -215,10 +215,10 @@ export const CommunityInventoryPage: React.FC = () => {
           {items.map((item: any) => (
             <ItemCard key={item.id} color={item.itemType.color}>
               <ItemIconContainer color={item.itemType.color}>
-                {item.itemType.iconUrl || item.itemType.imageUrl ? (
+                {item.itemType.image ? (
                   <ItemImage
-                    src={item.itemType.iconUrl || item.itemType.imageUrl}
-                    alt={item.itemType.name}
+                    src={item.itemType.image.thumbnailUrl || item.itemType.image.originalUrl}
+                    alt={item.itemType.image.altText || item.itemType.name}
                   />
                 ) : (
                   <Package size={48} />

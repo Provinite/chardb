@@ -1,5 +1,20 @@
 import { gql } from '@apollo/client';
 
+// User fragment for social features
+const USER_AVATAR_FRAGMENT = gql`
+  fragment UserWithAvatar on User {
+    id
+    username
+    displayName
+    avatarImage {
+      id
+      originalUrl
+      thumbnailUrl
+      altText
+    }
+  }
+`;
+
 export const TOGGLE_LIKE = gql`
   mutation ToggleLike($input: ToggleLikeInput!) {
     toggleLike(input: $input) {
@@ -54,10 +69,7 @@ export const CREATE_COMMENT = gql`
       isHidden
       likesCount
       author {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserWithAvatar
       }
       replies {
         id
@@ -68,14 +80,12 @@ export const CREATE_COMMENT = gql`
         isHidden
         likesCount
         author {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserWithAvatar
         }
       }
     }
   }
+  ${USER_AVATAR_FRAGMENT}
 `;
 
 export const UPDATE_COMMENT = gql`
@@ -91,13 +101,11 @@ export const UPDATE_COMMENT = gql`
       isHidden
       likesCount
       author {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserWithAvatar
       }
     }
   }
+  ${USER_AVATAR_FRAGMENT}
 `;
 
 export const DELETE_COMMENT = gql`
@@ -120,10 +128,7 @@ export const GET_COMMENTS = gql`
         isHidden
         likesCount
         author {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserWithAvatar
         }
         replies {
           id
@@ -134,16 +139,14 @@ export const GET_COMMENTS = gql`
           isHidden
           likesCount
           author {
-            id
-            username
-            displayName
-            avatarUrl
+            ...UserWithAvatar
           }
         }
       }
       total
     }
   }
+  ${USER_AVATAR_FRAGMENT}
 `;
 
 export const GET_FOLLOWERS = gql`
@@ -155,14 +158,12 @@ export const GET_FOLLOWERS = gql`
         displayName
       }
       followers {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserWithAvatar
         bio
       }
     }
   }
+  ${USER_AVATAR_FRAGMENT}
 `;
 
 export const GET_FOLLOWING = gql`
@@ -174,14 +175,12 @@ export const GET_FOLLOWING = gql`
         displayName
       }
       following {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserWithAvatar
         bio
       }
     }
   }
+  ${USER_AVATAR_FRAGMENT}
 `;
 
 export const GET_ACTIVITY_FEED = gql`
@@ -192,10 +191,7 @@ export const GET_ACTIVITY_FEED = gql`
       entityId
       createdAt
       user {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserWithAvatar
       }
       content {
         name
@@ -204,4 +200,5 @@ export const GET_ACTIVITY_FEED = gql`
       }
     }
   }
+  ${USER_AVATAR_FRAGMENT}
 `;
