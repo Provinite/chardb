@@ -360,7 +360,7 @@ interface UploadFormData {
 
 interface UploadedImage {
   id: string;
-  url: string;
+  originalUrl: string;
   thumbnailUrl?: string;
   filename: string;
   altText?: string;
@@ -507,7 +507,7 @@ export const UploadImagePage: React.FC = () => {
       // Convert upload results to UploadedImage format
       const images: UploadedImage[] = uploadResults.map((result) => ({
         id: result.id,
-        url: result.url,
+        originalUrl: result.originalUrl,
         thumbnailUrl: result.thumbnailUrl,
         filename: result.filename || result.originalFilename,
         altText: result.altText,
@@ -569,7 +569,7 @@ export const UploadImagePage: React.FC = () => {
             <UploadedImageCard key={image.id}>
               <Link to={`/media/${image.id}`}>
                 <UploadedImagePreview
-                  src={image.thumbnailUrl || image.url}
+                  src={image.thumbnailUrl || image.originalUrl}
                   alt={image.altText || image.filename}
                 />
               </Link>

@@ -845,6 +845,7 @@ type Image {
   likesCount: Int!
   mimeType: String!
   originalFilename: String!
+  originalUrl: String!
   sensitiveContentDescription: String
   source: String
   tags_rel: [ImageTag!]
@@ -852,7 +853,6 @@ type Image {
   updatedAt: DateTime!
   uploader: User!
   uploaderId: ID!
-  url: String!
   userHasLiked: Boolean!
   width: Int!
 }
@@ -959,6 +959,7 @@ type ItemType {
   description: String
   iconUrl: String
   id: ID!
+  image: Image
   imageUrl: String
   isConsumable: Boolean!
   isStackable: Boolean!
@@ -2738,6 +2739,7 @@ input UpdateUserInput {
 }
 
 type User {
+  avatarImage: Image
   avatarUrl: String
   bio: String
   canCreateCommunity: Boolean!

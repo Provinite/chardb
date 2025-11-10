@@ -503,7 +503,7 @@ export const EditProfilePage: React.FC = () => {
           <Label htmlFor="website">Website</Label>
           <Input
             id="website"
-            type="url"
+            type="originalUrl"
             placeholder="https://your-website.com"
             hasError={!!errors.website}
             {...register('website')}

@@ -288,10 +288,10 @@ export const LikedMediaPage: React.FC = () => {
               <ImageCard key={media.id}>
                 {media.image && (
                   <ImageContainer
-                    onClick={() => setLightboxImage(media.image.url)}
+                    onClick={() => setLightboxImage(media.image.originalUrl)}
                   >
                     <ImageElement
-                      src={media.image.thumbnailUrl || media.image.url}
+                      src={media.image.thumbnailUrl || media.image.originalUrl}
                       alt={media.image.altText || media.title}
                       loading="lazy"
                     />

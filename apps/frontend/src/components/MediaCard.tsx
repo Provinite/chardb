@@ -253,7 +253,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
     if (isImage && media.image) {
       return (
         <ImageElement
-          src={media.image.thumbnailUrl || media.image.url}
+          src={media.image.thumbnailUrl || media.image.originalUrl}
           alt={media.image.altText || media.title}
           loading="lazy"
         />

@@ -522,7 +522,7 @@ export const MediaPage: React.FC = () => {
           <>
             <ImageContainer>
               <ImageElement
-                src={media.image.url}
+                src={media.image.originalUrl}
                 alt={media.image.altText || media.title}
                 onClick={() => setLightboxOpen(true)}
               />
@@ -566,7 +566,7 @@ export const MediaPage: React.FC = () => {
           onClick={() => setLightboxOpen(false)}
         >
           <img
-            src={media.image.url}
+            src={media.image.originalUrl}
             alt={media.image.altText || media.title}
             onClick={(e) => e.stopPropagation()}
           />

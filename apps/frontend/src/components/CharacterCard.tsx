@@ -184,7 +184,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       <ImageSection>
         {character.mainMedia?.image ? (
           <MainImage
-            src={character.mainMedia.image.thumbnailUrl || character.mainMedia.image.url}
+            src={character.mainMedia.image.thumbnailUrl || character.mainMedia.image.originalUrl}
             alt={character.mainMedia.image.altText || `${character.name} main image`}
           />
         ) : (

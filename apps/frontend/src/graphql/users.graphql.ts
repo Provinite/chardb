@@ -70,7 +70,7 @@ export const GET_USER_PROFILE = gql`
         image {
           id
           filename
-          url
+          originalUrl
           thumbnailUrl
         }
       }

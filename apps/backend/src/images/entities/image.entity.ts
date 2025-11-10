@@ -14,7 +14,7 @@ export class Image {
   originalFilename: string;
 
   @Field()
-  url: string;
+  originalUrl: string;
 
   @Field({ nullable: true })
   thumbnailUrl?: string;

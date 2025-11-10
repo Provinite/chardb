@@ -2,6 +2,7 @@ import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
 import { GraphQLJSON } from "graphql-type-json";
 import { ExternalAccount } from "../../external-accounts/entities/external-account.entity";
 import { CommunityMember } from "../../community-members/entities/community-member.entity";
+import { Image } from "../../images/entities/image.entity";
 
 @ObjectType()
 export class User {
@@ -22,6 +23,9 @@ export class User {
 
   @Field({ nullable: true })
   avatarUrl?: string;
+
+  @Field(() => Image, { nullable: true })
+  avatarImage?: Image;
 
   @Field({ nullable: true })
   location?: string;

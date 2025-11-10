@@ -41,6 +41,7 @@ import { EmptyStringOnForbiddenFilter } from "../auth/filters/EmptyStringOnForbi
 import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
 import { CommunityMember } from "../community-members/entities/community-member.entity";
 import { DatabaseService } from "../database/database.service";
+import { Image } from "../images/entities/image.entity";
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -247,6 +248,21 @@ export class UsersResolver {
     return this.database.communityMember.findMany({
       where: { userId: user.id },
       include: { role: true },
+    }) as any;
+  }
+
+  @AllowUnauthenticated()
+  @ResolveField("avatarImage", () => Image, { nullable: true })
+  async resolveAvatarImage(@Parent() user: User): Promise<Image | null> {
+    if (!('avatarImageId' in user) || !(user as any).avatarImageId) {
+      return null;
+    }
+    return this.database.image.findUnique({
+      where: { id: (user as any).avatarImageId },
+      include: {
+        uploader: true,
+        artist: true,
+      },
     }) as any;
   }
 

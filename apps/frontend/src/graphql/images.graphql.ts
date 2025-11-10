@@ -11,7 +11,7 @@ export const GET_LIKED_IMAGES = gql`
       id
       filename
       originalFilename
-      url
+      originalUrl
       thumbnailUrl
       altText
       width

@@ -45,7 +45,7 @@ export const GET_CHARACTERS = gql`
           title
           image {
             id
-            url
+            originalUrl
             thumbnailUrl
             altText
             isNsfw
@@ -146,7 +146,7 @@ export const GET_CHARACTER = gql`
         title
         image {
           id
-          url
+          originalUrl
           thumbnailUrl
           altText
           isNsfw
@@ -195,7 +195,7 @@ export const GET_MY_CHARACTERS = gql`
           title
           image {
             id
-            url
+            originalUrl
             thumbnailUrl
             altText
             isNsfw
@@ -395,7 +395,7 @@ export const SET_CHARACTER_MAIN_MEDIA = gql`
         title
         image {
           id
-          url
+          originalUrl
           thumbnailUrl
           altText
           isNsfw

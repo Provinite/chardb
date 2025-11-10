@@ -31,7 +31,7 @@ export const GET_MEDIA = gql`
         }
         image {
           id
-          url
+          originalUrl
           thumbnailUrl
           altText
           isNsfw
@@ -89,7 +89,7 @@ export const GET_MEDIA_ITEM = gql`
       }
       image {
         id
-        url
+        originalUrl
         thumbnailUrl
         altText
         isNsfw
@@ -144,7 +144,7 @@ export const GET_CHARACTER_MEDIA = gql`
         }
         image {
           id
-          url
+          originalUrl
           thumbnailUrl
           altText
           isNsfw
@@ -191,7 +191,7 @@ export const GET_MY_MEDIA = gql`
         }
         image {
           id
-          url
+          originalUrl
           thumbnailUrl
           altText
           isNsfw
@@ -250,7 +250,7 @@ export const GET_LIKED_MEDIA = gql`
         }
         image {
           id
-          url
+          originalUrl
           thumbnailUrl
           altText
           isNsfw
@@ -360,7 +360,7 @@ export const UPDATE_MEDIA = gql`
       }
       image {
         id
-        url
+        originalUrl
         thumbnailUrl
         altText
         isNsfw

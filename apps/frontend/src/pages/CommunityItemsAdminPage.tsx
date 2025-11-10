@@ -667,7 +667,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
             <FormGroup>
               <Label>Icon URL</Label>
               <Input
-                type="url"
+                type="originalUrl"
                 value={formData.iconUrl}
                 onChange={(e) =>
                   setFormData({ ...formData, iconUrl: e.target.value })
@@ -786,7 +786,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
             <FormGroup>
               <Label>Icon URL</Label>
               <Input
-                type="url"
+                type="originalUrl"
                 value={formData.iconUrl}
                 onChange={(e) =>
                   setFormData({ ...formData, iconUrl: e.target.value })

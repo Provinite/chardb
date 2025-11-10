@@ -49,6 +49,7 @@ model User {
   displayName     String?   @map("display_name") @db.VarChar(100)
   bio             String?   @db.Text
   avatarUrl       String?   @map("avatar_url") @db.VarChar(500)
+  avatarImageId   String?   @map("avatar_image_id")
   location        String?   @db.VarChar(100)
   website         String?   @db.VarChar(500)
   dateOfBirth     DateTime? @map("date_of_birth") @db.Date
@@ -67,6 +68,7 @@ model User {
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   // Relations
+  avatarImage       Image?      @relation("UserAvatar", fields: [avatarImageId], references: [id], onDelete: SetNull)
   ownedCharacters   Character[] @relation("CharacterOwner")
   createdCharacters Character[] @relation("CharacterCreator")
   uploadedImages    Image[]     @relation("ImageUploader")
@@ -214,6 +216,8 @@ model Image {
   likes    Like[]
   tags_rel ImageTag[]
   media    Media[]
+  userAvatars User[]     @relation("UserAvatar")
+  itemTypes   ItemType[] @relation("ItemTypeImage")
 
   @@map("images")
 }
@@ -592,6 +596,7 @@ model ItemType {
   // Visual properties
   imageUrl       String? @db.VarChar(500) @map("image_url")
   iconUrl        String? @db.VarChar(500) @map("icon_url")
+  imageId        String? @map("image_id")
   colorId        String? @map("color_id")
 
   // Metadata
@@ -603,6 +608,7 @@ model ItemType {
   // Relations
   community      Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
   color          CommunityColor? @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  image          Image?          @relation("ItemTypeImage", fields: [imageId], references: [id], onDelete: SetNull)
   items          Item[]
 
   @@unique([name, communityId])

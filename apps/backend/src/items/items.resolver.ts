@@ -28,7 +28,9 @@ import {
 } from "./entities/item-type.entity";
 import { Item as ItemEntity } from "./entities/item.entity";
 import { Community } from "../communities/entities/community.entity";
+import { Image } from "../images/entities/image.entity";
 import { User } from "../users/entities/user.entity";
+import { DatabaseService } from "../database/database.service";
 import { CommunityColor } from "../community-colors/entities/community-color.entity";
 import {
   CreateItemTypeInput,
@@ -55,6 +57,7 @@ export class ItemsResolver {
     private readonly usersService: UsersService,
     private readonly communityColorsService: CommunityColorsService,
     private readonly pendingOwnershipService: PendingOwnershipService,
+    private readonly database: DatabaseService,
   ) {}
 
   // ==================== ItemType Mutations ====================
@@ -228,6 +231,23 @@ export class ItemsResolver {
       }
       throw error;
     }
+  }
+
+  @AllowUnauthenticated()
+  @ResolveField(() => Image, { name: "image", nullable: true })
+  async resolveImage(
+    @Parent() itemType: ItemTypeEntity,
+  ): Promise<Image | null> {
+    if (!('imageId' in itemType) || !(itemType as any).imageId) {
+      return null;
+    }
+    return this.database.image.findUnique({
+      where: { id: (itemType as any).imageId },
+      include: {
+        uploader: true,
+        artist: true,
+      },
+    }) as any;
   }
 }
 

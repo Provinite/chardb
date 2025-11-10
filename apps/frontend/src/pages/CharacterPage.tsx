@@ -624,7 +624,7 @@ export const CharacterPage: React.FC = () => {
               <MainImageElement
                 src={
                   character.mainMedia.image.thumbnailUrl ||
-                  character.mainMedia.image.url
+                  character.mainMedia.image.originalUrl
                 }
                 alt={
                   character.mainMedia.image.altText ||
