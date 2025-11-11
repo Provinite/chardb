@@ -169,6 +169,33 @@ export const GET_MY_CHARACTERS = gql`
         customFields
         createdAt
         updatedAt
+        isOrphaned
+        likesCount
+        userHasLiked
+        speciesId
+        speciesVariantId
+        speciesVariant {
+          id
+          name
+        }
+        tags_rel {
+          tag {
+            id
+            name
+            category
+            color
+          }
+        }
+        traitValues {
+          traitId
+          value
+        }
+        pendingOwnership {
+          id
+          provider
+          providerAccountId
+          createdAt
+        }
         owner {
           ...UserBasic
         }
@@ -377,8 +404,14 @@ export const SET_CHARACTER_MAIN_MEDIA = gql`
 `;
 
 export const UPDATE_CHARACTER_TRAITS = gql`
-  mutation UpdateCharacterTraits($id: ID!, $updateCharacterTraitsInput: UpdateCharacterTraitsInput!) {
-    updateCharacterTraits(id: $id, updateCharacterTraitsInput: $updateCharacterTraitsInput) {
+  mutation UpdateCharacterTraits(
+    $id: ID!
+    $updateCharacterTraitsInput: UpdateCharacterTraitsInput!
+  ) {
+    updateCharacterTraits(
+      id: $id
+      updateCharacterTraitsInput: $updateCharacterTraitsInput
+    ) {
       id
       name
       traitValues {

@@ -1,13 +1,11 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { useGetUserProfileQuery } from '../generated/graphql';
+import { useGetUserProfileQuery, useMyExternalAccountsQuery } from '../generated/graphql';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { RandomCharacterButton } from '../components/RandomCharacterButton';
 import { FollowButton } from '../components/FollowButton';
 import { MediaGrid } from '../components/MediaGrid';
-import { useQuery } from '@apollo/client';
-import { MY_EXTERNAL_ACCOUNTS } from '../graphql/external-accounts.graphql';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -305,7 +303,7 @@ export const UserProfilePage: React.FC = () => {
   });
 
   // Fetch external accounts only if viewing own profile
-  const { data: externalAccountsData } = useQuery(MY_EXTERNAL_ACCOUNTS, {
+  const { data: externalAccountsData } = useMyExternalAccountsQuery({
     skip: !data?.userProfile?.isOwnProfile,
   });
 

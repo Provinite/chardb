@@ -2933,7 +2933,7 @@ export type GetMyCharactersQueryVariables = Exact<{
 }>;
 
 
-export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
+export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, isOrphaned: boolean, likesCount: number, userHasLiked: boolean, speciesId: string | null, speciesVariantId: string | null, species: { __typename?: 'Species', id: string, name: string } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
 
 export type CreateCharacterMutationVariables = Exact<{
   input: CreateCharacterInput;
@@ -4604,6 +4604,33 @@ export const GetMyCharactersDocument = gql`
       customFields
       createdAt
       updatedAt
+      isOrphaned
+      likesCount
+      userHasLiked
+      speciesId
+      speciesVariantId
+      speciesVariant {
+        id
+        name
+      }
+      tags_rel {
+        tag {
+          id
+          name
+          category
+          color
+        }
+      }
+      traitValues {
+        traitId
+        value
+      }
+      pendingOwnership {
+        id
+        provider
+        providerAccountId
+        createdAt
+      }
       owner {
         ...UserBasic
       }
