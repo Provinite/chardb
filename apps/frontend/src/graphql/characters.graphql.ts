@@ -1,4 +1,5 @@
 import { gql } from "@apollo/client";
+import { USER_BASIC_FRAGMENT } from "./users.graphql";
 
 export const GET_CHARACTERS = gql`
   query GetCharacters($filters: CharacterFiltersInput) {
@@ -29,16 +30,10 @@ export const GET_CHARACTERS = gql`
           createdAt
         }
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         creator {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         mainMedia {
           id
@@ -59,6 +54,7 @@ export const GET_CHARACTERS = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_CHARACTER = gql`
@@ -118,16 +114,10 @@ export const GET_CHARACTER = gql`
         createdAt
       }
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       creator {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       _count {
         media
@@ -154,6 +144,7 @@ export const GET_CHARACTER = gql`
       }
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_MY_CHARACTERS = gql`
@@ -179,16 +170,10 @@ export const GET_MY_CHARACTERS = gql`
         createdAt
         updatedAt
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         creator {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         mainMedia {
           id
@@ -209,6 +194,7 @@ export const GET_MY_CHARACTERS = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const CREATE_CHARACTER = gql`
@@ -239,22 +225,17 @@ export const CREATE_CHARACTER = gql`
         createdAt
       }
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       creator {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       _count {
         media
       }
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const UPDATE_CHARACTER = gql`
@@ -285,22 +266,17 @@ export const UPDATE_CHARACTER = gql`
         createdAt
       }
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       creator {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       _count {
         media
       }
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const DELETE_CHARACTER = gql`
@@ -330,22 +306,17 @@ export const TRANSFER_CHARACTER = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       creator {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       _count {
         media
       }
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const ADD_CHARACTER_TAGS = gql`
@@ -443,10 +414,7 @@ export const GET_LIKED_CHARACTERS = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       _count {
         media
@@ -455,6 +423,7 @@ export const GET_LIKED_CHARACTERS = gql`
       userHasLiked
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 // Re-export generated types and hooks after regeneration

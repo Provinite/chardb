@@ -1,4 +1,5 @@
 import { gql } from "@apollo/client";
+import { USER_BASIC_FRAGMENT } from "./users.graphql";
 
 // ==================== ItemType Fragments ====================
 
@@ -13,8 +14,6 @@ export const ITEM_TYPE_FRAGMENT = gql`
     maxStackSize
     isTradeable
     isConsumable
-    imageUrl
-    iconUrl
     image {
       id
       originalUrl
@@ -54,13 +53,11 @@ export const ITEM_FRAGMENT = gql`
       ...ItemTypeFields
     }
     owner {
-      id
-      username
-      displayName
-      avatarUrl
+      ...UserBasic
     }
   }
   ${ITEM_TYPE_FRAGMENT}
+  ${USER_BASIC_FRAGMENT}
 `;
 
 // ==================== ItemType Queries ====================

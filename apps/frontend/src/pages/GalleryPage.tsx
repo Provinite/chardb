@@ -421,10 +421,10 @@ export const GalleryPage: React.FC = () => {
 
           <OwnerInfo>
             <OwnerAvatar>
-              {gallery.owner.avatarUrl ? (
+              {gallery.owner.avatarImage ? (
                 <img
-                  src={gallery.owner.avatarUrl}
-                  alt={gallery.owner.displayName || gallery.owner.username}
+                  src={gallery.owner.avatarImage.thumbnailUrl || gallery.owner.avatarImage.originalUrl}
+                  alt={gallery.owner.avatarImage.altText || gallery.owner.displayName || gallery.owner.username}
                 />
               ) : (
                 gallery.owner.displayName?.[0] || gallery.owner.username[0]

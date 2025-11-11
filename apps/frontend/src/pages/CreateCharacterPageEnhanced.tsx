@@ -307,7 +307,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
       id: user.id,
       username: user.username,
       displayName: user.displayName,
-      avatarUrl: user.avatarImage?.thumbnailUrl || user.avatarImage?.originalUrl || null,
+      avatarImage: user.avatarImage || null,
     };
   }, [user]);
 

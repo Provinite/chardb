@@ -5,7 +5,12 @@ export interface SelectedUser {
   id: string;
   username: string;
   displayName?: string | null;
-  avatarUrl?: string | null;
+  avatarImage?: {
+    id: string;
+    originalUrl: string;
+    thumbnailUrl: string | null;
+    altText: string | null;
+  } | null;
 }
 
 export interface UserTypeaheadProps {
@@ -359,8 +364,8 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
   };
 
   const renderAvatar = (user: SelectedUser) => {
-    if (user.avatarUrl) {
-      return <Avatar src={user.avatarUrl} alt={user.username} />;
+    if (user.avatarImage) {
+      return <Avatar src={user.avatarImage.thumbnailUrl || user.avatarImage.originalUrl} alt={user.avatarImage.altText || user.username} />;
     }
     return (
       <AvatarPlaceholder>

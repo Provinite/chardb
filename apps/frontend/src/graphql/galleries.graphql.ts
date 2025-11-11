@@ -1,4 +1,5 @@
 import { gql } from "@apollo/client";
+import { USER_BASIC_FRAGMENT } from "./users.graphql";
 
 export const GET_GALLERIES = gql`
   query GetGalleries($filters: GalleryFiltersInput) {
@@ -14,10 +15,7 @@ export const GET_GALLERIES = gql`
         createdAt
         updatedAt
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         character {
           id
@@ -37,6 +35,7 @@ export const GET_GALLERIES = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_GALLERY = gql`
@@ -52,10 +51,7 @@ export const GET_GALLERY = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       character {
         id
@@ -72,6 +68,7 @@ export const GET_GALLERY = gql`
       userHasLiked
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_MY_GALLERIES = gql`
@@ -88,10 +85,7 @@ export const GET_MY_GALLERIES = gql`
         createdAt
         updatedAt
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         character {
           id
@@ -111,6 +105,7 @@ export const GET_MY_GALLERIES = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_USER_GALLERIES = gql`
@@ -127,10 +122,7 @@ export const GET_USER_GALLERIES = gql`
         createdAt
         updatedAt
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         character {
           id
@@ -150,6 +142,7 @@ export const GET_USER_GALLERIES = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_CHARACTER_GALLERIES = gql`
@@ -169,10 +162,7 @@ export const GET_CHARACTER_GALLERIES = gql`
         createdAt
         updatedAt
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         character {
           id
@@ -192,6 +182,7 @@ export const GET_CHARACTER_GALLERIES = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const CREATE_GALLERY = gql`
@@ -207,10 +198,7 @@ export const CREATE_GALLERY = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       character {
         id
@@ -227,6 +215,7 @@ export const CREATE_GALLERY = gql`
       userHasLiked
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const UPDATE_GALLERY = gql`
@@ -242,10 +231,7 @@ export const UPDATE_GALLERY = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       character {
         id
@@ -262,6 +248,7 @@ export const UPDATE_GALLERY = gql`
       userHasLiked
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const DELETE_GALLERY = gql`
@@ -298,10 +285,7 @@ export const GET_LIKED_GALLERIES = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       character {
         id
@@ -314,6 +298,7 @@ export const GET_LIKED_GALLERIES = gql`
       userHasLiked
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 // Re-export generated types and hooks after regeneration

@@ -689,10 +689,10 @@ export const CharacterPage: React.FC = () => {
           <OwnerInfo>
             <OwnerLink to={`/user/${character.owner.username}`}>
               <OwnerAvatar>
-                {character.owner.avatarUrl ? (
+                {character.owner.avatarImage ? (
                   <img
-                    src={character.owner.avatarUrl}
-                    alt={
+                    src={character.owner.avatarImage.thumbnailUrl || character.owner.avatarImage.originalUrl}
+                    alt={character.owner.avatarImage.altText ||
                       character.owner.displayName || character.owner.username
                     }
                   />
