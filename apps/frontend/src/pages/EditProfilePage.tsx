@@ -1,20 +1,24 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import styled from 'styled-components';
-import toast from 'react-hot-toast';
-import { useMeQuery, useUpdateProfileMutation } from '../generated/graphql';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { useQuery, useMutation } from '@apollo/client';
-import { MY_EXTERNAL_ACCOUNTS, UNLINK_EXTERNAL_ACCOUNT } from '../graphql/external-accounts.graphql';
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import styled from "styled-components";
+import toast from "react-hot-toast";
+import {
+  useMeQuery,
+  useUpdateProfileMutation,
+  useMyExternalAccountsQuery,
+  useUnlinkExternalAccountMutation,
+  ExternalAccountProvider,
+} from "../generated/graphql";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 const updateProfileSchema = z.object({
   displayName: z.string().max(100).optional(),
   bio: z.string().max(1000).optional(),
   location: z.string().max(100).optional(),
-  website: z.string().url().optional().or(z.literal('')),
+  website: z.string().url().optional().or(z.literal("")),
   dateOfBirth: z.string().optional(),
 });
 
@@ -63,12 +67,13 @@ const Label = styled.label`
 `;
 
 const Input = styled.input.withConfig({
-  shouldForwardProp: (prop) => prop !== 'hasError',
+  shouldForwardProp: (prop) => prop !== "hasError",
 })<{ hasError?: boolean }>`
   width: 100%;
   padding: 0.75rem ${({ theme }) => theme.spacing.md};
-  border: 2px solid ${({ theme, hasError }) => 
-    hasError ? theme.colors.error : theme.colors.border};
+  border: 2px solid
+    ${({ theme, hasError }) =>
+      hasError ? theme.colors.error : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   background: ${({ theme }) => theme.colors.background};
@@ -86,13 +91,14 @@ const Input = styled.input.withConfig({
 `;
 
 const TextArea = styled.textarea.withConfig({
-  shouldForwardProp: (prop) => prop !== 'hasError',
+  shouldForwardProp: (prop) => prop !== "hasError",
 })<{ hasError?: boolean }>`
   width: 100%;
   min-height: 120px;
   padding: 0.75rem ${({ theme }) => theme.spacing.md};
-  border: 2px solid ${({ theme, hasError }) => 
-    hasError ? theme.colors.error : theme.colors.border};
+  border: 2px solid
+    ${({ theme, hasError }) =>
+      hasError ? theme.colors.error : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   background: ${({ theme }) => theme.colors.background};
@@ -129,25 +135,26 @@ const ButtonGroup = styled.div`
   }
 `;
 
-const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
+const Button = styled.button<{ variant?: "primary" | "secondary" }>`
   padding: 0.75rem ${({ theme }) => theme.spacing.lg};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  border: 2px solid ${({ theme, variant }) => 
-    variant === 'secondary' ? theme.colors.border : theme.colors.primary};
-  background: ${({ theme, variant }) => 
-    variant === 'secondary' ? theme.colors.background : theme.colors.primary};
-  color: ${({ theme, variant }) => 
-    variant === 'secondary' ? theme.colors.text.primary : 'white'};
+  border: 2px solid
+    ${({ theme, variant }) =>
+      variant === "secondary" ? theme.colors.border : theme.colors.primary};
+  background: ${({ theme, variant }) =>
+    variant === "secondary" ? theme.colors.background : theme.colors.primary};
+  color: ${({ theme, variant }) =>
+    variant === "secondary" ? theme.colors.text.primary : "white"};
   cursor: pointer;
   transition: all 0.2s ease;
   min-width: 120px;
 
   &:hover:not(:disabled) {
-    background: ${({ theme, variant }) => 
-      variant === 'secondary' ? theme.colors.surface : theme.colors.primary};
-    opacity: ${({ variant }) => variant === 'secondary' ? 1 : 0.9};
+    background: ${({ theme, variant }) =>
+      variant === "secondary" ? theme.colors.surface : theme.colors.primary};
+    opacity: ${({ variant }) => (variant === "secondary" ? 1 : 0.9)};
     transform: translateY(-1px);
   }
 
@@ -242,17 +249,18 @@ const AccountProvider = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-const SmallButton = styled.button<{ variant?: 'danger' | 'primary' }>`
+const SmallButton = styled.button<{ variant?: "danger" | "primary" }>`
   padding: 0.5rem ${({ theme }) => theme.spacing.md};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  border: 2px solid ${({ theme, variant }) =>
-    variant === 'danger' ? theme.colors.error : theme.colors.primary};
+  border: 2px solid
+    ${({ theme, variant }) =>
+      variant === "danger" ? theme.colors.error : theme.colors.primary};
   background: ${({ theme, variant }) =>
-    variant === 'danger' ? theme.colors.background : theme.colors.primary};
+    variant === "danger" ? theme.colors.background : theme.colors.primary};
   color: ${({ theme, variant }) =>
-    variant === 'danger' ? theme.colors.error : 'white'};
+    variant === "danger" ? theme.colors.error : "white"};
   cursor: pointer;
   transition: all 0.2s ease;
 
@@ -281,8 +289,13 @@ export const EditProfilePage: React.FC = () => {
   const [updateProfile, { loading: updating }] = useUpdateProfileMutation();
 
   // External accounts
-  const { data: externalAccountsData, loading: loadingAccounts, refetch: refetchAccounts } = useQuery(MY_EXTERNAL_ACCOUNTS);
-  const [unlinkAccount, { loading: unlinking }] = useMutation(UNLINK_EXTERNAL_ACCOUNT);
+  const {
+    data: externalAccountsData,
+    loading: loadingAccounts,
+    refetch: refetchAccounts,
+  } = useMyExternalAccountsQuery();
+  const [unlinkAccount, { loading: unlinking }] =
+    useUnlinkExternalAccountMutation();
 
   const {
     register,
@@ -292,11 +305,11 @@ export const EditProfilePage: React.FC = () => {
   } = useForm<UpdateProfileFormData>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
-      displayName: '',
-      bio: '',
-      location: '',
-      website: '',
-      dateOfBirth: '',
+      displayName: "",
+      bio: "",
+      location: "",
+      website: "",
+      dateOfBirth: "",
     },
   });
 
@@ -304,13 +317,13 @@ export const EditProfilePage: React.FC = () => {
   useEffect(() => {
     if (meData?.me) {
       reset({
-        displayName: meData.me.displayName || '',
-        bio: meData.me.bio || '',
-        location: meData.me.location || '',
-        website: meData.me.website || '',
+        displayName: meData.me.displayName || "",
+        bio: meData.me.bio || "",
+        location: meData.me.location || "",
+        website: meData.me.website || "",
         dateOfBirth: meData.me.dateOfBirth
-          ? new Date(meData.me.dateOfBirth).toISOString().split('T')[0]
-          : '',
+          ? new Date(meData.me.dateOfBirth).toISOString().split("T")[0]
+          : "",
       });
     }
   }, [meData, reset]);
@@ -319,19 +332,21 @@ export const EditProfilePage: React.FC = () => {
     try {
       // Remove empty strings and undefined values
       const input = Object.fromEntries(
-        Object.entries(data).filter(([_, value]) => value !== '' && value !== undefined)
+        Object.entries(data).filter(
+          ([_, value]) => value !== "" && value !== undefined,
+        ),
       );
 
       await updateProfile({
         variables: { input },
-        refetchQueries: ['Me'],
+        refetchQueries: ["Me"],
       });
 
-      toast.success('Profile updated successfully!');
+      toast.success("Profile updated successfully!");
       navigate(`/user/${meData?.me?.username}`);
     } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile. Please try again.');
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile. Please try again.");
     }
   };
 
@@ -341,77 +356,79 @@ export const EditProfilePage: React.FC = () => {
 
   const handleLinkDeviantArt = async () => {
     // Get JWT token from localStorage
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
 
     if (!token) {
-      toast.error('Please log in to link your DeviantArt account');
+      toast.error("Please log in to link your DeviantArt account");
       return;
     }
 
     try {
       // Fetch the OAuth URL from the backend with authentication in header
-      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const backendUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:4000";
       const response = await fetch(`${backendUrl}/auth/deviantart`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to initiate OAuth flow');
+        throw new Error("Failed to initiate OAuth flow");
       }
 
       const data = await response.json();
 
       if (!data.url) {
-        throw new Error('No OAuth URL returned');
+        throw new Error("No OAuth URL returned");
       }
 
       // Redirect to the OAuth URL (no tokens in URL)
       window.location.href = data.url;
     } catch (error: any) {
-      console.error('Error initiating OAuth:', error);
-      toast.error(error.message || 'Failed to start DeviantArt linking');
+      console.error("Error initiating OAuth:", error);
+      toast.error(error.message || "Failed to start DeviantArt linking");
     }
   };
 
   const handleLinkDiscord = async () => {
     // Get JWT token from localStorage
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
 
     if (!token) {
-      toast.error('Please log in to link your Discord account');
+      toast.error("Please log in to link your Discord account");
       return;
     }
 
     try {
       // Fetch the OAuth URL from the backend with authentication in header
-      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const backendUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:4000";
       const response = await fetch(`${backendUrl}/auth/discord`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to initiate OAuth flow');
+        throw new Error("Failed to initiate OAuth flow");
       }
 
       const data = await response.json();
 
       if (!data.url) {
-        throw new Error('No OAuth URL returned');
+        throw new Error("No OAuth URL returned");
       }
 
       // Redirect to the OAuth URL (no tokens in URL)
       window.location.href = data.url;
     } catch (error: any) {
-      console.error('Error initiating OAuth:', error);
-      toast.error(error.message || 'Failed to start Discord linking');
+      console.error("Error initiating OAuth:", error);
+      toast.error(error.message || "Failed to start Discord linking");
     }
   };
 
-  const handleUnlink = async (provider: string) => {
+  const handleUnlink = async (provider: ExternalAccountProvider) => {
     if (!confirm(`Are you sure you want to unlink your ${provider} account?`)) {
       return;
     }
@@ -425,7 +442,7 @@ export const EditProfilePage: React.FC = () => {
       toast.success(`${provider} account unlinked successfully`);
       refetchAccounts();
     } catch (error: any) {
-      console.error('Error unlinking account:', error);
+      console.error("Error unlinking account:", error);
       toast.error(error.message || `Failed to unlink ${provider} account`);
     }
   };
@@ -463,7 +480,7 @@ export const EditProfilePage: React.FC = () => {
             type="text"
             placeholder="Enter your display name"
             hasError={!!errors.displayName}
-            {...register('displayName')}
+            {...register("displayName")}
           />
           {errors.displayName && (
             <ErrorMessage>{errors.displayName.message}</ErrorMessage>
@@ -477,12 +494,12 @@ export const EditProfilePage: React.FC = () => {
             id="bio"
             placeholder="Tell us about yourself..."
             hasError={!!errors.bio}
-            {...register('bio')}
+            {...register("bio")}
           />
-          {errors.bio && (
-            <ErrorMessage>{errors.bio.message}</ErrorMessage>
-          )}
-          <HelpText>A brief description about yourself (max 1000 characters)</HelpText>
+          {errors.bio && <ErrorMessage>{errors.bio.message}</ErrorMessage>}
+          <HelpText>
+            A brief description about yourself (max 1000 characters)
+          </HelpText>
         </FormGroup>
 
         <FormGroup>
@@ -492,7 +509,7 @@ export const EditProfilePage: React.FC = () => {
             type="text"
             placeholder="Where are you located?"
             hasError={!!errors.location}
-            {...register('location')}
+            {...register("location")}
           />
           {errors.location && (
             <ErrorMessage>{errors.location.message}</ErrorMessage>
@@ -506,7 +523,7 @@ export const EditProfilePage: React.FC = () => {
             type="originalUrl"
             placeholder="https://your-website.com"
             hasError={!!errors.website}
-            {...register('website')}
+            {...register("website")}
           />
           {errors.website && (
             <ErrorMessage>{errors.website.message}</ErrorMessage>
@@ -519,23 +536,23 @@ export const EditProfilePage: React.FC = () => {
             id="dateOfBirth"
             type="date"
             hasError={!!errors.dateOfBirth}
-            {...register('dateOfBirth')}
+            {...register("dateOfBirth")}
           />
           {errors.dateOfBirth && (
             <ErrorMessage>{errors.dateOfBirth.message}</ErrorMessage>
           )}
-          <HelpText>This information is private and helps us provide age-appropriate content</HelpText>
+          <HelpText>
+            This information is private and helps us provide age-appropriate
+            content
+          </HelpText>
         </FormGroup>
 
         <ButtonGroup>
           <Button type="button" variant="secondary" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            disabled={updating || !isDirty}
-          >
-            {updating ? 'Saving...' : 'Save Changes'}
+          <Button type="submit" disabled={updating || !isDirty}>
+            {updating ? "Saving..." : "Save Changes"}
           </Button>
         </ButtonGroup>
       </Form>
@@ -544,20 +561,26 @@ export const EditProfilePage: React.FC = () => {
       <Section>
         <SectionTitle>Connected Accounts</SectionTitle>
         <SectionDescription>
-          Link your external accounts (DeviantArt, Discord) to verify ownership and connect with the community
+          Link your external accounts (DeviantArt, Discord) to verify ownership
+          and connect with the community
         </SectionDescription>
 
         {loadingAccounts ? (
-          <LoadingContainer style={{ minHeight: '200px' }}>
+          <LoadingContainer style={{ minHeight: "200px" }}>
             <LoadingSpinner />
           </LoadingContainer>
-        ) : externalAccountsData?.myExternalAccounts && externalAccountsData.myExternalAccounts.length > 0 ? (
+        ) : externalAccountsData?.myExternalAccounts &&
+          externalAccountsData.myExternalAccounts.length > 0 ? (
           <AccountsList>
             {externalAccountsData.myExternalAccounts.map((account: any) => (
               <AccountItem key={account.id}>
                 <AccountInfo>
                   <AccountIcon>
-                    {account.provider === 'DEVIANTART' ? 'DA' : account.provider === 'DISCORD' ? 'DC' : account.provider.charAt(0)}
+                    {account.provider === "DEVIANTART"
+                      ? "DA"
+                      : account.provider === "DISCORD"
+                        ? "DC"
+                        : account.provider.charAt(0)}
                   </AccountIcon>
                   <AccountDetails>
                     <AccountName>{account.displayName}</AccountName>
@@ -569,7 +592,7 @@ export const EditProfilePage: React.FC = () => {
                   onClick={() => handleUnlink(account.provider)}
                   disabled={unlinking}
                 >
-                  {unlinking ? 'Unlinking...' : 'Unlink'}
+                  {unlinking ? "Unlinking..." : "Unlink"}
                 </SmallButton>
               </AccountItem>
             ))}
@@ -577,20 +600,31 @@ export const EditProfilePage: React.FC = () => {
         ) : (
           <EmptyState>
             <p>No external accounts linked yet</p>
-            <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+            <p style={{ marginTop: "0.5rem", fontSize: "0.875rem" }}>
               Link your DeviantArt or Discord account to get started
             </p>
           </EmptyState>
         )}
 
         {/* Show link buttons for accounts not yet linked */}
-        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {!externalAccountsData?.myExternalAccounts?.some((acc: any) => acc.provider === 'DEVIANTART') && (
+        <div
+          style={{
+            marginTop: "1rem",
+            display: "flex",
+            gap: "0.5rem",
+            flexWrap: "wrap",
+          }}
+        >
+          {!externalAccountsData?.myExternalAccounts?.some(
+            (acc: any) => acc.provider === "DEVIANTART",
+          ) && (
             <SmallButton variant="primary" onClick={handleLinkDeviantArt}>
               Link DeviantArt Account
             </SmallButton>
           )}
-          {!externalAccountsData?.myExternalAccounts?.some((acc: any) => acc.provider === 'DISCORD') && (
+          {!externalAccountsData?.myExternalAccounts?.some(
+            (acc: any) => acc.provider === "DISCORD",
+          ) && (
             <SmallButton variant="primary" onClick={handleLinkDiscord}>
               Link Discord Account
             </SmallButton>

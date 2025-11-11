@@ -3,16 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQuery } from "@apollo/client";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import {
-  CREATE_GALLERY,
-  GET_GALLERIES,
-  GET_MY_GALLERIES,
-} from "../graphql/galleries.graphql";
-import { GET_MY_CHARACTERS, Character } from "../graphql/characters.graphql";
+  useCreateGalleryMutation,
+  useGetMyCharactersQuery,
+  GetGalleriesDocument,
+  GetMyGalleriesDocument,
+  Visibility,
+} from "../generated/graphql";
 
 const gallerySchema = z.object({
   name: z
@@ -25,7 +25,11 @@ const gallerySchema = z.object({
     .optional()
     .or(z.literal("")),
   characterId: z.string().optional().or(z.literal("")),
-  visibility: z.enum(["PUBLIC", "UNLISTED", "PRIVATE"]),
+  visibility: z.enum([
+    Visibility.Private,
+    Visibility.Public,
+    Visibility.Unlisted,
+  ]),
   sortOrder: z
     .string()
     .optional()
@@ -272,16 +276,19 @@ export const CreateGalleryPage: React.FC = () => {
   } = useForm<GalleryForm>({
     resolver: zodResolver(gallerySchema),
     defaultValues: {
-      visibility: "PUBLIC",
+      visibility: Visibility.Public,
     },
   });
 
-  const [createGallery] = useMutation(CREATE_GALLERY, {
-    refetchQueries: [{ query: GET_GALLERIES }, { query: GET_MY_GALLERIES }],
+  const [createGallery] = useCreateGalleryMutation({
+    refetchQueries: [
+      { query: GetGalleriesDocument },
+      { query: GetMyGalleriesDocument },
+    ],
   });
 
   // Fetch user's characters for the character association dropdown
-  const { data: charactersData } = useQuery(GET_MY_CHARACTERS, {
+  const { data: charactersData } = useGetMyCharactersQuery({
     variables: { filters: { limit: 100 } },
   });
 
@@ -315,7 +322,9 @@ export const CreateGalleryPage: React.FC = () => {
 
       // Navigate to the newly created gallery
       toast.success("Gallery created successfully!");
-      navigate(`/gallery/${result.data.createGallery.id}`);
+      if (result.data) {
+        navigate(`/gallery/${result.data.createGallery.id}`);
+      }
     } catch (error) {
       console.error("Error creating gallery:", error);
       toast.error(
@@ -430,14 +439,12 @@ export const CreateGalleryPage: React.FC = () => {
                 aria-invalid={!!errors.characterId}
               >
                 <option value="">No character association</option>
-                {charactersData?.myCharacters.characters.map(
-                  (character: Character) => (
-                    <option key={character.id} value={character.id}>
-                      {character.name}{" "}
-                      {character.species?.name && `(${character.species.name})`}
-                    </option>
-                  ),
-                )}
+                {charactersData?.myCharacters.characters.map((character) => (
+                  <option key={character.id} value={character.id}>
+                    {character.name}{" "}
+                    {character.species?.name && `(${character.species.name})`}
+                  </option>
+                ))}
               </Select>
               <HelpText>
                 Link this gallery to one of your characters to organize related
