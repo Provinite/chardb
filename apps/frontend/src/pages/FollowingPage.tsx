@@ -1,10 +1,9 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@apollo/client";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FollowButton } from "../components/FollowButton";
-import { GET_FOLLOWING } from "../graphql/social.graphql";
+import { useGetFollowingQuery } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 800px;
@@ -170,7 +169,7 @@ const ErrorContainer = styled.div`
 export const FollowingPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
 
-  const { data, loading, error } = useQuery(GET_FOLLOWING, {
+  const { data, loading, error } = useGetFollowingQuery({
     variables: { username: username! },
     skip: !username,
   });
@@ -204,7 +203,7 @@ export const FollowingPage: React.FC = () => {
       <BackButton to={`/user/${username}`}>Back to Profile</BackButton>
 
       <Header>
-        <Title>{user.displayName || user.username} Following</Title>
+        <Title>{user?.displayName || user?.username} Following</Title>
         <Subtitle>
           {following.length} {following.length === 1 ? "user" : "users"}{" "}
           followed
@@ -222,13 +221,13 @@ export const FollowingPage: React.FC = () => {
         </EmptyState>
       ) : (
         <UserList>
-          {following.map((followedUser: any) => (
+          {following.map((followedUser) => (
             <UserCard key={followedUser.id}>
               <UserAvatar>
-                {followedUser.avatarUrl ? (
+                {followedUser.avatarImage ? (
                   <img
-                    src={followedUser.avatarUrl}
-                    alt={followedUser.displayName || followedUser.username}
+                    src={followedUser.avatarImage.thumbnailUrl || followedUser.avatarImage.originalUrl}
+                    alt={followedUser.avatarImage.altText || followedUser.displayName || followedUser.username}
                     style={{
                       width: "100%",
                       height: "100%",

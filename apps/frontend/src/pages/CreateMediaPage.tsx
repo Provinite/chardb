@@ -1,9 +1,8 @@
 import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useQuery } from "@apollo/client";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
-import { GET_CHARACTER } from "../graphql/characters.graphql";
+import { useGetCharacterQuery } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 800px;
@@ -123,7 +122,7 @@ export const CreateMediaPage: React.FC = () => {
   const galleryId = searchParams.get("gallery");
 
   // Get character info if characterId is provided
-  const { data: characterData } = useQuery(GET_CHARACTER, {
+  const { data: characterData } = useGetCharacterQuery({
     variables: { id: characterId! },
     skip: !characterId,
   });

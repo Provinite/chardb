@@ -1,14 +1,11 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@apollo/client";
 import styled from "styled-components";
-import { GET_GALLERY, Gallery } from "../graphql/galleries.graphql";
-import { GET_MEDIA } from "../graphql/media.graphql";
+import { useGetGalleryQuery, useGetMediaQuery, LikeableType, CommentableType } from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { LikeButton } from "../components/LikeButton";
 import { CommentList } from "../components/CommentList";
 import { MediaCard } from "../components/MediaCard";
-import { LikeableType, CommentableType, Media } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -319,7 +316,7 @@ export const GalleryPage: React.FC = () => {
   const navigate = useNavigate();
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
-  const { data, loading, error } = useQuery(GET_GALLERY, {
+  const { data, loading, error } = useGetGalleryQuery({
     variables: { id: id! },
     skip: !id,
   });
@@ -328,12 +325,12 @@ export const GalleryPage: React.FC = () => {
     data: mediaData,
     loading: mediaLoading,
     error: mediaError,
-  } = useQuery(GET_MEDIA, {
+  } = useGetMediaQuery({
     variables: { filters: { galleryId: id } },
     skip: !id,
   });
 
-  const gallery: Gallery | undefined = data?.gallery;
+  const gallery = data?.gallery;
   const mediaItems = mediaData?.media?.media || [];
 
   const handleBackClick = () => {
@@ -484,7 +481,7 @@ export const GalleryPage: React.FC = () => {
           )}
           {!mediaLoading && !mediaError && mediaItems.length > 0 && (
             <MediaGrid>
-              {mediaItems.map((mediaItem: Media) => (
+              {mediaItems.map((mediaItem) => (
                 <MediaCard
                   key={mediaItem.id}
                   media={mediaItem}
