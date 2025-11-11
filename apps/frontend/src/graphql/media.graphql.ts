@@ -176,6 +176,9 @@ export const GET_MY_MEDIA = gql`
         textContentId
         createdAt
         updatedAt
+        owner {
+          ...UserBasic
+        }
         character {
           id
           name
@@ -212,6 +215,7 @@ export const GET_MY_MEDIA = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_LIKED_MEDIA = gql`
