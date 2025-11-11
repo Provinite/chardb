@@ -1,8 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useQuery } from '@apollo/client';
-import { GET_COMMUNITY_COLORS } from '../../graphql/community-colors.graphql';
-import { GetCommunityColorsQuery } from '../../generated/graphql';
+import { useGetCommunityColorsQuery } from '../../generated/graphql';
 import { ColorPip } from './ColorPip';
 import { LoadingSpinner } from '../LoadingSpinner';
 
@@ -93,13 +91,10 @@ export const ColorSelector: React.FC<ColorSelectorProps> = ({
   disabled = false,
   className,
 }) => {
-  const { data, loading, error } = useQuery<GetCommunityColorsQuery>(
-    GET_COMMUNITY_COLORS,
-    {
-      variables: { communityId },
-      skip: !communityId,
-    }
-  );
+  const { data, loading, error } = useGetCommunityColorsQuery({
+    variables: { communityId },
+    skip: !communityId,
+  });
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newValue = event.target.value;
