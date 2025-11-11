@@ -4,19 +4,12 @@ import { useParams } from "react-router-dom";
 import { Palette, Plus, Edit2, Trash2, X, Check } from "lucide-react";
 import { Button, Card } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { useQuery, useMutation } from "@apollo/client";
 import { toast } from "react-hot-toast";
 import {
-  GET_COMMUNITY_COLORS,
-  CREATE_COMMUNITY_COLOR,
-  UPDATE_COMMUNITY_COLOR,
-  DELETE_COMMUNITY_COLOR,
-} from "../graphql/community-colors.graphql";
-import {
-  GetCommunityColorsQuery,
-  CreateCommunityColorMutation,
-  UpdateCommunityColorMutation,
-  DeleteCommunityColorMutation,
+  useGetCommunityColorsQuery,
+  useCreateCommunityColorMutation,
+  useUpdateCommunityColorMutation,
+  useDeleteCommunityColorMutation,
 } from "../generated/graphql";
 
 const Container = styled.div`
@@ -225,57 +218,45 @@ export const CommunityColorPalettePage: React.FC = () => {
     hexCode: "#000000",
   });
 
-  const { data, loading, refetch } = useQuery<GetCommunityColorsQuery>(
-    GET_COMMUNITY_COLORS,
-    {
-      variables: { communityId: communityId! },
-      skip: !communityId,
-    }
-  );
+  const { data, loading, refetch } = useGetCommunityColorsQuery({
+    variables: { communityId: communityId! },
+    skip: !communityId,
+  });
 
-  const [createColor, { loading: creating }] = useMutation<CreateCommunityColorMutation>(
-    CREATE_COMMUNITY_COLOR,
-    {
-      onCompleted: () => {
-        toast.success("Color created successfully");
-        setIsModalOpen(false);
-        resetForm();
-        refetch();
-      },
-      onError: (error) => {
-        toast.error(`Error creating color: ${error.message}`);
-      },
-    }
-  );
+  const [createColor, { loading: creating }] = useCreateCommunityColorMutation({
+    onCompleted: () => {
+      toast.success("Color created successfully");
+      setIsModalOpen(false);
+      resetForm();
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Error creating color: ${error.message}`);
+    },
+  });
 
-  const [updateColor, { loading: updating }] = useMutation<UpdateCommunityColorMutation>(
-    UPDATE_COMMUNITY_COLOR,
-    {
-      onCompleted: () => {
-        toast.success("Color updated successfully");
-        setIsModalOpen(false);
-        setEditingColor(null);
-        resetForm();
-        refetch();
-      },
-      onError: (error) => {
-        toast.error(`Error updating color: ${error.message}`);
-      },
-    }
-  );
+  const [updateColor, { loading: updating }] = useUpdateCommunityColorMutation({
+    onCompleted: () => {
+      toast.success("Color updated successfully");
+      setIsModalOpen(false);
+      setEditingColor(null);
+      resetForm();
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Error updating color: ${error.message}`);
+    },
+  });
 
-  const [deleteColor] = useMutation<DeleteCommunityColorMutation>(
-    DELETE_COMMUNITY_COLOR,
-    {
-      onCompleted: () => {
-        toast.success("Color deleted successfully");
-        refetch();
-      },
-      onError: (error) => {
-        toast.error(`Error deleting color: ${error.message}`);
-      },
-    }
-  );
+  const [deleteColor] = useDeleteCommunityColorMutation({
+    onCompleted: () => {
+      toast.success("Color deleted successfully");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Error deleting color: ${error.message}`);
+    },
+  });
 
   const resetForm = () => {
     setFormData({ name: "", hexCode: "#000000" });

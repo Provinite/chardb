@@ -3,9 +3,7 @@ import styled from "styled-components";
 import { useParams } from "react-router-dom";
 import { Package } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { useQuery } from "@apollo/client";
-import { GET_MY_INVENTORY } from "../graphql/items.graphql";
-import { useCommunityByIdQuery } from "../generated/graphql";
+import { useCommunityByIdQuery, useGetMyInventoryQuery } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 
 const Container = styled.div`
@@ -160,7 +158,7 @@ export const CommunityInventoryPage: React.FC = () => {
       skip: !communityId,
     });
 
-  const { data: inventoryData, loading: inventoryLoading } = useQuery(GET_MY_INVENTORY, {
+  const { data: inventoryData, loading: inventoryLoading } = useGetMyInventoryQuery({
     variables: { communityId },
     skip: !communityId || !user,
   });
