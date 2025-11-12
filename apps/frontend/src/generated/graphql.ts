@@ -352,6 +352,8 @@ export type CommunityMemberConnection = {
 };
 
 export type CreateCharacterInput = {
+  /** Whether to assign ownership to the creator. Set to false to create an orphaned character. */
+  assignToSelf?: Scalars['Boolean']['input'];
   customFields?: InputMaybe<Scalars['String']['input']>;
   details?: InputMaybe<Scalars['String']['input']>;
   isSellable?: Scalars['Boolean']['input'];

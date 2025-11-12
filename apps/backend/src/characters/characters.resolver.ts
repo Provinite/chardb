@@ -90,8 +90,8 @@ export class CharactersResolver {
       );
     }
 
-    // If creating orphaned character (with pending ownership), require canCreateOrphanedCharacter permission
-    if (input.pendingOwner) {
+    // If creating orphaned character (with pending ownership or leave unassigned), require canCreateOrphanedCharacter permission
+    if (input.pendingOwner || input.assignToSelf === false) {
       // Check permissions
       const hasPermission =
         await this.charactersService.userHasOrphanedCharacterPermission(

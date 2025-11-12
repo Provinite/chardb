@@ -354,6 +354,10 @@ type CommunityMemberConnection {
 }
 
 input CreateCharacterInput {
+  """
+  Whether to assign ownership to the creator. Set to false to create an orphaned character.
+  """
+  assignToSelf: Boolean! = true
   customFields: String
   details: String
   isSellable: Boolean! = false

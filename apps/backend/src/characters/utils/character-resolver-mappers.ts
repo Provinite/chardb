@@ -35,8 +35,9 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     provider: ExternalAccountProvider;
     providerAccountId: string;
   };
+  assignToSelf?: boolean;
 } {
-  const { tags, pendingOwner, ...characterData } = input;
+  const { tags, pendingOwner, assignToSelf, ...characterData } = input;
 
   const prismaCharacterData: Omit<
     Prisma.CharacterCreateInput,
@@ -64,6 +65,7 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     characterData: prismaCharacterData,
     tags,
     pendingOwner,
+    assignToSelf,
   };
 }
 

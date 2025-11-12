@@ -75,6 +75,11 @@ export class CreateCharacterInput {
   @ValidateNested()
   @Type(() => PendingOwnerInput)
   pendingOwner?: PendingOwnerInput;
+
+  @Field({ defaultValue: true, description: 'Whether to assign ownership to the creator. Set to false to create an orphaned character.' })
+  @IsOptional()
+  @IsBoolean()
+  assignToSelf?: boolean;
 }
 
 /**
