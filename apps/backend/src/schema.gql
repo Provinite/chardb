@@ -1873,6 +1873,7 @@ type Query {
     id: ID!
   ): Media!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
+  myEditableCharacters(filters: CharacterFiltersInput): CharacterConnection!
 
   """Get all external accounts linked to the current user"""
   myExternalAccounts: [ExternalAccount!]!

@@ -5,7 +5,7 @@ import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { ImageUpload, ImageFile } from "../components/ImageUpload";
 import { useGetMyGalleriesQuery } from "../generated/graphql";
-import { useGetMyCharactersQuery } from "../generated/graphql";
+import { useGetMyEditableCharactersQuery } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -415,7 +415,7 @@ export const UploadImagePage: React.FC = () => {
     skip: !user,
   });
 
-  const { data: charactersData, loading: charactersLoading } = useGetMyCharactersQuery({
+  const { data: charactersData, loading: charactersLoading } = useGetMyEditableCharactersQuery({
     variables: { filters: { limit: 100 } },
     skip: !user,
   });
@@ -622,7 +622,7 @@ export const UploadImagePage: React.FC = () => {
   }
 
   const galleries = galleriesData?.myGalleries?.galleries || [];
-  const characters = charactersData?.myCharacters?.characters || [];
+  const characters = charactersData?.myEditableCharacters?.characters || [];
 
   return (
     <Container>

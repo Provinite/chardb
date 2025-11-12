@@ -477,6 +477,7 @@ input CreateItemTypeInput {
   communityId: ID!
   description: String
   iconUrl: String
+  imageId: ID
   imageUrl: String
   isConsumable: Boolean! = false
   isStackable: Boolean! = true
@@ -775,6 +776,10 @@ type FollowStatus {
   isFollowing: Boolean!
 }
 
+input ForgotPasswordInput {
+  email: String!
+}
+
 type Gallery {
   _count: GalleryCount!
   character: Character
@@ -818,7 +823,7 @@ input GrantItemInput {
   pendingOwner: PendingOwnerInput
   quantity: Int! = 1
 
-  """User ID to grant item to. Omit for orphaned items."""
+  """User ID to grant item to. Required if pendingOwner is not provided."""
   userId: ID
 }
 
@@ -837,6 +842,7 @@ type Image {
   likesCount: Int!
   mimeType: String!
   originalFilename: String!
+  originalUrl: String!
   sensitiveContentDescription: String
   source: String
   tags_rel: [ImageTag!]
@@ -844,7 +850,6 @@ type Image {
   updatedAt: DateTime!
   uploader: User!
   uploaderId: ID!
-  url: String!
   userHasLiked: Boolean!
   width: Int!
 }
@@ -949,9 +954,8 @@ type ItemType {
   communityId: ID!
   createdAt: DateTime!
   description: String
-  iconUrl: String
   id: ID!
-  imageUrl: String
+  image: Image
   isConsumable: Boolean!
   isStackable: Boolean!
   isTradeable: Boolean!
@@ -1257,6 +1261,7 @@ type Mutation {
     """Media ID to delete"""
     id: ID!
   ): Boolean!
+  forgotPassword(input: ForgotPasswordInput!): Boolean!
 
   """Grant an item to a user (admin only)"""
   grantItem(input: GrantItemInput!): Item!
@@ -1356,6 +1361,7 @@ type Mutation {
     id: ID!
   ): RemovalResponse!
   reorderGalleries(input: ReorderGalleriesInput!): [Gallery!]!
+  resetPassword(input: ResetPasswordInput!): Boolean!
 
   """Respond to a community invitation (accept or decline)"""
   respondToCommunityInvitation(
@@ -1516,6 +1522,11 @@ type Mutation {
   ): [TraitListEntry!]!
 }
 
+input OwnerIdUpdate {
+  """Set owner ID (null = orphan character)"""
+  set: ID
+}
+
 input PendingOwnerInput {
   """The external account provider"""
   provider: ExternalAccountProvider!
@@ -1524,6 +1535,11 @@ input PendingOwnerInput {
   The account identifier on the external provider (Discord user ID, DeviantArt username, etc.)
   """
   providerAccountId: String!
+}
+
+input PendingOwnerUpdate {
+  """Set pending owner (null = clear pending owner)"""
+  set: PendingOwnerInput
 }
 
 type PendingOwnership {
@@ -1853,6 +1869,7 @@ type Query {
     id: ID!
   ): Media!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
+  myEditableCharacters(filters: CharacterFiltersInput): CharacterConnection!
 
   """Get all external accounts linked to the current user"""
   myExternalAccounts: [ExternalAccount!]!
@@ -2055,6 +2072,9 @@ type Query {
 
   """Validate that the bot has access to a Discord guild"""
   validateDiscordGuild(
+    """Community ID"""
+    communityId: ID!
+
     """Discord guild ID"""
     guildId: ID!
   ): DiscordGuildInfo!
@@ -2071,6 +2091,11 @@ type RemovalResponse {
 
 input ReorderGalleriesInput {
   galleryIds: [ID!]!
+}
+
+input ResetPasswordInput {
+  newPassword: String!
+  token: String!
 }
 
 """Input for responding to a community invitation"""
@@ -2437,8 +2462,15 @@ input UpdateCharacterInput {
   mainMediaId: ID
   name: String
 
-  """Update pending ownership for orphaned character"""
-  pendingOwner: PendingOwnerInput
+  """
+  Update character ownership (requires canCreateOrphanedCharacter permission)
+  """
+  ownerIdUpdate: OwnerIdUpdate
+
+  """
+  Update pending ownership (requires canCreateOrphanedCharacter permission)
+  """
+  pendingOwnerUpdate: PendingOwnerUpdate
   price: Float
   speciesId: ID
   speciesVariantId: ID
@@ -2533,6 +2565,7 @@ input UpdateItemTypeInput {
   colorId: ID
   description: String
   iconUrl: String
+  imageId: ID
   imageUrl: String
   isConsumable: Boolean
   isStackable: Boolean
@@ -2703,7 +2736,7 @@ input UpdateUserInput {
 }
 
 type User {
-  avatarUrl: String
+  avatarImage: Image
   bio: String
   canCreateCommunity: Boolean!
   canCreateInviteCode: Boolean!
