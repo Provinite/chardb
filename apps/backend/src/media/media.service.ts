@@ -7,7 +7,7 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import type { Prisma, Visibility, TextFormatting } from "@chardb/database";
-import { S3Service } from "../images/s3.service";
+import { ImagesService } from "../images/images.service";
 
 /**
  * Service layer input types for media operations.
@@ -105,7 +105,7 @@ export class MediaService {
   constructor(
     private readonly db: DatabaseService,
     private readonly tagsService: TagsService,
-    private readonly s3Service: S3Service,
+    private readonly imagesService: ImagesService,
   ) {}
 
   /**
@@ -381,94 +381,12 @@ export class MediaService {
     this.logger.log(`[remove] Media ${id} deleted from database`);
 
     // Handle image cleanup if this media contained an image
+    // Use centralized cleanup from ImagesService
     if (imageId) {
-      await this.cleanupOrphanedImage(imageId);
+      await this.imagesService.cleanupOrphanedImage(imageId);
     }
 
     return true;
-  }
-
-  /**
-   * Cleans up an image if it's no longer referenced by any media
-   * @param imageId Image ID to check and potentially cleanup
-   */
-  private async cleanupOrphanedImage(imageId: string) {
-    this.logger.log(`[cleanupOrphanedImage] Starting cleanup for image ${imageId}`);
-
-    // Check if any other Media records still reference this image
-    const remainingMediaCount = await this.db.media.count({
-      where: { imageId },
-    });
-    this.logger.log(`[cleanupOrphanedImage] Found ${remainingMediaCount} media records still referencing image ${imageId}`);
-
-    // If no other media references this image, delete it
-    if (remainingMediaCount === 0) {
-      const image = await this.db.image.findUnique({
-        where: { id: imageId },
-      });
-      this.logger.log(`[cleanupOrphanedImage] Image record ${imageId} found: ${!!image}`);
-
-      if (image) {
-        this.logger.log(`[cleanupOrphanedImage] Image URLs - original: ${image.originalUrl}, thumbnail: ${image.thumbnailUrl}`);
-
-        // Delete files from S3/local storage
-        await this.cleanupImageFiles(image);
-
-        // Delete the image record from database
-        await this.db.image.delete({
-          where: { id: imageId },
-        });
-
-        this.logger.log(`Deleted orphaned image ${imageId} from database and storage`);
-      } else {
-        this.logger.warn(`[cleanupOrphanedImage] Image ${imageId} not found in database - may have been cascade deleted`);
-      }
-    } else {
-      this.logger.debug(`Image ${imageId} still referenced by ${remainingMediaCount} media record(s), skipping deletion`);
-    }
-  }
-
-  /**
-   * Cleans up image files from S3
-   * @param image Image record containing file information
-   */
-  private async cleanupImageFiles(image: Prisma.ImageGetPayload<{}>) {
-    try {
-      if (image.originalUrl && image.originalUrl.startsWith('data:')) {
-        // Base64 encoded image - no file cleanup needed, stored in DB
-        this.logger.debug('Base64 image detected, no file cleanup needed');
-        return;
-      }
-
-      // Always assume images are in S3
-      if (image.originalUrl) {
-        this.logger.log(`[cleanupImageFiles] Deleting from S3: ${image.originalUrl}`);
-        await this.deleteFromS3(image.originalUrl, image.thumbnailUrl ?? undefined);
-      }
-    } catch (error) {
-      // Log the error but don't fail the deletion
-      this.logger.error(`Failed to cleanup image files for image ${image.id}:`, error);
-    }
-  }
-
-  /**
-   * Deletes files from S3
-   * @param imageUrl Main image URL
-   * @param thumbnailUrl Optional thumbnail URL
-   */
-  private async deleteFromS3(imageUrl: string, thumbnailUrl?: string) {
-    try {
-      const urlsToDelete = [imageUrl];
-      if (thumbnailUrl) {
-        urlsToDelete.push(thumbnailUrl);
-      }
-
-      await this.s3Service.deleteImages(urlsToDelete);
-      this.logger.log(`Deleted ${urlsToDelete.length} image(s) from S3`);
-    } catch (error) {
-      this.logger.error(`Failed to delete images from S3: ${error.message}`, error.stack);
-      // Don't throw - deletion failures shouldn't break the application
-    }
   }
 
 

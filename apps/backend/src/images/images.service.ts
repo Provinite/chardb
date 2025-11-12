@@ -600,4 +600,74 @@ export class ImagesService {
       );
     }
   }
+
+  /**
+   * Checks if an image is orphaned and deletes it from S3 and database if so.
+   * An image is considered orphaned if it's not referenced by:
+   * - Any Media record
+   * - Any User avatar
+   * - Any ItemType
+   *
+   * @param imageId The ID of the image to check
+   * @returns Promise<boolean> True if image was orphaned and deleted, false otherwise
+   */
+  async cleanupOrphanedImage(imageId: string): Promise<boolean> {
+    const logger = new Logger('ImagesService');
+    logger.log(`[cleanupOrphanedImage] Checking if image ${imageId} is orphaned`);
+
+    // Check all references in parallel
+    const [mediaCount, userAvatarCount, itemTypeCount] = await Promise.all([
+      this.db.media.count({ where: { imageId } }),
+      this.db.user.count({ where: { avatarImageId: imageId } }),
+      this.db.itemType.count({ where: { imageId } }),
+    ]);
+
+    const totalReferences = mediaCount + userAvatarCount + itemTypeCount;
+    logger.log(
+      `[cleanupOrphanedImage] Image ${imageId} references: media=${mediaCount}, avatars=${userAvatarCount}, itemTypes=${itemTypeCount}, total=${totalReferences}`
+    );
+
+    // If image is still referenced, don't delete
+    if (totalReferences > 0) {
+      logger.debug(`Image ${imageId} still referenced by ${totalReferences} record(s), skipping deletion`);
+      return false;
+    }
+
+    // Image is orphaned, fetch it to get URLs
+    const image = await this.db.image.findUnique({
+      where: { id: imageId },
+    });
+
+    if (!image) {
+      logger.warn(`[cleanupOrphanedImage] Image ${imageId} not found in database`);
+      return false;
+    }
+
+    logger.log(`[cleanupOrphanedImage] Image ${imageId} is orphaned, deleting from S3 and database`);
+    logger.log(`[cleanupOrphanedImage] URLs - original: ${image.originalUrl}, thumbnail: ${image.thumbnailUrl}`);
+
+    // Delete from S3 (skip base64 images)
+    if (image.originalUrl && !image.originalUrl.startsWith('data:')) {
+      try {
+        const urlsToDelete = [image.originalUrl];
+        if (image.thumbnailUrl) {
+          urlsToDelete.push(image.thumbnailUrl);
+        }
+
+        await this.s3Service.deleteImages(urlsToDelete);
+        logger.log(`Deleted ${urlsToDelete.length} image(s) from S3`);
+      } catch (error) {
+        logger.error(`Failed to delete images from S3: ${error.message}`, error.stack);
+        // Continue with database deletion even if S3 fails
+      }
+    }
+
+    // Delete from database
+    await this.db.image.delete({
+      where: { id: imageId },
+    });
+
+    logger.log(`Successfully deleted orphaned image ${imageId} from database and storage`);
+    return true;
+  }
 }
