@@ -65,6 +65,9 @@ DISCORD_CLIENT_SECRET=$(terraform output -raw backend_discord_client_secret 2>/d
 DISCORD_CALLBACK_URL=$(terraform output -raw backend_discord_callback_url 2>/dev/null || echo "")
 DISCORD_BOT_TOKEN=$(terraform output -raw backend_discord_bot_token 2>/dev/null || echo "")
 
+# Get SQS Queue URL
+SQS_QUEUE_URL=$(terraform output -raw backend_sqs_queue_url 2>/dev/null || echo "")
+
 # Get backend URL for frontend
 if [ "$ENVIRONMENT" = "prod" ]; then
     # Prod uses CloudFront API endpoint
@@ -94,6 +97,7 @@ echo "   Discord Client ID: [REDACTED]"
 echo "   Discord Client Secret: [REDACTED]"
 echo "   Discord Callback URL: $DISCORD_CALLBACK_URL"
 echo "   Discord Bot Token: [REDACTED]"
+echo "   SQS Queue URL: $SQS_QUEUE_URL"
 echo ""
 echo "Export these variables:"
 echo "export SERVER_IP='$SERVER_IP'"
@@ -109,5 +113,6 @@ echo "export DISCORD_CLIENT_ID='$DISCORD_CLIENT_ID'"
 echo "export DISCORD_CLIENT_SECRET='$DISCORD_CLIENT_SECRET'"
 echo "export DISCORD_CALLBACK_URL='$DISCORD_CALLBACK_URL'"
 echo "export DISCORD_BOT_TOKEN='$DISCORD_BOT_TOKEN'"
+echo "export SQS_QUEUE_URL='$SQS_QUEUE_URL'"
 echo "export DATABASE_URL='postgresql://app:\$POSTGRES_PASSWORD@localhost:5432/app'"
 echo "export FRONTEND_URL='$FRONTEND_URL'"
