@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { SESClient } from '@aws-sdk/client-ses';
+import { SESv2Client } from '@aws-sdk/client-sesv2';
 import { EmailService } from './email.service';
 
 @Module({
@@ -28,13 +28,10 @@ import { EmailService } from './email.service';
                 : undefined,
             }
           : {
-              SES: {
-                ses: new SESClient({
-                  region: awsRegion,
-                  // Credentials automatically loaded from ECS task role
-                }),
-                aws: { SendRawEmail: true },
-              },
+              SES: new SESv2Client({
+                region: awsRegion,
+                // Credentials automatically loaded from ECS task role
+              }),
             };
 
         return {
