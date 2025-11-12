@@ -372,22 +372,51 @@ export class MediaService {
       throw new ForbiddenException("You can only delete your own media");
     }
 
-    // Handle image file cleanup if this media contains an image
-    if (media.imageId) {
-      const image = await this.db.image.findUnique({
-        where: { id: media.imageId },
-      });
-      if (image) {
-        await this.cleanupImageFiles(image);
-      }
-    }
+    const imageId = media.imageId;
 
-    // Delete the media record - CASCADE constraints will handle content deletion
+    // Delete the media record first - CASCADE constraints will handle text content deletion
     await this.db.media.delete({
       where: { id },
     });
 
+    // Handle image cleanup if this media contained an image
+    if (imageId) {
+      await this.cleanupOrphanedImage(imageId);
+    }
+
     return true;
+  }
+
+  /**
+   * Cleans up an image if it's no longer referenced by any media
+   * @param imageId Image ID to check and potentially cleanup
+   */
+  private async cleanupOrphanedImage(imageId: string) {
+    // Check if any other Media records still reference this image
+    const remainingMediaCount = await this.db.media.count({
+      where: { imageId },
+    });
+
+    // If no other media references this image, delete it
+    if (remainingMediaCount === 0) {
+      const image = await this.db.image.findUnique({
+        where: { id: imageId },
+      });
+
+      if (image) {
+        // Delete files from S3/local storage
+        await this.cleanupImageFiles(image);
+
+        // Delete the image record from database
+        await this.db.image.delete({
+          where: { id: imageId },
+        });
+
+        this.logger.log(`Deleted orphaned image ${imageId} from database and storage`);
+      }
+    } else {
+      this.logger.debug(`Image ${imageId} still referenced by ${remainingMediaCount} media record(s), skipping deletion`);
+    }
   }
 
   /**
