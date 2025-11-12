@@ -248,6 +248,97 @@ export class CharactersService {
     };
   }
 
+  /**
+   * Find all characters that the user can edit based on community permissions.
+   * This includes:
+   * - Characters owned by the user without a species (always editable by owner)
+   * - Characters owned by the user with a species (where user has canEditOwnCharacter in the community)
+   * - Any character in communities where user has canEditCharacter permission
+   * - Orphaned characters in communities where user has canCreateOrphanedCharacter or canEditCharacter permission
+   */
+  async findEditableCharacters(userId: string, filters: CharacterServiceFilters = {}) {
+    const { limit = 20, offset = 0 } = filters;
+
+    const where: Prisma.CharacterWhereInput = {
+      OR: [
+        // User owns the character without a species (always editable)
+        {
+          ownerId: userId,
+          speciesId: null,
+        },
+        // User owns the character AND has canEditOwnCharacter permission in the community
+        {
+          ownerId: userId,
+          species: {
+            community: {
+              roles: {
+                some: {
+                  canEditOwnCharacter: true,
+                  communityMembers: {
+                    some: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        // User has canEditCharacter permission in the community (works for any character)
+        {
+          species: {
+            community: {
+              roles: {
+                some: {
+                  canEditCharacter: true,
+                  communityMembers: {
+                    some: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        // Orphaned character with canCreateOrphanedCharacter permission
+        {
+          ownerId: null,
+          species: {
+            community: {
+              roles: {
+                some: {
+                  canCreateOrphanedCharacter: true,
+                  communityMembers: {
+                    some: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+    };
+
+    const [characters, total] = await Promise.all([
+      this.db.character.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      this.db.character.count({ where }),
+    ]);
+
+    return {
+      characters,
+      total,
+      hasMore: offset + limit < total,
+    };
+  }
+
   async findOne(id: string, userId?: string) {
     const character = await this.db.character.findUnique({
       where: { id },

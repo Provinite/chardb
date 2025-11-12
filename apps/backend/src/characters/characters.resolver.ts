@@ -256,6 +256,16 @@ export class CharactersResolver {
     return mapPrismaCharacterConnectionToGraphQL(result);
   }
 
+  @AllowAnyAuthenticated()
+  @Query(() => CharacterConnection)
+  async myEditableCharacters(
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+    @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
+  ): Promise<CharacterConnection> {
+    const result = await this.charactersService.findEditableCharacters(user.id, filters);
+    return mapPrismaCharacterConnectionToGraphQL(result);
+  }
+
   @AllowUnauthenticated()
   @Query(() => CharacterConnection)
   async userCharacters(
