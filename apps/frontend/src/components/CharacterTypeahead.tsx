@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-import { useGetMyEditableCharactersQuery } from "../generated/graphql";
+import { useGetMyEditableCharactersQuery, useGetCharacterQuery } from "../generated/graphql";
 
 interface Character {
   id: string;
@@ -133,6 +133,12 @@ export const CharacterTypeahead: React.FC<CharacterTypeaheadProps> = ({
     skip: !isOpen && !searchQuery,
   });
 
+  // Fetch the specific character if a value is provided but we don't have it yet
+  const { data: characterData } = useGetCharacterQuery({
+    variables: { id: value || "" },
+    skip: !value || !!selectedCharacter,
+  });
+
   const characters = data?.myEditableCharacters?.characters || [];
 
   // Close dropdown when clicking outside
@@ -152,17 +158,30 @@ export const CharacterTypeahead: React.FC<CharacterTypeaheadProps> = ({
 
   // Load selected character details when value changes
   useEffect(() => {
-    if (value && characters.length > 0) {
+    if (value) {
+      // Try to find in search results first
       const character = characters.find((c) => c.id === value);
       if (character) {
         setSelectedCharacter(character);
         setSearchQuery(character.name);
+      } else if (characterData?.character) {
+        // Use the fetched character data
+        const char = characterData.character;
+        setSelectedCharacter({
+          id: char.id,
+          name: char.name,
+          species: char.species ? {
+            id: char.species.id,
+            name: char.species.name,
+          } : null,
+        });
+        setSearchQuery(char.name);
       }
     } else if (!value) {
       setSelectedCharacter(null);
       setSearchQuery("");
     }
-  }, [value, characters]);
+  }, [value, characters, characterData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
