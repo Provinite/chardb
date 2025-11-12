@@ -1,11 +1,14 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { useGetUserProfileQuery, useMyExternalAccountsQuery } from '../generated/graphql';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { RandomCharacterButton } from '../components/RandomCharacterButton';
-import { FollowButton } from '../components/FollowButton';
-import { MediaGrid } from '../components/MediaGrid';
+import React from "react";
+import { useParams, Link } from "react-router-dom";
+import styled from "styled-components";
+import {
+  useGetUserProfileQuery,
+  useMyExternalAccountsQuery,
+} from "../generated/graphql";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { RandomCharacterButton } from "../components/RandomCharacterButton";
+import { FollowButton } from "../components/FollowButton";
+import { MediaGrid } from "../components/MediaGrid";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -103,17 +106,20 @@ const StatsGrid = styled.div`
 `;
 
 const StatCard = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== 'clickable'
+  shouldForwardProp: (prop) => prop !== "clickable",
 })<{ clickable?: boolean }>`
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   padding: ${({ theme }) => theme.spacing.md};
   text-align: center;
-  cursor: ${({ clickable }) => clickable ? 'pointer' : 'default'};
-  transition: ${({ clickable }) => clickable ? 'all 0.2s ease-in-out' : 'none'};
+  cursor: ${({ clickable }) => (clickable ? "pointer" : "default")};
+  transition: ${({ clickable }) =>
+    clickable ? "all 0.2s ease-in-out" : "none"};
 
-  ${({ clickable, theme }) => clickable && `
+  ${({ clickable, theme }) =>
+    clickable &&
+    `
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -153,7 +159,7 @@ const SectionHeader = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
   padding-bottom: ${({ theme }) => theme.spacing.sm};
   border-bottom: 2px solid ${({ theme }) => theme.colors.border};
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     gap: ${({ theme }) => theme.spacing.sm};
@@ -167,7 +173,6 @@ const SectionTitle = styled.h3`
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
 `;
-
 
 const Grid = styled.div`
   display: grid;
@@ -328,7 +333,15 @@ export const UserProfilePage: React.FC = () => {
     );
   }
 
-  const { user, stats, recentCharacters, recentGalleries, recentMedia, featuredCharacters, isOwnProfile } = data.userProfile;
+  const {
+    user,
+    stats,
+    recentCharacters,
+    recentGalleries,
+    recentMedia,
+    featuredCharacters,
+    isOwnProfile,
+  } = data.userProfile;
 
   return (
     <Container>
@@ -343,26 +356,29 @@ export const UserProfilePage: React.FC = () => {
             {user.displayName?.[0] || user.username[0]}
           </AvatarPlaceholder>
         )}
-        
+
         <ProfileInfo>
           <Username>
             @{user.username}
             {user.isVerified && <VerifiedBadge>✓</VerifiedBadge>}
           </Username>
-          
+
           {user.displayName && <DisplayName>{user.displayName}</DisplayName>}
-          
+
           {user.bio && <Bio>{user.bio}</Bio>}
-          
+
           <ProfileMeta>
-            {user.location && (
-              <MetaItem>
-                📍 {user.location}
-              </MetaItem>
-            )}
+            {user.location && <MetaItem>📍 {user.location}</MetaItem>}
             {user.website && (
               <MetaItem>
-                🔗 <a href={user.website} target="_blank" rel="noopener noreferrer">{user.website}</a>
+                🔗{" "}
+                <a
+                  href={user.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {user.website}
+                </a>
               </MetaItem>
             )}
             <MetaItem>
@@ -370,12 +386,10 @@ export const UserProfilePage: React.FC = () => {
             </MetaItem>
           </ProfileMeta>
         </ProfileInfo>
-        
+
         <ProfileActions>
           {isOwnProfile ? (
-            <EditButton to="/profile/edit">
-              Edit Profile
-            </EditButton>
+            <EditButton to="/profile/edit">Edit Profile</EditButton>
           ) : (
             <FollowButton userId={user.id} showCount={true} size="md" />
           )}
@@ -383,21 +397,27 @@ export const UserProfilePage: React.FC = () => {
       </ProfileHeader>
 
       {/* Connected Accounts - Only shown when viewing own profile */}
-      {isOwnProfile && externalAccountsData?.myExternalAccounts && externalAccountsData.myExternalAccounts.length > 0 && (
-        <ConnectedAccountsSection>
-          <ConnectedAccountsTitle>Connected Accounts</ConnectedAccountsTitle>
-          <ConnectedAccountsList>
-            {externalAccountsData.myExternalAccounts.map((account: any) => (
-              <ConnectedAccountBadge key={account.id}>
-                <AccountIcon>
-                  {account.provider === 'DEVIANTART' ? 'DA' : account.provider === 'DISCORD' ? 'DC' : account.provider.charAt(0)}
-                </AccountIcon>
-                <span>{account.displayName}</span>
-              </ConnectedAccountBadge>
-            ))}
-          </ConnectedAccountsList>
-        </ConnectedAccountsSection>
-      )}
+      {isOwnProfile &&
+        externalAccountsData?.myExternalAccounts &&
+        externalAccountsData.myExternalAccounts.length > 0 && (
+          <ConnectedAccountsSection>
+            <ConnectedAccountsTitle>Connected Accounts</ConnectedAccountsTitle>
+            <ConnectedAccountsList>
+              {externalAccountsData.myExternalAccounts.map((account: any) => (
+                <ConnectedAccountBadge key={account.id}>
+                  <AccountIcon>
+                    {account.provider === "DEVIANTART"
+                      ? "DA"
+                      : account.provider === "DISCORD"
+                        ? "DC"
+                        : account.provider.charAt(0)}
+                  </AccountIcon>
+                  <span>{account.displayName}</span>
+                </ConnectedAccountBadge>
+              ))}
+            </ConnectedAccountsList>
+          </ConnectedAccountsSection>
+        )}
 
       <StatsGrid>
         <StatCard>
@@ -434,10 +454,7 @@ export const UserProfilePage: React.FC = () => {
         <Section>
           <SectionHeader>
             <SectionTitle>Featured Characters</SectionTitle>
-            <RandomCharacterButton 
-              characters={featuredCharacters} 
-              size="sm"
-            />
+            <RandomCharacterButton characters={featuredCharacters} size="sm" />
           </SectionHeader>
           <Grid>
             {featuredCharacters.map((character) => (
@@ -454,19 +471,19 @@ export const UserProfilePage: React.FC = () => {
         <Section>
           <SectionHeader>
             <SectionTitle>Recent Characters</SectionTitle>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <Link to={`/characters?owner=${user.username}`} style={{ 
-                color: 'inherit', 
-                textDecoration: 'none',
-                fontSize: '0.9rem',
-                fontWeight: '500'
-              }}>
+            <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+              <Link
+                to={`/characters?owner=${user.username}`}
+                style={{
+                  color: "inherit",
+                  textDecoration: "none",
+                  fontSize: "0.9rem",
+                  fontWeight: "500",
+                }}
+              >
                 View All ({stats.charactersCount})
               </Link>
-              <RandomCharacterButton 
-                characters={recentCharacters} 
-                size="sm"
-              />
+              <RandomCharacterButton characters={recentCharacters} size="sm" />
             </div>
           </SectionHeader>
           <Grid>
@@ -484,12 +501,15 @@ export const UserProfilePage: React.FC = () => {
         <Section>
           <SectionHeader>
             <SectionTitle>Recent Galleries</SectionTitle>
-            <Link to={`/galleries?owner=${user.username}`} style={{ 
-              color: 'inherit', 
-              textDecoration: 'none',
-              fontSize: '0.9rem',
-              fontWeight: '500'
-            }}>
+            <Link
+              to={`/galleries?owner=${user.username}`}
+              style={{
+                color: "inherit",
+                textDecoration: "none",
+                fontSize: "0.9rem",
+                fontWeight: "500",
+              }}
+            >
               View All ({stats.galleriesCount})
             </Link>
           </SectionHeader>
@@ -498,7 +518,9 @@ export const UserProfilePage: React.FC = () => {
               <Card key={gallery.id} to={`/gallery/${gallery.id}`}>
                 <CardTitle>{gallery.name}</CardTitle>
                 {gallery.character && (
-                  <CardDescription>Character: {gallery.character.name}</CardDescription>
+                  <CardDescription>
+                    Character: {gallery.character.name}
+                  </CardDescription>
                 )}
                 {gallery.description && (
                   <CardDescription>{gallery.description}</CardDescription>
@@ -513,12 +535,15 @@ export const UserProfilePage: React.FC = () => {
         <Section>
           <SectionHeader>
             <SectionTitle>Recent Media</SectionTitle>
-            <Link to={`/images?uploader=${user.username}`} style={{ 
-              color: 'inherit', 
-              textDecoration: 'none',
-              fontSize: '0.9rem',
-              fontWeight: '500'
-            }}>
+            <Link
+              to={`/images?uploader=${user.username}`}
+              style={{
+                color: "inherit",
+                textDecoration: "none",
+                fontSize: "0.9rem",
+                fontWeight: "500",
+              }}
+            >
               View All ({stats.imagesCount})
             </Link>
           </SectionHeader>

@@ -452,7 +452,7 @@ export const MediaPage: React.FC = () => {
             <MetaBadge variant={getVisibilityVariant(media.visibility)}>
               {media.visibility}
             </MetaBadge>
-            {isTextMedia && (
+            {isTextMedia && media.textContent && (
               <>
                 <MetaBadge>{media.textContent.wordCount} words</MetaBadge>
                 <MetaBadge>
@@ -460,7 +460,7 @@ export const MediaPage: React.FC = () => {
                 </MetaBadge>
               </>
             )}
-            {isImageMedia && (
+            {isImageMedia && media.image && (
               <>
                 <MetaBadge>
                   {media.image.width} × {media.image.height}px
@@ -517,7 +517,7 @@ export const MediaPage: React.FC = () => {
       </AuthorInfo>
 
       <ContentSection>
-        {isImageMedia && (
+        {isImageMedia && media.image && (
           <>
             <ImageContainer>
               <ImageElement
@@ -543,7 +543,7 @@ export const MediaPage: React.FC = () => {
             )}
           </>
         )}
-        {isTextMedia && (
+        {isTextMedia && media.textContent && (
           <TextViewer
             textContent={media.textContent}
             maxHeight="none"
@@ -559,7 +559,7 @@ export const MediaPage: React.FC = () => {
         entityId={media.id}
       /> */}
 
-      {isImageMedia && (
+      {isImageMedia && media.image && (
         <ImageOverlay
           isOpen={lightboxOpen}
           onClick={() => setLightboxOpen(false)}

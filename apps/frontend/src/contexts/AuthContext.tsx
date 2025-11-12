@@ -5,15 +5,14 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { useMutation, useQuery } from "@apollo/client";
 import { toast } from "react-hot-toast";
 import {
-  LOGIN_MUTATION,
-  SIGNUP_MUTATION,
-  ME_QUERY,
-  REFRESH_TOKEN_MUTATION,
+  useLoginMutation,
+  useSignupMutation,
+  useMeQuery,
+  useRefreshTokenMutation,
   type MeQuery,
-} from "../graphql/auth.graphql";
+} from "../generated/graphql";
 
 type User = MeQuery['me'];
 
@@ -42,15 +41,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [loginMutation] = useMutation(LOGIN_MUTATION);
-  const [signupMutation] = useMutation(SIGNUP_MUTATION);
-  const [refreshTokenMutation] = useMutation(REFRESH_TOKEN_MUTATION);
+  const [loginMutation] = useLoginMutation();
+  const [signupMutation] = useSignupMutation();
+  const [refreshTokenMutation] = useRefreshTokenMutation();
 
   const {
     data: meData,
     loading: meLoading,
     refetch: refetchMe,
-  } = useQuery(ME_QUERY, {
+  } = useMeQuery({
     skip: !localStorage.getItem("accessToken"),
     errorPolicy: "ignore",
   });

@@ -1,10 +1,6 @@
 import React, { useState, useCallback } from "react";
-import { useQuery } from "@apollo/client";
 import styled from "styled-components";
-import {
-  GET_CHARACTERS,
-  CharacterFiltersInput,
-} from "../graphql/characters.graphql";
+import { useGetCharactersQuery, CharacterFiltersInput } from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CharacterGrid } from "../components/CharacterGrid";
 import { RandomCharacterButton } from "../components/RandomCharacterButton";
@@ -261,7 +257,7 @@ export const CharactersPage: React.FC = () => {
   const [currentAdvancedFilters, setCurrentAdvancedFilters] =
     useState<AdvancedSearchFilters>({});
 
-  const { data, loading, error, fetchMore } = useQuery(GET_CHARACTERS, {
+  const { data, loading, error, fetchMore } = useGetCharactersQuery({
     variables: { filters },
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "cache-and-network",
