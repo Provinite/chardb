@@ -5,6 +5,17 @@ import { Character } from '../generated/graphql';
 import { Tag } from './Tag';
 import { TagsContainer } from './TagsContainer';
 
+export type CharacterCardItem = Pick<Character,
+  'id' | 'name' | 'visibility' | 'tags' | 'isSellable' | 'price'
+> & {
+  species?: Pick<NonNullable<Character['species']>, 'name'> | null;
+  owner?: Pick<NonNullable<Character['owner']>, 'displayName' | 'username'> | null;
+  mainMedia?: {
+    image?: Pick<NonNullable<NonNullable<Character['mainMedia']>['image']>, 'thumbnailUrl' | 'originalUrl' | 'altText'> | null;
+  } | null;
+  _count?: Pick<NonNullable<Character['_count']>, 'media'> | null;
+};
+
 const Card = styled.div`
   background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
@@ -138,7 +149,7 @@ const EditButton = styled(Link)`
 `;
 
 interface CharacterCardProps {
-  character: Character;
+  character: CharacterCardItem;
   showOwner?: boolean;
   showEditButton?: boolean;
 }
@@ -184,7 +195,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       <ImageSection>
         {character.mainMedia?.image ? (
           <MainImage
-            src={character.mainMedia.image.thumbnailUrl || character.mainMedia.image.url}
+            src={character.mainMedia.image.thumbnailUrl || character.mainMedia.image.originalUrl}
             alt={character.mainMedia.image.altText || `${character.name} main image`}
           />
         ) : (

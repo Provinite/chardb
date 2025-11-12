@@ -1,12 +1,10 @@
 import React from "react";
-import { useQuery } from "@apollo/client";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
-import { GET_LIKED_GALLERIES } from "../graphql/galleries.graphql";
+import { useGetLikedGalleriesQuery, LikeableType } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
-import { LikeableType } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -180,7 +178,7 @@ const ErrorContainer = styled.div`
 export const LikedGalleriesPage: React.FC = () => {
   const { user } = useAuth();
 
-  const { data, loading, error } = useQuery(GET_LIKED_GALLERIES, {
+  const { data, loading, error } = useGetLikedGalleriesQuery({
     skip: !user,
   });
 

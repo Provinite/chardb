@@ -4,14 +4,14 @@ import { Media } from '../generated/graphql';
 import { MediaCard } from './MediaCard';
 
 // Define the minimal Media type that MediaGrid actually needs
-export type MediaGridItem = Pick<Media, 
-  | 'id' 
-  | 'title' 
-  | 'description' 
+export type MediaGridItem = Pick<Media,
+  | 'id'
+  | 'title'
+  | 'description'
   | 'visibility'
 > & {
   owner: Pick<Media['owner'], 'displayName' | 'username'>;
-  image: Media['image'] extends null ? null : Pick<NonNullable<Media['image']>, 'url' | 'thumbnailUrl' | 'altText'> | null;
+  image: Media['image'] extends null ? null : Pick<NonNullable<Media['image']>, 'originalUrl' | 'thumbnailUrl' | 'altText'> | null;
   textContent: Media['textContent'] extends null ? null : Pick<NonNullable<Media['textContent']>, 'content' | 'wordCount'> | null;
 };
 

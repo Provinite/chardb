@@ -33,10 +33,13 @@ chardb/
 - **Frontend**: React 18, TypeScript, Apollo Client, Styled Components
 - **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: JWT with refresh tokens
-- **File Storage**: AWS S3 (configurable)
-- **Caching**: Redis
+- **File Storage**: AWS S3 + CloudFront CDN (LocalStack for local dev)
+- **Image Processing**: Sharp (resize, thumbnails, optimization)
+- **Observability**: OpenTelemetry with Jaeger
+- **Email**: AWS SES (MailHog for local dev)
 - **Testing**: Jest, React Testing Library
-- **Deployment**: Docker, GitHub Actions
+- **Infrastructure**: Terraform, Docker
+- **Deployment**: AWS (ECS Fargate for prod, EC2 for dev)
 
 ## 🚀 Quick Start
 
@@ -70,16 +73,22 @@ chardb/
 
 4. **Start the development environment**
    ```bash
-   # Start PostgreSQL and Redis with Docker
-   docker compose -f docker/docker compose.yml up postgres redis -d
-   
+   # Start development services (PostgreSQL, LocalStack, MailHog, Jaeger)
+   docker compose up -d
+
    # Generate Prisma client and run migrations
    yarn workspace @chardb/database db:generate
    yarn workspace @chardb/database db:migrate
-   
+
    # Seed the database (optional)
    yarn workspace @chardb/database db:seed
    ```
+
+   **Development Services:**
+   - PostgreSQL: Database (port 5433)
+   - LocalStack: Local AWS services (S3, SES) at port 4566
+   - MailHog: SMTP server and email testing UI at http://localhost:8025
+   - Jaeger: OpenTelemetry tracing UI at http://localhost:16686
 
 5. **Start the applications**
    ```bash
@@ -149,12 +158,30 @@ The application uses PostgreSQL with Prisma ORM. Key entities include:
 
 #### Backend (`apps/backend/.env`)
 ```env
+# Database
 DATABASE_URL="postgresql://username:password@localhost:5432/chardb_db"
+
+# JWT Authentication
 JWT_SECRET="your-super-secret-jwt-key"
-REDIS_URL="redis://localhost:6379"
-AWS_ACCESS_KEY_ID="your-aws-key"
-AWS_SECRET_ACCESS_KEY="your-aws-secret"
-AWS_BUCKET_NAME="your-s3-bucket"
+
+# AWS Configuration
+AWS_REGION="us-east-1"
+
+# S3 Image Storage
+# For local development (using LocalStack):
+S3_IMAGES_BUCKET="chardb-images-local"
+CLOUDFRONT_IMAGES_DOMAIN="localhost:4566/chardb-images-local"
+AWS_ENDPOINT_URL="http://localhost:4566"
+
+# For deployed environments (managed by Terraform):
+# S3_IMAGES_BUCKET="chardb-images-dev"  # or chardb-images-prod
+# CLOUDFRONT_IMAGES_DOMAIN="images.dev.chardb.cc"  # or images.chardb.cc
+# AWS_ENDPOINT_URL not set (uses real AWS)
+
+# Email (MailHog for local, SES for prod)
+SMTP_HOST="localhost"
+SMTP_PORT="1025"
+EMAIL_FROM="noreply@chardb.dev"
 ```
 
 #### Frontend (`apps/frontend/.env`)

@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery } from "@apollo/client";
 import styled from "styled-components";
 import { toast } from "react-hot-toast";
 import { Button } from "@chardb/ui";
 import {
-  GET_CHARACTER,
-  GetCharacterQuery,
+  useGetCharacterQuery,
   useDeleteCharacterMutation,
-} from "../graphql/characters.graphql";
+  LikeableType,
+  CommentableType,
+} from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
@@ -20,7 +20,6 @@ import { Tag } from "../components/Tag";
 import { TagsContainer } from "../components/TagsContainer";
 import { DeleteConfirmationDialog } from "../components/DeleteConfirmationDialog";
 import { CharacterTraitsDisplay } from "../components/character/CharacterTraitsDisplay";
-import { LikeableType, CommentableType } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -493,12 +492,12 @@ export const CharacterPage: React.FC = () => {
   const { user } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const { data, loading, error } = useQuery(GET_CHARACTER, {
+  const { data, loading, error } = useGetCharacterQuery({
     variables: { id: id! },
     skip: !id,
   });
 
-  const character: GetCharacterQuery["character"] | undefined = data?.character;
+  const character = data?.character;
 
   // Get user's permissions in the character's community
   const { permissions } = useUserCommunityRole(
@@ -624,7 +623,7 @@ export const CharacterPage: React.FC = () => {
               <MainImageElement
                 src={
                   character.mainMedia.image.thumbnailUrl ||
-                  character.mainMedia.image.url
+                  character.mainMedia.image.originalUrl
                 }
                 alt={
                   character.mainMedia.image.altText ||
@@ -689,11 +688,16 @@ export const CharacterPage: React.FC = () => {
           <OwnerInfo>
             <OwnerLink to={`/user/${character.owner.username}`}>
               <OwnerAvatar>
-                {character.owner.avatarUrl ? (
+                {character.owner.avatarImage ? (
                   <img
-                    src={character.owner.avatarUrl}
+                    src={
+                      character.owner.avatarImage.thumbnailUrl ||
+                      character.owner.avatarImage.originalUrl
+                    }
                     alt={
-                      character.owner.displayName || character.owner.username
+                      character.owner.avatarImage.altText ||
+                      character.owner.displayName ||
+                      character.owner.username
                     }
                   />
                 ) : (

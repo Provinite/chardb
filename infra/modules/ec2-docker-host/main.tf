@@ -157,6 +157,32 @@ resource "aws_iam_role_policy" "ecr_access" {
   })
 }
 
+# IAM policy for S3 image storage access
+resource "aws_iam_role_policy" "s3_images_access" {
+  count = var.s3_images_bucket_arn != null ? 1 : 0
+  name  = "${var.name}-s3-images-access"
+  role  = aws_iam_role.docker_host.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          var.s3_images_bucket_arn,
+          "${var.s3_images_bucket_arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
 # IAM instance profile
 resource "aws_iam_instance_profile" "docker_host" {
   name = "${var.name}-docker-host-profile"

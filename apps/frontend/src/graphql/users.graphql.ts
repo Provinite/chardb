@@ -1,5 +1,20 @@
 import { gql } from '@apollo/client';
 
+// Shared user fragment for basic user info with avatar
+export const USER_BASIC_FRAGMENT = gql`
+  fragment UserBasic on User {
+    id
+    username
+    displayName
+    avatarImage {
+      id
+      originalUrl
+      thumbnailUrl
+      altText
+    }
+  }
+`;
+
 export const GET_USER_PROFILE = gql`
   query GetUserProfile($username: String!) {
     userProfile(username: $username) {
@@ -8,7 +23,12 @@ export const GET_USER_PROFILE = gql`
         username
         displayName
         bio
-        avatarUrl
+        avatarImage {
+          id
+          originalUrl
+          thumbnailUrl
+          altText
+        }
         location
         website
         isVerified
@@ -33,10 +53,7 @@ export const GET_USER_PROFILE = gql`
         createdAt
         updatedAt
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
       }
       recentGalleries {
@@ -46,10 +63,7 @@ export const GET_USER_PROFILE = gql`
         createdAt
         updatedAt
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         character {
           id
@@ -62,15 +76,12 @@ export const GET_USER_PROFILE = gql`
         description
         createdAt
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         image {
           id
           filename
-          url
+          originalUrl
           thumbnailUrl
         }
       }
@@ -84,16 +95,14 @@ export const GET_USER_PROFILE = gql`
         createdAt
         updatedAt
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
       }
       isOwnProfile
       canViewPrivateContent
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_USER_STATS = gql`
@@ -117,7 +126,12 @@ export const UPDATE_PROFILE = gql`
       username
       displayName
       bio
-      avatarUrl
+      avatarImage {
+        id
+        originalUrl
+        thumbnailUrl
+        altText
+      }
       location
       website
       dateOfBirth

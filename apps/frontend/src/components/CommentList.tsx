@@ -1,11 +1,9 @@
 import React, { useState } from "react";
-import { useQuery } from "@apollo/client";
 import styled from "styled-components";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { Comment } from "./Comment";
 import { CommentForm } from "./CommentForm";
-import { GET_COMMENTS } from "../graphql/social.graphql";
-import { CommentableType } from "../generated/graphql";
+import { useGetCommentsQuery, CommentableType } from "../generated/graphql";
 
 const Container = styled.div`
   margin-top: ${({ theme }) => theme.spacing.xl};
@@ -139,7 +137,7 @@ export const CommentList: React.FC<CommentListProps> = ({
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const { data, loading, error, refetch, fetchMore } = useQuery(GET_COMMENTS, {
+  const { data, loading, error, refetch, fetchMore } = useGetCommentsQuery({
     variables: {
       filters: {
         entityType,

@@ -1,11 +1,10 @@
 import React from "react";
-import { useQuery } from "@apollo/client";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CharacterGrid } from "../components/CharacterGrid";
 import { useAuth } from "../contexts/AuthContext";
-import { GET_MY_CHARACTERS } from "../graphql/characters.graphql";
+import { useGetMyCharactersQuery } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -87,7 +86,7 @@ const ErrorContainer = styled.div`
 export const MyCharactersPage: React.FC = () => {
   const { user } = useAuth();
 
-  const { data, loading, error } = useQuery(GET_MY_CHARACTERS, {
+  const { data, loading, error } = useGetMyCharactersQuery({
     skip: !user,
   });
 

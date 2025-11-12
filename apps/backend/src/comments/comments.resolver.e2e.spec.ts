@@ -18,7 +18,7 @@ describe('CommentsResolver', () => {
     passwordHash: 'hash',
     displayName: null,
     bio: null,
-    avatarUrl: null,
+    avatarImageId: null,
     location: null,
     website: null,
     dateOfBirth: null,

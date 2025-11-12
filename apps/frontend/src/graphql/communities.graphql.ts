@@ -7,7 +7,12 @@ export const COMMUNITY_MEMBER_USER_FRAGMENT = gql`
     id
     username
     displayName
-    avatarUrl
+    avatarImage {
+      id
+      originalUrl
+      thumbnailUrl
+      altText
+    }
   }
 `;
 

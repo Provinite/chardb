@@ -226,7 +226,7 @@ describe('ImageLikesResolver', () => {
     id: 'image-1',
     filename: 'test.jpg',
     originalFilename: 'test.jpg',
-    url: 'http://example.com/test.jpg',
+    originalUrl: 'http://example.com/test.jpg',
     uploaderId: 'user-1',
     width: 100,
     height: 100,

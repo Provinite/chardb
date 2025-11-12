@@ -397,7 +397,7 @@ export const EditCharacterPage: React.FC = () => {
             id: character.owner.id,
             username: character.owner.username,
             displayName: character.owner.displayName || undefined,
-            avatarUrl: character.owner.avatarUrl || undefined,
+            avatarImage: character.owner.avatarImage || null,
           },
         });
       } else if (character.pendingOwnership) {
@@ -826,7 +826,7 @@ export const EditCharacterPage: React.FC = () => {
                       id: character.owner.id,
                       username: character.owner.username,
                       displayName: character.owner.displayName || undefined,
-                      avatarUrl: character.owner.avatarUrl || undefined,
+                      avatarImage: character.owner.avatarImage || null,
                     }
                   : undefined
               }

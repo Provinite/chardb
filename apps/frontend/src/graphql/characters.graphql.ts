@@ -1,4 +1,5 @@
 import { gql } from "@apollo/client";
+import { USER_BASIC_FRAGMENT } from "./users.graphql";
 
 export const GET_CHARACTERS = gql`
   query GetCharacters($filters: CharacterFiltersInput) {
@@ -29,23 +30,17 @@ export const GET_CHARACTERS = gql`
           createdAt
         }
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         creator {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         mainMedia {
           id
           title
           image {
             id
-            url
+            originalUrl
             thumbnailUrl
             altText
             isNsfw
@@ -59,6 +54,7 @@ export const GET_CHARACTERS = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_CHARACTER = gql`
@@ -118,16 +114,10 @@ export const GET_CHARACTER = gql`
         createdAt
       }
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       creator {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       _count {
         media
@@ -146,7 +136,7 @@ export const GET_CHARACTER = gql`
         title
         image {
           id
-          url
+          originalUrl
           thumbnailUrl
           altText
           isNsfw
@@ -154,6 +144,7 @@ export const GET_CHARACTER = gql`
       }
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_MY_CHARACTERS = gql`
@@ -178,24 +169,45 @@ export const GET_MY_CHARACTERS = gql`
         customFields
         createdAt
         updatedAt
-        owner {
+        isOrphaned
+        likesCount
+        userHasLiked
+        speciesId
+        speciesVariantId
+        speciesVariant {
           id
-          username
-          displayName
-          avatarUrl
+          name
+        }
+        tags_rel {
+          tag {
+            id
+            name
+            category
+            color
+          }
+        }
+        traitValues {
+          traitId
+          value
+        }
+        pendingOwnership {
+          id
+          provider
+          providerAccountId
+          createdAt
+        }
+        owner {
+          ...UserBasic
         }
         creator {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         mainMedia {
           id
           title
           image {
             id
-            url
+            originalUrl
             thumbnailUrl
             altText
             isNsfw
@@ -209,6 +221,7 @@ export const GET_MY_CHARACTERS = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const CREATE_CHARACTER = gql`
@@ -239,22 +252,17 @@ export const CREATE_CHARACTER = gql`
         createdAt
       }
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       creator {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       _count {
         media
       }
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const UPDATE_CHARACTER = gql`
@@ -285,22 +293,17 @@ export const UPDATE_CHARACTER = gql`
         createdAt
       }
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       creator {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       _count {
         media
       }
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const DELETE_CHARACTER = gql`
@@ -330,22 +333,17 @@ export const TRANSFER_CHARACTER = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       creator {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       _count {
         media
       }
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const ADD_CHARACTER_TAGS = gql`
@@ -395,7 +393,7 @@ export const SET_CHARACTER_MAIN_MEDIA = gql`
         title
         image {
           id
-          url
+          originalUrl
           thumbnailUrl
           altText
           isNsfw
@@ -406,8 +404,14 @@ export const SET_CHARACTER_MAIN_MEDIA = gql`
 `;
 
 export const UPDATE_CHARACTER_TRAITS = gql`
-  mutation UpdateCharacterTraits($id: ID!, $updateCharacterTraitsInput: UpdateCharacterTraitsInput!) {
-    updateCharacterTraits(id: $id, updateCharacterTraitsInput: $updateCharacterTraitsInput) {
+  mutation UpdateCharacterTraits(
+    $id: ID!
+    $updateCharacterTraitsInput: UpdateCharacterTraitsInput!
+  ) {
+    updateCharacterTraits(
+      id: $id
+      updateCharacterTraitsInput: $updateCharacterTraitsInput
+    ) {
       id
       name
       traitValues {
@@ -443,10 +447,7 @@ export const GET_LIKED_CHARACTERS = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       _count {
         media
@@ -455,6 +456,7 @@ export const GET_LIKED_CHARACTERS = gql`
       userHasLiked
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 // Re-export generated types and hooks after regeneration

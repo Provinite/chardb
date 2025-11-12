@@ -80,6 +80,53 @@ module "backend_ecr" {
   tags = local.common_tags
 }
 
+# Image storage infrastructure
+module "image_storage" {
+  source = "../../modules/s3-image-storage"
+
+  bucket_name          = "${var.project_name}-images-${var.environment}"
+  environment          = var.environment
+  allowed_cors_origins = var.domain_name != null ? ["https://${var.environment}.${var.domain_name}"] : ["*"]
+  # No circular dependency - bucket policy is separate
+  cloudfront_distribution_arn = null
+}
+
+module "image_cdn" {
+  source = "../../modules/cloudfront-image-cdn"
+
+  environment                    = var.environment
+  s3_bucket_name                 = module.image_storage.bucket_name
+  s3_bucket_regional_domain_name = module.image_storage.bucket_regional_domain_name
+  domain_name                    = var.domain_name != null ? "images.${var.environment}.${var.domain_name}" : null
+  acm_certificate_arn            = var.domain_name != null ? aws_acm_certificate_validation.main[0].certificate_arn : null
+  route53_zone_id                = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : null
+}
+
+# Bucket policy to allow CloudFront OAC access (applied after both bucket and CloudFront are created)
+resource "aws_s3_bucket_policy" "images" {
+  bucket = module.image_storage.bucket_id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowCloudFrontOAC"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action   = "s3:GetObject"
+        Resource = "${module.image_storage.bucket_arn}/*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = module.image_cdn.distribution_arn
+          }
+        }
+      }
+    ]
+  })
+}
+
 # Backend infrastructure
 module "backend" {
   source = "../../../apps/backend/infra"
@@ -94,6 +141,9 @@ module "backend" {
   ssh_allowed_cidr_blocks    = var.backend_ssh_allowed_cidr_blocks
   enable_api_gateway         = var.backend_enable_api_gateway
   backend_ecr_repository_url = module.backend_ecr.repository_url
+
+  # S3 image storage configuration
+  s3_images_bucket_arn       = module.image_storage.bucket_arn
 
   # Custom domain configuration (if domain_name is provided)
   api_custom_domain_name   = var.domain_name != null ? "api.${var.environment}.${var.domain_name}" : ""

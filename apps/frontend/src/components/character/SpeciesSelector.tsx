@@ -214,6 +214,12 @@ interface SpeciesSelectorProps {
   onSpeciesChange: (species: SpeciesDetailsFragment | null) => void;
   onVariantChange: (variant: SpeciesVariantDetailsFragment | null) => void;
   error?: string;
+  userCommunityMemberships?: Array<{
+    role: {
+      communityId: string;
+      canCreateCharacter?: boolean;
+    };
+  }>;
 }
 
 export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
@@ -222,6 +228,7 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
   onSpeciesChange,
   onVariantChange,
   error,
+  userCommunityMemberships = [],
 }) => {
   const [speciesSearchQuery, setSpeciesSearchQuery] = useState("");
 
@@ -259,8 +266,21 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
 
   const variants = variantsData?.speciesVariantsBySpecies?.nodes || [];
 
+  // Check if user has permission to create characters for a species
+  const canCreateCharacterForSpecies = (species: SpeciesDetailsFragment): boolean => {
+    return userCommunityMemberships.some(
+      (membership) =>
+        membership.role.communityId === species.communityId &&
+        membership.role.canCreateCharacter === true
+    );
+  };
+
   // Handlers
   const handleSpeciesSelect = (species: SpeciesDetailsFragment) => {
+    // Don't allow selection if user doesn't have permission
+    if (!canCreateCharacterForSpecies(species)) {
+      return;
+    }
     if (selectedSpecies?.id === species.id) {
       // Deselect if clicking the same species
       onSpeciesChange(null);
@@ -318,24 +338,30 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
           </EmptyState>
         ) : (
           <SelectionGrid>
-            {filteredSpecies.map((species) => (
-              <SelectionCard
-                key={species.id}
-                isSelected={selectedSpecies?.id === species.id}
-                onClick={() => handleSpeciesSelect(species)}
-              >
-                <CardHeader>
-                  <CardIcon>
-                    <Database size={16} />
-                  </CardIcon>
-                  <CardTitle>{species.name}</CardTitle>
-                </CardHeader>
-                <CardMeta>
-                  <MetaBadge>Community Species</MetaBadge>
-                  {species.hasImage && <MetaBadge>Has Image</MetaBadge>}
-                </CardMeta>
-              </SelectionCard>
-            ))}
+            {filteredSpecies.map((species) => {
+              const hasPermission = canCreateCharacterForSpecies(species);
+              return (
+                <SelectionCard
+                  key={species.id}
+                  isSelected={selectedSpecies?.id === species.id}
+                  isDisabled={!hasPermission}
+                  onClick={() => handleSpeciesSelect(species)}
+                  title={!hasPermission ? "You don't have permission to create characters for this species" : undefined}
+                >
+                  <CardHeader>
+                    <CardIcon>
+                      <Database size={16} />
+                    </CardIcon>
+                    <CardTitle>{species.name}</CardTitle>
+                  </CardHeader>
+                  <CardMeta>
+                    <MetaBadge>Community Species</MetaBadge>
+                    {species.hasImage && <MetaBadge>Has Image</MetaBadge>}
+                    {!hasPermission && <MetaBadge style={{ background: '#ff000020', color: '#ff0000' }}>No Permission</MetaBadge>}
+                  </CardMeta>
+                </SelectionCard>
+              );
+            })}
           </SelectionGrid>
         )}
 

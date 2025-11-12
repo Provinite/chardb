@@ -1,10 +1,9 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@apollo/client";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FollowButton } from "../components/FollowButton";
-import { GET_FOLLOWERS } from "../graphql/social.graphql";
+import { useGetFollowersQuery } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 800px;
@@ -170,7 +169,7 @@ const ErrorContainer = styled.div`
 export const FollowersPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
 
-  const { data, loading, error } = useQuery(GET_FOLLOWERS, {
+  const { data, loading, error } = useGetFollowersQuery({
     variables: { username: username! },
     skip: !username,
   });
@@ -204,7 +203,7 @@ export const FollowersPage: React.FC = () => {
       <BackButton to={`/user/${username}`}>Back to Profile</BackButton>
 
       <Header>
-        <Title>{user.displayName || user.username}'s Followers</Title>
+        <Title>{user?.displayName || user?.username}'s Followers</Title>
         <Subtitle>
           {followers.length} {followers.length === 1 ? "follower" : "followers"}
         </Subtitle>
@@ -221,13 +220,13 @@ export const FollowersPage: React.FC = () => {
         </EmptyState>
       ) : (
         <UserList>
-          {followers.map((follower: any) => (
+          {followers.map((follower) => (
             <UserCard key={follower.id}>
               <UserAvatar>
-                {follower.avatarUrl ? (
+                {follower.avatarImage ? (
                   <img
-                    src={follower.avatarUrl}
-                    alt={follower.displayName || follower.username}
+                    src={follower.avatarImage.thumbnailUrl || follower.avatarImage.originalUrl}
+                    alt={follower.avatarImage.altText || follower.displayName || follower.username}
                     style={{
                       width: "100%",
                       height: "100%",

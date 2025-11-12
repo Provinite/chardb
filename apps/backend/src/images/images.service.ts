@@ -12,6 +12,7 @@ import * as sharp from "sharp";
 import { v4 as uuid } from "uuid";
 import { extname } from "path";
 import type { Image, Media, User } from "@chardb/database";
+import { S3Service } from "./s3.service";
 
 export interface UploadImageInput {
   file: Express.Multer.File;
@@ -65,6 +66,7 @@ export class ImagesService {
   constructor(
     private readonly db: DatabaseService,
     private readonly tagsService: TagsService,
+    private readonly s3Service: S3Service,
   ) {}
 
   async upload(
@@ -103,19 +105,36 @@ export class ImagesService {
     const fileExtension = extname(file.originalname);
     const filename = `${uuid()}${fileExtension}`;
 
-    // Process image with Sharp
-    const { processedImage, thumbnail, metadata } = await this.processImage(
-      file.buffer,
-    );
+    // Generate thumbnail from original buffer
+    const { thumbnail, metadata } = await this.processImage(file.buffer);
 
-    // For now, we'll store base64 encoded images in the database
-    // In production, you'd upload to S3/CloudStorage and store URLs
-    const imageUrl = `data:${file.mimetype};base64,${processedImage.toString("base64")}`;
+    // Generate a shared base key for all size variants of this upload
+    const baseKey = `${Date.now()}-${uuid()}`;
 
-    // Determine thumbnail MIME type based on original format
-    const thumbnailMimeType =
-      file.mimetype === "image/png" ? "image/png" : "image/jpeg";
-    const thumbnailUrl = `data:${thumbnailMimeType};base64,${thumbnail.toString("base64")}`;
+    // Upload original (unprocessed) and thumbnail to S3 with shared base key
+    const [originalUploadResult, thumbnailUploadResult] = await Promise.all([
+      // Upload original unprocessed buffer
+      this.s3Service.uploadImage({
+        buffer: file.buffer,
+        filename: file.originalname,
+        mimeType: file.mimetype,
+        userId,
+        sizeVariant: 'original',
+        baseKey,
+      }),
+      // Upload thumbnail with same base key
+      this.s3Service.uploadImage({
+        buffer: thumbnail,
+        filename: file.originalname,
+        mimeType: file.mimetype === "image/png" ? "image/png" : "image/jpeg",
+        userId,
+        sizeVariant: 'thumbnail',
+        baseKey,
+      }),
+    ]);
+
+    const originalUrl = originalUploadResult.url;
+    const thumbnailUrl = thumbnailUploadResult.url;
 
     // Use transaction to create both image and media records
     const result = await this.db.$transaction(async (tx) => {
@@ -124,7 +143,7 @@ export class ImagesService {
         data: {
           filename,
           originalFilename: file.originalname,
-          url: imageUrl,
+          originalUrl,
           thumbnailUrl,
           altText,
           uploaderId: userId,

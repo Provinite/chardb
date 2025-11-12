@@ -83,15 +83,15 @@ export class CharactersResolver {
     @Args("input") input: CreateCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
+    // Require speciesId for all character creation
+    if (!input.speciesId) {
+      throw new BadRequestException(
+        "Non-species character creation coming soon to all users!",
+      );
+    }
+
     // If creating orphaned character (with pending ownership), require canCreateOrphanedCharacter permission
     if (input.pendingOwner) {
-      // Validate that speciesId is provided when creating orphaned characters
-      if (!input.speciesId) {
-        throw new BadRequestException(
-          "speciesId is required when creating orphaned characters",
-        );
-      }
-
       // Check permissions
       const hasPermission =
         await this.charactersService.userHasOrphanedCharacterPermission(

@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery } from "@apollo/client";
 import styled from "styled-components";
 import { toast } from "react-hot-toast";
 import { Button } from "@chardb/ui";
 import {
-  GET_MEDIA_ITEM,
+  useGetMediaItemQuery,
   useDeleteMediaMutation,
-} from "../graphql/media.graphql";
+} from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { DeleteConfirmationDialog } from "../components/DeleteConfirmationDialog";
@@ -305,7 +304,7 @@ export const MediaPage: React.FC = () => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const { data, loading, error } = useQuery(GET_MEDIA_ITEM, {
+  const { data, loading, error } = useGetMediaItemQuery({
     variables: { id: id! },
     skip: !id,
   });
@@ -453,7 +452,7 @@ export const MediaPage: React.FC = () => {
             <MetaBadge variant={getVisibilityVariant(media.visibility)}>
               {media.visibility}
             </MetaBadge>
-            {isTextMedia && (
+            {isTextMedia && media.textContent && (
               <>
                 <MetaBadge>{media.textContent.wordCount} words</MetaBadge>
                 <MetaBadge>
@@ -461,7 +460,7 @@ export const MediaPage: React.FC = () => {
                 </MetaBadge>
               </>
             )}
-            {isImageMedia && (
+            {isImageMedia && media.image && (
               <>
                 <MetaBadge>
                   {media.image.width} × {media.image.height}px
@@ -499,10 +498,10 @@ export const MediaPage: React.FC = () => {
       <AuthorInfo>
         <AuthorLink to={`/user/${media.owner.username}`}>
           <AuthorAvatar>
-            {media.owner.avatarUrl ? (
+            {media.owner.avatarImage ? (
               <img
-                src={media.owner.avatarUrl}
-                alt={media.owner.displayName || media.owner.username}
+                src={media.owner.avatarImage.thumbnailUrl || media.owner.avatarImage.originalUrl}
+                alt={media.owner.avatarImage.altText || media.owner.displayName || media.owner.username}
               />
             ) : (
               media.owner.displayName?.[0] || media.owner.username[0]
@@ -518,11 +517,11 @@ export const MediaPage: React.FC = () => {
       </AuthorInfo>
 
       <ContentSection>
-        {isImageMedia && (
+        {isImageMedia && media.image && (
           <>
             <ImageContainer>
               <ImageElement
-                src={media.image.url}
+                src={media.image.originalUrl}
                 alt={media.image.altText || media.title}
                 onClick={() => setLightboxOpen(true)}
               />
@@ -544,7 +543,7 @@ export const MediaPage: React.FC = () => {
             )}
           </>
         )}
-        {isTextMedia && (
+        {isTextMedia && media.textContent && (
           <TextViewer
             textContent={media.textContent}
             maxHeight="none"
@@ -560,13 +559,13 @@ export const MediaPage: React.FC = () => {
         entityId={media.id}
       /> */}
 
-      {isImageMedia && (
+      {isImageMedia && media.image && (
         <ImageOverlay
           isOpen={lightboxOpen}
           onClick={() => setLightboxOpen(false)}
         >
           <img
-            src={media.image.url}
+            src={media.image.originalUrl}
             alt={media.image.altText || media.title}
             onClick={(e) => e.stopPropagation()}
           />

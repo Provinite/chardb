@@ -1,12 +1,10 @@
 import React, { useState } from "react";
-import { useQuery } from "@apollo/client";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
-import { GET_LIKED_MEDIA } from "../graphql/media.graphql";
+import { useGetLikedMediaQuery, LikeableType } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
-import { LikeableType } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -215,7 +213,7 @@ export const LikedMediaPage: React.FC = () => {
   const { user } = useAuth();
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
-  const { data, loading, error } = useQuery(GET_LIKED_MEDIA, {
+  const { data, loading, error } = useGetLikedMediaQuery({
     skip: !user,
   });
 
@@ -288,10 +286,10 @@ export const LikedMediaPage: React.FC = () => {
               <ImageCard key={media.id}>
                 {media.image && (
                   <ImageContainer
-                    onClick={() => setLightboxImage(media.image.url)}
+                    onClick={() => setLightboxImage(media.image.originalUrl)}
                   >
                     <ImageElement
-                      src={media.image.thumbnailUrl || media.image.url}
+                      src={media.image.thumbnailUrl || media.image.originalUrl}
                       alt={media.image.altText || media.title}
                       loading="lazy"
                     />

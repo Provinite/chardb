@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { useQuery } from "@apollo/client";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { ImageUpload, ImageFile } from "../components/ImageUpload";
-import { GET_MY_GALLERIES } from "../graphql/galleries.graphql";
-import { GET_MY_CHARACTERS } from "../graphql/characters.graphql";
+import { useGetMyGalleriesQuery } from "../generated/graphql";
+import { useGetMyCharactersQuery } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -360,7 +359,7 @@ interface UploadFormData {
 
 interface UploadedImage {
   id: string;
-  url: string;
+  originalUrl: string;
   thumbnailUrl?: string;
   filename: string;
   altText?: string;
@@ -411,21 +410,15 @@ export const UploadImagePage: React.FC = () => {
     }
   }, [searchParams]);
 
-  const { data: galleriesData, loading: galleriesLoading } = useQuery(
-    GET_MY_GALLERIES,
-    {
-      variables: { filters: { limit: 100 } },
-      skip: !user,
-    },
-  );
+  const { data: galleriesData, loading: galleriesLoading } = useGetMyGalleriesQuery({
+    variables: { filters: { limit: 100 } },
+    skip: !user,
+  });
 
-  const { data: charactersData, loading: charactersLoading } = useQuery(
-    GET_MY_CHARACTERS,
-    {
-      variables: { filters: { limit: 100 } },
-      skip: !user,
-    },
-  );
+  const { data: charactersData, loading: charactersLoading } = useGetMyCharactersQuery({
+    variables: { filters: { limit: 100 } },
+    skip: !user,
+  });
 
   const handleInputChange = (field: keyof UploadFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -507,7 +500,7 @@ export const UploadImagePage: React.FC = () => {
       // Convert upload results to UploadedImage format
       const images: UploadedImage[] = uploadResults.map((result) => ({
         id: result.id,
-        url: result.url,
+        originalUrl: result.originalUrl,
         thumbnailUrl: result.thumbnailUrl,
         filename: result.filename || result.originalFilename,
         altText: result.altText,
@@ -569,7 +562,7 @@ export const UploadImagePage: React.FC = () => {
             <UploadedImageCard key={image.id}>
               <Link to={`/media/${image.id}`}>
                 <UploadedImagePreview
-                  src={image.thumbnailUrl || image.url}
+                  src={image.thumbnailUrl || image.originalUrl}
                   alt={image.altText || image.filename}
                 />
               </Link>

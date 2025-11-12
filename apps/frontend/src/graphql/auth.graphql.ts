@@ -44,7 +44,12 @@ export const ME_QUERY = gql`
       email
       displayName
       bio
-      avatarUrl
+      avatarImage {
+        id
+        originalUrl
+        thumbnailUrl
+        altText
+      }
       location
       website
       dateOfBirth
@@ -66,6 +71,7 @@ export const ME_QUERY = gql`
           id
           name
           communityId
+          canCreateCharacter
           canEditCharacter
           canCreateOrphanedCharacter
         }

@@ -378,6 +378,58 @@ module "rds" {
 }
 
 ##############################################################################
+# Image Storage Infrastructure
+##############################################################################
+
+# Image storage S3 bucket
+module "image_storage" {
+  source = "../../modules/s3-image-storage"
+
+  bucket_name          = "${var.project_name}-images-${var.environment}"
+  environment          = var.environment
+  allowed_cors_origins = var.domain_name != null ? ["https://${var.domain_name}"] : ["*"]
+  # Bucket policy is separate to avoid circular dependency
+  cloudfront_distribution_arn = null
+}
+
+# Image CDN CloudFront distribution
+module "image_cdn" {
+  source = "../../modules/cloudfront-image-cdn"
+
+  environment                    = var.environment
+  s3_bucket_name                 = module.image_storage.bucket_name
+  s3_bucket_regional_domain_name = module.image_storage.bucket_regional_domain_name
+  domain_name                    = var.domain_name != null ? "images.${var.domain_name}" : null
+  acm_certificate_arn            = var.domain_name != null ? aws_acm_certificate_validation.frontend[0].certificate_arn : null
+  route53_zone_id                = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : null
+}
+
+# Bucket policy to allow CloudFront OAC access
+resource "aws_s3_bucket_policy" "images" {
+  bucket = module.image_storage.bucket_id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowCloudFrontOAC"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action   = "s3:GetObject"
+        Resource = "${module.image_storage.bucket_arn}/*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = module.image_cdn.distribution_arn
+          }
+        }
+      }
+    ]
+  })
+}
+
+##############################################################################
 # SQS Queue for Discord Bot Prize Distribution
 ##############################################################################
 
@@ -492,6 +544,15 @@ module "ecs" {
     {
       name  = "AWS_REGION"
       value = data.aws_region.current.name
+    },
+    # S3 Image Storage Configuration
+    {
+      name  = "S3_IMAGES_BUCKET"
+      value = module.image_storage.bucket_name
+    },
+    {
+      name  = "CLOUDFRONT_IMAGES_DOMAIN"
+      value = module.image_cdn.custom_domain_name != null ? module.image_cdn.custom_domain_name : module.image_cdn.distribution_domain_name
     },
     # SQS Queue Configuration
     {
@@ -608,6 +669,26 @@ module "ecs" {
   # Logging
   log_retention_days        = var.ecs_log_retention_days
   enable_container_insights = var.ecs_enable_container_insights
+
+  # IAM: Custom task role policy for S3 access
+  task_role_policy_json = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          module.image_storage.bucket_arn,
+          "${module.image_storage.bucket_arn}/*"
+        ]
+      }
+    ]
+  })
 
   tags = local.common_tags
 
