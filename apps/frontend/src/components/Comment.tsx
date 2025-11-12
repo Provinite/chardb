@@ -152,7 +152,12 @@ interface CommentProps {
       id: string;
       username: string;
       displayName?: string;
-      avatarUrl?: string;
+      avatarImage?: {
+        id: string;
+        originalUrl: string;
+        thumbnailUrl?: string;
+        altText?: string;
+      };
     };
   };
   onReply?: (parentId: string) => void;
@@ -270,10 +275,10 @@ export const Comment: React.FC<CommentProps> = ({
     <CommentContainer isReply={isReply}>
       <CommentHeader>
         <AuthorAvatar>
-          {comment.author.avatarUrl ? (
+          {comment.author.avatarImage ? (
             <img
-              src={comment.author.avatarUrl}
-              alt={comment.author.displayName || comment.author.username}
+              src={comment.author.avatarImage.thumbnailUrl || comment.author.avatarImage.originalUrl}
+              alt={comment.author.avatarImage.altText || comment.author.displayName || comment.author.username}
               style={{
                 width: "100%",
                 height: "100%",

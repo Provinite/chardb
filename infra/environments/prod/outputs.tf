@@ -170,6 +170,35 @@ output "frontend_website_url" {
 }
 
 ##############################################################################
+# Image Storage Outputs
+##############################################################################
+
+output "images_bucket_name" {
+  description = "Name of the images S3 bucket"
+  value       = module.image_storage.bucket_name
+}
+
+output "images_bucket_arn" {
+  description = "ARN of the images S3 bucket"
+  value       = module.image_storage.bucket_arn
+}
+
+output "images_cloudfront_distribution_id" {
+  description = "ID of the images CloudFront distribution"
+  value       = module.image_cdn.distribution_id
+}
+
+output "images_cloudfront_domain" {
+  description = "CloudFront domain for images"
+  value       = module.image_cdn.custom_domain_name != null ? module.image_cdn.custom_domain_name : module.image_cdn.distribution_domain_name
+}
+
+output "images_cdn_url" {
+  description = "Full URL for accessing images via CDN"
+  value       = module.image_cdn.custom_domain_name != null ? "https://${module.image_cdn.custom_domain_name}" : "https://${module.image_cdn.distribution_domain_name}"
+}
+
+##############################################################################
 # Secrets Outputs
 ##############################################################################
 

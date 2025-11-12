@@ -1,10 +1,9 @@
 import React from "react";
-import { useQuery } from "@apollo/client";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
-import { GET_MY_GALLERIES } from "../graphql/galleries.graphql";
+import { useGetMyGalleriesQuery } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -259,7 +258,7 @@ const formatDate = (dateString: string) => {
 export const MyGalleriesPage: React.FC = () => {
   const { user } = useAuth();
 
-  const { data, loading, error } = useQuery(GET_MY_GALLERIES, {
+  const { data, loading, error } = useGetMyGalleriesQuery({
     skip: !user,
   });
 

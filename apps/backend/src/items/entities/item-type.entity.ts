@@ -2,6 +2,7 @@ import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-type-json';
 import { Community } from '../../communities/entities/community.entity';
 import { CommunityColor } from '../../community-colors/entities/community-color.entity';
+import { Image } from '../../images/entities/image.entity';
 
 @ObjectType()
 export class ItemType {
@@ -32,11 +33,11 @@ export class ItemType {
   @Field()
   isConsumable: boolean;
 
-  @Field({ nullable: true })
-  imageUrl?: string;
+  // Not a GraphQL field - used internally by field resolver
+  imageId?: string;
 
-  @Field({ nullable: true })
-  iconUrl?: string;
+  @Field(() => Image, { nullable: true })
+  image?: Image;
 
   @Field(() => ID, { nullable: true })
   colorId?: string;

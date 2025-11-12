@@ -6,19 +6,16 @@ import { Button, Card } from "@chardb/ui";
 import { GrantTargetSelector, GrantTarget } from "../components/GrantTargetSelector";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ColorSelector, ColorPip } from "../components/colors";
-import { useQuery, useMutation } from "@apollo/client";
 import { toast } from "react-hot-toast";
-import {
-  GET_ITEM_TYPES,
-  CREATE_ITEM_TYPE,
-  UPDATE_ITEM_TYPE,
-  DELETE_ITEM_TYPE,
-  GRANT_ITEM,
-} from "../graphql/items.graphql";
 import {
   useCommunityByIdQuery,
   useGetCommunityMembersQuery,
-} from "../graphql/communities.graphql";
+  useGetItemTypesQuery,
+  useCreateItemTypeMutation,
+  useUpdateItemTypeMutation,
+  useDeleteItemTypeMutation,
+  useGrantItemMutation,
+} from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -276,15 +273,15 @@ export const CommunityItemsAdminPage: React.FC = () => {
     data: itemTypesData,
     loading: itemTypesLoading,
     refetch: refetchItemTypes,
-  } = useQuery(GET_ITEM_TYPES, {
-    variables: { filters: { communityId } },
+  } = useGetItemTypesQuery({
+    variables: { filters: { communityId, limit: 100 } },
     skip: !communityId,
   });
 
-  const [createItemType] = useMutation(CREATE_ITEM_TYPE);
-  const [updateItemType] = useMutation(UPDATE_ITEM_TYPE);
-  const [deleteItemType] = useMutation(DELETE_ITEM_TYPE);
-  const [grantItem] = useMutation(GRANT_ITEM);
+  const [createItemType] = useCreateItemTypeMutation();
+  const [updateItemType] = useUpdateItemTypeMutation();
+  const [deleteItemType] = useDeleteItemTypeMutation();
+  const [grantItem] = useGrantItemMutation();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -320,6 +317,8 @@ export const CommunityItemsAdminPage: React.FC = () => {
 
   const handleCreateItemType = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!communityId) return;
+
     try {
       await createItemType({
         variables: {
@@ -506,10 +505,10 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <ItemTypeCard key={itemType.id}>
                 <ItemTypeHeader>
                   <ItemTypeIcon color={itemType.color?.hexCode}>
-                    {itemType.iconUrl ? (
+                    {itemType.image ? (
                       <ItemTypeImage
-                        src={itemType.iconUrl}
-                        alt={itemType.name}
+                        src={itemType.image.thumbnailUrl || itemType.image.originalUrl}
+                        alt={itemType.image.altText || itemType.name}
                       />
                     ) : (
                       <Package size={24} />
@@ -517,7 +516,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
                   </ItemTypeIcon>
                   <ItemTypeInfo>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <ItemTypeName>{itemType.name}</ItemTypeName>
+                      <ItemTypeName title={itemType.name}>{itemType.name}</ItemTypeName>
                       {itemType.color && (
                         <ColorPip color={itemType.color.hexCode} size="sm" />
                       )}
@@ -667,7 +666,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
             <FormGroup>
               <Label>Icon URL</Label>
               <Input
-                type="url"
+                type="originalUrl"
                 value={formData.iconUrl}
                 onChange={(e) =>
                   setFormData({ ...formData, iconUrl: e.target.value })
@@ -786,7 +785,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
             <FormGroup>
               <Label>Icon URL</Label>
               <Input
-                type="url"
+                type="originalUrl"
                 value={formData.iconUrl}
                 onChange={(e) =>
                   setFormData({ ...formData, iconUrl: e.target.value })

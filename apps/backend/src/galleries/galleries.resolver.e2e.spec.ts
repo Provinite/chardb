@@ -407,7 +407,7 @@ describe('GalleriesResolver (e2e)', () => {
         data: {
           filename: 'test.jpg',
           originalFilename: 'test.jpg',
-          url: 'data:image/jpeg;base64,test',
+          originalUrl: 'data:image/jpeg;base64,test',
           thumbnailUrl: 'data:image/jpeg;base64,thumb',
           mimeType: 'image/jpeg',
           fileSize: 1000,

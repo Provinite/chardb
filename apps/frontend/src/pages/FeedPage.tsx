@@ -1,12 +1,10 @@
 import React from "react";
-import { useQuery } from "@apollo/client";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { LikeButton } from "../components/LikeButton";
-import { GET_ACTIVITY_FEED } from "../graphql/social.graphql";
-import { LikeableType } from "../generated/graphql";
+import { useGetActivityFeedQuery, LikeableType } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 800px;
@@ -200,7 +198,7 @@ const LoginPromptText = styled.p`
 export const FeedPage: React.FC = () => {
   const { user } = useAuth();
 
-  const { data, loading, error } = useQuery(GET_ACTIVITY_FEED, {
+  const { data, loading, error } = useGetActivityFeedQuery({
     variables: {
       input: {
         limit: 20,

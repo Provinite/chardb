@@ -72,6 +72,11 @@ export class CreateItemTypeInput {
   @Field(() => ID, { nullable: true })
   @IsOptional()
   @IsUUID()
+  imageId?: string;
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
   colorId?: string;
 
   @Field(() => String, { nullable: true })
@@ -133,6 +138,11 @@ export class UpdateItemTypeInput {
   @IsString()
   @MaxLength(500)
   iconUrl?: string;
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  imageId?: string;
 
   @Field(() => ID, { nullable: true })
   @IsOptional()

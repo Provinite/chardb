@@ -1,10 +1,9 @@
 import React from "react";
-import { useQuery } from "@apollo/client";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
-import { GET_MY_MEDIA } from "../graphql/media.graphql";
+import { useGetMyMediaQuery } from "../generated/graphql";
 import { MediaGrid } from "../components/MediaGrid";
 
 const Container = styled.div`
@@ -94,7 +93,7 @@ const ErrorContainer = styled.div`
 export const MyMediaPage: React.FC = () => {
   const { user } = useAuth();
 
-  const { data, loading, error } = useQuery(GET_MY_MEDIA, {
+  const { data, loading, error } = useGetMyMediaQuery({
     skip: !user,
   });
 

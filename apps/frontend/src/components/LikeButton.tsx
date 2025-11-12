@@ -2,9 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { Heart } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { useMutation, useQuery } from "@apollo/client";
-import { LikeableType } from "../generated/graphql";
-import { TOGGLE_LIKE, GET_LIKE_STATUS } from "../graphql/social.graphql";
+import { useToggleLikeMutation, useGetLikeStatusQuery, LikeableType, GetLikeStatusDocument } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 
 // Helper function to map LikeableType to GraphQL type names
@@ -126,19 +124,16 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
   const { user } = useAuth();
   const isAuthenticated = !!user;
 
-  const { data: likeStatusData, loading: statusLoading } = useQuery(
-    GET_LIKE_STATUS,
-    {
-      variables: { entityType, entityId },
-      skip: !isAuthenticated,
-    },
-  );
+  const { data: likeStatusData, loading: statusLoading } = useGetLikeStatusQuery({
+    variables: { entityType, entityId },
+    skip: !isAuthenticated,
+  });
 
   // Get current state for optimistic response
   const currentIsLiked = likeStatusData?.likeStatus.isLiked ?? false;
   const currentLikesCount = likeStatusData?.likeStatus.likesCount ?? 0;
 
-  const [toggleLike, { loading: mutationLoading }] = useMutation(TOGGLE_LIKE, {
+  const [toggleLike, { loading: mutationLoading }] = useToggleLikeMutation({
     update: (cache, { data }) => {
       if (!data?.toggleLike) return;
 
@@ -146,7 +141,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 
       // Update the like status cache
       cache.writeQuery({
-        query: GET_LIKE_STATUS,
+        query: GetLikeStatusDocument,
         variables: { entityType, entityId },
         data: {
           likeStatus: {
@@ -180,12 +175,12 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
           : currentLikesCount + 1,
       },
     },
-    onCompleted: (data: any) => {
+    onCompleted: (data) => {
       if (data.toggleLike.isLiked) {
         toast.success("Added to likes!", { duration: 2000 });
       }
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error("Like toggle error:", error);
       toast.error("Failed to update like. Please try again.");
     },

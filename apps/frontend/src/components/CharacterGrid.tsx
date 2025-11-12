@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Character } from '../generated/graphql';
-import { CharacterCard } from './CharacterCard';
+import { CharacterCard, CharacterCardItem } from './CharacterCard';
 
 const Grid = styled.div`
   display: grid;
@@ -11,7 +10,7 @@ const Grid = styled.div`
 `;
 
 interface CharacterGridProps {
-  characters: Character[];
+  characters: CharacterCardItem[];
   showOwner?: boolean;
   showEditButton?: boolean;
 }

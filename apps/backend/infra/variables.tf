@@ -109,3 +109,10 @@ variable "discord_bot_token" {
   type        = string
   sensitive   = true
 }
+
+# S3 Image Storage Configuration
+variable "s3_images_bucket_arn" {
+  description = "ARN of the S3 bucket for image storage (optional)"
+  type        = string
+  default     = null
+}

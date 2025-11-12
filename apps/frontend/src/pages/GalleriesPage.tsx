@@ -1,12 +1,7 @@
 import React, { useState, useCallback } from "react";
-import { useQuery } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import {
-  GET_GALLERIES,
-  Gallery,
-  GalleryFiltersInput,
-} from "../graphql/galleries.graphql";
+import { useGetGalleriesQuery, GalleryFiltersInput } from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -326,7 +321,7 @@ export const GalleriesPage: React.FC = () => {
     "ALL" | "PUBLIC" | "UNLISTED" | "PRIVATE"
   >("ALL");
 
-  const { data, loading, error, fetchMore } = useQuery(GET_GALLERIES, {
+  const { data, loading, error, fetchMore } = useGetGalleriesQuery({
     variables: { filters },
     notifyOnNetworkStatusChange: true,
   });
@@ -465,7 +460,7 @@ export const GalleriesPage: React.FC = () => {
             </EmptyState>
           ) : (
             <GalleryGrid>
-              {data?.galleries.galleries.map((gallery: Gallery) => (
+              {data?.galleries.galleries.map((gallery) => (
                 <GalleryCard
                   key={gallery.id}
                   onClick={() => handleGalleryClick(gallery.id)}

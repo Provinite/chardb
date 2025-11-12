@@ -1,4 +1,5 @@
 import { gql } from '@apollo/client';
+import { USER_BASIC_FRAGMENT } from './users.graphql';
 
 export const GET_MEDIA = gql`
   query GetMedia($filters: MediaFiltersInput) {
@@ -16,10 +17,7 @@ export const GET_MEDIA = gql`
         createdAt
         updatedAt
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         character {
           id
@@ -31,7 +29,7 @@ export const GET_MEDIA = gql`
         }
         image {
           id
-          url
+          originalUrl
           thumbnailUrl
           altText
           isNsfw
@@ -57,6 +55,7 @@ export const GET_MEDIA = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_MEDIA_ITEM = gql`
@@ -74,10 +73,7 @@ export const GET_MEDIA_ITEM = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       character {
         id
@@ -89,7 +85,7 @@ export const GET_MEDIA_ITEM = gql`
       }
       image {
         id
-        url
+        originalUrl
         thumbnailUrl
         altText
         isNsfw
@@ -119,6 +115,7 @@ export const GET_MEDIA_ITEM = gql`
       }
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_CHARACTER_MEDIA = gql`
@@ -137,14 +134,11 @@ export const GET_CHARACTER_MEDIA = gql`
         createdAt
         updatedAt
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         image {
           id
-          url
+          originalUrl
           thumbnailUrl
           altText
           isNsfw
@@ -164,6 +158,7 @@ export const GET_CHARACTER_MEDIA = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_MY_MEDIA = gql`
@@ -181,6 +176,9 @@ export const GET_MY_MEDIA = gql`
         textContentId
         createdAt
         updatedAt
+        owner {
+          ...UserBasic
+        }
         character {
           id
           name
@@ -191,7 +189,7 @@ export const GET_MY_MEDIA = gql`
         }
         image {
           id
-          url
+          originalUrl
           thumbnailUrl
           altText
           isNsfw
@@ -217,6 +215,7 @@ export const GET_MY_MEDIA = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const GET_LIKED_MEDIA = gql`
@@ -235,10 +234,7 @@ export const GET_LIKED_MEDIA = gql`
         createdAt
         updatedAt
         owner {
-          id
-          username
-          displayName
-          avatarUrl
+          ...UserBasic
         }
         character {
           id
@@ -250,7 +246,7 @@ export const GET_LIKED_MEDIA = gql`
         }
         image {
           id
-          url
+          originalUrl
           thumbnailUrl
           altText
           isNsfw
@@ -259,16 +255,10 @@ export const GET_LIKED_MEDIA = gql`
           fileSize
           mimeType
           uploader {
-            id
-            username
-            displayName
-            avatarUrl
+            ...UserBasic
           }
           artist {
-            id
-            username
-            displayName
-            avatarUrl
+            ...UserBasic
           }
         }
         textContent {
@@ -292,6 +282,7 @@ export const GET_LIKED_MEDIA = gql`
       hasMore
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const CREATE_TEXT_MEDIA = gql`
@@ -309,10 +300,7 @@ export const CREATE_TEXT_MEDIA = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       character {
         id
@@ -328,6 +316,7 @@ export const CREATE_TEXT_MEDIA = gql`
       userHasLiked
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const UPDATE_MEDIA = gql`
@@ -345,10 +334,7 @@ export const UPDATE_MEDIA = gql`
       createdAt
       updatedAt
       owner {
-        id
-        username
-        displayName
-        avatarUrl
+        ...UserBasic
       }
       character {
         id
@@ -360,7 +346,7 @@ export const UPDATE_MEDIA = gql`
       }
       image {
         id
-        url
+        originalUrl
         thumbnailUrl
         altText
         isNsfw
@@ -383,6 +369,7 @@ export const UPDATE_MEDIA = gql`
       }
     }
   }
+  ${USER_BASIC_FRAGMENT}
 `;
 
 export const UPDATE_TEXT_CONTENT = gql`

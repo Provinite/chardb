@@ -1,9 +1,8 @@
 import React from "react";
-import { useMutation, useQuery } from "@apollo/client";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
-import { TOGGLE_FOLLOW, GET_FOLLOW_STATUS } from "../graphql/social.graphql";
+import { useToggleFollowMutation, useGetFollowStatusQuery, GetFollowStatusDocument } from "../generated/graphql";
 import toast from "react-hot-toast";
 
 const FollowButtonContainer = styled.div`
@@ -67,61 +66,55 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
 }) => {
   const { user } = useAuth();
 
-  const { data: followData, loading: followLoading } = useQuery(
-    GET_FOLLOW_STATUS,
-    {
-      variables: { userId },
-      skip: !user || user.id === userId,
-    },
-  );
+  const { data: followData, loading: followLoading } = useGetFollowStatusQuery({
+    variables: { userId },
+    skip: !user || user.id === userId,
+  });
 
-  const [toggleFollow, { loading: toggleLoading }] = useMutation(
-    TOGGLE_FOLLOW,
-    {
-      variables: { input: { targetUserId: userId } },
-      optimisticResponse: {
-        toggleFollow: {
-          __typename: "FollowResult",
-          isFollowing: !followData?.followStatus?.isFollowing,
-          followersCount: followData?.followStatus?.isFollowing
-            ? (followData?.followStatus?.followersCount || 0) - 1
-            : (followData?.followStatus?.followersCount || 0) + 1,
-          followingCount: followData?.followStatus?.followingCount || 0,
-          targetUserId: userId,
-        },
-      },
-      update: (cache, { data }) => {
-        if (data?.toggleFollow) {
-          cache.writeQuery({
-            query: GET_FOLLOW_STATUS,
-            variables: { userId },
-            data: {
-              followStatus: {
-                __typename: "FollowStatus",
-                isFollowing: data.toggleFollow.isFollowing,
-                followersCount: data.toggleFollow.followersCount,
-                followingCount: data.toggleFollow.followingCount,
-              },
-            },
-          });
-        }
-      },
-      onCompleted: (data) => {
-        if (data?.toggleFollow) {
-          toast.success(
-            data.toggleFollow.isFollowing
-              ? "Successfully followed user!"
-              : "Successfully unfollowed user!",
-          );
-        }
-      },
-      onError: (error) => {
-        toast.error(
-          `Failed to ${followData?.followStatus?.isFollowing ? "unfollow" : "follow"} user: ${error.message}`,
-        );
+  const [toggleFollow, { loading: toggleLoading }] = useToggleFollowMutation({
+    variables: { input: { targetUserId: userId } },
+    optimisticResponse: {
+      toggleFollow: {
+        __typename: "FollowResult",
+        isFollowing: !followData?.followStatus?.isFollowing,
+        followersCount: followData?.followStatus?.isFollowing
+          ? (followData?.followStatus?.followersCount || 0) - 1
+          : (followData?.followStatus?.followersCount || 0) + 1,
+        followingCount: followData?.followStatus?.followingCount || 0,
+        targetUserId: userId,
       },
     },
-  );
+    update: (cache, { data }) => {
+      if (data?.toggleFollow) {
+        cache.writeQuery({
+          query: GetFollowStatusDocument,
+          variables: { userId },
+          data: {
+            followStatus: {
+              __typename: "FollowStatus",
+              isFollowing: data.toggleFollow.isFollowing,
+              followersCount: data.toggleFollow.followersCount,
+              followingCount: data.toggleFollow.followingCount,
+            },
+          },
+        });
+      }
+    },
+    onCompleted: (data) => {
+      if (data?.toggleFollow) {
+        toast.success(
+          data.toggleFollow.isFollowing
+            ? "Successfully followed user!"
+            : "Successfully unfollowed user!",
+        );
+      }
+    },
+    onError: (error) => {
+      toast.error(
+        `Failed to ${followData?.followStatus?.isFollowing ? "unfollow" : "follow"} user: ${error.message}`,
+      );
+    },
+  });
 
   const handleToggleFollow = async () => {
     if (!user) {
