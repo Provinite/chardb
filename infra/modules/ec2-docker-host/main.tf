@@ -250,6 +250,13 @@ resource "aws_instance" "docker_host" {
     encrypted   = true
   }
 
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"  # IMDSv2 only
+    http_put_response_hop_limit = 2           # Allow Docker containers to access IMDS
+    instance_metadata_tags      = "enabled"
+  }
+
   tags = merge(var.tags, {
     Name = "${var.name}-docker-host"
   })
