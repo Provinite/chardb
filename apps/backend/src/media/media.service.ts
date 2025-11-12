@@ -7,8 +7,6 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import type { Prisma, Visibility, TextFormatting } from "@chardb/database";
-import * as path from "path";
-import * as fs from "fs/promises";
 import { S3Service } from "../images/s3.service";
 
 /**
@@ -374,11 +372,13 @@ export class MediaService {
     }
 
     const imageId = media.imageId;
+    this.logger.log(`[remove] Deleting media ${id}, imageId: ${imageId}`);
 
     // Delete the media record first - CASCADE constraints will handle text content deletion
     await this.db.media.delete({
       where: { id },
     });
+    this.logger.log(`[remove] Media ${id} deleted from database`);
 
     // Handle image cleanup if this media contained an image
     if (imageId) {
@@ -393,18 +393,24 @@ export class MediaService {
    * @param imageId Image ID to check and potentially cleanup
    */
   private async cleanupOrphanedImage(imageId: string) {
+    this.logger.log(`[cleanupOrphanedImage] Starting cleanup for image ${imageId}`);
+
     // Check if any other Media records still reference this image
     const remainingMediaCount = await this.db.media.count({
       where: { imageId },
     });
+    this.logger.log(`[cleanupOrphanedImage] Found ${remainingMediaCount} media records still referencing image ${imageId}`);
 
     // If no other media references this image, delete it
     if (remainingMediaCount === 0) {
       const image = await this.db.image.findUnique({
         where: { id: imageId },
       });
+      this.logger.log(`[cleanupOrphanedImage] Image record ${imageId} found: ${!!image}`);
 
       if (image) {
+        this.logger.log(`[cleanupOrphanedImage] Image URLs - original: ${image.originalUrl}, thumbnail: ${image.thumbnailUrl}`);
+
         // Delete files from S3/local storage
         await this.cleanupImageFiles(image);
 
@@ -414,6 +420,8 @@ export class MediaService {
         });
 
         this.logger.log(`Deleted orphaned image ${imageId} from database and storage`);
+      } else {
+        this.logger.warn(`[cleanupOrphanedImage] Image ${imageId} not found in database - may have been cascade deleted`);
       }
     } else {
       this.logger.debug(`Image ${imageId} still referenced by ${remainingMediaCount} media record(s), skipping deletion`);
@@ -421,20 +429,21 @@ export class MediaService {
   }
 
   /**
-   * Cleans up image files (handles both S3 and local storage)
+   * Cleans up image files from S3
    * @param image Image record containing file information
    */
   private async cleanupImageFiles(image: Prisma.ImageGetPayload<{}>) {
     try {
-      // Check if we're using S3 (URL contains amazonaws.com or other S3 indicators)
-      if (image.originalUrl && (image.originalUrl.includes('amazonaws.com') || image.originalUrl.includes('s3'))) {
-        await this.deleteFromS3(image.originalUrl, image.thumbnailUrl ?? undefined);
-      } else if (image.originalUrl && image.originalUrl.startsWith('data:')) {
+      if (image.originalUrl && image.originalUrl.startsWith('data:')) {
         // Base64 encoded image - no file cleanup needed, stored in DB
         this.logger.debug('Base64 image detected, no file cleanup needed');
-      } else if (image.originalUrl && (image.originalUrl.startsWith('/') || image.originalUrl.includes('localhost'))) {
-        // Local file storage
-        await this.deleteLocalFiles(image.originalUrl, image.thumbnailUrl ?? undefined);
+        return;
+      }
+
+      // Always assume images are in S3
+      if (image.originalUrl) {
+        this.logger.log(`[cleanupImageFiles] Deleting from S3: ${image.originalUrl}`);
+        await this.deleteFromS3(image.originalUrl, image.thumbnailUrl ?? undefined);
       }
     } catch (error) {
       // Log the error but don't fail the deletion
@@ -462,47 +471,6 @@ export class MediaService {
     }
   }
 
-  /**
-   * Deletes local files from filesystem
-   * @param imageUrl Main image path
-   * @param thumbnailUrl Optional thumbnail path
-   */
-  private async deleteLocalFiles(imageUrl: string, thumbnailUrl?: string) {
-    try {
-      // Convert URL to local file path
-      const imagePath = this.urlToLocalPath(imageUrl);
-      await fs.unlink(imagePath);
-      this.logger.debug(`Deleted local image file: ${imagePath}`);
-
-      if (thumbnailUrl) {
-        const thumbnailPath = this.urlToLocalPath(thumbnailUrl);
-        await fs.unlink(thumbnailPath);
-        this.logger.debug(`Deleted local thumbnail file: ${thumbnailPath}`);
-      }
-    } catch (error) {
-      this.logger.error('Failed to delete local files:', error);
-    }
-  }
-
-  /**
-   * Converts a URL to a local file system path
-   * @param url The URL to convert
-   * @returns Local file system path
-   */
-  private urlToLocalPath(url: string): string {
-    // Handle relative URLs like '/uploads/image.jpg'
-    if (url.startsWith('/')) {
-      return path.join(process.cwd(), 'uploads', url.substring(1));
-    }
-    
-    // Handle localhost URLs
-    if (url.includes('localhost')) {
-      const urlPath = new URL(url).pathname;
-      return path.join(process.cwd(), 'uploads', urlPath.substring(1));
-    }
-    
-    return url;
-  }
 
   /**
    * Adds tags to a media item
