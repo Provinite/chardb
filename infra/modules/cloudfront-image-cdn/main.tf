@@ -66,13 +66,6 @@ resource "aws_cloudfront_distribution" "images" {
     compress               = true
   }
 
-  # Custom error response for missing images
-  custom_error_response {
-    error_code         = 403
-    response_code      = 404
-    response_page_path = ""
-  }
-
   # Viewer certificate configuration
   dynamic "viewer_certificate" {
     for_each = var.acm_certificate_arn != null ? [1] : []
