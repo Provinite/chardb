@@ -115,9 +115,8 @@ variable "discord_bot_token" {
 
 # S3 Image Storage Configuration
 variable "s3_images_bucket_arn" {
-  description = "ARN of the S3 bucket for image storage (optional)"
+  description = "ARN of the S3 bucket for image storage"
   type        = string
-  default     = null
 }
 
 variable "sqs_queue_url" {

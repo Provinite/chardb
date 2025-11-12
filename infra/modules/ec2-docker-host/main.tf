@@ -159,9 +159,8 @@ resource "aws_iam_role_policy" "ecr_access" {
 
 # IAM policy for S3 image storage access
 resource "aws_iam_role_policy" "s3_images_access" {
-  count = var.s3_images_bucket_arn != null ? 1 : 0
-  name  = "${var.name}-s3-images-access"
-  role  = aws_iam_role.docker_host.id
+  name = "${var.name}-s3-images-access"
+  role = aws_iam_role.docker_host.id
 
   policy = jsonencode({
     Version = "2012-10-17"
