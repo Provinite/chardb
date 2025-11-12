@@ -13,6 +13,9 @@ import { v4 as uuid } from "uuid";
 import { extname } from "path";
 import type { Image, Media, User } from "@chardb/database";
 import { S3Service } from "./s3.service";
+import { PermissionService } from "../auth/PermissionService";
+import { CommunityResolverService } from "../auth/services/community-resolver.service";
+import { CommunityPermission } from "../auth/CommunityPermission";
 
 export interface UploadImageInput {
   file: Express.Multer.File;
@@ -67,6 +70,8 @@ export class ImagesService {
     private readonly db: DatabaseService,
     private readonly tagsService: TagsService,
     private readonly s3Service: S3Service,
+    private readonly permissionService: PermissionService,
+    private readonly communityResolverService: CommunityResolverService,
   ) {}
 
   async upload(
@@ -92,6 +97,11 @@ export class ImagesService {
     this.validateFile(file);
 
     // NOTE: Character/gallery associations now handled through Media system
+
+    // Verify character edit permission if characterId is provided
+    if (characterId) {
+      await this.verifyCharacterEditPermission(userId, characterId);
+    }
 
     // Verify artist exists if artistId is provided
     if (artistId) {
@@ -447,22 +457,126 @@ export class ImagesService {
     }
   }
 
-  private async verifyCharacterOwnership(
-    characterId: string,
+  /**
+   * Verify that a user has permission to edit a character.
+   * Uses the same permission logic as CharacterEditGuard:
+   * - If user owns the character: requires `canEditOwnCharacter` permission
+   * - If user does not own the character: requires `canEditCharacter` permission
+   * - If character is orphaned: requires `canCreateOrphanedCharacter` or `canEditCharacter` permission
+   * - Permissions are resolved via character→species→community
+   */
+  private async verifyCharacterEditPermission(
     userId: string,
+    characterId: string,
   ): Promise<void> {
+    // Fetch character with species info
     const character = await this.db.character.findUnique({
       where: { id: characterId },
-      select: { ownerId: true },
+      select: {
+        ownerId: true,
+        speciesId: true,
+      },
     });
 
     if (!character) {
       throw new NotFoundException("Character not found");
     }
 
-    if (character.ownerId !== userId) {
+    const isOrphaned = character.ownerId === null;
+
+    // Handle orphaned characters (no owner)
+    if (isOrphaned) {
+      // Orphaned characters without species cannot be edited
+      if (!character.speciesId) {
+        throw new ForbiddenException(
+          "Cannot upload images to orphaned character without species",
+        );
+      }
+
+      // Resolve community from species
+      const resolvedIds = {
+        type: "speciesId" as const,
+        value: character.speciesId,
+      };
+      const community =
+        await this.communityResolverService.resolve(resolvedIds);
+
+      if (!community) {
+        throw new ForbiddenException(
+          "Cannot upload images to character: community not found",
+        );
+      }
+
+      // For orphaned characters, check if user has permission to manage orphaned characters
+      // OR has general edit permission
+      const hasOrphanedPermission =
+        await this.permissionService.hasCommunityPermission(
+          userId,
+          community.id,
+          CommunityPermission.CanCreateOrphanedCharacter,
+        );
+      const hasEditPermission =
+        await this.permissionService.hasCommunityPermission(
+          userId,
+          community.id,
+          CommunityPermission.CanEditCharacter,
+        );
+
+      if (!hasOrphanedPermission && !hasEditPermission) {
+        throw new ForbiddenException(
+          "You do not have permission to upload images to this orphaned character",
+        );
+      }
+
+      return;
+    }
+
+    // Handle owned characters
+    const isOwner = character.ownerId === userId;
+
+    // If no species, only owner can edit
+    if (!character.speciesId) {
+      if (!isOwner) {
+        throw new ForbiddenException(
+          "You can only upload images to your own characters",
+        );
+      }
+      return;
+    }
+
+    // Resolve community from species
+    const resolvedIds = {
+      type: "speciesId" as const,
+      value: character.speciesId,
+    };
+    const community = await this.communityResolverService.resolve(resolvedIds);
+
+    if (!community) {
+      // No community means only owner can edit
+      if (!isOwner) {
+        throw new ForbiddenException(
+          "You can only upload images to your own characters",
+        );
+      }
+      return;
+    }
+
+    // Check appropriate permission based on ownership
+    const requiredPermission = isOwner
+      ? CommunityPermission.CanEditOwnCharacter
+      : CommunityPermission.CanEditCharacter;
+
+    const hasPermission = await this.permissionService.hasCommunityPermission(
+      userId,
+      community.id,
+      requiredPermission,
+    );
+
+    if (!hasPermission) {
       throw new ForbiddenException(
-        "You can only upload images to your own characters",
+        isOwner
+          ? "You do not have permission to upload images to your own characters in this community"
+          : "You do not have permission to upload images to this character",
       );
     }
   }
