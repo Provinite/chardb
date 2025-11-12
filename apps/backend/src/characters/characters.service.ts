@@ -83,7 +83,7 @@ export class CharactersService {
     if (pendingOwner) {
       if (!speciesId) {
         throw new BadRequestException(
-          'Species ID is required when creating a character with pending ownership',
+          "Species ID is required when creating a character with pending ownership",
         );
       }
 
@@ -256,10 +256,20 @@ export class CharactersService {
    * - Any character in communities where user has canEditCharacter permission
    * - Orphaned characters in communities where user has canCreateOrphanedCharacter or canEditCharacter permission
    */
-  async findEditableCharacters(userId: string, filters: CharacterServiceFilters = {}) {
-    const { limit = 20, offset = 0 } = filters;
+  async findEditableCharacters(
+    userId: string,
+    filters: CharacterServiceFilters = {},
+  ) {
+    const { limit = 20, offset = 0, search } = filters;
 
     const where: Prisma.CharacterWhereInput = {
+      // Add search filter if provided
+      ...(search && {
+        name: {
+          contains: search,
+          mode: "insensitive" as const,
+        },
+      }),
       OR: [
         // User owns the character without a species (always editable)
         {
@@ -361,7 +371,12 @@ export class CharactersService {
   async update(
     id: string,
     userId: string,
-    input: { characterData: Prisma.CharacterUpdateInput; tags?: string[]; pendingOwner?: PendingOwnerInput | null; ownerId?: string | null },
+    input: {
+      characterData: Prisma.CharacterUpdateInput;
+      tags?: string[];
+      pendingOwner?: PendingOwnerInput | null;
+      ownerId?: string | null;
+    },
   ) {
     const character = await this.findOne(id, userId);
 
@@ -447,7 +462,8 @@ export class CharactersService {
 
         // If setting an actual owner, clear any pending ownership
         if (ownerId !== null) {
-          const existingPending = await this.pendingOwnershipService.findByCharacterId(id);
+          const existingPending =
+            await this.pendingOwnershipService.findByCharacterId(id);
           if (existingPending) {
             await this.pendingOwnershipService.remove(existingPending.id);
           }
@@ -458,7 +474,8 @@ export class CharactersService {
     // Handle pending ownership updates
     if (pendingOwner !== undefined) {
       // Get existing pending ownership
-      const existingPending = await this.pendingOwnershipService.findByCharacterId(id);
+      const existingPending =
+        await this.pendingOwnershipService.findByCharacterId(id);
 
       if (pendingOwner === null) {
         // Clear pending ownership
@@ -472,7 +489,7 @@ export class CharactersService {
         // Ensure character has a species
         if (!updatedCharacter.speciesId) {
           throw new BadRequestException(
-            'Cannot set pending ownership on a character without a species',
+            "Cannot set pending ownership on a character without a species",
           );
         }
 
@@ -522,9 +539,11 @@ export class CharactersService {
     }
 
     // Return the updated character (re-fetch to get latest state)
-    const finalCharacter = await this.db.character.findUnique({ where: { id } });
+    const finalCharacter = await this.db.character.findUnique({
+      where: { id },
+    });
     if (!finalCharacter) {
-      throw new NotFoundException('Character not found after update');
+      throw new NotFoundException("Character not found after update");
     }
     return finalCharacter;
   }

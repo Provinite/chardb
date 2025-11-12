@@ -131,6 +131,7 @@ export const CharacterTypeahead: React.FC<CharacterTypeaheadProps> = ({
       },
     },
     skip: !isOpen && !searchQuery,
+    fetchPolicy: "network-only",
   });
 
   // Fetch the specific character if a value is provided but we don't have it yet
@@ -177,11 +178,12 @@ export const CharacterTypeahead: React.FC<CharacterTypeaheadProps> = ({
         });
         setSearchQuery(char.name);
       }
-    } else if (!value) {
+    } else if (!value && !isOpen) {
+      // Only clear search query if dropdown is not open (user isn't actively searching)
       setSelectedCharacter(null);
       setSearchQuery("");
     }
-  }, [value, characters, characterData]);
+  }, [value, characters, characterData, isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
