@@ -8,6 +8,7 @@ import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import type { Prisma, Visibility, TextFormatting } from "@chardb/database";
 import * as path from "path";
+import * as fs from "fs/promises";
 import { S3Service } from "../images/s3.service";
 
 /**
@@ -467,9 +468,6 @@ export class MediaService {
    * @param thumbnailUrl Optional thumbnail path
    */
   private async deleteLocalFiles(imageUrl: string, thumbnailUrl?: string) {
-    const fs = require('fs').promises;
-    const path = require('path');
-
     try {
       // Convert URL to local file path
       const imagePath = this.urlToLocalPath(imageUrl);
