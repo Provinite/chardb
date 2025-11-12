@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { ImageUpload, ImageFile } from "../components/ImageUpload";
-import { useGetMyGalleriesQuery } from "../generated/graphql";
+import { useGetMyGalleriesQuery, useGetCharacterQuery } from "../generated/graphql";
 import { CharacterTypeahead } from "../components/CharacterTypeahead";
 
 const Container = styled.div`
@@ -415,6 +415,14 @@ export const UploadImagePage: React.FC = () => {
     skip: !user,
   });
 
+  // Fetch character details if a character is selected
+  const { data: characterData } = useGetCharacterQuery({
+    variables: { id: formData.characterId },
+    skip: !formData.characterId,
+  });
+
+  const selectedCharacter = characterData?.character;
+
   const handleInputChange = (field: keyof UploadFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -763,14 +771,16 @@ export const UploadImagePage: React.FC = () => {
           <Sidebar>
             <SidebarSection>
               <SectionTitle>Characters</SectionTitle>
-              {formData.characterId && (
+              {formData.characterId && selectedCharacter && (
                 <CharacterCard>
                   <CharacterAvatar>
-                    C
+                    {selectedCharacter.name.charAt(0).toUpperCase()}
                   </CharacterAvatar>
                   <CharacterInfo>
-                    <CharacterName>Selected Character</CharacterName>
-                    <CharacterMeta>Character selected</CharacterMeta>
+                    <CharacterName>{selectedCharacter.name}</CharacterName>
+                    <CharacterMeta>
+                      {selectedCharacter.species?.name || "No species"}
+                    </CharacterMeta>
                   </CharacterInfo>
                   <Button
                     variant="ghost"
