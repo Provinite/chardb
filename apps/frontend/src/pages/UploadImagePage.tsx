@@ -5,7 +5,7 @@ import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { ImageUpload, ImageFile } from "../components/ImageUpload";
 import { useGetMyGalleriesQuery } from "../generated/graphql";
-import { useGetMyEditableCharactersQuery } from "../generated/graphql";
+import { CharacterTypeahead } from "../components/CharacterTypeahead";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -415,11 +415,6 @@ export const UploadImagePage: React.FC = () => {
     skip: !user,
   });
 
-  const { data: charactersData, loading: charactersLoading } = useGetMyEditableCharactersQuery({
-    variables: { filters: { limit: 100 } },
-    skip: !user,
-  });
-
   const handleInputChange = (field: keyof UploadFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -541,9 +536,6 @@ export const UploadImagePage: React.FC = () => {
   };
 
   const renderSuccessState = () => {
-    const selectedCharacter = characters.find(
-      (c: any) => c.id === formData.characterId,
-    );
     const selectedGallery = galleries.find(
       (g: any) => g.id === formData.galleryId,
     );
@@ -588,9 +580,9 @@ export const UploadImagePage: React.FC = () => {
           {uploadedImages.length === 1 && (
             <Link to={`/media/${uploadedImages[0].id}`}>View Image</Link>
           )}
-          {selectedCharacter && (
-            <Link to={`/character/${selectedCharacter.id}`}>
-              View {selectedCharacter.name}
+          {formData.characterId && (
+            <Link to={`/character/${formData.characterId}`}>
+              View Character
             </Link>
           )}
           {selectedGallery && (
@@ -611,18 +603,17 @@ export const UploadImagePage: React.FC = () => {
     );
   }
 
-  if (galleriesLoading || charactersLoading) {
+  if (galleriesLoading) {
     return (
       <Container>
         <LoadingMessage>
-          Loading your galleries and characters...
+          Loading your galleries...
         </LoadingMessage>
       </Container>
     );
   }
 
   const galleries = galleriesData?.myGalleries?.galleries || [];
-  const characters = charactersData?.myEditableCharacters?.characters || [];
 
   return (
     <Container>
@@ -775,21 +766,11 @@ export const UploadImagePage: React.FC = () => {
               {formData.characterId && (
                 <CharacterCard>
                   <CharacterAvatar>
-                    {characters
-                      .find((c: any) => c.id === formData.characterId)
-                      ?.name?.charAt(0) || "?"}
+                    C
                   </CharacterAvatar>
                   <CharacterInfo>
-                    <CharacterName>
-                      {characters.find(
-                        (c: any) => c.id === formData.characterId,
-                      )?.name || "Unknown"}
-                    </CharacterName>
-                    <CharacterMeta>
-                      {characters.find(
-                        (c: any) => c.id === formData.characterId,
-                      )?.species?.name || "Unknown species"}
-                    </CharacterMeta>
+                    <CharacterName>Selected Character</CharacterName>
+                    <CharacterMeta>Character selected</CharacterMeta>
                   </CharacterInfo>
                   <Button
                     variant="ghost"
@@ -801,19 +782,13 @@ export const UploadImagePage: React.FC = () => {
                 </CharacterCard>
               )}
               <div>
-                <Select
+                <CharacterTypeahead
                   value={formData.characterId}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    handleInputChange("characterId", e.target.value)
+                  onChange={(characterId) =>
+                    handleInputChange("characterId", characterId || "")
                   }
-                >
-                  <option value="">Select a character...</option>
-                  {characters.map((character: any) => (
-                    <option key={character.id} value={character.id}>
-                      {character.name} ({character.species?.name || "Unknown"})
-                    </option>
-                  ))}
-                </Select>
+                  placeholder="Search for a character..."
+                />
               </div>
               <Button variant="ghost" size="sm">
                 + Add Character
