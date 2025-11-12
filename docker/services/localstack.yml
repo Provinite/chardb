@@ -1,15 +1,17 @@
 # LocalStack - Local AWS Cloud Stack
-# Provides local S3 for development and testing
+# Provides local S3 and SQS for development and testing
 #
 # Services:
 # - S3 (Simple Storage Service) for image uploads
+# - SQS (Simple Queue Service) for Discord bot prize distribution
 #
 # Access:
-# - S3 API: http://localhost:4566
+# - API Gateway: http://localhost:4566
 # - Health: http://localhost:4566/_localstack/health
 #
 # AWS CLI usage:
 #   aws --endpoint-url=http://localhost:4566 s3 ls
+#   aws --endpoint-url=http://localhost:4566 sqs list-queues
 #
 # Configuration is in init-aws.sh which runs on startup
 
@@ -21,7 +23,7 @@ services:
       - "4566:4566"            # LocalStack Gateway
       - "4510-4559:4510-4559"  # External services port range
     environment:
-      - SERVICES=s3
+      - SERVICES=s3,sqs
       - DEBUG=1
       - DOCKER_HOST=unix:///var/run/docker.sock
       - AWS_DEFAULT_REGION=us-east-1
