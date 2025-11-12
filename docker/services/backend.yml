@@ -44,6 +44,9 @@ services:
       AWS_SQS_ENABLED: ${AWS_SQS_ENABLED:-false}
       AWS_SQS_QUEUE_URL: ${AWS_SQS_QUEUE_URL:-}
       AWS_REGION: ${AWS_REGION:-us-east-1}
+      # AWS S3 Image Storage Configuration
+      S3_IMAGES_BUCKET: ${S3_IMAGES_BUCKET:-}
+      CLOUDFRONT_IMAGES_DOMAIN: ${CLOUDFRONT_IMAGES_DOMAIN:-}
       # OpenTelemetry Configuration
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-chardb-backend}
       OTEL_SERVICE_VERSION: ${OTEL_SERVICE_VERSION:-1.0.0}
