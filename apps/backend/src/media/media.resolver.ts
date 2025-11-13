@@ -17,7 +17,7 @@ import {
   AuthenticatedCurrentUserType,
   CurrentUserType,
 } from "../auth/types/current-user.type";
-import { ForbiddenException } from "@nestjs/common";
+import { ForbiddenException, UseFilters } from "@nestjs/common";
 import { MediaService } from "./media.service";
 import { UsersService } from "../users/users.service";
 import { CharactersService } from "../characters/characters.service";
@@ -49,6 +49,8 @@ import {
   mapPrismaMediaConnectionToGraphQL,
 } from "./utils/media-resolver-mappers";
 import { mapPrismaGalleryToGraphQL } from "../galleries/utils/gallery-resolver-mappers";
+import { FalseOnForbiddenFilter } from "../auth/filters/FalseOnForbiddenFilter";
+import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
 
 /**
  * GraphQL resolver for media operations
@@ -428,8 +430,10 @@ export class MediaResolver {
    * Resolves whether the current user has liked this media
    */
   @AllowAnyAuthenticated()
+  @UseFilters(FalseOnForbiddenFilter)
   @ResolveField(() => Boolean, {
     description: "Whether the current user has liked this media",
+    middleware: [sentinelValueMiddleware],
   })
   async userHasLiked(
     @Parent() media: MediaEntity,

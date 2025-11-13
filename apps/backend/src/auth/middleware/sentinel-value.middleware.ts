@@ -1,5 +1,9 @@
 import { FieldMiddleware, MiddlewareContext, NextFn } from "@nestjs/graphql";
-import { TRUTHY_NULL, TRUTHY_EMPTY_STRING } from "../constants/sentinel-values";
+import {
+  TRUTHY_NULL,
+  TRUTHY_EMPTY_STRING,
+  TRUTHY_FALSE,
+} from "../constants/sentinel-values";
 
 /**
  * GraphQL field middleware that transforms sentinel values to their actual values.
@@ -23,6 +27,9 @@ export const sentinelValueMiddleware: FieldMiddleware = async (
   }
   if (value === TRUTHY_EMPTY_STRING) {
     return "";
+  }
+  if (value === TRUTHY_FALSE) {
+    return false;
   }
 
   return value;
