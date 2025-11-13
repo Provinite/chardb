@@ -13,7 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Upload page with character and gallery association
   - Image preview during upload with metadata display
   - S3-backed storage with CloudFront CDN delivery
-  - Support for PNG, JPG, and WebP formats
+  - Support for PNG, JPG, WebP, and animated GIF formats
+  - Three image variants generated: original (full resolution), medium (800px web-optimized), thumbnail (300px)
+- **Media Display Improvements**: Enhanced image viewing experience
+  - Media detail page now displays web-optimized medium variant for faster loading
+  - "View Original" link to download/view full resolution image in new tab
+  - Shows image dimensions in original link
 - **Character Search in Typeahead**: Character selection dropdown now supports real-time search filtering
   - Debounced search with case-insensitive matching
   - Search filters character list as you type
