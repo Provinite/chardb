@@ -419,7 +419,8 @@ export class ImagesService {
       }
 
       // Generate medium (800px web-optimized) variant
-      let mediumImage = image.resize(this.mediumSize, this.mediumSize, {
+      // Clone the image instance for independent processing
+      let mediumImage = sharp(buffer).resize(this.mediumSize, this.mediumSize, {
         fit: "inside",
         withoutEnlargement: true,
       });
@@ -440,7 +441,8 @@ export class ImagesService {
       }
 
       // Generate thumbnail variant
-      let thumbnail = image.resize(this.thumbnailSize, this.thumbnailSize, {
+      // Clone the image instance for independent processing
+      let thumbnail = sharp(buffer).resize(this.thumbnailSize, this.thumbnailSize, {
         fit: "cover",
         position: "center",
       });
