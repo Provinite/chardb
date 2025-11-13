@@ -6,6 +6,7 @@ import { Button, Card } from "@chardb/ui";
 import { GrantTargetSelector, GrantTarget } from "../components/GrantTargetSelector";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ColorSelector, ColorPip } from "../components/colors";
+import { CopyIdButton } from "../components/CopyIdButton";
 import { toast } from "react-hot-toast";
 import {
   useCommunityByIdQuery,
@@ -65,6 +66,18 @@ const ItemTypeGrid = styled.div`
 
 const ItemTypeCard = styled(Card)`
   position: relative;
+`;
+
+const StyledCopyIdButton = styled(CopyIdButton)`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+
+  ${ItemTypeCard}:hover & {
+    opacity: 1;
+  }
 `;
 
 const ItemTypeHeader = styled.div`
@@ -503,6 +516,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
           <ItemTypeGrid>
             {itemTypes.map((itemType: any) => (
               <ItemTypeCard key={itemType.id}>
+                <StyledCopyIdButton id={itemType.id} />
                 <ItemTypeHeader>
                   <ItemTypeIcon color={itemType.color?.hexCode}>
                     {itemType.image ? (

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Admin Copy ID Buttons**: Copy ID buttons on character cards and item type cards for admins
 - **Image Upload System**: Complete image upload functionality with S3 storage integration
   - Upload page with character and gallery association
   - Image preview during upload with metadata display
