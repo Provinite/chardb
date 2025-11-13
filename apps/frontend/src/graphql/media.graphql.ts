@@ -86,6 +86,7 @@ export const GET_MEDIA_ITEM = gql`
       image {
         id
         originalUrl
+        mediumUrl
         thumbnailUrl
         altText
         isNsfw

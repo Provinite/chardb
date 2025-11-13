@@ -6,21 +6,18 @@ import {
   DeleteObjectCommand,
   PutObjectCommandInput,
 } from "@aws-sdk/client-s3";
-import { randomUUID } from "crypto";
 
 export interface UploadImageOptions {
   buffer: Buffer;
   filename: string;
   mimeType: string;
-  userId: string;
+  imageId: string; // Image ID for S3 key generation
   sizeVariant?: 'original' | 'thumbnail' | 'medium' | 'full';
-  baseKey?: string; // For consistent keys across size variants
 }
 
 export interface UploadImageResult {
   key: string;
   url: string;
-  baseKey: string; // The base key for generating other variants
 }
 
 @Injectable()
@@ -62,17 +59,17 @@ export class S3Service {
    * Upload an image to S3
    */
   async uploadImage(options: UploadImageOptions): Promise<UploadImageResult> {
-    const { buffer, filename, mimeType, userId, sizeVariant, baseKey } = options;
-
-    // Generate or use provided base key
-    const base = baseKey || `${Date.now()}-${randomUUID()}`;
+    const { buffer, filename, mimeType, imageId, sizeVariant } = options;
 
     // Extract file extension
     const extension = this.getExtension(filename, mimeType);
 
-    // Generate S3 key with suffix pattern: {userId}/{baseKey}-{variant}.{ext}
+    // Generate S3 key with pattern: {imageId}/{variant}.{ext}
     const variantSuffix = sizeVariant || 'original';
-    const key = `${userId}/${base}-${variantSuffix}.${extension}`;
+    const key = `${imageId}/${variantSuffix}.${extension}`;
+
+    // Sanitize filename for Content-Disposition header
+    const sanitizedFilename = this.sanitizeFilename(filename);
 
     // Prepare upload parameters
     const uploadParams: PutObjectCommandInput = {
@@ -80,7 +77,12 @@ export class S3Service {
       Key: key,
       Body: buffer,
       ContentType: mimeType,
+      ContentDisposition: `inline; filename="${sanitizedFilename}"`,
       CacheControl: "public, max-age=31536000, immutable", // 1 year cache
+      Metadata: {
+        imageId: imageId,
+        sizeVariant: variantSuffix,
+      },
     };
 
     try {
@@ -93,7 +95,7 @@ export class S3Service {
 
       this.logger.log(`Successfully uploaded image to S3: ${key}`);
 
-      return { key, url, baseKey: base };
+      return { key, url };
     } catch (error) {
       this.logger.error(`Failed to upload image to S3: ${error.message}`, error.stack);
       throw new Error(`Failed to upload image: ${error.message}`);
@@ -209,26 +211,41 @@ export class S3Service {
   }
 
   /**
-   * Sanitize filename for S3 key
+   * Sanitize filename for Content-Disposition header
+   * Restricts to [-_a-zA-Z0-9].[a-zA-Z0-9] with max length of 50
    */
   private sanitizeFilename(filename: string): string {
     // Remove path components
     const basename = filename.split("/").pop() || filename;
 
-    // Replace special characters with hyphens, preserve extension
-    const sanitized = basename
-      .toLowerCase()
-      .replace(/[^a-z0-9.-]/g, "-")
+    // Split into name and extension
+    const lastDotIndex = basename.lastIndexOf(".");
+    let name = lastDotIndex > 0 ? basename.slice(0, lastDotIndex) : basename;
+    let ext = lastDotIndex > 0 ? basename.slice(lastDotIndex + 1) : "";
+
+    // Sanitize name: only allow a-zA-Z0-9_-
+    name = name
+      .replace(/[^a-zA-Z0-9_-]/g, "-")
       .replace(/-+/g, "-") // Replace multiple hyphens with single
       .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
 
-    // Limit length to 100 characters
-    if (sanitized.length > 100) {
-      const ext = sanitized.split(".").pop();
-      const nameWithoutExt = sanitized.slice(0, sanitized.lastIndexOf("."));
-      return `${nameWithoutExt.slice(0, 95)}.${ext}`;
+    // Sanitize extension: only allow a-zA-Z0-9
+    ext = ext.replace(/[^a-zA-Z0-9]/g, "");
+
+    // Fallback if name is empty
+    if (!name) {
+      name = "image";
     }
 
-    return sanitized || "image";
+    // Limit total length to 50 characters
+    const maxLength = 50;
+    const extLength = ext ? ext.length + 1 : 0; // +1 for the dot
+    const maxNameLength = maxLength - extLength;
+
+    if (name.length > maxNameLength) {
+      name = name.slice(0, maxNameLength);
+    }
+
+    return ext ? `${name}.${ext}` : name;
   }
 }

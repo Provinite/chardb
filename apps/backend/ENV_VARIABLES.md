@@ -180,6 +180,39 @@ This document provides a comprehensive list of all environment variables used in
 - **Default**: `"info"`
 - **Valid Values**: `"error"`, `"warn"`, `"info"`, `"debug"`
 
+## AWS SQS Queue Consumer
+
+### `AWS_REGION`
+
+- **Type**: String
+- **Required**: No
+- **Description**: AWS region for SES, SQS, and other AWS services
+- **Referenced in**:
+  - `src/email/email.module.ts` (line 14)
+  - `src/queue-consumer/queue-consumer.service.ts` (line 30)
+- **Default**: `"us-east-1"`
+- **Example**: `"us-east-1"`
+
+### `AWS_SQS_ENABLED`
+
+- **Type**: Boolean
+- **Required**: No
+- **Description**: Enable/disable the SQS queue consumer for Discord bot prize distribution
+- **Referenced in**: `src/queue-consumer/queue-consumer.service.ts` (line 33)
+- **Default**: `true`
+- **Example**: `"true"` or `"false"`
+- **Note**: Set to `false` to disable queue consumer in local development
+
+### `AWS_SQS_QUEUE_URL`
+
+- **Type**: String (URL)
+- **Required**: Yes (if `AWS_SQS_ENABLED=true`)
+- **Description**: SQS queue URL for receiving prize distribution events from Discord bot
+- **Referenced in**: `src/queue-consumer/queue-consumer.service.ts` (line 31)
+- **Format**: `https://sqs.{region}.amazonaws.com/{account-id}/{queue-name}`
+- **Example**: `"https://sqs.us-east-1.amazonaws.com/123456789012/chardb-prize-distribution"`
+- **Note**: Queue is created via Terraform infrastructure. Consumer uses IAM role-based authentication (no credentials needed).
+
 ## Rate Limiting
 
 Rate limiting is implemented using NestJS ThrottlerModule with hardcoded values in `app.module.ts`:

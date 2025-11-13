@@ -159,9 +159,8 @@ resource "aws_iam_role_policy" "ecr_access" {
 
 # IAM policy for S3 image storage access
 resource "aws_iam_role_policy" "s3_images_access" {
-  count = var.s3_images_bucket_arn != null ? 1 : 0
-  name  = "${var.name}-s3-images-access"
-  role  = aws_iam_role.docker_host.id
+  name = "${var.name}-s3-images-access"
+  role = aws_iam_role.docker_host.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -236,17 +235,25 @@ resource "aws_instance" "docker_host" {
   iam_instance_profile   = aws_iam_instance_profile.docker_host.name
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    db_password = random_password.db_password.result
-    jwt_secret  = random_password.jwt_secret.result
-    db_host     = var.db_host
-    db_name     = var.db_name
-    db_user     = var.db_user
+    db_password    = random_password.db_password.result
+    jwt_secret     = random_password.jwt_secret.result
+    db_host        = var.db_host
+    db_name        = var.db_name
+    db_user        = var.db_user
+    sqs_queue_url  = var.sqs_queue_url
   }))
 
   root_block_device {
     volume_type = "gp3"
     volume_size = var.root_volume_size
     encrypted   = true
+  }
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"  # IMDSv2 only
+    http_put_response_hop_limit = 2           # Allow Docker containers to access IMDS
+    instance_metadata_tags      = "enabled"
   }
 
   tags = merge(var.tags, {

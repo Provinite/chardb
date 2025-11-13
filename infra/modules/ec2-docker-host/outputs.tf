@@ -49,6 +49,10 @@ output "ssh_key_name" {
   value       = aws_key_pair.docker_host.key_name
 }
 
+output "iam_role_name" {
+  description = "Name of the IAM role attached to the instance"
+  value       = aws_iam_role.docker_host.name
+}
 
 output "db_password" {
   description = "Generated database password"

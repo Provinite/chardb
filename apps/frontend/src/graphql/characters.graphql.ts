@@ -224,6 +224,23 @@ export const GET_MY_CHARACTERS = gql`
   ${USER_BASIC_FRAGMENT}
 `;
 
+export const GET_MY_EDITABLE_CHARACTERS = gql`
+  query GetMyEditableCharacters($filters: CharacterFiltersInput) {
+    myEditableCharacters(filters: $filters) {
+      characters {
+        id
+        name
+        species {
+          id
+          name
+        }
+      }
+      total
+      hasMore
+    }
+  }
+`;
+
 export const CREATE_CHARACTER = gql`
   mutation CreateCharacter($input: CreateCharacterInput!) {
     createCharacter(input: $input) {

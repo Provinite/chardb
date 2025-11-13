@@ -90,8 +90,8 @@ export class CharactersResolver {
       );
     }
 
-    // If creating orphaned character (with pending ownership), require canCreateOrphanedCharacter permission
-    if (input.pendingOwner) {
+    // If creating orphaned character (with pending ownership or leave unassigned), require canCreateOrphanedCharacter permission
+    if (input.pendingOwner || input.assignToSelf === false) {
       // Check permissions
       const hasPermission =
         await this.charactersService.userHasOrphanedCharacterPermission(
@@ -253,6 +253,16 @@ export class CharactersResolver {
   ): Promise<CharacterConnection> {
     const userFilters = { ...filters, ownerId: user.id };
     const result = await this.charactersService.findAll(userFilters, user.id);
+    return mapPrismaCharacterConnectionToGraphQL(result);
+  }
+
+  @AllowAnyAuthenticated()
+  @Query(() => CharacterConnection)
+  async myEditableCharacters(
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+    @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
+  ): Promise<CharacterConnection> {
+    const result = await this.charactersService.findEditableCharacters(user.id, filters);
     return mapPrismaCharacterConnectionToGraphQL(result);
   }
 

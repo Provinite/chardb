@@ -129,6 +129,14 @@ DISCORD_CLIENT_SECRET="${DISCORD_CLIENT_SECRET//$/\\$}"
 DISCORD_CALLBACK_URL="$DISCORD_CALLBACK_URL"
 DISCORD_BOT_TOKEN="${DISCORD_BOT_TOKEN//$/\\$}"
 
+# AWS SQS Configuration
+AWS_SQS_ENABLED="true"
+AWS_SQS_QUEUE_URL="$SQS_QUEUE_URL"
+
+# AWS S3 Image Storage Configuration
+S3_IMAGES_BUCKET="$S3_IMAGES_BUCKET"
+CLOUDFRONT_IMAGES_DOMAIN="$CLOUDFRONT_IMAGES_DOMAIN"
+
 # OpenTelemetry settings
 OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4320/v1/traces
 OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://otel-collector:4320/v1/metrics
@@ -197,8 +205,7 @@ scp -i "$SSH_KEY_PATH" docker/docker-compose.overrides.prod.yml ec2-user@$SERVER
 echo "2/7"
 scp -i "$SSH_KEY_PATH" -r docker/services/ ec2-user@$SERVER_IP:~/app/
 echo "3/7"
-scp -i "$SSH_KEY_PATH" docker/otel-collector-config.yml ec2-user@$SERVER_IP:~/app/services/otel-collector-config.yml
-echo "4/7"
+# iecho "4/7"
 scp -i "$SSH_KEY_PATH" scripts/ecr-login.sh ec2-user@$SERVER_IP:~/app/ecr-login.sh
 echo "5/7"
 scp -i "$SSH_KEY_PATH" .tmp/.env ec2-user@$SERVER_IP:~/app/.env

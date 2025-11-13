@@ -108,6 +108,40 @@ output "ecs_log_group_name" {
 }
 
 ##############################################################################
+# SQS Queue Outputs
+##############################################################################
+
+output "sqs_queue_url" {
+  description = "URL of the SQS prize distribution queue"
+  value       = module.prize_distribution_queue.queue_url
+}
+
+output "sqs_queue_arn" {
+  description = "ARN of the SQS prize distribution queue"
+  value       = module.prize_distribution_queue.queue_arn
+}
+
+output "sqs_queue_name" {
+  description = "Name of the SQS prize distribution queue"
+  value       = module.prize_distribution_queue.queue_name
+}
+
+output "sqs_dlq_url" {
+  description = "URL of the SQS Dead Letter Queue"
+  value       = module.prize_distribution_queue.dlq_url
+}
+
+output "sqs_dlq_arn" {
+  description = "ARN of the SQS Dead Letter Queue"
+  value       = module.prize_distribution_queue.dlq_arn
+}
+
+output "sqs_producer_policy_arn" {
+  description = "ARN of the IAM policy for queue producers (Discord bot)"
+  value       = module.prize_distribution_queue.producer_policy_arn
+}
+
+##############################################################################
 # NLB Outputs
 ##############################################################################
 
@@ -277,6 +311,12 @@ Frontend:
 
 ECR Repository:
   URL: ${module.backend_ecr.repository_url}
+
+SQS Queue:
+  Queue URL: ${module.prize_distribution_queue.queue_url}
+  Queue Name: ${module.prize_distribution_queue.queue_name}
+  DLQ URL: ${module.prize_distribution_queue.dlq_url}
+  Producer Policy ARN: ${module.prize_distribution_queue.producer_policy_arn}
 
 Next Steps:
 1. Build and push your backend Docker image to ECR:

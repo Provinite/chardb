@@ -243,6 +243,31 @@ const ImageOverlay = styled.div.withConfig({
   }
 `;
 
+const ViewOriginalLink = styled.a`
+  display: inline-block;
+  margin-top: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.primary};
+  text-decoration: none;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary};
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: ${({ theme }) => theme.shadows.sm};
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 const ImageMeta = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.md};
@@ -521,11 +546,18 @@ export const MediaPage: React.FC = () => {
           <>
             <ImageContainer>
               <ImageElement
-                src={media.image.originalUrl}
+                src={media.image.mediumUrl || media.image.originalUrl}
                 alt={media.image.altText || media.title}
                 onClick={() => setLightboxOpen(true)}
               />
             </ImageContainer>
+            <ViewOriginalLink
+              href={media.image.originalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View Original ({media.image.width} × {media.image.height})
+            </ViewOriginalLink>
             {media.image.altText && (
               <ImageMeta>
                 <ImageMetaBadge>Alt text: {media.image.altText}</ImageMetaBadge>

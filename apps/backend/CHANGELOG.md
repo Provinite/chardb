@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **SQS Queue Consumer**: Implemented prize distribution system for Discord bot integration
+  - Created queue consumer module that polls SQS for prize award events
+  - Added item prize handler for granting existing item types to Discord users
+  - Added character prize handler for transferring orphaned character ownership
+  - Integrated with existing pending ownership system for auto-claiming
+- **Image Upload System**: Complete S3-backed image upload implementation
+  - Pre-generated UUID-based image IDs for S3 key generation (`{imageId}/{variant}.ext`)
+  - Automatic generation of three image variants: original (full resolution), medium (800px web-optimized), and thumbnail (300px)
+  - Smart format conversion for web optimization:
+    - PNG → WebP for medium and thumbnail (smaller files, preserved transparency)
+    - JPEG → JPEG optimized
+    - GIF → GIF with preserved animation for medium, static JPEG thumbnail
+    - WebP → WebP optimized
+  - Support for PNG, JPG, WebP, and animated GIF formats
+- **Character Search Filtering**: Added search parameter to editable characters query
+  - Case-insensitive name search in `findEditableCharacters` service method
+  - GraphQL `myEditableCharacters` query now accepts optional search filter
+  - Enables real-time character typeahead search in frontend
+- **Orphaned Image Cleanup**: Centralized image cleanup system with reference checking
+  - `cleanupOrphanedImage()` method in ImagesService checks all references before deletion
+  - Verifies image is not used by Media, User avatars, or ItemTypes
+  - Automatically deletes from both S3 and database when orphaned
+  - Called automatically when Media records are deleted
+  - Prevents orphaned files accumulating in S3 storage
+
+### Fixed
+
+- **Character Creation Ownership**: Fixed `assignToSelf` parameter not being respected
+  - Characters now properly created without owner when `assignToSelf: false`
+  - Works in conjunction with `canCreateOrphanedCharacter` permission
+  - Supports both pending ownership and fully orphaned character creation
+
 ## [v6.1.0] - 2025-11-06
 
 ### Added
@@ -67,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Character Ownership Management via Update Mutation (#125)**: Enhanced `updateCharacter` mutation with ownership control
+
   - Added `OwnerIdUpdate` and `PendingOwnerUpdate` wrapper input types to distinguish "set to null" from "don't change"
   - Users with `canCreateOrphanedCharacter` permission can modify ownership of any character (not just orphaned)
   - Support for orphaning characters (setting owner to null), transferring to users, and setting pending ownership

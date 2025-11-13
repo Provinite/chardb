@@ -398,6 +398,8 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
                   providerAccountId: characterTarget.providerAccountId,
                 }
               : undefined,
+            // Set assignToSelf to false when user selects "Leave Unassigned" (characterTarget is null)
+            assignToSelf: characterTarget !== null,
           },
         },
       });

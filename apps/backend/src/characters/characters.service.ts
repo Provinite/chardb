@@ -50,16 +50,18 @@ export class CharactersService {
       characterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator">;
       tags?: string[];
       pendingOwner?: PendingOwnerInput; // Pending ownership info
+      assignToSelf?: boolean; // Whether to assign ownership to the creator
     },
   ) {
-    const { characterData, tags } = input;
+    const { characterData, tags, assignToSelf = true } = input;
     let pendingOwner = input.pendingOwner;
 
     // Determine the actual owner:
     // - If pendingOwner is provided, character is orphaned (ownerId = null)
+    // - If assignToSelf is false, character is orphaned (ownerId = null)
     // - Otherwise, owner is the current user (userId)
     // - Can be reassigned if external account is already claimed
-    let actualOwnerId = pendingOwner ? null : userId;
+    let actualOwnerId = (pendingOwner || !assignToSelf) ? null : userId;
 
     // Extract speciesId early for validation and Discord resolution
     const speciesId = characterData.species?.connect?.id;
@@ -83,7 +85,7 @@ export class CharactersService {
     if (pendingOwner) {
       if (!speciesId) {
         throw new BadRequestException(
-          'Species ID is required when creating a character with pending ownership',
+          "Species ID is required when creating a character with pending ownership",
         );
       }
 
@@ -248,6 +250,107 @@ export class CharactersService {
     };
   }
 
+  /**
+   * Find all characters that the user can edit based on community permissions.
+   * This includes:
+   * - Characters owned by the user without a species (always editable by owner)
+   * - Characters owned by the user with a species (where user has canEditOwnCharacter in the community)
+   * - Any character in communities where user has canEditCharacter permission
+   * - Orphaned characters in communities where user has canCreateOrphanedCharacter or canEditCharacter permission
+   */
+  async findEditableCharacters(
+    userId: string,
+    filters: CharacterServiceFilters = {},
+  ) {
+    const { limit = 20, offset = 0, search } = filters;
+
+    const where: Prisma.CharacterWhereInput = {
+      // Add search filter if provided
+      ...(search && {
+        name: {
+          contains: search,
+          mode: "insensitive" as const,
+        },
+      }),
+      OR: [
+        // User owns the character without a species (always editable)
+        {
+          ownerId: userId,
+          speciesId: null,
+        },
+        // User owns the character AND has canEditOwnCharacter permission in the community
+        {
+          ownerId: userId,
+          species: {
+            community: {
+              roles: {
+                some: {
+                  canEditOwnCharacter: true,
+                  communityMembers: {
+                    some: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        // User has canEditCharacter permission in the community (works for any character)
+        {
+          species: {
+            community: {
+              roles: {
+                some: {
+                  canEditCharacter: true,
+                  communityMembers: {
+                    some: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        // Orphaned character with canCreateOrphanedCharacter permission
+        {
+          ownerId: null,
+          species: {
+            community: {
+              roles: {
+                some: {
+                  canCreateOrphanedCharacter: true,
+                  communityMembers: {
+                    some: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+    };
+
+    const [characters, total] = await Promise.all([
+      this.db.character.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      this.db.character.count({ where }),
+    ]);
+
+    return {
+      characters,
+      total,
+      hasMore: offset + limit < total,
+    };
+  }
+
   async findOne(id: string, userId?: string) {
     const character = await this.db.character.findUnique({
       where: { id },
@@ -270,7 +373,12 @@ export class CharactersService {
   async update(
     id: string,
     userId: string,
-    input: { characterData: Prisma.CharacterUpdateInput; tags?: string[]; pendingOwner?: PendingOwnerInput | null; ownerId?: string | null },
+    input: {
+      characterData: Prisma.CharacterUpdateInput;
+      tags?: string[];
+      pendingOwner?: PendingOwnerInput | null;
+      ownerId?: string | null;
+    },
   ) {
     const character = await this.findOne(id, userId);
 
@@ -356,7 +464,8 @@ export class CharactersService {
 
         // If setting an actual owner, clear any pending ownership
         if (ownerId !== null) {
-          const existingPending = await this.pendingOwnershipService.findByCharacterId(id);
+          const existingPending =
+            await this.pendingOwnershipService.findByCharacterId(id);
           if (existingPending) {
             await this.pendingOwnershipService.remove(existingPending.id);
           }
@@ -367,7 +476,8 @@ export class CharactersService {
     // Handle pending ownership updates
     if (pendingOwner !== undefined) {
       // Get existing pending ownership
-      const existingPending = await this.pendingOwnershipService.findByCharacterId(id);
+      const existingPending =
+        await this.pendingOwnershipService.findByCharacterId(id);
 
       if (pendingOwner === null) {
         // Clear pending ownership
@@ -381,7 +491,7 @@ export class CharactersService {
         // Ensure character has a species
         if (!updatedCharacter.speciesId) {
           throw new BadRequestException(
-            'Cannot set pending ownership on a character without a species',
+            "Cannot set pending ownership on a character without a species",
           );
         }
 
@@ -431,9 +541,11 @@ export class CharactersService {
     }
 
     // Return the updated character (re-fetch to get latest state)
-    const finalCharacter = await this.db.character.findUnique({ where: { id } });
+    const finalCharacter = await this.db.character.findUnique({
+      where: { id },
+    });
     if (!finalCharacter) {
-      throw new NotFoundException('Character not found after update');
+      throw new NotFoundException("Character not found after update");
     }
     return finalCharacter;
   }

@@ -7,15 +7,16 @@ type User = MeQuery['me'];
 interface Permissions {
   canCreateOrphanedCharacter: boolean;
   canEditCharacter: boolean;
+  canEditOwnCharacter: boolean;
 }
 
 /**
  * Determines if a user can edit a character.
  *
  * User can edit if:
- * 1. They own the character, OR
- * 2. Character is orphaned AND they have canCreateOrphanedCharacter permission, OR
- * 3. Character is orphaned AND they have canEditCharacter permission
+ * 1. They own the character AND have canEditOwnCharacter permission, OR
+ * 2. They have canEditCharacter permission (works for any character), OR
+ * 3. Character is orphaned AND they have canCreateOrphanedCharacter permission
  *
  * @param character - The character to check
  * @param user - The current user (or null if not logged in)
@@ -31,16 +32,24 @@ export function canUserEditCharacter(
     return false;
   }
 
-  // User owns the character
-  if (character.owner && character.owner.id === user.id) {
+  const isOwner = character.owner && character.owner.id === user.id;
+  const isOrphaned = !character.owner;
+
+  // Character is orphaned
+  if (isOrphaned) {
+    return (
+      permissions.canCreateOrphanedCharacter ||
+      permissions.canEditCharacter
+    );
+  }
+
+  // User has general edit permission (works for any character)
+  if (permissions.canEditCharacter) {
     return true;
   }
 
-  // Character is orphaned AND user has permissions
-  if (!character.owner && (
-    permissions.canCreateOrphanedCharacter ||
-    permissions.canEditCharacter
-  )) {
+  // User owns the character and has permission to edit own characters
+  if (isOwner && permissions.canEditOwnCharacter) {
     return true;
   }
 

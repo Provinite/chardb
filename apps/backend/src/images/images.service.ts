@@ -13,6 +13,9 @@ import { v4 as uuid } from "uuid";
 import { extname } from "path";
 import type { Image, Media, User } from "@chardb/database";
 import { S3Service } from "./s3.service";
+import { PermissionService } from "../auth/PermissionService";
+import { CommunityResolverService } from "../auth/services/community-resolver.service";
+import { CommunityPermission } from "../auth/CommunityPermission";
 
 export interface UploadImageInput {
   file: Express.Multer.File;
@@ -67,6 +70,8 @@ export class ImagesService {
     private readonly db: DatabaseService,
     private readonly tagsService: TagsService,
     private readonly s3Service: S3Service,
+    private readonly permissionService: PermissionService,
+    private readonly communityResolverService: CommunityResolverService,
   ) {}
 
   async upload(
@@ -93,6 +98,11 @@ export class ImagesService {
 
     // NOTE: Character/gallery associations now handled through Media system
 
+    // Verify character edit permission if characterId is provided
+    if (characterId) {
+      await this.verifyCharacterEditPermission(userId, characterId);
+    }
+
     // Verify artist exists if artistId is provided
     if (artistId) {
       const artist = await this.db.user.findUnique({ where: { id: artistId } });
@@ -105,45 +115,58 @@ export class ImagesService {
     const fileExtension = extname(file.originalname);
     const filename = `${uuid()}${fileExtension}`;
 
-    // Generate thumbnail from original buffer
-    const { thumbnail, metadata } = await this.processImage(file.buffer);
+    // Generate all image variants from original buffer
+    const { thumbnail, medium, metadata } = await this.processImage(file.buffer);
 
-    // Generate a shared base key for all size variants of this upload
-    const baseKey = `${Date.now()}-${uuid()}`;
+    // Generate imageId upfront for S3 key generation
+    const imageId = uuid();
 
-    // Upload original (unprocessed) and thumbnail to S3 with shared base key
-    const [originalUploadResult, thumbnailUploadResult] = await Promise.all([
+    // Determine mime types for each variant based on format
+    const thumbnailMimeType = this.getThumbnailMimeType(file.mimetype);
+    const mediumMimeType = this.getMediumMimeType(file.mimetype);
+
+    // Upload original, medium, and thumbnail to S3 using imageId
+    const [originalUploadResult, mediumUploadResult, thumbnailUploadResult] = await Promise.all([
       // Upload original unprocessed buffer
       this.s3Service.uploadImage({
         buffer: file.buffer,
         filename: file.originalname,
         mimeType: file.mimetype,
-        userId,
+        imageId,
         sizeVariant: 'original',
-        baseKey,
       }),
-      // Upload thumbnail with same base key
+      // Upload medium (web-optimized display size)
+      this.s3Service.uploadImage({
+        buffer: medium,
+        filename: file.originalname,
+        mimeType: mediumMimeType,
+        imageId,
+        sizeVariant: 'medium',
+      }),
+      // Upload thumbnail
       this.s3Service.uploadImage({
         buffer: thumbnail,
         filename: file.originalname,
-        mimeType: file.mimetype === "image/png" ? "image/png" : "image/jpeg",
-        userId,
+        mimeType: thumbnailMimeType,
+        imageId,
         sizeVariant: 'thumbnail',
-        baseKey,
       }),
     ]);
 
     const originalUrl = originalUploadResult.url;
+    const mediumUrl = mediumUploadResult.url;
     const thumbnailUrl = thumbnailUploadResult.url;
 
     // Use transaction to create both image and media records
     const result = await this.db.$transaction(async (tx) => {
-      // Create image record
+      // Create image record with pre-generated ID
       const image = await tx.image.create({
         data: {
+          id: imageId, // Use pre-generated UUID
           filename,
           originalFilename: file.originalname,
           originalUrl,
+          mediumUrl,
           thumbnailUrl,
           altText,
           uploaderId: userId,
@@ -364,9 +387,21 @@ export class ImagesService {
         `Processing image: ${metadata.format} ${metadata.width}x${metadata.height}, size: ${buffer.length} bytes`,
       );
 
-      // For GIFs, preserve original to maintain animations
+      // For GIFs, preserve animation in both original and medium, create static thumbnail
       if (metadata.format === "gif") {
-        // Create static thumbnail only for GIFs
+        // Resize GIF for medium variant if needed, preserving animation
+        let mediumBuffer = buffer;
+        if (metadata.width! > this.mediumSize || metadata.height! > this.mediumSize) {
+          const mediumGif = sharp(buffer, { animated: true })
+            .resize(this.mediumSize, this.mediumSize, {
+              fit: "inside",
+              withoutEnlargement: true,
+            })
+            .gif();
+          mediumBuffer = await mediumGif.toBuffer();
+        }
+
+        // Create static thumbnail for GIFs
         const thumbnail = image
           .resize(this.thumbnailSize, this.thumbnailSize, {
             fit: "cover",
@@ -377,66 +412,60 @@ export class ImagesService {
         const thumbnailBuffer = await thumbnail.toBuffer();
 
         return {
-          processedImage: buffer, // Return original GIF buffer
+          medium: mediumBuffer,
           thumbnail: thumbnailBuffer,
           metadata,
         };
       }
 
-      // Process main image (resize if too large, optimize quality)
-      let processedImage = image;
+      // Generate medium (800px web-optimized) variant
+      // Clone the image instance for independent processing
+      let mediumImage = sharp(buffer).resize(this.mediumSize, this.mediumSize, {
+        fit: "inside",
+        withoutEnlargement: true,
+      });
 
-      // Only resize if larger than 4000px (less aggressive than before)
-      if (metadata.width! > 4000 || metadata.height! > 4000) {
-        processedImage = image.resize(4000, 4000, {
-          fit: "inside",
-          withoutEnlargement: true,
-        });
-      }
-
-      // Format-specific optimization with higher quality
-      if (metadata.format === "jpeg") {
-        processedImage = processedImage.jpeg({
-          quality: 92,
+      // Format-specific optimization for medium variant
+      if (metadata.format === "png") {
+        // PNG → WebP for smaller file size while preserving transparency
+        mediumImage = mediumImage.webp({ quality: 100, lossless: false });
+      } else if (metadata.format === "jpeg") {
+        // JPEG → JPEG optimized
+        mediumImage = mediumImage.jpeg({
+          quality: 100,
           progressive: true,
         });
-      } else if (metadata.format === "png") {
-        // Minimal compression for PNGs to preserve transparency
-        processedImage = processedImage.png({
-          compressionLevel: 6,
-          adaptiveFiltering: false,
-        });
       } else if (metadata.format === "webp") {
-        processedImage = processedImage.webp({ quality: 95, lossless: false });
+        // WebP → WebP optimized
+        mediumImage = mediumImage.webp({ quality: 100, lossless: false });
       }
 
-      // Generate format-appropriate thumbnail
-      let thumbnail;
+      // Generate thumbnail variant
+      // Clone the image instance for independent processing
+      let thumbnail = sharp(buffer).resize(this.thumbnailSize, this.thumbnailSize, {
+        fit: "cover",
+        position: "center",
+      });
+
+      // Format-specific optimization for thumbnail
       if (metadata.format === "png") {
-        // Keep PNG thumbnails as PNG to preserve transparency
-        thumbnail = image
-          .resize(this.thumbnailSize, this.thumbnailSize, {
-            fit: "cover",
-            position: "center",
-          })
-          .png({ compressionLevel: 6 });
-      } else {
-        // Use JPEG for other formats
-        thumbnail = image
-          .resize(this.thumbnailSize, this.thumbnailSize, {
-            fit: "cover",
-            position: "center",
-          })
-          .jpeg({ quality: 85 });
+        // PNG → WebP for smaller file size while preserving transparency
+        thumbnail = thumbnail.webp({ quality: 85, lossless: false });
+      } else if (metadata.format === "jpeg") {
+        // JPEG → JPEG
+        thumbnail = thumbnail.jpeg({ quality: 85 });
+      } else if (metadata.format === "webp") {
+        // WebP → WebP
+        thumbnail = thumbnail.webp({ quality: 85, lossless: false });
       }
 
-      const [processedBuffer, thumbnailBuffer] = await Promise.all([
-        processedImage.toBuffer(),
+      const [mediumBuffer, thumbnailBuffer] = await Promise.all([
+        mediumImage.toBuffer(),
         thumbnail.toBuffer(),
       ]);
 
       return {
-        processedImage: processedBuffer,
+        medium: mediumBuffer,
         thumbnail: thumbnailBuffer,
         metadata,
       };
@@ -447,22 +476,158 @@ export class ImagesService {
     }
   }
 
-  private async verifyCharacterOwnership(
-    characterId: string,
+  /**
+   * Determine MIME type for medium variant based on original format
+   */
+  private getMediumMimeType(originalMimeType: string): string {
+    if (originalMimeType === "image/png") {
+      return "image/webp"; // PNG → WebP
+    } else if (originalMimeType === "image/jpeg" || originalMimeType === "image/jpg") {
+      return "image/jpeg"; // JPEG → JPEG
+    } else if (originalMimeType === "image/webp") {
+      return "image/webp"; // WebP → WebP
+    } else if (originalMimeType === "image/gif") {
+      return "image/gif"; // GIF → GIF (preserves animation)
+    }
+    return originalMimeType;
+  }
+
+  /**
+   * Determine MIME type for thumbnail variant based on original format
+   */
+  private getThumbnailMimeType(originalMimeType: string): string {
+    if (originalMimeType === "image/png") {
+      return "image/webp"; // PNG → WebP
+    } else if (originalMimeType === "image/jpeg" || originalMimeType === "image/jpg") {
+      return "image/jpeg"; // JPEG → JPEG
+    } else if (originalMimeType === "image/webp") {
+      return "image/webp"; // WebP → WebP
+    } else if (originalMimeType === "image/gif") {
+      return "image/jpeg"; // GIF → Static JPEG thumbnail
+    }
+    return originalMimeType;
+  }
+
+  /**
+   * Verify that a user has permission to edit a character.
+   * Uses the same permission logic as CharacterEditGuard:
+   * - If user owns the character: requires `canEditOwnCharacter` permission
+   * - If user does not own the character: requires `canEditCharacter` permission
+   * - If character is orphaned: requires `canCreateOrphanedCharacter` or `canEditCharacter` permission
+   * - Permissions are resolved via character→species→community
+   */
+  private async verifyCharacterEditPermission(
     userId: string,
+    characterId: string,
   ): Promise<void> {
+    // Fetch character with species info
     const character = await this.db.character.findUnique({
       where: { id: characterId },
-      select: { ownerId: true },
+      select: {
+        ownerId: true,
+        speciesId: true,
+      },
     });
 
     if (!character) {
       throw new NotFoundException("Character not found");
     }
 
-    if (character.ownerId !== userId) {
+    const isOrphaned = character.ownerId === null;
+
+    // Handle orphaned characters (no owner)
+    if (isOrphaned) {
+      // Orphaned characters without species cannot be edited
+      if (!character.speciesId) {
+        throw new ForbiddenException(
+          "Cannot upload images to orphaned character without species",
+        );
+      }
+
+      // Resolve community from species
+      const resolvedIds = {
+        type: "speciesId" as const,
+        value: character.speciesId,
+      };
+      const community =
+        await this.communityResolverService.resolve(resolvedIds);
+
+      if (!community) {
+        throw new ForbiddenException(
+          "Cannot upload images to character: community not found",
+        );
+      }
+
+      // For orphaned characters, check if user has permission to manage orphaned characters
+      // OR has general edit permission
+      const hasOrphanedPermission =
+        await this.permissionService.hasCommunityPermission(
+          userId,
+          community.id,
+          CommunityPermission.CanCreateOrphanedCharacter,
+        );
+      const hasEditPermission =
+        await this.permissionService.hasCommunityPermission(
+          userId,
+          community.id,
+          CommunityPermission.CanEditCharacter,
+        );
+
+      if (!hasOrphanedPermission && !hasEditPermission) {
+        throw new ForbiddenException(
+          "You do not have permission to upload images to this orphaned character",
+        );
+      }
+
+      return;
+    }
+
+    // Handle owned characters
+    const isOwner = character.ownerId === userId;
+
+    // If no species, only owner can edit
+    if (!character.speciesId) {
+      if (!isOwner) {
+        throw new ForbiddenException(
+          "You can only upload images to your own characters",
+        );
+      }
+      return;
+    }
+
+    // Resolve community from species
+    const resolvedIds = {
+      type: "speciesId" as const,
+      value: character.speciesId,
+    };
+    const community = await this.communityResolverService.resolve(resolvedIds);
+
+    if (!community) {
+      // No community means only owner can edit
+      if (!isOwner) {
+        throw new ForbiddenException(
+          "You can only upload images to your own characters",
+        );
+      }
+      return;
+    }
+
+    // Check appropriate permission based on ownership
+    const requiredPermission = isOwner
+      ? CommunityPermission.CanEditOwnCharacter
+      : CommunityPermission.CanEditCharacter;
+
+    const hasPermission = await this.permissionService.hasCommunityPermission(
+      userId,
+      community.id,
+      requiredPermission,
+    );
+
+    if (!hasPermission) {
       throw new ForbiddenException(
-        "You can only upload images to your own characters",
+        isOwner
+          ? "You do not have permission to upload images to your own characters in this community"
+          : "You do not have permission to upload images to this character",
       );
     }
   }
@@ -485,5 +650,75 @@ export class ImagesService {
         "You can only upload images to your own galleries",
       );
     }
+  }
+
+  /**
+   * Checks if an image is orphaned and deletes it from S3 and database if so.
+   * An image is considered orphaned if it's not referenced by:
+   * - Any Media record
+   * - Any User avatar
+   * - Any ItemType
+   *
+   * @param imageId The ID of the image to check
+   * @returns Promise<boolean> True if image was orphaned and deleted, false otherwise
+   */
+  async cleanupOrphanedImage(imageId: string): Promise<boolean> {
+    const logger = new Logger('ImagesService');
+    logger.log(`[cleanupOrphanedImage] Checking if image ${imageId} is orphaned`);
+
+    // Check all references in parallel
+    const [mediaCount, userAvatarCount, itemTypeCount] = await Promise.all([
+      this.db.media.count({ where: { imageId } }),
+      this.db.user.count({ where: { avatarImageId: imageId } }),
+      this.db.itemType.count({ where: { imageId } }),
+    ]);
+
+    const totalReferences = mediaCount + userAvatarCount + itemTypeCount;
+    logger.log(
+      `[cleanupOrphanedImage] Image ${imageId} references: media=${mediaCount}, avatars=${userAvatarCount}, itemTypes=${itemTypeCount}, total=${totalReferences}`
+    );
+
+    // If image is still referenced, don't delete
+    if (totalReferences > 0) {
+      logger.debug(`Image ${imageId} still referenced by ${totalReferences} record(s), skipping deletion`);
+      return false;
+    }
+
+    // Image is orphaned, fetch it to get URLs
+    const image = await this.db.image.findUnique({
+      where: { id: imageId },
+    });
+
+    if (!image) {
+      logger.warn(`[cleanupOrphanedImage] Image ${imageId} not found in database`);
+      return false;
+    }
+
+    logger.log(`[cleanupOrphanedImage] Image ${imageId} is orphaned, deleting from S3 and database`);
+    logger.log(`[cleanupOrphanedImage] URLs - original: ${image.originalUrl}, thumbnail: ${image.thumbnailUrl}`);
+
+    // Delete from S3 (skip base64 images)
+    if (image.originalUrl && !image.originalUrl.startsWith('data:')) {
+      try {
+        const urlsToDelete = [image.originalUrl];
+        if (image.thumbnailUrl) {
+          urlsToDelete.push(image.thumbnailUrl);
+        }
+
+        await this.s3Service.deleteImages(urlsToDelete);
+        logger.log(`Deleted ${urlsToDelete.length} image(s) from S3`);
+      } catch (error) {
+        logger.error(`Failed to delete images from S3: ${error.message}`, error.stack);
+        // Continue with database deletion even if S3 fails
+      }
+    }
+
+    // Delete from database
+    await this.db.image.delete({
+      where: { id: imageId },
+    });
+
+    logger.log(`Successfully deleted orphaned image ${imageId} from database and storage`);
+    return true;
   }
 }

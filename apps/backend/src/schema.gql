@@ -358,6 +358,10 @@ type CommunityMemberConnection {
 }
 
 input CreateCharacterInput {
+  """
+  Whether to assign ownership to the creator. Set to false to create an orphaned character.
+  """
+  assignToSelf: Boolean! = true
   customFields: String
   details: String
   isSellable: Boolean! = false
@@ -844,6 +848,7 @@ type Image {
   id: ID!
   isNsfw: Boolean!
   likesCount: Int!
+  mediumUrl: String
   mimeType: String!
   originalFilename: String!
   originalUrl: String!
@@ -1873,6 +1878,7 @@ type Query {
     id: ID!
   ): Media!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
+  myEditableCharacters(filters: CharacterFiltersInput): CharacterConnection!
 
   """Get all external accounts linked to the current user"""
   myExternalAccounts: [ExternalAccount!]!

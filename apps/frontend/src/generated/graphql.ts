@@ -352,6 +352,8 @@ export type CommunityMemberConnection = {
 };
 
 export type CreateCharacterInput = {
+  /** Whether to assign ownership to the creator. Set to false to create an orphaned character. */
+  assignToSelf?: Scalars['Boolean']['input'];
   customFields?: InputMaybe<Scalars['String']['input']>;
   details?: InputMaybe<Scalars['String']['input']>;
   isSellable?: Scalars['Boolean']['input'];
@@ -768,6 +770,7 @@ export type Image = {
   id: Scalars['ID']['output'];
   isNsfw: Scalars['Boolean']['output'];
   likesCount: Scalars['Int']['output'];
+  mediumUrl: Maybe<Scalars['String']['output']>;
   mimeType: Scalars['String']['output'];
   originalFilename: Scalars['String']['output'];
   originalUrl: Scalars['String']['output'];
@@ -1725,6 +1728,7 @@ export type Query = {
   /** Retrieves a single media item by ID */
   mediaItem: Media;
   myCharacters: CharacterConnection;
+  myEditableCharacters: CharacterConnection;
   /** Get all external accounts linked to the current user */
   myExternalAccounts: Array<ExternalAccount>;
   myGalleries: GalleryConnection;
@@ -2068,6 +2072,11 @@ export type QueryMediaItemArgs = {
 
 
 export type QueryMyCharactersArgs = {
+  filters?: InputMaybe<CharacterFiltersInput>;
+};
+
+
+export type QueryMyEditableCharactersArgs = {
   filters?: InputMaybe<CharacterFiltersInput>;
 };
 
@@ -2935,6 +2944,13 @@ export type GetMyCharactersQueryVariables = Exact<{
 
 export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, isOrphaned: boolean, likesCount: number, userHasLiked: boolean, speciesId: string | null, speciesVariantId: string | null, species: { __typename?: 'Species', id: string, name: string } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
 
+export type GetMyEditableCharactersQueryVariables = Exact<{
+  filters?: InputMaybe<CharacterFiltersInput>;
+}>;
+
+
+export type GetMyEditableCharactersQuery = { __typename?: 'Query', myEditableCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null }> } };
+
 export type CreateCharacterMutationVariables = Exact<{
   input: CreateCharacterInput;
 }>;
@@ -3467,7 +3483,7 @@ export type GetMediaItemQueryVariables = Exact<{
 }>;
 
 
-export type GetMediaItemQuery = { __typename?: 'Query', mediaItem: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
+export type GetMediaItemQuery = { __typename?: 'Query', mediaItem: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, mediumUrl: string | null, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
 export type GetCharacterMediaQueryVariables = Exact<{
   characterId: Scalars['ID']['input'];
@@ -4690,6 +4706,55 @@ export type GetMyCharactersQueryHookResult = ReturnType<typeof useGetMyCharacter
 export type GetMyCharactersLazyQueryHookResult = ReturnType<typeof useGetMyCharactersLazyQuery>;
 export type GetMyCharactersSuspenseQueryHookResult = ReturnType<typeof useGetMyCharactersSuspenseQuery>;
 export type GetMyCharactersQueryResult = Apollo.QueryResult<GetMyCharactersQuery, GetMyCharactersQueryVariables>;
+export const GetMyEditableCharactersDocument = gql`
+    query GetMyEditableCharacters($filters: CharacterFiltersInput) {
+  myEditableCharacters(filters: $filters) {
+    characters {
+      id
+      name
+      species {
+        id
+        name
+      }
+    }
+    total
+    hasMore
+  }
+}
+    `;
+
+/**
+ * __useGetMyEditableCharactersQuery__
+ *
+ * To run a query within a React component, call `useGetMyEditableCharactersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMyEditableCharactersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMyEditableCharactersQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useGetMyEditableCharactersQuery(baseOptions?: Apollo.QueryHookOptions<GetMyEditableCharactersQuery, GetMyEditableCharactersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMyEditableCharactersQuery, GetMyEditableCharactersQueryVariables>(GetMyEditableCharactersDocument, options);
+      }
+export function useGetMyEditableCharactersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyEditableCharactersQuery, GetMyEditableCharactersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMyEditableCharactersQuery, GetMyEditableCharactersQueryVariables>(GetMyEditableCharactersDocument, options);
+        }
+export function useGetMyEditableCharactersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyEditableCharactersQuery, GetMyEditableCharactersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMyEditableCharactersQuery, GetMyEditableCharactersQueryVariables>(GetMyEditableCharactersDocument, options);
+        }
+export type GetMyEditableCharactersQueryHookResult = ReturnType<typeof useGetMyEditableCharactersQuery>;
+export type GetMyEditableCharactersLazyQueryHookResult = ReturnType<typeof useGetMyEditableCharactersLazyQuery>;
+export type GetMyEditableCharactersSuspenseQueryHookResult = ReturnType<typeof useGetMyEditableCharactersSuspenseQuery>;
+export type GetMyEditableCharactersQueryResult = Apollo.QueryResult<GetMyEditableCharactersQuery, GetMyEditableCharactersQueryVariables>;
 export const CreateCharacterDocument = gql`
     mutation CreateCharacter($input: CreateCharacterInput!) {
   createCharacter(input: $input) {
@@ -7956,6 +8021,7 @@ export const GetMediaItemDocument = gql`
     image {
       id
       originalUrl
+      mediumUrl
       thumbnailUrl
       altText
       isNsfw
