@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Markdown Line Breaks (#149)**: Replaced manual markdown parsing with `react-markdown`
+  - This will significantly enhance the markdown features available, and enables preserving linebreaks.
 - **Character Creation Ownership Bug**: Fixed "Leave Unassigned" option not working when creating characters
   - Characters are now properly created without owner when "Leave Unassigned" is selected
   - Only applies to users with orphaned character creation permission

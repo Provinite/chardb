@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { TextContent, TextFormatting } from '../generated/graphql';
+import { Markdown } from './Markdown';
 
 const Container = styled.div`
   background: ${({ theme }) => theme.colors.background};
@@ -56,7 +57,7 @@ const ContentContainer = styled.div<{ maxHeight?: string }>`
 `;
 
 const PlainTextContent = styled.div`
-  font-family: 'Monaco, Consolas, "Courier New", monospace';
+  font-family: Monaco, Consolas, "Courier New", monospace;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   line-height: 1.6;
   color: ${({ theme }) => theme.colors.text.primary};
@@ -64,84 +65,6 @@ const PlainTextContent = styled.div`
   word-wrap: break-word;
 `;
 
-const MarkdownContent = styled.div`
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  line-height: 1.7;
-  color: ${({ theme }) => theme.colors.text.primary};
-  
-  h1, h2, h3, h4, h5, h6 {
-    color: ${({ theme }) => theme.colors.text.primary};
-    margin: ${({ theme }) => theme.spacing.lg} 0 ${({ theme }) => theme.spacing.md} 0;
-    
-    &:first-child {
-      margin-top: 0;
-    }
-  }
-  
-  h1 { font-size: 2em; }
-  h2 { font-size: 1.5em; }
-  h3 { font-size: 1.25em; }
-  
-  p {
-    margin: 0 0 ${({ theme }) => theme.spacing.md} 0;
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-  
-  strong, b {
-    font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  }
-  
-  em, i {
-    font-style: italic;
-  }
-  
-  code {
-    background: ${({ theme }) => theme.colors.surface};
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-family: 'Monaco, Consolas, "Courier New", monospace';
-    font-size: 0.9em;
-  }
-  
-  pre {
-    background: ${({ theme }) => theme.colors.surface};
-    padding: ${({ theme }) => theme.spacing.md};
-    border-radius: ${({ theme }) => theme.borderRadius.md};
-    overflow-x: auto;
-    margin: ${({ theme }) => theme.spacing.md} 0;
-    
-    code {
-      background: none;
-      padding: 0;
-    }
-  }
-  
-  blockquote {
-    border-left: 3px solid ${({ theme }) => theme.colors.border};
-    padding-left: ${({ theme }) => theme.spacing.md};
-    margin: ${({ theme }) => theme.spacing.md} 0;
-    color: ${({ theme }) => theme.colors.text.secondary};
-    font-style: italic;
-  }
-  
-  ul, ol {
-    margin: ${({ theme }) => theme.spacing.md} 0;
-    padding-left: ${({ theme }) => theme.spacing.lg};
-  }
-  
-  li {
-    margin: ${({ theme }) => theme.spacing.xs} 0;
-  }
-  
-  hr {
-    border: none;
-    border-top: 1px solid ${({ theme }) => theme.colors.border};
-    margin: ${({ theme }) => theme.spacing.lg} 0;
-  }
-`;
 
 const ExpandButton = styled.button`
   width: 100%;
@@ -175,31 +98,6 @@ interface TextViewerProps {
   allowFormatToggle?: boolean;
 }
 
-/**
- * Simple markdown-to-HTML converter for basic formatting
- * Supports headers, bold, italic, code, and basic structure
- */
-const renderMarkdown = (text: string): string => {
-  return text
-    // Headers
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    // Bold
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/__(.*?)__/g, '<strong>$1</strong>')
-    // Italic
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/_(.*?)_/g, '<em>$1</em>')
-    // Code
-    .replace(/`(.*?)`/g, '<code>$1</code>')
-    // Line breaks
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^/, '<p>')
-    .replace(/$/, '</p>')
-    // Fix empty paragraphs
-    .replace(/<p><\/p>/g, '');
-};
 
 /**
  * A component for displaying text content with optional markdown formatting
@@ -228,14 +126,8 @@ export const TextViewer: React.FC<TextViewerProps> = ({
         </PlainTextContent>
       );
     }
-    
-    return (
-      <MarkdownContent
-        dangerouslySetInnerHTML={{
-          __html: renderMarkdown(textContent.content)
-        }}
-      />
-    );
+
+    return <Markdown>{textContent.content}</Markdown>;
   };
 
   return (

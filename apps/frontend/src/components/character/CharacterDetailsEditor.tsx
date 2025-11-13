@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { Markdown } from '../Markdown';
 
 const Container = styled.div`
   background: ${({ theme }) => theme.colors.background};
@@ -55,7 +56,7 @@ const TextArea = styled.textarea`
   min-height: 300px;
   padding: ${({ theme }) => theme.spacing.md};
   border: none;
-  font-family: 'Monaco, Consolas, "Courier New", monospace';
+  font-family: Monaco, Consolas, "Courier New", monospace;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   line-height: 1.6;
   resize: vertical;
@@ -79,42 +80,6 @@ const PreviewContainer = styled.div`
   background: ${({ theme }) => theme.colors.background};
 `;
 
-const PreviewContent = styled.div`
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  line-height: 1.6;
-  color: ${({ theme }) => theme.colors.text.primary};
-
-  h1, h2, h3, h4, h5, h6 {
-    margin: ${({ theme }) => theme.spacing.md} 0 ${({ theme }) => theme.spacing.sm};
-    font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  }
-
-  h1 { font-size: ${({ theme }) => theme.typography.fontSize.xl}; }
-  h2 { font-size: ${({ theme }) => theme.typography.fontSize.lg}; }
-  h3 { font-size: ${({ theme }) => theme.typography.fontSize.md}; }
-
-  p {
-    margin: ${({ theme }) => theme.spacing.sm} 0;
-  }
-
-  strong { font-weight: bold; }
-  em { font-style: italic; }
-
-  code {
-    background: ${({ theme }) => theme.colors.surface};
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-family: monospace;
-    font-size: 0.9em;
-  }
-
-  blockquote {
-    border-left: 4px solid ${({ theme }) => theme.colors.border};
-    padding-left: ${({ theme }) => theme.spacing.md};
-    margin: ${({ theme }) => theme.spacing.md} 0;
-    color: ${({ theme }) => theme.colors.text.muted};
-  }
-`;
 
 const Footer = styled.div`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
@@ -147,31 +112,6 @@ interface CharacterDetailsEditorProps {
   maxLength?: number;
 }
 
-/**
- * Simple markdown renderer for preview functionality
- * Supports basic markdown features like headers, bold, italic, code, and quotes
- */
-const renderMarkdownPreview = (text: string): string => {
-  return text
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/__(.*?)__/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/_(.*?)_/g, '<em>$1</em>')
-    .replace(/~~(.*?)~~/g, '<s>$1</s>')
-    .replace(/`(.*?)`/g, '<code>$1</code>')
-    .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[h|p|blockquote])/, '<p>')
-    .replace(/(?<![h|p|blockquote]>)$/, '</p>')
-    .replace(/<p><\/p>/g, '')
-    .replace(/<p>(<h[1-3]>)/g, '$1')
-    .replace(/(<\/h[1-3]>)<\/p>/g, '$1')
-    .replace(/<p>(<blockquote>)/g, '$1')
-    .replace(/(<\/blockquote>)<\/p>/g, '$1');
-};
 
 /**
  * A simplified markdown editor specifically for character details
@@ -232,11 +172,7 @@ Your character's history, background, and story...
           />
         ) : (
           <PreviewContainer>
-            <PreviewContent
-              dangerouslySetInnerHTML={{
-                __html: value ? renderMarkdownPreview(value) : '<p style="color: #999;">No content to preview</p>'
-              }}
-            />
+            {value ? <Markdown>{value}</Markdown> : <p style={{ color: '#999' }}>No content to preview</p>}
           </PreviewContainer>
         )}
 

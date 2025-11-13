@@ -38,8 +38,11 @@
     "react-dropzone": "^14.2.0",
     "react-hook-form": "^7.45.0",
     "react-hot-toast": "^2.4.0",
+    "react-markdown": "^10.1.0",
     "react-query": "^3.39.0",
     "react-router-dom": "^6.15.0",
+    "remark-breaks": "^4.0.0",
+    "remark-gfm": "^4.0.1",
     "styled-components": "^6.0.0",
     "zod": "^3.22.0"
   },
