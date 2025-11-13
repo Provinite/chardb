@@ -56,7 +56,7 @@ const TextArea = styled.textarea`
   min-height: 300px;
   padding: ${({ theme }) => theme.spacing.md};
   border: none;
-  font-family: 'Monaco, Consolas, "Courier New", monospace';
+  font-family: Monaco, Consolas, "Courier New", monospace;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   line-height: 1.6;
   resize: vertical;

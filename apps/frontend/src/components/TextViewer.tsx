@@ -57,7 +57,7 @@ const ContentContainer = styled.div<{ maxHeight?: string }>`
 `;
 
 const PlainTextContent = styled.div`
-  font-family: 'Monaco, Consolas, "Courier New", monospace';
+  font-family: Monaco, Consolas, "Courier New", monospace;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   line-height: 1.6;
   color: ${({ theme }) => theme.colors.text.primary};

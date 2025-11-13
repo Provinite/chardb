@@ -72,15 +72,15 @@ const TextArea = styled.textarea`
   padding: ${({ theme }) => theme.spacing.md};
   border: none;
   border-top: 1px solid ${({ theme }) => theme.colors.border};
-  font-family: 'Monaco, Consolas, "Courier New", monospace';
+  font-family: Monaco, Consolas, "Courier New", monospace;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   line-height: 1.6;
   resize: vertical;
-  
+
   &:focus {
     outline: none;
   }
-  
+
   &::placeholder {
     color: ${({ theme }) => theme.colors.text.muted};
   }
