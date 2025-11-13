@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { useParams } from "react-router-dom";
 import { Package } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { CopyIdButton } from "../components/CopyIdButton";
 import { useCommunityByIdQuery, useGetMyInventoryQuery } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -40,10 +41,23 @@ const ItemCard = styled.div<{ color?: string }>`
   border-radius: 12px;
   padding: 1rem;
   transition: all 0.2s ease;
+  position: relative;
 
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.md};
+  }
+`;
+
+const StyledCopyIdButton = styled(CopyIdButton)`
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  opacity: 0;
+  transition: all 0.2s;
+
+  ${ItemCard}:hover & {
+    opacity: 1;
   }
 `;
 
@@ -212,6 +226,7 @@ export const CommunityInventoryPage: React.FC = () => {
         <InventoryGrid>
           {items.map((item: any) => (
             <ItemCard key={item.id} color={item.itemType.color}>
+              <StyledCopyIdButton id={item.id} />
               <ItemIconContainer color={item.itemType.color}>
                 {item.itemType.image ? (
                   <ItemImage

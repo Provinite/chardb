@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { Character } from '../generated/graphql';
 import { Tag } from './Tag';
 import { TagsContainer } from './TagsContainer';
+import { CopyIdButton } from './CopyIdButton';
 
 export type CharacterCardItem = Pick<Character,
   'id' | 'name' | 'visibility' | 'tags' | 'isSellable' | 'price'
@@ -122,10 +123,22 @@ const VisibilityBadge = styled.span.withConfig({
 `;
 
 
-const EditButton = styled(Link)`
+const ButtonGroup = styled.div`
   position: absolute;
   top: ${({ theme }) => theme.spacing.md};
   right: ${({ theme }) => theme.spacing.md};
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.xs};
+  opacity: 0;
+  transition: all 0.2s ease-in-out;
+  z-index: 10;
+
+  ${Card}:hover & {
+    opacity: 1;
+  }
+`;
+
+const EditButton = styled(Link)`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.text.primary};
@@ -134,17 +147,16 @@ const EditButton = styled(Link)`
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  opacity: 0;
-  transition: all 0.2s ease-in-out;
-  z-index: 10;
-
-  ${Card}:hover & {
-    opacity: 1;
-  }
+  transition: all 0.2s;
 
   &:hover {
     background: ${({ theme }) => theme.colors.background};
     border-color: ${({ theme }) => theme.colors.primary};
+  }
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 2px;
   }
 `;
 
@@ -154,10 +166,10 @@ interface CharacterCardProps {
   showEditButton?: boolean;
 }
 
-export const CharacterCard: React.FC<CharacterCardProps> = ({ 
-  character, 
+export const CharacterCard: React.FC<CharacterCardProps> = ({
+  character,
   showOwner = true,
-  showEditButton = false 
+  showEditButton = false
 }) => {
   const navigate = useNavigate();
 
@@ -172,8 +184,8 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
     }
   };
 
-  const handleEditClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click when edit button is clicked
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click when button is clicked
   };
 
   return (
@@ -184,14 +196,17 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       role="button"
       aria-label={`View character ${character.name}`}
     >
-      {showEditButton && (
-        <EditButton 
-          to={`/character/${character.id}/edit`}
-          onClick={handleEditClick}
-        >
-          Edit
-        </EditButton>
-      )}
+      <ButtonGroup>
+        <CopyIdButton id={character.id} />
+        {showEditButton && (
+          <EditButton
+            to={`/character/${character.id}/edit`}
+            onClick={handleButtonClick}
+          >
+            Edit
+          </EditButton>
+        )}
+      </ButtonGroup>
       <ImageSection>
         {character.mainMedia?.image ? (
           <MainImage
