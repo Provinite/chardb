@@ -428,16 +428,16 @@ export class ImagesService {
       // Format-specific optimization for medium variant
       if (metadata.format === "png") {
         // PNG → WebP for smaller file size while preserving transparency
-        mediumImage = mediumImage.webp({ quality: 90, lossless: false });
+        mediumImage = mediumImage.webp({ quality: 95, lossless: false });
       } else if (metadata.format === "jpeg") {
         // JPEG → JPEG optimized
         mediumImage = mediumImage.jpeg({
-          quality: 90,
+          quality: 95,
           progressive: true,
         });
       } else if (metadata.format === "webp") {
         // WebP → WebP optimized
-        mediumImage = mediumImage.webp({ quality: 90, lossless: false });
+        mediumImage = mediumImage.webp({ quality: 95, lossless: false });
       }
 
       // Generate thumbnail variant
