@@ -85,6 +85,10 @@ export class S3Service {
       ContentType: mimeType,
       ContentDisposition: `inline; filename="${sanitizedFilename}"`,
       CacheControl: "public, max-age=31536000, immutable", // 1 year cache
+      Metadata: {
+        uploaderId: userId,
+        sizeVariant: variantSuffix,
+      },
     };
 
     try {
