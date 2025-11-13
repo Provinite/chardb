@@ -118,28 +118,26 @@ export class ImagesService {
     // Generate thumbnail from original buffer
     const { thumbnail, metadata } = await this.processImage(file.buffer);
 
-    // Generate a shared base key for all size variants of this upload
-    const baseKey = `${Date.now()}-${uuid()}`;
+    // Generate imageId upfront for S3 key generation
+    const imageId = uuid();
 
-    // Upload original (unprocessed) and thumbnail to S3 with shared base key
+    // Upload original (unprocessed) and thumbnail to S3 using imageId
     const [originalUploadResult, thumbnailUploadResult] = await Promise.all([
       // Upload original unprocessed buffer
       this.s3Service.uploadImage({
         buffer: file.buffer,
         filename: file.originalname,
         mimeType: file.mimetype,
-        userId,
+        imageId,
         sizeVariant: 'original',
-        baseKey,
       }),
-      // Upload thumbnail with same base key
+      // Upload thumbnail
       this.s3Service.uploadImage({
         buffer: thumbnail,
         filename: file.originalname,
         mimeType: file.mimetype === "image/png" ? "image/png" : "image/jpeg",
-        userId,
+        imageId,
         sizeVariant: 'thumbnail',
-        baseKey,
       }),
     ]);
 
@@ -148,9 +146,10 @@ export class ImagesService {
 
     // Use transaction to create both image and media records
     const result = await this.db.$transaction(async (tx) => {
-      // Create image record
+      // Create image record with pre-generated ID
       const image = await tx.image.create({
         data: {
+          id: imageId, // Use pre-generated UUID
           filename,
           originalFilename: file.originalname,
           originalUrl,

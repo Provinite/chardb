@@ -6,21 +6,18 @@ import {
   DeleteObjectCommand,
   PutObjectCommandInput,
 } from "@aws-sdk/client-s3";
-import { randomUUID } from "crypto";
 
 export interface UploadImageOptions {
   buffer: Buffer;
   filename: string;
   mimeType: string;
-  userId: string;
+  imageId: string; // Image ID for S3 key generation
   sizeVariant?: 'original' | 'thumbnail' | 'medium' | 'full';
-  baseKey?: string; // For consistent keys across size variants
 }
 
 export interface UploadImageResult {
   key: string;
   url: string;
-  baseKey: string; // The base key for generating other variants
 }
 
 @Injectable()
@@ -62,17 +59,14 @@ export class S3Service {
    * Upload an image to S3
    */
   async uploadImage(options: UploadImageOptions): Promise<UploadImageResult> {
-    const { buffer, filename, mimeType, userId, sizeVariant, baseKey } = options;
-
-    // Generate or use provided base key
-    const base = baseKey || `${Date.now()}-${randomUUID()}`;
+    const { buffer, filename, mimeType, imageId, sizeVariant } = options;
 
     // Extract file extension
     const extension = this.getExtension(filename, mimeType);
 
-    // Generate S3 key with suffix pattern: {userId}/{baseKey}-{variant}.{ext}
+    // Generate S3 key with pattern: {imageId}/{variant}.{ext}
     const variantSuffix = sizeVariant || 'original';
-    const key = `${userId}/${base}-${variantSuffix}.${extension}`;
+    const key = `${imageId}/${variantSuffix}.${extension}`;
 
     // Sanitize filename for Content-Disposition header
     const sanitizedFilename = this.sanitizeFilename(filename);
@@ -86,7 +80,7 @@ export class S3Service {
       ContentDisposition: `inline; filename="${sanitizedFilename}"`,
       CacheControl: "public, max-age=31536000, immutable", // 1 year cache
       Metadata: {
-        uploaderId: userId,
+        imageId: imageId,
         sizeVariant: variantSuffix,
       },
     };
@@ -101,7 +95,7 @@ export class S3Service {
 
       this.logger.log(`Successfully uploaded image to S3: ${key}`);
 
-      return { key, url, baseKey: base };
+      return { key, url };
     } catch (error) {
       this.logger.error(`Failed to upload image to S3: ${error.message}`, error.stack);
       throw new Error(`Failed to upload image: ${error.message}`);
