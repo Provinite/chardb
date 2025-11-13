@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Markdown Rendering Library**: Replaced manual regex-based markdown parsing with `react-markdown`
   - Created shared `Markdown` component for consistent rendering across the app
   - Replaced 4 instances of manual parsing with proper markdown library
+  - Added `remark-breaks` plugin to preserve single line breaks
+  - Added `remark-gfm` plugin for GitHub Flavored Markdown (strikethrough, tables, task lists)
   - Fixes line break preservation in character descriptions
   - Eliminates XSS risks from `dangerouslySetInnerHTML` usage
   - Better handling of all markdown edge cases

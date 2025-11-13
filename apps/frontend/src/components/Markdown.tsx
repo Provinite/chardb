@@ -1,5 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
+import remarkGfm from 'remark-gfm';
 import styled from 'styled-components';
 
 const StyledMarkdown = styled.div`
@@ -54,14 +56,42 @@ const StyledMarkdown = styled.div`
     color: ${({ theme }) => theme.colors.text.muted};
   }
 
-  ul,
+  ul {
+    margin: ${({ theme }) => theme.spacing.sm} 0;
+    padding-left: ${({ theme }) => theme.spacing.lg};
+    list-style-type: disc;
+  }
+
   ol {
     margin: ${({ theme }) => theme.spacing.sm} 0;
     padding-left: ${({ theme }) => theme.spacing.lg};
+    list-style-type: decimal;
   }
 
   li {
     margin: ${({ theme }) => theme.spacing.xs} 0;
+  }
+
+  del {
+    text-decoration: line-through;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: ${({ theme }) => theme.spacing.md} 0;
+  }
+
+  th,
+  td {
+    border: 1px solid ${({ theme }) => theme.colors.border};
+    padding: ${({ theme }) => theme.spacing.sm};
+    text-align: left;
+  }
+
+  th {
+    background: ${({ theme }) => theme.colors.surface};
+    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   }
 `;
 
@@ -71,12 +101,15 @@ interface MarkdownProps {
 
 /**
  * Simple markdown renderer using react-markdown
- * Preserves line breaks and handles basic markdown formatting
+ * Preserves line breaks (including single newlines) and handles GitHub Flavored Markdown
+ * Supports: headers, bold, italic, strikethrough, code, blockquotes, tables, task lists
  */
 export const Markdown: React.FC<MarkdownProps> = ({ children }) => {
   return (
     <StyledMarkdown>
-      <ReactMarkdown>{children}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkBreaks, remarkGfm]}>
+        {children}
+      </ReactMarkdown>
     </StyledMarkdown>
   );
 };
