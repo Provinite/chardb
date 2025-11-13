@@ -17,6 +17,9 @@ export class Image {
   originalUrl: string;
 
   @Field({ nullable: true })
+  mediumUrl?: string;
+
+  @Field({ nullable: true })
   thumbnailUrl?: string;
 
   @Field({ nullable: true })

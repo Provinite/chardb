@@ -848,6 +848,7 @@ type Image {
   id: ID!
   isNsfw: Boolean!
   likesCount: Int!
+  mediumUrl: String
   mimeType: String!
   originalFilename: String!
   originalUrl: String!

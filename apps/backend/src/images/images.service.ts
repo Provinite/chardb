@@ -115,14 +115,18 @@ export class ImagesService {
     const fileExtension = extname(file.originalname);
     const filename = `${uuid()}${fileExtension}`;
 
-    // Generate thumbnail from original buffer
-    const { thumbnail, metadata } = await this.processImage(file.buffer);
+    // Generate all image variants from original buffer
+    const { thumbnail, medium, metadata } = await this.processImage(file.buffer);
 
     // Generate imageId upfront for S3 key generation
     const imageId = uuid();
 
-    // Upload original (unprocessed) and thumbnail to S3 using imageId
-    const [originalUploadResult, thumbnailUploadResult] = await Promise.all([
+    // Determine mime types for each variant based on format
+    const thumbnailMimeType = this.getThumbnailMimeType(file.mimetype);
+    const mediumMimeType = this.getMediumMimeType(file.mimetype);
+
+    // Upload original, medium, and thumbnail to S3 using imageId
+    const [originalUploadResult, mediumUploadResult, thumbnailUploadResult] = await Promise.all([
       // Upload original unprocessed buffer
       this.s3Service.uploadImage({
         buffer: file.buffer,
@@ -131,17 +135,26 @@ export class ImagesService {
         imageId,
         sizeVariant: 'original',
       }),
+      // Upload medium (web-optimized display size)
+      this.s3Service.uploadImage({
+        buffer: medium,
+        filename: file.originalname,
+        mimeType: mediumMimeType,
+        imageId,
+        sizeVariant: 'medium',
+      }),
       // Upload thumbnail
       this.s3Service.uploadImage({
         buffer: thumbnail,
         filename: file.originalname,
-        mimeType: file.mimetype === "image/png" ? "image/png" : "image/jpeg",
+        mimeType: thumbnailMimeType,
         imageId,
         sizeVariant: 'thumbnail',
       }),
     ]);
 
     const originalUrl = originalUploadResult.url;
+    const mediumUrl = mediumUploadResult.url;
     const thumbnailUrl = thumbnailUploadResult.url;
 
     // Use transaction to create both image and media records
@@ -153,6 +166,7 @@ export class ImagesService {
           filename,
           originalFilename: file.originalname,
           originalUrl,
+          mediumUrl,
           thumbnailUrl,
           altText,
           uploaderId: userId,
@@ -373,9 +387,21 @@ export class ImagesService {
         `Processing image: ${metadata.format} ${metadata.width}x${metadata.height}, size: ${buffer.length} bytes`,
       );
 
-      // For GIFs, preserve original to maintain animations
+      // For GIFs, preserve animation in both original and medium, create static thumbnail
       if (metadata.format === "gif") {
-        // Create static thumbnail only for GIFs
+        // Resize GIF for medium variant if needed, preserving animation
+        let mediumBuffer = buffer;
+        if (metadata.width! > this.mediumSize || metadata.height! > this.mediumSize) {
+          const mediumGif = sharp(buffer, { animated: true })
+            .resize(this.mediumSize, this.mediumSize, {
+              fit: "inside",
+              withoutEnlargement: true,
+            })
+            .gif();
+          mediumBuffer = await mediumGif.toBuffer();
+        }
+
+        // Create static thumbnail for GIFs
         const thumbnail = image
           .resize(this.thumbnailSize, this.thumbnailSize, {
             fit: "cover",
@@ -386,66 +412,58 @@ export class ImagesService {
         const thumbnailBuffer = await thumbnail.toBuffer();
 
         return {
-          processedImage: buffer, // Return original GIF buffer
+          medium: mediumBuffer,
           thumbnail: thumbnailBuffer,
           metadata,
         };
       }
 
-      // Process main image (resize if too large, optimize quality)
-      let processedImage = image;
+      // Generate medium (800px web-optimized) variant
+      let mediumImage = image.resize(this.mediumSize, this.mediumSize, {
+        fit: "inside",
+        withoutEnlargement: true,
+      });
 
-      // Only resize if larger than 4000px (less aggressive than before)
-      if (metadata.width! > 4000 || metadata.height! > 4000) {
-        processedImage = image.resize(4000, 4000, {
-          fit: "inside",
-          withoutEnlargement: true,
-        });
-      }
-
-      // Format-specific optimization with higher quality
-      if (metadata.format === "jpeg") {
-        processedImage = processedImage.jpeg({
-          quality: 92,
+      // Format-specific optimization for medium variant
+      if (metadata.format === "png") {
+        // PNG → WebP for smaller file size while preserving transparency
+        mediumImage = mediumImage.webp({ quality: 90, lossless: false });
+      } else if (metadata.format === "jpeg") {
+        // JPEG → JPEG optimized
+        mediumImage = mediumImage.jpeg({
+          quality: 90,
           progressive: true,
         });
-      } else if (metadata.format === "png") {
-        // Minimal compression for PNGs to preserve transparency
-        processedImage = processedImage.png({
-          compressionLevel: 6,
-          adaptiveFiltering: false,
-        });
       } else if (metadata.format === "webp") {
-        processedImage = processedImage.webp({ quality: 95, lossless: false });
+        // WebP → WebP optimized
+        mediumImage = mediumImage.webp({ quality: 90, lossless: false });
       }
 
-      // Generate format-appropriate thumbnail
-      let thumbnail;
+      // Generate thumbnail variant
+      let thumbnail = image.resize(this.thumbnailSize, this.thumbnailSize, {
+        fit: "cover",
+        position: "center",
+      });
+
+      // Format-specific optimization for thumbnail
       if (metadata.format === "png") {
-        // Keep PNG thumbnails as PNG to preserve transparency
-        thumbnail = image
-          .resize(this.thumbnailSize, this.thumbnailSize, {
-            fit: "cover",
-            position: "center",
-          })
-          .png({ compressionLevel: 6 });
-      } else {
-        // Use JPEG for other formats
-        thumbnail = image
-          .resize(this.thumbnailSize, this.thumbnailSize, {
-            fit: "cover",
-            position: "center",
-          })
-          .jpeg({ quality: 85 });
+        // PNG → WebP for smaller file size while preserving transparency
+        thumbnail = thumbnail.webp({ quality: 85, lossless: false });
+      } else if (metadata.format === "jpeg") {
+        // JPEG → JPEG
+        thumbnail = thumbnail.jpeg({ quality: 85 });
+      } else if (metadata.format === "webp") {
+        // WebP → WebP
+        thumbnail = thumbnail.webp({ quality: 85, lossless: false });
       }
 
-      const [processedBuffer, thumbnailBuffer] = await Promise.all([
-        processedImage.toBuffer(),
+      const [mediumBuffer, thumbnailBuffer] = await Promise.all([
+        mediumImage.toBuffer(),
         thumbnail.toBuffer(),
       ]);
 
       return {
-        processedImage: processedBuffer,
+        medium: mediumBuffer,
         thumbnail: thumbnailBuffer,
         metadata,
       };
@@ -454,6 +472,38 @@ export class ImagesService {
       logger.error(`Stack trace:`, error.stack);
       throw new BadRequestException("Invalid image file or processing failed");
     }
+  }
+
+  /**
+   * Determine MIME type for medium variant based on original format
+   */
+  private getMediumMimeType(originalMimeType: string): string {
+    if (originalMimeType === "image/png") {
+      return "image/webp"; // PNG → WebP
+    } else if (originalMimeType === "image/jpeg" || originalMimeType === "image/jpg") {
+      return "image/jpeg"; // JPEG → JPEG
+    } else if (originalMimeType === "image/webp") {
+      return "image/webp"; // WebP → WebP
+    } else if (originalMimeType === "image/gif") {
+      return "image/gif"; // GIF → GIF (preserves animation)
+    }
+    return originalMimeType;
+  }
+
+  /**
+   * Determine MIME type for thumbnail variant based on original format
+   */
+  private getThumbnailMimeType(originalMimeType: string): string {
+    if (originalMimeType === "image/png") {
+      return "image/webp"; // PNG → WebP
+    } else if (originalMimeType === "image/jpeg" || originalMimeType === "image/jpg") {
+      return "image/jpeg"; // JPEG → JPEG
+    } else if (originalMimeType === "image/webp") {
+      return "image/webp"; // WebP → WebP
+    } else if (originalMimeType === "image/gif") {
+      return "image/jpeg"; // GIF → Static JPEG thumbnail
+    }
+    return originalMimeType;
   }
 
   /**
