@@ -98,9 +98,8 @@ variable "secrets_arns" {
 
 # IAM
 variable "task_role_policy_json" {
-  description = "Custom IAM policy JSON for the task role"
+  description = "Custom IAM policy JSON for the task role (required for S3 access)"
   type        = string
-  default     = null
 }
 
 # Logging

@@ -163,10 +163,8 @@ data "aws_iam_policy_document" "task_assume" {
   }
 }
 
-# Additional task role policies (optional, based on application needs)
+# Additional task role policies (required for S3 access)
 resource "aws_iam_role_policy" "task_custom" {
-  count = var.task_role_policy_json != null ? 1 : 0
-
   name   = "${var.name_prefix}-task-custom-policy"
   role   = aws_iam_role.task.id
   policy = var.task_role_policy_json
