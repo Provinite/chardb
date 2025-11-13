@@ -74,12 +74,16 @@ export class S3Service {
     const variantSuffix = sizeVariant || 'original';
     const key = `${userId}/${base}-${variantSuffix}.${extension}`;
 
+    // Sanitize filename for Content-Disposition header
+    const sanitizedFilename = this.sanitizeFilename(filename);
+
     // Prepare upload parameters
     const uploadParams: PutObjectCommandInput = {
       Bucket: this.bucketName,
       Key: key,
       Body: buffer,
       ContentType: mimeType,
+      ContentDisposition: `inline; filename="${sanitizedFilename}"`,
       CacheControl: "public, max-age=31536000, immutable", // 1 year cache
     };
 
@@ -209,26 +213,41 @@ export class S3Service {
   }
 
   /**
-   * Sanitize filename for S3 key
+   * Sanitize filename for Content-Disposition header
+   * Restricts to [-_a-zA-Z0-9].[a-zA-Z0-9] with max length of 50
    */
   private sanitizeFilename(filename: string): string {
     // Remove path components
     const basename = filename.split("/").pop() || filename;
 
-    // Replace special characters with hyphens, preserve extension
-    const sanitized = basename
-      .toLowerCase()
-      .replace(/[^a-z0-9.-]/g, "-")
+    // Split into name and extension
+    const lastDotIndex = basename.lastIndexOf(".");
+    let name = lastDotIndex > 0 ? basename.slice(0, lastDotIndex) : basename;
+    let ext = lastDotIndex > 0 ? basename.slice(lastDotIndex + 1) : "";
+
+    // Sanitize name: only allow a-zA-Z0-9_-
+    name = name
+      .replace(/[^a-zA-Z0-9_-]/g, "-")
       .replace(/-+/g, "-") // Replace multiple hyphens with single
       .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
 
-    // Limit length to 100 characters
-    if (sanitized.length > 100) {
-      const ext = sanitized.split(".").pop();
-      const nameWithoutExt = sanitized.slice(0, sanitized.lastIndexOf("."));
-      return `${nameWithoutExt.slice(0, 95)}.${ext}`;
+    // Sanitize extension: only allow a-zA-Z0-9
+    ext = ext.replace(/[^a-zA-Z0-9]/g, "");
+
+    // Fallback if name is empty
+    if (!name) {
+      name = "image";
     }
 
-    return sanitized || "image";
+    // Limit total length to 50 characters
+    const maxLength = 50;
+    const extLength = ext ? ext.length + 1 : 0; // +1 for the dot
+    const maxNameLength = maxLength - extLength;
+
+    if (name.length > maxNameLength) {
+      name = name.slice(0, maxNameLength);
+    }
+
+    return ext ? `${name}.${ext}` : name;
   }
 }
