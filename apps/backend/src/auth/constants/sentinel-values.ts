@@ -16,3 +16,5 @@ export const TRUTHY_NULL = Symbol("TRUTHY_NULL");
  * Will be transformed to actual empty string by SentinelValueInterceptor.
  */
 export const TRUTHY_EMPTY_STRING = Symbol("TRUTHY_EMPTY_STRING");
+
+export const TRUTHY_FALSE = Symbol("TRUTHY_FALSE");

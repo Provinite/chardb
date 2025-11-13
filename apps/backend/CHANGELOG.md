@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Unauthenticated Media Access**: Fixed `userHasLiked` field blocking unauthenticated users from viewing public media
 - **Character Creation Ownership**: Fixed `assignToSelf` parameter not being respected
   - Characters now properly created without owner when `assignToSelf: false`
   - Works in conjunction with `canCreateOrphanedCharacter` permission
