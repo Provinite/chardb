@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 import { TextFormatting, Visibility } from '../generated/graphql';
+import { Markdown } from './Markdown';
 
 const Container = styled.div`
   background: ${({ theme }) => theme.colors.background};
@@ -153,29 +154,6 @@ const PreviewContainer = styled.div`
   overflow-y: auto;
 `;
 
-const PreviewContent = styled.div`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  line-height: 1.6;
-  color: ${({ theme }) => theme.colors.text.primary};
-  
-  h1, h2, h3, h4, h5, h6 {
-    margin: ${({ theme }) => theme.spacing.sm} 0;
-  }
-  
-  p {
-    margin: ${({ theme }) => theme.spacing.xs} 0;
-  }
-  
-  strong { font-weight: bold; }
-  em { font-style: italic; }
-  
-  code {
-    background: ${({ theme }) => theme.colors.background};
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-family: monospace;
-  }
-`;
 
 /** Data structure for text editor content */
 export interface TextEditorData {
@@ -217,25 +195,6 @@ const calculateWordCount = (text: string): number => {
   return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 };
 
-/**
- * Simple markdown renderer for preview functionality
- * Supports basic markdown features like headers, bold, italic, and code
- */
-const renderMarkdownPreview = (text: string): string => {
-  return text
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/__(.*?)__/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/_(.*?)_/g, '<em>$1</em>')
-    .replace(/`(.*?)`/g, '<code>$1</code>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^/, '<p>')
-    .replace(/$/, '</p>')
-    .replace(/<p><\/p>/g, '');
-};
 
 /**
  * A rich text editor component with markdown support and live preview
@@ -365,13 +324,11 @@ export const TextEditor: React.FC<TextEditorProps> = ({
         />
       ) : (
         <PreviewContainer>
-          <PreviewContent
-            dangerouslySetInnerHTML={{
-              __html: isMarkdown 
-                ? renderMarkdownPreview(data.content)
-                : data.content.replace(/\n/g, '<br>')
-            }}
-          />
+          {isMarkdown ? (
+            <Markdown>{data.content}</Markdown>
+          ) : (
+            <div style={{ whiteSpace: 'pre-wrap' }}>{data.content}</div>
+          )}
         </PreviewContainer>
       )}
 

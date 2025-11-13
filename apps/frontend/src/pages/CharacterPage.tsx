@@ -20,6 +20,7 @@ import { Tag } from "../components/Tag";
 import { TagsContainer } from "../components/TagsContainer";
 import { DeleteConfirmationDialog } from "../components/DeleteConfirmationDialog";
 import { CharacterTraitsDisplay } from "../components/character/CharacterTraitsDisplay";
+import { Markdown } from "../components/Markdown";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -278,86 +279,6 @@ const SectionTitle = styled.h3`
   border-bottom: 2px solid ${({ theme }) => theme.colors.border};
 `;
 
-const MarkdownContent = styled.div`
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  line-height: 1.6;
-  color: ${({ theme }) => theme.colors.text.primary};
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    margin: ${({ theme }) => theme.spacing.md} 0
-      ${({ theme }) => theme.spacing.sm};
-    font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  }
-
-  h1 {
-    font-size: ${({ theme }) => theme.typography.fontSize.xl};
-  }
-  h2 {
-    font-size: ${({ theme }) => theme.typography.fontSize.lg};
-  }
-  h3 {
-    font-size: ${({ theme }) => theme.typography.fontSize.md};
-  }
-
-  p {
-    margin: ${({ theme }) => theme.spacing.sm} 0;
-  }
-
-  strong {
-    font-weight: bold;
-  }
-  em {
-    font-style: italic;
-  }
-  s {
-    text-decoration: line-through;
-  }
-
-  code {
-    background: ${({ theme }) => theme.colors.surface};
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-family: monospace;
-    font-size: 0.9em;
-  }
-
-  blockquote {
-    border-left: 4px solid ${({ theme }) => theme.colors.border};
-    padding-left: ${({ theme }) => theme.spacing.md};
-    margin: ${({ theme }) => theme.spacing.md} 0;
-    color: ${({ theme }) => theme.colors.text.muted};
-  }
-`;
-
-/**
- * Simple markdown renderer for display
- */
-const renderMarkdown = (text: string): string => {
-  return text
-    .replace(/^### (.*$)/gim, "<h3>$1</h3>")
-    .replace(/^## (.*$)/gim, "<h2>$1</h2>")
-    .replace(/^# (.*$)/gim, "<h1>$1</h1>")
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/__(.*?)__/g, "<strong>$1</strong>")
-    .replace(/\*(.*?)\*/g, "<em>$1</em>")
-    .replace(/_(.*?)_/g, "<em>$1</em>")
-    .replace(/~~(.*?)~~/g, "<s>$1</s>")
-    .replace(/`(.*?)`/g, "<code>$1</code>")
-    .replace(/^> (.*$)/gim, "<blockquote>$1</blockquote>")
-    .replace(/\n\n/g, "</p><p>")
-    .replace(/^(?!<[h|p|blockquote])/, "<p>")
-    .replace(/(?<![h|p|blockquote]>)$/, "</p>")
-    .replace(/<p><\/p>/g, "")
-    .replace(/<p>(<h[1-3]>)/g, "$1")
-    .replace(/(<\/h[1-3]>)<\/p>/g, "$1")
-    .replace(/<p>(<blockquote>)/g, "$1")
-    .replace(/(<\/blockquote>)<\/p>/g, "$1");
-};
 
 const TradingInfo = styled.div`
   background: ${({ theme }) => theme.colors.surface};
@@ -764,11 +685,7 @@ export const CharacterPage: React.FC = () => {
       {character.details && (
         <ContentSection>
           <SectionTitle>Character Details</SectionTitle>
-          <MarkdownContent
-            dangerouslySetInnerHTML={{
-              __html: renderMarkdown(character.details),
-            }}
-          />
+          <Markdown>{character.details}</Markdown>
         </ContentSection>
       )}
 

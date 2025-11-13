@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Markdown Rendering Library**: Replaced manual regex-based markdown parsing with `react-markdown`
+  - Created shared `Markdown` component for consistent rendering across the app
+  - Replaced 4 instances of manual parsing with proper markdown library
+  - Fixes line break preservation in character descriptions
+  - Eliminates XSS risks from `dangerouslySetInnerHTML` usage
+  - Better handling of all markdown edge cases
 - **Image Upload System**: Complete image upload functionality with S3 storage integration
   - Upload page with character and gallery association
   - Image preview during upload with metadata display
