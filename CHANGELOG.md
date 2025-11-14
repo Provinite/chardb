@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Community Character List Page**: New dedicated character browsing page for communities
+  - Route: `/communities/:communityId/characters` with automatic community sidebar integration
+- **Item Type Detail Page**: Dedicated page for viewing item type details
+  - Display item type information, description, and metadata
+  - Links from admin item management and user inventory pages
+
+### Changed
+
+- **Character List UI Improvements**: Streamlined search and filtering interface
+  - Removed species dropdown from basic search
+  - Removed Gender and Species filters from advanced search
+  - Removed visibility filter selector UI
+
+### Fixed
+
+- **Community Page Access**: Allow unauthenticated users to view community landing pages
+- **Terraform Script Performance**: Optimize terraform outputs script with single JSON call instead of multiple invocations
+
 ## [v7.0.0] - 2025-11-13
 
 ## [v6.1.0] - 2025-11-06
@@ -59,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **UI Core Entity Management System**: Comprehensive administration interface for species, traits, and community management
   - Species management pages with creation, editing, and variant support
-  - Trait builder system supporting ENUM, STRING, INTEGER, and TIMESTAMP value types  
+  - Trait builder system supporting ENUM, STRING, INTEGER, and TIMESTAMP value types
   - Community administration with role-based permissions and invite code management
   - Enum value configuration interface for species variant customization
   - Enhanced UI component library with Card, Modal, Input, Typography, and ErrorMessage components
