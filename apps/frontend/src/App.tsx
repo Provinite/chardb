@@ -61,6 +61,7 @@ import { DiscordCallbackPage } from "./pages/DiscordCallbackPage";
 import { CommunityItemsAdminPage } from "./pages/CommunityItemsAdminPage";
 import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
 import { CommunityColorPalettePage } from "./pages/CommunityColorPalettePage";
+import { ItemTypePage } from "./pages/ItemTypePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
@@ -95,6 +96,7 @@ function App() {
         <Route path="/user/:username/following" element={<FollowingPage />} />
         <Route path="/communities/:communityId" element={<CommunityPage />} />
         <Route path="/species/:speciesId" element={<SpeciesPage />} />
+        <Route path="/items/:itemTypeId" element={<ItemTypePage />} />
 
         {/* OAuth callback routes */}
         <Route path="/auth/deviantart/callback" element={<DeviantArtCallbackPage />} />

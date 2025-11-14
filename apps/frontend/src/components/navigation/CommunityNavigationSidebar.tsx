@@ -25,6 +25,7 @@ import {
   useGetCharacterQuery,
   useSpeciesVariantByIdQuery,
   useTraitByIdQuery,
+  useGetItemTypeQuery,
 } from '../../generated/graphql';
 
 interface CommunityNavigationSidebarProps {
@@ -165,6 +166,7 @@ const isCommunityRoute = (pathname: string): boolean => {
     /^\/character\/[^/]+/,
     /^\/variants\/[^/]+/,
     /^\/traits\/[^/]+/,
+    /^\/items\/[^/]+/,
   ];
   return communityRoutes.some((pattern) => pattern.test(pathname));
 };
@@ -210,6 +212,14 @@ const extractTraitId = (pathname: string): string | undefined => {
   return match ? match[1] : undefined;
 };
 
+/**
+ * Extract item type ID from pathname for item pages
+ */
+const extractItemTypeId = (pathname: string): string | undefined => {
+  const match = pathname.match(/^\/items\/([^/]+)/);
+  return match ? match[1] : undefined;
+};
+
 export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProps> = ({
   className,
   onToggleToGlobal,
@@ -222,6 +232,7 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   const characterId = extractCharacterId(location.pathname);
   const variantId = extractVariantId(location.pathname);
   const traitId = extractTraitId(location.pathname);
+  const itemTypeId = extractItemTypeId(location.pathname);
 
   // If we're on a species route, fetch the species to get its communityId
   const { data: speciesData, loading: speciesLoading } = useSpeciesByIdQuery({
@@ -245,6 +256,12 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   const { data: traitData, loading: traitLoading } = useTraitByIdQuery({
     variables: { id: traitId || '' },
     skip: !traitId,
+  });
+
+  // If we're on an item type route, fetch the item type to get its communityId
+  const { data: itemTypeData } = useGetItemTypeQuery({
+    variables: { id: itemTypeId || '' },
+    skip: !itemTypeId,
   });
 
   // Determine the species context (from species route, character, variant, or trait)
@@ -283,6 +300,11 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
 
     // Get community from trait's species
     communityId = traitData.traitById.species.communityId;
+  }
+
+  // If on item type route, get community from item type
+  if (itemTypeId && itemTypeData?.itemType?.communityId) {
+    communityId = itemTypeData.itemType.communityId;
   }
 
   const {
