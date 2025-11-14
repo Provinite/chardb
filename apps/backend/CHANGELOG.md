@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v7.0.0] - 2025-11-13
+
 ### Added
 
 - **Item Type Image Upload (#160)**: Added support for uploading images directly to item types
