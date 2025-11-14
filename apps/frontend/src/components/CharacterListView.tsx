@@ -98,39 +98,6 @@ const SearchInput = styled.input`
   }
 `;
 
-const VisibilityFilter = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
-  align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-`;
-
-const VisibilityButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== "active",
-})<{ active: boolean }>`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 2px solid
-    ${(props) =>
-      props.active ? props.theme.colors.primary : props.theme.colors.border};
-  background: ${(props) =>
-    props.active ? props.theme.colors.primary : props.theme.colors.background};
-  color: ${(props) =>
-    props.active ? "white" : props.theme.colors.text.secondary};
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    border-color: ${({ theme }) => theme.colors.primary};
-  }
-
-  &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
-    outline-offset: 2px;
-  }
-`;
-
 const LoadMoreButton = styled.button`
   width: 100%;
   padding: ${({ theme }) => theme.spacing.md};
@@ -190,12 +157,6 @@ const SearchButton = styled.button`
   }
 `;
 
-const VisibilityLabel = styled.span`
-  margin-right: ${({ theme }) => theme.spacing.sm};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-`;
-
 const ErrorContainer = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xl};
@@ -243,8 +204,6 @@ export interface CharacterListViewProps {
   title?: string;
   /** Optional breadcrumb content */
   breadcrumb?: React.ReactNode;
-  /** Hide the visibility filter section */
-  hideVisibilityFilter?: boolean;
 }
 
 export const CharacterListView: React.FC<CharacterListViewProps> = ({
@@ -252,7 +211,6 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
   defaultFilters = {},
   title = "Browse Characters",
   breadcrumb,
-  hideVisibilityFilter = false,
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -267,8 +225,6 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
 
     // Parse URL parameters
     const search = searchParams.get("search");
-    const species = searchParams.get("species");
-    const visibility = searchParams.get("visibility");
     const isSellable = searchParams.get("isSellable");
     const isTradeable = searchParams.get("isTradeable");
     const minPrice = searchParams.get("minPrice");
@@ -278,8 +234,6 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
     const searchFields = searchParams.get("searchFields");
 
     if (search) params.search = search;
-    if (species) params.species = species;
-    if (visibility) params.visibility = visibility as any;
     if (isSellable) params.isSellable = isSellable === "true";
     if (isTradeable) params.isTradeable = isTradeable === "true";
     if (minPrice) params.minPrice = parseFloat(minPrice);
@@ -293,9 +247,6 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
 
   const [filters, setFilters] = useState<CharacterFiltersInput>(getInitialFilters);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
-  const [visibilityFilter, setVisibilityFilter] = useState<
-    "ALL" | "PUBLIC" | "PRIVATE"
-  >((searchParams.get("visibility") as any) || defaultFilters.visibility || "ALL");
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [currentAdvancedFilters, setCurrentAdvancedFilters] =
     useState<AdvancedSearchFilters>({});
@@ -305,8 +256,6 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
     const params = new URLSearchParams();
 
     if (newFilters.search) params.set("search", newFilters.search);
-    if (newFilters.species) params.set("species", newFilters.species);
-    if (newFilters.visibility) params.set("visibility", newFilters.visibility);
     if (newFilters.isSellable !== undefined) params.set("isSellable", String(newFilters.isSellable));
     if (newFilters.isTradeable !== undefined) params.set("isTradeable", String(newFilters.isTradeable));
     if (newFilters.minPrice !== undefined) params.set("minPrice", String(newFilters.minPrice));
@@ -336,24 +285,6 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
         limit: 12,
         offset: 0,
         search: searchTerm || undefined,
-        visibility:
-          visibilityFilter === "ALL" ? undefined : (visibilityFilter as any),
-      };
-      setFilters(newFilters);
-      updateURL(newFilters);
-    },
-    [searchTerm, visibilityFilter, baseFilters, updateURL],
-  );
-
-  const handleVisibilityChange = useCallback(
-    (visibility: "ALL" | "PUBLIC" | "PRIVATE") => {
-      setVisibilityFilter(visibility);
-      const newFilters = {
-        ...baseFilters,
-        limit: 12,
-        offset: 0,
-        search: searchTerm || undefined,
-        visibility: visibility === "ALL" ? undefined : (visibility as any),
       };
       setFilters(newFilters);
       updateURL(newFilters);
@@ -487,22 +418,6 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
           </BasicSearchRow>
         )}
       </SearchSection>
-
-      {!hideVisibilityFilter && (
-        <VisibilityFilter>
-          <VisibilityLabel>Visibility:</VisibilityLabel>
-          {(["ALL", "PUBLIC"] as const).map((visibility) => (
-            <VisibilityButton
-              key={visibility}
-              active={visibilityFilter === visibility}
-              onClick={() => handleVisibilityChange(visibility)}
-              aria-label={`Filter by ${visibility.toLowerCase()} characters`}
-            >
-              {visibility}
-            </VisibilityButton>
-          ))}
-        </VisibilityFilter>
-      )}
 
       {loading && !data ? (
         <LoadingContainer>
