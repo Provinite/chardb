@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 import { useGetGalleriesQuery, GalleryFiltersInput } from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -148,7 +148,9 @@ const GalleryGrid = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.xl};
 `;
 
-const GalleryCard = styled.div`
+const GalleryCard = styled(Link)`
+  display: block;
+  text-decoration: none;
   background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
   padding: ${({ theme }) => theme.spacing.lg};
@@ -364,22 +366,6 @@ export const GalleriesPage: React.FC = () => {
     }
   }, [data, filters, fetchMore]);
 
-  const handleGalleryClick = useCallback(
-    (galleryId: string) => {
-      navigate(`/gallery/${galleryId}`);
-    },
-    [navigate],
-  );
-
-  const handleGalleryKeyDown = useCallback(
-    (e: React.KeyboardEvent, galleryId: string) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        handleGalleryClick(galleryId);
-      }
-    },
-    [handleGalleryClick],
-  );
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -463,10 +449,7 @@ export const GalleriesPage: React.FC = () => {
               {data?.galleries.galleries.map((gallery) => (
                 <GalleryCard
                   key={gallery.id}
-                  onClick={() => handleGalleryClick(gallery.id)}
-                  onKeyDown={(e) => handleGalleryKeyDown(e, gallery.id)}
-                  tabIndex={0}
-                  role="button"
+                  to={`/gallery/${gallery.id}`}
                   aria-label={`View gallery ${gallery.name}`}
                 >
                   <GalleryName>{gallery.name}</GalleryName>

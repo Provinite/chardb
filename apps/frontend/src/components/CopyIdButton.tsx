@@ -50,6 +50,7 @@ export const CopyIdButton: React.FC<CopyIdButtonProps> = ({
   }
 
   const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     navigator.clipboard.writeText(id);
     toast.success('ID copied to clipboard');

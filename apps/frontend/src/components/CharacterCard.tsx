@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { Character } from '../generated/graphql';
 import { Tag } from './Tag';
@@ -17,7 +17,9 @@ export type CharacterCardItem = Pick<Character,
   _count?: Pick<NonNullable<Character['_count']>, 'media'> | null;
 };
 
-const Card = styled.div`
+const Card = styled(Link)`
+  display: block;
+  text-decoration: none;
   background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
   box-shadow: ${({ theme }) => theme.shadows.sm};
@@ -26,12 +28,12 @@ const Card = styled.div`
   cursor: pointer;
   overflow: hidden;
   position: relative;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -171,29 +173,9 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   showOwner = true,
   showEditButton = false
 }) => {
-  const navigate = useNavigate();
-
-  const handleClick = () => {
-    navigate(`/character/${character.id}`);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleClick();
-    }
-  };
-
-  const handleButtonClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click when button is clicked
-  };
-
   return (
     <Card
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="button"
+      to={`/character/${character.id}`}
       aria-label={`View character ${character.name}`}
     >
       <ButtonGroup>
@@ -201,7 +183,6 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         {showEditButton && (
           <EditButton
             to={`/character/${character.id}/edit`}
-            onClick={handleButtonClick}
           >
             Edit
           </EditButton>

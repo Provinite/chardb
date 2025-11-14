@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Card Navigation Browser Shortcuts (#154)**: Fixed card components to support browser shortcuts (ctrl+click, middle-click, right-click "Open in new tab")
+  - Converted CharacterCard, MediaCard, and GalleryCard from `<div onClick>` to semantic `<Link>` elements
+  - Enables proper browser navigation shortcuts on all clickable cards
+  - Improves accessibility and user experience
 - **Markdown Line Breaks (#149)**: Replaced manual markdown parsing with `react-markdown`
   - This will significantly enhance the markdown features available, and enables preserving linebreaks.
 - **Character Creation Ownership Bug**: Fixed "Leave Unassigned" option not working when creating characters
