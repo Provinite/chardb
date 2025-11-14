@@ -28,6 +28,7 @@ export interface UploadImageInput {
   source?: string;
   // Media record parameters
   characterId?: string;
+  itemTypeId?: string;
   galleryId?: string;
   description?: string;
   visibility?: string;
@@ -88,6 +89,7 @@ export class ImagesService {
       artistUrl,
       source,
       characterId,
+      itemTypeId,
       galleryId,
       description,
       visibility,
@@ -101,6 +103,11 @@ export class ImagesService {
     // Verify character edit permission if characterId is provided
     if (characterId) {
       await this.verifyCharacterEditPermission(userId, characterId);
+    }
+
+    // Verify item type edit permission if itemTypeId is provided
+    if (itemTypeId) {
+      await this.verifyItemTypeEditPermission(userId, itemTypeId);
     }
 
     // Verify artist exists if artistId is provided
@@ -216,6 +223,14 @@ export class ImagesService {
 
       if (!media.image) {
         throw new Error("Failed to create image record");
+      }
+
+      // If itemTypeId is provided, update the ItemType to reference this image
+      if (itemTypeId) {
+        await tx.itemType.update({
+          where: { id: itemTypeId },
+          data: { imageId: image.id },
+        });
       }
 
       return media as Media & { image: Image; owner: User };
@@ -628,6 +643,40 @@ export class ImagesService {
         isOwner
           ? "You do not have permission to upload images to your own characters in this community"
           : "You do not have permission to upload images to this character",
+      );
+    }
+  }
+
+  /**
+   * Verify user has permission to edit an item type (upload images).
+   * Item types belong to a community and require permission to edit.
+   */
+  private async verifyItemTypeEditPermission(
+    userId: string,
+    itemTypeId: string,
+  ): Promise<void> {
+    // Fetch item type with community info
+    const itemType = await this.db.itemType.findUnique({
+      where: { id: itemTypeId },
+      select: {
+        communityId: true,
+      },
+    });
+
+    if (!itemType) {
+      throw new NotFoundException("Item type not found");
+    }
+
+    // Check if user has permission to manage items in this community
+    const hasPermission = await this.permissionService.hasCommunityPermission(
+      userId,
+      itemType.communityId,
+      CommunityPermission.CanManageItems,
+    );
+
+    if (!hasPermission) {
+      throw new ForbiddenException(
+        "You do not have permission to upload images to this item type",
       );
     }
   }

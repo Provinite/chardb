@@ -7,6 +7,8 @@ import { GrantTargetSelector, GrantTarget } from "../components/GrantTargetSelec
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ColorSelector, ColorPip } from "../components/colors";
 import { CopyIdButton } from "../components/CopyIdButton";
+import { ImageUpload, ImageFile } from "../components/ImageUpload";
+import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-hot-toast";
 import {
   useCommunityByIdQuery,
@@ -271,10 +273,12 @@ const LoadingContainer = styled.div`
 
 export const CommunityItemsAdminPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
+  const { user } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isGrantModalOpen, setIsGrantModalOpen] = useState(false);
   const [selectedItemType, setSelectedItemType] = useState<any>(null);
+  const [imageFile, setImageFile] = useState<ImageFile | null>(null);
 
   const { data: communityData, loading: communityLoading } =
     useCommunityByIdQuery({
@@ -328,12 +332,48 @@ export const CommunityItemsAdminPage: React.FC = () => {
       skip: !communityId || !userSearch || userSearch.length < 2,
     });
 
+  const uploadItemImage = async (itemTypeId: string): Promise<void> => {
+    if (!imageFile || !user) return;
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("file", imageFile.file);
+      formDataToSend.append("itemTypeId", itemTypeId);
+      formDataToSend.append("altText", formData.name);
+      formDataToSend.append("visibility", "PUBLIC");
+
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+      const response = await fetch(`${apiUrl}/images/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `Upload failed: ${response.statusText}`,
+        );
+      }
+
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      console.error("Failed to upload image:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload image",
+      );
+      throw error;
+    }
+  };
+
   const handleCreateItemType = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!communityId) return;
 
     try {
-      await createItemType({
+      const result = await createItemType({
         variables: {
           input: {
             ...formData,
@@ -344,6 +384,13 @@ export const CommunityItemsAdminPage: React.FC = () => {
           },
         },
       });
+
+      // Upload image if one was selected
+      if (result.data?.createItemType?.id && imageFile) {
+        await uploadItemImage(result.data.createItemType.id);
+      }
+
+      toast.success("Item type created successfully");
       setIsCreateModalOpen(false);
       setFormData({
         name: "",
@@ -357,9 +404,13 @@ export const CommunityItemsAdminPage: React.FC = () => {
         iconUrl: "",
         colorId: null,
       });
+      setImageFile(null);
       refetchItemTypes();
     } catch (error) {
       console.error("Failed to create item type:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create item type",
+      );
     }
   };
 
@@ -379,11 +430,22 @@ export const CommunityItemsAdminPage: React.FC = () => {
           },
         },
       });
+
+      // Upload image if one was selected
+      if (imageFile) {
+        await uploadItemImage(selectedItemType.id);
+      }
+
+      toast.success("Item type updated successfully");
       setIsEditModalOpen(false);
       setSelectedItemType(null);
+      setImageFile(null);
       refetchItemTypes();
     } catch (error) {
       console.error("Failed to update item type:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update item type",
+      );
     }
   };
 
@@ -465,6 +527,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
       iconUrl: itemType.iconUrl || "",
       colorId: itemType.colorId || null,
     });
+    setImageFile(null);
     setIsEditModalOpen(true);
   };
 
@@ -499,7 +562,10 @@ export const CommunityItemsAdminPage: React.FC = () => {
       <Section>
         <SectionHeader>
           <SectionTitle>Item Types</SectionTitle>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
+          <Button onClick={() => {
+            setImageFile(null);
+            setIsCreateModalOpen(true);
+          }}>
             <Plus size={16} /> Create Item Type
           </Button>
         </SectionHeader>
@@ -678,13 +744,11 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Icon URL</Label>
-              <Input
-                type="originalUrl"
-                value={formData.iconUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, iconUrl: e.target.value })
-                }
+              <Label>Item Image</Label>
+              <ImageUpload
+                files={imageFile ? [imageFile] : []}
+                onFilesChange={(files) => setImageFile(files[0] || null)}
+                maxFiles={1}
               />
             </FormGroup>
 
@@ -797,13 +861,11 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Icon URL</Label>
-              <Input
-                type="originalUrl"
-                value={formData.iconUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, iconUrl: e.target.value })
-                }
+              <Label>Item Image</Label>
+              <ImageUpload
+                files={imageFile ? [imageFile] : []}
+                onFilesChange={(files) => setImageFile(files[0] || null)}
+                maxFiles={1}
               />
             </FormGroup>
 

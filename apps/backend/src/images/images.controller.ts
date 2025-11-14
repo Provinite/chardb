@@ -30,6 +30,7 @@ export class ImagesController {
     const uploadInput = {
       file,
       characterId: body.characterId,
+      itemTypeId: body.itemTypeId,
       galleryId: body.galleryId,
       description: body.description,
       altText: body.altText,

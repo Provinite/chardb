@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Item Type Image Upload (#160)**: Added image upload functionality for item types
+  - Upload images directly in item type create/edit modals
+  - Single image support for item types
+  - Images displayed on item type cards & inventory
 - **Admin Copy ID Buttons**: Copy ID buttons on character cards and item type cards for admins
 - **Image Upload System**: Complete image upload functionality with S3 storage integration
   - Upload page with character and gallery association
