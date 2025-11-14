@@ -1,9 +1,11 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { MediaGridItem } from './MediaGrid';
 
-const Card = styled.div`
+const Card = styled(Link)`
+  display: block;
+  text-decoration: none;
   background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
   box-shadow: ${({ theme }) => theme.shadows.sm};
@@ -12,12 +14,12 @@ const Card = styled.div`
   cursor: pointer;
   overflow: hidden;
   position: relative;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -234,8 +236,8 @@ interface MediaCardProps {
  * A card component that displays either image or text media with metadata
  * Automatically adapts its layout based on the media type
  */
-export const MediaCard: React.FC<MediaCardProps> = ({ 
-  media, 
+export const MediaCard: React.FC<MediaCardProps> = ({
+  media,
   showOwner = true,
   characterId,
   currentMainMediaId,
@@ -243,7 +245,6 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   onRemoveAsMain,
   isSettingMain = false
 }) => {
-  const navigate = useNavigate();
   const isImage = !!media.image;
   const isText = !!media.textContent;
   const isMainMedia = currentMainMediaId === media.id;
@@ -276,26 +277,15 @@ export const MediaCard: React.FC<MediaCardProps> = ({
     }
   };
 
-  const handleClick = () => {
-    navigate(`/media/${media.id}`);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleClick();
-    }
-  };
-
   const handleSetAsMain = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
+    e.preventDefault(); // Prevent card navigation
     if (onSetAsMain && !isSettingMain) {
       onSetAsMain(media.id);
     }
   };
 
   const handleRemoveAsMain = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
+    e.preventDefault(); // Prevent card navigation
     if (onRemoveAsMain && !isSettingMain) {
       onRemoveAsMain();
     }
@@ -303,10 +293,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
 
   return (
     <Card
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="button"
+      to={`/media/${media.id}`}
       aria-label={`View ${isImage ? 'image' : 'text'} ${media.title}`}
     >
       <MediaSection>
