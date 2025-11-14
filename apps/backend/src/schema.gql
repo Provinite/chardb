@@ -85,6 +85,7 @@ type CharacterCount {
 }
 
 input CharacterFiltersInput {
+  communityId: ID
   isSellable: Boolean
   isTradeable: Boolean
   limit: Int! = 20

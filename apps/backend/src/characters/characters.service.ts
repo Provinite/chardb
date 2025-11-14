@@ -23,6 +23,7 @@ export interface CharacterServiceFilters {
   species?: string;
   speciesId?: string;
   speciesVariantId?: string;
+  communityId?: string;
   tags?: string[];
   ownerId?: string;
   visibility?: Visibility;
@@ -165,6 +166,7 @@ export class CharactersService {
       species,
       speciesId,
       speciesVariantId,
+      communityId,
       tags,
       ownerId,
       visibility,
@@ -203,6 +205,7 @@ export class CharactersService {
           : {},
         speciesId ? { speciesId } : {},
         speciesVariantId ? { speciesVariantId } : {},
+        communityId ? { species: { communityId } } : {},
         ownerId ? { ownerId } : {},
         visibility !== undefined ? { visibility } : {},
         isSellable !== undefined ? { isSellable } : {},

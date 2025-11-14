@@ -81,6 +81,7 @@ type CharacterCount {
 }
 
 input CharacterFiltersInput {
+  communityId: ID
   isSellable: Boolean
   isTradeable: Boolean
   limit: Int! = 20
@@ -844,6 +845,7 @@ type Image {
   id: ID!
   isNsfw: Boolean!
   likesCount: Int!
+  mediumUrl: String
   mimeType: String!
   originalFilename: String!
   originalUrl: String!
