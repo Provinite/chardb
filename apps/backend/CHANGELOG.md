@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Item Type Image Upload (#160)**: Added support for uploading images directly to item types
+  - Added `itemTypeId` parameter to image upload endpoint
+  - Automatically associates uploaded images with item types via `ItemType.imageId`
+  - Permission checking via `CanManageItems` community permission
+  - Images stored in S3 with same variant generation as other media
 - **SQS Queue Consumer**: Implemented prize distribution system for Discord bot integration
   - Created queue consumer module that polls SQS for prize award events
   - Added item prize handler for granting existing item types to Discord users
