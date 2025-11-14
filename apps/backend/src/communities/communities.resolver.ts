@@ -25,6 +25,7 @@ import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowGlobalPermission } from "../auth/decorators/AllowGlobalPermission";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { GlobalPermission } from "../auth/GlobalPermission";
 import { User } from "../users/entities/user.entity";
 import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
@@ -82,7 +83,7 @@ export class CommunitiesResolver {
     return mapPrismaCommunityConnectionToGraphQL(serviceResult);
   }
 
-  @AllowAnyAuthenticated()
+  @AllowUnauthenticated()
   @Query(() => Community, {
     name: "community",
     description: "Get a community by ID",

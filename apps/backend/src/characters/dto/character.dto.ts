@@ -220,6 +220,11 @@ export class CharacterFiltersInput {
   @IsUUID()
   speciesVariantId?: string;
 
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  communityId?: string;
+
   @Field(() => [String], { nullable: true })
   @IsOptional()
   @IsArray()
@@ -325,6 +330,7 @@ export interface CharacterFilters {
   species?: string;
   speciesId?: string;
   speciesVariantId?: string;
+  communityId?: string;
   tags?: string[];
   ownerId?: string;
   visibility?: Visibility;

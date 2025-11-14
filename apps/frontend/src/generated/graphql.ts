@@ -102,6 +102,7 @@ export type CharacterCount = {
 };
 
 export type CharacterFiltersInput = {
+  communityId?: InputMaybe<Scalars['ID']['input']>;
   isSellable?: InputMaybe<Scalars['Boolean']['input']>;
   isTradeable?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: Scalars['Int']['input'];

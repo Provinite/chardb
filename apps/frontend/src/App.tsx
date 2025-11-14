@@ -54,6 +54,7 @@ import { CommunityModerationPage } from "./pages/CommunityModerationPage";
 import { JoinCommunityPage } from "./pages/JoinCommunityPage";
 import { MyCommunitiesPage } from "./pages/MyCommunitiesPage";
 import { CommunityPage } from "./pages/CommunityPage";
+import { CommunityCharactersPage } from "./pages/CommunityCharactersPage";
 import { SpeciesPage } from "./pages/SpeciesPage";
 import { EditSpeciesPage } from "./pages/EditSpeciesPage";
 import { DeviantArtCallbackPage } from "./pages/DeviantArtCallbackPage";
@@ -61,6 +62,7 @@ import { DiscordCallbackPage } from "./pages/DiscordCallbackPage";
 import { CommunityItemsAdminPage } from "./pages/CommunityItemsAdminPage";
 import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
 import { CommunityColorPalettePage } from "./pages/CommunityColorPalettePage";
+import { ItemTypePage } from "./pages/ItemTypePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function App() {
@@ -94,7 +96,9 @@ function App() {
         <Route path="/user/:username/followers" element={<FollowersPage />} />
         <Route path="/user/:username/following" element={<FollowingPage />} />
         <Route path="/communities/:communityId" element={<CommunityPage />} />
+        <Route path="/communities/:communityId/characters" element={<CommunityCharactersPage />} />
         <Route path="/species/:speciesId" element={<SpeciesPage />} />
+        <Route path="/items/:itemTypeId" element={<ItemTypePage />} />
 
         {/* OAuth callback routes */}
         <Route path="/auth/deviantart/callback" element={<DeviantArtCallbackPage />} />

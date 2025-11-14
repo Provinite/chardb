@@ -89,8 +89,6 @@ const PriceSeparator = styled.span`
 
 export interface AdvancedSearchFilters {
   search?: string;
-  species?: string;
-  gender?: string;
   ageRange?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -117,8 +115,6 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
   const { register, handleSubmit, reset } = useForm<AdvancedSearchFilters>({
     defaultValues: {
       search: initialFilters.search || '',
-      species: initialFilters.species || '',
-      gender: initialFilters.gender || '',
       ageRange: initialFilters.ageRange || '',
       minPrice: initialFilters.minPrice,
       maxPrice: initialFilters.maxPrice,
@@ -145,8 +141,6 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
   const handleClear = () => {
     reset({
       search: '',
-      species: '',
-      gender: '',
       ageRange: '',
       minPrice: undefined,
       maxPrice: undefined,
@@ -185,26 +179,6 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
       </SearchRow>
 
       <SearchRow>
-        <FormGroup>
-          <Label htmlFor="species">Species</Label>
-          <Input
-            id="species"
-            type="text"
-            placeholder="e.g., Wolf, Cat, Dragon"
-            {...register('species')}
-          />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label htmlFor="gender">Gender</Label>
-          <Input
-            id="gender"
-            type="text"
-            placeholder="e.g., Male, Female, Non-binary"
-            {...register('gender')}
-          />
-        </FormGroup>
-        
         <FormGroup>
           <Label htmlFor="ageRange">Age Range</Label>
           <Input
