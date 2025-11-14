@@ -20,20 +20,57 @@ echo "📋 Getting Terraform outputs for environment: $ENVIRONMENT"
 
 cd "$TERRAFORM_DIR"
 
-# Get server IP (dev only - EC2)
-SERVER_IP=$(terraform output -raw backend_public_ip 2>/dev/null || echo "")
-if [ -z "$SERVER_IP" ] && [ "$ENVIRONMENT" = "dev" ]; then
-    echo "❌ Could not get server IP from Terraform outputs (required for dev)"
+# Check if jq is installed
+if ! command -v jq &> /dev/null; then
+    echo "❌ jq is required but not installed. Please install jq to use this script."
+    exit 1
+fi
+
+# Get all Terraform outputs in a single call
+echo "🔍 Fetching Terraform outputs..."
+TERRAFORM_OUTPUTS=$(terraform output -json 2>/dev/null)
+
+if [ $? -ne 0 ] || [ -z "$TERRAFORM_OUTPUTS" ]; then
+    echo "❌ Failed to get Terraform outputs"
     echo "Available outputs:"
     terraform output
     exit 1
 fi
 
-# Get SSH key content and save it (dev only)
-SSH_KEY_CONTENT=$(terraform output -raw backend_ssh_private_key 2>/dev/null || echo "")
-SSH_KEY_NAME=$(terraform output -raw backend_ssh_key_name 2>/dev/null || echo "")
+# Helper function to extract output value
+get_output() {
+    echo "$TERRAFORM_OUTPUTS" | jq -r ".$1.value // empty"
+}
 
+# Extract all outputs
+SERVER_IP=$(get_output "backend_public_ip")
+SSH_KEY_CONTENT=$(get_output "backend_ssh_private_key")
+SSH_KEY_NAME=$(get_output "backend_ssh_key_name")
+ECR_REPOSITORY_URL=$(get_output "backend_ecr_repository_url")
+DB_PASSWORD=$(get_output "backend_db_password")
+JWT_SECRET=$(get_output "backend_jwt_secret")
+DEVIANTART_CLIENT_ID=$(get_output "backend_deviantart_client_id")
+DEVIANTART_CLIENT_SECRET=$(get_output "backend_deviantart_client_secret")
+DEVIANTART_CALLBACK_URL=$(get_output "backend_deviantart_callback_url")
+DISCORD_CLIENT_ID=$(get_output "backend_discord_client_id")
+DISCORD_CLIENT_SECRET=$(get_output "backend_discord_client_secret")
+DISCORD_CALLBACK_URL=$(get_output "backend_discord_callback_url")
+DISCORD_BOT_TOKEN=$(get_output "backend_discord_bot_token")
+SQS_QUEUE_URL=$(get_output "backend_sqs_queue_url")
+S3_IMAGES_BUCKET=$(get_output "images_bucket_name")
+CLOUDFRONT_IMAGES_DOMAIN=$(get_output "images_cloudfront_domain")
+FRONTEND_URL=$(get_output "frontend_website_url")
+
+# Environment-specific validations and setup
 if [ "$ENVIRONMENT" = "dev" ]; then
+    # Dev environment validations
+    if [ -z "$SERVER_IP" ]; then
+        echo "❌ Could not get server IP from Terraform outputs (required for dev)"
+        echo "Available outputs:"
+        terraform output
+        exit 1
+    fi
+
     if [ -z "$SSH_KEY_CONTENT" ]; then
         echo "❌ Could not get SSH key from Terraform outputs (required for dev)"
         exit 1
@@ -43,48 +80,15 @@ if [ "$ENVIRONMENT" = "dev" ]; then
     SSH_KEY_PATH="$HOME/.ssh/${SSH_KEY_NAME}.pem"
     echo "$SSH_KEY_CONTENT" > "$SSH_KEY_PATH"
     chmod 600 "$SSH_KEY_PATH"
-else
-    SSH_KEY_PATH=""
-fi
 
-# Get ECR repository URL
-ECR_REPOSITORY_URL=$(terraform output -raw backend_ecr_repository_url 2>/dev/null || echo "")
-
-# Get database password and JWT secret
-DB_PASSWORD=$(terraform output -raw backend_db_password 2>/dev/null || echo "")
-JWT_SECRET=$(terraform output -raw backend_jwt_secret 2>/dev/null || echo "")
-
-# Get DeviantArt OAuth credentials
-DEVIANTART_CLIENT_ID=$(terraform output -raw backend_deviantart_client_id 2>/dev/null || echo "")
-DEVIANTART_CLIENT_SECRET=$(terraform output -raw backend_deviantart_client_secret 2>/dev/null || echo "")
-DEVIANTART_CALLBACK_URL=$(terraform output -raw backend_deviantart_callback_url 2>/dev/null || echo "")
-
-# Get Discord OAuth credentials
-DISCORD_CLIENT_ID=$(terraform output -raw backend_discord_client_id 2>/dev/null || echo "")
-DISCORD_CLIENT_SECRET=$(terraform output -raw backend_discord_client_secret 2>/dev/null || echo "")
-DISCORD_CALLBACK_URL=$(terraform output -raw backend_discord_callback_url 2>/dev/null || echo "")
-DISCORD_BOT_TOKEN=$(terraform output -raw backend_discord_bot_token 2>/dev/null || echo "")
-
-# Get SQS Queue URL
-SQS_QUEUE_URL=$(terraform output -raw backend_sqs_queue_url 2>/dev/null || echo "")
-
-# Get S3 Images Bucket and CloudFront domain
-S3_IMAGES_BUCKET=$(terraform output -raw images_bucket_name 2>/dev/null || echo "")
-CLOUDFRONT_IMAGES_DOMAIN=$(terraform output -raw images_cloudfront_domain 2>/dev/null || echo "")
-
-# Get backend URL for frontend
-if [ "$ENVIRONMENT" = "prod" ]; then
-    # Prod uses CloudFront API endpoint
-    BACKEND_URL=$(terraform output -raw api_url 2>/dev/null || echo "")
-    BACKEND_IP=""
-else
     # Dev uses EC2 direct IP
-    BACKEND_URL=$(terraform output -raw backend_url 2>/dev/null || echo "")
-    BACKEND_IP=$(terraform output -raw backend_public_ip 2>/dev/null || echo "")
+    BACKEND_URL=$(get_output "backend_url")
+else
+    # Prod environment
+    SSH_KEY_PATH=""
+    # Prod uses CloudFront API endpoint
+    BACKEND_URL=$(get_output "api_url")
 fi
-
-# Get frontend URL from Terraform outputs
-FRONTEND_URL=$(terraform output -raw frontend_website_url 2>/dev/null || echo "")
 
 echo "✅ Terraform outputs retrieved:"
 echo "   Server IP: $SERVER_IP"
