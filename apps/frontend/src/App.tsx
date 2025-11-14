@@ -96,13 +96,23 @@ function App() {
         <Route path="/user/:username/followers" element={<FollowersPage />} />
         <Route path="/user/:username/following" element={<FollowingPage />} />
         <Route path="/communities/:communityId" element={<CommunityPage />} />
-        <Route path="/communities/:communityId/characters" element={<CommunityCharactersPage />} />
+        <Route
+          path="/communities/:communityId/characters"
+          element={<CommunityCharactersPage />}
+        />
         <Route path="/species/:speciesId" element={<SpeciesPage />} />
         <Route path="/items/:itemTypeId" element={<ItemTypePage />} />
+        <Route path="/item/:itemTypeId" element={<ItemTypePage />} />
 
         {/* OAuth callback routes */}
-        <Route path="/auth/deviantart/callback" element={<DeviantArtCallbackPage />} />
-        <Route path="/auth/discord/callback" element={<DiscordCallbackPage />} />
+        <Route
+          path="/auth/deviantart/callback"
+          element={<DeviantArtCallbackPage />}
+        />
+        <Route
+          path="/auth/discord/callback"
+          element={<DiscordCallbackPage />}
+        />
 
         {/* Protected routes */}
         <Route
