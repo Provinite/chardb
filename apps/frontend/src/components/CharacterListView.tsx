@@ -98,20 +98,6 @@ const SearchInput = styled.input`
   }
 `;
 
-const FilterSelect = styled.select`
-  padding: 0.75rem ${({ theme }) => theme.spacing.md};
-  border: 2px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  background: ${({ theme }) => theme.colors.background};
-  min-width: 150px;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-  }
-`;
-
 const VisibilityFilter = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -259,8 +245,6 @@ export interface CharacterListViewProps {
   breadcrumb?: React.ReactNode;
   /** Hide the visibility filter section */
   hideVisibilityFilter?: boolean;
-  /** Hide the species filter in basic search */
-  hideSpeciesFilter?: boolean;
 }
 
 export const CharacterListView: React.FC<CharacterListViewProps> = ({
@@ -269,7 +253,6 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
   title = "Browse Characters",
   breadcrumb,
   hideVisibilityFilter = false,
-  hideSpeciesFilter = false,
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -310,9 +293,8 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
 
   const [filters, setFilters] = useState<CharacterFiltersInput>(getInitialFilters);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
-  const [speciesFilter, setSpeciesFilter] = useState(searchParams.get("species") || "");
   const [visibilityFilter, setVisibilityFilter] = useState<
-    "ALL" | "PUBLIC" | "UNLISTED" | "PRIVATE"
+    "ALL" | "PUBLIC" | "PRIVATE"
   >((searchParams.get("visibility") as any) || defaultFilters.visibility || "ALL");
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [currentAdvancedFilters, setCurrentAdvancedFilters] =
@@ -354,31 +336,29 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
         limit: 12,
         offset: 0,
         search: searchTerm || undefined,
-        species: speciesFilter || undefined,
         visibility:
           visibilityFilter === "ALL" ? undefined : (visibilityFilter as any),
       };
       setFilters(newFilters);
       updateURL(newFilters);
     },
-    [searchTerm, speciesFilter, visibilityFilter, baseFilters, updateURL],
+    [searchTerm, visibilityFilter, baseFilters, updateURL],
   );
 
   const handleVisibilityChange = useCallback(
-    (visibility: "ALL" | "PUBLIC" | "UNLISTED" | "PRIVATE") => {
+    (visibility: "ALL" | "PUBLIC" | "PRIVATE") => {
       setVisibilityFilter(visibility);
       const newFilters = {
         ...baseFilters,
         limit: 12,
         offset: 0,
         search: searchTerm || undefined,
-        species: speciesFilter || undefined,
         visibility: visibility === "ALL" ? undefined : (visibility as any),
       };
       setFilters(newFilters);
       updateURL(newFilters);
     },
-    [searchTerm, speciesFilter, baseFilters, updateURL],
+    [searchTerm, baseFilters, updateURL],
   );
 
   const handleAdvancedSearch = useCallback(
@@ -502,20 +482,6 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              {!hideSpeciesFilter && (
-                <FilterSelect
-                  value={speciesFilter}
-                  onChange={(e) => setSpeciesFilter(e.target.value)}
-                >
-                  <option value="">All Species</option>
-                  <option value="Dragon">Dragon</option>
-                  <option value="Wolf">Wolf</option>
-                  <option value="Cat">Cat</option>
-                  <option value="Fox">Fox</option>
-                  <option value="Human">Human</option>
-                  <option value="Other">Other</option>
-                </FilterSelect>
-              )}
               <SearchButton type="submit">Search</SearchButton>
             </SearchForm>
           </BasicSearchRow>
@@ -525,7 +491,7 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
       {!hideVisibilityFilter && (
         <VisibilityFilter>
           <VisibilityLabel>Visibility:</VisibilityLabel>
-          {(["ALL", "PUBLIC", "UNLISTED"] as const).map((visibility) => (
+          {(["ALL", "PUBLIC"] as const).map((visibility) => (
             <VisibilityButton
               key={visibility}
               active={visibilityFilter === visibility}

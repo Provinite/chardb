@@ -94,8 +94,6 @@ export const CommunityCharactersPage: React.FC = () => {
       defaultFilters={{
         visibility: "PUBLIC" as any,
       }}
-      hideSpeciesFilter={false}
-      hideVisibilityFilter={false}
     />
   );
 };
