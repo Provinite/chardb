@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Package } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useCommunityByIdQuery, useGetMyInventoryQuery } from "../generated/graphql";
@@ -34,12 +34,16 @@ const InventoryGrid = styled.div`
   gap: 1.5rem;
 `;
 
-const ItemCard = styled.div<{ color?: string }>`
+const ItemCard = styled(Link)<{ color?: string }>`
+  display: block;
   background: ${({ theme }) => theme.colors.surface};
   border: 2px solid ${({ color, theme }) => color || theme.colors.border};
   border-radius: 12px;
   padding: 1rem;
   transition: all 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 
   &:hover {
     transform: translateY(-2px);
@@ -211,7 +215,7 @@ export const CommunityInventoryPage: React.FC = () => {
       ) : (
         <InventoryGrid>
           {items.map((item: any) => (
-            <ItemCard key={item.id} color={item.itemType.color}>
+            <ItemCard key={item.id} to={`/items/${item.itemType.id}`} color={item.itemType.color}>
               <ItemIconContainer color={item.itemType.color}>
                 {item.itemType.image ? (
                   <ItemImage

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { useParams } from "react-router-dom";
-import { Package, Plus, Edit2, Trash2, Gift } from "lucide-react";
+import { useParams, Link } from "react-router-dom";
+import { Package, Plus, Edit2, Trash2, Gift, ExternalLink } from "lucide-react";
 import { Button, Card } from "@chardb/ui";
 import { GrantTargetSelector, GrantTarget } from "../components/GrantTargetSelector";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -629,6 +629,14 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 </ItemTypeProperties>
 
                 <ItemTypeActions>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    as={Link}
+                    to={`/items/${itemType.id}`}
+                  >
+                    <ExternalLink size={14} /> View
+                  </Button>
                   <Button
                     size="sm"
                     variant="secondary"
