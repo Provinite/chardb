@@ -28,6 +28,8 @@ export function mapCreateRoleInputToService(input: CreateRoleInput): CreateRoleS
     canManageMemberRoles: input.canManageMemberRoles,
     canManageItems: input.canManageItems,
     canGrantItems: input.canGrantItems,
+    canUploadOwnCharacterImages: input.canUploadOwnCharacterImages,
+    canUploadCharacterImages: input.canUploadCharacterImages,
   };
 }
 
@@ -52,6 +54,8 @@ export function mapUpdateRoleInputToService(input: UpdateRoleInput): UpdateRoleS
   if (input.canManageMemberRoles !== undefined) result.canManageMemberRoles = input.canManageMemberRoles;
   if (input.canManageItems !== undefined) result.canManageItems = input.canManageItems;
   if (input.canGrantItems !== undefined) result.canGrantItems = input.canGrantItems;
+  if (input.canUploadOwnCharacterImages !== undefined) result.canUploadOwnCharacterImages = input.canUploadOwnCharacterImages;
+  if (input.canUploadCharacterImages !== undefined) result.canUploadCharacterImages = input.canUploadCharacterImages;
 
   return result;
 }
@@ -80,6 +84,8 @@ export function mapPrismaRoleToGraphQL(prismaRole: PrismaRole): Role {
     canManageMemberRoles: prismaRole.canManageMemberRoles,
     canManageItems: prismaRole.canManageItems,
     canGrantItems: prismaRole.canGrantItems,
+    canUploadOwnCharacterImages: prismaRole.canUploadOwnCharacterImages,
+    canUploadCharacterImages: prismaRole.canUploadCharacterImages,
     canCreateOrphanedCharacter: prismaRole.canCreateOrphanedCharacter,
     createdAt: prismaRole.createdAt,
     updatedAt: prismaRole.updatedAt,

@@ -354,6 +354,124 @@ export class CharactersService {
     };
   }
 
+  /**
+   * Find all characters that the user can upload images to based on community permissions.
+   * This includes:
+   * - Characters owned by the user without a species (always allowed)
+   * - Characters owned by the user with a species (where user has canUploadOwnCharacterImages in the community)
+   * - Any character in communities where user has canUploadCharacterImages permission
+   * - Fallback: characters where user has edit permissions (edit implies upload)
+   */
+  async findCharactersForImageUpload(
+    userId: string,
+    filters: CharacterServiceFilters = {},
+  ) {
+    const { limit = 20, offset = 0, search } = filters;
+
+    const where: Prisma.CharacterWhereInput = {
+      // Add search filter if provided
+      ...(search && {
+        name: {
+          contains: search,
+          mode: "insensitive" as const,
+        },
+      }),
+      OR: [
+        // User owns the character without a species (always allowed)
+        {
+          ownerId: userId,
+          speciesId: null,
+        },
+        // User owns the character AND has canUploadOwnCharacterImages permission in the community
+        {
+          ownerId: userId,
+          species: {
+            community: {
+              roles: {
+                some: {
+                  canUploadOwnCharacterImages: true,
+                  communityMembers: {
+                    some: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        // User has canUploadCharacterImages permission in the community (can upload to any character)
+        {
+          species: {
+            community: {
+              roles: {
+                some: {
+                  canUploadCharacterImages: true,
+                  communityMembers: {
+                    some: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        // Fallback: User owns the character AND has canEditOwnCharacter permission (edit implies upload)
+        {
+          ownerId: userId,
+          species: {
+            community: {
+              roles: {
+                some: {
+                  canEditOwnCharacter: true,
+                  communityMembers: {
+                    some: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        // Fallback: User has canEditCharacter permission in the community (edit implies upload)
+        {
+          species: {
+            community: {
+              roles: {
+                some: {
+                  canEditCharacter: true,
+                  communityMembers: {
+                    some: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+    };
+
+    const [characters, total] = await Promise.all([
+      this.db.character.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      this.db.character.count({ where }),
+    ]);
+
+    return {
+      characters,
+      total,
+      hasMore: offset + limit < total,
+    };
+  }
+
   async findOne(id: string, userId?: string) {
     const character = await this.db.character.findUnique({
       where: { id },

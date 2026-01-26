@@ -540,6 +540,14 @@ input CreateRoleInput {
   """Whether members with this role can remove community members"""
   canRemoveCommunityMember: Boolean! = false
 
+  """Whether members with this role can upload images to any character"""
+  canUploadCharacterImages: Boolean! = false
+
+  """
+  Whether members with this role can upload images to their own characters
+  """
+  canUploadOwnCharacterImages: Boolean! = false
+
   """The ID of the community this role belongs to"""
   communityId: ID!
 
@@ -1879,6 +1887,9 @@ type Query {
     id: ID!
   ): Media!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
+
+  """Get characters the current user can upload images to"""
+  myCharactersForImageUpload(filters: CharacterFiltersInput): CharacterConnection!
   myEditableCharacters(filters: CharacterFiltersInput): CharacterConnection!
 
   """Get all external accounts linked to the current user"""
@@ -2157,6 +2168,14 @@ type Role {
 
   """Whether members with this role can remove community members"""
   canRemoveCommunityMember: Boolean!
+
+  """Whether members with this role can upload images to any character"""
+  canUploadCharacterImages: Boolean!
+
+  """
+  Whether members with this role can upload images to their own characters
+  """
+  canUploadOwnCharacterImages: Boolean!
 
   """The community this role belongs to"""
   community: Community!
@@ -2649,6 +2668,14 @@ input UpdateRoleInput {
 
   """Whether members with this role can remove community members"""
   canRemoveCommunityMember: Boolean
+
+  """Whether members with this role can upload images to any character"""
+  canUploadCharacterImages: Boolean
+
+  """
+  Whether members with this role can upload images to their own characters
+  """
+  canUploadOwnCharacterImages: Boolean
 
   """The name of the role"""
   name: String

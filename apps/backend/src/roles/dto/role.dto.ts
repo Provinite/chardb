@@ -97,6 +97,18 @@ export class CreateRoleInput {
   @IsBoolean()
   @IsOptional()
   canGrantItems?: boolean = false;
+
+  /** Permission to upload images to own characters */
+  @Field(() => Boolean, { description: 'Whether members with this role can upload images to their own characters', defaultValue: false })
+  @IsBoolean()
+  @IsOptional()
+  canUploadOwnCharacterImages?: boolean = false;
+
+  /** Permission to upload images to any character */
+  @Field(() => Boolean, { description: 'Whether members with this role can upload images to any character', defaultValue: false })
+  @IsBoolean()
+  @IsOptional()
+  canUploadCharacterImages?: boolean = false;
 }
 
 @InputType({ description: 'Input for updating an existing role' })
@@ -191,4 +203,16 @@ export class UpdateRoleInput {
   @IsOptional()
   @IsBoolean()
   canGrantItems?: boolean;
+
+  /** Permission to upload images to own characters */
+  @Field(() => Boolean, { description: 'Whether members with this role can upload images to their own characters', nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  canUploadOwnCharacterImages?: boolean;
+
+  /** Permission to upload images to any character */
+  @Field(() => Boolean, { description: 'Whether members with this role can upload images to any character', nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  canUploadCharacterImages?: boolean;
 }

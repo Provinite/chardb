@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-import { useGetMyEditableCharactersQuery, useGetCharacterQuery } from "../generated/graphql";
+import { useGetMyCharactersForImageUploadQuery, useGetCharacterQuery } from "../generated/graphql";
 
 interface Character {
   id: string;
@@ -89,6 +89,10 @@ const NoResults = styled.div`
 
 const LoadingMessage = styled(NoResults)``;
 
+const ErrorMessage = styled(NoResults)`
+  color: ${({ theme }) => theme.colors.error || theme.colors.text.secondary};
+`;
+
 const ClearButton = styled.button`
   position: absolute;
   right: ${({ theme }) => theme.spacing.sm};
@@ -123,7 +127,7 @@ export const CharacterTypeahead: React.FC<CharacterTypeaheadProps> = ({
   );
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { data, loading } = useGetMyEditableCharactersQuery({
+  const { data, loading, error } = useGetMyCharactersForImageUploadQuery({
     variables: {
       filters: {
         limit: 50,
@@ -140,7 +144,7 @@ export const CharacterTypeahead: React.FC<CharacterTypeaheadProps> = ({
     skip: !value || !!selectedCharacter,
   });
 
-  const characters = data?.myEditableCharacters?.characters || [];
+  const characters = data?.myCharactersForImageUpload?.characters || [];
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -234,6 +238,8 @@ export const CharacterTypeahead: React.FC<CharacterTypeaheadProps> = ({
         <Dropdown>
           {loading ? (
             <LoadingMessage>Loading characters...</LoadingMessage>
+          ) : error ? (
+            <ErrorMessage>Error loading characters</ErrorMessage>
           ) : characters.length === 0 ? (
             <NoResults>
               {searchQuery
