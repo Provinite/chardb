@@ -290,21 +290,9 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   }
 
   const getPermissionCount = (role: RoleFromQuery) => {
-    const permissions = [
-      role.canCreateSpecies,
-      role.canEditSpecies,
-      role.canCreateCharacter,
-      role.canCreateOrphanedCharacter,
-      role.canEditCharacter,
-      role.canEditOwnCharacter,
-      role.canManageItems,
-      role.canGrantItems,
-      role.canCreateInviteCode,
-      role.canListInviteCodes,
-      role.canCreateRole,
-      role.canEditRole
-    ];
-    return permissions.filter(Boolean).length;
+    return Object.keys(PERMISSION_LABELS).filter(
+      (key) => role[key as keyof RoleFromQuery]
+    ).length;
   };
 
   return (
