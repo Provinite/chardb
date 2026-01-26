@@ -16,7 +16,11 @@ import {
   HelpText,
   SmallText
 } from '@chardb/ui';
-import type { Role } from '../../generated/graphql';
+import {
+  ALL_PERMISSIONS,
+  PERMISSION_CATEGORIES as PERMISSION_CATEGORY_META,
+  type Permission,
+} from '../../lib/permissions';
 
 /**
  * Permission Selector Component
@@ -234,29 +238,6 @@ const PermissionDescription = styled(Caption)`
   line-height: 1.3;
 `;
 
-/**
- * Extract all permission keys (can* boolean fields) from the Role type.
- * This ensures type safety - if a new permission is added to the backend,
- * TypeScript will error until it's added to PERMISSIONS_MAP.
- */
-type PermissionKey = {
-  [K in keyof Role]-?: K extends `can${string}`
-    ? NonNullable<Role[K]> extends boolean ? K : never
-    : never
-}[keyof Role];
-
-type PermissionCategory = 'content' | 'community' | 'administration';
-
-interface PermissionInfo {
-  name: string;
-  description: string;
-  category: PermissionCategory;
-}
-
-interface Permission extends PermissionInfo {
-  key: string; // Use string for runtime compatibility, type safety enforced via PERMISSIONS_MAP
-}
-
 interface PermissionSelectorProps {
   selectedPermissions: string[];
   onPermissionChange: (permissions: string[]) => void;
@@ -265,121 +246,20 @@ interface PermissionSelectorProps {
   disabled?: boolean;
 }
 
-/**
- * Permission definitions map - uses Record<PermissionKey, ...> with satisfies
- * to ensure ALL permission keys from the Role type are included.
- * TypeScript will error if any permission is missing.
- */
-const PERMISSIONS_MAP = {
-  // Content Management
-  canCreateSpecies: {
-    name: 'Create Species',
-    description: 'Allow creation of new species and their configuration',
-    category: 'content'
-  },
-  canEditSpecies: {
-    name: 'Edit Species',
-    description: 'Allow editing existing species, traits, and variants',
-    category: 'content'
-  },
-  canCreateCharacter: {
-    name: 'Create Characters',
-    description: 'Allow creation of new characters in the community',
-    category: 'content'
-  },
-  canCreateOrphanedCharacter: {
-    name: 'Create Orphaned Characters',
-    description: 'Allow creation of characters without an owner (community/orphaned characters)',
-    category: 'content'
-  },
-  canEditCharacter: {
-    name: 'Edit Any Character',
-    description: "Allow editing any community member's characters",
-    category: 'content'
-  },
-  canEditOwnCharacter: {
-    name: 'Edit Own Characters',
-    description: 'Allow editing only characters owned by the member',
-    category: 'content'
-  },
-  canManageItems: {
-    name: 'Manage Items',
-    description: 'Allow creation, editing, and deletion of item types',
-    category: 'content'
-  },
-  canGrantItems: {
-    name: 'Grant Items',
-    description: 'Allow granting items to community members',
-    category: 'content'
-  },
-  canUploadOwnCharacterImages: {
-    name: 'Upload Own Character Images',
-    description: 'Allow uploading images to characters owned by the member',
-    category: 'content'
-  },
-  canUploadCharacterImages: {
-    name: 'Upload Any Character Images',
-    description: 'Allow uploading images to any character in the community',
-    category: 'content'
-  },
-  // Community Management
-  canCreateInviteCode: {
-    name: 'Create Invite Codes',
-    description: 'Allow creation of community invitation codes',
-    category: 'community'
-  },
-  canListInviteCodes: {
-    name: 'View Invite Codes',
-    description: 'Allow viewing and managing existing invite codes',
-    category: 'community'
-  },
-  canRemoveCommunityMember: {
-    name: 'Remove Members',
-    description: 'Allow removal of community members',
-    category: 'community'
-  },
-  canManageMemberRoles: {
-    name: 'Manage Member Roles',
-    description: "Allow changing roles of community members",
-    category: 'community'
-  },
-  // Role Administration
-  canCreateRole: {
-    name: 'Create Roles',
-    description: 'Allow creation of new community roles',
-    category: 'administration'
-  },
-  canEditRole: {
-    name: 'Edit Roles',
-    description: 'Allow editing existing community roles and permissions',
-    category: 'administration'
-  },
-} as const satisfies Record<PermissionKey, PermissionInfo>;
-
-// Derive the array from the map for use in the component
-const ALL_PERMISSIONS: Permission[] = Object.entries(PERMISSIONS_MAP).map(
-  ([key, info]) => ({
-    key,
-    ...info,
-  })
-);
-
+// Add icons to the shared category metadata
 const PERMISSION_CATEGORIES = {
   content: {
-    title: 'Content Management',
+    ...PERMISSION_CATEGORY_META.content,
     icon: Database,
-    description: 'Permissions for managing community content and species'
   },
   community: {
-    title: 'Community Management', 
+    ...PERMISSION_CATEGORY_META.community,
     icon: Users,
-    description: 'Permissions for managing community members and invitations'
   },
   administration: {
-    title: 'Role Administration',
+    ...PERMISSION_CATEGORY_META.administration,
     icon: Crown,
-    description: 'Permissions for managing community roles and permissions'
-  }
+  },
 };
 
 export const PermissionSelector: React.FC<PermissionSelectorProps> = ({
