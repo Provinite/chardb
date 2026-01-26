@@ -525,13 +525,11 @@ export class ImagesService {
 
   /**
    * Verify that a user has permission to upload images to a character.
-   * Permission hierarchy (checked in order, first match wins):
-   * 1. Upload-specific permissions: `canUploadOwnCharacterImages` / `canUploadCharacterImages`
-   * 2. Edit permissions (fallback): `canEditOwnCharacter` / `canEditCharacter`
+   * Checks upload-specific permissions: `canUploadOwnCharacterImages` / `canUploadCharacterImages`
    *
    * Special cases:
    * - Characters without species: owner can always upload
-   * - Orphaned characters: requires `canUploadCharacterImages`, `canEditCharacter`, or `canCreateOrphanedCharacter`
+   * - Orphaned characters: requires `canUploadCharacterImages` or `canCreateOrphanedCharacter`
    * - Permissions are resolved via character→species→community
    */
   private async verifyCharacterEditPermission(
@@ -576,27 +574,21 @@ export class ImagesService {
         );
       }
 
-      // For orphaned characters, check upload permission first, then fall back to edit/orphaned permissions
-      const [hasUploadPermission, hasOrphanedPermission, hasEditPermission] =
-        await Promise.all([
-          this.permissionService.hasCommunityPermission(
-            userId,
-            community.id,
-            CommunityPermission.CanUploadCharacterImages,
-          ),
-          this.permissionService.hasCommunityPermission(
-            userId,
-            community.id,
-            CommunityPermission.CanCreateOrphanedCharacter,
-          ),
-          this.permissionService.hasCommunityPermission(
-            userId,
-            community.id,
-            CommunityPermission.CanEditCharacter,
-          ),
-        ]);
+      // For orphaned characters, check upload permission or orphaned character permission
+      const [hasUploadPermission, hasOrphanedPermission] = await Promise.all([
+        this.permissionService.hasCommunityPermission(
+          userId,
+          community.id,
+          CommunityPermission.CanUploadCharacterImages,
+        ),
+        this.permissionService.hasCommunityPermission(
+          userId,
+          community.id,
+          CommunityPermission.CanCreateOrphanedCharacter,
+        ),
+      ]);
 
-      if (!hasUploadPermission && !hasOrphanedPermission && !hasEditPermission) {
+      if (!hasUploadPermission && !hasOrphanedPermission) {
         throw new ForbiddenException(
           "You do not have permission to upload images to this orphaned character",
         );
@@ -635,29 +627,19 @@ export class ImagesService {
       return;
     }
 
-    // Check upload-specific permissions first, then fall back to edit permissions
+    // Check upload-specific permissions only
     const uploadPermission = isOwner
       ? CommunityPermission.CanUploadOwnCharacterImages
       : CommunityPermission.CanUploadCharacterImages;
 
-    const editPermission = isOwner
-      ? CommunityPermission.CanEditOwnCharacter
-      : CommunityPermission.CanEditCharacter;
-
-    const [hasUploadPermission, hasEditPermission] = await Promise.all([
-      this.permissionService.hasCommunityPermission(
+    const hasUploadPermission =
+      await this.permissionService.hasCommunityPermission(
         userId,
         community.id,
         uploadPermission,
-      ),
-      this.permissionService.hasCommunityPermission(
-        userId,
-        community.id,
-        editPermission,
-      ),
-    ]);
+      );
 
-    if (!hasUploadPermission && !hasEditPermission) {
+    if (!hasUploadPermission) {
       throw new ForbiddenException(
         isOwner
           ? "You do not have permission to upload images to your own characters in this community"

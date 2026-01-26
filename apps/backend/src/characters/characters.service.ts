@@ -360,7 +360,6 @@ export class CharactersService {
    * - Characters owned by the user without a species (always allowed)
    * - Characters owned by the user with a species (where user has canUploadOwnCharacterImages in the community)
    * - Any character in communities where user has canUploadCharacterImages permission
-   * - Fallback: characters where user has edit permissions (edit implies upload)
    */
   async findCharactersForImageUpload(
     userId: string,
@@ -407,41 +406,6 @@ export class CharactersService {
               roles: {
                 some: {
                   canUploadCharacterImages: true,
-                  communityMembers: {
-                    some: {
-                      userId: userId,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        // Fallback: User owns the character AND has canEditOwnCharacter permission (edit implies upload)
-        {
-          ownerId: userId,
-          species: {
-            community: {
-              roles: {
-                some: {
-                  canEditOwnCharacter: true,
-                  communityMembers: {
-                    some: {
-                      userId: userId,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        // Fallback: User has canEditCharacter permission in the community (edit implies upload)
-        {
-          species: {
-            community: {
-              roles: {
-                some: {
-                  canEditCharacter: true,
                   communityMembers: {
                     some: {
                       userId: userId,
