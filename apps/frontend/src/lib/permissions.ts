@@ -131,6 +131,20 @@ export const getPermissionsByCategory = (category: PermissionCategory): Permissi
   ALL_PERMISSIONS.filter((p) => p.category === category);
 
 /**
+ * Permission key to display name mapping
+ * Properly typed so TypeScript knows all keys are present
+ */
+export const PERMISSION_LABELS: { [K in PermissionKey]: string } = Object.keys(
+  PERMISSIONS_MAP
+).reduce(
+  (acc, key) => {
+    acc[key as PermissionKey] = PERMISSIONS_MAP[key as PermissionKey].name;
+    return acc;
+  },
+  {} as { [K in PermissionKey]: string }
+);
+
+/**
  * Category metadata for UI display
  */
 export const PERMISSION_CATEGORIES = {

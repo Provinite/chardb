@@ -17,6 +17,7 @@ import {
   useRolesByCommunityDetailedQuery,
   RolesByCommunityDetailedQuery
 } from '../../generated/graphql';
+import { PERMISSION_LABELS } from '../../lib/permissions';
 
 /**
  * Role Management Tab Component
@@ -208,21 +209,6 @@ interface RoleManagementTabProps {
   onCreateRole?: () => void;
 }
 
-// Permission labels for display
-const PERMISSION_LABELS = {
-  canCreateSpecies: 'Create Species',
-  canEditSpecies: 'Edit Species',
-  canCreateCharacter: 'Create Characters',
-  canCreateOrphanedCharacter: 'Create Orphaned Characters',
-  canEditCharacter: 'Edit Any Character',
-  canEditOwnCharacter: 'Edit Own Characters',
-  canManageItems: 'Manage Items',
-  canGrantItems: 'Grant Items',
-  canCreateInviteCode: 'Create Invites',
-  canListInviteCodes: 'List Invites',
-  canCreateRole: 'Create Roles',
-  canEditRole: 'Edit Roles'
-};
 
 export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   communityId,
