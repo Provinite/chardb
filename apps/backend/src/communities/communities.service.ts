@@ -60,6 +60,8 @@ export class CommunitiesService {
           canEditRole: true,
           canManageItems: true,
           canGrantItems: true,
+          canUploadOwnCharacterImages: true,
+          canUploadCharacterImages: true,
         },
       });
 
@@ -78,6 +80,8 @@ export class CommunitiesService {
           canEditRole: false,
           canManageItems: false,
           canGrantItems: true,
+          canUploadOwnCharacterImages: true,
+          canUploadCharacterImages: true,
         },
       });
 
@@ -96,6 +100,8 @@ export class CommunitiesService {
           canEditRole: false,
           canManageItems: false,
           canGrantItems: false,
+          canUploadOwnCharacterImages: true,
+          canUploadCharacterImages: false,
         },
       });
 
