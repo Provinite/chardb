@@ -28,6 +28,10 @@ import {
   UpdateRoleInput,
   RolesByCommunityDetailedDocument,
 } from "../../generated/graphql";
+import {
+  getPermissionsByCategory,
+  PERMISSION_CATEGORIES,
+} from "../../lib/permissions";
 
 /**
  * Role Editor Component
@@ -217,6 +221,8 @@ type EditableRole = {
   canEditSpecies: boolean;
   canManageItems: boolean;
   canGrantItems: boolean;
+  canUploadOwnCharacterImages: boolean;
+  canUploadCharacterImages: boolean;
   canCreateInviteCode: boolean;
   canListInviteCodes: boolean;
   canCreateRole: boolean;
@@ -233,101 +239,22 @@ interface RoleEditorProps {
   editingRole?: EditableRole | null;
 }
 
-// Permission groups with descriptions
+// Permission groups derived from shared permissions with icons added
 const PERMISSION_GROUPS = [
   {
-    id: "content",
-    title: "Content Management",
-    description: "Permissions for managing community content and species",
+    ...PERMISSION_CATEGORIES.content,
     icon: Database,
-    permissions: [
-      {
-        key: "canCreateSpecies",
-        name: "Create Species",
-        description: "Allow creation of new species and their configuration",
-      },
-      {
-        key: "canEditSpecies",
-        name: "Edit Species",
-        description: "Allow editing existing species, traits, and variants",
-      },
-      {
-        key: "canCreateCharacter",
-        name: "Create Characters",
-        description: "Allow creation of new characters in the community",
-      },
-      {
-        key: "canCreateOrphanedCharacter",
-        name: "Create Orphaned Characters",
-        description: "Allow creation of characters without an owner (community/orphaned characters)",
-      },
-      {
-        key: "canEditCharacter",
-        name: "Edit Any Character",
-        description: "Allow editing any community member's characters",
-      },
-      {
-        key: "canEditOwnCharacter",
-        name: "Edit Own Characters",
-        description: "Allow editing only characters owned by the member",
-      },
-      {
-        key: "canManageItems",
-        name: "Manage Items",
-        description: "Allow creation, editing, and deletion of item types",
-      },
-      {
-        key: "canGrantItems",
-        name: "Grant Items",
-        description: "Allow granting items to community members",
-      },
-    ],
+    permissions: getPermissionsByCategory("content"),
   },
   {
-    id: "community",
-    title: "Community Management",
-    description: "Permissions for managing community members and invitations",
+    ...PERMISSION_CATEGORIES.community,
     icon: Users,
-    permissions: [
-      {
-        key: "canCreateInviteCode",
-        name: "Create Invite Codes",
-        description: "Allow creation of community invitation codes",
-      },
-      {
-        key: "canListInviteCodes",
-        name: "View Invite Codes",
-        description: "Allow viewing and managing existing invite codes",
-      },
-      {
-        key: "canRemoveCommunityMember",
-        name: "Remove Members",
-        description: "Allow removal of community members",
-      },
-      {
-        key: "canManageMemberRoles",
-        name: "Manage Member Roles",
-        description: "Allow changing roles of community members",
-      },
-    ],
+    permissions: getPermissionsByCategory("community"),
   },
   {
-    id: "administration",
-    title: "Role Administration",
-    description: "Permissions for managing community roles and permissions",
+    ...PERMISSION_CATEGORIES.administration,
     icon: Crown,
-    permissions: [
-      {
-        key: "canCreateRole",
-        name: "Create Roles",
-        description: "Allow creation of new community roles",
-      },
-      {
-        key: "canEditRole",
-        name: "Edit Roles",
-        description: "Allow editing existing community roles and permissions",
-      },
-    ],
+    permissions: getPermissionsByCategory("administration"),
   },
 ];
 
@@ -345,6 +272,8 @@ const ROLE_TEMPLATES = [
       canEditCharacter: false,
       canManageItems: false,
       canGrantItems: false,
+      canUploadOwnCharacterImages: true,
+      canUploadCharacterImages: false,
       canCreateInviteCode: false,
       canListInviteCodes: false,
       canCreateRole: false,
@@ -365,6 +294,8 @@ const ROLE_TEMPLATES = [
       canEditSpecies: true,
       canManageItems: false,
       canGrantItems: true,
+      canUploadOwnCharacterImages: true,
+      canUploadCharacterImages: true,
       canCreateInviteCode: true,
       canListInviteCodes: true,
       canCreateRole: false,
@@ -385,6 +316,8 @@ const ROLE_TEMPLATES = [
       canEditSpecies: true,
       canManageItems: true,
       canGrantItems: true,
+      canUploadOwnCharacterImages: true,
+      canUploadCharacterImages: true,
       canCreateInviteCode: true,
       canListInviteCodes: true,
       canCreateRole: true,
@@ -426,6 +359,8 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
         canEditSpecies: editingRole.canEditSpecies,
         canManageItems: editingRole.canManageItems,
         canGrantItems: editingRole.canGrantItems,
+        canUploadOwnCharacterImages: editingRole.canUploadOwnCharacterImages,
+        canUploadCharacterImages: editingRole.canUploadCharacterImages,
         canCreateInviteCode: editingRole.canCreateInviteCode,
         canListInviteCodes: editingRole.canListInviteCodes,
         canCreateRole: editingRole.canCreateRole,

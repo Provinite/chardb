@@ -19,6 +19,8 @@ export enum CommunityPermission {
   CanManageMemberRoles = "canManageMemberRoles",
   CanManageItems = "canManageItems",
   CanGrantItems = "canGrantItems",
+  CanUploadOwnCharacterImages = "canUploadOwnCharacterImages",
+  CanUploadCharacterImages = "canUploadCharacterImages",
 }
 
 export const AllCommunityPermissions = Object.values(CommunityPermission);

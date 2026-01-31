@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Upload Character Images Permissions**: New granular permissions for image upload character selection
+  - `canUploadOwnCharacterImages`: Controls ability to upload images to user's own characters within a community
+  - `canUploadCharacterImages`: Controls ability to upload images to any character (admin-level permission)
+  - Database migration adds permissions with `true` defaults for backward compatibility
+  - `findCharactersForImageUpload` query filters characters based on these permissions
+
 ## [v7.0.0] - 2025-11-13
 
 ### Added

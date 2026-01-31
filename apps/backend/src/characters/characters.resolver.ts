@@ -266,6 +266,18 @@ export class CharactersResolver {
     return mapPrismaCharacterConnectionToGraphQL(result);
   }
 
+  @AllowAnyAuthenticated()
+  @Query(() => CharacterConnection, {
+    description: "Get characters the current user can upload images to",
+  })
+  async myCharactersForImageUpload(
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+    @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
+  ): Promise<CharacterConnection> {
+    const result = await this.charactersService.findCharactersForImageUpload(user.id, filters);
+    return mapPrismaCharacterConnectionToGraphQL(result);
+  }
+
   @AllowUnauthenticated()
   @Query(() => CharacterConnection)
   async userCharacters(

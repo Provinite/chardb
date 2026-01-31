@@ -13,6 +13,7 @@ import {
   useRolesByCommunityDetailedQuery,
   useUpdateCommunityMemberMutation
 } from '../../generated/graphql';
+import { PERMISSION_LABELS } from '../../lib/permissions';
 
 /**
  * Permission Matrix Component
@@ -314,23 +315,6 @@ interface PermissionMatrixProps {
   communityId: string;
 }
 
-// Define permission labels for display
-const PERMISSION_LABELS = {
-  canCreateSpecies: 'Create Species',
-  canCreateCharacter: 'Create Character',
-  canCreateOrphanedCharacter: 'Create Orphaned Characters',
-  canEditCharacter: 'Edit Characters',
-  canEditOwnCharacter: 'Edit Own Characters',
-  canEditSpecies: 'Edit Species',
-  canManageItems: 'Manage Items',
-  canGrantItems: 'Grant Items',
-  canCreateInviteCode: 'Create Invites',
-  canListInviteCodes: 'List Invites',
-  canCreateRole: 'Create Roles',
-  canEditRole: 'Edit Roles',
-  canRemoveCommunityMember: 'Remove Members',
-  canManageMemberRoles: 'Manage Member Roles'
-} as const;
 
 export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ communityId }) => {
   const [searchTerm, setSearchTerm] = useState('');

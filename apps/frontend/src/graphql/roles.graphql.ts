@@ -15,6 +15,8 @@ export const ROLES_BY_COMMUNITY = gql`
         canEditSpecies
         canManageItems
         canGrantItems
+        canUploadOwnCharacterImages
+        canUploadCharacterImages
         canCreateInviteCode
         canListInviteCodes
         canCreateRole
@@ -49,6 +51,8 @@ export const CREATE_ROLE = gql`
       canEditSpecies
       canManageItems
       canGrantItems
+      canUploadOwnCharacterImages
+      canUploadCharacterImages
       canCreateInviteCode
       canListInviteCodes
       canCreateRole
@@ -79,6 +83,8 @@ export const UPDATE_ROLE = gql`
       canEditSpecies
       canManageItems
       canGrantItems
+      canUploadOwnCharacterImages
+      canUploadCharacterImages
       canCreateInviteCode
       canListInviteCodes
       canCreateRole
@@ -121,6 +127,8 @@ export const COMMUNITY_MEMBERS_WITH_ROLES = gql`
           canEditSpecies
           canManageItems
           canGrantItems
+          canUploadOwnCharacterImages
+          canUploadCharacterImages
           canCreateInviteCode
           canListInviteCodes
           canCreateRole
@@ -161,6 +169,8 @@ export const UPDATE_COMMUNITY_MEMBER = gql`
         canEditSpecies
         canManageItems
         canGrantItems
+        canUploadOwnCharacterImages
+        canUploadCharacterImages
         canCreateInviteCode
         canListInviteCodes
         canCreateRole

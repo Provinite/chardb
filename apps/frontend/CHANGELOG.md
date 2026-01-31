@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Upload Character Images Permissions**: New permissions for controlling image upload character selection
+  - Added `canUploadOwnCharacterImages` and `canUploadCharacterImages` to permission UI
+  - Centralized type-safe permission definitions in `lib/permissions.ts`
+  - All admin permission components (RoleManagementTab, PermissionMatrix, RoleTemplateManager) now use shared permission labels
+
 ## [v7.0.0] - 2025-11-13
 
 ### Added

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
-import { 
+import {
   Check,
   ChevronDown,
   Search,
@@ -10,12 +10,17 @@ import {
   Crown,
   X
 } from 'lucide-react';
-import { 
+import {
   Heading5,
   Caption,
   HelpText,
   SmallText
 } from '@chardb/ui';
+import {
+  ALL_PERMISSIONS,
+  PERMISSION_CATEGORIES as PERMISSION_CATEGORY_META,
+  type Permission,
+} from '../../lib/permissions';
 
 /**
  * Permission Selector Component
@@ -233,13 +238,6 @@ const PermissionDescription = styled(Caption)`
   line-height: 1.3;
 `;
 
-interface Permission {
-  key: string;
-  name: string;
-  description: string;
-  category: string;
-}
-
 interface PermissionSelectorProps {
   selectedPermissions: string[];
   onPermissionChange: (permissions: string[]) => void;
@@ -248,95 +246,20 @@ interface PermissionSelectorProps {
   disabled?: boolean;
 }
 
-// Permission definitions with categories
-const ALL_PERMISSIONS: Permission[] = [
-  // Content Management
-  {
-    key: 'canCreateSpecies',
-    name: 'Create Species',
-    description: 'Allow creation of new species and their configuration',
-    category: 'content'
-  },
-  {
-    key: 'canEditSpecies',
-    name: 'Edit Species',
-    description: 'Allow editing existing species, traits, and variants',
-    category: 'content'
-  },
-  {
-    key: 'canCreateCharacter',
-    name: 'Create Characters',
-    description: 'Allow creation of new characters in the community',
-    category: 'content'
-  },
-  {
-    key: 'canEditCharacter',
-    name: 'Edit Any Character',
-    description: 'Allow editing any community member\'s characters',
-    category: 'content'
-  },
-  {
-    key: 'canEditOwnCharacter',
-    name: 'Edit Own Characters',
-    description: 'Allow editing only characters owned by the member',
-    category: 'content'
-  },
-  {
-    key: 'canManageItems',
-    name: 'Manage Items',
-    description: 'Allow creation, editing, and deletion of item types',
-    category: 'content'
-  },
-  {
-    key: 'canGrantItems',
-    name: 'Grant Items',
-    description: 'Allow granting items to community members',
-    category: 'content'
-  },
-  // Community Management
-  {
-    key: 'canCreateInviteCode',
-    name: 'Create Invite Codes',
-    description: 'Allow creation of community invitation codes',
-    category: 'community'
-  },
-  {
-    key: 'canListInviteCodes',
-    name: 'View Invite Codes',
-    description: 'Allow viewing and managing existing invite codes',
-    category: 'community'
-  },
-  // Role Administration
-  {
-    key: 'canCreateRole',
-    name: 'Create Roles',
-    description: 'Allow creation of new community roles',
-    category: 'administration'
-  },
-  {
-    key: 'canEditRole',
-    name: 'Edit Roles',
-    description: 'Allow editing existing community roles and permissions',
-    category: 'administration'
-  }
-];
-
+// Add icons to the shared category metadata
 const PERMISSION_CATEGORIES = {
   content: {
-    title: 'Content Management',
+    ...PERMISSION_CATEGORY_META.content,
     icon: Database,
-    description: 'Permissions for managing community content and species'
   },
   community: {
-    title: 'Community Management', 
+    ...PERMISSION_CATEGORY_META.community,
     icon: Users,
-    description: 'Permissions for managing community members and invitations'
   },
   administration: {
-    title: 'Role Administration',
+    ...PERMISSION_CATEGORY_META.administration,
     icon: Crown,
-    description: 'Permissions for managing community roles and permissions'
-  }
+  },
 };
 
 export const PermissionSelector: React.FC<PermissionSelectorProps> = ({

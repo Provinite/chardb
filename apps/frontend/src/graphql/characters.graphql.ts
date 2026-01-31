@@ -241,6 +241,23 @@ export const GET_MY_EDITABLE_CHARACTERS = gql`
   }
 `;
 
+export const GET_MY_CHARACTERS_FOR_IMAGE_UPLOAD = gql`
+  query GetMyCharactersForImageUpload($filters: CharacterFiltersInput) {
+    myCharactersForImageUpload(filters: $filters) {
+      characters {
+        id
+        name
+        species {
+          id
+          name
+        }
+      }
+      total
+      hasMore
+    }
+  }
+`;
+
 export const CREATE_CHARACTER = gql`
   mutation CreateCharacter($input: CreateCharacterInput!) {
     createCharacter(input: $input) {

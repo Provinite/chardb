@@ -503,6 +503,10 @@ export type CreateRoleInput = {
   canManageMemberRoles?: Scalars['Boolean']['input'];
   /** Whether members with this role can remove community members */
   canRemoveCommunityMember?: Scalars['Boolean']['input'];
+  /** Whether members with this role can upload images to any character */
+  canUploadCharacterImages?: Scalars['Boolean']['input'];
+  /** Whether members with this role can upload images to their own characters */
+  canUploadOwnCharacterImages?: Scalars['Boolean']['input'];
   /** The ID of the community this role belongs to */
   communityId: Scalars['ID']['input'];
   /** The name of the role */
@@ -1729,6 +1733,8 @@ export type Query = {
   /** Retrieves a single media item by ID */
   mediaItem: Media;
   myCharacters: CharacterConnection;
+  /** Get characters the current user can upload images to */
+  myCharactersForImageUpload: CharacterConnection;
   myEditableCharacters: CharacterConnection;
   /** Get all external accounts linked to the current user */
   myExternalAccounts: Array<ExternalAccount>;
@@ -2077,6 +2083,11 @@ export type QueryMyCharactersArgs = {
 };
 
 
+export type QueryMyCharactersForImageUploadArgs = {
+  filters?: InputMaybe<CharacterFiltersInput>;
+};
+
+
 export type QueryMyEditableCharactersArgs = {
   filters?: InputMaybe<CharacterFiltersInput>;
 };
@@ -2313,6 +2324,10 @@ export type Role = {
   canManageMemberRoles: Scalars['Boolean']['output'];
   /** Whether members with this role can remove community members */
   canRemoveCommunityMember: Scalars['Boolean']['output'];
+  /** Whether members with this role can upload images to any character */
+  canUploadCharacterImages: Scalars['Boolean']['output'];
+  /** Whether members with this role can upload images to their own characters */
+  canUploadOwnCharacterImages: Scalars['Boolean']['output'];
   /** The community this role belongs to */
   community: Community;
   /** The ID of the community this role belongs to */
@@ -2720,6 +2735,10 @@ export type UpdateRoleInput = {
   canManageMemberRoles?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can remove community members */
   canRemoveCommunityMember?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can upload images to any character */
+  canUploadCharacterImages?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can upload images to their own characters */
+  canUploadOwnCharacterImages?: InputMaybe<Scalars['Boolean']['input']>;
   /** The name of the role */
   name?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2951,6 +2970,13 @@ export type GetMyEditableCharactersQueryVariables = Exact<{
 
 
 export type GetMyEditableCharactersQuery = { __typename?: 'Query', myEditableCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null }> } };
+
+export type GetMyCharactersForImageUploadQueryVariables = Exact<{
+  filters?: InputMaybe<CharacterFiltersInput>;
+}>;
+
+
+export type GetMyCharactersForImageUploadQuery = { __typename?: 'Query', myCharactersForImageUpload: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null }> } };
 
 export type CreateCharacterMutationVariables = Exact<{
   input: CreateCharacterInput;
@@ -3569,14 +3595,14 @@ export type RolesByCommunityDetailedQueryVariables = Exact<{
 }>;
 
 
-export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
+export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
 
 export type CreateRoleMutationVariables = Exact<{
   input: CreateRoleInput;
 }>;
 
 
-export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
 
 export type UpdateRoleMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3584,7 +3610,7 @@ export type UpdateRoleMutationVariables = Exact<{
 }>;
 
 
-export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
 
 export type CommunityMembersWithRolesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -3593,7 +3619,7 @@ export type CommunityMembersWithRolesQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
+export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
 
 export type UpdateCommunityMemberMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3601,7 +3627,7 @@ export type UpdateCommunityMemberMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
+export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
 
 export type UserWithAvatarFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
@@ -4756,6 +4782,55 @@ export type GetMyEditableCharactersQueryHookResult = ReturnType<typeof useGetMyE
 export type GetMyEditableCharactersLazyQueryHookResult = ReturnType<typeof useGetMyEditableCharactersLazyQuery>;
 export type GetMyEditableCharactersSuspenseQueryHookResult = ReturnType<typeof useGetMyEditableCharactersSuspenseQuery>;
 export type GetMyEditableCharactersQueryResult = Apollo.QueryResult<GetMyEditableCharactersQuery, GetMyEditableCharactersQueryVariables>;
+export const GetMyCharactersForImageUploadDocument = gql`
+    query GetMyCharactersForImageUpload($filters: CharacterFiltersInput) {
+  myCharactersForImageUpload(filters: $filters) {
+    characters {
+      id
+      name
+      species {
+        id
+        name
+      }
+    }
+    total
+    hasMore
+  }
+}
+    `;
+
+/**
+ * __useGetMyCharactersForImageUploadQuery__
+ *
+ * To run a query within a React component, call `useGetMyCharactersForImageUploadQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMyCharactersForImageUploadQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMyCharactersForImageUploadQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useGetMyCharactersForImageUploadQuery(baseOptions?: Apollo.QueryHookOptions<GetMyCharactersForImageUploadQuery, GetMyCharactersForImageUploadQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMyCharactersForImageUploadQuery, GetMyCharactersForImageUploadQueryVariables>(GetMyCharactersForImageUploadDocument, options);
+      }
+export function useGetMyCharactersForImageUploadLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyCharactersForImageUploadQuery, GetMyCharactersForImageUploadQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMyCharactersForImageUploadQuery, GetMyCharactersForImageUploadQueryVariables>(GetMyCharactersForImageUploadDocument, options);
+        }
+export function useGetMyCharactersForImageUploadSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyCharactersForImageUploadQuery, GetMyCharactersForImageUploadQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMyCharactersForImageUploadQuery, GetMyCharactersForImageUploadQueryVariables>(GetMyCharactersForImageUploadDocument, options);
+        }
+export type GetMyCharactersForImageUploadQueryHookResult = ReturnType<typeof useGetMyCharactersForImageUploadQuery>;
+export type GetMyCharactersForImageUploadLazyQueryHookResult = ReturnType<typeof useGetMyCharactersForImageUploadLazyQuery>;
+export type GetMyCharactersForImageUploadSuspenseQueryHookResult = ReturnType<typeof useGetMyCharactersForImageUploadSuspenseQuery>;
+export type GetMyCharactersForImageUploadQueryResult = Apollo.QueryResult<GetMyCharactersForImageUploadQuery, GetMyCharactersForImageUploadQueryVariables>;
 export const CreateCharacterDocument = gql`
     mutation CreateCharacter($input: CreateCharacterInput!) {
   createCharacter(input: $input) {
@@ -8697,6 +8772,8 @@ export const RolesByCommunityDetailedDocument = gql`
       canEditSpecies
       canManageItems
       canGrantItems
+      canUploadOwnCharacterImages
+      canUploadCharacterImages
       canCreateInviteCode
       canListInviteCodes
       canCreateRole
@@ -8765,6 +8842,8 @@ export const CreateRoleDocument = gql`
     canEditSpecies
     canManageItems
     canGrantItems
+    canUploadOwnCharacterImages
+    canUploadCharacterImages
     canCreateInviteCode
     canListInviteCodes
     canCreateRole
@@ -8820,6 +8899,8 @@ export const UpdateRoleDocument = gql`
     canEditSpecies
     canManageItems
     canGrantItems
+    canUploadOwnCharacterImages
+    canUploadCharacterImages
     canCreateInviteCode
     canListInviteCodes
     canCreateRole
@@ -8892,6 +8973,8 @@ export const CommunityMembersWithRolesDocument = gql`
         canEditSpecies
         canManageItems
         canGrantItems
+        canUploadOwnCharacterImages
+        canUploadCharacterImages
         canCreateInviteCode
         canListInviteCodes
         canCreateRole
@@ -8966,6 +9049,8 @@ export const UpdateCommunityMemberDocument = gql`
       canEditSpecies
       canManageItems
       canGrantItems
+      canUploadOwnCharacterImages
+      canUploadCharacterImages
       canCreateInviteCode
       canListInviteCodes
       canCreateRole

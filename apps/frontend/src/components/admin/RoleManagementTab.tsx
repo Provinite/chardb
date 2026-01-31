@@ -17,6 +17,7 @@ import {
   useRolesByCommunityDetailedQuery,
   RolesByCommunityDetailedQuery
 } from '../../generated/graphql';
+import { PERMISSION_LABELS } from '../../lib/permissions';
 
 /**
  * Role Management Tab Component
@@ -208,21 +209,6 @@ interface RoleManagementTabProps {
   onCreateRole?: () => void;
 }
 
-// Permission labels for display
-const PERMISSION_LABELS = {
-  canCreateSpecies: 'Create Species',
-  canEditSpecies: 'Edit Species',
-  canCreateCharacter: 'Create Characters',
-  canCreateOrphanedCharacter: 'Create Orphaned Characters',
-  canEditCharacter: 'Edit Any Character',
-  canEditOwnCharacter: 'Edit Own Characters',
-  canManageItems: 'Manage Items',
-  canGrantItems: 'Grant Items',
-  canCreateInviteCode: 'Create Invites',
-  canListInviteCodes: 'List Invites',
-  canCreateRole: 'Create Roles',
-  canEditRole: 'Edit Roles'
-};
 
 export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   communityId,
@@ -304,21 +290,9 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   }
 
   const getPermissionCount = (role: RoleFromQuery) => {
-    const permissions = [
-      role.canCreateSpecies,
-      role.canEditSpecies,
-      role.canCreateCharacter,
-      role.canCreateOrphanedCharacter,
-      role.canEditCharacter,
-      role.canEditOwnCharacter,
-      role.canManageItems,
-      role.canGrantItems,
-      role.canCreateInviteCode,
-      role.canListInviteCodes,
-      role.canCreateRole,
-      role.canEditRole
-    ];
-    return permissions.filter(Boolean).length;
+    return Object.keys(PERMISSION_LABELS).filter(
+      (key) => role[key as keyof RoleFromQuery]
+    ).length;
   };
 
   return (

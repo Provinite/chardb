@@ -21,6 +21,7 @@ import {
   Label
 } from '@chardb/ui';
 import { PermissionSelector } from './PermissionSelector';
+import { PERMISSION_LABELS, type PermissionKey } from '../../lib/permissions';
 
 /**
  * Role Template Manager Component
@@ -219,7 +220,7 @@ const SYSTEM_TEMPLATES: RoleTemplate[] = [
     id: 'template-member',
     name: 'Basic Member',
     description: 'Standard community member with character creation rights',
-    permissions: ['canCreateCharacter', 'canEditOwnCharacter'],
+    permissions: ['canCreateCharacter', 'canEditOwnCharacter', 'canUploadOwnCharacterImages'],
     isSystem: true,
     createdAt: new Date(),
     updatedAt: new Date()
@@ -229,10 +230,13 @@ const SYSTEM_TEMPLATES: RoleTemplate[] = [
     name: 'Moderator',
     description: 'Trusted member with content moderation abilities',
     permissions: [
-      'canCreateCharacter', 
-      'canEditOwnCharacter', 
+      'canCreateCharacter',
+      'canEditOwnCharacter',
       'canEditCharacter',
       'canEditSpecies',
+      'canUploadOwnCharacterImages',
+      'canUploadCharacterImages',
+      'canGrantItems',
       'canCreateInviteCode',
       'canListInviteCodes'
     ],
@@ -246,12 +250,19 @@ const SYSTEM_TEMPLATES: RoleTemplate[] = [
     description: 'Full administrative access to all community features',
     permissions: [
       'canCreateCharacter',
-      'canEditOwnCharacter', 
+      'canCreateOrphanedCharacter',
+      'canEditOwnCharacter',
       'canEditCharacter',
       'canCreateSpecies',
       'canEditSpecies',
+      'canManageItems',
+      'canGrantItems',
+      'canUploadOwnCharacterImages',
+      'canUploadCharacterImages',
       'canCreateInviteCode',
       'canListInviteCodes',
+      'canRemoveCommunityMember',
+      'canManageMemberRoles',
       'canCreateRole',
       'canEditRole'
     ],
@@ -267,7 +278,8 @@ const SYSTEM_TEMPLATES: RoleTemplate[] = [
       'canCreateCharacter',
       'canEditOwnCharacter',
       'canCreateSpecies',
-      'canEditSpecies'
+      'canEditSpecies',
+      'canUploadOwnCharacterImages'
     ],
     isSystem: true,
     createdAt: new Date(),
@@ -275,18 +287,6 @@ const SYSTEM_TEMPLATES: RoleTemplate[] = [
   }
 ];
 
-// Permission labels for display
-const PERMISSION_LABELS: Record<string, string> = {
-  canCreateSpecies: 'Create Species',
-  canCreateCharacter: 'Create Characters', 
-  canEditCharacter: 'Edit Characters',
-  canEditOwnCharacter: 'Edit Own Characters',
-  canEditSpecies: 'Edit Species',
-  canCreateInviteCode: 'Create Invites',
-  canListInviteCodes: 'View Invites',
-  canCreateRole: 'Create Roles',
-  canEditRole: 'Edit Roles'
-};
 
 export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
   onTemplateApply,
@@ -377,7 +377,7 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
     return permissions.slice(0, 3).map(perm => (
       <PermissionChip key={perm}>
         <Check size={10} />
-        {PERMISSION_LABELS[perm] || perm}
+        {PERMISSION_LABELS[perm as PermissionKey] || perm}
       </PermissionChip>
     ));
   };

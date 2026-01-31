@@ -44,6 +44,10 @@ export interface CreateRoleServiceInput {
   canManageItems?: boolean;
   /** Permission to grant items to users */
   canGrantItems?: boolean;
+  /** Permission to upload images to own characters */
+  canUploadOwnCharacterImages?: boolean;
+  /** Permission to upload images to any character */
+  canUploadCharacterImages?: boolean;
 }
 
 /**
@@ -80,6 +84,10 @@ export interface UpdateRoleServiceInput {
   canManageItems?: boolean;
   /** Permission to grant items to users */
   canGrantItems?: boolean;
+  /** Permission to upload images to own characters */
+  canUploadOwnCharacterImages?: boolean;
+  /** Permission to upload images to any character */
+  canUploadCharacterImages?: boolean;
 }
 
 @Injectable()
@@ -105,6 +113,8 @@ export class RolesService {
         canManageMemberRoles: input.canManageMemberRoles ?? false,
         canManageItems: input.canManageItems ?? false,
         canGrantItems: input.canGrantItems ?? false,
+        canUploadOwnCharacterImages: input.canUploadOwnCharacterImages ?? false,
+        canUploadCharacterImages: input.canUploadCharacterImages ?? false,
         community: {
           connect: { id: input.communityId },
         },
@@ -219,6 +229,10 @@ export class RolesService {
       updateData.canManageItems = input.canManageItems;
     if (input.canGrantItems !== undefined)
       updateData.canGrantItems = input.canGrantItems;
+    if (input.canUploadOwnCharacterImages !== undefined)
+      updateData.canUploadOwnCharacterImages = input.canUploadOwnCharacterImages;
+    if (input.canUploadCharacterImages !== undefined)
+      updateData.canUploadCharacterImages = input.canUploadCharacterImages;
 
     return this.prisma.role.update({
       where: { id },
