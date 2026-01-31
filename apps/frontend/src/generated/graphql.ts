@@ -1152,11 +1152,6 @@ export type Mutation = {
   updateCharacterProfile: Character;
   /** Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission. */
   updateCharacterRegistry: Character;
-  /**
-   * Update character trait values
-   * @deprecated Use updateCharacterRegistry instead
-   */
-  updateCharacterTraits: Character;
   updateComment: Comment;
   /** Update a community */
   updateCommunity: Community;
@@ -1508,12 +1503,6 @@ export type MutationUpdateCharacterProfileArgs = {
 export type MutationUpdateCharacterRegistryArgs = {
   id: Scalars['ID']['input'];
   input: UpdateCharacterRegistryInput;
-};
-
-
-export type MutationUpdateCharacterTraitsArgs = {
-  id: Scalars['ID']['input'];
-  updateCharacterTraitsInput: UpdateCharacterTraitsInput;
 };
 
 
@@ -2659,12 +2648,6 @@ export type UpdateCharacterRegistryInput = {
   speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
   /** Trait values for the character */
   traitValues?: InputMaybe<Array<CharacterTraitValueInput>>;
-};
-
-/** Input for updating character trait values */
-export type UpdateCharacterTraitsInput = {
-  /** Array of trait values to set for the character */
-  traitValues: Array<CharacterTraitValueInput>;
 };
 
 export type UpdateCommentInput = {

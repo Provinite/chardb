@@ -1224,69 +1224,6 @@ export class CharactersService {
     }
   }
 
-  /** Update character trait values */
-  async updateTraits(
-    id: string,
-    updateData: { traitValues: PrismaJson.CharacterTraitValuesJson },
-    userId: string,
-  ) {
-    // Fetch character to validate species and ownership
-    const character = await this.db.character.findUnique({
-      where: { id },
-      select: { speciesId: true, ownerId: true },
-    });
-
-    if (!character) {
-      throw new NotFoundException(`Character with ID ${id} not found`);
-    }
-
-    // Validate registry permission (trait values are registry fields)
-    if (character.speciesId) {
-      const species = await this.db.species.findUnique({
-        where: { id: character.speciesId },
-        select: { communityId: true },
-      });
-
-      if (species) {
-        const isOwner = character.ownerId === userId;
-        const permissions =
-          await this.permissionService.getCommunityPermissions(
-            userId,
-            species.communityId,
-          );
-
-        const canEditRegistry = isOwner
-          ? permissions.canEditOwnCharacterRegistry ||
-            permissions.canEditCharacterRegistry
-          : permissions.canEditCharacterRegistry;
-
-        if (!canEditRegistry) {
-          throw new ForbiddenException(
-            "You do not have permission to edit trait values. " +
-              "Trait values are registry fields that require admin permission. " +
-              "Contact a species admin to modify these fields.",
-          );
-        }
-      }
-    }
-
-    // Validate trait values if character has a species
-    if (character.speciesId && updateData.traitValues.length > 0) {
-      await this.validateTraitValues(
-        character.speciesId,
-        updateData.traitValues,
-      );
-    }
-
-    // Update the character with new trait values
-    return this.db.character.update({
-      where: { id },
-      data: {
-        traitValues: updateData.traitValues,
-      },
-    });
-  }
-
   async getLikesCount(characterId: string) {
     return this.db.like.count({
       where: { characterId },

@@ -6,10 +6,7 @@ import {
   UpdateCharacterRegistryInput,
 } from "../dto/character.dto";
 import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
-import {
-  UpdateCharacterTraitsInput,
-  CharacterTraitValueInput,
-} from "../dto/character-trait.dto";
+import { CharacterTraitValueInput } from "../dto/character-trait.dto";
 import { Character, CharacterConnection } from "../entities/character.entity";
 import { CharacterTraitValue } from "../../shared/types/character-trait.types";
 
@@ -189,17 +186,7 @@ export function mapUpdateCharacterRegistryInputToService(
   return { characterData };
 }
 
-export function mapUpdateCharacterTraitsInputToService(
-  input: UpdateCharacterTraitsInput,
-): {
-  traitValues: PrismaJson.CharacterTraitValuesJson;
-} {
-  return {
-    traitValues: mapTraitValues(input.traitValues),
-  };
-}
-
-// Define the exact Prisma return type for updateTraits method
+// Define the exact Prisma return type
 type PrismaCharacter = Prisma.CharacterGetPayload<{}>;
 
 /**

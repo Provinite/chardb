@@ -1438,9 +1438,6 @@ type Mutation {
   Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission.
   """
   updateCharacterRegistry(id: ID!, input: UpdateCharacterRegistryInput!): Character!
-
-  """Update character trait values"""
-  updateCharacterTraits(id: ID!, updateCharacterTraitsInput: UpdateCharacterTraitsInput!): Character! @deprecated(reason: "Use updateCharacterRegistry instead")
   updateComment(id: ID!, input: UpdateCommentInput!): Comment!
 
   """Update a community"""
@@ -2582,12 +2579,6 @@ input UpdateCharacterRegistryInput {
 
   """Trait values for the character"""
   traitValues: [CharacterTraitValueInput!]
-}
-
-"""Input for updating character trait values"""
-input UpdateCharacterTraitsInput {
-  """Array of trait values to set for the character"""
-  traitValues: [CharacterTraitValueInput!]!
 }
 
 input UpdateCommentInput {

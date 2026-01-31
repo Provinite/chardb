@@ -56,13 +56,11 @@ import {
   ManageTagsInput,
   SetMainMediaInput,
 } from "./dto/character.dto";
-import { UpdateCharacterTraitsInput } from "./dto/character-trait.dto";
 import {
   mapCreateCharacterInputToService,
   mapUpdateCharacterInputToService,
   mapUpdateCharacterProfileInputToService,
   mapUpdateCharacterRegistryInputToService,
-  mapUpdateCharacterTraitsInputToService,
   mapPrismaCharacterToGraphQL,
   mapPrismaCharacterConnectionToGraphQL,
 } from "./utils/character-resolver-mappers";
@@ -508,29 +506,4 @@ export class CharactersResolver {
     return mapPrismaSpeciesVariantToGraphQL(prismaResult);
   }
 
-  /**
-   * @deprecated Use updateCharacterRegistry instead
-   */
-  @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
-  @Mutation(() => CharacterEntity, {
-    description: "Update character trait values",
-    deprecationReason: "Use updateCharacterRegistry instead",
-  })
-  async updateCharacterTraits(
-    @Args("id", { type: () => ID }) id: string,
-    @Args("updateCharacterTraitsInput")
-    updateCharacterTraitsInput: UpdateCharacterTraitsInput,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<CharacterEntity> {
-    const serviceInput = mapUpdateCharacterTraitsInputToService(
-      updateCharacterTraitsInput,
-    );
-    const prismaResult = await this.charactersService.updateTraits(
-      id,
-      serviceInput,
-      user.id,
-    );
-    return mapPrismaCharacterToGraphQL(prismaResult);
-  }
 }
