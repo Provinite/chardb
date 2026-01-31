@@ -1152,7 +1152,10 @@ export type Mutation = {
   updateCharacterProfile: Character;
   /** Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission. */
   updateCharacterRegistry: Character;
-  /** Update character trait values */
+  /**
+   * Update character trait values
+   * @deprecated Use updateCharacterRegistry instead
+   */
   updateCharacterTraits: Character;
   updateComment: Comment;
   /** Update a community */
@@ -3093,14 +3096,6 @@ export type SetCharacterMainMediaMutationVariables = Exact<{
 
 
 export type SetCharacterMainMediaMutation = { __typename?: 'Mutation', setCharacterMainMedia: { __typename?: 'Character', id: string, name: string, mainMediaId: string | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
-
-export type UpdateCharacterTraitsMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  updateCharacterTraitsInput: UpdateCharacterTraitsInput;
-}>;
-
-
-export type UpdateCharacterTraitsMutation = { __typename?: 'Mutation', updateCharacterTraits: { __typename?: 'Character', id: string, name: string, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> } };
 
 export type UpdateCharacterProfileMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5266,60 +5261,6 @@ export function useSetCharacterMainMediaMutation(baseOptions?: Apollo.MutationHo
 export type SetCharacterMainMediaMutationHookResult = ReturnType<typeof useSetCharacterMainMediaMutation>;
 export type SetCharacterMainMediaMutationResult = Apollo.MutationResult<SetCharacterMainMediaMutation>;
 export type SetCharacterMainMediaMutationOptions = Apollo.BaseMutationOptions<SetCharacterMainMediaMutation, SetCharacterMainMediaMutationVariables>;
-export const UpdateCharacterTraitsDocument = gql`
-    mutation UpdateCharacterTraits($id: ID!, $updateCharacterTraitsInput: UpdateCharacterTraitsInput!) {
-  updateCharacterTraits(
-    id: $id
-    updateCharacterTraitsInput: $updateCharacterTraitsInput
-  ) {
-    id
-    name
-    traitValues {
-      traitId
-      value
-      trait {
-        name
-        valueType
-        allowsMultipleValues
-      }
-      enumValue {
-        name
-        color {
-          id
-          hexCode
-        }
-      }
-    }
-  }
-}
-    `;
-export type UpdateCharacterTraitsMutationFn = Apollo.MutationFunction<UpdateCharacterTraitsMutation, UpdateCharacterTraitsMutationVariables>;
-
-/**
- * __useUpdateCharacterTraitsMutation__
- *
- * To run a mutation, you first call `useUpdateCharacterTraitsMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateCharacterTraitsMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateCharacterTraitsMutation, { data, loading, error }] = useUpdateCharacterTraitsMutation({
- *   variables: {
- *      id: // value for 'id'
- *      updateCharacterTraitsInput: // value for 'updateCharacterTraitsInput'
- *   },
- * });
- */
-export function useUpdateCharacterTraitsMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCharacterTraitsMutation, UpdateCharacterTraitsMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateCharacterTraitsMutation, UpdateCharacterTraitsMutationVariables>(UpdateCharacterTraitsDocument, options);
-      }
-export type UpdateCharacterTraitsMutationHookResult = ReturnType<typeof useUpdateCharacterTraitsMutation>;
-export type UpdateCharacterTraitsMutationResult = Apollo.MutationResult<UpdateCharacterTraitsMutation>;
-export type UpdateCharacterTraitsMutationOptions = Apollo.BaseMutationOptions<UpdateCharacterTraitsMutation, UpdateCharacterTraitsMutationVariables>;
 export const UpdateCharacterProfileDocument = gql`
     mutation UpdateCharacterProfile($id: ID!, $input: UpdateCharacterProfileInput!) {
   updateCharacterProfile(id: $id, input: $input) {

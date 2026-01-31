@@ -1436,7 +1436,7 @@ type Mutation {
   updateCharacterRegistry(id: ID!, input: UpdateCharacterRegistryInput!): Character!
 
   """Update character trait values"""
-  updateCharacterTraits(id: ID!, updateCharacterTraitsInput: UpdateCharacterTraitsInput!): Character!
+  updateCharacterTraits(id: ID!, updateCharacterTraitsInput: UpdateCharacterTraitsInput!): Character! @deprecated(reason: "Use updateCharacterRegistry instead")
   updateComment(id: ID!, input: UpdateCommentInput!): Comment!
 
   """Update a community"""

@@ -438,37 +438,6 @@ export const SET_CHARACTER_MAIN_MEDIA = gql`
   }
 `;
 
-export const UPDATE_CHARACTER_TRAITS = gql`
-  mutation UpdateCharacterTraits(
-    $id: ID!
-    $updateCharacterTraitsInput: UpdateCharacterTraitsInput!
-  ) {
-    updateCharacterTraits(
-      id: $id
-      updateCharacterTraitsInput: $updateCharacterTraitsInput
-    ) {
-      id
-      name
-      traitValues {
-        traitId
-        value
-        trait {
-          name
-          valueType
-          allowsMultipleValues
-        }
-        enumValue {
-          name
-          color {
-            id
-            hexCode
-          }
-        }
-      }
-    }
-  }
-`;
-
 export const UPDATE_CHARACTER_PROFILE = gql`
   mutation UpdateCharacterProfile($id: ID!, $input: UpdateCharacterProfileInput!) {
     updateCharacterProfile(id: $id, input: $input) {
@@ -585,7 +554,6 @@ export {
   useAddCharacterTagsMutation,
   useRemoveCharacterTagsMutation,
   useSetCharacterMainMediaMutation,
-  useUpdateCharacterTraitsMutation,
 
   // Types
   type Character,
@@ -598,7 +566,6 @@ export {
   type TransferCharacterInput,
   type ManageTagsInput,
   type SetMainMediaInput,
-  type UpdateCharacterTraitsInput,
   type CharacterTraitValueInput,
   type GetCharactersQuery,
   type GetCharactersQueryVariables,
@@ -624,8 +591,6 @@ export {
   type RemoveCharacterTagsMutationVariables,
   type SetCharacterMainMediaMutation,
   type SetCharacterMainMediaMutationVariables,
-  type UpdateCharacterTraitsMutation,
-  type UpdateCharacterTraitsMutationVariables,
   type Visibility,
   type Tag,
   type CharacterTag,

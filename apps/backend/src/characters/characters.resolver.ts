@@ -508,10 +508,14 @@ export class CharactersResolver {
     return mapPrismaSpeciesVariantToGraphQL(prismaResult);
   }
 
+  /**
+   * @deprecated Use updateCharacterRegistry instead
+   */
   @AllowGlobalAdmin()
   @AllowCharacterEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity, {
     description: "Update character trait values",
+    deprecationReason: "Use updateCharacterRegistry instead",
   })
   async updateCharacterTraits(
     @Args("id", { type: () => ID }) id: string,
