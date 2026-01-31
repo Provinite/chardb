@@ -14,8 +14,11 @@ import {
 import {
   useGetCharacterQuery,
   useUpdateCharacterMutation,
-  useUpdateCharacterTraitsMutation,
+  useUpdateCharacterProfileMutation,
+  useUpdateCharacterRegistryMutation,
   UpdateCharacterInput,
+  UpdateCharacterProfileInput,
+  UpdateCharacterRegistryInput,
   CharacterTraitValueInput,
   Visibility,
 } from "../graphql/characters.graphql";
@@ -325,8 +328,11 @@ export const EditCharacterPage: React.FC = () => {
         userSearch.length < 2,
     });
 
+  // Use deprecated mutation only for first-time species assignment
   const [updateCharacter] = useUpdateCharacterMutation();
-  const [updateCharacterTraits] = useUpdateCharacterTraitsMutation();
+  // Use new faceted mutations for normal edits
+  const [updateCharacterProfile] = useUpdateCharacterProfileMutation();
+  const [updateCharacterRegistry] = useUpdateCharacterRegistryMutation();
 
   const {
     register,
@@ -504,35 +510,56 @@ export const EditCharacterPage: React.FC = () => {
         }
       }
 
-      const input: UpdateCharacterInput = {
-        name: data.name,
-        details: data.details || undefined,
-        customFields: cleanedCustomFields,
-        visibility: data.visibility as Visibility,
-        isSellable: data.isSellable,
-        isTradeable: data.isTradeable,
-        price:
-          data.price && data.isSellable ? parseFloat(data.price) : undefined,
-        tags, // Use the tags state directly
-        // Only include species if it's being set for the first time (character doesn't have one yet)
-        speciesId:
-          !character.speciesId && selectedSpecies
-            ? selectedSpecies.id
-            : undefined,
-        speciesVariantId:
-          !character.speciesId && selectedVariant
-            ? selectedVariant.id
-            : undefined,
-        ownerIdUpdate,
-        pendingOwnerUpdate,
-      };
+      // Check if we're doing first-time species assignment (special case)
+      const isFirstTimeSpeciesAssignment = !character.speciesId && selectedSpecies;
 
-      await updateCharacter({
-        variables: {
-          id: character.id,
-          input,
-        },
-      });
+      if (isFirstTimeSpeciesAssignment) {
+        // Use deprecated mutation for first-time species assignment
+        const input: UpdateCharacterInput = {
+          name: data.name,
+          details: data.details || undefined,
+          customFields: cleanedCustomFields,
+          visibility: data.visibility as Visibility,
+          isSellable: data.isSellable,
+          isTradeable: data.isTradeable,
+          price:
+            data.price && data.isSellable ? parseFloat(data.price) : undefined,
+          tags,
+          speciesId: selectedSpecies.id,
+          speciesVariantId: selectedVariant?.id,
+          ownerIdUpdate,
+          pendingOwnerUpdate,
+        };
+
+        await updateCharacter({
+          variables: {
+            id: character.id,
+            input,
+          },
+        });
+      } else {
+        // Use new profile mutation for normal edits
+        const input: UpdateCharacterProfileInput = {
+          name: data.name,
+          details: data.details || undefined,
+          customFields: cleanedCustomFields,
+          visibility: data.visibility as Visibility,
+          isSellable: data.isSellable,
+          isTradeable: data.isTradeable,
+          price:
+            data.price && data.isSellable ? parseFloat(data.price) : undefined,
+          tags,
+          ownerIdUpdate,
+          pendingOwnerUpdate,
+        };
+
+        await updateCharacterProfile({
+          variables: {
+            id: character.id,
+            input,
+          },
+        });
+      }
 
       toast.success("Character updated successfully!");
       navigate(`/character/${character.id}`);
@@ -553,22 +580,25 @@ export const EditCharacterPage: React.FC = () => {
 
     setIsSubmittingTraits(true);
     try {
-      await updateCharacterTraits({
+      const input: UpdateCharacterRegistryInput = {
+        traitValues,
+        // Could also include speciesVariantId here if we add variant editing to this section
+      };
+
+      await updateCharacterRegistry({
         variables: {
           id: character.id,
-          updateCharacterTraitsInput: {
-            traitValues,
-          },
+          input,
         },
       });
 
-      toast.success("Traits updated successfully!");
+      toast.success("Registry updated successfully!");
     } catch (error) {
-      console.error("Failed to update traits:", error);
+      console.error("Failed to update registry:", error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to update traits. Please try again.",
+          : "Failed to update registry. Please try again.",
       );
     } finally {
       setIsSubmittingTraits(false);
