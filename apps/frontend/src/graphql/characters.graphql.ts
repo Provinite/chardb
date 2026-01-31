@@ -62,6 +62,7 @@ export const GET_CHARACTER = gql`
     character(id: $id) {
       id
       name
+      registryId
       speciesId
       speciesVariantId
       species {
@@ -468,6 +469,80 @@ export const UPDATE_CHARACTER_TRAITS = gql`
   }
 `;
 
+export const UPDATE_CHARACTER_PROFILE = gql`
+  mutation UpdateCharacterProfile($id: ID!, $input: UpdateCharacterProfileInput!) {
+    updateCharacterProfile(id: $id, input: $input) {
+      id
+      name
+      species {
+        id
+        name
+      }
+      details
+      ownerId
+      creatorId
+      visibility
+      isSellable
+      isTradeable
+      price
+      tags
+      customFields
+      mainMediaId
+      createdAt
+      updatedAt
+      pendingOwnership {
+        id
+        provider
+        providerAccountId
+        displayIdentifier
+        createdAt
+      }
+      owner {
+        ...UserBasic
+      }
+      creator {
+        ...UserBasic
+      }
+      _count {
+        media
+      }
+    }
+  }
+  ${USER_BASIC_FRAGMENT}
+`;
+
+export const UPDATE_CHARACTER_REGISTRY = gql`
+  mutation UpdateCharacterRegistry($id: ID!, $input: UpdateCharacterRegistryInput!) {
+    updateCharacterRegistry(id: $id, input: $input) {
+      id
+      name
+      registryId
+      speciesId
+      speciesVariantId
+      speciesVariant {
+        id
+        name
+      }
+      traitValues {
+        traitId
+        value
+        trait {
+          name
+          valueType
+          allowsMultipleValues
+        }
+        enumValue {
+          name
+          color {
+            id
+            hexCode
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const GET_LIKED_CHARACTERS = gql`
   query GetLikedCharacters {
     likedCharacters {
@@ -503,6 +578,8 @@ export {
   // Mutation Hooks
   useCreateCharacterMutation,
   useUpdateCharacterMutation,
+  useUpdateCharacterProfileMutation,
+  useUpdateCharacterRegistryMutation,
   useDeleteCharacterMutation,
   useTransferCharacterMutation,
   useAddCharacterTagsMutation,
@@ -516,6 +593,8 @@ export {
   type CharacterFiltersInput,
   type CreateCharacterInput,
   type UpdateCharacterInput,
+  type UpdateCharacterProfileInput,
+  type UpdateCharacterRegistryInput,
   type TransferCharacterInput,
   type ManageTagsInput,
   type SetMainMediaInput,
@@ -531,6 +610,10 @@ export {
   type CreateCharacterMutationVariables,
   type UpdateCharacterMutation,
   type UpdateCharacterMutationVariables,
+  type UpdateCharacterProfileMutation,
+  type UpdateCharacterProfileMutationVariables,
+  type UpdateCharacterRegistryMutation,
+  type UpdateCharacterRegistryMutationVariables,
   type DeleteCharacterMutation,
   type DeleteCharacterMutationVariables,
   type TransferCharacterMutation,

@@ -1427,7 +1427,17 @@ type Mutation {
 
   """Unlink an external account from the current user"""
   unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
-  updateCharacter(id: ID!, input: UpdateCharacterInput!): Character!
+  updateCharacter(id: ID!, input: UpdateCharacterInput!): Character! @deprecated(reason: "Use updateCharacterProfile for profile fields or updateCharacterRegistry for registry fields")
+
+  """
+  Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.
+  """
+  updateCharacterProfile(id: ID!, input: UpdateCharacterProfileInput!): Character!
+
+  """
+  Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission.
+  """
+  updateCharacterRegistry(id: ID!, input: UpdateCharacterRegistryInput!): Character!
 
   """Update character trait values"""
   updateCharacterTraits(id: ID!, updateCharacterTraitsInput: UpdateCharacterTraitsInput!): Character!
@@ -2537,6 +2547,41 @@ input UpdateCharacterInput {
   """Trait values for the character"""
   traitValues: [CharacterTraitValueInput!]
   visibility: Visibility
+}
+
+"""Input for updating character profile fields"""
+input UpdateCharacterProfileInput {
+  customFields: String
+  details: String
+  isSellable: Boolean
+  isTradeable: Boolean
+  mainMediaId: ID
+  name: String
+
+  """
+  Update character ownership (requires canCreateOrphanedCharacter permission)
+  """
+  ownerIdUpdate: OwnerIdUpdate
+
+  """
+  Update pending ownership (requires canCreateOrphanedCharacter permission)
+  """
+  pendingOwnerUpdate: PendingOwnerUpdate
+  price: Float
+  tags: [String!]
+  visibility: Visibility
+}
+
+"""Input for updating character registry fields"""
+input UpdateCharacterRegistryInput {
+  """Official registry identifier for this character within its species"""
+  registryId: String
+
+  """Species variant ID"""
+  speciesVariantId: ID
+
+  """Trait values for the character"""
+  traitValues: [CharacterTraitValueInput!]
 }
 
 """Input for updating character trait values"""

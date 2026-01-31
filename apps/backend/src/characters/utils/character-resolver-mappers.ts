@@ -2,6 +2,8 @@ import { ExternalAccountProvider, Prisma } from "@chardb/database";
 import {
   CreateCharacterInput,
   UpdateCharacterInput,
+  UpdateCharacterProfileInput,
+  UpdateCharacterRegistryInput,
 } from "../dto/character.dto";
 import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
 import {
@@ -118,6 +120,73 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
   const ownerId = ownerIdUpdate?.set;
 
   return { characterData, tags, pendingOwner, ownerId };
+}
+
+/**
+ * Maps UpdateCharacterProfileInput to service format
+ * Profile fields: name, details, visibility, trade settings, tags, mainMedia, ownership
+ */
+export function mapUpdateCharacterProfileInputToService(
+  input: UpdateCharacterProfileInput,
+): {
+  characterData: Prisma.CharacterUpdateInput;
+  tags?: string[];
+  pendingOwner?: PendingOwnerInput | null;
+  ownerId?: string | null;
+} {
+  const { tags, pendingOwnerUpdate, ownerIdUpdate, ...inputData } = input;
+  const characterData: Prisma.CharacterUpdateInput = {};
+
+  if (inputData.name !== undefined) characterData.name = inputData.name;
+  if (inputData.details !== undefined)
+    characterData.details = inputData.details;
+  if (inputData.visibility !== undefined)
+    characterData.visibility = inputData.visibility;
+  if (inputData.isSellable !== undefined)
+    characterData.isSellable = inputData.isSellable;
+  if (inputData.isTradeable !== undefined)
+    characterData.isTradeable = inputData.isTradeable;
+  if (inputData.price !== undefined) characterData.price = inputData.price;
+  if (inputData.customFields !== undefined) {
+    characterData.customFields = inputData.customFields
+      ? JSON.parse(inputData.customFields)
+      : undefined;
+  }
+  if (inputData.mainMediaId !== undefined) {
+    characterData.mainMedia = inputData.mainMediaId
+      ? { connect: { id: inputData.mainMediaId } }
+      : { disconnect: true };
+  }
+
+  // Extract values from wrapper types
+  const pendingOwner = pendingOwnerUpdate?.set;
+  const ownerId = ownerIdUpdate?.set;
+
+  return { characterData, tags, pendingOwner, ownerId };
+}
+
+/**
+ * Maps UpdateCharacterRegistryInput to service format
+ * Registry fields: registryId, speciesVariantId, traitValues
+ */
+export function mapUpdateCharacterRegistryInputToService(
+  input: UpdateCharacterRegistryInput,
+): {
+  characterData: Prisma.CharacterUpdateInput;
+} {
+  const characterData: Prisma.CharacterUpdateInput = {};
+
+  if (input.registryId !== undefined)
+    characterData.registryId = input.registryId;
+  if (input.speciesVariantId !== undefined) {
+    characterData.speciesVariant = input.speciesVariantId
+      ? { connect: { id: input.speciesVariantId } }
+      : { disconnect: true };
+  }
+  if (input.traitValues !== undefined)
+    characterData.traitValues = mapTraitValues(input.traitValues);
+
+  return { characterData };
 }
 
 export function mapUpdateCharacterTraitsInputToService(

@@ -113,6 +113,99 @@ export class PendingOwnerUpdate {
   set?: PendingOwnerInput | null;
 }
 
+/**
+ * Input for updating character profile fields (name, bio, visibility, trade settings, etc.)
+ * Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.
+ */
+@InputType({ description: 'Input for updating character profile fields' })
+export class UpdateCharacterProfileInput {
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  name?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(15000)
+  details?: string;
+
+  @Field(() => Visibility, { nullable: true })
+  @IsOptional()
+  @IsEnum(Visibility)
+  visibility?: Visibility;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  isSellable?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  isTradeable?: boolean;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  price?: number;
+
+  @Field(() => [String], { nullable: true })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  customFields?: string; // JSON field
+
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsUUID()
+  mainMediaId?: string;
+
+  @Field(() => OwnerIdUpdate, { nullable: true, description: 'Update character ownership (requires canCreateOrphanedCharacter permission)' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => OwnerIdUpdate)
+  ownerIdUpdate?: OwnerIdUpdate;
+
+  @Field(() => PendingOwnerUpdate, { nullable: true, description: 'Update pending ownership (requires canCreateOrphanedCharacter permission)' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PendingOwnerUpdate)
+  pendingOwnerUpdate?: PendingOwnerUpdate;
+}
+
+/**
+ * Input for updating character registry fields (registryId, variant, traits).
+ * Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission.
+ */
+@InputType({ description: 'Input for updating character registry fields' })
+export class UpdateCharacterRegistryInput {
+  @Field({ nullable: true, description: 'Official registry identifier for this character within its species' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  registryId?: string;
+
+  @Field(() => ID, { nullable: true, description: 'Species variant ID' })
+  @IsOptional()
+  @IsUUID()
+  speciesVariantId?: string;
+
+  @Field(() => [CharacterTraitValueInput], { nullable: true, description: 'Trait values for the character' })
+  @IsOptional()
+  traitValues?: CharacterTraitValueInput[];
+}
+
+/**
+ * @deprecated Use UpdateCharacterProfileInput or UpdateCharacterRegistryInput instead
+ */
 @InputType()
 export class UpdateCharacterInput {
   @Field({ nullable: true })
@@ -173,7 +266,7 @@ export class UpdateCharacterInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  customFields?: any; // JSON field
+  customFields?: string; // JSON field
 
   @Field(() => [CharacterTraitValueInput], { nullable: true, description: 'Trait values for the character' })
   @IsOptional()

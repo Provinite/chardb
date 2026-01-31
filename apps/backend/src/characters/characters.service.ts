@@ -723,6 +723,198 @@ export class CharactersService {
   }
 
   /**
+   * Update character profile fields (name, details, visibility, trade settings, etc.).
+   * Permission checking is handled by the guard - this method trusts the caller.
+   */
+  async updateProfile(
+    id: string,
+    userId: string,
+    input: {
+      characterData: Prisma.CharacterUpdateInput;
+      tags?: string[];
+      pendingOwner?: PendingOwnerInput | null;
+      ownerId?: string | null;
+    },
+  ) {
+    const character = await this.findOne(id, userId);
+    const { characterData, tags, pendingOwner, ownerId } = input;
+
+    // Update the character
+    const updatedCharacter = await this.db.character.update({
+      where: { id },
+      data: characterData,
+    });
+
+    // Handle tags if provided
+    if (tags !== undefined) {
+      // Remove all existing character-tag relationships
+      await this.db.characterTag.deleteMany({
+        where: { characterId: id },
+      });
+
+      // Add new tags if provided
+      if (tags.length > 0) {
+        const tagModels = await this.tagsService.findOrCreateTags(tags);
+
+        for (const tag of tagModels) {
+          await this.db.characterTag.create({
+            data: {
+              characterId: id,
+              tagId: tag.id,
+            },
+          });
+        }
+      }
+    }
+
+    // Handle ownership changes (if ownerId is being modified)
+    if (ownerId !== undefined) {
+      const oldOwnerId = character.ownerId;
+
+      // Only update if ownership is actually changing
+      if (oldOwnerId !== ownerId) {
+        // Verify new owner exists if setting to a user
+        if (ownerId !== null) {
+          const newOwner = await this.db.user.findUnique({
+            where: { id: ownerId },
+          });
+          if (!newOwner) {
+            throw new NotFoundException("New owner not found");
+          }
+        }
+
+        // Update character ownership
+        await this.db.character.update({
+          where: { id },
+          data: { ownerId },
+        });
+
+        // Create ownership change audit record (only when transferring to a user)
+        if (ownerId !== null) {
+          await this.db.characterOwnershipChange.create({
+            data: {
+              characterId: id,
+              fromUserId: oldOwnerId,
+              toUserId: ownerId,
+            },
+          });
+        }
+
+        // If setting an actual owner, clear any pending ownership
+        if (ownerId !== null) {
+          const existingPending =
+            await this.pendingOwnershipService.findByCharacterId(id);
+          if (existingPending) {
+            await this.pendingOwnershipService.remove(existingPending.id);
+          }
+        }
+      }
+    }
+
+    // Handle pending ownership updates
+    if (pendingOwner !== undefined) {
+      // Get existing pending ownership
+      const existingPending =
+        await this.pendingOwnershipService.findByCharacterId(id);
+
+      if (pendingOwner === null) {
+        // Clear pending ownership
+        if (existingPending) {
+          await this.pendingOwnershipService.remove(existingPending.id);
+        }
+      } else {
+        // Set or update pending ownership
+        const { provider, providerAccountId } = pendingOwner;
+
+        // Ensure character has a species
+        if (!updatedCharacter.speciesId) {
+          throw new BadRequestException(
+            "Cannot set pending ownership on a character without a species",
+          );
+        }
+
+        let resolvedAccountId = providerAccountId;
+        let displayIdentifier: string | undefined;
+
+        // Resolve Discord username to ID if necessary
+        if (provider === ExternalAccountProvider.DISCORD) {
+          const isNumericId = /^\d{17,19}$/.test(providerAccountId);
+          if (!isNumericId) {
+            displayIdentifier = providerAccountId;
+          }
+          resolvedAccountId = await this.resolveDiscordIdentifier(
+            updatedCharacter.speciesId,
+            providerAccountId,
+          );
+        } else if (provider === ExternalAccountProvider.DEVIANTART) {
+          displayIdentifier = providerAccountId;
+        }
+
+        // Remove old pending ownership if exists
+        if (existingPending) {
+          await this.pendingOwnershipService.remove(existingPending.id);
+        }
+
+        // Create new pending ownership (with auto-claim if account is already linked)
+        await this.pendingOwnershipService.createForCharacter(
+          id,
+          provider,
+          resolvedAccountId,
+          displayIdentifier,
+        );
+      }
+    }
+
+    // Return the updated character (re-fetch to get latest state)
+    const finalCharacter = await this.db.character.findUnique({
+      where: { id },
+    });
+    if (!finalCharacter) {
+      throw new NotFoundException("Character not found after update");
+    }
+    return finalCharacter;
+  }
+
+  /**
+   * Update character registry fields (registryId, speciesVariant, traitValues).
+   * Permission checking is handled by the guard - this method trusts the caller.
+   */
+  async updateRegistry(
+    id: string,
+    userId: string,
+    input: {
+      characterData: Prisma.CharacterUpdateInput;
+    },
+  ) {
+    const character = await this.findOne(id, userId);
+    const { characterData } = input;
+
+    // Registry edits require a species
+    if (!character.speciesId) {
+      throw new BadRequestException(
+        "Cannot update registry fields on a character without a species",
+      );
+    }
+
+    // Validate trait values if provided
+    if (characterData.traitValues) {
+      const traitValues =
+        characterData.traitValues as PrismaJson.CharacterTraitValuesJson;
+      if (Array.isArray(traitValues) && traitValues.length > 0) {
+        await this.validateTraitValues(character.speciesId, traitValues);
+      }
+    }
+
+    // Update the character
+    const updatedCharacter = await this.db.character.update({
+      where: { id },
+      data: characterData,
+    });
+
+    return updatedCharacter;
+  }
+
+  /**
    * Validates that the user has permission to edit the specified fields.
    * Profile fields require canEditOwnCharacter (for owners) or canEditCharacter.
    * Registry fields require canEditOwnCharacterRegistry (for owners) or canEditCharacterRegistry.

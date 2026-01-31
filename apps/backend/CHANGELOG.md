@@ -13,9 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Profile facet (owner-editable): name, details, visibility, trade settings, images, tags
   - Registry facet (admin-controlled): registryId, speciesVariantId, traitValues
   - New permissions `canEditOwnCharacterRegistry` and `canEditCharacterRegistry` for registry field access
-  - Field-level permission validation in CharactersService.update() method
+  - New `updateCharacterProfile` mutation for profile fields (requires `canEditOwnCharacter`/`canEditCharacter`)
+  - New `updateCharacterRegistry` mutation for registry fields (requires `canEditOwnCharacterRegistry`/`canEditCharacterRegistry`)
+  - New `CharacterRegistryEditGuard` for registry permission checking
   - Updated CharacterEditGuard to allow access if user has ANY edit capability
   - Updated findEditableCharacters query to include registry permissions
+  - Deprecated `updateCharacter` mutation in favor of faceted mutations
 - **Character Registry ID**: New `registryId` field for official species identifiers
   - Unique per species (@@unique constraint on speciesId + registryId)
   - Stored as VARCHAR(100) for flexible identifier formats

@@ -22,6 +22,7 @@ import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermi
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { AllowCharacterEditor } from "../auth/decorators/AllowCharacterEditor";
+import { AllowCharacterRegistryEditor } from "../auth/decorators/AllowCharacterRegistryEditor";
 import { CharactersService } from "./characters.service";
 import { TagsService } from "../tags/tags.service";
 import { UsersService } from "../users/users.service";
@@ -48,6 +49,8 @@ import { Species } from "../species/entities/species.entity";
 import {
   CreateCharacterInput,
   UpdateCharacterInput,
+  UpdateCharacterProfileInput,
+  UpdateCharacterRegistryInput,
   CharacterFiltersInput,
   TransferCharacterInput,
   ManageTagsInput,
@@ -57,6 +60,8 @@ import { UpdateCharacterTraitsInput } from "./dto/character-trait.dto";
 import {
   mapCreateCharacterInputToService,
   mapUpdateCharacterInputToService,
+  mapUpdateCharacterProfileInputToService,
+  mapUpdateCharacterRegistryInputToService,
   mapUpdateCharacterTraitsInputToService,
   mapPrismaCharacterToGraphQL,
   mapPrismaCharacterConnectionToGraphQL,
@@ -133,9 +138,14 @@ export class CharactersResolver {
     return mapPrismaCharacterToGraphQL(character);
   }
 
+  /**
+   * @deprecated Use updateCharacterProfile for profile fields or updateCharacterRegistry for registry fields
+   */
   @AllowGlobalAdmin()
   @AllowCharacterEditor({ characterId: "id" })
-  @Mutation(() => CharacterEntity)
+  @Mutation(() => CharacterEntity, {
+    deprecationReason: "Use updateCharacterProfile for profile fields or updateCharacterRegistry for registry fields",
+  })
   async updateCharacter(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: UpdateCharacterInput,
@@ -173,6 +183,69 @@ export class CharactersResolver {
 
     const serviceInput = mapUpdateCharacterInputToService(input);
     const character = await this.charactersService.update(
+      id,
+      user.id,
+      serviceInput,
+    );
+    return mapPrismaCharacterToGraphQL(character);
+  }
+
+  @AllowGlobalAdmin()
+  @AllowCharacterEditor({ characterId: "id" })
+  @Mutation(() => CharacterEntity, {
+    description: "Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.",
+  })
+  async updateCharacterProfile(
+    @Args("id", { type: () => ID }) id: string,
+    @Args("input") input: UpdateCharacterProfileInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<CharacterEntity> {
+    // If updating ownership or pending ownership, require canCreateOrphanedCharacter permission
+    if (input.ownerIdUpdate !== undefined || input.pendingOwnerUpdate !== undefined) {
+      const char = await this.charactersService.findOne(id, user.id);
+      const speciesId = char.speciesId ?? undefined;
+
+      // Validate that character has a species
+      if (!speciesId) {
+        throw new BadRequestException(
+          'Cannot manage ownership on a character without a species',
+        );
+      }
+
+      // Check permissions
+      const hasPermission =
+        await this.charactersService.userHasOrphanedCharacterPermission(
+          user.id,
+          speciesId,
+        );
+      if (!hasPermission) {
+        throw new ForbiddenException(
+          'You do not have permission to manage character ownership',
+        );
+      }
+    }
+
+    const serviceInput = mapUpdateCharacterProfileInputToService(input);
+    const character = await this.charactersService.updateProfile(
+      id,
+      user.id,
+      serviceInput,
+    );
+    return mapPrismaCharacterToGraphQL(character);
+  }
+
+  @AllowGlobalAdmin()
+  @AllowCharacterRegistryEditor({ characterId: "id" })
+  @Mutation(() => CharacterEntity, {
+    description: "Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission.",
+  })
+  async updateCharacterRegistry(
+    @Args("id", { type: () => ID }) id: string,
+    @Args("input") input: UpdateCharacterRegistryInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<CharacterEntity> {
+    const serviceInput = mapUpdateCharacterRegistryInputToService(input);
+    const character = await this.charactersService.updateRegistry(
       id,
       user.id,
       serviceInput,

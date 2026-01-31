@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated permission descriptions to clarify Profile vs Registry field access
   - Updated GraphQL queries to fetch new permission fields
   - Role management UI now shows all faceted permissions
+  - Added `updateCharacterProfile` mutation for profile fields
+  - Added `updateCharacterRegistry` mutation for registry fields
+  - Added `registryId` field to character queries
 
 - **Upload Character Images Permissions**: New permissions for controlling image upload character selection
   - Added `canUploadOwnCharacterImages` and `canUploadCharacterImages` to permission UI

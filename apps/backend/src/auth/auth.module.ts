@@ -26,6 +26,7 @@ import { GlobalPermissionGuard } from "./guards/GlobalPermissionGuard";
 import { OwnershipGuard } from "./guards/OwnershipGuard";
 import { SelfGuard } from "./guards/SelfGuard";
 import { CharacterEditGuard } from "./guards/CharacterEditGuard";
+import { CharacterRegistryEditGuard } from "./guards/CharacterRegistryEditGuard";
 import { OptionalJwtAuthGuard } from "./guards/optional-jwt-auth.guard";
 import { CustomThrottlerGuard } from "../middleware/custom-throttler.guard";
 import { OrGuard } from "./guards/OrGuard";
@@ -65,6 +66,7 @@ import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
     OwnershipGuard,
     SelfGuard,
     CharacterEditGuard,
+    CharacterRegistryEditGuard,
     AuthenticatedGuard,
     OptionalJwtAuthGuard,
     CustomThrottlerGuard,
@@ -76,6 +78,7 @@ import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
         OwnershipGuard,
         SelfGuard,
         CharacterEditGuard,
+        CharacterRegistryEditGuard,
         AuthenticatedGuard,
         UnauthenticatedGuard,
       ),
