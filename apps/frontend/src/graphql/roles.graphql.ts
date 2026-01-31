@@ -12,6 +12,8 @@ export const ROLES_BY_COMMUNITY = gql`
         canCreateOrphanedCharacter
         canEditCharacter
         canEditOwnCharacter
+        canEditOwnCharacterRegistry
+        canEditCharacterRegistry
         canEditSpecies
         canManageItems
         canGrantItems
@@ -124,6 +126,8 @@ export const COMMUNITY_MEMBERS_WITH_ROLES = gql`
           canCreateOrphanedCharacter
           canEditCharacter
           canEditOwnCharacter
+          canEditOwnCharacterRegistry
+          canEditCharacterRegistry
           canEditSpecies
           canManageItems
           canGrantItems
@@ -166,6 +170,8 @@ export const UPDATE_COMMUNITY_MEMBER = gql`
         canCreateOrphanedCharacter
         canEditCharacter
         canEditOwnCharacter
+        canEditOwnCharacterRegistry
+        canEditCharacterRegistry
         canEditSpecies
         canManageItems
         canGrantItems

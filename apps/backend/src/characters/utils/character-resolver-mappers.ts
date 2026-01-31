@@ -44,6 +44,7 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     "owner" | "creator"
   > = {
     name: characterData.name,
+    registryId: characterData.registryId,
     species: characterData.speciesId
       ? { connect: { id: characterData.speciesId } }
       : undefined,
@@ -79,6 +80,7 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
   const characterData: Prisma.CharacterUpdateInput = {};
 
   if (inputData.name !== undefined) characterData.name = inputData.name;
+  if (inputData.registryId !== undefined) characterData.registryId = inputData.registryId;
   if (inputData.speciesId !== undefined) {
     characterData.species = inputData.speciesId
       ? { connect: { id: inputData.speciesId } }
@@ -141,6 +143,7 @@ export function mapPrismaCharacterToGraphQL(
   return {
     id: prismaCharacter.id,
     name: prismaCharacter.name,
+    registryId: prismaCharacter.registryId ?? undefined,
     speciesId: prismaCharacter.speciesId ?? undefined,
     speciesVariantId: prismaCharacter.speciesVariantId ?? undefined,
     details: prismaCharacter.details ?? undefined,

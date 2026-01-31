@@ -15,9 +15,17 @@ import { CommunityPermission } from "../CommunityPermission";
  * Works with @AllowCharacterEditor() decorator.
  *
  * Permission logic:
- * - If user owns the character: requires `canEditOwnCharacter` permission
- * - If user does not own the character: requires `canEditCharacter` permission
+ * - If user owns the character: requires ANY of:
+ *   - canEditOwnCharacter (profile fields)
+ *   - canEditOwnCharacterRegistry (registry fields)
+ *   - canEditCharacter (any profile fields)
+ *   - canEditCharacterRegistry (any registry fields)
+ * - If user does not own the character: requires ANY of:
+ *   - canEditCharacter (any profile fields)
+ *   - canEditCharacterRegistry (any registry fields)
  * - Permissions are resolved via character→species→community
+ *
+ * Field-level validation happens in the service layer.
  */
 @Injectable()
 export class CharacterEditGuard implements CanActivate {
@@ -87,21 +95,18 @@ export class CharacterEditGuard implements CanActivate {
       }
 
       // For orphaned characters, check if user has permission to manage orphaned characters
-      // OR has general edit permission
-      const hasOrphanedPermission =
-        await this.permissionService.hasCommunityPermission(
+      // OR has any character edit permission (profile or registry)
+      const permissions =
+        await this.permissionService.getCommunityPermissions(
           user.id,
           community.id,
-          CommunityPermission.CanCreateOrphanedCharacter,
-        );
-      const hasEditPermission =
-        await this.permissionService.hasCommunityPermission(
-          user.id,
-          community.id,
-          CommunityPermission.CanEditCharacter,
         );
 
-      return hasOrphanedPermission || hasEditPermission;
+      return !!(
+        permissions.canCreateOrphanedCharacter ||
+        permissions.canEditCharacter ||
+        permissions.canEditCharacterRegistry
+      );
     }
 
     // Handle owned characters (existing logic)
@@ -124,15 +129,26 @@ export class CharacterEditGuard implements CanActivate {
       return isOwner;
     }
 
-    // Check appropriate permission based on ownership
-    const requiredPermission = isOwner
-      ? CommunityPermission.CanEditOwnCharacter
-      : CommunityPermission.CanEditCharacter;
-
-    return this.permissionService.hasCommunityPermission(
+    // Check if user has ANY character edit permission (profile OR registry)
+    // Field-level validation happens in the service layer
+    const permissions = await this.permissionService.getCommunityPermissions(
       user.id,
       community.id,
-      requiredPermission,
     );
+
+    if (isOwner) {
+      // Owner can edit if they have any own-character or any-character permission
+      return !!(
+        permissions.canEditOwnCharacter ||
+        permissions.canEditOwnCharacterRegistry ||
+        permissions.canEditCharacter ||
+        permissions.canEditCharacterRegistry
+      );
+    } else {
+      // Non-owner needs an "any character" permission
+      return !!(
+        permissions.canEditCharacter || permissions.canEditCharacterRegistry
+      );
+    }
   }
 }

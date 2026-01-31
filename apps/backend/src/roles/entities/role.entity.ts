@@ -29,6 +29,14 @@ export class Role {
   @Field(() => Boolean, { description: 'Whether members with this role can edit their own characters' })
   canEditOwnCharacter!: boolean;
 
+  /** Permission to edit registry fields on own characters */
+  @Field(() => Boolean, { description: 'Whether members with this role can edit registry fields (variant, traits) on their own characters' })
+  canEditOwnCharacterRegistry!: boolean;
+
+  /** Permission to edit registry fields on any character */
+  @Field(() => Boolean, { description: 'Whether members with this role can edit registry fields (variant, traits) on any character' })
+  canEditCharacterRegistry!: boolean;
+
   /** Permission to edit species */
   @Field(() => Boolean, { description: 'Whether members with this role can edit species' })
   canEditSpecies!: boolean;

@@ -175,6 +175,8 @@ export const COMMUNITY_MEMBERS_BY_USER_QUERY = gql`
           canEditRole
           canEditCharacter
           canEditOwnCharacter
+          canEditOwnCharacterRegistry
+          canEditCharacterRegistry
           canCreateOrphanedCharacter
           canListInviteCodes
           canRemoveCommunityMember

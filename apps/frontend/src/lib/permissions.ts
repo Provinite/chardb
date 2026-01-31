@@ -51,13 +51,23 @@ export const PERMISSIONS_MAP = {
     category: 'content',
   },
   canEditCharacter: {
-    name: 'Edit Any Character',
-    description: "Allow editing any community member's characters",
+    name: 'Edit Any Character (Profile)',
+    description: "Allow editing profile fields (name, bio, visibility, trade settings) on any character",
     category: 'content',
   },
   canEditOwnCharacter: {
-    name: 'Edit Own Characters',
-    description: 'Allow editing only characters owned by the member',
+    name: 'Edit Own Characters (Profile)',
+    description: 'Allow editing profile fields (name, bio, visibility, trade settings) on owned characters',
+    category: 'content',
+  },
+  canEditCharacterRegistry: {
+    name: 'Edit Any Character (Registry)',
+    description: 'Allow editing registry fields (registry ID, variant, traits) on any character',
+    category: 'content',
+  },
+  canEditOwnCharacterRegistry: {
+    name: 'Edit Own Character (Registry)',
+    description: 'Allow editing registry fields (registry ID, variant, traits) on owned characters',
     category: 'content',
   },
   canManageItems: {

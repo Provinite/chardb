@@ -19,6 +19,12 @@ export class CreateCharacterInput {
   @MaxLength(100)
   name: string;
 
+  @Field({ nullable: true, description: 'Official registry identifier for this character within its species' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  registryId?: string;
+
   @Field(() => ID, { nullable: true })
   @IsOptional()
   @IsUUID()
@@ -115,6 +121,12 @@ export class UpdateCharacterInput {
   @MinLength(1)
   @MaxLength(100)
   name?: string;
+
+  @Field({ nullable: true, description: 'Official registry identifier for this character within its species' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  registryId?: string;
 
   @Field(() => ID, { nullable: true })
   @IsOptional()

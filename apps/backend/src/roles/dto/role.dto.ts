@@ -44,6 +44,18 @@ export class CreateRoleInput {
   @IsOptional()
   canEditOwnCharacter?: boolean = false;
 
+  /** Permission to edit registry fields on own characters */
+  @Field(() => Boolean, { description: 'Whether members with this role can edit registry fields (variant, traits) on their own characters', defaultValue: false })
+  @IsBoolean()
+  @IsOptional()
+  canEditOwnCharacterRegistry?: boolean = false;
+
+  /** Permission to edit registry fields on any character */
+  @Field(() => Boolean, { description: 'Whether members with this role can edit registry fields (variant, traits) on any character', defaultValue: false })
+  @IsBoolean()
+  @IsOptional()
+  canEditCharacterRegistry?: boolean = false;
+
   /** Permission to edit species */
   @Field(() => Boolean, { description: 'Whether members with this role can edit species', defaultValue: false })
   @IsBoolean()
@@ -149,6 +161,18 @@ export class UpdateRoleInput {
   @IsOptional()
   @IsBoolean()
   canEditOwnCharacter?: boolean;
+
+  /** Permission to edit registry fields on own characters */
+  @Field(() => Boolean, { description: 'Whether members with this role can edit registry fields (variant, traits) on their own characters', nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  canEditOwnCharacterRegistry?: boolean;
+
+  /** Permission to edit registry fields on any character */
+  @Field(() => Boolean, { description: 'Whether members with this role can edit registry fields (variant, traits) on any character', nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  canEditCharacterRegistry?: boolean;
 
   /** Permission to edit species */
   @Field(() => Boolean, { description: 'Whether members with this role can edit species', nullable: true })

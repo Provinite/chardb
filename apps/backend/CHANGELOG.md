@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Faceted Character Editing Permissions**: Separated character editing into Profile and Registry facets
+  - Profile facet (owner-editable): name, details, visibility, trade settings, images, tags
+  - Registry facet (admin-controlled): registryId, speciesVariantId, traitValues
+  - New permissions `canEditOwnCharacterRegistry` and `canEditCharacterRegistry` for registry field access
+  - Field-level permission validation in CharactersService.update() method
+  - Updated CharacterEditGuard to allow access if user has ANY edit capability
+  - Updated findEditableCharacters query to include registry permissions
+- **Character Registry ID**: New `registryId` field for official species identifiers
+  - Unique per species (@@unique constraint on speciesId + registryId)
+  - Stored as VARCHAR(100) for flexible identifier formats
+
 - **Upload Character Images Permissions**: New granular permissions for image upload character selection
   - `canUploadOwnCharacterImages`: Controls ability to upload images to user's own characters within a community
   - `canUploadCharacterImages`: Controls ability to upload images to any character (admin-level permission)

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Faceted Character Editing Permissions UI**: Updated permission system to display new registry permissions
+  - Added `canEditOwnCharacterRegistry` and `canEditCharacterRegistry` to permission labels
+  - Updated permission descriptions to clarify Profile vs Registry field access
+  - Updated GraphQL queries to fetch new permission fields
+  - Role management UI now shows all faceted permissions
+
 - **Upload Character Images Permissions**: New permissions for controlling image upload character selection
   - Added `canUploadOwnCharacterImages` and `canUploadCharacterImages` to permission UI
   - Centralized type-safe permission definitions in `lib/permissions.ts`

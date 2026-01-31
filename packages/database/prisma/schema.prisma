@@ -144,6 +144,7 @@ model PasswordResetToken {
 model Character {
   id                String     @id @default(uuid())
   name              String     @db.VarChar(100)
+  registryId        String?    @map("registry_id") @db.VarChar(100)
   speciesId         String?    @map("species_id")
   speciesVariantId  String?    @map("species_variant_id")
   details           String?    @db.Text
@@ -179,6 +180,7 @@ model Character {
   // Pending ownership
   pendingOwnership PendingOwnership?
 
+  @@unique([speciesId, registryId])
   @@index([traitValues], type: Gin, map: "character_traitvalues_gin_idx")
   @@map("characters")
 }
@@ -468,6 +470,8 @@ model Role {
   canCreateOrphanedCharacter Boolean @default(false) @map("can_create_orphaned_character")
   canEditCharacter         Boolean @default(false) @map("can_edit_character")
   canEditOwnCharacter      Boolean @default(false) @map("can_edit_own_character")
+  canEditOwnCharacterRegistry Boolean @default(false) @map("can_edit_own_character_registry")
+  canEditCharacterRegistry    Boolean @default(false) @map("can_edit_character_registry")
   canEditSpecies           Boolean @default(false) @map("can_edit_species")
   canCreateInviteCode      Boolean @default(false) @map("can_create_invite_code")
   canListInviteCodes       Boolean @default(false) @map("can_list_invite_codes")

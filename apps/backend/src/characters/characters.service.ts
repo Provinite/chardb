@@ -8,7 +8,31 @@ import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
 import { DiscordService } from "../discord/discord.service";
+import { PermissionService } from "../auth/PermissionService";
+import { CommunityPermission } from "../auth/CommunityPermission";
 import { Prisma, Visibility, ExternalAccountProvider } from "@chardb/database";
+
+/**
+ * Field classification for permission checks.
+ * Profile fields can be edited by owners with canEditOwnCharacter.
+ * Registry fields require canEditOwnCharacterRegistry or canEditCharacterRegistry.
+ */
+const PROFILE_FIELDS = new Set([
+  "name",
+  "details",
+  "visibility",
+  "isSellable",
+  "isTradeable",
+  "price",
+  "customFields",
+  "mainMedia",
+]);
+
+const REGISTRY_FIELDS = new Set([
+  "registryId",
+  "speciesVariant",
+  "traitValues",
+]);
 
 export interface PendingOwnerInput {
   provider: ExternalAccountProvider;
@@ -43,6 +67,7 @@ export class CharactersService {
     private readonly tagsService: TagsService,
     private readonly pendingOwnershipService: PendingOwnershipService,
     private readonly discordService: DiscordService,
+    private readonly permissionService: PermissionService,
   ) {}
 
   async create(
@@ -281,7 +306,7 @@ export class CharactersService {
           ownerId: userId,
           speciesId: null,
         },
-        // User owns the character AND has canEditOwnCharacter permission in the community
+        // User owns the character AND has canEditOwnCharacter permission (profile fields)
         {
           ownerId: userId,
           species: {
@@ -299,13 +324,48 @@ export class CharactersService {
             },
           },
         },
-        // User has canEditCharacter permission in the community (works for any character)
+        // User owns the character AND has canEditOwnCharacterRegistry permission (registry fields)
+        {
+          ownerId: userId,
+          species: {
+            community: {
+              roles: {
+                some: {
+                  canEditOwnCharacterRegistry: true,
+                  communityMembers: {
+                    some: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        // User has canEditCharacter permission (any character profile fields)
         {
           species: {
             community: {
               roles: {
                 some: {
                   canEditCharacter: true,
+                  communityMembers: {
+                    some: {
+                      userId: userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        // User has canEditCharacterRegistry permission (any character registry fields)
+        {
+          species: {
+            community: {
+              roles: {
+                some: {
+                  canEditCharacterRegistry: true,
                   communityMembers: {
                     some: {
                       userId: userId,
@@ -468,6 +528,23 @@ export class CharactersService {
     const character = await this.findOne(id, userId);
 
     const { characterData, tags, pendingOwner, ownerId } = input;
+
+    // Validate field-level permissions if character has a species (community context)
+    if (character.speciesId) {
+      const species = await this.db.species.findUnique({
+        where: { id: character.speciesId },
+        select: { communityId: true },
+      });
+      if (species) {
+        await this.validateFieldPermissions(
+          userId,
+          character,
+          characterData,
+          tags,
+          species.communityId,
+        );
+      }
+    }
 
     // Prevent changing species once it's set
     if (characterData.species !== undefined && character.speciesId) {
@@ -643,6 +720,63 @@ export class CharactersService {
     });
 
     return true;
+  }
+
+  /**
+   * Validates that the user has permission to edit the specified fields.
+   * Profile fields require canEditOwnCharacter (for owners) or canEditCharacter.
+   * Registry fields require canEditOwnCharacterRegistry (for owners) or canEditCharacterRegistry.
+   */
+  async validateFieldPermissions(
+    userId: string,
+    character: { ownerId: string | null; speciesId: string | null },
+    characterData: Prisma.CharacterUpdateInput,
+    tags: string[] | undefined,
+    communityId: string,
+  ): Promise<void> {
+    const isOwner = character.ownerId === userId;
+    const permissions = await this.permissionService.getCommunityPermissions(
+      userId,
+      communityId,
+    );
+
+    // Determine which facets the user can edit
+    const canEditProfile = isOwner
+      ? permissions.canEditOwnCharacter || permissions.canEditCharacter
+      : permissions.canEditCharacter;
+    const canEditRegistry = isOwner
+      ? permissions.canEditOwnCharacterRegistry ||
+        permissions.canEditCharacterRegistry
+      : permissions.canEditCharacterRegistry;
+
+    // Check for profile field violations
+    const profileFieldsInInput = Object.keys(characterData).filter((k) =>
+      PROFILE_FIELDS.has(k),
+    );
+    // Tags are profile-level (handled separately from characterData)
+    if (tags !== undefined) {
+      profileFieldsInInput.push("tags");
+    }
+
+    if (profileFieldsInInput.length > 0 && !canEditProfile) {
+      throw new ForbiddenException(
+        `You do not have permission to edit profile fields (${profileFieldsInInput.join(", ")}). ` +
+          `You need the "${isOwner ? "Edit Own Characters" : "Edit Any Character"}" permission.`,
+      );
+    }
+
+    // Check for registry field violations
+    const registryFieldsInInput = Object.keys(characterData).filter((k) =>
+      REGISTRY_FIELDS.has(k),
+    );
+
+    if (registryFieldsInInput.length > 0 && !canEditRegistry) {
+      throw new ForbiddenException(
+        `You do not have permission to edit registry fields (${registryFieldsInInput.join(", ")}). ` +
+          `Registry fields like species variant and traits require admin permission. ` +
+          `Contact a species admin to modify these fields.`,
+      );
+    }
   }
 
   async transfer(
@@ -904,14 +1038,44 @@ export class CharactersService {
     updateData: { traitValues: PrismaJson.CharacterTraitValuesJson },
     userId: string,
   ) {
-    // Fetch character to validate species
+    // Fetch character to validate species and ownership
     const character = await this.db.character.findUnique({
       where: { id },
-      select: { speciesId: true },
+      select: { speciesId: true, ownerId: true },
     });
 
     if (!character) {
       throw new NotFoundException(`Character with ID ${id} not found`);
+    }
+
+    // Validate registry permission (trait values are registry fields)
+    if (character.speciesId) {
+      const species = await this.db.species.findUnique({
+        where: { id: character.speciesId },
+        select: { communityId: true },
+      });
+
+      if (species) {
+        const isOwner = character.ownerId === userId;
+        const permissions =
+          await this.permissionService.getCommunityPermissions(
+            userId,
+            species.communityId,
+          );
+
+        const canEditRegistry = isOwner
+          ? permissions.canEditOwnCharacterRegistry ||
+            permissions.canEditCharacterRegistry
+          : permissions.canEditCharacterRegistry;
+
+        if (!canEditRegistry) {
+          throw new ForbiddenException(
+            "You do not have permission to edit trait values. " +
+              "Trait values are registry fields that require admin permission. " +
+              "Contact a species admin to modify these fields.",
+          );
+        }
+      }
     }
 
     // Validate trait values if character has a species

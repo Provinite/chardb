@@ -26,6 +26,10 @@ export interface CreateRoleServiceInput {
   canEditCharacter?: boolean;
   /** Permission to edit own characters only */
   canEditOwnCharacter?: boolean;
+  /** Permission to edit registry fields on own characters */
+  canEditOwnCharacterRegistry?: boolean;
+  /** Permission to edit registry fields on any character */
+  canEditCharacterRegistry?: boolean;
   /** Permission to edit species */
   canEditSpecies?: boolean;
   /** Permission to create invite codes */
@@ -66,6 +70,10 @@ export interface UpdateRoleServiceInput {
   canEditCharacter?: boolean;
   /** Permission to edit own characters only */
   canEditOwnCharacter?: boolean;
+  /** Permission to edit registry fields on own characters */
+  canEditOwnCharacterRegistry?: boolean;
+  /** Permission to edit registry fields on any character */
+  canEditCharacterRegistry?: boolean;
   /** Permission to edit species */
   canEditSpecies?: boolean;
   /** Permission to create invite codes */

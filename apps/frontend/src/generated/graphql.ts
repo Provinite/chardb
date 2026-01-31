@@ -72,6 +72,8 @@ export type Character = {
   ownerId: Maybe<Scalars['ID']['output']>;
   pendingOwnership: Maybe<PendingOwnership>;
   price: Maybe<Scalars['Float']['output']>;
+  /** Official registry identifier for this character within its species */
+  registryId: Maybe<Scalars['String']['output']>;
   /** Species this character belongs to */
   species: Maybe<Species>;
   /** ID of the species this character belongs to */
@@ -363,6 +365,8 @@ export type CreateCharacterInput = {
   /** Create character with pending ownership for an external account */
   pendingOwner?: InputMaybe<PendingOwnerInput>;
   price?: InputMaybe<Scalars['Float']['input']>;
+  /** Official registry identifier for this character within its species */
+  registryId?: InputMaybe<Scalars['String']['input']>;
   speciesId?: InputMaybe<Scalars['ID']['input']>;
   speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
   tags?: Array<Scalars['String']['input']>;
@@ -487,8 +491,12 @@ export type CreateRoleInput = {
   canCreateSpecies?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit characters */
   canEditCharacter?: Scalars['Boolean']['input'];
+  /** Whether members with this role can edit registry fields (variant, traits) on any character */
+  canEditCharacterRegistry?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit their own characters */
   canEditOwnCharacter?: Scalars['Boolean']['input'];
+  /** Whether members with this role can edit registry fields (variant, traits) on their own characters */
+  canEditOwnCharacterRegistry?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit existing roles */
   canEditRole?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit species */
@@ -2308,8 +2316,12 @@ export type Role = {
   canCreateSpecies: Scalars['Boolean']['output'];
   /** Whether members with this role can edit characters */
   canEditCharacter: Scalars['Boolean']['output'];
+  /** Whether members with this role can edit registry fields (variant, traits) on any character */
+  canEditCharacterRegistry: Scalars['Boolean']['output'];
   /** Whether members with this role can edit their own characters */
   canEditOwnCharacter: Scalars['Boolean']['output'];
+  /** Whether members with this role can edit registry fields (variant, traits) on their own characters */
+  canEditOwnCharacterRegistry: Scalars['Boolean']['output'];
   /** Whether members with this role can edit existing roles */
   canEditRole: Scalars['Boolean']['output'];
   /** Whether members with this role can edit species */
@@ -2592,6 +2604,8 @@ export type UpdateCharacterInput = {
   /** Update pending ownership (requires canCreateOrphanedCharacter permission) */
   pendingOwnerUpdate?: InputMaybe<PendingOwnerUpdate>;
   price?: InputMaybe<Scalars['Float']['input']>;
+  /** Official registry identifier for this character within its species */
+  registryId?: InputMaybe<Scalars['String']['input']>;
   speciesId?: InputMaybe<Scalars['ID']['input']>;
   speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -2719,8 +2733,12 @@ export type UpdateRoleInput = {
   canCreateSpecies?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit characters */
   canEditCharacter?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can edit registry fields (variant, traits) on any character */
+  canEditCharacterRegistry?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit their own characters */
   canEditOwnCharacter?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can edit registry fields (variant, traits) on their own characters */
+  canEditOwnCharacterRegistry?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit existing roles */
   canEditRole?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit species */
@@ -3136,7 +3154,7 @@ export type CommunityMembersByUserQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canCreateOrphanedCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type CommunityColorFieldsFragment = { __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string };
 
@@ -3595,7 +3613,7 @@ export type RolesByCommunityDetailedQueryVariables = Exact<{
 }>;
 
 
-export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
+export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
 
 export type CreateRoleMutationVariables = Exact<{
   input: CreateRoleInput;
@@ -3619,7 +3637,7 @@ export type CommunityMembersWithRolesQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
+export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
 
 export type UpdateCommunityMemberMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3627,7 +3645,7 @@ export type UpdateCommunityMemberMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
+export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
 
 export type UserWithAvatarFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
@@ -5768,6 +5786,8 @@ export const CommunityMembersByUserDocument = gql`
         canEditRole
         canEditCharacter
         canEditOwnCharacter
+        canEditOwnCharacterRegistry
+        canEditCharacterRegistry
         canCreateOrphanedCharacter
         canListInviteCodes
         canRemoveCommunityMember
@@ -8769,6 +8789,8 @@ export const RolesByCommunityDetailedDocument = gql`
       canCreateOrphanedCharacter
       canEditCharacter
       canEditOwnCharacter
+      canEditOwnCharacterRegistry
+      canEditCharacterRegistry
       canEditSpecies
       canManageItems
       canGrantItems
@@ -8970,6 +8992,8 @@ export const CommunityMembersWithRolesDocument = gql`
         canCreateOrphanedCharacter
         canEditCharacter
         canEditOwnCharacter
+        canEditOwnCharacterRegistry
+        canEditCharacterRegistry
         canEditSpecies
         canManageItems
         canGrantItems
@@ -9046,6 +9070,8 @@ export const UpdateCommunityMemberDocument = gql`
       canCreateOrphanedCharacter
       canEditCharacter
       canEditOwnCharacter
+      canEditOwnCharacterRegistry
+      canEditCharacterRegistry
       canEditSpecies
       canManageItems
       canGrantItems

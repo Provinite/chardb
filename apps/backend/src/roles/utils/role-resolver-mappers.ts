@@ -19,6 +19,8 @@ export function mapCreateRoleInputToService(input: CreateRoleInput): CreateRoleS
     canCreateOrphanedCharacter: input.canCreateOrphanedCharacter,
     canEditCharacter: input.canEditCharacter,
     canEditOwnCharacter: input.canEditOwnCharacter,
+    canEditOwnCharacterRegistry: input.canEditOwnCharacterRegistry,
+    canEditCharacterRegistry: input.canEditCharacterRegistry,
     canEditSpecies: input.canEditSpecies,
     canCreateInviteCode: input.canCreateInviteCode,
     canListInviteCodes: input.canListInviteCodes,
@@ -45,6 +47,8 @@ export function mapUpdateRoleInputToService(input: UpdateRoleInput): UpdateRoleS
   if (input.canCreateOrphanedCharacter !== undefined) result.canCreateOrphanedCharacter = input.canCreateOrphanedCharacter;
   if (input.canEditCharacter !== undefined) result.canEditCharacter = input.canEditCharacter;
   if (input.canEditOwnCharacter !== undefined) result.canEditOwnCharacter = input.canEditOwnCharacter;
+  if (input.canEditOwnCharacterRegistry !== undefined) result.canEditOwnCharacterRegistry = input.canEditOwnCharacterRegistry;
+  if (input.canEditCharacterRegistry !== undefined) result.canEditCharacterRegistry = input.canEditCharacterRegistry;
   if (input.canEditSpecies !== undefined) result.canEditSpecies = input.canEditSpecies;
   if (input.canCreateInviteCode !== undefined) result.canCreateInviteCode = input.canCreateInviteCode;
   if (input.canListInviteCodes !== undefined) result.canListInviteCodes = input.canListInviteCodes;
@@ -75,6 +79,8 @@ export function mapPrismaRoleToGraphQL(prismaRole: PrismaRole): Role {
     canCreateCharacter: prismaRole.canCreateCharacter,
     canEditCharacter: prismaRole.canEditCharacter,
     canEditOwnCharacter: prismaRole.canEditOwnCharacter,
+    canEditOwnCharacterRegistry: prismaRole.canEditOwnCharacterRegistry,
+    canEditCharacterRegistry: prismaRole.canEditCharacterRegistry,
     canEditSpecies: prismaRole.canEditSpecies,
     canCreateInviteCode: prismaRole.canCreateInviteCode,
     canListInviteCodes: prismaRole.canListInviteCodes,
