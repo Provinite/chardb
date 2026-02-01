@@ -422,7 +422,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             pendingOwner:
               characterTarget?.type === "pending"
                 ? {
-                    provider: characterTarget.provider as any,
+                    provider: characterTarget.provider,
                     providerAccountId: characterTarget.providerAccountId,
                   }
                 : undefined,

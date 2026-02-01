@@ -69,6 +69,9 @@ export const GET_CHARACTER = gql`
         id
         name
         communityId
+        hasImage
+        createdAt
+        updatedAt
         community {
           id
           name
@@ -79,6 +82,15 @@ export const GET_CHARACTER = gql`
       speciesVariant {
         id
         name
+        speciesId
+        colorId
+        createdAt
+        updatedAt
+        color {
+          id
+          name
+          hexCode
+        }
       }
       traitValues {
         traitId

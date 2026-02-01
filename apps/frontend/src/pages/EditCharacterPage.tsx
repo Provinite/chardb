@@ -386,10 +386,10 @@ export const EditCharacterPage: React.FC = () => {
 
       // Set species and variant if they exist
       if (character.species) {
-        setSelectedSpecies(character.species as any);
+        setSelectedSpecies(character.species);
       }
       if (character.speciesVariant) {
-        setSelectedVariant(character.speciesVariant as any);
+        setSelectedVariant(character.speciesVariant);
       }
 
       // Set registry values (traits and registryId)
@@ -420,9 +420,7 @@ export const EditCharacterPage: React.FC = () => {
         // Character is orphaned with pending ownership
         setCharacterTarget({
           type: "pending",
-          provider: character.pendingOwnership.provider as
-            | "DISCORD"
-            | "DEVIANTART",
+          provider: character.pendingOwnership.provider,
           providerAccountId:
             character.pendingOwnership.displayIdentifier ||
             character.pendingOwnership.providerAccountId,
