@@ -220,6 +220,7 @@ interface SpeciesSelectorProps {
       canCreateCharacter?: boolean;
     };
   }>;
+  disabled?: boolean;
 }
 
 export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
@@ -229,6 +230,7 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
   onVariantChange,
   error,
   userCommunityMemberships = [],
+  disabled = false,
 }) => {
   const [speciesSearchQuery, setSpeciesSearchQuery] = useState("");
 
@@ -319,6 +321,7 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
             placeholder="Search species..."
             value={speciesSearchQuery}
             onChange={(e) => setSpeciesSearchQuery(e.target.value)}
+            disabled={disabled}
           />
         </SearchContainer>
 
@@ -340,12 +343,13 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
           <SelectionGrid>
             {filteredSpecies.map((species) => {
               const hasPermission = canCreateCharacterForSpecies(species);
+              const isCardDisabled = disabled || !hasPermission;
               return (
                 <SelectionCard
                   key={species.id}
                   isSelected={selectedSpecies?.id === species.id}
-                  isDisabled={!hasPermission}
-                  onClick={() => handleSpeciesSelect(species)}
+                  isDisabled={isCardDisabled}
+                  onClick={() => !disabled && handleSpeciesSelect(species)}
                   title={!hasPermission ? "You don't have permission to create characters for this species" : undefined}
                 >
                   <CardHeader>
@@ -400,7 +404,8 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
                 <SelectionCard
                   key={variant.id}
                   isSelected={selectedVariant?.id === variant.id}
-                  onClick={() => handleVariantSelect(variant)}
+                  isDisabled={disabled}
+                  onClick={() => !disabled && handleVariantSelect(variant)}
                 >
                   <CardHeader>
                     <CardIcon variant="variant">

@@ -26,7 +26,11 @@ import { ExternalAccountProvider } from "../generated/graphql";
 import { useGetCommunityMembersQuery } from "../graphql/communities.graphql";
 import { useAuth } from "../contexts/AuthContext";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
-import { canUserEditCharacter } from "../lib/characterPermissions";
+import {
+  canUserEditCharacter,
+  canUserEditCharacterProfile,
+  canUserEditCharacterRegistry,
+} from "../lib/characterPermissions";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
@@ -361,6 +365,10 @@ export const EditCharacterPage: React.FC = () => {
     character?.species?.community?.id,
   );
 
+  // Compute section-specific edit permissions
+  const canEditProfile = canUserEditCharacterProfile(character, user, permissions);
+  const canEditRegistry = canUserEditCharacterRegistry(character, user, permissions);
+
   // Reset form when character data loads
   useEffect(() => {
     if (character) {
@@ -643,6 +651,13 @@ export const EditCharacterPage: React.FC = () => {
       <Title>Edit Character</Title>
 
       <Form onSubmit={handleSubmit(onSubmit)}>
+        {!canEditProfile && (
+          <InfoBox>
+            You don't have permission to edit profile fields for this character.
+            Profile editing is disabled.
+          </InfoBox>
+        )}
+
         <FormSection>
           <SectionTitle>Basic Information</SectionTitle>
 
@@ -653,6 +668,7 @@ export const EditCharacterPage: React.FC = () => {
                 {...register("name")}
                 placeholder="Character name"
                 hasError={!!errors.name}
+                disabled={!canEditProfile}
               />
               {errors.name && (
                 <ErrorMessage>{errors.name.message}</ErrorMessage>
@@ -664,6 +680,7 @@ export const EditCharacterPage: React.FC = () => {
             register={register}
             setValue={setValue}
             watch={watch}
+            disabled={!canEditProfile}
           />
         </FormSection>
 
@@ -679,6 +696,7 @@ export const EditCharacterPage: React.FC = () => {
               }
               error={errors.details?.message}
               maxLength={15000}
+              disabled={!canEditProfile}
             />
           </FormGroup>
         </FormSection>
@@ -692,6 +710,7 @@ export const EditCharacterPage: React.FC = () => {
               <Select
                 {...register("visibility")}
                 hasError={!!errors.visibility}
+                disabled={!canEditProfile}
               >
                 <option value="PUBLIC">Public - Anyone can view</option>
                 <option value="UNLISTED">
@@ -708,11 +727,11 @@ export const EditCharacterPage: React.FC = () => {
               <Label>Trading Options</Label>
               <CheckboxGroup>
                 <CheckboxLabel>
-                  <Checkbox {...register("isTradeable")} />
+                  <Checkbox {...register("isTradeable")} disabled={!canEditProfile} />
                   Available for trading
                 </CheckboxLabel>
                 <CheckboxLabel>
-                  <Checkbox {...register("isSellable")} />
+                  <Checkbox {...register("isSellable")} disabled={!canEditProfile} />
                   Available for sale
                 </CheckboxLabel>
               </CheckboxGroup>
@@ -730,6 +749,7 @@ export const EditCharacterPage: React.FC = () => {
                 min="0"
                 pattern="^[0-9]*\.?[0-9]*$"
                 hasError={!!errors.price}
+                disabled={!canEditProfile}
                 onInput={(e) => {
                   const target = e.target as HTMLInputElement;
                   const value = target.value;
@@ -764,6 +784,7 @@ export const EditCharacterPage: React.FC = () => {
               loading={tagsLoading}
               placeholder="Start typing to search tags..."
               maxTags={20}
+              disabled={!canEditProfile}
             />
             <TagsHelp>
               Start typing to find existing tags or create new ones. Tags help
@@ -810,6 +831,7 @@ export const EditCharacterPage: React.FC = () => {
                 selectedVariant={selectedVariant}
                 onSpeciesChange={setSelectedSpecies}
                 onVariantChange={setSelectedVariant}
+                disabled={!canEditProfile}
               />
             </>
           )}
@@ -863,6 +885,14 @@ export const EditCharacterPage: React.FC = () => {
             <InfoBox>
               Registry fields are managed by species administrators. These include the official registry ID and character traits.
             </InfoBox>
+            {!canEditRegistry && (
+              <WarningBox>
+                <AlertTriangle size={20} />
+                <div>
+                  You don't have permission to edit registry fields for this character.
+                </div>
+              </WarningBox>
+            )}
 
             <FormGroup>
               <Label>Official Identifier</Label>
@@ -870,7 +900,7 @@ export const EditCharacterPage: React.FC = () => {
                 value={registryId}
                 onChange={(e) => setRegistryId(e.target.value)}
                 placeholder="e.g., Strawberry Bliss, TH-042"
-                disabled={isSubmittingRegistry}
+                disabled={!canEditRegistry || isSubmittingRegistry}
                 maxLength={100}
               />
               <TagsHelp>
@@ -885,14 +915,14 @@ export const EditCharacterPage: React.FC = () => {
               }
               traitValues={traitValues}
               onChange={setTraitValues}
-              disabled={isSubmittingRegistry}
+              disabled={!canEditRegistry || isSubmittingRegistry}
             />
             <TraitActions>
               <Button
                 type="button"
                 variant="primary"
                 onClick={handleSaveRegistry}
-                disabled={isSubmittingRegistry}
+                disabled={!canEditRegistry || isSubmittingRegistry}
               >
                 {isSubmittingRegistry ? "Saving Registry..." : "Save Registry"}
               </Button>
@@ -912,7 +942,7 @@ export const EditCharacterPage: React.FC = () => {
           <Button
             type="submit"
             variant="primary"
-            disabled={isSubmitting || !isGrantTargetValid}
+            disabled={!canEditProfile || isSubmitting || !isGrantTargetValid}
           >
             {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>
