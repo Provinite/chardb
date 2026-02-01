@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v8.0.0] - 2026-02-01
+
 ### Added
 
 - **Faceted Character Editing Permissions**: Separated character editing into Profile and Registry facets
