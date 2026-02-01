@@ -12,7 +12,7 @@
 - You may start the servers if they are not running with `yarn dev:agent`
   - Frontend: localhost:3000
 - The `gh` cli is configured for github interactions beyond simple `git` cli commands
-- Local Development Credentials: test@example.com / test123
+- Local Development Credentials: See [LOCAL_DEV_SEED_DATA.md](./LOCAL_DEV_SEED_DATA.md) for test user personas and credentials
 - Use the .tmp folder in the package root for temporary files (like image uploads).
 - App-specific changes should go in the appropriate CHANGELOG.md. The root-level CHANGELOG.md is for tracking cross-cutting changes and non-app-specific changes (like CI for example)
 - PSQL credentials are in the backend .env file
