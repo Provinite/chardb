@@ -48,9 +48,9 @@ import { SpeciesVariant } from "../species-variants/entities/species-variant.ent
 import { Species } from "../species/entities/species.entity";
 import {
   CreateCharacterInput,
-  UpdateCharacterInput,
   UpdateCharacterProfileInput,
   UpdateCharacterRegistryInput,
+  AssignCharacterSpeciesInput,
   CharacterFiltersInput,
   TransferCharacterInput,
   ManageTagsInput,
@@ -58,7 +58,6 @@ import {
 } from "./dto/character.dto";
 import {
   mapCreateCharacterInputToService,
-  mapUpdateCharacterInputToService,
   mapUpdateCharacterProfileInputToService,
   mapUpdateCharacterRegistryInputToService,
   mapPrismaCharacterToGraphQL,
@@ -136,58 +135,6 @@ export class CharactersResolver {
     return mapPrismaCharacterToGraphQL(character);
   }
 
-  /**
-   * @deprecated Use updateCharacterProfile for profile fields or updateCharacterRegistry for registry fields
-   */
-  @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
-  @Mutation(() => CharacterEntity, {
-    deprecationReason: "Use updateCharacterProfile for profile fields or updateCharacterRegistry for registry fields",
-  })
-  async updateCharacter(
-    @Args("id", { type: () => ID }) id: string,
-    @Args("input") input: UpdateCharacterInput,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<CharacterEntity> {
-    // If updating ownership or pending ownership, require canCreateOrphanedCharacter permission
-    if (input.ownerIdUpdate !== undefined || input.pendingOwnerUpdate !== undefined) {
-      let speciesId = input.speciesId;
-
-      // If speciesId not in input, fetch from existing character
-      if (!speciesId) {
-        const char = await this.charactersService.findOne(id, user.id);
-        speciesId = char.speciesId ?? undefined;
-      }
-
-      // Validate that character has a species
-      if (!speciesId) {
-        throw new BadRequestException(
-          'Cannot manage ownership on a character without a species',
-        );
-      }
-
-      // Check permissions
-      const hasPermission =
-        await this.charactersService.userHasOrphanedCharacterPermission(
-          user.id,
-          speciesId,
-        );
-      if (!hasPermission) {
-        throw new ForbiddenException(
-          'You do not have permission to manage character ownership',
-        );
-      }
-    }
-
-    const serviceInput = mapUpdateCharacterInputToService(input);
-    const character = await this.charactersService.update(
-      id,
-      user.id,
-      serviceInput,
-    );
-    return mapPrismaCharacterToGraphQL(character);
-  }
-
   @AllowGlobalAdmin()
   @AllowCharacterEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity, {
@@ -248,6 +195,34 @@ export class CharactersResolver {
       user.id,
       serviceInput,
     );
+    return mapPrismaCharacterToGraphQL(character);
+  }
+
+  /**
+   * Assign a species to a character for the first time.
+   * Requires canCreateCharacter permission for the target species.
+   */
+  @AllowGlobalAdmin()
+  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCommunityPermission(CommunityPermission.CanCreateCharacter)
+  @ResolveCommunityFrom({ speciesId: "input.speciesId" })
+  @Mutation(() => CharacterEntity, {
+    description: "Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species.",
+  })
+  async assignCharacterSpecies(
+    @Args("id", { type: () => ID }) id: string,
+    @Args("input") input: AssignCharacterSpeciesInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<CharacterEntity> {
+    const character = await this.charactersService.assignSpecies(id, user.id, {
+      speciesId: input.speciesId,
+      speciesVariantId: input.speciesVariantId,
+      registryId: input.registryId,
+      traitValues: input.traitValues?.map((tv) => ({
+        traitId: tv.traitId,
+        value: tv.value ?? null,
+      })),
+    });
     return mapPrismaCharacterToGraphQL(character);
   }
 

@@ -22,6 +22,20 @@ type ActivityItem {
   user: User!
 }
 
+input AssignCharacterSpeciesInput {
+  """Official registry identifier for this character within its species"""
+  registryId: String
+
+  """Species ID to assign to the character"""
+  speciesId: ID!
+
+  """Species variant ID"""
+  speciesVariantId: ID
+
+  """Initial trait values for the character"""
+  traitValues: [CharacterTraitValueInput!]
+}
+
 type AuthPayload {
   accessToken: String!
   refreshToken: String!
@@ -1188,6 +1202,11 @@ type Mutation {
     input: ManageMediaTagsInput!
   ): Media!
 
+  """
+  Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species.
+  """
+  assignCharacterSpecies(id: ID!, input: AssignCharacterSpeciesInput!): Character!
+
   """Claim an invite code to join a community"""
   claimInviteCode(
     """Invite code claim data"""
@@ -1427,7 +1446,6 @@ type Mutation {
 
   """Unlink an external account from the current user"""
   unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
-  updateCharacter(id: ID!, input: UpdateCharacterInput!): Character! @deprecated(reason: "Use updateCharacterProfile for profile fields or updateCharacterRegistry for registry fields")
 
   """
   Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.
@@ -2514,36 +2532,6 @@ input TransferCharacterInput {
 
 input UnlinkExternalAccountInput {
   provider: ExternalAccountProvider!
-}
-
-input UpdateCharacterInput {
-  customFields: String
-  details: String
-  isSellable: Boolean
-  isTradeable: Boolean
-  mainMediaId: ID
-  name: String
-
-  """
-  Update character ownership (requires canCreateOrphanedCharacter permission)
-  """
-  ownerIdUpdate: OwnerIdUpdate
-
-  """
-  Update pending ownership (requires canCreateOrphanedCharacter permission)
-  """
-  pendingOwnerUpdate: PendingOwnerUpdate
-  price: Float
-
-  """Official registry identifier for this character within its species"""
-  registryId: String
-  speciesId: ID
-  speciesVariantId: ID
-  tags: [String!]
-
-  """Trait values for the character"""
-  traitValues: [CharacterTraitValueInput!]
-  visibility: Visibility
 }
 
 """Input for updating character profile fields"""

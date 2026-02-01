@@ -915,6 +915,72 @@ export class CharactersService {
   }
 
   /**
+   * Assign a species to a character for the first time.
+   * This is only valid for characters that don't already have a species assigned.
+   * Permission checking is handled by the guard - this method trusts the caller has canCreateCharacter for the species.
+   */
+  async assignSpecies(
+    id: string,
+    userId: string,
+    input: {
+      speciesId: string;
+      speciesVariantId?: string;
+      registryId?: string;
+      traitValues?: PrismaJson.CharacterTraitValuesJson;
+    },
+  ) {
+    const character = await this.findOne(id, userId);
+
+    // Cannot assign species if character already has one
+    if (character.speciesId) {
+      throw new BadRequestException(
+        "Character already has a species assigned. Species cannot be changed once set.",
+      );
+    }
+
+    // Verify the species exists
+    const species = await this.db.species.findUnique({
+      where: { id: input.speciesId },
+    });
+    if (!species) {
+      throw new NotFoundException(`Species with ID ${input.speciesId} not found`);
+    }
+
+    // If variant provided, verify it belongs to the species
+    if (input.speciesVariantId) {
+      const variant = await this.db.speciesVariant.findFirst({
+        where: {
+          id: input.speciesVariantId,
+          speciesId: input.speciesId,
+        },
+      });
+      if (!variant) {
+        throw new BadRequestException(
+          "Species variant does not belong to the specified species",
+        );
+      }
+    }
+
+    // Validate trait values if provided
+    if (input.traitValues && input.traitValues.length > 0) {
+      await this.validateTraitValues(input.speciesId, input.traitValues);
+    }
+
+    // Update the character with species assignment
+    const updatedCharacter = await this.db.character.update({
+      where: { id },
+      data: {
+        speciesId: input.speciesId,
+        speciesVariantId: input.speciesVariantId,
+        registryId: input.registryId,
+        traitValues: input.traitValues ?? [],
+      },
+    });
+
+    return updatedCharacter;
+  }
+
+  /**
    * Validates that the user has permission to edit the specified fields.
    * Profile fields require canEditOwnCharacter (for owners) or canEditCharacter.
    * Registry fields require canEditOwnCharacterRegistry (for owners) or canEditCharacterRegistry.

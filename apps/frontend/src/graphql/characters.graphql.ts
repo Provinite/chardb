@@ -300,16 +300,24 @@ export const CREATE_CHARACTER = gql`
   ${USER_BASIC_FRAGMENT}
 `;
 
-export const UPDATE_CHARACTER = gql`
-  mutation UpdateCharacter($id: ID!, $input: UpdateCharacterInput!) {
-    updateCharacter(id: $id, input: $input) {
+export const ASSIGN_CHARACTER_SPECIES = gql`
+  mutation AssignCharacterSpecies($id: ID!, $input: AssignCharacterSpeciesInput!) {
+    assignCharacterSpecies(id: $id, input: $input) {
       id
       name
       species {
         id
         name
       }
-      details
+      speciesVariant {
+        id
+        name
+      }
+      registryId
+      traitValues {
+        traitId
+        value
+      }
       ownerId
       creatorId
       visibility
@@ -546,7 +554,7 @@ export {
 
   // Mutation Hooks
   useCreateCharacterMutation,
-  useUpdateCharacterMutation,
+  useAssignCharacterSpeciesMutation,
   useUpdateCharacterProfileMutation,
   useUpdateCharacterRegistryMutation,
   useDeleteCharacterMutation,
@@ -560,7 +568,7 @@ export {
   type CharacterConnection,
   type CharacterFiltersInput,
   type CreateCharacterInput,
-  type UpdateCharacterInput,
+  type AssignCharacterSpeciesInput,
   type UpdateCharacterProfileInput,
   type UpdateCharacterRegistryInput,
   type TransferCharacterInput,
@@ -575,8 +583,8 @@ export {
   type GetMyCharactersQueryVariables,
   type CreateCharacterMutation,
   type CreateCharacterMutationVariables,
-  type UpdateCharacterMutation,
-  type UpdateCharacterMutationVariables,
+  type AssignCharacterSpeciesMutation,
+  type AssignCharacterSpeciesMutationVariables,
   type UpdateCharacterProfileMutation,
   type UpdateCharacterProfileMutationVariables,
   type UpdateCharacterRegistryMutation,

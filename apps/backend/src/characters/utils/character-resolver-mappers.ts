@@ -1,7 +1,6 @@
 import { ExternalAccountProvider, Prisma } from "@chardb/database";
 import {
   CreateCharacterInput,
-  UpdateCharacterInput,
   UpdateCharacterProfileInput,
   UpdateCharacterRegistryInput,
 } from "../dto/character.dto";
@@ -67,56 +66,6 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     pendingOwner,
     assignToSelf,
   };
-}
-
-export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
-  characterData: Prisma.CharacterUpdateInput;
-  tags?: string[];
-  pendingOwner?: PendingOwnerInput | null;
-  ownerId?: string | null;
-} {
-  const { tags, pendingOwnerUpdate, ownerIdUpdate, ...inputData } = input;
-  const characterData: Prisma.CharacterUpdateInput = {};
-
-  if (inputData.name !== undefined) characterData.name = inputData.name;
-  if (inputData.registryId !== undefined) characterData.registryId = inputData.registryId;
-  if (inputData.speciesId !== undefined) {
-    characterData.species = inputData.speciesId
-      ? { connect: { id: inputData.speciesId } }
-      : { disconnect: true };
-  }
-  if (inputData.speciesVariantId !== undefined) {
-    characterData.speciesVariant = inputData.speciesVariantId
-      ? { connect: { id: inputData.speciesVariantId } }
-      : { disconnect: true };
-  }
-  if (inputData.details !== undefined)
-    characterData.details = inputData.details;
-  if (inputData.visibility !== undefined)
-    characterData.visibility = inputData.visibility;
-  if (inputData.isSellable !== undefined)
-    characterData.isSellable = inputData.isSellable;
-  if (inputData.isTradeable !== undefined)
-    characterData.isTradeable = inputData.isTradeable;
-  if (inputData.price !== undefined) characterData.price = inputData.price;
-  if (inputData.customFields !== undefined) {
-    characterData.customFields = inputData.customFields
-      ? JSON.parse(inputData.customFields)
-      : undefined;
-  }
-  if (inputData.traitValues !== undefined)
-    characterData.traitValues = mapTraitValues(inputData.traitValues);
-  if (inputData.mainMediaId !== undefined) {
-    characterData.mainMedia = inputData.mainMediaId
-      ? { connect: { id: inputData.mainMediaId } }
-      : { disconnect: true };
-  }
-
-  // Extract values from wrapper types
-  const pendingOwner = pendingOwnerUpdate?.set;
-  const ownerId = ownerIdUpdate?.set;
-
-  return { characterData, tags, pendingOwner, ownerId };
 }
 
 /**

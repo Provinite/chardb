@@ -13,10 +13,10 @@ import {
 } from "../components/GrantTargetSelector";
 import {
   useGetCharacterQuery,
-  useUpdateCharacterMutation,
+  useAssignCharacterSpeciesMutation,
   useUpdateCharacterProfileMutation,
   useUpdateCharacterRegistryMutation,
-  UpdateCharacterInput,
+  AssignCharacterSpeciesInput,
   UpdateCharacterProfileInput,
   UpdateCharacterRegistryInput,
   CharacterTraitValueInput,
@@ -330,7 +330,7 @@ export const EditCharacterPage: React.FC = () => {
     });
 
   // Use deprecated mutation only for first-time species assignment
-  const [updateCharacter] = useUpdateCharacterMutation();
+  const [assignCharacterSpecies] = useAssignCharacterSpeciesMutation();
   // Use new faceted mutations for normal edits
   const [updateCharacterProfile] = useUpdateCharacterProfileMutation();
   const [updateCharacterRegistry] = useUpdateCharacterRegistryMutation();
@@ -516,52 +516,41 @@ export const EditCharacterPage: React.FC = () => {
       const isFirstTimeSpeciesAssignment = !character.speciesId && selectedSpecies;
 
       if (isFirstTimeSpeciesAssignment) {
-        // Use deprecated mutation for first-time species assignment
-        const input: UpdateCharacterInput = {
-          name: data.name,
-          details: data.details || undefined,
-          customFields: cleanedCustomFields,
-          visibility: data.visibility as Visibility,
-          isSellable: data.isSellable,
-          isTradeable: data.isTradeable,
-          price:
-            data.price && data.isSellable ? parseFloat(data.price) : undefined,
-          tags,
+        // First assign the species
+        const speciesInput: AssignCharacterSpeciesInput = {
           speciesId: selectedSpecies.id,
           speciesVariantId: selectedVariant?.id,
-          ownerIdUpdate,
-          pendingOwnerUpdate,
         };
 
-        await updateCharacter({
+        await assignCharacterSpecies({
           variables: {
             id: character.id,
-            input,
-          },
-        });
-      } else {
-        // Use new profile mutation for normal edits
-        const input: UpdateCharacterProfileInput = {
-          name: data.name,
-          details: data.details || undefined,
-          customFields: cleanedCustomFields,
-          visibility: data.visibility as Visibility,
-          isSellable: data.isSellable,
-          isTradeable: data.isTradeable,
-          price:
-            data.price && data.isSellable ? parseFloat(data.price) : undefined,
-          tags,
-          ownerIdUpdate,
-          pendingOwnerUpdate,
-        };
-
-        await updateCharacterProfile({
-          variables: {
-            id: character.id,
-            input,
+            input: speciesInput,
           },
         });
       }
+
+      // Update profile fields
+      const profileInput: UpdateCharacterProfileInput = {
+        name: data.name,
+        details: data.details || undefined,
+        customFields: cleanedCustomFields,
+        visibility: data.visibility as Visibility,
+        isSellable: data.isSellable,
+        isTradeable: data.isTradeable,
+        price:
+          data.price && data.isSellable ? parseFloat(data.price) : undefined,
+        tags,
+        ownerIdUpdate,
+        pendingOwnerUpdate,
+      };
+
+      await updateCharacterProfile({
+        variables: {
+          id: character.id,
+          input: profileInput,
+        },
+      });
 
       toast.success("Character updated successfully!");
       navigate(`/character/${character.id}`);

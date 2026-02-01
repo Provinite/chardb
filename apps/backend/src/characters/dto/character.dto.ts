@@ -204,16 +204,19 @@ export class UpdateCharacterRegistryInput {
 }
 
 /**
- * @deprecated Use UpdateCharacterProfileInput or UpdateCharacterRegistryInput instead
+ * Input for first-time species assignment to a character.
+ * This is only valid for characters that don't already have a species assigned.
  */
 @InputType()
-export class UpdateCharacterInput {
-  @Field({ nullable: true })
+export class AssignCharacterSpeciesInput {
+  @Field(() => ID, { description: 'Species ID to assign to the character' })
+  @IsUUID()
+  speciesId: string;
+
+  @Field(() => ID, { nullable: true, description: 'Species variant ID' })
   @IsOptional()
-  @IsString()
-  @MinLength(1)
-  @MaxLength(100)
-  name?: string;
+  @IsUUID()
+  speciesVariantId?: string;
 
   @Field({ nullable: true, description: 'Official registry identifier for this character within its species' })
   @IsOptional()
@@ -221,73 +224,9 @@ export class UpdateCharacterInput {
   @MaxLength(100)
   registryId?: string;
 
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  speciesId?: string;
-
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  speciesVariantId?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(15000)
-  details?: string;
-
-  @Field(() => Visibility, { nullable: true })
-  @IsOptional()
-  @IsEnum(Visibility)
-  visibility?: Visibility;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsBoolean()
-  isSellable?: boolean;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsBoolean()
-  isTradeable?: boolean;
-
-  @Field(() => Float, { nullable: true })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  price?: number;
-
-  @Field(() => [String], { nullable: true })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  tags?: string[];
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  customFields?: string; // JSON field
-
-  @Field(() => [CharacterTraitValueInput], { nullable: true, description: 'Trait values for the character' })
+  @Field(() => [CharacterTraitValueInput], { nullable: true, description: 'Initial trait values for the character' })
   @IsOptional()
   traitValues?: CharacterTraitValueInput[];
-
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  mainMediaId?: string;
-
-  @Field(() => OwnerIdUpdate, { nullable: true, description: 'Update character ownership (requires canCreateOrphanedCharacter permission)' })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => OwnerIdUpdate)
-  ownerIdUpdate?: OwnerIdUpdate;
-
-  @Field(() => PendingOwnerUpdate, { nullable: true, description: 'Update pending ownership (requires canCreateOrphanedCharacter permission)' })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => PendingOwnerUpdate)
-  pendingOwnerUpdate?: PendingOwnerUpdate;
 }
 
 @InputType()
