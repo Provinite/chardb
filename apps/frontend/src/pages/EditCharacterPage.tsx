@@ -876,16 +876,16 @@ export const EditCharacterPage: React.FC = () => {
             </InfoBox>
 
             <FormGroup>
-              <Label>Registry ID</Label>
+              <Label>Official Identifier</Label>
               <Input
                 value={registryId}
                 onChange={(e) => setRegistryId(e.target.value)}
-                placeholder="e.g., TH-0042, REG-123"
+                placeholder="e.g., Strawberry Bliss, TH-042"
                 disabled={isSubmittingRegistry}
                 maxLength={100}
               />
               <TagsHelp>
-                Official identifier for this character within the species registry.
+                Official identifier for this character within the species.
               </TagsHelp>
             </FormGroup>
 
