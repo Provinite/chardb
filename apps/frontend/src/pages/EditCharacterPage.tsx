@@ -361,7 +361,7 @@ export const EditCharacterPage: React.FC = () => {
   });
 
   // Get user's permissions in the character's community
-  const { permissions } = useUserCommunityRole(
+  const { permissions, loading: permissionsLoading } = useUserCommunityRole(
     character?.species?.community?.id,
   );
 
@@ -608,6 +608,17 @@ export const EditCharacterPage: React.FC = () => {
     navigate(`/character/${id}`);
   };
 
+  // Show loading while character or permissions are loading
+  if (loading || permissionsLoading) {
+    return (
+      <Container>
+        <LoadingContainer>
+          <LoadingSpinner />
+        </LoadingContainer>
+      </Container>
+    );
+  }
+
   // Check if user has permission to edit this character
   if (character && !canUserEditCharacter(character, user, permissions)) {
     return (
@@ -616,16 +627,6 @@ export const EditCharacterPage: React.FC = () => {
           <h3>Access Denied</h3>
           <p>You do not have permission to edit this character.</p>
         </ErrorContainer>
-      </Container>
-    );
-  }
-
-  if (loading) {
-    return (
-      <Container>
-        <LoadingContainer>
-          <LoadingSpinner />
-        </LoadingContainer>
       </Container>
     );
   }

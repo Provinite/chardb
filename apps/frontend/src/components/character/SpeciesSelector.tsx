@@ -93,12 +93,12 @@ const SelectionCard = styled.div<{ isSelected: boolean; isDisabled?: boolean }>`
       isDisabled
         ? theme.colors.border
         : isSelected
-        ? theme.colors.primary
-        : theme.colors.border};
+          ? theme.colors.primary
+          : theme.colors.border};
   border-radius: 8px;
   background: ${({ theme, isDisabled }) =>
     isDisabled ? `${theme.colors.surface}80` : theme.colors.surface};
-  cursor: ${({ isDisabled }) => (isDisabled ? 'not-allowed' : 'pointer')};
+  cursor: ${({ isDisabled }) => (isDisabled ? "not-allowed" : "pointer")};
   transition: all 0.2s ease;
   opacity: ${({ isDisabled }) => (isDisabled ? 0.6 : 1)};
 
@@ -120,7 +120,7 @@ const CardHeader = styled.div`
   margin-bottom: 0.5rem;
 `;
 
-const CardIcon = styled.div<{ variant?: 'species' | 'variant' }>`
+const CardIcon = styled.div<{ variant?: "species" | "variant" }>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -128,9 +128,9 @@ const CardIcon = styled.div<{ variant?: 'species' | 'variant' }>`
   height: 2rem;
   border-radius: 6px;
   background: ${({ theme, variant }) =>
-    variant === 'variant' ? theme.colors.secondary : theme.colors.primary}20;
+    variant === "variant" ? theme.colors.secondary : theme.colors.primary}20;
   color: ${({ theme, variant }) =>
-    variant === 'variant' ? theme.colors.secondary : theme.colors.primary};
+    variant === "variant" ? theme.colors.secondary : theme.colors.primary};
 `;
 
 const CardTitle = styled.h4`
@@ -262,18 +262,20 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
     if (!speciesSearchQuery.trim()) return species;
 
     return species.filter((s) =>
-      s.name.toLowerCase().includes(speciesSearchQuery.toLowerCase())
+      s.name.toLowerCase().includes(speciesSearchQuery.toLowerCase()),
     );
   }, [speciesData, speciesSearchQuery]);
 
   const variants = variantsData?.speciesVariantsBySpecies?.nodes || [];
 
   // Check if user has permission to create characters for a species
-  const canCreateCharacterForSpecies = (species: SpeciesDetailsFragment): boolean => {
+  const canCreateCharacterForSpecies = (
+    species: SpeciesDetailsFragment,
+  ): boolean => {
     return userCommunityMemberships.some(
       (membership) =>
         membership.role.communityId === species.communityId &&
-        membership.role.canCreateCharacter === true
+        membership.role.canCreateCharacter === true,
     );
   };
 
@@ -310,7 +312,8 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
           Choose Species
         </SectionTitle>
         <SectionDescription>
-          Select the species for your character. Each species has unique traits and variants available.
+          Select the species for your character. Each species has unique traits
+          and variants available.
         </SectionDescription>
 
         {error && <ErrorMessage message={error} />}
@@ -328,7 +331,9 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
         {speciesLoading ? (
           <LoadingState>Loading available species...</LoadingState>
         ) : speciesError ? (
-          <ErrorMessage message={`Failed to load species: ${speciesError.message}`} />
+          <ErrorMessage
+            message={`Failed to load species: ${speciesError.message}`}
+          />
         ) : filteredSpecies.length === 0 ? (
           <EmptyState>
             <Database size={48} />
@@ -350,7 +355,11 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
                   isSelected={selectedSpecies?.id === species.id}
                   isDisabled={isCardDisabled}
                   onClick={() => !disabled && handleSpeciesSelect(species)}
-                  title={!hasPermission ? "You don't have permission to create characters for this species" : undefined}
+                  title={
+                    !hasPermission
+                      ? "You don't have permission to create characters for this species"
+                      : undefined
+                  }
                 >
                   <CardHeader>
                     <CardIcon>
@@ -361,7 +370,13 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
                   <CardMeta>
                     <MetaBadge>Community Species</MetaBadge>
                     {species.hasImage && <MetaBadge>Has Image</MetaBadge>}
-                    {!hasPermission && <MetaBadge style={{ background: '#ff000020', color: '#ff0000' }}>No Permission</MetaBadge>}
+                    {!hasPermission && (
+                      <MetaBadge
+                        style={{ background: "#ff000020", color: "#ff0000" }}
+                      >
+                        No Permission
+                      </MetaBadge>
+                    )}
                   </CardMeta>
                 </SelectionCard>
               );
@@ -385,13 +400,18 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
             Choose Variant
           </SectionTitle>
           <SectionDescription>
-            Select a variant of {selectedSpecies.name}. Different variants may have different available trait options.
+            Select a variant of {selectedSpecies.name}. Different variants may
+            have different available trait options.
           </SectionDescription>
 
           {variantsLoading ? (
-            <LoadingState>Loading variants for {selectedSpecies.name}...</LoadingState>
+            <LoadingState>
+              Loading variants for {selectedSpecies.name}...
+            </LoadingState>
           ) : variantsError ? (
-            <ErrorMessage message={`Failed to load variants: ${variantsError.message}`} />
+            <ErrorMessage
+              message={`Failed to load variants: ${variantsError.message}`}
+            />
           ) : variants.length === 0 ? (
             <EmptyState>
               <Palette size={48} />
