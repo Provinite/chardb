@@ -110,6 +110,7 @@ interface CharacterDetailsEditorProps {
   onChange: (value: string) => void;
   error?: string;
   maxLength?: number;
+  disabled?: boolean;
 }
 
 
@@ -122,6 +123,7 @@ export const CharacterDetailsEditor: React.FC<CharacterDetailsEditorProps> = ({
   onChange,
   error,
   maxLength = 15000,
+  disabled = false,
 }) => {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const charCount = value.length;
@@ -149,6 +151,7 @@ export const CharacterDetailsEditor: React.FC<CharacterDetailsEditorProps> = ({
           <TextArea
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            disabled={disabled}
             placeholder="Describe your character using markdown formatting...
 
 You can use markdown to organize your content:

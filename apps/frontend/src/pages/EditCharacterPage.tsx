@@ -13,9 +13,12 @@ import {
 } from "../components/GrantTargetSelector";
 import {
   useGetCharacterQuery,
-  useUpdateCharacterMutation,
-  useUpdateCharacterTraitsMutation,
-  UpdateCharacterInput,
+  useAssignCharacterSpeciesMutation,
+  useUpdateCharacterProfileMutation,
+  useUpdateCharacterRegistryMutation,
+  AssignCharacterSpeciesInput,
+  UpdateCharacterProfileInput,
+  UpdateCharacterRegistryInput,
   CharacterTraitValueInput,
   Visibility,
 } from "../graphql/characters.graphql";
@@ -23,7 +26,11 @@ import { ExternalAccountProvider } from "../generated/graphql";
 import { useGetCommunityMembersQuery } from "../graphql/communities.graphql";
 import { useAuth } from "../contexts/AuthContext";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
-import { canUserEditCharacter } from "../lib/characterPermissions";
+import {
+  canUserEditCharacter,
+  canUserEditCharacterProfile,
+  canUserEditCharacterRegistry,
+} from "../lib/characterPermissions";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
@@ -290,11 +297,12 @@ export const EditCharacterPage: React.FC = () => {
   const [selectedVariant, setSelectedVariant] =
     useState<SpeciesVariantDetailsFragment | null>(null);
 
-  // Trait values state
+  // Registry state (traits and registryId)
   const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>(
     [],
   );
-  const [isSubmittingTraits, setIsSubmittingTraits] = useState(false);
+  const [registryId, setRegistryId] = useState<string>("");
+  const [isSubmittingRegistry, setIsSubmittingRegistry] = useState(false);
 
   // Pending ownership state
   const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(
@@ -325,8 +333,11 @@ export const EditCharacterPage: React.FC = () => {
         userSearch.length < 2,
     });
 
-  const [updateCharacter] = useUpdateCharacterMutation();
-  const [updateCharacterTraits] = useUpdateCharacterTraitsMutation();
+  // Use deprecated mutation only for first-time species assignment
+  const [assignCharacterSpecies] = useAssignCharacterSpeciesMutation();
+  // Use new faceted mutations for normal edits
+  const [updateCharacterProfile] = useUpdateCharacterProfileMutation();
+  const [updateCharacterRegistry] = useUpdateCharacterRegistryMutation();
 
   const {
     register,
@@ -350,9 +361,13 @@ export const EditCharacterPage: React.FC = () => {
   });
 
   // Get user's permissions in the character's community
-  const { permissions } = useUserCommunityRole(
+  const { permissions, loading: permissionsLoading } = useUserCommunityRole(
     character?.species?.community?.id,
   );
+
+  // Compute section-specific edit permissions
+  const canEditProfile = canUserEditCharacterProfile(character, user, permissions);
+  const canEditRegistry = canUserEditCharacterRegistry(character, user, permissions);
 
   // Reset form when character data loads
   useEffect(() => {
@@ -371,13 +386,13 @@ export const EditCharacterPage: React.FC = () => {
 
       // Set species and variant if they exist
       if (character.species) {
-        setSelectedSpecies(character.species as any);
+        setSelectedSpecies(character.species);
       }
       if (character.speciesVariant) {
-        setSelectedVariant(character.speciesVariant as any);
+        setSelectedVariant(character.speciesVariant);
       }
 
-      // Set trait values if they exist
+      // Set registry values (traits and registryId)
       if (character.traitValues) {
         setTraitValues(
           character.traitValues.map((tv) => ({
@@ -386,6 +401,7 @@ export const EditCharacterPage: React.FC = () => {
           })),
         );
       }
+      setRegistryId(character.registryId || "");
 
       // Initialize ownership state
       if (character.owner) {
@@ -404,9 +420,7 @@ export const EditCharacterPage: React.FC = () => {
         // Character is orphaned with pending ownership
         setCharacterTarget({
           type: "pending",
-          provider: character.pendingOwnership.provider as
-            | "DISCORD"
-            | "DEVIANTART",
+          provider: character.pendingOwnership.provider,
           providerAccountId:
             character.pendingOwnership.displayIdentifier ||
             character.pendingOwnership.providerAccountId,
@@ -504,7 +518,26 @@ export const EditCharacterPage: React.FC = () => {
         }
       }
 
-      const input: UpdateCharacterInput = {
+      // Check if we're doing first-time species assignment (special case)
+      const isFirstTimeSpeciesAssignment = !character.speciesId && selectedSpecies;
+
+      if (isFirstTimeSpeciesAssignment) {
+        // First assign the species
+        const speciesInput: AssignCharacterSpeciesInput = {
+          speciesId: selectedSpecies.id,
+          speciesVariantId: selectedVariant?.id,
+        };
+
+        await assignCharacterSpecies({
+          variables: {
+            id: character.id,
+            input: speciesInput,
+          },
+        });
+      }
+
+      // Update profile fields
+      const profileInput: UpdateCharacterProfileInput = {
         name: data.name,
         details: data.details || undefined,
         customFields: cleanedCustomFields,
@@ -513,24 +546,15 @@ export const EditCharacterPage: React.FC = () => {
         isTradeable: data.isTradeable,
         price:
           data.price && data.isSellable ? parseFloat(data.price) : undefined,
-        tags, // Use the tags state directly
-        // Only include species if it's being set for the first time (character doesn't have one yet)
-        speciesId:
-          !character.speciesId && selectedSpecies
-            ? selectedSpecies.id
-            : undefined,
-        speciesVariantId:
-          !character.speciesId && selectedVariant
-            ? selectedVariant.id
-            : undefined,
+        tags,
         ownerIdUpdate,
         pendingOwnerUpdate,
       };
 
-      await updateCharacter({
+      await updateCharacterProfile({
         variables: {
           id: character.id,
-          input,
+          input: profileInput,
         },
       });
 
@@ -548,36 +572,50 @@ export const EditCharacterPage: React.FC = () => {
     }
   };
 
-  const handleSaveTraits = async () => {
+  const handleSaveRegistry = async () => {
     if (!character || !user) return;
 
-    setIsSubmittingTraits(true);
+    setIsSubmittingRegistry(true);
     try {
-      await updateCharacterTraits({
+      const input: UpdateCharacterRegistryInput = {
+        traitValues,
+        registryId: registryId.trim() || null,
+      };
+
+      await updateCharacterRegistry({
         variables: {
           id: character.id,
-          updateCharacterTraitsInput: {
-            traitValues,
-          },
+          input,
         },
       });
 
-      toast.success("Traits updated successfully!");
+      toast.success("Species details updated!");
     } catch (error) {
-      console.error("Failed to update traits:", error);
+      console.error("Failed to update registry:", error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to update traits. Please try again.",
+          : "Failed to save species details. Please try again.",
       );
     } finally {
-      setIsSubmittingTraits(false);
+      setIsSubmittingRegistry(false);
     }
   };
 
   const handleBack = () => {
     navigate(`/character/${id}`);
   };
+
+  // Show loading while character or permissions are loading
+  if (loading || permissionsLoading) {
+    return (
+      <Container>
+        <LoadingContainer>
+          <LoadingSpinner />
+        </LoadingContainer>
+      </Container>
+    );
+  }
 
   // Check if user has permission to edit this character
   if (character && !canUserEditCharacter(character, user, permissions)) {
@@ -587,16 +625,6 @@ export const EditCharacterPage: React.FC = () => {
           <h3>Access Denied</h3>
           <p>You do not have permission to edit this character.</p>
         </ErrorContainer>
-      </Container>
-    );
-  }
-
-  if (loading) {
-    return (
-      <Container>
-        <LoadingContainer>
-          <LoadingSpinner />
-        </LoadingContainer>
       </Container>
     );
   }
@@ -622,6 +650,13 @@ export const EditCharacterPage: React.FC = () => {
       <Title>Edit Character</Title>
 
       <Form onSubmit={handleSubmit(onSubmit)}>
+        {!canEditProfile && (
+          <InfoBox>
+            You don't have permission to edit profile fields for this character.
+            Profile editing is disabled.
+          </InfoBox>
+        )}
+
         <FormSection>
           <SectionTitle>Basic Information</SectionTitle>
 
@@ -632,6 +667,7 @@ export const EditCharacterPage: React.FC = () => {
                 {...register("name")}
                 placeholder="Character name"
                 hasError={!!errors.name}
+                disabled={!canEditProfile}
               />
               {errors.name && (
                 <ErrorMessage>{errors.name.message}</ErrorMessage>
@@ -643,6 +679,7 @@ export const EditCharacterPage: React.FC = () => {
             register={register}
             setValue={setValue}
             watch={watch}
+            disabled={!canEditProfile}
           />
         </FormSection>
 
@@ -658,6 +695,7 @@ export const EditCharacterPage: React.FC = () => {
               }
               error={errors.details?.message}
               maxLength={15000}
+              disabled={!canEditProfile}
             />
           </FormGroup>
         </FormSection>
@@ -671,6 +709,7 @@ export const EditCharacterPage: React.FC = () => {
               <Select
                 {...register("visibility")}
                 hasError={!!errors.visibility}
+                disabled={!canEditProfile}
               >
                 <option value="PUBLIC">Public - Anyone can view</option>
                 <option value="UNLISTED">
@@ -687,11 +726,11 @@ export const EditCharacterPage: React.FC = () => {
               <Label>Trading Options</Label>
               <CheckboxGroup>
                 <CheckboxLabel>
-                  <Checkbox {...register("isTradeable")} />
+                  <Checkbox {...register("isTradeable")} disabled={!canEditProfile} />
                   Available for trading
                 </CheckboxLabel>
                 <CheckboxLabel>
-                  <Checkbox {...register("isSellable")} />
+                  <Checkbox {...register("isSellable")} disabled={!canEditProfile} />
                   Available for sale
                 </CheckboxLabel>
               </CheckboxGroup>
@@ -709,6 +748,7 @@ export const EditCharacterPage: React.FC = () => {
                 min="0"
                 pattern="^[0-9]*\.?[0-9]*$"
                 hasError={!!errors.price}
+                disabled={!canEditProfile}
                 onInput={(e) => {
                   const target = e.target as HTMLInputElement;
                   const value = target.value;
@@ -743,6 +783,7 @@ export const EditCharacterPage: React.FC = () => {
               loading={tagsLoading}
               placeholder="Start typing to search tags..."
               maxTags={20}
+              disabled={!canEditProfile}
             />
             <TagsHelp>
               Start typing to find existing tags or create new ones. Tags help
@@ -789,6 +830,7 @@ export const EditCharacterPage: React.FC = () => {
                 selectedVariant={selectedVariant}
                 onSpeciesChange={setSelectedSpecies}
                 onVariantChange={setSelectedVariant}
+                disabled={!canEditProfile}
               />
             </>
           )}
@@ -835,10 +877,36 @@ export const EditCharacterPage: React.FC = () => {
           </FormSection>
         )}
 
-        {/* Traits Section - only show if character has a species */}
+        {/* Registry Section - only show if character has a species */}
         {character.speciesId && (
           <FormSection>
-            <SectionTitle>Character Traits</SectionTitle>
+            <SectionTitle>Species Details</SectionTitle>
+            <InfoBox>
+              These fields are managed by species administrators. They include the official identifier and character traits.
+            </InfoBox>
+            {!canEditRegistry && (
+              <WarningBox>
+                <AlertTriangle size={20} />
+                <div>
+                  You don't have permission to edit species details for this character.
+                </div>
+              </WarningBox>
+            )}
+
+            <FormGroup>
+              <Label>Official Identifier</Label>
+              <Input
+                value={registryId}
+                onChange={(e) => setRegistryId(e.target.value)}
+                placeholder="e.g., Strawberry Bliss, TH-042"
+                disabled={!canEditRegistry || isSubmittingRegistry}
+                maxLength={100}
+              />
+              <TagsHelp>
+                Official identifier for this character within the species.
+              </TagsHelp>
+            </FormGroup>
+
             <TraitForm
               speciesId={character.speciesId}
               speciesVariant={
@@ -846,16 +914,16 @@ export const EditCharacterPage: React.FC = () => {
               }
               traitValues={traitValues}
               onChange={setTraitValues}
-              disabled={isSubmittingTraits}
+              disabled={!canEditRegistry || isSubmittingRegistry}
             />
             <TraitActions>
               <Button
                 type="button"
                 variant="primary"
-                onClick={handleSaveTraits}
-                disabled={isSubmittingTraits}
+                onClick={handleSaveRegistry}
+                disabled={!canEditRegistry || isSubmittingRegistry}
               >
-                {isSubmittingTraits ? "Saving Traits..." : "Save Traits"}
+                {isSubmittingRegistry ? "Saving..." : "Save Species Details"}
               </Button>
             </TraitActions>
           </FormSection>
@@ -873,7 +941,7 @@ export const EditCharacterPage: React.FC = () => {
           <Button
             type="submit"
             variant="primary"
-            disabled={isSubmitting || !isGrantTargetValid}
+            disabled={!canEditProfile || isSubmitting || !isGrantTargetValid}
           >
             {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>

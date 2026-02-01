@@ -22,6 +22,9 @@ export class Character {
   @Field()
   name: string;
 
+  @Field({ nullable: true, description: 'Official registry identifier for this character within its species' })
+  registryId?: string;
+
   @Field(() => ID, { nullable: true, description: 'ID of the species this character belongs to' })
   speciesId?: string;
 

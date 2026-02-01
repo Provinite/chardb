@@ -1,13 +1,11 @@
 import { ExternalAccountProvider, Prisma } from "@chardb/database";
 import {
   CreateCharacterInput,
-  UpdateCharacterInput,
+  UpdateCharacterProfileInput,
+  UpdateCharacterRegistryInput,
 } from "../dto/character.dto";
 import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
-import {
-  UpdateCharacterTraitsInput,
-  CharacterTraitValueInput,
-} from "../dto/character-trait.dto";
+import { CharacterTraitValueInput } from "../dto/character-trait.dto";
 import { Character, CharacterConnection } from "../entities/character.entity";
 import { CharacterTraitValue } from "../../shared/types/character-trait.types";
 
@@ -44,6 +42,7 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     "owner" | "creator"
   > = {
     name: characterData.name,
+    registryId: characterData.registryId,
     species: characterData.speciesId
       ? { connect: { id: characterData.speciesId } }
       : undefined,
@@ -69,7 +68,13 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
   };
 }
 
-export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
+/**
+ * Maps UpdateCharacterProfileInput to service format
+ * Profile fields: name, details, visibility, trade settings, tags, mainMedia, ownership
+ */
+export function mapUpdateCharacterProfileInputToService(
+  input: UpdateCharacterProfileInput,
+): {
   characterData: Prisma.CharacterUpdateInput;
   tags?: string[];
   pendingOwner?: PendingOwnerInput | null;
@@ -79,16 +84,6 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
   const characterData: Prisma.CharacterUpdateInput = {};
 
   if (inputData.name !== undefined) characterData.name = inputData.name;
-  if (inputData.speciesId !== undefined) {
-    characterData.species = inputData.speciesId
-      ? { connect: { id: inputData.speciesId } }
-      : { disconnect: true };
-  }
-  if (inputData.speciesVariantId !== undefined) {
-    characterData.speciesVariant = inputData.speciesVariantId
-      ? { connect: { id: inputData.speciesVariantId } }
-      : { disconnect: true };
-  }
   if (inputData.details !== undefined)
     characterData.details = inputData.details;
   if (inputData.visibility !== undefined)
@@ -103,8 +98,6 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
       ? JSON.parse(inputData.customFields)
       : undefined;
   }
-  if (inputData.traitValues !== undefined)
-    characterData.traitValues = mapTraitValues(inputData.traitValues);
   if (inputData.mainMediaId !== undefined) {
     characterData.mainMedia = inputData.mainMediaId
       ? { connect: { id: inputData.mainMediaId } }
@@ -118,17 +111,31 @@ export function mapUpdateCharacterInputToService(input: UpdateCharacterInput): {
   return { characterData, tags, pendingOwner, ownerId };
 }
 
-export function mapUpdateCharacterTraitsInputToService(
-  input: UpdateCharacterTraitsInput,
+/**
+ * Maps UpdateCharacterRegistryInput to service format
+ * Registry fields: registryId, speciesVariantId, traitValues
+ */
+export function mapUpdateCharacterRegistryInputToService(
+  input: UpdateCharacterRegistryInput,
 ): {
-  traitValues: PrismaJson.CharacterTraitValuesJson;
+  characterData: Prisma.CharacterUpdateInput;
 } {
-  return {
-    traitValues: mapTraitValues(input.traitValues),
-  };
+  const characterData: Prisma.CharacterUpdateInput = {};
+
+  if (input.registryId !== undefined)
+    characterData.registryId = input.registryId;
+  if (input.speciesVariantId !== undefined) {
+    characterData.speciesVariant = input.speciesVariantId
+      ? { connect: { id: input.speciesVariantId } }
+      : { disconnect: true };
+  }
+  if (input.traitValues !== undefined)
+    characterData.traitValues = mapTraitValues(input.traitValues);
+
+  return { characterData };
 }
 
-// Define the exact Prisma return type for updateTraits method
+// Define the exact Prisma return type
 type PrismaCharacter = Prisma.CharacterGetPayload<{}>;
 
 /**
@@ -141,6 +148,7 @@ export function mapPrismaCharacterToGraphQL(
   return {
     id: prismaCharacter.id,
     name: prismaCharacter.name,
+    registryId: prismaCharacter.registryId ?? undefined,
     speciesId: prismaCharacter.speciesId ?? undefined,
     speciesVariantId: prismaCharacter.speciesVariantId ?? undefined,
     details: prismaCharacter.details ?? undefined,

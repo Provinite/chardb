@@ -5,6 +5,7 @@ import { RadioGroup, Radio } from '@chardb/ui';
 import { Input } from '@chardb/ui';
 import { Alert } from '@chardb/ui';
 import { useResolveDiscordUserLazyQuery } from '../graphql/communities.graphql';
+import { ExternalAccountProvider } from '../generated/graphql';
 
 /**
  * GrantTargetSelector - Component for selecting a grant/ownership target
@@ -53,7 +54,7 @@ export type GrantTarget =
   | { type: 'user'; userId: string; user: SelectedUser }
   | {
       type: 'pending';
-      provider: 'DISCORD' | 'DEVIANTART';
+      provider: ExternalAccountProvider;
       providerAccountId: string;
     };
 
@@ -253,7 +254,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
   // Component state
   const [selectionMode, setSelectionMode] = useState<'user' | 'pending' | 'unassigned'>('user');
-  const [provider, setProvider] = useState<'DISCORD' | 'DEVIANTART'>('DISCORD');
+  const [provider, setProvider] = useState<ExternalAccountProvider>(ExternalAccountProvider.Discord);
   const [accountId, setAccountId] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [resolvedUser, setResolvedUser] = useState<ResolvedDiscordUser | null>(null);
@@ -282,7 +283,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
       if (!value) return false;
 
       // Discord pending owner: must have successful check
-      if (provider === 'DISCORD') {
+      if (provider === ExternalAccountProvider.Discord) {
         return hasSuccessfulCheck && !!value;
       }
 
@@ -367,7 +368,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     setValidationError(null);
     setCheckError(null);
     setResolvedUser(null);
-    setProvider(newProvider as 'DISCORD' | 'DEVIANTART');
+    setProvider(newProvider as ExternalAccountProvider);
     // Clear account ID when switching providers
     setAccountId('');
     // Reset check state
@@ -395,7 +396,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     }
 
     // Validate Discord numeric ID format if provided
-    if (provider === 'DISCORD') {
+    if (provider === ExternalAccountProvider.Discord) {
       const isNumeric = /^\d{17,19}$/.test(trimmed);
       const hasAtSign = trimmed.startsWith('@');
 
@@ -524,7 +525,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
           <Section>
             <Label>
-              {provider === 'DISCORD'
+              {provider === ExternalAccountProvider.Discord
                 ? 'Search Discord Account'
                 : 'Search DeviantArt Account'}
             </Label>
@@ -538,13 +539,13 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       // Optionally trigger Check for Discord
-                      if (provider === 'DISCORD' && accountId.trim()) {
+                      if (provider === ExternalAccountProvider.Discord && accountId.trim()) {
                         handleCheckDiscordUser();
                       }
                     }
                   }}
                   placeholder={
-                    provider === 'DISCORD'
+                    provider === ExternalAccountProvider.Discord
                       ? discordGuildId
                         ? 'Search by @handle or numeric ID'
                         : 'Numeric Discord ID (17-19 digits)'
@@ -557,14 +558,14 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
                 {validationError && <ErrorText>{validationError}</ErrorText>}
                 {checkError && <ErrorText>{checkError}</ErrorText>}
                 <HelpText>
-                  {provider === 'DISCORD'
+                  {provider === ExternalAccountProvider.Discord
                     ? discordGuildId
                       ? `Enter Discord handle (with @) or numeric user ID. Server: ${discordGuildName || 'Connected'}`
                       : 'Enter numeric Discord user ID (17-19 digits). No Discord server connected to this community.'
                     : 'Enter DeviantArt account name'}
                 </HelpText>
               </InputWrapper>
-              {provider === 'DISCORD' && (
+              {provider === ExternalAccountProvider.Discord && (
                 <CheckButton
                   onClick={handleCheckDiscordUser}
                   disabled={disabled || isChecking || !accountId.trim() || hasSuccessfulCheck}
@@ -590,7 +591,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
             )}
           </Section>
 
-          {!discordGuildId && provider === 'DISCORD' && (
+          {!discordGuildId && provider === ExternalAccountProvider.Discord && (
             <Alert variant="warning">
               No Discord server is linked to this community. You must use numeric
               Discord user IDs. Handle resolution requires a connected Discord

@@ -19,6 +19,12 @@ export class CreateCharacterInput {
   @MaxLength(100)
   name: string;
 
+  @Field({ nullable: true, description: 'Official registry identifier for this character within its species' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  registryId?: string;
+
   @Field(() => ID, { nullable: true })
   @IsOptional()
   @IsUUID()
@@ -107,24 +113,18 @@ export class PendingOwnerUpdate {
   set?: PendingOwnerInput | null;
 }
 
-@InputType()
-export class UpdateCharacterInput {
+/**
+ * Input for updating character profile fields (name, bio, visibility, trade settings, etc.)
+ * Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.
+ */
+@InputType({ description: 'Input for updating character profile fields' })
+export class UpdateCharacterProfileInput {
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(100)
   name?: string;
-
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  speciesId?: string;
-
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  speciesVariantId?: string;
 
   @Field({ nullable: true })
   @IsOptional()
@@ -161,11 +161,7 @@ export class UpdateCharacterInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  customFields?: any; // JSON field
-
-  @Field(() => [CharacterTraitValueInput], { nullable: true, description: 'Trait values for the character' })
-  @IsOptional()
-  traitValues?: CharacterTraitValueInput[];
+  customFields?: string; // JSON field
 
   @Field(() => ID, { nullable: true })
   @IsOptional()
@@ -183,6 +179,54 @@ export class UpdateCharacterInput {
   @ValidateNested()
   @Type(() => PendingOwnerUpdate)
   pendingOwnerUpdate?: PendingOwnerUpdate;
+}
+
+/**
+ * Input for updating character registry fields (registryId, variant, traits).
+ * Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission.
+ */
+@InputType({ description: 'Input for updating character registry fields' })
+export class UpdateCharacterRegistryInput {
+  @Field({ nullable: true, description: 'Official registry identifier for this character within its species' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  registryId?: string;
+
+  @Field(() => ID, { nullable: true, description: 'Species variant ID' })
+  @IsOptional()
+  @IsUUID()
+  speciesVariantId?: string;
+
+  @Field(() => [CharacterTraitValueInput], { nullable: true, description: 'Trait values for the character' })
+  @IsOptional()
+  traitValues?: CharacterTraitValueInput[];
+}
+
+/**
+ * Input for first-time species assignment to a character.
+ * This is only valid for characters that don't already have a species assigned.
+ */
+@InputType()
+export class AssignCharacterSpeciesInput {
+  @Field(() => ID, { description: 'Species ID to assign to the character' })
+  @IsUUID()
+  speciesId: string;
+
+  @Field(() => ID, { nullable: true, description: 'Species variant ID' })
+  @IsOptional()
+  @IsUUID()
+  speciesVariantId?: string;
+
+  @Field({ nullable: true, description: 'Official registry identifier for this character within its species' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  registryId?: string;
+
+  @Field(() => [CharacterTraitValueInput], { nullable: true, description: 'Initial trait values for the character' })
+  @IsOptional()
+  traitValues?: CharacterTraitValueInput[];
 }
 
 @InputType()

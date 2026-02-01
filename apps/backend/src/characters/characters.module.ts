@@ -10,12 +10,13 @@ import { TraitsModule } from '../traits/traits.module';
 import { EnumValuesModule } from '../enum-values/enum-values.module';
 import { PendingOwnershipModule } from '../pending-ownership/pending-ownership.module';
 import { DiscordModule } from '../discord/discord.module';
+import { AuthModule } from '../auth/auth.module';
 import { CharactersService } from './characters.service';
 import { CharactersResolver } from './characters.resolver';
 import { CharacterTraitValueResolver } from './character-trait-value.resolver';
 
 @Module({
-  imports: [DatabaseModule, ImagesModule, TagsModule, UsersModule, forwardRef(() => MediaModule), SpeciesVariantsModule, SpeciesModule, TraitsModule, EnumValuesModule, PendingOwnershipModule, DiscordModule],
+  imports: [DatabaseModule, ImagesModule, TagsModule, UsersModule, forwardRef(() => MediaModule), SpeciesVariantsModule, SpeciesModule, TraitsModule, EnumValuesModule, PendingOwnershipModule, DiscordModule, AuthModule],
   providers: [CharactersService, CharactersResolver, CharacterTraitValueResolver],
   exports: [CharactersService],
 })

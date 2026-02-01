@@ -5,9 +5,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
-import { ArrowLeft, User, FileText, Settings, Tag as TagIcon, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  User,
+  FileText,
+  Settings,
+  Tag as TagIcon,
+  Users,
+} from "lucide-react";
 import { Button, TagInput } from "@chardb/ui";
-import { GrantTargetSelector, GrantTarget } from "../components/GrantTargetSelector";
+import {
+  GrantTargetSelector,
+  GrantTarget,
+} from "../components/GrantTargetSelector";
 import {
   useCreateCharacterMutation,
   SpeciesDetailsFragment,
@@ -72,7 +82,7 @@ const characterSchema = z.object({
         const num = parseFloat(val);
         return !isNaN(num) && num >= 0 && num <= 999999;
       },
-      { message: "Price must be a valid number between 0 and 999,999" }
+      { message: "Price must be a valid number between 0 and 999,999" },
     )
     .optional()
     .or(z.literal("")),
@@ -216,7 +226,7 @@ const CheckboxGroup = styled.label`
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
-const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+const Checkbox = styled.input.attrs({ type: "checkbox" })`
   width: 18px;
   height: 18px;
   cursor: pointer;
@@ -267,37 +277,45 @@ const TagsHelp = styled.p`
   margin: 0.25rem 0 0 0;
 `;
 
-
 export const CreateCharacterPageEnhanced: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Species and variant state
-  const [selectedSpecies, setSelectedSpecies] = useState<SpeciesDetailsFragment | null>(null);
-  const [selectedVariant, setSelectedVariant] = useState<SpeciesVariantDetailsFragment | null>(null);
+  const [selectedSpecies, setSelectedSpecies] =
+    useState<SpeciesDetailsFragment | null>(null);
+  const [selectedVariant, setSelectedVariant] =
+    useState<SpeciesVariantDetailsFragment | null>(null);
+  const [registryId, setRegistryId] = useState<string>("");
 
   // Trait values state
-  const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>([]);
+  const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>(
+    [],
+  );
 
   // Tags state
   const [tags, setTags] = useState<string[]>([]);
   const { searchTags, suggestions, loading: tagsLoading } = useTagSearch();
 
   // Character ownership/grant target state
-  const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(null);
+  const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(
+    null,
+  );
   const [isGrantTargetValid, setIsGrantTargetValid] = useState(false);
   const [userSearch, setUserSearch] = useState("");
 
   // Query community members for user search (only when species is selected)
-  const { data: membersData, loading: membersLoading } = useGetCommunityMembersQuery({
-    variables: {
-      communityId: selectedSpecies?.communityId || '',
-      search: userSearch,
-      limit: 10,
-    },
-    skip: !selectedSpecies?.communityId || !userSearch || userSearch.length < 2,
-  });
+  const { data: membersData, loading: membersLoading } =
+    useGetCommunityMembersQuery({
+      variables: {
+        communityId: selectedSpecies?.communityId || "",
+        search: userSearch,
+        limit: 10,
+      },
+      skip:
+        !selectedSpecies?.communityId || !userSearch || userSearch.length < 2,
+    });
 
   // Convert current user to SelectedUser format for GrantTargetSelector
   const currentUser = useMemo(() => {
@@ -314,11 +332,13 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   // Check if user has permission to create orphaned characters in the selected species' community
   const canCreateOrphanedCharacter = useMemo(() => {
     if (!user || !selectedSpecies) return false;
-    return user.communityMemberships?.some(
-      (membership) =>
-        membership.role.communityId === selectedSpecies.communityId &&
-        membership.role.canCreateOrphanedCharacter
-    ) || false;
+    return (
+      user.communityMemberships?.some(
+        (membership) =>
+          membership.role.communityId === selectedSpecies.communityId &&
+          membership.role.canCreateOrphanedCharacter,
+      ) || false
+    );
   }, [user, selectedSpecies]);
 
   // Form handling
@@ -343,7 +363,9 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   // GraphQL mutation
   const [createCharacterMutation] = useCreateCharacterMutation({
     onCompleted: (data) => {
-      toast.success(`Character "${data.createCharacter.name}" created successfully!`);
+      toast.success(
+        `Character "${data.createCharacter.name}" created successfully!`,
+      );
       navigate(`/character/${data.createCharacter.id}`);
     },
     onError: (error) => {
@@ -362,16 +384,20 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
       if (data.customFields) {
         try {
           const parsed = JSON.parse(data.customFields);
-          const filtered = Object.entries(parsed).reduce((acc, [key, value]) => {
-            // Remove temporary keys and empty keys
-            if (key && !key.startsWith('__empty_') && key.trim()) {
-              acc[key] = value;
-            }
-            return acc;
-          }, {} as Record<string, unknown>);
-          cleanedCustomFields = Object.keys(filtered).length > 0
-            ? JSON.stringify(filtered)
-            : undefined;
+          const filtered = Object.entries(parsed).reduce(
+            (acc, [key, value]) => {
+              // Remove temporary keys and empty keys
+              if (key && !key.startsWith("__empty_") && key.trim()) {
+                acc[key] = value;
+              }
+              return acc;
+            },
+            {} as Record<string, unknown>,
+          );
+          cleanedCustomFields =
+            Object.keys(filtered).length > 0
+              ? JSON.stringify(filtered)
+              : undefined;
         } catch {
           cleanedCustomFields = undefined;
         }
@@ -390,14 +416,16 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             tags: tags.length > 0 ? tags : undefined,
             speciesId: selectedSpecies?.id || undefined,
             speciesVariantId: selectedVariant?.id || undefined,
+            registryId: registryId.trim() || undefined,
             traitValues: traitValues.length > 0 ? traitValues : undefined,
             // Add pending owner based on characterTarget
-            pendingOwner: characterTarget?.type === 'pending'
-              ? {
-                  provider: characterTarget.provider as any,
-                  providerAccountId: characterTarget.providerAccountId,
-                }
-              : undefined,
+            pendingOwner:
+              characterTarget?.type === "pending"
+                ? {
+                    provider: characterTarget.provider,
+                    providerAccountId: characterTarget.providerAccountId,
+                  }
+                : undefined,
             // Set assignToSelf to false when user selects "Leave Unassigned" (characterTarget is null)
             assignToSelf: characterTarget !== null,
           },
@@ -457,11 +485,43 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           <SpeciesSelector
             selectedSpecies={selectedSpecies}
             selectedVariant={selectedVariant}
-            onSpeciesChange={setSelectedSpecies}
+            onSpeciesChange={(species) => {
+              setSelectedSpecies(species);
+              if (!species) {
+                setRegistryId("");
+              }
+            }}
             onVariantChange={setSelectedVariant}
-            error={!selectedSpecies ? "Species selection is required. Non-species character creation coming soon to all users!" : undefined}
+            error={
+              !selectedSpecies
+                ? "Species selection is required. Non-species character creation coming soon to all users!"
+                : undefined
+            }
             userCommunityMemberships={user?.communityMemberships}
           />
+
+          {selectedSpecies && (
+            <FormGroup style={{ marginTop: "1rem" }}>
+              <Label htmlFor="registryId">Official Identifier (Optional)</Label>
+              <Input
+                id="registryId"
+                value={registryId}
+                onChange={(e) => setRegistryId(e.target.value)}
+                placeholder="e.g., Strawberry Bliss, TH-042"
+                maxLength={100}
+              />
+              <span
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#666",
+                  marginTop: "0.25rem",
+                }}
+              >
+                An optional official identifier for this character within the
+                species.
+              </span>
+            </FormGroup>
+          )}
         </Section>
 
         {/* Character Ownership */}
@@ -472,7 +532,8 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
               Character Ownership
             </SectionTitle>
             <SectionDescription>
-              Choose whether this character will be owned by you or created as an orphaned character with pending ownership.
+              Choose whether this character will be owned by you or created as
+              an orphaned character with pending ownership.
             </SectionDescription>
 
             <GrantTargetSelector
@@ -486,7 +547,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
               discordGuildName={selectedSpecies?.community?.discordGuildName}
               userLabel="Owned By..."
               pendingOwnerLabel="Orphaned with Pending Owner"
-              communityId={selectedSpecies?.communityId || ''}
+              communityId={selectedSpecies?.communityId || ""}
               onValidationChange={setIsGrantTargetValid}
               currentUser={currentUser}
               defaultToSelf={true}
@@ -515,14 +576,17 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             Character Details
           </SectionTitle>
           <SectionDescription>
-            Provide details about your character using markdown formatting for rich text.
+            Provide details about your character using markdown formatting for
+            rich text.
           </SectionDescription>
 
           <FormGroup>
             <Label htmlFor="details">Character Details</Label>
             <CharacterDetailsEditor
               value={watch("details") || ""}
-              onChange={(value) => setValue("details", value, { shouldValidate: true })}
+              onChange={(value) =>
+                setValue("details", value, { shouldValidate: true })
+              }
               error={errors.details?.message}
               maxLength={15000}
             />
@@ -536,15 +600,22 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             Character Settings
           </SectionTitle>
           <SectionDescription>
-            Configure visibility, trading options, and other settings for your character.
+            Configure visibility, trading options, and other settings for your
+            character.
           </SectionDescription>
 
           <FormGroup>
             <Label htmlFor="visibility">Visibility</Label>
             <Select {...register("visibility")} id="visibility">
-              <option value={Visibility.Public}>Public - Anyone can view</option>
-              <option value={Visibility.Unlisted}>Unlisted - Only via direct link</option>
-              <option value={Visibility.Private}>Private - Only you can view</option>
+              <option value={Visibility.Public}>
+                Public - Anyone can view
+              </option>
+              <option value={Visibility.Unlisted}>
+                Unlisted - Only via direct link
+              </option>
+              <option value={Visibility.Private}>
+                Private - Only you can view
+              </option>
             </Select>
           </FormGroup>
 
@@ -592,7 +663,9 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
                   }
                 }}
               />
-              {errors.price && <ErrorMessage>{errors.price.message}</ErrorMessage>}
+              {errors.price && (
+                <ErrorMessage>{errors.price.message}</ErrorMessage>
+              )}
             </FormGroup>
           )}
         </Section>
@@ -628,7 +701,11 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           </CancelButton>
           <Button
             type="submit"
-            disabled={isSubmitting || !selectedSpecies || (characterTarget?.type === 'pending' && !isGrantTargetValid)}
+            disabled={
+              isSubmitting ||
+              !selectedSpecies ||
+              (characterTarget?.type === "pending" && !isGrantTargetValid)
+            }
           >
             {isSubmitting ? "Creating..." : "Create Character"}
           </Button>

@@ -18,6 +18,20 @@ type ActivityItem {
   user: User!
 }
 
+input AssignCharacterSpeciesInput {
+  """Official registry identifier for this character within its species"""
+  registryId: String
+
+  """Species ID to assign to the character"""
+  speciesId: ID!
+
+  """Species variant ID"""
+  speciesVariantId: ID
+
+  """Initial trait values for the character"""
+  traitValues: [CharacterTraitValueInput!]
+}
+
 type AuthPayload {
   accessToken: String!
   refreshToken: String!
@@ -48,6 +62,9 @@ type Character {
   ownerId: ID
   pendingOwnership: PendingOwnership
   price: Float
+
+  """Official registry identifier for this character within its species"""
+  registryId: String
 
   """Species this character belongs to"""
   species: Species
@@ -368,6 +385,9 @@ input CreateCharacterInput {
   """Create character with pending ownership for an external account"""
   pendingOwner: PendingOwnerInput
   price: Float
+
+  """Official registry identifier for this character within its species"""
+  registryId: String
   speciesId: ID
   speciesVariantId: ID
   tags: [String!]! = []
@@ -512,8 +532,18 @@ input CreateRoleInput {
   """Whether members with this role can edit characters"""
   canEditCharacter: Boolean! = false
 
+  """
+  Whether members with this role can edit registry fields (variant, traits) on any character
+  """
+  canEditCharacterRegistry: Boolean! = false
+
   """Whether members with this role can edit their own characters"""
   canEditOwnCharacter: Boolean! = false
+
+  """
+  Whether members with this role can edit registry fields (variant, traits) on their own characters
+  """
+  canEditOwnCharacterRegistry: Boolean! = false
 
   """Whether members with this role can edit existing roles"""
   canEditRole: Boolean! = false
@@ -1168,6 +1198,11 @@ type Mutation {
     input: ManageMediaTagsInput!
   ): Media!
 
+  """
+  Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species.
+  """
+  assignCharacterSpecies(id: ID!, input: AssignCharacterSpeciesInput!): Character!
+
   """Claim an invite code to join a community"""
   claimInviteCode(
     """Invite code claim data"""
@@ -1407,10 +1442,16 @@ type Mutation {
 
   """Unlink an external account from the current user"""
   unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
-  updateCharacter(id: ID!, input: UpdateCharacterInput!): Character!
 
-  """Update character trait values"""
-  updateCharacterTraits(id: ID!, updateCharacterTraitsInput: UpdateCharacterTraitsInput!): Character!
+  """
+  Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.
+  """
+  updateCharacterProfile(id: ID!, input: UpdateCharacterProfileInput!): Character!
+
+  """
+  Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission.
+  """
+  updateCharacterRegistry(id: ID!, input: UpdateCharacterRegistryInput!): Character!
   updateComment(id: ID!, input: UpdateCommentInput!): Comment!
 
   """Update a community"""
@@ -2141,8 +2182,18 @@ type Role {
   """Whether members with this role can edit characters"""
   canEditCharacter: Boolean!
 
+  """
+  Whether members with this role can edit registry fields (variant, traits) on any character
+  """
+  canEditCharacterRegistry: Boolean!
+
   """Whether members with this role can edit their own characters"""
   canEditOwnCharacter: Boolean!
+
+  """
+  Whether members with this role can edit registry fields (variant, traits) on their own characters
+  """
+  canEditOwnCharacterRegistry: Boolean!
 
   """Whether members with this role can edit existing roles"""
   canEditRole: Boolean!
@@ -2479,7 +2530,8 @@ input UnlinkExternalAccountInput {
   provider: ExternalAccountProvider!
 }
 
-input UpdateCharacterInput {
+"""Input for updating character profile fields"""
+input UpdateCharacterProfileInput {
   customFields: String
   details: String
   isSellable: Boolean
@@ -2497,19 +2549,20 @@ input UpdateCharacterInput {
   """
   pendingOwnerUpdate: PendingOwnerUpdate
   price: Float
-  speciesId: ID
-  speciesVariantId: ID
   tags: [String!]
-
-  """Trait values for the character"""
-  traitValues: [CharacterTraitValueInput!]
   visibility: Visibility
 }
 
-"""Input for updating character trait values"""
-input UpdateCharacterTraitsInput {
-  """Array of trait values to set for the character"""
-  traitValues: [CharacterTraitValueInput!]!
+"""Input for updating character registry fields"""
+input UpdateCharacterRegistryInput {
+  """Official registry identifier for this character within its species"""
+  registryId: String
+
+  """Species variant ID"""
+  speciesVariantId: ID
+
+  """Trait values for the character"""
+  traitValues: [CharacterTraitValueInput!]
 }
 
 input UpdateCommentInput {
@@ -2641,8 +2694,18 @@ input UpdateRoleInput {
   """Whether members with this role can edit characters"""
   canEditCharacter: Boolean
 
+  """
+  Whether members with this role can edit registry fields (variant, traits) on any character
+  """
+  canEditCharacterRegistry: Boolean
+
   """Whether members with this role can edit their own characters"""
   canEditOwnCharacter: Boolean
+
+  """
+  Whether members with this role can edit registry fields (variant, traits) on their own characters
+  """
+  canEditOwnCharacterRegistry: Boolean
 
   """Whether members with this role can edit existing roles"""
   canEditRole: Boolean

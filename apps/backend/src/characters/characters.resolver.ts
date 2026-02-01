@@ -21,7 +21,8 @@ import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
-import { AllowCharacterEditor } from "../auth/decorators/AllowCharacterEditor";
+import { AllowCharacterProfileEditor } from "../auth/decorators/AllowCharacterProfileEditor";
+import { AllowCharacterRegistryEditor } from "../auth/decorators/AllowCharacterRegistryEditor";
 import { CharactersService } from "./characters.service";
 import { TagsService } from "../tags/tags.service";
 import { UsersService } from "../users/users.service";
@@ -47,17 +48,18 @@ import { SpeciesVariant } from "../species-variants/entities/species-variant.ent
 import { Species } from "../species/entities/species.entity";
 import {
   CreateCharacterInput,
-  UpdateCharacterInput,
+  UpdateCharacterProfileInput,
+  UpdateCharacterRegistryInput,
+  AssignCharacterSpeciesInput,
   CharacterFiltersInput,
   TransferCharacterInput,
   ManageTagsInput,
   SetMainMediaInput,
 } from "./dto/character.dto";
-import { UpdateCharacterTraitsInput } from "./dto/character-trait.dto";
 import {
   mapCreateCharacterInputToService,
-  mapUpdateCharacterInputToService,
-  mapUpdateCharacterTraitsInputToService,
+  mapUpdateCharacterProfileInputToService,
+  mapUpdateCharacterRegistryInputToService,
   mapPrismaCharacterToGraphQL,
   mapPrismaCharacterConnectionToGraphQL,
 } from "./utils/character-resolver-mappers";
@@ -134,22 +136,19 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
-  @Mutation(() => CharacterEntity)
-  async updateCharacter(
+  @AllowCharacterProfileEditor({ characterId: "id" })
+  @Mutation(() => CharacterEntity, {
+    description: "Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.",
+  })
+  async updateCharacterProfile(
     @Args("id", { type: () => ID }) id: string,
-    @Args("input") input: UpdateCharacterInput,
+    @Args("input") input: UpdateCharacterProfileInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<CharacterEntity> {
     // If updating ownership or pending ownership, require canCreateOrphanedCharacter permission
     if (input.ownerIdUpdate !== undefined || input.pendingOwnerUpdate !== undefined) {
-      let speciesId = input.speciesId;
-
-      // If speciesId not in input, fetch from existing character
-      if (!speciesId) {
-        const char = await this.charactersService.findOne(id, user.id);
-        speciesId = char.speciesId ?? undefined;
-      }
+      const char = await this.charactersService.findOne(id, user.id);
+      const speciesId = char.speciesId ?? undefined;
 
       // Validate that character has a species
       if (!speciesId) {
@@ -171,8 +170,8 @@ export class CharactersResolver {
       }
     }
 
-    const serviceInput = mapUpdateCharacterInputToService(input);
-    const character = await this.charactersService.update(
+    const serviceInput = mapUpdateCharacterProfileInputToService(input);
+    const character = await this.charactersService.updateProfile(
       id,
       user.id,
       serviceInput,
@@ -181,7 +180,52 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterRegistryEditor({ characterId: "id" })
+  @Mutation(() => CharacterEntity, {
+    description: "Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission.",
+  })
+  async updateCharacterRegistry(
+    @Args("id", { type: () => ID }) id: string,
+    @Args("input") input: UpdateCharacterRegistryInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<CharacterEntity> {
+    const serviceInput = mapUpdateCharacterRegistryInputToService(input);
+    const character = await this.charactersService.updateRegistry(
+      id,
+      user.id,
+      serviceInput,
+    );
+    return mapPrismaCharacterToGraphQL(character);
+  }
+
+  /**
+   * Assign a species to a character for the first time.
+   * Requires canCreateCharacter permission for the target species (checked in service layer).
+   */
+  @AllowGlobalAdmin()
+  @AllowCharacterProfileEditor({ characterId: "id" })
+  @Mutation(() => CharacterEntity, {
+    description: "Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species.",
+  })
+  async assignCharacterSpecies(
+    @Args("id", { type: () => ID }) id: string,
+    @Args("input") input: AssignCharacterSpeciesInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<CharacterEntity> {
+    const character = await this.charactersService.assignSpecies(id, user.id, {
+      speciesId: input.speciesId,
+      speciesVariantId: input.speciesVariantId,
+      registryId: input.registryId,
+      traitValues: input.traitValues?.map((tv) => ({
+        traitId: tv.traitId,
+        value: tv.value ?? null,
+      })),
+    });
+    return mapPrismaCharacterToGraphQL(character);
+  }
+
+  @AllowGlobalAdmin()
+  @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => Boolean)
   async deleteCharacter(
     @Args("id", { type: () => ID }) id: string,
@@ -203,7 +247,7 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity)
   async addCharacterTags(
     @Args("id", { type: () => ID }) id: string,
@@ -216,7 +260,7 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity)
   async removeCharacterTags(
     @Args("id", { type: () => ID }) id: string,
@@ -229,7 +273,7 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity, {
     description: "Sets or clears the main media for a character",
   })
@@ -435,25 +479,4 @@ export class CharactersResolver {
     return mapPrismaSpeciesVariantToGraphQL(prismaResult);
   }
 
-  @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
-  @Mutation(() => CharacterEntity, {
-    description: "Update character trait values",
-  })
-  async updateCharacterTraits(
-    @Args("id", { type: () => ID }) id: string,
-    @Args("updateCharacterTraitsInput")
-    updateCharacterTraitsInput: UpdateCharacterTraitsInput,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<CharacterEntity> {
-    const serviceInput = mapUpdateCharacterTraitsInputToService(
-      updateCharacterTraitsInput,
-    );
-    const prismaResult = await this.charactersService.updateTraits(
-      id,
-      serviceInput,
-      user.id,
-    );
-    return mapPrismaCharacterToGraphQL(prismaResult);
-  }
 }

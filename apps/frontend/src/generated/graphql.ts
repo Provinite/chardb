@@ -43,6 +43,17 @@ export type ActivityItem = {
   user: User;
 };
 
+export type AssignCharacterSpeciesInput = {
+  /** Official registry identifier for this character within its species */
+  registryId?: InputMaybe<Scalars['String']['input']>;
+  /** Species ID to assign to the character */
+  speciesId: Scalars['ID']['input'];
+  /** Species variant ID */
+  speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
+  /** Initial trait values for the character */
+  traitValues?: InputMaybe<Array<CharacterTraitValueInput>>;
+};
+
 export type AuthPayload = {
   __typename?: 'AuthPayload';
   accessToken: Scalars['String']['output'];
@@ -72,6 +83,8 @@ export type Character = {
   ownerId: Maybe<Scalars['ID']['output']>;
   pendingOwnership: Maybe<PendingOwnership>;
   price: Maybe<Scalars['Float']['output']>;
+  /** Official registry identifier for this character within its species */
+  registryId: Maybe<Scalars['String']['output']>;
   /** Species this character belongs to */
   species: Maybe<Species>;
   /** ID of the species this character belongs to */
@@ -363,6 +376,8 @@ export type CreateCharacterInput = {
   /** Create character with pending ownership for an external account */
   pendingOwner?: InputMaybe<PendingOwnerInput>;
   price?: InputMaybe<Scalars['Float']['input']>;
+  /** Official registry identifier for this character within its species */
+  registryId?: InputMaybe<Scalars['String']['input']>;
   speciesId?: InputMaybe<Scalars['ID']['input']>;
   speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
   tags?: Array<Scalars['String']['input']>;
@@ -487,8 +502,12 @@ export type CreateRoleInput = {
   canCreateSpecies?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit characters */
   canEditCharacter?: Scalars['Boolean']['input'];
+  /** Whether members with this role can edit registry fields (variant, traits) on any character */
+  canEditCharacterRegistry?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit their own characters */
   canEditOwnCharacter?: Scalars['Boolean']['input'];
+  /** Whether members with this role can edit registry fields (variant, traits) on their own characters */
+  canEditOwnCharacterRegistry?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit existing roles */
   canEditRole?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit species */
@@ -1046,6 +1065,8 @@ export type Mutation = {
   addCharacterTags: Character;
   /** Adds tags to a media item */
   addMediaTags: Media;
+  /** Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species. */
+  assignCharacterSpecies: Character;
   /** Claim an invite code to join a community */
   claimInviteCode: InviteCode;
   createCharacter: Character;
@@ -1138,9 +1159,10 @@ export type Mutation = {
   unlinkDiscordGuild: Community;
   /** Unlink an external account from the current user */
   unlinkExternalAccount: Scalars['Boolean']['output'];
-  updateCharacter: Character;
-  /** Update character trait values */
-  updateCharacterTraits: Character;
+  /** Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission. */
+  updateCharacterProfile: Character;
+  /** Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission. */
+  updateCharacterRegistry: Character;
   updateComment: Comment;
   /** Update a community */
   updateCommunity: Community;
@@ -1187,6 +1209,12 @@ export type MutationAddCharacterTagsArgs = {
 export type MutationAddMediaTagsArgs = {
   id: Scalars['ID']['input'];
   input: ManageMediaTagsInput;
+};
+
+
+export type MutationAssignCharacterSpeciesArgs = {
+  id: Scalars['ID']['input'];
+  input: AssignCharacterSpeciesInput;
 };
 
 
@@ -1477,15 +1505,15 @@ export type MutationUnlinkExternalAccountArgs = {
 };
 
 
-export type MutationUpdateCharacterArgs = {
+export type MutationUpdateCharacterProfileArgs = {
   id: Scalars['ID']['input'];
-  input: UpdateCharacterInput;
+  input: UpdateCharacterProfileInput;
 };
 
 
-export type MutationUpdateCharacterTraitsArgs = {
+export type MutationUpdateCharacterRegistryArgs = {
   id: Scalars['ID']['input'];
-  updateCharacterTraitsInput: UpdateCharacterTraitsInput;
+  input: UpdateCharacterRegistryInput;
 };
 
 
@@ -2308,8 +2336,12 @@ export type Role = {
   canCreateSpecies: Scalars['Boolean']['output'];
   /** Whether members with this role can edit characters */
   canEditCharacter: Scalars['Boolean']['output'];
+  /** Whether members with this role can edit registry fields (variant, traits) on any character */
+  canEditCharacterRegistry: Scalars['Boolean']['output'];
   /** Whether members with this role can edit their own characters */
   canEditOwnCharacter: Scalars['Boolean']['output'];
+  /** Whether members with this role can edit registry fields (variant, traits) on their own characters */
+  canEditOwnCharacterRegistry: Scalars['Boolean']['output'];
   /** Whether members with this role can edit existing roles */
   canEditRole: Scalars['Boolean']['output'];
   /** Whether members with this role can edit species */
@@ -2580,7 +2612,8 @@ export type UnlinkExternalAccountInput = {
   provider: ExternalAccountProvider;
 };
 
-export type UpdateCharacterInput = {
+/** Input for updating character profile fields */
+export type UpdateCharacterProfileInput = {
   customFields?: InputMaybe<Scalars['String']['input']>;
   details?: InputMaybe<Scalars['String']['input']>;
   isSellable?: InputMaybe<Scalars['Boolean']['input']>;
@@ -2592,18 +2625,18 @@ export type UpdateCharacterInput = {
   /** Update pending ownership (requires canCreateOrphanedCharacter permission) */
   pendingOwnerUpdate?: InputMaybe<PendingOwnerUpdate>;
   price?: InputMaybe<Scalars['Float']['input']>;
-  speciesId?: InputMaybe<Scalars['ID']['input']>;
-  speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  /** Trait values for the character */
-  traitValues?: InputMaybe<Array<CharacterTraitValueInput>>;
   visibility?: InputMaybe<Visibility>;
 };
 
-/** Input for updating character trait values */
-export type UpdateCharacterTraitsInput = {
-  /** Array of trait values to set for the character */
-  traitValues: Array<CharacterTraitValueInput>;
+/** Input for updating character registry fields */
+export type UpdateCharacterRegistryInput = {
+  /** Official registry identifier for this character within its species */
+  registryId?: InputMaybe<Scalars['String']['input']>;
+  /** Species variant ID */
+  speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
+  /** Trait values for the character */
+  traitValues?: InputMaybe<Array<CharacterTraitValueInput>>;
 };
 
 export type UpdateCommentInput = {
@@ -2719,8 +2752,12 @@ export type UpdateRoleInput = {
   canCreateSpecies?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit characters */
   canEditCharacter?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can edit registry fields (variant, traits) on any character */
+  canEditCharacterRegistry?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit their own characters */
   canEditOwnCharacter?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can edit registry fields (variant, traits) on their own characters */
+  canEditOwnCharacterRegistry?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit existing roles */
   canEditRole?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit species */
@@ -2955,7 +2992,7 @@ export type GetCharacterQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, speciesId: string | null, speciesVariantId: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -2985,13 +3022,13 @@ export type CreateCharacterMutationVariables = Exact<{
 
 export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
-export type UpdateCharacterMutationVariables = Exact<{
+export type AssignCharacterSpeciesMutationVariables = Exact<{
   id: Scalars['ID']['input'];
-  input: UpdateCharacterInput;
+  input: AssignCharacterSpeciesInput;
 }>;
 
 
-export type UpdateCharacterMutation = { __typename?: 'Mutation', updateCharacter: { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
+export type AssignCharacterSpeciesMutation = { __typename?: 'Mutation', assignCharacterSpecies: { __typename?: 'Character', id: string, name: string, registryId: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type DeleteCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3032,13 +3069,21 @@ export type SetCharacterMainMediaMutationVariables = Exact<{
 
 export type SetCharacterMainMediaMutation = { __typename?: 'Mutation', setCharacterMainMedia: { __typename?: 'Character', id: string, name: string, mainMediaId: string | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
-export type UpdateCharacterTraitsMutationVariables = Exact<{
+export type UpdateCharacterProfileMutationVariables = Exact<{
   id: Scalars['ID']['input'];
-  updateCharacterTraitsInput: UpdateCharacterTraitsInput;
+  input: UpdateCharacterProfileInput;
 }>;
 
 
-export type UpdateCharacterTraitsMutation = { __typename?: 'Mutation', updateCharacterTraits: { __typename?: 'Character', id: string, name: string, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> } };
+export type UpdateCharacterProfileMutation = { __typename?: 'Mutation', updateCharacterProfile: { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, mainMediaId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
+
+export type UpdateCharacterRegistryMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateCharacterRegistryInput;
+}>;
+
+
+export type UpdateCharacterRegistryMutation = { __typename?: 'Mutation', updateCharacterRegistry: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> } };
 
 export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -3136,7 +3181,7 @@ export type CommunityMembersByUserQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canCreateOrphanedCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type CommunityColorFieldsFragment = { __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string };
 
@@ -3595,7 +3640,7 @@ export type RolesByCommunityDetailedQueryVariables = Exact<{
 }>;
 
 
-export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
+export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
 
 export type CreateRoleMutationVariables = Exact<{
   input: CreateRoleInput;
@@ -3619,7 +3664,7 @@ export type CommunityMembersWithRolesQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
+export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
 
 export type UpdateCommunityMemberMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3627,7 +3672,7 @@ export type UpdateCommunityMemberMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
+export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
 
 export type UserWithAvatarFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
@@ -4509,12 +4554,16 @@ export const GetCharacterDocument = gql`
   character(id: $id) {
     id
     name
+    registryId
     speciesId
     speciesVariantId
     species {
       id
       name
       communityId
+      hasImage
+      createdAt
+      updatedAt
       community {
         id
         name
@@ -4525,6 +4574,15 @@ export const GetCharacterDocument = gql`
     speciesVariant {
       id
       name
+      speciesId
+      colorId
+      createdAt
+      updatedAt
+      color {
+        id
+        name
+        hexCode
+      }
     }
     traitValues {
       traitId
@@ -4896,16 +4954,24 @@ export function useCreateCharacterMutation(baseOptions?: Apollo.MutationHookOpti
 export type CreateCharacterMutationHookResult = ReturnType<typeof useCreateCharacterMutation>;
 export type CreateCharacterMutationResult = Apollo.MutationResult<CreateCharacterMutation>;
 export type CreateCharacterMutationOptions = Apollo.BaseMutationOptions<CreateCharacterMutation, CreateCharacterMutationVariables>;
-export const UpdateCharacterDocument = gql`
-    mutation UpdateCharacter($id: ID!, $input: UpdateCharacterInput!) {
-  updateCharacter(id: $id, input: $input) {
+export const AssignCharacterSpeciesDocument = gql`
+    mutation AssignCharacterSpecies($id: ID!, $input: AssignCharacterSpeciesInput!) {
+  assignCharacterSpecies(id: $id, input: $input) {
     id
     name
     species {
       id
       name
     }
-    details
+    speciesVariant {
+      id
+      name
+    }
+    registryId
+    traitValues {
+      traitId
+      value
+    }
     ownerId
     creatorId
     visibility
@@ -4935,33 +5001,33 @@ export const UpdateCharacterDocument = gql`
   }
 }
     ${UserBasicFragmentDoc}`;
-export type UpdateCharacterMutationFn = Apollo.MutationFunction<UpdateCharacterMutation, UpdateCharacterMutationVariables>;
+export type AssignCharacterSpeciesMutationFn = Apollo.MutationFunction<AssignCharacterSpeciesMutation, AssignCharacterSpeciesMutationVariables>;
 
 /**
- * __useUpdateCharacterMutation__
+ * __useAssignCharacterSpeciesMutation__
  *
- * To run a mutation, you first call `useUpdateCharacterMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateCharacterMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useAssignCharacterSpeciesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAssignCharacterSpeciesMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [updateCharacterMutation, { data, loading, error }] = useUpdateCharacterMutation({
+ * const [assignCharacterSpeciesMutation, { data, loading, error }] = useAssignCharacterSpeciesMutation({
  *   variables: {
  *      id: // value for 'id'
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useUpdateCharacterMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCharacterMutation, UpdateCharacterMutationVariables>) {
+export function useAssignCharacterSpeciesMutation(baseOptions?: Apollo.MutationHookOptions<AssignCharacterSpeciesMutation, AssignCharacterSpeciesMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateCharacterMutation, UpdateCharacterMutationVariables>(UpdateCharacterDocument, options);
+        return Apollo.useMutation<AssignCharacterSpeciesMutation, AssignCharacterSpeciesMutationVariables>(AssignCharacterSpeciesDocument, options);
       }
-export type UpdateCharacterMutationHookResult = ReturnType<typeof useUpdateCharacterMutation>;
-export type UpdateCharacterMutationResult = Apollo.MutationResult<UpdateCharacterMutation>;
-export type UpdateCharacterMutationOptions = Apollo.BaseMutationOptions<UpdateCharacterMutation, UpdateCharacterMutationVariables>;
+export type AssignCharacterSpeciesMutationHookResult = ReturnType<typeof useAssignCharacterSpeciesMutation>;
+export type AssignCharacterSpeciesMutationResult = Apollo.MutationResult<AssignCharacterSpeciesMutation>;
+export type AssignCharacterSpeciesMutationOptions = Apollo.BaseMutationOptions<AssignCharacterSpeciesMutation, AssignCharacterSpeciesMutationVariables>;
 export const DeleteCharacterDocument = gql`
     mutation DeleteCharacter($id: ID!) {
   deleteCharacter(id: $id)
@@ -5187,14 +5253,85 @@ export function useSetCharacterMainMediaMutation(baseOptions?: Apollo.MutationHo
 export type SetCharacterMainMediaMutationHookResult = ReturnType<typeof useSetCharacterMainMediaMutation>;
 export type SetCharacterMainMediaMutationResult = Apollo.MutationResult<SetCharacterMainMediaMutation>;
 export type SetCharacterMainMediaMutationOptions = Apollo.BaseMutationOptions<SetCharacterMainMediaMutation, SetCharacterMainMediaMutationVariables>;
-export const UpdateCharacterTraitsDocument = gql`
-    mutation UpdateCharacterTraits($id: ID!, $updateCharacterTraitsInput: UpdateCharacterTraitsInput!) {
-  updateCharacterTraits(
-    id: $id
-    updateCharacterTraitsInput: $updateCharacterTraitsInput
-  ) {
+export const UpdateCharacterProfileDocument = gql`
+    mutation UpdateCharacterProfile($id: ID!, $input: UpdateCharacterProfileInput!) {
+  updateCharacterProfile(id: $id, input: $input) {
     id
     name
+    species {
+      id
+      name
+    }
+    details
+    ownerId
+    creatorId
+    visibility
+    isSellable
+    isTradeable
+    price
+    tags
+    customFields
+    mainMediaId
+    createdAt
+    updatedAt
+    pendingOwnership {
+      id
+      provider
+      providerAccountId
+      displayIdentifier
+      createdAt
+    }
+    owner {
+      ...UserBasic
+    }
+    creator {
+      ...UserBasic
+    }
+    _count {
+      media
+    }
+  }
+}
+    ${UserBasicFragmentDoc}`;
+export type UpdateCharacterProfileMutationFn = Apollo.MutationFunction<UpdateCharacterProfileMutation, UpdateCharacterProfileMutationVariables>;
+
+/**
+ * __useUpdateCharacterProfileMutation__
+ *
+ * To run a mutation, you first call `useUpdateCharacterProfileMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCharacterProfileMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCharacterProfileMutation, { data, loading, error }] = useUpdateCharacterProfileMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateCharacterProfileMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCharacterProfileMutation, UpdateCharacterProfileMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateCharacterProfileMutation, UpdateCharacterProfileMutationVariables>(UpdateCharacterProfileDocument, options);
+      }
+export type UpdateCharacterProfileMutationHookResult = ReturnType<typeof useUpdateCharacterProfileMutation>;
+export type UpdateCharacterProfileMutationResult = Apollo.MutationResult<UpdateCharacterProfileMutation>;
+export type UpdateCharacterProfileMutationOptions = Apollo.BaseMutationOptions<UpdateCharacterProfileMutation, UpdateCharacterProfileMutationVariables>;
+export const UpdateCharacterRegistryDocument = gql`
+    mutation UpdateCharacterRegistry($id: ID!, $input: UpdateCharacterRegistryInput!) {
+  updateCharacterRegistry(id: $id, input: $input) {
+    id
+    name
+    registryId
+    speciesId
+    speciesVariantId
+    speciesVariant {
+      id
+      name
+    }
     traitValues {
       traitId
       value
@@ -5214,33 +5351,33 @@ export const UpdateCharacterTraitsDocument = gql`
   }
 }
     `;
-export type UpdateCharacterTraitsMutationFn = Apollo.MutationFunction<UpdateCharacterTraitsMutation, UpdateCharacterTraitsMutationVariables>;
+export type UpdateCharacterRegistryMutationFn = Apollo.MutationFunction<UpdateCharacterRegistryMutation, UpdateCharacterRegistryMutationVariables>;
 
 /**
- * __useUpdateCharacterTraitsMutation__
+ * __useUpdateCharacterRegistryMutation__
  *
- * To run a mutation, you first call `useUpdateCharacterTraitsMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateCharacterTraitsMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useUpdateCharacterRegistryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCharacterRegistryMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [updateCharacterTraitsMutation, { data, loading, error }] = useUpdateCharacterTraitsMutation({
+ * const [updateCharacterRegistryMutation, { data, loading, error }] = useUpdateCharacterRegistryMutation({
  *   variables: {
  *      id: // value for 'id'
- *      updateCharacterTraitsInput: // value for 'updateCharacterTraitsInput'
+ *      input: // value for 'input'
  *   },
  * });
  */
-export function useUpdateCharacterTraitsMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCharacterTraitsMutation, UpdateCharacterTraitsMutationVariables>) {
+export function useUpdateCharacterRegistryMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCharacterRegistryMutation, UpdateCharacterRegistryMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateCharacterTraitsMutation, UpdateCharacterTraitsMutationVariables>(UpdateCharacterTraitsDocument, options);
+        return Apollo.useMutation<UpdateCharacterRegistryMutation, UpdateCharacterRegistryMutationVariables>(UpdateCharacterRegistryDocument, options);
       }
-export type UpdateCharacterTraitsMutationHookResult = ReturnType<typeof useUpdateCharacterTraitsMutation>;
-export type UpdateCharacterTraitsMutationResult = Apollo.MutationResult<UpdateCharacterTraitsMutation>;
-export type UpdateCharacterTraitsMutationOptions = Apollo.BaseMutationOptions<UpdateCharacterTraitsMutation, UpdateCharacterTraitsMutationVariables>;
+export type UpdateCharacterRegistryMutationHookResult = ReturnType<typeof useUpdateCharacterRegistryMutation>;
+export type UpdateCharacterRegistryMutationResult = Apollo.MutationResult<UpdateCharacterRegistryMutation>;
+export type UpdateCharacterRegistryMutationOptions = Apollo.BaseMutationOptions<UpdateCharacterRegistryMutation, UpdateCharacterRegistryMutationVariables>;
 export const GetLikedCharactersDocument = gql`
     query GetLikedCharacters {
   likedCharacters {
@@ -5768,6 +5905,8 @@ export const CommunityMembersByUserDocument = gql`
         canEditRole
         canEditCharacter
         canEditOwnCharacter
+        canEditOwnCharacterRegistry
+        canEditCharacterRegistry
         canCreateOrphanedCharacter
         canListInviteCodes
         canRemoveCommunityMember
@@ -8769,6 +8908,8 @@ export const RolesByCommunityDetailedDocument = gql`
       canCreateOrphanedCharacter
       canEditCharacter
       canEditOwnCharacter
+      canEditOwnCharacterRegistry
+      canEditCharacterRegistry
       canEditSpecies
       canManageItems
       canGrantItems
@@ -8970,6 +9111,8 @@ export const CommunityMembersWithRolesDocument = gql`
         canCreateOrphanedCharacter
         canEditCharacter
         canEditOwnCharacter
+        canEditOwnCharacterRegistry
+        canEditCharacterRegistry
         canEditSpecies
         canManageItems
         canGrantItems
@@ -9046,6 +9189,8 @@ export const UpdateCommunityMemberDocument = gql`
       canCreateOrphanedCharacter
       canEditCharacter
       canEditOwnCharacter
+      canEditOwnCharacterRegistry
+      canEditCharacterRegistry
       canEditSpecies
       canManageItems
       canGrantItems

@@ -62,12 +62,16 @@ export const GET_CHARACTER = gql`
     character(id: $id) {
       id
       name
+      registryId
       speciesId
       speciesVariantId
       species {
         id
         name
         communityId
+        hasImage
+        createdAt
+        updatedAt
         community {
           id
           name
@@ -78,6 +82,15 @@ export const GET_CHARACTER = gql`
       speciesVariant {
         id
         name
+        speciesId
+        colorId
+        createdAt
+        updatedAt
+        color {
+          id
+          name
+          hexCode
+        }
       }
       traitValues {
         traitId
@@ -299,16 +312,24 @@ export const CREATE_CHARACTER = gql`
   ${USER_BASIC_FRAGMENT}
 `;
 
-export const UPDATE_CHARACTER = gql`
-  mutation UpdateCharacter($id: ID!, $input: UpdateCharacterInput!) {
-    updateCharacter(id: $id, input: $input) {
+export const ASSIGN_CHARACTER_SPECIES = gql`
+  mutation AssignCharacterSpecies($id: ID!, $input: AssignCharacterSpeciesInput!) {
+    assignCharacterSpecies(id: $id, input: $input) {
       id
       name
       species {
         id
         name
       }
-      details
+      speciesVariant {
+        id
+        name
+      }
+      registryId
+      traitValues {
+        traitId
+        value
+      }
       ownerId
       creatorId
       visibility
@@ -437,17 +458,60 @@ export const SET_CHARACTER_MAIN_MEDIA = gql`
   }
 `;
 
-export const UPDATE_CHARACTER_TRAITS = gql`
-  mutation UpdateCharacterTraits(
-    $id: ID!
-    $updateCharacterTraitsInput: UpdateCharacterTraitsInput!
-  ) {
-    updateCharacterTraits(
-      id: $id
-      updateCharacterTraitsInput: $updateCharacterTraitsInput
-    ) {
+export const UPDATE_CHARACTER_PROFILE = gql`
+  mutation UpdateCharacterProfile($id: ID!, $input: UpdateCharacterProfileInput!) {
+    updateCharacterProfile(id: $id, input: $input) {
       id
       name
+      species {
+        id
+        name
+      }
+      details
+      ownerId
+      creatorId
+      visibility
+      isSellable
+      isTradeable
+      price
+      tags
+      customFields
+      mainMediaId
+      createdAt
+      updatedAt
+      pendingOwnership {
+        id
+        provider
+        providerAccountId
+        displayIdentifier
+        createdAt
+      }
+      owner {
+        ...UserBasic
+      }
+      creator {
+        ...UserBasic
+      }
+      _count {
+        media
+      }
+    }
+  }
+  ${USER_BASIC_FRAGMENT}
+`;
+
+export const UPDATE_CHARACTER_REGISTRY = gql`
+  mutation UpdateCharacterRegistry($id: ID!, $input: UpdateCharacterRegistryInput!) {
+    updateCharacterRegistry(id: $id, input: $input) {
+      id
+      name
+      registryId
+      speciesId
+      speciesVariantId
+      speciesVariant {
+        id
+        name
+      }
       traitValues {
         traitId
         value
@@ -502,24 +566,26 @@ export {
 
   // Mutation Hooks
   useCreateCharacterMutation,
-  useUpdateCharacterMutation,
+  useAssignCharacterSpeciesMutation,
+  useUpdateCharacterProfileMutation,
+  useUpdateCharacterRegistryMutation,
   useDeleteCharacterMutation,
   useTransferCharacterMutation,
   useAddCharacterTagsMutation,
   useRemoveCharacterTagsMutation,
   useSetCharacterMainMediaMutation,
-  useUpdateCharacterTraitsMutation,
 
   // Types
   type Character,
   type CharacterConnection,
   type CharacterFiltersInput,
   type CreateCharacterInput,
-  type UpdateCharacterInput,
+  type AssignCharacterSpeciesInput,
+  type UpdateCharacterProfileInput,
+  type UpdateCharacterRegistryInput,
   type TransferCharacterInput,
   type ManageTagsInput,
   type SetMainMediaInput,
-  type UpdateCharacterTraitsInput,
   type CharacterTraitValueInput,
   type GetCharactersQuery,
   type GetCharactersQueryVariables,
@@ -529,8 +595,12 @@ export {
   type GetMyCharactersQueryVariables,
   type CreateCharacterMutation,
   type CreateCharacterMutationVariables,
-  type UpdateCharacterMutation,
-  type UpdateCharacterMutationVariables,
+  type AssignCharacterSpeciesMutation,
+  type AssignCharacterSpeciesMutationVariables,
+  type UpdateCharacterProfileMutation,
+  type UpdateCharacterProfileMutationVariables,
+  type UpdateCharacterRegistryMutation,
+  type UpdateCharacterRegistryMutationVariables,
   type DeleteCharacterMutation,
   type DeleteCharacterMutationVariables,
   type TransferCharacterMutation,
@@ -541,8 +611,6 @@ export {
   type RemoveCharacterTagsMutationVariables,
   type SetCharacterMainMediaMutation,
   type SetCharacterMainMediaMutationVariables,
-  type UpdateCharacterTraitsMutation,
-  type UpdateCharacterTraitsMutationVariables,
   type Visibility,
   type Tag,
   type CharacterTag,

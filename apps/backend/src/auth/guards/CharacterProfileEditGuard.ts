@@ -6,21 +6,22 @@ import { PermissionService } from "../PermissionService";
 import { CommunityResolverService } from "../services/community-resolver.service";
 import { getUserFromContext } from "../utils/get-user-from-context";
 import { getNestedValue } from "../../common/utils/getNestedValue";
-import { AllowCharacterEditor } from "../decorators/AllowCharacterEditor";
-import { CommunityPermission } from "../CommunityPermission";
+import { AllowCharacterProfileEditor } from "../decorators/AllowCharacterProfileEditor";
 
 /**
- * Guard that checks character edit permissions based on ownership.
+ * Guard that checks character profile edit permissions based on ownership.
  *
- * Works with @AllowCharacterEditor() decorator.
+ * Works with @AllowCharacterProfileEditor() decorator.
+ * For registry field editing, use @AllowCharacterRegistryEditor() instead.
  *
  * Permission logic:
- * - If user owns the character: requires `canEditOwnCharacter` permission
+ * - If user owns the character: requires `canEditOwnCharacter` or `canEditCharacter` permission
  * - If user does not own the character: requires `canEditCharacter` permission
+ * - For orphaned characters: requires `canCreateOrphanedCharacter` or `canEditCharacter` permission
  * - Permissions are resolved via character→species→community
  */
 @Injectable()
-export class CharacterEditGuard implements CanActivate {
+export class CharacterProfileEditGuard implements CanActivate {
   constructor(
     private prisma: DatabaseService,
     private permissionService: PermissionService,
@@ -34,7 +35,7 @@ export class CharacterEditGuard implements CanActivate {
       return false;
     }
 
-    const config = this.reflector.getAllAndOverride(AllowCharacterEditor, [
+    const config = this.reflector.getAllAndOverride(AllowCharacterProfileEditor, [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -87,24 +88,20 @@ export class CharacterEditGuard implements CanActivate {
       }
 
       // For orphaned characters, check if user has permission to manage orphaned characters
-      // OR has general edit permission
-      const hasOrphanedPermission =
-        await this.permissionService.hasCommunityPermission(
+      // OR has canEditCharacter permission (profile-level)
+      const permissions =
+        await this.permissionService.getCommunityPermissions(
           user.id,
           community.id,
-          CommunityPermission.CanCreateOrphanedCharacter,
-        );
-      const hasEditPermission =
-        await this.permissionService.hasCommunityPermission(
-          user.id,
-          community.id,
-          CommunityPermission.CanEditCharacter,
         );
 
-      return hasOrphanedPermission || hasEditPermission;
+      return !!(
+        permissions.canCreateOrphanedCharacter ||
+        permissions.canEditCharacter
+      );
     }
 
-    // Handle owned characters (existing logic)
+    // Handle owned characters
     const isOwner = character.ownerId === user.id;
 
     // If no species, only owner can edit
@@ -124,15 +121,21 @@ export class CharacterEditGuard implements CanActivate {
       return isOwner;
     }
 
-    // Check appropriate permission based on ownership
-    const requiredPermission = isOwner
-      ? CommunityPermission.CanEditOwnCharacter
-      : CommunityPermission.CanEditCharacter;
-
-    return this.permissionService.hasCommunityPermission(
+    // Check profile-level permissions only
+    const permissions = await this.permissionService.getCommunityPermissions(
       user.id,
       community.id,
-      requiredPermission,
     );
+
+    if (isOwner) {
+      // Owner can edit if they have canEditOwnCharacter or canEditCharacter
+      return !!(
+        permissions.canEditOwnCharacter ||
+        permissions.canEditCharacter
+      );
+    } else {
+      // Non-owner needs canEditCharacter permission
+      return !!permissions.canEditCharacter;
+    }
   }
 }

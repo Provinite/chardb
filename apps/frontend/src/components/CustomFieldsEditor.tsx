@@ -103,6 +103,7 @@ interface CustomFieldsEditorProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   watch: UseFormWatch<any>;
   fieldName?: string;
+  disabled?: boolean;
 }
 
 export const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
@@ -110,6 +111,7 @@ export const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
   setValue,
   watch,
   fieldName = 'customFields',
+  disabled = false,
 }) => {
   // Watch the customFields value
   const customFieldsValue = watch(fieldName);
@@ -193,17 +195,20 @@ export const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
                   placeholder="e.g., Age, Pronouns, Occupation"
                   value={field.key}
                   onChange={(e) => updateField(index, 'key', e.target.value)}
+                  disabled={disabled}
                 />
                 <Input
                   type="text"
                   placeholder="e.g., 25, they/them, Merchant"
                   value={field.value}
                   onChange={(e) => updateField(index, 'value', e.target.value)}
+                  disabled={disabled}
                 />
                 <RemoveButton
                   type="button"
                   onClick={() => removeField(index)}
                   aria-label="Remove field"
+                  disabled={disabled}
                 >
                   Remove
                 </RemoveButton>
@@ -212,7 +217,7 @@ export const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
           </>
         )}
 
-        <AddButton type="button" onClick={addField}>
+        <AddButton type="button" onClick={addField} disabled={disabled}>
           + Add Field
         </AddButton>
       </FieldsContainer>

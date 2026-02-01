@@ -10,6 +10,8 @@ export enum CommunityPermission {
   CanCreateOrphanedCharacter = "canCreateOrphanedCharacter",
   CanEditCharacter = "canEditCharacter",
   CanEditOwnCharacter = "canEditOwnCharacter",
+  CanEditOwnCharacterRegistry = "canEditOwnCharacterRegistry",
+  CanEditCharacterRegistry = "canEditCharacterRegistry",
   CanEditSpecies = "canEditSpecies",
   CanCreateInviteCode = "canCreateInviteCode",
   CanListInviteCodes = "canListInviteCodes",

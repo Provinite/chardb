@@ -9,10 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Faceted Character Editing Permissions**: Separate UI controls for Profile vs Registry editing
+  - Added `canEditOwnCharacterRegistry` and `canEditCharacterRegistry` to role management UI
+  - Updated permission descriptions to clarify Profile vs Registry field access
+  - Added "Species Details" section to character edit with Official Identifier field and traits
+  - Profile fields disabled for users with only registry permissions (and vice versa)
 - **Upload Character Images Permissions**: New permissions for controlling image upload character selection
   - Added `canUploadOwnCharacterImages` and `canUploadCharacterImages` to permission UI
   - Centralized type-safe permission definitions in `lib/permissions.ts`
-  - All admin permission components (RoleManagementTab, PermissionMatrix, RoleTemplateManager) now use shared permission labels
+
+### Changed
+
+- Character edit/create now uses `updateCharacterProfile`, `updateCharacterRegistry`, and `assignCharacterSpecies` mutations
 
 ## [v7.0.0] - 2025-11-13
 

@@ -26,6 +26,10 @@ export interface CreateRoleServiceInput {
   canEditCharacter?: boolean;
   /** Permission to edit own characters only */
   canEditOwnCharacter?: boolean;
+  /** Permission to edit registry fields on own characters */
+  canEditOwnCharacterRegistry?: boolean;
+  /** Permission to edit registry fields on any character */
+  canEditCharacterRegistry?: boolean;
   /** Permission to edit species */
   canEditSpecies?: boolean;
   /** Permission to create invite codes */
@@ -66,6 +70,10 @@ export interface UpdateRoleServiceInput {
   canEditCharacter?: boolean;
   /** Permission to edit own characters only */
   canEditOwnCharacter?: boolean;
+  /** Permission to edit registry fields on own characters */
+  canEditOwnCharacterRegistry?: boolean;
+  /** Permission to edit registry fields on any character */
+  canEditCharacterRegistry?: boolean;
   /** Permission to edit species */
   canEditSpecies?: boolean;
   /** Permission to create invite codes */
@@ -104,6 +112,8 @@ export class RolesService {
         canCreateOrphanedCharacter: input.canCreateOrphanedCharacter ?? false,
         canEditCharacter: input.canEditCharacter ?? false,
         canEditOwnCharacter: input.canEditOwnCharacter ?? false,
+        canEditOwnCharacterRegistry: input.canEditOwnCharacterRegistry ?? false,
+        canEditCharacterRegistry: input.canEditCharacterRegistry ?? false,
         canEditSpecies: input.canEditSpecies ?? false,
         canCreateInviteCode: input.canCreateInviteCode ?? false,
         canListInviteCodes: input.canListInviteCodes ?? false,
@@ -211,6 +221,10 @@ export class RolesService {
       updateData.canEditCharacter = input.canEditCharacter;
     if (input.canEditOwnCharacter !== undefined)
       updateData.canEditOwnCharacter = input.canEditOwnCharacter;
+    if (input.canEditOwnCharacterRegistry !== undefined)
+      updateData.canEditOwnCharacterRegistry = input.canEditOwnCharacterRegistry;
+    if (input.canEditCharacterRegistry !== undefined)
+      updateData.canEditCharacterRegistry = input.canEditCharacterRegistry;
     if (input.canEditSpecies !== undefined)
       updateData.canEditSpecies = input.canEditSpecies;
     if (input.canCreateInviteCode !== undefined)

@@ -3002,6 +3002,8 @@ __metadata:
   resolution: "@chardb/database@workspace:packages/database"
   dependencies:
     "@prisma/client": "npm:^5.0.0"
+    "@types/bcrypt": "npm:^5.0.0"
+    bcrypt: "npm:^5.1.0"
     dotenv-cli: "npm:^8.0.0"
     prisma: "npm:^5.0.0"
     prisma-json-types-generator: "npm:^3.6.0"

@@ -13,14 +13,17 @@
     "db:migrate": "dotenv -e .env -e ../../apps/backend/.env -- prisma migrate dev",
     "db:migrate:prod": "dotenv -e .env -e ../../apps/backend/.env -- prisma migrate deploy",
     "db:studio": "dotenv -e .env -e ../../apps/backend/.env -- prisma studio",
-    "db:seed": "dotenv -e .env -e ../../apps/backend/.env -- tsx src/seed.ts"
+    "db:seed": "dotenv -e .env -e ../../apps/backend/.env -- tsx src/seed.ts",
+    "db:seed-personas": "dotenv -e .env -e ../../apps/backend/.env -- tsx src/seed-personas.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",
+    "bcrypt": "^5.1.0",
     "prisma": "^5.0.0",
     "prisma-json-types-generator": "^3.6.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
     "dotenv-cli": "^8.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
