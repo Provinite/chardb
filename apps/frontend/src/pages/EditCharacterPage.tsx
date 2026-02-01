@@ -293,11 +293,12 @@ export const EditCharacterPage: React.FC = () => {
   const [selectedVariant, setSelectedVariant] =
     useState<SpeciesVariantDetailsFragment | null>(null);
 
-  // Trait values state
+  // Registry state (traits and registryId)
   const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>(
     [],
   );
-  const [isSubmittingTraits, setIsSubmittingTraits] = useState(false);
+  const [registryId, setRegistryId] = useState<string>("");
+  const [isSubmittingRegistry, setIsSubmittingRegistry] = useState(false);
 
   // Pending ownership state
   const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(
@@ -383,7 +384,7 @@ export const EditCharacterPage: React.FC = () => {
         setSelectedVariant(character.speciesVariant as any);
       }
 
-      // Set trait values if they exist
+      // Set registry values (traits and registryId)
       if (character.traitValues) {
         setTraitValues(
           character.traitValues.map((tv) => ({
@@ -392,6 +393,7 @@ export const EditCharacterPage: React.FC = () => {
           })),
         );
       }
+      setRegistryId(character.registryId || "");
 
       // Initialize ownership state
       if (character.owner) {
@@ -575,14 +577,14 @@ export const EditCharacterPage: React.FC = () => {
     }
   };
 
-  const handleSaveTraits = async () => {
+  const handleSaveRegistry = async () => {
     if (!character || !user) return;
 
-    setIsSubmittingTraits(true);
+    setIsSubmittingRegistry(true);
     try {
       const input: UpdateCharacterRegistryInput = {
         traitValues,
-        // Could also include speciesVariantId here if we add variant editing to this section
+        registryId: registryId.trim() || undefined,
       };
 
       await updateCharacterRegistry({
@@ -601,7 +603,7 @@ export const EditCharacterPage: React.FC = () => {
           : "Failed to update registry. Please try again.",
       );
     } finally {
-      setIsSubmittingTraits(false);
+      setIsSubmittingRegistry(false);
     }
   };
 
@@ -865,10 +867,28 @@ export const EditCharacterPage: React.FC = () => {
           </FormSection>
         )}
 
-        {/* Traits Section - only show if character has a species */}
+        {/* Registry Section - only show if character has a species */}
         {character.speciesId && (
           <FormSection>
-            <SectionTitle>Character Traits</SectionTitle>
+            <SectionTitle>Species Registry</SectionTitle>
+            <InfoBox>
+              Registry fields are managed by species administrators. These include the official registry ID and character traits.
+            </InfoBox>
+
+            <FormGroup>
+              <Label>Registry ID</Label>
+              <Input
+                value={registryId}
+                onChange={(e) => setRegistryId(e.target.value)}
+                placeholder="e.g., TH-0042, REG-123"
+                disabled={isSubmittingRegistry}
+                maxLength={100}
+              />
+              <TagsHelp>
+                Official identifier for this character within the species registry.
+              </TagsHelp>
+            </FormGroup>
+
             <TraitForm
               speciesId={character.speciesId}
               speciesVariant={
@@ -876,16 +896,16 @@ export const EditCharacterPage: React.FC = () => {
               }
               traitValues={traitValues}
               onChange={setTraitValues}
-              disabled={isSubmittingTraits}
+              disabled={isSubmittingRegistry}
             />
             <TraitActions>
               <Button
                 type="button"
                 variant="primary"
-                onClick={handleSaveTraits}
-                disabled={isSubmittingTraits}
+                onClick={handleSaveRegistry}
+                disabled={isSubmittingRegistry}
               >
-                {isSubmittingTraits ? "Saving Traits..." : "Save Traits"}
+                {isSubmittingRegistry ? "Saving Registry..." : "Save Registry"}
               </Button>
             </TraitActions>
           </FormSection>
