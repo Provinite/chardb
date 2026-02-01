@@ -591,13 +591,13 @@ export const EditCharacterPage: React.FC = () => {
         },
       });
 
-      toast.success("Registry updated successfully!");
+      toast.success("Species details updated!");
     } catch (error) {
       console.error("Failed to update registry:", error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to update registry. Please try again.",
+          : "Failed to save species details. Please try again.",
       );
     } finally {
       setIsSubmittingRegistry(false);
@@ -882,15 +882,15 @@ export const EditCharacterPage: React.FC = () => {
         {/* Registry Section - only show if character has a species */}
         {character.speciesId && (
           <FormSection>
-            <SectionTitle>Species Registry</SectionTitle>
+            <SectionTitle>Species Details</SectionTitle>
             <InfoBox>
-              Registry fields are managed by species administrators. These include the official registry ID and character traits.
+              These fields are managed by species administrators. They include the official identifier and character traits.
             </InfoBox>
             {!canEditRegistry && (
               <WarningBox>
                 <AlertTriangle size={20} />
                 <div>
-                  You don't have permission to edit registry fields for this character.
+                  You don't have permission to edit species details for this character.
                 </div>
               </WarningBox>
             )}
@@ -925,7 +925,7 @@ export const EditCharacterPage: React.FC = () => {
                 onClick={handleSaveRegistry}
                 disabled={!canEditRegistry || isSubmittingRegistry}
               >
-                {isSubmittingRegistry ? "Saving Registry..." : "Save Registry"}
+                {isSubmittingRegistry ? "Saving..." : "Save Species Details"}
               </Button>
             </TraitActions>
           </FormSection>
