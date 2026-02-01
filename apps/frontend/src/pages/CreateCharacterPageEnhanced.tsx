@@ -276,6 +276,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   // Species and variant state
   const [selectedSpecies, setSelectedSpecies] = useState<SpeciesDetailsFragment | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<SpeciesVariantDetailsFragment | null>(null);
+  const [registryId, setRegistryId] = useState<string>("");
 
   // Trait values state
   const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>([]);
@@ -390,6 +391,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             tags: tags.length > 0 ? tags : undefined,
             speciesId: selectedSpecies?.id || undefined,
             speciesVariantId: selectedVariant?.id || undefined,
+            registryId: registryId.trim() || undefined,
             traitValues: traitValues.length > 0 ? traitValues : undefined,
             // Add pending owner based on characterTarget
             pendingOwner: characterTarget?.type === 'pending'
@@ -457,11 +459,32 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           <SpeciesSelector
             selectedSpecies={selectedSpecies}
             selectedVariant={selectedVariant}
-            onSpeciesChange={setSelectedSpecies}
+            onSpeciesChange={(species) => {
+              setSelectedSpecies(species);
+              if (!species) {
+                setRegistryId("");
+              }
+            }}
             onVariantChange={setSelectedVariant}
             error={!selectedSpecies ? "Species selection is required. Non-species character creation coming soon to all users!" : undefined}
             userCommunityMemberships={user?.communityMemberships}
           />
+
+          {selectedSpecies && (
+            <FormGroup style={{ marginTop: '1rem' }}>
+              <Label htmlFor="registryId">Registry ID (Optional)</Label>
+              <Input
+                id="registryId"
+                value={registryId}
+                onChange={(e) => setRegistryId(e.target.value)}
+                placeholder="e.g., TH-0042, REG-123"
+                maxLength={100}
+              />
+              <span style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
+                An optional official identifier for this character within the species registry.
+              </span>
+            </FormGroup>
+          )}
         </Section>
 
         {/* Character Ownership */}
