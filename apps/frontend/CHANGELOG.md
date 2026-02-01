@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `updateCharacterProfile` mutation for profile fields
   - Added `updateCharacterRegistry` mutation for registry fields
   - Added `registryId` field to character queries
+  - Added Registry ID input in "Species Registry" section of character edit page
+  - Registry ID and traits saved together via registry mutation with proper permissions
 
 - **Upload Character Images Permissions**: New permissions for controlling image upload character selection
   - Added `canUploadOwnCharacterImages` and `canUploadCharacterImages` to permission UI

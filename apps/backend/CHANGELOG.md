@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Unique per species (@@unique constraint on speciesId + registryId)
   - Stored as VARCHAR(100) for flexible identifier formats
 
+### Fixed
+
+- **Role Service Registry Permissions**: Fixed roles service not saving registry permission fields
+  - `canEditOwnCharacterRegistry` and `canEditCharacterRegistry` were defined in DTOs but not passed to Prisma in create/update methods
+  - Role updates for registry permissions now correctly persist to database
+
+### Added
+
 - **Upload Character Images Permissions**: New granular permissions for image upload character selection
   - `canUploadOwnCharacterImages`: Controls ability to upload images to user's own characters within a community
   - `canUploadCharacterImages`: Controls ability to upload images to any character (admin-level permission)
