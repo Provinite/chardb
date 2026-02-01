@@ -584,7 +584,7 @@ export const EditCharacterPage: React.FC = () => {
     try {
       const input: UpdateCharacterRegistryInput = {
         traitValues,
-        registryId: registryId.trim() || undefined,
+        registryId: registryId.trim() || null,
       };
 
       await updateCharacterRegistry({

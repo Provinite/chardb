@@ -7,11 +7,10 @@
 - You can always just run `yarn install` from the project root to install dependencies for the entire repository
 - This project is yarn 4 monorepo
 - You can execute yarn scripts in a particular package by running `yarn workspace ${PACKAGE_NAME} ${SCRIPT_NAME}` (example: `yarn workspace @chardb/backend build`)
-  - Prefer this method to the subshell when available
-- To execute commands in subdirectories, use the bash subshell syntax instead of cd'ing into directories
 - You can type check the entire repository by running `yarn type-check` in the root
 - Jaeger trace analysis is available at http://localhost:16686
-- You cannot directly start the servers with the dev command. The servers run indefinitely, and you will get stuck waiting for the logs. If you need the servers running, or details from the logs, just ask the user directly instead.
+- You may start the servers if they are not running with `yarn dev:agent`
+  - Frontend: localhost:3000
 - The `gh` cli is configured for github interactions beyond simple `git` cli commands
 - Local Development Credentials: test@example.com / test123
 - Use the .tmp folder in the package root for temporary files (like image uploads).
