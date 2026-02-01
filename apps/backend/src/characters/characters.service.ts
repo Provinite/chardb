@@ -917,7 +917,8 @@ export class CharactersService {
   /**
    * Assign a species to a character for the first time.
    * This is only valid for characters that don't already have a species assigned.
-   * Permission checking is handled by the guard - this method trusts the caller has canCreateCharacter for the species.
+   * The guard ensures the user can access the character; this method checks
+   * canCreateCharacter permission for the target species.
    */
   async assignSpecies(
     id: string,
@@ -938,12 +939,25 @@ export class CharactersService {
       );
     }
 
-    // Verify the species exists
+    // Verify the species exists and get its community
     const species = await this.db.species.findUnique({
       where: { id: input.speciesId },
+      select: { id: true, communityId: true },
     });
     if (!species) {
       throw new NotFoundException(`Species with ID ${input.speciesId} not found`);
+    }
+
+    // Verify user has canCreateCharacter permission for the target species
+    const hasPermission = await this.permissionService.hasCommunityPermission(
+      userId,
+      species.communityId,
+      CommunityPermission.CanCreateCharacter,
+    );
+    if (!hasPermission) {
+      throw new ForbiddenException(
+        "You do not have permission to create characters for this species",
+      );
     }
 
     // If variant provided, verify it belongs to the species

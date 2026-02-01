@@ -21,7 +21,7 @@ import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
-import { AllowCharacterEditor } from "../auth/decorators/AllowCharacterEditor";
+import { AllowCharacterProfileEditor } from "../auth/decorators/AllowCharacterProfileEditor";
 import { AllowCharacterRegistryEditor } from "../auth/decorators/AllowCharacterRegistryEditor";
 import { CharactersService } from "./characters.service";
 import { TagsService } from "../tags/tags.service";
@@ -136,7 +136,7 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity, {
     description: "Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.",
   })
@@ -200,12 +200,10 @@ export class CharactersResolver {
 
   /**
    * Assign a species to a character for the first time.
-   * Requires canCreateCharacter permission for the target species.
+   * Requires canCreateCharacter permission for the target species (checked in service layer).
    */
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
-  @AllowCommunityPermission(CommunityPermission.CanCreateCharacter)
-  @ResolveCommunityFrom({ speciesId: "input.speciesId" })
+  @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity, {
     description: "Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species.",
   })
@@ -227,7 +225,7 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => Boolean)
   async deleteCharacter(
     @Args("id", { type: () => ID }) id: string,
@@ -249,7 +247,7 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity)
   async addCharacterTags(
     @Args("id", { type: () => ID }) id: string,
@@ -262,7 +260,7 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity)
   async removeCharacterTags(
     @Args("id", { type: () => ID }) id: string,
@@ -275,7 +273,7 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterEditor({ characterId: "id" })
+  @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity, {
     description: "Sets or clears the main media for a character",
   })

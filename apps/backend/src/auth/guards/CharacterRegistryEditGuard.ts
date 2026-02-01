@@ -13,11 +13,14 @@ import { CommunityPermission } from "../CommunityPermission";
  * Guard that checks character registry edit permissions based on ownership.
  *
  * Works with @AllowCharacterRegistryEditor() decorator.
+ * For profile field editing (name, details, visibility, tags, etc.),
+ * use @AllowCharacterProfileEditor() instead.
  *
  * Permission logic:
- * - If user owns the character: requires `canEditOwnCharacterRegistry` permission
+ * - If user owns the character: requires `canEditOwnCharacterRegistry` or `canEditCharacterRegistry` permission
  * - If user does not own the character: requires `canEditCharacterRegistry` permission
  * - Permissions are resolved via character→species→community
+ * - Characters without a species cannot have registry fields edited
  */
 @Injectable()
 export class CharacterRegistryEditGuard implements CanActivate {
