@@ -15,27 +15,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New permissions `canEditOwnCharacterRegistry` and `canEditCharacterRegistry` for registry field access
   - New `updateCharacterProfile` mutation for profile fields (requires `canEditOwnCharacter`/`canEditCharacter`)
   - New `updateCharacterRegistry` mutation for registry fields (requires `canEditOwnCharacterRegistry`/`canEditCharacterRegistry`)
-  - New `CharacterRegistryEditGuard` for registry permission checking
-  - Updated CharacterEditGuard to allow access if user has ANY edit capability
+  - New `assignCharacterSpecies` mutation for initial species assignment (requires `canCreateCharacter`)
+  - New `CharacterProfileEditGuard` and `CharacterRegistryEditGuard` for faceted permission checking
   - Updated findEditableCharacters query to include registry permissions
-  - Deprecated `updateCharacter` mutation in favor of faceted mutations
 - **Character Registry ID**: New `registryId` field for official species identifiers
   - Unique per species (@@unique constraint on speciesId + registryId)
   - Stored as VARCHAR(100) for flexible identifier formats
-
-### Fixed
-
-- **Role Service Registry Permissions**: Fixed roles service not saving registry permission fields
-  - `canEditOwnCharacterRegistry` and `canEditCharacterRegistry` were defined in DTOs but not passed to Prisma in create/update methods
-  - Role updates for registry permissions now correctly persist to database
-
-### Added
-
 - **Upload Character Images Permissions**: New granular permissions for image upload character selection
   - `canUploadOwnCharacterImages`: Controls ability to upload images to user's own characters within a community
   - `canUploadCharacterImages`: Controls ability to upload images to any character (admin-level permission)
   - Database migration adds permissions with `true` defaults for backward compatibility
   - `findCharactersForImageUpload` query filters characters based on these permissions
+
+### Changed
+
+- Replaced `updateCharacter` mutation with `updateCharacterProfile` (profile fields only)
+- Replaced `updateCharacterTraits` mutation with `updateCharacterRegistry` (includes traits, registryId, variant)
 
 ## [v7.0.0] - 2025-11-13
 
