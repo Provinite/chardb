@@ -11,6 +11,7 @@ import {
   CreateSpeciesResponse,
   CreateSpeciesVariantResponse,
   CreateCharacterResponse,
+  UpdateCharacterProfileResponse,
   SpeciesByCommunityResponse,
   SpeciesVariantsBySpeciesResponse,
   CharactersResponse,
@@ -129,15 +130,32 @@ async function createCharacterForPersona(
   variantId: string
 ): Promise<boolean> {
   try {
-    await client.request<CreateCharacterResponse>(MUTATIONS.createCharacter, {
-      input: {
-        name: characterName,
-        speciesId,
-        speciesVariantId: variantId,
-        details: `# About ${characterName}\n\nThis is a test character for **${user.displayName ?? user.username}**.`,
-        visibility: "PUBLIC",
-      },
-    });
+    // Create orphaned character (assignToSelf: false)
+    const createResponse = await client.request<CreateCharacterResponse>(
+      MUTATIONS.createCharacter,
+      {
+        input: {
+          name: characterName,
+          speciesId,
+          speciesVariantId: variantId,
+          details: `# About ${characterName}\n\nThis is a test character for **${user.displayName ?? user.username}**.`,
+          visibility: "PUBLIC",
+          assignToSelf: false,
+        },
+      }
+    );
+
+    // Assign ownership to the intended user
+    await client.request<UpdateCharacterProfileResponse>(
+      MUTATIONS.updateCharacterProfile,
+      {
+        id: createResponse.createCharacter.id,
+        input: {
+          ownerIdUpdate: { set: user.id },
+        },
+      }
+    );
+
     return true;
   } catch (error) {
     if (error instanceof Error && isAlreadyExistsError(error)) {
@@ -194,16 +212,7 @@ export async function runPhase4(
       continue;
     }
 
-    // We need to login as this user to create a character they own
-    // For simplicity, let's use a helper mutation or just create via admin
-    // Actually, createCharacter creates for the current user if assignToSelf is true (default)
-    // So we need to login as each user
-
-    // For now, let's create characters as admin and note that ownership will be admin's
-    // A better approach would be to login as each user
-
-    // Actually, let's just create as admin with a note
-    // The character will be owned by admin, but we can test permissions on it
+    // Create orphaned character and assign ownership to the persona
     try {
       const created = await createCharacterForPersona(
         client,
@@ -214,7 +223,7 @@ export async function runPhase4(
       );
 
       if (created) {
-        log.success(`${characterName} (created, owned by Site Admin)`);
+        log.success(`${characterName} (created, owned by ${persona.displayName})`);
         createdCount++;
       } else {
         log.skip(`${characterName} (exists)`);
@@ -228,7 +237,4 @@ export async function runPhase4(
   }
 
   log.info(`Characters: ${createdCount} created, ${existsCount} existing`);
-  log.info(
-    "Note: Characters are owned by Site Admin. For proper ownership testing, create characters while logged in as each persona."
-  );
 }

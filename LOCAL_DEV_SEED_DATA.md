@@ -108,6 +108,7 @@ The test community is created with the following default roles plus two custom r
 | Permission | Admin | Moderator | Member | Member (Registry Edit) | Member (No Registry) |
 |------------|:-----:|:---------:|:------:|:---------------------:|:-------------------:|
 | `canCreateCharacter` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `canCreateOrphanedCharacter` | ✓ | - | - | - | - |
 | `canEditOwnCharacter` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `canEditCharacter` | ✓ | ✓ | - | - | - |
 | `canEditOwnCharacterRegistry` | ✓ | ✓ | - | ✓ | - |
@@ -143,18 +144,18 @@ The test community is created with the following default roles plus two custom r
 
 ### Characters
 
-All sample characters are owned by **Site Admin** (created via the authenticated GraphQL endpoint).
+Each persona owns their own character, enabling proper testing of "own vs any" permission scenarios.
 
 | Character Name | Species | Variant | Owner |
 |----------------|---------|---------|-------|
 | Site Admin's Character | Test Species | Standard | Site Admin |
-| Community Admin's Character | Test Species | Standard | Site Admin |
-| Moderator's Character | Test Species | Standard | Site Admin |
-| Member's Character | Test Species | Standard | Site Admin |
-| Member (Registry Edit)'s Character | Test Species | Standard | Site Admin |
-| Member (No Registry)'s Character | Test Species | Standard | Site Admin |
+| Community Admin's Character | Test Species | Standard | Community Admin |
+| Moderator's Character | Test Species | Standard | Moderator |
+| Member's Character | Test Species | Standard | Member |
+| Member (Registry Edit)'s Character | Test Species | Standard | Member (Registry Edit) |
+| Member (No Registry)'s Character | Test Species | Standard | Member (No Registry) |
 
-> **Note:** For proper ownership testing, create characters while logged in as each individual persona. The seeded characters are all owned by Site Admin because they're created through the Site Admin's authenticated session.
+Characters are created as orphaned characters (`assignToSelf: false`) by Site Admin using `canCreateOrphanedCharacter` permission, then ownership is assigned to the appropriate persona via `updateCharacterProfile`.
 
 ---
 

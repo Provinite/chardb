@@ -51,6 +51,7 @@ export class CommunitiesService {
           communityId: community.id,
           canCreateSpecies: true,
           canCreateCharacter: true,
+          canCreateOrphanedCharacter: true,
           canEditCharacter: true,
           canEditOwnCharacter: true,
           canEditOwnCharacterRegistry: true,

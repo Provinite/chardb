@@ -135,6 +135,16 @@ export const MUTATIONS = {
       }
     }
   `,
+
+  updateCharacterProfile: `
+    mutation UpdateCharacterProfile($id: ID!, $input: UpdateCharacterProfileInput!) {
+      updateCharacterProfile(id: $id, input: $input) {
+        id
+        name
+        ownerId
+      }
+    }
+  `,
 };
 
 export const QUERIES = {
@@ -249,7 +259,15 @@ export interface CreateCharacterResponse {
   createCharacter: {
     id: string;
     name: string;
-    ownerId: string;
+    ownerId: string | null;
+  };
+}
+
+export interface UpdateCharacterProfileResponse {
+  updateCharacterProfile: {
+    id: string;
+    name: string;
+    ownerId: string | null;
   };
 }
 
