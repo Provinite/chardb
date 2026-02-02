@@ -1,6 +1,7 @@
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../shared/entities/tag.entity';
+import { ModerationStatus } from '@prisma/client';
 
 @ObjectType()
 export class Image {
@@ -62,6 +63,8 @@ export class Image {
   @Field({ nullable: true })
   sensitiveContentDescription?: string;
 
+  @Field(() => ModerationStatus, { description: 'Current moderation status of the image' })
+  moderationStatus: ModerationStatus;
 
   @Field()
   createdAt: Date;

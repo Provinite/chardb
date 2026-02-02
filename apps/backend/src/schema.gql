@@ -22,6 +22,11 @@ type ActivityItem {
   user: User!
 }
 
+input ApproveImageInput {
+  """The ID of the image to approve"""
+  imageId: ID!
+}
+
 input AssignCharacterSpeciesInput {
   """Official registry identifier for this character within its species"""
   registryId: String
@@ -567,6 +572,11 @@ input CreateRoleInput {
   """Whether members with this role can change other members' roles"""
   canManageMemberRoles: Boolean! = false
 
+  """
+  Whether members with this role can review and approve/reject uploaded images
+  """
+  canModerateImages: Boolean! = false
+
   """Whether members with this role can remove community members"""
   canRemoveCommunityMember: Boolean! = false
 
@@ -889,6 +899,9 @@ type Image {
   likesCount: Int!
   mediumUrl: String
   mimeType: String!
+
+  """Current moderation status of the image"""
+  moderationStatus: ModerationStatus!
   originalFilename: String!
   originalUrl: String!
   sensitiveContentDescription: String
@@ -915,6 +928,66 @@ input ImageFiltersInput {
   offset: Int! = 0
   search: String
   uploaderId: ID
+}
+
+"""A moderation action taken on an image"""
+type ImageModerationAction {
+  """The moderation action taken"""
+  action: ModerationStatus!
+
+  """When the moderation action was taken"""
+  createdAt: DateTime!
+  id: ID!
+  image: Image!
+  imageId: ID!
+  moderator: User!
+  moderatorId: ID!
+
+  """The reason for rejection (if rejected)"""
+  reason: ModerationRejectionReason
+
+  """Additional details about the rejection"""
+  reasonText: String
+}
+
+"""Paginated list of images in the moderation queue"""
+type ImageModerationQueueConnection {
+  """Whether there are more images after this page"""
+  hasMore: Boolean!
+  items: [ImageModerationQueueItem!]!
+
+  """Total count of pending images"""
+  total: Int!
+}
+
+input ImageModerationQueueFiltersInput {
+  """Filter images uploaded after this date"""
+  uploadedAfter: DateTime
+
+  """Filter images uploaded before this date"""
+  uploadedBefore: DateTime
+
+  """Filter by uploader ID"""
+  uploaderId: ID
+}
+
+"""An item in the moderation queue"""
+type ImageModerationQueueItem {
+  """ID of the associated character (if any)"""
+  characterId: ID
+
+  """Name of the associated character (if any)"""
+  characterName: String
+
+  """ID of the associated community (if any)"""
+  communityId: ID
+
+  """Name of the associated community (if any)"""
+  communityName: String
+  image: Image!
+
+  """Title of the associated media (if any)"""
+  mediaTitle: String
 }
 
 type ImageTag {
@@ -1190,6 +1263,22 @@ enum MediaType {
   TEXT
 }
 
+"""The reason for rejecting an image"""
+enum ModerationRejectionReason {
+  COPYRIGHT_ISSUE
+  NSFW_NOT_TAGGED
+  OTHER
+  SPAM_LOW_QUALITY
+  TOS_VIOLATION
+}
+
+"""The moderation status of an image"""
+enum ModerationStatus {
+  APPROVED
+  PENDING
+  REJECTED
+}
+
 type Mutation {
   addCharacterTags(id: ID!, input: ManageTagsInput!): Character!
 
@@ -1201,6 +1290,9 @@ type Mutation {
     """Tags to add to the media"""
     input: ManageMediaTagsInput!
   ): Media!
+
+  """Approve an image (moderator action)"""
+  approveImage(input: ApproveImageInput!): ImageModerationAction!
 
   """
   Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species.
@@ -1329,6 +1421,9 @@ type Mutation {
   ): Community!
   login(input: LoginInput!): AuthPayload!
   refreshToken(token: String!): String!
+
+  """Reject an image (moderator action)"""
+  rejectImage(input: RejectImageInput!): ImageModerationAction!
 
   """Remove a character ownership change record"""
   removeCharacterOwnershipChange(
@@ -1863,7 +1958,19 @@ type Query {
   ): MediaConnection!
   getFollowers(username: String!): FollowListResult!
   getFollowing(username: String!): FollowListResult!
+
+  """Get all pending images across all communities (admin only)"""
+  globalImageModerationQueue(filters: ImageModerationQueueFiltersInput, first: Int = 20, offset: Int = 0): ImageModerationQueueConnection!
+
+  """Get count of all pending images across all communities (admin only)"""
+  globalPendingImageCount: Int!
   image(id: ID!): Image!
+
+  """Get moderation history for an image"""
+  imageModerationHistory(imageId: ID!): [ImageModerationAction!]!
+
+  """Get pending images for a community moderation queue"""
+  imageModerationQueue(communityId: ID!, filters: ImageModerationQueueFiltersInput, first: Int = 20, offset: Int = 0): ImageModerationQueueConnection!
   images(filters: ImageFiltersInput): ImageConnection!
 
   """Get an invite code by ID"""
@@ -1943,6 +2050,9 @@ type Query {
     """Optional filters for media query"""
     filters: MediaFiltersInput
   ): MediaConnection!
+
+  """Get count of pending images for a community"""
+  pendingImageCount(communityId: ID!): Int!
 
   """
   Resolve a Discord username or user ID to full user information. Requires permission to create orphaned characters.
@@ -2142,6 +2252,17 @@ type Query {
   ): DiscordGuildInfo!
 }
 
+input RejectImageInput {
+  """The ID of the image to reject"""
+  imageId: ID!
+
+  """The reason for rejection"""
+  reason: ModerationRejectionReason!
+
+  """Additional details about the rejection (required when reason is OTHER)"""
+  reasonText: String
+}
+
 """Response confirming successful removal of an entity"""
 type RemovalResponse {
   """Optional message about the removal"""
@@ -2216,6 +2337,11 @@ type Role {
 
   """Whether members with this role can change other members' roles"""
   canManageMemberRoles: Boolean!
+
+  """
+  Whether members with this role can review and approve/reject uploaded images
+  """
+  canModerateImages: Boolean!
 
   """Whether members with this role can remove community members"""
   canRemoveCommunityMember: Boolean!
@@ -2728,6 +2854,11 @@ input UpdateRoleInput {
 
   """Whether members with this role can change other members' roles"""
   canManageMemberRoles: Boolean
+
+  """
+  Whether members with this role can review and approve/reject uploaded images
+  """
+  canModerateImages: Boolean
 
   """Whether members with this role can remove community members"""
   canRemoveCommunityMember: Boolean

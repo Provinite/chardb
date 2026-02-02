@@ -234,6 +234,7 @@ describe('ImageLikesResolver', () => {
     mimeType: 'image/jpeg',
     isNsfw: false,
     visibility: 'PUBLIC' as any,
+    moderationStatus: 'APPROVED' as any,
     createdAt: new Date(),
     updatedAt: new Date(),
     uploader: {

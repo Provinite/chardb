@@ -43,6 +43,11 @@ export type ActivityItem = {
   user: User;
 };
 
+export type ApproveImageInput = {
+  /** The ID of the image to approve */
+  imageId: Scalars['ID']['input'];
+};
+
 export type AssignCharacterSpeciesInput = {
   /** Official registry identifier for this character within its species */
   registryId?: InputMaybe<Scalars['String']['input']>;
@@ -520,6 +525,8 @@ export type CreateRoleInput = {
   canManageItems?: Scalars['Boolean']['input'];
   /** Whether members with this role can change other members' roles */
   canManageMemberRoles?: Scalars['Boolean']['input'];
+  /** Whether members with this role can review and approve/reject uploaded images */
+  canModerateImages?: Scalars['Boolean']['input'];
   /** Whether members with this role can remove community members */
   canRemoveCommunityMember?: Scalars['Boolean']['input'];
   /** Whether members with this role can upload images to any character */
@@ -796,6 +803,8 @@ export type Image = {
   likesCount: Scalars['Int']['output'];
   mediumUrl: Maybe<Scalars['String']['output']>;
   mimeType: Scalars['String']['output'];
+  /** Current moderation status of the image */
+  moderationStatus: ModerationStatus;
   originalFilename: Scalars['String']['output'];
   originalUrl: Scalars['String']['output'];
   sensitiveContentDescription: Maybe<Scalars['String']['output']>;
@@ -823,6 +832,59 @@ export type ImageFiltersInput = {
   offset?: Scalars['Int']['input'];
   search?: InputMaybe<Scalars['String']['input']>;
   uploaderId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** A moderation action taken on an image */
+export type ImageModerationAction = {
+  __typename?: 'ImageModerationAction';
+  /** The moderation action taken */
+  action: ModerationStatus;
+  /** When the moderation action was taken */
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  image: Image;
+  imageId: Scalars['ID']['output'];
+  moderator: User;
+  moderatorId: Scalars['ID']['output'];
+  /** The reason for rejection (if rejected) */
+  reason: Maybe<ModerationRejectionReason>;
+  /** Additional details about the rejection */
+  reasonText: Maybe<Scalars['String']['output']>;
+};
+
+/** Paginated list of images in the moderation queue */
+export type ImageModerationQueueConnection = {
+  __typename?: 'ImageModerationQueueConnection';
+  /** Whether there are more images after this page */
+  hasMore: Scalars['Boolean']['output'];
+  items: Array<ImageModerationQueueItem>;
+  /** Total count of pending images */
+  total: Scalars['Int']['output'];
+};
+
+export type ImageModerationQueueFiltersInput = {
+  /** Filter images uploaded after this date */
+  uploadedAfter?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter images uploaded before this date */
+  uploadedBefore?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by uploader ID */
+  uploaderId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** An item in the moderation queue */
+export type ImageModerationQueueItem = {
+  __typename?: 'ImageModerationQueueItem';
+  /** ID of the associated character (if any) */
+  characterId: Maybe<Scalars['ID']['output']>;
+  /** Name of the associated character (if any) */
+  characterName: Maybe<Scalars['String']['output']>;
+  /** ID of the associated community (if any) */
+  communityId: Maybe<Scalars['ID']['output']>;
+  /** Name of the associated community (if any) */
+  communityName: Maybe<Scalars['String']['output']>;
+  image: Image;
+  /** Title of the associated media (if any) */
+  mediaTitle: Maybe<Scalars['String']['output']>;
 };
 
 export type ImageTag = {
@@ -1060,11 +1122,29 @@ export enum MediaType {
   Text = 'TEXT'
 }
 
+/** The reason for rejecting an image */
+export enum ModerationRejectionReason {
+  CopyrightIssue = 'COPYRIGHT_ISSUE',
+  NsfwNotTagged = 'NSFW_NOT_TAGGED',
+  Other = 'OTHER',
+  SpamLowQuality = 'SPAM_LOW_QUALITY',
+  TosViolation = 'TOS_VIOLATION'
+}
+
+/** The moderation status of an image */
+export enum ModerationStatus {
+  Approved = 'APPROVED',
+  Pending = 'PENDING',
+  Rejected = 'REJECTED'
+}
+
 export type Mutation = {
   __typename?: 'Mutation';
   addCharacterTags: Character;
   /** Adds tags to a media item */
   addMediaTags: Media;
+  /** Approve an image (moderator action) */
+  approveImage: ImageModerationAction;
   /** Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species. */
   assignCharacterSpecies: Character;
   /** Claim an invite code to join a community */
@@ -1118,6 +1198,8 @@ export type Mutation = {
   linkDiscordGuild: Community;
   login: AuthPayload;
   refreshToken: Scalars['String']['output'];
+  /** Reject an image (moderator action) */
+  rejectImage: ImageModerationAction;
   /** Remove a character ownership change record */
   removeCharacterOwnershipChange: RemovalResponse;
   removeCharacterTags: Character;
@@ -1209,6 +1291,11 @@ export type MutationAddCharacterTagsArgs = {
 export type MutationAddMediaTagsArgs = {
   id: Scalars['ID']['input'];
   input: ManageMediaTagsInput;
+};
+
+
+export type MutationApproveImageArgs = {
+  input: ApproveImageInput;
 };
 
 
@@ -1377,6 +1464,11 @@ export type MutationLoginArgs = {
 
 export type MutationRefreshTokenArgs = {
   token: Scalars['String']['input'];
+};
+
+
+export type MutationRejectImageArgs = {
+  input: RejectImageInput;
 };
 
 
@@ -1738,7 +1830,15 @@ export type Query = {
   galleryMedia: MediaConnection;
   getFollowers: FollowListResult;
   getFollowing: FollowListResult;
+  /** Get all pending images across all communities (admin only) */
+  globalImageModerationQueue: ImageModerationQueueConnection;
+  /** Get count of all pending images across all communities (admin only) */
+  globalPendingImageCount: Scalars['Int']['output'];
   image: Image;
+  /** Get moderation history for an image */
+  imageModerationHistory: Array<ImageModerationAction>;
+  /** Get pending images for a community moderation queue */
+  imageModerationQueue: ImageModerationQueueConnection;
   images: ImageConnection;
   /** Get an invite code by ID */
   inviteCodeById: InviteCode;
@@ -1770,6 +1870,8 @@ export type Query = {
   myImages: ImageConnection;
   /** Retrieves media owned by the current authenticated user */
   myMedia: MediaConnection;
+  /** Get count of pending images for a community */
+  pendingImageCount: Scalars['Int']['output'];
   /** Resolve a Discord username or user ID to full user information. Requires permission to create orphaned characters. */
   resolveDiscordUser: DiscordUserInfo;
   /** Get a role by ID */
@@ -2039,8 +2141,28 @@ export type QueryGetFollowingArgs = {
 };
 
 
+export type QueryGlobalImageModerationQueueArgs = {
+  filters?: InputMaybe<ImageModerationQueueFiltersInput>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryImageArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryImageModerationHistoryArgs = {
+  imageId: Scalars['ID']['input'];
+};
+
+
+export type QueryImageModerationQueueArgs = {
+  communityId: Scalars['ID']['input'];
+  filters?: InputMaybe<ImageModerationQueueFiltersInput>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -2133,6 +2255,11 @@ export type QueryMyImagesArgs = {
 
 export type QueryMyMediaArgs = {
   filters?: InputMaybe<MediaFiltersInput>;
+};
+
+
+export type QueryPendingImageCountArgs = {
+  communityId: Scalars['ID']['input'];
 };
 
 
@@ -2297,6 +2424,15 @@ export type QueryValidateDiscordGuildArgs = {
   guildId: Scalars['ID']['input'];
 };
 
+export type RejectImageInput = {
+  /** The ID of the image to reject */
+  imageId: Scalars['ID']['input'];
+  /** The reason for rejection */
+  reason: ModerationRejectionReason;
+  /** Additional details about the rejection (required when reason is OTHER) */
+  reasonText?: InputMaybe<Scalars['String']['input']>;
+};
+
 /** Response confirming successful removal of an entity */
 export type RemovalResponse = {
   __typename?: 'RemovalResponse';
@@ -2354,6 +2490,8 @@ export type Role = {
   canManageItems: Scalars['Boolean']['output'];
   /** Whether members with this role can change other members' roles */
   canManageMemberRoles: Scalars['Boolean']['output'];
+  /** Whether members with this role can review and approve/reject uploaded images */
+  canModerateImages: Scalars['Boolean']['output'];
   /** Whether members with this role can remove community members */
   canRemoveCommunityMember: Scalars['Boolean']['output'];
   /** Whether members with this role can upload images to any character */
@@ -2770,6 +2908,8 @@ export type UpdateRoleInput = {
   canManageItems?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can change other members' roles */
   canManageMemberRoles?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can review and approve/reject uploaded images */
+  canModerateImages?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can remove community members */
   canRemoveCommunityMember?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can upload images to any character */
@@ -3412,6 +3552,58 @@ export type GetLikedGalleriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null, _count: { __typename?: 'GalleryCount', media: number } }> };
 
+export type ImageModerationQueueQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  filters?: InputMaybe<ImageModerationQueueFiltersInput>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type ImageModerationQueueQuery = { __typename?: 'Query', imageModerationQueue: { __typename?: 'ImageModerationQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'ImageModerationQueueItem', characterId: string | null, characterName: string | null, communityId: string | null, communityName: string | null, mediaTitle: string | null, image: { __typename?: 'Image', id: string, filename: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } }> } };
+
+export type GlobalImageModerationQueueQueryVariables = Exact<{
+  filters?: InputMaybe<ImageModerationQueueFiltersInput>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GlobalImageModerationQueueQuery = { __typename?: 'Query', globalImageModerationQueue: { __typename?: 'ImageModerationQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'ImageModerationQueueItem', characterId: string | null, characterName: string | null, communityId: string | null, communityName: string | null, mediaTitle: string | null, image: { __typename?: 'Image', id: string, filename: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } }> } };
+
+export type PendingImageCountQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type PendingImageCountQuery = { __typename?: 'Query', pendingImageCount: number };
+
+export type GlobalPendingImageCountQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GlobalPendingImageCountQuery = { __typename?: 'Query', globalPendingImageCount: number };
+
+export type ImageModerationHistoryQueryVariables = Exact<{
+  imageId: Scalars['ID']['input'];
+}>;
+
+
+export type ImageModerationHistoryQuery = { __typename?: 'Query', imageModerationHistory: Array<{ __typename?: 'ImageModerationAction', id: string, action: ModerationStatus, reason: ModerationRejectionReason | null, reasonText: string | null, createdAt: string, moderator: { __typename?: 'User', id: string, username: string, displayName: string | null } }> };
+
+export type ApproveImageMutationVariables = Exact<{
+  input: ApproveImageInput;
+}>;
+
+
+export type ApproveImageMutation = { __typename?: 'Mutation', approveImage: { __typename?: 'ImageModerationAction', id: string, action: ModerationStatus, createdAt: string, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } } };
+
+export type RejectImageMutationVariables = Exact<{
+  input: RejectImageInput;
+}>;
+
+
+export type RejectImageMutation = { __typename?: 'Mutation', rejectImage: { __typename?: 'ImageModerationAction', id: string, action: ModerationStatus, reason: ModerationRejectionReason | null, reasonText: string | null, createdAt: string, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } } };
+
 export type GetLikedImagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -3640,14 +3832,14 @@ export type RolesByCommunityDetailedQueryVariables = Exact<{
 }>;
 
 
-export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
+export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
 
 export type CreateRoleMutationVariables = Exact<{
   input: CreateRoleInput;
 }>;
 
 
-export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
 
 export type UpdateRoleMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3655,7 +3847,7 @@ export type UpdateRoleMutationVariables = Exact<{
 }>;
 
 
-export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
 
 export type CommunityMembersWithRolesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -3664,7 +3856,7 @@ export type CommunityMembersWithRolesQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
+export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
 
 export type UpdateCommunityMemberMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3672,7 +3864,7 @@ export type UpdateCommunityMemberMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
+export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
 
 export type UserWithAvatarFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
@@ -7364,6 +7556,352 @@ export type GetLikedGalleriesQueryHookResult = ReturnType<typeof useGetLikedGall
 export type GetLikedGalleriesLazyQueryHookResult = ReturnType<typeof useGetLikedGalleriesLazyQuery>;
 export type GetLikedGalleriesSuspenseQueryHookResult = ReturnType<typeof useGetLikedGalleriesSuspenseQuery>;
 export type GetLikedGalleriesQueryResult = Apollo.QueryResult<GetLikedGalleriesQuery, GetLikedGalleriesQueryVariables>;
+export const ImageModerationQueueDocument = gql`
+    query ImageModerationQueue($communityId: ID!, $filters: ImageModerationQueueFiltersInput, $first: Int, $offset: Int) {
+  imageModerationQueue(
+    communityId: $communityId
+    filters: $filters
+    first: $first
+    offset: $offset
+  ) {
+    items {
+      image {
+        id
+        filename
+        originalFilename
+        originalUrl
+        thumbnailUrl
+        altText
+        width
+        height
+        isNsfw
+        moderationStatus
+        createdAt
+        uploader {
+          id
+          username
+          displayName
+        }
+      }
+      characterId
+      characterName
+      communityId
+      communityName
+      mediaTitle
+    }
+    total
+    hasMore
+  }
+}
+    `;
+
+/**
+ * __useImageModerationQueueQuery__
+ *
+ * To run a query within a React component, call `useImageModerationQueueQuery` and pass it any options that fit your needs.
+ * When your component renders, `useImageModerationQueueQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useImageModerationQueueQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      filters: // value for 'filters'
+ *      first: // value for 'first'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useImageModerationQueueQuery(baseOptions: Apollo.QueryHookOptions<ImageModerationQueueQuery, ImageModerationQueueQueryVariables> & ({ variables: ImageModerationQueueQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ImageModerationQueueQuery, ImageModerationQueueQueryVariables>(ImageModerationQueueDocument, options);
+      }
+export function useImageModerationQueueLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ImageModerationQueueQuery, ImageModerationQueueQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ImageModerationQueueQuery, ImageModerationQueueQueryVariables>(ImageModerationQueueDocument, options);
+        }
+export function useImageModerationQueueSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ImageModerationQueueQuery, ImageModerationQueueQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ImageModerationQueueQuery, ImageModerationQueueQueryVariables>(ImageModerationQueueDocument, options);
+        }
+export type ImageModerationQueueQueryHookResult = ReturnType<typeof useImageModerationQueueQuery>;
+export type ImageModerationQueueLazyQueryHookResult = ReturnType<typeof useImageModerationQueueLazyQuery>;
+export type ImageModerationQueueSuspenseQueryHookResult = ReturnType<typeof useImageModerationQueueSuspenseQuery>;
+export type ImageModerationQueueQueryResult = Apollo.QueryResult<ImageModerationQueueQuery, ImageModerationQueueQueryVariables>;
+export const GlobalImageModerationQueueDocument = gql`
+    query GlobalImageModerationQueue($filters: ImageModerationQueueFiltersInput, $first: Int, $offset: Int) {
+  globalImageModerationQueue(filters: $filters, first: $first, offset: $offset) {
+    items {
+      image {
+        id
+        filename
+        originalFilename
+        originalUrl
+        thumbnailUrl
+        altText
+        width
+        height
+        isNsfw
+        moderationStatus
+        createdAt
+        uploader {
+          id
+          username
+          displayName
+        }
+      }
+      characterId
+      characterName
+      communityId
+      communityName
+      mediaTitle
+    }
+    total
+    hasMore
+  }
+}
+    `;
+
+/**
+ * __useGlobalImageModerationQueueQuery__
+ *
+ * To run a query within a React component, call `useGlobalImageModerationQueueQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGlobalImageModerationQueueQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGlobalImageModerationQueueQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      first: // value for 'first'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useGlobalImageModerationQueueQuery(baseOptions?: Apollo.QueryHookOptions<GlobalImageModerationQueueQuery, GlobalImageModerationQueueQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GlobalImageModerationQueueQuery, GlobalImageModerationQueueQueryVariables>(GlobalImageModerationQueueDocument, options);
+      }
+export function useGlobalImageModerationQueueLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GlobalImageModerationQueueQuery, GlobalImageModerationQueueQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GlobalImageModerationQueueQuery, GlobalImageModerationQueueQueryVariables>(GlobalImageModerationQueueDocument, options);
+        }
+export function useGlobalImageModerationQueueSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GlobalImageModerationQueueQuery, GlobalImageModerationQueueQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GlobalImageModerationQueueQuery, GlobalImageModerationQueueQueryVariables>(GlobalImageModerationQueueDocument, options);
+        }
+export type GlobalImageModerationQueueQueryHookResult = ReturnType<typeof useGlobalImageModerationQueueQuery>;
+export type GlobalImageModerationQueueLazyQueryHookResult = ReturnType<typeof useGlobalImageModerationQueueLazyQuery>;
+export type GlobalImageModerationQueueSuspenseQueryHookResult = ReturnType<typeof useGlobalImageModerationQueueSuspenseQuery>;
+export type GlobalImageModerationQueueQueryResult = Apollo.QueryResult<GlobalImageModerationQueueQuery, GlobalImageModerationQueueQueryVariables>;
+export const PendingImageCountDocument = gql`
+    query PendingImageCount($communityId: ID!) {
+  pendingImageCount(communityId: $communityId)
+}
+    `;
+
+/**
+ * __usePendingImageCountQuery__
+ *
+ * To run a query within a React component, call `usePendingImageCountQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePendingImageCountQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePendingImageCountQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function usePendingImageCountQuery(baseOptions: Apollo.QueryHookOptions<PendingImageCountQuery, PendingImageCountQueryVariables> & ({ variables: PendingImageCountQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<PendingImageCountQuery, PendingImageCountQueryVariables>(PendingImageCountDocument, options);
+      }
+export function usePendingImageCountLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<PendingImageCountQuery, PendingImageCountQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<PendingImageCountQuery, PendingImageCountQueryVariables>(PendingImageCountDocument, options);
+        }
+export function usePendingImageCountSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<PendingImageCountQuery, PendingImageCountQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<PendingImageCountQuery, PendingImageCountQueryVariables>(PendingImageCountDocument, options);
+        }
+export type PendingImageCountQueryHookResult = ReturnType<typeof usePendingImageCountQuery>;
+export type PendingImageCountLazyQueryHookResult = ReturnType<typeof usePendingImageCountLazyQuery>;
+export type PendingImageCountSuspenseQueryHookResult = ReturnType<typeof usePendingImageCountSuspenseQuery>;
+export type PendingImageCountQueryResult = Apollo.QueryResult<PendingImageCountQuery, PendingImageCountQueryVariables>;
+export const GlobalPendingImageCountDocument = gql`
+    query GlobalPendingImageCount {
+  globalPendingImageCount
+}
+    `;
+
+/**
+ * __useGlobalPendingImageCountQuery__
+ *
+ * To run a query within a React component, call `useGlobalPendingImageCountQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGlobalPendingImageCountQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGlobalPendingImageCountQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGlobalPendingImageCountQuery(baseOptions?: Apollo.QueryHookOptions<GlobalPendingImageCountQuery, GlobalPendingImageCountQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GlobalPendingImageCountQuery, GlobalPendingImageCountQueryVariables>(GlobalPendingImageCountDocument, options);
+      }
+export function useGlobalPendingImageCountLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GlobalPendingImageCountQuery, GlobalPendingImageCountQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GlobalPendingImageCountQuery, GlobalPendingImageCountQueryVariables>(GlobalPendingImageCountDocument, options);
+        }
+export function useGlobalPendingImageCountSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GlobalPendingImageCountQuery, GlobalPendingImageCountQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GlobalPendingImageCountQuery, GlobalPendingImageCountQueryVariables>(GlobalPendingImageCountDocument, options);
+        }
+export type GlobalPendingImageCountQueryHookResult = ReturnType<typeof useGlobalPendingImageCountQuery>;
+export type GlobalPendingImageCountLazyQueryHookResult = ReturnType<typeof useGlobalPendingImageCountLazyQuery>;
+export type GlobalPendingImageCountSuspenseQueryHookResult = ReturnType<typeof useGlobalPendingImageCountSuspenseQuery>;
+export type GlobalPendingImageCountQueryResult = Apollo.QueryResult<GlobalPendingImageCountQuery, GlobalPendingImageCountQueryVariables>;
+export const ImageModerationHistoryDocument = gql`
+    query ImageModerationHistory($imageId: ID!) {
+  imageModerationHistory(imageId: $imageId) {
+    id
+    action
+    reason
+    reasonText
+    createdAt
+    moderator {
+      id
+      username
+      displayName
+    }
+  }
+}
+    `;
+
+/**
+ * __useImageModerationHistoryQuery__
+ *
+ * To run a query within a React component, call `useImageModerationHistoryQuery` and pass it any options that fit your needs.
+ * When your component renders, `useImageModerationHistoryQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useImageModerationHistoryQuery({
+ *   variables: {
+ *      imageId: // value for 'imageId'
+ *   },
+ * });
+ */
+export function useImageModerationHistoryQuery(baseOptions: Apollo.QueryHookOptions<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables> & ({ variables: ImageModerationHistoryQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables>(ImageModerationHistoryDocument, options);
+      }
+export function useImageModerationHistoryLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables>(ImageModerationHistoryDocument, options);
+        }
+export function useImageModerationHistorySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables>(ImageModerationHistoryDocument, options);
+        }
+export type ImageModerationHistoryQueryHookResult = ReturnType<typeof useImageModerationHistoryQuery>;
+export type ImageModerationHistoryLazyQueryHookResult = ReturnType<typeof useImageModerationHistoryLazyQuery>;
+export type ImageModerationHistorySuspenseQueryHookResult = ReturnType<typeof useImageModerationHistorySuspenseQuery>;
+export type ImageModerationHistoryQueryResult = Apollo.QueryResult<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables>;
+export const ApproveImageDocument = gql`
+    mutation ApproveImage($input: ApproveImageInput!) {
+  approveImage(input: $input) {
+    id
+    action
+    createdAt
+    image {
+      id
+      moderationStatus
+    }
+  }
+}
+    `;
+export type ApproveImageMutationFn = Apollo.MutationFunction<ApproveImageMutation, ApproveImageMutationVariables>;
+
+/**
+ * __useApproveImageMutation__
+ *
+ * To run a mutation, you first call `useApproveImageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useApproveImageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [approveImageMutation, { data, loading, error }] = useApproveImageMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useApproveImageMutation(baseOptions?: Apollo.MutationHookOptions<ApproveImageMutation, ApproveImageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ApproveImageMutation, ApproveImageMutationVariables>(ApproveImageDocument, options);
+      }
+export type ApproveImageMutationHookResult = ReturnType<typeof useApproveImageMutation>;
+export type ApproveImageMutationResult = Apollo.MutationResult<ApproveImageMutation>;
+export type ApproveImageMutationOptions = Apollo.BaseMutationOptions<ApproveImageMutation, ApproveImageMutationVariables>;
+export const RejectImageDocument = gql`
+    mutation RejectImage($input: RejectImageInput!) {
+  rejectImage(input: $input) {
+    id
+    action
+    reason
+    reasonText
+    createdAt
+    image {
+      id
+      moderationStatus
+    }
+  }
+}
+    `;
+export type RejectImageMutationFn = Apollo.MutationFunction<RejectImageMutation, RejectImageMutationVariables>;
+
+/**
+ * __useRejectImageMutation__
+ *
+ * To run a mutation, you first call `useRejectImageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRejectImageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [rejectImageMutation, { data, loading, error }] = useRejectImageMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useRejectImageMutation(baseOptions?: Apollo.MutationHookOptions<RejectImageMutation, RejectImageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RejectImageMutation, RejectImageMutationVariables>(RejectImageDocument, options);
+      }
+export type RejectImageMutationHookResult = ReturnType<typeof useRejectImageMutation>;
+export type RejectImageMutationResult = Apollo.MutationResult<RejectImageMutation>;
+export type RejectImageMutationOptions = Apollo.BaseMutationOptions<RejectImageMutation, RejectImageMutationVariables>;
 export const GetLikedImagesDocument = gql`
     query GetLikedImages {
   likedImages {
@@ -8915,6 +9453,7 @@ export const RolesByCommunityDetailedDocument = gql`
       canGrantItems
       canUploadOwnCharacterImages
       canUploadCharacterImages
+      canModerateImages
       canCreateInviteCode
       canListInviteCodes
       canCreateRole
@@ -8985,6 +9524,7 @@ export const CreateRoleDocument = gql`
     canGrantItems
     canUploadOwnCharacterImages
     canUploadCharacterImages
+    canModerateImages
     canCreateInviteCode
     canListInviteCodes
     canCreateRole
@@ -9042,6 +9582,7 @@ export const UpdateRoleDocument = gql`
     canGrantItems
     canUploadOwnCharacterImages
     canUploadCharacterImages
+    canModerateImages
     canCreateInviteCode
     canListInviteCodes
     canCreateRole
@@ -9118,6 +9659,7 @@ export const CommunityMembersWithRolesDocument = gql`
         canGrantItems
         canUploadOwnCharacterImages
         canUploadCharacterImages
+        canModerateImages
         canCreateInviteCode
         canListInviteCodes
         canCreateRole
@@ -9196,6 +9738,7 @@ export const UpdateCommunityMemberDocument = gql`
       canGrantItems
       canUploadOwnCharacterImages
       canUploadCharacterImages
+      canModerateImages
       canCreateInviteCode
       canListInviteCodes
       canCreateRole

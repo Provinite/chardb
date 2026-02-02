@@ -81,6 +81,10 @@ export class Role {
   @Field(() => Boolean, { description: 'Whether members with this role can upload images to any character' })
   canUploadCharacterImages!: boolean;
 
+  /** Permission to moderate images */
+  @Field(() => Boolean, { description: 'Whether members with this role can review and approve/reject uploaded images' })
+  canModerateImages!: boolean;
+
   /** Permission to create orphaned characters */
   @Field(() => Boolean, { description: 'Whether members with this role can create orphaned characters' })
   canCreateOrphanedCharacter!: boolean;

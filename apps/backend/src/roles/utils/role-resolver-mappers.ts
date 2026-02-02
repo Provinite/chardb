@@ -32,6 +32,7 @@ export function mapCreateRoleInputToService(input: CreateRoleInput): CreateRoleS
     canGrantItems: input.canGrantItems,
     canUploadOwnCharacterImages: input.canUploadOwnCharacterImages,
     canUploadCharacterImages: input.canUploadCharacterImages,
+    canModerateImages: input.canModerateImages,
   };
 }
 
@@ -60,6 +61,7 @@ export function mapUpdateRoleInputToService(input: UpdateRoleInput): UpdateRoleS
   if (input.canGrantItems !== undefined) result.canGrantItems = input.canGrantItems;
   if (input.canUploadOwnCharacterImages !== undefined) result.canUploadOwnCharacterImages = input.canUploadOwnCharacterImages;
   if (input.canUploadCharacterImages !== undefined) result.canUploadCharacterImages = input.canUploadCharacterImages;
+  if (input.canModerateImages !== undefined) result.canModerateImages = input.canModerateImages;
 
   return result;
 }
@@ -92,6 +94,7 @@ export function mapPrismaRoleToGraphQL(prismaRole: PrismaRole): Role {
     canGrantItems: prismaRole.canGrantItems,
     canUploadOwnCharacterImages: prismaRole.canUploadOwnCharacterImages,
     canUploadCharacterImages: prismaRole.canUploadCharacterImages,
+    canModerateImages: prismaRole.canModerateImages,
     canCreateOrphanedCharacter: prismaRole.canCreateOrphanedCharacter,
     createdAt: prismaRole.createdAt,
     updatedAt: prismaRole.updatedAt,
