@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <circle cx="200" cy="110" r="40" fill="none" stroke="#6366f1" stroke-width="3"/>
+  <path d="M200 85 L200 125 M200 135 L200 140" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+  <text x="200" y="190" text-anchor="middle" fill="#9ca3af" font-family="system-ui, sans-serif" font-size="16" font-weight="500">Image Pending</text>
+  <text x="200" y="215" text-anchor="middle" fill="#9ca3af" font-family="system-ui, sans-serif" font-size="16" font-weight="500">Moderation</text>
+</svg>

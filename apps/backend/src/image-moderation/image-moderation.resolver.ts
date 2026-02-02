@@ -1,10 +1,12 @@
 import { Resolver, Query, Mutation, Args, Int, ID } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ImageModerationService } from './image-moderation.service';
+import { MediaService } from '../media/media.service';
 import {
   ImageModerationAction,
   ImageModerationQueueConnection,
 } from './entities/image-moderation-action.entity';
+import { MediaConnection } from '../media/entities/media.entity';
 import {
   ImageModerationQueueFiltersInput,
   ApproveImageInput,
@@ -18,10 +20,14 @@ import { AllowCommunityPermission } from '../auth/decorators/AllowCommunityPermi
 import { CommunityPermission } from '../auth/CommunityPermission';
 import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
 import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
+import { mapPrismaMediaConnectionToGraphQL } from '../media/utils/media-resolver-mappers';
 
 @Resolver()
 export class ImageModerationResolver {
-  constructor(private readonly imageModerationService: ImageModerationService) {}
+  constructor(
+    private readonly imageModerationService: ImageModerationService,
+    private readonly mediaService: MediaService,
+  ) {}
 
   /**
    * Get pending images for a community's moderation queue
@@ -41,6 +47,26 @@ export class ImageModerationResolver {
   ): Promise<ImageModerationQueueConnection> {
     const result = await this.imageModerationService.getQueueForCommunity(communityId, filters, first, offset);
     return result as unknown as ImageModerationQueueConnection;
+  }
+
+  /**
+   * Get pending media for a community's moderation queue (returns Media objects)
+   * Use this query to access media with pendingModerationImage field for actual image URLs
+   */
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanModerateImages)
+  @ResolveCommunityFrom({ communityId: 'communityId' })
+  @UseGuards(JwtAuthGuard)
+  @Query(() => MediaConnection, {
+    description: 'Get pending media for moderation queue (use pendingModerationImage field for actual image URLs)',
+  })
+  async mediaModerationQueue(
+    @Args('communityId', { type: () => ID }) communityId: string,
+    @Args('first', { nullable: true, defaultValue: 20, type: () => Int }) first: number,
+    @Args('offset', { nullable: true, defaultValue: 0, type: () => Int }) offset: number,
+  ): Promise<MediaConnection> {
+    const result = await this.mediaService.findPendingForModeration(communityId, first, offset);
+    return mapPrismaMediaConnectionToGraphQL(result);
   }
 
   /**

@@ -299,7 +299,7 @@ export class ImagesService {
     };
   }
 
-  async findOne(id: string, userId?: string): Promise<Image> {
+  async findOne(id: string, userId?: string) {
     const image = await this.db.image.findUnique({
       where: { id },
       include: {
@@ -407,55 +407,34 @@ export class ImagesService {
   }
 
   /**
-   * Build Prisma filter for moderation visibility based on user permissions
+   * Build Prisma filter for moderation visibility in general image lists.
+   * Lists should ONLY show APPROVED images - pending/rejected images are
+   * viewed through dedicated interfaces (moderation queue, my pending uploads).
    */
-  private async getModerationVisibilityFilter(userId?: string): Promise<Prisma.ImageWhereInput> {
-    // Anonymous users: only approved images
-    if (!userId) {
-      return { moderationStatus: ModerationStatus.APPROVED };
-    }
+  private async getModerationVisibilityFilter(_userId?: string): Promise<Prisma.ImageWhereInput> {
+    // All image lists only show approved images
+    // Users see their pending uploads via dedicated "my pending uploads" query
+    // Moderators see pending images via the moderation queue
+    return { moderationStatus: ModerationStatus.APPROVED };
+  }
 
-    // Check if user is a global admin
-    const user = await this.db.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
+  /**
+   * Get pending uploads for a specific user (for "My Pending Uploads" view)
+   */
+  async findPendingUploads(userId: string) {
+    const images = await this.db.image.findMany({
+      where: {
+        uploaderId: userId,
+        moderationStatus: ModerationStatus.PENDING,
+      },
+      include: {
+        uploader: true,
+        artist: true,
+      },
+      orderBy: { createdAt: "desc" },
     });
 
-    // Global admins see everything
-    if (user?.isAdmin) {
-      return {};
-    }
-
-    // Get communities where user can moderate
-    const moderatorCommunityIds = await this.getModeratorCommunityIds(userId);
-
-    // Build filter: approved + own uploads + moderatable community images
-    const filterConditions: Prisma.ImageWhereInput[] = [
-      { moderationStatus: ModerationStatus.APPROVED },
-      { uploaderId: userId }, // Own uploads (any status)
-    ];
-
-    // Add community moderator filter if user is moderator of any community
-    if (moderatorCommunityIds.length > 0) {
-      filterConditions.push({
-        AND: [
-          { moderationStatus: ModerationStatus.PENDING },
-          {
-            media: {
-              some: {
-                character: {
-                  species: {
-                    communityId: { in: moderatorCommunityIds },
-                  },
-                },
-              },
-            },
-          },
-        ],
-      });
-    }
-
-    return { OR: filterConditions };
+    return images.map(mapPrismaImageToEntity);
   }
 
   async update(

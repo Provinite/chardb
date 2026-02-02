@@ -79,11 +79,13 @@ export class CommunityPermissionGuard implements CanActivate {
     for (const [key, path] of Object.entries(config)) {
       if (!path) continue;
 
-      // Handle $root.id syntax for field resolvers
-      if (path === "$root.id") {
+      // Handle $root.propertyName syntax for field resolvers
+      if (path.startsWith("$root.")) {
         const parent = gqlContext.getRoot();
-        if (parent?.id) {
-          return { type: key as keyof CommunityResolutionConfig, value: parent.id };
+        const propertyPath = path.slice(6); // Remove "$root." prefix
+        const value = getNestedValue(parent, propertyPath);
+        if (value) {
+          return { type: key as keyof CommunityResolutionConfig, value };
         }
       } else {
         // Handle normal argument paths

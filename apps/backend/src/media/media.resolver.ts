@@ -23,6 +23,11 @@ import { UsersService } from "../users/users.service";
 import { CharactersService } from "../characters/characters.service";
 import { GalleriesService } from "../galleries/galleries.service";
 import { ImagesService } from "../images/images.service";
+import { ModerationStatus } from "@prisma/client";
+import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
+import { CommunityPermission } from "../auth/CommunityPermission";
+import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
+import { NullOnForbiddenFilter } from "../auth/filters/NullOnForbiddenFilter";
 import {
   Media as MediaEntity,
   MediaConnection,
@@ -49,12 +54,16 @@ import {
   mapPrismaMediaConnectionToGraphQL,
 } from "./utils/media-resolver-mappers";
 import { mapPrismaGalleryToGraphQL } from "../galleries/utils/gallery-resolver-mappers";
+import { mapPrismaImageToGraphQL } from "../images/utils/image-resolver-mappers";
 import { FalseOnForbiddenFilter } from "../auth/filters/FalseOnForbiddenFilter";
 import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
 
 /**
  * GraphQL resolver for media operations
  */
+// Placeholder URL for images pending moderation
+const PENDING_MODERATION_PLACEHOLDER = "/images/pending-moderation.svg";
+
 @Resolver(() => MediaEntity)
 export class MediaResolver {
   constructor(
@@ -369,16 +378,64 @@ export class MediaResolver {
   }
 
   /**
-   * Resolves the image content for image media
+   * Resolves the image content for image media.
+   * For non-approved images, URLs are masked with a placeholder.
    */
   @AllowUnauthenticated()
   @ResolveField(() => Image, {
     nullable: true,
-    description: "Image content (populated for image media)",
+    description: "Image content (populated for image media). URLs are masked for pending/rejected images.",
   })
-  async image(@Parent() media: MediaEntity) {
+  async image(@Parent() media: MediaEntity): Promise<Image | null> {
     if (!media.imageId) return null;
-    return this.imagesService.findOne(media.imageId);
+
+    const prismaImage = await this.imagesService.findOne(media.imageId);
+    if (!prismaImage) return null;
+
+    const image = mapPrismaImageToGraphQL(prismaImage);
+
+    // Mask URLs for non-approved images
+    if (prismaImage.moderationStatus !== ModerationStatus.APPROVED) {
+      return {
+        ...image,
+        originalUrl: PENDING_MODERATION_PLACEHOLDER,
+        mediumUrl: PENDING_MODERATION_PLACEHOLDER,
+        thumbnailUrl: PENDING_MODERATION_PLACEHOLDER,
+      };
+    }
+
+    return image;
+  }
+
+  /**
+   * Resolves the actual image content for pending moderation.
+   * Only available to users with moderation permissions (global admin or community moderator).
+   * Returns null for approved/rejected images or unauthorized users.
+   */
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanModerateImages)
+  @ResolveCommunityFrom({ characterId: "$root.characterId" })
+  @UseFilters(NullOnForbiddenFilter)
+  @ResolveField(() => Image, {
+    nullable: true,
+    description: "Actual image for moderation review (moderators only, pending images only)",
+    middleware: [sentinelValueMiddleware],
+  })
+  async pendingModerationImage(
+    @Parent() media: MediaEntity,
+  ): Promise<Image | null> {
+    if (!media.imageId) return null;
+
+    const prismaImage = await this.imagesService.findOne(media.imageId);
+    if (!prismaImage) return null;
+
+    // Only return for PENDING images
+    if (prismaImage.moderationStatus !== ModerationStatus.PENDING) {
+      return null;
+    }
+
+    // Return actual image with real URLs
+    return mapPrismaImageToGraphQL(prismaImage);
   }
 
   /**
