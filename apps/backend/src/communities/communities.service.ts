@@ -67,6 +67,7 @@ export class CommunitiesService {
           canGrantItems: true,
           canUploadOwnCharacterImages: true,
           canUploadCharacterImages: true,
+          canModerateImages: true,
         },
       });
 
@@ -83,6 +84,7 @@ export class CommunitiesService {
           canEditSpecies: true,
           canCreateInviteCode: false,
           canListInviteCodes: false,
+          canModerateImages: true,
           canCreateRole: false,
           canEditRole: false,
           canManageItems: false,

@@ -386,10 +386,13 @@ export class MediaResolver {
     nullable: true,
     description: "Image content (populated for image media). URLs are masked for pending/rejected images.",
   })
-  async image(@Parent() media: MediaEntity): Promise<Image | null> {
+  async image(
+    @Parent() media: MediaEntity,
+    @CurrentUser() user?: CurrentUserType,
+  ): Promise<Image | null> {
     if (!media.imageId) return null;
 
-    const prismaImage = await this.imagesService.findOne(media.imageId);
+    const prismaImage = await this.imagesService.findOne(media.imageId, user?.id);
     if (!prismaImage) return null;
 
     const image = mapPrismaImageToGraphQL(prismaImage);
@@ -423,10 +426,11 @@ export class MediaResolver {
   })
   async pendingModerationImage(
     @Parent() media: MediaEntity,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<Image | null> {
     if (!media.imageId) return null;
 
-    const prismaImage = await this.imagesService.findOne(media.imageId);
+    const prismaImage = await this.imagesService.findOne(media.imageId, user?.id);
     if (!prismaImage) return null;
 
     // Only return for PENDING images

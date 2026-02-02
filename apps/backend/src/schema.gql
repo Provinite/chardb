@@ -1170,21 +1170,25 @@ type Media {
   """Unique identifier for the media"""
   id: ID!
 
-  """Image content (populated for image media). URLs are masked for pending/rejected images."""
+  """
+  Image content (populated for image media). URLs are masked for pending/rejected images.
+  """
   image: Image
 
   """Foreign key to image content (null for text media)"""
   imageId: ID
   likesCount: Int!
 
-  """Actual image for moderation review (moderators only, pending images only)"""
-  pendingModerationImage: Image
-
   """The user who owns this media"""
   owner: User!
 
   """ID of the user who owns this media"""
   ownerId: ID!
+
+  """
+  Actual image for moderation review (moderators only, pending images only)
+  """
+  pendingModerationImage: Image
 
   """Tag relationships for this media"""
   tags_rel: [MediaTag!]
@@ -1976,9 +1980,6 @@ type Query {
   imageModerationQueue(communityId: ID!, filters: ImageModerationQueueFiltersInput, first: Int = 20, offset: Int = 0): ImageModerationQueueConnection!
   images(filters: ImageFiltersInput): ImageConnection!
 
-  """Get pending media for moderation queue (use pendingModerationImage field for actual image URLs)"""
-  mediaModerationQueue(communityId: ID!, first: Int = 20, offset: Int = 0): MediaConnection!
-
   """Get an invite code by ID"""
   inviteCodeById(
     """Invite code ID"""
@@ -2040,6 +2041,11 @@ type Query {
     """Media ID to retrieve"""
     id: ID!
   ): Media!
+
+  """
+  Get pending media for moderation queue (use pendingModerationImage field for actual image URLs)
+  """
+  mediaModerationQueue(communityId: ID!, first: Int = 20, offset: Int = 0): MediaConnection!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
 
   """Get characters the current user can upload images to"""
