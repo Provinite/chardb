@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v8.0.0] - 2026-02-01
+
 ### Added
 
 - **Faceted Character Editing Permissions**: Separate UI controls for Profile vs Registry editing
@@ -21,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Character edit/create now uses `updateCharacterProfile`, `updateCharacterRegistry`, and `assignCharacterSpecies` mutations
+
+### Fixed
+
+- **RoleEditor permission checkboxes not reflecting saved state**: Fixed bug where `canEditOwnCharacterRegistry` and `canEditCharacterRegistry` checkboxes weren't checked when editing existing roles. Refactored to use `PermissionKey` type and dynamic initialization from `ALL_PERMISSIONS` to prevent future permission sync issues.
 
 ## [v7.0.0] - 2025-11-13
 

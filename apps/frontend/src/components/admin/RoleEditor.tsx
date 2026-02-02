@@ -31,6 +31,8 @@ import {
 import {
   getPermissionsByCategory,
   PERMISSION_CATEGORIES,
+  ALL_PERMISSIONS,
+  type PermissionKey,
 } from "../../lib/permissions";
 
 /**
@@ -210,26 +212,12 @@ const InfoIcon = styled.div`
 `;
 
 // Type for the minimum role fields needed for editing
+// Uses PermissionKey to ensure all permissions are included - TypeScript will
+// error if a new permission is added to the backend but not handled here
 type EditableRole = {
   id: string;
   name: string;
-  canCreateSpecies: boolean;
-  canCreateCharacter: boolean;
-  canCreateOrphanedCharacter: boolean;
-  canEditCharacter: boolean;
-  canEditOwnCharacter: boolean;
-  canEditSpecies: boolean;
-  canManageItems: boolean;
-  canGrantItems: boolean;
-  canUploadOwnCharacterImages: boolean;
-  canUploadCharacterImages: boolean;
-  canCreateInviteCode: boolean;
-  canListInviteCodes: boolean;
-  canCreateRole: boolean;
-  canEditRole: boolean;
-  canRemoveCommunityMember: boolean;
-  canManageMemberRoles: boolean;
-};
+} & Record<PermissionKey, boolean>;
 
 interface RoleEditorProps {
   isOpen: boolean;
@@ -259,7 +247,12 @@ const PERMISSION_GROUPS = [
 ];
 
 // Role templates for quick configuration
-const ROLE_TEMPLATES = [
+// Uses Record<PermissionKey, boolean> to ensure all permissions are defined
+const ROLE_TEMPLATES: Array<{
+  name: string;
+  description: string;
+  permissions: Record<PermissionKey, boolean>;
+}> = [
   {
     name: "Member",
     description: "Basic member with character creation rights",
@@ -267,9 +260,11 @@ const ROLE_TEMPLATES = [
       canCreateCharacter: true,
       canCreateOrphanedCharacter: false,
       canEditOwnCharacter: true,
+      canEditCharacter: false,
+      canEditOwnCharacterRegistry: false,
+      canEditCharacterRegistry: false,
       canCreateSpecies: false,
       canEditSpecies: false,
-      canEditCharacter: false,
       canManageItems: false,
       canGrantItems: false,
       canUploadOwnCharacterImages: true,
@@ -290,6 +285,8 @@ const ROLE_TEMPLATES = [
       canCreateOrphanedCharacter: false,
       canEditOwnCharacter: true,
       canEditCharacter: true,
+      canEditOwnCharacterRegistry: true,
+      canEditCharacterRegistry: true,
       canCreateSpecies: false,
       canEditSpecies: true,
       canManageItems: false,
@@ -312,6 +309,8 @@ const ROLE_TEMPLATES = [
       canCreateOrphanedCharacter: true,
       canEditOwnCharacter: true,
       canEditCharacter: true,
+      canEditOwnCharacterRegistry: true,
+      canEditCharacterRegistry: true,
       canCreateSpecies: true,
       canEditSpecies: true,
       canManageItems: true,
@@ -347,27 +346,20 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
   const isLoading = creating || updating;
 
   // Initialize form when editing
+  // Uses ALL_PERMISSIONS to dynamically build permissions object, ensuring
+  // new permissions are automatically included without manual updates
   useEffect(() => {
     if (editingRole) {
       setRoleName(editingRole.name);
-      setPermissions({
-        canCreateSpecies: editingRole.canCreateSpecies,
-        canCreateCharacter: editingRole.canCreateCharacter,
-        canCreateOrphanedCharacter: editingRole.canCreateOrphanedCharacter,
-        canEditCharacter: editingRole.canEditCharacter,
-        canEditOwnCharacter: editingRole.canEditOwnCharacter,
-        canEditSpecies: editingRole.canEditSpecies,
-        canManageItems: editingRole.canManageItems,
-        canGrantItems: editingRole.canGrantItems,
-        canUploadOwnCharacterImages: editingRole.canUploadOwnCharacterImages,
-        canUploadCharacterImages: editingRole.canUploadCharacterImages,
-        canCreateInviteCode: editingRole.canCreateInviteCode,
-        canListInviteCodes: editingRole.canListInviteCodes,
-        canCreateRole: editingRole.canCreateRole,
-        canEditRole: editingRole.canEditRole,
-        canRemoveCommunityMember: editingRole.canRemoveCommunityMember,
-        canManageMemberRoles: editingRole.canManageMemberRoles,
-      });
+      setPermissions(
+        ALL_PERMISSIONS.reduce(
+          (acc, perm) => {
+            acc[perm.key] = editingRole[perm.key as PermissionKey];
+            return acc;
+          },
+          {} as Record<string, boolean>
+        )
+      );
     } else {
       // Reset form for new role
       setRoleName("");
