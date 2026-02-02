@@ -214,9 +214,9 @@
             <p>All uploads enter moderation queue</p>
           </div>
           <div class="feature-item">
-            <div class="icon">👁️</div>
-            <h4>Limited Visibility</h4>
-            <p>Only uploader sees pending images</p>
+            <div class="icon">🖼️</div>
+            <h4>Placeholder Display</h4>
+            <p>Pending images show placeholder to all users</p>
           </div>
           <div class="feature-item">
             <div class="icon">✅</div>
@@ -232,10 +232,44 @@
       </div>
     </div>
 
-    <!-- Step 1: Accessing the Queue -->
+    <!-- Step 1: What Users See -->
     <div class="step">
       <div class="step-header">
         <div class="step-number">1</div>
+        <h2 class="step-title">What Users See While Pending</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          When an image is uploaded, it enters the moderation queue with a <span class="badge badge-warning">PENDING</span> status.
+          During this time, <strong>all users</strong>&mdash;including the uploader&mdash;see a placeholder image instead of the actual content.
+        </p>
+        <p>
+          The placeholder clearly indicates that the image is awaiting moderation. This ensures that:
+        </p>
+        <ul>
+          <li>Unapproved content is never displayed publicly</li>
+          <li>Users know their upload was received and is being processed</li>
+          <li>The media entry still appears in galleries and character pages (with the placeholder)</li>
+          <li>Only moderators can view the actual image content, and only through the moderation queue</li>
+        </ul>
+
+        <div class="highlight-box">
+          <strong>Note:</strong> Media metadata (title, description, character association) is still visible.
+          Only the actual image content is replaced with the placeholder.
+        </div>
+      </div>
+      <div class="screenshot">
+        <img src="pending-moderation-placeholder.png" alt="Placeholder shown for pending images">
+        <div class="screenshot-caption">
+          A media page showing the "Image Pending Moderation" placeholder while awaiting review
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Accessing the Queue -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
         <h2 class="step-title">Accessing the Moderation Queue</h2>
       </div>
       <div class="step-content">
@@ -257,10 +291,10 @@
       </div>
     </div>
 
-    <!-- Step 2: Reviewing an Image -->
+    <!-- Step 3: Reviewing an Image -->
     <div class="step">
       <div class="step-header">
-        <div class="step-number">2</div>
+        <div class="step-number">3</div>
         <h2 class="step-title">Reviewing Pending Images</h2>
       </div>
       <div class="step-content">
@@ -296,10 +330,10 @@
       </div>
     </div>
 
-    <!-- Step 3: Approving an Image -->
+    <!-- Step 4: Approving an Image -->
     <div class="step">
       <div class="step-header">
-        <div class="step-number">3</div>
+        <div class="step-number">4</div>
         <h2 class="step-title">Approving an Image</h2>
       </div>
       <div class="step-content">
@@ -321,10 +355,10 @@
       </div>
     </div>
 
-    <!-- Step 4: Rejecting an Image -->
+    <!-- Step 5: Rejecting an Image -->
     <div class="step">
       <div class="step-header">
-        <div class="step-number">4</div>
+        <div class="step-number">5</div>
         <h2 class="step-title">Rejecting an Image</h2>
       </div>
       <div class="step-content">
@@ -359,10 +393,10 @@
       </div>
     </div>
 
-    <!-- Step 5: After Moderation -->
+    <!-- Step 6: After Moderation -->
     <div class="step">
       <div class="step-header">
-        <div class="step-number">5</div>
+        <div class="step-number">6</div>
         <h2 class="step-title">After Moderation</h2>
       </div>
       <div class="step-content">
