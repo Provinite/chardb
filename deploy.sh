@@ -205,7 +205,8 @@ scp -i "$SSH_KEY_PATH" docker/docker-compose.overrides.prod.yml ec2-user@$SERVER
 echo "2/7"
 scp -i "$SSH_KEY_PATH" -r docker/services/ ec2-user@$SERVER_IP:~/app/
 echo "3/7"
-# iecho "4/7"
+scp -i "$SSH_KEY_PATH" docker/otel-collector-config.yml ec2-user@$SERVER_IP:~/app/otel-collector-config.yml
+echo "4/7"
 scp -i "$SSH_KEY_PATH" scripts/ecr-login.sh ec2-user@$SERVER_IP:~/app/ecr-login.sh
 echo "5/7"
 scp -i "$SSH_KEY_PATH" .tmp/.env ec2-user@$SERVER_IP:~/app/.env
