@@ -434,7 +434,7 @@ export class ImagesService {
       orderBy: { createdAt: "desc" },
     });
 
-    return images.map(mapPrismaImageToEntity);
+    return images;
   }
 
   async update(

@@ -44,6 +44,59 @@ export const IMAGE_MODERATION_QUEUE = gql`
   }
 `;
 
+export const MEDIA_MODERATION_QUEUE = gql`
+  query MediaModerationQueue($communityId: ID!, $first: Int, $offset: Int) {
+    mediaModerationQueue(communityId: $communityId, first: $first, offset: $offset) {
+      media {
+        id
+        title
+        characterId
+        character {
+          id
+          name
+          species {
+            id
+            name
+            community {
+              id
+              name
+            }
+          }
+        }
+        owner {
+          id
+          username
+          displayName
+        }
+        image {
+          id
+          moderationStatus
+        }
+        pendingModerationImage {
+          id
+          filename
+          originalFilename
+          originalUrl
+          thumbnailUrl
+          altText
+          width
+          height
+          isNsfw
+          moderationStatus
+          createdAt
+          uploader {
+            id
+            username
+            displayName
+          }
+        }
+      }
+      total
+      hasMore
+    }
+  }
+`;
+
 export const GLOBAL_IMAGE_MODERATION_QUEUE = gql`
   query GlobalImageModerationQueue(
     $filters: ImageModerationQueueFiltersInput

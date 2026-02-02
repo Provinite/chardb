@@ -3,11 +3,10 @@ import styled from 'styled-components';
 import { RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button, Heading3, HelpText, SmallText, Caption } from '@chardb/ui';
 import {
-  useImageModerationQueueQuery,
+  useMediaModerationQueueQuery,
   useApproveImageMutation,
   useRejectImageMutation,
   ModerationRejectionReason,
-  ImageModerationQueueItem,
 } from '../../generated/graphql';
 import { ImageModerationCard } from './ImageModerationCard';
 
@@ -127,7 +126,7 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const { data, loading, error, refetch } = useImageModerationQueueQuery({
+  const { data, loading, error, refetch } = useMediaModerationQueueQuery({
     variables: {
       communityId,
       first: PAGE_SIZE,
@@ -139,8 +138,8 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
   const [approveImage] = useApproveImageMutation();
   const [rejectImage] = useRejectImageMutation();
 
-  const queue = data?.imageModerationQueue;
-  const items = queue?.items || [];
+  const queue = data?.mediaModerationQueue;
+  const items = queue?.media || [];
   const total = queue?.total || 0;
   const hasMore = queue?.hasMore || false;
 
@@ -260,16 +259,42 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
       ) : (
         <>
           <Grid>
-            {items.map((item) => (
-              <ImageModerationCard
-                key={item.image.id}
-                item={item as ImageModerationQueueItem}
-                onApprove={handleApprove}
-                onReject={handleReject}
-                approving={actionInProgress === item.image.id}
-                rejecting={actionInProgress === item.image.id}
-              />
-            ))}
+            {items.map((mediaItem) => {
+              // Only render if we have the pending moderation image (moderator-only field)
+              const image = mediaItem.pendingModerationImage;
+              if (!image) return null;
+
+              return (
+                <ImageModerationCard
+                  key={image.id}
+                  item={{
+                    image: {
+                      id: image.id,
+                      filename: image.filename,
+                      originalFilename: image.originalFilename,
+                      originalUrl: image.originalUrl,
+                      thumbnailUrl: image.thumbnailUrl ?? undefined,
+                      altText: image.altText ?? undefined,
+                      width: image.width,
+                      height: image.height,
+                      isNsfw: image.isNsfw,
+                      moderationStatus: image.moderationStatus,
+                      createdAt: image.createdAt,
+                      uploader: image.uploader ?? undefined,
+                    },
+                    characterId: mediaItem.characterId ?? undefined,
+                    characterName: mediaItem.character?.name ?? undefined,
+                    communityId: mediaItem.character?.species?.community?.id ?? undefined,
+                    communityName: mediaItem.character?.species?.community?.name ?? undefined,
+                    mediaTitle: mediaItem.title,
+                  }}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                  approving={actionInProgress === image.id}
+                  rejecting={actionInProgress === image.id}
+                />
+              );
+            })}
           </Grid>
 
           {totalPages > 1 && (

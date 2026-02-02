@@ -1048,7 +1048,7 @@ export type Media = {
   galleryId: Maybe<Scalars['ID']['output']>;
   /** Unique identifier for the media */
   id: Scalars['ID']['output'];
-  /** Image content (populated for image media) */
+  /** Image content (populated for image media). URLs are masked for pending/rejected images. */
   image: Maybe<Image>;
   /** Foreign key to image content (null for text media) */
   imageId: Maybe<Scalars['ID']['output']>;
@@ -1057,6 +1057,8 @@ export type Media = {
   owner: User;
   /** ID of the user who owns this media */
   ownerId: Scalars['ID']['output'];
+  /** Actual image for moderation review (moderators only, pending images only) */
+  pendingModerationImage: Maybe<Image>;
   /** Tag relationships for this media */
   tags_rel: Maybe<Array<MediaTag>>;
   /** Text content (populated for text media) */
@@ -1860,6 +1862,8 @@ export type Query = {
   media: MediaConnection;
   /** Retrieves a single media item by ID */
   mediaItem: Media;
+  /** Get pending media for moderation queue (use pendingModerationImage field for actual image URLs) */
+  mediaModerationQueue: MediaConnection;
   myCharacters: CharacterConnection;
   /** Get characters the current user can upload images to */
   myCharactersForImageUpload: CharacterConnection;
@@ -2225,6 +2229,13 @@ export type QueryMediaArgs = {
 
 export type QueryMediaItemArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryMediaModerationQueueArgs = {
+  communityId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -3561,6 +3572,15 @@ export type ImageModerationQueueQueryVariables = Exact<{
 
 
 export type ImageModerationQueueQuery = { __typename?: 'Query', imageModerationQueue: { __typename?: 'ImageModerationQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'ImageModerationQueueItem', characterId: string | null, characterName: string | null, communityId: string | null, communityName: string | null, mediaTitle: string | null, image: { __typename?: 'Image', id: string, filename: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } }> } };
+
+export type MediaModerationQueueQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type MediaModerationQueueQuery = { __typename?: 'Query', mediaModerationQueue: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, characterId: string | null, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } | null, pendingModerationImage: { __typename?: 'Image', id: string, filename: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } | null }> } };
 
 export type GlobalImageModerationQueueQueryVariables = Exact<{
   filters?: InputMaybe<ImageModerationQueueFiltersInput>;
@@ -7630,6 +7650,93 @@ export type ImageModerationQueueQueryHookResult = ReturnType<typeof useImageMode
 export type ImageModerationQueueLazyQueryHookResult = ReturnType<typeof useImageModerationQueueLazyQuery>;
 export type ImageModerationQueueSuspenseQueryHookResult = ReturnType<typeof useImageModerationQueueSuspenseQuery>;
 export type ImageModerationQueueQueryResult = Apollo.QueryResult<ImageModerationQueueQuery, ImageModerationQueueQueryVariables>;
+export const MediaModerationQueueDocument = gql`
+    query MediaModerationQueue($communityId: ID!, $first: Int, $offset: Int) {
+  mediaModerationQueue(communityId: $communityId, first: $first, offset: $offset) {
+    media {
+      id
+      title
+      characterId
+      character {
+        id
+        name
+        species {
+          id
+          name
+          community {
+            id
+            name
+          }
+        }
+      }
+      owner {
+        id
+        username
+        displayName
+      }
+      image {
+        id
+        moderationStatus
+      }
+      pendingModerationImage {
+        id
+        filename
+        originalFilename
+        originalUrl
+        thumbnailUrl
+        altText
+        width
+        height
+        isNsfw
+        moderationStatus
+        createdAt
+        uploader {
+          id
+          username
+          displayName
+        }
+      }
+    }
+    total
+    hasMore
+  }
+}
+    `;
+
+/**
+ * __useMediaModerationQueueQuery__
+ *
+ * To run a query within a React component, call `useMediaModerationQueueQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMediaModerationQueueQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMediaModerationQueueQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      first: // value for 'first'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useMediaModerationQueueQuery(baseOptions: Apollo.QueryHookOptions<MediaModerationQueueQuery, MediaModerationQueueQueryVariables> & ({ variables: MediaModerationQueueQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MediaModerationQueueQuery, MediaModerationQueueQueryVariables>(MediaModerationQueueDocument, options);
+      }
+export function useMediaModerationQueueLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MediaModerationQueueQuery, MediaModerationQueueQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MediaModerationQueueQuery, MediaModerationQueueQueryVariables>(MediaModerationQueueDocument, options);
+        }
+export function useMediaModerationQueueSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MediaModerationQueueQuery, MediaModerationQueueQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<MediaModerationQueueQuery, MediaModerationQueueQueryVariables>(MediaModerationQueueDocument, options);
+        }
+export type MediaModerationQueueQueryHookResult = ReturnType<typeof useMediaModerationQueueQuery>;
+export type MediaModerationQueueLazyQueryHookResult = ReturnType<typeof useMediaModerationQueueLazyQuery>;
+export type MediaModerationQueueSuspenseQueryHookResult = ReturnType<typeof useMediaModerationQueueSuspenseQuery>;
+export type MediaModerationQueueQueryResult = Apollo.QueryResult<MediaModerationQueueQuery, MediaModerationQueueQueryVariables>;
 export const GlobalImageModerationQueueDocument = gql`
     query GlobalImageModerationQueue($filters: ImageModerationQueueFiltersInput, $first: Int, $offset: Int) {
   globalImageModerationQueue(filters: $filters, first: $first, offset: $offset) {
