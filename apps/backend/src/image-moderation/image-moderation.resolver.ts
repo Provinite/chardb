@@ -21,6 +21,10 @@ import { CommunityPermission } from '../auth/CommunityPermission';
 import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
 import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
 import { mapPrismaMediaConnectionToGraphQL } from '../media/utils/media-resolver-mappers';
+import {
+  mapQueueResultToGraphQL,
+  mapPrismaImageModerationActionToGraphQL,
+} from './utils/image-moderation-mappers';
 
 @Resolver()
 export class ImageModerationResolver {
@@ -46,7 +50,7 @@ export class ImageModerationResolver {
     @Args('offset', { nullable: true, defaultValue: 0, type: () => Int }) offset: number,
   ): Promise<ImageModerationQueueConnection> {
     const result = await this.imageModerationService.getQueueForCommunity(communityId, filters, first, offset);
-    return result as unknown as ImageModerationQueueConnection;
+    return mapQueueResultToGraphQL(result);
   }
 
   /**
@@ -83,7 +87,7 @@ export class ImageModerationResolver {
     @Args('offset', { nullable: true, defaultValue: 0, type: () => Int }) offset: number,
   ): Promise<ImageModerationQueueConnection> {
     const result = await this.imageModerationService.getGlobalQueue(filters, first, offset);
-    return result as unknown as ImageModerationQueueConnection;
+    return mapQueueResultToGraphQL(result);
   }
 
   /**
@@ -126,7 +130,7 @@ export class ImageModerationResolver {
     @Args('imageId', { type: () => ID }) imageId: string,
   ): Promise<ImageModerationAction[]> {
     const actions = await this.imageModerationService.getModerationHistory(imageId);
-    return actions as unknown as ImageModerationAction[];
+    return actions.map(mapPrismaImageModerationActionToGraphQL);
   }
 
   /**
@@ -142,7 +146,7 @@ export class ImageModerationResolver {
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<ImageModerationAction> {
     const action = await this.imageModerationService.approveImage(input.imageId, user.id);
-    return action as unknown as ImageModerationAction;
+    return mapPrismaImageModerationActionToGraphQL(action);
   }
 
   /**
@@ -163,6 +167,6 @@ export class ImageModerationResolver {
       input.reason,
       input.reasonText,
     );
-    return action as unknown as ImageModerationAction;
+    return mapPrismaImageModerationActionToGraphQL(action);
   }
 }

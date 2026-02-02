@@ -5,6 +5,10 @@ import { CommunityPermission } from '../auth/CommunityPermission';
 import { EmailService } from '../email/email.service';
 import { ModerationStatus, ModerationRejectionReason, Prisma } from '@prisma/client';
 import { ImageModerationQueueFiltersInput } from './dto/image-moderation.dto';
+import {
+  queueImageInclude,
+  moderationActionInclude,
+} from './utils/image-moderation-mappers';
 
 @Injectable()
 export class ImageModerationService {
@@ -109,32 +113,21 @@ export class ImageModerationService {
     if (filters?.uploaderId) {
       whereClause.uploaderId = filters.uploaderId;
     }
-    if (filters?.uploadedAfter) {
-      whereClause.createdAt = { ...whereClause.createdAt as Prisma.DateTimeFilter, gte: filters.uploadedAfter };
-    }
-    if (filters?.uploadedBefore) {
-      whereClause.createdAt = { ...whereClause.createdAt as Prisma.DateTimeFilter, lte: filters.uploadedBefore };
+    if (filters?.uploadedAfter || filters?.uploadedBefore) {
+      const dateFilter: Prisma.DateTimeFilter = {};
+      if (filters?.uploadedAfter) {
+        dateFilter.gte = filters.uploadedAfter;
+      }
+      if (filters?.uploadedBefore) {
+        dateFilter.lte = filters.uploadedBefore;
+      }
+      whereClause.createdAt = dateFilter;
     }
 
     const [images, total] = await Promise.all([
       this.db.image.findMany({
         where: whereClause,
-        include: {
-          uploader: true,
-          media: {
-            include: {
-              character: {
-                include: {
-                  species: {
-                    include: {
-                      community: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+        include: queueImageInclude,
         orderBy: { createdAt: 'asc' },
         skip: offset,
         take: first + 1, // Fetch one extra to check hasMore
@@ -143,24 +136,7 @@ export class ImageModerationService {
     ]);
 
     const hasMore = images.length > first;
-    const items = images.slice(0, first).map((image) => {
-      const media = image.media[0];
-      const character = media?.character;
-      const community = character?.species?.community;
-
-      return {
-        image: {
-          ...image,
-          likesCount: 0,
-          userHasLiked: false,
-        },
-        mediaTitle: media?.title,
-        characterName: character?.name,
-        characterId: character?.id,
-        communityName: community?.name,
-        communityId: community?.id,
-      };
-    });
+    const items = images.slice(0, first);
 
     return { items, total, hasMore };
   }
@@ -181,32 +157,21 @@ export class ImageModerationService {
     if (filters?.uploaderId) {
       whereClause.uploaderId = filters.uploaderId;
     }
-    if (filters?.uploadedAfter) {
-      whereClause.createdAt = { ...whereClause.createdAt as Prisma.DateTimeFilter, gte: filters.uploadedAfter };
-    }
-    if (filters?.uploadedBefore) {
-      whereClause.createdAt = { ...whereClause.createdAt as Prisma.DateTimeFilter, lte: filters.uploadedBefore };
+    if (filters?.uploadedAfter || filters?.uploadedBefore) {
+      const dateFilter: Prisma.DateTimeFilter = {};
+      if (filters?.uploadedAfter) {
+        dateFilter.gte = filters.uploadedAfter;
+      }
+      if (filters?.uploadedBefore) {
+        dateFilter.lte = filters.uploadedBefore;
+      }
+      whereClause.createdAt = dateFilter;
     }
 
     const [images, total] = await Promise.all([
       this.db.image.findMany({
         where: whereClause,
-        include: {
-          uploader: true,
-          media: {
-            include: {
-              character: {
-                include: {
-                  species: {
-                    include: {
-                      community: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+        include: queueImageInclude,
         orderBy: { createdAt: 'asc' },
         skip: offset,
         take: first + 1,
@@ -215,24 +180,7 @@ export class ImageModerationService {
     ]);
 
     const hasMore = images.length > first;
-    const items = images.slice(0, first).map((image) => {
-      const media = image.media[0];
-      const character = media?.character;
-      const community = character?.species?.community;
-
-      return {
-        image: {
-          ...image,
-          likesCount: 0,
-          userHasLiked: false,
-        },
-        mediaTitle: media?.title,
-        characterName: character?.name,
-        characterId: character?.id,
-        communityName: community?.name,
-        communityId: community?.id,
-      };
-    });
+    const items = images.slice(0, first);
 
     return { items, total, hasMore };
   }
@@ -273,10 +221,7 @@ export class ImageModerationService {
           moderatorId,
           action: ModerationStatus.APPROVED,
         },
-        include: {
-          image: { include: { uploader: true } },
-          moderator: true,
-        },
+        include: moderationActionInclude,
       }),
     ]);
 
@@ -334,10 +279,7 @@ export class ImageModerationService {
           reason,
           reasonText,
         },
-        include: {
-          image: { include: { uploader: true } },
-          moderator: true,
-        },
+        include: moderationActionInclude,
       }),
     ]);
 
@@ -390,9 +332,7 @@ export class ImageModerationService {
   async getModerationHistory(imageId: string) {
     return this.db.imageModerationAction.findMany({
       where: { imageId },
-      include: {
-        moderator: true,
-      },
+      include: moderationActionInclude,
       orderBy: { createdAt: 'desc' },
     });
   }

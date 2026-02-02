@@ -3,8 +3,38 @@ import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { Check, X, User, Image as ImageIcon, Clock, ExternalLink, AlertTriangle } from 'lucide-react';
 import { Button, SmallText, Caption } from '@chardb/ui';
-import { ImageModerationQueueItem, ModerationRejectionReason } from '../../generated/graphql';
+import { ModerationRejectionReason, ModerationStatus } from '../../generated/graphql';
 import { RejectImageModal } from './RejectImageModal';
+
+/**
+ * Local type for the image moderation card item.
+ * Only includes fields actually used by this component.
+ */
+export interface ImageModerationCardItem {
+  image: {
+    id: string;
+    filename: string;
+    originalFilename: string;
+    originalUrl: string;
+    thumbnailUrl?: string | null;
+    altText?: string | null;
+    width: number;
+    height: number;
+    isNsfw: boolean;
+    moderationStatus: ModerationStatus;
+    createdAt: string;
+    uploader?: {
+      id: string;
+      username: string;
+      displayName?: string | null;
+    } | null;
+  };
+  characterId?: string | null;
+  characterName?: string | null;
+  communityId?: string | null;
+  communityName?: string | null;
+  mediaTitle?: string | null;
+}
 
 const Card = styled.div`
   background: ${({ theme }) => theme.colors.background};
@@ -149,7 +179,7 @@ const TimestampText = styled(Caption)`
 `;
 
 interface ImageModerationCardProps {
-  item: ImageModerationQueueItem;
+  item: ImageModerationCardItem;
   onApprove: (imageId: string) => Promise<void>;
   onReject: (imageId: string, reason: ModerationRejectionReason, reasonText?: string) => Promise<void>;
   approving?: boolean;
