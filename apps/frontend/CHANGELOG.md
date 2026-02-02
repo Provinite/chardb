@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Image Moderation Queue**: Moderators can review, approve, or reject pending images
+  - Rejection reasons with optional explanation
+  - Added `canModerateImages` to role permissions
+
 ## [v8.0.0] - 2026-02-01
 
 ### Added

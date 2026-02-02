@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Image Moderation System**: Uploaded images require moderator approval before becoming visible
+  - Images show placeholder until approved
+  - Approval/rejection with email notifications to uploaders
+  - New `canModerateImages` community permission
+
 ## [v8.0.0] - 2026-02-01
 
 ### Added
