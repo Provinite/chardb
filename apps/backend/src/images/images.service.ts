@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
-import { Prisma, Visibility } from "@chardb/database";
+import { Prisma, Visibility, ModerationStatus } from "@chardb/database";
 import * as sharp from "sharp";
 import { v4 as uuid } from "uuid";
 import { extname } from "path";
@@ -123,7 +123,9 @@ export class ImagesService {
     const filename = `${uuid()}${fileExtension}`;
 
     // Generate all image variants from original buffer
-    const { thumbnail, medium, metadata } = await this.processImage(file.buffer);
+    const { thumbnail, medium, metadata } = await this.processImage(
+      file.buffer,
+    );
 
     // Generate imageId upfront for S3 key generation
     const imageId = uuid();
@@ -133,32 +135,33 @@ export class ImagesService {
     const mediumMimeType = this.getMediumMimeType(file.mimetype);
 
     // Upload original, medium, and thumbnail to S3 using imageId
-    const [originalUploadResult, mediumUploadResult, thumbnailUploadResult] = await Promise.all([
-      // Upload original unprocessed buffer
-      this.s3Service.uploadImage({
-        buffer: file.buffer,
-        filename: file.originalname,
-        mimeType: file.mimetype,
-        imageId,
-        sizeVariant: 'original',
-      }),
-      // Upload medium (web-optimized display size)
-      this.s3Service.uploadImage({
-        buffer: medium,
-        filename: file.originalname,
-        mimeType: mediumMimeType,
-        imageId,
-        sizeVariant: 'medium',
-      }),
-      // Upload thumbnail
-      this.s3Service.uploadImage({
-        buffer: thumbnail,
-        filename: file.originalname,
-        mimeType: thumbnailMimeType,
-        imageId,
-        sizeVariant: 'thumbnail',
-      }),
-    ]);
+    const [originalUploadResult, mediumUploadResult, thumbnailUploadResult] =
+      await Promise.all([
+        // Upload original unprocessed buffer
+        this.s3Service.uploadImage({
+          buffer: file.buffer,
+          filename: file.originalname,
+          mimeType: file.mimetype,
+          imageId,
+          sizeVariant: "original",
+        }),
+        // Upload medium (web-optimized display size)
+        this.s3Service.uploadImage({
+          buffer: medium,
+          filename: file.originalname,
+          mimeType: mediumMimeType,
+          imageId,
+          sizeVariant: "medium",
+        }),
+        // Upload thumbnail
+        this.s3Service.uploadImage({
+          buffer: thumbnail,
+          filename: file.originalname,
+          mimeType: thumbnailMimeType,
+          imageId,
+          sizeVariant: "thumbnail",
+        }),
+      ]);
 
     const originalUrl = originalUploadResult.url;
     const mediumUrl = mediumUploadResult.url;
@@ -249,8 +252,13 @@ export class ImagesService {
       artistId,
     } = filters;
 
+    // Get moderation visibility filter
+    const moderationFilter = this.getModerationVisibilityFilter();
+
     const where: Prisma.ImageWhereInput = {
       AND: [
+        // Moderation status filter
+        moderationFilter,
         // Other filters
         uploaderId ? { uploaderId } : {},
         artistId ? { artistId } : {},
@@ -294,7 +302,7 @@ export class ImagesService {
     };
   }
 
-  async findOne(id: string, userId?: string): Promise<Image> {
+  async findOne(id: string, userId?: string) {
     const image = await this.db.image.findUnique({
       where: { id },
       include: {
@@ -312,9 +320,38 @@ export class ImagesService {
       throw new NotFoundException("Image not found");
     }
 
-    // NOTE: Visibility now handled through Media system
-
     return image;
+  }
+
+  /**
+   * Build Prisma filter for moderation visibility in general image lists.
+   * Lists should ONLY show APPROVED images - pending/rejected images are
+   * viewed through dedicated interfaces (moderation queue, my pending uploads).
+   */
+  private getModerationVisibilityFilter(): Prisma.ImageWhereInput {
+    // All image lists only show approved images
+    // Users see their pending uploads via dedicated "my pending uploads" query
+    // Moderators see pending images via the moderation queue
+    return { moderationStatus: ModerationStatus.APPROVED };
+  }
+
+  /**
+   * Get pending uploads for a specific user (for "My Pending Uploads" view)
+   */
+  async findPendingUploads(userId: string) {
+    const images = await this.db.image.findMany({
+      where: {
+        uploaderId: userId,
+        moderationStatus: ModerationStatus.PENDING,
+      },
+      include: {
+        uploader: true,
+        artist: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return images;
   }
 
   async update(
@@ -406,7 +443,10 @@ export class ImagesService {
       if (metadata.format === "gif") {
         // Resize GIF for medium variant if needed, preserving animation
         let mediumBuffer = buffer;
-        if (metadata.width! > this.mediumSize || metadata.height! > this.mediumSize) {
+        if (
+          metadata.width! > this.mediumSize ||
+          metadata.height! > this.mediumSize
+        ) {
           const mediumGif = sharp(buffer, { animated: true })
             .resize(this.mediumSize, this.mediumSize, {
               fit: "inside",
@@ -457,10 +497,14 @@ export class ImagesService {
 
       // Generate thumbnail variant
       // Clone the image instance for independent processing
-      let thumbnail = sharp(buffer).resize(this.thumbnailSize, this.thumbnailSize, {
-        fit: "cover",
-        position: "center",
-      });
+      let thumbnail = sharp(buffer).resize(
+        this.thumbnailSize,
+        this.thumbnailSize,
+        {
+          fit: "cover",
+          position: "center",
+        },
+      );
 
       // Format-specific optimization for thumbnail
       if (metadata.format === "png") {
@@ -497,7 +541,10 @@ export class ImagesService {
   private getMediumMimeType(originalMimeType: string): string {
     if (originalMimeType === "image/png") {
       return "image/webp"; // PNG → WebP
-    } else if (originalMimeType === "image/jpeg" || originalMimeType === "image/jpg") {
+    } else if (
+      originalMimeType === "image/jpeg" ||
+      originalMimeType === "image/jpg"
+    ) {
       return "image/jpeg"; // JPEG → JPEG
     } else if (originalMimeType === "image/webp") {
       return "image/webp"; // WebP → WebP
@@ -513,7 +560,10 @@ export class ImagesService {
   private getThumbnailMimeType(originalMimeType: string): string {
     if (originalMimeType === "image/png") {
       return "image/webp"; // PNG → WebP
-    } else if (originalMimeType === "image/jpeg" || originalMimeType === "image/jpg") {
+    } else if (
+      originalMimeType === "image/jpeg" ||
+      originalMimeType === "image/jpg"
+    ) {
       return "image/jpeg"; // JPEG → JPEG
     } else if (originalMimeType === "image/webp") {
       return "image/webp"; // WebP → WebP
@@ -713,8 +763,10 @@ export class ImagesService {
    * @returns Promise<boolean> True if image was orphaned and deleted, false otherwise
    */
   async cleanupOrphanedImage(imageId: string): Promise<boolean> {
-    const logger = new Logger('ImagesService');
-    logger.log(`[cleanupOrphanedImage] Checking if image ${imageId} is orphaned`);
+    const logger = new Logger("ImagesService");
+    logger.log(
+      `[cleanupOrphanedImage] Checking if image ${imageId} is orphaned`,
+    );
 
     // Check all references in parallel
     const [mediaCount, userAvatarCount, itemTypeCount] = await Promise.all([
@@ -725,12 +777,14 @@ export class ImagesService {
 
     const totalReferences = mediaCount + userAvatarCount + itemTypeCount;
     logger.log(
-      `[cleanupOrphanedImage] Image ${imageId} references: media=${mediaCount}, avatars=${userAvatarCount}, itemTypes=${itemTypeCount}, total=${totalReferences}`
+      `[cleanupOrphanedImage] Image ${imageId} references: media=${mediaCount}, avatars=${userAvatarCount}, itemTypes=${itemTypeCount}, total=${totalReferences}`,
     );
 
     // If image is still referenced, don't delete
     if (totalReferences > 0) {
-      logger.debug(`Image ${imageId} still referenced by ${totalReferences} record(s), skipping deletion`);
+      logger.debug(
+        `Image ${imageId} still referenced by ${totalReferences} record(s), skipping deletion`,
+      );
       return false;
     }
 
@@ -740,15 +794,21 @@ export class ImagesService {
     });
 
     if (!image) {
-      logger.warn(`[cleanupOrphanedImage] Image ${imageId} not found in database`);
+      logger.warn(
+        `[cleanupOrphanedImage] Image ${imageId} not found in database`,
+      );
       return false;
     }
 
-    logger.log(`[cleanupOrphanedImage] Image ${imageId} is orphaned, deleting from S3 and database`);
-    logger.log(`[cleanupOrphanedImage] URLs - original: ${image.originalUrl}, thumbnail: ${image.thumbnailUrl}`);
+    logger.log(
+      `[cleanupOrphanedImage] Image ${imageId} is orphaned, deleting from S3 and database`,
+    );
+    logger.log(
+      `[cleanupOrphanedImage] URLs - original: ${image.originalUrl}, thumbnail: ${image.thumbnailUrl}`,
+    );
 
     // Delete from S3 (skip base64 images)
-    if (image.originalUrl && !image.originalUrl.startsWith('data:')) {
+    if (image.originalUrl && !image.originalUrl.startsWith("data:")) {
       try {
         const urlsToDelete = [image.originalUrl];
         if (image.thumbnailUrl) {
@@ -758,7 +818,10 @@ export class ImagesService {
         await this.s3Service.deleteImages(urlsToDelete);
         logger.log(`Deleted ${urlsToDelete.length} image(s) from S3`);
       } catch (error) {
-        logger.error(`Failed to delete images from S3: ${error.message}`, error.stack);
+        logger.error(
+          `Failed to delete images from S3: ${error.message}`,
+          error.stack,
+        );
         // Continue with database deletion even if S3 fails
       }
     }
@@ -768,7 +831,9 @@ export class ImagesService {
       where: { id: imageId },
     });
 
-    logger.log(`Successfully deleted orphaned image ${imageId} from database and storage`);
+    logger.log(
+      `Successfully deleted orphaned image ${imageId} from database and storage`,
+    );
     return true;
   }
 }

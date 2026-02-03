@@ -4,7 +4,10 @@ import { ConfigService } from '@nestjs/config';
 import {
   passwordResetTemplate,
   passwordChangedTemplate,
+  imageApprovedTemplate,
+  imageRejectedTemplate,
 } from './templates';
+import { ModerationRejectionReason } from '@prisma/client';
 
 @Injectable()
 export class EmailService {
@@ -84,6 +87,74 @@ export class EmailService {
         error.stack,
       );
       // Don't throw error here - password change was successful, notification is secondary
+    }
+  }
+
+  /**
+   * Send notification when an image is approved
+   */
+  async sendImageApprovedEmail(
+    email: string,
+    username: string,
+    imageName: string,
+  ): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Your Image Has Been Approved',
+        html: imageApprovedTemplate({
+          username,
+          imageName,
+        }),
+      });
+
+      this.logger.log(`Image approved notification sent to ${email}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send image approved notification to ${email}`,
+        error.stack,
+      );
+      // Don't throw - notification is secondary
+    }
+  }
+
+  /**
+   * Send notification when an image is rejected
+   */
+  async sendImageRejectedEmail(
+    email: string,
+    username: string,
+    imageName: string,
+    reason: ModerationRejectionReason,
+    reasonText?: string,
+  ): Promise<void> {
+    const reasonLabels: Record<ModerationRejectionReason, string> = {
+      TOS_VIOLATION: 'Terms of Service Violation',
+      NSFW_NOT_TAGGED: 'NSFW Content Not Properly Tagged',
+      SPAM_LOW_QUALITY: 'Spam or Low Quality Content',
+      COPYRIGHT_ISSUE: 'Copyright or Intellectual Property Issue',
+      OTHER: 'Other Policy Violation',
+    };
+
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Your Image Was Not Approved',
+        html: imageRejectedTemplate({
+          username,
+          imageName,
+          reason: reasonLabels[reason],
+          reasonText,
+        }),
+      });
+
+      this.logger.log(`Image rejected notification sent to ${email}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send image rejected notification to ${email}`,
+        error.stack,
+      );
+      // Don't throw - notification is secondary
     }
   }
 }

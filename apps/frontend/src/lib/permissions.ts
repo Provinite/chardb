@@ -90,6 +90,11 @@ export const PERMISSIONS_MAP = {
     description: 'Allow uploading images to any character in the community',
     category: 'content',
   },
+  canModerateImages: {
+    name: 'Moderate Images',
+    description: 'Allow reviewing and approving/rejecting uploaded images in the community',
+    category: 'content',
+  },
   // Community Management
   canCreateInviteCode: {
     name: 'Create Invite Codes',

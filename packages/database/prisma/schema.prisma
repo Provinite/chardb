@@ -39,6 +39,20 @@ enum ExternalAccountProvider {
   DISCORD
 }
 
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ModerationRejectionReason {
+  TOS_VIOLATION
+  NSFW_NOT_TAGGED
+  SPAM_LOW_QUALITY
+  COPYRIGHT_ISSUE
+  OTHER
+}
+
 
 
 model User {
@@ -103,6 +117,9 @@ model User {
 
   // Password reset tokens
   passwordResetTokens    PasswordResetToken[]
+
+  // Image moderation actions
+  moderationActions      ImageModerationAction[] @relation("ModeratorActions")
 
   @@map("users")
 }
@@ -194,19 +211,23 @@ model Image {
   thumbnailUrl     String?    @map("thumbnail_url") @db.Text
   altText          String?    @map("alt_text") @db.VarChar(200)
   uploaderId       String     @map("uploader_id")
-  
+
   // Artist attribution
   artistId         String?    @map("artist_id")
   artistName       String?    @map("artist_name") @db.VarChar(255)
   artistUrl        String?    @map("artist_url") @db.VarChar(500)
   source           String?    @db.VarChar(500)
-  
+
   width            Int
   height           Int
   fileSize         Int        @map("file_size")
   mimeType         String     @map("mime_type") @db.VarChar(50)
   isNsfw           Boolean    @default(false) @map("is_nsfw")
   sensitiveContentDescription String? @map("sensitive_content_description") @db.Text
+
+  // Moderation
+  moderationStatus ModerationStatus @default(PENDING) @map("moderation_status")
+
   createdAt        DateTime   @default(now()) @map("created_at")
   updatedAt        DateTime   @updatedAt @map("updated_at")
 
@@ -220,6 +241,7 @@ model Image {
   media    Media[]
   userAvatars User[]     @relation("UserAvatar")
   itemTypes   ItemType[] @relation("ItemTypeImage")
+  moderationActions ImageModerationAction[]
 
   @@map("images")
 }
@@ -483,6 +505,7 @@ model Role {
   canGrantItems            Boolean @default(false) @map("can_grant_items")
   canUploadOwnCharacterImages Boolean @default(false) @map("can_upload_own_character_images")
   canUploadCharacterImages    Boolean @default(false) @map("can_upload_character_images")
+  canModerateImages           Boolean @default(false) @map("can_moderate_images")
 
   // Relations
   community            Community             @relation(fields: [communityId], references: [id], onDelete: Cascade)
@@ -750,4 +773,22 @@ model EnumValueSetting {
 
   @@unique([enumValueId, speciesVariantId])
   @@map("enum_value_settings")
+}
+
+model ImageModerationAction {
+  id          String                     @id @default(uuid())
+  imageId     String                     @map("image_id")
+  moderatorId String                     @map("moderator_id")
+  action      ModerationStatus
+  reason      ModerationRejectionReason?
+  reasonText  String?                    @map("reason_text") @db.Text
+  createdAt   DateTime                   @default(now()) @map("created_at")
+
+  // Relations
+  image     Image @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  moderator User  @relation("ModeratorActions", fields: [moderatorId], references: [id])
+
+  @@index([imageId])
+  @@index([moderatorId])
+  @@map("image_moderation_actions")
 }

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CharDB - Character Hosting Platform</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      color: #1a1a2e;
+      background: #fafafa;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .hero .tagline {
+      font-size: 1.25rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.875rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .btn-primary {
+      background: white;
+      color: #667eea;
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.5);
+    }
+
+    /* Features Section */
+    .features {
+      padding: 4rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .features h2 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 3rem;
+      color: #1a1a2e;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .feature-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-card h3 {
+      color: #1a1a2e;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    /* Documentation Section */
+    .docs {
+      background: #f0f4ff;
+      padding: 4rem 2rem;
+    }
+
+    .docs-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .docs h2 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #1a1a2e;
+    }
+
+    .docs-subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 3rem;
+    }
+
+    .docs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .doc-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .doc-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+
+    .doc-icon {
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+
+    .doc-content h3 {
+      color: #667eea;
+      margin-bottom: 0.25rem;
+    }
+
+    .doc-content p {
+      color: #666;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    /* Footer */
+    footer {
+      background: #1a1a2e;
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    footer p {
+      opacity: 0.7;
+    }
+
+    footer a {
+      color: #a8b4ff;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .hero .tagline {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero -->
+  <section class="hero">
+    <h1>CharDB</h1>
+    <p class="tagline">
+      A modern character hosting platform for creative communities.
+      Organize characters, manage species, and build vibrant creative spaces.
+    </p>
+    <div class="hero-buttons">
+      <a href="https://github.com/Provinite/chardb" class="btn btn-primary">View on GitHub</a>
+      <a href="#docs" class="btn btn-secondary">Documentation</a>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <h2>Platform Features</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3>Character Profiles</h3>
+        <p>Rich character profiles with custom traits, galleries, and detailed information pages.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌿</div>
+        <h3>Species Management</h3>
+        <p>Create and manage species with variants, traits, and customizable attributes.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👥</div>
+        <h3>Community Tools</h3>
+        <p>Role-based permissions, member management, and community-specific settings.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖼️</div>
+        <h3>Media Galleries</h3>
+        <p>Upload and organize artwork with support for multiple image formats and galleries.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>Content Moderation</h3>
+        <p>Built-in moderation queue for reviewing uploaded content before publication.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎁</div>
+        <h3>Item System</h3>
+        <p>Create custom items and manage community inventories with Discord integration.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Documentation -->
+  <section class="docs" id="docs">
+    <div class="docs-container">
+      <h2>Documentation</h2>
+      <p class="docs-subtitle">Learn how to use CharDB's features</p>
+      <div class="docs-grid">
+        <a href="docs/image-moderation.html" class="doc-card">
+          <div class="doc-icon">🛡️</div>
+          <div class="doc-content">
+            <h3>Image Moderation Queue</h3>
+            <p>Walkthrough of the content moderation workflow for reviewing and approving uploaded images.</p>
+          </div>
+        </a>
+        <a href="https://github.com/Provinite/chardb#readme" class="doc-card">
+          <div class="doc-icon">📖</div>
+          <div class="doc-content">
+            <h3>Getting Started</h3>
+            <p>Installation guide and setup instructions for running CharDB locally or in production.</p>
+          </div>
+        </a>
+        <a href="https://github.com/Provinite/chardb/blob/main/DEPLOYMENT_GUIDE.md" class="doc-card">
+          <div class="doc-icon">🚀</div>
+          <div class="doc-content">
+            <h3>Deployment Guide</h3>
+            <p>Deploy CharDB to AWS with Docker, including infrastructure setup and configuration.</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>
+      CharDB is open source software.
+      <a href="https://github.com/Provinite/chardb">Contribute on GitHub</a>
+    </p>
+  </footer>
+</body>
+</html>

@@ -35,6 +35,7 @@ import { CommunityColorsModule } from "./community-colors/community-colors.modul
 import { PendingOwnershipModule } from "./pending-ownership/pending-ownership.module";
 import { DiscordModule } from "./discord/discord.module";
 import { QueueConsumerModule } from "./queue-consumer/queue-consumer.module";
+import { ImageModerationModule } from "./image-moderation/image-moderation.module";
 import { Request, Response } from "express";
 
 @Module({
@@ -216,6 +217,7 @@ import { Request, Response } from "express";
     PendingOwnershipModule,
     DiscordModule,
     QueueConsumerModule,
+    ImageModerationModule,
   ],
 })
 export class AppModule {}

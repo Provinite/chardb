@@ -31,6 +31,7 @@ export function mapPrismaImageToGraphQL(prismaImage: PrismaImage): Image {
     mimeType: prismaImage.mimeType,
     isNsfw: prismaImage.isNsfw,
     sensitiveContentDescription: prismaImage.sensitiveContentDescription ?? undefined,
+    moderationStatus: prismaImage.moderationStatus,
     createdAt: prismaImage.createdAt,
     updatedAt: prismaImage.updatedAt,
     uploader: mapPrismaUserToGraphQL(prismaImage.uploader),

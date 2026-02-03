@@ -121,6 +121,12 @@ export class CreateRoleInput {
   @IsBoolean()
   @IsOptional()
   canUploadCharacterImages?: boolean = false;
+
+  /** Permission to moderate images */
+  @Field(() => Boolean, { description: 'Whether members with this role can review and approve/reject uploaded images', defaultValue: false })
+  @IsBoolean()
+  @IsOptional()
+  canModerateImages?: boolean = false;
 }
 
 @InputType({ description: 'Input for updating an existing role' })
@@ -239,4 +245,10 @@ export class UpdateRoleInput {
   @IsOptional()
   @IsBoolean()
   canUploadCharacterImages?: boolean;
+
+  /** Permission to moderate images */
+  @Field(() => Boolean, { description: 'Whether members with this role can review and approve/reject uploaded images', nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  canModerateImages?: boolean;
 }

@@ -1,13 +1,14 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { FileText, ArrowLeft } from 'lucide-react';
-import { 
+import { Image, ArrowLeft } from 'lucide-react';
+import {
   Button,
   Heading2,
   SmallText,
   HelpText
 } from '@chardb/ui';
+import { ImageModerationQueue } from '../components/moderation';
 
 const Container = styled.div`
   display: flex;
@@ -65,20 +66,10 @@ const HeaderText = styled.div`
   gap: 0.25rem;
 `;
 
-const PlaceholderContent = styled.div`
+const ContentSection = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem;
   gap: 1rem;
-  text-align: center;
-  color: ${({ theme }) => theme.colors.text.secondary};
-`;
-
-const PlaceholderIcon = styled.div`
-  color: ${({ theme }) => theme.colors.text.muted};
-  opacity: 0.5;
 `;
 
 export const CommunityModerationPage: React.FC = () => {
@@ -109,7 +100,7 @@ export const CommunityModerationPage: React.FC = () => {
         <HeaderContent>
           <HeaderInfo>
             <HeaderIcon>
-              <FileText size={24} />
+              <Image size={24} />
             </HeaderIcon>
             <HeaderText>
               <Heading2>Content Moderation</Heading2>
@@ -121,16 +112,9 @@ export const CommunityModerationPage: React.FC = () => {
         </HeaderContent>
       </Header>
 
-      <PlaceholderContent>
-        <PlaceholderIcon>
-          <FileText size={48} />
-        </PlaceholderIcon>
-        <Heading2>Content Moderation</Heading2>
-        <HelpText>
-          This feature is under development. Content moderation tools will be available soon.
-          You can review reported content, manage character approvals, and maintain community standards here.
-        </HelpText>
-      </PlaceholderContent>
+      <ContentSection>
+        <ImageModerationQueue communityId={communityId} />
+      </ContentSection>
     </Container>
   );
 };

@@ -7,6 +7,7 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import type { Prisma, Visibility, TextFormatting } from "@chardb/database";
+import { ModerationStatus } from "@prisma/client";
 import { ImagesService } from "../images/images.service";
 
 /**
@@ -552,6 +553,76 @@ export class MediaService {
   async getGalleryMediaCount(galleryId: string): Promise<number> {
     return this.db.media.count({
       where: { galleryId: galleryId },
+    });
+  }
+
+  /**
+   * Find media with pending images for moderation queue
+   * @param communityId Community ID to filter by
+   * @param first Number of items to return
+   * @param offset Number of items to skip
+   * @returns Paginated list of media with pending images
+   */
+  async findPendingForModeration(
+    communityId: string,
+    first: number = 20,
+    offset: number = 0,
+  ) {
+    const where: Prisma.MediaWhereInput = {
+      imageId: { not: null },
+      image: { moderationStatus: ModerationStatus.PENDING },
+      character: {
+        species: { communityId },
+      },
+    };
+
+    const [items, total] = await Promise.all([
+      this.db.media.findMany({
+        where,
+        include: {
+          image: {
+            include: {
+              uploader: true,
+            },
+          },
+          character: {
+            include: {
+              species: true,
+            },
+          },
+          owner: true,
+        },
+        take: first,
+        skip: offset,
+        orderBy: { createdAt: "asc" },
+      }),
+      this.db.media.count({ where }),
+    ]);
+
+    return {
+      media: items,
+      total,
+      // All items in moderation queue are images
+      imageCount: total,
+      textCount: 0,
+      hasMore: offset + items.length < total,
+    };
+  }
+
+  /**
+   * Get count of pending media for moderation in a community
+   * @param communityId Community ID to count pending media for
+   * @returns Number of pending media items
+   */
+  async getPendingModerationCount(communityId: string): Promise<number> {
+    return this.db.media.count({
+      where: {
+        imageId: { not: null },
+        image: { moderationStatus: ModerationStatus.PENDING },
+        character: {
+          species: { communityId },
+        },
+      },
     });
   }
 }
