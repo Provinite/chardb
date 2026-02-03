@@ -1837,8 +1837,6 @@ export type Query = {
   /** Get count of all pending images across all communities (admin only) */
   globalPendingImageCount: Scalars['Int']['output'];
   image: Image;
-  /** Get moderation history for an image */
-  imageModerationHistory: Array<ImageModerationAction>;
   /** Get pending images for a community moderation queue */
   imageModerationQueue: ImageModerationQueueConnection;
   images: ImageConnection;
@@ -2154,11 +2152,6 @@ export type QueryGlobalImageModerationQueueArgs = {
 
 export type QueryImageArgs = {
   id: Scalars['ID']['input'];
-};
-
-
-export type QueryImageModerationHistoryArgs = {
-  imageId: Scalars['ID']['input'];
 };
 
 
@@ -3602,13 +3595,6 @@ export type GlobalPendingImageCountQueryVariables = Exact<{ [key: string]: never
 
 
 export type GlobalPendingImageCountQuery = { __typename?: 'Query', globalPendingImageCount: number };
-
-export type ImageModerationHistoryQueryVariables = Exact<{
-  imageId: Scalars['ID']['input'];
-}>;
-
-
-export type ImageModerationHistoryQuery = { __typename?: 'Query', imageModerationHistory: Array<{ __typename?: 'ImageModerationAction', id: string, action: ModerationStatus, reason: ModerationRejectionReason | null, reasonText: string | null, createdAt: string, moderator: { __typename?: 'User', id: string, username: string, displayName: string | null } }> };
 
 export type ApproveImageMutationVariables = Exact<{
   input: ApproveImageInput;
@@ -7880,55 +7866,6 @@ export type GlobalPendingImageCountQueryHookResult = ReturnType<typeof useGlobal
 export type GlobalPendingImageCountLazyQueryHookResult = ReturnType<typeof useGlobalPendingImageCountLazyQuery>;
 export type GlobalPendingImageCountSuspenseQueryHookResult = ReturnType<typeof useGlobalPendingImageCountSuspenseQuery>;
 export type GlobalPendingImageCountQueryResult = Apollo.QueryResult<GlobalPendingImageCountQuery, GlobalPendingImageCountQueryVariables>;
-export const ImageModerationHistoryDocument = gql`
-    query ImageModerationHistory($imageId: ID!) {
-  imageModerationHistory(imageId: $imageId) {
-    id
-    action
-    reason
-    reasonText
-    createdAt
-    moderator {
-      id
-      username
-      displayName
-    }
-  }
-}
-    `;
-
-/**
- * __useImageModerationHistoryQuery__
- *
- * To run a query within a React component, call `useImageModerationHistoryQuery` and pass it any options that fit your needs.
- * When your component renders, `useImageModerationHistoryQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useImageModerationHistoryQuery({
- *   variables: {
- *      imageId: // value for 'imageId'
- *   },
- * });
- */
-export function useImageModerationHistoryQuery(baseOptions: Apollo.QueryHookOptions<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables> & ({ variables: ImageModerationHistoryQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables>(ImageModerationHistoryDocument, options);
-      }
-export function useImageModerationHistoryLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables>(ImageModerationHistoryDocument, options);
-        }
-export function useImageModerationHistorySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables>(ImageModerationHistoryDocument, options);
-        }
-export type ImageModerationHistoryQueryHookResult = ReturnType<typeof useImageModerationHistoryQuery>;
-export type ImageModerationHistoryLazyQueryHookResult = ReturnType<typeof useImageModerationHistoryLazyQuery>;
-export type ImageModerationHistorySuspenseQueryHookResult = ReturnType<typeof useImageModerationHistorySuspenseQuery>;
-export type ImageModerationHistoryQueryResult = Apollo.QueryResult<ImageModerationHistoryQuery, ImageModerationHistoryQueryVariables>;
 export const ApproveImageDocument = gql`
     mutation ApproveImage($input: ApproveImageInput!) {
   approveImage(input: $input) {

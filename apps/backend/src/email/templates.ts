@@ -1,3 +1,5 @@
+import escapeHtml from 'escape-html';
+
 /**
  * Email template contexts
  */
@@ -111,7 +113,7 @@ export const passwordResetTemplate = (
     <div class="container">
         <h1>Reset Your Password</h1>
 
-        <p>Hi ${context.username},</p>
+        <p>Hi ${escapeHtml(context.username)},</p>
 
         <p>We received a request to reset your CharDB password. Click the button below to create a new password:</p>
 
@@ -220,7 +222,7 @@ export const passwordChangedTemplate = (
         <div class="success-icon">✓</div>
         <h1>Password Changed Successfully</h1>
 
-        <p>Hi ${context.username},</p>
+        <p>Hi ${escapeHtml(context.username)},</p>
 
         <p>This email confirms that your CharDB password was successfully changed.</p>
 
@@ -327,11 +329,11 @@ export const imageApprovedTemplate = (
         <div class="success-icon">✓</div>
         <h1>Your Image Has Been Approved</h1>
 
-        <p>Hi ${context.username},</p>
+        <p>Hi ${escapeHtml(context.username)},</p>
 
         <p>Great news! Your uploaded image has been reviewed and approved by our moderation team.</p>
 
-        <div class="image-name">${context.imageName}</div>
+        <div class="image-name">${escapeHtml(context.imageName)}</div>
 
         <p>Your image is now visible to others based on its visibility settings.</p>
     </div>
@@ -431,16 +433,16 @@ export const imageRejectedTemplate = (
         <div class="reject-icon">✕</div>
         <h1>Your Image Was Not Approved</h1>
 
-        <p>Hi ${context.username},</p>
+        <p>Hi ${escapeHtml(context.username)},</p>
 
         <p>Unfortunately, your uploaded image could not be approved by our moderation team.</p>
 
-        <div class="image-name">${context.imageName}</div>
+        <div class="image-name">${escapeHtml(context.imageName)}</div>
 
         <div class="reason-box">
             <div class="reason-title">Reason:</div>
-            <p>${context.reason}</p>
-            ${context.reasonText ? `<p><strong>Details:</strong> ${context.reasonText}</p>` : ''}
+            <p>${escapeHtml(context.reason)}</p>
+            ${context.reasonText ? `<p><strong>Details:</strong> ${escapeHtml(context.reasonText)}</p>` : ''}
         </div>
 
         <p>If you believe this was a mistake, please review our community guidelines and contact support if you have questions.</p>

@@ -151,23 +151,6 @@ export const GLOBAL_PENDING_IMAGE_COUNT = gql`
   }
 `;
 
-export const IMAGE_MODERATION_HISTORY = gql`
-  query ImageModerationHistory($imageId: ID!) {
-    imageModerationHistory(imageId: $imageId) {
-      id
-      action
-      reason
-      reasonText
-      createdAt
-      moderator {
-        id
-        username
-        displayName
-      }
-    }
-  }
-`;
-
 export const APPROVE_IMAGE = gql`
   mutation ApproveImage($input: ApproveImageInput!) {
     approveImage(input: $input) {

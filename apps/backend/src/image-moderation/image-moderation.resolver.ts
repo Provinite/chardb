@@ -119,21 +119,6 @@ export class ImageModerationResolver {
   }
 
   /**
-   * Get moderation history for an image
-   */
-  @AllowAnyAuthenticated()
-  @UseGuards(JwtAuthGuard)
-  @Query(() => [ImageModerationAction], {
-    description: 'Get moderation history for an image',
-  })
-  async imageModerationHistory(
-    @Args('imageId', { type: () => ID }) imageId: string,
-  ): Promise<ImageModerationAction[]> {
-    const actions = await this.imageModerationService.getModerationHistory(imageId);
-    return actions.map(mapPrismaImageModerationActionToGraphQL);
-  }
-
-  /**
    * Approve an image
    */
   @AllowAnyAuthenticated()

@@ -253,7 +253,7 @@ export class ImagesService {
     } = filters;
 
     // Get moderation visibility filter
-    const moderationFilter = await this.getModerationVisibilityFilter(userId);
+    const moderationFilter = this.getModerationVisibilityFilter();
 
     const where: Prisma.ImageWhereInput = {
       AND: [
@@ -324,31 +324,11 @@ export class ImagesService {
   }
 
   /**
-   * Get community IDs where the user has image moderation permission
-   */
-  private async getModeratorCommunityIds(userId: string): Promise<string[]> {
-    const memberships = await this.db.communityMember.findMany({
-      where: { userId },
-      include: {
-        role: {
-          select: { communityId: true, canModerateImages: true },
-        },
-      },
-    });
-
-    return memberships
-      .filter((m) => m.role.canModerateImages)
-      .map((m) => m.role.communityId);
-  }
-
-  /**
    * Build Prisma filter for moderation visibility in general image lists.
    * Lists should ONLY show APPROVED images - pending/rejected images are
    * viewed through dedicated interfaces (moderation queue, my pending uploads).
    */
-  private async getModerationVisibilityFilter(
-    _userId?: string,
-  ): Promise<Prisma.ImageWhereInput> {
+  private getModerationVisibilityFilter(): Prisma.ImageWhereInput {
     // All image lists only show approved images
     // Users see their pending uploads via dedicated "my pending uploads" query
     // Moderators see pending images via the moderation queue

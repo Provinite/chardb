@@ -1973,9 +1973,6 @@ type Query {
   globalPendingImageCount: Int!
   image(id: ID!): Image!
 
-  """Get moderation history for an image"""
-  imageModerationHistory(imageId: ID!): [ImageModerationAction!]!
-
   """Get pending images for a community moderation queue"""
   imageModerationQueue(communityId: ID!, filters: ImageModerationQueueFiltersInput, first: Int = 20, offset: Int = 0): ImageModerationQueueConnection!
   images(filters: ImageFiltersInput): ImageConnection!

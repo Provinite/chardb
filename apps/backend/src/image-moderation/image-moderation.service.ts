@@ -327,17 +327,6 @@ export class ImageModerationService {
   }
 
   /**
-   * Get moderation history for an image
-   */
-  async getModerationHistory(imageId: string) {
-    return this.db.imageModerationAction.findMany({
-      where: { imageId },
-      include: moderationActionInclude,
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  /**
    * Send approval notification email
    */
   private async sendApprovalNotification(email: string, username: string, imageName: string): Promise<void> {
