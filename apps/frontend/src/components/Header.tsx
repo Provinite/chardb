@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { Search } from 'lucide-react';
+import { spotlight } from '@mantine/spotlight';
 import { Button } from '@chardb/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { ThemeToggle } from './ThemeToggle';
@@ -74,6 +76,38 @@ const Username = styled.span`
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
+const SearchTrigger = styled.button`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.md}`};
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.text.muted};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+`;
+
+const Kbd = styled.kbd`
+  display: inline-flex;
+  align-items: center;
+  padding: 0 ${({ theme }) => theme.spacing.xs};
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  line-height: 1.6;
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
 export const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -89,6 +123,11 @@ export const Header: React.FC = () => {
         <Logo to="/">CharDB</Logo>
 
         <Nav>
+          <SearchTrigger onClick={() => spotlight.open()} aria-label="Search pages">
+            <Search size={16} />
+            Search...
+            <Kbd>Ctrl+K</Kbd>
+          </SearchTrigger>
           <ThemeToggle />
 
           {user ? (
