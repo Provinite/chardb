@@ -149,7 +149,13 @@ const Kbd = styled.kbd`
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   line-height: 1.6;
   color: ${({ theme }) => theme.colors.text.muted};
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
+
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
 const LoadingContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.md};
@@ -183,7 +189,7 @@ export const GlobalNavigationSidebar: React.FC<GlobalNavigationSidebarProps> = (
         <SearchTrigger onClick={() => spotlight.open()} aria-label="Search pages">
           <Search size={16} />
           Find page...
-          <Kbd>Ctrl+K</Kbd>
+          <Kbd>{isMac ? '⌘K' : 'Ctrl+K'}</Kbd>
         </SearchTrigger>
 
         {onToggleToCommunity && (
