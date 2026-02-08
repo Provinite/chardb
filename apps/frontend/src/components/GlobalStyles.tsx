@@ -12,13 +12,15 @@ export const GlobalStyles = createGlobalStyle`
     transition: background-color 0.3s ease;
   }
 
-  /* Ensure smooth transitions for theme changes, but not on initial load */
-  * {
-    transition: 
+  /* Only apply blanket transitions during theme changes to avoid
+     penalizing every DOM update (e.g. Spotlight keystrokes). The
+     .theme-transitioning class is toggled by ThemeContext. */
+  .theme-transitioning * {
+    transition:
       background-color 0.3s ease,
       color 0.3s ease,
       border-color 0.3s ease,
-      box-shadow 0.3s ease;
+      box-shadow 0.3s ease !important;
   }
 
   /* Override any lingering styles that might not respect theme */

@@ -84,14 +84,24 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   }, [theme]);
 
+  // Enable blanket transitions briefly during theme switch
+  const enableThemeTransition = () => {
+    document.documentElement.classList.add('theme-transitioning');
+    setTimeout(() => {
+      document.documentElement.classList.remove('theme-transitioning');
+    }, 350);
+  };
+
   // Toggle between light and dark
   const toggleTheme = () => {
+    enableThemeTransition();
     const newMode = mode === "light" ? "dark" : "light";
     setMode(newMode);
   };
 
   // Set specific theme
   const setTheme = (newMode: ThemeMode) => {
+    enableThemeTransition();
     setMode(newMode);
   };
 
