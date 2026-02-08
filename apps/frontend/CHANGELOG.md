@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Fuzzy Page Navigation (Ctrl+K / Cmd+K)**: Spotlight search to jump to any page instantly
+  - "Find page..." trigger button in both global and community navigation sidebars
+  - Fuzzy matching with highlighted results, grouped by category
+  - Platform-aware keyboard shortcut badge (Cmd+K on macOS, Ctrl+K elsewhere, hidden on mobile)
+
+### Fixed
+
+- Improved rendering performance across the site by scoping CSS transitions and memoizing context values
+
 - **Image Moderation Queue**: Moderators can review, approve, or reject pending images
   - Rejection reasons with optional explanation
   - Added `canModerateImages` to role permissions
