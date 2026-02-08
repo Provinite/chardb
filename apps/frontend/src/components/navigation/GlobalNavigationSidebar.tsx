@@ -10,7 +10,9 @@ import {
   Users,
   Plus,
   Building2,
+  Search,
 } from 'lucide-react';
+import { spotlight } from '@mantine/spotlight';
 import { CommunityNavigationItem } from './CommunityNavigationItem';
 import { CommunityNavigationGroup } from './CommunityNavigationGroup';
 import { useAuth } from '../../contexts/AuthContext';
@@ -115,6 +117,40 @@ const ToggleButton = styled.button`
   }
 `;
 
+const SearchTrigger = styled.button`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  width: 100%;
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.text.muted};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+`;
+
+const Kbd = styled.kbd`
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 0 ${({ theme }) => theme.spacing.xs};
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  line-height: 1.6;
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
 const LoadingContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.md};
   color: ${({ theme }) => theme.colors.text.muted};
@@ -144,6 +180,12 @@ export const GlobalNavigationSidebar: React.FC<GlobalNavigationSidebarProps> = (
       </SidebarHeader>
 
       <SidebarContent>
+        <SearchTrigger onClick={() => spotlight.open()} aria-label="Search pages">
+          <Search size={16} />
+          Search...
+          <Kbd>Ctrl+K</Kbd>
+        </SearchTrigger>
+
         {onToggleToCommunity && (
           <ToggleButton onClick={onToggleToCommunity} aria-label="View community navigation">
             <Building2 />
