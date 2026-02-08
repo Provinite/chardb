@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v8.1.0] - 2026-02-08
+
 ### Added
 
 - **Fuzzy Page Navigation (Ctrl+K / Cmd+K)**: Spotlight search to jump to any page instantly
