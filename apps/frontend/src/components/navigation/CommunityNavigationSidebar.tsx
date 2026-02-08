@@ -440,7 +440,7 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
         )}
         <SearchTrigger onClick={() => spotlight.open()} aria-label="Search pages">
           <Search size={16} />
-          Search...
+          Find page...
           <Kbd>Ctrl+K</Kbd>
         </SearchTrigger>
         <DashboardLink to="/dashboard">

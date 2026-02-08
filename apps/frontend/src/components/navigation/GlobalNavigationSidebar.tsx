@@ -182,7 +182,7 @@ export const GlobalNavigationSidebar: React.FC<GlobalNavigationSidebarProps> = (
       <SidebarContent>
         <SearchTrigger onClick={() => spotlight.open()} aria-label="Search pages">
           <Search size={16} />
-          Search...
+          Find page...
           <Kbd>Ctrl+K</Kbd>
         </SearchTrigger>
 
