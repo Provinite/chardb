@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fuzzy Page Navigation - Feature Walkthrough</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      color: white;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .step {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .step-number {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .step-title {
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    .step-content {
+      color: #555;
+      margin-bottom: 1.5rem;
+    }
+
+    .step-content p {
+      margin-bottom: 1rem;
+    }
+
+    .step-content ul {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .step-content li {
+      margin-bottom: 0.5rem;
+    }
+
+    .screenshot {
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .screenshot img {
+      width: 100%;
+      display: block;
+    }
+
+    .screenshot-caption {
+      background: #f8f9fa;
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      color: #666;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .screenshot-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .screenshot-row .screenshot img {
+      height: 400px;
+      object-fit: contain;
+      background: #1a1a2e;
+    }
+
+    .highlight-box {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .highlight-box strong {
+      color: #667eea;
+    }
+
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .feature-item {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .feature-item .icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-item h4 {
+      color: #333;
+      margin-bottom: 0.25rem;
+    }
+
+    .feature-item p {
+      font-size: 0.875rem;
+      color: #666;
+    }
+
+    kbd {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85em;
+      color: #555;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+    }
+
+    footer {
+      text-align: center;
+      color: white;
+      opacity: 0.8;
+      margin-top: 2rem;
+      padding: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .screenshot-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Fuzzy Page Navigation</h1>
+      <p>Quickly jump to any page in CharDB with the "Find page" spotlight</p>
+    </header>
+
+    <!-- Overview -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">0</div>
+        <h2 class="step-title">Overview</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          CharDB now includes a fuzzy page finder that lets you jump to any page instantly.
+          Instead of clicking through menus, type a few characters and select the page you need.
+        </p>
+
+        <div class="feature-list">
+          <div class="feature-item">
+            <div class="icon">&#x1F50D;</div>
+            <h4>Fuzzy Matching</h4>
+            <p>Type partial words and matching pages appear instantly</p>
+          </div>
+          <div class="feature-item">
+            <div class="icon">&#x26A1;</div>
+            <h4>Keyboard First</h4>
+            <p>Open with <kbd>Ctrl+K</kbd> or <kbd>&#8984;K</kbd> on Mac</p>
+          </div>
+          <div class="feature-item">
+            <div class="icon">&#x1F4CD;</div>
+            <h4>Always Available</h4>
+            <p>"Find page" button in every sidebar view</p>
+          </div>
+          <div class="feature-item">
+            <div class="icon">&#x1F3F7;&#xFE0F;</div>
+            <h4>Categorized Results</h4>
+            <p>Results grouped by section for easy scanning</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1: Finding the Trigger -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <h2 class="step-title">Find the "Find page" Button</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          The <strong>"Find page..."</strong> button sits at the top of the navigation sidebar, visible on every page.
+          It appears in both the <strong>global sidebar</strong> (shown on dashboard and general pages) and the
+          <strong>community sidebar</strong> (shown when browsing a community).
+        </p>
+        <p>
+          The button also displays the keyboard shortcut&mdash;<kbd>Ctrl+K</kbd> on Windows/Linux
+          or <kbd>&#8984;K</kbd> on Mac&mdash;so you can memorize it for even faster access.
+          On mobile, the shortcut badge is hidden to save space.
+        </p>
+      </div>
+      <div class="screenshot-row">
+        <div class="screenshot">
+          <img src="global-sidebar-find-page.png" alt="Global sidebar with Find page button">
+          <div class="screenshot-caption">
+            Global sidebar &mdash; "Find page..." at the top of the navigation
+          </div>
+        </div>
+        <div class="screenshot">
+          <img src="community-sidebar-find-page.png" alt="Community sidebar with Find page button">
+          <div class="screenshot-caption">
+            Community sidebar &mdash; "Find page..." below the community switcher
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Opening the Spotlight -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <h2 class="step-title">Opening the Spotlight</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Click the "Find page..." button or press <kbd>Ctrl+K</kbd> (<kbd>&#8984;K</kbd> on Mac) anywhere in
+          the application. A search overlay appears in the center of the screen with a text input and a list
+          of all available pages grouped by category:
+        </p>
+        <ul>
+          <li><strong>General</strong> &mdash; Home, Dashboard, Feed</li>
+          <li><strong>Browse</strong> &mdash; Browse Characters, Galleries, Media</li>
+          <li><strong>My Content</strong> &mdash; My Characters, Galleries, Media</li>
+          <li><strong>Liked</strong> &mdash; Liked Characters, Galleries, Media</li>
+          <li><strong>Create</strong> &mdash; Create Character, Gallery, Media</li>
+          <li><strong>Account</strong> &mdash; Profile, Settings</li>
+        </ul>
+
+        <div class="highlight-box">
+          <strong>Tip:</strong> You can press <kbd>Escape</kbd> or click outside the overlay to close it at any time.
+        </div>
+      </div>
+      <div class="screenshot">
+        <img src="spotlight-open.png" alt="Spotlight overlay showing all pages">
+        <div class="screenshot-caption">
+          The spotlight overlay listing all available pages, grouped by category
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Filtering Results -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <h2 class="step-title">Filtering with Fuzzy Search</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Start typing and the list narrows down instantly. The search uses <strong>fuzzy matching</strong>,
+          so you don't need to type the full page name&mdash;just a few characters is enough.
+          Matched portions are highlighted in the results so you can see exactly what matched.
+        </p>
+        <p>
+          For example, typing <strong>"char"</strong> filters the list to show pages related to characters:
+          Browse Characters, My Characters, Liked Characters, and Create Character.
+        </p>
+        <p>
+          You can also search by <strong>community name</strong>. Each community you belong to has its own
+          group of pages in the spotlight&mdash;typing your community's name will surface all of its pages
+          at once (Overview, Members, Species Management, Admin Dashboard, etc.).
+          This is one of the fastest ways to jump between community sections.
+        </p>
+
+        <div class="highlight-box">
+          <strong>Tip:</strong> Use the <kbd>&uarr;</kbd> and <kbd>&darr;</kbd> arrow keys to move between results,
+          then press <kbd>Enter</kbd> to navigate to the selected page.
+        </div>
+      </div>
+      <div class="screenshot">
+        <img src="spotlight-filtered.png" alt="Spotlight showing filtered results for 'char'">
+        <div class="screenshot-caption">
+          Typing "char" filters results to character-related pages, with matched text highlighted
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Navigating -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <h2 class="step-title">Navigating to a Page</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Once you see the page you want, navigate to it in one of two ways:
+        </p>
+        <ul>
+          <li><strong>Click</strong> the result directly with your mouse</li>
+          <li><strong>Keyboard:</strong> use <kbd>&uarr;</kbd>/<kbd>&darr;</kbd> to highlight the result, then press <kbd>Enter</kbd></li>
+        </ul>
+        <p>
+          The spotlight closes automatically and you're taken to the selected page.
+          The whole flow&mdash;from pressing <kbd>Ctrl+K</kbd> to landing on a new page&mdash;takes
+          just a few keystrokes.
+        </p>
+
+        <div class="highlight-box">
+          <strong>Keyboard-only workflow:</strong> <kbd>Ctrl+K</kbd> &rarr; type a few letters &rarr; <kbd>Enter</kbd>.
+          You never need to leave the keyboard.
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>CharDB Fuzzy Page Navigation &bull; Feature Documentation</p>
+    </footer>
+  </div>
+</body>
+</html>

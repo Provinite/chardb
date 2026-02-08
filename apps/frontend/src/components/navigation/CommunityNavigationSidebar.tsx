@@ -14,7 +14,9 @@ import {
   Globe,
   LayoutGrid,
   Package,
+  Search,
 } from 'lucide-react';
+import { spotlight } from '@mantine/spotlight';
 import { CommunityNavigationItem } from './CommunityNavigationItem';
 import { CommunityNavigationGroup } from './CommunityNavigationGroup';
 import { CommunitySwitcher } from './CommunitySwitcher';
@@ -145,6 +147,46 @@ const ToggleButton = styled.button`
     height: 14px;
   }
 `;
+
+const SearchTrigger = styled.button`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  width: 100%;
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.text.muted};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+`;
+
+const Kbd = styled.kbd`
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 0 ${({ theme }) => theme.spacing.xs};
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  line-height: 1.6;
+  color: ${({ theme }) => theme.colors.text.muted};
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
 const SubsectionLabel = styled.div`
   padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.xl}`};
@@ -402,6 +444,11 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
             View Global Navigation
           </ToggleButton>
         )}
+        <SearchTrigger onClick={() => spotlight.open()} aria-label="Search pages">
+          <Search size={16} />
+          Find page...
+          <Kbd>{isMac ? '⌘K' : 'Ctrl+K'}</Kbd>
+        </SearchTrigger>
         <DashboardLink to="/dashboard">
           <LayoutGrid />
           Dashboard

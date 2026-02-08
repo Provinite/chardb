@@ -3032,6 +3032,7 @@ __metadata:
     "@hookform/resolvers": "npm:^3.3.0"
     "@mantine/core": "npm:^8.0.2"
     "@mantine/hooks": "npm:^8.0.2"
+    "@mantine/spotlight": "npm:^8.0.2"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/jest-dom": "npm:^6.6.3"
     "@testing-library/react": "npm:^16.3.0"
@@ -5397,6 +5398,29 @@ __metadata:
   peerDependencies:
     react: ^18.x || ^19.x
   checksum: 10c0/65c0f7c04b5019aafe5a924971b8706ecb1e73df786c5368ab59cd78f9258778bfd3bb880d7288d10e6ac2ecdef273bfbc8ce7ff080dfd4644be829321967fe2
+  languageName: node
+  linkType: hard
+
+"@mantine/spotlight@npm:^8.0.2":
+  version: 8.3.14
+  resolution: "@mantine/spotlight@npm:8.3.14"
+  dependencies:
+    "@mantine/store": "npm:8.3.14"
+  peerDependencies:
+    "@mantine/core": 8.3.14
+    "@mantine/hooks": 8.3.14
+    react: ^18.x || ^19.x
+    react-dom: ^18.x || ^19.x
+  checksum: 10c0/9dbe14acbcb390f90ebdf53b5f93d2075cdc06b0fd2d018a7d4253227d03c763fa532fed8669f5d980115b701ca4390e2b62ee6821beabac257e8b088f39caa8
+  languageName: node
+  linkType: hard
+
+"@mantine/store@npm:8.3.14":
+  version: 8.3.14
+  resolution: "@mantine/store@npm:8.3.14"
+  peerDependencies:
+    react: ^18.x || ^19.x
+  checksum: 10c0/9f2cf44c0287aa3bf7c8204e326f0553acb69945e6ef817f089c6481f8a13b33de9a7ef4b57738e6bbe558d53f0957b426b6664fd81be8559967583fe9b9f565
   languageName: node
   linkType: hard
 
