@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v8.2.0] - 2026-02-09
+
 ### Added
 
 - **Title field on upload form**: Users can set a custom title when uploading images; defaults to original filename if left blank
