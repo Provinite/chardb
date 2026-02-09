@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Simplified image upload form**: Hide visibility/privacy settings, limit artist credits to off-site only, remove multi-artist support, require character selection, and limit to single image upload at a time
+- **NSFW uploads blocked**: Show warning and disable upload button when any NSFW flag is checked
+
 ## [v8.2.0] - 2026-02-09
 
 ### Added
