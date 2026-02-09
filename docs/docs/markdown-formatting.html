@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Formatting - Feature Guide</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      color: white;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .step {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .step-number {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .step-title {
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    .step-content {
+      color: #555;
+      margin-bottom: 1.5rem;
+    }
+
+    .step-content p {
+      margin-bottom: 1rem;
+    }
+
+    .step-content ul {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .step-content li {
+      margin-bottom: 0.5rem;
+    }
+
+    .highlight-box {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .highlight-box strong {
+      color: #667eea;
+    }
+
+    .highlight-box.warning {
+      background: #fff8e1;
+      border-left-color: #f9a825;
+    }
+
+    .highlight-box.warning strong {
+      color: #f57f17;
+    }
+
+    .syntax-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    .syntax-table th,
+    .syntax-table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .syntax-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .syntax-table td {
+      color: #555;
+    }
+
+    .syntax-table code {
+      background: #f0f0f0;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-family: Monaco, Consolas, 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+
+    .example-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .example-panel {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .example-panel-header {
+      background: #f8f9fa;
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: #667eea;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .example-panel-body {
+      padding: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .example-panel-body.source {
+      font-family: Monaco, Consolas, 'Courier New', monospace;
+      white-space: pre-wrap;
+      background: #fafafa;
+      color: #444;
+      line-height: 1.8;
+    }
+
+    .example-panel-body.rendered h1 {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .example-panel-body.rendered h2 {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .example-panel-body.rendered h3 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .example-panel-body.rendered p {
+      margin-bottom: 0.75rem;
+    }
+
+    .example-panel-body.rendered blockquote {
+      border-left: 4px solid #ccc;
+      padding-left: 1rem;
+      color: #666;
+      margin: 0.75rem 0;
+    }
+
+    .example-panel-body.rendered code {
+      background: #f0f0f0;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-family: Monaco, Consolas, 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+
+    .example-panel-body.rendered ul,
+    .example-panel-body.rendered ol {
+      margin-left: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .example-panel-body.rendered li {
+      margin-bottom: 0.25rem;
+    }
+
+    .example-panel-body.rendered del {
+      text-decoration: line-through;
+    }
+
+    .example-panel-body.rendered table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.75rem 0;
+    }
+
+    .example-panel-body.rendered table th,
+    .example-panel-body.rendered table td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: left;
+    }
+
+    .example-panel-body.rendered table th {
+      background: #f0f0f0;
+    }
+
+    .where-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .where-item {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .where-item .icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .where-item h4 {
+      color: #333;
+      margin-bottom: 0.25rem;
+    }
+
+    .where-item p {
+      font-size: 0.875rem;
+      color: #666;
+    }
+
+    footer {
+      text-align: center;
+      color: white;
+      opacity: 0.8;
+      margin-top: 2rem;
+      padding: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1.75rem;
+      }
+
+      .example-block {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Markdown Formatting</h1>
+      <p>A guide to the supported Markdown syntax across CharDB</p>
+    </header>
+
+    <!-- Overview -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">0</div>
+        <h2 class="step-title">Overview</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          CharDB supports <strong>Markdown</strong> in several text fields across the platform.
+          Markdown is a lightweight way to add formatting&mdash;like bold, italics, headings, and links&mdash;using
+          simple text characters. You don't need to know HTML; just type naturally and add a few symbols to style your content.
+        </p>
+
+        <div class="where-list">
+          <div class="where-item">
+            <div class="icon">🎨</div>
+            <h4>Character Details</h4>
+            <p>Full markdown editor with 15,000 character limit</p>
+          </div>
+          <div class="where-item">
+            <div class="icon">🖼️</div>
+            <h4>Media Descriptions</h4>
+            <p>Upload and edit captions with 3,000 character limit</p>
+          </div>
+          <div class="where-item">
+            <div class="icon">📝</div>
+            <h4>Text Content</h4>
+            <p>Stories and written content with markdown formatting option</p>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <strong>Tip:</strong> Every markdown-enabled field has an <strong>Edit/Preview</strong> toggle button
+          in the toolbar. Click <strong>Preview</strong> to see exactly how your formatted text will look
+          before saving.
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1: Basic Text Formatting -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <h2 class="step-title">Basic Text Formatting</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Use simple characters around your text to make it bold, italic, or strikethrough.
+        </p>
+
+        <table class="syntax-table">
+          <thead>
+            <tr>
+              <th>What you type</th>
+              <th>What you get</th>
+              <th>Use for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>**bold text**</code></td>
+              <td><strong>bold text</strong></td>
+              <td>Emphasis, names, important details</td>
+            </tr>
+            <tr>
+              <td><code>*italic text*</code></td>
+              <td><em>italic text</em></td>
+              <td>Character thoughts, species names, subtle emphasis</td>
+            </tr>
+            <tr>
+              <td><code>~~strikethrough~~</code></td>
+              <td><del>strikethrough</del></td>
+              <td>Corrections, redacted text, humorous asides</td>
+            </tr>
+            <tr>
+              <td><code>`inline code`</code></td>
+              <td><code>inline code</code></td>
+              <td>Registry IDs, technical identifiers</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="example-block">
+          <div class="example-panel">
+            <div class="example-panel-header">What you type</div>
+            <div class="example-panel-body source">**Luna** is a *graceful* fox with ~~brown~~ silver fur.</div>
+          </div>
+          <div class="example-panel">
+            <div class="example-panel-header">What you see</div>
+            <div class="example-panel-body rendered">
+              <p><strong>Luna</strong> is a <em>graceful</em> fox with <del>brown</del> silver fur.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Headings -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <h2 class="step-title">Headings</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Start a line with one or more <code>#</code> symbols to create headings.
+          More <code>#</code> symbols mean smaller headings.
+        </p>
+
+        <table class="syntax-table">
+          <thead>
+            <tr>
+              <th>What you type</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code># Heading 1</code></td>
+              <td>Largest heading</td>
+            </tr>
+            <tr>
+              <td><code>## Heading 2</code></td>
+              <td>Medium heading</td>
+            </tr>
+            <tr>
+              <td><code>### Heading 3</code></td>
+              <td>Smaller heading</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="example-block">
+          <div class="example-panel">
+            <div class="example-panel-header">What you type</div>
+            <div class="example-panel-body source"># Description
+A cheerful fox who loves adventure.
+
+## Personality
+Brave but cautious.
+
+### Fun Facts
+Allergic to pollen.</div>
+          </div>
+          <div class="example-panel">
+            <div class="example-panel-header">What you see</div>
+            <div class="example-panel-body rendered">
+              <h1>Description</h1>
+              <p>A cheerful fox who loves adventure.</p>
+              <h2>Personality</h2>
+              <p>Brave but cautious.</p>
+              <h3>Fun Facts</h3>
+              <p>Allergic to pollen.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <strong>Tip:</strong> Headings are especially useful for organizing long character details into
+          sections like Description, Personality, and Backstory.
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Links -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <h2 class="step-title">Links</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Create clickable links using square brackets for the display text and parentheses for the URL.
+        </p>
+
+        <table class="syntax-table">
+          <thead>
+            <tr>
+              <th>What you type</th>
+              <th>What you get</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[Link text](https://example.com)</code></td>
+              <td>A clickable link labeled "Link text"</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="example-block">
+          <div class="example-panel">
+            <div class="example-panel-header">What you type</div>
+            <div class="example-panel-body source">Art by [StarryPaws](https://example.com/starrypaws)</div>
+          </div>
+          <div class="example-panel">
+            <div class="example-panel-header">What you see</div>
+            <div class="example-panel-body rendered">
+              <p>Art by <a href="https://example.com/starrypaws" style="color: #667eea; text-decoration: underline;">StarryPaws</a></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <strong>Safety:</strong> All links in markdown fields open in a <strong>new tab</strong> and include
+          security attributes to protect you. You'll never be navigated away from CharDB unexpectedly.
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Lists -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <h2 class="step-title">Lists</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Create bullet lists with <code>-</code> or <code>*</code>, and numbered lists with <code>1.</code>, <code>2.</code>, etc.
+        </p>
+
+        <div class="example-block">
+          <div class="example-panel">
+            <div class="example-panel-header">What you type</div>
+            <div class="example-panel-body source">**Likes:**
+- Warm blankets
+- Stargazing
+- Peanut butter
+
+**Top 3 skills:**
+1. Stealth
+2. Cooking
+3. Navigation</div>
+          </div>
+          <div class="example-panel">
+            <div class="example-panel-header">What you see</div>
+            <div class="example-panel-body rendered">
+              <p><strong>Likes:</strong></p>
+              <ul>
+                <li>Warm blankets</li>
+                <li>Stargazing</li>
+                <li>Peanut butter</li>
+              </ul>
+              <p><strong>Top 3 skills:</strong></p>
+              <ol>
+                <li>Stealth</li>
+                <li>Cooking</li>
+                <li>Navigation</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5: Blockquotes -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">5</div>
+        <h2 class="step-title">Blockquotes</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Start a line with <code>&gt;</code> to create a blockquote. These are great for character quotes,
+          lore excerpts, or any text you want to visually set apart.
+        </p>
+
+        <div class="example-block">
+          <div class="example-panel">
+            <div class="example-panel-header">What you type</div>
+            <div class="example-panel-body source">> "The stars remember what we forget."
+> &mdash; Luna, gazing at the night sky</div>
+          </div>
+          <div class="example-panel">
+            <div class="example-panel-header">What you see</div>
+            <div class="example-panel-body rendered">
+              <blockquote>
+                <p>"The stars remember what we forget."<br>&mdash; Luna, gazing at the night sky</p>
+              </blockquote>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 6: Tables -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">6</div>
+        <h2 class="step-title">Tables</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Create tables using pipes (<code>|</code>) and dashes (<code>---</code>). Tables are useful for
+          stat blocks, comparisons, and structured character data.
+        </p>
+
+        <div class="example-block">
+          <div class="example-panel">
+            <div class="example-panel-header">What you type</div>
+            <div class="example-panel-body source">| Stat | Value |
+| --- | --- |
+| Strength | 8 |
+| Agility | 14 |
+| Charisma | 12 |</div>
+          </div>
+          <div class="example-panel">
+            <div class="example-panel-header">What you see</div>
+            <div class="example-panel-body rendered">
+              <table>
+                <thead>
+                  <tr><th>Stat</th><th>Value</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Strength</td><td>8</td></tr>
+                  <tr><td>Agility</td><td>14</td></tr>
+                  <tr><td>Charisma</td><td>12</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 7: The Editor -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">7</div>
+        <h2 class="step-title">Using the Editor</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Wherever CharDB supports markdown, you'll see a dedicated editor with these features:
+        </p>
+        <ul>
+          <li><strong>Toolbar</strong> &ndash; A bar at the top with an Edit/Preview toggle and a quick-reference of supported syntax</li>
+          <li><strong>Edit mode</strong> &ndash; A monospace text area where you type your markdown</li>
+          <li><strong>Preview mode</strong> &ndash; Click the Preview button to see your formatted text exactly as others will see it</li>
+          <li><strong>Character count</strong> &ndash; A footer showing how many characters you've used out of the maximum allowed</li>
+        </ul>
+
+        <div class="highlight-box">
+          <strong>Tip:</strong> Get into the habit of clicking <strong>Preview</strong> before saving.
+          It only takes a second and helps you catch formatting mistakes early.
+        </div>
+
+        <h3 style="margin: 1.5rem 0 0.75rem; color: #333;">Character Limits</h3>
+        <table class="syntax-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Maximum Length</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Character Details</td>
+              <td>15,000 characters</td>
+            </tr>
+            <tr>
+              <td>Media Description (upload &amp; edit)</td>
+              <td>3,000 characters</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick Reference -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">&#9733;</div>
+        <h2 class="step-title">Quick Reference</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          A handy cheat sheet of all supported markdown syntax:
+        </p>
+
+        <table class="syntax-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Syntax</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Bold</td>
+              <td><code>**text**</code></td>
+            </tr>
+            <tr>
+              <td>Italic</td>
+              <td><code>*text*</code></td>
+            </tr>
+            <tr>
+              <td>Strikethrough</td>
+              <td><code>~~text~~</code></td>
+            </tr>
+            <tr>
+              <td>Inline code</td>
+              <td><code>`text`</code></td>
+            </tr>
+            <tr>
+              <td>Heading 1</td>
+              <td><code># Heading</code></td>
+            </tr>
+            <tr>
+              <td>Heading 2</td>
+              <td><code>## Heading</code></td>
+            </tr>
+            <tr>
+              <td>Heading 3</td>
+              <td><code>### Heading</code></td>
+            </tr>
+            <tr>
+              <td>Link</td>
+              <td><code>[text](url)</code></td>
+            </tr>
+            <tr>
+              <td>Bullet list</td>
+              <td><code>- item</code></td>
+            </tr>
+            <tr>
+              <td>Numbered list</td>
+              <td><code>1. item</code></td>
+            </tr>
+            <tr>
+              <td>Blockquote</td>
+              <td><code>&gt; text</code></td>
+            </tr>
+            <tr>
+              <td>Table</td>
+              <td><code>| col | col |</code> with <code>| --- | --- |</code> separator</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>
+      <p>CharDB Markdown Formatting &bull; Feature Documentation</p>
+    </footer>
+  </div>
+</body>
+</html>
