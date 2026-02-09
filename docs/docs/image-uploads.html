@@ -368,7 +368,7 @@
           </tbody>
         </table>
         <p>
-          The maximum file size is <strong>10 MB</strong> per image. After selection, a preview thumbnail
+          The maximum file size is <strong>10 MB</strong>. After selection, a preview thumbnail
           appears next to the upload area. Click the <strong>&times;</strong> button on the preview to remove
           it and choose a different file.
         </p>
@@ -418,7 +418,7 @@
       <div class="step-content">
         <p>
           The upload form is divided into a <strong>main content area</strong> (left) and a <strong>sidebar</strong> (right).
-          All fields besides the file itself are optional.
+          The file and a character selection are required; all other fields are optional. One image can be uploaded at a time.
         </p>
 
         <div class="layout-diagram">
@@ -427,15 +427,14 @@
             <ul>
               <li><strong>Basics</strong> &ndash; File selector, Title</li>
               <li><strong>Caption</strong> &ndash; A longer description of the image</li>
-              <li><strong>Privacies</strong> &ndash; Authorized/public viewer access levels and watermark settings</li>
               <li><strong>NSFW Settings</strong> &ndash; Nudity, gore, or sensitive content flags (with optional description)</li>
             </ul>
           </div>
           <div class="layout-box">
             <h4>Sidebar</h4>
             <ul>
-              <li><strong>Characters</strong> &ndash; Link to a character via search</li>
-              <li><strong>Artist Credits</strong> &ndash; On-site or off-site artist attribution</li>
+              <li><strong>Character (required)</strong> &ndash; Link to a character via search</li>
+              <li><strong>Artist Credits</strong> &ndash; Off-site artist attribution (link and label)</li>
               <li><strong>Organization</strong> &ndash; Gallery selection and alt text</li>
             </ul>
           </div>
@@ -468,7 +467,7 @@
             </tr>
             <tr>
               <td>Character</td>
-              <td>No</td>
+              <td>Yes</td>
               <td>Associate the image with a character (searchable typeahead)</td>
             </tr>
             <tr>
@@ -484,17 +483,12 @@
             <tr>
               <td>Artist Credit</td>
               <td>No</td>
-              <td>Credit an on-site user or link to an off-site artist profile</td>
+              <td>Link to an off-site artist profile or website</td>
             </tr>
             <tr>
               <td>NSFW Flags</td>
               <td>No</td>
-              <td>Mark nudity, gore, or other sensitive content. NSFW images default to Private visibility.</td>
-            </tr>
-            <tr>
-              <td>Visibility</td>
-              <td>No</td>
-              <td>Public (default), Unlisted, or Private</td>
+              <td>Mark nudity, gore, or other sensitive content. NSFW image uploads are not currently accepted.</td>
             </tr>
           </tbody>
         </table>
@@ -543,7 +537,7 @@
           After a successful upload, you'll see a confirmation screen showing:
         </p>
         <ul>
-          <li>A thumbnail preview of each uploaded image</li>
+          <li>A thumbnail preview of the uploaded image</li>
           <li>The <strong>media title</strong> you set (or the original filename if no title was provided)</li>
           <li>A link to <strong>View Image</strong> on the media detail page</li>
           <li>Links to the associated character or gallery (if selected)</li>

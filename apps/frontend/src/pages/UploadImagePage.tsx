@@ -407,7 +407,7 @@ export const UploadImagePage: React.FC = () => {
     nsfwSensitive: false,
     sensitiveContentDescription: "",
     // Artist credits
-    artistType: "onsite",
+    artistType: "offsite",
     artistLink: "",
     artistLabel: "",
   });
@@ -661,6 +661,7 @@ export const UploadImagePage: React.FC = () => {
                 <ImageUpload
                   files={files}
                   onFilesChange={setFiles}
+                  maxFiles={1}
                   disabled={uploading}
                 />
                 <div>
@@ -688,6 +689,7 @@ export const UploadImagePage: React.FC = () => {
                 />
               </Section>
 
+              {/* TODO: Re-enable visibility/privacy settings when ready
               <Section>
                 <SectionTitle>Privacies</SectionTitle>
                 <div>
@@ -730,6 +732,7 @@ export const UploadImagePage: React.FC = () => {
                   </Select>
                 </div>
               </Section>
+              */}
 
               <Section>
                 <SectionTitle>NSFW Settings</SectionTitle>
@@ -782,12 +785,17 @@ export const UploadImagePage: React.FC = () => {
                     />
                   </div>
                 )}
+                {(formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive) && (
+                  <ErrorMessage>
+                    NSFW image uploads are not accepted at this time.
+                  </ErrorMessage>
+                )}
               </Section>
 
               <Actions style={{ justifyContent: "center" }}>
                 <UploadButton
                   onClick={() => handleUpload(files)}
-                  disabled={uploading || files.length === 0}
+                  disabled={uploading || files.length === 0 || !formData.characterId || formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive}
                   variant="primary"
                 >
                   {uploading ? "Uploading..." : "Upload Image"}
@@ -798,7 +806,12 @@ export const UploadImagePage: React.FC = () => {
 
           <Sidebar>
             <SidebarSection>
-              <SectionTitle>Characters</SectionTitle>
+              <SectionTitle>Character (required)</SectionTitle>
+              {!formData.characterId && (
+                <ErrorMessage>
+                  Please select a character for this upload.
+                </ErrorMessage>
+              )}
               {formData.characterId && selectedCharacter && (
                 <CharacterCard>
                   <CharacterAvatar>
@@ -835,6 +848,7 @@ export const UploadImagePage: React.FC = () => {
 
             <SidebarSection>
               <SectionTitle>Artist Credits</SectionTitle>
+              {/* TODO: Re-enable on-site artist toggle when ready
               <ArtistToggle>
                 <ArtistToggleButton
                   type="button"
@@ -851,6 +865,7 @@ export const UploadImagePage: React.FC = () => {
                   Off-site Artist
                 </ArtistToggleButton>
               </ArtistToggle>
+              */}
               <div>
                 <Label>Link to Artist</Label>
                 <Input
@@ -875,9 +890,11 @@ export const UploadImagePage: React.FC = () => {
                   }
                 />
               </div>
+              {/* TODO: Re-enable multiple artist credits when ready
               <Button variant="ghost" size="sm">
                 + Add another artist
               </Button>
+              */}
             </SidebarSection>
 
             <SidebarSection>
