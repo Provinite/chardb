@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Editable media title at upload**: Accept optional `title` field in upload endpoint; defaults to original filename
+
+### Changed
+
+- **Remove `filename` from GraphQL API**: The `Image.filename` field (UUID-based, not user-facing) is no longer exposed
+- **Activity feed uses media titles**: IMAGE_UPLOADED feed items now show the media title instead of UUID filenames, and link to `/media/:id`
+
 ### Fixed
 
 - **Artist credit not persisting on image upload**: Pass `artistId`, `artistName`, and `artistUrl` from the upload controller to the images service (#147)

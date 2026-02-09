@@ -892,7 +892,6 @@ type Image {
   artistUrl: String
   createdAt: DateTime!
   fileSize: Int!
-  filename: String!
   height: Int!
   id: ID!
   isNsfw: Boolean!

@@ -16,7 +16,6 @@ export const IMAGE_MODERATION_QUEUE = gql`
       items {
         image {
           id
-          filename
           originalFilename
           originalUrl
           thumbnailUrl
@@ -74,7 +73,6 @@ export const MEDIA_MODERATION_QUEUE = gql`
         }
         pendingModerationImage {
           id
-          filename
           originalFilename
           originalUrl
           thumbnailUrl
@@ -111,7 +109,6 @@ export const GLOBAL_IMAGE_MODERATION_QUEUE = gql`
       items {
         image {
           id
-          filename
           originalFilename
           originalUrl
           thumbnailUrl

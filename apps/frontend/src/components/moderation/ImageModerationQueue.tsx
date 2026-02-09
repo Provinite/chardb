@@ -270,7 +270,6 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
                   item={{
                     image: {
                       id: image.id,
-                      filename: image.filename,
                       originalFilename: image.originalFilename,
                       originalUrl: image.originalUrl,
                       thumbnailUrl: image.thumbnailUrl,

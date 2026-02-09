@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Title field on upload form**: Users can set a custom title when uploading images; defaults to original filename if left blank
+
+### Changed
+
+- **Remove `filename` from GraphQL queries**: All frontend queries updated to reflect `Image.filename` removal from the API
+- **Upload success screen shows media title**: Success cards display the media title instead of UUID filenames
+
 ### Fixed
 
 - **Broken Image Preview on Post-Upload Screen**: Fixed image preview not rendering after uploading images (#166)

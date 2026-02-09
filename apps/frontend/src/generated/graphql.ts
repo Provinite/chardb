@@ -796,7 +796,6 @@ export type Image = {
   artistUrl: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   fileSize: Scalars['Int']['output'];
-  filename: Scalars['String']['output'];
   height: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   isNsfw: Scalars['Boolean']['output'];
@@ -3564,7 +3563,7 @@ export type ImageModerationQueueQueryVariables = Exact<{
 }>;
 
 
-export type ImageModerationQueueQuery = { __typename?: 'Query', imageModerationQueue: { __typename?: 'ImageModerationQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'ImageModerationQueueItem', characterId: string | null, characterName: string | null, communityId: string | null, communityName: string | null, mediaTitle: string | null, image: { __typename?: 'Image', id: string, filename: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } }> } };
+export type ImageModerationQueueQuery = { __typename?: 'Query', imageModerationQueue: { __typename?: 'ImageModerationQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'ImageModerationQueueItem', characterId: string | null, characterName: string | null, communityId: string | null, communityName: string | null, mediaTitle: string | null, image: { __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } }> } };
 
 export type MediaModerationQueueQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -3573,7 +3572,7 @@ export type MediaModerationQueueQueryVariables = Exact<{
 }>;
 
 
-export type MediaModerationQueueQuery = { __typename?: 'Query', mediaModerationQueue: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, characterId: string | null, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } | null, pendingModerationImage: { __typename?: 'Image', id: string, filename: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } | null }> } };
+export type MediaModerationQueueQuery = { __typename?: 'Query', mediaModerationQueue: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, characterId: string | null, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } | null, pendingModerationImage: { __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } | null }> } };
 
 export type GlobalImageModerationQueueQueryVariables = Exact<{
   filters?: InputMaybe<ImageModerationQueueFiltersInput>;
@@ -3582,7 +3581,7 @@ export type GlobalImageModerationQueueQueryVariables = Exact<{
 }>;
 
 
-export type GlobalImageModerationQueueQuery = { __typename?: 'Query', globalImageModerationQueue: { __typename?: 'ImageModerationQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'ImageModerationQueueItem', characterId: string | null, characterName: string | null, communityId: string | null, communityName: string | null, mediaTitle: string | null, image: { __typename?: 'Image', id: string, filename: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } }> } };
+export type GlobalImageModerationQueueQuery = { __typename?: 'Query', globalImageModerationQueue: { __typename?: 'ImageModerationQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'ImageModerationQueueItem', characterId: string | null, characterName: string | null, communityId: string | null, communityName: string | null, mediaTitle: string | null, image: { __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } }> } };
 
 export type PendingImageCountQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -3613,7 +3612,7 @@ export type RejectImageMutation = { __typename?: 'Mutation', rejectImage: { __ty
 export type GetLikedImagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedImagesQuery = { __typename?: 'Query', likedImages: Array<{ __typename?: 'Image', id: string, filename: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+export type GetLikedImagesQuery = { __typename?: 'Query', likedImages: Array<{ __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, fileSize: number, mimeType: string, isNsfw: boolean, sensitiveContentDescription: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type InviteCodesQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -4150,7 +4149,7 @@ export type GetUserProfileQueryVariables = Exact<{
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, image: { __typename?: 'Image', id: string, filename: string, originalUrl: string, thumbnailUrl: string | null } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } | null };
+export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, location: string | null, website: string | null, isVerified: boolean, createdAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } | null };
 
 export type GetUserStatsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -7576,7 +7575,6 @@ export const ImageModerationQueueDocument = gql`
     items {
       image {
         id
-        filename
         originalFilename
         originalUrl
         thumbnailUrl
@@ -7669,7 +7667,6 @@ export const MediaModerationQueueDocument = gql`
       }
       pendingModerationImage {
         id
-        filename
         originalFilename
         originalUrl
         thumbnailUrl
@@ -7732,7 +7729,6 @@ export const GlobalImageModerationQueueDocument = gql`
     items {
       image {
         id
-        filename
         originalFilename
         originalUrl
         thumbnailUrl
@@ -7953,7 +7949,6 @@ export const GetLikedImagesDocument = gql`
     query GetLikedImages {
   likedImages {
     id
-    filename
     originalFilename
     originalUrl
     thumbnailUrl
@@ -11287,7 +11282,6 @@ export const GetUserProfileDocument = gql`
       }
       image {
         id
-        filename
         originalUrl
         thumbnailUrl
       }

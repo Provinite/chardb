@@ -13,7 +13,6 @@ import { RejectImageModal } from './RejectImageModal';
 export interface ImageModerationCardItem {
   image: {
     id: string;
-    filename: string;
     originalFilename: string;
     originalUrl: string;
     thumbnailUrl?: string | null;

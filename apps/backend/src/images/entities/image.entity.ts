@@ -9,9 +9,6 @@ export class Image {
   id: string;
 
   @Field()
-  filename: string;
-
-  @Field()
   originalFilename: string;
 
   @Field()

@@ -339,6 +339,7 @@ const SuccessNavLinks = styled.div`
 `;
 
 interface UploadFormData {
+  title: string;
   description: string;
   altText: string;
   galleryId: string;
@@ -364,16 +365,16 @@ interface UploadedImage {
   id: string;
   originalUrl: string;
   thumbnailUrl?: string;
-  filename: string;
+  title: string;
   altText?: string;
 }
 
 interface UploadImageResponse {
   id: string;
+  title: string;
   image: {
     originalUrl: string;
     thumbnailUrl: string;
-    filename: string;
     originalFilename: string;
     altText: string | null;
   };
@@ -389,6 +390,7 @@ export const UploadImagePage: React.FC = () => {
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [formData, setFormData] = useState<UploadFormData>({
+    title: "",
     description: "",
     altText: "",
     galleryId: "",
@@ -456,6 +458,8 @@ export const UploadImagePage: React.FC = () => {
         const formDataToSend = new FormData();
         formDataToSend.append("file", imageFile.file);
 
+        if (formData.title)
+          formDataToSend.append("title", formData.title);
         if (formData.description)
           formDataToSend.append("description", formData.description);
         if (formData.altText)
@@ -520,7 +524,7 @@ export const UploadImagePage: React.FC = () => {
         id: result.id,
         originalUrl: result.image.originalUrl,
         thumbnailUrl: result.image.thumbnailUrl,
-        filename: result.image.filename || result.image.originalFilename,
+        title: result.title,
         altText: result.image.altText ?? undefined,
       }));
 
@@ -532,6 +536,7 @@ export const UploadImagePage: React.FC = () => {
       // Reset form data except character/gallery selection for convenience
       setFormData((prev) => ({
         ...prev,
+        title: "",
         description: "",
         altText: "",
         nsfwNudity: false,
@@ -578,12 +583,12 @@ export const UploadImagePage: React.FC = () => {
               <Link to={`/media/${image.id}`}>
                 <UploadedImagePreview
                   src={image.thumbnailUrl || image.originalUrl}
-                  alt={image.altText || image.filename}
+                  alt={image.altText || image.title}
                 />
               </Link>
               <UploadedImageInfo>
-                <UploadedImageName title={image.filename}>
-                  {image.filename}
+                <UploadedImageName title={image.title}>
+                  {image.title}
                 </UploadedImageName>
               </UploadedImageInfo>
             </UploadedImageCard>
@@ -658,6 +663,16 @@ export const UploadImagePage: React.FC = () => {
                   onFilesChange={setFiles}
                   disabled={uploading}
                 />
+                <div>
+                  <Label>Title (optional)</Label>
+                  <Input
+                    placeholder="Give your image a title..."
+                    value={formData.title}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleInputChange("title", e.target.value)
+                    }
+                  />
+                </div>
               </Section>
 
               <Section>
