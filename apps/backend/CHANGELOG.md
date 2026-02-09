@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Artist credit not persisting on image upload**: Pass `artistId`, `artistName`, and `artistUrl` from the upload controller to the images service (#147)
+
 ## [v8.1.1] - 2026-02-08
 
 ## [v8.1.0] - 2026-02-08

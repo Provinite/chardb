@@ -27,7 +27,7 @@ export class ImagesController {
       throw new BadRequestException("No file provided");
     }
 
-    const uploadInput = {
+    const uploadInput: Parameters<ImagesService["upload"]>[1] = {
       file,
       characterId: body.characterId,
       itemTypeId: body.itemTypeId,
@@ -37,6 +37,11 @@ export class ImagesController {
       isNsfw: body.isNsfw === "true",
       visibility: body.visibility,
       sensitiveContentDescription: body.sensitiveContentDescription,
+      artistId:
+        body.artistType === "onsite" ? body.artistLink : undefined,
+      artistName: body.artistLabel || undefined,
+      artistUrl:
+        body.artistType === "offsite" ? body.artistLink : undefined,
     };
 
     return this.imagesService.upload(req.user.id, uploadInput);
