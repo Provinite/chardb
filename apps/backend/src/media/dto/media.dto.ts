@@ -1,6 +1,6 @@
 import { InputType, Field, ID, registerEnumType } from '@nestjs/graphql';
 import { TextFormatting, Visibility } from '@chardb/database';
-import { IsString, IsOptional, IsEnum, IsInt, Min, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsInt, Min, IsUUID, MaxLength } from 'class-validator';
 
 /**
  * Enum for filtering media by type
@@ -86,6 +86,7 @@ export class CreateTextMediaInput {
   @Field({ nullable: true, description: 'Optional description for the text media' })
   @IsOptional()
   @IsString()
+  @MaxLength(3000)
   description?: string;
 
   /** The actual text content */
@@ -137,6 +138,7 @@ export class UpdateMediaInput {
   @Field({ nullable: true, description: 'Updated description for the media' })
   @IsOptional()
   @IsString()
+  @MaxLength(3000)
   description?: string;
 
   /** Updated character association */

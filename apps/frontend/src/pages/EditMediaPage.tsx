@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@apollo/client";
@@ -18,6 +18,7 @@ import { useGetMyGalleriesQuery } from "../graphql/galleries.graphql";
 import { TextFormatting, Visibility } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { MarkdownEditor } from "../components/MarkdownEditor";
 
 const mediaSchema = z.object({
   title: z
@@ -26,7 +27,7 @@ const mediaSchema = z.object({
     .max(255, "Title must be less than 255 characters"),
   description: z
     .string()
-    .max(1000, "Description must be less than 1000 characters")
+    .max(3000, "Description must be less than 3000 characters")
     .optional()
     .or(z.literal("")),
   content: z
@@ -327,6 +328,7 @@ export const EditMediaPage: React.FC = () => {
     reset,
     setError,
     clearErrors,
+    control,
   } = useForm<MediaForm>({
     resolver: zodResolver(mediaSchema),
     defaultValues: {
@@ -531,16 +533,20 @@ export const EditMediaPage: React.FC = () => {
 
           <FormGroup>
             <Label htmlFor="description">Description</Label>
-            <TextArea
-              id="description"
-              {...register("description")}
-              aria-invalid={!!errors.description}
-              placeholder="Optional description or summary..."
-              rows={3}
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <MarkdownEditor
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  error={errors.description?.message}
+                  maxLength={3000}
+                  placeholder="Optional description or summary..."
+                  minHeight="150px"
+                />
+              )}
             />
-            {errors.description && (
-              <ErrorMessage>{errors.description.message}</ErrorMessage>
-            )}
           </FormGroup>
         </Section>
 

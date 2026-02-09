@@ -13,6 +13,7 @@ import { DeleteConfirmationDialog } from "../components/DeleteConfirmationDialog
 // import { LikeButton } from '../components/LikeButton';
 // import { CommentList } from '../components/CommentList';
 import { TextViewer } from "../components/TextViewer";
+import { Markdown } from "../components/Markdown";
 // import { LikeableType, CommentableType } from '../generated/graphql';
 
 const Container = styled.div`
@@ -89,7 +90,7 @@ const Title = styled.h1`
   }
 `;
 
-const Description = styled.p`
+const Description = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.lg};
   color: ${({ theme }) => theme.colors.text.secondary};
   line-height: 1.6;
@@ -471,7 +472,11 @@ export const MediaPage: React.FC = () => {
       <Header>
         <HeaderContent>
           <Title>{media.title}</Title>
-          {media.description && <Description>{media.description}</Description>}
+          {media.description && (
+            <Description>
+              <Markdown>{media.description}</Markdown>
+            </Description>
+          )}
 
           <Meta>
             <MetaBadge variant={getVisibilityVariant(media.visibility)}>

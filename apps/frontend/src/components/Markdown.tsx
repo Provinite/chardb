@@ -93,6 +93,15 @@ const StyledMarkdown = styled.div`
     background: ${({ theme }) => theme.colors.surface};
     font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   }
+
+  a {
+    color: ${({ theme }) => theme.colors.primary};
+    text-decoration: underline;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
 `;
 
 interface MarkdownProps {
@@ -107,7 +116,16 @@ interface MarkdownProps {
 export const Markdown: React.FC<MarkdownProps> = ({ children }) => {
   return (
     <StyledMarkdown>
-      <ReactMarkdown remarkPlugins={[remarkBreaks, remarkGfm]}>
+      <ReactMarkdown
+        remarkPlugins={[remarkBreaks, remarkGfm]}
+        components={{
+          a: ({ href, children: linkChildren }) => (
+            <a href={href} target="_blank" rel="noopener noreferrer nofollow">
+              {linkChildren}
+            </a>
+          ),
+        }}
+      >
         {children}
       </ReactMarkdown>
     </StyledMarkdown>
