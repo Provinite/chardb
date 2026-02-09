@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Description length validation**: Added `@MaxLength(3000)` validation to `description` field in `CreateTextMediaInput` and `UpdateMediaInput` DTOs
+
 ## [v9.0.0] - 2026-02-09
 
 ## [v8.2.0] - 2026-02-09

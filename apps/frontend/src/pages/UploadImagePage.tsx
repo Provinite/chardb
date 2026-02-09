@@ -9,6 +9,7 @@ import {
   useGetCharacterQuery,
 } from "../generated/graphql";
 import { CharacterTypeahead } from "../components/CharacterTypeahead";
+import { MarkdownEditor } from "../components/MarkdownEditor";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -677,14 +678,13 @@ export const UploadImagePage: React.FC = () => {
 
               <Section>
                 <Label>Caption (optional)</Label>
-                <Input
-                  as="textarea"
-                  rows={4}
-                  placeholder="Describe your image..."
+                <MarkdownEditor
                   value={formData.description}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    handleInputChange("description", e.target.value)
-                  }
+                  onChange={(value) => handleInputChange("description", value)}
+                  maxLength={3000}
+                  placeholder="Describe your image..."
+                  minHeight="150px"
+                  disabled={uploading}
                 />
               </Section>
 

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Markdown support for media descriptions**: Image captions and descriptions now support bold, italic, headings, links, lists, and other markdown formatting with a live preview toggle
+- **Markdown links open safely**: Links in rendered markdown open in a new tab so users are never navigated away unexpectedly
+
+### Changed
+
+- **Media description limit increased**: Description fields now allow up to 3,000 characters (previously 1,000)
+
 ## [v9.0.0] - 2026-02-09
 
 ### Changed
