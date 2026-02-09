@@ -784,12 +784,17 @@ export const UploadImagePage: React.FC = () => {
                     />
                   </div>
                 )}
+                {(formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive) && (
+                  <ErrorMessage>
+                    NSFW image uploads are not accepted at this time.
+                  </ErrorMessage>
+                )}
               </Section>
 
               <Actions style={{ justifyContent: "center" }}>
                 <UploadButton
                   onClick={() => handleUpload(files)}
-                  disabled={uploading || files.length === 0}
+                  disabled={uploading || files.length === 0 || formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive}
                   variant="primary"
                 >
                   {uploading ? "Uploading..." : "Upload Image"}
