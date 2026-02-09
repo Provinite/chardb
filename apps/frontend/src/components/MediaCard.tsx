@@ -52,6 +52,7 @@ const TextPreview = styled.div`
   -webkit-box-orient: vertical;
   overflow: hidden;
   white-space: pre-wrap;
+  overflow-wrap: break-word;
   position: relative;
   
   &::after {
@@ -94,6 +95,7 @@ const Title = styled.h3`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  overflow-wrap: break-word;
 `;
 
 const Description = styled.p`
@@ -105,6 +107,7 @@ const Description = styled.p`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  overflow-wrap: break-word;
 `;
 
 const Meta = styled.div`

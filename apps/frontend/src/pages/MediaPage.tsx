@@ -67,6 +67,7 @@ const Header = styled.div`
 
 const HeaderContent = styled.div`
   flex: 1;
+  min-width: 0;
 `;
 
 const HeaderActions = styled.div`
@@ -84,6 +85,7 @@ const Title = styled.h1`
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
+  overflow-wrap: break-word;
 
   @media (max-width: 768px) {
     font-size: 2.5rem;
@@ -95,6 +97,7 @@ const Description = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
   line-height: 1.6;
   margin: 0 0 ${({ theme }) => theme.spacing.lg} 0;
+  overflow-wrap: break-word;
 `;
 
 const Meta = styled.div`

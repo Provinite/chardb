@@ -8,6 +8,7 @@ const StyledMarkdown = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   line-height: 1.6;
   color: ${({ theme }) => theme.colors.text.primary};
+  overflow-wrap: break-word;
 
   h1,
   h2,
