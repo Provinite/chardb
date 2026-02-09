@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Uploads - Feature Walkthrough</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      color: white;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .step {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .step-number {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .step-title {
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    .step-content {
+      color: #555;
+      margin-bottom: 1.5rem;
+    }
+
+    .step-content p {
+      margin-bottom: 1rem;
+    }
+
+    .step-content ul {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .step-content li {
+      margin-bottom: 0.5rem;
+    }
+
+    .highlight-box {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .highlight-box strong {
+      color: #667eea;
+    }
+
+    .highlight-box.warning {
+      background: #fff8e1;
+      border-left-color: #f9a825;
+    }
+
+    .highlight-box.warning strong {
+      color: #f57f17;
+    }
+
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .feature-item {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .feature-item .icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-item h4 {
+      color: #333;
+      margin-bottom: 0.25rem;
+    }
+
+    .feature-item p {
+      font-size: 0.875rem;
+      color: #666;
+    }
+
+    .field-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    .field-table th,
+    .field-table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .field-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .field-table td {
+      color: #555;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-info {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .badge-success {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .badge-warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .layout-diagram {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      font-size: 0.875rem;
+    }
+
+    .layout-box {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      background: #fafafa;
+    }
+
+    .layout-box h4 {
+      margin-bottom: 0.5rem;
+      color: #667eea;
+    }
+
+    .layout-box ul {
+      margin-left: 1.25rem;
+    }
+
+    .layout-box li {
+      margin-bottom: 0.25rem;
+      color: #666;
+    }
+
+    footer {
+      text-align: center;
+      color: white;
+      opacity: 0.8;
+      margin-top: 2rem;
+      padding: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1.75rem;
+      }
+
+      .layout-diagram {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Uploading Images</h1>
+      <p>A walkthrough of the image upload workflow in CharDB</p>
+    </header>
+
+    <!-- Overview -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">0</div>
+        <h2 class="step-title">Overview</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          CharDB lets you upload images as <strong>Media</strong> entries&mdash;the platform's unified content system.
+          When you upload an image, a Media record is created with a title, optional description, and links to
+          characters, galleries, and other organizational features.
+        </p>
+
+        <div class="feature-list">
+          <div class="feature-item">
+            <div class="icon">🖼️</div>
+            <h4>Multiple Formats</h4>
+            <p>JPEG, PNG, WebP, and animated GIF support</p>
+          </div>
+          <div class="feature-item">
+            <div class="icon">📐</div>
+            <h4>Auto Processing</h4>
+            <p>Thumbnails and optimized variants generated automatically</p>
+          </div>
+          <div class="feature-item">
+            <div class="icon">🏷️</div>
+            <h4>Rich Metadata</h4>
+            <p>Titles, captions, artist credits, and character links</p>
+          </div>
+          <div class="feature-item">
+            <div class="icon">🔒</div>
+            <h4>Moderation</h4>
+            <p>Images enter a review queue before becoming public</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1: Getting to the Upload Page -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <h2 class="step-title">Getting to the Upload Page</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          There are several ways to reach the image upload form:
+        </p>
+        <ul>
+          <li><strong>Top navigation bar:</strong> Click the <strong>Upload</strong> link, then select <strong>Upload Image</strong></li>
+          <li><strong>Dashboard:</strong> Click <strong>Create Media</strong> in Quick Actions, then choose <strong>Upload Image</strong></li>
+          <li><strong>Gallery page:</strong> Click <strong>Upload Image</strong> from within a gallery&mdash;the gallery will be pre-selected</li>
+          <li><strong>Character page:</strong> Upload from a character profile to pre-link the image</li>
+        </ul>
+
+        <div class="highlight-box">
+          <strong>Tip:</strong> Use the <strong>Find page</strong> spotlight (<kbd>Ctrl+K</kbd>) and type
+          "upload" to quickly navigate to the upload page from anywhere.
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Choosing a File -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <h2 class="step-title">Choosing a File</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          The upload form opens with the <strong>Basics</strong> section at the top. Click the upload area
+          or drag and drop a file onto it to select your image.
+        </p>
+        <p>
+          Accepted formats and limits:
+        </p>
+        <table class="field-table">
+          <thead>
+            <tr>
+              <th>Format</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>JPEG / JPG</td>
+              <td>Standard photo format, widely supported</td>
+            </tr>
+            <tr>
+              <td>PNG</td>
+              <td>Lossless with transparency support</td>
+            </tr>
+            <tr>
+              <td>WebP</td>
+              <td>Modern format with excellent compression</td>
+            </tr>
+            <tr>
+              <td>GIF</td>
+              <td>Animation preserved in original and medium variants; thumbnail is a static frame</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The maximum file size is <strong>10 MB</strong> per image. After selection, a preview thumbnail
+          appears next to the upload area. Click the <strong>&times;</strong> button on the preview to remove
+          it and choose a different file.
+        </p>
+      </div>
+    </div>
+
+    <!-- Step 3: Setting a Title -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <h2 class="step-title">Setting a Title</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Below the file selector is the <strong>Title</strong> field. This is the display name for your
+          media entry&mdash;it appears on the media detail page, in search results, on your profile, and
+          in followers' activity feeds.
+        </p>
+        <p>
+          The title is optional. If left blank, it defaults to the <strong>original filename</strong> of the
+          uploaded file (e.g. "my-character-art.png").
+        </p>
+
+        <div class="highlight-box">
+          <strong>Best practice:</strong> Give your images descriptive titles like "Luna&mdash;Spring Festival Outfit"
+          rather than relying on filenames. Titles make your media easier to find and more meaningful in feeds.
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Form Layout -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <h2 class="step-title">Filling Out the Form</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          The upload form is divided into a <strong>main content area</strong> (left) and a <strong>sidebar</strong> (right).
+          All fields besides the file itself are optional.
+        </p>
+
+        <div class="layout-diagram">
+          <div class="layout-box">
+            <h4>Main Content</h4>
+            <ul>
+              <li><strong>Basics</strong> &ndash; File selector, Title</li>
+              <li><strong>Caption</strong> &ndash; A longer description of the image</li>
+              <li><strong>Privacies</strong> &ndash; Authorized/public viewer access levels and watermark settings</li>
+              <li><strong>NSFW Settings</strong> &ndash; Nudity, gore, or sensitive content flags (with optional description)</li>
+            </ul>
+          </div>
+          <div class="layout-box">
+            <h4>Sidebar</h4>
+            <ul>
+              <li><strong>Characters</strong> &ndash; Link to a character via search</li>
+              <li><strong>Artist Credits</strong> &ndash; On-site or off-site artist attribution</li>
+              <li><strong>Organization</strong> &ndash; Gallery selection and alt text</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 style="margin: 1.5rem 0 0.75rem; color: #333;">Field Reference</h3>
+        <table class="field-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Required</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>File</td>
+              <td>Yes</td>
+              <td>The image file to upload (JPEG, PNG, WebP, or GIF, max 10 MB)</td>
+            </tr>
+            <tr>
+              <td>Title</td>
+              <td>No</td>
+              <td>Display name for the media entry. Defaults to the original filename.</td>
+            </tr>
+            <tr>
+              <td>Caption</td>
+              <td>No</td>
+              <td>Longer description shown on the media detail page</td>
+            </tr>
+            <tr>
+              <td>Character</td>
+              <td>No</td>
+              <td>Associate the image with a character (searchable typeahead)</td>
+            </tr>
+            <tr>
+              <td>Gallery</td>
+              <td>No</td>
+              <td>Place the image into one of your existing galleries</td>
+            </tr>
+            <tr>
+              <td>Alt Text</td>
+              <td>No</td>
+              <td>Accessibility description for screen readers</td>
+            </tr>
+            <tr>
+              <td>Artist Credit</td>
+              <td>No</td>
+              <td>Credit an on-site user or link to an off-site artist profile</td>
+            </tr>
+            <tr>
+              <td>NSFW Flags</td>
+              <td>No</td>
+              <td>Mark nudity, gore, or other sensitive content. NSFW images default to Private visibility.</td>
+            </tr>
+            <tr>
+              <td>Visibility</td>
+              <td>No</td>
+              <td>Public (default), Unlisted, or Private</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Step 5: Uploading -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">5</div>
+        <h2 class="step-title">Uploading</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Once you've selected a file and filled in any desired fields, click the <strong>Upload Image</strong> button
+          at the bottom of the main content area. The button is disabled until at least one file is selected.
+        </p>
+        <p>
+          During upload, CharDB automatically:
+        </p>
+        <ul>
+          <li>Validates the file type and size</li>
+          <li>Generates an optimized <strong>medium</strong> variant (max 800px) for web display</li>
+          <li>Generates a <strong>thumbnail</strong> (300px, cropped square) for cards and grids</li>
+          <li>Uploads all three variants (original, medium, thumbnail) to cloud storage</li>
+          <li>Creates the Image and Media database records in a single transaction</li>
+        </ul>
+
+        <div class="highlight-box warning">
+          <strong>Moderation:</strong> If the community has image moderation enabled, uploaded images enter
+          a <span class="badge badge-warning">PENDING</span> review queue. A placeholder is shown to all users
+          until a moderator approves the image. See the
+          <a href="image-moderation.html">Image Moderation Queue</a> documentation for details.
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 6: Success Screen -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">6</div>
+        <h2 class="step-title">After a Successful Upload</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          After a successful upload, you'll see a confirmation screen showing:
+        </p>
+        <ul>
+          <li>A thumbnail preview of each uploaded image</li>
+          <li>The <strong>media title</strong> you set (or the original filename if no title was provided)</li>
+          <li>A link to <strong>View Image</strong> on the media detail page</li>
+          <li>Links to the associated character or gallery (if selected)</li>
+        </ul>
+
+        <p>
+          From the success screen you can:
+        </p>
+        <ul>
+          <li><strong>Upload More Images</strong> &ndash; Returns to the upload form with character/gallery still selected for convenience</li>
+          <li><strong>Go to Dashboard</strong> &ndash; Navigate back to your dashboard</li>
+          <li><strong>View Image</strong> &ndash; Open the newly created media entry</li>
+        </ul>
+
+        <div class="highlight-box">
+          <strong>Note:</strong> The form resets the title, caption, NSFW flags, and artist credit fields after
+          a successful upload, but keeps the character and gallery selection so you can quickly upload
+          multiple images to the same context.
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 7: Where Your Image Appears -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">7</div>
+        <h2 class="step-title">Where Your Image Appears</h2>
+      </div>
+      <div class="step-content">
+        <p>
+          Once uploaded (and approved, if moderation is enabled), your image is visible in several places
+          across the platform:
+        </p>
+        <ul>
+          <li><strong>Media detail page</strong> &ndash; Full view with title, description, metadata, and social features</li>
+          <li><strong>Your profile</strong> &ndash; Under the "Recent Media" section with its title and thumbnail</li>
+          <li><strong>Activity feed</strong> &ndash; Followers see an "uploaded a new image" entry with the media title</li>
+          <li><strong>Character page</strong> &ndash; If linked to a character, appears in the character's media section</li>
+          <li><strong>Gallery page</strong> &ndash; If placed in a gallery, appears alongside other gallery media</li>
+          <li><strong>Browse &gt; All Media</strong> &ndash; Discoverable in the global media listing</li>
+        </ul>
+
+        <p>
+          You can edit the title, description, character association, and other metadata at any time from the
+          media detail page by clicking <strong>Edit Content</strong>.
+        </p>
+      </div>
+    </div>
+
+    <footer>
+      <p>CharDB Image Uploads &bull; Feature Documentation</p>
+    </footer>
+  </div>
+</body>
+</html>
