@@ -1,4 +1,4 @@
-import escapeHtml from 'escape-html';
+import { escapeHtml } from './escape-html';
 
 /**
  * Email template contexts
