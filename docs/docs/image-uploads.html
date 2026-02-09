@@ -228,6 +228,25 @@
       padding: 1rem;
     }
 
+    .screenshot {
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    .screenshot img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      border: 1px solid #e0e0e0;
+    }
+
+    .screenshot figcaption {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: #888;
+      font-style: italic;
+    }
+
     @media (max-width: 768px) {
       header h1 {
         font-size: 1.75rem;
@@ -353,6 +372,11 @@
           appears next to the upload area. Click the <strong>&times;</strong> button on the preview to remove
           it and choose a different file.
         </p>
+
+        <figure class="screenshot">
+          <img src="upload-empty-form.png" alt="The upload form before selecting a file, showing the file drop zone, Title field, and Caption area">
+          <figcaption>The upload form with the file drop zone, Title field, and other options</figcaption>
+        </figure>
       </div>
     </div>
 
@@ -377,6 +401,11 @@
           <strong>Best practice:</strong> Give your images descriptive titles like "Luna&mdash;Spring Festival Outfit"
           rather than relying on filenames. Titles make your media easier to find and more meaningful in feeds.
         </div>
+
+        <figure class="screenshot">
+          <img src="upload-filled-form.png" alt="Upload form filled out with a file preview, title, and caption">
+          <figcaption>A completed upload form with a custom title and caption</figcaption>
+        </figure>
       </div>
     </div>
 
@@ -534,6 +563,11 @@
           a successful upload, but keeps the character and gallery selection so you can quickly upload
           multiple images to the same context.
         </div>
+
+        <figure class="screenshot">
+          <img src="upload-success.png" alt="Upload success screen showing the media title and a link to view the image">
+          <figcaption>The success screen after uploading, showing the media title and navigation links</figcaption>
+        </figure>
       </div>
     </div>
 
@@ -561,6 +595,16 @@
           You can edit the title, description, character association, and other metadata at any time from the
           media detail page by clicking <strong>Edit Content</strong>.
         </p>
+
+        <figure class="screenshot">
+          <img src="upload-media-detail.png" alt="Media detail page showing the image title, description, and metadata">
+          <figcaption>The media detail page with title, description, and image metadata</figcaption>
+        </figure>
+
+        <figure class="screenshot">
+          <img src="upload-activity-feed.png" alt="Activity feed showing uploaded images with their media titles">
+          <figcaption>The activity feed showing media titles for recently uploaded images</figcaption>
+        </figure>
       </div>
     </div>
 
