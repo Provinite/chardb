@@ -562,20 +562,25 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
           {/* Administration Section - requires admin permissions */}
           {hasAdminPermissions && (
             <CommunityNavigationGroup title="Administration" icon={Shield}>
-              <CommunityNavigationItem
-                to={`${communityBasePath}/admin`}
-                icon={Shield}
-                label="Dashboard"
-                isNested
-              />
+              {/* Dashboard - requires member management permissions */}
+              {(permissions.canRemoveCommunityMember || permissions.canManageMemberRoles) && (
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/admin`}
+                  icon={Shield}
+                  label="Dashboard"
+                  isNested
+                />
+              )}
 
-              {/* Items - requires admin permissions */}
-              <CommunityNavigationItem
-                to={`${communityBasePath}/admin/items`}
-                icon={Package}
-                label="Items"
-                isNested
-              />
+              {/* Items - requires item management permissions */}
+              {(permissions.canManageItems || permissions.canGrantItems) && (
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/admin/items`}
+                  icon={Package}
+                  label="Items"
+                  isNested
+                />
+              )}
 
               {/* Permissions - requires role management permissions */}
               {(permissions.canCreateRole || permissions.canEditRole) && (
@@ -587,8 +592,8 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
                 />
               )}
 
-              {/* Moderation - requires member management permissions */}
-              {permissions.canRemoveCommunityMember && (
+              {/* Moderation - requires image moderation permissions */}
+              {permissions.canModerateImages && (
                 <CommunityNavigationItem
                   to={`${communityBasePath}/moderation`}
                   icon={AlertCircle}

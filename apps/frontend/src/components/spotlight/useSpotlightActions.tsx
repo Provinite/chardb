@@ -145,7 +145,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
           actions.push({ id: `c-${cId}-permissions`, label: 'Permissions', description: `${cName} role permissions`, onClick: nav(`/communities/${cId}/permissions`) });
         }
 
-        if (role.canRemoveCommunityMember) {
+        if (role.canModerateImages) {
           actions.push({ id: `c-${cId}-moderation`, label: 'Image Moderation Queue', description: `${cName} image moderation`, onClick: nav(`/communities/${cId}/moderation`) });
         }
 

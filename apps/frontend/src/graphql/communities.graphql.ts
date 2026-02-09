@@ -181,6 +181,9 @@ export const COMMUNITY_MEMBERS_BY_USER_QUERY = gql`
           canListInviteCodes
           canRemoveCommunityMember
           canManageMemberRoles
+          canManageItems
+          canGrantItems
+          canModerateImages
         }
         user {
           id
