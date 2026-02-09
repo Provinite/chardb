@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Admin Navigation Visibility**: Gate each admin sidebar item by its specific permission instead of broad checks
+  - Moderation link now uses `canModerateImages` (was `canRemoveCommunityMember`)
+  - Items link now gated by `canManageItems || canGrantItems`
+  - Dashboard link gated by `canRemoveCommunityMember || canManageMemberRoles`
+  - Spotlight search moderation action uses `canModerateImages`
+  - Added `canManageItems`, `canGrantItems`, `canModerateImages` to community membership query
+
 ## [v8.1.0] - 2026-02-08
 
 ### Added
