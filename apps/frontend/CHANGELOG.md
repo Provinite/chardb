@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Broken Image Preview on Post-Upload Screen**: Fixed image preview not rendering after uploading images (#166)
+
 ## [v8.1.1] - 2026-02-08
 
 ### Fixed

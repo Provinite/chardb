@@ -4,7 +4,10 @@ import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { ImageUpload, ImageFile } from "../components/ImageUpload";
-import { useGetMyGalleriesQuery, useGetCharacterQuery } from "../generated/graphql";
+import {
+  useGetMyGalleriesQuery,
+  useGetCharacterQuery,
+} from "../generated/graphql";
 import { CharacterTypeahead } from "../components/CharacterTypeahead";
 
 const Container = styled.div`
@@ -365,6 +368,17 @@ interface UploadedImage {
   altText?: string;
 }
 
+interface UploadImageResponse {
+  id: string;
+  image: {
+    originalUrl: string;
+    thumbnailUrl: string;
+    filename: string;
+    originalFilename: string;
+    altText: string | null;
+  };
+}
+
 export const UploadImagePage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -410,10 +424,11 @@ export const UploadImagePage: React.FC = () => {
     }
   }, [searchParams]);
 
-  const { data: galleriesData, loading: galleriesLoading } = useGetMyGalleriesQuery({
-    variables: { filters: { limit: 100 } },
-    skip: !user,
-  });
+  const { data: galleriesData, loading: galleriesLoading } =
+    useGetMyGalleriesQuery({
+      variables: { filters: { limit: 100 } },
+      skip: !user,
+    });
 
   // Fetch character details if a character is selected
   const { data: characterData } = useGetCharacterQuery({
@@ -495,7 +510,7 @@ export const UploadImagePage: React.FC = () => {
           );
         }
 
-        return response.json();
+        return response.json() as Promise<UploadImageResponse>;
       });
 
       const uploadResults = await Promise.all(uploadPromises);
@@ -503,10 +518,10 @@ export const UploadImagePage: React.FC = () => {
       // Convert upload results to UploadedImage format
       const images: UploadedImage[] = uploadResults.map((result) => ({
         id: result.id,
-        originalUrl: result.originalUrl,
-        thumbnailUrl: result.thumbnailUrl,
-        filename: result.filename || result.originalFilename,
-        altText: result.altText,
+        originalUrl: result.image.originalUrl,
+        thumbnailUrl: result.image.thumbnailUrl,
+        filename: result.image.filename || result.image.originalFilename,
+        altText: result.image.altText ?? undefined,
       }));
 
       // Show success state instead of navigating away
@@ -614,9 +629,7 @@ export const UploadImagePage: React.FC = () => {
   if (galleriesLoading) {
     return (
       <Container>
-        <LoadingMessage>
-          Loading your galleries...
-        </LoadingMessage>
+        <LoadingMessage>Loading your galleries...</LoadingMessage>
       </Container>
     );
   }
