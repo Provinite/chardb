@@ -254,7 +254,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         <HiddenInput
           ref={fileInputRef}
           type="file"
-          multiple
+          multiple={maxFiles > 1}
           accept={acceptedTypes.join(',')}
           onChange={handleFileInput}
         />

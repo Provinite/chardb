@@ -661,6 +661,7 @@ export const UploadImagePage: React.FC = () => {
                 <ImageUpload
                   files={files}
                   onFilesChange={setFiles}
+                  maxFiles={1}
                   disabled={uploading}
                 />
                 <div>
