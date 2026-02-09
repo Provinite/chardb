@@ -191,44 +191,44 @@ const CharacterMeta = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-const ArtistToggle = styled.div`
-  display: flex;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  overflow: hidden;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-`;
+// const ArtistToggle = styled.div`
+//   display: flex;
+//   border: 1px solid ${({ theme }) => theme.colors.border};
+//   border-radius: ${({ theme }) => theme.borderRadius.md};
+//   overflow: hidden;
+//   margin-bottom: ${({ theme }) => theme.spacing.sm};
+// `;
 
-const ArtistToggleButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== "active",
-})<{ active: boolean }>`
-  flex: 1;
-  padding: ${({ theme }) => theme.spacing.sm};
-  border: none;
-  background: ${({ theme, active }) =>
-    active ? theme.colors.primary : theme.colors.surface};
-  color: ${({ theme, active }) =>
-    active ? "white" : theme.colors.text.primary};
-  cursor: pointer;
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  transition: all 0.2s ease;
+// const ArtistToggleButton = styled.button.withConfig({
+//   shouldForwardProp: (prop) => prop !== "active",
+// })<{ active: boolean }>`
+//   flex: 1;
+//   padding: ${({ theme }) => theme.spacing.sm};
+//   border: none;
+//   background: ${({ theme, active }) =>
+//     active ? theme.colors.primary : theme.colors.surface};
+//   color: ${({ theme, active }) =>
+//     active ? "white" : theme.colors.text.primary};
+//   cursor: pointer;
+//   font-size: ${({ theme }) => theme.typography.fontSize.sm};
+//   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+//   transition: all 0.2s ease;
 
-  &:hover {
-    background: ${({ theme, active }) =>
-      active ? `${theme.colors.primary}e6` : `${theme.colors.primary}15`};
-  }
+//   &:hover {
+//     background: ${({ theme, active }) =>
+//       active ? `${theme.colors.primary}e6` : `${theme.colors.primary}15`};
+//   }
 
-  &:first-child {
-    border-radius: ${({ theme }) => theme.borderRadius.md} 0 0
-      ${({ theme }) => theme.borderRadius.md};
-  }
+//   &:first-child {
+//     border-radius: ${({ theme }) => theme.borderRadius.md} 0 0
+//       ${({ theme }) => theme.borderRadius.md};
+//   }
 
-  &:last-child {
-    border-radius: 0 ${({ theme }) => theme.borderRadius.md}
-      ${({ theme }) => theme.borderRadius.md} 0;
-  }
-`;
+//   &:last-child {
+//     border-radius: 0 ${({ theme }) => theme.borderRadius.md}
+//       ${({ theme }) => theme.borderRadius.md} 0;
+//   }
+// `;
 
 const LoadingMessage = styled.div`
   text-align: center;
@@ -458,8 +458,7 @@ export const UploadImagePage: React.FC = () => {
         const formDataToSend = new FormData();
         formDataToSend.append("file", imageFile.file);
 
-        if (formData.title)
-          formDataToSend.append("title", formData.title);
+        if (formData.title) formDataToSend.append("title", formData.title);
         if (formData.description)
           formDataToSend.append("description", formData.description);
         if (formData.altText)
@@ -785,7 +784,9 @@ export const UploadImagePage: React.FC = () => {
                     />
                   </div>
                 )}
-                {(formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive) && (
+                {(formData.nsfwNudity ||
+                  formData.nsfwGore ||
+                  formData.nsfwSensitive) && (
                   <ErrorMessage>
                     NSFW image uploads are not accepted at this time.
                   </ErrorMessage>
@@ -795,7 +796,14 @@ export const UploadImagePage: React.FC = () => {
               <Actions style={{ justifyContent: "center" }}>
                 <UploadButton
                   onClick={() => handleUpload(files)}
-                  disabled={uploading || files.length === 0 || !formData.characterId || formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive}
+                  disabled={
+                    uploading ||
+                    files.length === 0 ||
+                    !formData.characterId ||
+                    formData.nsfwNudity ||
+                    formData.nsfwGore ||
+                    formData.nsfwSensitive
+                  }
                   variant="primary"
                 >
                   {uploading ? "Uploading..." : "Upload Image"}
