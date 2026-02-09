@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.1.0] - 2026-02-09
+
 ### Added
 
 - **Markdown support for media descriptions**: Image captions and descriptions now support bold, italic, headings, links, lists, and other markdown formatting with a live preview toggle
