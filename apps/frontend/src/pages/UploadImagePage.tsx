@@ -794,7 +794,7 @@ export const UploadImagePage: React.FC = () => {
               <Actions style={{ justifyContent: "center" }}>
                 <UploadButton
                   onClick={() => handleUpload(files)}
-                  disabled={uploading || files.length === 0 || formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive}
+                  disabled={uploading || files.length === 0 || !formData.characterId || formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive}
                   variant="primary"
                 >
                   {uploading ? "Uploading..." : "Upload Image"}
@@ -805,7 +805,12 @@ export const UploadImagePage: React.FC = () => {
 
           <Sidebar>
             <SidebarSection>
-              <SectionTitle>Characters</SectionTitle>
+              <SectionTitle>Character (required)</SectionTitle>
+              {!formData.characterId && (
+                <ErrorMessage>
+                  Please select a character for this upload.
+                </ErrorMessage>
+              )}
               {formData.characterId && selectedCharacter && (
                 <CharacterCard>
                   <CharacterAvatar>
