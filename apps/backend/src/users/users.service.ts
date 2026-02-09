@@ -64,7 +64,7 @@ export class UsersService {
     return this.db.user.create({
       data: {
         username: input.username,
-        email: input.email,
+        email: input.email.toLowerCase(),
         passwordHash: input.passwordHash,
         displayName: input.displayName,
       },
@@ -103,7 +103,7 @@ export class UsersService {
 
   async findByEmail(email: string) {
     return this.db.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase() },
     });
   }
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Case-sensitive email login**: Normalize emails to lowercase in login, signup, password reset, and user creation flows. Includes database migration to lowercase existing emails.
+
 ## [v9.1.0] - 2026-02-09
 
 ### Added
