@@ -407,7 +407,7 @@ export const UploadImagePage: React.FC = () => {
     nsfwSensitive: false,
     sensitiveContentDescription: "",
     // Artist credits
-    artistType: "onsite",
+    artistType: "offsite",
     artistLink: "",
     artistLabel: "",
   });
@@ -688,6 +688,7 @@ export const UploadImagePage: React.FC = () => {
                 />
               </Section>
 
+              {/* TODO: Re-enable visibility/privacy settings when ready
               <Section>
                 <SectionTitle>Privacies</SectionTitle>
                 <div>
@@ -730,6 +731,7 @@ export const UploadImagePage: React.FC = () => {
                   </Select>
                 </div>
               </Section>
+              */}
 
               <Section>
                 <SectionTitle>NSFW Settings</SectionTitle>
@@ -835,6 +837,7 @@ export const UploadImagePage: React.FC = () => {
 
             <SidebarSection>
               <SectionTitle>Artist Credits</SectionTitle>
+              {/* TODO: Re-enable on-site artist toggle when ready
               <ArtistToggle>
                 <ArtistToggleButton
                   type="button"
@@ -851,6 +854,7 @@ export const UploadImagePage: React.FC = () => {
                   Off-site Artist
                 </ArtistToggleButton>
               </ArtistToggle>
+              */}
               <div>
                 <Label>Link to Artist</Label>
                 <Input
@@ -875,9 +879,11 @@ export const UploadImagePage: React.FC = () => {
                   }
                 />
               </div>
+              {/* TODO: Re-enable multiple artist credits when ready
               <Button variant="ghost" size="sm">
                 + Add another artist
               </Button>
+              */}
             </SidebarSection>
 
             <SidebarSection>
