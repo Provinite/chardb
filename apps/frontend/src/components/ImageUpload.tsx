@@ -248,7 +248,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           {isDragActive ? 'Drop files here' : 'Click to upload or drag and drop'}
         </UploadText>
         <UploadSubtext>
-          Supports: {acceptedTypes.map(type => type.split('/')[1].toUpperCase()).join(', ')} (max {maxSizeMB}MB each)
+          Supports: {acceptedTypes.map(type => type.split('/')[1].toUpperCase()).join(', ')} (max {maxSizeMB}MB)
         </UploadSubtext>
         
         <HiddenInput
