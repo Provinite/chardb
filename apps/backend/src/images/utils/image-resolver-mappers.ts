@@ -15,7 +15,6 @@ type PrismaImage = Prisma.ImageGetPayload<{
 export function mapPrismaImageToGraphQL(prismaImage: PrismaImage): Image {
   return {
     id: prismaImage.id,
-    filename: prismaImage.filename,
     originalFilename: prismaImage.originalFilename,
     originalUrl: prismaImage.originalUrl,
     thumbnailUrl: prismaImage.thumbnailUrl ?? undefined,

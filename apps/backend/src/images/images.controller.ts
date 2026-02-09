@@ -29,6 +29,7 @@ export class ImagesController {
 
     const uploadInput: Parameters<ImagesService["upload"]>[1] = {
       file,
+      title: body.title,
       characterId: body.characterId,
       itemTypeId: body.itemTypeId,
       galleryId: body.galleryId,

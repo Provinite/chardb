@@ -5,7 +5,6 @@ export const GET_LIKED_IMAGES = gql`
   query GetLikedImages {
     likedImages {
       id
-      filename
       originalFilename
       originalUrl
       thumbnailUrl

@@ -712,7 +712,7 @@ export class SocialService {
     // For now, we'll include character creation, gallery creation, and image uploads
     // This could be expanded to include likes and comments in the future
 
-    const [characters, galleries, images] = await Promise.all([
+    const [characters, galleries, imageMedia] = await Promise.all([
       // Recent characters created by followed users
       this.databaseService.character.findMany({
         where: {
@@ -757,13 +757,14 @@ export class SocialService {
         skip: Math.floor(offset / 3),
       }),
 
-      // Recent images uploaded by followed users
-      this.databaseService.image.findMany({
+      // Recent image media uploaded by followed users
+      this.databaseService.media.findMany({
         where: {
-          uploaderId: { in: followingUserIds },
+          imageId: { not: null },
+          ownerId: { in: followingUserIds },
         },
         include: {
-          uploader: {
+          owner: {
             select: {
               id: true,
               username: true,
@@ -803,15 +804,15 @@ export class SocialService {
           description: gallery.description,
         },
       })),
-      ...images.map((image) => ({
-        id: `image_${image.id}`,
+      ...imageMedia.map((media) => ({
+        id: `image_${media.id}`,
         type: "IMAGE_UPLOADED",
-        entityId: image.id,
-        createdAt: image.createdAt,
-        user: image.uploader,
+        entityId: media.id,
+        createdAt: media.createdAt,
+        user: media.owner,
         content: {
-          name: image.filename,
-          description: image.altText,
+          name: media.title,
+          description: media.description,
         },
       })),
     ];

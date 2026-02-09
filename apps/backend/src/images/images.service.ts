@@ -19,6 +19,7 @@ import { CommunityPermission } from "../auth/CommunityPermission";
 
 export interface UploadImageInput {
   file: Express.Multer.File;
+  title?: string;
   altText?: string;
   isNsfw?: boolean;
   sensitiveContentDescription?: string;
@@ -81,6 +82,7 @@ export class ImagesService {
   ): Promise<Media & { image: Image; owner: User }> {
     const {
       file,
+      title,
       altText,
       isNsfw = false,
       sensitiveContentDescription,
@@ -205,7 +207,7 @@ export class ImagesService {
       // Create corresponding Media record for unified media system
       const media = await tx.media.create({
         data: {
-          title: altText || file.originalname,
+          title: title || file.originalname,
           description: description || sensitiveContentDescription,
           ownerId: userId,
           characterId: characterId || null,
