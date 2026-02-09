@@ -108,6 +108,7 @@ export class AuthService {
   }
 
   async signup(input: SignupServiceInput): Promise<AuthResponse> {
+    const normalizedEmail = input.email.toLowerCase();
     return await this.prisma.$transaction(async (tx) => {
       // 1. Validate invite code first (using regular service, not transaction)
       const inviteCode = await this.inviteCodesService.findOne(input.inviteCode);
@@ -117,7 +118,7 @@ export class AuthService {
 
       // 2. Check for existing user by email (within transaction)
       const existingUserByEmail = await tx.user.findUnique({
-        where: { email: input.email }
+        where: { email: normalizedEmail }
       });
       if (existingUserByEmail) {
         throw new ConflictException('User with this email already exists');
@@ -136,7 +137,7 @@ export class AuthService {
       const user = await tx.user.create({
         data: {
           username: input.username,
-          email: input.email,
+          email: normalizedEmail,
           passwordHash: hashedPassword,
           displayName: input.displayName,
         },
