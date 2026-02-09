@@ -131,9 +131,19 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
         if (hasAdminPermissions) {
           actions.push(
             { id: `c-${cId}-settings`, label: 'Settings', description: `${cName} settings`, onClick: nav(`/communities/${cId}/settings`) },
+          );
+        }
+
+        if (role.canRemoveCommunityMember || role.canManageMemberRoles) {
+          actions.push(
             { id: `c-${cId}-admin`, label: 'Admin Dashboard', description: `${cName} admin dashboard`, onClick: nav(`/communities/${cId}/admin`) },
-            { id: `c-${cId}-items`, label: 'Items Admin', description: `${cName} items administration`, onClick: nav(`/communities/${cId}/admin/items`) },
             { id: `c-${cId}-colors`, label: 'Color Palette', description: `${cName} color palette`, onClick: nav(`/communities/${cId}/admin/colors`) },
+          );
+        }
+
+        if (role.canManageItems || role.canGrantItems) {
+          actions.push(
+            { id: `c-${cId}-items`, label: 'Items Admin', description: `${cName} items administration`, onClick: nav(`/communities/${cId}/admin/items`) },
           );
         }
 
@@ -145,7 +155,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
           actions.push({ id: `c-${cId}-permissions`, label: 'Permissions', description: `${cName} role permissions`, onClick: nav(`/communities/${cId}/permissions`) });
         }
 
-        if (role.canRemoveCommunityMember) {
+        if (role.canModerateImages) {
           actions.push({ id: `c-${cId}-moderation`, label: 'Image Moderation Queue', description: `${cName} image moderation`, onClick: nav(`/communities/${cId}/moderation`) });
         }
 

@@ -46,6 +46,9 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
         canEditRole: false,
         canRemoveCommunityMember: false,
         canManageMemberRoles: false,
+        canManageItems: false,
+        canGrantItems: false,
+        canModerateImages: false,
       };
     }
 
@@ -64,6 +67,9 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
       canEditRole: userRole.canEditRole,
       canRemoveCommunityMember: userRole.canRemoveCommunityMember,
       canManageMemberRoles: userRole.canManageMemberRoles,
+      canManageItems: userRole.canManageItems,
+      canGrantItems: userRole.canGrantItems,
+      canModerateImages: userRole.canModerateImages,
     };
   }, [userRole]);
 
@@ -75,7 +81,10 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
       permissions.canCreateRole ||
       permissions.canEditRole ||
       permissions.canRemoveCommunityMember ||
-      permissions.canManageMemberRoles
+      permissions.canManageMemberRoles ||
+      permissions.canManageItems ||
+      permissions.canGrantItems ||
+      permissions.canModerateImages
     );
   }, [permissions]);
 
