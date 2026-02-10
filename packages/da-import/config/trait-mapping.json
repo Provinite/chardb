@@ -1135,6 +1135,106 @@
       "pattern": "Width",
       "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
       "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5"
+    },
+    {
+      "pattern": "Levitation Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "c722d988-6784-42e9-8fd6-a32e004feaaf"
+    },
+    {
+      "pattern": "Levitation magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "c722d988-6784-42e9-8fd6-a32e004feaaf"
+    },
+    {
+      "pattern": "Body Temperature Control Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a7df7285-6120-4655-aa95-6809fd259ab5"
+    },
+    {
+      "pattern": "Temperature Control Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a7df7285-6120-4655-aa95-6809fd259ab5"
+    },
+    {
+      "pattern": "Fabric Pattern Animation Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a827f2a4-3e99-4eed-8579-f52c9473b0b1"
+    },
+    {
+      "pattern": "Costume",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "076b6eb9-da29-42e1-9e72-23e2c7844542"
+    },
+    {
+      "pattern": "Latex Material",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "a246a024-e3e4-4519-8a7b-b769ddb2f877"
+    },
+    {
+      "pattern": "Fake Plants",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "8b0e64d0-e3ca-41bc-b01a-f64f22bcc078"
+    },
+    {
+      "pattern": "Patched",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "e1a186b2-0c20-4431-9a81-b914b3a5b3a7"
+    },
+    {
+      "pattern": "No Mouth",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "239faa6c-cfef-4064-83b2-6cc6cdfe954b"
+    },
+    {
+      "pattern": "Knot Bow",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "47650951-ddda-4d7e-82bb-3154cbeadbcc"
+    },
+    {
+      "pattern": "Not Only Tail",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "62e16c38-05e6-474e-ab6d-967144b5e46b"
+    },
+    {
+      "pattern": "Antennas",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "a3ef82b7-fe19-48e4-ab20-2b464c1c7ee1"
+    },
+    {
+      "pattern": "StandardEyes",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f"
+    },
+    {
+      "pattern": "Shaped Empty Case Tail",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958"
+    },
+    {
+      "pattern": "\"Yarn\" Tail",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "1d6a98bd-283b-4b5c-a333-507f657a4c81"
+    },
+    {
+      "pattern": "\"Yarn\" Tails",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "1d6a98bd-283b-4b5c-a333-507f657a4c81"
+    },
+    {
+      "pattern": "Closed Eye",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968"
+    },
+    {
+      "pattern": "No Eye",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "d768f743-5bfa-4640-8956-a7ac441a0fd5"
+    },
+    {
+      "pattern": "Eyeless Eye",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "d768f743-5bfa-4640-8956-a7ac441a0fd5"
     }
   ],
   "compositeRules": [
