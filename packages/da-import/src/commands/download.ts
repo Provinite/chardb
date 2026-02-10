@@ -20,6 +20,7 @@ interface DownloadArgs {
   clientSecret: string;
   resume: boolean;
   rateLimit: number;
+  url: string | undefined;
 }
 
 function extractNumericId(url: string): string | null {
@@ -34,19 +35,73 @@ async function loadState(stateFile: string): Promise<DownloadState | null> {
   return null;
 }
 
+async function downloadSingleDeviation(
+  client: DeviantArtClient,
+  deviationUrl: string,
+  deviationsDir: string
+): Promise<void> {
+  const numericId = extractNumericId(deviationUrl);
+  if (!numericId) {
+    logger.error(`Could not extract numeric ID from URL: ${deviationUrl}`);
+    process.exit(1);
+  }
+
+  logger.info(`Fetching deviation ${numericId}...`);
+
+  // Resolve the page URL to a DA API UUID
+  logger.info("Resolving deviation UUID from page...");
+  const uuid = await client.resolveDeviationUuid(deviationUrl);
+  logger.debug(`Resolved UUID: ${uuid}`);
+
+  // Fetch full deviation metadata via the API
+  const deviation = await client.getDeviation(uuid);
+
+  let descriptionHtml = "";
+  try {
+    const content = await client.getDeviationContent(deviation.deviationid);
+    descriptionHtml = content.html;
+  } catch (err) {
+    logger.warn(`Failed to fetch content: ${err}`);
+  }
+
+  const downloaded: DownloadedDeviation = {
+    numericId,
+    deviationId: deviation.deviationid,
+    url: deviation.url,
+    title: deviation.title,
+    authorUsername: deviation.author.username,
+    descriptionHtml,
+    folderName: "(single)",
+    publishedTime: deviation.published_time,
+    thumbnailUrl: deviation.thumbs?.[0]?.src,
+  };
+
+  const outPath = path.join(deviationsDir, `${numericId}.json`);
+  await writeJson(outPath, downloaded);
+
+  logger.info(`Saved: ${outPath}`);
+  logger.info(`  Title: ${downloaded.title}`);
+  logger.info(`  Author: ${downloaded.authorUsername}`);
+  logger.info(`  Description length: ${descriptionHtml.length} chars`);
+}
+
 export const downloadCommand: CommandModule<object, DownloadArgs> = {
   command: "download",
   describe: "Download deviations from DeviantArt gallery folders",
   builder: {
     username: {
       type: "string" as const,
-      demandOption: true,
+      default: "",
       describe: "DeviantArt username to download from",
     },
     folders: {
       type: "string" as const,
-      demandOption: true,
+      default: "",
       describe: "Comma-separated list of folder names to download",
+    },
+    url: {
+      type: "string" as const,
+      describe: "Download a single deviation by URL",
     },
     "client-id": {
       type: "string" as const,
@@ -77,6 +132,7 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
       clientSecret,
       resume,
       rateLimit,
+      url: singleUrl,
     } = argv;
 
     if (!clientId || !clientSecret) {
@@ -86,13 +142,24 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
       process.exit(1);
     }
 
-    const targetFolders = foldersArg.split(",").map((f) => f.trim());
     const deviationsDir = getDeviationsDir();
-    const stateFile = path.join(getDataDir(), "download-state.json");
-
     await ensureDir(deviationsDir);
-
     const client = new DeviantArtClient(clientId, clientSecret, rateLimit);
+
+    // Single deviation mode
+    if (singleUrl) {
+      await downloadSingleDeviation(client, singleUrl, deviationsDir);
+      return;
+    }
+
+    // Folder mode — require username and folders
+    if (!username || !foldersArg) {
+      logger.error("Either --url or both --username and --folders are required.");
+      process.exit(1);
+    }
+
+    const targetFolders = foldersArg.split(",").map((f) => f.trim());
+    const stateFile = path.join(getDataDir(), "download-state.json");
 
     // Load or initialize state
     let state: DownloadState = resume

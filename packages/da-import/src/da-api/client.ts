@@ -2,6 +2,7 @@ import { logger } from "../utils/logger";
 import { RateLimiter } from "./rate-limiter";
 import type {
   DATokenResponse,
+  DADeviation,
   DAFoldersResponse,
   DAGalleryResponse,
   DADeviationContent,
@@ -102,6 +103,44 @@ export class DeviantArtClient {
     const url = `${DA_API_BASE}/gallery/${folderId}?username=${encodeURIComponent(username)}&offset=${offset}&limit=${limit}&mature_content=true`;
     const resp = await this.fetchWithRetry(url);
     return (await resp.json()) as DAGalleryResponse;
+  }
+
+  async getDeviation(deviationUuid: string): Promise<DADeviation> {
+    const url = `${DA_API_BASE}/deviation/${deviationUuid}`;
+    const resp = await this.fetchWithRetry(url);
+    return (await resp.json()) as DADeviation;
+  }
+
+  /**
+   * Resolve a DA deviation page URL to the API's UUID.
+   * DA pages embed the UUID in a meta tag: <meta property="da:appurl" content="DeviantArt://deviation/UUID">
+   */
+  async resolveDeviationUuid(pageUrl: string): Promise<string> {
+    const resp = await fetch(pageUrl, {
+      headers: { "User-Agent": "CharDB-Import/1.0" },
+    });
+    if (!resp.ok) {
+      throw new Error(`Failed to fetch DA page: ${resp.status}`);
+    }
+    const html = await resp.text();
+
+    // Look for da:appurl meta tag
+    const appUrlMatch = html.match(
+      /property="da:appurl"\s+content="DeviantArt:\/\/deviation\/([^"]+)"/
+    );
+    if (appUrlMatch) {
+      return appUrlMatch[1];
+    }
+
+    // Fallback: look for deviationid in page data
+    const dataMatch = html.match(/"deviationId"\s*:\s*"([^"]+)"/);
+    if (dataMatch) {
+      return dataMatch[1];
+    }
+
+    throw new Error(
+      "Could not resolve deviation UUID from page. The URL may be invalid."
+    );
   }
 
   async getDeviationContent(deviationId: string): Promise<DADeviationContent> {
