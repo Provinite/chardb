@@ -10,13 +10,14 @@ export interface ParsedDescription {
 /**
  * Parse a DA deviation description HTML into structured data.
  *
- * Typical structure:
- * - Title/Name line at the top (often bold or in a heading)
- * - "Owner: Username" or "Owned by: Username" line
- * - Bullet list of traits, often with rarity prefixes
- *
- * This parser is deliberately permissive — it extracts what it can and
- * flags unparseable content as warnings downstream.
+ * DA Pillowing descriptions use this structure:
+ * - Character name as first text
+ * - "Category:" line
+ * - "Artist:" with DA user link
+ * - "Current Owner:" with DA user link
+ * - "Features:" header followed by trait lines
+ * - Each trait line is a bullet image + "Rarity TraitName"
+ * - Lines separated by <br> tags
  */
 export function parseDescription(
   html: string,
@@ -24,114 +25,87 @@ export function parseDescription(
 ): ParsedDescription {
   const $ = cheerio.load(html);
 
-  // Get the raw text content, preserving some structure
+  // Replace <br> tags with newlines to split into lines
+  $("br").replaceWith("\n");
+
+  // Get text with newlines preserved
   const rawText = $("body").text().trim();
 
-  // Extract all text lines, cleaning up whitespace
   const allLines = rawText
     .split(/\n/)
-    .map((l) => l.trim())
+    .map((l) => l.replace(/\u00a0/g, " ").trim())
     .filter((l) => l.length > 0);
 
-  // Try to extract character name from the first bold or heading element
+  // Extract character name — first non-empty text line
   let characterName = "";
-  const headings = $("h1, h2, h3, b, strong").first().text().trim();
-  if (headings) {
-    characterName = headings;
+  for (const line of allLines) {
+    // Skip lines that are category/artist/owner labels
+    if (/^(category|artist|current\s+owner|owner|features)/i.test(line)) {
+      break;
+    }
+    if (line.length > 0) {
+      characterName = line;
+      break;
+    }
   }
-
-  // Fallback: try first line
-  if (!characterName && allLines.length > 0) {
-    characterName = allLines[0];
-  }
-
-  // Final fallback: use DA title
   if (!characterName) {
     characterName = fallbackName;
   }
 
-  // Extract owner — look for "Owner:", "Owned by:", or DA username links
+  // Extract owner — look for "Current Owner:" context in HTML
   let ownerUsername = "";
-  const ownerPatterns = [
-    /owner\s*:\s*(\S+)/i,
-    /owned\s+by\s*:\s*(\S+)/i,
-    /belongs\s+to\s*:\s*(\S+)/i,
-  ];
 
-  for (const line of allLines) {
-    for (const pattern of ownerPatterns) {
-      const match = line.match(pattern);
+  // Find the DA username link after "Current Owner" text
+  const htmlLower = html.toLowerCase();
+  const ownerIdx = htmlLower.indexOf("current owner");
+  if (ownerIdx !== -1) {
+    // Find the next DA username link after the owner label
+    const afterOwner = html.slice(ownerIdx);
+    const linkMatch = afterOwner.match(
+      /href="https?:\/\/([^.]+)\.deviantart\.com"/
+    );
+    if (linkMatch) {
+      ownerUsername = linkMatch[1];
+    }
+  }
+
+  // Fallback: try "Owner:" pattern in text
+  if (!ownerUsername) {
+    for (const line of allLines) {
+      const match = line.match(/(?:current\s+)?owner\s*:\s*(\S+)/i);
       if (match) {
         ownerUsername = match[1].replace(/^@/, "");
         break;
       }
     }
-    if (ownerUsername) break;
   }
 
-  // Also check for DA user links (icon links like :iconUsername:)
-  if (!ownerUsername) {
-    const iconMatch = rawText.match(/:icon([^:]+):/i);
-    if (iconMatch) {
-      ownerUsername = iconMatch[1];
-    }
-  }
-
-  // Check for DA user links in HTML
-  if (!ownerUsername) {
-    $("a").each((_i, el) => {
-      const href = $(el).attr("href") || "";
-      const userMatch = href.match(/deviantart\.com\/([^/]+)$/);
-      if (userMatch && !ownerUsername) {
-        const text = $(el).text().trim().toLowerCase();
-        // Only take it if it's in an owner context
-        const parentText = $(el).parent().text().toLowerCase();
-        if (
-          parentText.includes("owner") ||
-          parentText.includes("owned") ||
-          parentText.includes("belongs")
-        ) {
-          ownerUsername = userMatch[1];
-        }
-      }
-    });
-  }
-
-  // Extract trait lines — look for bullet-like patterns
-  // Lines that start with common trait indicators or have rarity prefixes
+  // Extract trait lines — lines after "Features:" that have rarity prefixes
   const traitLines: string[] = [];
-  const rarityPrefixes = /^(exclusive|legendary|very\s+rare|rare|uncommon|common)\s+/i;
-  const bulletPrefixes = /^[-•*❖►▸▹◆◇○●]\s*/;
+  let inFeatures = false;
 
   for (const line of allLines) {
-    const cleaned = line.replace(bulletPrefixes, "").trim();
-    if (!cleaned) continue;
-
-    // Skip owner/name lines
-    if (
-      /^owner\s*:/i.test(cleaned) ||
-      /^owned\s+by/i.test(cleaned) ||
-      /^belongs\s+to/i.test(cleaned) ||
-      /^name\s*:/i.test(cleaned)
-    ) {
+    // Detect features section
+    if (/^features\s*:/i.test(line)) {
+      inFeatures = true;
+      // The rest of this line after "Features:" might have content
+      const afterLabel = line.replace(/^features\s*:\s*/i, "").trim();
+      if (afterLabel && /^(common|uncommon|rare|very\s+rare|legendary|exclusive)\s+/i.test(afterLabel)) {
+        traitLines.push(afterLabel);
+      }
       continue;
     }
 
-    // Lines with rarity prefixes are likely traits
-    if (rarityPrefixes.test(cleaned)) {
-      traitLines.push(cleaned);
-      continue;
+    if (!inFeatures) continue;
+
+    // End of features section — stop at bracketed resale/trade lines or boilerplate
+    if (/^\[/.test(line) || /^pillowings\s+are/i.test(line)) {
+      break;
     }
 
-    // Lines that look like trait descriptions (contain colons for categories)
-    if (/^\w[\w\s]*:/.test(cleaned) && cleaned.length < 200) {
-      traitLines.push(cleaned);
-      continue;
-    }
-
-    // Lines in bullet-list context
-    if (bulletPrefixes.test(line)) {
-      traitLines.push(cleaned);
+    // Lines with rarity prefixes are traits
+    if (/^(common|uncommon|rare|very\s+rare|legendary|exclusive)\s+/i.test(line)) {
+      traitLines.push(line);
     }
   }
 

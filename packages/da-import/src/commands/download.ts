@@ -48,21 +48,11 @@ async function downloadSingleDeviation(
 
   logger.info(`Fetching deviation ${numericId}...`);
 
-  // Resolve the page URL to a DA API UUID
-  logger.info("Resolving deviation UUID from page...");
-  const uuid = await client.resolveDeviationUuid(deviationUrl);
-  logger.debug(`Resolved UUID: ${uuid}`);
+  // Scrape page for UUID and description in one request
+  const { uuid, descriptionHtml } = await client.scrapeDeviationPage(deviationUrl);
 
   // Fetch full deviation metadata via the API
   const deviation = await client.getDeviation(uuid);
-
-  let descriptionHtml = "";
-  try {
-    const content = await client.getDeviationContent(deviation.deviationid);
-    descriptionHtml = content.html;
-  } catch (err) {
-    logger.warn(`Failed to fetch content: ${err}`);
-  }
 
   const downloaded: DownloadedDeviation = {
     numericId,
@@ -105,13 +95,11 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
     },
     "client-id": {
       type: "string" as const,
-      default: process.env.DEVIANTART_CLIENT_ID ?? "",
-      describe: "DeviantArt OAuth client ID",
+      describe: "DeviantArt OAuth client ID (or set DEVIANTART_CLIENT_ID env var)",
     },
     "client-secret": {
       type: "string" as const,
-      default: process.env.DEVIANTART_CLIENT_SECRET ?? "",
-      describe: "DeviantArt OAuth client secret",
+      describe: "DeviantArt OAuth client secret (or set DEVIANTART_CLIENT_SECRET env var)",
     },
     resume: {
       type: "boolean" as const,
@@ -128,12 +116,15 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
     const {
       username,
       folders: foldersArg,
-      clientId,
-      clientSecret,
+      clientId: clientIdArg,
+      clientSecret: clientSecretArg,
       resume,
       rateLimit,
       url: singleUrl,
     } = argv;
+
+    const clientId = clientIdArg || process.env.DEVIANTART_CLIENT_ID || "";
+    const clientSecret = clientSecretArg || process.env.DEVIANTART_CLIENT_SECRET || "";
 
     if (!clientId || !clientSecret) {
       logger.error(
@@ -217,16 +208,15 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
             continue;
           }
 
-          // Fetch description HTML
+          // Fetch description HTML by scraping the deviation page
           let descriptionHtml = "";
           try {
-            const content = await client.getDeviationContent(
-              deviation.deviationid
+            descriptionHtml = await client.getDeviationDescription(
+              deviation.url
             );
-            descriptionHtml = content.html;
           } catch (err) {
             logger.warn(
-              `Failed to fetch content for ${deviation.deviationid}: ${err}`
+              `Failed to fetch description for ${deviation.deviationid}: ${err}`
             );
           }
 

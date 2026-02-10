@@ -5,7 +5,6 @@ import type {
   DADeviation,
   DAFoldersResponse,
   DAGalleryResponse,
-  DADeviationContent,
 } from "./types";
 
 const DA_API_BASE = "https://www.deviantart.com/api/v1/oauth2";
@@ -124,6 +123,18 @@ export class DeviantArtClient {
    * DA pages embed the UUID in a meta tag: <meta property="da:appurl" content="DeviantArt://deviation/UUID">
    */
   async resolveDeviationUuid(pageUrl: string): Promise<string> {
+    const { uuid } = await this.scrapeDeviationPage(pageUrl);
+    return uuid;
+  }
+
+  /**
+   * Fetch a DA deviation page and extract both the UUID and description HTML.
+   * The description is embedded as JSON in the page's initial state data since
+   * the /content API endpoint is not available with Client Credentials auth.
+   */
+  async scrapeDeviationPage(
+    pageUrl: string
+  ): Promise<{ uuid: string; descriptionHtml: string }> {
     const resp = await fetch(pageUrl, {
       headers: { "User-Agent": "CharDB-Import/1.0" },
     });
@@ -132,28 +143,55 @@ export class DeviantArtClient {
     }
     const html = await resp.text();
 
-    // Look for da:appurl meta tag
+    // Extract UUID from da:appurl meta tag
+    let uuid = "";
     const appUrlMatch = html.match(
       /property="da:appurl"\s+content="DeviantArt:\/\/deviation\/([^"]+)"/
     );
     if (appUrlMatch) {
-      return appUrlMatch[1];
+      uuid = appUrlMatch[1];
+    } else {
+      const dataMatch = html.match(/"deviationId"\s*:\s*"([^"]+)"/);
+      if (dataMatch) {
+        uuid = dataMatch[1];
+      }
     }
 
-    // Fallback: look for deviationid in page data
-    const dataMatch = html.match(/"deviationId"\s*:\s*"([^"]+)"/);
-    if (dataMatch) {
-      return dataMatch[1];
+    if (!uuid) {
+      throw new Error(
+        "Could not resolve deviation UUID from page. The URL may be invalid."
+      );
     }
 
-    throw new Error(
-      "Could not resolve deviation UUID from page. The URL may be invalid."
+    // Extract description HTML from the legacy-journal div
+    let descriptionHtml = "";
+
+    const journalMatch = html.match(
+      /<div class="legacy-journal[^"]*"[^>]*>([\s\S]*?)<\/div><\/div><\/div>/
     );
+    if (journalMatch) {
+      descriptionHtml = journalMatch[1];
+    }
+
+    // Fallback: try the "description" section which wraps the journal
+    if (!descriptionHtml) {
+      const descSectionMatch = html.match(
+        /class="[^"]*description[^"]*"[^>]*>[\s\S]*?<div class="legacy-journal[^"]*"[^>]*>([\s\S]*?)<\/div>/
+      );
+      if (descSectionMatch) {
+        descriptionHtml = descSectionMatch[1];
+      }
+    }
+
+    return { uuid, descriptionHtml };
   }
 
-  async getDeviationContent(deviationId: string): Promise<DADeviationContent> {
-    const url = `${DA_API_BASE}/deviation/${deviationId}/content`;
-    const resp = await this.fetchWithRetry(url);
-    return (await resp.json()) as DADeviationContent;
+  /**
+   * Fetch description HTML for a deviation. Falls back to page scraping
+   * since the /content API endpoint requires user-level auth.
+   */
+  async getDeviationDescription(deviationUrl: string): Promise<string> {
+    const { descriptionHtml } = await this.scrapeDeviationPage(deviationUrl);
+    return descriptionHtml;
   }
 }
