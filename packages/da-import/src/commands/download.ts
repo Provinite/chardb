@@ -2,7 +2,10 @@ import * as path from "path";
 import type { CommandModule } from "yargs";
 import { DeviantArtClient } from "../da-api/client";
 import type { DownloadedDeviation, DownloadState } from "../types/downloaded-deviation";
-import { DownloadStateSchema } from "../types/downloaded-deviation";
+import {
+  DownloadedDeviationSchema,
+  DownloadStateSchema,
+} from "../types/downloaded-deviation";
 import {
   getDataDir,
   getDeviationsDir,
@@ -10,8 +13,10 @@ import {
   writeJson,
   readJson,
   fileExists,
+  listJsonFiles,
 } from "../utils/file-io";
 import { logger } from "../utils/logger";
+import { ProgressTracker } from "../utils/progress";
 
 interface DownloadArgs {
   username: string;
@@ -22,6 +27,7 @@ interface DownloadArgs {
   rateLimit: number;
   url: string | undefined;
   limit: number;
+  redownloadEmpty: boolean;
 }
 
 function extractNumericId(url: string): string | null {
@@ -117,6 +123,12 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
       default: 0,
       describe: "Max deviations to download (0 = unlimited)",
     },
+    "redownload-empty": {
+      type: "boolean" as const,
+      default: false,
+      describe:
+        "Re-download deviations that have empty descriptions (e.g. from 403 errors)",
+    },
   },
   handler: async (argv) => {
     const {
@@ -128,6 +140,7 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
       rateLimit,
       url: singleUrl,
       limit,
+      redownloadEmpty,
     } = argv;
 
     const clientId = clientIdArg || process.env.DEVIANTART_CLIENT_ID || "";
@@ -143,6 +156,61 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
     const deviationsDir = getDeviationsDir();
     await ensureDir(deviationsDir);
     const client = new DeviantArtClient(clientId, clientSecret, rateLimit);
+
+    // Re-download empty descriptions mode
+    if (redownloadEmpty) {
+      const files = await listJsonFiles(deviationsDir);
+      const emptyFiles: string[] = [];
+      for (const file of files) {
+        const filePath = path.join(deviationsDir, file);
+        const dev = await readJson(filePath, DownloadedDeviationSchema);
+        if (!dev.descriptionHtml) {
+          emptyFiles.push(file);
+        }
+      }
+
+      if (emptyFiles.length === 0) {
+        logger.info("No deviations with empty descriptions found.");
+        return;
+      }
+
+      logger.info(
+        `Found ${emptyFiles.length} deviations with empty descriptions. Re-downloading...`
+      );
+
+      const progress = new ProgressTracker(emptyFiles.length, "Re-downloading");
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const file of emptyFiles) {
+        const filePath = path.join(deviationsDir, file);
+        const dev = await readJson(filePath, DownloadedDeviationSchema);
+
+        try {
+          const descriptionHtml = await client.getDeviationDescription(dev.url);
+          if (descriptionHtml) {
+            const updated: DownloadedDeviation = { ...dev, descriptionHtml };
+            await writeJson(filePath, updated);
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (err) {
+          logger.warn(
+            `Failed to re-download description for ${dev.numericId}: ${err}`
+          );
+          failCount++;
+        }
+
+        progress.increment();
+      }
+
+      progress.finish();
+      logger.info(
+        `Re-download complete: ${successCount} recovered, ${failCount} still empty.`
+      );
+      return;
+    }
 
     // Single deviation mode
     if (singleUrl) {

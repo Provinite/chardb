@@ -133,14 +133,37 @@ export class DeviantArtClient {
    * the /content API endpoint is not available with Client Credentials auth.
    */
   async scrapeDeviationPage(
-    pageUrl: string
+    pageUrl: string,
+    maxRetries = 5
   ): Promise<{ uuid: string; descriptionHtml: string }> {
-    const resp = await fetch(pageUrl, {
-      headers: { "User-Agent": "CharDB-Import/1.0" },
-    });
-    if (!resp.ok) {
+    await this.rateLimiter.wait();
+
+    let resp: Response | null = null;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      resp = await fetch(pageUrl, {
+        headers: { "User-Agent": "CharDB-Import/1.0" },
+      });
+
+      if (resp.ok) break;
+
+      if (resp.status === 403 || resp.status === 429 || resp.status >= 500) {
+        const delay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s, 16s, 32s, 64s
+        logger.warn(
+          `DA page scrape ${resp.status} on attempt ${attempt + 1}/${maxRetries + 1}, retrying in ${delay / 1000}s...`
+        );
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+
       throw new Error(`Failed to fetch DA page: ${resp.status}`);
     }
+
+    if (!resp || !resp.ok) {
+      throw new Error(
+        `Failed to fetch DA page after ${maxRetries + 1} attempts: ${resp?.status ?? "no response"}`
+      );
+    }
+
     const html = await resp.text();
 
     // Extract UUID from da:appurl meta tag
