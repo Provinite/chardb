@@ -1295,6 +1295,231 @@
       "pattern": "Beading",
       "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
       "enumValueId": "2df1fe39-59f0-4edf-80cb-9abf0b22cbfa"
+    },
+    {
+      "pattern": "Padded Paws",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf"
+    },
+    {
+      "pattern": "Standard Padding Paws",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf"
+    },
+    {
+      "pattern": "Costume Jewelry",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "50f1312f-1a16-4fb3-bdce-9255db9e8651"
+    },
+    {
+      "pattern": "Button",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "3a960bcc-373c-4caf-828d-c38a1e1099db"
+    },
+    {
+      "pattern": "Stylized Bow Knot",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "47650951-ddda-4d7e-82bb-3154cbeadbcc"
+    },
+    {
+      "pattern": "Pompoms",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "326858ac-e7be-448c-832a-8c80d4d4298f"
+    },
+    {
+      "pattern": "Feather Accents",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "c5a96f71-c1ae-4192-a5fa-5850adb71528"
+    },
+    {
+      "pattern": "Star Buttons",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "3a960bcc-373c-4caf-828d-c38a1e1099db"
+    },
+    {
+      "pattern": "Heart Buttons",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "3a960bcc-373c-4caf-828d-c38a1e1099db"
+    },
+    {
+      "pattern": "Pinback Buttons",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "3a960bcc-373c-4caf-828d-c38a1e1099db"
+    },
+    {
+      "pattern": "Head Antennas",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "a3ef82b7-fe19-48e4-ab20-2b464c1c7ee1"
+    },
+    {
+      "pattern": "Fluff Mane Hair",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "62e9cac4-e4c7-4fa3-ba2f-461b59f9de09"
+    },
+    {
+      "pattern": "Fake Flowers and Leaves",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "8b0e64d0-e3ca-41bc-b01a-f64f22bcc078"
+    },
+    {
+      "pattern": "Fake Plant Stem",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "8b0e64d0-e3ca-41bc-b01a-f64f22bcc078"
+    },
+    {
+      "pattern": "Ruffled Collar",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "880c18bf-8c7e-4fc6-8889-df073cd6adb4"
+    },
+    {
+      "pattern": "Sticker Accents",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "735d03b0-23a6-41f4-a349-fe1f3bd399c4"
+    },
+    {
+      "pattern": "Keyrings",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "b1133a47-c8ca-45bd-8b9b-270abbc7c468"
+    },
+    {
+      "pattern": "Lace Trim",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "8b39b1b9-2d0d-45d3-8f57-33d5d9dc6e6b"
+    },
+    {
+      "pattern": "Ribbons and Bows",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "239ea7e2-017a-41c6-85d3-c32ccb4c61be"
+    },
+    {
+      "pattern": "Collar Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Costume Saddle",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "076b6eb9-da29-42e1-9e72-23e2c7844542"
+    },
+    {
+      "pattern": "Outfit",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "076b6eb9-da29-42e1-9e72-23e2c7844542"
+    },
+    {
+      "pattern": "Costume Props",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86"
+    },
+    {
+      "pattern": "Accessories",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "87c9cf69-539e-40ca-8e5e-ed5654f8935f"
+    },
+    {
+      "pattern": "Extra Fabric",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "ecb0b736-fbc3-4d0a-aa03-3a70138b9211"
+    },
+    {
+      "pattern": "Extra Fabric Flap",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "ecb0b736-fbc3-4d0a-aa03-3a70138b9211"
+    },
+    {
+      "pattern": "Patches and Patchwork",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "e1a186b2-0c20-4431-9a81-b914b3a5b3a7"
+    },
+    {
+      "pattern": "Gemstone",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "a810d82b-29a9-4ef2-9107-11f90cd4c4f5"
+    },
+    {
+      "pattern": "Pocket",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "cae4c0e5-ef0e-4859-bae7-7de5b2fb2905"
+    },
+    {
+      "pattern": "Sheer Fabric",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "79751a09-2f19-44af-8cbb-22f2ea4ff17e"
+    },
+    {
+      "pattern": "1 Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Pins",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "875cc88d-120d-47a0-b083-b1093a40bac7"
+    },
+    {
+      "pattern": "Paw Paws",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0"
+    },
+    {
+      "pattern": "Heart Shaped Paw Pads",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "8d439215-f89d-4494-8a75-e388aae3f186"
+    },
+    {
+      "pattern": "Medium Droop Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269"
+    },
+    {
+      "pattern": "Empty Pillow Case Tail",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958"
+    },
+    {
+      "pattern": "Open Case Tail",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8"
+    },
+    {
+      "pattern": "StandardTongue",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc"
+    },
+    {
+      "pattern": "Round Tongue",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc"
+    },
+    {
+      "pattern": "Scent",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5"
+    },
+    {
+      "pattern": "Scented Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5"
+    },
+    {
+      "pattern": "Magic Scent",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5"
+    },
+    {
+      "pattern": "Magic Body Temperature Control",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a7df7285-6120-4655-aa95-6809fd259ab5"
+    },
+    {
+      "pattern": "Fins Body Modification",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "a3f65386-1506-451f-938a-ca95df0b90af"
+    },
+    {
+      "pattern": "Piercings",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "2b3509d6-c132-401d-9ca5-4337de00bac8"
     }
   ],
   "compositeRules": [
@@ -1341,6 +1566,36 @@
           "groupName": "Multiple Tails",
           "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
           "enumValueId": "dc191b76-de74-461c-b613-74b10a5f9fd1"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Sheer Hair(?:\\s*\\(.*\\))?$",
+      "extractions": [
+        {
+          "groupName": "Hair",
+          "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+          "enumValueId": "62e9cac4-e4c7-4fa3-ba2f-461b59f9de09"
+        },
+        {
+          "groupName": "Sheer",
+          "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+          "enumValueId": "79751a09-2f19-44af-8cbb-22f2ea4ff17e"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Bob Closed Case Tail$",
+      "extractions": [
+        {
+          "groupName": "Bob Tail",
+          "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+          "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31"
+        },
+        {
+          "groupName": "Closed Case Tail",
+          "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+          "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832"
         }
       ]
     }
