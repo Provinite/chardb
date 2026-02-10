@@ -100,6 +100,7 @@ export class CommunityColorsResolver {
 
   // ==================== Field Resolvers ====================
 
+  @AllowUnauthenticated()
   @ResolveField(() => Community)
   async community(@Parent() color: CommunityColor): Promise<Community> {
     if (color.community) {

@@ -116,6 +116,7 @@ export class SpeciesResolver {
     return mapPrismaSpeciesConnectionToGraphQL(serviceResult);
   }
 
+  @AllowUnauthenticated()
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.Any)
   @ResolveCommunityFrom({ speciesId: "id" })
