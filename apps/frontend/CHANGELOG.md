@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Long text overflow in media cards and detail pages**: Titles and descriptions with long unbroken strings now wrap correctly instead of overflowing their containers (#10)
+- **Raw markdown visible in media card descriptions**: Card previews now strip markdown syntax and display clean plain text instead of showing raw `**bold**` and `[link](url)` syntax
 
 ## [v9.1.0] - 2026-02-09
 
