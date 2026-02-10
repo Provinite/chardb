@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Character search**: Fixed an error when using advanced search with empty price filters (#167)
 - **Long text overflow in media cards and detail pages**: Titles and descriptions with long unbroken strings now wrap correctly instead of overflowing their containers (#10)
 - **Raw markdown visible in media card descriptions**: Card previews now strip markdown syntax and display clean plain text instead of showing raw `**bold**` and `[link](url)` syntax
 
