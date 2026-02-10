@@ -191,6 +191,7 @@ export const scaffoldMappingCommand: CommandModule<object, ScaffoldArgs> = {
         "^MYO",
         "Design by",
       ],
+      textValueTraits: [],
     };
 
     const outPath = path.join(getConfigDir(), "trait-mapping.json");

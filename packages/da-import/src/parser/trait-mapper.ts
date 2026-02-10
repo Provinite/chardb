@@ -152,7 +152,7 @@ export function deriveVariant(
   let highestRarity: string | null = null;
 
   for (const trait of mappedTraits) {
-    if (trait.rarity) {
+    if ("rarity" in trait && trait.rarity) {
       const idx = config.rarityOrder.indexOf(trait.rarity);
       if (idx > highestRarityIndex) {
         highestRarityIndex = idx;

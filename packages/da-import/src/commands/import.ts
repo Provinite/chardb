@@ -201,7 +201,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
           speciesVariantId: char.derivedVariantId ?? config.rarityToVariantId[config.rarityOrder[0]],
           traitValues: char.mappedTraits.map((t) => ({
             traitId: t.traitId,
-            value: t.enumValueId,
+            value: "enumValueId" in t ? t.enumValueId : t.textValue,
           })),
           pendingOwner: char.ownerDaUsername
             ? {

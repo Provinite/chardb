@@ -1,11 +1,22 @@
 import { z } from "zod";
 
-export const MappedTraitSchema = z.object({
+export const EnumMappedTraitSchema = z.object({
   traitId: z.string(),
   enumValueId: z.string(),
   rarity: z.string().optional(),
   sourceLine: z.string(),
 });
+
+export const TextMappedTraitSchema = z.object({
+  traitId: z.string(),
+  textValue: z.string(),
+  sourceLine: z.string(),
+});
+
+export const MappedTraitSchema = z.union([
+  EnumMappedTraitSchema,
+  TextMappedTraitSchema,
+]);
 
 export type MappedTrait = z.infer<typeof MappedTraitSchema>;
 

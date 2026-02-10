@@ -24,6 +24,13 @@ export const CompositeRuleSchema = z.object({
 
 export type CompositeRule = z.infer<typeof CompositeRuleSchema>;
 
+export const TextValueTraitSchema = z.object({
+  traitId: z.string(),
+  source: z.enum(["deviationUrl"]),
+});
+
+export type TextValueTrait = z.infer<typeof TextValueTraitSchema>;
+
 export const MappingConfigSchema = z.object({
   speciesId: z.string(),
   communityId: z.string(),
@@ -33,6 +40,7 @@ export const MappingConfigSchema = z.object({
   rules: z.array(SimpleRuleSchema),
   compositeRules: z.array(CompositeRuleSchema).default([]),
   ignorePatterns: z.array(z.string()).default([]),
+  textValueTraits: z.array(TextValueTraitSchema).default([]),
 });
 
 export type MappingConfig = z.infer<typeof MappingConfigSchema>;

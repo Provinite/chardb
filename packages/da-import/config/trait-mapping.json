@@ -2083,5 +2083,11 @@
     "^Terms of Use",
     "^F\\.?A\\.?Q",
     "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Mouth\\s*\\(No Mouth\\)"
+  ],
+  "textValueTraits": [
+    {
+      "traitId": "d1da3098-4f59-4edd-9e0d-bcaa841b7479",
+      "source": "deviationUrl"
+    }
   ]
 }

@@ -98,8 +98,21 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
 
       // Filter out TODO-mapped traits
       const validMappedTraits = mappedTraits.filter(
-        (t) => t.traitId !== "TODO" && t.enumValueId !== "TODO"
+        (t) =>
+          t.traitId !== "TODO" &&
+          (!("enumValueId" in t) || t.enumValueId !== "TODO")
       );
+
+      // Add text-value traits from config
+      for (const tvt of config.textValueTraits) {
+        if (tvt.source === "deviationUrl") {
+          validMappedTraits.push({
+            traitId: tvt.traitId,
+            textValue: deviation.url,
+            sourceLine: deviation.url,
+          });
+        }
+      }
 
       // Derive variant from rarity
       const { variantId, rarity } = deriveVariant(validMappedTraits, config);
