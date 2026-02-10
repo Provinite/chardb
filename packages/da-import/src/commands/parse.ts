@@ -15,6 +15,7 @@ import {
 } from "../utils/file-io";
 import { logger } from "../utils/logger";
 import { ProgressTracker } from "../utils/progress";
+import { loadExclusions } from "./exclude";
 
 interface ParseArgs {
   mapping: string;
@@ -56,10 +57,22 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
       );
     }
 
+    // Load exclusions
+    const exclusions = await loadExclusions();
+    const excludedIds = new Set(exclusions.map((e) => e.numericId));
+
     // Load deviations
     const deviationsDir = getDeviationsDir();
-    const files = await listJsonFiles(deviationsDir);
-    logger.info(`Found ${files.length} downloaded deviations.`);
+    const allFiles = await listJsonFiles(deviationsDir);
+    const files = allFiles.filter(
+      (f) => !excludedIds.has(f.replace(".json", ""))
+    );
+    logger.info(
+      `Found ${allFiles.length} downloaded deviations` +
+        (excludedIds.size > 0
+          ? ` (${excludedIds.size} excluded, parsing ${files.length}).`
+          : ".")
+    );
 
     const parsedCharacters: ParsedCharacter[] = [];
     const progress = new ProgressTracker(files.length, "Parsing");
