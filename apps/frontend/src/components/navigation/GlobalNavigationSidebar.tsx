@@ -199,68 +199,72 @@ export const GlobalNavigationSidebar: React.FC<GlobalNavigationSidebarProps> = (
           </ToggleButton>
         )}
 
-        {/* Personal Content Section */}
-        <CommunityNavigationGroup title="My Content" icon={User} defaultExpanded>
-          <CommunityNavigationItem
-            to="/my/characters"
-            icon={User}
-            label="My Characters"
-            isNested
-          />
-          <CommunityNavigationItem
-            to="/my/galleries"
-            icon={LayoutGrid}
-            label="My Galleries"
-            isNested
-          />
-          <CommunityNavigationItem
-            to="/my/media"
-            icon={Image}
-            label="My Media"
-            isNested
-          />
-        </CommunityNavigationGroup>
+        {user && (
+          <>
+            {/* Personal Content Section */}
+            <CommunityNavigationGroup title="My Content" icon={User} defaultExpanded>
+              <CommunityNavigationItem
+                to="/my/characters"
+                icon={User}
+                label="My Characters"
+                isNested
+              />
+              <CommunityNavigationItem
+                to="/my/galleries"
+                icon={LayoutGrid}
+                label="My Galleries"
+                isNested
+              />
+              <CommunityNavigationItem
+                to="/my/media"
+                icon={Image}
+                label="My Media"
+                isNested
+              />
+            </CommunityNavigationGroup>
 
-        <Divider />
+            <Divider />
 
-        {/* Liked Content Section */}
-        <CommunityNavigationGroup title="Liked" icon={Heart}>
-          <CommunityNavigationItem
-            to="/liked/characters"
-            icon={User}
-            label="Characters"
-            isNested
-          />
-          <CommunityNavigationItem
-            to="/liked/galleries"
-            icon={LayoutGrid}
-            label="Galleries"
-            isNested
-          />
-          <CommunityNavigationItem
-            to="/liked/media"
-            icon={Image}
-            label="Media"
-            isNested
-          />
-        </CommunityNavigationGroup>
+            {/* Liked Content Section */}
+            <CommunityNavigationGroup title="Liked" icon={Heart}>
+              <CommunityNavigationItem
+                to="/liked/characters"
+                icon={User}
+                label="Characters"
+                isNested
+              />
+              <CommunityNavigationItem
+                to="/liked/galleries"
+                icon={LayoutGrid}
+                label="Galleries"
+                isNested
+              />
+              <CommunityNavigationItem
+                to="/liked/media"
+                icon={Image}
+                label="Media"
+                isNested
+              />
+            </CommunityNavigationGroup>
 
-        <Divider />
+            <Divider />
 
-        {/* Activity Section */}
-        <CommunityNavigationItem
-          to="/feed"
-          icon={Activity}
-          label="Activity Feed"
-        />
+            {/* Activity Section */}
+            <CommunityNavigationItem
+              to="/feed"
+              icon={Activity}
+              label="Activity Feed"
+            />
 
-        <CommunityNavigationItem
-          to={`/user/${user?.username || ''}`}
-          icon={User}
-          label="My Profile"
-        />
+            <CommunityNavigationItem
+              to={`/user/${user.username}`}
+              icon={User}
+              label="My Profile"
+            />
 
-        <Divider />
+            <Divider />
+          </>
+        )}
 
         {/* Browse Section */}
         <CommunityNavigationGroup title="Browse" icon={LayoutGrid}>
@@ -288,29 +292,31 @@ export const GlobalNavigationSidebar: React.FC<GlobalNavigationSidebarProps> = (
 
         {/* Communities Section */}
         <CommunityNavigationGroup title="Communities" icon={Users} defaultExpanded>
-          {communitiesLoading ? (
-            <LoadingContainer>Loading communities...</LoadingContainer>
-          ) : communities.length > 0 ? (
-            <>
-              {communities.map((community) => (
+          {user && (
+            communitiesLoading ? (
+              <LoadingContainer>Loading communities...</LoadingContainer>
+            ) : communities.length > 0 ? (
+              <>
+                {communities.map((community) => (
+                  <CommunityNavigationItem
+                    key={community.id}
+                    to={`/communities/${community.id}`}
+                    icon={Users}
+                    label={community.name}
+                    isNested
+                  />
+                ))}
+                <Divider />
                 <CommunityNavigationItem
-                  key={community.id}
-                  to={`/communities/${community.id}`}
+                  to="/my/communities"
                   icon={Users}
-                  label={community.name}
+                  label="View All"
                   isNested
                 />
-              ))}
-              <Divider />
-              <CommunityNavigationItem
-                to="/my/communities"
-                icon={Users}
-                label="View All"
-                isNested
-              />
-            </>
-          ) : (
-            <LoadingContainer>No communities yet</LoadingContainer>
+              </>
+            ) : (
+              <LoadingContainer>No communities yet</LoadingContainer>
+            )
           )}
           <CommunityNavigationItem
             to="/join-community"
