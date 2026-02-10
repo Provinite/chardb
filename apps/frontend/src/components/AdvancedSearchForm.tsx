@@ -171,9 +171,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
           <Select id="searchFields" {...register('searchFields')}>
             <option value="all">All Fields</option>
             <option value="name">Name Only</option>
-            <option value="description">Description Only</option>
-            <option value="personality">Personality Only</option>
-            <option value="backstory">Backstory Only</option>
+            <option value="details">Details Only</option>
           </Select>
         </FormGroup>
       </SearchRow>

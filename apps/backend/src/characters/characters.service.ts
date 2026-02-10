@@ -1201,18 +1201,12 @@ export class CharactersService {
     switch (searchFields) {
       case "name":
         return [{ name: searchTerm }];
-      case "description":
-        return [{ description: searchTerm }];
-      case "personality":
-        return [{ personality: searchTerm }];
-      case "backstory":
-        return [{ backstory: searchTerm }];
+      case "details":
+        return [{ details: searchTerm }];
       default: // 'all'
         return [
           { name: searchTerm },
-          { description: searchTerm },
-          { personality: searchTerm },
-          { backstory: searchTerm },
+          { details: searchTerm },
           { species: { name: searchTerm } },
         ];
     }

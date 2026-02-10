@@ -320,7 +320,7 @@ export class CharacterFiltersInput {
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  searchFields?: string; // "name", "description", "all" - what fields to search
+  searchFields?: string; // "name", "details", "all" - what fields to search
 }
 
 @InputType()
