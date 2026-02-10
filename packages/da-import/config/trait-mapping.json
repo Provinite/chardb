@@ -1666,6 +1666,106 @@
           "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e"
         }
       ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Dark Open Eyes?$",
+      "extractions": [
+        {
+          "groupName": "Dark Eyes",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7"
+        },
+        {
+          "groupName": "Open Eyes",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Open Star Pupil Eyes?$",
+      "extractions": [
+        {
+          "groupName": "Open Eyes",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f"
+        },
+        {
+          "groupName": "Shaped Pupils",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Open Dark Slit Eyes with Soft Special Glow$",
+      "extractions": [
+        {
+          "groupName": "Open Eyes",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f"
+        },
+        {
+          "groupName": "Dark Eyes",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7"
+        },
+        {
+          "groupName": "Glowing Eyes",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "eb437853-da6f-4c31-a6fa-3381d06c00ee"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Open Bejeweled Eyes?$",
+      "extractions": [
+        {
+          "groupName": "Open Eyes",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f"
+        },
+        {
+          "groupName": "Bejeweled Eyes",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "3e92bbf4-3ef6-482c-b3c4-6fbe03d938c5"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Bejeweled With Special Glow Eyes?$",
+      "extractions": [
+        {
+          "groupName": "Bejeweled Eyes",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "3e92bbf4-3ef6-482c-b3c4-6fbe03d938c5"
+        },
+        {
+          "groupName": "Glowing Eyes",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "eb437853-da6f-4c31-a6fa-3381d06c00ee"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Dark Open Eyes? with Very Rare Shaped Pupils?$",
+      "extractions": [
+        {
+          "groupName": "Dark Eyes",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7"
+        },
+        {
+          "groupName": "Open Eyes",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f"
+        },
+        {
+          "groupName": "Shaped Pupils",
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7"
+        }
+      ]
     }
   ],
   "ignorePatterns": [
