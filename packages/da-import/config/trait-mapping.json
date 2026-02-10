@@ -6,12 +6,10 @@
     "Uncommon",
     "Rare",
     "Very Rare",
-    "Legendary",
-    "Exclusive"
+    "Special"
   ],
   "rarityPrefixes": [
-    "Exclusive",
-    "Legendary",
+    "Special",
     "Very Rare",
     "Rare",
     "Uncommon",
@@ -22,8 +20,7 @@
     "Uncommon": "4c1375cc-89b6-4e39-acad-0714548498a4",
     "Rare": "e9c03262-8eb6-4be4-a570-73dd3a47df9a",
     "Very Rare": "0b4b12c5-db8a-4f31-ba41-b5dcccd46d07",
-    "Legendary": "e3f878f8-4e76-42a6-a012-2cb3e04c8c00",
-    "Exclusive": "e3f878f8-4e76-42a6-a012-2cb3e04c8c00"
+    "Special": "e3f878f8-4e76-42a6-a012-2cb3e04c8c00"
   },
   "rules": [
     {
@@ -1542,15 +1539,15 @@
       "extractions": []
     },
     {
-      "linePattern": "^((?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+.+?)\\s+with\\s+((?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+.+?)(?:\\s*\\(.*\\))?$",
+      "linePattern": "^((?:Common|Uncommon|Rare|Very Rare|Special)\\s+.+?)\\s+with\\s+((?:Common|Uncommon|Rare|Very Rare|Special)\\s+.+?)(?:\\s*\\(.*\\))?$",
       "extractions": []
     },
     {
-      "linePattern": "^((?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+.+?)\\s+and\\s+((?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+.+?)$",
+      "linePattern": "^((?:Common|Uncommon|Rare|Very Rare|Special)\\s+.+?)\\s+and\\s+((?:Common|Uncommon|Rare|Very Rare|Special)\\s+.+?)$",
       "extractions": []
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Claws\\s+with\\s+Special\\s+Raptor Dew Claws?$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Claws\\s+with\\s+Special\\s+Raptor Dew Claws?$",
       "extractions": [
         {
           "groupName": "Claws",
@@ -1565,7 +1562,7 @@
       ]
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Shaped Multiple Tails?$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Shaped Multiple Tails?$",
       "extractions": [
         {
           "groupName": "Shaped Tail",
@@ -1580,7 +1577,7 @@
       ]
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Sheer Hair(?:\\s*\\(.*\\))?$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Sheer Hair(?:\\s*\\(.*\\))?$",
       "extractions": [
         {
           "groupName": "Hair",
@@ -1595,7 +1592,7 @@
       ]
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Bob Closed Case Tail$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Bob Closed Case Tail$",
       "extractions": [
         {
           "groupName": "Bob Tail",
@@ -1610,11 +1607,11 @@
       ]
     },
     {
-      "linePattern": "^((?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Tongue),\\s+(.+)$",
+      "linePattern": "^((?:Common|Uncommon|Rare|Very Rare|Special)\\s+Tongue),\\s+(.+)$",
       "extractions": []
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Tongue,\\s+Special Shark Teeth$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Tongue,\\s+Special Shark Teeth$",
       "extractions": [
         {
           "groupName": "Standard Tongue",
@@ -1629,11 +1626,11 @@
       ]
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Mouth,\\s+((?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+.+)$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Mouth,\\s+((?:Common|Uncommon|Rare|Very Rare|Special)\\s+.+)$",
       "extractions": []
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Mouth,\\s+Uncommon\\s+\\(.*\\)\\s*Slim Tongue$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Mouth,\\s+Uncommon\\s+\\(.*\\)\\s*Slim Tongue$",
       "extractions": [
         {
           "groupName": "Slim Tongue",
@@ -1643,7 +1640,7 @@
       ]
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Mouth \\(No Teeth\\)$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Mouth \\(No Teeth\\)$",
       "extractions": [
         {
           "groupName": "No Teeth",
@@ -1653,7 +1650,7 @@
       ]
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Forked Tongue\\s+(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive|Special)\\s+Fangs$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Forked Tongue\\s+(?:Common|Uncommon|Rare|Very Rare|Special|Special)\\s+Fangs$",
       "extractions": [
         {
           "groupName": "Forked Tongue",
@@ -1668,7 +1665,7 @@
       ]
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Dark Open Eyes?$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Dark Open Eyes?$",
       "extractions": [
         {
           "groupName": "Dark Eyes",
@@ -1683,7 +1680,7 @@
       ]
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Open Star Pupil Eyes?$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Open Star Pupil Eyes?$",
       "extractions": [
         {
           "groupName": "Open Eyes",
@@ -1698,7 +1695,7 @@
       ]
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Open Dark Slit Eyes with Soft Special Glow$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Open Dark Slit Eyes with Soft Special Glow$",
       "extractions": [
         {
           "groupName": "Open Eyes",
@@ -1718,7 +1715,7 @@
       ]
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Open Bejeweled Eyes?$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Open Bejeweled Eyes?$",
       "extractions": [
         {
           "groupName": "Open Eyes",
@@ -1733,7 +1730,7 @@
       ]
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Bejeweled With Special Glow Eyes?$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Bejeweled With Special Glow Eyes?$",
       "extractions": [
         {
           "groupName": "Bejeweled Eyes",
@@ -1748,7 +1745,7 @@
       ]
     },
     {
-      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Dark Open Eyes? with Very Rare Shaped Pupils?$",
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Dark Open Eyes? with Very Rare Shaped Pupils?$",
       "extractions": [
         {
           "groupName": "Dark Eyes",
@@ -1764,6 +1761,81 @@
           "groupName": "Shaped Pupils",
           "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
           "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Standard Ear and (?:Common|Uncommon|Rare|Very Rare|Special)\\s+Droop Ear$",
+      "extractions": [
+        {
+          "groupName": "Standard Ears",
+          "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+          "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359"
+        },
+        {
+          "groupName": "Droop Ears",
+          "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+          "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Bob Droop Ears?$",
+      "extractions": [
+        {
+          "groupName": "Bob Ears",
+          "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+          "enumValueId": "0d054c0b-6909-408f-a1c3-0a918759568a"
+        },
+        {
+          "groupName": "Droop Ears",
+          "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+          "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Paws,\\s+(?:Common|Uncommon|Rare|Very Rare|Special|Special)\\s+Retractable Claws$",
+      "extractions": [
+        {
+          "groupName": "Standard Paw",
+          "traitId": "508da275-4435-4385-832e-1cec41e89644",
+          "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854"
+        },
+        {
+          "groupName": "Retractable Claws",
+          "traitId": "508da275-4435-4385-832e-1cec41e89644",
+          "enumValueId": "729ade5b-3e93-4f36-ab54-714870b1efa6"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Shaped Tail with Special Multiple Knots$",
+      "extractions": [
+        {
+          "groupName": "Shaped Tail",
+          "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+          "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9"
+        },
+        {
+          "groupName": "Multiple Knotted Tails",
+          "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+          "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Scent Magic\\s*\\(.*\\)\\s+(?:Common|Uncommon|Rare|Very Rare|Special|Special)\\s+Fabric Pattern Animation\\s*\\(.*\\)$",
+      "extractions": [
+        {
+          "groupName": "Scented",
+          "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+          "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5"
+        },
+        {
+          "groupName": "Fabric Pattern Animation",
+          "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+          "enumValueId": "a827f2a4-3e99-4eed-8579-f52c9473b0b1"
         }
       ]
     }
@@ -1780,6 +1852,6 @@
     "^Pillowing Wiki",
     "^Terms of Use",
     "^F\\.?A\\.?Q",
-    "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Mouth\\s*\\(No Mouth\\)"
+    "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Mouth\\s*\\(No Mouth\\)"
   ]
 }
