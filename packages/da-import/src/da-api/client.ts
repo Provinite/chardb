@@ -18,9 +18,10 @@ export class DeviantArtClient {
   constructor(
     private readonly clientId: string,
     private readonly clientSecret: string,
-    intervalMs = 1000
+    minIntervalMs = 2000,
+    maxIntervalMs = 3000
   ) {
-    this.rateLimiter = new RateLimiter(intervalMs);
+    this.rateLimiter = new RateLimiter(minIntervalMs, maxIntervalMs);
   }
 
   private async authenticate(): Promise<void> {
@@ -133,35 +134,15 @@ export class DeviantArtClient {
    * the /content API endpoint is not available with Client Credentials auth.
    */
   async scrapeDeviationPage(
-    pageUrl: string,
-    maxRetries = 5
+    pageUrl: string
   ): Promise<{ uuid: string; descriptionHtml: string }> {
     await this.rateLimiter.wait();
 
-    let resp: Response | null = null;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      resp = await fetch(pageUrl, {
-        headers: { "User-Agent": "CharDB-Import/1.0" },
-      });
-
-      if (resp.ok) break;
-
-      if (resp.status === 403 || resp.status === 429 || resp.status >= 500) {
-        const delay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s, 16s, 32s, 64s
-        logger.warn(
-          `DA page scrape ${resp.status} on attempt ${attempt + 1}/${maxRetries + 1}, retrying in ${delay / 1000}s...`
-        );
-        await new Promise((r) => setTimeout(r, delay));
-        continue;
-      }
-
+    const resp = await fetch(pageUrl, {
+      headers: { "User-Agent": "CharDB-Import/1.0" },
+    });
+    if (!resp.ok) {
       throw new Error(`Failed to fetch DA page: ${resp.status}`);
-    }
-
-    if (!resp || !resp.ok) {
-      throw new Error(
-        `Failed to fetch DA page after ${maxRetries + 1} attempts: ${resp?.status ?? "no response"}`
-      );
     }
 
     const html = await resp.text();

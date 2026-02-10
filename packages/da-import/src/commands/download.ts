@@ -155,7 +155,7 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
 
     const deviationsDir = getDeviationsDir();
     await ensureDir(deviationsDir);
-    const client = new DeviantArtClient(clientId, clientSecret, rateLimit);
+    const client = new DeviantArtClient(clientId, clientSecret);
 
     // Re-download empty descriptions mode
     if (redownloadEmpty) {

@@ -1235,6 +1235,66 @@
       "pattern": "Eyeless Eye",
       "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
       "enumValueId": "d768f743-5bfa-4640-8956-a7ac441a0fd5"
+    },
+    {
+      "pattern": "No Claws",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "d4ead820-e39e-4a9b-9258-950495d7aaa0"
+    },
+    {
+      "pattern": "Animal Hood",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "3874b5e2-099e-4da7-913d-e56cc67f1114"
+    },
+    {
+      "pattern": "Prop",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86"
+    },
+    {
+      "pattern": "Props",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86"
+    },
+    {
+      "pattern": "Shaped Tails",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9"
+    },
+    {
+      "pattern": "Shape Tail",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9"
+    },
+    {
+      "pattern": "Shaped Pawpads",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "8d439215-f89d-4494-8a75-e388aae3f186"
+    },
+    {
+      "pattern": "Pawpads",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0"
+    },
+    {
+      "pattern": "Extra Fabric Flaps",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "ecb0b736-fbc3-4d0a-aa03-3a70138b9211"
+    },
+    {
+      "pattern": "Bumpy Mink Fabric",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "TODO"
+    },
+    {
+      "pattern": "Stitches",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "8f276e6c-08bd-4cfb-b0ff-7f5f602a0a82"
+    },
+    {
+      "pattern": "Beading",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "2df1fe39-59f0-4edf-80cb-9abf0b22cbfa"
     }
   ],
   "compositeRules": [
@@ -1253,6 +1313,36 @@
     {
       "linePattern": "^((?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+.+?)\\s+and\\s+((?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+.+?)$",
       "extractions": []
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Claws\\s+with\\s+Special\\s+Raptor Dew Claws?$",
+      "extractions": [
+        {
+          "groupName": "Claws",
+          "traitId": "508da275-4435-4385-832e-1cec41e89644",
+          "enumValueId": "552ee57e-35aa-4576-8ab8-2e4f5dec4844"
+        },
+        {
+          "groupName": "Raptor Dew Claws",
+          "traitId": "508da275-4435-4385-832e-1cec41e89644",
+          "enumValueId": "ad72a149-2a2a-445a-a567-4471669427d3"
+        }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+Shaped Multiple Tails?$",
+      "extractions": [
+        {
+          "groupName": "Shaped Tail",
+          "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+          "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9"
+        },
+        {
+          "groupName": "Multiple Tails",
+          "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+          "enumValueId": "dc191b76-de74-461c-b613-74b10a5f9fd1"
+        }
+      ]
     }
   ],
   "ignorePatterns": [
