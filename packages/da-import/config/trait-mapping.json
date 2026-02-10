@@ -77,7 +77,17 @@
       "enumValueId": "0d054c0b-6909-408f-a1c3-0a918759568a"
     },
     {
+      "pattern": "Bob Ear",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "0d054c0b-6909-408f-a1c3-0a918759568a"
+    },
+    {
       "pattern": "Drop Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "1c3a221a-a835-4499-b4dc-0e0d540f1533"
+    },
+    {
+      "pattern": "Drop Ear",
       "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
       "enumValueId": "1c3a221a-a835-4499-b4dc-0e0d540f1533"
     },
@@ -158,6 +168,11 @@
     },
     {
       "pattern": "Open Eyes",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f"
+    },
+    {
+      "pattern": "Standard Eyes",
       "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
       "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f"
     },
@@ -467,6 +482,11 @@
       "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86"
     },
     {
+      "pattern": "Item Prop",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86"
+    },
+    {
       "pattern": "Key Rings",
       "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
       "enumValueId": "b1133a47-c8ca-45bd-8b9b-270abbc7c468"
@@ -573,6 +593,11 @@
     },
     {
       "pattern": "Sheer",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "79751a09-2f19-44af-8cbb-22f2ea4ff17e"
+    },
+    {
+      "pattern": "Sheer Material",
       "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
       "enumValueId": "79751a09-2f19-44af-8cbb-22f2ea4ff17e"
     },
@@ -882,6 +907,16 @@
       "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5"
     },
     {
+      "pattern": "Scent Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5"
+    },
+    {
+      "pattern": "Scent magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5"
+    },
+    {
       "pattern": "Body Temperature Control",
       "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
       "enumValueId": "a7df7285-6120-4655-aa95-6809fd259ab5"
@@ -988,6 +1023,11 @@
     },
     {
       "pattern": "Half Attached Pillow Case",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "ec2ac31f-13df-4af6-bfe9-78feddace82a"
+    },
+    {
+      "pattern": "Half Attached Case",
       "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
       "enumValueId": "ec2ac31f-13df-4af6-bfe9-78feddace82a"
     },
@@ -1099,7 +1139,19 @@
   ],
   "compositeRules": [
     {
+      "linePattern": "^(.+?Length)\\s+and\\s+(.+?(?:Width|Slim|Wide))(?:\\s+Tail)?\\s*\\((.+?)\\s*\\)$",
+      "extractions": []
+    },
+    {
       "linePattern": "^(.+?)\\s+and\\s+(.+?)\\s+Tail,\\s*(.+)$",
+      "extractions": []
+    },
+    {
+      "linePattern": "^((?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+.+?)\\s+with\\s+((?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+.+?)(?:\\s*\\(.*\\))?$",
+      "extractions": []
+    },
+    {
+      "linePattern": "^((?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+.+?)\\s+and\\s+((?:Common|Uncommon|Rare|Very Rare|Legendary|Exclusive)\\s+.+?)$",
       "extractions": []
     }
   ],

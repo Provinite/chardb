@@ -8,6 +8,31 @@ export interface TraitMappingResult {
   warnings: string[];
 }
 
+/**
+ * Strip a trailing parenthetical like "(Bell Collar)" from a trait text.
+ */
+function stripParenthetical(text: string): string {
+  return text.replace(/\s*\([^)]*\)\s*$/, "").trim();
+}
+
+/**
+ * Look up a trait text in the rule map, falling back to stripping
+ * a trailing parenthetical modifier if the exact text doesn't match.
+ */
+function lookupRule(
+  traitText: string,
+  ruleLookup: Map<string, { traitId: string; enumValueId: string }>
+): { traitId: string; enumValueId: string } | undefined {
+  const exact = ruleLookup.get(traitText.toLowerCase());
+  if (exact) return exact;
+
+  const stripped = stripParenthetical(traitText);
+  if (stripped !== traitText) {
+    return ruleLookup.get(stripped.toLowerCase());
+  }
+  return undefined;
+}
+
 function matchesIgnorePattern(
   line: string,
   ignorePatterns: string[]
@@ -47,7 +72,7 @@ function tryCompositeRules(
       const subLine = match[i]?.trim();
       if (!subLine) continue;
       const { rarity, traitText } = extractTraitAndRarity(subLine);
-      const found = ruleLookup.get(traitText.toLowerCase());
+      const found = lookupRule(traitText, ruleLookup);
       if (found) {
         results.push({
           traitId: found.traitId,
@@ -98,8 +123,8 @@ export function mapTraitLines(
     // Extract rarity and trait text
     const { rarity, traitText } = extractTraitAndRarity(trimmed);
 
-    // Look up in simple rules
-    const match = ruleLookup.get(traitText.toLowerCase());
+    // Look up in simple rules (with parenthetical stripping fallback)
+    const match = lookupRule(traitText, ruleLookup);
     if (match) {
       mappedTraits.push({
         traitId: match.traitId,
