@@ -1195,7 +1195,7 @@ export class CharactersService {
     return updatedCharacter;
   }
 
-  private buildSearchConditions(search: string, searchFields: string) {
+  private buildSearchConditions(search: string, searchFields: string): Prisma.CharacterWhereInput[] {
     const searchTerm = { contains: search, mode: "insensitive" as const };
 
     switch (searchFields) {
@@ -1212,7 +1212,7 @@ export class CharactersService {
     }
   }
 
-  private buildOrderBy(sortBy: string, sortOrder: string) {
+  private buildOrderBy(sortBy: string, sortOrder: string): Prisma.CharacterOrderByWithRelationInput {
     const order = sortOrder === "asc" ? "asc" : "desc";
 
     switch (sortBy) {
