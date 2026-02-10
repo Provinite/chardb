@@ -121,6 +121,7 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
         numericId: deviation.numericId,
         name: parsed.characterName || deviation.title,
         ownerDaUsername: parsed.ownerUsername,
+        category: parsed.category,
         folderName: deviation.folderName,
         url: deviation.url,
         mappedTraits: validMappedTraits,

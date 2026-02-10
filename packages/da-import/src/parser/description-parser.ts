@@ -3,6 +3,7 @@ import * as cheerio from "cheerio";
 export interface ParsedDescription {
   characterName: string;
   ownerUsername: string;
+  category: string;
   traitLines: string[];
   rawText: string;
 }
@@ -98,6 +99,16 @@ export function parseDescription(
     }
   }
 
+  // Extract category (Official, MYO, Guest, etc.)
+  let category = "";
+  for (const line of allLines) {
+    const catMatch = line.match(/category\s*:\s*(.+)/i);
+    if (catMatch) {
+      category = catMatch[1].trim();
+      break;
+    }
+  }
+
   // Extract trait lines — lines after "Features:" that have rarity prefixes
   const traitLines: string[] = [];
   let inFeatures = false;
@@ -130,6 +141,7 @@ export function parseDescription(
   return {
     characterName: characterName.replace(/^#*\s*/, "").trim(),
     ownerUsername,
+    category,
     traitLines,
     rawText,
   };

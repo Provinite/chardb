@@ -24,6 +24,7 @@ export const ParsedCharacterSchema = z.object({
   numericId: z.string(),
   name: z.string(),
   ownerDaUsername: z.string(),
+  category: z.string(),
   folderName: z.string(),
   url: z.string(),
   mappedTraits: z.array(MappedTraitSchema),
