@@ -1838,6 +1838,236 @@
           "enumValueId": "a827f2a4-3e99-4eed-8579-f52c9473b0b1"
         }
       ]
+    },
+    {
+      "linePattern": "^Common Length,? Common Width Open Case Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common (?:Weight|Width),? Common Length Sealed Case Tail$",
+      "extractions": [
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common Width,? Common Length Open Case Tail$",
+      "extractions": [
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common Length and Common Width,? Open Case Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common Length and Common Width,? Sealed Case Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common Standard Length Common Standard Width Tail,? Closed Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon Short,? Common (?:Width|Weight) Open Case Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon Short,? Common Width,? Open Case Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon Short with Common Width Open Case Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon Short,? (?:Standard Weight|Standard Width) Open Case Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon Short and Rare Wide Open Case Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon Short,? Uncommon Slim Open Case Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon Short,? Wide Set Closed Case Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon Short,? Rare Wide Set Open Case Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon Short Rare Wide Set Open Case Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Rare Long,? Common Width,? Open Case Tail$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Rare Long,? Uncommon Slim,? Open Case Tail$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Rare Long,? Rare Wide Open Case Tail$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Rare Long,? Uncommon Slim,? Closed Case Tail$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Rare Long Length,? Common (?:Weight|Width) Open Case Tail$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common Standard Length,? Rare Wide Set Open Case Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common Length,? Wide Set Open Case Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Rare Wide and Common Length Closed Case Tail$",
+      "extractions": [
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common Standard Length Uncommon Slim Width Tail,? Closed Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Rare Wide Set Very Rare Bean Bag Bob Tail$",
+      "extractions": [
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" }
+      ]
+    },
+    {
+      "linePattern": "^Very Rare Bob,? Rare (?:Width|Wide) Bean Bag Tail$",
+      "extractions": [
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" }
+      ]
+    },
+    {
+      "linePattern": "^Very Rare Bob and Rare Wide Width Tail \\(Closed Case\\)$",
+      "extractions": [
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Rare Wide Width,? Very Rare Bobbed Tail$",
+      "extractions": [
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" }
+      ]
+    },
+    {
+      "linePattern": "^Rare Long Length,? Uncommon Short Weight,? Special Multiple Knots Open Case Tail$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Multiple Knotted Tails", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
     }
   ],
   "ignorePatterns": [
