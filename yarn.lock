@@ -3060,6 +3060,7 @@ __metadata:
     react-router-dom: "npm:^6.15.0"
     remark-breaks: "npm:^4.0.0"
     remark-gfm: "npm:^4.0.1"
+    strip-markdown: "npm:^6.0.0"
     styled-components: "npm:^6.0.0"
     typescript: "npm:^5.0.2"
     vite: "npm:^4.4.5"
@@ -20856,6 +20857,15 @@ __metadata:
   dependencies:
     js-tokens: "npm:^9.0.1"
   checksum: 10c0/d81657f84aba42d4bbaf2a677f7e7f34c1f3de5a6726db8bc1797f9c0b303ba54d4660383a74bde43df401cf37cce1dff2c842c55b077a4ceee11f9e31fba828
+  languageName: node
+  linkType: hard
+
+"strip-markdown@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "strip-markdown@npm:6.0.0"
+  dependencies:
+    "@types/mdast": "npm:^4.0.0"
+  checksum: 10c0/209b3fa4f6a0c655124143c40e7a7cf7e764cf339a1429649f8b0cb905ee165d77aff58456753edb24e02c05f1e0881aca7d775e3a162d804ea5d4b69a09a0ae
   languageName: node
   linkType: hard
 

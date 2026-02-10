@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { MediaGridItem } from './MediaGrid';
+import { stripMarkdown } from '../lib/stripMarkdown';
 
 const Card = styled(Link)`
   display: block;
@@ -252,6 +253,10 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   const isText = !!media.textContent;
   const isMainMedia = currentMainMediaId === media.id;
   const showSetAsMainActions = !!characterId && !!onSetAsMain;
+  const plainDescription = useMemo(
+    () => media.description ? stripMarkdown(media.description) : '',
+    [media.description]
+  );
 
   const renderMediaPreview = () => {
     if (isImage && media.image) {
@@ -336,8 +341,8 @@ export const MediaCard: React.FC<MediaCardProps> = ({
       
       <Content>
         <Title>{media.title}</Title>
-        {media.description && (
-          <Description>{media.description}</Description>
+        {plainDescription && (
+          <Description>{plainDescription}</Description>
         )}
         
         <Meta>
