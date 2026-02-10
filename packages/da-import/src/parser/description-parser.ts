@@ -58,12 +58,16 @@ export function parseDescription(
     characterName = fallbackName;
   }
 
-  // Extract owner — look for "Current Owner:" context in HTML
+  // Extract owner — look for "Current Owner:" or "Owner History:" context in HTML
   let ownerUsername = "";
 
-  // Find the DA username link after "Current Owner" text
+  // Find the DA username link after the owner label.
+  // Some older deviations use "Owner History:" instead of "Current Owner:".
   const htmlLower = html.toLowerCase();
-  const ownerIdx = htmlLower.indexOf("current owner");
+  let ownerIdx = htmlLower.indexOf("current owner");
+  if (ownerIdx === -1) {
+    ownerIdx = htmlLower.indexOf("owner history");
+  }
   if (ownerIdx !== -1) {
     // Find the next DA username link after the owner label.
     // Handles both URL formats:
