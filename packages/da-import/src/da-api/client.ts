@@ -1,3 +1,4 @@
+import * as cheerio from "cheerio";
 import { logger } from "../utils/logger";
 import { RateLimiter } from "./rate-limiter";
 import type {
@@ -167,28 +168,9 @@ export class DeviantArtClient {
       );
     }
 
-    // Extract description HTML from the page.
-    // DA uses different structures depending on page age:
-    //   Legacy: <div class="legacy-journal ...">content</div></div></div>
-    //   Current: <div id="description">...<div data-editor-viewer="1" ...>content</div></div></div>
-    let descriptionHtml = "";
-
-    const journalMatch = html.match(
-      /<div class="legacy-journal[^"]*"[^>]*>([\s\S]*?)<\/div><\/div><\/div>/
-    );
-    if (journalMatch) {
-      descriptionHtml = journalMatch[1];
-    }
-
-    // Fallback: current DA format uses data-editor-viewer inside #description
-    if (!descriptionHtml) {
-      const editorMatch = html.match(
-        /id="description"[^>]*>[\s\S]*?<div data-editor-viewer="1"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/
-      );
-      if (editorMatch) {
-        descriptionHtml = editorMatch[1];
-      }
-    }
+    // Extract description HTML from #description > div
+    const $ = cheerio.load(html);
+    const descriptionHtml = $("#description > div").html() ?? "";
 
     return { uuid, descriptionHtml };
   }
