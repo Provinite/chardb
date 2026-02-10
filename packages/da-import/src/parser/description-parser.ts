@@ -28,6 +28,12 @@ export function parseDescription(
   // Replace <br> tags with newlines to split into lines
   $("br").replaceWith("\n");
 
+  // Insert newlines before block elements so that traits spanning
+  // multiple <p> tags don't get concatenated into a single line.
+  $("p, div").each((_i, el) => {
+    $(el).prepend("\n");
+  });
+
   // Get text with newlines preserved
   const rawText = $("body").text().trim();
 

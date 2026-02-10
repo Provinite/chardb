@@ -262,6 +262,11 @@
       "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854"
     },
     {
+      "pattern": "Standard Paws",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854"
+    },
+    {
       "pattern": "Paws",
       "traitId": "508da275-4435-4385-832e-1cec41e89644",
       "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854"
@@ -298,6 +303,11 @@
     },
     {
       "pattern": "Padding Paw",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf"
+    },
+    {
+      "pattern": "Padding Paws",
       "traitId": "508da275-4435-4385-832e-1cec41e89644",
       "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf"
     },
