@@ -82,6 +82,7 @@ export class TraitsResolver {
     return mapPrismaTraitConnectionToGraphQL(serviceResult);
   }
 
+  @AllowUnauthenticated()
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.Any)
   @ResolveCommunityFrom({ speciesId: "speciesId" })
