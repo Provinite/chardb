@@ -42,7 +42,15 @@ export class DeviantArtClient {
     });
 
     if (!resp.ok) {
-      throw new Error(`DA auth failed: ${resp.status} ${await resp.text()}`);
+      const body = await resp.text();
+      throw new Error(`DA auth failed: ${resp.status} — ${body.slice(0, 200)}`);
+    }
+
+    const contentType = resp.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
+      throw new Error(
+        `DA auth returned unexpected content-type: ${contentType}. Are your DEVIANTART_CLIENT_ID and DEVIANTART_CLIENT_SECRET correct?`
+      );
     }
 
     const data = (await resp.json()) as DATokenResponse;
