@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.1.1] - 2026-02-09
+
 ### Fixed
 
 - **Sidebar shows user-specific sections when not logged in**: Hide My Content, Liked, Activity Feed, My Profile, and user community list from the sidebar when not authenticated (#84)
