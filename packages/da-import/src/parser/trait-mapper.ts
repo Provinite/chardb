@@ -23,12 +23,16 @@ function matchesIgnorePattern(
 
 function tryCompositeRules(
   line: string,
-  compositeRules: CompositeRule[]
+  compositeRules: CompositeRule[],
+  ruleLookup: Map<string, { traitId: string; enumValueId: string }>
 ): MappedTrait[] | null {
   for (const rule of compositeRules) {
     const regex = new RegExp(rule.linePattern, "i");
     const match = line.match(regex);
-    if (match) {
+    if (!match) continue;
+
+    // If extractions are defined, use them directly
+    if (rule.extractions.length > 0) {
       return rule.extractions.map((ext) => ({
         traitId: ext.traitId,
         enumValueId: ext.enumValueId,
@@ -36,6 +40,24 @@ function tryCompositeRules(
         sourceLine: line,
       }));
     }
+
+    // Empty extractions: split capture groups into sub-lines and re-lookup
+    const results: MappedTrait[] = [];
+    for (let i = 1; i < match.length; i++) {
+      const subLine = match[i]?.trim();
+      if (!subLine) continue;
+      const { rarity, traitText } = extractTraitAndRarity(subLine);
+      const found = ruleLookup.get(traitText.toLowerCase());
+      if (found) {
+        results.push({
+          traitId: found.traitId,
+          enumValueId: found.enumValueId,
+          rarity: rarity ?? undefined,
+          sourceLine: line,
+        });
+      }
+    }
+    if (results.length > 0) return results;
   }
   return null;
 }
@@ -67,7 +89,7 @@ export function mapTraitLines(
     }
 
     // Try composite rules first
-    const compositeMatch = tryCompositeRules(trimmed, config.compositeRules);
+    const compositeMatch = tryCompositeRules(trimmed, config.compositeRules, ruleLookup);
     if (compositeMatch) {
       mappedTraits.push(...compositeMatch);
       continue;
