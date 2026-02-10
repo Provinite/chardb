@@ -21,6 +21,7 @@ interface DownloadArgs {
   resume: boolean;
   rateLimit: number;
   url: string | undefined;
+  limit: number;
 }
 
 function extractNumericId(url: string): string | null {
@@ -111,6 +112,11 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
       default: 1000,
       describe: "Minimum milliseconds between API calls",
     },
+    limit: {
+      type: "number" as const,
+      default: 0,
+      describe: "Max deviations to download (0 = unlimited)",
+    },
   },
   handler: async (argv) => {
     const {
@@ -121,6 +127,7 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
       resume,
       rateLimit,
       url: singleUrl,
+      limit,
     } = argv;
 
     const clientId = clientIdArg || process.env.DEVIANTART_CLIENT_ID || "";
@@ -166,6 +173,8 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
     const folderMap = new Map(
       foldersResp.results.map((f) => [f.name, f])
     );
+
+    let totalDownloaded = 0;
 
     for (const folderName of targetFolders) {
       const folder = folderMap.get(folderName);
@@ -235,7 +244,12 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
           const outPath = path.join(deviationsDir, `${numericId}.json`);
           await writeJson(outPath, downloaded);
           downloadedCount++;
+          totalDownloaded++;
+
+          if (limit > 0 && totalDownloaded >= limit) break;
         }
+
+        if (limit > 0 && totalDownloaded >= limit) break;
 
         offset += page.results.length;
 
@@ -258,6 +272,11 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
       logger.info(
         `Completed folder "${folderName}": ${downloadedCount} new deviations saved.`
       );
+
+      if (limit > 0 && totalDownloaded >= limit) {
+        logger.info(`Reached limit of ${limit} deviations.`);
+        break;
+      }
     }
 
     logger.info("Download complete.");
