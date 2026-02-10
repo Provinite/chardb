@@ -163,7 +163,10 @@ export class DeviantArtClient {
       );
     }
 
-    // Extract description HTML from the legacy-journal div
+    // Extract description HTML from the page.
+    // DA uses different structures depending on page age:
+    //   Legacy: <div class="legacy-journal ...">content</div></div></div>
+    //   Current: <div id="description">...<div data-editor-viewer="1" ...>content</div></div></div>
     let descriptionHtml = "";
 
     const journalMatch = html.match(
@@ -173,13 +176,13 @@ export class DeviantArtClient {
       descriptionHtml = journalMatch[1];
     }
 
-    // Fallback: try the "description" section which wraps the journal
+    // Fallback: current DA format uses data-editor-viewer inside #description
     if (!descriptionHtml) {
-      const descSectionMatch = html.match(
-        /class="[^"]*description[^"]*"[^>]*>[\s\S]*?<div class="legacy-journal[^"]*"[^>]*>([\s\S]*?)<\/div>/
+      const editorMatch = html.match(
+        /id="description"[^>]*>[\s\S]*?<div data-editor-viewer="1"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/
       );
-      if (descSectionMatch) {
-        descriptionHtml = descSectionMatch[1];
+      if (editorMatch) {
+        descriptionHtml = editorMatch[1];
       }
     }
 

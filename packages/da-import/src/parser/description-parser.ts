@@ -59,13 +59,21 @@ export function parseDescription(
   const htmlLower = html.toLowerCase();
   const ownerIdx = htmlLower.indexOf("current owner");
   if (ownerIdx !== -1) {
-    // Find the next DA username link after the owner label
+    // Find the next DA username link after the owner label.
+    // Handles both URL formats:
+    //   Legacy: https://username.deviantart.com
+    //   Current: https://www.deviantart.com/username
     const afterOwner = html.slice(ownerIdx);
-    const linkMatch = afterOwner.match(
+    const newLinkMatch = afterOwner.match(
+      /href="https?:\/\/www\.deviantart\.com\/([^"/?]+)"/
+    );
+    const oldLinkMatch = afterOwner.match(
       /href="https?:\/\/([^.]+)\.deviantart\.com"/
     );
-    if (linkMatch) {
-      ownerUsername = linkMatch[1];
+    if (newLinkMatch) {
+      ownerUsername = newLinkMatch[1];
+    } else if (oldLinkMatch && oldLinkMatch[1] !== "www") {
+      ownerUsername = oldLinkMatch[1];
     }
   }
 
