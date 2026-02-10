@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Character search**: Fixed an error when searching for characters (#167)
 - **Case-sensitive email login**: Normalize emails to lowercase in login, signup, password reset, and user creation flows. Includes database migration to lowercase existing emails.
 - **Emails not sending**: Fixed a bug preventing password reset, password changed, and image moderation emails from being sent.
 

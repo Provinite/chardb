@@ -1195,30 +1195,24 @@ export class CharactersService {
     return updatedCharacter;
   }
 
-  private buildSearchConditions(search: string, searchFields: string) {
+  private buildSearchConditions(search: string, searchFields: string): Prisma.CharacterWhereInput[] {
     const searchTerm = { contains: search, mode: "insensitive" as const };
 
     switch (searchFields) {
       case "name":
         return [{ name: searchTerm }];
-      case "description":
-        return [{ description: searchTerm }];
-      case "personality":
-        return [{ personality: searchTerm }];
-      case "backstory":
-        return [{ backstory: searchTerm }];
+      case "details":
+        return [{ details: searchTerm }];
       default: // 'all'
         return [
           { name: searchTerm },
-          { description: searchTerm },
-          { personality: searchTerm },
-          { backstory: searchTerm },
+          { details: searchTerm },
           { species: { name: searchTerm } },
         ];
     }
   }
 
-  private buildOrderBy(sortBy: string, sortOrder: string) {
+  private buildOrderBy(sortBy: string, sortOrder: string): Prisma.CharacterOrderByWithRelationInput {
     const order = sortOrder === "asc" ? "asc" : "desc";
 
     switch (sortBy) {

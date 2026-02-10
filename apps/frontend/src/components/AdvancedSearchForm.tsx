@@ -129,7 +129,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
   const handleFormSubmit = (data: AdvancedSearchFilters) => {
     // Remove empty strings and undefined values
     const cleanFilters = Object.entries(data).reduce((acc, [key, value]) => {
-      if (value !== '' && value !== undefined && value !== null) {
+      if (value !== '' && value !== undefined && value !== null && !(typeof value === 'number' && isNaN(value))) {
         acc[key as keyof AdvancedSearchFilters] = value;
       }
       return acc;
@@ -171,9 +171,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
           <Select id="searchFields" {...register('searchFields')}>
             <option value="all">All Fields</option>
             <option value="name">Name Only</option>
-            <option value="description">Description Only</option>
-            <option value="personality">Personality Only</option>
-            <option value="backstory">Backstory Only</option>
+            <option value="details">Details Only</option>
           </Select>
         </FormGroup>
       </SearchRow>
