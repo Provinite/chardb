@@ -1834,6 +1834,156 @@
       "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5"
     },
     {
+      "pattern": "Perky Long",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "ef7bec80-d5fb-47c8-b2df-ee830f2bdd47"
+    },
+    {
+      "pattern": "Medium Droop",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269"
+    },
+    {
+      "pattern": "Medium Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359"
+    },
+    {
+      "pattern": "Cape Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Hat Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Hat",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Clip Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Glasses Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Glasses/Visor Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Neck Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Bow Tie Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Bow Collar Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Hair Tie Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Flower Collar Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Harness Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Harness Bag Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Cardboard Crown Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Paper Crown Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Nurse Hat",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Removable Scarf Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "School Collar and Ribbon Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Accessory Scarf",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Accessory, Collar",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Single Accessory - Collar",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Bow",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Bow/Ribbon",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "one accsesory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "bow Accessories",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Costume Accessories",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "87c9cf69-539e-40ca-8e5e-ed5654f8935f"
+    },
+    {
+      "pattern": "Clothing Accessories",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "87c9cf69-539e-40ca-8e5e-ed5654f8935f"
+    },
+    {
       "pattern": "Clothes",
       "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
       "enumValueId": "076b6eb9-da29-42e1-9e72-23e2c7844542"
