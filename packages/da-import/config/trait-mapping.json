@@ -5792,6 +5792,173 @@
         { "groupName": "Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "b730c278-654d-4174-b897-06711a5e4722" },
         { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" }
       ]
+    },
+    {
+      "linePattern": "^Common\\s+Padding\\s+Paws\\s+(?:with|and)\\s+Common\\s+Dew\\s+Toes?$",
+      "extractions": [
+        { "groupName": "Padding Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf" },
+        { "groupName": "Dew Toe", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "cf9dc557-980d-433b-8266-efae7d13f149" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Retractable\\s+Claws\\s+(?:with|and)\\s+Special\\s+Raptor\\s+Dew\\s+Claws$",
+      "extractions": [
+        { "groupName": "Retractable Claws", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "729ade5b-3e93-4f36-ab54-714870b1efa6" },
+        { "groupName": "Raptor Dew Claws", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "ad72a149-2a2a-445a-a567-4471669427d3" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Retractable\\s+Claws\\s+and\\s+Common\\s+No\\s+Nails$",
+      "extractions": [
+        { "groupName": "Retractable Claws", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "729ade5b-3e93-4f36-ab54-714870b1efa6" },
+        { "groupName": "No Nails", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "d4ead820-e39e-4a9b-9258-950495d7aaa0" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Mitten\\s+Paws\\s+(?:with|With)\\s+Uncommon\\s+Grippy\\s+Paws$",
+      "extractions": [
+        { "groupName": "Mitten Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "e3170cd6-0b0b-4a38-ae16-bd438df6c65b" },
+        { "groupName": "Grippy Paws", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "26831f92-c3e9-4120-a425-2f9733ba9867" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Mitten\\s+Paws\\s+With\\s+Common\\s+Padding$",
+      "extractions": [
+        { "groupName": "Mitten Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "e3170cd6-0b0b-4a38-ae16-bd438df6c65b" },
+        { "groupName": "Padding Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Padding\\s+(?:Paws\\s+)?and\\s+Common\\s+Mitten\\s+Paws?$",
+      "extractions": [
+        { "groupName": "Padding Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf" },
+        { "groupName": "Mitten Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "e3170cd6-0b0b-4a38-ae16-bd438df6c65b" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Padding\\s+Paws\\s+and\\s+Uncommon\\s+Grippy\\s+Paws$",
+      "extractions": [
+        { "groupName": "Padding Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf" },
+        { "groupName": "Grippy Paws", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "26831f92-c3e9-4120-a425-2f9733ba9867" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Padding\\s+Paws\\s+and\\s+Uncommon\\s+Paw\\s+Pads$",
+      "extractions": [
+        { "groupName": "Padding Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf" },
+        { "groupName": "Paw Pads", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Paw\\s*[Pp]ads\\s+(?:with|and)\\s+Common\\s+D[eu][ew]?\\s+Toe$",
+      "extractions": [
+        { "groupName": "Paw Pads", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0" },
+        { "groupName": "Dew Toe", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "cf9dc557-980d-433b-8266-efae7d13f149" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Paw\\s*[Pp]ads\\s+(?:with|and)\\s+Very\\s+Rare\\s+Retractable\\s+Claws$",
+      "extractions": [
+        { "groupName": "Paw Pads", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0" },
+        { "groupName": "Retractable Claws", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "729ade5b-3e93-4f36-ab54-714870b1efa6" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Paw\\s+Pads\\s+and\\s+Common\\s+D[eu][ew]?\\s+Toe$",
+      "extractions": [
+        { "groupName": "Paw Pads", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0" },
+        { "groupName": "Dew Toe", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "cf9dc557-980d-433b-8266-efae7d13f149" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Paw\\s+Pads\\s+and\\s+Uncommon\\s+Shaped\\s+Paw\\s+Pads$",
+      "extractions": [
+        { "groupName": "Paw Pads", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0" },
+        { "groupName": "Shaped Paw Pads", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "8d439215-f89d-4494-8a75-e388aae3f186" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Paw\\s*[Pp]ads\\s+(?:with|and)\\s+Uncommon\\s+Grippy\\s+Paws$",
+      "extractions": [
+        { "groupName": "Paw Pads", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0" },
+        { "groupName": "Grippy Paws", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "26831f92-c3e9-4120-a425-2f9733ba9867" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Padding\\s+Paws\\s+\\(Front\\)\\s+And\\s+Common\\s+Standard\\s+Paws\\s+\\(Back\\)$",
+      "extractions": [
+        { "groupName": "Padding Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf" },
+        { "groupName": "Standard Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Paws\\s+(?:with|and)\\s+Common\\s+Dew\\s+Toes?$",
+      "extractions": [
+        { "groupName": "Standard Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854" },
+        { "groupName": "Dew Toe", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "cf9dc557-980d-433b-8266-efae7d13f149" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Nails\\s+With\\s+Special\\s+Raptor\\s+Dew\\s+Claws$",
+      "extractions": [
+        { "groupName": "Nails", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "c529d21a-f209-4377-ba06-35b01ed1e40d" },
+        { "groupName": "Raptor Dew Claws", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "ad72a149-2a2a-445a-a567-4471669427d3" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Paws\\s+with\\s+Special\\s+Removable\\s+Limbs$",
+      "extractions": [
+        { "groupName": "Standard Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854" },
+        { "groupName": "Removable Body Parts", "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a", "enumValueId": "fd9b6f70-5a82-4b54-9301-7fe4633ad195" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Paws\\s+and\\s+Common\\s+Padding\\s+Paws$",
+      "extractions": [
+        { "groupName": "Standard Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854" },
+        { "groupName": "Padding Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Paws\\s+and\\s+Uncommon\\s+Shaped\\s+Paw\\s+Pads?$",
+      "extractions": [
+        { "groupName": "Standard Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854" },
+        { "groupName": "Shaped Paw Pads", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "8d439215-f89d-4494-8a75-e388aae3f186" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Shaped\\s+Paw\\s+Pads\\s+with\\s+Uncommon\\s+Grippy\\s+Paws$",
+      "extractions": [
+        { "groupName": "Shaped Paw Pads", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "8d439215-f89d-4494-8a75-e388aae3f186" },
+        { "groupName": "Grippy Paws", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "26831f92-c3e9-4120-a425-2f9733ba9867" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Shaped\\s+Paw\\s+Pads\\s+with\\s+Common\\s+D[eu][ew]?\\s+Toe$",
+      "extractions": [
+        { "groupName": "Shaped Paw Pads", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "8d439215-f89d-4494-8a75-e388aae3f186" },
+        { "groupName": "Dew Toe", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "cf9dc557-980d-433b-8266-efae7d13f149" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Padded\\s+Paws\\s+and\\s+Very\\s+Rare\\s+Shaped\\s+Limbs(?:\\s*\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Padding Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf" },
+        { "groupName": "Shaped Limbs", "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a", "enumValueId": "3fa4e184-94b7-4a6c-98aa-d81b9423d6af" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Paws\\s+and\\s+Very\\s+Rare\\s+Shaped\\s+Hind\\s+Legs$",
+      "extractions": [
+        { "groupName": "Standard Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854" },
+        { "groupName": "Shaped Limbs", "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a", "enumValueId": "3fa4e184-94b7-4a6c-98aa-d81b9423d6af" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Missing\\s+Limbs\\s+with\\s+Very\\s+Rare\\s+Mod\\s*\\(.*\\)$",
+      "extractions": [
+        { "groupName": "Two Missing Limbs", "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a", "enumValueId": "e88b7b28-6425-444b-b207-20a406ae3bd0" }
+      ]
     }
   ],
   "ignorePatterns": [
