@@ -1779,6 +1779,91 @@
       "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9"
     },
     {
+      "pattern": "Empty Pillow Case",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958"
+    },
+    {
+      "pattern": "Knot Ribbon",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "47650951-ddda-4d7e-82bb-3154cbeadbcc"
+    },
+    {
+      "pattern": "Body Temperature Control Magci",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a7df7285-6120-4655-aa95-6809fd259ab5"
+    },
+    {
+      "pattern": "Bob Eyes",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "a82e56fb-f9ad-4c42-a997-562171f42a64"
+    },
+    {
+      "pattern": "Horse Head Body Modification",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "a3f65386-1506-451f-938a-ca95df0b90af"
+    },
+    {
+      "pattern": "Opened Case Tail",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8"
+    },
+    {
+      "pattern": "Fluff Hair",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "62e9cac4-e4c7-4fa3-ba2f-461b59f9de09"
+    },
+    {
+      "pattern": "No Naims",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "d4ead820-e39e-4a9b-9258-950495d7aaa0"
+    },
+    {
+      "pattern": "Sock Accessories",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Droop Standard Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269"
+    },
+    {
+      "pattern": "Scent Magic (Fresh Pumpkin",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5"
+    },
+    {
+      "pattern": "Clothes",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "076b6eb9-da29-42e1-9e72-23e2c7844542"
+    },
+    {
+      "pattern": "Single Accessories",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Standard Single Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Scent <agic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5"
+    },
+    {
+      "pattern": "Body Temp Control",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a7df7285-6120-4655-aa95-6809fd259ab5"
+    },
+    {
+      "pattern": "Magic, Body Temperature Control",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a7df7285-6120-4655-aa95-6809fd259ab5"
+    },
+    {
       "pattern": "Retractable Nails",
       "traitId": "508da275-4435-4385-832e-1cec41e89644",
       "enumValueId": "729ade5b-3e93-4f36-ab54-714870b1efa6"
@@ -3108,6 +3193,103 @@
       "extractions": [
         { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
         { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Short Tail,\\s*(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Weight and Opened Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Slim Tail,\\s*(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Length and Opened Case$",
+      "extractions": [
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Short,\\s*(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Weight Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Tail,\\s*(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Slim Weight$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Length,\\s*(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Slim Weight$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Short Length,\\s*Slim Tail Closed Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Tail Length and Width$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Length and Weight,\\s*Open-cased Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Length,\\s*(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Slim Tail,\\s*Closed Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Short/\\s*(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Short Length Tail,\\s*(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Weight and Sealed$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Standard Ear and (?:Common|Uncommon|Rare|Very Rare|Special)\\s+Droop Long Ear$",
+      "extractions": [
+        { "groupName": "Standard Ears", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359" },
+        { "groupName": "Droop Long Ears", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "7155af00-47ee-4e4f-b117-05b737a89358" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Standard Ear (?:Common|Uncommon|Rare|Very Rare|Special)\\s+Droop Ear$",
+      "extractions": [
+        { "groupName": "Standard Ears", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359" },
+        { "groupName": "Droop Ears", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269" }
       ]
     }
   ],
