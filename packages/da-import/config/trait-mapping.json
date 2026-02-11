@@ -5370,6 +5370,253 @@
         { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
         { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
       ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Open(?:ed)?\\s+Eyes?\\s+(?:with|and)\\s+(?:(?:Common|Uncommon|Rare|Very Rare|Special)\\s+)?(?!.*Bejewel)(?:\\S+\\s+)*?(?:Shaped\\s+)?Pupils?\\s*(?:\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Shaped Pupils", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Dark\\s+Eyes?\\s+(?:with|and)\\s+(?:(?:Common|Uncommon|Rare|Very Rare|Special)\\s+)?(?!.*Bejewel)(?:\\S+\\s+)*?(?:Shaped\\s+)?Pupils?\\s*(?:\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Dark Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7" },
+        { "groupName": "Shaped Pupils", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+(?:Closed|Standard)\\s+Eye\\s+and\\s+Uncommon\\s+Button\\s+Eye$",
+      "extractions": [
+        { "groupName": "Closed Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968" },
+        { "groupName": "Buttons", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Closed\\s+and\\s+Uncommon\\s+Button\\s+Eyes$",
+      "extractions": [
+        { "groupName": "Closed Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968" },
+        { "groupName": "Buttons", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Open\\s+Eye\\s+and\\s+Rare\\s+Dark\\s+Eye$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Dark Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Bead\\s+and\\s+Uncommon\\s+Button\\s+Eyes$",
+      "extractions": [
+        { "groupName": "Beads", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "a82e56fb-f9ad-4c42-a997-562171f42a64" },
+        { "groupName": "Buttons", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Closed\\s+Eye\\s+and\\s+Common\\s+(?:No|Eyeless)\\s+Eye$",
+      "extractions": [
+        { "groupName": "Closed Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968" },
+        { "groupName": "Eyeless", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "d768f743-5bfa-4640-8956-a7ac441a0fd5" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Closed\\s+Eyes\\s+and\\s+Rare\\s+Open\\s+Eye$",
+      "extractions": [
+        { "groupName": "Closed Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968" },
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Open\\s+Eye\\s+and\\s+Common\\s+Eyeless$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Eyeless", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "d768f743-5bfa-4640-8956-a7ac441a0fd5" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Dark\\s+Eye\\s+and\\s+Common\\s+Closed\\s+Eye$",
+      "extractions": [
+        { "groupName": "Dark Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7" },
+        { "groupName": "Closed Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Bead\\s+Eye\\s+and\\s+Common\\s+Closed\\s+Eyes$",
+      "extractions": [
+        { "groupName": "Beads", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "a82e56fb-f9ad-4c42-a997-562171f42a64" },
+        { "groupName": "Closed Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+No\\s+Eye\\s+and\\s+Uncommon\\s+Bead\\s+Eye$",
+      "extractions": [
+        { "groupName": "Eyeless", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "d768f743-5bfa-4640-8956-a7ac441a0fd5" },
+        { "groupName": "Beads", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "a82e56fb-f9ad-4c42-a997-562171f42a64" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Open\\s+Eyes?\\s+and\\s+Uncommon\\s+Button\\s+Eye$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Buttons", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Eyeless\\s+and\\s+Uncommon\\s+Button\\s+Eyes?$",
+      "extractions": [
+        { "groupName": "Eyeless", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "d768f743-5bfa-4640-8956-a7ac441a0fd5" },
+        { "groupName": "Buttons", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Button\\s+and\\s+Uncommon\\s+Bead\\s+Eyes$",
+      "extractions": [
+        { "groupName": "Buttons", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4" },
+        { "groupName": "Beads", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "a82e56fb-f9ad-4c42-a997-562171f42a64" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+No\\s+Eyes\\s+and\\s+Rare\\s+Googly\\s+Eyes$",
+      "extractions": [
+        { "groupName": "Eyeless", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "d768f743-5bfa-4640-8956-a7ac441a0fd5" },
+        { "groupName": "Googly Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "24a1664f-f04d-43b2-bab1-bbccfd3d5b30" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Open\\s+Eyes\\s+with\\s+Special\\s+Glow(?:ing(?:\\s+(?:Eyes|Magic))?)?$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Glowing Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "eb437853-da6f-4c31-a6fa-3381d06c00ee" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Bejeweled\\s+Eyes\\s+with\\s+Special\\s+Glow$",
+      "extractions": [
+        { "groupName": "Bejeweled Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "3e92bbf4-3ef6-482c-b3c4-6fbe03d938c5" },
+        { "groupName": "Glowing Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "eb437853-da6f-4c31-a6fa-3381d06c00ee" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Dark\\s+Eyes\\s+with\\s+Special\\s+Glow(?:ing\\s+Eyes)?$",
+      "extractions": [
+        { "groupName": "Dark Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7" },
+        { "groupName": "Glowing Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "eb437853-da6f-4c31-a6fa-3381d06c00ee" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+(?:Open\\s+Dark|Dark\\s+Open)\\s+Eyes\\s+(?:and|with)\\s+Very\\s+Rare\\s+(?:\\S+\\s+)*?(?:Shaped\\s+)?Pupils?\\s*(?:\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Dark Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7" },
+        { "groupName": "Shaped Pupils", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Open\\s+Dark\\s+and\\s+Very\\s+Rare\\s+Bejeweled\\s+Eyes$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Dark Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7" },
+        { "groupName": "Bejeweled Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "3e92bbf4-3ef6-482c-b3c4-6fbe03d938c5" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Open\\s+Eyes\\s+(?:with|With)\\s+Very\\s+Rare\\s+(?:Shaped\\s+)?Bejewel(?:ed|led)\\s+(?:Pupils|Eyes)\\s*(?:\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Bejeweled Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "3e92bbf4-3ef6-482c-b3c4-6fbe03d938c5" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Open\\s+Eyes\\s+With\\s+Very\\s+Rare\\s+Bejeweled\\s+Pupils,\\s+Special\\s+Glowing$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Bejeweled Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "3e92bbf4-3ef6-482c-b3c4-6fbe03d938c5" },
+        { "groupName": "Glowing Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "eb437853-da6f-4c31-a6fa-3381d06c00ee" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Bejeweled\\s+Eyes\\s+with\\s+Very\\s+Rare\\s+(?:Shaped|Slit)\\s+Pupils?\\s*(?:\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Bejeweled Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "3e92bbf4-3ef6-482c-b3c4-6fbe03d938c5" },
+        { "groupName": "Shaped Pupils", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Open\\s+Eyes\\s+(?:with|With)\\s+Very\\s+Rare\\s+(?:\\S+\\s+)*?(?:Shaped\\s+)?Pupils?\\s*(?:\\(.*\\))?\\s+and\\s+Special\\s+Glow(?:ing)?(?:\\s+Magic)?$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Shaped Pupils", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7" },
+        { "groupName": "Glowing Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "eb437853-da6f-4c31-a6fa-3381d06c00ee" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Dark\\s+Eyes\\s+with\\s+Shaped\\s+Pupils\\s+and\\s+Rare\\s+Open\\s+Eyes$",
+      "extractions": [
+        { "groupName": "Dark Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7" },
+        { "groupName": "Shaped Pupils", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7" },
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Dark\\s+Eye\\s+with\\s+Very\\s+Rare\\s+Shaped\\s+Pupil\\s+with\\s+Uncommon\\s+Button\\s+Eye$",
+      "extractions": [
+        { "groupName": "Dark Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7" },
+        { "groupName": "Shaped Pupils", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7" },
+        { "groupName": "Buttons", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Button\\s+Eye\\s+and\\s+Rare\\s+Dark\\s+Eye\\s+with\\s+Very\\s+Rare\\s+Shaped\\s+Pupil$",
+      "extractions": [
+        { "groupName": "Buttons", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4" },
+        { "groupName": "Dark Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7" },
+        { "groupName": "Shaped Pupils", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Open\\s+Eye\\s+and\\s+Rare\\s+Dark\\s+with\\s+Very\\s+Rare\\s+Bejeweled\\s+Eye$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Dark Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7" },
+        { "groupName": "Bejeweled Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "3e92bbf4-3ef6-482c-b3c4-6fbe03d938c5" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Open\\s+with\\s+Very\\s+Rare\\s+Shaped\\s+Pupils$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Shaped Pupils", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Opened\\s+Eyes\\s+with\\s+Very\\s+Rare\\s+Shaped\\s+Pupil\\s+Eyes$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Shaped Pupils", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Eyes\\s+with\\s+Very\\s+Rare\\s+Heart\\s+Pupil$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Shaped Pupils", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Open\\s+Eyes\\s+with\\s+Special\\s+Multiple\\s+Rare\\s+Googly\\s+Eyes$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Googly Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "24a1664f-f04d-43b2-bab1-bbccfd3d5b30" },
+        { "groupName": "Multiple Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "02fdc710-7ea2-47d1-99dc-41654831d2fb" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Closed\\s+Eyes\\s+with\\s+Special\\s+Multiple\\s+Eyes$",
+      "extractions": [
+        { "groupName": "Closed Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968" },
+        { "groupName": "Multiple Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "02fdc710-7ea2-47d1-99dc-41654831d2fb" }
+      ]
     }
   ],
   "ignorePatterns": [
