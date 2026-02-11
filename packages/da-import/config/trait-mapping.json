@@ -5186,6 +5186,145 @@
         { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
         { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
       ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long,?\\s+Very\\s+Rare\\s+Shaped\\s+Tail\\s*\\(.*\\)$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Shaped\\s+Bob\\s+Tail\\s*\\(.*\\)$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Shape\\s+Tail,?\\s+Closed\\s+Case$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Shaped\\s+Tail,?\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length,?\\s+Very\\s+Rare\\s+Shaped\\s+Tail$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Shaped,?\\s+Special\\s+Multiple\\s+Tails$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Multiple Tails", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "dc191b76-de74-461c-b613-74b10a5f9fd1" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Shaped\\s+And\\s+Special\\s+Multiple\\s+Tails$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Multiple Tails", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "dc191b76-de74-461c-b613-74b10a5f9fd1" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Shaped\\s+Sealed\\s+Case\\s+Tail\\s*\\(.*\\)$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Layered\\s+Shaped\\s+Tail$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Layered Pillow Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Shaped\\s+Special\\s+Multiknot\\s+Tail$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Knot-Only\\s+Tail\\s+Stylized\\s+into\\s+a\\s+Rose$",
+      "extractions": [
+        { "groupName": "Knot Only Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "62e16c38-05e6-474e-ab6d-967144b5e46b" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Knot\\s+Only,?\\s+Very\\s+Rare\\s+Yarn\\s+Tail$",
+      "extractions": [
+        { "groupName": "Knot Only Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "62e16c38-05e6-474e-ab6d-967144b5e46b" },
+        { "groupName": "Yarn Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ac0719fa-4761-4d08-8575-fd3f4b9225d7" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Length\\s+and\\s+Rare\\s+Wide\\s+Width,?\\s+Special\\s+Multiknotted\\s+Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Length,?\\s+Multiknotted\\s+Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Bobbed\\s+Tail\\s+With\\s+Open\\s+Layered\\s+Case$",
+      "extractions": [
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long,?\\s+Very\\s+Rare\\s+See-through\\s+Tail$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Sheer", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "79751a09-2f19-44af-8cbb-22f2ea4ff17e" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Short\\s+Standard\\s+Weight\\s+Tail,?\\s+Closed\\s+Pillow\\s+Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Layered\\s+Length\\s+and\\s+Rare\\s+Wide\\s+With\\s+Tail\\s*\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Layered Pillow Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" },
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Layered,?\\s+Uncommon\\s+Short\\s+Length,?\\s+Common\\s+Width\\s+Tail\\s*\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Layered Pillow Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" },
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
     }
   ],
   "ignorePatterns": [
