@@ -1569,6 +1569,111 @@
       "enumValueId": "e14e99f8-57f7-4978-bd98-db18c0d46cd1"
     },
     {
+      "pattern": "Tail, Open Case",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8"
+    },
+    {
+      "pattern": "Tail, Closed Case",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832"
+    },
+    {
+      "pattern": "Tail, Sealed Case",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832"
+    },
+    {
+      "pattern": "Open Cased Tail",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8"
+    },
+    {
+      "pattern": "Tail",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8"
+    },
+    {
+      "pattern": "Antenna",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "a3ef82b7-fe19-48e4-ab20-2b464c1c7ee1"
+    },
+    {
+      "pattern": "Yarn Hair",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "62e9cac4-e4c7-4fa3-ba2f-461b59f9de09"
+    },
+    {
+      "pattern": "Bobbed Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "0d054c0b-6909-408f-a1c3-0a918759568a"
+    },
+    {
+      "pattern": "Standard Droop Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269"
+    },
+    {
+      "pattern": "Long Droopy Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "7155af00-47ee-4e4f-b117-05b737a89358"
+    },
+    {
+      "pattern": "Bobbed Tail",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31"
+    },
+    {
+      "pattern": "Knot-Only Tail",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "62e16c38-05e6-474e-ab6d-967144b5e46b"
+    },
+    {
+      "pattern": "Pillowing Size",
+      "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+      "enumValueId": "b161dbe0-4693-4ebd-96f7-efd67428c58f"
+    },
+    {
+      "pattern": "StandardSize",
+      "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+      "enumValueId": "b161dbe0-4693-4ebd-96f7-efd67428c58f"
+    },
+    {
+      "pattern": "Cowl Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Patches Accent",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "e1a186b2-0c20-4431-9a81-b914b3a5b3a7"
+    },
+    {
+      "pattern": "Patch Accent",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "e1a186b2-0c20-4431-9a81-b914b3a5b3a7"
+    },
+    {
+      "pattern": "Patchs",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "e1a186b2-0c20-4431-9a81-b914b3a5b3a7"
+    },
+    {
+      "pattern": "Jewlery",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "50f1312f-1a16-4fb3-bdce-9255db9e8651"
+    },
+    {
+      "pattern": "Wheels Body Modification",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "17bffb67-35c8-4b81-bf15-e0d792057cf5"
+    },
+    {
+      "pattern": "Body Modification, Missing Limb",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "550a9194-b74a-4542-be2d-ef1a8b8da442"
+    },
+    {
       "pattern": "No Claws",
       "traitId": "508da275-4435-4385-832e-1cec41e89644",
       "enumValueId": "d4ead820-e39e-4a9b-9258-950495d7aaa0"
