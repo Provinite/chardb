@@ -1659,6 +1659,126 @@
       "enumValueId": "e14e99f8-57f7-4978-bd98-db18c0d46cd1"
     },
     {
+      "pattern": "Latex Fabric",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "a246a024-e3e4-4519-8a7b-b769ddb2f877"
+    },
+    {
+      "pattern": "Glitter Fabric",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "dcc766fc-451e-47e1-9de8-f13d6a41a308"
+    },
+    {
+      "pattern": "Crochet Yarn Fabric",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "1d6a98bd-283b-4b5c-a333-507f657a4c81"
+    },
+    {
+      "pattern": "Leviation Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "c722d988-6784-42e9-8fd6-a32e004feaaf"
+    },
+    {
+      "pattern": "Levitation Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "c722d988-6784-42e9-8fd6-a32e004feaaf"
+    },
+    {
+      "pattern": "One Missing Limb",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "550a9194-b74a-4542-be2d-ef1a8b8da442"
+    },
+    {
+      "pattern": "Missing Limbs",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "e88b7b28-6425-444b-b207-20a406ae3bd0"
+    },
+    {
+      "pattern": "Body Mod",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "b8a72a7a-f540-4b8e-8292-4610a6a53de4"
+    },
+    {
+      "pattern": "No Paw Padding",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854"
+    },
+    {
+      "pattern": " No Paw Padding",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854"
+    },
+    {
+      "pattern": "Standard Paw Padding",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf"
+    },
+    {
+      "pattern": "Shaped Padding",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "8d439215-f89d-4494-8a75-e388aae3f186"
+    },
+    {
+      "pattern": "Paw Pad Feet",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0"
+    },
+    {
+      "pattern": "Very  Rare Claws",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "552ee57e-35aa-4576-8ab8-2e4f5dec4844"
+    },
+    {
+      "pattern": "Very  Rare Shaped Limbs",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "3fa4e184-94b7-4a6c-98aa-d81b9423d6af"
+    },
+    {
+      "pattern": "Very  Rare Large Size",
+      "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+      "enumValueId": "c761bd6c-d53d-449b-8fd6-7f1f7d654a6c"
+    },
+    {
+      "pattern": "Very  Rare Levitation Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "c722d988-6784-42e9-8fd6-a32e004feaaf"
+    },
+    {
+      "pattern": "Knot Only",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "62e16c38-05e6-474e-ab6d-967144b5e46b"
+    },
+    {
+      "pattern": "Googly Eye Goggles",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Open Pillow Tail",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8"
+    },
+    {
+      "pattern": "Two or More Accessories",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "87c9cf69-539e-40ca-8e5e-ed5654f8935f"
+    },
+    {
+      "pattern": "Stylized Knot-Only Tail",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "47650951-ddda-4d7e-82bb-3154cbeadbcc"
+    },
+    {
+      "pattern": "Wide Tail Weight",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428"
+    },
+    {
+      "pattern": "Very  Rare Shaped Tail (Rainbow)",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9"
+    },
+    {
       "pattern": "Retractable Nails",
       "traitId": "508da275-4435-4385-832e-1cec41e89644",
       "enumValueId": "729ade5b-3e93-4f36-ab54-714870b1efa6"
@@ -2916,6 +3036,78 @@
       "extractions": [
         { "groupName": "Standard Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc" },
         { "groupName": "No Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "65199a10-735e-4c25-bbf8-f8ad2e1ae453" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Shaped Bob Tail$",
+      "extractions": [
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" },
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Empty Case Shaped Tail$",
+      "extractions": [
+        { "groupName": "Empty Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958" },
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Droop Ear and (?:Common|Uncommon|Rare|Very Rare|Special)\\s+Standard Ear$",
+      "extractions": [
+        { "groupName": "Droop Ears", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269" },
+        { "groupName": "Standard Ears", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Glitter\\s+(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Ribbons$",
+      "extractions": [
+        { "groupName": "Glitter", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "dcc766fc-451e-47e1-9de8-f13d6a41a308" },
+        { "groupName": "Ribbons", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "239ea7e2-017a-41c6-85d3-c32ccb4c61be" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Short Tail,\\s*(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Weight Opened Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Short Open Cased Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Very Rare Bob,\\s*Very Rare Shaped Tail(?:\\s*\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" },
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Short and (?:Common|Uncommon|Rare|Very Rare|Special)\\s+Short Weight Tail,\\s*Closed Pillow Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Bob Tail,\\s*Closed Case$",
+      "extractions": [
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Standard Length,\\s*(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Wide Width Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" }
       ]
     }
   ],
