@@ -5617,6 +5617,181 @@
         { "groupName": "Closed Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968" },
         { "groupName": "Multiple Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "02fdc710-7ea2-47d1-99dc-41654831d2fb" }
       ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+(?:Ears?\\s+)?and\\s+Common\\s+Droop\\s+Ears?$",
+      "extractions": [
+        { "groupName": "Standard", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359" },
+        { "groupName": "Droop", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Droop\\s+(?:Ears?\\s+)?(?:,\\s*)?and\\s+Common\\s+Standard\\s+Ears?$",
+      "extractions": [
+        { "groupName": "Droop", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269" },
+        { "groupName": "Standard", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Earless\\s+and\\s+Rare\\s+Perky\\s+Long\\s+Ears$",
+      "extractions": [
+        { "groupName": "Earless", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "fc77be24-480e-4574-b9e4-fd6245579aae" },
+        { "groupName": "Perky Long", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "ef7bec80-d5fb-47c8-b2df-ee830f2bdd47" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Ear\\s+and\\s+Very\\s+Rare\\s+Earless$",
+      "extractions": [
+        { "groupName": "Standard", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359" },
+        { "groupName": "Earless", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "fc77be24-480e-4574-b9e4-fd6245579aae" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Droop\\s+Ear,?\\s+and\\s+Uncommon\\s+Drops?\\s+Ear$",
+      "extractions": [
+        { "groupName": "Droop", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269" },
+        { "groupName": "Drops", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1c3a221a-a835-4499-b4dc-0e0d540f1533" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Bob\\s+Ears?\\s+and\\s+Uncommon\\s+Drops?\\s+Ears?$",
+      "extractions": [
+        { "groupName": "Bob", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "0d054c0b-6909-408f-a1c3-0a918759568a" },
+        { "groupName": "Drops", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1c3a221a-a835-4499-b4dc-0e0d540f1533" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Ear\\s+and\\s+Uncommon\\s+Bob\\s+Ear$",
+      "extractions": [
+        { "groupName": "Standard", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359" },
+        { "groupName": "Bob", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "0d054c0b-6909-408f-a1c3-0a918759568a" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Drops?\\s+Ear\\s+and\\s+Uncommon\\s+Bob\\s+Ear$",
+      "extractions": [
+        { "groupName": "Drops", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1c3a221a-a835-4499-b4dc-0e0d540f1533" },
+        { "groupName": "Bob", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "0d054c0b-6909-408f-a1c3-0a918759568a" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Bob\\s+and\\s+Uncommon\\s+Drops?\\s+Ears$",
+      "extractions": [
+        { "groupName": "Bob", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "0d054c0b-6909-408f-a1c3-0a918759568a" },
+        { "groupName": "Drops", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1c3a221a-a835-4499-b4dc-0e0d540f1533" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Droop\\s+and\\s+Uncommon\\s+Bob\\s+Ears$",
+      "extractions": [
+        { "groupName": "Droop", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269" },
+        { "groupName": "Bob", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "0d054c0b-6909-408f-a1c3-0a918759568a" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Perky\\s+Long\\s+and\\s+Special\\s+Shaped\\s+Ears$",
+      "extractions": [
+        { "groupName": "Perky Long", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "ef7bec80-d5fb-47c8-b2df-ee830f2bdd47" },
+        { "groupName": "Shaped Ears", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "2c98bbf5-1a6e-4257-a630-9cd36a2c6552" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Tongue\\s+(?:with|and)\\s+Rare\\s+Teeth$",
+      "extractions": [
+        { "groupName": "Standard Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc" },
+        { "groupName": "Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "b730c278-654d-4174-b897-06711a5e4722" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Fangs\\s+(?:and|with)\\s+Special\\s+Shark\\s+Teeth$",
+      "extractions": [
+        { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" },
+        { "groupName": "Shark Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "cf3b2e1b-dfa6-4bf8-b60b-44424574c42b" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+No\\s+Teeth\\s+and\\s+Rare\\s+Teeth$",
+      "extractions": [
+        { "groupName": "No Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "65199a10-735e-4c25-bbf8-f8ad2e1ae453" },
+        { "groupName": "Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "b730c278-654d-4174-b897-06711a5e4722" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+No\\s+Teeth\\s+with\\s+Very\\s+Rare\\s+Fangs(?:\\s*\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "No Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "65199a10-735e-4c25-bbf8-f8ad2e1ae453" },
+        { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Forked\\s+Tongue\\s+and\\s+Common\\s+Standard\\s+Tongue$",
+      "extractions": [
+        { "groupName": "Forked Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "f108f7e7-4526-4492-87ef-9d664d2fb33e" },
+        { "groupName": "Standard Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Teeth,?\\s+and\\s+Very\\s+Rare\\s+Fangs(?:\\s*\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "b730c278-654d-4174-b897-06711a5e4722" },
+        { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Tongue\\s+with\\s+Very\\s+Rare\\s+Fangs$",
+      "extractions": [
+        { "groupName": "Standard Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc" },
+        { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Slim\\s+Tongue\\s+and\\s+Very\\s+Rare\\s+Fangs$",
+      "extractions": [
+        { "groupName": "Slim Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "44bab3d8-de52-4f87-b28b-f56c65c5bb96" },
+        { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Forked\\s+Tongue\\s+and\\s+Very\\s+Rare\\s+Fangs$",
+      "extractions": [
+        { "groupName": "Forked Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "f108f7e7-4526-4492-87ef-9d664d2fb33e" },
+        { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Rare\\s+)?Fangs\\s+and\\s+Special\\s+Tusks$",
+      "extractions": [
+        { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" },
+        { "groupName": "Saberteeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a4a62b53-6c61-4cb1-8c2d-551f72da7d6e" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Fangs\\s+with\\s+Common\\s+Tongue$",
+      "extractions": [
+        { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" },
+        { "groupName": "Standard Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Teeth\\s+and\\s+Common\\s+Tongue$",
+      "extractions": [
+        { "groupName": "Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "b730c278-654d-4174-b897-06711a5e4722" },
+        { "groupName": "Standard Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Slim\\s+and\\s+Very\\s+Rare\\s+Forked\\s+Tongue$",
+      "extractions": [
+        { "groupName": "Slim Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "44bab3d8-de52-4f87-b28b-f56c65c5bb96" },
+        { "groupName": "Forked Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "f108f7e7-4526-4492-87ef-9d664d2fb33e" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Teeth\\s+and\\s+Very\\s+[Rr]are\\s+Fangs$",
+      "extractions": [
+        { "groupName": "Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "b730c278-654d-4174-b897-06711a5e4722" },
+        { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" }
+      ]
     }
   ],
   "ignorePatterns": [
