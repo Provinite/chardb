@@ -1234,6 +1234,341 @@
       "enumValueId": "d768f743-5bfa-4640-8956-a7ac441a0fd5"
     },
     {
+      "pattern": "Eyes",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968"
+    },
+    {
+      "pattern": "Standard Closed Eyes",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968"
+    },
+    {
+      "pattern": "Opened Eyes",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f"
+    },
+    {
+      "pattern": "Googly Eye",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "24a1664f-f04d-43b2-bab1-bbccfd3d5b30"
+    },
+    {
+      "pattern": "Uncommon Eyes",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4"
+    },
+    {
+      "pattern": "Button Eye",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4"
+    },
+    {
+      "pattern": "Beaded Eyes",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "a82e56fb-f9ad-4c42-a997-562171f42a64"
+    },
+    {
+      "pattern": "Heart Pupil Eyes",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7"
+    },
+    {
+      "pattern": "Patching",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "e1a186b2-0c20-4431-9a81-b914b3a5b3a7"
+    },
+    {
+      "pattern": "Bow Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Pom-Poms",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "326858ac-e7be-448c-832a-8c80d4d4298f"
+    },
+    {
+      "pattern": "Scarf Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Patch",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "e1a186b2-0c20-4431-9a81-b914b3a5b3a7"
+    },
+    {
+      "pattern": "Stitching Accent",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "8f276e6c-08bd-4cfb-b0ff-7f5f602a0a82"
+    },
+    {
+      "pattern": "Ribbon Accent",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "239ea7e2-017a-41c6-85d3-c32ccb4c61be"
+    },
+    {
+      "pattern": "Crown Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Patchwork",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "e1a186b2-0c20-4431-9a81-b914b3a5b3a7"
+    },
+    {
+      "pattern": "Fur Accent",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "ba7360e0-cd05-49b9-ba18-f61fb926fcd7"
+    },
+    {
+      "pattern": "Patch Accents",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "e1a186b2-0c20-4431-9a81-b914b3a5b3a7"
+    },
+    {
+      "pattern": "Flower Crown Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Necklace Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Fluff Accent",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "f0df1853-909e-40a1-8383-830d93dcf8a1"
+    },
+    {
+      "pattern": "Hood Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Tassles",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "9092ce09-2bd9-4db6-aa69-e73a1dbd5227"
+    },
+    {
+      "pattern": "Costume Jewlery",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "50f1312f-1a16-4fb3-bdce-9255db9e8651"
+    },
+    {
+      "pattern": "Clothing and Costume",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "076b6eb9-da29-42e1-9e72-23e2c7844542"
+    },
+    {
+      "pattern": "Shawl Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Beading Accent",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "2df1fe39-59f0-4edf-80cb-9abf0b22cbfa"
+    },
+    {
+      "pattern": "Ruffles Accent",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "880c18bf-8c7e-4fc6-8889-df073cd6adb4"
+    },
+    {
+      "pattern": "Bandanna Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Fake Flower",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "8b0e64d0-e3ca-41bc-b01a-f64f22bcc078"
+    },
+    {
+      "pattern": "Gem Bedazzling",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "a810d82b-29a9-4ef2-9107-11f90cd4c4f5"
+    },
+    {
+      "pattern": "Tearing and Fraying",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "223aa4c8-9c13-4a5d-9efe-2c53b77f02ff"
+    },
+    {
+      "pattern": "Retractable Nails",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "729ade5b-3e93-4f36-ab54-714870b1efa6"
+    },
+    {
+      "pattern": "Paw Padding",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf"
+    },
+    {
+      "pattern": "No Padding",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854"
+    },
+    {
+      "pattern": "Paw",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854"
+    },
+    {
+      "pattern": "Standard Nails",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "c529d21a-f209-4377-ba06-35b01ed1e40d"
+    },
+    {
+      "pattern": "Padless Paws",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854"
+    },
+    {
+      "pattern": "No-Claws",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "d4ead820-e39e-4a9b-9258-950495d7aaa0"
+    },
+    {
+      "pattern": "Paw-Pads",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0"
+    },
+    {
+      "pattern": "Star Shaped Paw Pads",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "8d439215-f89d-4494-8a75-e388aae3f186"
+    },
+    {
+      "pattern": "Kit Body Size",
+      "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+      "enumValueId": "a6a3e738-d04b-4dfa-a882-40bed6667c80"
+    },
+    {
+      "pattern": "Kit Sized",
+      "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+      "enumValueId": "a6a3e738-d04b-4dfa-a882-40bed6667c80"
+    },
+    {
+      "pattern": "Size Pillowing",
+      "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+      "enumValueId": "b161dbe0-4693-4ebd-96f7-efd67428c58f"
+    },
+    {
+      "pattern": "Standard Body Size",
+      "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+      "enumValueId": "b161dbe0-4693-4ebd-96f7-efd67428c58f"
+    },
+    {
+      "pattern": "Standard Teeth",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "b730c278-654d-4174-b897-06711a5e4722"
+    },
+    {
+      "pattern": "Standard No Teeth",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "65199a10-735e-4c25-bbf8-f8ad2e1ae453"
+    },
+    {
+      "pattern": "Standard  Tongue",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc"
+    },
+    {
+      "pattern": "Stnadard Tongue",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc"
+    },
+    {
+      "pattern": "Temperature Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a7df7285-6120-4655-aa95-6809fd259ab5"
+    },
+    {
+      "pattern": "Magic Temperature Control",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a7df7285-6120-4655-aa95-6809fd259ab5"
+    },
+    {
+      "pattern": "Body Temperature Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a7df7285-6120-4655-aa95-6809fd259ab5"
+    },
+    {
+      "pattern": "Temperature Control",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a7df7285-6120-4655-aa95-6809fd259ab5"
+    },
+    {
+      "pattern": "Heat Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a7df7285-6120-4655-aa95-6809fd259ab5"
+    },
+    {
+      "pattern": "Pattern Animation Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a827f2a4-3e99-4eed-8579-f52c9473b0b1"
+    },
+    {
+      "pattern": "Fabric Animation Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a827f2a4-3e99-4eed-8579-f52c9473b0b1"
+    },
+    {
+      "pattern": "Pattern Manipulation Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a827f2a4-3e99-4eed-8579-f52c9473b0b1"
+    },
+    {
+      "pattern": "Rubber Material",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "1b008d00-6950-41ed-ab79-e37d840d645b"
+    },
+    {
+      "pattern": "Blacklight Material",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "797184f7-dcb7-4025-981c-1fc09b49dfd9"
+    },
+    {
+      "pattern": "Black Light Reactive Material",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "797184f7-dcb7-4025-981c-1fc09b49dfd9"
+    },
+    {
+      "pattern": "Blacklight Reactive Material",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "797184f7-dcb7-4025-981c-1fc09b49dfd9"
+    },
+    {
+      "pattern": "Knitted Fabric",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "1d6a98bd-283b-4b5c-a333-507f657a4c81"
+    },
+    {
+      "pattern": "Knit Fabric",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "1d6a98bd-283b-4b5c-a333-507f657a4c81"
+    },
+    {
+      "pattern": "Knit and Crochet Material",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "1d6a98bd-283b-4b5c-a333-507f657a4c81"
+    },
+    {
+      "pattern": "Knitted or Crocheted Yarn",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "1d6a98bd-283b-4b5c-a333-507f657a4c81"
+    },
+    {
+      "pattern": "Leather Material",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "e14e99f8-57f7-4978-bd98-db18c0d46cd1"
+    },
+    {
       "pattern": "No Claws",
       "traitId": "508da275-4435-4385-832e-1cec41e89644",
       "enumValueId": "d4ead820-e39e-4a9b-9258-950495d7aaa0"
@@ -2067,6 +2402,20 @@
         { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
         { "groupName": "Multiple Knotted Tails", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" },
         { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Open(?:ed)? Dark [Ee]yes$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Dark Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Jewelry and Gemstones$",
+      "extractions": [
+        { "groupName": "Jewelry", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "50f1312f-1a16-4fb3-bdce-9255db9e8651" },
+        { "groupName": "Gemstones", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "a810d82b-29a9-4ef2-9107-11f90cd4c4f5" }
       ]
     }
   ],
