@@ -3472,6 +3472,101 @@
       "pattern": "Handle Body Modification",
       "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
       "enumValueId": "b8a72a7a-f540-4b8e-8292-4610a6a53de4"
+    },
+    {
+      "pattern": "Clothing",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "076b6eb9-da29-42e1-9e72-23e2c7844542"
+    },
+    {
+      "pattern": "2 or More Accessories",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "87c9cf69-539e-40ca-8e5e-ed5654f8935f"
+    },
+    {
+      "pattern": "Scented Enchantment",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5"
+    },
+    {
+      "pattern": "Iridescent Silk",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "58f46336-d8d8-4976-866a-96d8045bd1df"
+    },
+    {
+      "pattern": "Paw Wheels",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "17bffb67-35c8-4b81-bf15-e0d792057cf5"
+    },
+    {
+      "pattern": "Animal Pillowcase",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9"
+    },
+    {
+      "pattern": "Kit",
+      "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+      "enumValueId": "a6a3e738-d04b-4dfa-a882-40bed6667c80"
+    },
+    {
+      "pattern": "Leaf",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "8b0e64d0-e3ca-41bc-b01a-f64f22bcc078"
+    },
+    {
+      "pattern": "Ear Pom Poms",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "326858ac-e7be-448c-832a-8c80d4d4298f"
+    },
+    {
+      "pattern": "Fabric Clip Accessories",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Fluff Padding",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "f0df1853-909e-40a1-8383-830d93dcf8a1"
+    },
+    {
+      "pattern": "Item Prop Accent",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86"
+    },
+    {
+      "pattern": "Spider Shaped Pom-Poms",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "326858ac-e7be-448c-832a-8c80d4d4298f"
+    },
+    {
+      "pattern": "Very  Rare Knot  Bow",
+      "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+      "enumValueId": "47650951-ddda-4d7e-82bb-3154cbeadbcc"
+    },
+    {
+      "pattern": "Fabric Pattern Manipulation",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a827f2a4-3e99-4eed-8579-f52c9473b0b1"
+    },
+    {
+      "pattern": "Pattern Animation",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a827f2a4-3e99-4eed-8579-f52c9473b0b1"
+    },
+    {
+      "pattern": "Clothing (Flowy Shirt",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "076b6eb9-da29-42e1-9e72-23e2c7844542"
+    },
+    {
+      "pattern": "Shape Paw Pads",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "8d439215-f89d-4494-8a75-e388aae3f186"
+    },
+    {
+      "pattern": "Pierced Ears",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "2b3509d6-c132-401d-9ca5-4337de00bac8"
     }
   ],
   "compositeRules": [
@@ -4338,6 +4433,131 @@
       "extractions": [
         { "groupName": "Fraying and Tearing", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "223aa4c8-9c13-4a5d-9efe-2c53b77f02ff" },
         { "groupName": "Sheer", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "79751a09-2f19-44af-8cbb-22f2ea4ff17e" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Teeth,?\\s+Very\\s+Rare\\s+Fangs$",
+      "extractions": [
+        { "groupName": "Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "b730c278-654d-4174-b897-06711a5e4722" },
+        { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Fangs,?\\s+Special\\s+Shark\\s+Teeth$",
+      "extractions": [
+        { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" },
+        { "groupName": "Shark Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "cf3b2e1b-dfa6-4bf8-b60b-44424574c42b" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Fangs,?\\s+Snaggle\\s+Teeth$",
+      "extractions": [
+        { "groupName": "Fangs", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e" },
+        { "groupName": "Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "b730c278-654d-4174-b897-06711a5e4722" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Nails\\s*\\(Front\\),?\\s+Common\\s+Paws\\s*\\(Hind\\)$",
+      "extractions": [
+        { "groupName": "Nails", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "c529d21a-f209-4377-ba06-35b01ed1e40d" },
+        { "groupName": "Standard Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Padding\\s+Paws,?\\s+Special\\s+Glowing$",
+      "extractions": [
+        { "groupName": "Padding Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf" },
+        { "groupName": "Glowing", "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Padding\\s+and\\s+Mitten\\s+Paws$",
+      "extractions": [
+        { "groupName": "Padding Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf" },
+        { "groupName": "Mitten Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "e3170cd6-0b0b-4a38-ae16-bd438df6c65b" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Padding\\s+Mitten\\s+Paws$",
+      "extractions": [
+        { "groupName": "Padding Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf" },
+        { "groupName": "Mitten Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "e3170cd6-0b0b-4a38-ae16-bd438df6c65b" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Paws\\s+with\\s+Dew\\s+Toe$",
+      "extractions": [
+        { "groupName": "Standard Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854" },
+        { "groupName": "Dew Toe", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "cf9dc557-980d-433b-8266-efae7d13f149" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Heart\\s+Shaped\\s+Paw\\s+Pads,?\\s+Common\\s+Dew\\s+Toe$",
+      "extractions": [
+        { "groupName": "Shaped Paw Pads", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "8d439215-f89d-4494-8a75-e388aae3f186" },
+        { "groupName": "Dew Toe", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "cf9dc557-980d-433b-8266-efae7d13f149" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Left\\s+Ear,?\\s+Common\\s+Droop\\s+Right\\s+Ear$",
+      "extractions": [
+        { "groupName": "Standard", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359" },
+        { "groupName": "Droop", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Droop\\s+Ear,?\\s+Common\\s+Standard\\s+Ear$",
+      "extractions": [
+        { "groupName": "Droop", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269" },
+        { "groupName": "Standard", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Ear\\s+and\\s+Rare\\s+Perky\\s+Long\\s+Ear$",
+      "extractions": [
+        { "groupName": "Standard", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359" },
+        { "groupName": "Perky Long", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "ef7bec80-d5fb-47c8-b2df-ee830f2bdd47" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Droop\\s+Long\\s+Ear\\s+and\\s+Rare\\s+Perky\\s+Long\\s+Ear$",
+      "extractions": [
+        { "groupName": "Droop Long", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "7155af00-47ee-4e4f-b117-05b737a89358" },
+        { "groupName": "Perky Long", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "ef7bec80-d5fb-47c8-b2df-ee830f2bdd47" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Perky\\s+Long\\s+Ear\\s+and\\s+Rare\\s+Droop\\s+Long\\s+Ear$",
+      "extractions": [
+        { "groupName": "Perky Long", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "ef7bec80-d5fb-47c8-b2df-ee830f2bdd47" },
+        { "groupName": "Droop Long", "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "7155af00-47ee-4e4f-b117-05b737a89358" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Light\\s+Reflective\\s+Padding\\s+Paws$",
+      "extractions": [
+        { "groupName": "Reflective Material", "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3", "enumValueId": "99f2d94a-c430-4f79-81d0-5e44dfa43792" },
+        { "groupName": "Padding Paw", "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Levitation\\s+Magic\\s+&\\s+Levitating\\s+Items\\s*\\(.*\\)$",
+      "extractions": [
+        { "groupName": "Levitation", "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "c722d988-6784-42e9-8fd6-a32e004feaaf" },
+        { "groupName": "Item Props", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Levitation\\s+Magic\\s+Uncommon\\s+Multiple\\s+Accessories\\s*\\(.*\\)$",
+      "extractions": [
+        { "groupName": "Levitation", "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "c722d988-6784-42e9-8fd6-a32e004feaaf" },
+        { "groupName": "Multiple Accessories", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "87c9cf69-539e-40ca-8e5e-ed5654f8935f" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Open\\s*\\(No\\s+Pupils\\.\\s+Only\\s+Sclera\\)$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" }
       ]
     }
   ],
