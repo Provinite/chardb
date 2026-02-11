@@ -1394,9 +1394,269 @@
       "enumValueId": "a810d82b-29a9-4ef2-9107-11f90cd4c4f5"
     },
     {
+      "pattern": "Jewel Bedazzling",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "a810d82b-29a9-4ef2-9107-11f90cd4c4f5"
+    },
+    {
+      "pattern": "Pins and Buttons",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "3a960bcc-373c-4caf-828d-c38a1e1099db"
+    },
+    {
+      "pattern": "Tassel",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "9092ce09-2bd9-4db6-aa69-e73a1dbd5227"
+    },
+    {
+      "pattern": "Velcro Patches",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "77fa7bc8-f3ea-4ea7-a2c2-3f8696ea2a33"
+    },
+    {
+      "pattern": "Fake Plant Leaves",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "8b0e64d0-e3ca-41bc-b01a-f64f22bcc078"
+    },
+    {
+      "pattern": "Fake Leaves",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "8b0e64d0-e3ca-41bc-b01a-f64f22bcc078"
+    },
+    {
+      "pattern": "Stickers Accent",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "735d03b0-23a6-41f4-a349-fe1f3bd399c4"
+    },
+    {
+      "pattern": "Pocket Accent",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "cae4c0e5-ef0e-4859-bae7-7de5b2fb2905"
+    },
+    {
       "pattern": "Tearing and Fraying",
       "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
       "enumValueId": "223aa4c8-9c13-4a5d-9efe-2c53b77f02ff"
+    },
+    {
+      "pattern": "Fluff Accents",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "f0df1853-909e-40a1-8383-830d93dcf8a1"
+    },
+    {
+      "pattern": "Fabric Flap",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "ecb0b736-fbc3-4d0a-aa03-3a70138b9211"
+    },
+    {
+      "pattern": "Rope/Twine",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "61abbaa0-e26f-41ef-a8a2-4c0c5db29700"
+    },
+    {
+      "pattern": "Fake Food Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Headband Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Bowtie Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Tie Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Leaf Crown Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Socks Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "076b6eb9-da29-42e1-9e72-23e2c7844542"
+    },
+    {
+      "pattern": "Cloak Costume",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "076b6eb9-da29-42e1-9e72-23e2c7844542"
+    },
+    {
+      "pattern": "Piercing Accessories",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "2b3509d6-c132-401d-9ca5-4337de00bac8"
+    },
+    {
+      "pattern": "Attached Socks",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Standard No Nails",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "d4ead820-e39e-4a9b-9258-950495d7aaa0"
+    },
+    {
+      "pattern": "Peg Leg",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "6e11b61b-8645-466c-bc65-6a59a3041262"
+    },
+    {
+      "pattern": "Flower Crown",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Fringe",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "880c18bf-8c7e-4fc6-8889-df073cd6adb4"
+    },
+    {
+      "pattern": "Size Large",
+      "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+      "enumValueId": "c761bd6c-d53d-449b-8fd6-7f1f7d654a6c"
+    },
+    {
+      "pattern": "Large Size",
+      "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+      "enumValueId": "c761bd6c-d53d-449b-8fd6-7f1f7d654a6c"
+    },
+    {
+      "pattern": "Kit Size Size",
+      "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+      "enumValueId": "a6a3e738-d04b-4dfa-a882-40bed6667c80"
+    },
+    {
+      "pattern": "Fabric Animation",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "a827f2a4-3e99-4eed-8579-f52c9473b0b1"
+    },
+    {
+      "pattern": "Key Ring",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "b1133a47-c8ca-45bd-8b9b-270abbc7c468"
+    },
+    {
+      "pattern": "Standard  Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359"
+    },
+    {
+      "pattern": "Perky Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "ef7bec80-d5fb-47c8-b2df-ee830f2bdd47"
+    },
+    {
+      "pattern": "Fangs Teeth",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e"
+    },
+    {
+      "pattern": "Fang Teeth",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e"
+    },
+    {
+      "pattern": "Retractable Claws Nails",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "729ade5b-3e93-4f36-ab54-714870b1efa6"
+    },
+    {
+      "pattern": "Retactable Claws",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "729ade5b-3e93-4f36-ab54-714870b1efa6"
+    },
+    {
+      "pattern": "No Nails Nails",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "d4ead820-e39e-4a9b-9258-950495d7aaa0"
+    },
+    {
+      "pattern": "No NailsNails",
+      "traitId": "508da275-4435-4385-832e-1cec41e89644",
+      "enumValueId": "d4ead820-e39e-4a9b-9258-950495d7aaa0"
+    },
+    {
+      "pattern": "Teeth Teeth",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "b730c278-654d-4174-b897-06711a5e4722"
+    },
+    {
+      "pattern": "No Teeth Teeth",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "65199a10-735e-4c25-bbf8-f8ad2e1ae453"
+    },
+    {
+      "pattern": "Standard Tongues",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc"
+    },
+    {
+      "pattern": "Standard Tonge",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc"
+    },
+    {
+      "pattern": "Slim Mouth Tongue",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "44bab3d8-de52-4f87-b28b-f56c65c5bb96"
+    },
+    {
+      "pattern": "Standrd Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359"
+    },
+    {
+      "pattern": "StandardEars",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359"
+    },
+    {
+      "pattern": "Long Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359"
+    },
+    {
+      "pattern": "Droopy Long Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "7155af00-47ee-4e4f-b117-05b737a89358"
+    },
+    {
+      "pattern": "Sheer Fabric Material",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "79751a09-2f19-44af-8cbb-22f2ea4ff17e"
+    },
+    {
+      "pattern": "Reflective Fabric",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "99f2d94a-c430-4f79-81d0-5e44dfa43792"
+    },
+    {
+      "pattern": "Reflective Materials)",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "99f2d94a-c430-4f79-81d0-5e44dfa43792"
+    },
+    {
+      "pattern": "Waterproof Material",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "1b008d00-6950-41ed-ab79-e37d840d645b"
+    },
+    {
+      "pattern": "Water-Proof Material",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "1b008d00-6950-41ed-ab79-e37d840d645b"
+    },
+    {
+      "pattern": "Vinyl Material",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "e14e99f8-57f7-4978-bd98-db18c0d46cd1"
     },
     {
       "pattern": "Retractable Nails",
@@ -1672,6 +1932,76 @@
       "pattern": "Body Modification, Missing Limb",
       "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
       "enumValueId": "550a9194-b74a-4542-be2d-ef1a8b8da442"
+    },
+    {
+      "pattern": "Stiching",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "8f276e6c-08bd-4cfb-b0ff-7f5f602a0a82"
+    },
+    {
+      "pattern": "Droop Long",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "7155af00-47ee-4e4f-b117-05b737a89358"
+    },
+    {
+      "pattern": "Ruffle",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "880c18bf-8c7e-4fc6-8889-df073cd6adb4"
+    },
+    {
+      "pattern": "Beading Accents",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "2df1fe39-59f0-4edf-80cb-9abf0b22cbfa"
+    },
+    {
+      "pattern": "Bandana",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Bell",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "e247559c-b0a9-4454-aa65-096e4789e4cb"
+    },
+    {
+      "pattern": "Large",
+      "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+      "enumValueId": "c761bd6c-d53d-449b-8fd6-7f1f7d654a6c"
+    },
+    {
+      "pattern": "Bob Ears Ears",
+      "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af",
+      "enumValueId": "0d054c0b-6909-408f-a1c3-0a918759568a"
+    },
+    {
+      "pattern": "Open Eye",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f"
+    },
+    {
+      "pattern": "Dark Eye",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7"
+    },
+    {
+      "pattern": "Dark Glass Bead Eyes",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "a82e56fb-f9ad-4c42-a997-562171f42a64"
+    },
+    {
+      "pattern": "Removable Scarf",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Food Accessory",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+    },
+    {
+      "pattern": "Removable Outfit",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "076b6eb9-da29-42e1-9e72-23e2c7844542"
     },
     {
       "pattern": "No Claws",
@@ -2521,6 +2851,71 @@
       "extractions": [
         { "groupName": "Jewelry", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "50f1312f-1a16-4fb3-bdce-9255db9e8651" },
         { "groupName": "Gemstones", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "a810d82b-29a9-4ef2-9107-11f90cd4c4f5" }
+      ]
+    },
+    {
+      "linePattern": "^Common Length,? Common Weight,? Open Case Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common Length,? Common Weight,? Closed Case Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Knot Bow and Ribbons$",
+      "extractions": [
+        { "groupName": "Stylized Knot Bow", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "47650951-ddda-4d7e-82bb-3154cbeadbcc" },
+        { "groupName": "Ribbons", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "239ea7e2-017a-41c6-85d3-c32ccb4c61be" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Gemstones and Jewelry$",
+      "extractions": [
+        { "groupName": "Gemstones", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "a810d82b-29a9-4ef2-9107-11f90cd4c4f5" },
+        { "groupName": "Jewelry", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "50f1312f-1a16-4fb3-bdce-9255db9e8651" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Open Eyes?,\\s*(?:Very Rare|Special)\\s+(?:\\w+\\s+)?Shaped Pupils?(?:\\s*\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Shaped Pupils", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Dark and (?:Common|Uncommon|Rare|Very Rare|Special)\\s+Glowing Eyes$",
+      "extractions": [
+        { "groupName": "Dark Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7" },
+        { "groupName": "Glowing Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "eb437853-da6f-4c31-a6fa-3381d06c00ee" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Open Eyes?,\\s*(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Glowing$",
+      "extractions": [
+        { "groupName": "Open Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f" },
+        { "groupName": "Glowing Eyes", "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "eb437853-da6f-4c31-a6fa-3381d06c00ee" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Standard Mouth$",
+      "extractions": [
+        { "groupName": "Standard Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc" },
+        { "groupName": "No Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "65199a10-735e-4c25-bbf8-f8ad2e1ae453" }
+      ]
+    },
+    {
+      "linePattern": "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Standard Mouth,\\s*(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Standard Tongue$",
+      "extractions": [
+        { "groupName": "Standard Tongue", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc" },
+        { "groupName": "No Teeth", "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "65199a10-735e-4c25-bbf8-f8ad2e1ae453" }
       ]
     }
   ],
