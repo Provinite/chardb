@@ -7273,6 +7273,323 @@
         { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "f0f48a74-500b-43e9-b7fd-e85fd9864630" },
         { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
       ]
+    },
+    {
+      "line": "Little Bird Plushie",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Little Butterfly Plushie",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Little Cat Plushie",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Little Pet Rock",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Little Plush Bee",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Little Snail Plush",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Little Toy Car",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Little Toy Dragonfly",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Little Toy Ladybug",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Little mouse Plushie",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Pocket Chameleon",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Pocket Hydra",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Comes with Plush Frog Companion",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Raindrop Bird Plush Companion",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Chameleon",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d283b516-14b9-49cb-afcc-6e538f859a86", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Removable Helmet Fish Bowl Accessory",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9", "rarity": "Common" }]
+    },
+    {
+      "line": "Removable Piano Scarf",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9", "rarity": "Common" }]
+    },
+    {
+      "line": "Removable Ribbon Accessory",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9", "rarity": "Common" }]
+    },
+    {
+      "line": "Removable Scarf Accessory",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9", "rarity": "Common" }]
+    },
+    {
+      "line": "Removable Silver Bell Necklace Accessory",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9", "rarity": "Common" }]
+    },
+    {
+      "line": "Removable Accessories: Chestnut Helmet and Medic Kit",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "87c9cf69-539e-40ca-8e5e-ed5654f8935f", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Removable Accessories: Collar and Rain Boots.",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "87c9cf69-539e-40ca-8e5e-ed5654f8935f", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Removable Bandanna And Bell Accessory",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "87c9cf69-539e-40ca-8e5e-ed5654f8935f", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Removeable Velcro Seastar Accessories",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "87c9cf69-539e-40ca-8e5e-ed5654f8935f", "rarity": "Uncommon" }]
+    },
+    { "line": "Cotton Stuffing", "mappings": [] },
+    { "line": "Feather Stuffing", "mappings": [] },
+    { "line": "Feather & Cotton Stuffing in body", "mappings": [] },
+    { "line": "Sand Stuffing", "mappings": [] },
+    { "line": "Sand Stuffing in legs", "mappings": [] },
+    { "line": "Soft sand stuffing in tail. Ash stuffing in body.", "mappings": [] },
+    { "line": "Stuffing Feathers", "mappings": [] },
+    { "line": "Grandfathered as Very Rare", "mappings": [] },
+    { "line": "Pawpads and Buttons are purely aesthetic. They have no electronics", "mappings": [] },
+    { "line": "Two Pillowings that can never be separated.", "mappings": [] },
+    { "line": "Plush rose pin on his left ear which is optional.", "mappings": [] },
+    { "line": "Preview", "mappings": [] },
+    { "line": "Accents:", "mappings": [] },
+    { "line": "Other Accents:", "mappings": [] },
+    {
+      "line": "Bobbed Tail",
+      "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31", "rarity": "Very Rare" }]
+    },
+    {
+      "line": "Long Droop Ears",
+      "mappings": [{ "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "7155af00-47ee-4e4f-b117-05b737a89358", "rarity": "Rare" }]
+    },
+    {
+      "line": "Medium Droop Ear",
+      "mappings": [{ "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269", "rarity": "Common" }]
+    },
+    {
+      "line": "Medium Droop Ears",
+      "mappings": [{ "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269", "rarity": "Common" }]
+    },
+    {
+      "line": "Perky Long Ears",
+      "mappings": [{ "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "ef7bec80-d5fb-47c8-b2df-ee830f2bdd47", "rarity": "Rare" }]
+    },
+    {
+      "line": "Slim Tongue",
+      "mappings": [{ "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "44bab3d8-de52-4f87-b28b-f56c65c5bb96", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Patches",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "e1a186b2-0c20-4431-9a81-b914b3a5b3a7", "rarity": "Common" }]
+    },
+    {
+      "line": "Paws",
+      "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854", "rarity": "Common" }]
+    },
+    {
+      "line": "Mouth",
+      "mappings": [{ "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc", "rarity": "Common" }]
+    },
+    {
+      "line": "Eyes",
+      "mappings": [{ "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968", "rarity": "Common" }]
+    },
+    {
+      "line": "Multiple Tail Knots",
+      "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7", "rarity": "Special" }]
+    },
+    {
+      "line": "Fabric Flaps (Felt Lashes)",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "ecb0b736-fbc3-4d0a-aa03-3a70138b9211", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Shaped Empty Case Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958", "rarity": "Very Rare" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9", "rarity": "Very Rare" }
+      ]
+    },
+    {
+      "line": "Open Case Tail",
+      "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }]
+    },
+    {
+      "line": "Ribbon Accent",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "239ea7e2-017a-41c6-85d3-c32ccb4c61be", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Magic Retracting Cape",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9", "rarity": "Common" }]
+    },
+    {
+      "line": "One Common Closed Eye and One Uncommon Bead Eye",
+      "mappings": [
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968", "rarity": "Common" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "a82e56fb-f9ad-4c42-a997-562171f42a64", "rarity": "Uncommon" }
+      ]
+    },
+    {
+      "line": "One Common Closed Eye, One Uncommon Button Eye",
+      "mappings": [
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "8a750e15-7ae9-44d4-b9af-97b5b5c06968", "rarity": "Common" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4", "rarity": "Uncommon" }
+      ]
+    },
+    {
+      "line": "One Common Droop Ear and One Common Standard Ear",
+      "mappings": [
+        { "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269", "rarity": "Common" },
+        { "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "One Common Ear and One Common Droop Ear",
+      "mappings": [
+        { "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359", "rarity": "Common" },
+        { "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "One Common Standard Ear, One Common Droop Ear",
+      "mappings": [
+        { "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359", "rarity": "Common" },
+        { "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "1a4243d3-7d2f-48e6-808f-1d08132e8269", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "One Rare Perky Long Ear, One Rare Long Droop Ear",
+      "mappings": [
+        { "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "ef7bec80-d5fb-47c8-b2df-ee830f2bdd47", "rarity": "Rare" },
+        { "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "7155af00-47ee-4e4f-b117-05b737a89358", "rarity": "Rare" }
+      ]
+    },
+    {
+      "line": "One Common Accessory Crown",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9", "rarity": "Common" }]
+    },
+    {
+      "line": "Extreme Body Modification (Multiple Heads)",
+      "mappings": [{ "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a", "enumValueId": "0de62405-3b92-4405-b9af-851b144a2ac3", "rarity": "Exclusive" }]
+    },
+    {
+      "line": "Glowing Magic(Chest Marking)",
+      "mappings": [{ "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b", "rarity": "Special" }]
+    },
+    {
+      "line": ":bluuetblue: Uncommon Ribbons",
+      "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "239ea7e2-017a-41c6-85d3-c32ccb4c61be", "rarity": "Uncommon" }]
+    },
+    {
+      "line": "Wide Tail Weight",
+      "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428", "rarity": "Rare" }]
+    },
+    {
+      "line": "Common, Open Case Tail",
+      "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }]
+    },
+    {
+      "line": "Common, Opened Case Tail",
+      "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }]
+    },
+    {
+      "line": "Common, Sealed Case Tail",
+      "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832", "rarity": "Common" }]
+    },
+    {
+      "line": "Common, Closed Case Tail",
+      "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832", "rarity": "Common" }]
+    },
+    {
+      "line": "Optional Special Red, White, Blue, and Stars Aura",
+      "mappings": [{ "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434", "rarity": "Special" }]
+    },
+    {
+      "line": "Glow in the Dark Markings and Eyes",
+      "mappings": [{ "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b", "rarity": "Special" }]
+    },
+    {
+      "line": "Rare/ Very Rare Open Pupil Star Eyes",
+      "mappings": [{ "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7", "rarity": "Very Rare" }]
+    },
+    {
+      "line": "Padding Paws, Special Ability; Leaves glowing pawprints as it walks",
+      "mappings": [
+        { "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf", "rarity": "Common" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Open Eyes with Very Rare Shaped Pupils (Stars)",
+      "mappings": [{ "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7", "rarity": "Very Rare" }]
+    },
+    {
+      "line": ":bulletgreen\" Common Standard Length And Common Standard Width Tail, Open Case",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Very Levitation Magic",
+      "mappings": [{ "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "c722d988-6784-42e9-8fd6-a32e004feaaf", "rarity": "Very Rare" }]
+    },
+    {
+      "line": "3 Common Padding Paws, 1 Common Mitten Paw",
+      "mappings": [
+        { "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf", "rarity": "Common" },
+        { "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "e3170cd6-0b0b-4a38-ae16-bd438df6c65b", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Green Common Standard Length and Common Standard Width Tail, Open Case",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Talking and Speech Vocals",
+      "mappings": [{ "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "14693934-5469-4a53-bb0b-b759afa3e454", "rarity": "Special" }]
+    },
+    {
+      "line": "Themed Vocals (Various chitters, growls, and roars)",
+      "mappings": [{ "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682", "rarity": "Special" }]
+    },
+    {
+      "line": "Themed Vocals (Various purrs, chitters, and other soft animal noises.)",
+      "mappings": [{ "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682", "rarity": "Special" }]
     }
   ],
   "textValueTraits": [
