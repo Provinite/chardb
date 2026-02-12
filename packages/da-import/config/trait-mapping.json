@@ -3887,6 +3887,241 @@
       "pattern": "Themed Vocal Magic",
       "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
       "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682"
+    },
+    {
+      "pattern": "Feathered Wings",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10"
+    },
+    {
+      "pattern": "Bat Wings",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10"
+    },
+    {
+      "pattern": "Collector Wings",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10"
+    },
+    {
+      "pattern": "Insect Wings",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10"
+    },
+    {
+      "pattern": "Dragonfly Wings",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10"
+    },
+    {
+      "pattern": "Disappearing Wings",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10"
+    },
+    {
+      "pattern": "Retractable Wings",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10"
+    },
+    {
+      "pattern": "Retractable Fins",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10"
+    },
+    {
+      "pattern": "Beetle Shell",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10"
+    },
+    {
+      "pattern": "Speech and Singing Vocals",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "5ba463cc-6337-40b3-a5d1-fb978b7ce67e"
+    },
+    {
+      "pattern": "Humming And Singing Vocals",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "5ba463cc-6337-40b3-a5d1-fb978b7ce67e"
+    },
+    {
+      "pattern": "Humming & Singing",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "5ba463cc-6337-40b3-a5d1-fb978b7ce67e"
+    },
+    {
+      "pattern": "Humming Vocals",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "5ba463cc-6337-40b3-a5d1-fb978b7ce67e"
+    },
+    {
+      "pattern": "Singing and Humming Vocal Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "5ba463cc-6337-40b3-a5d1-fb978b7ce67e"
+    },
+    {
+      "pattern": "Humming and Singing Vocals",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "5ba463cc-6337-40b3-a5d1-fb978b7ce67e"
+    },
+    {
+      "pattern": "Music Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "5ba463cc-6337-40b3-a5d1-fb978b7ce67e"
+    },
+    {
+      "pattern": "Voicebox - Calming Music",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "5ba463cc-6337-40b3-a5d1-fb978b7ce67e"
+    },
+    {
+      "pattern": "Voice Box",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "5ba463cc-6337-40b3-a5d1-fb978b7ce67e"
+    },
+    {
+      "pattern": "Magic (Singing and Humming Vocals)",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "5ba463cc-6337-40b3-a5d1-fb978b7ce67e"
+    },
+    {
+      "pattern": "Themed Voice",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682"
+    },
+    {
+      "pattern": "Themed Vocals Voice",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682"
+    },
+    {
+      "pattern": "Themed Vocals Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682"
+    },
+    {
+      "pattern": "Magic Themed Vocals",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682"
+    },
+    {
+      "pattern": "Voice",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682"
+    },
+    {
+      "pattern": "Vocalizations",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682"
+    },
+    {
+      "pattern": "Nature Mimicking Sounds",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682"
+    },
+    {
+      "pattern": "Human Speech Capabilities",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "14693934-5469-4a53-bb0b-b759afa3e454"
+    },
+    {
+      "pattern": "Spiritbox Talking",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "14693934-5469-4a53-bb0b-b759afa3e454"
+    },
+    {
+      "pattern": "Glowing Aura",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434"
+    },
+    {
+      "pattern": "Calming Aura",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434"
+    },
+    {
+      "pattern": "Dark Aura",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434"
+    },
+    {
+      "pattern": "Soft Pink Aura",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434"
+    },
+    {
+      "pattern": "Relaxing Aura",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434"
+    },
+    {
+      "pattern": "Golden Holy Aura",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434"
+    },
+    {
+      "pattern": "Magic Aura",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434"
+    },
+    {
+      "pattern": "Magical Aura",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434"
+    },
+    {
+      "pattern": "Glowing Marks",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b"
+    },
+    {
+      "pattern": "Magic Glowing Markings",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b"
+    },
+    {
+      "pattern": "Magic Ability: Glowing Markings",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b"
+    },
+    {
+      "pattern": "Relaxing Glowing Heart",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b"
+    },
+    {
+      "pattern": "Glowing Ear Beads",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b"
+    },
+    {
+      "pattern": "Glowing Threat Stitching",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b"
+    },
+    {
+      "pattern": "Glow Powder in Paws",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b"
+    },
+    {
+      "pattern": "Scented Smoke",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "44e419af-093e-464f-a6b6-ec256b38c415"
+    },
+    {
+      "pattern": "Magic Ability to breathe Soothing Smoke",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "44e419af-093e-464f-a6b6-ec256b38c415"
+    },
+    {
+      "pattern": "Size Changing Magic",
+      "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+      "enumValueId": "1ce34b3e-500f-493e-803e-018959f14c1a"
+    },
+    {
+      "pattern": "Glowing Eye",
+      "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+      "enumValueId": "eb437853-da6f-4c31-a6fa-3381d06c00ee"
     }
   ],
   "compositeRules": [
@@ -7947,6 +8182,54 @@
         { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44", "rarity": "Rare" },
         { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428", "rarity": "Rare" },
         { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Special Color Changing Glow With Therapeutic Attribute Aura (Blue- Calming, Lime- Vitalizing)",
+      "mappings": [
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b", "rarity": "Special" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "df71b0dc-18a7-4fc1-8d00-4321398b8715", "rarity": "Special" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Color Changing Glow: Green/Orange/Red on the Mask and Rings",
+      "mappings": [
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b", "rarity": "Special" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "df71b0dc-18a7-4fc1-8d00-4321398b8715", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Wings With Special Snow Aura",
+      "mappings": [
+        { "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10", "rarity": "Special" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Wings with Special Glitter Aura Magic",
+      "mappings": [
+        { "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10", "rarity": "Special" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Pixie Wings with Special Glowing Magic",
+      "mappings": [
+        { "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10", "rarity": "Special" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Aura Wings (take shape of wing patches)",
+      "mappings": [
+        { "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "d384a415-c15b-47a8-910f-f447bbda7d10", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Magic, Vocals",
+      "mappings": [
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682", "rarity": "Special" }
       ]
     }
   ],
