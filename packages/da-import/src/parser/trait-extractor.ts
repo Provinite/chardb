@@ -8,6 +8,7 @@ const RARITY_PREFIXES = [
   "Exclusive",
   "Legendary",
   "Very Rare",
+  "Special",
   "Rare",
   "Uncommon",
   "Common",

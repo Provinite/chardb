@@ -46,11 +46,16 @@ function matchesIgnorePattern(
   return false;
 }
 
+interface CompositeResult {
+  traits: MappedTrait[];
+  errors: string[];
+}
+
 function tryCompositeRules(
   line: string,
   compositeRules: CompositeRule[],
   ruleLookup: Map<string, { traitId: string; enumValueId: string }>
-): MappedTrait[] | null {
+): CompositeResult | null {
   for (const rule of compositeRules) {
     const regex = new RegExp(rule.linePattern, "i");
     const match = line.match(regex);
@@ -58,16 +63,20 @@ function tryCompositeRules(
 
     // If extractions are defined, use them directly
     if (rule.extractions.length > 0) {
-      return rule.extractions.map((ext) => ({
-        traitId: ext.traitId,
-        enumValueId: ext.enumValueId,
-        rarity: ext.rarity,
-        sourceLine: line,
-      }));
+      return {
+        traits: rule.extractions.map((ext) => ({
+          traitId: ext.traitId,
+          enumValueId: ext.enumValueId,
+          rarity: ext.rarity,
+          sourceLine: line,
+        })),
+        errors: [],
+      };
     }
 
     // Empty extractions: split capture groups into sub-lines and re-lookup
     const results: MappedTrait[] = [];
+    const failedGroups: string[] = [];
     for (let i = 1; i < match.length; i++) {
       const subLine = match[i]?.trim();
       if (!subLine) continue;
@@ -80,9 +89,19 @@ function tryCompositeRules(
           rarity: rarity ?? undefined,
           sourceLine: line,
         });
+      } else {
+        failedGroups.push(subLine);
       }
     }
-    if (results.length > 0) return results;
+    if (results.length > 0) {
+      const errors: string[] = [];
+      if (failedGroups.length > 0) {
+        errors.push(
+          `Composite rule matched line "${line}" but ${failedGroups.length} capture group(s) failed to resolve: ${failedGroups.map((g) => `"${g}"`).join(", ")}`
+        );
+      }
+      return { traits: results, errors };
+    }
   }
   return null;
 }
@@ -94,6 +113,7 @@ export function mapTraitLines(
   const mappedTraits: MappedTrait[] = [];
   const unmappedLines: string[] = [];
   const warnings: string[] = [];
+  const captureGroupErrors: string[] = [];
 
   // Build a case-insensitive lookup map for simple rules
   const ruleLookup = new Map<string, { traitId: string; enumValueId: string }>();
@@ -116,7 +136,8 @@ export function mapTraitLines(
     // Try composite rules first
     const compositeMatch = tryCompositeRules(trimmed, config.compositeRules, ruleLookup);
     if (compositeMatch) {
-      mappedTraits.push(...compositeMatch);
+      mappedTraits.push(...compositeMatch.traits);
+      captureGroupErrors.push(...compositeMatch.errors);
       continue;
     }
 
@@ -135,6 +156,12 @@ export function mapTraitLines(
     } else {
       unmappedLines.push(trimmed);
       warnings.push(`Unmapped trait line: "${trimmed}"`);
+    }
+  }
+
+  if (captureGroupErrors.length > 0) {
+    for (const err of captureGroupErrors) {
+      warnings.push(err);
     }
   }
 
