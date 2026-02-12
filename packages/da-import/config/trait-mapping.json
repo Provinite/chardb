@@ -4122,6 +4122,141 @@
       "pattern": "Glowing Eye",
       "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
       "enumValueId": "eb437853-da6f-4c31-a6fa-3381d06c00ee"
+    },
+    {
+      "pattern": "Empty Bag Body Mod",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "d277f5bf-3848-4f29-98f2-6f54e339e32b"
+    },
+    {
+      "pattern": "Empty Body Mod",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "d277f5bf-3848-4f29-98f2-6f54e339e32b"
+    },
+    {
+      "pattern": "Empty Body Bad",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "d277f5bf-3848-4f29-98f2-6f54e339e32b"
+    },
+    {
+      "pattern": "Bag Type Pillowing",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "d277f5bf-3848-4f29-98f2-6f54e339e32b"
+    },
+    {
+      "pattern": "Body Modification: Removable Mace Tail Attachment",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "fd9b6f70-5a82-4b54-9301-7fe4633ad195"
+    },
+    {
+      "pattern": "Detachable Limbs",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "fd9b6f70-5a82-4b54-9301-7fe4633ad195"
+    },
+    {
+      "pattern": "Multiple Heads",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "0de62405-3b92-4405-b9af-851b144a2ac3"
+    },
+    {
+      "pattern": "Barbed-Wire Spring Body",
+      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+      "enumValueId": "a3f65386-1506-451f-938a-ca95df0b90af"
+    },
+    {
+      "pattern": "Enchanted Porcelain Face",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "4b4aced4-3127-46ba-a0c3-67269ff9c4d8"
+    },
+    {
+      "pattern": "Faux Face Plate",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "4b4aced4-3127-46ba-a0c3-67269ff9c4d8"
+    },
+    {
+      "pattern": "Removable Faux Face",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "4b4aced4-3127-46ba-a0c3-67269ff9c4d8"
+    },
+    {
+      "pattern": "Syringe Unicorn Horn",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "12afb48f-bce2-4ef1-9462-5f9fe57b4dd6"
+    },
+    {
+      "pattern": "Wood Moose Antlers",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "12afb48f-bce2-4ef1-9462-5f9fe57b4dd6"
+    },
+    {
+      "pattern": "Sea Glass Horn",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "12afb48f-bce2-4ef1-9462-5f9fe57b4dd6"
+    },
+    {
+      "pattern": "Spiked Studs",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "2b3509d6-c132-401d-9ca5-4337de00bac8"
+    },
+    {
+      "pattern": "Spikes Accents",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "02930408-f1c3-404c-83a6-70028dd6b61a"
+    },
+    {
+      "pattern": "Tusks",
+      "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+      "enumValueId": "a4a62b53-6c61-4cb1-8c2d-551f72da7d6e"
+    },
+    {
+      "pattern": "Temperature Sensitive Material",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "cf2bc351-308c-48ef-9001-20111b5a4670"
+    },
+    {
+      "pattern": "Heat-Sensitive Fabric",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "cf2bc351-308c-48ef-9001-20111b5a4670"
+    },
+    {
+      "pattern": "Clear Pillowcase",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "6ff66068-f7e2-4a44-be23-178df60f64c3"
+    },
+    {
+      "pattern": "Clear Material",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "6ff66068-f7e2-4a44-be23-178df60f64c3"
+    },
+    {
+      "pattern": "Transparent Body",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "6ff66068-f7e2-4a44-be23-178df60f64c3"
+    },
+    {
+      "pattern": "Waterproof Fabric",
+      "traitId": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+      "enumValueId": "1b008d00-6950-41ed-ab79-e37d840d645b"
+    },
+    {
+      "pattern": "Fake Fur",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "ba7360e0-cd05-49b9-ba18-f61fb926fcd7"
+    },
+    {
+      "pattern": "Soil Filling",
+      "traitId": "1cc3dd94-ddd6-474c-a608-fa0761cf7d26",
+      "enumValueId": "b0a22d0b-28a8-46d3-b98a-23f10e168003"
+    },
+    {
+      "pattern": "Air Stuffing",
+      "traitId": "1cc3dd94-ddd6-474c-a608-fa0761cf7d26",
+      "enumValueId": "33477897-6cdd-4a2b-bb1c-2e488204bc9d"
+    },
+    {
+      "pattern": "Glitter mixed with the Stuffing",
+      "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+      "enumValueId": "dcc766fc-451e-47e1-9de8-f13d6a41a308"
     }
   ],
   "compositeRules": [
@@ -8231,7 +8366,9 @@
       "mappings": [
         { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682", "rarity": "Special" }
       ]
-    }
+    },
+    { "line": "Special Woven Material", "mappings": [] },
+    { "line": "Uncommon Satin/Silk", "mappings": [] }
   ],
   "textValueTraits": [
     {
