@@ -191,6 +191,7 @@ export const scaffoldMappingCommand: CommandModule<object, ScaffoldArgs> = {
         "^MYO",
         "Design by",
       ],
+      exactLineRules: [],
       textValueTraits: [],
     };
 

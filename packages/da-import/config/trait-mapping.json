@@ -7106,6 +7106,175 @@
     "^F\\.?A\\.?Q",
     "^(?:Common|Uncommon|Rare|Very Rare|Special)\\s+Mouth\\s*\\(No Mouth\\)"
   ],
+  "exactLineRules": [
+    {
+      "line": "Corrupted Pillowing",
+      "mappings": [
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Corrupted Pillowing (Turned evil and malicious towards companions, not safe to be around others what so ever!",
+      "mappings": [
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Corrupted Pillowing: Overly protective to a point of danger. Will stop at nothing to protect its companions.",
+      "mappings": [
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Corrupted Pillowing: Turned evil and malicious towards companions, not safe to be around under any circumstances!",
+      "mappings": [
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Optional Pitfox",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Optional Pitfox Class",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Optional Pit Fox",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Optional Special Pitfox Class",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Possible Pitfox Status",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Optional Pitfox",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Optional Pitfox Class",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Pitfox Class",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Show Fox Class",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Show Fox (High Society Gladiator / Entertainer)",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Optional Pit Fox or Show Fox title",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Optional Gladiator Class",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "f0f48a74-500b-43e9-b7fd-e85fd9864630" }
+      ]
+    },
+    {
+      "line": "Optional Gladiator Status",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "f0f48a74-500b-43e9-b7fd-e85fd9864630" }
+      ]
+    },
+    {
+      "line": "( Pitfox/Gladiator)",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "f0f48a74-500b-43e9-b7fd-e85fd9864630" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Optional Pit Fox Feature or Corrupted Pillowing Feature",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Optional Pit Fox Feature/Corrupted Pillowing Feature",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Gladiator or Pitfox",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "f0f48a74-500b-43e9-b7fd-e85fd9864630" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Gladiator/Pitfox Class",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "f0f48a74-500b-43e9-b7fd-e85fd9864630" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Optional Pitfox/Gladiator Class",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "f0f48a74-500b-43e9-b7fd-e85fd9864630" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    },
+    {
+      "line": "Special Pitfox/Gladiator Class",
+      "mappings": [
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "dea24a68-7336-414f-86ba-30effb84b63c" },
+        { "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "f0f48a74-500b-43e9-b7fd-e85fd9864630" },
+        { "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "ad5f4f56-2b21-48b3-a318-470950e683ca", "rarity": "Special" }
+      ]
+    }
+  ],
   "textValueTraits": [
     {
       "traitId": "d1da3098-4f59-4edd-9e0d-bcaa841b7479",

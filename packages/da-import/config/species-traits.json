@@ -260,11 +260,30 @@
       },
       {
         "id": "c761bd6c-d53d-449b-8fd6-7f1f7d654a6c",
-        "name": "Large Large Size"
+        "name": "Large Size"
       },
       {
         "id": "bedd657d-cfb6-43cd-9e57-a572748e76ff",
         "name": "Special Jumbo Size (Restricted)"
+      }
+    ]
+  },
+  {
+    "id": "3e7eb751-13d1-4bc1-918c-fde08694593d",
+    "name": "Community Badges",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "dea24a68-7336-414f-86ba-30effb84b63c",
+        "name": "Pit Fox"
+      },
+      {
+        "id": "f0f48a74-500b-43e9-b7fd-e85fd9864630",
+        "name": "Gladiator"
+      },
+      {
+        "id": "2275520d-0cd1-49ca-a014-7c953f6d2272",
+        "name": "S.A.F.E."
       }
     ]
   },

@@ -24,6 +24,21 @@ export const CompositeRuleSchema = z.object({
 
 export type CompositeRule = z.infer<typeof CompositeRuleSchema>;
 
+export const ExactLineMappingSchema = z.object({
+  traitId: z.string(),
+  enumValueId: z.string(),
+  rarity: z.string().optional(),
+});
+
+export type ExactLineMapping = z.infer<typeof ExactLineMappingSchema>;
+
+export const ExactLineRuleSchema = z.object({
+  line: z.string(),
+  mappings: z.array(ExactLineMappingSchema),
+});
+
+export type ExactLineRule = z.infer<typeof ExactLineRuleSchema>;
+
 export const TextValueTraitSchema = z.object({
   traitId: z.string(),
   source: z.enum(["deviationUrl"]),
@@ -40,6 +55,7 @@ export const MappingConfigSchema = z.object({
   rules: z.array(SimpleRuleSchema),
   compositeRules: z.array(CompositeRuleSchema).default([]),
   ignorePatterns: z.array(z.string()).default([]),
+  exactLineRules: z.array(ExactLineRuleSchema).default([]),
   textValueTraits: z.array(TextValueTraitSchema).default([]),
 });
 

@@ -1,11 +1,69 @@
 import * as cheerio from "cheerio";
+import type { ExactLineRule, ExactLineMapping } from "../types/mapping-config";
+
+const RARITY_PATTERN =
+  /^(common|uncommon|rare|very\s+rare|legendary|exclusive|special)\s+/i;
+
+/**
+ * Normalize a trait line in the features section to fix common formatting
+ * issues found in DA descriptions.
+ */
+function normalizeTraitLine(line: string): string {
+  let s = line;
+
+  // Strip bullet emoticon text prefixes (:bulletgreen:, bulletblue:, etc.)
+  s = s.replace(/^:?\s*bullet\w*:?\s*/i, "");
+
+  // Strip leading colons (": Common Stitching")
+  s = s.replace(/^:\s*/, "");
+
+  // Fix "Special:" with colon → "Special"
+  s = s.replace(/^special:\s*/i, "Special ");
+
+  // Fix common rarity typos
+  s = s.replace(/^vert rare\b/i, "Very Rare");
+  s = s.replace(/^vary rare\b/i, "Very Rare");
+  s = s.replace(/^unommon\b/i, "Uncommon");
+  s = s.replace(/^uncomment\b/i, "Uncommon");
+  s = s.replace(/^uncomming\b/i, "Uncommon");
+  s = s.replace(/^commom\b/i, "Common");
+  s = s.replace(/^ommon\b/i, "Common");
+
+  // Fix missing space after rarity (CommonMouth → Common Mouth)
+  s = s.replace(
+    /^(Common|Uncommon|Rare|Legendary|Exclusive|Special)(?=[A-Z])/,
+    "$1 "
+  );
+
+  // Handle "Standard [Rarity] ..." → "[Rarity] Standard ..."
+  const stdRarityMatch = s.match(
+    /^standard\s+(common|uncommon|rare|very\s+rare|legendary|exclusive|special)\s+/i
+  );
+  if (stdRarityMatch) {
+    s = stdRarityMatch[1] + " Standard " + s.slice(stdRarityMatch[0].length);
+  }
+
+  // Bare "Standard [Trait]" with no rarity → treat as "Common Standard [Trait]"
+  if (/^standard\s+/i.test(s) && !RARITY_PATTERN.test(s)) {
+    s = "Common " + s;
+  }
+
+  return s.trim();
+}
+
+export interface ExactLineMatch {
+  line: string;
+  mappings: ExactLineMapping[];
+}
 
 export interface ParsedDescription {
   characterName: string;
   ownerUsername: string;
   category: string;
   traitLines: string[];
+  exactLineMatches: ExactLineMatch[];
   rawText: string;
+  warnings: string[];
 }
 
 /**
@@ -22,7 +80,8 @@ export interface ParsedDescription {
  */
 export function parseDescription(
   html: string,
-  fallbackName: string
+  fallbackName: string,
+  exactLineRules: ExactLineRule[] = []
 ): ParsedDescription {
   const $ = cheerio.load(html);
 
@@ -109,17 +168,27 @@ export function parseDescription(
     }
   }
 
+  // Build case-insensitive lookup for exact line rules
+  const exactLineLookup = new Map<string, ExactLineRule>();
+  for (const rule of exactLineRules) {
+    exactLineLookup.set(rule.line.toLowerCase(), rule);
+  }
+
   // Extract trait lines — lines after "Features:" that have rarity prefixes
   const traitLines: string[] = [];
+  const exactLineMatches: ExactLineMatch[] = [];
+  const warnings: string[] = [];
   let inFeatures = false;
 
   for (const line of allLines) {
     // Detect features section
-    if (/^features\s*:/i.test(line)) {
+    if (/^features\s*:?/i.test(line)) {
       inFeatures = true;
       // The rest of this line after "Features:" might have content
-      const afterLabel = line.replace(/^features\s*:\s*/i, "").trim();
-      if (afterLabel && /^(common|uncommon|rare|very\s+rare|legendary|exclusive)\s+/i.test(afterLabel)) {
+      const afterLabel = normalizeTraitLine(
+        line.replace(/^features\s*:?\s*/i, "").trim()
+      );
+      if (afterLabel && RARITY_PATTERN.test(afterLabel)) {
         traitLines.push(afterLabel);
       }
       continue;
@@ -132,10 +201,24 @@ export function parseDescription(
       break;
     }
 
-    // Lines with rarity prefixes are traits
-    if (/^(common|uncommon|rare|very\s+rare|legendary|exclusive)\s+/i.test(line)) {
-      traitLines.push(line);
+    // Check exact line rules first — these bypass rarity parsing
+    const exactRule = exactLineLookup.get(line.toLowerCase());
+    if (exactRule) {
+      exactLineMatches.push({ line, mappings: exactRule.mappings });
+      continue;
     }
+
+    // Normalize and check for rarity prefixes
+    const normalized = normalizeTraitLine(line);
+    if (RARITY_PATTERN.test(normalized)) {
+      traitLines.push(normalized);
+    } else {
+      warnings.push(`Unparseable trait line in features section: "${line}"`);
+    }
+  }
+
+  if (!inFeatures) {
+    warnings.push("No features section detected in description");
   }
 
   return {
@@ -143,6 +226,8 @@ export function parseDescription(
     ownerUsername,
     category,
     traitLines,
+    exactLineMatches,
     rawText,
+    warnings,
   };
 }

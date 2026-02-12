@@ -87,7 +87,8 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
       // Parse description HTML
       const parsed = parseDescription(
         deviation.descriptionHtml,
-        deviation.title
+        deviation.title,
+        config.exactLineRules
       );
 
       // Map trait lines
@@ -103,6 +104,18 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
           (!("enumValueId" in t) || t.enumValueId !== "TODO")
       );
 
+      // Add traits from exact line matches
+      for (const match of parsed.exactLineMatches) {
+        for (const mapping of match.mappings) {
+          validMappedTraits.push({
+            traitId: mapping.traitId,
+            enumValueId: mapping.enumValueId,
+            rarity: mapping.rarity,
+            sourceLine: match.line,
+          });
+        }
+      }
+
       // Add text-value traits from config
       for (const tvt of config.textValueTraits) {
         if (tvt.source === "deviationUrl") {
@@ -117,6 +130,8 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
       // Derive variant from rarity
       const { variantId, rarity } = deriveVariant(validMappedTraits, config);
 
+      const allWarnings = [...parsed.warnings, ...warnings];
+
       const character: ParsedCharacter = {
         numericId: deviation.numericId,
         name: parsed.characterName || deviation.title,
@@ -126,7 +141,7 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
         url: deviation.url,
         mappedTraits: validMappedTraits,
         unmappedLines,
-        warnings,
+        warnings: allWarnings,
         derivedVariantId: variantId,
         derivedRarity: rarity,
       };
