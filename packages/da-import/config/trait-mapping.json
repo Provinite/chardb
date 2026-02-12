@@ -3751,10 +3751,82 @@
       ]
     },
     {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Uncommon\\s+Slim\\s+Width\\s+Tail\\s+\\(Closed\\s+Layered\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Common\\s+Standard\\s+Weight\\s+Tail\\s+\\(Layered\\s+Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Uncommon\\s+Slim\\s+Weight\\s+\\(Layered\\s+Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Width\\s+Tail\\s+\\(Open\\s+Layered\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
       "linePattern": "^Uncommon\\s+Short\\s+Length\\s+And\\s+Common\\s+Standard\\s+Weight\\s+Tail\\s+\\(Open\\s+Layered\\s+Case\\)$",
       "extractions": [
         { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
         { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Length\\s+and\\s+Common\\s+Width\\s+Tail,\\s+Open\\s+Layered\\s+Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Rare\\s+Wide\\s+Width\\s+Tail,\\s+Open\\s+Case\\s+\\(Layered\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+with\\s+Layered\\s+Open\\s+Case\\s+Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Rare\\s+Wide\\s+Set\\s+Tail\\s+with\\s+Common\\s+Layered\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
         { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
         { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
       ]
@@ -3773,6 +3845,52 @@
       "extractions": [
         { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
         { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Layered\\s+Case\\s+with\\s+Rare\\s+Long\\s+Length\\s+and\\s+Rare\\s+Wide\\s+Tail\\s+\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Layered\\s+Rare\\s+Long\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail\\s+\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Common\\s+Width,\\s+Common\\s+Layered\\s+Pillow\\s+Case\\s+Tail\\s+\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+And\\s+Common\\s+Standard\\s+Width,\\s+Common\\s+Layered\\s+Case\\s+Tail\\s+\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+And\\s+Common\\s+Standard\\s+Width\\s+Tail\\s+With\\s+Very\\s+Rare\\s+Ribbon\\s+Knot,\\s+Open\\s+Layered\\s+Case$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Stylized Knot Bow", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "47650951-ddda-4d7e-82bb-3154cbeadbcc" },
         { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
         { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
       ]
@@ -6222,6 +6340,725 @@
       "linePattern": "^Common\\s+Missing\\s+Limbs\\s+with\\s+Very\\s+Rare\\s+Mod\\s*\\(.*\\)$",
       "extractions": [
         { "groupName": "Two Missing Limbs", "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a", "enumValueId": "e88b7b28-6425-444b-b207-20a406ae3bd0" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail\\s+\\(Half\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Half Attached Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ec2ac31f-13df-4af6-bfe9-78feddace82a" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Rare\\s+Wide\\s+Width\\s+Tail\\s+\\(Half\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Half Attached Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ec2ac31f-13df-4af6-bfe9-78feddace82a" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail\\s+\\(Half\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Half Attached Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ec2ac31f-13df-4af6-bfe9-78feddace82a" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Rare\\s+Wide\\s+Width\\s+Tail\\s+\\(Half\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Half Attached Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ec2ac31f-13df-4af6-bfe9-78feddace82a" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Uncommon\\s+Slim\\s+Width\\s+Tail\\s+Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tai\\s+\\(\\s*Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail\\s+\\(Closed\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Uncommon\\s+Slim\\s+Width\\s+Tail\\s+\\(OpenCase\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Common\\s+Stadard\\s+Width\\s+Tail\\s+\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Shorth\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail\\s+\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+And\\s+Common\\s+Standad\\s+Width\\s+Tail\\s+\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+With\\s+Tail\\s+\\(Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+with\\s+Common\\s+Weight\\s+Closed\\s+Pillow\\s+Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Rare\\s+Wide\\s+Weight,\\s+Open\\s+Case\\s+Tail$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+and\\s+Common\\s+Weight\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+and\\s+Rare\\s+Wide\\s+Weight\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+and\\s+Uncommon\\s+Slim\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+and\\s+Common\\s+Width\\s+Tail,\\s+Closed\\s+Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Standard\\s+Weight\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Standard\\s+Weight\\s+Tail,\\s+Closed\\s+Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Standard\\s+Width\\s+Tail\\s+\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Standard\\s+Width\\s+Tail\\s+\\(Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Uncommon\\s+Thin\\s+Width\\s+Tail\\s+\\(Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Common\\s+Width,\\s+Open\\s+Case\\s+Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Common\\s+Width,\\s+Open\\s+Case\\s+Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+And\\s+Common\\s+Standard\\s+Width\\s+Tail,\\s+Partially\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Long\\s+Length\\s+And\\s+Rare\\s+Wide\\s+Width\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+and\\s+Common\\s+Standard\\s+Length\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+Tail\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Slim\\s+Length\\s+and\\s+Uncommon\\s+Short\\s+Width\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail\\s+\\(Rare\\s+Long\\s+Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+And\\s+Common\\s+Standard\\s+Width\\s+Tail,\\s+Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Common\\s+Standard\\s+Wide\\s+Width\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Wide\\s+Width\\s+and\\s+Common\\s+Length\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Width\\s+and\\s+Common\\s+Length\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Width\\s+and\\s+Uncommon\\s+Short\\s+Length\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Weight\\s+and\\s+Common\\s+Length\\s+Tail,\\s+Closed\\s+Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Open\\s+Case\\s+Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Open\\s+Case\\s+Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail,\\s+Attatched\\s+Half\\s+Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Half Attached Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ec2ac31f-13df-4af6-bfe9-78feddace82a" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail\\s+\\(Half\\s+Attached\\s+Layered\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Half Attached Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ec2ac31f-13df-4af6-bfe9-78feddace82a" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Rare\\s+Wide\\s+Width,\\s+Open\\s+Case\\s+Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width,\\s+Open\\s+Case\\s+Tail$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Bob\\s+Tail\\s+with\\s+Common\\s+Width,\\s+Sealed\\s+Case$",
+      "extractions": [
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Bob\\s+Tail\\s+with\\s+Rare\\s+Wide\\s+Width,\\s+Sealed\\s+Case$",
+      "extractions": [
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Bob\\s+and\\s+Very\\s+Rare\\s+Wide\\s+Width\\s+Tail,\\s+Closed\\s+Case$",
+      "extractions": [
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Wide\\s+Width\\s+and\\s+Very\\s+Rare\\s+Bobbed\\s+Tail$",
+      "extractions": [
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Short\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail,\\s+Closed\\s+Case\\s+Tail$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Rare\\s+Wide\\s+Set\\s+Open\\s+Case\\s+Tail$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+And\\s+Uncommon\\s+Thin\\s+Width\\s+Tail,\\s+Closed\\s+Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+And\\s+Wide\\s+Width\\s+\\(Open\\s+Pillow\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Standard\\s+Width\\s+Tail,\\s+Closed\\s+Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Slim\\s+Width\\s+Tail\\s+\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Uncommon\\s+Thin\\s+Width\\s+Tail\\s+\\(Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Uncommon\\s+Slim\\s+Width\\s+Tails\\s+\\(Closed\\s+Cases\\)$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Uncommon\\s+Thin\\s+Width\\s+Tail\\s+\\(Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Uncommon\\s+Thin\\s+Width\\s+Tail\\s+\\(Sealed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+And\\s+Common\\s+Standard\\s+Length\\s+Tail,\\s+Open\\s+Case$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Length\\s+and\\s+Very\\s+Rare\\s+Shaped\\s+Tail\\s+\\(Hand\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Shaped\\s+Tail\\s+with\\s+Rare\\s+Long\\s+Length\\s+and\\s+Rare\\s+Wide\\s+Width\\s+Tail$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Shaped\\s+Tail\\s+with\\s+Very\\s+Rare\\s+Empty\\s+Case$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Empty Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Shaped\\s+Tail\\s+with\\s+Common\\s+Layered\\s+Case$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Very\\s+Rare\\s+Shaped\\s+Tail\\s+\\(Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Uncommon\\s+Slim\\s+Width\\s+Tail,\\s+Special\\s+Multiple\\s+Knots$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Shaped\\s+and\\s+Special\\s+Multiknotted\\s+Tail,\\s+Closed\\s+Case$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+with\\s+Common\\s+Standard\\s+Width\\s+and\\s+Special\\s+Multiknot$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+And\\s+Special\\s+Multi-Knot\\s+Tail\\s+\\(Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+And\\s+Special\\s+Multi-Knot\\s+Tail\\s+\\(Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Uncommon\\s+Slim\\s+Width\\s+Special\\s+Multi-Knot\\s+Closed\\s+case\\s+Tail$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Uncommon\\s+Slim\\s+Width\\s+Special\\s+Multi-Knot\\s+Closed\\s+Case\\s+Tail$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+And\\s+Common\\s+Standard\\s+Width\\s+With\\s+Special\\s+Multi-Knot\\s+Tail\\s+\\(Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+And\\s+Uncommon\\s+Slim\\s+Width\\s+With\\s+Special\\s+Multi-Knot\\s+Tail,\\s+Closed\\s+Case$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Very\\s+Rare\\s+Shaped\\s+with\\s+Special\\s+Multi-Knot\\s+Tail\\s+\\(Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail\\s+with\\s+Special\\s+Multiple\\s+Knots\\s+\\(Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Shaped\\s+Tail\\s+with\\s+Special\\s+Multiple\\s+Knots\\s+\\(Alligator\\s+Tail\\)$",
+      "extractions": [
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+with\\s+Very\\s+Rare\\s+Empty\\s+Case\\s+and\\s+Special\\s+Double\\s+Knot\\s+\\(\\+1\\)$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Empty Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958" },
+        { "groupName": "Multiple Knots", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail\\s+\\(Empty\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Empty Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Empty\\s+Case\\s+and\\s+Rare\\s+Wide\\s+Width\\s+Tail\\s+\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Empty Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Very\\s+Rare\\s+Empty\\s+Tail\\s+Case\\s+\\(Open\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Empty Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+And\\s+Uncommon\\s+Slim\\s+Width,\\s+Very\\s+Rare\\s+Empty\\s+Case\\s+Tail\\s+\\(Closed\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Empty Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Knot\\s+Only\\s+and\\s+Very\\s+Rare\\s+Yarn\\s+Tail\\s+\\(Hair\\)$",
+      "extractions": [
+        { "groupName": "Knot Only Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "62e16c38-05e6-474e-ab6d-967144b5e46b" },
+        { "groupName": "Yarn Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ac0719fa-4761-4d08-8575-fd3f4b9225d7" }
+      ]
+    },
+    {
+      "linePattern": "^Rare\\s+Long\\s+Length\\s+and\\s+Uncommon\\s+Slim\\s+Width\\s+Tail\\s+with\\s+Very\\s+Rare\\s+Ribbon\\s+Knot,\\s+Closed\\s+Case$",
+      "extractions": [
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Slim Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a" },
+        { "groupName": "Stylized Knot Bow", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "47650951-ddda-4d7e-82bb-3154cbeadbcc" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Knot\\s+Bow\\s+and\\s+Ribbons\\s+With\\s+Very\\s+Rare\\s+Shaped\\s+Tail\\s+\\(Cotton\\s+Candy\\)$",
+      "extractions": [
+        { "groupName": "Stylized Knot Bow", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "47650951-ddda-4d7e-82bb-3154cbeadbcc" },
+        { "groupName": "Ribbons", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "239ea7e2-017a-41c6-85d3-c32ccb4c61be" },
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail,\\s+Open\\s+Case\\s+Common\\s+Single\\s+Accessory\\s+\\(Bow\\)$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Single Accessory", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Standard\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail,\\s+Closed\\s+Case\\s+Uncommon\\s+Buttons$",
+      "extractions": [
+        { "groupName": "Standard Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Closed Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832" },
+        { "groupName": "Buttons and Pins", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "3a960bcc-373c-4caf-828d-c38a1e1099db" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Ribbon\\s+with\\s+Very\\s+Rare\\s+Lace\\s+Trimming$",
+      "extractions": [
+        { "groupName": "Ribbons", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "239ea7e2-017a-41c6-85d3-c32ccb4c61be" },
+        { "groupName": "Lace", "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "8b39b1b9-2d0d-45d3-8f57-33d5d9dc6e6b" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Short\\s+Length\\s+and\\s+Common\\s+Standard\\s+Width\\s+Tail\\s+\\(Open\\s+Layered\\s+Petal\\s+Shaped\\s+Case\\)$",
+      "extractions": [
+        { "groupName": "Short Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c" },
+        { "groupName": "Standard Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5" },
+        { "groupName": "Open Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" },
+        { "groupName": "Layered Pillow Case", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" },
+        { "groupName": "Shaped Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Inflating\\s+Bob\\s+Tail/\\s+Rare\\s+Long\\s+Length\\s+and\\s+Rare\\s+Wide\\s+Tail\\s+with\\s+Very\\s+Rare\\s+Empty\\s+Case$",
+      "extractions": [
+        { "groupName": "Bob Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31" },
+        { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
+        { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
+        { "groupName": "Empty Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958" }
       ]
     }
   ],
