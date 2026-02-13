@@ -8809,7 +8809,28 @@
     { "line": "Very Rare Ruffled Knot", "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "880c18bf-8c7e-4fc6-8889-df073cd6adb4", "rarity": "Very Rare" }] },
     { "line": "Common Standard  Size", "mappings": [{ "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871", "enumValueId": "b161dbe0-4693-4ebd-96f7-efd67428c58f", "rarity": "Common" }] },
     { "line": "Common Body Size", "mappings": [{ "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871", "enumValueId": "b161dbe0-4693-4ebd-96f7-efd67428c58f", "rarity": "Common" }] },
-    { "line": "Common Body", "mappings": [{ "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871", "enumValueId": "b161dbe0-4693-4ebd-96f7-efd67428c58f", "rarity": "Common" }] }
+    { "line": "Common Body", "mappings": [{ "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871", "enumValueId": "b161dbe0-4693-4ebd-96f7-efd67428c58f", "rarity": "Common" }] },
+
+    { "line": "Common Padding on Paws", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf", "rarity": "Common" }] },
+    { "line": "Common Padless Paw w/o Claws", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854", "rarity": "Common" }, { "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "d4ead820-e39e-4a9b-9258-950495d7aaa0", "rarity": "Common" }] },
+    { "line": "Common Paw Nails", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "c529d21a-f209-4377-ba06-35b01ed1e40d", "rarity": "Rare" }, { "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854", "rarity": "Common" }] },
+    { "line": "Common Paws w/ Uncommon Paw Pads", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0", "rarity": "Uncommon" }, { "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854", "rarity": "Common" }] },
+    { "line": "Special Wooden Paw Pads", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0", "rarity": "Uncommon" }] },
+
+    { "line": "Very Rare Rectractible Claws", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "729ade5b-3e93-4f36-ab54-714870b1efa6", "rarity": "Very Rare" }] },
+    { "line": "Special Raptor Dew Claw", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "ad72a149-2a2a-445a-a567-4471669427d3", "rarity": "Special" }] },
+    { "line": "Special Raptor Dew Claws and Rare Nails", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "ad72a149-2a2a-445a-a567-4471669427d3", "rarity": "Special" }, { "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "c529d21a-f209-4377-ba06-35b01ed1e40d", "rarity": "Rare" }] },
+
+    { "line": "Common (flopped) Ears", "mappings": [{ "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "61bd447d-10b1-46bc-8155-103b30288359", "rarity": "Common" }] },
+    { "line": "Uncommon Bobs Ears", "mappings": [{ "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "0d054c0b-6909-408f-a1c3-0a918759568a", "rarity": "Uncommon" }] },
+    { "line": "Special Extra Special Shaped Ears", "mappings": [{ "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "2c98bbf5-1a6e-4257-a630-9cd36a2c6552", "rarity": "Special" }] },
+    { "line": "Special Shaped and Special Extra Long Ears", "mappings": [{ "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "2c98bbf5-1a6e-4257-a630-9cd36a2c6552", "rarity": "Special" }, { "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "736f622b-1cc8-4e59-bc5a-f4361d847d3b", "rarity": "Special" }] },
+    { "line": "Special Shaped Interchangeable Ears", "mappings": [{ "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "2c98bbf5-1a6e-4257-a630-9cd36a2c6552", "rarity": "Special" }] },
+
+    { "line": "Special Shark Teeth and Common No Teeth", "mappings": [{ "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "cf3b2e1b-dfa6-4bf8-b60b-44424574c42b", "rarity": "Special" }, { "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "65199a10-735e-4c25-bbf8-f8ad2e1ae453", "rarity": "Common" }] },
+    { "line": "Special Shark Teeth With Very Rare Fangs", "mappings": [{ "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "cf3b2e1b-dfa6-4bf8-b60b-44424574c42b", "rarity": "Special" }, { "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "a84660bf-edad-4435-ad26-3b08339dc76e", "rarity": "Very Rare" }] },
+    { "line": "Uncommon SlimTongue", "mappings": [{ "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "44bab3d8-de52-4f87-b28b-f56c65c5bb96", "rarity": "Uncommon" }] },
+    { "line": "Special Slime Tongue", "mappings": [{ "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "44bab3d8-de52-4f87-b28b-f56c65c5bb96", "rarity": "Uncommon" }] }
   ],
   "textValueTraits": [
     {
