@@ -704,11 +704,6 @@
       "enumValueId": "550a9194-b74a-4542-be2d-ef1a8b8da442"
     },
     {
-      "pattern": "Body Modification",
-      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
-      "enumValueId": "b8a72a7a-f540-4b8e-8292-4610a6a53de4"
-    },
-    {
       "pattern": "Prosthetic",
       "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
       "enumValueId": "6e11b61b-8645-466c-bc65-6a59a3041262"
@@ -717,11 +712,6 @@
       "pattern": "Shaped Limbs",
       "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
       "enumValueId": "3fa4e184-94b7-4a6c-98aa-d81b9423d6af"
-    },
-    {
-      "pattern": "Body Modifications",
-      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
-      "enumValueId": "a3f65386-1506-451f-938a-ca95df0b90af"
     },
     {
       "pattern": "Empty Bag Body",
@@ -1767,11 +1757,6 @@
       "pattern": "Missing Limbs",
       "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
       "enumValueId": "e88b7b28-6425-444b-b207-20a406ae3bd0"
-    },
-    {
-      "pattern": "Body Mod",
-      "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
-      "enumValueId": "b8a72a7a-f540-4b8e-8292-4610a6a53de4"
     },
     {
       "pattern": "No Paw Padding",
@@ -7689,6 +7674,30 @@
         { "groupName": "Long Length", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44" },
         { "groupName": "Wide Width", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428" },
         { "groupName": "Empty Case Tail", "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958" }
+      ]
+    },
+    {
+      "linePattern": "^Very\\s+Rare\\s+Body\\s+Mod(?:ification|ifications|s)?(?:\\s*\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Very Rare Body Modifications", "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a", "enumValueId": "a3f65386-1506-451f-938a-ca95df0b90af", "rarity": "Very Rare" }
+      ]
+    },
+    {
+      "linePattern": "^Common\\s+Body\\s+Mod(?:ification|ifications|s)?(?:\\s*\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Common Body Modification", "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a", "enumValueId": "b8a72a7a-f540-4b8e-8292-4610a6a53de4", "rarity": "Common" }
+      ]
+    },
+    {
+      "linePattern": "^Uncommon\\s+Body\\s+Mod(?:ification|ifications|s)?(?:\\s*\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Common Body Modification", "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a", "enumValueId": "b8a72a7a-f540-4b8e-8292-4610a6a53de4", "rarity": "Uncommon" }
+      ]
+    },
+    {
+      "linePattern": "^Special\\s+Body\\s+Mod(?:ification|ifications|s)?(?:\\s*\\(.*\\))?$",
+      "extractions": [
+        { "groupName": "Extreme Body Modification", "traitId": "2391d2c6-9fd7-4417-bcd9-61be77dce90a", "enumValueId": "0de62405-3b92-4405-b9af-851b144a2ac3", "rarity": "Special" }
       ]
     }
   ],
