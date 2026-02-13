@@ -8230,8 +8230,7 @@
       "line": "Common Standard Length and Common Standard Width Tail (Case)",
       "mappings": [
         { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
-        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
-        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832", "rarity": "Common" }
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" }
       ]
     },
     {
@@ -8368,7 +8367,443 @@
       ]
     },
     { "line": "Special Woven Material", "mappings": [] },
-    { "line": "Uncommon Satin/Silk", "mappings": [] }
+    { "line": "Uncommon Satin/Silk", "mappings": [] },
+    {
+      "line": "Common Standard  Length and Common Standard Width Tail (Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Common Standard  Length and Uncommon Slim Width Tail (Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a", "rarity": "Uncommon" }
+      ]
+    },
+    {
+      "line": "Common Standard Length and Rare Wide Width Tail (Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428", "rarity": "Rare" }
+      ]
+    },
+    {
+      "line": "Rare Long Length and Common Standard Width Tail (Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44", "rarity": "Rare" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Rare Long Length and Rare Wide Width Tail (Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44", "rarity": "Rare" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428", "rarity": "Rare" }
+      ]
+    },
+    {
+      "line": "Uncommon Short Length and Common Standard Width Tail (Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Common Standard Size and Uncommon Slim Width Tail (Closed Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Uncommon Short Length Tail and Common Wide Width Tail (Closed Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428", "rarity": "Rare" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Common Standard Length and Uncommon Slim Tail (Open Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Uncommon Short and Uncommon Slim Tail (Open Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Common Standard Length and Common Standard Width Tail (Open Case or Sealed Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Common Standard Length and Common Standard Width Tail (Open Tiered Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "line": "Common Standard Length and Common Standard Width (Open Layered Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "line": "Uncommon Slim Length and Common Standard Width Tail (Half Attached Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ec2ac31f-13df-4af6-bfe9-78feddace82a" }
+      ]
+    },
+    {
+      "line": "Uncommon Slim Length and Uncommon Slim Width Tail (Open Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Common Standard Open Case",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Common Standard Width Tail, Open Case",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Common Tail Length & Width, Open Case",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Common Length Open Case Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Common Width, Rare Long Open Case Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44", "rarity": "Rare" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Standard Common Length and Common Standard Width Tail (Open Tiered Case)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda" }
+      ]
+    },
+    {
+      "line": "Standard Open Case",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Standard Width Tail, Open Case",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Standard Width Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" }
+      ]
+    },
+    { "line": "Standard Stitches", "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "8f276e6c-08bd-4cfb-b0ff-7f5f602a0a82", "rarity": "Common" }] },
+    { "line": "Standard Stitching", "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "8f276e6c-08bd-4cfb-b0ff-7f5f602a0a82", "rarity": "Common" }] },
+    {
+      "line": "Uncommon Short Tail, Common Open Case",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Uncommon Short and Uncommon Slim Open Case Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Uncommon Short and Uncommon Slim Open, Case Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Uncommon Short Length, Common Weight, Open Case Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Uncommon Short and Common Weight Tail, Open Pillow Case",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Uncommon Short Length and Uncommon Short Width Open Case Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Uncommon Slim and Common Open Case Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Uncommon and Common Open Case Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Uncommon Short Tail Length",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Uncommon Slim Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a", "rarity": "Uncommon" }
+      ]
+    },
+    {
+      "line": "CommonUncommon Short and Common Sealed Case Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Rare Long and Common SealedCase Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44", "rarity": "Rare" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "0c9db164-41c5-4724-b2f2-a04732048832", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Common Length, Rare Wide Weight Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428", "rarity": "Rare" }
+      ]
+    },
+    {
+      "line": "Rare Long Slim weighted tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44", "rarity": "Rare" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "acafced3-3adb-4b7d-bd23-393e9e866d8a", "rarity": "Uncommon" }
+      ]
+    },
+    {
+      "line": "Common Standard Length and Common Standard Width Tail (Open Case) Uncommon Fluff",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" },
+        { "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "f0df1853-909e-40a1-8383-830d93dcf8a1", "rarity": "Uncommon" }
+      ]
+    },
+    {
+      "line": "Common Standard Length and Common Standard Width Tail (Open Case) Common Stitching",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" },
+        { "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "8f276e6c-08bd-4cfb-b0ff-7f5f602a0a82", "rarity": "Common" }
+      ]
+    },
+    { "line": "Special Multi-knot Tail", "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7", "rarity": "Special" }] },
+    { "line": "Special Multi-Knot Tail", "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7", "rarity": "Special" }] },
+    { "line": "Special Optional Multiple Knots (Tied Yarn)", "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7", "rarity": "Special" }] },
+    {
+      "line": "Very Rare Bob Tail, Common Width",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "bdcb06ea-9d87-4558-981e-537965186b31", "rarity": "Very Rare" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Special Multiknot, Common Standard Weight, Uncommon Short Length Open Case Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7", "rarity": "Special" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Special Open Case Multitails (Two Standard, One Short)",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "dc191b76-de74-461c-b613-74b10a5f9fd1", "rarity": "Special" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Special Two Tails, Uncommon Short, Common Width",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "dc191b76-de74-461c-b613-74b10a5f9fd1", "rarity": "Special" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "f29ce463-5bf2-4848-9ac8-0f211cdd180c", "rarity": "Uncommon" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5", "rarity": "Common" }
+      ]
+    },
+    {
+      "line": "Very Rare Knot-Only Tail Stylized into Poppy Flower",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "62e16c38-05e6-474e-ab6d-967144b5e46b", "rarity": "Very Rare" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "47650951-ddda-4d7e-82bb-3154cbeadbcc", "rarity": "Very Rare" }
+      ]
+    },
+    {
+      "line": "Very Rare Shaped and Very Rare Empty Case Tail",
+      "mappings": [
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "39479739-19a3-41b7-af42-a7f33028e0b9", "rarity": "Very Rare" },
+        { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "21ed5516-686b-4ef0-a763-6382abe6a958", "rarity": "Very Rare" }
+      ]
+    },
+    {
+      "line": "Common No Eye and Uncommon Button Eye",
+      "mappings": [
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "d768f743-5bfa-4640-8956-a7ac441a0fd5", "rarity": "Common" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4", "rarity": "Uncommon" }
+      ]
+    },
+    {
+      "line": "Rare Open Eyes w/ Very Rare Star Pupils",
+      "mappings": [
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f", "rarity": "Rare" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7", "rarity": "Very Rare" }
+      ]
+    },
+    {
+      "line": "Very Rare Open Eyes, Diamond Pupil",
+      "mappings": [
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f", "rarity": "Rare" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7", "rarity": "Very Rare" }
+      ]
+    },
+    {
+      "line": "Very Rare Star Pupil Open Eyes",
+      "mappings": [
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f", "rarity": "Rare" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7", "rarity": "Very Rare" }
+      ]
+    },
+    {
+      "line": "Very Rare Open Dark X Eyes",
+      "mappings": [
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f", "rarity": "Rare" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7", "rarity": "Rare" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7", "rarity": "Very Rare" }
+      ]
+    },
+    {
+      "line": "Special Glowing Eyes With Very Rare Shaped Pupils (Diamonds)",
+      "mappings": [
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "eb437853-da6f-4c31-a6fa-3381d06c00ee", "rarity": "Special" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f", "rarity": "Rare" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7", "rarity": "Very Rare" }
+      ]
+    },
+    {
+      "line": "Special Multiple Common Open Eyes",
+      "mappings": [
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "02fdc710-7ea2-47d1-99dc-41654831d2fb", "rarity": "Special" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f", "rarity": "Rare" }
+      ]
+    },
+    {
+      "line": "Special Multiple Eyes with Very Rare Shaped Pupils",
+      "mappings": [
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "02fdc710-7ea2-47d1-99dc-41654831d2fb", "rarity": "Special" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f", "rarity": "Rare" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7", "rarity": "Very Rare" }
+      ]
+    },
+    {
+      "line": "Special Multiple Rare Dark Eyes with Very Rare Shaped Pupils",
+      "mappings": [
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "02fdc710-7ea2-47d1-99dc-41654831d2fb", "rarity": "Special" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7", "rarity": "Rare" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f", "rarity": "Rare" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7", "rarity": "Very Rare" }
+      ]
+    },
+    {
+      "line": "Special Multiple Uncommon Bead Eyes",
+      "mappings": [
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "02fdc710-7ea2-47d1-99dc-41654831d2fb", "rarity": "Special" },
+        { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "a82e56fb-f9ad-4c42-a997-562171f42a64", "rarity": "Uncommon" }
+      ]
+    }
   ],
   "textValueTraits": [
     {
