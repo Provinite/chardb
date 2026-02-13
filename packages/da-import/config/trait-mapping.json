@@ -8803,7 +8803,13 @@
         { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "02fdc710-7ea2-47d1-99dc-41654831d2fb", "rarity": "Special" },
         { "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "a82e56fb-f9ad-4c42-a997-562171f42a64", "rarity": "Uncommon" }
       ]
-    }
+    },
+    { "line": "Very Rare Knot", "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "62e16c38-05e6-474e-ab6d-967144b5e46b", "rarity": "Very Rare" }] },
+    { "line": "Very Rare Knotted Tail", "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "62e16c38-05e6-474e-ab6d-967144b5e46b", "rarity": "Very Rare" }] },
+    { "line": "Very Rare Ruffled Knot", "mappings": [{ "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "880c18bf-8c7e-4fc6-8889-df073cd6adb4", "rarity": "Very Rare" }] },
+    { "line": "Common Standard  Size", "mappings": [{ "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871", "enumValueId": "b161dbe0-4693-4ebd-96f7-efd67428c58f", "rarity": "Common" }] },
+    { "line": "Common Body Size", "mappings": [{ "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871", "enumValueId": "b161dbe0-4693-4ebd-96f7-efd67428c58f", "rarity": "Common" }] },
+    { "line": "Common Body", "mappings": [{ "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871", "enumValueId": "b161dbe0-4693-4ebd-96f7-efd67428c58f", "rarity": "Common" }] }
   ],
   "textValueTraits": [
     {
