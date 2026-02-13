@@ -127,8 +127,42 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
         }
       }
 
+      // Promote multiple Single Accessory → Multiple Accessories, then deduplicate
+      const SINGLE_ACCESSORY_ENUM = "328f185a-1c3f-4a24-8415-d283cc2691b9";
+      const MULTIPLE_ACCESSORIES_ENUM = "87c9cf69-539e-40ca-8e5e-ed5654f8935f";
+      const ACCENTS_TRAIT = "24b0cb2b-c7fb-4565-9922-9754168466b6";
+
+      const singleAccessoryCount = validMappedTraits.filter(
+        (t) => "enumValueId" in t && t.enumValueId === SINGLE_ACCESSORY_ENUM
+      ).length;
+
+      if (singleAccessoryCount > 1) {
+        // Replace first Single Accessory with Multiple Accessories
+        for (const t of validMappedTraits) {
+          if ("enumValueId" in t && t.enumValueId === SINGLE_ACCESSORY_ENUM) {
+            t.enumValueId = MULTIPLE_ACCESSORIES_ENUM;
+            t.traitId = ACCENTS_TRAIT;
+            t.rarity = "Uncommon";
+            break;
+          }
+        }
+      }
+
+      // Deduplicate by traitId+value
+      const deduped: typeof validMappedTraits = [];
+      const seen = new Set<string>();
+      for (const t of validMappedTraits) {
+        const key =
+          "enumValueId" in t
+            ? `${t.traitId}|${t.enumValueId}`
+            : `${t.traitId}|text:${t.textValue}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(t);
+      }
+
       // Derive variant from rarity
-      const { variantId, rarity } = deriveVariant(validMappedTraits, config);
+      const { variantId, rarity } = deriveVariant(deduped, config);
 
       const allWarnings = [...parsed.warnings, ...warnings];
 
@@ -139,7 +173,7 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
         category: parsed.category,
         folderName: deviation.folderName,
         url: deviation.url,
-        mappedTraits: validMappedTraits,
+        mappedTraits: deduped,
         unmappedLines,
         warnings: allWarnings,
         derivedVariantId: variantId,
@@ -147,7 +181,7 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
       };
 
       parsedCharacters.push(character);
-      totalMapped += validMappedTraits.length;
+      totalMapped += deduped.length;
       totalUnmapped += unmappedLines.length;
 
       progress.increment();
