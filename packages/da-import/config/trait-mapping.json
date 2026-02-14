@@ -8886,5 +8886,37 @@
       "traitId": "d1da3098-4f59-4edd-9e0d-bcaa841b7479",
       "source": "deviationUrl"
     }
+  ],
+  "categoryBadges": {
+    "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d",
+    "mappings": {
+      "Official": "a9739602-317d-4c2a-92cf-10aa353be624",
+      "Official (Voided)": "a9739602-317d-4c2a-92cf-10aa353be624",
+      "Official (voided)": "a9739602-317d-4c2a-92cf-10aa353be624",
+      "Official (void)": "a9739602-317d-4c2a-92cf-10aa353be624",
+      "Official (Void)": "a9739602-317d-4c2a-92cf-10aa353be624",
+      "Offical": "a9739602-317d-4c2a-92cf-10aa353be624",
+      "MYO": "c695d051-2a26-421e-baa5-20014fece3e4",
+      "MYO (Voided)": "c695d051-2a26-421e-baa5-20014fece3e4",
+      "MYO [VOIDED]": "c695d051-2a26-421e-baa5-20014fece3e4",
+      "MYO (void)": "c695d051-2a26-421e-baa5-20014fece3e4",
+      "MYO (voided)": "c695d051-2a26-421e-baa5-20014fece3e4",
+      "MYO (VOID)": "c695d051-2a26-421e-baa5-20014fece3e4",
+      "MYO (RETIRED)": "c695d051-2a26-421e-baa5-20014fece3e4",
+      "MYO (Void)": "c695d051-2a26-421e-baa5-20014fece3e4",
+      "Guest Artist": "98224748-3610-41b2-8bb2-4ec8a069dfe2",
+      "Guest Artist (Voided)": "98224748-3610-41b2-8bb2-4ec8a069dfe2",
+      "Guest": "98224748-3610-41b2-8bb2-4ec8a069dfe2"
+    },
+    "retiredBadgeEnumId": "04743a05-64b8-4337-b69b-d6f70a88a27f",
+    "retiredPatterns": ["voided", "void", "retired"]
+  },
+  "deviationOverrides": [
+    { "numericId": "570173073", "traits": [{ "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "a9739602-317d-4c2a-92cf-10aa353be624" }] },
+    { "numericId": "570393310", "traits": [{ "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "a9739602-317d-4c2a-92cf-10aa353be624" }] },
+    { "numericId": "642001103", "traits": [{ "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "c695d051-2a26-421e-baa5-20014fece3e4" }] },
+    { "numericId": "748879869", "traits": [{ "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "c695d051-2a26-421e-baa5-20014fece3e4" }] },
+    { "numericId": "896967792", "traits": [{ "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "c695d051-2a26-421e-baa5-20014fece3e4" }] },
+    { "numericId": "904806800", "traits": [{ "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "c695d051-2a26-421e-baa5-20014fece3e4" }] }
   ]
 }

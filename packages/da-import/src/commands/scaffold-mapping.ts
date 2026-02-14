@@ -193,6 +193,7 @@ export const scaffoldMappingCommand: CommandModule<object, ScaffoldArgs> = {
       ],
       exactLineRules: [],
       textValueTraits: [],
+      deviationOverrides: [],
     };
 
     const outPath = path.join(getConfigDir(), "trait-mapping.json");

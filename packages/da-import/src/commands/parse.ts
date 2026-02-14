@@ -91,6 +91,11 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
           : ".")
     );
 
+    // Build deviation override lookup
+    const deviationOverrides = new Map(
+      config.deviationOverrides.map((o) => [o.numericId, o.traits])
+    );
+
     const parsedCharacters: ParsedCharacter[] = [];
     const progress = new ProgressTracker(files.length, "Parsing");
 
@@ -140,6 +145,50 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
             traitId: tvt.traitId,
             textValue: deviation.url,
             sourceLine: deviation.url,
+          });
+        }
+      }
+
+      // Assign category badge
+      if (config.categoryBadges) {
+        const badgeEnumId = config.categoryBadges.mappings[parsed.category];
+        if (badgeEnumId) {
+          validMappedTraits.push({
+            traitId: config.categoryBadges.traitId,
+            enumValueId: badgeEnumId,
+            sourceLine: `Category: ${parsed.category}`,
+          });
+        } else {
+          parsed.warnings.push(
+            `No category badge mapping for category: "${parsed.category}"`
+          );
+        }
+
+        // Assign retired badge if category matches a retired pattern
+        if (config.categoryBadges.retiredBadgeEnumId && config.categoryBadges.retiredPatterns) {
+          const catLower = parsed.category.toLowerCase();
+          const isRetired = config.categoryBadges.retiredPatterns.some(
+            (p) => catLower.includes(p.toLowerCase())
+          );
+          if (isRetired) {
+            validMappedTraits.push({
+              traitId: config.categoryBadges.traitId,
+              enumValueId: config.categoryBadges.retiredBadgeEnumId,
+              sourceLine: `Category: ${parsed.category} (retired)`,
+            });
+          }
+        }
+      }
+
+      // Apply deviation-specific overrides
+      const overrideTraits = deviationOverrides.get(deviation.numericId);
+      if (overrideTraits) {
+        for (const ot of overrideTraits) {
+          validMappedTraits.push({
+            traitId: ot.traitId,
+            enumValueId: ot.enumValueId,
+            rarity: ot.rarity,
+            sourceLine: `Deviation override (${deviation.numericId})`,
           });
         }
       }

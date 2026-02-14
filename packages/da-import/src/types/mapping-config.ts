@@ -46,6 +46,26 @@ export const TextValueTraitSchema = z.object({
 
 export type TextValueTrait = z.infer<typeof TextValueTraitSchema>;
 
+export const CategoryBadgesSchema = z.object({
+  traitId: z.string(),
+  mappings: z.record(z.string(), z.string()),
+  retiredBadgeEnumId: z.string().optional(),
+  retiredPatterns: z.array(z.string()).optional(),
+});
+
+export type CategoryBadges = z.infer<typeof CategoryBadgesSchema>;
+
+export const DeviationOverrideSchema = z.object({
+  numericId: z.string(),
+  traits: z.array(z.object({
+    traitId: z.string(),
+    enumValueId: z.string(),
+    rarity: z.string().optional(),
+  })),
+});
+
+export type DeviationOverride = z.infer<typeof DeviationOverrideSchema>;
+
 export const MappingConfigSchema = z.object({
   speciesId: z.string(),
   communityId: z.string(),
@@ -57,6 +77,8 @@ export const MappingConfigSchema = z.object({
   ignorePatterns: z.array(z.string()).default([]),
   exactLineRules: z.array(ExactLineRuleSchema).default([]),
   textValueTraits: z.array(TextValueTraitSchema).default([]),
+  categoryBadges: CategoryBadgesSchema.optional(),
+  deviationOverrides: z.array(DeviationOverrideSchema).default([]),
 });
 
 export type MappingConfig = z.infer<typeof MappingConfigSchema>;
