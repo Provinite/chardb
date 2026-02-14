@@ -15713,6 +15713,26 @@
           "rarity": "Special"
         }
       ]
+    },
+    {
+      "line": "Rare Open Eye and Rare Dark Eye with Very Rare Shaped Pupils",
+      "mappings": [
+        {
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "1df35c7a-8c22-42eb-bcc1-730c16d0330f",
+          "rarity": "Rare"
+        },
+        {
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7",
+          "rarity": "Rare"
+        },
+        {
+          "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+          "enumValueId": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7",
+          "rarity": "Very Rare"
+        }
+      ]
     }
   ],
   "textValueTraits": [
