@@ -2079,11 +2079,6 @@
       "enumValueId": "729ade5b-3e93-4f36-ab54-714870b1efa6"
     },
     {
-      "pattern": "Paw Padding",
-      "traitId": "508da275-4435-4385-832e-1cec41e89644",
-      "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf"
-    },
-    {
       "pattern": "No Padding",
       "traitId": "508da275-4435-4385-832e-1cec41e89644",
       "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854"
@@ -8884,7 +8879,10 @@
     { "line": "Special Star Aura Crown", "mappings": [{ "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "acce7374-dcdc-492a-a3a1-874604459434", "rarity": "Special" }] },
     { "line": "Special Voice: Can mimic human speech and music (Distorted for effect)", "mappings": [{ "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "24eda26d-7a14-4950-969f-2bf5145c1682", "rarity": "Special" }] },
     { "line": "Special Golden Aries Crest, Glows Red when laying curses.", "mappings": [{ "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb", "enumValueId": "bca2a30e-7936-4952-b535-5985ffd79f2b", "rarity": "Special" }, { "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6", "enumValueId": "50f1312f-1a16-4fb3-bdce-9255db9e8651", "rarity": "Very Rare" }] },
-    { "line": "Special Ability, when damp, becomes almost sticky like rubber. Uses this to climb up things normally not accessible to pillowings.", "mappings": [] }
+    { "line": "Special Ability, when damp, becomes almost sticky like rubber. Uses this to climb up things normally not accessible to pillowings.", "mappings": [] },
+    { "line": "Common Paw Padding", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf", "rarity": "Common" }] },
+    { "line": "Common Paw Padding (No Nails)", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "30d366ab-c54a-48f7-82a8-a07190226bdf", "rarity": "Common" }, { "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "d4ead820-e39e-4a9b-9258-950495d7aaa0", "rarity": "Common" }] },
+    { "line": "Uncommon Paw Padding", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0", "rarity": "Uncommon" }] }
   ],
   "textValueTraits": [
     {

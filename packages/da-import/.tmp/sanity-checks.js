@@ -307,7 +307,7 @@ else if (badOwners > 20) console.log(`  ...and ${badOwners - 20} more`);
 console.log(`  Total: ${badOwners}`);
 console.log('');
 
-// 14. Check that derived rarity matches highest rarity from source lines
+// 14. Check that derived variant rarity matches highest rarity from source lines
 console.log('=== Derived Rarity Mismatches ===');
 const rarityRank = { 'Common': 0, 'Uncommon': 1, 'Rare': 2, 'Very Rare': 3, 'Legendary': 4, 'Exclusive': 5, 'Special': 6 };
 const rarityPrefixes = ['Exclusive', 'Legendary', 'Very Rare', 'Special', 'Rare', 'Uncommon', 'Common'];
@@ -320,7 +320,7 @@ function extractRarityFromLine(line) {
 }
 let rarityMismatches = 0;
 for (const c of chars) {
-  // Compute highest rarity from source lines (independent of mapped trait rarity fields)
+  // Compute highest rarity from source lines
   let highestFromSource = null;
   let highestSourceRank = -1;
   for (const t of c.mappedTraits) {
@@ -330,19 +330,12 @@ for (const c of chars) {
       highestFromSource = sourceRarity;
     }
   }
-  // Compute highest rarity from mapped trait rarity fields
-  let highestFromTraits = null;
-  let highestTraitRank = -1;
-  for (const t of c.mappedTraits) {
-    if (t.rarity && (rarityRank[t.rarity] ?? -1) > highestTraitRank) {
-      highestTraitRank = rarityRank[t.rarity] ?? -1;
-      highestFromTraits = t.rarity;
-    }
-  }
-  if (highestFromSource && highestFromTraits && highestFromSource !== highestFromTraits) {
+  // Compare against derived variant rarity
+  const derivedRarity = c.derivedRarity;
+  if (highestFromSource && derivedRarity && highestFromSource !== derivedRarity) {
     if (rarityMismatches < 20) {
       console.log(`  ${c.name || c.numericId} (${c.url}):`);
-      console.log(`    Source lines suggest: ${highestFromSource}, mapped traits say: ${highestFromTraits}`);
+      console.log(`    Source lines suggest: ${highestFromSource}, derived variant: ${derivedRarity}`);
     }
     rarityMismatches++;
     issues++;
