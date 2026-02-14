@@ -267,6 +267,11 @@ export function parseDescription(
     warnings.push("No features section detected in description");
   }
 
+  // Fall back to firstArtist when firstDesigner is missing
+  if (!firstDesigner && firstArtist) {
+    firstDesigner = firstArtist;
+  }
+
   return {
     characterName: characterName.replace(/^#*\s*/, "").trim(),
     ownerUsername,
