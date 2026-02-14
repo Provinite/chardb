@@ -30,6 +30,8 @@ export const ParsedCharacterSchema = z.object({
   category: z.string(),
   folderName: z.string(),
   url: z.string(),
+  imageUrl: z.string(),
+  currentRefUrl: z.string(),
   mappedTraits: z.array(MappedTraitSchema),
   unmappedLines: z.array(z.string()),
   warnings: z.array(z.string()),

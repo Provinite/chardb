@@ -62,6 +62,7 @@ export interface ParsedDescription {
   firstArtist: string;
   firstDesigner: string;
   category: string;
+  currentRefUrl: string;
   traitLines: string[];
   exactLineMatches: ExactLineMatch[];
   rawText: string;
@@ -204,6 +205,24 @@ export function parseDescription(
     }
   }
 
+  // Extract current ref — look for "Current Ref/Design/Reference" or "Updated Ref"
+  // followed by a sta.sh link
+  let currentRefUrl = "";
+  {
+    const refMatch = html.match(
+      /current\s+(?:ref|design|reference|artwork)|updated\s+ref/i
+    );
+    if (refMatch) {
+      const afterLabel = html.slice(refMatch.index!);
+      const stashMatch = afterLabel.match(
+        /href="(https?:\/\/sta\.sh\/[a-zA-Z0-9]+)"/
+      );
+      if (stashMatch) {
+        currentRefUrl = stashMatch[1];
+      }
+    }
+  }
+
   // Extract category (Official, MYO, Guest, etc.)
   let category = "";
   for (const line of allLines) {
@@ -278,6 +297,7 @@ export function parseDescription(
     firstArtist,
     firstDesigner,
     category,
+    currentRefUrl,
     traitLines,
     exactLineMatches,
     rawText,

@@ -272,6 +272,8 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
         category: parsed.category,
         folderName: deviation.folderName,
         url: deviation.url,
+        imageUrl: deviation.thumbnailUrl ?? "",
+        currentRefUrl: parsed.currentRefUrl,
         mappedTraits: deduped,
         unmappedLines,
         warnings: allWarnings,
