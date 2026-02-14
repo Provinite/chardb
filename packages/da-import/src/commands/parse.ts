@@ -1,7 +1,12 @@
+import * as fs from "fs/promises";
 import * as path from "path";
 import type { CommandModule } from "yargs";
 import { parseDescription } from "../parser/description-parser";
-import { mapTraitLines, deriveVariant } from "../parser/trait-mapper";
+import {
+  mapTraitLines,
+  deriveVariant,
+  type VariantSetting,
+} from "../parser/trait-mapper";
 import { DownloadedDeviationSchema } from "../types/downloaded-deviation";
 import { MappingConfigSchema } from "../types/mapping-config";
 import type { ParsedCharacter } from "../types/parsed-character";
@@ -37,6 +42,18 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
     // Load mapping config
     logger.info(`Loading mapping config from ${mappingPath}...`);
     const config = await readJson(mappingPath, MappingConfigSchema);
+
+    // Load variant settings
+    const variantSettingsPath = path.join(
+      getConfigDir(),
+      "variant-settings.json"
+    );
+    const variantSettings: VariantSetting[] = JSON.parse(
+      await fs.readFile(variantSettingsPath, "utf-8")
+    );
+    logger.info(
+      `Loaded ${variantSettings.length} variant settings from ${variantSettingsPath}`
+    );
 
     // Validate mapping config — check for TODOs
     const todoRules = config.rules.filter(
@@ -162,7 +179,11 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
       }
 
       // Derive variant from rarity
-      const { variantId, rarity } = deriveVariant(deduped, config);
+      const { variantId, rarity } = deriveVariant(
+        deduped,
+        config,
+        variantSettings
+      );
 
       const allWarnings = [...parsed.warnings, ...warnings];
 

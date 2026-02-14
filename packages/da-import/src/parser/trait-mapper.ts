@@ -168,39 +168,59 @@ export function mapTraitLines(
   return { mappedTraits, unmappedLines, warnings };
 }
 
+export interface VariantSetting {
+  id: string;
+  name: string;
+  allowedEnumValueIds: string[];
+}
+
 /**
- * Derive the variant ID based on the highest rarity among mapped traits.
+ * Derive the variant by selecting the LOWEST rarity variant that has ALL
+ * selected enum values enabled. Falls back to the highest rarity variant
+ * if no variant allows all selected enum values.
  */
 export function deriveVariant(
   mappedTraits: MappedTrait[],
-  config: MappingConfig
+  config: MappingConfig,
+  variantSettings: VariantSetting[]
 ): { variantId: string | null; rarity: string | null } {
-  let highestRarityIndex = -1;
-  let highestRarity: string | null = null;
-
+  const selectedEnumValues = new Set<string>();
   for (const trait of mappedTraits) {
-    if ("rarity" in trait && trait.rarity) {
-      const idx = config.rarityOrder.indexOf(trait.rarity);
-      if (idx > highestRarityIndex) {
-        highestRarityIndex = idx;
-        highestRarity = trait.rarity;
-      }
+    if ("enumValueId" in trait) {
+      selectedEnumValues.add(trait.enumValueId);
     }
   }
 
-  if (highestRarity && config.rarityToVariantId[highestRarity]) {
-    return {
-      variantId: config.rarityToVariantId[highestRarity],
-      rarity: highestRarity,
-    };
+  const variantAllowed = new Map<string, Set<string>>();
+  for (const v of variantSettings) {
+    variantAllowed.set(v.id, new Set(v.allowedEnumValueIds));
   }
 
-  // Default to first rarity if no traits have rarity
-  const defaultRarity = config.rarityOrder[0];
-  if (defaultRarity && config.rarityToVariantId[defaultRarity]) {
+  // Iterate from lowest to highest rarity; return first that allows all
+  for (const rarity of config.rarityOrder) {
+    const variantId = config.rarityToVariantId[rarity];
+    if (!variantId) continue;
+    const allowed = variantAllowed.get(variantId);
+    if (!allowed) continue;
+
+    let allAllowed = true;
+    for (const evId of selectedEnumValues) {
+      if (!allowed.has(evId)) {
+        allAllowed = false;
+        break;
+      }
+    }
+    if (allAllowed) {
+      return { variantId, rarity };
+    }
+  }
+
+  // Fallback to highest rarity variant
+  const lastRarity = config.rarityOrder[config.rarityOrder.length - 1];
+  if (lastRarity && config.rarityToVariantId[lastRarity]) {
     return {
-      variantId: config.rarityToVariantId[defaultRarity],
-      rarity: defaultRarity,
+      variantId: config.rarityToVariantId[lastRarity],
+      rarity: lastRarity,
     };
   }
 
