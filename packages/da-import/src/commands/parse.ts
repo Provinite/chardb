@@ -257,7 +257,7 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
 
       const character: ParsedCharacter = {
         numericId: deviation.numericId,
-        name: registryId,
+        name: deviation.title,
         registryId,
         ownerDaUsername: parsed.ownerUsername,
         category: parsed.category,
