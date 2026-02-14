@@ -193,6 +193,17 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
         }
       }
 
+      // Assign badges based on description HTML content
+      for (const db of config.descriptionBadges) {
+        if (new RegExp(db.pattern, "i").test(deviation.descriptionHtml)) {
+          validMappedTraits.push({
+            traitId: db.traitId,
+            enumValueId: db.enumValueId,
+            sourceLine: `Description match: ${db.pattern}`,
+          });
+        }
+      }
+
       // Promote multiple Single Accessory → Multiple Accessories, then deduplicate
       const SINGLE_ACCESSORY_ENUM = "328f185a-1c3f-4a24-8415-d283cc2691b9";
       const MULTIPLE_ACCESSORIES_ENUM = "87c9cf69-539e-40ca-8e5e-ed5654f8935f";

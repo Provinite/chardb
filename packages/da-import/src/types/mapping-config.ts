@@ -55,6 +55,14 @@ export const CategoryBadgesSchema = z.object({
 
 export type CategoryBadges = z.infer<typeof CategoryBadgesSchema>;
 
+export const DescriptionBadgeSchema = z.object({
+  pattern: z.string(),
+  traitId: z.string(),
+  enumValueId: z.string(),
+});
+
+export type DescriptionBadge = z.infer<typeof DescriptionBadgeSchema>;
+
 export const DeviationOverrideSchema = z.object({
   numericId: z.string(),
   traits: z.array(z.object({
@@ -79,6 +87,7 @@ export const MappingConfigSchema = z.object({
   textValueTraits: z.array(TextValueTraitSchema).default([]),
   categoryBadges: CategoryBadgesSchema.optional(),
   deviationOverrides: z.array(DeviationOverrideSchema).default([]),
+  descriptionBadges: z.array(DescriptionBadgeSchema).default([]),
 });
 
 export type MappingConfig = z.infer<typeof MappingConfigSchema>;

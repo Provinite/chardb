@@ -8918,5 +8918,8 @@
     { "numericId": "748879869", "traits": [{ "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "c695d051-2a26-421e-baa5-20014fece3e4" }] },
     { "numericId": "896967792", "traits": [{ "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "c695d051-2a26-421e-baa5-20014fece3e4" }] },
     { "numericId": "904806800", "traits": [{ "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "c695d051-2a26-421e-baa5-20014fece3e4" }] }
+  ],
+  "descriptionBadges": [
+    { "pattern": "SAFE Event", "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d", "enumValueId": "2275520d-0cd1-49ca-a014-7c953f6d2272" }
   ]
 }
