@@ -206,7 +206,7 @@ export function parseDescription(
   }
 
   // Extract current ref — look for "Current Ref/Design/Reference" or "Updated Ref"
-  // followed by a sta.sh link
+  // followed by a sta.sh link (in <a href> or in data-deviation JSON blobs)
   let currentRefUrl = "";
   {
     const refMatch = html.match(
@@ -214,11 +214,19 @@ export function parseDescription(
     );
     if (refMatch) {
       const afterLabel = html.slice(refMatch.index!);
-      const stashMatch = afterLabel.match(
+      const hrefMatch = afterLabel.match(
         /href="(https?:\/\/sta\.sh\/[a-zA-Z0-9]+)"/
       );
-      if (stashMatch) {
-        currentRefUrl = stashMatch[1];
+      if (hrefMatch) {
+        currentRefUrl = hrefMatch[1];
+      } else {
+        // DA embeds sta.sh links as HTML-entity-encoded JSON in data-deviation attrs
+        const entityMatch = afterLabel.match(
+          /&quot;shortUrl&quot;:&quot;(https?:\/\/sta\.sh\/[a-zA-Z0-9]+)&quot;/
+        );
+        if (entityMatch) {
+          currentRefUrl = entityMatch[1];
+        }
       }
     }
   }
