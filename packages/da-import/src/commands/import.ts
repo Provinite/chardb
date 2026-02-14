@@ -196,7 +196,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
       try {
         const input = {
           name: char.name,
-          registryId: char.numericId,
+          registryId: char.registryId,
           speciesId: config.speciesId,
           speciesVariantId: char.derivedVariantId ?? config.rarityToVariantId[config.rarityOrder[0]],
           traitValues: char.mappedTraits.map((t) => ({

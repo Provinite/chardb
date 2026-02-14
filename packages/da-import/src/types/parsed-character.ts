@@ -23,6 +23,7 @@ export type MappedTrait = z.infer<typeof MappedTraitSchema>;
 export const ParsedCharacterSchema = z.object({
   numericId: z.string(),
   name: z.string(),
+  registryId: z.string(),
   ownerDaUsername: z.string(),
   category: z.string(),
   folderName: z.string(),
