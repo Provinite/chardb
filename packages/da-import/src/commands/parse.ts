@@ -164,6 +164,21 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
           );
         }
 
+        // Assign voided badge if category matches a voided pattern
+        if (config.categoryBadges.voidedBadgeEnumId && config.categoryBadges.voidedPatterns) {
+          const catLower = parsed.category.toLowerCase();
+          const isVoided = config.categoryBadges.voidedPatterns.some(
+            (p) => catLower.includes(p.toLowerCase())
+          );
+          if (isVoided) {
+            validMappedTraits.push({
+              traitId: config.categoryBadges.traitId,
+              enumValueId: config.categoryBadges.voidedBadgeEnumId,
+              sourceLine: `Category: ${parsed.category} (voided)`,
+            });
+          }
+        }
+
         // Assign retired badge if category matches a retired pattern
         if (config.categoryBadges.retiredBadgeEnumId && config.categoryBadges.retiredPatterns) {
           const catLower = parsed.category.toLowerCase();

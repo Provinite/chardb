@@ -51,6 +51,8 @@ export const CategoryBadgesSchema = z.object({
   mappings: z.record(z.string(), z.string()),
   retiredBadgeEnumId: z.string().optional(),
   retiredPatterns: z.array(z.string()).optional(),
+  voidedBadgeEnumId: z.string().optional(),
+  voidedPatterns: z.array(z.string()).optional(),
 });
 
 export type CategoryBadges = z.infer<typeof CategoryBadgesSchema>;
