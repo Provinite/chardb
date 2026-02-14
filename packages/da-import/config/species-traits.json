@@ -300,6 +300,10 @@
       {
         "id": "04743a05-64b8-4337-b69b-d6f70a88a27f",
         "name": "Retired"
+      },
+      {
+        "id": "b28b1bc4-01a0-45a9-8b7d-989a7c48569d",
+        "name": "Voided"
       }
     ]
   },
