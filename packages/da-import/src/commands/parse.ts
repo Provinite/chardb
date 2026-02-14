@@ -267,6 +267,8 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
         name: deviation.title,
         registryId: deviation.title,
         ownerDaUsername: parsed.ownerUsername,
+        firstArtist: parsed.firstArtist,
+        firstDesigner: parsed.firstDesigner,
         category: parsed.category,
         folderName: deviation.folderName,
         url: deviation.url,

@@ -25,6 +25,8 @@ export const ParsedCharacterSchema = z.object({
   name: z.string(),
   registryId: z.string(),
   ownerDaUsername: z.string(),
+  firstArtist: z.string(),
+  firstDesigner: z.string(),
   category: z.string(),
   folderName: z.string(),
   url: z.string(),

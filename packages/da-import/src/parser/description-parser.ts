@@ -59,6 +59,8 @@ export interface ExactLineMatch {
 export interface ParsedDescription {
   characterName: string;
   ownerUsername: string;
+  firstArtist: string;
+  firstDesigner: string;
   category: string;
   traitLines: string[];
   exactLineMatches: ExactLineMatch[];
@@ -158,6 +160,50 @@ export function parseDescription(
     }
   }
 
+  // Extract first artist — look for "First Artist:" or "Artist:" in HTML
+  let firstArtist = "";
+  {
+    const artistIdx = htmlLower.indexOf("first artist");
+    const fallbackIdx = artistIdx === -1 ? htmlLower.indexOf("artist") : -1;
+    const idx = artistIdx !== -1 ? artistIdx : fallbackIdx;
+    if (idx !== -1) {
+      const afterLabel = html.slice(idx);
+      const newLink = afterLabel.match(
+        /href="https?:\/\/www\.deviantart\.com\/([^"/?]+)"/
+      );
+      const oldLink = afterLabel.match(
+        /href="https?:\/\/([^.]+)\.deviantart\.com"/
+      );
+      if (newLink) {
+        firstArtist = newLink[1];
+      } else if (oldLink && oldLink[1] !== "www") {
+        firstArtist = oldLink[1];
+      }
+    }
+  }
+
+  // Extract first designer — look for "First Designer:" or "Designer:" in HTML
+  let firstDesigner = "";
+  {
+    const designerIdx = htmlLower.indexOf("first designer");
+    const fallbackIdx = designerIdx === -1 ? htmlLower.indexOf("designer") : -1;
+    const idx = designerIdx !== -1 ? designerIdx : fallbackIdx;
+    if (idx !== -1) {
+      const afterLabel = html.slice(idx);
+      const newLink = afterLabel.match(
+        /href="https?:\/\/www\.deviantart\.com\/([^"/?]+)"/
+      );
+      const oldLink = afterLabel.match(
+        /href="https?:\/\/([^.]+)\.deviantart\.com"/
+      );
+      if (newLink) {
+        firstDesigner = newLink[1];
+      } else if (oldLink && oldLink[1] !== "www") {
+        firstDesigner = oldLink[1];
+      }
+    }
+  }
+
   // Extract category (Official, MYO, Guest, etc.)
   let category = "";
   for (const line of allLines) {
@@ -224,6 +270,8 @@ export function parseDescription(
   return {
     characterName: characterName.replace(/^#*\s*/, "").trim(),
     ownerUsername,
+    firstArtist,
+    firstDesigner,
     category,
     traitLines,
     exactLineMatches,
