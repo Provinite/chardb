@@ -247,18 +247,10 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
 
       const allWarnings = [...parsed.warnings, ...warnings];
 
-      // Derive registryId from URL slug
-      const slugParts = (deviation.url.split("/art/")[1] || "").split("-");
-      slugParts.pop(); // remove DA numeric ID
-      const registryId = slugParts
-        .join(" ")
-        .replace(/\b\w/g, (c) => c.toUpperCase())
-        .replace(/\bmyo\b/gi, "MYO");
-
       const character: ParsedCharacter = {
         numericId: deviation.numericId,
         name: deviation.title,
-        registryId,
+        registryId: deviation.title,
         ownerDaUsername: parsed.ownerUsername,
         category: parsed.category,
         folderName: deviation.folderName,
