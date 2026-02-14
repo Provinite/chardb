@@ -12652,29 +12652,62 @@
         }
       ]
     },
-    { "line": "Cotton Stuffing", "mappings": [] },
-    { "line": "Feather Stuffing", "mappings": [] },
-    { "line": "Feather & Cotton Stuffing in body", "mappings": [] },
-    { "line": "Sand Stuffing", "mappings": [] },
-    { "line": "Sand Stuffing in legs", "mappings": [] },
+    {
+      "line": "Cotton Stuffing",
+      "mappings": []
+    },
+    {
+      "line": "Feather Stuffing",
+      "mappings": []
+    },
+    {
+      "line": "Feather & Cotton Stuffing in body",
+      "mappings": []
+    },
+    {
+      "line": "Sand Stuffing",
+      "mappings": []
+    },
+    {
+      "line": "Sand Stuffing in legs",
+      "mappings": []
+    },
     {
       "line": "Soft sand stuffing in tail. Ash stuffing in body.",
       "mappings": []
     },
-    { "line": "Stuffing Feathers", "mappings": [] },
-    { "line": "Grandfathered as Very Rare", "mappings": [] },
+    {
+      "line": "Stuffing Feathers",
+      "mappings": []
+    },
+    {
+      "line": "Grandfathered as Very Rare",
+      "mappings": []
+    },
     {
       "line": "Pawpads and Buttons are purely aesthetic. They have no electronics",
       "mappings": []
     },
-    { "line": "Two Pillowings that can never be separated.", "mappings": [] },
+    {
+      "line": "Two Pillowings that can never be separated.",
+      "mappings": []
+    },
     {
       "line": "Plush rose pin on his left ear which is optional.",
       "mappings": []
     },
-    { "line": "Preview", "mappings": [] },
-    { "line": "Accents:", "mappings": [] },
-    { "line": "Other Accents:", "mappings": [] },
+    {
+      "line": "Preview",
+      "mappings": []
+    },
+    {
+      "line": "Accents:",
+      "mappings": []
+    },
+    {
+      "line": "Other Accents:",
+      "mappings": []
+    },
     {
       "line": "Bobbed Tail",
       "mappings": [
@@ -13544,8 +13577,14 @@
         }
       ]
     },
-    { "line": "Special Woven Material", "mappings": [] },
-    { "line": "Uncommon Satin/Silk", "mappings": [] },
+    {
+      "line": "Special Woven Material",
+      "mappings": []
+    },
+    {
+      "line": "Uncommon Satin/Silk",
+      "mappings": []
+    },
     {
       "line": "Common Standard  Length and Common Standard Width Tail (Case)",
       "mappings": [
@@ -14687,7 +14726,6 @@
         }
       ]
     },
-
     {
       "line": "Common Padding on Paws",
       "mappings": [
@@ -14753,7 +14791,6 @@
         }
       ]
     },
-
     {
       "line": "Very Rare Rectractible Claws",
       "mappings": [
@@ -14789,7 +14826,6 @@
         }
       ]
     },
-
     {
       "line": "Common (flopped) Ears",
       "mappings": [
@@ -14845,7 +14881,6 @@
         }
       ]
     },
-
     {
       "line": "Special Shark Teeth and Common No Teeth",
       "mappings": [
@@ -14896,7 +14931,6 @@
         }
       ]
     },
-
     {
       "line": "Common Single Accesory (Collar)",
       "mappings": [
@@ -15765,6 +15799,16 @@
         {
           "traitId": "3e7eb751-13d1-4bc1-918c-fde08694593d",
           "enumValueId": "c695d051-2a26-421e-baa5-20014fece3e4"
+        }
+      ]
+    },
+    {
+      "numericId": "1009431967",
+      "traits": [
+        {
+          "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
+          "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5",
+          "rarity": "Uncommon"
         }
       ]
     }

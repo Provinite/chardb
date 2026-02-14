@@ -264,8 +264,8 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
 
       const character: ParsedCharacter = {
         numericId: deviation.numericId,
-        name: deviation.title,
-        registryId: deviation.title,
+        name: deviation.title.replace(/\s+/g, " ").trim(),
+        registryId: deviation.title.replace(/\s+/g, " ").trim(),
         ownerDaUsername: parsed.ownerUsername,
         firstArtist: parsed.firstArtist,
         firstDesigner: parsed.firstDesigner,
