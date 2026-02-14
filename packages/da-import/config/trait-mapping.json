@@ -8872,7 +8872,10 @@
     { "line": "Common  Paws", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854", "rarity": "Common" }] },
     { "line": "Common Paws (No Nails)", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854", "rarity": "Common" }, { "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "d4ead820-e39e-4a9b-9258-950495d7aaa0", "rarity": "Common" }] },
     { "line": "Common Paws (No Pads)", "mappings": [{ "traitId": "508da275-4435-4385-832e-1cec41e89644", "enumValueId": "03b4ded7-5afd-4668-b89c-c41dfd19b854", "rarity": "Common" }] },
-    { "line": "Rare Long Ears", "mappings": [{ "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "ef7bec80-d5fb-47c8-b2df-ee830f2bdd47", "rarity": "Rare" }] }
+    { "line": "Rare Long Ears", "mappings": [{ "traitId": "21698dc5-3665-4ea6-a014-87758c1c67af", "enumValueId": "ef7bec80-d5fb-47c8-b2df-ee830f2bdd47", "rarity": "Rare" }] },
+    { "line": "Very Rare Dark Eyes with Common Round Pupils", "mappings": [{ "traitId": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4", "enumValueId": "7aba2cc2-559f-4725-90e1-0400e863fda7", "rarity": "Rare" }] },
+    { "line": "Common Standard Length and Rare Width Tail (Open Case)", "mappings": [{ "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "8704cb5c-6eaf-4768-80fb-b0574471416a", "rarity": "Common" }, { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "4c8a27ce-5a41-4a61-99e6-08884a797428", "rarity": "Rare" }, { "traitId": "8bd03ff5-3d19-4c39-8b24-67ec4634c107", "enumValueId": "49d31a03-5e8f-4859-832a-c60ff0a75fd8" }] },
+    { "line": "Common Mouth (No Teeth)", "mappings": [{ "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "65199a10-735e-4c25-bbf8-f8ad2e1ae453", "rarity": "Common" }, { "traitId": "ba721454-21c3-41d4-9cc3-01d60fa4d618", "enumValueId": "e275ad26-9127-4cec-b8c0-44b9366fedfc", "rarity": "Common" }] }
   ],
   "textValueTraits": [
     {
