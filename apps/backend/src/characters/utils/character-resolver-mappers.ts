@@ -171,6 +171,7 @@ export function mapPrismaCharacterToGraphQL(
           value: tv.value,
         }))
       : [],
+    traitReviewStatus: prismaCharacter.traitReviewStatus ?? undefined,
     createdAt: prismaCharacter.createdAt,
     updatedAt: prismaCharacter.updatedAt,
   };

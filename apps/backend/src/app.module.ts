@@ -36,6 +36,7 @@ import { PendingOwnershipModule } from "./pending-ownership/pending-ownership.mo
 import { DiscordModule } from "./discord/discord.module";
 import { QueueConsumerModule } from "./queue-consumer/queue-consumer.module";
 import { ImageModerationModule } from "./image-moderation/image-moderation.module";
+import { TraitReviewModule } from "./trait-review/trait-review.module";
 import { Request, Response } from "express";
 
 @Module({
@@ -218,6 +219,7 @@ import { Request, Response } from "express";
     DiscordModule,
     QueueConsumerModule,
     ImageModerationModule,
+    TraitReviewModule,
   ],
 })
 export class AppModule {}
