@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trait Review Queue - Feature Walkthrough</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .badge-warning {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .badge-success {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .badge-danger {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .badge-info {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Trait Review Queue</h1>
+        <p>A walkthrough of the trait review moderation workflow for CharDB</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The Trait Review Queue allows moderators to review trait values
+            after they are applied to characters. When characters are created or
+            their traits are updated through imports or user submissions, the
+            values are applied immediately but enter a review queue where
+            moderators can approve them, revert to previous values, or edit
+            them.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">📋</div>
+              <h4>Review Queue</h4>
+              <p>All trait changes enter a moderation queue</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🔍</div>
+              <h4>Trait Diff View</h4>
+              <p>See exactly which traits were added, changed, or removed</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">↩️</div>
+              <h4>Revert</h4>
+              <p>Roll back to previous trait values if incorrect</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🏷️</div>
+              <h4>Status Badges</h4>
+              <p>Characters display their review status</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: Character Badge -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Characters Awaiting Review</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            When a character has traits pending review, a
+            <span class="badge badge-warning">Traits Pending Review</span> badge
+            appears on their profile page. This is visible to all users, letting
+            them know that the character's trait values have not yet been
+            confirmed by a moderator.
+          </p>
+          <p>
+            The badge appears alongside the character's visibility status (e.g.
+            PUBLIC) and creation date. Once a moderator approves or reverts the
+            review, the badge is removed.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Note:</strong> Trait values are applied to the character
+            immediately. The review badge indicates that the values have not yet
+            been verified by a moderator. If the values are incorrect, a
+            moderator can revert them to the previous values.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trait-review-character-badge.png"
+            alt="Character page showing Traits Pending Review badge"
+          />
+          <div class="screenshot-caption">
+            A character profile showing the "Traits Pending Review" badge next
+            to the PUBLIC status indicator
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Accessing the Queue -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Accessing the Trait Review Queue</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Community moderators and administrators can access the Trait Review
+            Queue from the
+            <strong>Administration</strong> section in the community sidebar.
+            Click <strong>Trait Review</strong> to open the dedicated Trait
+            Review page.
+          </p>
+          <p>
+            The Trait Review Queue displays a count badge showing how many
+            reviews are pending. Only users with the
+            <strong>CanEditCharacterRegistry</strong> permission or global
+            administrators can access this queue.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Note:</strong> Trait Review and Image Moderation are
+            separate pages with their own sidebar links. The Trait Review link
+            is visible to users with the
+            <strong>CanEditCharacterRegistry</strong> permission.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="sidebar-moderation-links.png"
+            alt="Sidebar showing separate Image Moderation and Trait Review links"
+          />
+          <div class="screenshot-caption">
+            The community sidebar showing separate "Image Moderation" and "Trait
+            Review" links under Administration
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Reviewing the Queue -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Reviewing Pending Traits</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The Trait Review Queue displays all pending reviews as cards. Each
+            card shows:
+          </p>
+          <ul>
+            <li>
+              <strong>Character Name:</strong> The name of the character whose
+              traits are being reviewed
+            </li>
+            <li>
+              <strong>Species &amp; Variant:</strong> The character's species
+              and variant type
+            </li>
+            <li>
+              <strong>Source:</strong> How the review was triggered (e.g.
+              CREATION for new characters, IMPORT for bulk imports)
+            </li>
+            <li>
+              <strong>Time:</strong> How long ago the review was submitted
+            </li>
+            <li>
+              <strong>Trait Diff:</strong> A visual diff showing which traits
+              were added, changed, or removed, with their values
+            </li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Diff Legend:</strong> Traits marked as
+            <span class="badge badge-success">added</span> are new values.
+            Changed traits show both the old and new values. Removed traits are
+            shown with strikethrough text.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trait-review-page.png"
+            alt="Trait Review page with pending review cards"
+          />
+          <div class="screenshot-caption">
+            The Trait Review page showing pending reviews with trait diffs and
+            action buttons
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Review Card Detail -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Review Card Details</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Each review card provides a clear view of the proposed trait changes
+            with action buttons at the bottom:
+          </p>
+          <ul>
+            <li>
+              <span class="badge badge-success">Approve</span> &mdash; Confirms
+              the trait values are correct and removes the "Traits Pending
+              Review" badge
+            </li>
+            <li>
+              <span class="badge badge-danger">Revert</span> &mdash; Rolls back
+              the character's traits to their previous values (not available for
+              CREATION reviews since there are no previous values)
+            </li>
+          </ul>
+          <p>
+            The trait diff section uses color coding: green borders indicate
+            added traits, with each trait name and its proposed value clearly
+            displayed. CREATION-source reviews show only the Approve button.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trait-review-card-detail.png"
+            alt="Close-up of a trait review card"
+          />
+          <div class="screenshot-caption">
+            A single review card showing character info, trait diff with "Eye
+            Color: blue" marked as ADDED, and action buttons
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Approving a Review -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Approving a Review</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            If the trait values are correct, click the green
+            <strong>Approve</strong> button. Since traits are already applied to
+            the character, approving will:
+          </p>
+          <ul>
+            <li>
+              Update the character's review status to <strong>APPROVED</strong>
+            </li>
+            <li>
+              Remove the "Traits Pending Review" badge from the character's
+              profile
+            </li>
+            <li>Remove the review from the pending queue</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Note:</strong> Approval is immediate. The queue refreshes
+            automatically after the action is taken. All moderation actions are
+            logged with the moderator's identity and timestamp.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: Reverting a Review -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">Reverting a Review</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            If the trait values are incorrect, click the
+            <strong>Revert</strong> button to open the revert modal. You must
+            provide a reason explaining why the traits are being reverted.
+          </p>
+          <p>
+            Reverting restores the character's traits to their previous values.
+            This is useful when:
+          </p>
+          <ul>
+            <li>
+              Incorrect trait mapping (e.g. wrong color value for the species)
+            </li>
+            <li>Trait values don't match the character's reference sheet</li>
+            <li>Import data contained errors</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Important:</strong> The Revert button is not available for
+            CREATION-source reviews, since there are no previous trait values to
+            restore. The Revert button remains disabled until a reason is
+            provided. When reverted, the character's traits are rolled back to
+            their previous values and the review status updates to
+            <strong>REJECTED</strong>.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trait-review-revert-modal.png"
+            alt="Revert trait review modal with reason filled in"
+          />
+          <div class="screenshot-caption">
+            The revert modal with a reason explaining why the trait values are
+            being reverted
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7: Edit and Approve -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <h2 class="step-title">Edit and Approve</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            In some cases, the proposed trait values may be close but need minor
+            corrections. Rather than rejecting and requiring a new submission,
+            moderators can use the <strong>Edit and Approve</strong>
+            workflow via the API to correct the trait values and approve them in
+            a single action.
+          </p>
+          <p>
+            This is especially useful for bulk imports where minor data mapping
+            issues may occur. The corrected values are applied to the character,
+            and an audit trail records both the original proposed values and the
+            corrected values that were actually applied.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Audit Trail:</strong> When a review is edited and approved,
+            the system records both the originally proposed trait values and the
+            corrected values that were applied, along with which moderator made
+            the changes.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 8: Review Sources -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">8</div>
+          <h2 class="step-title">Review Sources</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Trait reviews can be triggered by different sources, displayed as a
+            label on each review card:
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">🆕</div>
+              <h4>CREATION</h4>
+              <p>Triggered when a new character is created with trait values</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">📥</div>
+              <h4>IMPORT</h4>
+              <p>
+                Triggered by bulk character imports from external data sources
+              </p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">✏️</div>
+              <h4>USER_EDIT</h4>
+              <p>Triggered when a user edits their character's trait values</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🎨</div>
+              <h4>MYO</h4>
+              <p>Triggered by Make-Your-Own character submissions</p>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <strong>Tip:</strong> You can filter the review queue by source type
+            to focus on specific categories of reviews, such as reviewing all
+            imported characters at once.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 9: Permissions -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">9</div>
+          <h2 class="step-title">Permissions</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Access to the Trait Review Queue is controlled by community
+            permissions:
+          </p>
+          <ul>
+            <li>
+              <strong>Global Administrators:</strong> Can access and manage
+              trait reviews in all communities
+            </li>
+            <li>
+              <strong>CanEditCharacterRegistry:</strong> Community-level
+              permission that grants access to the trait review queue for that
+              specific community
+            </li>
+          </ul>
+          <p>
+            Regular community members cannot view or interact with the review
+            queue. They will only see the review status badge on character
+            profiles indicating whether traits are pending, approved, or
+            rejected.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Trait Review Queue &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>

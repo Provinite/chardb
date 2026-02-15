@@ -1,0 +1,768 @@
+[
+  {
+    "id": "24b0cb2b-c7fb-4565-9922-9754168466b6",
+    "name": "Accents and Decoration",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "328f185a-1c3f-4a24-8415-d283cc2691b9",
+        "name": "Common Single Accessory"
+      },
+      {
+        "id": "2df1fe39-59f0-4edf-80cb-9abf0b22cbfa",
+        "name": "Common Beads"
+      },
+      {
+        "id": "223aa4c8-9c13-4a5d-9efe-2c53b77f02ff",
+        "name": "Common Fraying and Tearing"
+      },
+      {
+        "id": "e1a186b2-0c20-4431-9a81-b914b3a5b3a7",
+        "name": "Common Patches"
+      },
+      {
+        "id": "1015ade0-c241-4280-a005-cd3d09a28229",
+        "name": "Common Squeakers"
+      },
+      {
+        "id": "735d03b0-23a6-41f4-a349-fe1f3bd399c4",
+        "name": "Common Stickers"
+      },
+      {
+        "id": "8f276e6c-08bd-4cfb-b0ff-7f5f602a0a82",
+        "name": "Common Stitching"
+      },
+      {
+        "id": "87c9cf69-539e-40ca-8e5e-ed5654f8935f",
+        "name": "Uncommon Multiple Accessories"
+      },
+      {
+        "id": "3874b5e2-099e-4da7-913d-e56cc67f1114",
+        "name": "Uncommon Animal Headband"
+      },
+      {
+        "id": "e247559c-b0a9-4454-aa65-096e4789e4cb",
+        "name": "Uncommon Bells"
+      },
+      {
+        "id": "3a960bcc-373c-4caf-828d-c38a1e1099db",
+        "name": "Uncommon Buttons and Pins"
+      },
+      {
+        "id": "076b6eb9-da29-42e1-9e72-23e2c7844542",
+        "name": "Uncommon Clothing and Costumes"
+      },
+      {
+        "id": "f0df1853-909e-40a1-8383-830d93dcf8a1",
+        "name": "Uncommon Fluff"
+      },
+      {
+        "id": "dcc766fc-451e-47e1-9de8-f13d6a41a308",
+        "name": "Uncommon Glitter"
+      },
+      {
+        "id": "d283b516-14b9-49cb-afcc-6e538f859a86",
+        "name": "Uncommon Item Props"
+      },
+      {
+        "id": "b1133a47-c8ca-45bd-8b9b-270abbc7c468",
+        "name": "Uncommon Key Rings"
+      },
+      {
+        "id": "875cc88d-120d-47a0-b083-b1093a40bac7",
+        "name": "Uncommon Sewing Pins"
+      },
+      {
+        "id": "326858ac-e7be-448c-832a-8c80d4d4298f",
+        "name": "Uncommon Pom Poms"
+      },
+      {
+        "id": "61abbaa0-e26f-41ef-a8a2-4c0c5db29700",
+        "name": "Uncommon Rope and Twine"
+      },
+      {
+        "id": "239ea7e2-017a-41c6-85d3-c32ccb4c61be",
+        "name": "Uncommon Ribbons"
+      },
+      {
+        "id": "583b916e-ca4d-4e6a-befb-d106f5af2f8b",
+        "name": "Uncommon Zippers"
+      },
+      {
+        "id": "ba7360e0-cd05-49b9-ba18-f61fb926fcd7",
+        "name": "Rare Fur"
+      },
+      {
+        "id": "9092ce09-2bd9-4db6-aa69-e73a1dbd5227",
+        "name": "Rare Tassels"
+      },
+      {
+        "id": "77fa7bc8-f3ea-4ea7-a2c2-3f8696ea2a33",
+        "name": "Rare Velcro"
+      },
+      {
+        "id": "8b0e64d0-e3ca-41bc-b01a-f64f22bcc078",
+        "name": "Very Rare Fake Flowers and Plants"
+      },
+      {
+        "id": "c5a96f71-c1ae-4192-a5fa-5850adb71528",
+        "name": "Very Rare Feathers"
+      },
+      {
+        "id": "a810d82b-29a9-4ef2-9107-11f90cd4c4f5",
+        "name": "Very Rare Gemstones"
+      },
+      {
+        "id": "8b39b1b9-2d0d-45d3-8f57-33d5d9dc6e6b",
+        "name": "Very Rare Lace"
+      },
+      {
+        "id": "880c18bf-8c7e-4fc6-8889-df073cd6adb4",
+        "name": "Very Rare Ruffles"
+      },
+      {
+        "id": "79751a09-2f19-44af-8cbb-22f2ea4ff17e",
+        "name": "Very Rare Sheer"
+      },
+      {
+        "id": "4888fd1a-cda8-4748-b869-c1937daae008",
+        "name": "Special Scales"
+      },
+      {
+        "id": "02930408-f1c3-404c-83a6-70028dd6b61a",
+        "name": "Special Spikes"
+      },
+      {
+        "id": "9b1136c6-1915-493a-8ff6-4598458f2b02",
+        "name": "Special Sequins"
+      },
+      {
+        "id": "50f1312f-1a16-4fb3-bdce-9255db9e8651",
+        "name": "Very Rare Jewelry"
+      },
+      {
+        "id": "2b3509d6-c132-401d-9ca5-4337de00bac8",
+        "name": "Special Studs"
+      },
+      {
+        "id": "cae4c0e5-ef0e-4859-bae7-7de5b2fb2905",
+        "name": "Common Pockets"
+      },
+      {
+        "id": "ecb0b736-fbc3-4d0a-aa03-3a70138b9211",
+        "name": "Uncommon Fabric Flaps"
+      },
+      {
+        "id": "f5466fab-d909-42c1-9306-16496d419de5",
+        "name": "Uncommon Whiskers"
+      },
+      {
+        "id": "62e9cac4-e4c7-4fa3-ba2f-461b59f9de09",
+        "name": "Very Rare Hair"
+      },
+      {
+        "id": "12afb48f-bce2-4ef1-9462-5f9fe57b4dd6",
+        "name": "Special Horns and Antlers"
+      },
+      {
+        "id": "cd6a6575-dd62-404b-b8a6-400e80827cff",
+        "name": "Special Robotics and Electronics"
+      },
+      {
+        "id": "d384a415-c15b-47a8-910f-f447bbda7d10",
+        "name": "Special Wings"
+      },
+      {
+        "id": "4b4aced4-3127-46ba-a0c3-67269ff9c4d8",
+        "name": "Special Faux Face"
+      },
+      {
+        "id": "17bffb67-35c8-4b81-bf15-e0d792057cf5",
+        "name": "Rare Wheels"
+      },
+      {
+        "id": "a3ef82b7-fe19-48e4-ab20-2b464c1c7ee1",
+        "name": "Very Rare Antennae"
+      }
+    ]
+  },
+  {
+    "id": "2391d2c6-9fd7-4417-bcd9-61be77dce90a",
+    "name": "Body Modifications",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "550a9194-b74a-4542-be2d-ef1a8b8da442",
+        "name": "Common Single Missing Limb"
+      },
+      {
+        "id": "b8a72a7a-f540-4b8e-8292-4610a6a53de4",
+        "name": "Common Body Modification"
+      },
+      {
+        "id": "6e11b61b-8645-466c-bc65-6a59a3041262",
+        "name": "Uncommon Prosthetic"
+      },
+      {
+        "id": "3fa4e184-94b7-4a6c-98aa-d81b9423d6af",
+        "name": "Very Rare Shaped Limbs"
+      },
+      {
+        "id": "a3f65386-1506-451f-938a-ca95df0b90af",
+        "name": "Very Rare Body Modifications"
+      },
+      {
+        "id": "d277f5bf-3848-4f29-98f2-6f54e339e32b",
+        "name": "Special Empty Bag Body"
+      },
+      {
+        "id": "f98f3949-5083-44cd-b59a-4bb59031d12e",
+        "name": "Special Extra Limbs"
+      },
+      {
+        "id": "0de62405-3b92-4405-b9af-851b144a2ac3",
+        "name": "Extreme Body Modification"
+      },
+      {
+        "id": "cdcb3e1e-fcdf-42c7-82ef-b6c6f967bd44",
+        "name": "Special Garden Host"
+      },
+      {
+        "id": "fd9b6f70-5a82-4b54-9301-7fe4633ad195",
+        "name": "Special Removable Body Parts"
+      },
+      {
+        "id": "e88b7b28-6425-444b-b207-20a406ae3bd0",
+        "name": "Uncommon Two Missing Limbs"
+      },
+      {
+        "id": "64987a27-bb7c-4be5-bc0e-09de64bf531f",
+        "name": "Very Rare Three Missing Limbs"
+      },
+      {
+        "id": "d9d37688-bcf2-4de4-8d40-c991cd0069e5",
+        "name": "Special Four Missing Limbs"
+      }
+    ]
+  },
+  {
+    "id": "4581012e-0b36-4cf7-b76f-1198c586e871",
+    "name": "Body Sizes",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "b161dbe0-4693-4ebd-96f7-efd67428c58f",
+        "name": "Common Standard Size"
+      },
+      {
+        "id": "a6a3e738-d04b-4dfa-a882-40bed6667c80",
+        "name": "Rare Kit Size"
+      },
+      {
+        "id": "c761bd6c-d53d-449b-8fd6-7f1f7d654a6c",
+        "name": "Large Size"
+      },
+      {
+        "id": "bedd657d-cfb6-43cd-9e57-a572748e76ff",
+        "name": "Special Jumbo Size (Restricted)"
+      }
+    ]
+  },
+  {
+    "id": "3e7eb751-13d1-4bc1-918c-fde08694593d",
+    "name": "Community Badges",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "dea24a68-7336-414f-86ba-30effb84b63c",
+        "name": "Pit Fox"
+      },
+      {
+        "id": "f0f48a74-500b-43e9-b7fd-e85fd9864630",
+        "name": "Gladiator"
+      },
+      {
+        "id": "2275520d-0cd1-49ca-a014-7c953f6d2272",
+        "name": "S.A.F.E."
+      },
+      {
+        "id": "c695d051-2a26-421e-baa5-20014fece3e4",
+        "name": "MYO"
+      },
+      {
+        "id": "98224748-3610-41b2-8bb2-4ec8a069dfe2",
+        "name": "Guest Artist Design"
+      },
+      {
+        "id": "a9739602-317d-4c2a-92cf-10aa353be624",
+        "name": "CloverCoin Design"
+      },
+      {
+        "id": "04743a05-64b8-4337-b69b-d6f70a88a27f",
+        "name": "Retired"
+      },
+      {
+        "id": "b28b1bc4-01a0-45a9-8b7d-989a7c48569d",
+        "name": "Voided"
+      }
+    ]
+  },
+  {
+    "id": "ad6f55ba-3b6f-49d9-9bba-b76535271fa3",
+    "name": "Crafting Materials",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "978b6889-852d-4b80-829a-5b5a29a24078",
+        "name": "Uncommon Burlap Material"
+      },
+      {
+        "id": "3b873d6f-d9dc-4e37-a233-e46c9af99c79",
+        "name": "Uncommon Canvas Material"
+      },
+      {
+        "id": "58f46336-d8d8-4976-866a-96d8045bd1df",
+        "name": "Rare Iridescent Material"
+      },
+      {
+        "id": "1d6a98bd-283b-4b5c-a333-507f657a4c81",
+        "name": "Rare Knitted or Crochet Yarn"
+      },
+      {
+        "id": "99f2d94a-c430-4f79-81d0-5e44dfa43792",
+        "name": "Rare Reflective Material"
+      },
+      {
+        "id": "1b008d00-6950-41ed-ab79-e37d840d645b",
+        "name": "Very Rare Rubber"
+      },
+      {
+        "id": "e14e99f8-57f7-4978-bd98-db18c0d46cd1",
+        "name": "Very Rare Leather"
+      },
+      {
+        "id": "797184f7-dcb7-4025-981c-1fc09b49dfd9",
+        "name": "Very Rare Black Light Material"
+      },
+      {
+        "id": "f7166a17-4421-4331-bf2f-3bdb62252bcc",
+        "name": "Special Chainmail and Metals"
+      },
+      {
+        "id": "cf2bc351-308c-48ef-9001-20111b5a4670",
+        "name": "Special Temperature Sensitive Fabric"
+      },
+      {
+        "id": "6ff66068-f7e2-4a44-be23-178df60f64c3",
+        "name": "Special Transparent Fabric"
+      },
+      {
+        "id": "a246a024-e3e4-4519-8a7b-b769ddb2f877",
+        "name": "Very Rare Latex"
+      },
+      {
+        "id": "30b516d6-205c-4120-8fa3-b8747f8af923",
+        "name": "Common Minky"
+      },
+      {
+        "id": "6c729980-3a2b-48e5-aea3-8b9a27d8394d",
+        "name": "Special Porcelain"
+      }
+    ]
+  },
+  {
+    "id": "d1da3098-4f59-4edd-9e0d-bcaa841b7479",
+    "name": "DA Masterlist Entry",
+    "valueType": "STRING",
+    "enumValues": []
+  },
+  {
+    "id": "21698dc5-3665-4ea6-a014-87758c1c67af",
+    "name": "Ears",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "1a4243d3-7d2f-48e6-808f-1d08132e8269",
+        "name": "Common Droop"
+      },
+      {
+        "id": "61bd447d-10b1-46bc-8155-103b30288359",
+        "name": "Common Standard"
+      },
+      {
+        "id": "0d054c0b-6909-408f-a1c3-0a918759568a",
+        "name": "Uncommon Bob"
+      },
+      {
+        "id": "1c3a221a-a835-4499-b4dc-0e0d540f1533",
+        "name": "Uncommon Drops"
+      },
+      {
+        "id": "7155af00-47ee-4e4f-b117-05b737a89358",
+        "name": "Rare Droop Long"
+      },
+      {
+        "id": "ef7bec80-d5fb-47c8-b2df-ee830f2bdd47",
+        "name": "Rare Perky Long"
+      },
+      {
+        "id": "fc77be24-480e-4574-b9e4-fd6245579aae",
+        "name": "Very Rare Earless"
+      },
+      {
+        "id": "736f622b-1cc8-4e59-bc5a-f4361d847d3b",
+        "name": "Special Extra Long Ears"
+      },
+      {
+        "id": "2c98bbf5-1a6e-4257-a630-9cd36a2c6552",
+        "name": "Special Shaped Ears"
+      }
+    ]
+  },
+  {
+    "id": "6db74b21-76ca-4ca5-a229-33bf5df8dbe4",
+    "name": "Eyes",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "d768f743-5bfa-4640-8956-a7ac441a0fd5",
+        "name": "Common Eyeless"
+      },
+      {
+        "id": "8a750e15-7ae9-44d4-b9af-97b5b5c06968",
+        "name": "Common Closed Eyes"
+      },
+      {
+        "id": "a82e56fb-f9ad-4c42-a997-562171f42a64",
+        "name": "Uncommon Beads"
+      },
+      {
+        "id": "f1c980e8-80a5-4f2c-a12d-87f4b345bed4",
+        "name": "Uncommon Buttons"
+      },
+      {
+        "id": "24a1664f-f04d-43b2-bab1-bbccfd3d5b30",
+        "name": "Rare Googly Eyes"
+      },
+      {
+        "id": "1df35c7a-8c22-42eb-bcc1-730c16d0330f",
+        "name": "Rare Open Eyes"
+      },
+      {
+        "id": "7aba2cc2-559f-4725-90e1-0400e863fda7",
+        "name": "Rare Dark Eyes"
+      },
+      {
+        "id": "c6f62de4-a8d5-4283-af3c-9c4713d6f8c7",
+        "name": "Very Rare Shaped Pupils"
+      },
+      {
+        "id": "ddc5d744-8b92-4ad4-9a77-6316e5664f50",
+        "name": "Very Rare Insect Eyes"
+      },
+      {
+        "id": "3e92bbf4-3ef6-482c-b3c4-6fbe03d938c5",
+        "name": "Very Rare Bejeweled Eyes"
+      },
+      {
+        "id": "eb437853-da6f-4c31-a6fa-3381d06c00ee",
+        "name": "Special Glowing Eyes"
+      },
+      {
+        "id": "02fdc710-7ea2-47d1-99dc-41654831d2fb",
+        "name": "Special Multiple Eyes"
+      }
+    ]
+  },
+  {
+    "id": "1cc3dd94-ddd6-474c-a608-fa0761cf7d26",
+    "name": "Filling and Stuffing",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "b0a22d0b-28a8-46d3-b98a-23f10e168003",
+        "name": "Special Soil"
+      },
+      {
+        "id": "601d198d-fd96-4da2-8130-65e2a72a6045",
+        "name": "Special Water"
+      },
+      {
+        "id": "33477897-6cdd-4a2b-bb1c-2e488204bc9d",
+        "name": "Special Air"
+      }
+    ]
+  },
+  {
+    "id": "274591a6-6b36-4163-af16-c0ff84f005cb",
+    "name": "Magic",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "3ba964b6-cca4-4fc2-8250-d280b8a9d699",
+        "name": "Common Body Animation"
+      },
+      {
+        "id": "945b7a82-01c9-4a5f-802e-4948b08348c5",
+        "name": "Uncommon Scented"
+      },
+      {
+        "id": "a7df7285-6120-4655-aa95-6809fd259ab5",
+        "name": "Uncommon Body Temperature Control"
+      },
+      {
+        "id": "c722d988-6784-42e9-8fd6-a32e004feaaf",
+        "name": "Very Rare Levitation"
+      },
+      {
+        "id": "a827f2a4-3e99-4eed-8579-f52c9473b0b1",
+        "name": "Very Rare Fabric Pattern Animation"
+      },
+      {
+        "id": "ad5f4f56-2b21-48b3-a318-470950e683ca",
+        "name": "Special Corruption"
+      },
+      {
+        "id": "acce7374-dcdc-492a-a3a1-874604459434",
+        "name": "Special Aura"
+      },
+      {
+        "id": "df71b0dc-18a7-4fc1-8d00-4321398b8715",
+        "name": "Special Color Changing"
+      },
+      {
+        "id": "e69f4080-69a5-4de4-b1d0-0fb973d934f9",
+        "name": "Special Fog and Mist"
+      },
+      {
+        "id": "bca2a30e-7936-4952-b535-5985ffd79f2b",
+        "name": "Special Glowing"
+      },
+      {
+        "id": "dca012bb-7ca7-4ad5-a9bb-6a1c7b0fe703",
+        "name": "Special Illusion"
+      },
+      {
+        "id": "44e419af-093e-464f-a6b6-ec256b38c415",
+        "name": "Special Smoke"
+      },
+      {
+        "id": "39ebf586-c1b1-4ad7-81fc-6d81d7f7a97e",
+        "name": "Special Summoning"
+      },
+      {
+        "id": "950ede34-d095-46e2-bfad-27b40c82a6d9",
+        "name": "Special Teleportation"
+      },
+      {
+        "id": "1ce34b3e-500f-493e-803e-018959f14c1a",
+        "name": "Special Transformation"
+      },
+      {
+        "id": "24eda26d-7a14-4950-969f-2bf5145c1682",
+        "name": "Special Themed Vocals"
+      },
+      {
+        "id": "5ba463cc-6337-40b3-a5d1-fb978b7ce67e",
+        "name": "Special Singing and Humming"
+      },
+      {
+        "id": "14693934-5469-4a53-bb0b-b759afa3e454",
+        "name": "Special Talking and Speech"
+      }
+    ]
+  },
+  {
+    "id": "ba721454-21c3-41d4-9cc3-01d60fa4d618",
+    "name": "Mouths",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "239faa6c-cfef-4064-83b2-6cc6cdfe954b",
+        "name": "Common No Tongue"
+      },
+      {
+        "id": "e275ad26-9127-4cec-b8c0-44b9366fedfc",
+        "name": "Common Standard Tongue"
+      },
+      {
+        "id": "44bab3d8-de52-4f87-b28b-f56c65c5bb96",
+        "name": "Uncommon Slim Tongue"
+      },
+      {
+        "id": "b730c278-654d-4174-b897-06711a5e4722",
+        "name": "Rare Teeth"
+      },
+      {
+        "id": "f108f7e7-4526-4492-87ef-9d664d2fb33e",
+        "name": "Very Rare Forked Tongue"
+      },
+      {
+        "id": "a84660bf-edad-4435-ad26-3b08339dc76e",
+        "name": "Very Rare Fangs"
+      },
+      {
+        "id": "8fb37385-258a-461e-b884-91fed85c2e07",
+        "name": "Special Metal Mouth"
+      },
+      {
+        "id": "a4a62b53-6c61-4cb1-8c2d-551f72da7d6e",
+        "name": "Special Saberteeth"
+      },
+      {
+        "id": "72109606-f268-46d2-96f8-3d91e05a300b",
+        "name": "Special Shaped Tongue"
+      },
+      {
+        "id": "cf3b2e1b-dfa6-4bf8-b60b-44424574c42b",
+        "name": "Special Shark Teeth"
+      },
+      {
+        "id": "65199a10-735e-4c25-bbf8-f8ad2e1ae453",
+        "name": "Common No Teeth"
+      }
+    ]
+  },
+  {
+    "id": "508da275-4435-4385-832e-1cec41e89644",
+    "name": "Paws",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "03b4ded7-5afd-4668-b89c-c41dfd19b854",
+        "name": "Common Standard Paw"
+      },
+      {
+        "id": "e3170cd6-0b0b-4a38-ae16-bd438df6c65b",
+        "name": "Common Mitten Paw"
+      },
+      {
+        "id": "cf9dc557-980d-433b-8266-efae7d13f149",
+        "name": "Common Dew Toe"
+      },
+      {
+        "id": "30d366ab-c54a-48f7-82a8-a07190226bdf",
+        "name": "Common Padding Paw"
+      },
+      {
+        "id": "26831f92-c3e9-4120-a425-2f9733ba9867",
+        "name": "Uncommon Grippy Paws"
+      },
+      {
+        "id": "3b7f18f4-ce42-4775-b6db-89eadcf1cbd0",
+        "name": "Uncommon Paw Pads"
+      },
+      {
+        "id": "8d439215-f89d-4494-8a75-e388aae3f186",
+        "name": "Uncommon Shaped Paw Pads"
+      },
+      {
+        "id": "c529d21a-f209-4377-ba06-35b01ed1e40d",
+        "name": "Rare Nails"
+      },
+      {
+        "id": "552ee57e-35aa-4576-8ab8-2e4f5dec4844",
+        "name": "Very Rare Claws"
+      },
+      {
+        "id": "729ade5b-3e93-4f36-ab54-714870b1efa6",
+        "name": "Very Rare Retractable Claws"
+      },
+      {
+        "id": "ad72a149-2a2a-445a-a567-4471669427d3",
+        "name": "Special Raptor Dew Claws"
+      },
+      {
+        "id": "26948984-ee3d-46fe-8087-b22b720e264d",
+        "name": "Special Multiple Limbs"
+      },
+      {
+        "id": "d4ead820-e39e-4a9b-9258-950495d7aaa0",
+        "name": "Common No Nails"
+      }
+    ]
+  },
+  {
+    "id": "8bd03ff5-3d19-4c39-8b24-67ec4634c107",
+    "name": "Tails",
+    "valueType": "ENUM",
+    "enumValues": [
+      {
+        "id": "49d31a03-5e8f-4859-832a-c60ff0a75fd8",
+        "name": "Open Case Tail"
+      },
+      {
+        "id": "0c9db164-41c5-4724-b2f2-a04732048832",
+        "name": "Closed Case Tail"
+      },
+      {
+        "id": "ec2ac31f-13df-4af6-bfe9-78feddace82a",
+        "name": "Half Attached Pillow Case Tail"
+      },
+      {
+        "id": "f5840d0a-9a23-4bc4-ac3e-50da5c358fda",
+        "name": "Layered Pillow Case Tail"
+      },
+      {
+        "id": "f29ce463-5bf2-4848-9ac8-0f211cdd180c",
+        "name": "Uncommon Short Length"
+      },
+      {
+        "id": "acafced3-3adb-4b7d-bd23-393e9e866d8a",
+        "name": "Uncommon Slim Width"
+      },
+      {
+        "id": "f1f8e53d-0f86-4f8b-a4ee-706971ef0a44",
+        "name": "Rare Long Length"
+      },
+      {
+        "id": "4c8a27ce-5a41-4a61-99e6-08884a797428",
+        "name": "Rare Wide Width"
+      },
+      {
+        "id": "bdcb06ea-9d87-4558-981e-537965186b31",
+        "name": "Very Rare Bob Tail"
+      },
+      {
+        "id": "21ed5516-686b-4ef0-a763-6382abe6a958",
+        "name": "Very Rare Empty Case Tail"
+      },
+      {
+        "id": "47650951-ddda-4d7e-82bb-3154cbeadbcc",
+        "name": "Very Rare Stylized Knot Bow"
+      },
+      {
+        "id": "62e16c38-05e6-474e-ab6d-967144b5e46b",
+        "name": "Very Rare Knot Only Tail"
+      },
+      {
+        "id": "39479739-19a3-41b7-af42-a7f33028e0b9",
+        "name": " Very Rare Shaped Tail"
+      },
+      {
+        "id": "ac0719fa-4761-4d08-8575-fd3f4b9225d7",
+        "name": " Very Rare Yarn Tail"
+      },
+      {
+        "id": "ffeb4efc-750d-4583-ae28-11eda8662186",
+        "name": "Special Extra Long Length"
+      },
+      {
+        "id": "ce1a9f8d-1184-4e1f-b495-b66c57faa4e7",
+        "name": "Special Multiple Knots"
+      },
+      {
+        "id": "dc191b76-de74-461c-b613-74b10a5f9fd1",
+        "name": "Special Multiple Tails"
+      },
+      {
+        "id": "8704cb5c-6eaf-4768-80fb-b0574471416a",
+        "name": "Common Standard Length"
+      },
+      {
+        "id": "b2f4e3cf-3860-4ef2-b7a5-df7bbc7a60d5",
+        "name": "Common Standard Width"
+      }
+    ]
+  }
+]

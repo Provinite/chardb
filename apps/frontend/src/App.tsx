@@ -50,7 +50,8 @@ import { EnumValueSettingsPage } from "./pages/EnumValueSettingsPage";
 import { PermissionManagementPage } from "./pages/PermissionManagementPage";
 import { CommunityMembersPage } from "./pages/CommunityMembersPage";
 import { CommunitySettingsPage } from "./pages/CommunitySettingsPage";
-import { CommunityModerationPage } from "./pages/CommunityModerationPage";
+import { ImageModerationPage } from "./pages/ImageModerationPage";
+import { TraitReviewPage } from "./pages/TraitReviewPage";
 import { JoinCommunityPage } from "./pages/JoinCommunityPage";
 import { MyCommunitiesPage } from "./pages/MyCommunitiesPage";
 import { CommunityPage } from "./pages/CommunityPage";
@@ -368,10 +369,18 @@ function App() {
           }
         />
         <Route
-          path="/communities/:communityId/moderation"
+          path="/communities/:communityId/moderation/images"
           element={
             <ProtectedRoute>
-              <CommunityModerationPage />
+              <ImageModerationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/moderation/traits"
+          element={
+            <ProtectedRoute>
+              <TraitReviewPage />
             </ProtectedRoute>
           }
         />

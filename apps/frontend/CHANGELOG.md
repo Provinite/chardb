@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Trait Review Queue**: Dedicated moderation page for reviewing character trait values
+  - Review cards show character image, name (linked to character page), species, variant, source badge, and trait diff
+  - Approve button confirms traits and clears the "Traits Pending Review" badge
+  - Revert button (hidden for CREATION-source reviews) opens a modal to roll back traits with a required reason
+  - Paginated queue with pending count badge and refresh
+- **Separate moderation pages**: Split Image Moderation and Trait Review into dedicated pages with their own sidebar links and spotlight actions
+
+### Changed
+
+- **Character delete button hidden**: Removed the delete button from the character page UI
+
 ## [v9.1.1] - 2026-02-09
 
 ### Fixed

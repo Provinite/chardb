@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Trait Review System**: Moderation queue for reviewing character trait values
+  - Trait values are applied to characters immediately at creation/import; the review queue lets moderators verify correctness
+  - `approveTraitReview` mutation confirms traits and removes the "Traits Pending Review" badge
+  - `revertTraitReview` mutation restores previous trait values with a required reason (unavailable for CREATION-source reviews)
+  - `editAndApproveTraitReview` mutation allows moderators to correct trait values before approving
+  - Review sources: CREATION, IMPORT, MYO, USER_EDIT
+  - Paginated `traitReviewQueue` query with character metadata
+  - Gated by `canEditCharacterRegistry` permission and global admin
+
+### Changed
+
+- **`deleteCharacter` restricted to global admins**: Removed character owner/editor access; only global administrators can delete characters
+
 ## [v9.1.1] - 2026-02-09
 
 ### Fixed
