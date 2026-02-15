@@ -53,6 +53,12 @@ enum ModerationRejectionReason {
   OTHER
 }
 
+enum TraitReviewSource {
+  IMPORT
+  MYO
+  USER_EDIT
+}
+
 
 
 model User {
@@ -121,6 +127,9 @@ model User {
   // Image moderation actions
   moderationActions      ImageModerationAction[] @relation("ModeratorActions")
 
+  // Trait review actions
+  traitReviewActions     TraitReview[] @relation("TraitReviewResolver")
+
   @@map("users")
 }
 
@@ -175,6 +184,7 @@ model Character {
   customFields      Json       @default("{}") @map("custom_fields")
   /// [CharacterTraitValuesJson]
   traitValues       Json       @default("[]") @map("trait_values")
+  traitReviewStatus ModerationStatus? @map("trait_review_status")
   createdAt         DateTime   @default(now()) @map("created_at")
   updatedAt         DateTime   @updatedAt @map("updated_at")
 
@@ -196,6 +206,9 @@ model Character {
 
   // Pending ownership
   pendingOwnership PendingOwnership?
+
+  // Trait reviews
+  traitReviews TraitReview[]
 
   @@unique([speciesId, registryId])
   @@index([traitValues], type: Gin, map: "character_traitvalues_gin_idx")
@@ -791,4 +804,32 @@ model ImageModerationAction {
   @@index([imageId])
   @@index([moderatorId])
   @@map("image_moderation_actions")
+}
+
+model TraitReview {
+  id                  String            @id @default(uuid())
+  characterId         String            @map("character_id")
+  status              ModerationStatus  @default(PENDING)
+  source              TraitReviewSource
+
+  /// [CharacterTraitValuesJson]
+  proposedTraitValues Json              @map("proposed_trait_values")
+  /// [CharacterTraitValuesJson]
+  previousTraitValues Json              @map("previous_trait_values")
+  /// [CharacterTraitValuesJson]
+  appliedTraitValues  Json?             @map("applied_trait_values")
+
+  resolvedAt          DateTime?         @map("resolved_at")
+  resolvedById        String?           @map("resolved_by_id")
+  rejectionReason     String?           @map("rejection_reason") @db.Text
+
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  character           Character         @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  resolvedBy          User?             @relation("TraitReviewResolver", fields: [resolvedById], references: [id])
+
+  @@index([characterId])
+  @@index([status])
+  @@map("trait_reviews")
 }
