@@ -592,8 +592,8 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
                 />
               )}
 
-              {/* Moderation - requires image moderation permissions */}
-              {permissions.canModerateImages && (
+              {/* Moderation - requires image moderation or trait review permissions */}
+              {(permissions.canModerateImages || permissions.canEditCharacterRegistry) && (
                 <CommunityNavigationItem
                   to={`${communityBasePath}/moderation`}
                   icon={AlertCircle}

@@ -19,7 +19,6 @@ import { AllowGlobalAdmin } from '../auth/decorators/AllowGlobalAdmin';
 import { AllowCommunityPermission } from '../auth/decorators/AllowCommunityPermission';
 import { CommunityPermission } from '../auth/CommunityPermission';
 import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
-import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
 import {
   mapPrismaTraitReviewToGraphQL,
   mapTraitReviewQueueResultToGraphQL,
@@ -61,7 +60,9 @@ export class TraitReviewResolver {
     return this.traitReviewService.getPendingCountForCommunity(communityId);
   }
 
-  @AllowAnyAuthenticated()
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
+  @ResolveCommunityFrom({ characterId: 'characterId' })
   @UseGuards(JwtAuthGuard)
   @Query(() => TraitReview, {
     nullable: true,
@@ -75,7 +76,9 @@ export class TraitReviewResolver {
     return mapPrismaTraitReviewToGraphQL(review);
   }
 
-  @AllowAnyAuthenticated()
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
+  @ResolveCommunityFrom({ traitReviewId: 'input.reviewId' })
   @UseGuards(JwtAuthGuard)
   @Mutation(() => TraitReview, {
     description: 'Approve a trait review (moderator action)',
@@ -88,7 +91,9 @@ export class TraitReviewResolver {
     return mapPrismaTraitReviewToGraphQL(review);
   }
 
-  @AllowAnyAuthenticated()
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
+  @ResolveCommunityFrom({ traitReviewId: 'input.reviewId' })
   @UseGuards(JwtAuthGuard)
   @Mutation(() => TraitReview, {
     description: 'Reject a trait review (moderator action)',
@@ -105,7 +110,9 @@ export class TraitReviewResolver {
     return mapPrismaTraitReviewToGraphQL(review);
   }
 
-  @AllowAnyAuthenticated()
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
+  @ResolveCommunityFrom({ traitReviewId: 'input.reviewId' })
   @UseGuards(JwtAuthGuard)
   @Mutation(() => TraitReview, {
     description: 'Edit and approve a trait review (moderator action)',
@@ -129,7 +136,9 @@ export class TraitReviewResolver {
     return mapPrismaTraitReviewToGraphQL(review);
   }
 
-  @AllowAnyAuthenticated()
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
+  @ResolveCommunityFrom({ characterId: 'input.characterId' })
   @UseGuards(JwtAuthGuard)
   @Mutation(() => TraitReview, {
     description: 'Create a trait review for a character',

@@ -1,12 +1,9 @@
 import {
   Injectable,
-  ForbiddenException,
   BadRequestException,
   NotFoundException,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import { PermissionService } from "../auth/PermissionService";
-import { CommunityPermission } from "../auth/CommunityPermission";
 import { ModerationStatus, TraitReviewSource, Prisma } from "@prisma/client";
 import { TraitReviewQueueFiltersInput } from "./dto/trait-review.dto";
 import {
@@ -16,62 +13,7 @@ import {
 
 @Injectable()
 export class TraitReviewService {
-  constructor(
-    private readonly db: DatabaseService,
-    private readonly permissionService: PermissionService,
-  ) {}
-
-  /**
-   * Get the community ID for a character via species chain
-   */
-  private async getCharacterCommunityId(
-    characterId: string,
-  ): Promise<string | null> {
-    const character = await this.db.character.findUnique({
-      where: { id: characterId },
-      select: {
-        species: {
-          select: { communityId: true },
-        },
-      },
-    });
-
-    return character?.species?.communityId ?? null;
-  }
-
-  /**
-   * Check if user has permission to manage trait reviews for a character
-   */
-  private async ensureCanManageTraitReviews(
-    userId: string,
-    characterId: string,
-  ): Promise<void> {
-    const user = await this.db.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-
-    if (user?.isAdmin) return;
-
-    const communityId = await this.getCharacterCommunityId(characterId);
-    if (!communityId) {
-      throw new ForbiddenException(
-        "Character is not associated with a community",
-      );
-    }
-
-    const hasPermission = await this.permissionService.hasCommunityPermission(
-      userId,
-      communityId,
-      CommunityPermission.CanEditCharacterRegistry,
-    );
-
-    if (!hasPermission) {
-      throw new ForbiddenException(
-        "You do not have permission to manage trait reviews",
-      );
-    }
-  }
+  constructor(private readonly db: DatabaseService) {}
 
   /**
    * Create a new trait review.
@@ -169,8 +111,6 @@ export class TraitReviewService {
       throw new BadRequestException("Review is not pending");
     }
 
-    await this.ensureCanManageTraitReviews(moderatorId, review.characterId);
-
     const [updatedReview] = await this.db.$transaction([
       this.db.traitReview.update({
         where: { id: reviewId },
@@ -209,8 +149,6 @@ export class TraitReviewService {
     if (review.status !== ModerationStatus.PENDING) {
       throw new BadRequestException("Review is not pending");
     }
-
-    await this.ensureCanManageTraitReviews(moderatorId, review.characterId);
 
     const [updatedReview] = await this.db.$transaction([
       this.db.traitReview.update({
@@ -252,8 +190,6 @@ export class TraitReviewService {
     if (review.status !== ModerationStatus.PENDING) {
       throw new BadRequestException("Review is not pending");
     }
-
-    await this.ensureCanManageTraitReviews(moderatorId, review.characterId);
 
     const [updatedReview] = await this.db.$transaction([
       this.db.traitReview.update({
