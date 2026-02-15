@@ -594,9 +594,6 @@ export const CharacterPage: React.FC = () => {
             {character.traitReviewStatus === ModerationStatus.Rejected && (
               <MetaBadge variant="error">Traits Rejected</MetaBadge>
             )}
-            {character.traitReviewStatus === ModerationStatus.Approved && (
-              <MetaBadge variant="success">Traits Approved</MetaBadge>
-            )}
             <MetaBadge>Created {formatDate(character.createdAt)}</MetaBadge>
             <LikeButton
               entityType={LikeableType.Character}
