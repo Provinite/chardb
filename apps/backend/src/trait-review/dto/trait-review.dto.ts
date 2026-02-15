@@ -31,7 +31,7 @@ export class ApproveTraitReviewInput {
 }
 
 @InputType()
-export class RejectTraitReviewInput {
+export class RevertTraitReviewInput {
   @Field(() => ID, { description: 'The ID of the review to reject' })
   @IsUUID()
   reviewId: string;

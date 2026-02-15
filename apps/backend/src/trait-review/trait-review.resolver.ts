@@ -8,7 +8,7 @@ import {
 import {
   TraitReviewQueueFiltersInput,
   ApproveTraitReviewInput,
-  RejectTraitReviewInput,
+  RevertTraitReviewInput,
   EditAndApproveTraitReviewInput,
   CreateTraitReviewInput,
 } from './dto/trait-review.dto';
@@ -96,13 +96,13 @@ export class TraitReviewResolver {
   @ResolveCommunityFrom({ traitReviewId: 'input.reviewId' })
   @UseGuards(JwtAuthGuard)
   @Mutation(() => TraitReview, {
-    description: 'Reject a trait review (moderator action)',
+    description: 'Revert a trait review, restoring previous trait values (moderator action)',
   })
-  async rejectTraitReview(
-    @Args('input') input: RejectTraitReviewInput,
+  async revertTraitReview(
+    @Args('input') input: RevertTraitReviewInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<TraitReview> {
-    const review = await this.traitReviewService.rejectReview(
+    const review = await this.traitReviewService.revertReview(
       input.reviewId,
       user.id,
       input.reason,

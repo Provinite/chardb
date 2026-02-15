@@ -5,7 +5,7 @@ import { Button, Heading3, HelpText, SmallText, Caption } from '@chardb/ui';
 import {
   useTraitReviewQueueQuery,
   useApproveTraitReviewMutation,
-  useRejectTraitReviewMutation,
+  useRevertTraitReviewMutation,
 } from '../../generated/graphql';
 import { TraitReviewCard } from './TraitReviewCard';
 
@@ -131,7 +131,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
   });
 
   const [approveReview] = useApproveTraitReviewMutation();
-  const [rejectReview] = useRejectTraitReviewMutation();
+  const [revertReview] = useRevertTraitReviewMutation();
 
   const queue = data?.traitReviewQueue;
   const items = queue?.items || [];
@@ -156,14 +156,14 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
     }
   };
 
-  const handleReject = async (reviewId: string, reason: string) => {
+  const handleRevert = async (reviewId: string, reason: string) => {
     setActionInProgress(reviewId);
     try {
-      await rejectReview({ variables: { input: { reviewId, reason } } });
-      showToast('Trait review rejected');
+      await revertReview({ variables: { input: { reviewId, reason } } });
+      showToast('Trait values reverted');
       await refetch();
     } catch (err) {
-      console.error('Failed to reject trait review:', err);
+      console.error('Failed to revert trait review:', err);
     } finally {
       setActionInProgress(null);
     }
@@ -208,7 +208,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
 
       <HelpText>
         Review proposed trait values for imported or user-submitted characters.
-        You can approve, reject with a reason, or edit the traits before approving.
+        You can approve, revert to previous values, or edit the traits before approving.
       </HelpText>
 
       {loading ? (
@@ -234,7 +234,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
                 key={item.review.id}
                 item={item}
                 onApprove={handleApprove}
-                onReject={handleReject}
+                onRevert={handleRevert}
                 actionInProgress={actionInProgress === item.review.id}
               />
             ))}

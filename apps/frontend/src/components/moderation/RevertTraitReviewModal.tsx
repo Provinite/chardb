@@ -50,16 +50,16 @@ const Actions = styled.div`
   gap: 0.75rem;
 `;
 
-interface RejectTraitReviewModalProps {
+interface RevertTraitReviewModalProps {
   characterName: string;
-  onReject: (reason: string) => Promise<void>;
+  onRevert: (reason: string) => Promise<void>;
   onCancel: () => void;
   submitting: boolean;
 }
 
-export const RejectTraitReviewModal: React.FC<RejectTraitReviewModalProps> = ({
+export const RevertTraitReviewModal: React.FC<RevertTraitReviewModalProps> = ({
   characterName,
-  onReject,
+  onRevert,
   onCancel,
   submitting,
 }) => {
@@ -67,7 +67,7 @@ export const RejectTraitReviewModal: React.FC<RejectTraitReviewModalProps> = ({
 
   const handleSubmit = () => {
     if (reason.trim()) {
-      onReject(reason.trim());
+      onRevert(reason.trim());
     }
   };
 
@@ -75,17 +75,17 @@ export const RejectTraitReviewModal: React.FC<RejectTraitReviewModalProps> = ({
     <Modal
       isOpen
       onClose={onCancel}
-      title={`Reject Trait Review: ${characterName}`}
+      title={`Revert Traits: ${characterName}`}
     >
       <FormContainer>
         <WarningBanner>
           <AlertTriangle size={18} />
-          This will reject the proposed trait values. The character's traits will not be updated.
+          This will revert the character's traits to their previous values.
         </WarningBanner>
 
         <div>
-          <Label>Rejection Reason</Label>
-          <HelpText>Explain why the trait values are being rejected.</HelpText>
+          <Label>Revert Reason</Label>
+          <HelpText>Explain why the trait values are being reverted.</HelpText>
           <TextArea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -103,7 +103,7 @@ export const RejectTraitReviewModal: React.FC<RejectTraitReviewModalProps> = ({
             onClick={handleSubmit}
             disabled={!reason.trim() || submitting}
           >
-            {submitting ? 'Rejecting...' : 'Reject'}
+            {submitting ? 'Reverting...' : 'Revert'}
           </Button>
         </Actions>
       </FormContainer>

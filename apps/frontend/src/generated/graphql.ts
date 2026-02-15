@@ -1236,8 +1236,6 @@ export type Mutation = {
   refreshToken: Scalars['String']['output'];
   /** Reject an image (moderator action) */
   rejectImage: ImageModerationAction;
-  /** Reject a trait review (moderator action) */
-  rejectTraitReview: TraitReview;
   /** Remove a character ownership change record */
   removeCharacterOwnershipChange: RemovalResponse;
   removeCharacterTags: Character;
@@ -1269,6 +1267,8 @@ export type Mutation = {
   resetPassword: Scalars['Boolean']['output'];
   /** Respond to a community invitation (accept or decline) */
   respondToCommunityInvitation: CommunityInvitation;
+  /** Revert a trait review, restoring previous trait values (moderator action) */
+  revertTraitReview: TraitReview;
   /** Sets or clears the main media for a character */
   setCharacterMainMedia: Character;
   signup: AuthPayload;
@@ -1525,11 +1525,6 @@ export type MutationRejectImageArgs = {
 };
 
 
-export type MutationRejectTraitReviewArgs = {
-  input: RejectTraitReviewInput;
-};
-
-
 export type MutationRemoveCharacterOwnershipChangeArgs = {
   id: Scalars['ID']['input'];
 };
@@ -1615,6 +1610,11 @@ export type MutationResetPasswordArgs = {
 export type MutationRespondToCommunityInvitationArgs = {
   id: Scalars['ID']['input'];
   respondToCommunityInvitationInput: RespondToCommunityInvitationInput;
+};
+
+
+export type MutationRevertTraitReviewArgs = {
+  input: RevertTraitReviewInput;
 };
 
 
@@ -2517,13 +2517,6 @@ export type RejectImageInput = {
   reasonText?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type RejectTraitReviewInput = {
-  /** Reason for rejection */
-  reason: Scalars['String']['input'];
-  /** The ID of the review to reject */
-  reviewId: Scalars['ID']['input'];
-};
-
 /** Response confirming successful removal of an entity */
 export type RemovalResponse = {
   __typename?: 'RemovalResponse';
@@ -2546,6 +2539,13 @@ export type ResetPasswordInput = {
 export type RespondToCommunityInvitationInput = {
   /** Whether to accept (true) or decline (false) the invitation */
   accept: Scalars['Boolean']['input'];
+};
+
+export type RevertTraitReviewInput = {
+  /** Reason for rejection */
+  reason: Scalars['String']['input'];
+  /** The ID of the review to reject */
+  reviewId: Scalars['ID']['input'];
 };
 
 /** A role within a community that defines permissions for members */
@@ -4330,12 +4330,12 @@ export type ApproveTraitReviewMutationVariables = Exact<{
 
 export type ApproveTraitReviewMutation = { __typename?: 'Mutation', approveTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, resolvedAt: string | null, resolvedBy: { __typename?: 'User', id: string, username: string } | null } };
 
-export type RejectTraitReviewMutationVariables = Exact<{
-  input: RejectTraitReviewInput;
+export type RevertTraitReviewMutationVariables = Exact<{
+  input: RevertTraitReviewInput;
 }>;
 
 
-export type RejectTraitReviewMutation = { __typename?: 'Mutation', rejectTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, rejectionReason: string | null, resolvedAt: string | null, resolvedBy: { __typename?: 'User', id: string, username: string } | null } };
+export type RevertTraitReviewMutation = { __typename?: 'Mutation', revertTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, rejectionReason: string | null, resolvedAt: string | null, resolvedBy: { __typename?: 'User', id: string, username: string } | null } };
 
 export type EditAndApproveTraitReviewMutationVariables = Exact<{
   input: EditAndApproveTraitReviewInput;
@@ -11666,9 +11666,9 @@ export function useApproveTraitReviewMutation(baseOptions?: Apollo.MutationHookO
 export type ApproveTraitReviewMutationHookResult = ReturnType<typeof useApproveTraitReviewMutation>;
 export type ApproveTraitReviewMutationResult = Apollo.MutationResult<ApproveTraitReviewMutation>;
 export type ApproveTraitReviewMutationOptions = Apollo.BaseMutationOptions<ApproveTraitReviewMutation, ApproveTraitReviewMutationVariables>;
-export const RejectTraitReviewDocument = gql`
-    mutation RejectTraitReview($input: RejectTraitReviewInput!) {
-  rejectTraitReview(input: $input) {
+export const RevertTraitReviewDocument = gql`
+    mutation RevertTraitReview($input: RevertTraitReviewInput!) {
+  revertTraitReview(input: $input) {
     id
     status
     rejectionReason
@@ -11680,32 +11680,32 @@ export const RejectTraitReviewDocument = gql`
   }
 }
     `;
-export type RejectTraitReviewMutationFn = Apollo.MutationFunction<RejectTraitReviewMutation, RejectTraitReviewMutationVariables>;
+export type RevertTraitReviewMutationFn = Apollo.MutationFunction<RevertTraitReviewMutation, RevertTraitReviewMutationVariables>;
 
 /**
- * __useRejectTraitReviewMutation__
+ * __useRevertTraitReviewMutation__
  *
- * To run a mutation, you first call `useRejectTraitReviewMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useRejectTraitReviewMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRevertTraitReviewMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRevertTraitReviewMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [rejectTraitReviewMutation, { data, loading, error }] = useRejectTraitReviewMutation({
+ * const [revertTraitReviewMutation, { data, loading, error }] = useRevertTraitReviewMutation({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useRejectTraitReviewMutation(baseOptions?: Apollo.MutationHookOptions<RejectTraitReviewMutation, RejectTraitReviewMutationVariables>) {
+export function useRevertTraitReviewMutation(baseOptions?: Apollo.MutationHookOptions<RevertTraitReviewMutation, RevertTraitReviewMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<RejectTraitReviewMutation, RejectTraitReviewMutationVariables>(RejectTraitReviewDocument, options);
+        return Apollo.useMutation<RevertTraitReviewMutation, RevertTraitReviewMutationVariables>(RevertTraitReviewDocument, options);
       }
-export type RejectTraitReviewMutationHookResult = ReturnType<typeof useRejectTraitReviewMutation>;
-export type RejectTraitReviewMutationResult = Apollo.MutationResult<RejectTraitReviewMutation>;
-export type RejectTraitReviewMutationOptions = Apollo.BaseMutationOptions<RejectTraitReviewMutation, RejectTraitReviewMutationVariables>;
+export type RevertTraitReviewMutationHookResult = ReturnType<typeof useRevertTraitReviewMutation>;
+export type RevertTraitReviewMutationResult = Apollo.MutationResult<RevertTraitReviewMutation>;
+export type RevertTraitReviewMutationOptions = Apollo.BaseMutationOptions<RevertTraitReviewMutation, RevertTraitReviewMutationVariables>;
 export const EditAndApproveTraitReviewDocument = gql`
     mutation EditAndApproveTraitReview($input: EditAndApproveTraitReviewInput!) {
   editAndApproveTraitReview(input: $input) {

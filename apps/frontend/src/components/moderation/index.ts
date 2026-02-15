@@ -4,4 +4,4 @@ export { RejectImageModal } from './RejectImageModal';
 export { TraitReviewQueue } from './TraitReviewQueue';
 export { TraitReviewCard } from './TraitReviewCard';
 export { TraitDiffDisplay } from './TraitDiffDisplay';
-export { RejectTraitReviewModal } from './RejectTraitReviewModal';
+export { RevertTraitReviewModal } from './RevertTraitReviewModal';

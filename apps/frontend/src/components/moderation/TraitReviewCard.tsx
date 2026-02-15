@@ -5,7 +5,7 @@ import { Check, X, Edit, Clock, Image as ImageIcon, ExternalLink } from 'lucide-
 import { Button, Caption } from '@chardb/ui';
 import { TraitReviewSource } from '../../generated/graphql';
 import { TraitDiffDisplay } from './TraitDiffDisplay';
-import { RejectTraitReviewModal } from './RejectTraitReviewModal';
+import { RevertTraitReviewModal } from './RevertTraitReviewModal';
 
 import type { TraitReviewQueueQuery } from '../../generated/graphql';
 
@@ -14,7 +14,7 @@ type QueueItem = TraitReviewQueueQuery['traitReviewQueue']['items'][0];
 interface TraitReviewCardProps {
   item: QueueItem;
   onApprove: (reviewId: string) => Promise<void>;
-  onReject: (reviewId: string, reason: string) => Promise<void>;
+  onRevert: (reviewId: string, reason: string) => Promise<void>;
   onEditAndApprove?: (reviewId: string) => void;
   actionInProgress: boolean;
 }
@@ -156,7 +156,7 @@ function sourceLabel(source: TraitReviewSource): string {
 export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
   item,
   onApprove,
-  onReject,
+  onRevert,
   onEditAndApprove,
   actionInProgress,
 }) => {
@@ -225,24 +225,26 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
                 Edit & Approve
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowRejectModal(true)}
-              disabled={actionInProgress}
-              icon={<X size={14} />}
-            >
-              Reject
-            </Button>
+            {review.source !== TraitReviewSource.Creation && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowRejectModal(true)}
+                disabled={actionInProgress}
+                icon={<X size={14} />}
+              >
+                Revert
+              </Button>
+            )}
           </Actions>
         </CardBody>
       </Card>
 
       {showRejectModal && (
-        <RejectTraitReviewModal
+        <RevertTraitReviewModal
           characterName={item.characterName}
-          onReject={async (reason) => {
-            await onReject(review.id, reason);
+          onRevert={async (reason) => {
+            await onRevert(review.id, reason);
             setShowRejectModal(false);
           }}
           onCancel={() => setShowRejectModal(false)}

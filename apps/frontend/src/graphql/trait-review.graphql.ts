@@ -123,9 +123,9 @@ export const APPROVE_TRAIT_REVIEW = gql`
   }
 `;
 
-export const REJECT_TRAIT_REVIEW = gql`
-  mutation RejectTraitReview($input: RejectTraitReviewInput!) {
-    rejectTraitReview(input: $input) {
+export const REVERT_TRAIT_REVIEW = gql`
+  mutation RevertTraitReview($input: RevertTraitReviewInput!) {
+    revertTraitReview(input: $input) {
       id
       status
       rejectionReason

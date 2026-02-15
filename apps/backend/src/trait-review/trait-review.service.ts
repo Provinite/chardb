@@ -125,7 +125,6 @@ export class TraitReviewService {
         where: { id: review.characterId },
         data: {
           traitReviewStatus: ModerationStatus.APPROVED,
-          traitValues: review.proposedTraitValues,
         },
       }),
     ]);
@@ -134,9 +133,10 @@ export class TraitReviewService {
   }
 
   /**
-   * Reject a trait review
+   * Revert a trait review - restores the character's previous trait values.
+   * Cannot revert CREATION-source reviews since there are no previous values.
    */
-  async rejectReview(reviewId: string, moderatorId: string, reason: string) {
+  async revertReview(reviewId: string, moderatorId: string, reason: string) {
     const review = await this.db.traitReview.findUnique({
       where: { id: reviewId },
       include: traitReviewInclude,
@@ -148,6 +148,12 @@ export class TraitReviewService {
 
     if (review.status !== ModerationStatus.PENDING) {
       throw new BadRequestException("Review is not pending");
+    }
+
+    if (review.source === TraitReviewSource.CREATION) {
+      throw new BadRequestException(
+        "Cannot revert a CREATION review - there are no previous trait values to restore",
+      );
     }
 
     const [updatedReview] = await this.db.$transaction([
@@ -163,7 +169,10 @@ export class TraitReviewService {
       }),
       this.db.character.update({
         where: { id: review.characterId },
-        data: { traitReviewStatus: ModerationStatus.REJECTED },
+        data: {
+          traitReviewStatus: ModerationStatus.REJECTED,
+          traitValues: review.previousTraitValues,
+        },
       }),
     ]);
 
