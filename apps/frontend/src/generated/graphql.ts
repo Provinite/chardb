@@ -48,6 +48,11 @@ export type ApproveImageInput = {
   imageId: Scalars['ID']['input'];
 };
 
+export type ApproveTraitReviewInput = {
+  /** The ID of the review to approve */
+  reviewId: Scalars['ID']['input'];
+};
+
 export type AssignCharacterSpeciesInput = {
   /** Official registry identifier for this character within its species */
   registryId?: InputMaybe<Scalars['String']['input']>;
@@ -68,6 +73,8 @@ export type AuthPayload = {
 export type Character = {
   __typename?: 'Character';
   _count: CharacterCount;
+  /** The active pending trait review for this character */
+  activeTraitReview: Maybe<TraitReview>;
   createdAt: Scalars['DateTime']['output'];
   creator: Maybe<User>;
   creatorId: Maybe<Scalars['ID']['output']>;
@@ -100,6 +107,8 @@ export type Character = {
   speciesVariantId: Maybe<Scalars['ID']['output']>;
   tags: Array<Scalars['String']['output']>;
   tags_rel: Array<CharacterTag>;
+  /** Trait review moderation status */
+  traitReviewStatus: Maybe<ModerationStatus>;
   /** Trait values assigned to this character */
   traitValues: Array<CharacterTraitValue>;
   updatedAt: Scalars['DateTime']['output'];
@@ -609,6 +618,17 @@ export type CreateTraitListEntryInput = {
   valueType: TraitValueType;
 };
 
+export type CreateTraitReviewInput = {
+  /** The ID of the character */
+  characterId: Scalars['ID']['input'];
+  /** The previous trait values (optional, will use current character values if not provided) */
+  previousTraitValues?: InputMaybe<Array<CharacterTraitValueInput>>;
+  /** The proposed trait values */
+  proposedTraitValues: Array<CharacterTraitValueInput>;
+  /** The source of this review */
+  source: TraitReviewSource;
+};
+
 export type DiscordGuildInfo = {
   __typename?: 'DiscordGuildInfo';
   /** Whether the bot has access to this guild */
@@ -630,6 +650,13 @@ export type DiscordUserInfo = {
   userId: Scalars['ID']['output'];
   /** Discord username */
   username: Scalars['String']['output'];
+};
+
+export type EditAndApproveTraitReviewInput = {
+  /** The corrected trait values to apply */
+  correctedTraitValues: Array<CharacterTraitValueInput>;
+  /** The ID of the review to edit and approve */
+  reviewId: Scalars['ID']['input'];
 };
 
 export type EnumValue = {
@@ -1146,6 +1173,8 @@ export type Mutation = {
   addMediaTags: Media;
   /** Approve an image (moderator action) */
   approveImage: ImageModerationAction;
+  /** Approve a trait review (moderator action) */
+  approveTraitReview: TraitReview;
   /** Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species. */
   assignCharacterSpecies: Character;
   /** Claim an invite code to join a community */
@@ -1181,6 +1210,8 @@ export type Mutation = {
   createTrait: Trait;
   /** Create a new trait list entry */
   createTraitListEntry: TraitListEntry;
+  /** Create a trait review for a character */
+  createTraitReview: TraitReview;
   deleteAccount: RemovalResponse;
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
@@ -1192,6 +1223,8 @@ export type Mutation = {
   deleteItemType: Scalars['Boolean']['output'];
   /** Deletes a media item and its associated content */
   deleteMedia: Scalars['Boolean']['output'];
+  /** Edit and approve a trait review (moderator action) */
+  editAndApproveTraitReview: TraitReview;
   forgotPassword: Scalars['Boolean']['output'];
   /** Grant an item to a user (admin only) */
   grantItem: Item;
@@ -1201,6 +1234,8 @@ export type Mutation = {
   refreshToken: Scalars['String']['output'];
   /** Reject an image (moderator action) */
   rejectImage: ImageModerationAction;
+  /** Reject a trait review (moderator action) */
+  rejectTraitReview: TraitReview;
   /** Remove a character ownership change record */
   removeCharacterOwnershipChange: RemovalResponse;
   removeCharacterTags: Character;
@@ -1297,6 +1332,11 @@ export type MutationAddMediaTagsArgs = {
 
 export type MutationApproveImageArgs = {
   input: ApproveImageInput;
+};
+
+
+export type MutationApproveTraitReviewArgs = {
+  input: ApproveTraitReviewInput;
 };
 
 
@@ -1402,6 +1442,11 @@ export type MutationCreateTraitListEntryArgs = {
 };
 
 
+export type MutationCreateTraitReviewArgs = {
+  input: CreateTraitReviewInput;
+};
+
+
 export type MutationDeleteCharacterArgs = {
   id: Scalars['ID']['input'];
 };
@@ -1442,6 +1487,11 @@ export type MutationDeleteMediaArgs = {
 };
 
 
+export type MutationEditAndApproveTraitReviewArgs = {
+  input: EditAndApproveTraitReviewInput;
+};
+
+
 export type MutationForgotPasswordArgs = {
   input: ForgotPasswordInput;
 };
@@ -1470,6 +1520,11 @@ export type MutationRefreshTokenArgs = {
 
 export type MutationRejectImageArgs = {
   input: RejectImageInput;
+};
+
+
+export type MutationRejectTraitReviewArgs = {
+  input: RejectTraitReviewInput;
 };
 
 
@@ -1782,6 +1837,8 @@ export type Query = {
   characterOwnershipChangesByCharacter: CharacterOwnershipChangeConnection;
   /** Get character ownership changes by user ID with pagination */
   characterOwnershipChangesByUser: CharacterOwnershipChangeConnection;
+  /** Get the active pending trait review for a character */
+  characterTraitReview: Maybe<TraitReview>;
   characters: CharacterConnection;
   comment: Comment;
   comments: CommentConnection;
@@ -1873,6 +1930,8 @@ export type Query = {
   myMedia: MediaConnection;
   /** Get count of pending images for a community */
   pendingImageCount: Scalars['Int']['output'];
+  /** Get count of pending trait reviews for a community */
+  pendingTraitReviewCount: Scalars['Int']['output'];
   /** Resolve a Discord username or user ID to full user information. Requires permission to create orphaned characters. */
   resolveDiscordUser: DiscordUserInfo;
   /** Get a role by ID */
@@ -1905,6 +1964,8 @@ export type Query = {
   traitListEntriesByTrait: TraitListEntryConnection;
   /** Get a trait list entry by ID */
   traitListEntryById: TraitListEntry;
+  /** Get trait reviews for a community moderation queue */
+  traitReviewQueue: TraitReviewQueueConnection;
   /** Get all traits with pagination */
   traits: TraitConnection;
   /** Get traits by species ID with pagination, optionally ordered by variant-specific order */
@@ -1973,6 +2034,11 @@ export type QueryCharacterOwnershipChangesByUserArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   userId: Scalars['ID']['input'];
+};
+
+
+export type QueryCharacterTraitReviewArgs = {
+  characterId: Scalars['ID']['input'];
 };
 
 
@@ -2266,6 +2332,11 @@ export type QueryPendingImageCountArgs = {
 };
 
 
+export type QueryPendingTraitReviewCountArgs = {
+  communityId: Scalars['ID']['input'];
+};
+
+
 export type QueryResolveDiscordUserArgs = {
   communityId: Scalars['ID']['input'];
   identifier: Scalars['String']['input'];
@@ -2362,6 +2433,14 @@ export type QueryTraitListEntryByIdArgs = {
 };
 
 
+export type QueryTraitReviewQueueArgs = {
+  communityId: Scalars['ID']['input'];
+  filters?: InputMaybe<TraitReviewQueueFiltersInput>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryTraitsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -2434,6 +2513,13 @@ export type RejectImageInput = {
   reason: ModerationRejectionReason;
   /** Additional details about the rejection (required when reason is OTHER) */
   reasonText?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type RejectTraitReviewInput = {
+  /** Reason for rejection */
+  reason: Scalars['String']['input'];
+  /** The ID of the review to reject */
+  reviewId: Scalars['ID']['input'];
 };
 
 /** Response confirming successful removal of an entity */
@@ -2732,6 +2818,72 @@ export type TraitOrderInput = {
   /** ID of the trait */
   traitId: Scalars['ID']['input'];
 };
+
+/** A trait review for a character */
+export type TraitReview = {
+  __typename?: 'TraitReview';
+  /** The trait values actually applied (if edited) */
+  appliedTraitValues: Maybe<Array<CharacterTraitValue>>;
+  /** The character being reviewed */
+  character: Character;
+  characterId: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  /** The previous trait values */
+  previousTraitValues: Array<CharacterTraitValue>;
+  /** The proposed trait values */
+  proposedTraitValues: Array<CharacterTraitValue>;
+  /** Reason for rejection */
+  rejectionReason: Maybe<Scalars['String']['output']>;
+  /** When the review was resolved */
+  resolvedAt: Maybe<Scalars['DateTime']['output']>;
+  /** The moderator who resolved this review */
+  resolvedBy: Maybe<User>;
+  resolvedById: Maybe<Scalars['ID']['output']>;
+  source: TraitReviewSource;
+  status: ModerationStatus;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+/** Paginated list of trait reviews in the queue */
+export type TraitReviewQueueConnection = {
+  __typename?: 'TraitReviewQueueConnection';
+  /** Whether there are more reviews after this page */
+  hasMore: Scalars['Boolean']['output'];
+  items: Array<TraitReviewQueueItem>;
+  /** Total count of pending reviews */
+  total: Scalars['Int']['output'];
+};
+
+export type TraitReviewQueueFiltersInput = {
+  /** Filter by source */
+  source?: InputMaybe<TraitReviewSource>;
+  /** Filter by status */
+  status?: InputMaybe<ModerationStatus>;
+};
+
+/** An item in the trait review queue */
+export type TraitReviewQueueItem = {
+  __typename?: 'TraitReviewQueueItem';
+  /** ID of the character */
+  characterId: Scalars['ID']['output'];
+  /** Name of the character */
+  characterName: Scalars['String']['output'];
+  /** Registry ID of the character */
+  registryId: Maybe<Scalars['String']['output']>;
+  review: TraitReview;
+  /** Name of the species */
+  speciesName: Maybe<Scalars['String']['output']>;
+  /** Name of the species variant */
+  variantName: Maybe<Scalars['String']['output']>;
+};
+
+/** The source that triggered a trait review */
+export enum TraitReviewSource {
+  Import = 'IMPORT',
+  Myo = 'MYO',
+  UserEdit = 'USER_EDIT'
+}
 
 /** Types of values that traits can store */
 export enum TraitValueType {
@@ -3135,7 +3287,7 @@ export type GetCharacterQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, traitReviewStatus: ModerationStatus | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -4142,6 +4294,60 @@ export type RemoveTraitListEntryMutationVariables = Exact<{
 
 export type RemoveTraitListEntryMutation = { __typename?: 'Mutation', removeTraitListEntry: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
+export type TraitValueFieldsFragment = { __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null };
+
+export type TraitReviewQueueQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  filters?: InputMaybe<TraitReviewQueueFiltersInput>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type TraitReviewQueueQuery = { __typename?: 'Query', traitReviewQueue: { __typename?: 'TraitReviewQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'TraitReviewQueueItem', characterName: string, characterId: string, registryId: string | null, speciesName: string | null, variantName: string | null, review: { __typename?: 'TraitReview', id: string, characterId: string, status: ModerationStatus, source: TraitReviewSource, rejectionReason: string | null, resolvedAt: string | null, createdAt: string, proposedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, previousTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, appliedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> | null, resolvedBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null } }> } };
+
+export type PendingTraitReviewCountQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type PendingTraitReviewCountQuery = { __typename?: 'Query', pendingTraitReviewCount: number };
+
+export type CharacterTraitReviewQueryVariables = Exact<{
+  characterId: Scalars['ID']['input'];
+}>;
+
+
+export type CharacterTraitReviewQuery = { __typename?: 'Query', characterTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, source: TraitReviewSource, rejectionReason: string | null, createdAt: string, proposedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, previousTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> } | null };
+
+export type ApproveTraitReviewMutationVariables = Exact<{
+  input: ApproveTraitReviewInput;
+}>;
+
+
+export type ApproveTraitReviewMutation = { __typename?: 'Mutation', approveTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, resolvedAt: string | null, resolvedBy: { __typename?: 'User', id: string, username: string } | null } };
+
+export type RejectTraitReviewMutationVariables = Exact<{
+  input: RejectTraitReviewInput;
+}>;
+
+
+export type RejectTraitReviewMutation = { __typename?: 'Mutation', rejectTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, rejectionReason: string | null, resolvedAt: string | null, resolvedBy: { __typename?: 'User', id: string, username: string } | null } };
+
+export type EditAndApproveTraitReviewMutationVariables = Exact<{
+  input: EditAndApproveTraitReviewInput;
+}>;
+
+
+export type EditAndApproveTraitReviewMutation = { __typename?: 'Mutation', editAndApproveTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, resolvedAt: string | null, appliedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> | null, resolvedBy: { __typename?: 'User', id: string, username: string } | null } };
+
+export type CreateTraitReviewMutationVariables = Exact<{
+  input: CreateTraitReviewInput;
+}>;
+
+
+export type CreateTraitReviewMutation = { __typename?: 'Mutation', createTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, source: TraitReviewSource, characterId: string, createdAt: string } };
+
 export type UserBasicFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
 export type GetUserProfileQueryVariables = Exact<{
@@ -4419,6 +4625,24 @@ export const TraitListEntryDetailsFragmentDoc = gql`
       id
       name
       order
+    }
+  }
+}
+    `;
+export const TraitValueFieldsFragmentDoc = gql`
+    fragment TraitValueFields on CharacterTraitValue {
+  traitId
+  value
+  trait {
+    name
+    valueType
+    allowsMultipleValues
+  }
+  enumValue {
+    name
+    color {
+      id
+      hexCode
     }
   }
 }
@@ -4797,6 +5021,7 @@ export const GetCharacterDocument = gql`
         }
       }
     }
+    traitReviewStatus
     details
     ownerId
     creatorId
@@ -11217,6 +11442,331 @@ export function useRemoveTraitListEntryMutation(baseOptions?: Apollo.MutationHoo
 export type RemoveTraitListEntryMutationHookResult = ReturnType<typeof useRemoveTraitListEntryMutation>;
 export type RemoveTraitListEntryMutationResult = Apollo.MutationResult<RemoveTraitListEntryMutation>;
 export type RemoveTraitListEntryMutationOptions = Apollo.BaseMutationOptions<RemoveTraitListEntryMutation, RemoveTraitListEntryMutationVariables>;
+export const TraitReviewQueueDocument = gql`
+    query TraitReviewQueue($communityId: ID!, $filters: TraitReviewQueueFiltersInput, $first: Int, $offset: Int) {
+  traitReviewQueue(
+    communityId: $communityId
+    filters: $filters
+    first: $first
+    offset: $offset
+  ) {
+    items {
+      review {
+        id
+        characterId
+        status
+        source
+        proposedTraitValues {
+          ...TraitValueFields
+        }
+        previousTraitValues {
+          ...TraitValueFields
+        }
+        appliedTraitValues {
+          ...TraitValueFields
+        }
+        rejectionReason
+        resolvedAt
+        createdAt
+        resolvedBy {
+          id
+          username
+          displayName
+        }
+      }
+      characterName
+      characterId
+      registryId
+      speciesName
+      variantName
+    }
+    total
+    hasMore
+  }
+}
+    ${TraitValueFieldsFragmentDoc}`;
+
+/**
+ * __useTraitReviewQueueQuery__
+ *
+ * To run a query within a React component, call `useTraitReviewQueueQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTraitReviewQueueQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTraitReviewQueueQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      filters: // value for 'filters'
+ *      first: // value for 'first'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useTraitReviewQueueQuery(baseOptions: Apollo.QueryHookOptions<TraitReviewQueueQuery, TraitReviewQueueQueryVariables> & ({ variables: TraitReviewQueueQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<TraitReviewQueueQuery, TraitReviewQueueQueryVariables>(TraitReviewQueueDocument, options);
+      }
+export function useTraitReviewQueueLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TraitReviewQueueQuery, TraitReviewQueueQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<TraitReviewQueueQuery, TraitReviewQueueQueryVariables>(TraitReviewQueueDocument, options);
+        }
+export function useTraitReviewQueueSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TraitReviewQueueQuery, TraitReviewQueueQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<TraitReviewQueueQuery, TraitReviewQueueQueryVariables>(TraitReviewQueueDocument, options);
+        }
+export type TraitReviewQueueQueryHookResult = ReturnType<typeof useTraitReviewQueueQuery>;
+export type TraitReviewQueueLazyQueryHookResult = ReturnType<typeof useTraitReviewQueueLazyQuery>;
+export type TraitReviewQueueSuspenseQueryHookResult = ReturnType<typeof useTraitReviewQueueSuspenseQuery>;
+export type TraitReviewQueueQueryResult = Apollo.QueryResult<TraitReviewQueueQuery, TraitReviewQueueQueryVariables>;
+export const PendingTraitReviewCountDocument = gql`
+    query PendingTraitReviewCount($communityId: ID!) {
+  pendingTraitReviewCount(communityId: $communityId)
+}
+    `;
+
+/**
+ * __usePendingTraitReviewCountQuery__
+ *
+ * To run a query within a React component, call `usePendingTraitReviewCountQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePendingTraitReviewCountQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePendingTraitReviewCountQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function usePendingTraitReviewCountQuery(baseOptions: Apollo.QueryHookOptions<PendingTraitReviewCountQuery, PendingTraitReviewCountQueryVariables> & ({ variables: PendingTraitReviewCountQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<PendingTraitReviewCountQuery, PendingTraitReviewCountQueryVariables>(PendingTraitReviewCountDocument, options);
+      }
+export function usePendingTraitReviewCountLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<PendingTraitReviewCountQuery, PendingTraitReviewCountQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<PendingTraitReviewCountQuery, PendingTraitReviewCountQueryVariables>(PendingTraitReviewCountDocument, options);
+        }
+export function usePendingTraitReviewCountSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<PendingTraitReviewCountQuery, PendingTraitReviewCountQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<PendingTraitReviewCountQuery, PendingTraitReviewCountQueryVariables>(PendingTraitReviewCountDocument, options);
+        }
+export type PendingTraitReviewCountQueryHookResult = ReturnType<typeof usePendingTraitReviewCountQuery>;
+export type PendingTraitReviewCountLazyQueryHookResult = ReturnType<typeof usePendingTraitReviewCountLazyQuery>;
+export type PendingTraitReviewCountSuspenseQueryHookResult = ReturnType<typeof usePendingTraitReviewCountSuspenseQuery>;
+export type PendingTraitReviewCountQueryResult = Apollo.QueryResult<PendingTraitReviewCountQuery, PendingTraitReviewCountQueryVariables>;
+export const CharacterTraitReviewDocument = gql`
+    query CharacterTraitReview($characterId: ID!) {
+  characterTraitReview(characterId: $characterId) {
+    id
+    status
+    source
+    proposedTraitValues {
+      ...TraitValueFields
+    }
+    previousTraitValues {
+      ...TraitValueFields
+    }
+    rejectionReason
+    createdAt
+  }
+}
+    ${TraitValueFieldsFragmentDoc}`;
+
+/**
+ * __useCharacterTraitReviewQuery__
+ *
+ * To run a query within a React component, call `useCharacterTraitReviewQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCharacterTraitReviewQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCharacterTraitReviewQuery({
+ *   variables: {
+ *      characterId: // value for 'characterId'
+ *   },
+ * });
+ */
+export function useCharacterTraitReviewQuery(baseOptions: Apollo.QueryHookOptions<CharacterTraitReviewQuery, CharacterTraitReviewQueryVariables> & ({ variables: CharacterTraitReviewQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CharacterTraitReviewQuery, CharacterTraitReviewQueryVariables>(CharacterTraitReviewDocument, options);
+      }
+export function useCharacterTraitReviewLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CharacterTraitReviewQuery, CharacterTraitReviewQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CharacterTraitReviewQuery, CharacterTraitReviewQueryVariables>(CharacterTraitReviewDocument, options);
+        }
+export function useCharacterTraitReviewSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CharacterTraitReviewQuery, CharacterTraitReviewQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CharacterTraitReviewQuery, CharacterTraitReviewQueryVariables>(CharacterTraitReviewDocument, options);
+        }
+export type CharacterTraitReviewQueryHookResult = ReturnType<typeof useCharacterTraitReviewQuery>;
+export type CharacterTraitReviewLazyQueryHookResult = ReturnType<typeof useCharacterTraitReviewLazyQuery>;
+export type CharacterTraitReviewSuspenseQueryHookResult = ReturnType<typeof useCharacterTraitReviewSuspenseQuery>;
+export type CharacterTraitReviewQueryResult = Apollo.QueryResult<CharacterTraitReviewQuery, CharacterTraitReviewQueryVariables>;
+export const ApproveTraitReviewDocument = gql`
+    mutation ApproveTraitReview($input: ApproveTraitReviewInput!) {
+  approveTraitReview(input: $input) {
+    id
+    status
+    resolvedAt
+    resolvedBy {
+      id
+      username
+    }
+  }
+}
+    `;
+export type ApproveTraitReviewMutationFn = Apollo.MutationFunction<ApproveTraitReviewMutation, ApproveTraitReviewMutationVariables>;
+
+/**
+ * __useApproveTraitReviewMutation__
+ *
+ * To run a mutation, you first call `useApproveTraitReviewMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useApproveTraitReviewMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [approveTraitReviewMutation, { data, loading, error }] = useApproveTraitReviewMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useApproveTraitReviewMutation(baseOptions?: Apollo.MutationHookOptions<ApproveTraitReviewMutation, ApproveTraitReviewMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ApproveTraitReviewMutation, ApproveTraitReviewMutationVariables>(ApproveTraitReviewDocument, options);
+      }
+export type ApproveTraitReviewMutationHookResult = ReturnType<typeof useApproveTraitReviewMutation>;
+export type ApproveTraitReviewMutationResult = Apollo.MutationResult<ApproveTraitReviewMutation>;
+export type ApproveTraitReviewMutationOptions = Apollo.BaseMutationOptions<ApproveTraitReviewMutation, ApproveTraitReviewMutationVariables>;
+export const RejectTraitReviewDocument = gql`
+    mutation RejectTraitReview($input: RejectTraitReviewInput!) {
+  rejectTraitReview(input: $input) {
+    id
+    status
+    rejectionReason
+    resolvedAt
+    resolvedBy {
+      id
+      username
+    }
+  }
+}
+    `;
+export type RejectTraitReviewMutationFn = Apollo.MutationFunction<RejectTraitReviewMutation, RejectTraitReviewMutationVariables>;
+
+/**
+ * __useRejectTraitReviewMutation__
+ *
+ * To run a mutation, you first call `useRejectTraitReviewMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRejectTraitReviewMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [rejectTraitReviewMutation, { data, loading, error }] = useRejectTraitReviewMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useRejectTraitReviewMutation(baseOptions?: Apollo.MutationHookOptions<RejectTraitReviewMutation, RejectTraitReviewMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RejectTraitReviewMutation, RejectTraitReviewMutationVariables>(RejectTraitReviewDocument, options);
+      }
+export type RejectTraitReviewMutationHookResult = ReturnType<typeof useRejectTraitReviewMutation>;
+export type RejectTraitReviewMutationResult = Apollo.MutationResult<RejectTraitReviewMutation>;
+export type RejectTraitReviewMutationOptions = Apollo.BaseMutationOptions<RejectTraitReviewMutation, RejectTraitReviewMutationVariables>;
+export const EditAndApproveTraitReviewDocument = gql`
+    mutation EditAndApproveTraitReview($input: EditAndApproveTraitReviewInput!) {
+  editAndApproveTraitReview(input: $input) {
+    id
+    status
+    appliedTraitValues {
+      ...TraitValueFields
+    }
+    resolvedAt
+    resolvedBy {
+      id
+      username
+    }
+  }
+}
+    ${TraitValueFieldsFragmentDoc}`;
+export type EditAndApproveTraitReviewMutationFn = Apollo.MutationFunction<EditAndApproveTraitReviewMutation, EditAndApproveTraitReviewMutationVariables>;
+
+/**
+ * __useEditAndApproveTraitReviewMutation__
+ *
+ * To run a mutation, you first call `useEditAndApproveTraitReviewMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useEditAndApproveTraitReviewMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [editAndApproveTraitReviewMutation, { data, loading, error }] = useEditAndApproveTraitReviewMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useEditAndApproveTraitReviewMutation(baseOptions?: Apollo.MutationHookOptions<EditAndApproveTraitReviewMutation, EditAndApproveTraitReviewMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<EditAndApproveTraitReviewMutation, EditAndApproveTraitReviewMutationVariables>(EditAndApproveTraitReviewDocument, options);
+      }
+export type EditAndApproveTraitReviewMutationHookResult = ReturnType<typeof useEditAndApproveTraitReviewMutation>;
+export type EditAndApproveTraitReviewMutationResult = Apollo.MutationResult<EditAndApproveTraitReviewMutation>;
+export type EditAndApproveTraitReviewMutationOptions = Apollo.BaseMutationOptions<EditAndApproveTraitReviewMutation, EditAndApproveTraitReviewMutationVariables>;
+export const CreateTraitReviewDocument = gql`
+    mutation CreateTraitReview($input: CreateTraitReviewInput!) {
+  createTraitReview(input: $input) {
+    id
+    status
+    source
+    characterId
+    createdAt
+  }
+}
+    `;
+export type CreateTraitReviewMutationFn = Apollo.MutationFunction<CreateTraitReviewMutation, CreateTraitReviewMutationVariables>;
+
+/**
+ * __useCreateTraitReviewMutation__
+ *
+ * To run a mutation, you first call `useCreateTraitReviewMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateTraitReviewMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createTraitReviewMutation, { data, loading, error }] = useCreateTraitReviewMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateTraitReviewMutation(baseOptions?: Apollo.MutationHookOptions<CreateTraitReviewMutation, CreateTraitReviewMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateTraitReviewMutation, CreateTraitReviewMutationVariables>(CreateTraitReviewDocument, options);
+      }
+export type CreateTraitReviewMutationHookResult = ReturnType<typeof useCreateTraitReviewMutation>;
+export type CreateTraitReviewMutationResult = Apollo.MutationResult<CreateTraitReviewMutation>;
+export type CreateTraitReviewMutationOptions = Apollo.BaseMutationOptions<CreateTraitReviewMutation, CreateTraitReviewMutationVariables>;
 export const GetUserProfileDocument = gql`
     query GetUserProfile($username: String!) {
   userProfile(username: $username) {

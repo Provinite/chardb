@@ -8,7 +8,7 @@ import {
   SmallText,
   HelpText
 } from '@chardb/ui';
-import { ImageModerationQueue } from '../components/moderation';
+import { ImageModerationQueue, TraitReviewQueue } from '../components/moderation';
 
 const Container = styled.div`
   display: flex;
@@ -114,6 +114,10 @@ export const CommunityModerationPage: React.FC = () => {
 
       <ContentSection>
         <ImageModerationQueue communityId={communityId} />
+      </ContentSection>
+
+      <ContentSection>
+        <TraitReviewQueue communityId={communityId} />
       </ContentSection>
     </Container>
   );

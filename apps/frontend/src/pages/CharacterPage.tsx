@@ -8,6 +8,7 @@ import {
   useDeleteCharacterMutation,
   LikeableType,
   CommentableType,
+  ModerationStatus,
 } from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
@@ -586,6 +587,15 @@ export const CharacterPage: React.FC = () => {
             )}
             {character.isTradeable && (
               <MetaBadge variant="warning">Open to Trades</MetaBadge>
+            )}
+            {character.traitReviewStatus === ModerationStatus.Pending && (
+              <MetaBadge variant="warning">Traits Pending Review</MetaBadge>
+            )}
+            {character.traitReviewStatus === ModerationStatus.Rejected && (
+              <MetaBadge variant="error">Traits Rejected</MetaBadge>
+            )}
+            {character.traitReviewStatus === ModerationStatus.Approved && (
+              <MetaBadge variant="success">Traits Approved</MetaBadge>
             )}
             <MetaBadge>Created {formatDate(character.createdAt)}</MetaBadge>
             <LikeButton
