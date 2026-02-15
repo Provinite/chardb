@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { Check, X, Edit, Clock, Image as ImageIcon } from 'lucide-react';
+import { Check, X, Edit, Clock, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import { Button, Caption } from '@chardb/ui';
 import { TraitReviewSource } from '../../generated/graphql';
 import { TraitDiffDisplay } from './TraitDiffDisplay';
@@ -71,10 +72,18 @@ const CharacterInfo = styled.div`
   min-width: 0;
 `;
 
-const CharacterName = styled.span`
+const CharacterName = styled(Link)`
   font-weight: 600;
   font-size: 1.125rem;
   color: ${({ theme }) => theme.colors.text.primary};
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+  }
 `;
 
 const CharacterMeta = styled.div`
@@ -173,7 +182,10 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
         <CardBody>
           <CardHeader>
             <CharacterInfo>
-              <CharacterName>{item.characterName}</CharacterName>
+              <CharacterName to={`/character/${item.characterId}`} target="_blank" rel="noopener noreferrer">
+                {item.characterName}
+                <ExternalLink size={14} />
+              </CharacterName>
               <CharacterMeta>
                 {item.registryId && <Caption>#{item.registryId}</Caption>}
                 {item.speciesName && <Caption>{item.speciesName}</Caption>}
