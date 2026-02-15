@@ -1,14 +1,14 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { Image, ArrowLeft } from 'lucide-react';
+import { ClipboardCheck, ArrowLeft } from 'lucide-react';
 import {
   Button,
   Heading2,
   SmallText,
   HelpText
 } from '@chardb/ui';
-import { ImageModerationQueue, TraitReviewQueue } from '../components/moderation';
+import { TraitReviewQueue } from '../components/moderation';
 
 const Container = styled.div`
   display: flex;
@@ -66,13 +66,7 @@ const HeaderText = styled.div`
   gap: 0.25rem;
 `;
 
-const ContentSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-export const CommunityModerationPage: React.FC = () => {
+export const TraitReviewPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
 
   if (!communityId) {
@@ -100,25 +94,19 @@ export const CommunityModerationPage: React.FC = () => {
         <HeaderContent>
           <HeaderInfo>
             <HeaderIcon>
-              <Image size={24} />
+              <ClipboardCheck size={24} />
             </HeaderIcon>
             <HeaderText>
-              <Heading2>Content Moderation</Heading2>
+              <Heading2>Trait Review</Heading2>
               <SmallText style={{ margin: 0, color: 'muted' }}>
-                Review and manage community content
+                Review proposed trait values for characters
               </SmallText>
             </HeaderText>
           </HeaderInfo>
         </HeaderContent>
       </Header>
 
-      <ContentSection>
-        <ImageModerationQueue communityId={communityId} />
-      </ContentSection>
-
-      <ContentSection>
-        <TraitReviewQueue communityId={communityId} />
-      </ContentSection>
+      <TraitReviewQueue communityId={communityId} />
     </Container>
   );
 };

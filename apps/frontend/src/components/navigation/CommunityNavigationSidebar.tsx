@@ -10,7 +10,8 @@ import {
   Dna,
   Shield,
   Lock,
-  AlertCircle,
+  Image,
+  ClipboardCheck,
   Globe,
   LayoutGrid,
   Package,
@@ -592,12 +593,22 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
                 />
               )}
 
-              {/* Moderation - requires image moderation or trait review permissions */}
-              {(permissions.canModerateImages || permissions.canEditCharacterRegistry) && (
+              {/* Image Moderation - requires image moderation permissions */}
+              {permissions.canModerateImages && (
                 <CommunityNavigationItem
-                  to={`${communityBasePath}/moderation`}
-                  icon={AlertCircle}
-                  label="Moderation"
+                  to={`${communityBasePath}/moderation/images`}
+                  icon={Image}
+                  label="Image Moderation"
+                  isNested
+                />
+              )}
+
+              {/* Trait Review - requires character registry permissions */}
+              {permissions.canEditCharacterRegistry && (
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/moderation/traits`}
+                  icon={ClipboardCheck}
+                  label="Trait Review"
                   isNested
                 />
               )}
