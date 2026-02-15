@@ -10,7 +10,8 @@ import { PendingOwnershipService } from "../pending-ownership/pending-ownership.
 import { DiscordService } from "../discord/discord.service";
 import { PermissionService } from "../auth/PermissionService";
 import { CommunityPermission } from "../auth/CommunityPermission";
-import { Prisma, Visibility, ExternalAccountProvider } from "@chardb/database";
+import { Prisma, Visibility, ExternalAccountProvider, ModerationStatus, TraitReviewSource } from "@chardb/database";
+import { TraitReviewService } from "../trait-review/trait-review.service";
 
 /**
  * Field classification for permission checks.
@@ -68,6 +69,7 @@ export class CharactersService {
     private readonly pendingOwnershipService: PendingOwnershipService,
     private readonly discordService: DiscordService,
     private readonly permissionService: PermissionService,
+    private readonly traitReviewService: TraitReviewService,
   ) {}
 
   async create(
@@ -77,6 +79,7 @@ export class CharactersService {
       tags?: string[];
       pendingOwner?: PendingOwnerInput; // Pending ownership info
       assignToSelf?: boolean; // Whether to assign ownership to the creator
+      traitReviewSource?: TraitReviewSource; // Source for auto-created trait review
     },
   ) {
     const { characterData, tags, assignToSelf = true } = input;
@@ -141,16 +144,32 @@ export class CharactersService {
     }
 
     // Now create the character (only if all validations passed)
-    const character = await this.db.character.create({
-      data: {
-        // Owner connection (may be null for orphaned characters)
-        ...(actualOwnerId ? { owner: { connect: { id: actualOwnerId } } } : {}),
-        // Creator is always the user creating the character
-        creator: {
-          connect: { id: userId },
+    // Use interactive transaction so trait review creation is atomic with character creation
+    const character = await this.db.$transaction(async (tx) => {
+      const created = await tx.character.create({
+        data: {
+          // Owner connection (may be null for orphaned characters)
+          ...(actualOwnerId ? { owner: { connect: { id: actualOwnerId } } } : {}),
+          // Creator is always the user creating the character
+          creator: {
+            connect: { id: userId },
+          },
+          ...characterData,
         },
-        ...characterData,
-      },
+      });
+
+      // Auto-create trait review if character has trait values
+      if (traitValues && Array.isArray(traitValues) && traitValues.length > 0) {
+        await this.traitReviewService.createReview(
+          created.id,
+          input.traitReviewSource ?? TraitReviewSource.CREATION,
+          traitValues,
+          [],
+          tx,
+        );
+      }
+
+      return created;
     });
 
     // Handle tags if provided

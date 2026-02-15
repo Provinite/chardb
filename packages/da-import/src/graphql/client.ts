@@ -133,6 +133,7 @@ export class CharDBClient {
     pendingOwner: { provider: string; providerAccountId: string };
     assignToSelf: boolean;
     visibility: string;
+    traitReviewSource?: string;
   }): Promise<CreateCharacterResponse["createCharacter"]> {
     const data = await this.request<CreateCharacterResponse>(
       MUTATIONS.createCharacter,

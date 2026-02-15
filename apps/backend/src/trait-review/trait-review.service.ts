@@ -74,15 +74,19 @@ export class TraitReviewService {
   }
 
   /**
-   * Create a new trait review
+   * Create a new trait review.
+   * Accepts an optional transaction client to participate in an external transaction.
    */
   async createReview(
     characterId: string,
     source: TraitReviewSource,
     proposedTraitValues: PrismaJson.CharacterTraitValuesJson,
     previousTraitValues: PrismaJson.CharacterTraitValuesJson,
+    tx?: Prisma.TransactionClient,
   ) {
-    const character = await this.db.character.findUnique({
+    const client = tx ?? this.db;
+
+    const character = await client.character.findUnique({
       where: { id: characterId },
     });
 
@@ -90,22 +94,21 @@ export class TraitReviewService {
       throw new NotFoundException("Character not found");
     }
 
-    const [review] = await this.db.$transaction([
-      this.db.traitReview.create({
-        data: {
-          characterId,
-          source,
-          proposedTraitValues,
-          previousTraitValues,
-          status: ModerationStatus.PENDING,
-        },
-        include: traitReviewInclude,
-      }),
-      this.db.character.update({
-        where: { id: characterId },
-        data: { traitReviewStatus: ModerationStatus.PENDING },
-      }),
-    ]);
+    const review = await client.traitReview.create({
+      data: {
+        characterId,
+        source,
+        proposedTraitValues,
+        previousTraitValues,
+        status: ModerationStatus.PENDING,
+      },
+      include: traitReviewInclude,
+    });
+
+    await client.character.update({
+      where: { id: characterId },
+      data: { traitReviewStatus: ModerationStatus.PENDING },
+    });
 
     return review;
   }

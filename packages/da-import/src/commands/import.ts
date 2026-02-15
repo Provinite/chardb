@@ -211,6 +211,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
             : undefined!,
           assignToSelf: false,
           visibility: "PUBLIC",
+          traitReviewSource: "IMPORT",
         };
 
         const result = await client.createCharacter(input);

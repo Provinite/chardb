@@ -57,6 +57,7 @@ enum TraitReviewSource {
   IMPORT
   MYO
   USER_EDIT
+  CREATION
 }
 
 

@@ -395,6 +395,8 @@ export type CreateCharacterInput = {
   speciesId?: InputMaybe<Scalars['ID']['input']>;
   speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
   tags?: Array<Scalars['String']['input']>;
+  /** Source for the trait review. Defaults to CREATION. */
+  traitReviewSource?: InputMaybe<TraitReviewSource>;
   /** Trait values for the character */
   traitValues?: Array<CharacterTraitValueInput>;
   visibility?: Visibility;
@@ -2880,6 +2882,7 @@ export type TraitReviewQueueItem = {
 
 /** The source that triggered a trait review */
 export enum TraitReviewSource {
+  Creation = 'CREATION',
   Import = 'IMPORT',
   Myo = 'MYO',
   UserEdit = 'USER_EDIT'
