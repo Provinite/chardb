@@ -1,5 +1,6 @@
 import { InputType, Field, ID, registerEnumType } from '@nestjs/graphql';
-import { IsUUID, IsOptional, IsString, MaxLength, IsEnum } from 'class-validator';
+import { IsUUID, IsOptional, IsString, MaxLength, IsEnum, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { TraitReviewSource, ModerationStatus } from '@prisma/client';
 import { CharacterTraitValueInput } from '../../characters/dto/character-trait.dto';
 
@@ -48,6 +49,9 @@ export class EditAndApproveTraitReviewInput {
   reviewId: string;
 
   @Field(() => [CharacterTraitValueInput], { description: 'The corrected trait values to apply' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CharacterTraitValueInput)
   correctedTraitValues: CharacterTraitValueInput[];
 }
 
@@ -62,9 +66,15 @@ export class CreateTraitReviewInput {
   source: TraitReviewSource;
 
   @Field(() => [CharacterTraitValueInput], { description: 'The proposed trait values' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CharacterTraitValueInput)
   proposedTraitValues: CharacterTraitValueInput[];
 
   @Field(() => [CharacterTraitValueInput], { nullable: true, description: 'The previous trait values (optional, will use current character values if not provided)' })
   @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CharacterTraitValueInput)
   previousTraitValues?: CharacterTraitValueInput[];
 }
