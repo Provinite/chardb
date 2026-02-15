@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { Check, X, Edit, Clock } from 'lucide-react';
+import { Check, X, Edit, Clock, Image as ImageIcon } from 'lucide-react';
 import { Button, Caption } from '@chardb/ui';
 import { TraitReviewSource } from '../../generated/graphql';
 import { TraitDiffDisplay } from './TraitDiffDisplay';
@@ -35,10 +35,37 @@ const CardHeader = styled.div`
   gap: 0.75rem;
 `;
 
+const CharacterHeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+`;
+
+const CharacterAvatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: ${({ theme }) => theme.colors.background};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${({ theme }) => theme.colors.text.muted};
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
 const CharacterInfo = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  min-width: 0;
 `;
 
 const CharacterName = styled.span`
@@ -123,20 +150,32 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
 }) => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const review = item.review;
+  const mainMedia = review.character?.mainMedia;
+  const img = mainMedia?.pendingModerationImage ?? mainMedia?.image;
+  const imageUrl = img?.thumbnailUrl ?? img?.originalUrl;
 
   return (
     <>
       <Card>
         <CardHeader>
-          <CharacterInfo>
-            <CharacterName>{item.characterName}</CharacterName>
+          <CharacterHeaderLeft>
+            <CharacterAvatar>
+              {imageUrl ? (
+                <img src={imageUrl} alt={item.characterName} />
+              ) : (
+                <ImageIcon size={20} />
+              )}
+            </CharacterAvatar>
+            <CharacterInfo>
+              <CharacterName>{item.characterName}</CharacterName>
             <CharacterMeta>
               {item.registryId && <Caption>#{item.registryId}</Caption>}
               {item.speciesName && <Caption>{item.speciesName}</Caption>}
               {item.variantName && <Caption>({item.variantName})</Caption>}
               <SourceBadge $source={review.source}>{sourceLabel(review.source)}</SourceBadge>
             </CharacterMeta>
-          </CharacterInfo>
+            </CharacterInfo>
+          </CharacterHeaderLeft>
           <TimeInfo>
             <Clock size={12} />
             <Caption>{formatTimeAgo(review.createdAt)}</Caption>

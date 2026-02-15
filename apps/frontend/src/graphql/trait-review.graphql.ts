@@ -55,6 +55,19 @@ export const TRAIT_REVIEW_QUEUE = gql`
             username
             displayName
           }
+          character {
+            id
+            mainMedia {
+              pendingModerationImage {
+                thumbnailUrl
+                originalUrl
+              }
+              image {
+                thumbnailUrl
+                originalUrl
+              }
+            }
+          }
         }
         characterName
         characterId
