@@ -3219,7 +3219,7 @@
     {
       "pattern": "Animal Headband Accessory",
       "traitId": "24b0cb2b-c7fb-4565-9922-9754168466b6",
-      "enumValueId": "328f185a-1c3f-4a24-8415-d283cc2691b9"
+      "enumValueId": "3874b5e2-099e-4da7-913d-e56cc67f1114"
     },
     {
       "pattern": "Bejeweled Accessory",
@@ -15829,6 +15829,16 @@
           "traitId": "274591a6-6b36-4163-af16-c0ff84f005cb",
           "enumValueId": "945b7a82-01c9-4a5f-802e-4948b08348c5",
           "rarity": "Uncommon"
+        }
+      ]
+    },
+    {
+      "numericId": "724082671",
+      "traits": [
+        {
+          "traitId": "4581012e-0b36-4cf7-b76f-1198c586e871",
+          "enumValueId": "b161dbe0-4693-4ebd-96f7-efd67428c58f",
+          "rarity": "Common"
         }
       ]
     }
