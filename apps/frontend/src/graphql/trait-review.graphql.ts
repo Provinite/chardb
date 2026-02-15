@@ -59,10 +59,12 @@ export const TRAIT_REVIEW_QUEUE = gql`
             id
             mainMedia {
               pendingModerationImage {
+                mediumUrl
                 thumbnailUrl
                 originalUrl
               }
               image {
+                mediumUrl
                 thumbnailUrl
                 originalUrl
               }

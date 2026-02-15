@@ -22,6 +22,35 @@ const Card = styled.div`
   background: ${({ theme }) => theme.colors.surface};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+`;
+
+const ImageSection = styled.div`
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: ${({ theme }) => theme.colors.background};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+`;
+
+const MainImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const ImagePlaceholder = styled.div`
+  color: ${({ theme }) => theme.colors.text.muted};
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem;
+`;
+
+const CardBody = styled.div`
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
@@ -35,32 +64,6 @@ const CardHeader = styled.div`
   gap: 0.75rem;
 `;
 
-const CharacterHeaderLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-width: 0;
-`;
-
-const CharacterAvatar = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: ${({ theme }) => theme.colors.background};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${({ theme }) => theme.colors.text.muted};
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
 const CharacterInfo = styled.div`
   display: flex;
   flex-direction: column;
@@ -70,7 +73,7 @@ const CharacterInfo = styled.div`
 
 const CharacterName = styled.span`
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.125rem;
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
@@ -152,72 +155,75 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
   const review = item.review;
   const mainMedia = review.character?.mainMedia;
   const img = mainMedia?.pendingModerationImage ?? mainMedia?.image;
-  const imageUrl = img?.thumbnailUrl ?? img?.originalUrl;
+  const imageUrl = img?.mediumUrl ?? img?.originalUrl;
 
   return (
     <>
       <Card>
-        <CardHeader>
-          <CharacterHeaderLeft>
-            <CharacterAvatar>
-              {imageUrl ? (
-                <img src={imageUrl} alt={item.characterName} />
-              ) : (
-                <ImageIcon size={20} />
-              )}
-            </CharacterAvatar>
+        <ImageSection>
+          {imageUrl ? (
+            <MainImage src={imageUrl} alt={item.characterName} />
+          ) : (
+            <ImagePlaceholder>
+              <ImageIcon size={32} />
+            </ImagePlaceholder>
+          )}
+        </ImageSection>
+
+        <CardBody>
+          <CardHeader>
             <CharacterInfo>
               <CharacterName>{item.characterName}</CharacterName>
-            <CharacterMeta>
-              {item.registryId && <Caption>#{item.registryId}</Caption>}
-              {item.speciesName && <Caption>{item.speciesName}</Caption>}
-              {item.variantName && <Caption>({item.variantName})</Caption>}
-              <SourceBadge $source={review.source}>{sourceLabel(review.source)}</SourceBadge>
-            </CharacterMeta>
+              <CharacterMeta>
+                {item.registryId && <Caption>#{item.registryId}</Caption>}
+                {item.speciesName && <Caption>{item.speciesName}</Caption>}
+                {item.variantName && <Caption>({item.variantName})</Caption>}
+                <SourceBadge $source={review.source}>{sourceLabel(review.source)}</SourceBadge>
+              </CharacterMeta>
             </CharacterInfo>
-          </CharacterHeaderLeft>
-          <TimeInfo>
-            <Clock size={12} />
-            <Caption>{formatTimeAgo(review.createdAt)}</Caption>
-          </TimeInfo>
-        </CardHeader>
+            <TimeInfo>
+              <Clock size={12} />
+              <Caption>{formatTimeAgo(review.createdAt)}</Caption>
+            </TimeInfo>
+          </CardHeader>
 
-        <TraitDiffDisplay
-          previousTraitValues={review.previousTraitValues}
-          proposedTraitValues={review.proposedTraitValues}
-        />
+          <TraitDiffDisplay
+            previousTraitValues={review.previousTraitValues}
+            proposedTraitValues={review.proposedTraitValues}
+          />
 
-        <Actions>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => onApprove(review.id)}
-            disabled={actionInProgress}
-            icon={<Check size={14} />}
-          >
-            Approve
-          </Button>
-          {onEditAndApprove && (
+          <Actions>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => onApprove(review.id)}
+              disabled={actionInProgress}
+              icon={<Check size={14} />}
+            >
+              Approve
+            </Button>
+            {onEditAndApprove && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditAndApprove(review.id)}
+                disabled={actionInProgress}
+                icon={<Edit size={14} />}
+              >
+                Edit & Approve
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onEditAndApprove(review.id)}
+              onClick={() => setShowRejectModal(true)}
               disabled={actionInProgress}
-              icon={<Edit size={14} />}
+              icon={<X size={14} />}
             >
-              Edit & Approve
+              Reject
             </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowRejectModal(true)}
-            disabled={actionInProgress}
-            icon={<X size={14} />}
-          >
-            Reject
-          </Button>
-        </Actions>
+          </Actions>
+        </CardBody>
       </Card>
 
       {showRejectModal && (
