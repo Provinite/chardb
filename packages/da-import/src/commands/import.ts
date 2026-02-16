@@ -7,7 +7,7 @@ import type {
   ImportResults,
   ImageUploadStatus,
 } from "../types/import-result";
-import type { ImageManifest, ImageDownload } from "../types/image-manifest";
+import type { ImageManifest } from "../types/image-manifest";
 import { ImageManifestSchema } from "../types/image-manifest";
 import { MappingConfigSchema } from "../types/mapping-config";
 import { ParsedCharacterSchema } from "../types/parsed-character";
@@ -101,6 +101,11 @@ async function uploadCharacterImages(
       );
       currentRefMediaId = media.id;
     }
+  }
+
+  // If nothing was actually uploaded, report accurately
+  if (!originalMediaId && !currentRefMediaId) {
+    return { imageStatus: "no_image" };
   }
 
   // Set main media: prefer current ref, fall back to original
@@ -243,7 +248,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
 
     // Count how many would be skipped
     const wouldSkipExisting = importable.filter((c) =>
-      existingByRegistryId.has(c.numericId)
+      existingByRegistryId.has(c.registryId)
     ).length;
     const wouldCreate = importable.length - wouldSkipExisting;
 
@@ -262,6 +267,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     }
 
     // Import loop
+    const resultsPath = path.join(getDataDir(), "import-results.json");
     const entries: ImportResultEntry[] = [];
     let created = 0;
     let skippedExisting = 0;
@@ -269,6 +275,20 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     let failed = 0;
     let imagesUploaded = 0;
     let imagesFailed = 0;
+
+    const saveResults = async () => {
+      const results: ImportResults = {
+        timestamp: new Date().toISOString(),
+        speciesId: config.speciesId,
+        totalProcessed: entries.length,
+        created,
+        skippedExisting,
+        skippedUnmapped,
+        failed,
+        entries,
+      };
+      await writeJson(resultsPath, results);
+    };
 
     const progress = new ProgressTracker(parsed.length, "Importing");
 
@@ -282,12 +302,13 @@ export const importCommand: CommandModule<object, ImportArgs> = {
         });
         skippedUnmapped++;
         progress.increment();
+        await saveResults();
         continue;
       }
 
       // Skip existing
-      if (existingByRegistryId.has(char.numericId)) {
-        const existingId = existingByRegistryId.get(char.numericId)!;
+      if (existingByRegistryId.has(char.registryId)) {
+        const existingId = existingByRegistryId.get(char.registryId)!;
         const entry: ImportResultEntry = {
           numericId: char.numericId,
           name: char.name,
@@ -320,6 +341,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
         entries.push(entry);
         skippedExisting++;
         progress.increment();
+        await saveResults();
         continue;
       }
 
@@ -405,24 +427,13 @@ export const importCommand: CommandModule<object, ImportArgs> = {
       }
 
       progress.increment();
+      await saveResults();
     }
 
     progress.finish();
 
-    // Save results
-    const results: ImportResults = {
-      timestamp: new Date().toISOString(),
-      speciesId: config.speciesId,
-      totalProcessed: parsed.length,
-      created,
-      skippedExisting,
-      skippedUnmapped,
-      failed,
-      entries,
-    };
-
-    const resultsPath = path.join(getDataDir(), "import-results.json");
-    await writeJson(resultsPath, results);
+    // Final save
+    await saveResults();
 
     // Print summary
     logger.info(`\nImport complete:`);
