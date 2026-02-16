@@ -1,9 +1,9 @@
 # @chardb/da-import
 
-CLI tool for importing species masterlists from DeviantArt into CharDB. Operates as a 3-phase pipeline where each phase produces inspectable intermediate files.
+CLI tool for importing species masterlists from DeviantArt into CharDB. Operates as a 4-phase pipeline where each phase produces inspectable intermediate files.
 
 ```
-Download (DA API → JSON files) → Parse (JSON → mapped JSON) → Import (mapped JSON → CharDB GraphQL)
+Download (DA API → JSON) → Parse (JSON → mapped JSON) → Download Images (oEmbed → files) → Import (→ CharDB)
 ```
 
 ## Prerequisites
@@ -88,9 +88,35 @@ yarn workspace @chardb/da-import cli parse
 
 **Output:** `data/parsed-characters.json` — an array of parsed characters with mapped traits, unmapped lines, and derived variant IDs.
 
+### Phase 2.5: `download-images`
+
+Downloads reference images for parsed characters using the DeviantArt oEmbed API. For each character, resolves up to two images:
+- **Original**: The deviation image itself (from the DA page URL)
+- **Current ref**: An updated reference sheet (from sta.sh links found in descriptions)
+
+Uses the public oEmbed endpoint (`backend.deviantart.com/oembed`) to resolve page URLs to direct image URLs — no DA API credentials required.
+
+```bash
+# Test with a small batch first
+yarn workspace @chardb/da-import cli download-images --limit 5
+
+# Full download (resumes from where it left off)
+yarn workspace @chardb/da-import cli download-images
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--rate-limit` | `2000` | Minimum milliseconds between oEmbed/download requests |
+| `--force` | `false` | Re-download even if already in manifest |
+| `--limit` | `0` | Max characters to process (0 = unlimited) |
+
+Images are saved to `data/images/` as `{numericId}-original.{ext}` and `{numericId}-ref.{ext}`. The manifest tracks download status per character and is saved periodically for crash resilience.
+
+**Output:** `data/images/` directory + `data/image-manifest.json`
+
 ### Phase 3: `import`
 
-Creates characters in CharDB via the GraphQL API. Pre-checks for existing characters by `registryId` to ensure idempotent re-runs.
+Creates characters in CharDB via the GraphQL API. Pre-checks for existing characters by `registryId` to ensure idempotent re-runs. Optionally uploads reference images from the manifest and sets the main media on each character.
 
 ```bash
 # Dry run first
@@ -111,6 +137,8 @@ yarn workspace @chardb/da-import cli import \
 | `--dry-run` | `false` | Preview what would be imported |
 | `--force` | `false` | Skip the interactive confirmation prompt |
 | `--skip-unmapped` | `true` | Skip characters that have unmapped trait lines |
+| `--upload-images` | `true` | Upload reference images from manifest during import |
+| `--upload-images-for-existing` | `false` | Also upload images for characters that already exist |
 
 Each character is created with:
 - `registryId` set to the DA numeric ID
@@ -119,7 +147,9 @@ Each character is created with:
 - `pendingOwner` set to `{ provider: DEVIANTART, providerAccountId: ownerUsername }`
 - `assignToSelf: false` (no owner until the DA account is linked)
 
-**Output:** `data/import-results.json` with per-character status (`created`, `skipped_existing`, `skipped_unmapped`, `failed`).
+When `--upload-images` is enabled and an image manifest exists, both the original deviation image and current ref image are uploaded to CharDB via the REST upload endpoint. The current ref is set as the character's main media (falling back to the original if no ref exists).
+
+**Output:** `data/import-results.json` with per-character status (`created`, `skipped_existing`, `skipped_unmapped`, `failed`) and optional `imageStatus` (`uploaded`, `skipped`, `failed`, `no_image`).
 
 ### `report`
 
@@ -183,7 +213,9 @@ packages/da-import/
 │   └── trait-mapping.json    # Mapping config (generated, then manually curated)
 ├── data/                     # .gitignored — all runtime data
 │   ├── deviations/           # One JSON per DA entry
+│   ├── images/               # Downloaded reference images
 │   ├── download-state.json   # Resume state for download phase
+│   ├── image-manifest.json   # Image download tracking manifest
 │   ├── parsed-characters.json
 │   └── import-results.json
 └── src/
@@ -219,16 +251,21 @@ packages/da-import/
    yarn workspace @chardb/da-import cli report --type parsed
    ```
 
-5. **Dry-run** the import:
+5. **Download images** (resumes automatically):
+   ```bash
+   yarn workspace @chardb/da-import cli download-images
+   ```
+
+6. **Dry-run** the import:
    ```bash
    yarn workspace @chardb/da-import cli import \
      --email admin@test.local --password pw --dry-run
    ```
 
-6. **Import** for real:
+7. **Import** for real (creates characters + uploads images):
    ```bash
    yarn workspace @chardb/da-import cli import \
      --email admin@test.local --password pw
    ```
 
-7. **Re-run** is safe — existing characters are skipped by `registryId`.
+8. **Re-run** is safe — existing characters are skipped by `registryId`. Use `--upload-images-for-existing` to backfill images for previously imported characters.
