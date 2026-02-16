@@ -588,6 +588,13 @@ export class ImagesService {
     userId: string,
     characterId: string,
   ): Promise<void> {
+    // Global admins bypass all permission checks
+    const user = await this.db.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+    if (user?.isAdmin) return;
+
     // Fetch character with species info
     const character = await this.db.character.findUnique({
       where: { id: characterId },
