@@ -9,12 +9,23 @@ export const ImportStatusSchema = z.enum([
 
 export type ImportStatus = z.infer<typeof ImportStatusSchema>;
 
+export const ImageUploadStatusSchema = z.enum([
+  "uploaded",
+  "skipped",
+  "failed",
+  "no_image",
+]);
+
+export type ImageUploadStatus = z.infer<typeof ImageUploadStatusSchema>;
+
 export const ImportResultEntrySchema = z.object({
   numericId: z.string(),
   name: z.string(),
   status: ImportStatusSchema,
   characterId: z.string().optional(),
   error: z.string().optional(),
+  imageStatus: ImageUploadStatusSchema.optional(),
+  imageError: z.string().optional(),
 });
 
 export type ImportResultEntry = z.infer<typeof ImportResultEntrySchema>;

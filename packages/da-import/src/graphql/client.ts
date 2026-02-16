@@ -1,3 +1,5 @@
+import * as fs from "fs/promises";
+import * as path from "path";
 import { logger } from "../utils/logger";
 import { MUTATIONS } from "./mutations";
 import { QUERIES } from "./queries";
@@ -9,6 +11,8 @@ import type {
   CharactersResponse,
   CreateCharacterResponse,
   CharacterNode,
+  UploadImageResponse,
+  SetCharacterMainMediaResponse,
 } from "./types";
 
 interface GraphQLError {
@@ -140,5 +144,66 @@ export class CharDBClient {
       { input }
     );
     return data.createCharacter;
+  }
+
+  async uploadImage(
+    filePath: string,
+    characterId: string,
+    title: string
+  ): Promise<UploadImageResponse> {
+    if (!this.token) {
+      throw new Error("Not authenticated — call login() first");
+    }
+
+    // Derive the REST base URL from the GraphQL endpoint
+    const baseUrl = this.endpoint.replace(/\/graphql$/, "");
+    const uploadUrl = `${baseUrl}/images/upload`;
+
+    const fileBuffer = await fs.readFile(filePath);
+    const fileName = path.basename(filePath);
+    const ext = path.extname(fileName).toLowerCase();
+    const mimeTypes: Record<string, string> = {
+      ".png": "image/png",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
+    };
+    const mimeType = mimeTypes[ext] ?? "image/png";
+
+    const formData = new FormData();
+    formData.append(
+      "file",
+      new Blob([fileBuffer], { type: mimeType }),
+      fileName
+    );
+    formData.append("characterId", characterId);
+    formData.append("title", title);
+    formData.append("visibility", "PUBLIC");
+
+    const response = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Image upload failed: ${response.status} - ${text}`);
+    }
+
+    return (await response.json()) as UploadImageResponse;
+  }
+
+  async setCharacterMainMedia(
+    characterId: string,
+    mediaId: string
+  ): Promise<void> {
+    await this.request<SetCharacterMainMediaResponse>(
+      MUTATIONS.setCharacterMainMedia,
+      { id: characterId, input: { mediaId } }
+    );
   }
 }

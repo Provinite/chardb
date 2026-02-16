@@ -21,6 +21,7 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { downloadCommand } from "./commands/download";
 import { parseCommand } from "./commands/parse";
+import { downloadImagesCommand } from "./commands/download-images";
 import { importCommand } from "./commands/import";
 import { reportCommand } from "./commands/report";
 import { scaffoldMappingCommand } from "./commands/scaffold-mapping";
@@ -31,6 +32,7 @@ yargs(hideBin(process.argv))
   .usage("$0 <command> [options]")
   .command(downloadCommand)
   .command(parseCommand)
+  .command(downloadImagesCommand)
   .command(importCommand)
   .command(reportCommand)
   .command(scaffoldMappingCommand)

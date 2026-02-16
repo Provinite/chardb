@@ -5,15 +5,20 @@ import { CharDBClient } from "../graphql/client";
 import type {
   ImportResultEntry,
   ImportResults,
+  ImageUploadStatus,
 } from "../types/import-result";
+import type { ImageManifest, ImageDownload } from "../types/image-manifest";
+import { ImageManifestSchema } from "../types/image-manifest";
 import { MappingConfigSchema } from "../types/mapping-config";
-import type { ParsedCharacter } from "../types/parsed-character";
 import { ParsedCharacterSchema } from "../types/parsed-character";
 import {
   getDataDir,
   getConfigDir,
+  getImagesDir,
+  getImageManifestPath,
   readJson,
   writeJson,
+  fileExists,
 } from "../utils/file-io";
 import { logger } from "../utils/logger";
 import { ProgressTracker } from "../utils/progress";
@@ -27,6 +32,8 @@ interface ImportArgs {
   dryRun: boolean;
   force: boolean;
   skipUnmapped: boolean;
+  uploadImages: boolean;
+  uploadImagesForExisting: boolean;
 }
 
 async function promptConfirm(message: string): Promise<boolean> {
@@ -40,6 +47,69 @@ async function promptConfirm(message: string): Promise<boolean> {
       resolve(answer.toLowerCase() === "y");
     });
   });
+}
+
+/**
+ * Upload both original and current ref images for a character, then set main media.
+ * Returns the imageStatus for the result entry.
+ */
+async function uploadCharacterImages(
+  client: CharDBClient,
+  characterId: string,
+  numericId: string,
+  manifest: ImageManifest,
+  imagesDir: string
+): Promise<{ imageStatus: ImageUploadStatus; imageError?: string }> {
+  const entry = manifest.entries[numericId];
+  if (!entry) {
+    return { imageStatus: "no_image" };
+  }
+
+  const hasOriginal =
+    entry.original.status === "downloaded" && entry.original.localPath;
+  const hasCurrentRef =
+    entry.currentRef.status === "downloaded" && entry.currentRef.localPath;
+
+  if (!hasOriginal && !hasCurrentRef) {
+    return { imageStatus: "no_image" };
+  }
+
+  let originalMediaId: string | undefined;
+  let currentRefMediaId: string | undefined;
+
+  // Upload original deviation image
+  if (hasOriginal) {
+    const filePath = path.join(imagesDir, entry.original.localPath);
+    if (await fileExists(filePath)) {
+      const media = await client.uploadImage(
+        filePath,
+        characterId,
+        `${entry.name} - Original`
+      );
+      originalMediaId = media.id;
+    }
+  }
+
+  // Upload current ref image
+  if (hasCurrentRef) {
+    const filePath = path.join(imagesDir, entry.currentRef.localPath);
+    if (await fileExists(filePath)) {
+      const media = await client.uploadImage(
+        filePath,
+        characterId,
+        `${entry.name} - Reference`
+      );
+      currentRefMediaId = media.id;
+    }
+  }
+
+  // Set main media: prefer current ref, fall back to original
+  const mainMediaId = currentRefMediaId ?? originalMediaId;
+  if (mainMediaId) {
+    await client.setCharacterMainMedia(characterId, mainMediaId);
+  }
+
+  return { imageStatus: "uploaded" };
 }
 
 export const importCommand: CommandModule<object, ImportArgs> = {
@@ -81,10 +151,29 @@ export const importCommand: CommandModule<object, ImportArgs> = {
       default: true,
       describe: "Skip characters with unmapped traits",
     },
+    "upload-images": {
+      type: "boolean" as const,
+      default: true,
+      describe: "Upload reference images from manifest during import",
+    },
+    "upload-images-for-existing": {
+      type: "boolean" as const,
+      default: false,
+      describe: "Upload images for existing characters that have no main media",
+    },
   },
   handler: async (argv) => {
-    const { apiUrl, email, password, mapping: mappingPath, dryRun, force, skipUnmapped } =
-      argv;
+    const {
+      apiUrl,
+      email,
+      password,
+      mapping: mappingPath,
+      dryRun,
+      force,
+      skipUnmapped,
+      uploadImages,
+      uploadImagesForExisting,
+    } = argv;
 
     // Load parsed characters
     const parsedPath = path.join(getDataDir(), "parsed-characters.json");
@@ -93,6 +182,21 @@ export const importCommand: CommandModule<object, ImportArgs> = {
 
     // Load mapping config
     const config = await readJson(mappingPath, MappingConfigSchema);
+
+    // Load image manifest (optional)
+    let manifest: ImageManifest | undefined;
+    const manifestPath = getImageManifestPath();
+    if (uploadImages && (await fileExists(manifestPath))) {
+      manifest = await readJson(manifestPath, ImageManifestSchema);
+      const entryCount = Object.keys(manifest.entries).length;
+      logger.info(`Loaded image manifest with ${entryCount} entries`);
+    } else if (uploadImages) {
+      logger.warn(
+        "Image manifest not found — run download-images first to enable image uploads"
+      );
+    }
+
+    const imagesDir = getImagesDir();
 
     // Pre-flight categorization
     const fullyMapped = parsed.filter((c) => c.unmappedLines.length === 0);
@@ -163,6 +267,8 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     let skippedExisting = 0;
     let skippedUnmapped = 0;
     let failed = 0;
+    let imagesUploaded = 0;
+    let imagesFailed = 0;
 
     const progress = new ProgressTracker(parsed.length, "Importing");
 
@@ -181,12 +287,37 @@ export const importCommand: CommandModule<object, ImportArgs> = {
 
       // Skip existing
       if (existingByRegistryId.has(char.numericId)) {
-        entries.push({
+        const existingId = existingByRegistryId.get(char.numericId)!;
+        const entry: ImportResultEntry = {
           numericId: char.numericId,
           name: char.name,
           status: "skipped_existing",
-          characterId: existingByRegistryId.get(char.numericId),
-        });
+          characterId: existingId,
+        };
+
+        // Optionally upload images for existing characters
+        if (manifest && uploadImagesForExisting) {
+          try {
+            const imgResult = await uploadCharacterImages(
+              client,
+              existingId,
+              char.numericId,
+              manifest,
+              imagesDir
+            );
+            entry.imageStatus = imgResult.imageStatus;
+            entry.imageError = imgResult.imageError;
+            if (imgResult.imageStatus === "uploaded") imagesUploaded++;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            entry.imageStatus = "failed";
+            entry.imageError = msg;
+            imagesFailed++;
+            logger.warn(`Image upload failed for existing ${char.numericId}: ${msg}`);
+          }
+        }
+
+        entries.push(entry);
         skippedExisting++;
         progress.increment();
         continue;
@@ -215,12 +346,36 @@ export const importCommand: CommandModule<object, ImportArgs> = {
         };
 
         const result = await client.createCharacter(input);
-        entries.push({
+        const entry: ImportResultEntry = {
           numericId: char.numericId,
           name: char.name,
           status: "created",
           characterId: result.id,
-        });
+        };
+
+        // Upload images for newly created character
+        if (manifest && uploadImages) {
+          try {
+            const imgResult = await uploadCharacterImages(
+              client,
+              result.id,
+              char.numericId,
+              manifest,
+              imagesDir
+            );
+            entry.imageStatus = imgResult.imageStatus;
+            entry.imageError = imgResult.imageError;
+            if (imgResult.imageStatus === "uploaded") imagesUploaded++;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            entry.imageStatus = "failed";
+            entry.imageError = msg;
+            imagesFailed++;
+            logger.warn(`Image upload failed for ${char.numericId}: ${msg}`);
+          }
+        }
+
+        entries.push(entry);
         created++;
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err);
@@ -275,6 +430,10 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     logger.info(`  Skipped (existing): ${skippedExisting}`);
     logger.info(`  Skipped (unmapped): ${skippedUnmapped}`);
     logger.info(`  Failed: ${failed}`);
+    if (manifest) {
+      logger.info(`  Images uploaded: ${imagesUploaded}`);
+      logger.info(`  Images failed: ${imagesFailed}`);
+    }
     logger.info(`\nResults saved to ${resultsPath}`);
   },
 };

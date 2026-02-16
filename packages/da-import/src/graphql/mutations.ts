@@ -18,4 +18,13 @@ export const MUTATIONS = {
       }
     }
   `,
+
+  setCharacterMainMedia: `
+    mutation SetCharacterMainMedia($id: ID!, $input: SetMainMediaInput!) {
+      setCharacterMainMedia(id: $id, input: $input) {
+        id
+        mainMediaId
+      }
+    }
+  `,
 };

@@ -4,6 +4,7 @@ import { z } from "zod";
 
 const DATA_DIR = path.resolve(__dirname, "../../data");
 const DEVIATIONS_DIR = path.join(DATA_DIR, "deviations");
+const IMAGES_DIR = path.join(DATA_DIR, "images");
 const CONFIG_DIR = path.resolve(__dirname, "../../config");
 
 export function getDataDir(): string {
@@ -12,6 +13,14 @@ export function getDataDir(): string {
 
 export function getDeviationsDir(): string {
   return DEVIATIONS_DIR;
+}
+
+export function getImagesDir(): string {
+  return IMAGES_DIR;
+}
+
+export function getImageManifestPath(): string {
+  return path.join(DATA_DIR, "image-manifest.json");
 }
 
 export function getConfigDir(): string {

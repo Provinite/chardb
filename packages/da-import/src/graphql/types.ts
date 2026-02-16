@@ -67,3 +67,19 @@ export interface CreateCharacterResponse {
     ownerId: string | null;
   };
 }
+
+export interface UploadImageResponse {
+  id: string;
+  title: string;
+  image: {
+    id: string;
+    originalUrl: string;
+  };
+}
+
+export interface SetCharacterMainMediaResponse {
+  setCharacterMainMedia: {
+    id: string;
+    mainMediaId: string | null;
+  };
+}
