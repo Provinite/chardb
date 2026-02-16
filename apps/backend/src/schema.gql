@@ -1478,9 +1478,6 @@ type Mutation {
   """Reject an image (moderator action)"""
   rejectImage(input: RejectImageInput!): ImageModerationAction!
 
-  """Reject a trait review (moderator action)"""
-  rejectTraitReview(input: RejectTraitReviewInput!): TraitReview!
-
   """Remove a character ownership change record"""
   removeCharacterOwnershipChange(
     """Character ownership change ID"""
@@ -1575,6 +1572,11 @@ type Mutation {
     """Response data (accept or decline)"""
     respondToCommunityInvitationInput: RespondToCommunityInvitationInput!
   ): CommunityInvitation!
+
+  """
+  Revert a trait review, restoring previous trait values (moderator action)
+  """
+  revertTraitReview(input: RevertTraitReviewInput!): TraitReview!
 
   """Sets or clears the main media for a character"""
   setCharacterMainMedia(
@@ -2330,14 +2332,6 @@ input RejectImageInput {
   reasonText: String
 }
 
-input RejectTraitReviewInput {
-  """Reason for rejection"""
-  reason: String!
-
-  """The ID of the review to reject"""
-  reviewId: ID!
-}
-
 """Response confirming successful removal of an entity"""
 type RemovalResponse {
   """Optional message about the removal"""
@@ -2360,6 +2354,14 @@ input ResetPasswordInput {
 input RespondToCommunityInvitationInput {
   """Whether to accept (true) or decline (false) the invitation"""
   accept: Boolean!
+}
+
+input RevertTraitReviewInput {
+  """Reason for rejection"""
+  reason: String!
+
+  """The ID of the review to reject"""
+  reviewId: ID!
 }
 
 """A role within a community that defines permissions for members"""

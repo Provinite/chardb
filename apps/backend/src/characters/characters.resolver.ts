@@ -138,7 +138,8 @@ export class CharactersResolver {
   @AllowGlobalAdmin()
   @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity, {
-    description: "Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.",
+    description:
+      "Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.",
   })
   async updateCharacterProfile(
     @Args("id", { type: () => ID }) id: string,
@@ -146,14 +147,17 @@ export class CharactersResolver {
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<CharacterEntity> {
     // If updating ownership or pending ownership, require canCreateOrphanedCharacter permission
-    if (input.ownerIdUpdate !== undefined || input.pendingOwnerUpdate !== undefined) {
+    if (
+      input.ownerIdUpdate !== undefined ||
+      input.pendingOwnerUpdate !== undefined
+    ) {
       const char = await this.charactersService.findOne(id, user.id);
       const speciesId = char.speciesId ?? undefined;
 
       // Validate that character has a species
       if (!speciesId) {
         throw new BadRequestException(
-          'Cannot manage ownership on a character without a species',
+          "Cannot manage ownership on a character without a species",
         );
       }
 
@@ -165,7 +169,7 @@ export class CharactersResolver {
         );
       if (!hasPermission) {
         throw new ForbiddenException(
-          'You do not have permission to manage character ownership',
+          "You do not have permission to manage character ownership",
         );
       }
     }
@@ -182,7 +186,8 @@ export class CharactersResolver {
   @AllowGlobalAdmin()
   @AllowCharacterRegistryEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity, {
-    description: "Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission.",
+    description:
+      "Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission.",
   })
   async updateCharacterRegistry(
     @Args("id", { type: () => ID }) id: string,
@@ -205,7 +210,8 @@ export class CharactersResolver {
   @AllowGlobalAdmin()
   @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => CharacterEntity, {
-    description: "Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species.",
+    description:
+      "Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species.",
   })
   async assignCharacterSpecies(
     @Args("id", { type: () => ID }) id: string,
@@ -225,7 +231,6 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @AllowCharacterProfileEditor({ characterId: "id" })
   @Mutation(() => Boolean)
   async deleteCharacter(
     @Args("id", { type: () => ID }) id: string,
@@ -235,6 +240,7 @@ export class CharactersResolver {
   }
 
   @AllowEntityOwner({ characterId: "id" })
+  @AllowGlobalAdmin()
   @Mutation(() => CharacterEntity)
   async transferCharacter(
     @Args("id", { type: () => ID }) id: string,
@@ -306,7 +312,10 @@ export class CharactersResolver {
     @CurrentUser() user: AuthenticatedCurrentUserType,
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
   ): Promise<CharacterConnection> {
-    const result = await this.charactersService.findEditableCharacters(user.id, filters);
+    const result = await this.charactersService.findEditableCharacters(
+      user.id,
+      filters,
+    );
     return mapPrismaCharacterConnectionToGraphQL(result);
   }
 
@@ -318,7 +327,10 @@ export class CharactersResolver {
     @CurrentUser() user: AuthenticatedCurrentUserType,
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
   ): Promise<CharacterConnection> {
-    const result = await this.charactersService.findCharactersForImageUpload(user.id, filters);
+    const result = await this.charactersService.findCharactersForImageUpload(
+      user.id,
+      filters,
+    );
     return mapPrismaCharacterConnectionToGraphQL(result);
   }
 
@@ -478,5 +490,4 @@ export class CharactersResolver {
     );
     return mapPrismaSpeciesVariantToGraphQL(prismaResult);
   }
-
 }
