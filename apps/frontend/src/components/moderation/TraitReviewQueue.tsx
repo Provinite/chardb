@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import { RefreshCw, AlertCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { Button, Heading3, HelpText, SmallText, Caption } from '@chardb/ui';
 import {
   useTraitReviewQueueQuery,
@@ -94,24 +95,6 @@ const PageInfo = styled(Caption)`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-const SuccessToast = styled.div<{ $visible: boolean }>`
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: ${({ theme }) => theme.colors.success};
-  color: white;
-  border-radius: 8px;
-  box-shadow: ${({ theme }) => theme.shadows.lg};
-  transform: translateY(${({ $visible }) => ($visible ? '0' : '100px')});
-  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
-  transition: all 0.3s ease;
-  z-index: 1000;
-`;
-
 const PAGE_SIZE = 10;
 
 interface TraitReviewQueueProps {
@@ -123,7 +106,6 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
 }) => {
   const [offset, setOffset] = useState(0);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const { data, loading, error, refetch } = useTraitReviewQueueQuery({
     variables: { communityId, first: PAGE_SIZE, offset },
@@ -138,19 +120,16 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
   const total = queue?.total || 0;
   const hasMore = queue?.hasMore || false;
 
-  const showToast = (message: string) => {
-    setToastMessage(message);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
-
   const handleApprove = async (reviewId: string) => {
     setActionInProgress(reviewId);
     try {
       await approveReview({ variables: { input: { reviewId } } });
-      showToast('Trait review approved');
+      toast.success('Trait review approved');
       await refetch();
     } catch (err) {
       console.error('Failed to approve trait review:', err);
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(`Failed to approve: ${message}`);
     } finally {
       setActionInProgress(null);
     }
@@ -160,10 +139,12 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
     setActionInProgress(reviewId);
     try {
       await revertReview({ variables: { input: { reviewId, reason } } });
-      showToast('Trait values reverted');
+      toast.success('Trait values reverted');
       await refetch();
     } catch (err) {
       console.error('Failed to revert trait review:', err);
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(`Failed to revert: ${message}`);
     } finally {
       setActionInProgress(null);
     }
@@ -266,10 +247,6 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
         </>
       )}
 
-      <SuccessToast $visible={!!toastMessage}>
-        <CheckCircle size={16} />
-        {toastMessage}
-      </SuccessToast>
     </Container>
   );
 };
