@@ -225,7 +225,7 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
                 Edit & Approve
               </Button>
             )}
-            {review.source !== TraitReviewSource.Creation && (
+            {review.source !== TraitReviewSource.Creation && review.source !== TraitReviewSource.Import && (
               <Button
                 variant="outline"
                 size="sm"

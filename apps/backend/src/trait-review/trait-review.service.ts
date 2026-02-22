@@ -134,7 +134,7 @@ export class TraitReviewService {
 
   /**
    * Revert a trait review - restores the character's previous trait values.
-   * Cannot revert CREATION-source reviews since there are no previous values.
+   * Cannot revert CREATION or IMPORT-source reviews since there are no previous values.
    */
   async revertReview(reviewId: string, moderatorId: string, reason: string) {
     const review = await this.db.traitReview.findUnique({
@@ -150,9 +150,12 @@ export class TraitReviewService {
       throw new BadRequestException("Review is not pending");
     }
 
-    if (review.source === TraitReviewSource.CREATION) {
+    if (
+      review.source === TraitReviewSource.CREATION ||
+      review.source === TraitReviewSource.IMPORT
+    ) {
       throw new BadRequestException(
-        "Cannot revert a CREATION review - there are no previous trait values to restore",
+        `Cannot revert a ${review.source} review - there are no previous trait values to restore`,
       );
     }
 
