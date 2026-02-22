@@ -123,7 +123,7 @@ export class TraitReviewService {
 
     const [updatedReview] = await this.db.$transaction([
       this.db.traitReview.update({
-        where: { id: reviewId },
+        where: { id: reviewId, status: ModerationStatus.PENDING },
         data: {
           status: ModerationStatus.APPROVED,
           resolvedAt: new Date(),
@@ -171,7 +171,7 @@ export class TraitReviewService {
 
     const [updatedReview] = await this.db.$transaction([
       this.db.traitReview.update({
-        where: { id: reviewId },
+        where: { id: reviewId, status: ModerationStatus.PENDING },
         data: {
           status: ModerationStatus.REJECTED,
           resolvedAt: new Date(),
@@ -215,7 +215,7 @@ export class TraitReviewService {
 
     const [updatedReview] = await this.db.$transaction([
       this.db.traitReview.update({
-        where: { id: reviewId },
+        where: { id: reviewId, status: ModerationStatus.PENDING },
         data: {
           status: ModerationStatus.APPROVED,
           resolvedAt: new Date(),
