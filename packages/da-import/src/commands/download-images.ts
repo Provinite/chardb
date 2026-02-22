@@ -4,11 +4,7 @@ import type { CommandModule } from "yargs";
 import { z } from "zod";
 import { RateLimiter } from "../da-api/rate-limiter";
 import { ParsedCharacterSchema } from "../types/parsed-character";
-import type {
-  ImageManifest,
-  ImageEntry,
-  ImageDownload,
-} from "../types/image-manifest";
+import type { ImageManifest, ImageDownload } from "../types/image-manifest";
 import { ImageManifestSchema } from "../types/image-manifest";
 import {
   getDataDir,
@@ -27,7 +23,9 @@ const DA_OEMBED_URL = "https://backend.deviantart.com/oembed";
 interface DownloadImagesArgs {
   rateLimit: number;
   force: boolean;
+  reprocessExisting: boolean;
   limit: number;
+  metadataOnly: boolean;
 }
 
 interface OEmbedResponse {
@@ -52,10 +50,10 @@ function getExtensionFromUrl(url: string): string {
   return ".png";
 }
 
-async function resolveViaOEmbed(
+async function fetchOEmbed(
   pageUrl: string,
   rateLimiter: RateLimiter
-): Promise<{ imageUrl: string; extension: string; title: string }> {
+): Promise<OEmbedResponse> {
   await rateLimiter.wait();
 
   const oembedUrl = `${DA_OEMBED_URL}?url=${encodeURIComponent(pageUrl)}`;
@@ -67,8 +65,14 @@ async function resolveViaOEmbed(
     throw new Error(`oEmbed request failed: ${resp.status}`);
   }
 
-  const data = (await resp.json()) as OEmbedResponse;
+  return (await resp.json()) as OEmbedResponse;
+}
 
+function extractOEmbedMetadata(data: OEmbedResponse): {
+  imageUrl: string;
+  extension: string;
+  title: string;
+} {
   if (!data.url) {
     throw new Error("oEmbed response missing image URL");
   }
@@ -139,19 +143,32 @@ function makeFailedDownload(
 }
 
 /**
- * Attempt to resolve and download a single image.
- * Returns the ImageDownload result with the oEmbed title for later artist extraction.
+ * Fetch oEmbed and optionally download the image.
+ * With metadataOnly, merges title into existing entry without downloading.
  */
-async function resolveAndDownload(
+async function processImage(
   sourceUrl: string,
   fileName: string,
+  existing: ImageDownload | undefined,
   imagesDir: string,
-  rateLimiter: RateLimiter
+  rateLimiter: RateLimiter,
+  metadataOnly: boolean
 ): Promise<ImageDownload> {
-  const { imageUrl, extension, title } = await resolveViaOEmbed(
-    sourceUrl,
-    rateLimiter
-  );
+  const data = await fetchOEmbed(sourceUrl, rateLimiter);
+  const { imageUrl, extension, title } = extractOEmbedMetadata(data);
+
+  if (metadataOnly) {
+    if (existing && existing.status === "downloaded") {
+      return { ...existing, title: title || existing.title };
+    }
+    return {
+      sourceUrl,
+      resolvedUrl: imageUrl,
+      localPath: "",
+      status: "skipped",
+      title: title || undefined,
+    };
+  }
 
   const fullFileName = `${fileName}${extension}`;
   const destPath = path.join(imagesDir, fullFileName);
@@ -192,16 +209,26 @@ export const downloadImagesCommand: CommandModule<object, DownloadImagesArgs> = 
     force: {
       type: "boolean" as const,
       default: false,
-      describe: "Re-download even if already in manifest",
+      describe: "Re-download images even if already on disk",
+    },
+    "reprocess-existing": {
+      type: "boolean" as const,
+      default: false,
+      describe: "Re-fetch oEmbed for entries already in the manifest",
     },
     limit: {
       type: "number" as const,
       default: 0,
       describe: "Max characters to process (0 = unlimited)",
     },
+    "metadata-only": {
+      type: "boolean" as const,
+      default: false,
+      describe: "Only fetch oEmbed metadata, skip image downloads",
+    },
   },
   handler: async (argv) => {
-    const { rateLimit, force, limit } = argv;
+    const { rateLimit, force, reprocessExisting, limit, metadataOnly } = argv;
 
     // Load parsed characters
     const parsedPath = path.join(getDataDir(), "parsed-characters.json");
@@ -248,11 +275,12 @@ export const downloadImagesCommand: CommandModule<object, DownloadImagesArgs> = 
     const rateLimiter = new RateLimiter(rateLimit, rateLimit + 1000);
     const SAVE_INTERVAL = 10;
 
-    const progress = new ProgressTracker(toProcess.length, "Downloading");
-    let origDownloaded = 0;
+    const label = metadataOnly ? "Fetching metadata" : "Downloading";
+    const progress = new ProgressTracker(toProcess.length, label);
+    let origProcessed = 0;
     let origSkipped = 0;
     let origFailed = 0;
-    let refDownloaded = 0;
+    let refProcessed = 0;
     let refSkipped = 0;
     let refFailed = 0;
 
@@ -267,19 +295,22 @@ export const downloadImagesCommand: CommandModule<object, DownloadImagesArgs> = 
         origSkipped++;
       } else if (
         !force &&
+        !reprocessExisting &&
         (await isAlreadyDownloaded(existing?.original, imagesDir))
       ) {
         original = existing!.original;
         origSkipped++;
       } else {
         try {
-          original = await resolveAndDownload(
+          original = await processImage(
             char.url,
             `${char.numericId}-original`,
+            existing?.original,
             imagesDir,
-            rateLimiter
+            rateLimiter,
+            metadataOnly
           );
-          origDownloaded++;
+          origProcessed++;
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           logger.warn(`Original failed: ${char.name} (${char.numericId}): ${msg}`);
@@ -295,19 +326,22 @@ export const downloadImagesCommand: CommandModule<object, DownloadImagesArgs> = 
         refSkipped++;
       } else if (
         !force &&
+        !reprocessExisting &&
         (await isAlreadyDownloaded(existing?.currentRef, imagesDir))
       ) {
         currentRef = existing!.currentRef;
         refSkipped++;
       } else {
         try {
-          currentRef = await resolveAndDownload(
+          currentRef = await processImage(
             char.currentRefUrl,
             `${char.numericId}-ref`,
+            existing?.currentRef,
             imagesDir,
-            rateLimiter
+            rateLimiter,
+            metadataOnly
           );
-          refDownloaded++;
+          refProcessed++;
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           logger.warn(`Ref failed: ${char.name} (${char.numericId}): ${msg}`);
@@ -338,11 +372,12 @@ export const downloadImagesCommand: CommandModule<object, DownloadImagesArgs> = 
     manifest.lastUpdated = new Date().toISOString();
     await writeJson(manifestPath, manifest);
 
+    const action = metadataOnly ? "updated" : "downloaded";
     logger.info(
-      `Original: ${origDownloaded} downloaded, ${origSkipped} skipped, ${origFailed} failed`
+      `Original: ${origProcessed} ${action}, ${origSkipped} skipped, ${origFailed} failed`
     );
     logger.info(
-      `Current ref: ${refDownloaded} downloaded, ${refSkipped} skipped, ${refFailed} failed`
+      `Current ref: ${refProcessed} ${action}, ${refSkipped} skipped, ${refFailed} failed`
     );
     logger.info(`Manifest saved: ${manifestPath}`);
   },

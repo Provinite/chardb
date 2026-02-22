@@ -129,6 +129,8 @@ const SourceBadge = styled.span<{ $source: TraitReviewSource }>`
         return theme.colors.success;
       case TraitReviewSource.Creation:
         return theme.colors.text.secondary;
+      default:
+        assertNever($source);
     }
   }};
 `;

@@ -149,7 +149,8 @@ export class CharDBClient {
   async uploadImage(
     filePath: string,
     characterId: string,
-    title: string
+    title: string,
+    artist?: { name: string; url: string }
   ): Promise<UploadImageResponse> {
     if (!this.token) {
       throw new Error("Not authenticated — call login() first");
@@ -180,6 +181,11 @@ export class CharDBClient {
     formData.append("characterId", characterId);
     formData.append("title", title);
     formData.append("visibility", "PUBLIC");
+    if (artist) {
+      formData.append("artistType", "offsite");
+      formData.append("artistLabel", artist.name);
+      formData.append("artistLink", artist.url);
+    }
 
     const response = await fetch(uploadUrl, {
       method: "POST",
