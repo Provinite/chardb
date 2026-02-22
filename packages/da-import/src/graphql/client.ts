@@ -134,7 +134,7 @@ export class CharDBClient {
     speciesId: string;
     speciesVariantId: string;
     traitValues: Array<{ traitId: string; value: string }>;
-    pendingOwner: { provider: string; providerAccountId: string };
+    pendingOwner?: { provider: string; providerAccountId: string };
     assignToSelf: boolean;
     visibility: string;
     traitReviewSource?: string;

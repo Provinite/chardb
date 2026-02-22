@@ -34,6 +34,7 @@ interface ImportArgs {
   skipUnmapped: boolean;
   uploadImages: boolean;
   uploadImagesForExisting: boolean;
+  limit: number;
 }
 
 async function promptConfirm(message: string): Promise<boolean> {
@@ -166,6 +167,11 @@ export const importCommand: CommandModule<object, ImportArgs> = {
       default: false,
       describe: "Upload images for existing characters that have no main media",
     },
+    limit: {
+      type: "number" as const,
+      default: 0,
+      describe: "Max characters to process (0 = unlimited)",
+    },
   },
   handler: async (argv) => {
     const {
@@ -178,12 +184,17 @@ export const importCommand: CommandModule<object, ImportArgs> = {
       skipUnmapped,
       uploadImages,
       uploadImagesForExisting,
+      limit,
     } = argv;
 
     // Load parsed characters
     const parsedPath = path.join(getDataDir(), "parsed-characters.json");
     logger.info("Loading parsed characters...");
-    const parsed = await readJson(parsedPath, z.array(ParsedCharacterSchema));
+    const allParsed = await readJson(parsedPath, z.array(ParsedCharacterSchema));
+    const parsed = limit > 0 ? allParsed.slice(0, limit) : allParsed;
+    if (limit > 0) {
+      logger.info(`  Limited to first ${limit} of ${allParsed.length} characters`);
+    }
 
     // Load mapping config
     const config = await readJson(mappingPath, MappingConfigSchema);
@@ -361,7 +372,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
                 provider: "DEVIANTART",
                 providerAccountId: char.ownerDaUsername,
               }
-            : undefined!,
+            : undefined,
           assignToSelf: false,
           visibility: "PUBLIC",
           traitReviewSource: "IMPORT",
