@@ -36,6 +36,16 @@ export class TraitReviewService {
       throw new NotFoundException("Character not found");
     }
 
+    const existingPending = await client.traitReview.findFirst({
+      where: { characterId, status: ModerationStatus.PENDING },
+    });
+
+    if (existingPending) {
+      throw new BadRequestException(
+        "Character already has a pending trait review",
+      );
+    }
+
     const review = await client.traitReview.create({
       data: {
         characterId,
