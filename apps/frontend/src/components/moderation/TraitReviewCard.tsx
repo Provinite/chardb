@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { Check, X, Edit, Clock, Image as ImageIcon, ExternalLink } from 'lucide-react';
-import { Button, Caption } from '@chardb/ui';
-import { TraitReviewSource } from '../../generated/graphql';
-import { TraitDiffDisplay } from './TraitDiffDisplay';
-import { RevertTraitReviewModal } from './RevertTraitReviewModal';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import {
+  Check,
+  X,
+  Edit,
+  Clock,
+  Image as ImageIcon,
+  ExternalLink,
+} from "lucide-react";
+import { Button, Caption } from "@chardb/ui";
+import { TraitReviewSource } from "../../generated/graphql";
+import { TraitDiffDisplay } from "./TraitDiffDisplay";
+import { RevertTraitReviewModal } from "./RevertTraitReviewModal";
 
-import type { TraitReviewQueueQuery } from '../../generated/graphql';
+import type { TraitReviewQueueQuery } from "../../generated/graphql";
 
-type QueueItem = TraitReviewQueueQuery['traitReviewQueue']['items'][0];
+type QueueItem = TraitReviewQueueQuery["traitReviewQueue"]["items"][0];
 
 interface TraitReviewCardProps {
   item: QueueItem;
@@ -100,18 +107,28 @@ const SourceBadge = styled.span<{ $source: TraitReviewSource }>`
   font-weight: 600;
   background: ${({ theme, $source }) => {
     switch ($source) {
-      case TraitReviewSource.Import: return theme.colors.primary + '20';
-      case TraitReviewSource.Myo: return theme.colors.warning + '20';
-      case TraitReviewSource.UserEdit: return theme.colors.success + '20';
-      default: return theme.colors.surface;
+      case TraitReviewSource.Import:
+        return theme.colors.primary + "20";
+      case TraitReviewSource.Myo:
+        return theme.colors.warning + "20";
+      case TraitReviewSource.UserEdit:
+        return theme.colors.success + "20";
+      case TraitReviewSource.Creation:
+        return theme.colors.surface;
+      default:
+        assertNever($source);
     }
   }};
   color: ${({ theme, $source }) => {
     switch ($source) {
-      case TraitReviewSource.Import: return theme.colors.primary;
-      case TraitReviewSource.Myo: return theme.colors.warning;
-      case TraitReviewSource.UserEdit: return theme.colors.success;
-      default: return theme.colors.text.secondary;
+      case TraitReviewSource.Import:
+        return theme.colors.primary;
+      case TraitReviewSource.Myo:
+        return theme.colors.warning;
+      case TraitReviewSource.UserEdit:
+        return theme.colors.success;
+      case TraitReviewSource.Creation:
+        return theme.colors.text.secondary;
     }
   }};
 `;
@@ -136,7 +153,7 @@ function formatTimeAgo(dateString: string): string {
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
 
-  if (diffMins < 1) return 'just now';
+  if (diffMins < 1) return "just now";
   if (diffMins < 60) return `${diffMins}m ago`;
   const diffHours = Math.floor(diffMins / 60);
   if (diffHours < 24) return `${diffHours}h ago`;
@@ -144,12 +161,22 @@ function formatTimeAgo(dateString: string): string {
   return `${diffDays}d ago`;
 }
 
+function assertNever(value: never): never {
+  throw new Error(`Unhandled value: ${value}`);
+}
+
 function sourceLabel(source: TraitReviewSource): string {
   switch (source) {
-    case TraitReviewSource.Import: return 'Import';
-    case TraitReviewSource.Myo: return 'MYO';
-    case TraitReviewSource.UserEdit: return 'User Edit';
-    default: return source;
+    case TraitReviewSource.Creation:
+      return "Creation";
+    case TraitReviewSource.Import:
+      return "Import";
+    case TraitReviewSource.Myo:
+      return "MYO";
+    case TraitReviewSource.UserEdit:
+      return "User Edit";
+    default:
+      assertNever(source);
   }
 }
 
@@ -182,7 +209,11 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
         <CardBody>
           <CardHeader>
             <CharacterInfo>
-              <CharacterName to={`/character/${item.characterId}`} target="_blank" rel="noopener noreferrer">
+              <CharacterName
+                to={`/character/${item.characterId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {item.characterName}
                 <ExternalLink size={14} />
               </CharacterName>
@@ -190,7 +221,9 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
                 {item.registryId && <Caption>#{item.registryId}</Caption>}
                 {item.speciesName && <Caption>{item.speciesName}</Caption>}
                 {item.variantName && <Caption>({item.variantName})</Caption>}
-                <SourceBadge $source={review.source}>{sourceLabel(review.source)}</SourceBadge>
+                <SourceBadge $source={review.source}>
+                  {sourceLabel(review.source)}
+                </SourceBadge>
               </CharacterMeta>
             </CharacterInfo>
             <TimeInfo>
@@ -225,17 +258,18 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
                 Edit & Approve
               </Button>
             )}
-            {review.source !== TraitReviewSource.Creation && review.source !== TraitReviewSource.Import && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowRejectModal(true)}
-                disabled={actionInProgress}
-                icon={<X size={14} />}
-              >
-                Revert
-              </Button>
-            )}
+            {review.source !== TraitReviewSource.Creation &&
+              review.source !== TraitReviewSource.Import && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowRejectModal(true)}
+                  disabled={actionInProgress}
+                  icon={<X size={14} />}
+                >
+                  Revert
+                </Button>
+              )}
           </Actions>
         </CardBody>
       </Card>
