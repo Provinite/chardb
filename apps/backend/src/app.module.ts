@@ -95,25 +95,33 @@ import { Request, Response } from "express";
               },
 
               // Helper method to remove sensitive data from logs
-              sanitizeVariables(variables: any): any {
+              sanitizeVariables(variables: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
                 if (!variables) return variables;
 
-                const sensitiveFields = [
+                const sensitiveFields = new Set([
                   "password",
                   "oldPassword",
                   "newPassword",
                   "token",
                   "refreshToken",
-                ];
-                const sanitized = { ...variables };
+                ]);
 
-                for (const field of sensitiveFields) {
-                  if (sanitized[field]) {
-                    sanitized[field] = "[REDACTED]";
+                const sanitize = (obj: Record<string, unknown>, depth: number): Record<string, unknown> => {
+                  if (depth <= 0) return obj;
+                  const result: Record<string, unknown> = {};
+                  for (const [key, value] of Object.entries(obj)) {
+                    if (sensitiveFields.has(key)) {
+                      result[key] = "[REDACTED]";
+                    } else if (value && typeof value === "object" && !Array.isArray(value)) {
+                      result[key] = sanitize(value as Record<string, unknown>, depth - 1);
+                    } else {
+                      result[key] = value;
+                    }
                   }
-                }
+                  return result;
+                };
 
-                return sanitized;
+                return sanitize(variables, 5);
               },
 
               async willSendResponse(requestContext: any) {

@@ -76,9 +76,6 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<Omit<PrismaUser, 'passwordHash'> | null> {
     try {
       const user = await this.usersService.findByEmail(email);
-      console.log('validateUser - user found:', !!user);
-      console.log('validateUser - passwordHash exists:', !!user?.passwordHash);
-      
       if (user && user.passwordHash && await bcrypt.compare(password, user.passwordHash)) {
         const { passwordHash, ...result } = user;
         return result;

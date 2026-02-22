@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Paginated `traitReviewQueue` query with character metadata
   - Gated by `canEditCharacterRegistry` permission and global admin
 
+### Fixed
+
+- **Logging redaction filter**: GraphQL variable sanitization now recurses into nested objects, fixing a bug where sensitive data could be logged. (note: logs are stored securely, for a limited duration, and have not been accessed).
+
 ### Changed
 
 - **`deleteCharacter` restricted to global admins**: Removed character owner/editor access; only global administrators can delete characters
