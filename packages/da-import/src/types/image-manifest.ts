@@ -14,6 +14,7 @@ export const ImageDownloadSchema = z.object({
   localPath: z.string(),
   status: ImageDownloadStatusSchema,
   error: z.string().optional(),
+  title: z.string().optional(),
 });
 
 export type ImageDownload = z.infer<typeof ImageDownloadSchema>;

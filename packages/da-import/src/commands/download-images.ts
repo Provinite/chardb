@@ -55,7 +55,7 @@ function getExtensionFromUrl(url: string): string {
 async function resolveViaOEmbed(
   pageUrl: string,
   rateLimiter: RateLimiter
-): Promise<{ imageUrl: string; extension: string }> {
+): Promise<{ imageUrl: string; extension: string; title: string }> {
   await rateLimiter.wait();
 
   const oembedUrl = `${DA_OEMBED_URL}?url=${encodeURIComponent(pageUrl)}`;
@@ -78,7 +78,7 @@ async function resolveViaOEmbed(
       ? `.${data.imagetype}`
       : getExtensionFromUrl(data.url);
 
-  return { imageUrl: data.url, extension };
+  return { imageUrl: data.url, extension, title: data.title || "" };
 }
 
 async function downloadFile(
@@ -140,7 +140,7 @@ function makeFailedDownload(
 
 /**
  * Attempt to resolve and download a single image.
- * Returns the ImageDownload result.
+ * Returns the ImageDownload result with the oEmbed title for later artist extraction.
  */
 async function resolveAndDownload(
   sourceUrl: string,
@@ -148,7 +148,7 @@ async function resolveAndDownload(
   imagesDir: string,
   rateLimiter: RateLimiter
 ): Promise<ImageDownload> {
-  const { imageUrl, extension } = await resolveViaOEmbed(
+  const { imageUrl, extension, title } = await resolveViaOEmbed(
     sourceUrl,
     rateLimiter
   );
@@ -162,6 +162,7 @@ async function resolveAndDownload(
     resolvedUrl: imageUrl,
     localPath: fullFileName,
     status: "downloaded",
+    title: title || undefined,
   };
 }
 
