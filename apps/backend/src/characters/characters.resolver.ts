@@ -9,6 +9,7 @@ import {
   Int,
 } from "@nestjs/graphql";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
+import { TraitReviewSource } from "@prisma/client";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import {
   AuthenticatedCurrentUserType,
@@ -89,6 +90,17 @@ export class CharactersResolver {
     if (!input.speciesId) {
       throw new BadRequestException(
         "Non-species character creation coming soon to all users!",
+      );
+    }
+
+    // Only site admins can set a non-CREATION trait review source (e.g. IMPORT)
+    if (
+      input.traitReviewSource &&
+      input.traitReviewSource !== TraitReviewSource.CREATION &&
+      !user.isAdmin
+    ) {
+      throw new ForbiddenException(
+        "Only site admins can set a custom trait review source",
       );
     }
 
