@@ -272,7 +272,7 @@ export const downloadImagesCommand: CommandModule<object, DownloadImagesArgs> = 
     const manifestPath = getImageManifestPath();
     const manifest = await loadOrInitManifest(manifestPath);
 
-    const rateLimiter = new RateLimiter(rateLimit, rateLimit + 1000);
+    const rateLimiter = new RateLimiter(rateLimit, rateLimit + 250);
     const SAVE_INTERVAL = 10;
 
     const label = metadataOnly ? "Fetching metadata" : "Downloading";
@@ -314,7 +314,7 @@ export const downloadImagesCommand: CommandModule<object, DownloadImagesArgs> = 
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           logger.warn(`Original failed: ${char.name} (${char.numericId}): ${msg}`);
-          original = makeFailedDownload(char.url, msg);
+          original = existing?.original ?? makeFailedDownload(char.url, msg);
           origFailed++;
         }
       }
@@ -345,7 +345,7 @@ export const downloadImagesCommand: CommandModule<object, DownloadImagesArgs> = 
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           logger.warn(`Ref failed: ${char.name} (${char.numericId}): ${msg}`);
-          currentRef = makeFailedDownload(char.currentRefUrl, msg);
+          currentRef = existing?.currentRef ?? makeFailedDownload(char.currentRefUrl, msg);
           refFailed++;
         }
       }

@@ -15,6 +15,7 @@ export const ImageDownloadSchema = z.object({
   status: ImageDownloadStatusSchema,
   error: z.string().optional(),
   title: z.string().optional(),
+  artistDaUsername: z.string().optional(),
 });
 
 export type ImageDownload = z.infer<typeof ImageDownloadSchema>;

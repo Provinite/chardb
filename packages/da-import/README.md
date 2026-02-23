@@ -3,7 +3,7 @@
 CLI tool for importing species masterlists from DeviantArt into CharDB. Operates as a 4-phase pipeline where each phase produces inspectable intermediate files.
 
 ```
-Download (DA API → JSON) → Parse (JSON → mapped JSON) → Download Images (oEmbed → files) → Import (→ CharDB)
+Download (DA API → JSON) → Parse (JSON → mapped JSON) → Download Images (oEmbed → files) → Extract Artists (titles → usernames) → Import (→ CharDB)
 ```
 
 ## Prerequisites
@@ -102,17 +102,42 @@ yarn workspace @chardb/da-import cli download-images --limit 5
 
 # Full download (resumes from where it left off)
 yarn workspace @chardb/da-import cli download-images
+
+# Backfill oEmbed titles without re-downloading images
+yarn workspace @chardb/da-import cli download-images --metadata-only --reprocess-existing
 ```
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--rate-limit` | `2000` | Minimum milliseconds between oEmbed/download requests |
-| `--force` | `false` | Re-download even if already in manifest |
+| `--rate-limit` | `2000` | Minimum milliseconds between oEmbed requests |
+| `--force` | `false` | Re-download images even if already on disk |
+| `--reprocess-existing` | `false` | Re-fetch oEmbed for entries already in the manifest |
+| `--metadata-only` | `false` | Only fetch oEmbed metadata, skip image downloads |
 | `--limit` | `0` | Max characters to process (0 = unlimited) |
 
-Images are saved to `data/images/` as `{numericId}-original.{ext}` and `{numericId}-ref.{ext}`. The manifest tracks download status per character and is saved periodically for crash resilience.
+Images are saved to `data/images/` as `{numericId}-original.{ext}` and `{numericId}-ref.{ext}`. The manifest tracks download status, oEmbed titles, and artist attribution per image. Saved periodically for crash resilience — on failure, existing entries are preserved.
 
 **Output:** `data/images/` directory + `data/image-manifest.json`
+
+### Phase 2.75: `extract-artists`
+
+Extracts DeviantArt artist usernames from oEmbed titles stored in the image manifest. Sta.sh titles typically follow `"CharacterName - ArtistUsername"`. A table of manual overrides handles non-standard title formats.
+
+```bash
+# Preview without modifying the manifest
+yarn workspace @chardb/da-import cli extract-artists --dry-run
+
+# Write artistDaUsername to manifest entries
+yarn workspace @chardb/da-import cli extract-artists
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--dry-run` | `false` | Print results without writing to manifest |
+
+Reports a breakdown of extracted, overridden, no-title, and unmatched entries. Unmatched titles are printed for review. Artist usernames are stored as `artistDaUsername` on each image entry in the manifest and used during import to set artist credits on uploaded images.
+
+**Output:** Updates `data/image-manifest.json` in place.
 
 ### Phase 3: `import`
 
@@ -139,6 +164,7 @@ yarn workspace @chardb/da-import cli import \
 | `--skip-unmapped` | `true` | Skip characters that have unmapped trait lines |
 | `--upload-images` | `true` | Upload reference images from manifest during import |
 | `--upload-images-for-existing` | `false` | Also upload images for characters that already exist |
+| `--limit` | `0` | Max characters to process (0 = unlimited) |
 
 Each character is created with:
 - `registryId` set to the DA numeric ID
@@ -256,16 +282,22 @@ packages/da-import/
    yarn workspace @chardb/da-import cli download-images
    ```
 
-6. **Dry-run** the import:
+6. **Extract artist credits** from oEmbed titles:
+   ```bash
+   yarn workspace @chardb/da-import cli extract-artists --dry-run
+   yarn workspace @chardb/da-import cli extract-artists
+   ```
+
+7. **Dry-run** the import:
    ```bash
    yarn workspace @chardb/da-import cli import \
      --email admin@test.local --password pw --dry-run
    ```
 
-7. **Import** for real (creates characters + uploads images):
+8. **Import** for real (creates characters + uploads images):
    ```bash
    yarn workspace @chardb/da-import cli import \
      --email admin@test.local --password pw
    ```
 
-8. **Re-run** is safe — existing characters are skipped by `registryId`. Use `--upload-images-for-existing` to backfill images for previously imported characters.
+9. **Re-run** is safe — existing characters are skipped by `registryId`. Use `--upload-images-for-existing` to backfill images for previously imported characters.

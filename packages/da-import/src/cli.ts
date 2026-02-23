@@ -26,6 +26,7 @@ import { importCommand } from "./commands/import";
 import { reportCommand } from "./commands/report";
 import { scaffoldMappingCommand } from "./commands/scaffold-mapping";
 import { excludeCommand } from "./commands/exclude";
+import { extractArtistsCommand } from "./commands/extract-artists";
 
 yargs(hideBin(process.argv))
   .scriptName("da-import")
@@ -33,6 +34,7 @@ yargs(hideBin(process.argv))
   .command(downloadCommand)
   .command(parseCommand)
   .command(downloadImagesCommand)
+  .command(extractArtistsCommand)
   .command(importCommand)
   .command(reportCommand)
   .command(scaffoldMappingCommand)
