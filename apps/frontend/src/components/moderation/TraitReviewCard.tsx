@@ -37,7 +37,7 @@ const Card = styled.div`
 
 const ImageSection = styled.div`
   width: 100%;
-  aspect-ratio: 16/9;
+  max-height: 400px;
   background: ${({ theme }) => theme.colors.background};
   display: flex;
   align-items: center;
@@ -46,9 +46,9 @@ const ImageSection = styled.div`
 `;
 
 const MainImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
 `;
 
 const ImagePlaceholder = styled.div`
