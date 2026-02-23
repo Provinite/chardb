@@ -156,7 +156,11 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
         }
 
         if (role.canModerateImages) {
-          actions.push({ id: `c-${cId}-moderation`, label: 'Image Moderation Queue', description: `${cName} image moderation`, onClick: nav(`/communities/${cId}/moderation`) });
+          actions.push({ id: `c-${cId}-image-moderation`, label: 'Image Moderation', description: `${cName} image moderation`, onClick: nav(`/communities/${cId}/moderation/images`) });
+        }
+
+        if (role.canEditCharacterRegistry) {
+          actions.push({ id: `c-${cId}-trait-review`, label: 'Trait Review', description: `${cName} trait review`, onClick: nav(`/communities/${cId}/moderation/traits`) });
         }
 
         groups.push({ group: cName, actions });

@@ -17,3 +17,4 @@
 - App-specific changes should go in the appropriate CHANGELOG.md. The root-level CHANGELOG.md is for tracking cross-cutting changes and non-app-specific changes (like CI for example)
 - PSQL credentials are in the backend .env file
 - SQS Queue Consumer: The backend runs an SQS consumer for Discord bot prize distribution. Set AWS_SQS_ENABLED=false in .env to disable it in local development. Queue URL must be configured via AWS_SQS_QUEUE_URL.
+- Don't use `git -C` unless absolutely necessary. If you're already in the directory you're passing to -C, just omit it.

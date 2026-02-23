@@ -27,6 +27,11 @@ input ApproveImageInput {
   imageId: ID!
 }
 
+input ApproveTraitReviewInput {
+  """The ID of the review to approve"""
+  reviewId: ID!
+}
+
 input AssignCharacterSpeciesInput {
   """Official registry identifier for this character within its species"""
   registryId: String
@@ -48,6 +53,9 @@ type AuthPayload {
 
 type Character {
   _count: CharacterCount!
+
+  """The active pending trait review for this character"""
+  activeTraitReview: TraitReview
   createdAt: DateTime!
   creator: User
   creatorId: ID
@@ -88,6 +96,9 @@ type Character {
   speciesVariantId: ID
   tags: [String!]!
   tags_rel: [CharacterTag!]!
+
+  """Trait review moderation status"""
+  traitReviewStatus: ModerationStatus
 
   """Trait values assigned to this character"""
   traitValues: [CharacterTraitValue!]!
@@ -400,6 +411,9 @@ input CreateCharacterInput {
   speciesId: ID
   speciesVariantId: ID
   tags: [String!]! = []
+
+  """Source for the trait review. Defaults to CREATION."""
+  traitReviewSource: TraitReviewSource
 
   """Trait values for the character"""
   traitValues: [CharacterTraitValueInput!]! = []
@@ -716,6 +730,14 @@ type DiscordUserInfo {
 
   """Discord username"""
   username: String!
+}
+
+input EditAndApproveTraitReviewInput {
+  """The corrected trait values to apply"""
+  correctedTraitValues: [CharacterTraitValueInput!]!
+
+  """The ID of the review to edit and approve"""
+  reviewId: ID!
 }
 
 type EnumValue {
@@ -1300,6 +1322,9 @@ type Mutation {
   """Approve an image (moderator action)"""
   approveImage(input: ApproveImageInput!): ImageModerationAction!
 
+  """Approve a trait review (moderator action)"""
+  approveTraitReview(input: ApproveTraitReviewInput!): TraitReview!
+
   """
   Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species.
   """
@@ -1412,6 +1437,9 @@ type Mutation {
     """Media ID to delete"""
     id: ID!
   ): Boolean!
+
+  """Edit and approve a trait review (moderator action)"""
+  editAndApproveTraitReview(input: EditAndApproveTraitReviewInput!): TraitReview!
   forgotPassword(input: ForgotPasswordInput!): Boolean!
 
   """Grant an item to a user (admin only)"""
@@ -1525,6 +1553,11 @@ type Mutation {
     """Response data (accept or decline)"""
     respondToCommunityInvitationInput: RespondToCommunityInvitationInput!
   ): CommunityInvitation!
+
+  """
+  Revert a trait review, restoring previous trait values (moderator action)
+  """
+  revertTraitReview(input: RevertTraitReviewInput!): TraitReview!
 
   """Sets or clears the main media for a character"""
   setCharacterMainMedia(
@@ -1782,6 +1815,9 @@ type Query {
     """User ID (can be from or to user)"""
     userId: ID!
   ): CharacterOwnershipChangeConnection!
+
+  """Get the active pending trait review for a character"""
+  characterTraitReview(characterId: ID!): TraitReview
   characters(filters: CharacterFiltersInput): CharacterConnection!
   comment(id: ID!): Comment!
   comments(filters: CommentFiltersInput!): CommentConnection!
@@ -2062,6 +2098,9 @@ type Query {
   """Get count of pending images for a community"""
   pendingImageCount(communityId: ID!): Int!
 
+  """Get count of pending trait reviews for a community"""
+  pendingTraitReviewCount(communityId: ID!): Int!
+
   """
   Resolve a Discord username or user ID to full user information. Requires permission to create orphaned characters.
   """
@@ -2208,6 +2247,9 @@ type Query {
     id: ID!
   ): TraitListEntry!
 
+  """Get trait reviews for a community moderation queue"""
+  traitReviewQueue(communityId: ID!, filters: TraitReviewQueueFiltersInput, first: Int = 20, offset: Int = 0): TraitReviewQueueConnection!
+
   """Get all traits with pagination"""
   traits(
     """Cursor for pagination"""
@@ -2293,6 +2335,14 @@ input ResetPasswordInput {
 input RespondToCommunityInvitationInput {
   """Whether to accept (true) or decline (false) the invitation"""
   accept: Boolean!
+}
+
+input RevertTraitReviewInput {
+  """Reason for rejection"""
+  reason: String!
+
+  """The ID of the review to reject"""
+  reviewId: ID!
 }
 
 """A role within a community that defines permissions for members"""
@@ -2643,6 +2693,82 @@ input TraitOrderInput {
 
   """ID of the trait"""
   traitId: ID!
+}
+
+"""A trait review for a character"""
+type TraitReview {
+  """The trait values actually applied (if edited)"""
+  appliedTraitValues: [CharacterTraitValue!]
+
+  """The character being reviewed"""
+  character: Character!
+  characterId: ID!
+  createdAt: DateTime!
+  id: ID!
+
+  """The previous trait values"""
+  previousTraitValues: [CharacterTraitValue!]!
+
+  """The proposed trait values"""
+  proposedTraitValues: [CharacterTraitValue!]!
+
+  """Reason for rejection"""
+  rejectionReason: String
+
+  """When the review was resolved"""
+  resolvedAt: DateTime
+
+  """The moderator who resolved this review"""
+  resolvedBy: User
+  resolvedById: ID
+  source: TraitReviewSource!
+  status: ModerationStatus!
+  updatedAt: DateTime!
+}
+
+"""Paginated list of trait reviews in the queue"""
+type TraitReviewQueueConnection {
+  """Whether there are more reviews after this page"""
+  hasMore: Boolean!
+  items: [TraitReviewQueueItem!]!
+
+  """Total count of pending reviews"""
+  total: Int!
+}
+
+input TraitReviewQueueFiltersInput {
+  """Filter by source"""
+  source: TraitReviewSource
+
+  """Filter by status"""
+  status: ModerationStatus
+}
+
+"""An item in the trait review queue"""
+type TraitReviewQueueItem {
+  """ID of the character"""
+  characterId: ID!
+
+  """Name of the character"""
+  characterName: String!
+
+  """Registry ID of the character"""
+  registryId: String
+  review: TraitReview!
+
+  """Name of the species"""
+  speciesName: String
+
+  """Name of the species variant"""
+  variantName: String
+}
+
+"""The source that triggered a trait review"""
+enum TraitReviewSource {
+  CREATION
+  IMPORT
+  MYO
+  USER_EDIT
 }
 
 """Types of values that traits can store"""

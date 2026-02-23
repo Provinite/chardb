@@ -108,6 +108,7 @@ export const GET_CHARACTER = gql`
           }
         }
       }
+      traitReviewStatus
       details
       ownerId
       creatorId

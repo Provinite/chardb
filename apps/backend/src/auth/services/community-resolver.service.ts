@@ -355,6 +355,31 @@ export class CommunityResolverService {
   }
 
   /**
+   * Get the community ID for a trait review.
+   *
+   * Resolved through: traitReview → character → species → community
+   *
+   * @param traitReviewId - The trait review ID
+   * @returns The community ID or null if character has no species
+   */
+  async getTraitReviewCommunity(traitReviewId: string): Promise<string | null> {
+    const traitReview = await this.prisma.traitReview.findUnique({
+      where: { id: traitReviewId },
+      select: {
+        character: {
+          select: {
+            species: {
+              select: { communityId: true },
+            },
+          },
+        },
+      },
+    });
+
+    return traitReview?.character?.species?.communityId ?? null;
+  }
+
+  /**
    * Get the community ID for a pending ownership.
    *
    * Resolution path: pendingOwnership → character → species → community
@@ -451,6 +476,7 @@ export class CommunityResolverService {
       itemId: this.getItemCommunity.bind(this),
       communityColorId: this.getCommunityColorCommunity.bind(this),
       pendingOwnershipId: this.getPendingOwnershipCommunity.bind(this),
+      traitReviewId: this.getTraitReviewCommunity.bind(this),
     };
 
     if (!config.type) {

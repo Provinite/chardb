@@ -17,6 +17,7 @@ export function mapPrismaImageToGraphQL(prismaImage: PrismaImage): Image {
     id: prismaImage.id,
     originalFilename: prismaImage.originalFilename,
     originalUrl: prismaImage.originalUrl,
+    mediumUrl: prismaImage.mediumUrl ?? undefined,
     thumbnailUrl: prismaImage.thumbnailUrl ?? undefined,
     altText: prismaImage.altText ?? undefined,
     uploaderId: prismaImage.uploaderId,
