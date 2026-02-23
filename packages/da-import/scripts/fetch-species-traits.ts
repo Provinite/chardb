@@ -2,7 +2,7 @@
  * Fetch species traits from the production CharDB API and write to
  * config/species-traits.json.
  *
- * Usage: npx tsx scripts/fetch-species-traits.ts
+ * Usage: yarn dlx tsx scripts/fetch-species-traits.ts
  */
 import * as fs from "fs/promises";
 import * as path from "path";

@@ -10,7 +10,6 @@ import {
   ApproveTraitReviewInput,
   RevertTraitReviewInput,
   EditAndApproveTraitReviewInput,
-  CreateTraitReviewInput,
 } from './dto/trait-review.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/CurrentUser';
@@ -136,39 +135,4 @@ export class TraitReviewResolver {
     return mapPrismaTraitReviewToGraphQL(review);
   }
 
-  @AllowGlobalAdmin()
-  @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
-  @ResolveCommunityFrom({ characterId: 'input.characterId' })
-  @UseGuards(JwtAuthGuard)
-  @Mutation(() => TraitReview, {
-    description: 'Create a trait review for a character',
-  })
-  async createTraitReview(
-    @Args('input') input: CreateTraitReviewInput,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<TraitReview> {
-    const proposedValues = input.proposedTraitValues
-      .filter((tv) => tv.value !== undefined && tv.value !== null)
-      .map((tv) => ({
-        traitId: tv.traitId,
-        value: tv.value!,
-      }));
-
-    const previousValues = input.previousTraitValues
-      ? input.previousTraitValues
-          .filter((tv) => tv.value !== undefined && tv.value !== null)
-          .map((tv) => ({
-            traitId: tv.traitId,
-            value: tv.value!,
-          }))
-      : [];
-
-    const review = await this.traitReviewService.createReview(
-      input.characterId,
-      input.source,
-      proposedValues,
-      previousValues,
-    );
-    return mapPrismaTraitReviewToGraphQL(review);
-  }
 }

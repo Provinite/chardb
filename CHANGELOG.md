@@ -10,12 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **DeviantArt Import Tool** (`packages/da-import`): CLI tool for importing species masterlists from DeviantArt into CharDB
-  - 3-phase pipeline: download deviations from DA gallery folders, parse trait data from HTML descriptions, import characters via GraphQL API
+  - Multi-phase pipeline: download deviations, parse traits, download images, extract artist credits, import characters via GraphQL API
   - Configurable trait mapping file correlates DA text patterns to CharDB trait/enum IDs
   - Scaffold command auto-generates mapping config from downloaded data
   - Supports dry-run mode and idempotent re-runs (existing characters skipped by registryId)
   - Sets up pending ownership via DeviantArt usernames for automatic claiming
+  - Reference images downloaded via oEmbed and uploaded with artist credit attribution
   - Characters enter the trait review queue after import for moderator verification
+- **Trait Review System**: Moderation queue for reviewing character trait values after creation or import, with approve/revert/edit-and-approve workflow
 
 ## [v9.1.1] - 2026-02-09
 

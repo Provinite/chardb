@@ -189,6 +189,30 @@ yarn workspace @chardb/da-import cli report --type parsed
 yarn workspace @chardb/da-import cli report --type import
 ```
 
+### `exclude`
+
+Marks individual deviations as unparseable so they are skipped during parse and import. Useful for deviations with non-standard formatting that can't be automatically mapped.
+
+```bash
+# Exclude a deviation
+yarn workspace @chardb/da-import cli exclude --id 123456789 --reason "Garbled description"
+
+# List all exclusions
+yarn workspace @chardb/da-import cli exclude --list
+
+# Remove an exclusion
+yarn workspace @chardb/da-import cli exclude --remove 123456789
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--id` | | Numeric deviation ID to exclude |
+| `--reason` | `"Manual exclusion"` | Reason for exclusion |
+| `--remove` | | Numeric deviation ID to un-exclude |
+| `--list` | `false` | List all excluded deviations |
+
+**Output:** `data/excluded.json`
+
 ## Mapping Config
 
 The mapping config (`config/trait-mapping.json`) drives the parse phase. It connects DA description text to CharDB IDs.

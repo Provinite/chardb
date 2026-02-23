@@ -155,15 +155,3 @@ export const EDIT_AND_APPROVE_TRAIT_REVIEW = gql`
   }
   ${TRAIT_VALUE_FIELDS_FRAGMENT}
 `;
-
-export const CREATE_TRAIT_REVIEW = gql`
-  mutation CreateTraitReview($input: CreateTraitReviewInput!) {
-    createTraitReview(input: $input) {
-      id
-      status
-      source
-      characterId
-      createdAt
-    }
-  }
-`;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Button, Heading3, HelpText, SmallText, Caption } from '@chardb/ui';
 import {

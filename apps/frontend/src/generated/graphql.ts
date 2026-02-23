@@ -620,17 +620,6 @@ export type CreateTraitListEntryInput = {
   valueType: TraitValueType;
 };
 
-export type CreateTraitReviewInput = {
-  /** The ID of the character */
-  characterId: Scalars['ID']['input'];
-  /** The previous trait values (optional, will use current character values if not provided) */
-  previousTraitValues?: InputMaybe<Array<CharacterTraitValueInput>>;
-  /** The proposed trait values */
-  proposedTraitValues: Array<CharacterTraitValueInput>;
-  /** The source of this review */
-  source: TraitReviewSource;
-};
-
 export type DiscordGuildInfo = {
   __typename?: 'DiscordGuildInfo';
   /** Whether the bot has access to this guild */
@@ -1212,8 +1201,6 @@ export type Mutation = {
   createTrait: Trait;
   /** Create a new trait list entry */
   createTraitListEntry: TraitListEntry;
-  /** Create a trait review for a character */
-  createTraitReview: TraitReview;
   deleteAccount: RemovalResponse;
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
@@ -1441,11 +1428,6 @@ export type MutationCreateTraitArgs = {
 
 export type MutationCreateTraitListEntryArgs = {
   createTraitListEntryInput: CreateTraitListEntryInput;
-};
-
-
-export type MutationCreateTraitReviewArgs = {
-  input: CreateTraitReviewInput;
 };
 
 
@@ -4343,13 +4325,6 @@ export type EditAndApproveTraitReviewMutationVariables = Exact<{
 
 
 export type EditAndApproveTraitReviewMutation = { __typename?: 'Mutation', editAndApproveTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, resolvedAt: string | null, appliedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> | null, resolvedBy: { __typename?: 'User', id: string, username: string } | null } };
-
-export type CreateTraitReviewMutationVariables = Exact<{
-  input: CreateTraitReviewInput;
-}>;
-
-
-export type CreateTraitReviewMutation = { __typename?: 'Mutation', createTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, source: TraitReviewSource, characterId: string, createdAt: string } };
 
 export type UserBasicFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
@@ -11748,43 +11723,6 @@ export function useEditAndApproveTraitReviewMutation(baseOptions?: Apollo.Mutati
 export type EditAndApproveTraitReviewMutationHookResult = ReturnType<typeof useEditAndApproveTraitReviewMutation>;
 export type EditAndApproveTraitReviewMutationResult = Apollo.MutationResult<EditAndApproveTraitReviewMutation>;
 export type EditAndApproveTraitReviewMutationOptions = Apollo.BaseMutationOptions<EditAndApproveTraitReviewMutation, EditAndApproveTraitReviewMutationVariables>;
-export const CreateTraitReviewDocument = gql`
-    mutation CreateTraitReview($input: CreateTraitReviewInput!) {
-  createTraitReview(input: $input) {
-    id
-    status
-    source
-    characterId
-    createdAt
-  }
-}
-    `;
-export type CreateTraitReviewMutationFn = Apollo.MutationFunction<CreateTraitReviewMutation, CreateTraitReviewMutationVariables>;
-
-/**
- * __useCreateTraitReviewMutation__
- *
- * To run a mutation, you first call `useCreateTraitReviewMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateTraitReviewMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createTraitReviewMutation, { data, loading, error }] = useCreateTraitReviewMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateTraitReviewMutation(baseOptions?: Apollo.MutationHookOptions<CreateTraitReviewMutation, CreateTraitReviewMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateTraitReviewMutation, CreateTraitReviewMutationVariables>(CreateTraitReviewDocument, options);
-      }
-export type CreateTraitReviewMutationHookResult = ReturnType<typeof useCreateTraitReviewMutation>;
-export type CreateTraitReviewMutationResult = Apollo.MutationResult<CreateTraitReviewMutation>;
-export type CreateTraitReviewMutationOptions = Apollo.BaseMutationOptions<CreateTraitReviewMutation, CreateTraitReviewMutationVariables>;
 export const GetUserProfileDocument = gql`
     query GetUserProfile($username: String!) {
   userProfile(username: $username) {

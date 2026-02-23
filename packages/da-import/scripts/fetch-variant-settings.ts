@@ -2,7 +2,7 @@
  * Fetch species variant enum value settings from the production CharDB API
  * and write to config/variant-settings.json.
  *
- * Usage: npx tsx scripts/fetch-variant-settings.ts
+ * Usage: yarn dlx tsx scripts/fetch-variant-settings.ts
  */
 import * as fs from "fs/promises";
 import * as path from "path";

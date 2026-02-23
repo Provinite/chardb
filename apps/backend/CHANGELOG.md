@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Trait Review System**: Moderation queue for reviewing character trait values
   - Trait values are applied to characters immediately at creation/import; the review queue lets moderators verify correctness
   - `approveTraitReview` mutation confirms traits and removes the "Traits Pending Review" badge
-  - `revertTraitReview` mutation restores previous trait values with a required reason (unavailable for CREATION-source reviews)
+  - `revertTraitReview` mutation restores previous trait values with a required reason (unavailable for CREATION and IMPORT-source reviews)
   - `editAndApproveTraitReview` mutation allows moderators to correct trait values before approving
   - Review sources: CREATION, IMPORT, MYO, USER_EDIT
   - Paginated `traitReviewQueue` query with character metadata
@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Logging redaction filter**: GraphQL variable sanitization now recurses into nested objects, fixing a bug where sensitive data could be logged. (note: logs are stored securely, for a limited duration, and have not been accessed).
+- **Image upload permissions**: Global admins can now upload images to any character regardless of community membership
+- **`mediumUrl` not returned for images**: Image resolver now surfaces the `mediumUrl` field
 
 ### Changed
 

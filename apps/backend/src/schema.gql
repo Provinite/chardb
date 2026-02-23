@@ -701,22 +701,6 @@ input CreateTraitListEntryInput {
   valueType: TraitValueType!
 }
 
-input CreateTraitReviewInput {
-  """The ID of the character"""
-  characterId: ID!
-
-  """
-  The previous trait values (optional, will use current character values if not provided)
-  """
-  previousTraitValues: [CharacterTraitValueInput!]
-
-  """The proposed trait values"""
-  proposedTraitValues: [CharacterTraitValueInput!]!
-
-  """The source of this review"""
-  source: TraitReviewSource!
-}
-
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
@@ -1437,9 +1421,6 @@ type Mutation {
     """Trait list entry creation data"""
     createTraitListEntryInput: CreateTraitListEntryInput!
   ): TraitListEntry!
-
-  """Create a trait review for a character"""
-  createTraitReview(input: CreateTraitReviewInput!): TraitReview!
   deleteAccount: RemovalResponse!
   deleteCharacter(id: ID!): Boolean!
   deleteComment(id: ID!): Boolean!

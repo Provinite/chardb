@@ -55,26 +55,3 @@ export class EditAndApproveTraitReviewInput {
   correctedTraitValues: CharacterTraitValueInput[];
 }
 
-@InputType()
-export class CreateTraitReviewInput {
-  @Field(() => ID, { description: 'The ID of the character' })
-  @IsUUID()
-  characterId: string;
-
-  @Field(() => TraitReviewSource, { description: 'The source of this review' })
-  @IsEnum(TraitReviewSource)
-  source: TraitReviewSource;
-
-  @Field(() => [CharacterTraitValueInput], { description: 'The proposed trait values' })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CharacterTraitValueInput)
-  proposedTraitValues: CharacterTraitValueInput[];
-
-  @Field(() => [CharacterTraitValueInput], { nullable: true, description: 'The previous trait values (optional, will use current character values if not provided)' })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CharacterTraitValueInput)
-  previousTraitValues?: CharacterTraitValueInput[];
-}
