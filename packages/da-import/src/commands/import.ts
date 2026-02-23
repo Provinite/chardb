@@ -82,10 +82,14 @@ async function uploadCharacterImages(
   if (hasOriginal) {
     const filePath = path.join(imagesDir, entry.original.localPath);
     if (await fileExists(filePath)) {
+      const artist = entry.original.artistDaUsername
+        ? { name: entry.original.artistDaUsername, url: `https://www.deviantart.com/${entry.original.artistDaUsername}` }
+        : undefined;
       const media = await client.uploadImage(
         filePath,
         characterId,
-        `${entry.name} - Original`
+        `${entry.name} - Original`,
+        artist
       );
       originalMediaId = media.id;
     }
@@ -95,10 +99,14 @@ async function uploadCharacterImages(
   if (hasCurrentRef) {
     const filePath = path.join(imagesDir, entry.currentRef.localPath);
     if (await fileExists(filePath)) {
+      const artist = entry.currentRef.artistDaUsername
+        ? { name: entry.currentRef.artistDaUsername, url: `https://www.deviantart.com/${entry.currentRef.artistDaUsername}` }
+        : undefined;
       const media = await client.uploadImage(
         filePath,
         characterId,
-        `${entry.name} - Reference`
+        `${entry.name} - Reference`,
+        artist
       );
       currentRefMediaId = media.id;
     }
