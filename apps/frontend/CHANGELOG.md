@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.2.1] - 2026-02-23
+
 ### Fixed
 
 - **Trait review queue images cropped**: Images in the trait review queue are no longer cropped; use `object-fit: contain` instead of `cover` and remove fixed 16/9 aspect ratio (#209)
