@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.2.0] - 2026-02-22
+
 ### Added
 
 - **DeviantArt Import Tool** (`packages/da-import`): CLI tool for importing species masterlists from DeviantArt into CharDB
