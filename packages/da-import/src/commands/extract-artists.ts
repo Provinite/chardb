@@ -1,7 +1,11 @@
+import * as path from "path";
 import type { CommandModule } from "yargs";
+import { z } from "zod";
 import { ImageManifestSchema } from "../types/image-manifest";
 import type { ImageDownload } from "../types/image-manifest";
+import { ParsedCharacterSchema } from "../types/parsed-character";
 import {
+  getDataDir,
   getImageManifestPath,
   readJson,
   writeJson,
@@ -65,6 +69,18 @@ export const extractArtistsCommand: CommandModule<object, ExtractArtistsArgs> = 
     const manifest = await readJson(manifestPath, ImageManifestSchema);
     const entries = Object.values(manifest.entries);
 
+    // Load parsed characters for firstArtist data
+    const parsedPath = path.join(getDataDir(), "parsed-characters.json");
+    const parsedChars = (await fileExists(parsedPath))
+      ? await readJson(parsedPath, z.array(ParsedCharacterSchema))
+      : [];
+    const firstArtistByNumericId = new Map(
+      parsedChars
+        .filter((c) => c.firstArtist)
+        .map((c) => [c.numericId, c.firstArtist])
+    );
+    logger.info(`Loaded ${firstArtistByNumericId.size} firstArtist entries from parsed characters`);
+
     const noMatchTitles: Array<{ numericId: string; field: string; title: string }> = [];
 
     function processDownload(
@@ -96,19 +112,27 @@ export const extractArtistsCommand: CommandModule<object, ExtractArtistsArgs> = 
       }
     }
 
-    const origCounters = { extracted: 0, overridden: 0, noTitle: 0, noMatch: 0 };
+    let origFromParsed = 0;
+    let origMissing = 0;
     const refCounters = { extracted: 0, overridden: 0, noTitle: 0, noMatch: 0 };
 
     for (const entry of entries) {
-      processDownload(entry.original, entry.numericId, "original", {}, origCounters);
+      // Original: use firstArtist from parsed character data
+      const firstArtist = firstArtistByNumericId.get(entry.numericId);
+      if (firstArtist) {
+        entry.original.artistDaUsername = firstArtist;
+        origFromParsed++;
+      } else {
+        origMissing++;
+      }
+
+      // Current ref: extract from oEmbed title or use override
       processDownload(entry.currentRef, entry.numericId, "currentRef", CURRENT_REF_ARTIST_OVERRIDES, refCounters);
     }
 
     logger.info(`\nOriginal images:`);
-    logger.info(`  Artist extracted: ${origCounters.extracted}`);
-    logger.info(`  Manual overrides: ${origCounters.overridden}`);
-    logger.info(`  No title: ${origCounters.noTitle}`);
-    logger.info(`  Title but no match: ${origCounters.noMatch}`);
+    logger.info(`  From parsed firstArtist: ${origFromParsed}`);
+    logger.info(`  No firstArtist: ${origMissing}`);
     logger.info(`\nCurrent ref images:`);
     logger.info(`  Artist extracted: ${refCounters.extracted}`);
     logger.info(`  Manual overrides: ${refCounters.overridden}`);
