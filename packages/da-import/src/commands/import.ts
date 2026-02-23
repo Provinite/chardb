@@ -20,6 +20,7 @@ import {
   writeJson,
   fileExists,
 } from "../utils/file-io";
+import { loadExclusions } from "./exclude";
 import { logger } from "../utils/logger";
 import { ProgressTracker } from "../utils/progress";
 import { z } from "zod";
@@ -137,13 +138,11 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     },
     email: {
       type: "string" as const,
-      demandOption: true,
-      describe: "Admin email for CharDB login",
+      describe: "Admin email for CharDB login (required unless --dry-run)",
     },
     password: {
       type: "string" as const,
-      demandOption: true,
-      describe: "Admin password for CharDB login",
+      describe: "Admin password for CharDB login (required unless --dry-run)",
     },
     mapping: {
       type: "string" as const,
@@ -199,9 +198,18 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     const parsedPath = path.join(getDataDir(), "parsed-characters.json");
     logger.info("Loading parsed characters...");
     const allParsed = await readJson(parsedPath, z.array(ParsedCharacterSchema));
-    const parsed = limit > 0 ? allParsed.slice(0, limit) : allParsed;
+
+    // Filter out excluded deviations
+    const exclusions = await loadExclusions();
+    const excludedIds = new Set(exclusions.map((e) => e.numericId));
+    const afterExclusions = allParsed.filter((c) => !excludedIds.has(c.numericId));
+    if (excludedIds.size > 0) {
+      logger.info(`  Excluded ${allParsed.length - afterExclusions.length} characters (${excludedIds.size} exclusion rules)`);
+    }
+
+    const parsed = limit > 0 ? afterExclusions.slice(0, limit) : afterExclusions;
     if (limit > 0) {
-      logger.info(`  Limited to first ${limit} of ${allParsed.length} characters`);
+      logger.info(`  Limited to first ${limit} of ${afterExclusions.length} characters`);
     }
 
     // Load mapping config
@@ -236,22 +244,17 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     );
 
     if (dryRun) {
-      logger.info("\n=== DRY RUN — no changes will be made ===\n");
-      for (const char of importable.slice(0, 10)) {
-        logger.info(`  ${char.numericId}: ${char.name}`);
-        logger.info(`    Owner: ${char.ownerDaUsername || "(none)"}`);
-        logger.info(`    Variant: ${char.derivedRarity ?? "default"}`);
-        logger.info(`    Traits: ${char.mappedTraits.length}`);
-      }
-      if (importable.length > 10) {
-        logger.info(`  ... and ${importable.length - 10} more`);
-      }
-      return;
+      logger.info("\n=== DRY RUN — no writes will be made ===\n");
+    } else if (!email || !password) {
+      logger.error("--email and --password are required unless --dry-run is set");
+      process.exit(1);
     }
 
-    // Login
+    // Login (skip for dry run)
     const client = new CharDBClient(apiUrl);
-    await client.login(email, password);
+    if (!dryRun) {
+      await client.login(email, password);
+    }
 
     // Build existing character index
     logger.info("Building existing character index...");
@@ -263,21 +266,34 @@ export const importCommand: CommandModule<object, ImportArgs> = {
         .filter((c) => c.registryId)
         .map((c) => [c.registryId!, c.id])
     );
-    logger.info(`  Found ${existingChars.length} existing characters (${existingByRegistryId.size} with registryId)`);
+    // Name-based index for characters missing a registryId — used to
+    // set the registryId on existing characters without duplicating them.
+    const existingWithoutRegistryByName = new Map(
+      existingChars
+        .filter((c) => !c.registryId)
+        .map((c) => [c.name.trim().toLowerCase(), c.id])
+    );
+    logger.info(`  Found ${existingChars.length} existing characters (${existingByRegistryId.size} with registryId, ${existingWithoutRegistryByName.size} without)`);
 
-    // Count how many would be skipped
+    // Count how many would fall into each bucket
     const wouldSkipExisting = importable.filter((c) =>
       existingByRegistryId.has(c.registryId)
     ).length;
-    const wouldCreate = importable.length - wouldSkipExisting;
+    const wouldUpdateRegistry = importable.filter(
+      (c) =>
+        !existingByRegistryId.has(c.registryId) &&
+        existingWithoutRegistryByName.has(c.name.trim().toLowerCase())
+    ).length;
+    const wouldCreate = importable.length - wouldSkipExisting - wouldUpdateRegistry;
 
     logger.info(`  Would create: ${wouldCreate}`);
+    logger.info(`  Would update registry only: ${wouldUpdateRegistry}`);
     logger.info(`  Would skip (existing): ${wouldSkipExisting}`);
 
-    // Review prompt
-    if (!force) {
+    // Review prompt (skip for dry run)
+    if (!dryRun && !force) {
       const proceed = await promptConfirm(
-        `\nProceed with importing ${wouldCreate} characters?`
+        `\nProceed with importing ${wouldCreate} new + ${wouldUpdateRegistry} registry updates?`
       );
       if (!proceed) {
         logger.info("Import cancelled.");
@@ -289,6 +305,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     const resultsPath = path.join(getDataDir(), "import-results.json");
     const entries: ImportResultEntry[] = [];
     let created = 0;
+    let registryUpdated = 0;
     let skippedExisting = 0;
     let skippedUnmapped = 0;
     let failed = 0;
@@ -301,6 +318,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
         speciesId: config.speciesId,
         totalProcessed: entries.length,
         created,
+        registryUpdated,
         skippedExisting,
         skippedUnmapped,
         failed,
@@ -337,23 +355,37 @@ export const importCommand: CommandModule<object, ImportArgs> = {
 
         // Optionally upload images for existing characters
         if (manifest && uploadImagesForExisting) {
-          try {
-            const imgResult = await uploadCharacterImages(
-              client,
-              existingId,
-              char.numericId,
-              manifest,
-              imagesDir
-            );
-            entry.imageStatus = imgResult.imageStatus;
-            entry.imageError = imgResult.imageError;
-            if (imgResult.imageStatus === "uploaded") imagesUploaded++;
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err);
-            entry.imageStatus = "failed";
-            entry.imageError = msg;
-            imagesFailed++;
-            logger.warn(`Image upload failed for existing ${char.numericId}: ${msg}`);
+          if (dryRun) {
+            const imgEntry = manifest.entries[char.numericId];
+            if (imgEntry) {
+              const hasOrig = imgEntry.original.status === "downloaded" && imgEntry.original.localPath;
+              const hasRef = imgEntry.currentRef.status === "downloaded" && imgEntry.currentRef.localPath;
+              if (hasOrig) {
+                logger.info(`[DRY RUN]   image (original) for existing ${existingId}: "${imgEntry.name} - Original", file: ${imgEntry.original.localPath}, artist: ${imgEntry.original.artistDaUsername ?? "(none)"}`);
+              }
+              if (hasRef) {
+                logger.info(`[DRY RUN]   image (ref) for existing ${existingId}: "${imgEntry.name} - Reference", file: ${imgEntry.currentRef.localPath}, artist: ${imgEntry.currentRef.artistDaUsername ?? "(none)"}`);
+              }
+            }
+          } else {
+            try {
+              const imgResult = await uploadCharacterImages(
+                client,
+                existingId,
+                char.numericId,
+                manifest,
+                imagesDir
+              );
+              entry.imageStatus = imgResult.imageStatus;
+              entry.imageError = imgResult.imageError;
+              if (imgResult.imageStatus === "uploaded") imagesUploaded++;
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              entry.imageStatus = "failed";
+              entry.imageError = msg;
+              imagesFailed++;
+              logger.warn(`Image upload failed for existing ${char.numericId}: ${msg}`);
+            }
           }
         }
 
@@ -364,84 +396,170 @@ export const importCommand: CommandModule<object, ImportArgs> = {
         continue;
       }
 
-      // Create character
-      try {
-        const input = {
+      // Update registry ID for existing name match with no registryId
+      const nameKey = char.name.trim().toLowerCase();
+      const existingByNameId = existingWithoutRegistryByName.get(nameKey);
+      if (existingByNameId) {
+        if (dryRun) {
+          logger.info(`[DRY RUN] updateCharacterRegistry(${existingByNameId}, { registryId: "${char.registryId}" }) — ${char.name}`);
+        } else {
+          try {
+            await client.updateCharacterRegistry(existingByNameId, {
+              registryId: char.registryId,
+            });
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            entries.push({
+              numericId: char.numericId,
+              name: char.name,
+              status: "failed",
+              error: `Registry update failed: ${errorMsg}`,
+              characterId: existingByNameId,
+            });
+            failed++;
+            logger.warn(`Failed to update registry for ${char.name}: ${errorMsg}`);
+            progress.increment();
+            await saveResults();
+            continue;
+          }
+        }
+        entries.push({
+          numericId: char.numericId,
           name: char.name,
-          registryId: char.registryId,
-          speciesId: config.speciesId,
-          speciesVariantId: char.derivedVariantId ?? config.rarityToVariantId[config.rarityOrder[0]],
-          traitValues: char.mappedTraits.map((t) => ({
-            traitId: t.traitId,
-            value: "enumValueId" in t ? t.enumValueId : t.textValue,
-          })),
-          pendingOwner: char.ownerDaUsername
-            ? {
-                provider: "DEVIANTART",
-                providerAccountId: char.ownerDaUsername,
-              }
-            : undefined,
-          assignToSelf: false,
-          visibility: "PUBLIC",
-          traitReviewSource: "IMPORT",
-        };
+          status: "registry_updated",
+          characterId: existingByNameId,
+        });
+        registryUpdated++;
+        // Remove from name index so we don't match again
+        existingWithoutRegistryByName.delete(nameKey);
+        // Add to registryId index so subsequent duplicates get skipped
+        existingByRegistryId.set(char.registryId, existingByNameId);
+        progress.increment();
+        await saveResults();
+        continue;
+      }
 
-        const result = await client.createCharacter(input);
-        const entry: ImportResultEntry = {
+      // Create character
+      const input = {
+        name: char.name,
+        registryId: char.registryId,
+        speciesId: config.speciesId,
+        speciesVariantId: char.derivedVariantId ?? config.rarityToVariantId[config.rarityOrder[0]],
+        traitValues: char.mappedTraits.map((t) => ({
+          traitId: t.traitId,
+          value: "enumValueId" in t ? t.enumValueId : t.textValue,
+        })),
+        pendingOwner: char.ownerDaUsername
+          ? {
+              provider: "DEVIANTART",
+              providerAccountId: char.ownerDaUsername,
+            }
+          : undefined,
+        assignToSelf: false,
+        visibility: "PUBLIC",
+        traitReviewSource: "IMPORT",
+      };
+
+      if (dryRun) {
+        logger.info(`[DRY RUN] createCharacter("${char.name}")`);
+        logger.info(`[DRY RUN]   registryId: "${char.registryId}"`);
+        logger.info(`[DRY RUN]   variant: ${char.derivedVariantId ?? "default"} (${char.derivedRarity ?? "unknown rarity"})`);
+        if (char.ownerDaUsername) {
+          logger.info(`[DRY RUN]   pendingOwner: { provider: "DEVIANTART", providerAccountId: "${char.ownerDaUsername}" }`);
+        } else {
+          logger.info(`[DRY RUN]   pendingOwner: (none)`);
+        }
+        logger.info(`[DRY RUN]   traits (${char.mappedTraits.length}):`);
+        for (const t of char.mappedTraits) {
+          if ("enumValueId" in t) {
+            logger.info(`[DRY RUN]     ${t.sourceLine} -> traitId: ${t.traitId}, enumValueId: ${t.enumValueId}`);
+          } else {
+            logger.info(`[DRY RUN]     ${t.sourceLine} -> traitId: ${t.traitId}, text: "${t.textValue}"`);
+          }
+        }
+        if (manifest && uploadImages) {
+          const imgEntry = manifest.entries[char.numericId];
+          if (imgEntry) {
+            const hasOrig = imgEntry.original.status === "downloaded" && imgEntry.original.localPath;
+            const hasRef = imgEntry.currentRef.status === "downloaded" && imgEntry.currentRef.localPath;
+            if (hasOrig) {
+              logger.info(`[DRY RUN]   image (original): "${imgEntry.name} - Original", file: ${imgEntry.original.localPath}, artist: ${imgEntry.original.artistDaUsername ?? "(none)"}`);
+            }
+            if (hasRef) {
+              logger.info(`[DRY RUN]   image (ref): "${imgEntry.name} - Reference", file: ${imgEntry.currentRef.localPath}, artist: ${imgEntry.currentRef.artistDaUsername ?? "(none)"}`);
+            }
+            if (!hasOrig && !hasRef) {
+              logger.info(`[DRY RUN]   images: none available`);
+            }
+          } else {
+            logger.info(`[DRY RUN]   images: no manifest entry`);
+          }
+        }
+        entries.push({
           numericId: char.numericId,
           name: char.name,
           status: "created",
-          characterId: result.id,
-        };
-
-        // Upload images for newly created character
-        if (manifest && uploadImages) {
-          try {
-            const imgResult = await uploadCharacterImages(
-              client,
-              result.id,
-              char.numericId,
-              manifest,
-              imagesDir
-            );
-            entry.imageStatus = imgResult.imageStatus;
-            entry.imageError = imgResult.imageError;
-            if (imgResult.imageStatus === "uploaded") imagesUploaded++;
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err);
-            entry.imageStatus = "failed";
-            entry.imageError = msg;
-            imagesFailed++;
-            logger.warn(`Image upload failed for ${char.numericId}: ${msg}`);
-          }
-        }
-
-        entries.push(entry);
+        });
         created++;
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
+      } else {
+        try {
+          const result = await client.createCharacter(input);
+          const entry: ImportResultEntry = {
+            numericId: char.numericId,
+            name: char.name,
+            status: "created",
+            characterId: result.id,
+          };
 
-        // Check for unique constraint violation (idempotency)
-        if (
-          errorMsg.includes("unique") ||
-          errorMsg.includes("already exists") ||
-          errorMsg.includes("Unique constraint")
-        ) {
-          entries.push({
-            numericId: char.numericId,
-            name: char.name,
-            status: "skipped_existing",
-          });
-          skippedExisting++;
-        } else {
-          entries.push({
-            numericId: char.numericId,
-            name: char.name,
-            status: "failed",
-            error: errorMsg,
-          });
-          failed++;
-          logger.warn(`Failed to create ${char.numericId} (${char.name}): ${errorMsg}`);
+          // Upload images for newly created character
+          if (manifest && uploadImages) {
+            try {
+              const imgResult = await uploadCharacterImages(
+                client,
+                result.id,
+                char.numericId,
+                manifest,
+                imagesDir
+              );
+              entry.imageStatus = imgResult.imageStatus;
+              entry.imageError = imgResult.imageError;
+              if (imgResult.imageStatus === "uploaded") imagesUploaded++;
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              entry.imageStatus = "failed";
+              entry.imageError = msg;
+              imagesFailed++;
+              logger.warn(`Image upload failed for ${char.numericId}: ${msg}`);
+            }
+          }
+
+          entries.push(entry);
+          created++;
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
+
+          // Check for unique constraint violation (idempotency)
+          if (
+            errorMsg.includes("unique") ||
+            errorMsg.includes("already exists") ||
+            errorMsg.includes("Unique constraint")
+          ) {
+            entries.push({
+              numericId: char.numericId,
+              name: char.name,
+              status: "skipped_existing",
+            });
+            skippedExisting++;
+          } else {
+            entries.push({
+              numericId: char.numericId,
+              name: char.name,
+              status: "failed",
+              error: errorMsg,
+            });
+            failed++;
+            logger.warn(`Failed to create ${char.numericId} (${char.name}): ${errorMsg}`);
+          }
         }
       }
 
@@ -457,6 +575,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     // Print summary
     logger.info(`\nImport complete:`);
     logger.info(`  Created: ${created}`);
+    logger.info(`  Registry updated: ${registryUpdated}`);
     logger.info(`  Skipped (existing): ${skippedExisting}`);
     logger.info(`  Skipped (unmapped): ${skippedUnmapped}`);
     logger.info(`  Failed: ${failed}`);

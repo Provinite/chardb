@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const ImportStatusSchema = z.enum([
   "created",
+  "registry_updated",
   "skipped_existing",
   "skipped_unmapped",
   "failed",
@@ -35,6 +36,7 @@ export const ImportResultsSchema = z.object({
   speciesId: z.string(),
   totalProcessed: z.number(),
   created: z.number(),
+  registryUpdated: z.number().default(0),
   skippedExisting: z.number(),
   skippedUnmapped: z.number(),
   failed: z.number(),

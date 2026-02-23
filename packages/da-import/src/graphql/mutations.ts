@@ -27,4 +27,14 @@ export const MUTATIONS = {
       }
     }
   `,
+
+  updateCharacterRegistry: `
+    mutation UpdateCharacterRegistry($id: ID!, $input: UpdateCharacterRegistryInput!) {
+      updateCharacterRegistry(id: $id, input: $input) {
+        id
+        name
+        registryId
+      }
+    }
+  `,
 };

@@ -83,3 +83,11 @@ export interface SetCharacterMainMediaResponse {
     mainMediaId: string | null;
   };
 }
+
+export interface UpdateCharacterRegistryResponse {
+  updateCharacterRegistry: {
+    id: string;
+    name: string;
+    registryId: string | null;
+  };
+}

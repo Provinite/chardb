@@ -13,6 +13,7 @@ import type {
   CharacterNode,
   UploadImageResponse,
   SetCharacterMainMediaResponse,
+  UpdateCharacterRegistryResponse,
 } from "./types";
 
 interface GraphQLError {
@@ -211,5 +212,16 @@ export class CharDBClient {
       MUTATIONS.setCharacterMainMedia,
       { id: characterId, input: { mediaId } }
     );
+  }
+
+  async updateCharacterRegistry(
+    characterId: string,
+    input: { registryId?: string; speciesVariantId?: string }
+  ): Promise<UpdateCharacterRegistryResponse["updateCharacterRegistry"]> {
+    const data = await this.request<UpdateCharacterRegistryResponse>(
+      MUTATIONS.updateCharacterRegistry,
+      { id: characterId, input }
+    );
+    return data.updateCharacterRegistry;
   }
 }
