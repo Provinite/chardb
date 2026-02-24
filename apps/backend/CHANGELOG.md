@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **DeviantArt pending ownership auto-claim**: DeviantArt usernames are now resolved to UUIDs via the DA API before storing in `pending_ownership`, fixing a mismatch that prevented auto-claim from ever working for DA accounts (#208)
+- **Stale character return after creation**: `create()` now re-fetches the character after auto-claim so the response includes the correct `ownerId`
+
+### Added
+
+- **DeviantArtService**: New service for resolving DeviantArt usernames to UUIDs via client_credentials OAuth flow, with token caching
+
 ## [v9.2.1] - 2026-02-23
 
 ## [v9.2.0] - 2026-02-22
