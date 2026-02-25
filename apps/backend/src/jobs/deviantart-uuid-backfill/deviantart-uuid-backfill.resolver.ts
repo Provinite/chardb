@@ -1,6 +1,5 @@
 import { Resolver, Mutation, Subscription, Args } from "@nestjs/graphql";
 import { UseGuards, Inject, ConflictException } from "@nestjs/common";
-import { v4 as uuidv4 } from "uuid";
 import { PubSub } from "graphql-subscriptions";
 import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
 import { AllowGlobalAdmin } from "../../auth/decorators/AllowGlobalAdmin";
@@ -15,27 +14,27 @@ export class DeviantartUuidBackfillResolver {
     @Inject(PUB_SUB) private pubSub: PubSub,
   ) {}
 
-  @Mutation(() => String, {
+  @Mutation(() => Boolean, {
     description:
-      "Start a DeviantArt UUID backfill job. Returns a job ID to pass to the subscription.",
+      "Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this).",
   })
   @AllowGlobalAdmin()
   @UseGuards(JwtAuthGuard)
-  async runDeviantartUuidBackfill(): Promise<string> {
+  async runDeviantartUuidBackfill(
+    @Args("jobId") jobId: string,
+  ): Promise<boolean> {
     if (this.backfillService.isRunning) {
       throw new ConflictException(
         "A DeviantArt UUID backfill job is already running",
       );
     }
 
-    const jobId = uuidv4();
-
     // Fire-and-forget — don't await
     this.backfillService.run(jobId).catch(() => {
       // Errors are logged inside the service; nothing to do here
     });
 
-    return jobId;
+    return true;
   }
 
   @Subscription(() => DeviantartUuidBackfillProgress, {

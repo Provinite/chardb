@@ -1583,9 +1583,9 @@ type Mutation {
   revertTraitReview(input: RevertTraitReviewInput!): TraitReview!
 
   """
-  Start a DeviantArt UUID backfill job. Returns a job ID to pass to the subscription.
+  Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this).
   """
-  runDeviantartUuidBackfill: String!
+  runDeviantartUuidBackfill(jobId: String!): Boolean!
 
   """Sets or clears the main media for a character"""
   setCharacterMainMedia(
