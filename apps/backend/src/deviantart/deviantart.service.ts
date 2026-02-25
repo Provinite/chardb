@@ -55,6 +55,13 @@ export class DeviantArtService {
       );
     }
 
+    return this.fetchUserProfile(username, false);
+  }
+
+  private async fetchUserProfile(
+    username: string,
+    isRetry: boolean,
+  ): Promise<string> {
     const token = await this.getAccessToken();
 
     try {
@@ -66,6 +73,13 @@ export class DeviantArtService {
           },
         },
       );
+
+      // Token expired unexpectedly — clear cache and retry once
+      if (response.status === 401 && !isRetry) {
+        this.logger.warn("DeviantArt token rejected (401), refreshing and retrying");
+        this.cachedToken = null;
+        return this.fetchUserProfile(username, true);
+      }
 
       if (response.status === 404) {
         throw new NotFoundException(
