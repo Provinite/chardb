@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **DeviantArt UUID backfill job**: Admin-triggered async job to backfill UUIDs on existing pending ownership records that have raw DA usernames, with auto-claim and progress reporting via GraphQL subscription
+- **GraphQL subscriptions**: WebSocket support via `graphql-ws` for real-time progress updates
 - **DeviantArtService**: New service for resolving DeviantArt usernames to UUIDs via client_credentials OAuth flow, with token caching
 
 ## [v9.2.1] - 2026-02-23
