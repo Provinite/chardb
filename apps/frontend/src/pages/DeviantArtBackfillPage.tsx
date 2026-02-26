@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -119,11 +120,9 @@ const LogContainer = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
-const LogEntry = styled.div<{ $success: boolean }>`
-  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
+const LogEntry = styled.div`
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.md}`};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  background: ${({ theme, $success }) => $success ? 'transparent' : `${theme.colors.error}10`};
-  border-left: 3px solid ${({ theme, $success }) => $success ? theme.colors.success : theme.colors.error};
 
   &:last-child {
     border-bottom: none;
@@ -132,7 +131,6 @@ const LogEntry = styled.div<{ $success: boolean }>`
 
 const LogEntryHeader = styled.div<{ $success: boolean }>`
   color: ${({ theme, $success }) => $success ? theme.colors.success : theme.colors.error};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
 `;
 
 const LogLabel = styled.span`
@@ -141,11 +139,20 @@ const LogLabel = styled.span`
 `;
 
 const LogError = styled.div`
-  color: ${({ theme }) => theme.colors.error};
-  margin-top: ${({ theme }) => theme.spacing.xs};
+  color: ${({ theme }) => theme.colors.text.muted};
   padding-left: ${({ theme }) => theme.spacing.md};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   word-break: break-word;
+`;
+
+const CharLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
+  margin-left: ${({ theme }) => theme.spacing.sm};
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 const DoneMessage = styled.div`
@@ -277,12 +284,15 @@ export function DeviantArtBackfillPage() {
           {records.length > 0 && (
             <LogContainer ref={logRef}>
               {records.map((record) => (
-                <LogEntry key={record.pendingOwnershipId} $success={record.success}>
+                <LogEntry key={record.pendingOwnershipId}>
                   <LogEntryHeader $success={record.success}>
                     {record.success ? '✓' : '✗'}{' '}
                     {record.oldValue}
                     {record.success && <> → {record.newValue}</>}
                     {record.claimed && <LogLabel>(auto-claimed)</LogLabel>}
+                    {record.characterId && (
+                      <CharLink to={`/character/${record.characterId}`}>view</CharLink>
+                    )}
                   </LogEntryHeader>
                   {record.error && <LogError>{record.error}</LogError>}
                 </LogEntry>
