@@ -120,18 +120,32 @@ const LogContainer = styled.div`
 `;
 
 const LogEntry = styled.div<{ $success: boolean }>`
-  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.md}`};
+  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  color: ${({ theme, $success }) => $success ? theme.colors.success : theme.colors.error};
+  background: ${({ theme, $success }) => $success ? 'transparent' : `${theme.colors.error}10`};
+  border-left: 3px solid ${({ theme, $success }) => $success ? theme.colors.success : theme.colors.error};
 
   &:last-child {
     border-bottom: none;
   }
 `;
 
+const LogEntryHeader = styled.div<{ $success: boolean }>`
+  color: ${({ theme, $success }) => $success ? theme.colors.success : theme.colors.error};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+`;
+
 const LogLabel = styled.span`
   color: ${({ theme }) => theme.colors.text.muted};
   margin-left: ${({ theme }) => theme.spacing.sm};
+`;
+
+const LogError = styled.div`
+  color: ${({ theme }) => theme.colors.error};
+  margin-top: ${({ theme }) => theme.spacing.xs};
+  padding-left: ${({ theme }) => theme.spacing.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  word-break: break-word;
 `;
 
 const DoneMessage = styled.div`
@@ -264,10 +278,13 @@ export function DeviantArtBackfillPage() {
             <LogContainer ref={logRef}>
               {records.map((record) => (
                 <LogEntry key={record.pendingOwnershipId} $success={record.success}>
-                  {record.success ? '✓' : '✗'}{' '}
-                  {record.oldValue} → {record.newValue ?? 'N/A'}
-                  {record.claimed && <LogLabel>(auto-claimed)</LogLabel>}
-                  {record.error && <LogLabel>— {record.error}</LogLabel>}
+                  <LogEntryHeader $success={record.success}>
+                    {record.success ? '✓' : '✗'}{' '}
+                    {record.oldValue}
+                    {record.success && <> → {record.newValue}</>}
+                    {record.claimed && <LogLabel>(auto-claimed)</LogLabel>}
+                  </LogEntryHeader>
+                  {record.error && <LogError>{record.error}</LogError>}
                 </LogEntry>
               ))}
             </LogContainer>
