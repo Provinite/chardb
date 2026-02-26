@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.3.0] - 2026-02-26
+
 ### Added
 
 - **DeviantArt UUID Backfill admin UI**: Site admins can trigger and monitor the DA username-to-UUID backfill job with real-time progress bar, stats, scrollable log with character links, and cancel support

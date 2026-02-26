@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.3.0] - 2026-02-26
+
 ### Fixed
 
 - **DeviantArt pending ownership auto-claim**: DeviantArt usernames are now resolved to UUIDs via the DA API before storing in `pending_ownership`, fixing a mismatch that prevented auto-claim from ever working for DA accounts (#208)
