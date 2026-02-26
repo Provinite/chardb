@@ -23,10 +23,10 @@ export class DeviantartUuidBackfillService {
   private running = false;
 
   constructor(
-    private prisma: DatabaseService,
-    private deviantArtService: DeviantArtService,
-    private pendingOwnershipService: PendingOwnershipService,
-    @Inject(PUB_SUB) private pubSub: PubSub,
+    private readonly db: DatabaseService,
+    private readonly deviantArtService: DeviantArtService,
+    private readonly pendingOwnershipService: PendingOwnershipService,
+    @Inject(PUB_SUB) private readonly pubSub: PubSub,
   ) {}
 
   get isRunning(): boolean {
@@ -51,7 +51,7 @@ export class DeviantartUuidBackfillService {
 
   private async executeBackfill(jobId: string): Promise<void> {
     // Find all unclaimed DA pending_ownership records with username-style IDs
-    const candidates = await this.prisma.pendingOwnership.findMany({
+    const candidates = await this.db.pendingOwnership.findMany({
       where: {
         provider: ExternalAccountProvider.DEVIANTART,
         claimedAt: null,
@@ -102,7 +102,7 @@ export class DeviantartUuidBackfillService {
         recordResult.newValue = uuid;
 
         // Transactionally update the record and attempt auto-claim
-        const claimResult = await this.prisma.$transaction(
+        const claimResult = await this.db.$transaction(
           async (tx: Prisma.TransactionClient) => {
             return this.pendingOwnershipService.updateProviderIdAndClaim(
               tx,

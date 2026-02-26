@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { z } from "zod";
 
 interface CachedToken {
   token: string;
@@ -13,6 +14,12 @@ interface CachedToken {
 
 const MAX_429_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 5000;
+
+const deviantArtProfileResponseSchema = z.object({
+  user: z.object({
+    userid: z.string(),
+  }),
+});
 
 /**
  * DeviantArt API service for username resolution.
@@ -27,7 +34,7 @@ export class DeviantArtService {
   private readonly isConfigured: boolean;
   private cachedToken: CachedToken | null = null;
 
-  constructor(private configService: ConfigService) {
+  constructor(private readonly configService: ConfigService) {
     this.clientId = this.configService.get<string>("DEVIANTART_CLIENT_ID");
     this.clientSecret = this.configService.get<string>(
       "DEVIANTART_CLIENT_SECRET",
@@ -133,16 +140,18 @@ export class DeviantArtService {
       }
 
       const data = await response.json();
-      const uuid = data?.user?.userid;
+      const parsed = deviantArtProfileResponseSchema.safeParse(data);
 
-      if (!uuid) {
+      if (!parsed.success) {
         this.logger.error(
-          `DeviantArt API returned unexpected response for "${username}": missing user.userid`,
+          `DeviantArt API returned unexpected response for "${username}": ${parsed.error.message}`,
         );
         throw new BadRequestException(
           `Failed to resolve DeviantArt user "${username}". Unexpected API response.`,
         );
       }
+
+      const uuid = parsed.data.user.userid;
 
       this.logger.debug(`Resolved DeviantArt user "${username}" to UUID ${uuid}`);
       return uuid;
