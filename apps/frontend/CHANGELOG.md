@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **DeviantArt UUID Backfill admin UI**: Site admins can trigger and monitor the DA username-to-UUID backfill job with real-time progress bar, stats, scrollable log with character links, and cancel support
+
+### Fixed
+
+- **Pending ownership display name**: Character page now shows the display identifier (username) instead of the raw provider account ID for pending ownership badges
+
 ## [v9.2.1] - 2026-02-23
 
 ### Fixed

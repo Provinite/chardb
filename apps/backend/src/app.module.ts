@@ -34,9 +34,11 @@ import { ItemsModule } from "./items/items.module";
 import { CommunityColorsModule } from "./community-colors/community-colors.module";
 import { PendingOwnershipModule } from "./pending-ownership/pending-ownership.module";
 import { DiscordModule } from "./discord/discord.module";
+import { DeviantArtModule } from "./deviantart/deviantart.module";
 import { QueueConsumerModule } from "./queue-consumer/queue-consumer.module";
 import { ImageModerationModule } from "./image-moderation/image-moderation.module";
 import { TraitReviewModule } from "./trait-review/trait-review.module";
+import { DeviantartUuidBackfillModule } from "./jobs/deviantart-uuid-backfill/deviantart-uuid-backfill.module";
 import { Request, Response } from "express";
 
 @Module({
@@ -63,6 +65,9 @@ import { Request, Response } from "express";
       graphiql: process.env.GRAPHQL_PLAYGROUND === "true",
       introspection: process.env.GRAPHQL_INTROSPECTION === "true",
       fieldResolverEnhancers: ["guards", "interceptors", "filters"],
+      subscriptions: {
+        "graphql-ws": true,
+      },
       context: ({ req, res }: { req: Request; res: Response }) => ({
         req,
         res,
@@ -225,9 +230,11 @@ import { Request, Response } from "express";
     CommunityColorsModule,
     PendingOwnershipModule,
     DiscordModule,
+    DeviantArtModule,
     QueueConsumerModule,
     ImageModerationModule,
     TraitReviewModule,
+    DeviantartUuidBackfillModule,
   ],
 })
 export class AppModule {}

@@ -706,6 +706,30 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type DeviantartUuidBackfillProgress {
+  cancelled: Boolean!
+  claimed: Int!
+  currentRecord: DeviantartUuidBackfillRecordResult
+  done: Boolean!
+  failed: Int!
+  jobId: String!
+  processed: Int!
+  succeeded: Int!
+  total: Int!
+}
+
+type DeviantartUuidBackfillRecordResult {
+  characterId: ID
+  claimed: Boolean!
+  claimedByUserId: ID
+  error: String
+  itemId: ID
+  newValue: String
+  oldValue: String!
+  pendingOwnershipId: ID!
+  success: Boolean!
+}
+
 type DiscordGuildInfo {
   """Whether the bot has access to this guild"""
   botHasAccess: Boolean!
@@ -1330,6 +1354,9 @@ type Mutation {
   """
   assignCharacterSpecies(id: ID!, input: AssignCharacterSpeciesInput!): Character!
 
+  """Cancel a running DeviantArt UUID backfill job."""
+  cancelDeviantartUuidBackfill: Boolean!
+
   """Claim an invite code to join a community"""
   claimInviteCode(
     """Invite code claim data"""
@@ -1558,6 +1585,11 @@ type Mutation {
   Revert a trait review, restoring previous trait values (moderator action)
   """
   revertTraitReview(input: RevertTraitReviewInput!): TraitReview!
+
+  """
+  Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this).
+  """
+  runDeviantartUuidBackfill(jobId: String!): Boolean!
 
   """Sets or clears the main media for a character"""
   setCharacterMainMedia(
@@ -2539,6 +2571,10 @@ type SpeciesVariantConnection {
 
   """Total number of species variants available"""
   totalCount: Float!
+}
+
+type Subscription {
+  deviantartUuidBackfillProgress(jobId: String!): DeviantartUuidBackfillProgress!
 }
 
 type Tag {

@@ -545,7 +545,7 @@ export const CharacterPage: React.FC = () => {
                 {character.pendingOwnership.provider === "DISCORD"
                   ? "🎮"
                   : "🎨"}{" "}
-                {character.pendingOwnership.providerAccountId}
+                {character.pendingOwnership.displayIdentifier ?? character.pendingOwnership.providerAccountId}
               </MetaBadge>
             )}
             {character.isSellable && (

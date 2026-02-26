@@ -58,6 +58,7 @@ import { CommunityPage } from "./pages/CommunityPage";
 import { CommunityCharactersPage } from "./pages/CommunityCharactersPage";
 import { SpeciesPage } from "./pages/SpeciesPage";
 import { EditSpeciesPage } from "./pages/EditSpeciesPage";
+import { DeviantArtBackfillPage } from "./pages/DeviantArtBackfillPage";
 import { DeviantArtCallbackPage } from "./pages/DeviantArtCallbackPage";
 import { DiscordCallbackPage } from "./pages/DiscordCallbackPage";
 import { CommunityItemsAdminPage } from "./pages/CommunityItemsAdminPage";
@@ -283,6 +284,14 @@ function App() {
           element={
             <ProtectedRoute>
               <SiteInviteCodesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/deviantart-backfill"
+          element={
+            <ProtectedRoute>
+              <DeviantArtBackfillPage />
             </ProtectedRoute>
           }
         />

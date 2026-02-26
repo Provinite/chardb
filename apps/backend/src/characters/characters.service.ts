@@ -8,6 +8,7 @@ import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
 import { DiscordService } from "../discord/discord.service";
+import { DeviantArtService } from "../deviantart/deviantart.service";
 import { PermissionService } from "../auth/PermissionService";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { Prisma, Visibility, ExternalAccountProvider, ModerationStatus, TraitReviewSource } from "@chardb/database";
@@ -68,6 +69,7 @@ export class CharactersService {
     private readonly tagsService: TagsService,
     private readonly pendingOwnershipService: PendingOwnershipService,
     private readonly discordService: DiscordService,
+    private readonly deviantArtService: DeviantArtService,
     private readonly permissionService: PermissionService,
     private readonly traitReviewService: TraitReviewService,
   ) {}
@@ -135,9 +137,13 @@ export class CharactersService {
           pendingOwner.providerAccountId,
         );
       } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
-        // DeviantArt uses usernames, so always store as displayIdentifier
-        displayIdentifier = pendingOwner.providerAccountId;
-        resolvedAccountId = pendingOwner.providerAccountId;
+        // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
+        // Resolve the username to a UUID so it matches external_accounts.
+        const resolved = await this.deviantArtService.resolveUsername(
+          pendingOwner.providerAccountId,
+        );
+        resolvedAccountId = resolved.uuid;
+        displayIdentifier = resolved.username;
       }
 
       // Note: Auto-claim logic is now handled inside createForCharacter
@@ -198,8 +204,14 @@ export class CharactersService {
       );
     }
 
-    // Return the created character
-    return character;
+    // Return the created character (re-fetch to get latest state including auto-claim)
+    const finalCharacter = await this.db.character.findUnique({
+      where: { id: character.id },
+    });
+    if (!finalCharacter) {
+      throw new NotFoundException("Character not found after creation");
+    }
+    return finalCharacter;
   }
 
   async findAll(filters: CharacterServiceFilters = {}, userId?: string) {
@@ -694,8 +706,13 @@ export class CharactersService {
             providerAccountId,
           );
         } else if (provider === ExternalAccountProvider.DEVIANTART) {
-          // DeviantArt uses usernames, so always store as displayIdentifier
-          displayIdentifier = providerAccountId;
+          // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
+          // Resolve the username to a UUID so it matches external_accounts.
+          const resolved = await this.deviantArtService.resolveUsername(
+            providerAccountId,
+          );
+          resolvedAccountId = resolved.uuid;
+          displayIdentifier = resolved.username;
         }
 
         // Remove old pending ownership if exists
@@ -866,7 +883,13 @@ export class CharactersService {
             providerAccountId,
           );
         } else if (provider === ExternalAccountProvider.DEVIANTART) {
-          displayIdentifier = providerAccountId;
+          // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
+          // Resolve the username to a UUID so it matches external_accounts.
+          const resolved = await this.deviantArtService.resolveUsername(
+            providerAccountId,
+          );
+          resolvedAccountId = resolved.uuid;
+          displayIdentifier = resolved.username;
         }
 
         // Remove old pending ownership if exists
