@@ -3064,6 +3064,7 @@ __metadata:
     eslint-plugin-react-refresh: "npm:^0.4.3"
     framer-motion: "npm:^10.16.0"
     graphql: "npm:^16.8.0"
+    graphql-ws: "npm:^6.0.7"
     jsdom: "npm:^26.1.0"
     lucide-react: "npm:^0.513.0"
     react: "npm:^18.2.0"

@@ -1,10 +1,26 @@
-import { ApolloClient, InMemoryCache, createHttpLink, from } from '@apollo/client';
+import { ApolloClient, InMemoryCache, createHttpLink, from, split } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { getMainDefinition } from '@apollo/client/utilities';
+import { createClient } from 'graphql-ws';
+
+const httpUrl = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/graphql` : 'http://localhost:4000/graphql';
+const wsUrl = httpUrl.replace(/^http/, 'ws');
 
 const httpLink = createHttpLink({
-  uri: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/graphql` : 'http://localhost:4000/graphql',
+  uri: httpUrl,
 });
+
+const wsLink = new GraphQLWsLink(
+  createClient({
+    url: wsUrl,
+    connectionParams: () => {
+      const token = localStorage.getItem('accessToken');
+      return token ? { authorization: `Bearer ${token}` } : {};
+    },
+  }),
+);
 
 const authLink = setContext((_, { headers }) => {
   const token = localStorage.getItem('accessToken');
@@ -38,8 +54,17 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
   }
 });
 
+const splitLink = split(
+  ({ query }) => {
+    const definition = getMainDefinition(query);
+    return definition.kind === 'OperationDefinition' && definition.operation === 'subscription';
+  },
+  wsLink,
+  from([errorLink, authLink, httpLink]),
+);
+
 export const client = new ApolloClient({
-  link: from([errorLink, authLink, httpLink]),
+  link: splitLink,
   cache: new InMemoryCache({
     typePolicies: {
       Query: {

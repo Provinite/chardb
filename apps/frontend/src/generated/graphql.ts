@@ -620,6 +620,31 @@ export type CreateTraitListEntryInput = {
   valueType: TraitValueType;
 };
 
+export type DeviantartUuidBackfillProgress = {
+  __typename?: 'DeviantartUuidBackfillProgress';
+  claimed: Scalars['Int']['output'];
+  currentRecord: Maybe<DeviantartUuidBackfillRecordResult>;
+  done: Scalars['Boolean']['output'];
+  failed: Scalars['Int']['output'];
+  jobId: Scalars['String']['output'];
+  processed: Scalars['Int']['output'];
+  succeeded: Scalars['Int']['output'];
+  total: Scalars['Int']['output'];
+};
+
+export type DeviantartUuidBackfillRecordResult = {
+  __typename?: 'DeviantartUuidBackfillRecordResult';
+  characterId: Maybe<Scalars['ID']['output']>;
+  claimed: Scalars['Boolean']['output'];
+  claimedByUserId: Maybe<Scalars['ID']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  itemId: Maybe<Scalars['ID']['output']>;
+  newValue: Maybe<Scalars['String']['output']>;
+  oldValue: Scalars['String']['output'];
+  pendingOwnershipId: Scalars['ID']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type DiscordGuildInfo = {
   __typename?: 'DiscordGuildInfo';
   /** Whether the bot has access to this guild */
@@ -1256,6 +1281,8 @@ export type Mutation = {
   respondToCommunityInvitation: CommunityInvitation;
   /** Revert a trait review, restoring previous trait values (moderator action) */
   revertTraitReview: TraitReview;
+  /** Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this). */
+  runDeviantartUuidBackfill: Scalars['Boolean']['output'];
   /** Sets or clears the main media for a character */
   setCharacterMainMedia: Character;
   signup: AuthPayload;
@@ -1597,6 +1624,11 @@ export type MutationRespondToCommunityInvitationArgs = {
 
 export type MutationRevertTraitReviewArgs = {
   input: RevertTraitReviewInput;
+};
+
+
+export type MutationRunDeviantartUuidBackfillArgs = {
+  jobId: Scalars['String']['input'];
 };
 
 
@@ -2676,6 +2708,16 @@ export type SpeciesVariantConnection = {
   totalCount: Scalars['Float']['output'];
 };
 
+export type Subscription = {
+  __typename?: 'Subscription';
+  deviantartUuidBackfillProgress: DeviantartUuidBackfillProgress;
+};
+
+
+export type SubscriptionDeviantartUuidBackfillProgressArgs = {
+  jobId: Scalars['String']['input'];
+};
+
 export type Tag = {
   __typename?: 'Tag';
   category: Maybe<Scalars['String']['output']>;
@@ -3493,6 +3535,20 @@ export type DeleteCommunityColorMutationVariables = Exact<{
 
 
 export type DeleteCommunityColorMutation = { __typename?: 'Mutation', deleteCommunityColor: boolean };
+
+export type RunDeviantartUuidBackfillMutationVariables = Exact<{
+  jobId: Scalars['String']['input'];
+}>;
+
+
+export type RunDeviantartUuidBackfillMutation = { __typename?: 'Mutation', runDeviantartUuidBackfill: boolean };
+
+export type DeviantartUuidBackfillProgressSubscriptionVariables = Exact<{
+  jobId: Scalars['String']['input'];
+}>;
+
+
+export type DeviantartUuidBackfillProgressSubscription = { __typename?: 'Subscription', deviantartUuidBackfillProgress: { __typename?: 'DeviantartUuidBackfillProgress', jobId: string, total: number, processed: number, succeeded: number, failed: number, claimed: number, done: boolean, currentRecord: { __typename?: 'DeviantartUuidBackfillRecordResult', pendingOwnershipId: string, characterId: string | null, itemId: string | null, oldValue: string, newValue: string | null, success: boolean, error: string | null, claimed: boolean, claimedByUserId: string | null } | null } };
 
 export type SpeciesWithTraitsAndEnumValuesQueryVariables = Exact<{
   speciesId: Scalars['ID']['input'];
@@ -6500,6 +6556,84 @@ export function useDeleteCommunityColorMutation(baseOptions?: Apollo.MutationHoo
 export type DeleteCommunityColorMutationHookResult = ReturnType<typeof useDeleteCommunityColorMutation>;
 export type DeleteCommunityColorMutationResult = Apollo.MutationResult<DeleteCommunityColorMutation>;
 export type DeleteCommunityColorMutationOptions = Apollo.BaseMutationOptions<DeleteCommunityColorMutation, DeleteCommunityColorMutationVariables>;
+export const RunDeviantartUuidBackfillDocument = gql`
+    mutation RunDeviantartUuidBackfill($jobId: String!) {
+  runDeviantartUuidBackfill(jobId: $jobId)
+}
+    `;
+export type RunDeviantartUuidBackfillMutationFn = Apollo.MutationFunction<RunDeviantartUuidBackfillMutation, RunDeviantartUuidBackfillMutationVariables>;
+
+/**
+ * __useRunDeviantartUuidBackfillMutation__
+ *
+ * To run a mutation, you first call `useRunDeviantartUuidBackfillMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRunDeviantartUuidBackfillMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [runDeviantartUuidBackfillMutation, { data, loading, error }] = useRunDeviantartUuidBackfillMutation({
+ *   variables: {
+ *      jobId: // value for 'jobId'
+ *   },
+ * });
+ */
+export function useRunDeviantartUuidBackfillMutation(baseOptions?: Apollo.MutationHookOptions<RunDeviantartUuidBackfillMutation, RunDeviantartUuidBackfillMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RunDeviantartUuidBackfillMutation, RunDeviantartUuidBackfillMutationVariables>(RunDeviantartUuidBackfillDocument, options);
+      }
+export type RunDeviantartUuidBackfillMutationHookResult = ReturnType<typeof useRunDeviantartUuidBackfillMutation>;
+export type RunDeviantartUuidBackfillMutationResult = Apollo.MutationResult<RunDeviantartUuidBackfillMutation>;
+export type RunDeviantartUuidBackfillMutationOptions = Apollo.BaseMutationOptions<RunDeviantartUuidBackfillMutation, RunDeviantartUuidBackfillMutationVariables>;
+export const DeviantartUuidBackfillProgressDocument = gql`
+    subscription DeviantartUuidBackfillProgress($jobId: String!) {
+  deviantartUuidBackfillProgress(jobId: $jobId) {
+    jobId
+    total
+    processed
+    succeeded
+    failed
+    claimed
+    currentRecord {
+      pendingOwnershipId
+      characterId
+      itemId
+      oldValue
+      newValue
+      success
+      error
+      claimed
+      claimedByUserId
+    }
+    done
+  }
+}
+    `;
+
+/**
+ * __useDeviantartUuidBackfillProgressSubscription__
+ *
+ * To run a query within a React component, call `useDeviantartUuidBackfillProgressSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useDeviantartUuidBackfillProgressSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDeviantartUuidBackfillProgressSubscription({
+ *   variables: {
+ *      jobId: // value for 'jobId'
+ *   },
+ * });
+ */
+export function useDeviantartUuidBackfillProgressSubscription(baseOptions: Apollo.SubscriptionHookOptions<DeviantartUuidBackfillProgressSubscription, DeviantartUuidBackfillProgressSubscriptionVariables> & ({ variables: DeviantartUuidBackfillProgressSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<DeviantartUuidBackfillProgressSubscription, DeviantartUuidBackfillProgressSubscriptionVariables>(DeviantartUuidBackfillProgressDocument, options);
+      }
+export type DeviantartUuidBackfillProgressSubscriptionHookResult = ReturnType<typeof useDeviantartUuidBackfillProgressSubscription>;
+export type DeviantartUuidBackfillProgressSubscriptionResult = Apollo.SubscriptionResult<DeviantartUuidBackfillProgressSubscription>;
 export const SpeciesWithTraitsAndEnumValuesDocument = gql`
     query SpeciesWithTraitsAndEnumValues($speciesId: ID!) {
   speciesById(id: $speciesId) {

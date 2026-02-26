@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { Settings, Users, Shield, Database, Activity } from 'lucide-react';
+import { Settings, Users, Shield, Database, Activity, RefreshCw } from 'lucide-react';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -173,6 +173,16 @@ export function SiteAdminPage() {
           <CardTitle>Audit Logs</CardTitle>
           <CardDescription>
             Security monitoring and activity logs
+          </CardDescription>
+        </AdminCard>
+
+        <AdminCard to="/admin/deviantart-backfill">
+          <CardIcon>
+            <RefreshCw size={24} />
+          </CardIcon>
+          <CardTitle>DA UUID Backfill</CardTitle>
+          <CardDescription>
+            Resolve DeviantArt usernames to UUIDs in pending ownership records
           </CardDescription>
         </AdminCard>
       </Grid>
