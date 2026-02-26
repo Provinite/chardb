@@ -1,6 +1,9 @@
 import { Injectable, Logger, ConflictException, Inject } from "@nestjs/common";
 import { DatabaseService } from "../../database/database.service";
-import { DeviantArtService } from "../../deviantart/deviantart.service";
+import {
+  DeviantArtService,
+  type ResolvedDeviantArtUser,
+} from "../../deviantart/deviantart.service";
 import { PendingOwnershipService } from "../../pending-ownership/pending-ownership.service";
 import { PubSub } from "graphql-subscriptions";
 import { PUB_SUB } from "../../common/pubsub.provider";
@@ -13,7 +16,8 @@ import {
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const RATE_LIMIT_DELAY_MS = 2000;
+const RATE_LIMIT_DELAY_MS = 1000;
+const RATE_LIMIT_JITTER_MS = 150;
 
 const PROGRESS_TOPIC = "DEVIANTART_UUID_BACKFILL_PROGRESS";
 
@@ -64,7 +68,7 @@ export class DeviantartUuidBackfillService {
     );
 
     this.logger.log(
-      `Backfill job ${jobId}: Found ${records.length} candidate records (of ${candidates.length} total unclaimed DA records)`,
+      `[DeviantArtBackFill] job ${jobId}: Found ${records.length} candidate records (of ${candidates.length} total unclaimed DA records)`,
     );
 
     const progress: DeviantartUuidBackfillProgress = {
@@ -80,6 +84,9 @@ export class DeviantartUuidBackfillService {
     // Publish initial progress
     await this.publishProgress(progress);
 
+    // Cache DA username → resolved user to avoid redundant API calls
+    const resolvedCache = new Map<string, ResolvedDeviantArtUser>();
+
     for (const record of records) {
       const recordResult: DeviantartUuidBackfillRecordResult = {
         pendingOwnershipId: record.id,
@@ -91,15 +98,19 @@ export class DeviantartUuidBackfillService {
       };
 
       try {
-        // Rate limit: wait before each API call
-        await this.delay(RATE_LIMIT_DELAY_MS);
+        const username = record.providerAccountId;
+        let resolved = resolvedCache.get(username);
 
-        // Resolve username to UUID
-        const uuid = await this.deviantArtService.resolveUsernameToUuid(
-          record.providerAccountId,
-        );
+        if (!resolved) {
+          // Rate limit only when making an actual API call
+          const jitter = Math.floor(Math.random() * RATE_LIMIT_JITTER_MS * 2) - RATE_LIMIT_JITTER_MS;
+          await this.delay(RATE_LIMIT_DELAY_MS + jitter);
 
-        recordResult.newValue = uuid;
+          resolved = await this.deviantArtService.resolveUsername(username);
+          resolvedCache.set(username, resolved);
+        }
+
+        recordResult.newValue = resolved.uuid;
 
         // Transactionally update the record and attempt auto-claim
         const claimResult = await this.db.$transaction(
@@ -107,12 +118,13 @@ export class DeviantartUuidBackfillService {
             return this.pendingOwnershipService.updateProviderIdAndClaim(
               tx,
               record.id,
-              uuid,
+              resolved.uuid,
               ExternalAccountProvider.DEVIANTART,
               {
                 characterId: record.characterId ?? undefined,
                 itemId: record.itemId ?? undefined,
               },
+              resolved.username,
             );
           },
         );
@@ -129,7 +141,7 @@ export class DeviantartUuidBackfillService {
         }
 
         this.logger.log(
-          `Backfill job ${jobId}: Resolved "${record.providerAccountId}" → ${uuid}${claimResult.claimed ? " (auto-claimed)" : ""}`,
+          `[DeviantArtBackFill] job ${jobId}: Resolved "${record.providerAccountId}" → ${resolved.uuid}${claimResult.claimed ? " (auto-claimed)" : ""}`,
         );
       } catch (error) {
         const errorMessage =
@@ -138,7 +150,7 @@ export class DeviantartUuidBackfillService {
         progress.failed++;
 
         this.logger.warn(
-          `Backfill job ${jobId}: Failed to resolve "${record.providerAccountId}": ${errorMessage}`,
+          `[DeviantArtBackFill] job ${jobId}: Failed to resolve "${record.providerAccountId}": ${errorMessage}`,
         );
       }
 
@@ -153,7 +165,7 @@ export class DeviantartUuidBackfillService {
     await this.publishProgress(progress);
 
     this.logger.log(
-      `Backfill job ${jobId}: Complete. ${progress.succeeded} succeeded, ${progress.failed} failed, ${progress.claimed} auto-claimed.`,
+      `[DeviantArtBackFill] job ${jobId}: Complete. ${progress.succeeded} succeeded, ${progress.failed} failed, ${progress.claimed} auto-claimed.`,
     );
   }
 

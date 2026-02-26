@@ -139,10 +139,11 @@ export class CharactersService {
       } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
         // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
         // Resolve the username to a UUID so it matches external_accounts.
-        displayIdentifier = pendingOwner.providerAccountId;
-        resolvedAccountId = await this.deviantArtService.resolveUsernameToUuid(
+        const resolved = await this.deviantArtService.resolveUsername(
           pendingOwner.providerAccountId,
         );
+        resolvedAccountId = resolved.uuid;
+        displayIdentifier = resolved.username;
       }
 
       // Note: Auto-claim logic is now handled inside createForCharacter
@@ -707,10 +708,11 @@ export class CharactersService {
         } else if (provider === ExternalAccountProvider.DEVIANTART) {
           // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
           // Resolve the username to a UUID so it matches external_accounts.
-          displayIdentifier = providerAccountId;
-          resolvedAccountId = await this.deviantArtService.resolveUsernameToUuid(
+          const resolved = await this.deviantArtService.resolveUsername(
             providerAccountId,
           );
+          resolvedAccountId = resolved.uuid;
+          displayIdentifier = resolved.username;
         }
 
         // Remove old pending ownership if exists
@@ -883,10 +885,11 @@ export class CharactersService {
         } else if (provider === ExternalAccountProvider.DEVIANTART) {
           // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
           // Resolve the username to a UUID so it matches external_accounts.
-          displayIdentifier = providerAccountId;
-          resolvedAccountId = await this.deviantArtService.resolveUsernameToUuid(
+          const resolved = await this.deviantArtService.resolveUsername(
             providerAccountId,
           );
+          resolvedAccountId = resolved.uuid;
+          displayIdentifier = resolved.username;
         }
 
         // Remove old pending ownership if exists

@@ -168,10 +168,14 @@ export class PendingOwnershipService {
     newProviderAccountId: string,
     provider: ExternalAccountProvider,
     entityId: { characterId?: string; itemId?: string },
+    displayIdentifier?: string,
   ): Promise<{ claimed: boolean; claimedByUserId?: string }> {
     await tx.pendingOwnership.update({
       where: { id: pendingOwnershipId },
-      data: { providerAccountId: newProviderAccountId },
+      data: {
+        providerAccountId: newProviderAccountId,
+        ...(displayIdentifier != null && { displayIdentifier }),
+      },
     });
 
     // Look up the external account within the transaction

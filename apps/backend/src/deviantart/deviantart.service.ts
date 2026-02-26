@@ -18,8 +18,14 @@ const INITIAL_BACKOFF_MS = 5000;
 const deviantArtProfileResponseSchema = z.object({
   user: z.object({
     userid: z.string(),
+    username: z.string(),
   }),
 });
+
+export interface ResolvedDeviantArtUser {
+  uuid: string;
+  username: string;
+}
 
 /**
  * DeviantArt API service for username resolution.
@@ -58,7 +64,7 @@ export class DeviantArtService {
    * @throws NotFoundException if the username doesn't exist on DeviantArt
    * @throws BadRequestException if DeviantArt credentials are not configured
    */
-  async resolveUsernameToUuid(username: string): Promise<string> {
+  async resolveUsername(username: string): Promise<ResolvedDeviantArtUser> {
     if (!this.isConfigured) {
       throw new BadRequestException(
         "DeviantArt API credentials are not configured. Cannot resolve DeviantArt usernames.",
@@ -71,7 +77,7 @@ export class DeviantArtService {
   private async fetchUserProfile(
     username: string,
     retryState: { authRetried: boolean; rateLimitRetries: number },
-  ): Promise<string> {
+  ): Promise<ResolvedDeviantArtUser> {
     const token = await this.getAccessToken();
 
     try {
@@ -151,10 +157,10 @@ export class DeviantArtService {
         );
       }
 
-      const uuid = parsed.data.user.userid;
+      const { userid, username: canonicalUsername } = parsed.data.user;
 
-      this.logger.debug(`Resolved DeviantArt user "${username}" to UUID ${uuid}`);
-      return uuid;
+      this.logger.debug(`Resolved DeviantArt user "${username}" to UUID ${userid}`);
+      return { uuid: userid, username: canonicalUsername };
     } catch (error) {
       if (
         error instanceof NotFoundException ||
