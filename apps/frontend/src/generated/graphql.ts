@@ -622,6 +622,7 @@ export type CreateTraitListEntryInput = {
 
 export type DeviantartUuidBackfillProgress = {
   __typename?: 'DeviantartUuidBackfillProgress';
+  cancelled: Scalars['Boolean']['output'];
   claimed: Scalars['Int']['output'];
   currentRecord: Maybe<DeviantartUuidBackfillRecordResult>;
   done: Scalars['Boolean']['output'];
@@ -1193,6 +1194,8 @@ export type Mutation = {
   approveTraitReview: TraitReview;
   /** Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species. */
   assignCharacterSpecies: Character;
+  /** Cancel a running DeviantArt UUID backfill job. */
+  cancelDeviantartUuidBackfill: Scalars['Boolean']['output'];
   /** Claim an invite code to join a community */
   claimInviteCode: InviteCode;
   createCharacter: Character;
@@ -3543,12 +3546,17 @@ export type RunDeviantartUuidBackfillMutationVariables = Exact<{
 
 export type RunDeviantartUuidBackfillMutation = { __typename?: 'Mutation', runDeviantartUuidBackfill: boolean };
 
+export type CancelDeviantartUuidBackfillMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CancelDeviantartUuidBackfillMutation = { __typename?: 'Mutation', cancelDeviantartUuidBackfill: boolean };
+
 export type DeviantartUuidBackfillProgressSubscriptionVariables = Exact<{
   jobId: Scalars['String']['input'];
 }>;
 
 
-export type DeviantartUuidBackfillProgressSubscription = { __typename?: 'Subscription', deviantartUuidBackfillProgress: { __typename?: 'DeviantartUuidBackfillProgress', jobId: string, total: number, processed: number, succeeded: number, failed: number, claimed: number, done: boolean, currentRecord: { __typename?: 'DeviantartUuidBackfillRecordResult', pendingOwnershipId: string, characterId: string | null, itemId: string | null, oldValue: string, newValue: string | null, success: boolean, error: string | null, claimed: boolean, claimedByUserId: string | null } | null } };
+export type DeviantartUuidBackfillProgressSubscription = { __typename?: 'Subscription', deviantartUuidBackfillProgress: { __typename?: 'DeviantartUuidBackfillProgress', jobId: string, total: number, processed: number, succeeded: number, failed: number, claimed: number, done: boolean, cancelled: boolean, currentRecord: { __typename?: 'DeviantartUuidBackfillRecordResult', pendingOwnershipId: string, characterId: string | null, itemId: string | null, oldValue: string, newValue: string | null, success: boolean, error: string | null, claimed: boolean, claimedByUserId: string | null } | null } };
 
 export type SpeciesWithTraitsAndEnumValuesQueryVariables = Exact<{
   speciesId: Scalars['ID']['input'];
@@ -6587,6 +6595,36 @@ export function useRunDeviantartUuidBackfillMutation(baseOptions?: Apollo.Mutati
 export type RunDeviantartUuidBackfillMutationHookResult = ReturnType<typeof useRunDeviantartUuidBackfillMutation>;
 export type RunDeviantartUuidBackfillMutationResult = Apollo.MutationResult<RunDeviantartUuidBackfillMutation>;
 export type RunDeviantartUuidBackfillMutationOptions = Apollo.BaseMutationOptions<RunDeviantartUuidBackfillMutation, RunDeviantartUuidBackfillMutationVariables>;
+export const CancelDeviantartUuidBackfillDocument = gql`
+    mutation CancelDeviantartUuidBackfill {
+  cancelDeviantartUuidBackfill
+}
+    `;
+export type CancelDeviantartUuidBackfillMutationFn = Apollo.MutationFunction<CancelDeviantartUuidBackfillMutation, CancelDeviantartUuidBackfillMutationVariables>;
+
+/**
+ * __useCancelDeviantartUuidBackfillMutation__
+ *
+ * To run a mutation, you first call `useCancelDeviantartUuidBackfillMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCancelDeviantartUuidBackfillMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [cancelDeviantartUuidBackfillMutation, { data, loading, error }] = useCancelDeviantartUuidBackfillMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useCancelDeviantartUuidBackfillMutation(baseOptions?: Apollo.MutationHookOptions<CancelDeviantartUuidBackfillMutation, CancelDeviantartUuidBackfillMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CancelDeviantartUuidBackfillMutation, CancelDeviantartUuidBackfillMutationVariables>(CancelDeviantartUuidBackfillDocument, options);
+      }
+export type CancelDeviantartUuidBackfillMutationHookResult = ReturnType<typeof useCancelDeviantartUuidBackfillMutation>;
+export type CancelDeviantartUuidBackfillMutationResult = Apollo.MutationResult<CancelDeviantartUuidBackfillMutation>;
+export type CancelDeviantartUuidBackfillMutationOptions = Apollo.BaseMutationOptions<CancelDeviantartUuidBackfillMutation, CancelDeviantartUuidBackfillMutationVariables>;
 export const DeviantartUuidBackfillProgressDocument = gql`
     subscription DeviantartUuidBackfillProgress($jobId: String!) {
   deviantartUuidBackfillProgress(jobId: $jobId) {
@@ -6608,6 +6646,7 @@ export const DeviantartUuidBackfillProgressDocument = gql`
       claimedByUserId
     }
     done
+    cancelled
   }
 }
     `;

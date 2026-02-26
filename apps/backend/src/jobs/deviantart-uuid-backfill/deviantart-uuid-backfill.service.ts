@@ -25,6 +25,7 @@ const PROGRESS_TOPIC = "DEVIANTART_UUID_BACKFILL_PROGRESS";
 export class DeviantartUuidBackfillService {
   private readonly logger = new Logger(DeviantartUuidBackfillService.name);
   private running = false;
+  private cancelled = false;
 
   constructor(
     private readonly db: DatabaseService,
@@ -37,6 +38,12 @@ export class DeviantartUuidBackfillService {
     return this.running;
   }
 
+  cancel(): void {
+    if (!this.running) return;
+    this.cancelled = true;
+    this.logger.log("[DeviantArtBackFill] Cancellation requested");
+  }
+
   async run(jobId: string): Promise<void> {
     if (this.running) {
       throw new ConflictException(
@@ -45,11 +52,13 @@ export class DeviantartUuidBackfillService {
     }
 
     this.running = true;
+    this.cancelled = false;
 
     try {
       await this.executeBackfill(jobId);
     } finally {
       this.running = false;
+      this.cancelled = false;
     }
   }
 
@@ -81,15 +90,23 @@ export class DeviantartUuidBackfillService {
       failed: 0,
       claimed: 0,
       done: false,
+      cancelled: false,
     };
 
     // Publish initial progress
     await this.publishProgress(progress);
 
-    // Cache DA username → resolved user to avoid redundant API calls
-    const resolvedCache = new Map<string, ResolvedDeviantArtUser>();
+    // Cache DA username → resolved user (or error) to avoid redundant API calls
+    const resolvedCache = new Map<string, ResolvedDeviantArtUser | Error>();
 
     for (const record of records) {
+      if (this.cancelled) {
+        this.logger.log(
+          `[DeviantArtBackFill] job ${jobId}: Cancelled after ${progress.processed} of ${progress.total} records`,
+        );
+        break;
+      }
+
       const recordResult: DeviantartUuidBackfillRecordResult = {
         pendingOwnershipId: record.id,
         characterId: record.characterId ?? undefined,
@@ -101,20 +118,28 @@ export class DeviantartUuidBackfillService {
 
       try {
         const username = record.providerAccountId;
-        let resolved = resolvedCache.get(username);
+        let cached = resolvedCache.get(username);
 
-        if (!resolved) {
+        if (!cached) {
           // Rate limit only when making an actual API call
           const jitter =
             Math.floor(Math.random() * RATE_LIMIT_JITTER_MS * 2) -
             RATE_LIMIT_JITTER_MS;
           await this.delay(RATE_LIMIT_DELAY_MS + jitter);
 
-          resolved = await this.deviantArtService.resolveUsername(username);
-          resolvedCache.set(username, resolved);
+          try {
+            cached = await this.deviantArtService.resolveUsername(username);
+          } catch (error) {
+            cached = error instanceof Error ? error : new Error(String(error));
+          }
+          resolvedCache.set(username, cached);
         }
 
-        recordResult.newValue = resolved.uuid;
+        if (cached instanceof Error) {
+          throw cached;
+        }
+
+        recordResult.newValue = cached.uuid;
 
         // Transactionally update the record and attempt auto-claim
         const claimResult = await this.db.$transaction(
@@ -122,13 +147,13 @@ export class DeviantartUuidBackfillService {
             return this.pendingOwnershipService.updateProviderIdAndClaim(
               tx,
               record.id,
-              resolved.uuid,
+              cached.uuid,
               ExternalAccountProvider.DEVIANTART,
               {
                 characterId: record.characterId ?? undefined,
                 itemId: record.itemId ?? undefined,
               },
-              resolved.username,
+              cached.username,
             );
           },
         );
@@ -145,7 +170,7 @@ export class DeviantartUuidBackfillService {
         }
 
         this.logger.log(
-          `[DeviantArtBackFill] job ${jobId}: Resolved "${record.providerAccountId}" → ${resolved.uuid}${claimResult.claimed ? " (auto-claimed)" : ""}`,
+          `[DeviantArtBackFill] job ${jobId}: Resolved "${record.providerAccountId}" → ${cached.uuid}${claimResult.claimed ? " (auto-claimed)" : ""}`,
         );
       } catch (error) {
         const errorMessage =
@@ -165,11 +190,13 @@ export class DeviantartUuidBackfillService {
 
     // Publish completion
     progress.done = true;
+    progress.cancelled = this.cancelled;
     progress.currentRecord = undefined;
     await this.publishProgress(progress);
 
+    const status = this.cancelled ? "Cancelled" : "Complete";
     this.logger.log(
-      `[DeviantArtBackFill] job ${jobId}: Complete. ${progress.succeeded} succeeded, ${progress.failed} failed, ${progress.claimed} auto-claimed.`,
+      `[DeviantArtBackFill] job ${jobId}: ${status}. ${progress.succeeded} succeeded, ${progress.failed} failed, ${progress.claimed} auto-claimed.`,
     );
   }
 

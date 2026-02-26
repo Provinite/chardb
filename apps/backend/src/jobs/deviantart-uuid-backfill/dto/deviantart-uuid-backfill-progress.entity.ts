@@ -55,4 +55,7 @@ export class DeviantartUuidBackfillProgress {
 
   @Field()
   done: boolean;
+
+  @Field()
+  cancelled: boolean;
 }

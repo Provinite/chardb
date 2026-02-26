@@ -6,6 +6,12 @@ export const RUN_DEVIANTART_UUID_BACKFILL = gql`
   }
 `;
 
+export const CANCEL_DEVIANTART_UUID_BACKFILL = gql`
+  mutation CancelDeviantartUuidBackfill {
+    cancelDeviantartUuidBackfill
+  }
+`;
+
 export const DEVIANTART_UUID_BACKFILL_PROGRESS = gql`
   subscription DeviantartUuidBackfillProgress($jobId: String!) {
     deviantartUuidBackfillProgress(jobId: $jobId) {
@@ -27,6 +33,7 @@ export const DEVIANTART_UUID_BACKFILL_PROGRESS = gql`
         claimedByUserId
       }
       done
+      cancelled
     }
   }
 `;

@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
 import {
   useRunDeviantartUuidBackfillMutation,
+  useCancelDeviantartUuidBackfillMutation,
   useDeviantartUuidBackfillProgressSubscription,
   type DeviantartUuidBackfillRecordResult,
 } from '../generated/graphql';
@@ -45,6 +46,23 @@ const RunButton = styled.button<{ $disabled?: boolean }>`
 
   &:hover {
     opacity: ${({ $disabled }) => $disabled ? 1 : 0.9};
+  }
+`;
+
+const CancelButton = styled.button`
+  background: ${({ theme }) => theme.colors.error};
+  color: white;
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.lg}`};
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-left: ${({ theme }) => theme.spacing.md};
+
+  &:hover {
+    opacity: 0.9;
   }
 `;
 
@@ -165,6 +183,16 @@ const DoneMessage = styled.div`
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
 `;
 
+const CancelledMessage = styled.div`
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.warning};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  padding: ${({ theme }) => theme.spacing.lg};
+  margin-top: ${({ theme }) => theme.spacing.lg};
+  color: ${({ theme }) => theme.colors.warning};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+`;
+
 const ErrorMessage = styled.div`
   background: ${({ theme }) => theme.colors.surface};
   border: 1px solid ${({ theme }) => theme.colors.error};
@@ -178,11 +206,13 @@ export function DeviantArtBackfillPage() {
   const { user } = useAuth();
   const [jobId, setJobId] = useState<string | null>(null);
   const [isDone, setIsDone] = useState(false);
+  const [isCancelled, setIsCancelled] = useState(false);
   const [records, setRecords] = useState<DeviantartUuidBackfillRecordResult[]>([]);
   const [stats, setStats] = useState({ total: 0, processed: 0, succeeded: 0, failed: 0, claimed: 0 });
   const logRef = useRef<HTMLDivElement>(null);
 
-  const [runBackfill, { error: mutationError }] = useRunDeviantartUuidBackfillMutation();
+  const [runBackfill, { error: runError }] = useRunDeviantartUuidBackfillMutation();
+  const [cancelBackfill, { error: cancelError }] = useCancelDeviantartUuidBackfillMutation();
 
   useDeviantartUuidBackfillProgressSubscription({
     variables: { jobId: jobId! },
@@ -206,6 +236,7 @@ export function DeviantArtBackfillPage() {
       }
       if (progress.done) {
         setIsDone(true);
+        setIsCancelled(progress.cancelled);
         setJobId(null);
       }
     },
@@ -215,15 +246,15 @@ export function DeviantArtBackfillPage() {
     const newJobId = crypto.randomUUID();
     setJobId(newJobId);
     setIsDone(false);
+    setIsCancelled(false);
     setRecords([]);
     setStats({ total: 0, processed: 0, succeeded: 0, failed: 0, claimed: 0 });
-
-    try {
-      await runBackfill({ variables: { jobId: newJobId } });
-    } catch {
-      setJobId(null);
-    }
+    await runBackfill({ variables: { jobId: newJobId } });
   }, [runBackfill]);
+
+  const handleCancel = useCallback(async () => {
+    await cancelBackfill();
+  }, [cancelBackfill]);
 
   if (!user?.isAdmin) {
     return (
@@ -251,9 +282,15 @@ export function DeviantArtBackfillPage() {
       <RunButton $disabled={isRunning} onClick={handleRun} disabled={isRunning}>
         {isRunning ? 'Running...' : isDone ? 'Run Again' : 'Run Backfill'}
       </RunButton>
+      {isRunning && (
+        <CancelButton onClick={handleCancel}>Cancel</CancelButton>
+      )}
 
-      {mutationError && (
-        <ErrorMessage>{mutationError.message}</ErrorMessage>
+      {runError && (
+        <ErrorMessage>{runError.message}</ErrorMessage>
+      )}
+      {cancelError && (
+        <ErrorMessage>{cancelError.message}</ErrorMessage>
       )}
 
       {(isRunning || isDone) && (
@@ -300,10 +337,15 @@ export function DeviantArtBackfillPage() {
             </LogContainer>
           )}
 
-          {isDone && (
+          {isDone && !isCancelled && (
             <DoneMessage>
               Backfill complete — {stats.succeeded} succeeded, {stats.failed} failed, {stats.claimed} auto-claimed
             </DoneMessage>
+          )}
+          {isDone && isCancelled && (
+            <CancelledMessage>
+              Backfill cancelled — {stats.processed} of {stats.total} processed ({stats.succeeded} succeeded, {stats.failed} failed, {stats.claimed} auto-claimed)
+            </CancelledMessage>
           )}
         </ProgressSection>
       )}

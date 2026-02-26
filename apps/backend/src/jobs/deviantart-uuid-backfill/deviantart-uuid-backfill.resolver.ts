@@ -35,6 +35,15 @@ export class DeviantartUuidBackfillResolver {
     return true;
   }
 
+  @Mutation(() => Boolean, {
+    description: "Cancel a running DeviantArt UUID backfill job.",
+  })
+  @AllowGlobalAdmin()
+  cancelDeviantartUuidBackfill(): boolean {
+    this.backfillService.cancel();
+    return true;
+  }
+
   @AllowGlobalAdmin()
   @Subscription(() => DeviantartUuidBackfillProgress, {
     filter: (
