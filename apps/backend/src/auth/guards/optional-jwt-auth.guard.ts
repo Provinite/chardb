@@ -11,10 +11,6 @@ export class OptionalJwtAuthGuard extends AuthGuard("jwt") {
 
   // Override handleRequest to not throw errors if no token is provided
   handleRequest(err: any, user: any) {
-    if (err) {
-      console.error(err);
-    }
-    // If there's an error or no user, just return null instead of throwing
     if (err || !user) {
       return null;
     }

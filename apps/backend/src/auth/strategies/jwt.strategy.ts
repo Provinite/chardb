@@ -12,9 +12,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (req) => {
-          const auth = (req as any)?.connectionParams?.authorization;
-          if (auth && typeof auth === "string" && auth.startsWith("Bearer ")) {
+        (req: unknown) => {
+          const params = (
+            req as { connectionParams?: { authorization?: unknown } } | undefined
+          )?.connectionParams;
+          const auth = params?.authorization;
+          if (typeof auth === "string" && auth.startsWith("Bearer ")) {
             return auth.substring("Bearer ".length);
           }
           return null;
