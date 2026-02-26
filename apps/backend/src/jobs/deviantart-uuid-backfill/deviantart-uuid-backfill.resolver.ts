@@ -35,6 +35,7 @@ export class DeviantartUuidBackfillResolver {
     return true;
   }
 
+  @AllowGlobalAdmin()
   @Subscription(() => DeviantartUuidBackfillProgress, {
     filter: (
       payload: {
