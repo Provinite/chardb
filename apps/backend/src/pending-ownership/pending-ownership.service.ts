@@ -156,6 +156,64 @@ export class PendingOwnershipService {
   }
 
   /**
+   * Update a pending ownership record's provider account ID and attempt auto-claim,
+   * all within a provided transaction.
+   *
+   * Used by the backfill job to atomically resolve a username to a UUID and claim
+   * the record if the account is already linked.
+   */
+  async updateProviderIdAndClaim(
+    tx: Prisma.TransactionClient,
+    pendingOwnershipId: string,
+    newProviderAccountId: string,
+    provider: ExternalAccountProvider,
+    entityId: { characterId?: string; itemId?: string },
+  ): Promise<{ claimed: boolean; claimedByUserId?: string }> {
+    await tx.pendingOwnership.update({
+      where: { id: pendingOwnershipId },
+      data: { providerAccountId: newProviderAccountId },
+    });
+
+    // Look up the external account within the transaction
+    const externalAccount = await tx.externalAccount.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider,
+          providerAccountId: newProviderAccountId,
+        },
+      },
+    });
+
+    if (!externalAccount) {
+      return { claimed: false };
+    }
+
+    const userId = externalAccount.userId;
+
+    if (entityId.characterId) {
+      await tx.character.update({
+        where: { id: entityId.characterId },
+        data: { ownerId: userId },
+      });
+    } else if (entityId.itemId) {
+      await tx.item.update({
+        where: { id: entityId.itemId },
+        data: { ownerId: userId },
+      });
+    }
+
+    await tx.pendingOwnership.update({
+      where: { id: pendingOwnershipId },
+      data: {
+        claimedAt: new Date(),
+        claimedByUserId: userId,
+      },
+    });
+
+    return { claimed: true, claimedByUserId: userId };
+  }
+
+  /**
    * Find all pending ownership records for a given external account
    * Only returns unclaimed records
    */

@@ -11,6 +11,9 @@ interface CachedToken {
   expiresAt: number;
 }
 
+const MAX_429_RETRIES = 3;
+const INITIAL_BACKOFF_MS = 5000;
+
 /**
  * DeviantArt API service for username resolution.
  * Uses client_credentials OAuth flow for server-to-server API access.
@@ -55,12 +58,12 @@ export class DeviantArtService {
       );
     }
 
-    return this.fetchUserProfile(username, false);
+    return this.fetchUserProfile(username, { authRetried: false, rateLimitRetries: 0 });
   }
 
   private async fetchUserProfile(
     username: string,
-    isRetry: boolean,
+    retryState: { authRetried: boolean; rateLimitRetries: number },
   ): Promise<string> {
     const token = await this.getAccessToken();
 
@@ -75,10 +78,23 @@ export class DeviantArtService {
       );
 
       // Token expired unexpectedly — clear cache and retry once
-      if (response.status === 401 && !isRetry) {
+      if (response.status === 401 && !retryState.authRetried) {
         this.logger.warn("DeviantArt token rejected (401), refreshing and retrying");
         this.cachedToken = null;
-        return this.fetchUserProfile(username, true);
+        return this.fetchUserProfile(username, { ...retryState, authRetried: true });
+      }
+
+      // Rate limited — exponential backoff
+      if (response.status === 429 && retryState.rateLimitRetries < MAX_429_RETRIES) {
+        const backoffMs = INITIAL_BACKOFF_MS * Math.pow(2, retryState.rateLimitRetries);
+        this.logger.warn(
+          `DeviantArt rate limited (429) for "${username}", retrying in ${backoffMs}ms (attempt ${retryState.rateLimitRetries + 1}/${MAX_429_RETRIES})`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, backoffMs));
+        return this.fetchUserProfile(username, {
+          ...retryState,
+          rateLimitRetries: retryState.rateLimitRetries + 1,
+        });
       }
 
       if (response.status === 404) {

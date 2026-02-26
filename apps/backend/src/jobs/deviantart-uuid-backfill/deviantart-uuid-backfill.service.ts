@@ -104,46 +104,16 @@ export class DeviantartUuidBackfillService {
         // Transactionally update the record and attempt auto-claim
         const claimResult = await this.prisma.$transaction(
           async (tx: Prisma.TransactionClient) => {
-            // Update the provider account ID to the resolved UUID
-            await tx.pendingOwnership.update({
-              where: { id: record.id },
-              data: { providerAccountId: uuid },
-            });
-
-            // Check if this UUID matches a linked external account
-            const claimedUserId =
-              await this.pendingOwnershipService.checkIfAccountClaimed(
-                ExternalAccountProvider.DEVIANTART,
-                uuid,
-              );
-
-            if (claimedUserId) {
-              // Auto-claim: transfer ownership
-              if (record.characterId) {
-                await tx.character.update({
-                  where: { id: record.characterId },
-                  data: { ownerId: claimedUserId },
-                });
-              } else if (record.itemId) {
-                await tx.item.update({
-                  where: { id: record.itemId },
-                  data: { ownerId: claimedUserId },
-                });
-              }
-
-              // Mark as claimed
-              await tx.pendingOwnership.update({
-                where: { id: record.id },
-                data: {
-                  claimedAt: new Date(),
-                  claimedByUserId: claimedUserId,
-                },
-              });
-
-              return { claimed: true, claimedByUserId: claimedUserId };
-            }
-
-            return { claimed: false };
+            return this.pendingOwnershipService.updateProviderIdAndClaim(
+              tx,
+              record.id,
+              uuid,
+              ExternalAccountProvider.DEVIANTART,
+              {
+                characterId: record.characterId ?? undefined,
+                itemId: record.itemId ?? undefined,
+              },
+            );
           },
         );
 
