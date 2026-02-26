@@ -54,6 +54,7 @@ export class DeviantartUuidBackfillService {
   }
 
   private async executeBackfill(jobId: string): Promise<void> {
+    await new Promise((res) => setTimeout(res, 1500));
     // Find all unclaimed DA pending_ownership records for characters
     const candidates = await this.db.pendingOwnership.findMany({
       where: {
@@ -104,7 +105,9 @@ export class DeviantartUuidBackfillService {
 
         if (!resolved) {
           // Rate limit only when making an actual API call
-          const jitter = Math.floor(Math.random() * RATE_LIMIT_JITTER_MS * 2) - RATE_LIMIT_JITTER_MS;
+          const jitter =
+            Math.floor(Math.random() * RATE_LIMIT_JITTER_MS * 2) -
+            RATE_LIMIT_JITTER_MS;
           await this.delay(RATE_LIMIT_DELAY_MS + jitter);
 
           resolved = await this.deviantArtService.resolveUsername(username);
@@ -173,8 +176,9 @@ export class DeviantartUuidBackfillService {
   private async publishProgress(
     progress: DeviantartUuidBackfillProgress,
   ): Promise<void> {
+    // Snapshot to prevent mutation aliasing — PubSub holds a reference
     await this.pubSub.publish(PROGRESS_TOPIC, {
-      deviantartUuidBackfillProgress: progress,
+      deviantartUuidBackfillProgress: { ...progress },
     });
   }
 
