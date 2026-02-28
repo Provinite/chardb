@@ -17,7 +17,6 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 const updateProfileSchema = z.object({
   displayName: z.string().max(100).optional(),
   bio: z.string().max(1000).optional(),
-  location: z.string().max(100).optional(),
   website: z.string().url().optional().or(z.literal("")),
   dateOfBirth: z.string().optional(),
 });
@@ -307,7 +306,6 @@ export const EditProfilePage: React.FC = () => {
     defaultValues: {
       displayName: "",
       bio: "",
-      location: "",
       website: "",
       dateOfBirth: "",
     },
@@ -319,7 +317,6 @@ export const EditProfilePage: React.FC = () => {
       reset({
         displayName: meData.me.displayName || "",
         bio: meData.me.bio || "",
-        location: meData.me.location || "",
         website: meData.me.website || "",
         dateOfBirth: meData.me.dateOfBirth
           ? new Date(meData.me.dateOfBirth).toISOString().split("T")[0]
@@ -500,20 +497,6 @@ export const EditProfilePage: React.FC = () => {
           <HelpText>
             A brief description about yourself (max 1000 characters)
           </HelpText>
-        </FormGroup>
-
-        <FormGroup>
-          <Label htmlFor="location">Location</Label>
-          <Input
-            id="location"
-            type="text"
-            placeholder="Where are you located?"
-            hasError={!!errors.location}
-            {...register("location")}
-          />
-          {errors.location && (
-            <ErrorMessage>{errors.location.message}</ErrorMessage>
-          )}
         </FormGroup>
 
         <FormGroup>

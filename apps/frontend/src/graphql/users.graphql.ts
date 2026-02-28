@@ -29,7 +29,6 @@ export const GET_USER_PROFILE = gql`
           thumbnailUrl
           altText
         }
-        location
         website
         isVerified
         createdAt
@@ -131,7 +130,6 @@ export const UPDATE_PROFILE = gql`
         thumbnailUrl
         altText
       }
-      location
       website
       dateOfBirth
       isVerified

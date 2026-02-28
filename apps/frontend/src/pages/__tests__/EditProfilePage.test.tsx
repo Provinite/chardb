@@ -38,7 +38,6 @@ import { render, createMockUser } from "../../__tests__/test-utils";
 const mockUserData = createMockUser({
   displayName: "John Doe",
   bio: "Software developer and open source enthusiast",
-  location: "San Francisco, CA",
   website: "https://johndoe.com",
   dateOfBirth: "1990-01-01T00:00:00.000Z",
   username: "johndoe",
@@ -64,7 +63,6 @@ const mockMeQueryEmptyProfile: MockedResponse = {
       me: createMockUser({
         displayName: "",
         bio: "",
-        location: "",
         website: "",
         dateOfBirth: "",
         username: "emptyuser",
@@ -82,7 +80,6 @@ const mockMeQueryPartialProfile: MockedResponse = {
       me: createMockUser({
         displayName: "Jane Smith",
         bio: null,
-        location: "New York",
         website: null,
         dateOfBirth: "1985-05-15T00:00:00.000Z",
         username: "janesmith",
@@ -121,7 +118,6 @@ const mockUpdateProfileMutation: MockedResponse = {
       input: {
         displayName: "Updated Name",
         bio: "Updated bio description",
-        location: "San Francisco, CA",
         website: "https://johndoe.com",
         dateOfBirth: "1990-01-01",
       },
@@ -135,7 +131,6 @@ const mockUpdateProfileMutation: MockedResponse = {
         displayName: "Updated Name",
         bio: "Updated bio description",
         avatarUrl: null,
-        location: "San Francisco, CA",
         website: "https://johndoe.com",
         dateOfBirth: "1990-01-01T00:00:00.000Z",
         isVerified: false,
@@ -206,9 +201,6 @@ describe("EditProfilePage", () => {
 
       // Check all form fields are prefilled correctly
       const bioTextarea = screen.getByLabelText("Bio") as HTMLTextAreaElement;
-      const locationInput = screen.getByLabelText(
-        "Location",
-      ) as HTMLInputElement;
       const websiteInput = screen.getByLabelText("Website") as HTMLInputElement;
       const dateOfBirthInput = screen.getByLabelText(
         "Date of Birth",
@@ -217,7 +209,6 @@ describe("EditProfilePage", () => {
       expect(bioTextarea.value).toBe(
         "Software developer and open source enthusiast",
       );
-      expect(locationInput.value).toBe("San Francisco, CA");
       expect(websiteInput.value).toBe("https://johndoe.com");
       expect(dateOfBirthInput.value).toBe("1990-01-01");
     });
@@ -237,9 +228,6 @@ describe("EditProfilePage", () => {
           "Display Name",
         ) as HTMLInputElement;
         const bioTextarea = screen.getByLabelText("Bio") as HTMLTextAreaElement;
-        const locationInput = screen.getByLabelText(
-          "Location",
-        ) as HTMLInputElement;
         const websiteInput = screen.getByLabelText(
           "Website",
         ) as HTMLInputElement;
@@ -249,7 +237,6 @@ describe("EditProfilePage", () => {
 
         expect(displayNameInput.value).toBe("");
         expect(bioTextarea.value).toBe("");
-        expect(locationInput.value).toBe("");
         expect(websiteInput.value).toBe("");
         expect(dateOfBirthInput.value).toBe("");
       });
@@ -274,16 +261,12 @@ describe("EditProfilePage", () => {
 
       // Check that null values are handled as empty strings
       const bioTextarea = screen.getByLabelText("Bio") as HTMLTextAreaElement;
-      const locationInput = screen.getByLabelText(
-        "Location",
-      ) as HTMLInputElement;
       const websiteInput = screen.getByLabelText("Website") as HTMLInputElement;
       const dateOfBirthInput = screen.getByLabelText(
         "Date of Birth",
       ) as HTMLInputElement;
 
       expect(bioTextarea.value).toBe(""); // null becomes empty string
-      expect(locationInput.value).toBe("New York");
       expect(websiteInput.value).toBe(""); // null becomes empty string
       expect(dateOfBirthInput.value).toBe("1985-05-15");
     });
@@ -300,7 +283,6 @@ describe("EditProfilePage", () => {
       // Check all labels are present
       expect(screen.getByLabelText("Display Name")).toBeInTheDocument();
       expect(screen.getByLabelText("Bio")).toBeInTheDocument();
-      expect(screen.getByLabelText("Location")).toBeInTheDocument();
       expect(screen.getByLabelText("Website")).toBeInTheDocument();
       expect(screen.getByLabelText("Date of Birth")).toBeInTheDocument();
 
@@ -488,7 +470,6 @@ describe("EditProfilePage", () => {
             input: {
               displayName: "Just Changed Display Name",
               bio: "Software developer and open source enthusiast",
-              location: "San Francisco, CA",
               website: "https://johndoe.com",
               dateOfBirth: "1990-01-01",
             },
@@ -502,7 +483,6 @@ describe("EditProfilePage", () => {
               displayName: "Just Changed Display Name",
               bio: "Software developer and open source enthusiast",
               avatarUrl: null,
-              location: "San Francisco, CA",
               website: "https://johndoe.com",
               dateOfBirth: "1990-01-01T00:00:00.000Z",
               isVerified: false,
@@ -652,7 +632,6 @@ describe("EditProfilePage", () => {
               displayName: "Only Required Field",
               bio: null,
               avatarUrl: null,
-              location: null,
               website: null,
               dateOfBirth: null,
               isVerified: false,
@@ -673,7 +652,6 @@ describe("EditProfilePage", () => {
               ...mockUserData,
               displayName: "Only Required Field",
               bio: "",
-              location: "",
               website: "",
               dateOfBirth: "",
             },
@@ -700,7 +678,6 @@ describe("EditProfilePage", () => {
       // Clear all optional fields and set only display name
       const displayNameInput = screen.getByLabelText("Display Name");
       const bioTextarea = screen.getByLabelText("Bio");
-      const locationInput = screen.getByLabelText("Location");
       const websiteInput = screen.getByLabelText("Website");
       const dateOfBirthInput = screen.getByLabelText("Date of Birth");
 
@@ -708,7 +685,6 @@ describe("EditProfilePage", () => {
       await user.type(displayNameInput, "Only Required Field");
 
       await user.clear(bioTextarea);
-      await user.clear(locationInput);
       await user.clear(websiteInput);
       await user.clear(dateOfBirthInput);
 

@@ -3131,7 +3131,6 @@ input UpdateUserInput {
   bio: String
   dateOfBirth: String
   displayName: String
-  location: String
   privacySettings: JSON
   website: String
 }
@@ -3158,7 +3157,6 @@ type User {
   inventories(communityId: ID): [Inventory!]!
   isAdmin: Boolean!
   isVerified: Boolean!
-  location: String
   privacySettings: JSON!
   updatedAt: DateTime!
   userIsFollowing: Boolean!

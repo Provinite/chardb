@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **User location field**: Removed location input from the Edit Profile form and location display from user profile pages (#223)
+
 ## [v9.3.0] - 2026-02-26
 
 ### Added

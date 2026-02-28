@@ -29,7 +29,6 @@ export function mapUpdateUserInputToService(input: UpdateUserInput): UpdateUserS
 
   if (input.displayName !== undefined) result.displayName = input.displayName;
   if (input.bio !== undefined) result.bio = input.bio;
-  if (input.location !== undefined) result.location = input.location;
   if (input.website !== undefined) result.website = input.website;
   if (input.dateOfBirth !== undefined) {
     result.dateOfBirth = new Date(input.dateOfBirth);
@@ -53,7 +52,6 @@ export function mapPrismaUserToGraphQL(prismaUser: PrismaUser): User {
     displayName: prismaUser.displayName ?? undefined,
     bio: prismaUser.bio ?? undefined,
     avatarImageId: prismaUser.avatarImageId ?? undefined,
-    location: prismaUser.location ?? undefined,
     website: prismaUser.website ?? undefined,
     dateOfBirth: prismaUser.dateOfBirth ?? undefined,
     isVerified: prismaUser.isVerified,

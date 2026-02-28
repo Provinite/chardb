@@ -28,9 +28,6 @@ export class User {
   avatarImage?: Image;
 
   @Field({ nullable: true })
-  location?: string;
-
-  @Field({ nullable: true })
   website?: string;
 
   @Field({ nullable: true })

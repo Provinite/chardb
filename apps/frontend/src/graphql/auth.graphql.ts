@@ -50,7 +50,6 @@ export const ME_QUERY = gql`
         thumbnailUrl
         altText
       }
-      location
       website
       dateOfBirth
       isVerified

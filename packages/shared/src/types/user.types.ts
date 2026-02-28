@@ -7,7 +7,6 @@ export const UserSchema = z.object({
   displayName: z.string().max(100).optional(),
   bio: z.string().max(1000).optional(),
   avatarUrl: z.string().url().optional(),
-  location: z.string().max(100).optional(),
   website: z.string().url().optional(),
   dateOfBirth: z.date().optional(),
   isVerified: z.boolean().default(false),
@@ -27,7 +26,6 @@ export const CreateUserSchema = z.object({
 export const UpdateUserSchema = z.object({
   displayName: z.string().max(100).optional(),
   bio: z.string().max(1000).optional(),
-  location: z.string().max(100).optional(),
   website: z.string().url().optional(),
   dateOfBirth: z.date().optional(),
   privacySettings: z.record(z.any()).optional(),

@@ -18,12 +18,6 @@ export class UpdateUserInput {
 
   @Field({ nullable: true })
   @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  location?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
   @IsUrl()
   website?: string;
 
