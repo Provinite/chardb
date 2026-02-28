@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **User location field**: Removed `location` from the User entity, GraphQL schema, and update DTO.
+
 ## [v9.3.0] - 2026-02-26
 
 ### Fixed
