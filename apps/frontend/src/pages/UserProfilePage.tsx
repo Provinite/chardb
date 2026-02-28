@@ -368,7 +368,6 @@ export const UserProfilePage: React.FC = () => {
           {user.bio && <Bio>{user.bio}</Bio>}
 
           <ProfileMeta>
-            {user.location && <MetaItem>📍 {user.location}</MetaItem>}
             {user.website && (
               <MetaItem>
                 🔗{" "}

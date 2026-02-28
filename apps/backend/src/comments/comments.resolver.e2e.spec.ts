@@ -19,7 +19,6 @@ describe('CommentsResolver', () => {
     displayName: null,
     bio: null,
     avatarImageId: null,
-    location: null,
     website: null,
     dateOfBirth: null,
     isVerified: false,

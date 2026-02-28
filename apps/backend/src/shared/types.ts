@@ -10,7 +10,6 @@ export interface CreateUser {
 export interface UpdateUser {
   displayName?: string;
   bio?: string;
-  location?: string;
   website?: string;
   dateOfBirth?: string; // GraphQL will send as ISO string
 }

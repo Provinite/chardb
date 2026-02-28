@@ -114,7 +114,6 @@ export const createMockUser = (overrides = {}) => ({
   isVerified: false,
   isAdmin: false,
   bio: null,
-  location: null,
   website: null,
   dateOfBirth: null,
   privacySettings: null,

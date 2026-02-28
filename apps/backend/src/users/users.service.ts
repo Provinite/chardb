@@ -44,8 +44,6 @@ export interface UpdateUserServiceInput {
   displayName?: string;
   /** User's bio */
   bio?: string;
-  /** User's location */
-  location?: string;
   /** User's website */
   website?: string;
   /** User's date of birth */
@@ -113,7 +111,6 @@ export class UsersService {
     if (input.displayName !== undefined)
       updateData.displayName = input.displayName;
     if (input.bio !== undefined) updateData.bio = input.bio;
-    if (input.location !== undefined) updateData.location = input.location;
     if (input.website !== undefined) updateData.website = input.website;
     if (input.dateOfBirth !== undefined)
       updateData.dateOfBirth = input.dateOfBirth;
