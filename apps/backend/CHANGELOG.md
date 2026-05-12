@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Trait clarifiers**: Traits can now opt in to free-text clarifiers (`Trait.allowsClarifier`). Character trait values carry an optional per-value `clarifier` field that round-trips through GraphQL, validation, and trait review. (#228)
+
 ## [v10.0.0] - 2026-02-27
 
 ### Removed

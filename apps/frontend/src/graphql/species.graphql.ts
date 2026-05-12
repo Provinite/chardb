@@ -337,6 +337,7 @@ export const TRAIT_FRAGMENT = gql`
     name
     valueType
     allowsMultipleValues
+    allowsClarifier
     speciesId
     colorId
     color {

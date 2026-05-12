@@ -182,10 +182,15 @@ const getTraitTypeDescription = (type: TraitValueType) => {
   }
 };
 
+export interface TraitValueEntry {
+  value: string;
+  clarifier?: string | null;
+}
+
 interface TraitValueEditorProps {
   trait: TraitDetailsFragment;
-  values: string[];
-  onChange: (values: string[]) => void;
+  values: TraitValueEntry[];
+  onChange: (values: TraitValueEntry[]) => void;
   speciesVariantId?: string;
   error?: string;
   required?: boolean;
@@ -203,6 +208,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
 }) => {
   // Local state for current input value (used when adding new values for multi-value traits)
   const [currentValue, setCurrentValue] = React.useState("");
+  const [currentClarifier, setCurrentClarifier] = React.useState("");
 
   // Fetch enum values for ENUM-type traits
   const {
@@ -223,32 +229,73 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
     skip: !speciesVariantId || trait.valueType !== TraitValueType.Enum,
   });
 
+  const trimmedClarifier = currentClarifier.trim();
+
   // Helper to add a new value to the values array
   const handleAddValue = () => {
     if (!currentValue.trim()) return;
 
+    const newEntry: TraitValueEntry = {
+      value: currentValue,
+      ...(trait.allowsClarifier && trimmedClarifier
+        ? { clarifier: trimmedClarifier }
+        : {}),
+    };
+
     // For single-value traits, replace the existing value
     if (!trait.allowsMultipleValues) {
-      onChange([currentValue]);
+      onChange([newEntry]);
       setCurrentValue("");
+      setCurrentClarifier("");
       return;
     }
 
-    // For multi-value traits, add to the array if not already present
-    if (!values.includes(currentValue)) {
-      onChange([...values, currentValue]);
+    // For multi-value traits, dedupe by (value, clarifier) pair
+    const duplicate = values.some(
+      (v) =>
+        v.value === newEntry.value &&
+        (v.clarifier ?? "") === (newEntry.clarifier ?? ""),
+    );
+    if (!duplicate) {
+      onChange([...values, newEntry]);
     }
     setCurrentValue("");
+    setCurrentClarifier("");
   };
 
-  // Helper to remove a value from the values array
-  const handleRemoveValue = (valueToRemove: string) => {
-    onChange(values.filter(v => v !== valueToRemove));
+  // Helper to remove a value from the values array by index
+  const handleRemoveValueAt = (indexToRemove: number) => {
+    onChange(values.filter((_, i) => i !== indexToRemove));
   };
 
-  // For single-value traits, update directly when input changes
+  // For single-value traits, update value while preserving any clarifier
   const handleSingleValueChange = (newValue: string) => {
-    onChange([newValue]);
+    if (!newValue) {
+      onChange([]);
+      return;
+    }
+    const existingClarifier = values[0]?.clarifier ?? null;
+    onChange([
+      {
+        value: newValue,
+        ...(trait.allowsClarifier && existingClarifier
+          ? { clarifier: existingClarifier }
+          : {}),
+      },
+    ]);
+  };
+
+  // For single-value traits, update clarifier while preserving the value
+  const handleSingleClarifierChange = (newClarifier: string) => {
+    const existingValue = values[0]?.value ?? "";
+    if (!existingValue) return; // no value to attach a clarifier to
+    const trimmed = newClarifier.trim();
+    onChange([
+      {
+        value: existingValue,
+        ...(trimmed ? { clarifier: trimmed } : {}),
+      },
+    ]);
   };
 
   // Filter enum values based on variant settings
@@ -274,10 +321,32 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
     );
   }, [trait.valueType, enumValuesData, enumSettingsData, speciesVariantId]);
 
+  const renderClarifierInput = (
+    value: string,
+    onChangeFn: (v: string) => void,
+    options: { multi?: boolean } = {},
+  ) =>
+    trait.allowsClarifier ? (
+      <Input
+        type="text"
+        value={value}
+        onChange={(e) => onChangeFn(e.target.value)}
+        placeholder={
+          options.multi
+            ? "Clarifier (optional)..."
+            : "Clarifier (optional)..."
+        }
+        maxLength={200}
+        disabled={disabled}
+        hasError={!!error}
+      />
+    ) : null;
+
   const renderInput = () => {
     // For multi-value traits, use Add button pattern
     const isMultiValue = trait.allowsMultipleValues;
-    const singleValue = values.length > 0 ? values[0] : "";
+    const singleValue = values.length > 0 ? values[0].value : "";
+    const singleClarifier = values.length > 0 ? values[0].clarifier ?? "" : "";
 
     switch (trait.valueType) {
       case TraitValueType.String:
@@ -300,6 +369,11 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
                   hasError={!!error}
                 />
               </InputWrapper>
+              {trait.allowsClarifier && (
+                <InputWrapper>
+                  {renderClarifierInput(currentClarifier, setCurrentClarifier, { multi: true })}
+                </InputWrapper>
+              )}
               <Button
                 onClick={handleAddValue}
                 disabled={disabled || !currentValue.trim()}
@@ -312,14 +386,23 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
           );
         }
         return (
-          <Input
-            type="text"
-            value={singleValue}
-            onChange={(e) => handleSingleValueChange(e.target.value)}
-            placeholder={`Enter ${trait.name.toLowerCase()}...`}
-            disabled={disabled}
-            hasError={!!error}
-          />
+          <AddValueContainer>
+            <InputWrapper>
+              <Input
+                type="text"
+                value={singleValue}
+                onChange={(e) => handleSingleValueChange(e.target.value)}
+                placeholder={`Enter ${trait.name.toLowerCase()}...`}
+                disabled={disabled}
+                hasError={!!error}
+              />
+            </InputWrapper>
+            {trait.allowsClarifier && (
+              <InputWrapper>
+                {renderClarifierInput(singleClarifier, handleSingleClarifierChange)}
+              </InputWrapper>
+            )}
+          </AddValueContainer>
         );
 
       case TraitValueType.Integer:
@@ -343,6 +426,11 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
                   hasError={!!error}
                 />
               </InputWrapper>
+              {trait.allowsClarifier && (
+                <InputWrapper>
+                  {renderClarifierInput(currentClarifier, setCurrentClarifier, { multi: true })}
+                </InputWrapper>
+              )}
               <Button
                 onClick={handleAddValue}
                 disabled={disabled || !currentValue.trim()}
@@ -355,15 +443,24 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
           );
         }
         return (
-          <Input
-            type="number"
-            step="1"
-            value={singleValue}
-            onChange={(e) => handleSingleValueChange(e.target.value)}
-            placeholder={`Enter ${trait.name.toLowerCase()}...`}
-            disabled={disabled}
-            hasError={!!error}
-          />
+          <AddValueContainer>
+            <InputWrapper>
+              <Input
+                type="number"
+                step="1"
+                value={singleValue}
+                onChange={(e) => handleSingleValueChange(e.target.value)}
+                placeholder={`Enter ${trait.name.toLowerCase()}...`}
+                disabled={disabled}
+                hasError={!!error}
+              />
+            </InputWrapper>
+            {trait.allowsClarifier && (
+              <InputWrapper>
+                {renderClarifierInput(singleClarifier, handleSingleClarifierChange)}
+              </InputWrapper>
+            )}
+          </AddValueContainer>
         );
 
       case TraitValueType.Timestamp:
@@ -379,6 +476,11 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
                   hasError={!!error}
                 />
               </InputWrapper>
+              {trait.allowsClarifier && (
+                <InputWrapper>
+                  {renderClarifierInput(currentClarifier, setCurrentClarifier, { multi: true })}
+                </InputWrapper>
+              )}
               <Button
                 onClick={handleAddValue}
                 disabled={disabled || !currentValue.trim()}
@@ -391,13 +493,22 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
           );
         }
         return (
-          <Input
-            type="datetime-local"
-            value={singleValue}
-            onChange={(e) => handleSingleValueChange(e.target.value)}
-            disabled={disabled}
-            hasError={!!error}
-          />
+          <AddValueContainer>
+            <InputWrapper>
+              <Input
+                type="datetime-local"
+                value={singleValue}
+                onChange={(e) => handleSingleValueChange(e.target.value)}
+                disabled={disabled}
+                hasError={!!error}
+              />
+            </InputWrapper>
+            {trait.allowsClarifier && (
+              <InputWrapper>
+                {renderClarifierInput(singleClarifier, handleSingleClarifierChange)}
+              </InputWrapper>
+            )}
+          </AddValueContainer>
         );
 
       case TraitValueType.Enum:
@@ -431,6 +542,10 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         }
 
         if (isMultiValue) {
+          // For multi-value enum traits without clarifiers, hide already-selected options.
+          // With clarifiers we allow the same enum twice, since duplicates are distinguished
+          // by their clarifier text (e.g. multiple "Common Body Mod" entries).
+          const selectedIds = new Set(values.map((v) => v.value));
           return (
             <AddValueContainer>
               <InputWrapper>
@@ -444,7 +559,9 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
                   </option>
                   {[...availableEnumValues]
                     .sort((a, b) => a.order - b.order)
-                    .filter(enumValue => !values.includes(enumValue.id)) // Filter out already selected values
+                    .filter((enumValue) =>
+                      trait.allowsClarifier ? true : !selectedIds.has(enumValue.id),
+                    )
                     .map((enumValue) => (
                       <EnumValueOption key={enumValue.id} value={enumValue.id}>
                         {enumValue.name}
@@ -452,6 +569,11 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
                     ))}
                 </Select>
               </InputWrapper>
+              {trait.allowsClarifier && (
+                <InputWrapper>
+                  {renderClarifierInput(currentClarifier, setCurrentClarifier, { multi: true })}
+                </InputWrapper>
+              )}
               <Button
                 onClick={handleAddValue}
                 disabled={disabled || !currentValue}
@@ -465,22 +587,31 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         }
 
         return (
-          <Select
-            value={singleValue}
-            onChange={(e) => handleSingleValueChange(e.target.value)}
-            disabled={disabled}
-          >
-            <option value="">
-              {required ? `Select ${trait.name.toLowerCase()}...` : `Optional - Select ${trait.name.toLowerCase()}...`}
-            </option>
-            {[...availableEnumValues]
-              .sort((a, b) => a.order - b.order)
-              .map((enumValue) => (
-                <EnumValueOption key={enumValue.id} value={enumValue.id}>
-                  {enumValue.name}
-                </EnumValueOption>
-              ))}
-          </Select>
+          <AddValueContainer>
+            <InputWrapper>
+              <Select
+                value={singleValue}
+                onChange={(e) => handleSingleValueChange(e.target.value)}
+                disabled={disabled}
+              >
+                <option value="">
+                  {required ? `Select ${trait.name.toLowerCase()}...` : `Optional - Select ${trait.name.toLowerCase()}...`}
+                </option>
+                {[...availableEnumValues]
+                  .sort((a, b) => a.order - b.order)
+                  .map((enumValue) => (
+                    <EnumValueOption key={enumValue.id} value={enumValue.id}>
+                      {enumValue.name}
+                    </EnumValueOption>
+                  ))}
+              </Select>
+            </InputWrapper>
+            {trait.allowsClarifier && (
+              <InputWrapper>
+                {renderClarifierInput(singleClarifier, handleSingleClarifierChange)}
+              </InputWrapper>
+            )}
+          </AddValueContainer>
         );
 
       default:
@@ -536,13 +667,14 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
       {/* Display existing values as chips for multi-value traits */}
       {trait.allowsMultipleValues && values.length > 0 && (
         <ValuesContainer>
-          {values.map((value, index) => (
+          {values.map((entry, index) => (
             <TraitValueChip
-              key={`${value}-${index}`}
-              value={trait.valueType === TraitValueType.Enum ? getEnumValueName(value) : value}
-              onRemove={() => handleRemoveValue(value)}
+              key={`${entry.value}-${entry.clarifier ?? ""}-${index}`}
+              value={trait.valueType === TraitValueType.Enum ? getEnumValueName(entry.value) : entry.value}
+              clarifier={entry.clarifier ?? null}
+              onRemove={() => handleRemoveValueAt(index)}
               disabled={disabled}
-              color={trait.valueType === TraitValueType.Enum ? getEnumValueColor(value) : null}
+              color={trait.valueType === TraitValueType.Enum ? getEnumValueColor(entry.value) : null}
             />
           ))}
         </ValuesContainer>

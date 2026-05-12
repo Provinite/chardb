@@ -181,6 +181,8 @@ type CharacterTag {
 
 """A trait value assigned to a character"""
 type CharacterTraitValue {
+  """Optional free-text clarifier displayed parenthetically with the value"""
+  clarifier: String
   enumValue: EnumValue
   trait: Trait
 
@@ -193,6 +195,9 @@ type CharacterTraitValue {
 
 """Input for setting a character trait value"""
 input CharacterTraitValueInput {
+  """Optional free-text clarifier displayed parenthetically with the value"""
+  clarifier: String
+
   """The ID of the trait"""
   traitId: ID!
 
@@ -659,6 +664,11 @@ input CreateTextMediaInput {
 }
 
 input CreateTraitInput {
+  """
+  Whether this trait allows an optional free-text clarifier on each value
+  """
+  allowsClarifier: Boolean = false
+
   """Whether this trait allows multiple values per character"""
   allowsMultipleValues: Boolean = false
 
@@ -2617,6 +2627,11 @@ input ToggleLikeInput {
 }
 
 type Trait {
+  """
+  Whether this trait allows an optional free-text clarifier on each value
+  """
+  allowsClarifier: Boolean!
+
   """Whether this trait allows multiple values per character"""
   allowsMultipleValues: Boolean!
 
@@ -3077,6 +3092,11 @@ input UpdateTextContentInput {
 }
 
 input UpdateTraitInput {
+  """
+  Whether this trait allows an optional free-text clarifier on each value
+  """
+  allowsClarifier: Boolean
+
   """Whether this trait allows multiple values per character"""
   allowsMultipleValues: Boolean
 

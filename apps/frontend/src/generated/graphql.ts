@@ -188,6 +188,8 @@ export type CharacterTag = {
 /** A trait value assigned to a character */
 export type CharacterTraitValue = {
   __typename?: 'CharacterTraitValue';
+  /** Optional free-text clarifier displayed parenthetically with the value */
+  clarifier: Maybe<Scalars['String']['output']>;
   enumValue: Maybe<EnumValue>;
   trait: Maybe<Trait>;
   /** The ID of the trait this value belongs to */
@@ -198,6 +200,8 @@ export type CharacterTraitValue = {
 
 /** Input for setting a character trait value */
 export type CharacterTraitValueInput = {
+  /** Optional free-text clarifier displayed parenthetically with the value */
+  clarifier?: InputMaybe<Scalars['String']['input']>;
   /** The ID of the trait */
   traitId: Scalars['ID']['input'];
   /** The value of the trait */
@@ -589,6 +593,8 @@ export type CreateTextMediaInput = {
 };
 
 export type CreateTraitInput = {
+  /** Whether this trait allows an optional free-text clarifier on each value */
+  allowsClarifier?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether this trait allows multiple values per character */
   allowsMultipleValues?: InputMaybe<Scalars['Boolean']['input']>;
   /** ID of the color for this trait */
@@ -2761,6 +2767,8 @@ export type ToggleLikeInput = {
 
 export type Trait = {
   __typename?: 'Trait';
+  /** Whether this trait allows an optional free-text clarifier on each value */
+  allowsClarifier: Scalars['Boolean']['output'];
   /** Whether this trait allows multiple values per character */
   allowsMultipleValues: Scalars['Boolean']['output'];
   /** The color associated with this trait */
@@ -3132,6 +3140,8 @@ export type UpdateTextContentInput = {
 };
 
 export type UpdateTraitInput = {
+  /** Whether this trait allows an optional free-text clarifier on each value */
+  allowsClarifier?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether this trait allows multiple values per character */
   allowsMultipleValues?: InputMaybe<Scalars['Boolean']['input']>;
   /** ID of the color for this trait */
@@ -3315,14 +3325,14 @@ export type GetCharacterQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, traitReviewStatus: ModerationStatus | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, traitReviewStatus: ModerationStatus | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
 
 
-export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, isOrphaned: boolean, likesCount: number, userHasLiked: boolean, speciesId: string | null, speciesVariantId: string | null, species: { __typename?: 'Species', id: string, name: string } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
+export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, isOrphaned: boolean, likesCount: number, userHasLiked: boolean, speciesId: string | null, speciesVariantId: string | null, species: { __typename?: 'Species', id: string, name: string } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
 
 export type GetMyEditableCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -3351,7 +3361,7 @@ export type AssignCharacterSpeciesMutationVariables = Exact<{
 }>;
 
 
-export type AssignCharacterSpeciesMutation = { __typename?: 'Mutation', assignCharacterSpecies: { __typename?: 'Character', id: string, name: string, registryId: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
+export type AssignCharacterSpeciesMutation = { __typename?: 'Mutation', assignCharacterSpecies: { __typename?: 'Character', id: string, name: string, registryId: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type DeleteCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3406,7 +3416,7 @@ export type UpdateCharacterRegistryMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCharacterRegistryMutation = { __typename?: 'Mutation', updateCharacterRegistry: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> } };
+export type UpdateCharacterRegistryMutation = { __typename?: 'Mutation', updateCharacterRegistry: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> } };
 
 export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4251,9 +4261,9 @@ export type DeleteSpeciesVariantMutationVariables = Exact<{
 
 export type DeleteSpeciesVariantMutation = { __typename?: 'Mutation', removeSpeciesVariant: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
-export type TraitDetailsFragment = { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
+export type TraitDetailsFragment = { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
 
-export type TraitConnectionDetailsFragment = { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> };
+export type TraitConnectionDetailsFragment = { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> };
 
 export type TraitsBySpeciesQueryVariables = Exact<{
   speciesId: Scalars['ID']['input'];
@@ -4263,21 +4273,21 @@ export type TraitsBySpeciesQueryVariables = Exact<{
 }>;
 
 
-export type TraitsBySpeciesQuery = { __typename?: 'Query', traitsBySpecies: { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
+export type TraitsBySpeciesQuery = { __typename?: 'Query', traitsBySpecies: { __typename?: 'TraitConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type TraitByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateTraitMutationVariables = Exact<{
   createTraitInput: CreateTraitInput;
 }>;
 
 
-export type CreateTraitMutation = { __typename?: 'Mutation', createTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type CreateTraitMutation = { __typename?: 'Mutation', createTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type UpdateTraitMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4285,7 +4295,7 @@ export type UpdateTraitMutationVariables = Exact<{
 }>;
 
 
-export type UpdateTraitMutation = { __typename?: 'Mutation', updateTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type UpdateTraitMutation = { __typename?: 'Mutation', updateTrait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type DeleteTraitMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4341,7 +4351,7 @@ export type RemoveTraitListEntryMutationVariables = Exact<{
 
 export type RemoveTraitListEntryMutation = { __typename?: 'Mutation', removeTraitListEntry: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
-export type TraitValueFieldsFragment = { __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null };
+export type TraitValueFieldsFragment = { __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null };
 
 export type TraitReviewQueueQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -4351,7 +4361,7 @@ export type TraitReviewQueueQueryVariables = Exact<{
 }>;
 
 
-export type TraitReviewQueueQuery = { __typename?: 'Query', traitReviewQueue: { __typename?: 'TraitReviewQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'TraitReviewQueueItem', characterName: string, characterId: string, registryId: string | null, speciesName: string | null, variantName: string | null, review: { __typename?: 'TraitReview', id: string, characterId: string, status: ModerationStatus, source: TraitReviewSource, rejectionReason: string | null, resolvedAt: string | null, createdAt: string, proposedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, previousTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, appliedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> | null, resolvedBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, mainMedia: { __typename?: 'Media', pendingModerationImage: { __typename?: 'Image', mediumUrl: string | null, thumbnailUrl: string | null, originalUrl: string } | null, image: { __typename?: 'Image', mediumUrl: string | null, thumbnailUrl: string | null, originalUrl: string } | null } | null } } }> } };
+export type TraitReviewQueueQuery = { __typename?: 'Query', traitReviewQueue: { __typename?: 'TraitReviewQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'TraitReviewQueueItem', characterName: string, characterId: string, registryId: string | null, speciesName: string | null, variantName: string | null, review: { __typename?: 'TraitReview', id: string, characterId: string, status: ModerationStatus, source: TraitReviewSource, rejectionReason: string | null, resolvedAt: string | null, createdAt: string, proposedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, previousTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, appliedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> | null, resolvedBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, mainMedia: { __typename?: 'Media', pendingModerationImage: { __typename?: 'Image', mediumUrl: string | null, thumbnailUrl: string | null, originalUrl: string } | null, image: { __typename?: 'Image', mediumUrl: string | null, thumbnailUrl: string | null, originalUrl: string } | null } | null } } }> } };
 
 export type PendingTraitReviewCountQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -4365,7 +4375,7 @@ export type CharacterTraitReviewQueryVariables = Exact<{
 }>;
 
 
-export type CharacterTraitReviewQuery = { __typename?: 'Query', characterTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, source: TraitReviewSource, rejectionReason: string | null, createdAt: string, proposedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, previousTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> } | null };
+export type CharacterTraitReviewQuery = { __typename?: 'Query', characterTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, source: TraitReviewSource, rejectionReason: string | null, createdAt: string, proposedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, previousTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> } | null };
 
 export type ApproveTraitReviewMutationVariables = Exact<{
   input: ApproveTraitReviewInput;
@@ -4386,7 +4396,7 @@ export type EditAndApproveTraitReviewMutationVariables = Exact<{
 }>;
 
 
-export type EditAndApproveTraitReviewMutation = { __typename?: 'Mutation', editAndApproveTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, resolvedAt: string | null, appliedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> | null, resolvedBy: { __typename?: 'User', id: string, username: string } | null } };
+export type EditAndApproveTraitReviewMutation = { __typename?: 'Mutation', editAndApproveTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, resolvedAt: string | null, appliedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> | null, resolvedBy: { __typename?: 'User', id: string, username: string } | null } };
 
 export type UserBasicFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
@@ -4623,6 +4633,7 @@ export const TraitDetailsFragmentDoc = gql`
   name
   valueType
   allowsMultipleValues
+  allowsClarifier
   speciesId
   colorId
   color {
@@ -4673,10 +4684,12 @@ export const TraitValueFieldsFragmentDoc = gql`
     fragment TraitValueFields on CharacterTraitValue {
   traitId
   value
+  clarifier
   trait {
     name
     valueType
     allowsMultipleValues
+    allowsClarifier
   }
   enumValue {
     name
@@ -5047,10 +5060,12 @@ export const GetCharacterDocument = gql`
     traitValues {
       traitId
       value
+      clarifier
       trait {
         name
         valueType
         allowsMultipleValues
+        allowsClarifier
       }
       enumValue {
         name
@@ -5186,6 +5201,7 @@ export const GetMyCharactersDocument = gql`
       traitValues {
         traitId
         value
+        clarifier
       }
       pendingOwnership {
         id
@@ -5432,6 +5448,7 @@ export const AssignCharacterSpeciesDocument = gql`
     traitValues {
       traitId
       value
+      clarifier
     }
     ownerId
     creatorId
@@ -5796,10 +5813,12 @@ export const UpdateCharacterRegistryDocument = gql`
     traitValues {
       traitId
       value
+      clarifier
       trait {
         name
         valueType
         allowsMultipleValues
+        allowsClarifier
       }
       enumValue {
         name

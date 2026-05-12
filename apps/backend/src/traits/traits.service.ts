@@ -20,6 +20,8 @@ export interface CreateTraitServiceInput {
   valueType: $Enums.TraitValueType;
   /** Whether this trait allows multiple values per character */
   allowsMultipleValues?: boolean;
+  /** Whether this trait allows an optional free-text clarifier on each value */
+  allowsClarifier?: boolean;
   /** ID of the species this trait belongs to */
   speciesId: string;
   /** ID of the color for this trait */
@@ -36,6 +38,8 @@ export interface UpdateTraitServiceInput {
   valueType?: $Enums.TraitValueType;
   /** Whether this trait allows multiple values per character */
   allowsMultipleValues?: boolean;
+  /** Whether this trait allows an optional free-text clarifier on each value */
+  allowsClarifier?: boolean;
   /** ID of the species this trait belongs to */
   speciesId?: string;
   /** ID of the color for this trait */
@@ -75,6 +79,7 @@ export class TraitsService {
         name: input.name,
         valueType: input.valueType,
         allowsMultipleValues: input.allowsMultipleValues ?? false,
+        allowsClarifier: input.allowsClarifier ?? false,
         species: {
           connect: { id: input.speciesId },
         },
@@ -235,6 +240,7 @@ export class TraitsService {
     if (input.name !== undefined) updateData.name = input.name;
     if (input.valueType !== undefined) updateData.valueType = input.valueType;
     if (input.allowsMultipleValues !== undefined) updateData.allowsMultipleValues = input.allowsMultipleValues;
+    if (input.allowsClarifier !== undefined) updateData.allowsClarifier = input.allowsClarifier;
     if (input.speciesId !== undefined) {
       updateData.species = { connect: { id: input.speciesId } };
     }

@@ -122,10 +122,14 @@ export class TraitReviewResolver {
   ): Promise<TraitReview> {
     const correctedValues = input.correctedTraitValues
       .filter((tv) => tv.value !== undefined && tv.value !== null)
-      .map((tv) => ({
-        traitId: tv.traitId,
-        value: tv.value!,
-      }));
+      .map((tv) => {
+        const clarifier = tv.clarifier?.trim();
+        return {
+          traitId: tv.traitId,
+          value: tv.value!,
+          ...(clarifier ? { clarifier } : {}),
+        };
+      });
 
     const review = await this.traitReviewService.editAndApproveReview(
       input.reviewId,

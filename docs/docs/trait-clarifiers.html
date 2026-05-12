@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trait Clarifiers - Feature Walkthrough</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .clar {
+        color: #a8b4ff;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Trait Clarifiers</h1>
+        <p>
+          A walkthrough of free-text clarifiers on character trait values
+        </p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Clarifiers</strong> let you attach an optional free-text
+            note to any character trait value. The clarifier is rendered in
+            parentheses after the value, so a single trait can describe many
+            distinct things without exploding the trait list.
+          </p>
+          <p>
+            For example, instead of creating a separate trait for every body
+            modification, you can use one multi-value
+            <em>Body Mod</em> trait and clarify each instance:
+          </p>
+          <div class="example">
+            Common Body Mod <span class="clar">(extra horns)</span><br />
+            Common Body Mod <span class="clar">(stripes on tail)</span><br />
+            Rare Body Mod <span class="clar">(iridescent wings)</span>
+          </div>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">🎛️</div>
+              <h4>Per-trait toggle</h4>
+              <p>Species managers opt in each trait individually</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">📝</div>
+              <h4>Per-value text</h4>
+              <p>Each value carries its own clarifier</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🔍</div>
+              <h4>Diff-aware</h4>
+              <p>Trait review surfaces clarifier changes</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🧩</div>
+              <h4>Any value type</h4>
+              <p>Works on Text, Number, Date, and Selection traits</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: Enabling on a trait -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Enable clarifiers on a trait</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Open the species' <strong>Trait Builder</strong>, then either
+            create a new trait or edit an existing one. Toggle
+            <strong>Allow clarifier text</strong> on. The setting lives on the
+            trait itself, so it applies to every variant that uses the trait.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Tip:</strong> Pair clarifiers with
+            <strong>Allow multiple values</strong> to model grouping traits
+            (e.g. one <em>Body Mod</em> trait with multiple clarified
+            instances). They work independently too — a single-value trait can
+            still carry a clarifier.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trait-clarifier-toggle.png"
+            alt="Trait builder modal showing the Allow clarifier text toggle enabled"
+          />
+          <div class="screenshot-caption">
+            Trait builder Edit modal with both "Allow multiple values" and
+            "Allow clarifier text" enabled
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Filling in clarifiers -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Fill in clarifiers on a character</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            When editing a character, traits with clarifiers enabled show a
+            second text input labelled
+            <em>Clarifier (optional)</em> next to the value input.
+          </p>
+          <ul>
+            <li>
+              <strong>Single-value trait:</strong> type the value, then type
+              the clarifier. Both fields update the trait independently.
+            </li>
+            <li>
+              <strong>Multi-value trait:</strong> type the value and (optional)
+              clarifier, click <strong>Add</strong>. The entry is added as a
+              chip with the format
+              <code>Value (clarifier)</code>. Repeat to add more, including
+              duplicates of the same value with different clarifiers.
+            </li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Note:</strong> The clarifier is optional. Leaving it blank
+            stores only the bare value. The maximum clarifier length is 200
+            characters.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trait-clarifier-editor.png"
+            alt="Character trait editor with Body Mod showing two clarified chips and a value + clarifier input pair"
+          />
+          <div class="screenshot-caption">
+            Multi-value Body Mod trait with two clarified entries and the
+            value + clarifier inputs ready for the next addition
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Display -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">How clarifiers display</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            On the character profile, clarified values are rendered with the
+            clarifier in parentheses immediately after the value. Multi-value
+            traits show each instance as its own chip; single-value traits
+            show the value inline.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trait-clarifier-display.png"
+            alt="Character profile showing Body Mod trait with two parenthetically clarified values"
+          />
+          <div class="screenshot-caption">
+            The character profile rendering "Common Body Mod (extra horns)"
+            and "Common Body Mod (long tail)" as separate chips
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Review diff -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Clarifier changes in trait review</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The
+            <a href="trait-review.html" style="color: #667eea"
+              >Trait Review Queue</a
+            >
+            treats the
+            <code>(value, clarifier)</code> pair as the diff key. Changing
+            only the clarifier — same value, different note — registers as a
+            change, just like swapping the value itself.
+          </p>
+          <ul>
+            <li>
+              Removed entries are shown with strikethrough text
+            </li>
+            <li>
+              Added entries are highlighted (green border / chip)
+            </li>
+            <li>Unchanged entries appear normally for context</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Tip:</strong> A clarifier-only edit is intentionally
+            visible in moderation. Reviewers can spot, for example, a renamed
+            mod (<em>"extra horns" → "spiral horns"</em>) without having to
+            inspect raw data.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trait-clarifier-review-diff.png"
+            alt="Trait review card showing CHANGED Body Mod with strikethrough removed clarifier and added clarifiers"
+          />
+          <div class="screenshot-caption">
+            Review diff: "Common Body Mod (long tail)" removed; "(stripes on
+            tail)" and "Rare Body Mod (iridescent wings)" added
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Validation & rules -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Rules &amp; validation</h2>
+        </div>
+        <div class="step-content">
+          <ul>
+            <li>
+              Clarifier input is only shown for traits where the species
+              manager has enabled <strong>Allow clarifier text</strong>. The
+              backend rejects clarifiers submitted on traits that did not opt
+              in.
+            </li>
+            <li>
+              A clarifier requires a value — you can't store a clarifier
+              against an empty trait entry.
+            </li>
+            <li>
+              Maximum length is 200 characters. Surrounding whitespace is
+              trimmed; an all-whitespace clarifier is treated as absent.
+            </li>
+            <li>
+              On enum (Selection) multi-value traits, enabling clarifiers
+              allows the same enum option to appear multiple times with
+              different clarifiers (e.g. two
+              <em>Common Body Mod</em> entries). Without clarifiers, already
+              selected options remain hidden from the dropdown.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Trait Clarifiers &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>

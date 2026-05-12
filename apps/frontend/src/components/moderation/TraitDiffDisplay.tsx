@@ -7,10 +7,12 @@ import { ColorPip } from '../colors/ColorPip';
 type TraitValue = {
   traitId: string;
   value: string | number | boolean | null;
+  clarifier?: string | null;
   trait?: {
     name: string;
     valueType: TraitValueType;
     allowsMultipleValues: boolean;
+    allowsClarifier?: boolean;
   } | null;
   enumValue?: {
     name: string;
@@ -20,14 +22,31 @@ type TraitValue = {
 
 type DiffStatus = 'added' | 'removed' | 'changed' | 'unchanged';
 
+type GroupedValue = {
+  value: string | number | boolean | null;
+  enumValueName?: string | null;
+  enumValueColor?: string | null;
+  clarifier?: string | null;
+};
+
 interface GroupedTrait {
   traitId: string;
   traitName: string;
   valueType: TraitValueType;
   allowsMultipleValues: boolean;
   status: DiffStatus;
-  previousValues: Array<{ value: string | number | boolean | null; enumValueName?: string | null; enumValueColor?: string | null }>;
-  proposedValues: Array<{ value: string | number | boolean | null; enumValueName?: string | null; enumValueColor?: string | null }>;
+  previousValues: GroupedValue[];
+  proposedValues: GroupedValue[];
+}
+
+/** Stable key combining value + clarifier — used to determine diff status. */
+function diffKey(v: GroupedValue): string {
+  return `${String(v.value)}::${v.clarifier ?? ""}`;
+}
+
+function renderLabel(v: GroupedValue): string {
+  const base = v.enumValueName || String(v.value);
+  return v.clarifier ? `${base} (${v.clarifier})` : base;
 }
 
 interface TraitDiffDisplayProps {
@@ -167,7 +186,7 @@ function groupTraitValues(traitValues: TraitValue[]) {
     traitName: string;
     valueType: TraitValueType;
     allowsMultipleValues: boolean;
-    values: Array<{ value: string | number | boolean | null; enumValueName?: string | null; enumValueColor?: string | null }>;
+    values: GroupedValue[];
   }>();
 
   for (const tv of traitValues) {
@@ -184,6 +203,7 @@ function groupTraitValues(traitValues: TraitValue[]) {
       value: tv.value,
       enumValueName: tv.enumValue?.name,
       enumValueColor: tv.enumValue?.color?.hexCode,
+      clarifier: tv.clarifier ?? null,
     });
   }
 
@@ -226,10 +246,10 @@ export const TraitDiffDisplay: React.FC<TraitDiffDisplayProps> = ({
           proposedValues: [],
         });
       } else if (prev && prop) {
-        const prevValueSet = new Set(prev.values.map((v) => String(v.value)));
-        const propValueSet = new Set(prop.values.map((v) => String(v.value)));
-        const isChanged = prevValueSet.size !== propValueSet.size ||
-          [...prevValueSet].some((v) => !propValueSet.has(v));
+        const prevKeys = new Set(prev.values.map(diffKey));
+        const propKeys = new Set(prop.values.map(diffKey));
+        const isChanged = prevKeys.size !== propKeys.size ||
+          [...prevKeys].some((k) => !propKeys.has(k));
 
         result.push({
           traitId,
@@ -266,23 +286,23 @@ export const TraitDiffDisplay: React.FC<TraitDiffDisplayProps> = ({
                 // For multi-value changed traits, show individual value diffs
                 <>
                   {trait.previousValues
-                    .filter((pv) => !trait.proposedValues.some((v) => String(v.value) === String(pv.value)))
+                    .filter((pv) => !trait.proposedValues.some((v) => diffKey(v) === diffKey(pv)))
                     .map((v, i) => (
                       <ValueChip key={`removed-${i}`} $diff="removed">
                         {v.enumValueColor && (
                           <ColorPipWrapper><ColorPip color={v.enumValueColor} size="sm" /></ColorPipWrapper>
                         )}
-                        {v.enumValueName || String(v.value)}
+                        {renderLabel(v)}
                       </ValueChip>
                     ))}
                   {trait.proposedValues.map((v, i) => {
-                    const isNew = !trait.previousValues.some((pv) => String(pv.value) === String(v.value));
+                    const isNew = !trait.previousValues.some((pv) => diffKey(pv) === diffKey(v));
                     return (
                       <ValueChip key={`prop-${i}`} $diff={isNew ? 'added' : undefined}>
                         {v.enumValueColor && (
                           <ColorPipWrapper><ColorPip color={v.enumValueColor} size="sm" /></ColorPipWrapper>
                         )}
-                        {v.enumValueName || String(v.value)}
+                        {renderLabel(v)}
                       </ValueChip>
                     );
                   })}
@@ -294,7 +314,7 @@ export const TraitDiffDisplay: React.FC<TraitDiffDisplayProps> = ({
                     {v.enumValueColor && (
                       <ColorPipWrapper><ColorPip color={v.enumValueColor} size="sm" /></ColorPipWrapper>
                     )}
-                    {v.enumValueName || String(v.value)}
+                    {renderLabel(v)}
                   </ValueChip>
                 ))
               )}

@@ -234,10 +234,14 @@ export class CharactersResolver {
       speciesId: input.speciesId,
       speciesVariantId: input.speciesVariantId,
       registryId: input.registryId,
-      traitValues: input.traitValues?.map((tv) => ({
-        traitId: tv.traitId,
-        value: tv.value ?? null,
-      })),
+      traitValues: input.traitValues?.map((tv) => {
+        const clarifier = tv.clarifier?.trim();
+        return {
+          traitId: tv.traitId,
+          value: tv.value ?? null,
+          ...(clarifier ? { clarifier } : {}),
+        };
+      }),
     });
     return mapPrismaCharacterToGraphQL(character);
   }

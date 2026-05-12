@@ -699,6 +699,7 @@ model Trait {
   name                 String         @db.VarChar(100)
   valueType            TraitValueType @map("value_type")
   allowsMultipleValues Boolean        @default(false) @map("allows_multiple_values")
+  allowsClarifier      Boolean        @default(false) @map("allows_clarifier")
   speciesId            String         @map("species_id")
   colorId              String?        @map("color_id")
   createdAt            DateTime       @default(now()) @map("created_at")
