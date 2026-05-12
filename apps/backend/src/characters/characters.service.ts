@@ -1286,6 +1286,7 @@ export class CharactersService {
         id: true,
         name: true,
         allowsMultipleValues: true,
+        allowsClarifier: true,
       },
     });
 
@@ -1293,7 +1294,11 @@ export class CharactersService {
     const traitMap = new Map(
       traits.map((t) => [
         t.id,
-        { name: t.name, allowsMultipleValues: t.allowsMultipleValues },
+        {
+          name: t.name,
+          allowsMultipleValues: t.allowsMultipleValues,
+          allowsClarifier: t.allowsClarifier,
+        },
       ]),
     );
 
@@ -1303,6 +1308,8 @@ export class CharactersService {
       { count: number; values: string[] }
     >();
 
+    const violations: string[] = [];
+
     for (const tv of traitValues) {
       if (!traitValueCounts.has(tv.traitId)) {
         traitValueCounts.set(tv.traitId, { count: 0, values: [] });
@@ -1311,10 +1318,34 @@ export class CharactersService {
       entry.count++;
       // Convert value to string for display in error messages
       entry.values.push(String(tv.value));
+
+      // Per-entry validation for clarifier
+      const clarifier = tv.clarifier;
+      if (clarifier !== undefined && clarifier !== null && clarifier !== "") {
+        const traitInfo = traitMap.get(tv.traitId);
+        if (traitInfo && !traitInfo.allowsClarifier) {
+          violations.push(
+            `Trait '${traitInfo.name}' does not allow clarifier text`,
+          );
+        }
+        if (typeof clarifier !== "string") {
+          violations.push(
+            `Clarifier for trait '${traitInfo?.name ?? tv.traitId}' must be a string`,
+          );
+        } else if (clarifier.length > 200) {
+          violations.push(
+            `Clarifier for trait '${traitInfo?.name ?? tv.traitId}' exceeds 200 characters`,
+          );
+        }
+        if (tv.value === null || tv.value === undefined || tv.value === "") {
+          violations.push(
+            `Clarifier for trait '${traitInfo?.name ?? tv.traitId}' requires a value`,
+          );
+        }
+      }
     }
 
-    // Check for violations
-    const violations: string[] = [];
+    // Check for multi-value violations
     for (const [traitId, { count, values }] of traitValueCounts.entries()) {
       const traitInfo = traitMap.get(traitId);
 

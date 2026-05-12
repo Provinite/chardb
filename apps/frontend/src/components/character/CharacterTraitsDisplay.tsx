@@ -141,6 +141,7 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
         value: string | number | boolean | null;
         enumValueName?: string | null;
         enumValueColor?: string | null;
+        clarifier?: string | null;
       }>;
     }>();
 
@@ -160,6 +161,7 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
         value: tv.value,
         enumValueName: tv.enumValue?.name,
         enumValueColor: tv.enumValue?.color?.hexCode,
+        clarifier: tv.clarifier ?? null,
       });
     }
 
@@ -196,9 +198,12 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
                 {isMultiValue ? (
                   // Display as chips for multi-value traits
                   values.map((v, index) => {
-                    const displayValue = v.enumValueName || String(v.value);
+                    const baseValue = v.enumValueName || String(v.value);
+                    const displayValue = v.clarifier
+                      ? `${baseValue} (${v.clarifier})`
+                      : baseValue;
                     return (
-                      <ValueChip key={`${v.value}-${index}`}>
+                      <ValueChip key={`${v.value}-${v.clarifier ?? ""}-${index}`}>
                         {v.enumValueColor && (
                           <ColorPipWrapper>
                             <ColorPip color={v.enumValueColor} size="sm" />
@@ -216,7 +221,13 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
                         <ColorPip color={values[0].enumValueColor} size="sm" />
                       </ColorPipWrapper>
                     )}
-                    {values[0]?.enumValueName || String(values[0]?.value)}
+                    {(() => {
+                      const baseValue =
+                        values[0]?.enumValueName || String(values[0]?.value);
+                      return values[0]?.clarifier
+                        ? `${baseValue} (${values[0].clarifier})`
+                        : baseValue;
+                    })()}
                   </TraitValue>
                 )}
               </TraitValues>

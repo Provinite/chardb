@@ -21,6 +21,10 @@ export class Trait {
   @Field(() => Boolean, { description: 'Whether this trait allows multiple values per character' })
   allowsMultipleValues: boolean;
 
+  /** Whether this trait allows an optional free-text clarifier on each value */
+  @Field(() => Boolean, { description: 'Whether this trait allows an optional free-text clarifier on each value' })
+  allowsClarifier: boolean;
+
   /** ID of the species this trait belongs to */
   @Field(() => ID, { description: 'ID of the species this trait belongs to' })
   speciesId: string;

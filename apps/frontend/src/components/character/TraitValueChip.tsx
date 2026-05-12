@@ -83,6 +83,8 @@ const RemoveButton = styled.button<{ $disabled?: boolean }>`
 interface TraitValueChipProps {
   /** The trait value to display */
   value: string;
+  /** Optional clarifier text shown parenthetically after the value */
+  clarifier?: string | null;
   /** Callback when the remove button is clicked */
   onRemove: () => void;
   /** Whether the chip is disabled (prevents removal) */
@@ -93,10 +95,12 @@ interface TraitValueChipProps {
 
 export const TraitValueChip: React.FC<TraitValueChipProps> = ({
   value,
+  clarifier,
   onRemove,
   disabled = false,
   color,
 }) => {
+  const displayText = clarifier ? `${value} (${clarifier})` : value;
   return (
     <Chip $disabled={disabled}>
       {color && (
@@ -104,14 +108,14 @@ export const TraitValueChip: React.FC<TraitValueChipProps> = ({
           <ColorPip color={color} size="sm" />
         </ColorPipWrapper>
       )}
-      <ValueText title={value}>{value}</ValueText>
+      <ValueText title={displayText}>{displayText}</ValueText>
       <RemoveButton
         onClick={onRemove}
         disabled={disabled}
         $disabled={disabled}
         type="button"
         title="Remove value"
-        aria-label={`Remove ${value}`}
+        aria-label={`Remove ${displayText}`}
       >
         <X size={14} />
       </RemoveButton>

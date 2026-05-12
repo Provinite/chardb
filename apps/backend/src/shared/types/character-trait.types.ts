@@ -12,6 +12,10 @@ export class CharacterTraitValue {
   @Field(() => String, { description: 'The value of the trait', nullable: true })
   value!: string | number | boolean | null;
 
+  /** Optional free-text clarifier displayed parenthetically with the value */
+  @Field(() => String, { nullable: true, description: 'Optional free-text clarifier displayed parenthetically with the value' })
+  clarifier?: string | null;
+
   /** The full trait definition (resolved via field resolver) */
   @Field(() => Trait, { nullable: true, description: 'The full trait definition' })
   trait?: Trait;

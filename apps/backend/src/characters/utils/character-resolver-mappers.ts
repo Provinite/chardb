@@ -20,10 +20,14 @@ function mapTraitValues(
 
   return traitValues
     .filter((tv) => tv.value !== undefined && tv.value !== null)
-    .map((tv) => ({
-      traitId: tv.traitId,
-      value: tv.value!,
-    }));
+    .map((tv) => {
+      const clarifier = tv.clarifier?.trim();
+      return {
+        traitId: tv.traitId,
+        value: tv.value!,
+        ...(clarifier ? { clarifier } : {}),
+      };
+    });
 }
 
 export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
@@ -171,6 +175,7 @@ export function mapPrismaCharacterToGraphQL(
         ).map((tv) => ({
           traitId: tv.traitId,
           value: tv.value,
+          clarifier: tv.clarifier ?? null,
         }))
       : [],
     traitReviewStatus: prismaCharacter.traitReviewStatus ?? undefined,

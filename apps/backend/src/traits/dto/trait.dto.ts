@@ -26,6 +26,16 @@ export class CreateTraitInput {
   @IsOptional()
   allowsMultipleValues?: boolean;
 
+  /** Whether this trait allows an optional free-text clarifier on each value */
+  @Field(() => Boolean, {
+    nullable: true,
+    defaultValue: false,
+    description: 'Whether this trait allows an optional free-text clarifier on each value'
+  })
+  @IsBoolean()
+  @IsOptional()
+  allowsClarifier?: boolean;
+
   /** ID of the species this trait belongs to */
   @Field(() => ID, { description: 'ID of the species this trait belongs to' })
   @IsUUID()
@@ -63,6 +73,15 @@ export class UpdateTraitInput {
   @IsBoolean()
   @IsOptional()
   allowsMultipleValues?: boolean;
+
+  /** Whether this trait allows an optional free-text clarifier on each value */
+  @Field(() => Boolean, {
+    nullable: true,
+    description: 'Whether this trait allows an optional free-text clarifier on each value'
+  })
+  @IsBoolean()
+  @IsOptional()
+  allowsClarifier?: boolean;
 
   /** ID of the species this trait belongs to */
   @Field(() => ID, { nullable: true, description: 'ID of the species this trait belongs to' })

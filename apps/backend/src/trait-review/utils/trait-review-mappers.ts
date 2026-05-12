@@ -50,6 +50,7 @@ function mapTraitValuesJson(json: PrismaJson.CharacterTraitValuesJson): Characte
   return json.map((tv) => ({
     traitId: tv.traitId,
     value: tv.value,
+    clarifier: tv.clarifier ?? null,
   }));
 }
 

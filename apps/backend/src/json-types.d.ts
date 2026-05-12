@@ -9,6 +9,8 @@ declare global {
       traitId: string;
       /** The trait value - can be string, number, boolean, or null */
       value: string | number | boolean | null;
+      /** Optional free-text clarifier displayed parenthetically with the value */
+      clarifier?: string | null;
     }[];
   }
 }

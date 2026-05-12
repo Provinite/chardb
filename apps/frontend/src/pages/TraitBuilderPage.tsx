@@ -315,6 +315,7 @@ interface TraitFormData {
   name: string;
   valueType: TraitValueType;
   allowsMultipleValues?: boolean;
+  allowsClarifier?: boolean;
   colorId?: string | null;
 }
 
@@ -339,6 +340,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
     name: trait?.name || "",
     valueType: trait?.valueType || TraitValueType.String,
     allowsMultipleValues: trait?.allowsMultipleValues || false,
+    allowsClarifier: trait?.allowsClarifier || false,
     colorId: trait?.colorId || null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -350,6 +352,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
         name: trait.name,
         valueType: trait.valueType,
         allowsMultipleValues: trait.allowsMultipleValues || false,
+        allowsClarifier: trait.allowsClarifier || false,
         colorId: trait.colorId || null,
       });
     } else {
@@ -358,6 +361,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
         name: "",
         valueType: TraitValueType.String,
         allowsMultipleValues: false,
+        allowsClarifier: false,
         colorId: null,
       });
     }
@@ -371,7 +375,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
     try {
       await onSubmit(formData);
       if (!trait) {
-        setFormData({ name: "", valueType: TraitValueType.String, allowsMultipleValues: false });
+        setFormData({ name: "", valueType: TraitValueType.String, allowsMultipleValues: false, allowsClarifier: false });
       }
       onClose();
     } catch (error) {
@@ -467,6 +471,37 @@ const TraitModal: React.FC<TraitModalProps> = ({
           <FormNote>
             When enabled, characters can have multiple values for this trait
             (e.g., "Stitching" and "Patches")
+          </FormNote>
+        </FormSection>
+
+        <FormSection>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={formData.allowsClarifier || false}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  allowsClarifier: e.target.checked,
+                }))
+              }
+              disabled={isSubmitting}
+              style={{ width: "18px", height: "18px", cursor: "pointer" }}
+            />
+            <span style={{ fontSize: "0.875rem" }}>
+              Allow clarifier text
+            </span>
+          </label>
+          <FormNote>
+            When enabled, users can attach an optional free-text note to each
+            value, displayed parenthetically (e.g., "Common Body Mod (extra horns)")
           </FormNote>
         </FormSection>
 
@@ -585,6 +620,7 @@ export const TraitBuilderPage: React.FC = () => {
           name: formData.name,
           valueType: formData.valueType,
           allowsMultipleValues: formData.allowsMultipleValues || false,
+          allowsClarifier: formData.allowsClarifier || false,
           colorId: formData.colorId,
           speciesId,
         },
@@ -601,6 +637,7 @@ export const TraitBuilderPage: React.FC = () => {
         updateTraitInput: {
           name: formData.name,
           allowsMultipleValues: formData.allowsMultipleValues,
+          allowsClarifier: formData.allowsClarifier,
           colorId: formData.colorId,
           // Note: valueType cannot be changed for existing traits
         },

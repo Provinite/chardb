@@ -4,10 +4,12 @@ export const TRAIT_VALUE_FIELDS_FRAGMENT = gql`
   fragment TraitValueFields on CharacterTraitValue {
     traitId
     value
+    clarifier
     trait {
       name
       valueType
       allowsMultipleValues
+      allowsClarifier
     }
     enumValue {
       name

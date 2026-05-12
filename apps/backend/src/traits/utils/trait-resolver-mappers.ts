@@ -52,6 +52,7 @@ export function mapCreateTraitInputToService(input: CreateTraitInput) {
     name: input.name,
     valueType: mapGraphQLTraitValueTypeToPrisma(input.valueType),
     allowsMultipleValues: input.allowsMultipleValues,
+    allowsClarifier: input.allowsClarifier,
     speciesId: input.speciesId,
     colorId: input.colorId,
   };
@@ -65,6 +66,7 @@ export function mapUpdateTraitInputToService(input: UpdateTraitInput) {
     name?: string;
     valueType?: $Enums.TraitValueType;
     allowsMultipleValues?: boolean;
+    allowsClarifier?: boolean;
     speciesId?: string;
     colorId?: string | null;
   } = {};
@@ -72,6 +74,7 @@ export function mapUpdateTraitInputToService(input: UpdateTraitInput) {
   if (input.name !== undefined) result.name = input.name;
   if (input.valueType !== undefined) result.valueType = mapGraphQLTraitValueTypeToPrisma(input.valueType);
   if (input.allowsMultipleValues !== undefined) result.allowsMultipleValues = input.allowsMultipleValues;
+  if (input.allowsClarifier !== undefined) result.allowsClarifier = input.allowsClarifier;
   if (input.speciesId !== undefined) result.speciesId = input.speciesId;
   if (input.colorId !== undefined) result.colorId = input.colorId;
 
@@ -90,6 +93,7 @@ export function mapPrismaTraitToGraphQL(prismaTrait: PrismaTrait): Trait {
     name: prismaTrait.name,
     valueType: mapPrismaTraitValueTypeToGraphQL(prismaTrait.valueType),
     allowsMultipleValues: prismaTrait.allowsMultipleValues,
+    allowsClarifier: prismaTrait.allowsClarifier,
     speciesId: prismaTrait.speciesId,
     colorId: prismaTrait.colorId ?? undefined,
     createdAt: prismaTrait.createdAt,

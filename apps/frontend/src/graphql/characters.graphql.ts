@@ -95,10 +95,12 @@ export const GET_CHARACTER = gql`
       traitValues {
         traitId
         value
+        clarifier
         trait {
           name
           valueType
           allowsMultipleValues
+          allowsClarifier
         }
         enumValue {
           name
@@ -203,6 +205,7 @@ export const GET_MY_CHARACTERS = gql`
         traitValues {
           traitId
           value
+          clarifier
         }
         pendingOwnership {
           id
@@ -330,6 +333,7 @@ export const ASSIGN_CHARACTER_SPECIES = gql`
       traitValues {
         traitId
         value
+        clarifier
       }
       ownerId
       creatorId
@@ -516,10 +520,12 @@ export const UPDATE_CHARACTER_REGISTRY = gql`
       traitValues {
         traitId
         value
+        clarifier
         trait {
           name
           valueType
           allowsMultipleValues
+          allowsClarifier
         }
         enumValue {
           name

@@ -398,6 +398,7 @@ export const EditCharacterPage: React.FC = () => {
           character.traitValues.map((tv) => ({
             traitId: tv.traitId,
             value: tv.value || "",
+            clarifier: tv.clarifier ?? null,
           })),
         );
       }

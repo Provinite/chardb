@@ -7,7 +7,7 @@ import {
   CharacterTraitValueInput,
   SpeciesVariantDetailsFragment,
 } from "../../generated/graphql";
-import { TraitValueEditor } from "./TraitValueEditor";
+import { TraitValueEditor, TraitValueEntry } from "./TraitValueEditor";
 
 /**
  * Comprehensive Trait Form Component for Character Creation/Editing
@@ -198,22 +198,31 @@ export const TraitForm: React.FC<TraitFormProps> = ({
   }, [traits, traitValues]);
 
   // Helper function to get trait values by trait ID (returns array for multi-value support)
-  const getTraitValues = (traitId: string): string[] => {
+  const getTraitValues = (traitId: string): TraitValueEntry[] => {
     return traitValues
-      .filter(tv => tv.traitId === traitId && tv.value)
-      .map(tv => tv.value!)
-      .filter(v => v.trim() !== "");
+      .filter((tv) => tv.traitId === traitId && tv.value && tv.value.trim() !== "")
+      .map((tv) => ({
+        value: tv.value!,
+        clarifier: tv.clarifier ?? null,
+      }));
   };
 
   // Helper function to update trait values (handles both single and multi-value traits)
-  const updateTraitValues = (traitId: string, values: string[]) => {
+  const updateTraitValues = (traitId: string, values: TraitValueEntry[]) => {
     // Remove all existing values for this trait
-    let updatedTraitValues = traitValues.filter(tv => tv.traitId !== traitId);
+    let updatedTraitValues = traitValues.filter((tv) => tv.traitId !== traitId);
 
     // Add new values (creates duplicate entries for multi-value traits)
     const newTraitValues = values
-      .filter(value => value && value.trim() !== "")
-      .map(value => ({ traitId, value }));
+      .filter((entry) => entry.value && entry.value.trim() !== "")
+      .map((entry) => {
+        const trimmed = entry.clarifier?.trim();
+        return {
+          traitId,
+          value: entry.value,
+          ...(trimmed ? { clarifier: trimmed } : {}),
+        };
+      });
 
     updatedTraitValues = [...updatedTraitValues, ...newTraitValues];
 
