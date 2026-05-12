@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v10.1.0] - 2026-05-12
+
 ### Added
 
 - **Trait clarifiers**: Species managers can enable per-trait clarifier text from the trait builder. When enabled, character trait values accept an optional free-text clarifier rendered parenthetically (e.g., `Common Body Mod (extra horns)`) in displays, editor chips, and trait review diffs. (#228)
