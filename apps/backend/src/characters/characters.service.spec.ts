@@ -203,6 +203,20 @@ describe('CharactersService', () => {
       const result = await service.purge('char1');
       expect(result).toBe(true);
     });
+
+    it('should cancel pending trait reviews before deleting', async () => {
+      const character = makeCharacter();
+      db.character.findFirst.mockResolvedValue(character);
+      db.character.delete.mockResolvedValue(character);
+
+      await service.purge('char1');
+
+      expect(db.traitReview.updateMany).toHaveBeenCalledWith({
+        where: { characterId: 'char1', status: ModerationStatus.PENDING },
+        data: { status: ModerationStatus.CANCELLED },
+      });
+      expect(db.character.delete).toHaveBeenCalledWith({ where: { id: 'char1' } });
+    });
   });
 
   describe('kickFromSpecies', () => {
