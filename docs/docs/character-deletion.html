@@ -206,7 +206,7 @@
             <div class="feature-item">
               <div class="icon">🗑️</div>
               <h4>Delete Character</h4>
-              <p>Soft-deletes the character. Reversible by a site admin.</p>
+              <p>Deletes the character and removes it from all public views.</p>
             </div>
             <div class="feature-item">
               <div class="icon">↩️</div>
@@ -246,7 +246,7 @@
               <strong>Remove from Species</strong> — detaches the character from
               its species (only shown when the character has a species assigned)
             </li>
-            <li><strong>Delete Character</strong> — soft-deletes the character</li>
+            <li><strong>Delete Character</strong> — deletes the character</li>
           </ul>
           <div class="highlight-box">
             <strong>Note:</strong> The buttons only appear while the character
@@ -279,23 +279,15 @@
             dialog describing what will happen:
           </p>
           <ul>
-            <li>The character is <em>soft-deleted</em> — it is hidden from all
-              public views but the data is retained in the database.</li>
+            <li>The character is deleted and hidden from all public views.</li>
             <li>Any pending trait reviews for the character are cancelled.</li>
             <li>After confirmation you are redirected to the character browse page.</li>
           </ul>
           <div class="warning-box">
-            <strong>Important:</strong> Soft-deletion is intentionally not
-            self-service reversible. Recovery requires a site admin to manually
-            clear the <code>deletedAt</code> timestamp. Use this action for
-            characters that violate community rules or are otherwise no longer
+            <strong>Important:</strong> This action is not self-service reversible.
+            Use it for characters that violate community rules or are otherwise no longer
             appropriate.
           </div>
-          <p>
-            A separate <strong>Purge</strong> mutation is available to site
-            admins only via the GraphQL API for hard (permanent) deletion when
-            needed.
-          </p>
         </div>
       </div>
 
