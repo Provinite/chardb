@@ -419,7 +419,7 @@ export class CommunityResolverService {
       pending.item?.itemType?.communityId;
 
     if (!communityId) {
-      throw new Error("PendingOwnership has no associated community");
+      return null;
     }
 
     return communityId;
