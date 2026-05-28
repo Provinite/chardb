@@ -75,6 +75,7 @@ export class TestApp {
     await this.db.media.deleteMany({});
     await this.db.image.deleteMany({});
     await this.db.gallery.deleteMany({});
+    await this.db.traitReview.deleteMany({});
     await this.db.pendingOwnership.deleteMany({});
     await this.db.characterOwnershipChange.deleteMany({});
     await this.db.character.deleteMany({});
@@ -210,6 +211,8 @@ export class TestApp {
       canCreateCharacter: true,
       canEditOwnCharacter: true,
       canEditCharacter: true,
+      canEditOwnCharacterRegistry: true,
+      canEditCharacterRegistry: true,
       canDeleteCharacter: true,
       canCreateSpecies: true,
       canEditSpecies: true,

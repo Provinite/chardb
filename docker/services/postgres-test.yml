@@ -8,8 +8,6 @@
 #
 # No persistent volume — data is intentionally discarded between test runs.
 
-version: '3.8'
-
 services:
   postgres-test:
     image: postgres:15-alpine

@@ -304,6 +304,91 @@ describe('CharactersResolver (e2e)', () => {
     });
   });
 
+  describe('kickCharacterFromSpecies', () => {
+    it('should remove the character from its species and return true', async () => {
+      const createResponse = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        {
+          input: {
+            name: 'To Kick',
+            speciesId: testSpeciesId,
+            visibility: Visibility.PUBLIC,
+          },
+        },
+        testToken
+      );
+
+      const characterId = createResponse.body.data.createCharacter.id;
+
+      const kickResponse = await testApp.authenticatedGraphqlRequest(
+        `
+          mutation kickCharacterFromSpecies($id: ID!) {
+            kickCharacterFromSpecies(id: $id)
+          }
+        `,
+        { id: characterId },
+        testToken
+      );
+
+      expect(kickResponse.status).toBe(200);
+      expect(kickResponse.body.errors).toBeUndefined();
+      expect(kickResponse.body.data.kickCharacterFromSpecies).toBe(true);
+
+      const fetchResponse = await testApp.authenticatedGraphqlRequest(
+        `
+          query character($id: ID!) {
+            character(id: $id) {
+              id
+              speciesId
+              customFields
+            }
+          }
+        `,
+        { id: characterId },
+        testToken
+      );
+
+      expect(fetchResponse.body.errors).toBeUndefined();
+      const updated = fetchResponse.body.data.character;
+      expect(updated.speciesId).toBeNull();
+      expect(JSON.parse(updated.customFields ?? '{}')).toEqual({});
+    });
+
+    it('should return forbidden when the character has no species (no community context to resolve)', async () => {
+      // Create a character, kick it once, then try again.
+      // After kicking, speciesId is null so the community resolver can't find a
+      // community for the character — the guard denies before the service runs.
+      const createResponse = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        {
+          input: {
+            name: 'Already Kicked',
+            speciesId: testSpeciesId,
+            visibility: Visibility.PUBLIC,
+          },
+        },
+        testToken
+      );
+
+      const characterId = createResponse.body.data.createCharacter.id;
+
+      await testApp.authenticatedGraphqlRequest(
+        `mutation kickCharacterFromSpecies($id: ID!) { kickCharacterFromSpecies(id: $id) }`,
+        { id: characterId },
+        testToken
+      );
+
+      const secondKick = await testApp.authenticatedGraphqlRequest(
+        `mutation kickCharacterFromSpecies($id: ID!) { kickCharacterFromSpecies(id: $id) }`,
+        { id: characterId },
+        testToken
+      );
+
+      expect(secondKick.body.errors).toBeDefined();
+      expect(secondKick.body.errors[0].message).toContain('Forbidden');
+    });
+  });
+
   describe('deleteCharacter', () => {
     it('should delete character when user is owner', async () => {
       const createResponse = await testApp.authenticatedGraphqlRequest(
