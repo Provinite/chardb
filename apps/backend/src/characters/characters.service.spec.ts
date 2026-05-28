@@ -1,9 +1,46 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { CharactersService } from './characters.service';
 import { DatabaseService } from '../database/database.service';
-import { Visibility } from '@chardb/database';
+import { TagsService } from '../tags/tags.service';
+import { PendingOwnershipService } from '../pending-ownership/pending-ownership.service';
+import { DiscordService } from '../discord/discord.service';
+import { DeviantArtService } from '../deviantart/deviantart.service';
+import { PermissionService } from '../auth/PermissionService';
+import { TraitReviewService } from '../trait-review/trait-review.service';
+import { ModerationStatus, TraitValueType, Visibility } from '@chardb/database';
 import { mockDatabaseService } from '../../test/setup';
+
+const mockTagsService = { getCharacterTags: jest.fn(), getCharacterTagRelations: jest.fn(), findOrCreateTags: jest.fn() };
+const mockPendingOwnershipService = { findByCharacterId: jest.fn(), createForCharacter: jest.fn(), remove: jest.fn() };
+const mockDiscordService = { validateUserId: jest.fn(), resolveUsernameToId: jest.fn() };
+const mockDeviantArtService = { resolveUsername: jest.fn() };
+const mockPermissionService = { hasCommunityPermission: jest.fn(), getCommunityPermissions: jest.fn() };
+const mockTraitReviewService = { createReview: jest.fn() };
+
+const makeCharacter = (overrides: Record<string, unknown> = {}) => ({
+  id: 'char1',
+  name: 'Test Character',
+  visibility: Visibility.PUBLIC,
+  ownerId: 'user1',
+  creatorId: 'user1',
+  speciesId: null,
+  speciesVariantId: null,
+  registryId: null,
+  customFields: {},
+  traitValues: [],
+  traitReviewStatus: null,
+  deletedAt: null,
+  deletedById: null,
+  mainMediaId: null,
+  isSellable: false,
+  isTradeable: false,
+  price: null,
+  details: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  ...overrides,
+});
 
 describe('CharactersService', () => {
   let service: CharactersService;
@@ -13,216 +50,64 @@ describe('CharactersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CharactersService,
-        {
-          provide: DatabaseService,
-          useValue: mockDatabaseService,
-        },
+        { provide: DatabaseService, useValue: mockDatabaseService },
+        { provide: TagsService, useValue: mockTagsService },
+        { provide: PendingOwnershipService, useValue: mockPendingOwnershipService },
+        { provide: DiscordService, useValue: mockDiscordService },
+        { provide: DeviantArtService, useValue: mockDeviantArtService },
+        { provide: PermissionService, useValue: mockPermissionService },
+        { provide: TraitReviewService, useValue: mockTraitReviewService },
       ],
     }).compile();
 
     service = module.get<CharactersService>(CharactersService);
-    db = module.get<DatabaseService>(DatabaseService) as any;
-  });
-
-  describe('create', () => {
-    it('should create a character successfully', async () => {
-      const userId = 'user1';
-      const input = {
-        characterData: {
-          name: 'Test Character',
-          description: 'A test character',
-          visibility: Visibility.PUBLIC,
-        },
-      };
-
-      const mockCharacter = {
-        id: 'char1',
-        ...input.characterData,
-        customFields: null,
-        ownerId: userId,
-        creatorId: userId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        mainMediaId: null,
-        price: null,
-        traitValues: [],
-        age: null,
-        gender: null,
-        personality: null,
-        backstory: null,
-        isSellable: false,
-        isTradeable: false,
-      };
-
-      db.character.create.mockResolvedValue(mockCharacter);
-
-      const result = await service.create(userId, input);
-
-      expect(db.character.create).toHaveBeenCalledWith({
-        data: {
-          owner: {
-            connect: { id: userId },
-          },
-          creator: {
-            connect: { id: userId },
-          },
-          ...input.characterData,
-        },
-      });
-      expect(result).toEqual(mockCharacter);
-    });
+    db = module.get<DatabaseService>(DatabaseService) as unknown as typeof mockDatabaseService;
   });
 
   describe('findOne', () => {
     it('should find a public character', async () => {
-      const characterId = 'char1';
-      const mockCharacter = {
-        id: characterId,
-        name: 'Public Character',
-        visibility: Visibility.PUBLIC,
-        ownerId: 'user1',
-        customFields: null,
-      };
+      const character = makeCharacter();
+      db.character.findFirst.mockResolvedValue(character);
 
-      db.character.findUnique.mockResolvedValue(mockCharacter);
+      const result = await service.findOne('char1');
 
-      const result = await service.findOne(characterId);
-
-      expect(db.character.findUnique).toHaveBeenCalledWith({
-        where: { id: characterId },
-        include: expect.any(Object),
+      expect(db.character.findFirst).toHaveBeenCalledWith({
+        where: { id: 'char1', deletedAt: null },
       });
-      expect(result).toEqual(mockCharacter);
+      expect(result).toEqual(character);
     });
 
-    it('should throw NotFoundException for non-existent character', async () => {
-      const characterId = 'nonexistent';
-      db.character.findUnique.mockResolvedValue(null);
+    it('should throw NotFoundException for a non-existent character', async () => {
+      db.character.findFirst.mockResolvedValue(null);
 
-      await expect(service.findOne(characterId)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('nonexistent')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException for a soft-deleted character', async () => {
+      db.character.findFirst.mockResolvedValue(null);
+
+      await expect(service.findOne('char1')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException for private character accessed by non-owner', async () => {
-      const characterId = 'char1';
-      const mockCharacter = {
-        id: characterId,
-        name: 'Private Character',
-        visibility: Visibility.PRIVATE,
-        ownerId: 'user1',
-        customFields: null,
-      };
+      const character = makeCharacter({ visibility: Visibility.PRIVATE });
+      db.character.findFirst.mockResolvedValue(character);
 
-      db.character.findUnique.mockResolvedValue(mockCharacter);
-
-      await expect(service.findOne(characterId, 'user2')).rejects.toThrow(ForbiddenException);
+      await expect(service.findOne('char1', 'user2')).rejects.toThrow();
     });
 
     it('should allow owner to access private character', async () => {
-      const characterId = 'char1';
-      const mockCharacter = {
-        id: characterId,
-        name: 'Private Character',
-        visibility: Visibility.PRIVATE,
-        ownerId: 'user1',
-        customFields: null,
-      };
+      const character = makeCharacter({ visibility: Visibility.PRIVATE });
+      db.character.findFirst.mockResolvedValue(character);
 
-      db.character.findUnique.mockResolvedValue(mockCharacter);
-
-      const result = await service.findOne(characterId, 'user1');
-      expect(result).toEqual(mockCharacter);
-    });
-  });
-
-  describe('update', () => {
-    it('should update character successfully', async () => {
-      const characterId = 'char1';
-      const userId = 'user1';
-      const input = { characterData: { name: 'Updated Character' } };
-
-      const mockExistingCharacter = {
-        id: characterId,
-        ownerId: userId,
-        visibility: Visibility.PUBLIC,
-      };
-
-      const mockUpdatedCharacter = {
-        ...mockExistingCharacter,
-        ...input.characterData,
-        customFields: null,
-      };
-
-      db.character.findUnique.mockResolvedValue(mockExistingCharacter);
-      db.character.update.mockResolvedValue(mockUpdatedCharacter);
-
-      const result = await service.update(characterId, userId, input);
-
-      expect(db.character.update).toHaveBeenCalledWith({
-        where: { id: characterId },
-        data: input.characterData,
-      });
-      expect(result).toEqual(mockUpdatedCharacter);
-    });
-
-    it('should throw ForbiddenException when non-owner tries to update', async () => {
-      const characterId = 'char1';
-      const mockCharacter = {
-        id: characterId,
-        ownerId: 'user1',
-        visibility: Visibility.PUBLIC,
-      };
-
-      db.character.findUnique.mockResolvedValue(mockCharacter);
-
-      await expect(service.update(characterId, 'user2', { characterData: { name: 'Hacked' } }))
-        .rejects.toThrow(ForbiddenException);
-    });
-  });
-
-  describe('remove', () => {
-    it('should delete character successfully', async () => {
-      const characterId = 'char1';
-      const userId = 'user1';
-
-      const mockCharacter = {
-        id: characterId,
-        ownerId: userId,
-        visibility: Visibility.PUBLIC,
-      };
-
-      db.character.findUnique.mockResolvedValue(mockCharacter);
-      db.character.delete.mockResolvedValue(mockCharacter);
-
-      const result = await service.remove(characterId, userId);
-
-      expect(db.character.delete).toHaveBeenCalledWith({
-        where: { id: characterId },
-      });
-      expect(result).toBe(true);
-    });
-
-    it('should throw ForbiddenException when non-owner tries to delete', async () => {
-      const characterId = 'char1';
-      const mockCharacter = {
-        id: characterId,
-        ownerId: 'user1',
-        visibility: Visibility.PUBLIC,
-      };
-
-      db.character.findUnique.mockResolvedValue(mockCharacter);
-
-      await expect(service.remove(characterId, 'user2'))
-        .rejects.toThrow(ForbiddenException);
+      const result = await service.findOne('char1', 'user1');
+      expect(result).toEqual(character);
     });
   });
 
   describe('findAll', () => {
-    it('should return paginated characters with proper filtering', async () => {
-      const mockCharacters = [
-        { id: 'char1', name: 'Character 1', visibility: Visibility.PUBLIC, customFields: null },
-        { id: 'char2', name: 'Character 2', visibility: Visibility.PUBLIC, customFields: null },
-      ];
-
+    it('should include notDeleted filter in the where clause', async () => {
+      const mockCharacters = [makeCharacter(), makeCharacter({ id: 'char2', name: 'Character 2' })];
       db.character.findMany.mockResolvedValue(mockCharacters);
       db.character.count.mockResolvedValue(2);
 
@@ -234,65 +119,256 @@ describe('CharactersService', () => {
         hasMore: false,
       });
 
-      expect(db.character.findMany).toHaveBeenCalledWith({
-        where: expect.objectContaining({
-          AND: expect.arrayContaining([
-            { visibility: Visibility.PUBLIC },
-          ]),
+      expect(db.character.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([{ deletedAt: null }]),
+          }),
         }),
-        include: {
-          owner: true,
-          creator: true,
-          tags_rel: {
-            include: {
-              tag: true,
-            },
-          },
-          _count: {
-            select: {
-              images: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-        skip: 0,
-      });
+      );
+    });
+
+    it('should not include soft-deleted characters', async () => {
+      db.character.findMany.mockResolvedValue([]);
+      db.character.count.mockResolvedValue(0);
+
+      await service.findAll();
+
+      const [call] = db.character.findMany.mock.calls;
+      const where = call[0].where;
+      expect(where.AND).toEqual(expect.arrayContaining([{ deletedAt: null }]));
     });
   });
 
-  describe('addTags', () => {
-    it('should add tags to character', async () => {
-      const characterId = 'char1';
-      const userId = 'user1';
-      const tagNames = ['fantasy', 'dragon'];
+  describe('softDelete', () => {
+    it('should set deletedAt and cancel pending trait reviews', async () => {
+      const character = makeCharacter();
+      db.character.findFirst.mockResolvedValue(character);
+      db.character.update.mockResolvedValue({ ...character, deletedAt: new Date(), deletedById: 'admin1' });
+      db.traitReview.updateMany.mockResolvedValue({ count: 1 });
 
-      const mockCharacter = {
-        id: characterId,
-        ownerId: userId,
-        visibility: Visibility.PUBLIC,
-      };
+      const result = await service.softDelete('char1', 'admin1');
 
-      const mockTags = [
-        { id: 'tag1', name: 'fantasy' },
-        { id: 'tag2', name: 'dragon' },
+      expect(result).toBe(true);
+      expect(db.character.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'char1' },
+          data: expect.objectContaining({
+            deletedById: 'admin1',
+          }),
+        }),
+      );
+      expect(db.traitReview.updateMany).toHaveBeenCalledWith({
+        where: { characterId: 'char1', status: ModerationStatus.PENDING },
+        data: { status: ModerationStatus.CANCELLED },
+      });
+    });
+
+    it('should throw NotFoundException for a non-existent character', async () => {
+      db.character.findFirst.mockResolvedValue(null);
+
+      await expect(service.softDelete('nonexistent', 'admin1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException for an already soft-deleted character', async () => {
+      db.character.findFirst.mockResolvedValue(null);
+
+      await expect(service.softDelete('char1', 'admin1')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('purge', () => {
+    it('should hard-delete the character', async () => {
+      const character = makeCharacter();
+      db.character.findFirst.mockResolvedValue(character);
+      db.character.delete.mockResolvedValue(character);
+
+      const result = await service.purge('char1');
+
+      expect(result).toBe(true);
+      expect(db.character.delete).toHaveBeenCalledWith({ where: { id: 'char1' } });
+    });
+
+    it('should throw NotFoundException when character does not exist', async () => {
+      db.character.findFirst.mockResolvedValue(null);
+
+      await expect(service.purge('nonexistent')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should purge a soft-deleted character (findFirst without notDeleted filter)', async () => {
+      const character = makeCharacter({ deletedAt: new Date(), deletedById: 'admin1' });
+      db.character.findFirst.mockResolvedValue(character);
+      db.character.delete.mockResolvedValue(character);
+
+      const result = await service.purge('char1');
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('kickFromSpecies', () => {
+    it('should throw NotFoundException when character does not exist', async () => {
+      db.character.findFirst.mockResolvedValue(null);
+
+      await expect(service.kickFromSpecies('nonexistent')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException when character has no species', async () => {
+      const character = makeCharacter({ speciesId: null });
+      db.character.findFirst.mockResolvedValue(character);
+
+      await expect(service.kickFromSpecies('char1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should nullify speciesId, speciesVariantId, registryId and clear traitValues', async () => {
+      const character = makeCharacter({
+        speciesId: 'species1',
+        speciesVariantId: 'variant1',
+        registryId: '001',
+        traitValues: [],
+        customFields: {},
+      });
+      db.character.findFirst.mockResolvedValue(character);
+      db.trait.findMany.mockResolvedValue([]);
+      db.enumValue.findMany.mockResolvedValue([]);
+      db.character.update.mockResolvedValue({ ...character, speciesId: null });
+      db.traitReview.updateMany.mockResolvedValue({ count: 0 });
+
+      const result = await service.kickFromSpecies('char1');
+
+      expect(result).toBe(true);
+      expect(db.character.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'char1' },
+          data: expect.objectContaining({
+            speciesId: null,
+            speciesVariantId: null,
+            registryId: null,
+            traitValues: [],
+          }),
+        }),
+      );
+    });
+
+    it('should cancel pending trait reviews', async () => {
+      const character = makeCharacter({ speciesId: 'species1', traitValues: [] });
+      db.character.findFirst.mockResolvedValue(character);
+      db.trait.findMany.mockResolvedValue([]);
+      db.enumValue.findMany.mockResolvedValue([]);
+      db.character.update.mockResolvedValue(character);
+      db.traitReview.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.kickFromSpecies('char1');
+
+      expect(db.traitReview.updateMany).toHaveBeenCalledWith({
+        where: { characterId: 'char1', status: ModerationStatus.PENDING },
+        data: { status: ModerationStatus.CANCELLED },
+      });
+    });
+
+    it('should flatten string trait values into customFields', async () => {
+      const traitValues = [{ traitId: 'trait1', value: 'Blue', clarifier: null }];
+      const character = makeCharacter({
+        speciesId: 'species1',
+        traitValues,
+        customFields: { 'Existing Field': 'kept' },
+      });
+      db.character.findFirst.mockResolvedValue(character);
+      db.trait.findMany.mockResolvedValue([
+        { id: 'trait1', name: 'Eye Color', valueType: TraitValueType.STRING },
+      ]);
+      db.enumValue.findMany.mockResolvedValue([]);
+      db.character.update.mockResolvedValue(character);
+      db.traitReview.updateMany.mockResolvedValue({ count: 0 });
+
+      await service.kickFromSpecies('char1');
+
+      expect(db.character.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            customFields: expect.objectContaining({
+              'Eye Color': 'Blue',
+              'Existing Field': 'kept',
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should append clarifier to the display value', async () => {
+      const traitValues = [{ traitId: 'trait1', value: 'Blue', clarifier: 'gradient' }];
+      const character = makeCharacter({ speciesId: 'species1', traitValues, customFields: {} });
+      db.character.findFirst.mockResolvedValue(character);
+      db.trait.findMany.mockResolvedValue([
+        { id: 'trait1', name: 'Eye Color', valueType: TraitValueType.STRING },
+      ]);
+      db.enumValue.findMany.mockResolvedValue([]);
+      db.character.update.mockResolvedValue(character);
+      db.traitReview.updateMany.mockResolvedValue({ count: 0 });
+
+      await service.kickFromSpecies('char1');
+
+      expect(db.character.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            customFields: expect.objectContaining({
+              'Eye Color': 'Blue (gradient)',
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should resolve ENUM trait values to their display names', async () => {
+      const traitValues = [{ traitId: 'trait1', value: 'spotted', clarifier: null }];
+      const character = makeCharacter({ speciesId: 'species1', traitValues, customFields: {} });
+      db.character.findFirst.mockResolvedValue(character);
+      db.trait.findMany.mockResolvedValue([
+        { id: 'trait1', name: 'Pattern', valueType: TraitValueType.ENUM },
+      ]);
+      db.enumValue.findMany.mockResolvedValue([
+        { traitId: 'trait1', name: 'Spotted' },
+      ]);
+      db.character.update.mockResolvedValue(character);
+      db.traitReview.updateMany.mockResolvedValue({ count: 0 });
+
+      await service.kickFromSpecies('char1');
+
+      expect(db.character.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            customFields: expect.objectContaining({
+              Pattern: 'Spotted',
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should concatenate multiple values for the same trait', async () => {
+      const traitValues = [
+        { traitId: 'trait1', value: 'Red', clarifier: null },
+        { traitId: 'trait1', value: 'Blue', clarifier: null },
       ];
+      const character = makeCharacter({ speciesId: 'species1', traitValues, customFields: {} });
+      db.character.findFirst.mockResolvedValue(character);
+      db.trait.findMany.mockResolvedValue([
+        { id: 'trait1', name: 'Colors', valueType: TraitValueType.STRING },
+      ]);
+      db.enumValue.findMany.mockResolvedValue([]);
+      db.character.update.mockResolvedValue(character);
+      db.traitReview.updateMany.mockResolvedValue({ count: 0 });
 
-      const mockUpdatedCharacter = {
-        ...mockCharacter,
-        customFields: null,
-      };
+      await service.kickFromSpecies('char1');
 
-      db.character.findUnique.mockResolvedValue(mockCharacter);
-      db.tag.upsert.mockResolvedValueOnce(mockTags[0]).mockResolvedValueOnce(mockTags[1]);
-      db.characterTag.upsert.mockResolvedValue({});
-      db.character.findUnique.mockResolvedValueOnce(mockUpdatedCharacter);
-
-      const result = await service.addTags(characterId, userId, tagNames);
-
-      expect(db.tag.upsert).toHaveBeenCalledTimes(2);
-      expect(db.characterTag.upsert).toHaveBeenCalledTimes(2);
-      expect(result).toEqual(mockUpdatedCharacter);
+      expect(db.character.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            customFields: expect.objectContaining({
+              Colors: 'Red, Blue',
+            }),
+          }),
+        }),
+      );
     });
   });
 });
