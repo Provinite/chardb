@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
+import { notDeleted } from "../common/utils/prisma-filters";
 
 /**
  * Service for checking entity ownership.
@@ -51,8 +52,8 @@ export class OwnershipService {
   ): Promise<boolean> {
     switch (entityType) {
       case "character": {
-        const character = await this.prisma.character.findUnique({
-          where: { id: entityId },
+        const character = await this.prisma.character.findFirst({
+          where: { id: entityId, ...notDeleted },
           select: { ownerId: true },
         });
         return character?.ownerId === userId;
@@ -134,8 +135,8 @@ export class OwnershipService {
   ): Promise<string | null> {
     switch (entityType) {
       case "character": {
-        const character = await this.prisma.character.findUnique({
-          where: { id: entityId },
+        const character = await this.prisma.character.findFirst({
+          where: { id: entityId, ...notDeleted },
           select: { ownerId: true },
         });
         return character?.ownerId ?? null;

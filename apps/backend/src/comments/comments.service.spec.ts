@@ -51,14 +51,14 @@ describe('CommentsService', () => {
         entityId: 'character-1',
       };
 
-      db.character.findUnique.mockResolvedValue(mockCharacter);
+      db.character.findFirst.mockResolvedValue(mockCharacter);
       db.comment.create.mockResolvedValue(mockComment);
 
       const result = await service.create('user-1', input);
 
       expect(result.content).toBe('Test comment');
-      expect(db.character.findUnique).toHaveBeenCalledWith({
-        where: { id: 'character-1' },
+      expect(db.character.findFirst).toHaveBeenCalledWith({
+        where: { id: 'character-1', deletedAt: null },
       });
       expect(db.comment.create).toHaveBeenCalledWith({
         data: {
@@ -77,7 +77,7 @@ describe('CommentsService', () => {
         entityId: 'non-existent',
       };
 
-      db.character.findUnique.mockResolvedValue(null);
+      db.character.findFirst.mockResolvedValue(null);
 
       await expect(service.create('user-1', input)).rejects.toThrow(
         BadRequestException,
@@ -99,7 +99,7 @@ describe('CommentsService', () => {
         imageId: 'image-1',
       };
 
-      db.character.findUnique.mockResolvedValue(mockCharacter);
+      db.character.findFirst.mockResolvedValue(mockCharacter);
       db.comment.findUnique.mockResolvedValue(parentComment);
 
       await expect(service.create('user-1', input)).rejects.toThrow(
@@ -231,7 +231,7 @@ describe('CommentsService', () => {
       const otherUserComment = { ...mockComment, authorId: 'other-user' };
       db.comment.findUnique.mockResolvedValue(otherUserComment);
       // user-1 does not own the character the comment is on
-      db.character.findUnique.mockResolvedValue({ id: 'character-1', ownerId: 'other-user' });
+      db.character.findFirst.mockResolvedValue({ id: 'character-1', ownerId: 'other-user' });
 
       await expect(
         service.remove('comment-1', 'user-1', false),

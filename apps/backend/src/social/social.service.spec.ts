@@ -52,7 +52,7 @@ describe('SocialService', () => {
       };
 
       // Mock entity exists
-      db.character.findUnique.mockResolvedValue(mockCharacter);
+      db.character.findFirst.mockResolvedValue(mockCharacter);
       
       // Mock no existing like
       db.like.findUnique.mockResolvedValue(null);
@@ -82,7 +82,7 @@ describe('SocialService', () => {
       };
 
       // Mock entity exists
-      db.character.findUnique.mockResolvedValue(mockCharacter);
+      db.character.findFirst.mockResolvedValue(mockCharacter);
       
       // Mock transaction with existing like
       db.$transaction.mockImplementation(async (callback) => {
@@ -108,7 +108,7 @@ describe('SocialService', () => {
         entityId: 'non-existent',
       };
 
-      db.character.findUnique.mockResolvedValue(null);
+      db.character.findFirst.mockResolvedValue(null);
 
       await expect(service.toggleLike('user-1', input)).rejects.toThrow(
         BadRequestException,
@@ -129,13 +129,17 @@ describe('SocialService', () => {
           entityId: 'test-id',
         };
 
-        const mockEntities: Record<string, { findUnique: jest.Mock }> = {
-          character: db.character,
-          image: db.image,
-          gallery: db.gallery,
-          comment: db.comment,
-        };
-        mockEntities[testCase.mock].findUnique.mockResolvedValue({ id: 'test-id' });
+        // character uses findFirst (soft-delete filter); others use findUnique
+        if (testCase.mock === 'character') {
+          db.character.findFirst.mockResolvedValue({ id: 'test-id' });
+        } else {
+          const mockEntities: Record<string, { findUnique: jest.Mock }> = {
+            image: db.image,
+            gallery: db.gallery,
+            comment: db.comment,
+          };
+          mockEntities[testCase.mock].findUnique.mockResolvedValue({ id: 'test-id' });
+        }
         db.$transaction.mockImplementation(async (callback) => {
           db.like.findUnique.mockResolvedValue(null);
           db.like.create.mockResolvedValue(mockLike);

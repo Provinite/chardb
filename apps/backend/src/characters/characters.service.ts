@@ -13,13 +13,13 @@ import { PermissionService } from "../auth/PermissionService";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { Prisma, Visibility, ExternalAccountProvider, ModerationStatus, TraitReviewSource, TraitValueType } from "@chardb/database";
 import { TraitReviewService } from "../trait-review/trait-review.service";
+import { notDeleted } from "../common/utils/prisma-filters";
 
 /**
  * Field classification for permission checks.
  * Profile fields can be edited by owners with canEditOwnCharacter.
  * Registry fields require canEditOwnCharacterRegistry or canEditCharacterRegistry.
  */
-const notDeleted = { deletedAt: null } as const;
 
 const PROFILE_FIELDS = new Set([
   "name",
@@ -809,6 +809,10 @@ export class CharactersService {
         : {};
 
     await this.db.$transaction(async (tx) => {
+      await tx.traitReview.updateMany({
+        where: { characterId: id, status: ModerationStatus.PENDING },
+        data: { status: ModerationStatus.CANCELLED },
+      });
       await tx.character.update({
         where: { id },
         data: {
@@ -816,15 +820,12 @@ export class CharactersService {
           speciesVariantId: null,
           registryId: null,
           traitValues: [],
+          traitReviewStatus: null,
           // Trait values take precedence over any existing custom field with
           // the same name — the structured species data is more authoritative
           // than a freeform field the owner may have set manually.
           customFields: { ...existingCustomFields, ...flattenedFields },
         },
-      });
-      await tx.traitReview.updateMany({
-        where: { characterId: id, status: ModerationStatus.PENDING },
-        data: { status: ModerationStatus.CANCELLED },
       });
     });
 

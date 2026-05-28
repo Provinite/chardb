@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { ExternalAccountProvider } from '@chardb/database';
 import { DatabaseService } from '../../database/database.service';
 import { PendingOwnershipService } from '../../pending-ownership/pending-ownership.service';
+import { notDeleted } from '../../common/utils/prisma-filters';
 import { PrizeEventDto } from '../dto/prize-event.dto';
 
 @Injectable()
@@ -23,8 +24,8 @@ export class CharacterPrizeHandler {
     }
 
     // Step 1: Look up the character
-    const character = await this.db.character.findUnique({
-      where: { id: event.characterId },
+    const character = await this.db.character.findFirst({
+      where: { id: event.characterId, ...notDeleted },
       include: {
         species: {
           include: {

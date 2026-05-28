@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
+import { notDeleted } from "../common/utils/prisma-filters";
 import {
   LikeableType,
   ToggleLikeInput,
@@ -206,8 +207,8 @@ export class SocialService {
 
     switch (entityType) {
       case LikeableType.CHARACTER:
-        const character = await this.databaseService.character.findUnique({
-          where: { id: entityId },
+        const character = await this.databaseService.character.findFirst({
+          where: { id: entityId, ...notDeleted },
         });
         exists = !!character;
         break;
@@ -406,6 +407,7 @@ export class SocialService {
       where: {
         id: { in: characterIds.filter((id): id is string => id !== null) },
         visibility: "PUBLIC", // Only return public characters
+        ...notDeleted,
       },
       include: {
         owner: true,
@@ -717,6 +719,7 @@ export class SocialService {
       this.databaseService.character.findMany({
         where: {
           ownerId: { in: followingUserIds },
+          ...notDeleted,
         },
         include: {
           owner: {

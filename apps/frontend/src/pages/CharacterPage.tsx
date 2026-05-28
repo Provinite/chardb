@@ -637,7 +637,9 @@ export const CharacterPage: React.FC = () => {
                   Edit Character
                 </Button>
               )}
-              {character.speciesId && permissions.canEditCharacterRegistry && (
+              {character.speciesId &&
+                (permissions.canEditCharacterRegistry ||
+                  (user?.isAdmin ?? false)) && (
                 <RemoveFromSpeciesButton
                   variant="outline"
                   size="sm"

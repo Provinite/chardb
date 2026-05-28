@@ -1,6 +1,7 @@
 import { Injectable, ConflictException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { ExternalAccountProvider, PendingOwnership, Prisma } from '@chardb/database';
+import { notDeleted } from '../common/utils/prisma-filters';
 import { ExternalAccountsService } from '../external-accounts/external-accounts.service';
 
 @Injectable()
@@ -26,8 +27,8 @@ export class PendingOwnershipService {
     displayIdentifier?: string,
   ): Promise<{ claimed: boolean; ownerId?: string; pendingOwnership?: PendingOwnership }> {
     // Check if character exists
-    const character = await this.prisma.character.findUnique({
-      where: { id: characterId },
+    const character = await this.prisma.character.findFirst({
+      where: { id: characterId, ...notDeleted },
     });
     if (!character) {
       throw new NotFoundException(`Character with ID ${characterId} not found`);

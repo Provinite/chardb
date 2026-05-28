@@ -124,7 +124,7 @@ describe('ImagesService', () => {
     });
 
     it('should verify character ownership when specified', async () => {
-      db.character.findUnique.mockResolvedValue({
+      db.character.findFirst.mockResolvedValue({
         id: 'char1',
         ownerId: 'user2',
       });

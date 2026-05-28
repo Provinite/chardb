@@ -68,7 +68,7 @@ describe('GalleriesService', () => {
         characterId: 'char1',
       };
 
-      db.character.findUnique.mockResolvedValue({
+      db.character.findFirst.mockResolvedValue({
         id: 'char1',
         ownerId: 'user2', // Different user
       });
@@ -76,8 +76,8 @@ describe('GalleriesService', () => {
       await expect(service.create(userId, input))
         .rejects.toThrow(ForbiddenException);
 
-      expect(db.character.findUnique).toHaveBeenCalledWith({
-        where: { id: 'char1' },
+      expect(db.character.findFirst).toHaveBeenCalledWith({
+        where: { id: 'char1', deletedAt: null },
         select: { ownerId: true },
       });
     });
@@ -195,7 +195,7 @@ describe('GalleriesService', () => {
       };
 
       db.gallery.findUnique.mockResolvedValue(mockExistingGallery);
-      db.character.findUnique.mockResolvedValue({
+      db.character.findFirst.mockResolvedValue({
         id: 'char2',
         ownerId: 'user2', // Different user
       });
