@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 
 import { Button } from "@chardb/ui";
 import {
   useGetCharacterQuery,
+  useDeleteCharacterMutation,
+  useKickCharacterFromSpeciesMutation,
   LikeableType,
   CommentableType,
   ModerationStatus,
@@ -411,7 +413,7 @@ export const CharacterPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const { data, loading, error } = useGetCharacterQuery({
     variables: { id: id! },
@@ -425,12 +427,39 @@ export const CharacterPage: React.FC = () => {
     character?.species?.community?.id,
   );
 
+  const [deleteCharacter, { loading: deleting }] = useDeleteCharacterMutation();
+  const [kickFromSpecies, { loading: kicking }] = useKickCharacterFromSpeciesMutation();
+
   const handleBackClick = () => {
     navigate("/characters");
   };
 
   const handleEditClick = () => {
     navigate(`/character/${id}/edit`);
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    if (!window.confirm(`Delete "${character?.name}"? This action soft-deletes the character and cannot be undone without admin intervention.`)) return;
+    setActionError(null);
+    try {
+      await deleteCharacter({ variables: { id } });
+      navigate("/characters");
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Failed to delete character");
+    }
+  };
+
+  const handleKickFromSpecies = async () => {
+    if (!id) return;
+    if (!window.confirm(`Remove "${character?.name}" from its species? Trait values will be flattened to custom fields and the character will no longer be part of "${character?.species?.name}".`)) return;
+    setActionError(null);
+    try {
+      await kickFromSpecies({ variables: { id } });
+      navigate(0); // reload page to reflect updated character state
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Failed to remove character from species");
+    }
   };
 
   const getVisibilityVariant = (visibility: string) => {
@@ -629,12 +658,41 @@ export const CharacterPage: React.FC = () => {
           </OwnerInfo>
         )}
 
-        {canUserEditCharacter(character, user, permissions) && (
+        {(canUserEditCharacter(character, user, permissions) ||
+          permissions.canDeleteCharacter ||
+          (user?.isAdmin ?? false)) && (
           <HeaderActions>
-            <Button variant="primary" size="sm" onClick={handleEditClick}>
-              Edit Character
-            </Button>
+            {canUserEditCharacter(character, user, permissions) && (
+              <Button variant="primary" size="sm" onClick={handleEditClick}>
+                Edit Character
+              </Button>
+            )}
+            {character.speciesId && permissions.canEditCharacterRegistry && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleKickFromSpecies}
+                disabled={kicking}
+              >
+                {kicking ? "Removing..." : "Remove from Species"}
+              </Button>
+            )}
+            {(permissions.canDeleteCharacter || (user?.isAdmin ?? false)) && (
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Delete Character"}
+              </Button>
+            )}
           </HeaderActions>
+        )}
+        {actionError && (
+          <div style={{ color: "red", marginTop: "0.5rem", fontSize: "0.875rem" }}>
+            {actionError}
+          </div>
         )}
       </CharacterHeader>
 

@@ -20,6 +20,7 @@ export const ROLES_BY_COMMUNITY = gql`
         canUploadOwnCharacterImages
         canUploadCharacterImages
         canModerateImages
+        canDeleteCharacter
         canCreateInviteCode
         canListInviteCodes
         canCreateRole
@@ -57,6 +58,7 @@ export const CREATE_ROLE = gql`
       canUploadOwnCharacterImages
       canUploadCharacterImages
       canModerateImages
+      canDeleteCharacter
       canCreateInviteCode
       canListInviteCodes
       canCreateRole
@@ -90,6 +92,7 @@ export const UPDATE_ROLE = gql`
       canUploadOwnCharacterImages
       canUploadCharacterImages
       canModerateImages
+      canDeleteCharacter
       canCreateInviteCode
       canListInviteCodes
       canCreateRole
@@ -137,6 +140,7 @@ export const COMMUNITY_MEMBERS_WITH_ROLES = gql`
           canUploadOwnCharacterImages
           canUploadCharacterImages
           canModerateImages
+          canDeleteCharacter
           canCreateInviteCode
           canListInviteCodes
           canCreateRole
@@ -182,6 +186,7 @@ export const UPDATE_COMMUNITY_MEMBER = gql`
         canUploadOwnCharacterImages
         canUploadCharacterImages
         canModerateImages
+        canDeleteCharacter
         canCreateInviteCode
         canListInviteCodes
         canCreateRole

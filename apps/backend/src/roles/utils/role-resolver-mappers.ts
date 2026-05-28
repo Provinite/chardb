@@ -95,6 +95,7 @@ export function mapPrismaRoleToGraphQL(prismaRole: PrismaRole): Role {
     canUploadOwnCharacterImages: prismaRole.canUploadOwnCharacterImages,
     canUploadCharacterImages: prismaRole.canUploadCharacterImages,
     canModerateImages: prismaRole.canModerateImages,
+    canDeleteCharacter: prismaRole.canDeleteCharacter,
     canCreateOrphanedCharacter: prismaRole.canCreateOrphanedCharacter,
     createdAt: prismaRole.createdAt,
     updatedAt: prismaRole.updatedAt,

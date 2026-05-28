@@ -520,6 +520,8 @@ export type CreateRoleInput = {
   canCreateRole?: Scalars['Boolean']['input'];
   /** Whether members with this role can create new species */
   canCreateSpecies?: Scalars['Boolean']['input'];
+  /** Whether members with this role can delete characters in this community */
+  canDeleteCharacter?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit characters */
   canEditCharacter?: Scalars['Boolean']['input'];
   /** Whether members with this role can edit registry fields (variant, traits) on any character */
@@ -1185,6 +1187,7 @@ export enum ModerationRejectionReason {
 /** The moderation status of an image */
 export enum ModerationStatus {
   Approved = 'APPROVED',
+  Cancelled = 'CANCELLED',
   Pending = 'PENDING',
   Rejected = 'REJECTED'
 }
@@ -1236,6 +1239,7 @@ export type Mutation = {
   /** Create a new trait list entry */
   createTraitListEntry: TraitListEntry;
   deleteAccount: RemovalResponse;
+  /** Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. */
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
   deleteCommunityColor: Scalars['Boolean']['output'];
@@ -1251,9 +1255,13 @@ export type Mutation = {
   forgotPassword: Scalars['Boolean']['output'];
   /** Grant an item to a user (admin only) */
   grantItem: Item;
+  /** Remove a character from its species, flattening its trait values into custom fields. Requires CanEditCharacterRegistry permission. */
+  kickCharacterFromSpecies: Scalars['Boolean']['output'];
   /** Link a Discord guild to a community */
   linkDiscordGuild: Community;
   login: AuthPayload;
+  /** Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete. */
+  purgeCharacter: Scalars['Boolean']['output'];
   refreshToken: Scalars['String']['output'];
   /** Reject an image (moderator action) */
   rejectImage: ImageModerationAction;
@@ -1522,6 +1530,11 @@ export type MutationGrantItemArgs = {
 };
 
 
+export type MutationKickCharacterFromSpeciesArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationLinkDiscordGuildArgs = {
   communityId: Scalars['ID']['input'];
   guildId: Scalars['ID']['input'];
@@ -1530,6 +1543,11 @@ export type MutationLinkDiscordGuildArgs = {
 
 export type MutationLoginArgs = {
   input: LoginInput;
+};
+
+
+export type MutationPurgeCharacterArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2584,6 +2602,8 @@ export type Role = {
   canCreateRole: Scalars['Boolean']['output'];
   /** Whether members with this role can create new species */
   canCreateSpecies: Scalars['Boolean']['output'];
+  /** Whether members with this role can delete characters in this community */
+  canDeleteCharacter: Scalars['Boolean']['output'];
   /** Whether members with this role can edit characters */
   canEditCharacter: Scalars['Boolean']['output'];
   /** Whether members with this role can edit registry fields (variant, traits) on any character */
@@ -3081,6 +3101,8 @@ export type UpdateRoleInput = {
   canCreateRole?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can create new species */
   canCreateSpecies?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether members with this role can delete characters in this community */
+  canDeleteCharacter?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit characters */
   canEditCharacter?: InputMaybe<Scalars['Boolean']['input']>;
   /** Whether members with this role can edit registry fields (variant, traits) on any character */
@@ -3370,6 +3392,20 @@ export type DeleteCharacterMutationVariables = Exact<{
 
 export type DeleteCharacterMutation = { __typename?: 'Mutation', deleteCharacter: boolean };
 
+export type PurgeCharacterMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type PurgeCharacterMutation = { __typename?: 'Mutation', purgeCharacter: boolean };
+
+export type KickCharacterFromSpeciesMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type KickCharacterFromSpeciesMutation = { __typename?: 'Mutation', kickCharacterFromSpecies: boolean };
+
 export type TransferCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   input: TransferCharacterInput;
@@ -3514,7 +3550,7 @@ export type CommunityMembersByUserQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type CommunityColorFieldsFragment = { __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string };
 
@@ -4046,14 +4082,14 @@ export type RolesByCommunityDetailedQueryVariables = Exact<{
 }>;
 
 
-export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
+export type RolesByCommunityDetailedQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } }> } };
 
 export type CreateRoleMutationVariables = Exact<{
   input: CreateRoleInput;
 }>;
 
 
-export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
 
 export type UpdateRoleMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4061,7 +4097,7 @@ export type UpdateRoleMutationVariables = Exact<{
 }>;
 
 
-export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
+export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } } };
 
 export type CommunityMembersWithRolesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -4070,7 +4106,7 @@ export type CommunityMembersWithRolesQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
+export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
 
 export type UpdateCommunityMemberMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4078,7 +4114,7 @@ export type UpdateCommunityMemberMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
+export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
 
 export type UserWithAvatarFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
@@ -5537,6 +5573,68 @@ export function useDeleteCharacterMutation(baseOptions?: Apollo.MutationHookOpti
 export type DeleteCharacterMutationHookResult = ReturnType<typeof useDeleteCharacterMutation>;
 export type DeleteCharacterMutationResult = Apollo.MutationResult<DeleteCharacterMutation>;
 export type DeleteCharacterMutationOptions = Apollo.BaseMutationOptions<DeleteCharacterMutation, DeleteCharacterMutationVariables>;
+export const PurgeCharacterDocument = gql`
+    mutation PurgeCharacter($id: ID!) {
+  purgeCharacter(id: $id)
+}
+    `;
+export type PurgeCharacterMutationFn = Apollo.MutationFunction<PurgeCharacterMutation, PurgeCharacterMutationVariables>;
+
+/**
+ * __usePurgeCharacterMutation__
+ *
+ * To run a mutation, you first call `usePurgeCharacterMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePurgeCharacterMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [purgeCharacterMutation, { data, loading, error }] = usePurgeCharacterMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function usePurgeCharacterMutation(baseOptions?: Apollo.MutationHookOptions<PurgeCharacterMutation, PurgeCharacterMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<PurgeCharacterMutation, PurgeCharacterMutationVariables>(PurgeCharacterDocument, options);
+      }
+export type PurgeCharacterMutationHookResult = ReturnType<typeof usePurgeCharacterMutation>;
+export type PurgeCharacterMutationResult = Apollo.MutationResult<PurgeCharacterMutation>;
+export type PurgeCharacterMutationOptions = Apollo.BaseMutationOptions<PurgeCharacterMutation, PurgeCharacterMutationVariables>;
+export const KickCharacterFromSpeciesDocument = gql`
+    mutation KickCharacterFromSpecies($id: ID!) {
+  kickCharacterFromSpecies(id: $id)
+}
+    `;
+export type KickCharacterFromSpeciesMutationFn = Apollo.MutationFunction<KickCharacterFromSpeciesMutation, KickCharacterFromSpeciesMutationVariables>;
+
+/**
+ * __useKickCharacterFromSpeciesMutation__
+ *
+ * To run a mutation, you first call `useKickCharacterFromSpeciesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useKickCharacterFromSpeciesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [kickCharacterFromSpeciesMutation, { data, loading, error }] = useKickCharacterFromSpeciesMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useKickCharacterFromSpeciesMutation(baseOptions?: Apollo.MutationHookOptions<KickCharacterFromSpeciesMutation, KickCharacterFromSpeciesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<KickCharacterFromSpeciesMutation, KickCharacterFromSpeciesMutationVariables>(KickCharacterFromSpeciesDocument, options);
+      }
+export type KickCharacterFromSpeciesMutationHookResult = ReturnType<typeof useKickCharacterFromSpeciesMutation>;
+export type KickCharacterFromSpeciesMutationResult = Apollo.MutationResult<KickCharacterFromSpeciesMutation>;
+export type KickCharacterFromSpeciesMutationOptions = Apollo.BaseMutationOptions<KickCharacterFromSpeciesMutation, KickCharacterFromSpeciesMutationVariables>;
 export const TransferCharacterDocument = gql`
     mutation TransferCharacter($id: ID!, $input: TransferCharacterInput!) {
   transferCharacter(id: $id, input: $input) {
@@ -6394,6 +6492,7 @@ export const CommunityMembersByUserDocument = gql`
         canManageItems
         canGrantItems
         canModerateImages
+        canDeleteCharacter
       }
       user {
         id
@@ -9888,6 +9987,7 @@ export const RolesByCommunityDetailedDocument = gql`
       canUploadOwnCharacterImages
       canUploadCharacterImages
       canModerateImages
+      canDeleteCharacter
       canCreateInviteCode
       canListInviteCodes
       canCreateRole
@@ -9959,6 +10059,7 @@ export const CreateRoleDocument = gql`
     canUploadOwnCharacterImages
     canUploadCharacterImages
     canModerateImages
+    canDeleteCharacter
     canCreateInviteCode
     canListInviteCodes
     canCreateRole
@@ -10017,6 +10118,7 @@ export const UpdateRoleDocument = gql`
     canUploadOwnCharacterImages
     canUploadCharacterImages
     canModerateImages
+    canDeleteCharacter
     canCreateInviteCode
     canListInviteCodes
     canCreateRole
@@ -10094,6 +10196,7 @@ export const CommunityMembersWithRolesDocument = gql`
         canUploadOwnCharacterImages
         canUploadCharacterImages
         canModerateImages
+        canDeleteCharacter
         canCreateInviteCode
         canListInviteCodes
         canCreateRole
@@ -10173,6 +10276,7 @@ export const UpdateCommunityMemberDocument = gql`
       canUploadOwnCharacterImages
       canUploadCharacterImages
       canModerateImages
+      canDeleteCharacter
       canCreateInviteCode
       canListInviteCodes
       canCreateRole
