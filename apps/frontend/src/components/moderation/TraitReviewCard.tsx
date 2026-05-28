@@ -8,6 +8,8 @@ import {
   Clock,
   Image as ImageIcon,
   ExternalLink,
+  Trash2,
+  Unlink,
 } from "lucide-react";
 import { Button, Caption } from "@chardb/ui";
 import { TraitReviewSource } from "../../generated/graphql";
@@ -23,6 +25,8 @@ interface TraitReviewCardProps {
   onApprove: (reviewId: string) => Promise<void>;
   onRevert: (reviewId: string, reason: string) => Promise<void>;
   onEditAndApprove?: (reviewId: string) => void;
+  onDelete?: (characterId: string, characterName: string) => Promise<void>;
+  onKickFromSpecies?: (characterId: string, characterName: string, speciesName: string | undefined) => Promise<void>;
   actionInProgress: boolean;
 }
 
@@ -187,6 +191,8 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
   onApprove,
   onRevert,
   onEditAndApprove,
+  onDelete,
+  onKickFromSpecies,
   actionInProgress,
 }) => {
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -272,6 +278,28 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
                   Revert
                 </Button>
               )}
+            {onKickFromSpecies && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onKickFromSpecies(item.characterId, item.characterName, item.speciesName ?? undefined)}
+                disabled={actionInProgress}
+                icon={<Unlink size={14} />}
+              >
+                Remove from Species
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => onDelete(item.characterId, item.characterName)}
+                disabled={actionInProgress}
+                icon={<Trash2 size={14} />}
+              >
+                Delete
+              </Button>
+            )}
           </Actions>
         </CardBody>
       </Card>
