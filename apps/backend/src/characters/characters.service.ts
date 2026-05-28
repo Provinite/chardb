@@ -11,7 +11,7 @@ import { DiscordService } from "../discord/discord.service";
 import { DeviantArtService } from "../deviantart/deviantart.service";
 import { PermissionService } from "../auth/PermissionService";
 import { CommunityPermission } from "../auth/CommunityPermission";
-import { Prisma, Visibility, ExternalAccountProvider, ModerationStatus, TraitReviewSource } from "@chardb/database";
+import { Prisma, Visibility, ExternalAccountProvider, ModerationStatus, TraitReviewSource, TraitValueType } from "@chardb/database";
 import { TraitReviewService } from "../trait-review/trait-review.service";
 
 /**
@@ -19,6 +19,8 @@ import { TraitReviewService } from "../trait-review/trait-review.service";
  * Profile fields can be edited by owners with canEditOwnCharacter.
  * Registry fields require canEditOwnCharacterRegistry or canEditCharacterRegistry.
  */
+const notDeleted = { deletedAt: null } as const;
+
 const PROFILE_FIELDS = new Set([
   "name",
   "details",
@@ -237,6 +239,8 @@ export class CharactersService {
 
     const where: Prisma.CharacterWhereInput = {
       AND: [
+        notDeleted,
+
         // Visibility filter - only show public characters unless owner/admin
         userId
           ? {
@@ -324,6 +328,7 @@ export class CharactersService {
     const { limit = 20, offset = 0, search } = filters;
 
     const where: Prisma.CharacterWhereInput = {
+      ...notDeleted,
       // Add search filter if provided
       ...(search && {
         name: {
@@ -459,6 +464,7 @@ export class CharactersService {
     const { limit = 20, offset = 0, search } = filters;
 
     const where: Prisma.CharacterWhereInput = {
+      ...notDeleted,
       // Add search filter if provided
       ...(search && {
         name: {
@@ -528,8 +534,8 @@ export class CharactersService {
   }
 
   async findOne(id: string, userId?: string) {
-    const character = await this.db.character.findUnique({
-      where: { id },
+    const character = await this.db.character.findFirst({
+      where: { id, ...notDeleted },
     });
 
     if (!character) {
@@ -748,14 +754,138 @@ export class CharactersService {
     return finalCharacter;
   }
 
-  async remove(id: string, userId: string): Promise<boolean> {
-    const character = await this.findOne(id, userId);
+  async softDelete(id: string, userId: string): Promise<boolean> {
+    const character = await this.db.character.findFirst({ where: { id, ...notDeleted } });
+    if (!character) {
+      throw new NotFoundException("Character not found");
+    }
 
-    await this.db.character.delete({
-      where: { id },
+    await this.db.$transaction(async (tx) => {
+      await tx.character.update({
+        where: { id },
+        data: { deletedAt: new Date(), deletedById: userId },
+      });
+      await tx.traitReview.updateMany({
+        where: { characterId: id, status: ModerationStatus.PENDING },
+        data: { status: ModerationStatus.CANCELLED },
+      });
     });
 
     return true;
+  }
+
+  async purge(id: string): Promise<boolean> {
+    const character = await this.db.character.findFirst({ where: { id } });
+    if (!character) {
+      throw new NotFoundException("Character not found");
+    }
+
+    await this.db.character.delete({ where: { id } });
+    return true;
+  }
+
+  async kickFromSpecies(id: string): Promise<boolean> {
+    const character = await this.db.character.findFirst({ where: { id, ...notDeleted } });
+    if (!character) {
+      throw new NotFoundException("Character not found");
+    }
+    if (!character.speciesId) {
+      throw new BadRequestException("Character does not have a species assigned");
+    }
+
+    const traitValues = character.traitValues as PrismaJson.CharacterTraitValuesJson;
+
+    const flattenedFields = await this.flattenTraitValues(character.speciesId, traitValues);
+
+    const existingCustomFields =
+      character.customFields && typeof character.customFields === "object" && !Array.isArray(character.customFields)
+        ? (character.customFields as Record<string, string>)
+        : {};
+
+    await this.db.$transaction(async (tx) => {
+      await tx.character.update({
+        where: { id },
+        data: {
+          speciesId: null,
+          speciesVariantId: null,
+          registryId: null,
+          traitValues: [],
+          customFields: { ...existingCustomFields, ...flattenedFields },
+        },
+      });
+      await tx.traitReview.updateMany({
+        where: { characterId: id, status: ModerationStatus.PENDING },
+        data: { status: ModerationStatus.CANCELLED },
+      });
+    });
+
+    return true;
+  }
+
+  private async flattenTraitValues(
+    speciesId: string,
+    traitValues: PrismaJson.CharacterTraitValuesJson,
+  ): Promise<Record<string, string>> {
+    if (!traitValues.length) return {};
+
+    const traitIds = [...new Set(traitValues.map((tv) => tv.traitId))];
+
+    const traits = await this.db.trait.findMany({
+      where: { id: { in: traitIds }, speciesId },
+      select: { id: true, name: true, valueType: true },
+    });
+    const traitMap = new Map(traits.map((t) => [t.id, t]));
+
+    const enumTraitIds = traits
+      .filter((t) => t.valueType === TraitValueType.ENUM)
+      .map((t) => t.id);
+
+    const enumValues =
+      enumTraitIds.length > 0
+        ? await this.db.enumValue.findMany({
+            where: { traitId: { in: enumTraitIds } },
+            select: { traitId: true, name: true },
+          })
+        : [];
+
+    // Map enumValue lookup by traitId + lowercased name for matching stored string values
+    const enumValueMap = new Map(
+      enumValues.map((ev) => [`${ev.traitId}::${String(ev.name).toLowerCase()}`, ev.name]),
+    );
+
+    const result: Record<string, string> = {};
+
+    for (const tv of traitValues) {
+      const trait = traitMap.get(tv.traitId);
+      if (!trait || tv.value === null || tv.value === undefined) continue;
+
+      let displayValue: string;
+      if (trait.valueType === TraitValueType.ENUM) {
+        const key = `${tv.traitId}::${String(tv.value).toLowerCase()}`;
+        displayValue = enumValueMap.get(key) ?? String(tv.value);
+      } else {
+        displayValue = String(tv.value);
+      }
+
+      if (tv.clarifier) {
+        displayValue = `${displayValue} (${tv.clarifier})`;
+      }
+
+      // For traits that allow multiple values, append rather than overwrite
+      const existingKey = trait.name;
+      if (result[existingKey]) {
+        result[existingKey] = `${result[existingKey]}, ${displayValue}`;
+      } else {
+        result[existingKey] = displayValue;
+      }
+    }
+
+    return result;
+  }
+
+  /** @deprecated Use softDelete instead. Retained for global admin hard-delete via purge. */
+  async remove(id: string, userId: string): Promise<boolean> {
+    return this.softDelete(id, userId);
   }
 
   /**
@@ -1101,7 +1231,7 @@ export class CharactersService {
     // For orphaned characters, currentOwnerId can be null
     const character = currentOwnerId
       ? await this.findOne(id, currentOwnerId)
-      : await this.db.character.findUnique({ where: { id } });
+      : await this.db.character.findFirst({ where: { id, ...notDeleted } });
 
     if (!character) {
       throw new NotFoundException("Character not found");
@@ -1143,8 +1273,8 @@ export class CharactersService {
   }
 
   async addTags(characterId: string, userId: string, tagNames: string[]) {
-    const character = await this.db.character.findUnique({
-      where: { id: characterId },
+    const character = await this.db.character.findFirst({
+      where: { id: characterId, ...notDeleted },
     });
 
     if (!character) {
@@ -1174,8 +1304,8 @@ export class CharactersService {
   }
 
   async removeTags(characterId: string, userId: string, tagNames: string[]) {
-    const character = await this.db.character.findUnique({
-      where: { id: characterId },
+    const character = await this.db.character.findFirst({
+      where: { id: characterId, ...notDeleted },
     });
 
     if (!character) {
@@ -1205,8 +1335,8 @@ export class CharactersService {
    * @throws NotFoundException if media doesn't exist
    */
   async setMainMedia(characterId: string, userId: string, mediaId?: string) {
-    const character = await this.db.character.findUnique({
-      where: { id: characterId },
+    const character = await this.db.character.findFirst({
+      where: { id: characterId, ...notDeleted },
     });
 
     if (!character) {

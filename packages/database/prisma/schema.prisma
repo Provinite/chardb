@@ -43,6 +43,7 @@ enum ModerationStatus {
   PENDING
   APPROVED
   REJECTED
+  CANCELLED
 }
 
 enum ModerationRejectionReason {
@@ -90,6 +91,7 @@ model User {
   avatarImage       Image?      @relation("UserAvatar", fields: [avatarImageId], references: [id], onDelete: SetNull)
   ownedCharacters   Character[] @relation("CharacterOwner")
   createdCharacters Character[] @relation("CharacterCreator")
+  deletedCharacters Character[] @relation("CharacterDeletedBy")
   uploadedImages    Image[]     @relation("ImageUploader")
   artistImages      Image[]     @relation("ImageArtist")
   media             Media[]
@@ -185,12 +187,15 @@ model Character {
   /// [CharacterTraitValuesJson]
   traitValues       Json       @default("[]") @map("trait_values")
   traitReviewStatus ModerationStatus? @map("trait_review_status")
+  deletedAt         DateTime?  @map("deleted_at")
+  deletedById       String?    @map("deleted_by_id")
   createdAt         DateTime   @default(now()) @map("created_at")
   updatedAt         DateTime   @updatedAt @map("updated_at")
 
   // Relations
   owner          User?           @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   creator        User?           @relation("CharacterCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  deletedBy      User?           @relation("CharacterDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
   mainMedia      Media?          @relation("CharacterMainMedia", fields: [mainMediaId], references: [id], onDelete: SetNull)
   species        Species?        @relation(fields: [speciesId], references: [id], onDelete: SetNull)
   speciesVariant SpeciesVariant? @relation(fields: [speciesVariantId], references: [id], onDelete: SetNull)
@@ -519,6 +524,7 @@ model Role {
   canUploadOwnCharacterImages Boolean @default(false) @map("can_upload_own_character_images")
   canUploadCharacterImages    Boolean @default(false) @map("can_upload_character_images")
   canModerateImages           Boolean @default(false) @map("can_moderate_images")
+  canDeleteCharacter          Boolean @default(false) @map("can_delete_character")
 
   // Relations
   community            Community             @relation(fields: [communityId], references: [id], onDelete: Cascade)
