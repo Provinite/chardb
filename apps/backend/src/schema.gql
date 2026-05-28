@@ -557,6 +557,9 @@ input CreateRoleInput {
   """Whether members with this role can create new species"""
   canCreateSpecies: Boolean! = false
 
+  """Whether members with this role can delete characters in this community"""
+  canDeleteCharacter: Boolean! = false
+
   """Whether members with this role can edit characters"""
   canEditCharacter: Boolean! = false
 
@@ -1337,6 +1340,7 @@ enum ModerationRejectionReason {
 """The moderation status of an image"""
 enum ModerationStatus {
   APPROVED
+  CANCELLED
   PENDING
   REJECTED
 }
@@ -1459,6 +1463,10 @@ type Mutation {
     createTraitListEntryInput: CreateTraitListEntryInput!
   ): TraitListEntry!
   deleteAccount: RemovalResponse!
+
+  """
+  Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin.
+  """
   deleteCharacter(id: ID!): Boolean!
   deleteComment(id: ID!): Boolean!
   deleteCommunityColor(id: ID!): Boolean!
@@ -1482,6 +1490,11 @@ type Mutation {
   """Grant an item to a user (admin only)"""
   grantItem(input: GrantItemInput!): Item!
 
+  """
+  Remove a character from its species, flattening its trait values into custom fields. Requires CanEditCharacterRegistry permission.
+  """
+  kickCharacterFromSpecies(id: ID!): Boolean!
+
   """Link a Discord guild to a community"""
   linkDiscordGuild(
     """Community ID"""
@@ -1491,6 +1504,11 @@ type Mutation {
     guildId: ID!
   ): Community!
   login(input: LoginInput!): AuthPayload!
+
+  """
+  Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete.
+  """
+  purgeCharacter(id: ID!): Boolean!
   refreshToken(token: String!): String!
 
   """Reject an image (moderator action)"""
@@ -2404,6 +2422,9 @@ type Role {
   """Whether members with this role can create new species"""
   canCreateSpecies: Boolean!
 
+  """Whether members with this role can delete characters in this community"""
+  canDeleteCharacter: Boolean!
+
   """Whether members with this role can edit characters"""
   canEditCharacter: Boolean!
 
@@ -3005,6 +3026,9 @@ input UpdateRoleInput {
 
   """Whether members with this role can create new species"""
   canCreateSpecies: Boolean
+
+  """Whether members with this role can delete characters in this community"""
+  canDeleteCharacter: Boolean
 
   """Whether members with this role can edit characters"""
   canEditCharacter: Boolean

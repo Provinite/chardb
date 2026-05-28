@@ -844,14 +844,16 @@ export class CharactersService {
       enumTraitIds.length > 0
         ? await this.db.enumValue.findMany({
             where: { traitId: { in: enumTraitIds } },
-            select: { traitId: true, name: true },
+            select: { id: true, traitId: true, name: true },
           })
         : [];
 
-    // Map enumValue lookup by traitId + lowercased name for matching stored string values
-    const enumValueMap = new Map(
-      enumValues.map((ev) => [`${ev.traitId}::${String(ev.name).toLowerCase()}`, ev.name]),
-    );
+    // Index by both lowercased name AND UUID to handle both storage formats
+    const enumValueMap = new Map<string, string>();
+    for (const ev of enumValues) {
+      enumValueMap.set(`${ev.traitId}::${String(ev.name).toLowerCase()}`, ev.name);
+      enumValueMap.set(`${ev.traitId}::${ev.id}`, ev.name);
+    }
 
     const result: Record<string, string> = {};
 

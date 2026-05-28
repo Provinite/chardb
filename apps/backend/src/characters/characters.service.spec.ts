@@ -326,7 +326,33 @@ describe('CharactersService', () => {
         { id: 'trait1', name: 'Pattern', valueType: TraitValueType.ENUM },
       ]);
       db.enumValue.findMany.mockResolvedValue([
-        { traitId: 'trait1', name: 'Spotted' },
+        { id: 'ev1', traitId: 'trait1', name: 'Spotted' },
+      ]);
+      db.character.update.mockResolvedValue(character);
+      db.traitReview.updateMany.mockResolvedValue({ count: 0 });
+
+      await service.kickFromSpecies('char1');
+
+      expect(db.character.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            customFields: expect.objectContaining({
+              Pattern: 'Spotted',
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should resolve ENUM trait values stored as UUIDs to their display names', async () => {
+      const traitValues = [{ traitId: 'trait1', value: 'ev-uuid-123', clarifier: null }];
+      const character = makeCharacter({ speciesId: 'species1', traitValues, customFields: {} });
+      db.character.findFirst.mockResolvedValue(character);
+      db.trait.findMany.mockResolvedValue([
+        { id: 'trait1', name: 'Pattern', valueType: TraitValueType.ENUM },
+      ]);
+      db.enumValue.findMany.mockResolvedValue([
+        { id: 'ev-uuid-123', traitId: 'trait1', name: 'Spotted' },
       ]);
       db.character.update.mockResolvedValue(character);
       db.traitReview.updateMany.mockResolvedValue({ count: 0 });
