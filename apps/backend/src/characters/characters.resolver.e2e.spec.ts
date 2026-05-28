@@ -10,6 +10,7 @@ describe('CharactersResolver (e2e)', () => {
   let app: INestApplication;
   let testUserId: string;
   let testToken: string;
+  let testSpeciesId: string;
 
   beforeAll(async () => {
     testApp = new TestApp();
@@ -17,20 +18,15 @@ describe('CharactersResolver (e2e)', () => {
       imports: [DatabaseModule, AuthModule, CharactersModule],
     });
     app = testApp.getApp();
-
-    // Create a test user
-    const testUser = await testApp.createTestUser();
-    testUserId = testUser.id;
-    testToken = await testApp.generateTestToken(testUserId, testUser.username);
   });
 
   beforeEach(async () => {
-    // Clear database before each test
     await testApp.clearDatabase();
-    // Recreate test user
     const testUser = await testApp.createTestUser();
     testUserId = testUser.id;
     testToken = await testApp.generateTestToken(testUserId, testUser.username);
+    const setup = await testApp.createTestCommunitySetup(testUserId);
+    testSpeciesId = setup.speciesId;
   });
 
   afterAll(async () => {
@@ -41,8 +37,7 @@ describe('CharactersResolver (e2e)', () => {
     it('should create a character with valid input', async () => {
       const input = {
         name: 'Test Dragon',
-        species: 'Dragon',
-        description: 'A magnificent test dragon',
+        speciesId: testSpeciesId,
         visibility: Visibility.PUBLIC,
       };
 
@@ -56,8 +51,7 @@ describe('CharactersResolver (e2e)', () => {
       expect(response.body.errors).toBeUndefined();
       expect(response.body.data.createCharacter).toMatchObject({
         name: input.name,
-        species: input.species,
-        description: input.description,
+        speciesId: testSpeciesId,
         visibility: input.visibility,
         owner: {
           id: testUserId,
@@ -69,7 +63,7 @@ describe('CharactersResolver (e2e)', () => {
     it('should require authentication', async () => {
       const input = {
         name: 'Unauthorized Character',
-        species: 'Phoenix',
+        speciesId: testSpeciesId,
       };
 
       const response = await testApp.graphqlRequest(
@@ -79,13 +73,14 @@ describe('CharactersResolver (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].extensions.code).toBe('UNAUTHENTICATED');
+      expect(response.body.errors[0].extensions.code).toBe('FORBIDDEN');
     });
 
     it('should validate required fields', async () => {
+      // Empty name triggers @MinLength(1) class-validator error (HTTP 200 with errors)
       const input = {
-        // Missing required 'name' field
-        species: 'Dragon',
+        name: '',
+        speciesId: testSpeciesId,
       };
 
       const response = await testApp.authenticatedGraphqlRequest(
@@ -101,10 +96,9 @@ describe('CharactersResolver (e2e)', () => {
 
   describe('character query', () => {
     it('should fetch a public character', async () => {
-      // First create a character
       const createInput = {
         name: 'Public Dragon',
-        species: 'Dragon',
+        speciesId: testSpeciesId,
         visibility: Visibility.PUBLIC,
       };
 
@@ -117,7 +111,6 @@ describe('CharactersResolver (e2e)', () => {
       expect(createResponse.body.errors).toBeUndefined();
       const characterId = createResponse.body.data.createCharacter.id;
 
-      // Then fetch it without authentication
       const fetchResponse = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
         { id: characterId }
@@ -128,7 +121,7 @@ describe('CharactersResolver (e2e)', () => {
       expect(fetchResponse.body.data.character).toMatchObject({
         id: characterId,
         name: createInput.name,
-        species: createInput.species,
+        speciesId: testSpeciesId,
         visibility: createInput.visibility,
       });
     });
@@ -145,10 +138,9 @@ describe('CharactersResolver (e2e)', () => {
     });
 
     it('should block access to private characters for non-owners', async () => {
-      // Create a private character
       const createInput = {
         name: 'Private Dragon',
-        species: 'Dragon',
+        speciesId: testSpeciesId,
         visibility: Visibility.PRIVATE,
       };
 
@@ -160,7 +152,6 @@ describe('CharactersResolver (e2e)', () => {
 
       const characterId = createResponse.body.data.createCharacter.id;
 
-      // Try to fetch it without authentication
       const fetchResponse = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
         { id: characterId }
@@ -174,13 +165,12 @@ describe('CharactersResolver (e2e)', () => {
 
   describe('characters query', () => {
     beforeEach(async () => {
-      // Create test characters
       await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
           input: {
             name: 'Public Dragon',
-            species: 'Dragon',
+            speciesId: testSpeciesId,
             visibility: Visibility.PUBLIC,
           },
         },
@@ -192,7 +182,7 @@ describe('CharactersResolver (e2e)', () => {
         {
           input: {
             name: 'Private Phoenix',
-            species: 'Phoenix',
+            speciesId: testSpeciesId,
             visibility: Visibility.PRIVATE,
           },
         },
@@ -220,12 +210,12 @@ describe('CharactersResolver (e2e)', () => {
       });
     });
 
-    it('should filter by species', async () => {
+    it('should filter by name search', async () => {
       const response = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTERS,
         {
           filters: {
-            species: 'Dragon',
+            search: 'Dragon',
             limit: 10,
             offset: 0,
           },
@@ -234,15 +224,14 @@ describe('CharactersResolver (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      
-      // Should only return Dragon characters
-      response.body.data.characters.characters.forEach((char: any) => {
-        expect(char.species).toBe('Dragon');
+
+      // Should only return characters with 'Dragon' in their name
+      response.body.data.characters.characters.forEach((char: { name: string }) => {
+        expect(char.name).toContain('Dragon');
       });
     });
 
     it('should respect visibility controls', async () => {
-      // Fetch all characters without authentication
       const response = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTERS,
         {
@@ -255,32 +244,31 @@ describe('CharactersResolver (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      
+
       // Should not include private characters in public query
       const privateCharacters = response.body.data.characters.characters.filter(
-        (char: any) => char.visibility === Visibility.PRIVATE
+        (char: { visibility: string }) => char.visibility === Visibility.PRIVATE
       );
-      
+
       expect(privateCharacters).toHaveLength(0);
-      
+
       // Should include public characters
       const publicCharacters = response.body.data.characters.characters.filter(
-        (char: any) => char.visibility === Visibility.PUBLIC
+        (char: { visibility: string }) => char.visibility === Visibility.PUBLIC
       );
-      
+
       expect(publicCharacters.length).toBeGreaterThan(0);
     });
   });
 
-  describe('updateCharacter', () => {
+  describe('updateCharacterProfile', () => {
     it('should update character when user is owner', async () => {
-      // Create a character
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
           input: {
             name: 'Original Name',
-            species: 'Dragon',
+            speciesId: testSpeciesId,
             visibility: Visibility.PUBLIC,
           },
         },
@@ -289,14 +277,12 @@ describe('CharactersResolver (e2e)', () => {
 
       const characterId = createResponse.body.data.createCharacter.id;
 
-      // Update it
       const updateResponse = await testApp.authenticatedGraphqlRequest(
         `
-          mutation updateCharacter($id: ID!, $input: UpdateCharacterInput!) {
-            updateCharacter(id: $id, input: $input) {
+          mutation updateCharacterProfile($id: ID!, $input: UpdateCharacterProfileInput!) {
+            updateCharacterProfile(id: $id, input: $input) {
               id
               name
-              species
             }
           }
         `,
@@ -304,7 +290,6 @@ describe('CharactersResolver (e2e)', () => {
           id: characterId,
           input: {
             name: 'Updated Name',
-            species: 'Phoenix',
           },
         },
         testToken
@@ -312,23 +297,21 @@ describe('CharactersResolver (e2e)', () => {
 
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.body.errors).toBeUndefined();
-      expect(updateResponse.body.data.updateCharacter).toMatchObject({
+      expect(updateResponse.body.data.updateCharacterProfile).toMatchObject({
         id: characterId,
         name: 'Updated Name',
-        species: 'Phoenix',
       });
     });
   });
 
   describe('deleteCharacter', () => {
     it('should delete character when user is owner', async () => {
-      // Create a character
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
           input: {
             name: 'To Delete',
-            species: 'Dragon',
+            speciesId: testSpeciesId,
             visibility: Visibility.PUBLIC,
           },
         },
@@ -337,7 +320,6 @@ describe('CharactersResolver (e2e)', () => {
 
       const characterId = createResponse.body.data.createCharacter.id;
 
-      // Delete it
       const deleteResponse = await testApp.authenticatedGraphqlRequest(
         `
           mutation deleteCharacter($id: ID!) {
@@ -352,7 +334,6 @@ describe('CharactersResolver (e2e)', () => {
       expect(deleteResponse.body.errors).toBeUndefined();
       expect(deleteResponse.body.data.deleteCharacter).toBe(true);
 
-      // Verify it's deleted
       const fetchResponse = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
         { id: characterId }

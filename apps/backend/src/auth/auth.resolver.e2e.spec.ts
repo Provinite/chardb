@@ -18,7 +18,6 @@ describe('AuthResolver (e2e)', () => {
   });
 
   beforeEach(async () => {
-    // Clear database before each test
     await testApp.clearDatabase();
   });
 
@@ -28,11 +27,13 @@ describe('AuthResolver (e2e)', () => {
 
   describe('signup', () => {
     it('should create a new user with valid input', async () => {
+      const inviteCode = await testApp.createTestInviteCode();
       const input = {
         username: 'newuser',
         email: 'newuser@example.com',
         password: 'password123',
         displayName: 'New User',
+        inviteCode,
       };
 
       const response = await testApp.graphqlRequest(
@@ -45,11 +46,6 @@ describe('AuthResolver (e2e)', () => {
       expect(response.body.data.signup).toMatchObject({
         accessToken: expect.any(String),
         refreshToken: expect.any(String),
-        user: {
-          username: input.username,
-          email: input.email,
-          displayName: input.displayName,
-        },
       });
 
       // Verify user was created in database
@@ -57,23 +53,25 @@ describe('AuthResolver (e2e)', () => {
       const user = await db.user.findUnique({
         where: { email: input.email },
       });
-      
+
       expect(user).toBeTruthy();
       expect(user!.username).toBe(input.username);
     });
 
     it('should reject duplicate email', async () => {
+      const inviteCode = await testApp.createTestInviteCode();
       const input = {
         username: 'user1',
         email: 'test@example.com',
         password: 'password123',
         displayName: 'User 1',
+        inviteCode,
       };
 
       // Create first user
       await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, { input });
 
-      // Try to create second user with same email
+      // Try to create second user with same email (invite code still has claims remaining)
       const duplicateInput = {
         ...input,
         username: 'user2',
@@ -91,11 +89,13 @@ describe('AuthResolver (e2e)', () => {
     });
 
     it('should reject duplicate username', async () => {
+      const inviteCode = await testApp.createTestInviteCode();
       const input = {
         username: 'testuser',
         email: 'user1@example.com',
         password: 'password123',
         displayName: 'User 1',
+        inviteCode,
       };
 
       // Create first user
@@ -124,6 +124,7 @@ describe('AuthResolver (e2e)', () => {
         email: 'invalid-email',
         password: 'password123',
         displayName: 'Test User',
+        inviteCode: 'dummy-code',
       };
 
       const response = await testApp.graphqlRequest(
@@ -141,6 +142,7 @@ describe('AuthResolver (e2e)', () => {
         email: 'test@example.com',
         password: '123', // Too short
         displayName: 'Test User',
+        inviteCode: 'dummy-code',
       };
 
       const response = await testApp.graphqlRequest(
@@ -155,10 +157,9 @@ describe('AuthResolver (e2e)', () => {
 
   describe('login', () => {
     beforeEach(async () => {
-      // Create a test user for login tests
       const db = testApp.getDb();
       const passwordHash = await bcrypt.hash('password123', 10);
-      
+
       await db.user.create({
         data: {
           username: 'testuser',
@@ -185,11 +186,6 @@ describe('AuthResolver (e2e)', () => {
       expect(response.body.data.login).toMatchObject({
         accessToken: expect.any(String),
         refreshToken: expect.any(String),
-        user: {
-          username: 'testuser',
-          email: 'test@example.com',
-          displayName: 'Test User',
-        },
       });
     });
 
@@ -233,7 +229,6 @@ describe('AuthResolver (e2e)', () => {
     let testToken: string;
 
     beforeEach(async () => {
-      // Create and authenticate a test user
       const testUser = await testApp.createTestUser();
       testUserId = testUser.id;
       testUsername = testUser.username;
@@ -263,7 +258,7 @@ describe('AuthResolver (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].extensions.code).toBe('UNAUTHENTICATED');
+      expect(response.body.errors[0].extensions.code).toBe('FORBIDDEN');
     });
 
     it('should reject invalid tokens', async () => {
@@ -275,7 +270,7 @@ describe('AuthResolver (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].extensions.code).toBe('UNAUTHENTICATED');
+      expect(response.body.errors[0].extensions.code).toBe('FORBIDDEN');
     });
   });
 
@@ -283,12 +278,13 @@ describe('AuthResolver (e2e)', () => {
     let refreshToken: string;
 
     beforeEach(async () => {
-      // Create a user and get refresh token
+      const inviteCode = await testApp.createTestInviteCode();
       const input = {
         username: 'testuser',
         email: 'test@example.com',
         password: 'password123',
         displayName: 'Test User',
+        inviteCode,
       };
 
       const signupResponse = await testApp.graphqlRequest(

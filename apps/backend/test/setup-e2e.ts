@@ -1,12 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe, ModuleMetadata } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { ThrottlerModule } from '@nestjs/throttler';
 import * as request from 'supertest';
 import { DatabaseService } from '../src/database/database.service';
-import { execSync } from 'child_process';
+import { CustomThrottlerGuard } from '../src/middleware/custom-throttler.guard';
+import { OptionalJwtAuthGuard } from '../src/auth/guards/optional-jwt-auth.guard';
+// Ensure ModerationStatus and other enums are registered for GraphQL schema generation
+import '../src/image-moderation/dto/image-moderation.dto';
+
+// NestJS app startup + DB operations can take well over 5s
+jest.setTimeout(60000);
 
 // Test utilities for E2E tests
 export class TestApp {
@@ -14,16 +21,17 @@ export class TestApp {
   private moduleRef: TestingModule;
   private db: DatabaseService;
 
-  async setup(moduleMetadata: any) {
-    // Ensure test database is running and migrated
-    await this.setupTestDatabase();
-
+  async setup(moduleMetadata: Pick<ModuleMetadata, 'imports' | 'providers'>) {
     this.moduleRef = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
           envFilePath: '.env.test',
         }),
+        ThrottlerModule.forRoot([
+          { name: 'short', ttl: 1000, limit: 10000 },
+          { name: 'long', ttl: 60000, limit: 100000 },
+        ]),
         GraphQLModule.forRoot<ApolloDriverConfig>({
           driver: ApolloDriver,
           autoSchemaFile: true,
@@ -35,7 +43,7 @@ export class TestApp {
           secret: 'test-jwt-secret-key-for-testing-only',
           signOptions: { expiresIn: '15m' },
         }),
-        ...moduleMetadata.imports,
+        ...(moduleMetadata.imports ?? []),
       ],
       providers: moduleMetadata.providers || [],
     }).compile();
@@ -46,37 +54,33 @@ export class TestApp {
       forbidNonWhitelisted: true,
       transform: true,
     }));
+    this.app.useGlobalGuards(
+      this.app.get(CustomThrottlerGuard),
+      this.app.get(OptionalJwtAuthGuard),
+      this.app.get('PERMISSION_OR_GUARD'),
+    );
 
     this.db = this.app.get(DatabaseService);
     await this.app.init();
-  }
-
-  async setupTestDatabase() {
-    try {
-      // Reset test database
-      console.log('Setting up test database...');
-      execSync('yarn workspace @chardb/backend db:push', { 
-        env: { ...process.env, DATABASE_URL: 'postgresql://test_user:test_password@localhost:5440/chardb_test' },
-        stdio: 'inherit' 
-      });
-      console.log('Test database ready');
-    } catch (error) {
-      console.error('Failed to setup test database:', error);
-      throw error;
-    }
   }
 
   async clearDatabase() {
     // Clear all tables in the correct order (respecting foreign keys)
     await this.db.characterTag.deleteMany({});
     await this.db.imageTag.deleteMany({});
+    await this.db.mediaTag.deleteMany({});
     await this.db.comment.deleteMany({});
     await this.db.like.deleteMany({});
     await this.db.follow.deleteMany({});
+    await this.db.media.deleteMany({});
     await this.db.image.deleteMany({});
     await this.db.gallery.deleteMany({});
+    await this.db.pendingOwnership.deleteMany({});
+    await this.db.characterOwnershipChange.deleteMany({});
     await this.db.character.deleteMany({});
     await this.db.tag.deleteMany({});
+    await this.db.inviteCode.deleteMany({});
+    await this.db.community.deleteMany({});
     await this.db.user.deleteMany({});
   }
 
@@ -114,7 +118,7 @@ export class TestApp {
     });
   }
 
-  async createTestUser(userData: any = {}) {
+  async createTestUser(userData: Record<string, unknown> = {}) {
     const timestamp = Date.now();
     const defaultUser = {
       username: `testuser_${timestamp}`,
@@ -123,10 +127,98 @@ export class TestApp {
       passwordHash: '$2b$10$test.hash.for.testing',
       ...userData,
     };
-    
+
     return this.db.user.create({
       data: defaultUser,
     });
+  }
+
+  async createTestInviteCode(): Promise<string> {
+    const timestamp = Date.now();
+    const creator = await this.db.user.create({
+      data: {
+        username: `invite_creator_${timestamp}`,
+        email: `invite_creator_${timestamp}@example.com`,
+        passwordHash: '$2b$10$test.hash.for.testing',
+      },
+    });
+    const code = `testcode${timestamp}`;
+    await this.db.inviteCode.create({
+      data: {
+        id: code,
+        maxClaims: 1000,
+        claimCount: 0,
+        creatorId: creator.id,
+      },
+    });
+    return code;
+  }
+
+  async createTestCommunity(name?: string): Promise<{ id: string; name: string }> {
+    const timestamp = Date.now();
+    return this.db.community.create({
+      data: {
+        name: name ?? `Test Community ${timestamp}`,
+      },
+    });
+  }
+
+  async createTestSpecies(
+    communityId: string,
+    name?: string,
+  ): Promise<{ id: string; name: string; communityId: string }> {
+    const timestamp = Date.now();
+    return this.db.species.create({
+      data: {
+        name: name ?? `Test Species ${timestamp}`,
+        communityId,
+      },
+    });
+  }
+
+  async createTestRole(
+    communityId: string,
+    permissions: Record<string, boolean> = {},
+  ): Promise<{ id: string; communityId: string }> {
+    const timestamp = Date.now();
+    return this.db.role.create({
+      data: {
+        name: `Test Role ${timestamp}`,
+        communityId,
+        ...permissions,
+      },
+    });
+  }
+
+  async createTestCommunityMember(
+    userId: string,
+    roleId: string,
+  ): Promise<{ id: string }> {
+    return this.db.communityMember.create({
+      data: { userId, roleId },
+    });
+  }
+
+  /** Creates community + full-permission role + species + community member for userId. */
+  async createTestCommunitySetup(userId: string): Promise<{
+    communityId: string;
+    speciesId: string;
+    roleId: string;
+  }> {
+    const community = await this.createTestCommunity();
+    const role = await this.createTestRole(community.id, {
+      canCreateCharacter: true,
+      canEditOwnCharacter: true,
+      canEditCharacter: true,
+      canDeleteCharacter: true,
+      canCreateSpecies: true,
+      canEditSpecies: true,
+      canUploadOwnCharacterImages: true,
+      canUploadCharacterImages: true,
+    });
+    const species = await this.createTestSpecies(community.id);
+    await this.createTestCommunityMember(userId, role.id);
+    return { communityId: community.id, speciesId: species.id, roleId: role.id };
   }
 
   async generateTestToken(userId: string, username?: string) {
@@ -159,31 +251,19 @@ export const AUTH_QUERIES = {
       login(input: $input) {
         accessToken
         refreshToken
-        user {
-          id
-          username
-          email
-          displayName
-        }
       }
     }
   `,
-  
+
   SIGNUP: `
     mutation signup($input: SignupInput!) {
       signup(input: $input) {
         accessToken
         refreshToken
-        user {
-          id
-          username
-          email
-          displayName
-        }
       }
     }
   `,
-  
+
   ME: `
     query me {
       me {
@@ -202,8 +282,7 @@ export const CHARACTER_QUERIES = {
       createCharacter(input: $input) {
         id
         name
-        species
-        description
+        speciesId
         visibility
         owner {
           id
@@ -212,14 +291,13 @@ export const CHARACTER_QUERIES = {
       }
     }
   `,
-  
+
   GET_CHARACTER: `
     query character($id: ID!) {
       character(id: $id) {
         id
         name
-        species
-        description
+        speciesId
         visibility
         owner {
           id
@@ -228,14 +306,14 @@ export const CHARACTER_QUERIES = {
       }
     }
   `,
-  
+
   GET_CHARACTERS: `
     query characters($filters: CharacterFiltersInput) {
       characters(filters: $filters) {
         characters {
           id
           name
-          species
+          speciesId
           visibility
         }
         total
@@ -264,7 +342,7 @@ export const GALLERY_QUERIES = {
       }
     }
   `,
-  
+
   GET_GALLERY: `
     query gallery($id: ID!) {
       gallery(id: $id) {
@@ -276,14 +354,10 @@ export const GALLERY_QUERIES = {
           id
           username
         }
-        images {
-          id
-          originalFilename
-        }
       }
     }
   `,
-  
+
   GET_GALLERIES: `
     query galleries($filters: GalleryFiltersInput) {
       galleries(filters: $filters) {
