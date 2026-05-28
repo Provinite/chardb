@@ -92,6 +92,8 @@ const CharacterHeader = styled.div`
 
 const HeaderActions = styled.div`
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: ${({ theme }) => theme.spacing.sm};
   margin-left: auto;
 
