@@ -12,21 +12,14 @@ describe('CommentsService', () => {
     id: 'comment-1',
     content: 'Test comment',
     authorId: 'user-1',
-    commentableType: CommentableTypeFilter.CHARACTER,
-    commentableId: 'character-1',
+    characterId: 'character-1',
+    imageId: null,
+    galleryId: null,
+    userId: null,
     parentId: null,
     isHidden: false,
     createdAt: new Date(),
     updatedAt: new Date(),
-    author: {
-      id: 'user-1',
-      username: 'testuser',
-      email: 'test@example.com',
-      displayName: 'Test User',
-    },
-    parent: null,
-    replies: [],
-    _count: { replies: 0 },
   };
 
   const mockCharacter = {
@@ -47,7 +40,7 @@ describe('CommentsService', () => {
     }).compile();
 
     service = module.get<CommentsService>(CommentsService);
-    db = module.get<DatabaseService>(DatabaseService) as any;
+    db = module.get<DatabaseService>(DatabaseService) as unknown as typeof mockDatabaseService;
   });
 
   describe('create', () => {
@@ -71,11 +64,9 @@ describe('CommentsService', () => {
         data: {
           content: 'Test comment',
           authorId: 'user-1',
-          commentableType: CommentableTypeFilter.CHARACTER,
-          commentableId: 'character-1',
+          characterId: 'character-1',
           parentId: undefined,
         },
-        include: expect.any(Object),
       });
     });
 
@@ -104,8 +95,8 @@ describe('CommentsService', () => {
       const parentComment = {
         ...mockComment,
         id: 'parent-comment-1',
-        commentableType: CommentableTypeFilter.IMAGE, // Different type
-        commentableId: 'image-1', // Different entity
+        characterId: null,
+        imageId: 'image-1',
       };
 
       db.character.findUnique.mockResolvedValue(mockCharacter);
@@ -126,7 +117,6 @@ describe('CommentsService', () => {
       expect(result.id).toBe('comment-1');
       expect(db.comment.findUnique).toHaveBeenCalledWith({
         where: { id: 'comment-1' },
-        include: expect.any(Object),
       });
     });
 
@@ -174,12 +164,10 @@ describe('CommentsService', () => {
 
       expect(db.comment.findMany).toHaveBeenCalledWith({
         where: {
-          commentableType: CommentableTypeFilter.CHARACTER,
-          commentableId: 'character-1',
+          characterId: 'character-1',
           parentId: null,
           isHidden: false,
         },
-        include: expect.any(Object),
         orderBy: { createdAt: 'desc' },
         take: 10,
         skip: 0,
@@ -201,7 +189,6 @@ describe('CommentsService', () => {
       expect(db.comment.update).toHaveBeenCalledWith({
         where: { id: 'comment-1' },
         data: { content: 'Updated content' },
-        include: expect.any(Object),
       });
     });
 
@@ -243,6 +230,8 @@ describe('CommentsService', () => {
     it('should throw ForbiddenException when non-admin tries to delete others comment', async () => {
       const otherUserComment = { ...mockComment, authorId: 'other-user' };
       db.comment.findUnique.mockResolvedValue(otherUserComment);
+      // user-1 does not own the character the comment is on
+      db.character.findUnique.mockResolvedValue({ id: 'character-1', ownerId: 'other-user' });
 
       await expect(
         service.remove('comment-1', 'user-1', false),

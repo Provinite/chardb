@@ -2,8 +2,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { ExternalAccountsService } from './external-accounts.service';
 import { DatabaseService } from '../database/database.service';
+import { PendingOwnershipService } from '../pending-ownership/pending-ownership.service';
 import { ExternalAccountProvider } from '@prisma/client';
 import { mockDatabaseService } from '../../test/setup';
+
+const mockPendingOwnershipService = {
+  claimAllForAccount: jest.fn(),
+};
 
 describe('ExternalAccountsService', () => {
   let service: ExternalAccountsService;
@@ -17,11 +22,15 @@ describe('ExternalAccountsService', () => {
           provide: DatabaseService,
           useValue: mockDatabaseService,
         },
+        {
+          provide: PendingOwnershipService,
+          useValue: mockPendingOwnershipService,
+        },
       ],
     }).compile();
 
     service = module.get<ExternalAccountsService>(ExternalAccountsService);
-    db = module.get<DatabaseService>(DatabaseService) as any;
+    db = module.get<DatabaseService>(DatabaseService) as unknown as typeof mockDatabaseService;
   });
 
   describe('findByUserId', () => {
@@ -124,6 +133,7 @@ describe('ExternalAccountsService', () => {
         .mockResolvedValueOnce(null); // Second check (via findByProviderAndUserId): user doesn't have provider linked
 
       db.externalAccount.create.mockResolvedValue(mockLinkedAccount);
+      mockPendingOwnershipService.claimAllForAccount.mockResolvedValue([]);
 
       const result = await service.linkExternalAccount(
         userId,
@@ -159,7 +169,11 @@ describe('ExternalAccountsService', () => {
         },
       });
 
-      expect(result).toEqual(mockLinkedAccount);
+      expect(result).toEqual({
+        externalAccount: mockLinkedAccount,
+        claimedCharacterIds: [],
+        claimedItemIds: [],
+      });
     });
 
     it('should throw ConflictException when provider account is already linked to same user', async () => {
