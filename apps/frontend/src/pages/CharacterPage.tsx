@@ -90,16 +90,35 @@ const CharacterHeader = styled.div`
   }
 `;
 
-const HeaderActions = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-left: auto;
+const AdminActionsLabel = styled.span`
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  color: ${({ theme }) => theme.colors.text.muted};
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-right: ${({ theme }) => theme.spacing.xs};
+  white-space: nowrap;
+`;
 
-  @media (max-width: 768px) {
-    margin-left: 0;
-    justify-content: flex-start;
+const CharacterActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding-top: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing.md};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  flex-wrap: wrap;
+`;
+
+const RemoveFromSpeciesButton = styled(Button)`
+  color: ${({ theme }) => theme.colors.warning};
+  border-color: ${({ theme }) => theme.colors.warning};
+  background: transparent;
+
+  &:hover:not(:disabled) {
+    background-color: ${({ theme }) => theme.colors.warning};
+    border-color: ${({ theme }) => theme.colors.warning};
+    color: #fff;
   }
 `;
 
@@ -607,6 +626,44 @@ export const CharacterPage: React.FC = () => {
               </InfoItem>
             )}
           </InfoGrid>
+
+          {(canUserEditCharacter(character, user, permissions) ||
+            permissions.canDeleteCharacter ||
+            (user?.isAdmin ?? false)) && (
+            <CharacterActions>
+              <AdminActionsLabel>Admin</AdminActionsLabel>
+              {canUserEditCharacter(character, user, permissions) && (
+                <Button variant="outline" size="sm" onClick={handleEditClick}>
+                  Edit Character
+                </Button>
+              )}
+              {character.speciesId && permissions.canEditCharacterRegistry && (
+                <RemoveFromSpeciesButton
+                  variant="outline"
+                  size="sm"
+                  onClick={handleKickFromSpecies}
+                  disabled={kicking}
+                >
+                  {kicking ? "Removing..." : "Remove from Species"}
+                </RemoveFromSpeciesButton>
+              )}
+              {(permissions.canDeleteCharacter || (user?.isAdmin ?? false)) && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? "Deleting..." : "Delete Character"}
+                </Button>
+              )}
+            </CharacterActions>
+          )}
+          {actionError && (
+            <div style={{ color: "red", marginTop: "0.5rem", fontSize: "0.875rem" }}>
+              {actionError}
+            </div>
+          )}
         </CharacterBasics>
 
         {character.owner ? (
@@ -660,42 +717,6 @@ export const CharacterPage: React.FC = () => {
           </OwnerInfo>
         )}
 
-        {(canUserEditCharacter(character, user, permissions) ||
-          permissions.canDeleteCharacter ||
-          (user?.isAdmin ?? false)) && (
-          <HeaderActions>
-            {canUserEditCharacter(character, user, permissions) && (
-              <Button variant="primary" size="sm" onClick={handleEditClick}>
-                Edit Character
-              </Button>
-            )}
-            {character.speciesId && permissions.canEditCharacterRegistry && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleKickFromSpecies}
-                disabled={kicking}
-              >
-                {kicking ? "Removing..." : "Remove from Species"}
-              </Button>
-            )}
-            {(permissions.canDeleteCharacter || (user?.isAdmin ?? false)) && (
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting ? "Deleting..." : "Delete Character"}
-              </Button>
-            )}
-          </HeaderActions>
-        )}
-        {actionError && (
-          <div style={{ color: "red", marginTop: "0.5rem", fontSize: "0.875rem" }}>
-            {actionError}
-          </div>
-        )}
       </CharacterHeader>
 
       {character._count && (
