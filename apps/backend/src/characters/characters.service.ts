@@ -780,7 +780,13 @@ export class CharactersService {
       throw new NotFoundException("Character not found");
     }
 
-    await this.db.character.delete({ where: { id } });
+    await this.db.$transaction(async (tx) => {
+      await tx.traitReview.updateMany({
+        where: { characterId: id, status: ModerationStatus.PENDING },
+        data: { status: ModerationStatus.CANCELLED },
+      });
+      await tx.character.delete({ where: { id } });
+    });
     return true;
   }
 
@@ -883,11 +889,6 @@ export class CharactersService {
     }
 
     return result;
-  }
-
-  /** @deprecated Use softDelete instead. Retained for global admin hard-delete via purge. */
-  async remove(id: string, userId: string): Promise<boolean> {
-    return this.softDelete(id, userId);
   }
 
   /**

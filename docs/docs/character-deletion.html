@@ -397,28 +397,35 @@
         </div>
         <div class="step-content">
           <p>
-            Both actions are gated by the <code>canDeleteCharacter</code>
-            permission on a community role. To grant it:
+            The two actions use different permissions:
           </p>
           <ul>
             <li>
-              Go to <strong>Community Settings → Roles</strong> and open the
-              role you want to configure (e.g., Admin or Moderator).
+              <strong>Delete Character</strong> requires the
+              <code>canDeleteCharacter</code> permission. Enable the
+              <strong>Delete Characters</strong> toggle on any role you want
+              to grant this ability.
             </li>
             <li>
-              Enable the <strong>Can Delete Character</strong> toggle.
+              <strong>Remove from Species</strong> requires the
+              <code>canEditCharacterRegistry</code> permission (the same
+              permission used for editing registry IDs and trait values).
+              Enable the <strong>Edit Any Character (Registry)</strong> toggle.
             </li>
-            <li>Save the role.</li>
           </ul>
           <p>
-            Members with that role will immediately see the action buttons on
-            character pages and in the trait review queue.
+            Go to <strong>Community Settings → Permissions → Role Management</strong>,
+            open the role you want to configure, and toggle the appropriate
+            permissions. Save the role — changes apply immediately to all
+            members with that role.
           </p>
           <div class="highlight-box">
             <strong>Default roles:</strong> The <em>Admin</em> role created
-            automatically when a new community is started now includes
-            <code>canDeleteCharacter</code> by default. Moderator and Member
-            roles do not.
+            automatically when a new community is started includes both
+            <code>canDeleteCharacter</code> and
+            <code>canEditCharacterRegistry</code> by default. Moderator and
+            Member roles do not have <code>canDeleteCharacter</code>;
+            Moderator has <code>canEditCharacterRegistry</code>.
           </div>
         </div>
       </div>
