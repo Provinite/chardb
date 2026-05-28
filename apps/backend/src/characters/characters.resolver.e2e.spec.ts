@@ -528,4 +528,111 @@ describe('CharactersResolver (e2e)', () => {
       expect(purgeResponse.body.errors[0].message).toContain('Forbidden');
     });
   });
+
+  describe('soft-deleted character isolation', () => {
+    it('should exclude soft-deleted characters from the characters list', async () => {
+      // Create two characters, delete one, confirm only the live one is returned
+      await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        { input: { name: 'Live Dragon', speciesId: testSpeciesId, visibility: Visibility.PUBLIC } },
+        testToken
+      );
+      const toDeleteRes = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        { input: { name: 'Deleted Dragon', speciesId: testSpeciesId, visibility: Visibility.PUBLIC } },
+        testToken
+      );
+      const deletedId = toDeleteRes.body.data.createCharacter.id;
+
+      await testApp.authenticatedGraphqlRequest(
+        `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
+        { id: deletedId },
+        testToken
+      );
+
+      const listResponse = await testApp.graphqlRequest(
+        CHARACTER_QUERIES.GET_CHARACTERS,
+        { filters: { limit: 50, offset: 0 } }
+      );
+
+      expect(listResponse.body.errors).toBeUndefined();
+      const ids = listResponse.body.data.characters.characters.map(
+        (c: { id: string }) => c.id
+      );
+      expect(ids).not.toContain(deletedId);
+    });
+
+    it('should return not-found for a soft-deleted character by id', async () => {
+      const createRes = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        { input: { name: 'Soon Gone', speciesId: testSpeciesId, visibility: Visibility.PUBLIC } },
+        testToken
+      );
+      const characterId = createRes.body.data.createCharacter.id;
+
+      await testApp.authenticatedGraphqlRequest(
+        `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
+        { id: characterId },
+        testToken
+      );
+
+      const fetchResponse = await testApp.graphqlRequest(
+        CHARACTER_QUERIES.GET_CHARACTER,
+        { id: characterId }
+      );
+
+      expect(fetchResponse.body.errors).toBeDefined();
+      expect(fetchResponse.body.errors[0].message).toContain('Character not found');
+    });
+
+    it('should reject updateCharacterProfile for a soft-deleted character', async () => {
+      const createRes = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        { input: { name: 'To Be Locked', speciesId: testSpeciesId, visibility: Visibility.PUBLIC } },
+        testToken
+      );
+      const characterId = createRes.body.data.createCharacter.id;
+
+      await testApp.authenticatedGraphqlRequest(
+        `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
+        { id: characterId },
+        testToken
+      );
+
+      const updateResponse = await testApp.authenticatedGraphqlRequest(
+        `mutation updateCharacterProfile($id: ID!, $input: UpdateCharacterProfileInput!) {
+          updateCharacterProfile(id: $id, input: $input) { id name }
+        }`,
+        { id: characterId, input: { name: 'Should Not Work' } },
+        testToken
+      );
+
+      expect(updateResponse.body.errors).toBeDefined();
+      expect(updateResponse.body.errors[0].extensions.code).toBe('FORBIDDEN');
+    });
+
+    it('should reject kickCharacterFromSpecies for a soft-deleted character', async () => {
+      const createRes = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        { input: { name: 'Deleted With Species', speciesId: testSpeciesId, visibility: Visibility.PUBLIC } },
+        testToken
+      );
+      const characterId = createRes.body.data.createCharacter.id;
+
+      await testApp.authenticatedGraphqlRequest(
+        `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
+        { id: characterId },
+        testToken
+      );
+
+      const kickResponse = await testApp.authenticatedGraphqlRequest(
+        `mutation kickCharacterFromSpecies($id: ID!) { kickCharacterFromSpecies(id: $id) }`,
+        { id: characterId },
+        testToken
+      );
+
+      expect(kickResponse.body.errors).toBeDefined();
+      expect(kickResponse.body.errors[0].message).toContain('Forbidden');
+    });
+  });
 });

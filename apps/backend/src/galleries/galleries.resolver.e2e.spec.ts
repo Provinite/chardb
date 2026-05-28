@@ -112,6 +112,35 @@ describe('GalleriesResolver (e2e)', () => {
         },
       });
     });
+
+    it('should reject gallery creation linked to a soft-deleted character', async () => {
+      const db = testApp.getDb();
+      const character = await db.character.create({
+        data: {
+          name: 'Deleted Character',
+          ownerId: testUserId,
+          creatorId: testUserId,
+          visibility: Visibility.PUBLIC,
+          deletedAt: new Date(),
+        },
+      });
+
+      const input = {
+        name: 'Gallery For Deleted Char',
+        characterId: character.id,
+        visibility: Visibility.PUBLIC,
+      };
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        GALLERY_QUERIES.CREATE_GALLERY,
+        { input },
+        testToken
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.errors).toBeDefined();
+      expect(response.body.errors[0].message).toContain('Character not found');
+    });
   });
 
   describe('gallery query', () => {

@@ -81,7 +81,7 @@ describe('CommentsResolver', () => {
         entityId: 'character-1',
       };
 
-      db.character.findUnique.mockResolvedValue({ id: 'character-1', name: 'Test Character' });
+      db.character.findFirst.mockResolvedValue({ id: 'character-1', name: 'Test Character' });
       db.comment.create.mockResolvedValue(mockDbComment);
 
       const result = await resolver.createComment(input, mockUser);
