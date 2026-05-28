@@ -390,7 +390,7 @@ describe('CharactersResolver (e2e)', () => {
   });
 
   describe('deleteCharacter', () => {
-    it('should delete character when user is owner', async () => {
+    it('should delete character when user has canDeleteCharacter permission', async () => {
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
@@ -426,6 +426,106 @@ describe('CharactersResolver (e2e)', () => {
 
       expect(fetchResponse.body.errors).toBeDefined();
       expect(fetchResponse.body.errors[0].message).toContain('Character not found');
+    });
+
+    it('should return forbidden when user lacks canDeleteCharacter permission', async () => {
+      // Create a character owned by the privileged user
+      const createResponse = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        {
+          input: {
+            name: 'Cannot Delete This',
+            speciesId: testSpeciesId,
+            visibility: Visibility.PUBLIC,
+          },
+        },
+        testToken
+      );
+      const characterId = createResponse.body.data.createCharacter.id;
+
+      // Create a second user with a role that explicitly lacks canDeleteCharacter
+      const unprivilegedUser = await testApp.createTestUser();
+      const { communityId } = await testApp.createTestCommunitySetup(testUserId);
+      const readOnlyRole = await testApp.createTestRole(communityId, {
+        canCreateCharacter: false,
+        canDeleteCharacter: false,
+      });
+      await testApp.createTestCommunityMember(unprivilegedUser.id, readOnlyRole.id);
+      const unprivilegedToken = await testApp.generateTestToken(
+        unprivilegedUser.id,
+        unprivilegedUser.username
+      );
+
+      const deleteResponse = await testApp.authenticatedGraphqlRequest(
+        `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
+        { id: characterId },
+        unprivilegedToken
+      );
+
+      expect(deleteResponse.body.errors).toBeDefined();
+      expect(deleteResponse.body.errors[0].message).toContain('Forbidden');
+    });
+  });
+
+  describe('purgeCharacter', () => {
+    it('should permanently delete a character when called by a global admin', async () => {
+      const createResponse = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        {
+          input: {
+            name: 'To Purge',
+            speciesId: testSpeciesId,
+            visibility: Visibility.PUBLIC,
+          },
+        },
+        testToken
+      );
+      const characterId = createResponse.body.data.createCharacter.id;
+
+      const adminUser = await testApp.createTestUser({ isAdmin: true });
+      const adminToken = await testApp.generateTestToken(adminUser.id, adminUser.username);
+
+      const purgeResponse = await testApp.authenticatedGraphqlRequest(
+        `mutation purgeCharacter($id: ID!) { purgeCharacter(id: $id) }`,
+        { id: characterId },
+        adminToken
+      );
+
+      expect(purgeResponse.status).toBe(200);
+      expect(purgeResponse.body.errors).toBeUndefined();
+      expect(purgeResponse.body.data.purgeCharacter).toBe(true);
+
+      // Character should be gone — not just hidden, but absent from the DB
+      const fetchResponse = await testApp.graphqlRequest(
+        CHARACTER_QUERIES.GET_CHARACTER,
+        { id: characterId }
+      );
+      expect(fetchResponse.body.errors).toBeDefined();
+      expect(fetchResponse.body.errors[0].message).toContain('Character not found');
+    });
+
+    it('should return forbidden when called by a non-admin user', async () => {
+      const createResponse = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        {
+          input: {
+            name: 'Cannot Purge This',
+            speciesId: testSpeciesId,
+            visibility: Visibility.PUBLIC,
+          },
+        },
+        testToken
+      );
+      const characterId = createResponse.body.data.createCharacter.id;
+
+      const purgeResponse = await testApp.authenticatedGraphqlRequest(
+        `mutation purgeCharacter($id: ID!) { purgeCharacter(id: $id) }`,
+        { id: characterId },
+        testToken
+      );
+
+      expect(purgeResponse.body.errors).toBeDefined();
+      expect(purgeResponse.body.errors[0].message).toContain('Forbidden');
     });
   });
 });

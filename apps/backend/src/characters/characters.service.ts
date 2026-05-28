@@ -816,6 +816,9 @@ export class CharactersService {
           speciesVariantId: null,
           registryId: null,
           traitValues: [],
+          // Trait values take precedence over any existing custom field with
+          // the same name — the structured species data is more authoritative
+          // than a freeform field the owner may have set manually.
           customFields: { ...existingCustomFields, ...flattenedFields },
         },
       });
