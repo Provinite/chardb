@@ -61,6 +61,7 @@ import { EditSpeciesPage } from "./pages/EditSpeciesPage";
 import { DeviantArtBackfillPage } from "./pages/DeviantArtBackfillPage";
 import { DeviantArtCallbackPage } from "./pages/DeviantArtCallbackPage";
 import { DiscordCallbackPage } from "./pages/DiscordCallbackPage";
+import { ToyhouseCallbackPage } from "./pages/ToyhouseCallbackPage";
 import { CommunityItemsAdminPage } from "./pages/CommunityItemsAdminPage";
 import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
 import { CommunityColorPalettePage } from "./pages/CommunityColorPalettePage";
@@ -114,6 +115,10 @@ function App() {
         <Route
           path="/auth/discord/callback"
           element={<DiscordCallbackPage />}
+        />
+        <Route
+          path="/auth/toyhouse/callback"
+          element={<ToyhouseCallbackPage />}
         />
 
         {/* Protected routes */}
