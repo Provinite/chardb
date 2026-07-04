@@ -26,7 +26,7 @@ export class ToyhouseOAuthController {
       { sub: user.id },
       { secret: jwtSecret + "_O", expiresIn: "10m" },
     );
-    const clientId = this.configService.get("TOYHOUSE_CLIENT_ID");
+    const clientId = this.configService.getOrThrow("TOYHOUSE_CLIENT_ID");
     const callbackUrl =
       this.configService.get("TOYHOUSE_CALLBACK_URL") ||
       "http://localhost:4000/auth/toyhouse/callback";

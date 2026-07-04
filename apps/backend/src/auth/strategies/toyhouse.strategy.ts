@@ -50,7 +50,11 @@ export class ToyhouseStrategy extends PassportStrategy(Strategy, "toyhouse") {
 
       const data = await response.json();
 
-      done(null, { id: String(data.id), username: data.username });
+      if (!data.id || !data.username) {
+        return done(new Error("ToyHouse API returned an unexpected response shape"));
+      }
+
+      done(null, { id: String(data.id), username: String(data.username) });
     } catch (error) {
       done(error as Error);
     }
