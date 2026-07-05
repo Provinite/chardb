@@ -73,7 +73,7 @@ export function ToyhouseCallbackPage() {
   const hasProcessed = useRef(false);
 
   useEffect(() => {
-    const processCallback = async () => {
+    const processCallback = () => {
       if (hasProcessed.current) {
         return;
       }
