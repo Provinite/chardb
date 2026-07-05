@@ -8,6 +8,13 @@ export interface ToyhouseProfile {
   username: string;
 }
 
+export interface ToyhouseOAuthPayload {
+  providerAccountId: string;
+  displayName: string;
+  accessToken: string;
+  refreshToken: string;
+}
+
 @Injectable()
 export class ToyhouseStrategy extends PassportStrategy(Strategy, "toyhouse") {
   constructor(configService: ConfigService) {
@@ -23,14 +30,6 @@ export class ToyhouseStrategy extends PassportStrategy(Strategy, "toyhouse") {
     });
 
     this.userProfile = this.fetchUserProfile.bind(this);
-  }
-
-  authenticate(req: any, options?: any) {
-    const state = req.oauthState;
-    if (state) {
-      options = { ...options, state };
-    }
-    super.authenticate(req, options);
   }
 
   async fetchUserProfile(

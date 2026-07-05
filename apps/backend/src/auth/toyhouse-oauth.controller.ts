@@ -9,6 +9,7 @@ import { ExternalAccountsService } from "../external-accounts/external-accounts.
 import { ExternalAccountProvider } from "@prisma/client";
 import { CurrentUser } from "./decorators/CurrentUser";
 import { User } from "@prisma/client";
+import { ToyhouseOAuthPayload } from "./strategies/toyhouse.strategy";
 
 @Controller("auth/toyhouse")
 export class ToyhouseOAuthController {
@@ -65,7 +66,7 @@ export class ToyhouseOAuthController {
         throw new Error("Invalid or expired state token");
       }
 
-      const oauthData = req.user as any;
+      const oauthData = req.user as ToyhouseOAuthPayload;
       if (!oauthData?.providerAccountId || !oauthData?.displayName) {
         throw new Error("Invalid OAuth response");
       }
