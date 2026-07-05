@@ -868,6 +868,7 @@ type ExternalAccount {
 enum ExternalAccountProvider {
   DEVIANTART
   DISCORD
+  TOYHOUSE
 }
 
 type FollowListResult {
@@ -1337,6 +1338,7 @@ enum ModerationRejectionReason {
 """The moderation status of an image"""
 enum ModerationStatus {
   APPROVED
+  CANCELLED
   PENDING
   REJECTED
 }

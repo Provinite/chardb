@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **ToyHouse account linking UI**: "Link ToyHouse Account" button on the Edit Profile page initiates the OAuth2 flow. Linked accounts are shown in the Connected Accounts section with a "TH" badge. On successful callback, shows a success toast and (if pending items were claimed) a summary of claimed characters/items. (#242)
+
 ## [v10.1.0] - 2026-05-12
 
 ### Added

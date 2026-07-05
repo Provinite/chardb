@@ -382,9 +382,9 @@ export const EditProfilePage: React.FC = () => {
 
       // Redirect to the OAuth URL (no tokens in URL)
       window.location.href = data.url;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error initiating OAuth:", error);
-      toast.error(error.message || "Failed to start DeviantArt linking");
+      toast.error(error instanceof Error ? error.message : "Failed to start DeviantArt linking");
     }
   };
 
@@ -419,9 +419,43 @@ export const EditProfilePage: React.FC = () => {
 
       // Redirect to the OAuth URL (no tokens in URL)
       window.location.href = data.url;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error initiating OAuth:", error);
-      toast.error(error.message || "Failed to start Discord linking");
+      toast.error(error instanceof Error ? error.message : "Failed to start Discord linking");
+    }
+  };
+
+  const handleLinkToyhouse = async () => {
+    const token = localStorage.getItem("accessToken");
+
+    if (!token) {
+      toast.error("Please log in to link your ToyHouse account");
+      return;
+    }
+
+    try {
+      const backendUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:4000";
+      const response = await fetch(`${backendUrl}/auth/toyhouse`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to initiate OAuth flow");
+      }
+
+      const data = await response.json();
+
+      if (!data.url) {
+        throw new Error("No OAuth URL returned");
+      }
+
+      window.location.href = data.url;
+    } catch (error: unknown) {
+      console.error("Error initiating OAuth:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to start ToyHouse linking");
     }
   };
 
@@ -438,9 +472,9 @@ export const EditProfilePage: React.FC = () => {
       });
       toast.success(`${provider} account unlinked successfully`);
       refetchAccounts();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error unlinking account:", error);
-      toast.error(error.message || `Failed to unlink ${provider} account`);
+      toast.error(error instanceof Error ? error.message : `Failed to unlink ${provider} account`);
     }
   };
 
@@ -544,8 +578,8 @@ export const EditProfilePage: React.FC = () => {
       <Section>
         <SectionTitle>Connected Accounts</SectionTitle>
         <SectionDescription>
-          Link your external accounts (DeviantArt, Discord) to verify ownership
-          and connect with the community
+          Link your external accounts (DeviantArt, Discord, ToyHouse) to verify
+          ownership and connect with the community
         </SectionDescription>
 
         {loadingAccounts ? (
@@ -563,7 +597,9 @@ export const EditProfilePage: React.FC = () => {
                       ? "DA"
                       : account.provider === "DISCORD"
                         ? "DC"
-                        : account.provider.charAt(0)}
+                        : account.provider === "TOYHOUSE"
+                          ? "TH"
+                          : account.provider.charAt(0)}
                   </AccountIcon>
                   <AccountDetails>
                     <AccountName>{account.displayName}</AccountName>
@@ -610,6 +646,13 @@ export const EditProfilePage: React.FC = () => {
           ) && (
             <SmallButton variant="primary" onClick={handleLinkDiscord}>
               Link Discord Account
+            </SmallButton>
+          )}
+          {!externalAccountsData?.myExternalAccounts?.some(
+            (acc: any) => acc.provider === "TOYHOUSE",
+          ) && (
+            <SmallButton variant="primary" onClick={handleLinkToyhouse}>
+              Link ToyHouse Account
             </SmallButton>
           )}
         </div>

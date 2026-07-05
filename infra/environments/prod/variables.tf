@@ -247,6 +247,23 @@ variable "discord_callback_url" {
   type        = string
 }
 
+variable "toyhouse_client_id" {
+  description = "ToyHouse OAuth client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "toyhouse_client_secret" {
+  description = "ToyHouse OAuth client secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "toyhouse_callback_url" {
+  description = "ToyHouse OAuth callback URL"
+  type        = string
+}
+
 variable "discord_bot_token" {
   description = "Discord bot token for bot integration"
   type        = string

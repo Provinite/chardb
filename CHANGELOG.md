@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **ToyHouse OAuth account linking**: Full OAuth2 integration allowing users to link their ToyHouse accounts to CharDB for identity verification and pending ownership auto-claim. Includes Passport strategy, controller, frontend callback page, Terraform secrets management, and a Prisma migration adding `TOYHOUSE` to `ExternalAccountProvider`. (#242)
+
 ## [v10.1.0] - 2026-05-12
 
 ## [v10.0.0] - 2026-02-27
