@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **ToyHouse OAuth account linking**: Users can now link their ToyHouse accounts via OAuth2. Linked accounts trigger automatic claiming of pending character/item ownership registered to that ToyHouse username. (#242)
+
+### Fixed
+
+- **SQS enabled flag coercion**: `AWS_SQS_ENABLED=false` now correctly disables the SQS consumer. Previously, `ConfigService.get<boolean>()` returned the raw string `"false"` (truthy), so the consumer would start regardless of the flag value.
+
 ## [v10.1.0] - 2026-05-12
 
 ### Added
