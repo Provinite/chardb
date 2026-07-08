@@ -113,6 +113,24 @@ variable "discord_bot_token" {
   sensitive   = true
 }
 
+# ToyHouse OAuth Configuration
+variable "toyhouse_client_id" {
+  description = "ToyHouse OAuth client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "toyhouse_client_secret" {
+  description = "ToyHouse OAuth client secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "toyhouse_callback_url" {
+  description = "ToyHouse OAuth callback URL"
+  type        = string
+}
+
 # S3 Image Storage Configuration
 variable "s3_images_bucket_arn" {
   description = "ARN of the S3 bucket for image storage"

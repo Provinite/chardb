@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Registered missing ToyHouse env vars in the backend Docker Compose service (was crash-looping the API). (#245)
+- Wired ToyHouse OAuth vars through the dev (EC2) Terraform and `deploy.sh`, so the generated `.env` no longer drops them on deploy.
 
 ## [v10.1.0] - 2026-05-12
 

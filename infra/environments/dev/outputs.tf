@@ -43,7 +43,7 @@ output "backend_ssh_key_name" {
 
 output "ssh_key_setup_instructions" {
   description = "Instructions to save and use the SSH key"
-  value = <<-EOT
+  value       = <<-EOT
 To save the SSH key and connect:
 1. terraform output -raw backend_ssh_private_key > ${module.backend.ssh_key_name}.pem
 2. chmod 600 ${module.backend.ssh_key_name}.pem  
@@ -112,6 +112,23 @@ output "backend_discord_bot_token" {
   description = "Discord bot token for backend"
   value       = module.backend.discord_bot_token
   sensitive   = true
+}
+
+output "backend_toyhouse_client_id" {
+  description = "ToyHouse OAuth client ID for backend"
+  value       = module.backend.toyhouse_client_id
+  sensitive   = true
+}
+
+output "backend_toyhouse_client_secret" {
+  description = "ToyHouse OAuth client secret for backend"
+  value       = module.backend.toyhouse_client_secret
+  sensitive   = true
+}
+
+output "backend_toyhouse_callback_url" {
+  description = "ToyHouse OAuth callback URL for backend"
+  value       = module.backend.toyhouse_callback_url
 }
 
 # Frontend infrastructure outputs
