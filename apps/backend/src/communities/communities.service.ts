@@ -68,6 +68,7 @@ export class CommunitiesService {
           canUploadOwnCharacterImages: true,
           canUploadCharacterImages: true,
           canModerateImages: true,
+          canDeleteCharacter: true,
         },
       });
 

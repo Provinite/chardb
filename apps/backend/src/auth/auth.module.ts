@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
 import { ConfigService } from "@nestjs/config";
@@ -44,12 +44,12 @@ import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
         signOptions: { expiresIn: "24h" },
       }),
     }),
-    UsersModule,
-    InviteCodesModule,
+    forwardRef(() => UsersModule),
+    forwardRef(() => InviteCodesModule),
     DatabaseModule,
-    ExternalAccountsModule,
+    forwardRef(() => ExternalAccountsModule),
     EmailModule,
-    CommunityMembersModule,
+    forwardRef(() => CommunityMembersModule),
   ],
   controllers: [DeviantArtOAuthController, DiscordOAuthController, ToyhouseOAuthController],
   providers: [

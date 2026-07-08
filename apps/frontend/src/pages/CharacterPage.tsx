@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 
 import { Button } from "@chardb/ui";
 import {
   useGetCharacterQuery,
+  useDeleteCharacterMutation,
+  useKickCharacterFromSpeciesMutation,
   LikeableType,
   CommentableType,
   ModerationStatus,
@@ -88,14 +90,35 @@ const CharacterHeader = styled.div`
   }
 `;
 
-const HeaderActions = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-left: auto;
+const AdminActionsLabel = styled.span`
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  color: ${({ theme }) => theme.colors.text.muted};
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-right: ${({ theme }) => theme.spacing.xs};
+  white-space: nowrap;
+`;
 
-  @media (max-width: 768px) {
-    margin-left: 0;
-    justify-content: flex-start;
+const CharacterActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding-top: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing.md};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  flex-wrap: wrap;
+`;
+
+const RemoveFromSpeciesButton = styled(Button)`
+  color: ${({ theme }) => theme.colors.warning};
+  border-color: ${({ theme }) => theme.colors.warning};
+  background: transparent;
+
+  &:hover:not(:disabled) {
+    background-color: ${({ theme }) => theme.colors.warning};
+    border-color: ${({ theme }) => theme.colors.warning};
+    color: #fff;
   }
 `;
 
@@ -411,7 +434,7 @@ export const CharacterPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const { data, loading, error } = useGetCharacterQuery({
     variables: { id: id! },
@@ -425,12 +448,39 @@ export const CharacterPage: React.FC = () => {
     character?.species?.community?.id,
   );
 
+  const [deleteCharacter, { loading: deleting }] = useDeleteCharacterMutation();
+  const [kickFromSpecies, { loading: kicking }] = useKickCharacterFromSpeciesMutation();
+
   const handleBackClick = () => {
     navigate("/characters");
   };
 
   const handleEditClick = () => {
     navigate(`/character/${id}/edit`);
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    if (!window.confirm(`Delete "${character?.name}"? This action soft-deletes the character and cannot be undone without admin intervention.`)) return;
+    setActionError(null);
+    try {
+      await deleteCharacter({ variables: { id } });
+      navigate("/characters");
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Failed to delete character");
+    }
+  };
+
+  const handleKickFromSpecies = async () => {
+    if (!id) return;
+    if (!window.confirm(`Remove "${character?.name}" from its species? Trait values will be flattened to custom fields and the character will no longer be part of "${character?.species?.name}".`)) return;
+    setActionError(null);
+    try {
+      await kickFromSpecies({ variables: { id } });
+      navigate(0); // reload page to reflect updated character state
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Failed to remove character from species");
+    }
   };
 
   const getVisibilityVariant = (visibility: string) => {
@@ -576,6 +626,44 @@ export const CharacterPage: React.FC = () => {
               </InfoItem>
             )}
           </InfoGrid>
+
+          {(canUserEditCharacter(character, user, permissions) ||
+            permissions.canDeleteCharacter ||
+            (user?.isAdmin ?? false)) && (
+            <CharacterActions>
+              <AdminActionsLabel>Admin</AdminActionsLabel>
+              {canUserEditCharacter(character, user, permissions) && (
+                <Button variant="outline" size="sm" onClick={handleEditClick}>
+                  Edit Character
+                </Button>
+              )}
+              {character.speciesId && permissions.canEditCharacterRegistry && (
+                <RemoveFromSpeciesButton
+                  variant="outline"
+                  size="sm"
+                  onClick={handleKickFromSpecies}
+                  disabled={kicking}
+                >
+                  {kicking ? "Removing..." : "Remove from Species"}
+                </RemoveFromSpeciesButton>
+              )}
+              {(permissions.canDeleteCharacter || (user?.isAdmin ?? false)) && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? "Deleting..." : "Delete Character"}
+                </Button>
+              )}
+            </CharacterActions>
+          )}
+          {actionError && (
+            <div style={{ color: "red", marginTop: "0.5rem", fontSize: "0.875rem" }}>
+              {actionError}
+            </div>
+          )}
         </CharacterBasics>
 
         {character.owner ? (
@@ -629,13 +717,6 @@ export const CharacterPage: React.FC = () => {
           </OwnerInfo>
         )}
 
-        {canUserEditCharacter(character, user, permissions) && (
-          <HeaderActions>
-            <Button variant="primary" size="sm" onClick={handleEditClick}>
-              Edit Character
-            </Button>
-          </HeaderActions>
-        )}
       </CharacterHeader>
 
       {character._count && (

@@ -18,8 +18,10 @@ describe('SocialService', () => {
   const mockLike = {
     id: 'like-1',
     userId: 'user-1',
-    likeableType: LikeableType.CHARACTER,
-    likeableId: 'character-1',
+    characterId: 'character-1',
+    imageId: null,
+    galleryId: null,
+    commentId: null,
     createdAt: new Date(),
     user: {
       id: 'user-1',
@@ -39,7 +41,7 @@ describe('SocialService', () => {
     }).compile();
 
     service = module.get<SocialService>(SocialService);
-    db = module.get<DatabaseService>(DatabaseService) as any;
+    db = module.get<DatabaseService>(DatabaseService) as unknown as typeof mockDatabaseService;
   });
 
   describe('toggleLike', () => {
@@ -127,7 +129,13 @@ describe('SocialService', () => {
           entityId: 'test-id',
         };
 
-        (db as any)[testCase.mock].findUnique.mockResolvedValue({ id: 'test-id' });
+        const mockEntities: Record<string, { findUnique: jest.Mock }> = {
+          character: db.character,
+          image: db.image,
+          gallery: db.gallery,
+          comment: db.comment,
+        };
+        mockEntities[testCase.mock].findUnique.mockResolvedValue({ id: 'test-id' });
         db.$transaction.mockImplementation(async (callback) => {
           db.like.findUnique.mockResolvedValue(null);
           db.like.create.mockResolvedValue(mockLike);
@@ -201,8 +209,7 @@ describe('SocialService', () => {
       expect(result).toBe(10);
       expect(db.like.count).toHaveBeenCalledWith({
         where: {
-          likeableType: LikeableType.CHARACTER,
-          likeableId: 'character-1',
+          characterId: 'character-1',
         },
       });
     });

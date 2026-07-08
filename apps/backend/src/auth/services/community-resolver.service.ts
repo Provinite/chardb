@@ -389,7 +389,7 @@ export class CommunityResolverService {
    * @returns The community ID
    * @throws Error if pending ownership doesn't exist or has no associated community
    */
-  async getPendingOwnershipCommunity(pendingOwnershipId: string): Promise<string> {
+  async getPendingOwnershipCommunity(pendingOwnershipId: string): Promise<string | null> {
     const pending = await this.prisma.pendingOwnership.findUnique({
       where: { id: pendingOwnershipId },
       select: {
@@ -419,7 +419,7 @@ export class CommunityResolverService {
       pending.item?.itemType?.communityId;
 
     if (!communityId) {
-      throw new Error("PendingOwnership has no associated community");
+      return null;
     }
 
     return communityId;

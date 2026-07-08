@@ -85,6 +85,10 @@ export class Role {
   @Field(() => Boolean, { description: 'Whether members with this role can review and approve/reject uploaded images' })
   canModerateImages!: boolean;
 
+  /** Permission to soft-delete characters in this community */
+  @Field(() => Boolean, { description: 'Whether members with this role can delete characters in this community' })
+  canDeleteCharacter!: boolean;
+
   /** Permission to create orphaned characters */
   @Field(() => Boolean, { description: 'Whether members with this role can create orphaned characters' })
   canCreateOrphanedCharacter!: boolean;

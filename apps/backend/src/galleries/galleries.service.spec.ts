@@ -21,7 +21,7 @@ describe('GalleriesService', () => {
     }).compile();
 
     service = module.get<GalleriesService>(GalleriesService);
-    db = module.get<DatabaseService>(DatabaseService) as any;
+    db = module.get<DatabaseService>(DatabaseService) as unknown as typeof mockDatabaseService;
   });
 
   describe('create', () => {
@@ -50,12 +50,12 @@ describe('GalleriesService', () => {
 
       expect(db.gallery.create).toHaveBeenCalledWith({
         data: {
-          ...input,
+          name: 'Test Gallery',
+          description: 'A test gallery',
           ownerId: userId,
-        },
-        include: {
-          owner: true,
-          character: true,
+          characterId: undefined,
+          visibility: Visibility.PUBLIC,
+          sortOrder: 0,
         },
       });
       expect(result).toEqual(mockGallery);
@@ -99,7 +99,6 @@ describe('GalleriesService', () => {
 
       expect(db.gallery.findUnique).toHaveBeenCalledWith({
         where: { id: galleryId },
-        include: expect.any(Object),
       });
       expect(result).toEqual(mockGallery);
     });
@@ -166,7 +165,6 @@ describe('GalleriesService', () => {
       expect(db.gallery.update).toHaveBeenCalledWith({
         where: { id: galleryId },
         data: input,
-        include: expect.any(Object),
       });
       expect(result).toEqual(mockUpdatedGallery);
     });
@@ -264,7 +262,6 @@ describe('GalleriesService', () => {
 
       expect(db.gallery.findMany).toHaveBeenCalledWith({
         where: expect.any(Object),
-        include: expect.any(Object),
         orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
         take: 10,
         skip: 0,
@@ -286,7 +283,6 @@ describe('GalleriesService', () => {
             { characterId },
           ]),
         }),
-        include: expect.any(Object),
         orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
         take: 10,
         skip: 0,

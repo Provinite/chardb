@@ -7,7 +7,11 @@ import {
   useTraitReviewQueueQuery,
   useApproveTraitReviewMutation,
   useRevertTraitReviewMutation,
+  useDeleteCharacterMutation,
+  useKickCharacterFromSpeciesMutation,
 } from '../../generated/graphql';
+import { useAuth } from '../../contexts/AuthContext';
+import { useUserCommunityRole } from '../../hooks/useUserCommunityRole';
 import { TraitReviewCard } from './TraitReviewCard';
 
 const Container = styled.div`
@@ -106,6 +110,8 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
 }) => {
   const [offset, setOffset] = useState(0);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { permissions } = useUserCommunityRole(communityId);
 
   const { data, loading, error, refetch } = useTraitReviewQueueQuery({
     variables: { communityId, first: PAGE_SIZE, offset },
@@ -114,6 +120,8 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
 
   const [approveReview] = useApproveTraitReviewMutation();
   const [revertReview] = useRevertTraitReviewMutation();
+  const [deleteCharacter] = useDeleteCharacterMutation();
+  const [kickFromSpecies] = useKickCharacterFromSpeciesMutation();
 
   const queue = data?.traitReviewQueue;
   const items = queue?.items || [];
@@ -149,6 +157,40 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
       setActionInProgress(null);
     }
   };
+
+  const handleDelete = async (characterId: string, characterName: string) => {
+    if (!window.confirm(`Delete "${characterName}"? This soft-deletes the character and removes it from the queue.`)) return;
+    setActionInProgress(characterId);
+    try {
+      await deleteCharacter({ variables: { id: characterId } });
+      toast.success(`"${characterName}" deleted`);
+      await refetch();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(`Failed to delete: ${message}`);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  const handleKickFromSpecies = async (characterId: string, characterName: string, speciesName: string | undefined) => {
+    const speciesLabel = speciesName ? `"${speciesName}"` : 'its species';
+    if (!window.confirm(`Remove "${characterName}" from ${speciesLabel}? Trait values will be saved as custom fields.`)) return;
+    setActionInProgress(characterId);
+    try {
+      await kickFromSpecies({ variables: { id: characterId } });
+      toast.success(`"${characterName}" removed from ${speciesLabel}`);
+      await refetch();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(`Failed to remove from species: ${message}`);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  const canDelete = permissions.canDeleteCharacter || (user?.isAdmin ?? false);
+  const canKick = permissions.canEditCharacterRegistry || (user?.isAdmin ?? false);
 
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -216,7 +258,9 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
                 item={item}
                 onApprove={handleApprove}
                 onRevert={handleRevert}
-                actionInProgress={actionInProgress === item.review.id}
+                onDelete={canDelete ? handleDelete : undefined}
+                onKickFromSpecies={canKick ? handleKickFromSpecies : undefined}
+                actionInProgress={actionInProgress === item.review.id || actionInProgress === item.characterId}
               />
             ))}
           </QueueList>
