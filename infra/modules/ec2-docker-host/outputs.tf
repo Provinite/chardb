@@ -105,3 +105,20 @@ output "discord_bot_token" {
   value       = var.discord_bot_token
   sensitive   = true
 }
+
+output "toyhouse_client_id" {
+  description = "ToyHouse OAuth client ID"
+  value       = var.toyhouse_client_id
+  sensitive   = true
+}
+
+output "toyhouse_client_secret" {
+  description = "ToyHouse OAuth client secret"
+  value       = var.toyhouse_client_secret
+  sensitive   = true
+}
+
+output "toyhouse_callback_url" {
+  description = "ToyHouse OAuth callback URL"
+  value       = var.toyhouse_callback_url
+}

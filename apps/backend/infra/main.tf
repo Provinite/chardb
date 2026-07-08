@@ -52,6 +52,11 @@ module "backend_docker_host" {
   discord_callback_url  = var.discord_callback_url
   discord_bot_token     = var.discord_bot_token
 
+  # ToyHouse OAuth Configuration
+  toyhouse_client_id     = var.toyhouse_client_id
+  toyhouse_client_secret = var.toyhouse_client_secret
+  toyhouse_callback_url  = var.toyhouse_callback_url
+
   # SQS Queue URL
   sqs_queue_url = module.prize_distribution_queue.queue_url
 
