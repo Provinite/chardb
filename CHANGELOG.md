@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **ToyHouse OAuth account linking**: Full OAuth2 integration allowing users to link their ToyHouse accounts to CharDB for identity verification and pending ownership auto-claim. Includes Passport strategy, controller, frontend callback page, Terraform secrets management, and a Prisma migration adding `TOYHOUSE` to `ExternalAccountProvider`. (#242)
+- `scripts/restart-dev-server.sh`: reboots the dev EC2 docker host by looking up its instance ID from the `Name` tag.
+- `packages/da-import/scripts/excluded-to-discord.ts`: renders `data/excluded.json` as Discord-ready markdown grouped by exclusion reason.
 
 ### Fixed
 
