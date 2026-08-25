@@ -1186,7 +1186,6 @@ export enum ModerationRejectionReason {
 /** The moderation status of an image */
 export enum ModerationStatus {
   Approved = 'APPROVED',
-  Cancelled = 'CANCELLED',
   Pending = 'PENDING',
   Rejected = 'REJECTED'
 }
