@@ -67,8 +67,11 @@ jobs:
             --include '@chardb/ui' \
             run build
 
+      # Kept sequential deliberately: ubuntu-latest has 4 vCPUs, and running
+      # all six workspace tsc processes at once measured slower (59s) than
+      # sequential (40s) through contention.
       - name: Type check
-        run: yarn workspaces foreach -A --parallel --jobs unlimited run type-check
+        run: yarn type-check
 
       # The frontend's generated GraphQL types are committed but only refresh
       # when someone runs codegen by hand. When they go stale, main can stop
