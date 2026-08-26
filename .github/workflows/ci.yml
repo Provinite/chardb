@@ -38,8 +38,15 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Generate Prisma client
-        run: yarn workspace @chardb/database prisma generate
+      # apps/* consume these via their package "types" field, which points at
+      # dist/. That is gitignored, so a fresh checkout has no type declarations
+      # for them until they are built. @chardb/database's build also runs
+      # prisma generate.
+      - name: Build workspace packages
+        run: |
+          yarn workspace @chardb/database build
+          yarn workspace @chardb/shared build
+          yarn workspace @chardb/ui build
 
       - name: Type check
         run: yarn type-check
