@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Character admin action strip**: Edit / Remove from Species / Delete Character buttons render inside the character info column under an "ADMIN" label, gated by `canDeleteCharacter` and `canEditCharacterRegistry` (or global admin). (#235)
+- **Trait Review Queue inline actions**: Review cards expose Remove from Species and Delete Character alongside Approve, each with a confirm dialog and toast feedback, so moderators never need to leave the queue. The queue refreshes after every action. (#235)
+- `canDeleteCharacter` is exposed through the role queries, `useUserCommunityRole`, the permissions helper, and the RoleEditor presets. (#235)
 - **ToyHouse account linking UI**: "Link ToyHouse Account" button on the Edit Profile page initiates the OAuth2 flow. Linked accounts are shown in the Connected Accounts section with a "TH" badge. On successful callback, shows a success toast and (if pending items were claimed) a summary of claimed characters/items. (#242)
 
 ### Fixed

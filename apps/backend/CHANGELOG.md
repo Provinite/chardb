@@ -9,10 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Character soft-delete and species removal**: New `deleteCharacter` (soft-delete, sets `deletedAt`/`deletedById`), `purgeCharacter` (hard-delete, global admin only), and `kickCharacterFromSpecies` (clears species/variant/registry and flattens trait values into custom fields) mutations. All three cancel any pending trait reviews. Adds the `CANCELLED` moderation status and the `canDeleteCharacter` role permission, granted to the default Admin role at community creation. (#235)
+- **E2E test infrastructure**: `docker/compose.test.yml` runs an isolated Postgres container for e2e runs, started and stopped by a Jest global setup. Adds cross-service isolation coverage asserting soft-deleted characters are invisible to list/fetch queries, guards, galleries, comments, likes, and species deletion counts. (#235)
 - **ToyHouse OAuth account linking**: Users can now link their ToyHouse accounts via OAuth2. Linked accounts trigger automatic claiming of pending character/item ownership registered to that ToyHouse username. (#242)
 
 ### Fixed
 
+- **Soft-delete filter coverage**: Every character `findUnique`/`findFirst`/`findMany`/`count` call site now applies the shared `notDeleted` filter from `common/utils/prisma-filters.ts`, so soft-deleted characters cannot leak through ownership checks, guards, galleries, comments, images, media, social, species, or trait review. (#235)
+- **ENUM trait values stored as UUIDs**: `kickFromSpecies` now indexes the enum value map by both name and ID, so trait values resolve to their display name regardless of which path created them. (#235)
+- **Circular module dependencies**: Added `forwardRef` between `AuthModule` and `UsersModule`/`ExternalAccountsModule`/`InviteCodesModule`/`CommunityMembersModule`, which previously broke module compilation when a feature module was loaded in isolation under test. (#235)
+- `getPendingOwnershipCommunity` returns `null` instead of throwing when no community is found. (#235)
 - **SQS enabled flag coercion**: `AWS_SQS_ENABLED=false` now correctly disables the SQS consumer. Previously, `ConfigService.get<boolean>()` returned the raw string `"false"` (truthy), so the consumer would start regardless of the flag value.
 - **Phantom `CANCELLED` moderation status**: Removed `CANCELLED` from the generated `schema.gql`. The value has no migration on `main` (it belongs to the unmerged character soft-delete work), so it leaked into the committed schema from a locally generated Prisma client and advertised an enum value the deployed API does not serve.
 
