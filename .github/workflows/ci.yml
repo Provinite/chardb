@@ -23,14 +23,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Corepack must be enabled before setup-node: `cache: yarn` shells out to
+      # `yarn cache dir` inside that step, and the runner's default Yarn 1.22
+      # refuses to run against a `packageManager: yarn@4` project.
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: yarn
-
-      - name: Enable Corepack
-        run: corepack enable
 
       - name: Install dependencies
         run: yarn install --immutable
