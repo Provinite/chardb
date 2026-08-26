@@ -56,6 +56,9 @@ DISCORD_CLIENT_ID=$(get_output "backend_discord_client_id")
 DISCORD_CLIENT_SECRET=$(get_output "backend_discord_client_secret")
 DISCORD_CALLBACK_URL=$(get_output "backend_discord_callback_url")
 DISCORD_BOT_TOKEN=$(get_output "backend_discord_bot_token")
+TOYHOUSE_CLIENT_ID=$(get_output "backend_toyhouse_client_id")
+TOYHOUSE_CLIENT_SECRET=$(get_output "backend_toyhouse_client_secret")
+TOYHOUSE_CALLBACK_URL=$(get_output "backend_toyhouse_callback_url")
 SQS_QUEUE_URL=$(get_output "backend_sqs_queue_url")
 S3_IMAGES_BUCKET=$(get_output "images_bucket_name")
 CLOUDFRONT_IMAGES_DOMAIN=$(get_output "images_cloudfront_domain")
@@ -105,6 +108,9 @@ echo "   Discord Client ID: [REDACTED]"
 echo "   Discord Client Secret: [REDACTED]"
 echo "   Discord Callback URL: $DISCORD_CALLBACK_URL"
 echo "   Discord Bot Token: [REDACTED]"
+echo "   ToyHouse Client ID: [REDACTED]"
+echo "   ToyHouse Client Secret: [REDACTED]"
+echo "   ToyHouse Callback URL: $TOYHOUSE_CALLBACK_URL"
 echo "   SQS Queue URL: $SQS_QUEUE_URL"
 echo "   S3 Images Bucket: $S3_IMAGES_BUCKET"
 echo "   CloudFront Images Domain: $CLOUDFRONT_IMAGES_DOMAIN"
@@ -123,6 +129,9 @@ echo "export DISCORD_CLIENT_ID='$DISCORD_CLIENT_ID'"
 echo "export DISCORD_CLIENT_SECRET='$DISCORD_CLIENT_SECRET'"
 echo "export DISCORD_CALLBACK_URL='$DISCORD_CALLBACK_URL'"
 echo "export DISCORD_BOT_TOKEN='$DISCORD_BOT_TOKEN'"
+echo "export TOYHOUSE_CLIENT_ID='$TOYHOUSE_CLIENT_ID'"
+echo "export TOYHOUSE_CLIENT_SECRET='$TOYHOUSE_CLIENT_SECRET'"
+echo "export TOYHOUSE_CALLBACK_URL='$TOYHOUSE_CALLBACK_URL'"
 echo "export SQS_QUEUE_URL='$SQS_QUEUE_URL'"
 echo "export S3_IMAGES_BUCKET='$S3_IMAGES_BUCKET'"
 echo "export CLOUDFRONT_IMAGES_DOMAIN='$CLOUDFRONT_IMAGES_DOMAIN'"

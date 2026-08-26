@@ -117,6 +117,23 @@ output "discord_bot_token" {
   sensitive   = true
 }
 
+output "toyhouse_client_id" {
+  description = "ToyHouse OAuth client ID"
+  value       = module.backend_docker_host.toyhouse_client_id
+  sensitive   = true
+}
+
+output "toyhouse_client_secret" {
+  description = "ToyHouse OAuth client secret"
+  value       = module.backend_docker_host.toyhouse_client_secret
+  sensitive   = true
+}
+
+output "toyhouse_callback_url" {
+  description = "ToyHouse OAuth callback URL"
+  value       = module.backend_docker_host.toyhouse_callback_url
+}
+
 # SQS Queue outputs
 output "sqs_queue_url" {
   description = "URL of the prize distribution SQS queue"

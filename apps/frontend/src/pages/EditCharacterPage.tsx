@@ -487,7 +487,11 @@ export const EditCharacterPage: React.FC = () => {
         const provider = {
           DISCORD: ExternalAccountProvider.Discord,
           DEVIANTART: ExternalAccountProvider.Deviantart,
+          TOYHOUSE: ExternalAccountProvider.Toyhouse,
         }[characterTarget.provider];
+        if (!provider) {
+          throw new Error(`Unsupported provider: ${characterTarget.provider}`);
+        }
         const pendingOwnerData = {
           provider: provider,
           providerAccountId: characterTarget.providerAccountId,

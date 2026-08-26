@@ -871,6 +871,7 @@ type ExternalAccount {
 enum ExternalAccountProvider {
   DEVIANTART
   DISCORD
+  TOYHOUSE
 }
 
 type FollowListResult {

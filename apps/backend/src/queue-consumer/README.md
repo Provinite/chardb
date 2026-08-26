@@ -118,8 +118,8 @@ Messages are automatically retried up to 3 times (based on `maxReceiveCount` in 
 AWS_SQS_QUEUE_URL=https://sqs.region.amazonaws.com/account/queue-name
 AWS_REGION=us-east-1
 
-# Optional
-AWS_SQS_ENABLED=true  # Set to false to disable consumer
+# Optional (defaults to true; runs via LocalStack in local dev)
+AWS_SQS_ENABLED=true
 ```
 
 ### Queue Parameters
@@ -179,26 +179,15 @@ Logs include:
 
 ### Local Testing
 
-1. **Disable consumer in local dev:**
+Local development uses LocalStack (via `docker compose up localstack`) for SQS.
+The `.env` default points to `http://localhost:4566` with `AWS_SQS_ENABLED=true`.
+
+1. **Start LocalStack:**
    ```bash
-   AWS_SQS_ENABLED=false
+   docker compose up localstack
    ```
 
-2. **Use LocalStack for local SQS:**
-   ```bash
-   # In docker-compose.yml
-   localstack:
-     image: localstack/localstack
-     ports:
-       - "4566:4566"
-     environment:
-       - SERVICES=sqs
-
-   # In .env
-   AWS_SQS_QUEUE_URL=http://localhost:4566/000000000000/test-queue
-   ```
-
-3. **Create local queue:**
+2. **Create local queue:**
    ```bash
    aws --endpoint-url=http://localhost:4566 sqs create-queue \
      --queue-name test-prize-distribution

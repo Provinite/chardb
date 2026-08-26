@@ -92,6 +92,19 @@ resource "aws_secretsmanager_secret_version" "deviantart_client_secret" {
   secret_string = var.deviantart_client_secret
 }
 
+# ToyHouse client secret
+resource "aws_secretsmanager_secret" "toyhouse_client_secret" {
+  name        = "${var.project_name}-${var.environment}-toyhouse-secret"
+  description = "ToyHouse OAuth client secret"
+
+  tags = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "toyhouse_client_secret" {
+  secret_id     = aws_secretsmanager_secret.toyhouse_client_secret.id
+  secret_string = var.toyhouse_client_secret
+}
+
 # Discord client secret
 resource "aws_secretsmanager_secret" "discord_client_secret" {
   name        = "${var.project_name}-${var.environment}-discord-secret"
@@ -522,6 +535,14 @@ module "ecs" {
       value = var.deviantart_callback_url
     },
     {
+      name  = "TOYHOUSE_CLIENT_ID"
+      value = var.toyhouse_client_id
+    },
+    {
+      name  = "TOYHOUSE_CALLBACK_URL"
+      value = var.toyhouse_callback_url
+    },
+    {
       name  = "DISCORD_CLIENT_ID"
       value = var.discord_client_id
     },
@@ -634,6 +655,10 @@ module "ecs" {
       valueFrom = aws_secretsmanager_secret.deviantart_client_secret.arn
     },
     {
+      name      = "TOYHOUSE_CLIENT_SECRET"
+      valueFrom = aws_secretsmanager_secret.toyhouse_client_secret.arn
+    },
+    {
       name      = "DISCORD_CLIENT_SECRET"
       valueFrom = aws_secretsmanager_secret.discord_client_secret.arn
     },
@@ -652,6 +677,7 @@ module "ecs" {
     aws_secretsmanager_secret.database_url.arn,
     aws_secretsmanager_secret.jwt_secret.arn,
     aws_secretsmanager_secret.deviantart_client_secret.arn,
+    aws_secretsmanager_secret.toyhouse_client_secret.arn,
     aws_secretsmanager_secret.discord_client_secret.arn,
     aws_secretsmanager_secret.discord_bot_token.arn,
     aws_secretsmanager_secret.otel_otlp_headers.arn,

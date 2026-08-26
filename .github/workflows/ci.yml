@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Type check & generated file drift
+    runs-on: ubuntu-latest
+
+    env:
+      # prisma generate resolves env("DATABASE_URL") from the datasource block.
+      # It never connects, so a placeholder is enough.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Corepack must be enabled before setup-node: `cache: yarn` shells out to
+      # `yarn cache dir` inside that step, and the runner's default Yarn 1.22
+      # refuses to run against a `packageManager: yarn@4` project.
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      # `cache: yarn` above only caches Yarn's download cache; with the
+      # node-modules linker the link step still costs ~45s. Caching the
+      # resulting node_modules trees lets a lockfile-identical run skip
+      # installing altogether.
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            .yarn/install-state.gz
+          key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: yarn install --immutable
+
+      # apps/* consume these via their package "types" field, which points at
+      # dist/. That is gitignored, so a fresh checkout has no type declarations
+      # for them until they are built. @chardb/database's build also runs
+      # prisma generate. The three have no dependencies on each other, so they
+      # build in parallel.
+      - name: Build workspace packages
+        run: |
+          yarn workspaces foreach -A --parallel \
+            --include '@chardb/database' \
+            --include '@chardb/shared' \
+            --include '@chardb/ui' \
+            run build
+
+      # tsc reuses these to skip re-checking unchanged files. A restored file
+      # from an older commit is safe: tsc validates it against current file
+      # contents and rechecks anything stale, including files whose
+      # dependencies changed.
+      - name: Restore TypeScript build info
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/frontend/tsconfig.tsbuildinfo
+            apps/backend/dist/tsconfig.tsbuildinfo
+          key: tsbuildinfo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            tsbuildinfo-${{ runner.os }}-
+
+      # Kept sequential deliberately: ubuntu-latest has 4 vCPUs, and running
+      # all six workspace tsc processes at once contends rather than helps.
+      - name: Type check
+        run: yarn type-check
+
+      # The frontend's generated GraphQL types are committed but only refresh
+      # when someone runs codegen by hand. When they go stale, main can stop
+      # compiling -- regenerate and fail if the result differs from what is
+      # checked in.
+      - name: Check GraphQL codegen is up to date
+        run: |
+          yarn workspace @chardb/frontend codegen
+          if ! git diff --quiet -- apps/frontend/src/generated/graphql.ts; then
+            echo "::error file=apps/frontend/src/generated/graphql.ts::Generated GraphQL types are out of date. Run 'yarn workspace @chardb/frontend codegen' and commit the result."
+            git diff -- apps/frontend/src/generated/graphql.ts
+            exit 1
+          fi
+          echo "Generated GraphQL types are up to date."

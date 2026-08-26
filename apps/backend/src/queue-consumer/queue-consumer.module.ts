@@ -8,6 +8,29 @@ import { DatabaseModule } from "../database/database.module";
 import { ItemsModule } from "../items/items.module";
 import { PendingOwnershipModule } from "../pending-ownership/pending-ownership.module";
 
+export function sqsModuleFactory(configService: ConfigService) {
+  const enabled = configService.get("AWS_SQS_ENABLED", "true") !== "false";
+  const queueUrl = configService.get<string>("AWS_SQS_QUEUE_URL", "");
+  const region = configService.get<string>("AWS_REGION", "us-east-1");
+
+  if (!enabled || !queueUrl) {
+    return { consumers: [], producers: [] };
+  }
+
+  return {
+    consumers: [
+      {
+        name: "prize-distribution",
+        queueUrl: queueUrl,
+        region: region,
+        batchSize: 5,
+        waitTimeSeconds: 5,
+      },
+    ],
+    producers: [],
+  };
+}
+
 @Module({
   imports: [
     ConfigModule,
@@ -17,32 +40,7 @@ import { PendingOwnershipModule } from "../pending-ownership/pending-ownership.m
     SqsModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const enabled = configService.get<boolean>("AWS_SQS_ENABLED", true);
-        const queueUrl = configService.get<string>("AWS_SQS_QUEUE_URL", "");
-        const region = configService.get<string>("AWS_REGION", "us-east-1");
-
-        // If disabled or no queue URL, return empty configuration
-        if (!enabled || !queueUrl) {
-          return {
-            consumers: [],
-            producers: [],
-          };
-        }
-
-        return {
-          consumers: [
-            {
-              name: "prize-distribution",
-              queueUrl: queueUrl,
-              region: region,
-              batchSize: 5,
-              waitTimeSeconds: 5,
-            },
-          ],
-          producers: [],
-        };
-      },
+      useFactory: sqsModuleFactory,
     }),
   ],
   providers: [PrizeQueueHandler, ItemPrizeHandler, CharacterPrizeHandler],
