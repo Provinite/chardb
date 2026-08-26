@@ -35,21 +35,40 @@ jobs:
           node-version-file: .nvmrc
           cache: yarn
 
+      # `cache: yarn` above only caches Yarn's download cache; with the
+      # node-modules linker the link step still costs ~45s. Caching the
+      # resulting node_modules trees lets a lockfile-identical run skip
+      # installing altogether.
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            .yarn/install-state.gz
+          key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+
       - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
         run: yarn install --immutable
 
       # apps/* consume these via their package "types" field, which points at
       # dist/. That is gitignored, so a fresh checkout has no type declarations
       # for them until they are built. @chardb/database's build also runs
-      # prisma generate.
+      # prisma generate. The three have no dependencies on each other, so they
+      # build in parallel.
       - name: Build workspace packages
         run: |
-          yarn workspace @chardb/database build
-          yarn workspace @chardb/shared build
-          yarn workspace @chardb/ui build
+          yarn workspaces foreach -A --parallel \
+            --include '@chardb/database' \
+            --include '@chardb/shared' \
+            --include '@chardb/ui' \
+            run build
 
       - name: Type check
-        run: yarn type-check
+        run: yarn workspaces foreach -A --parallel --jobs unlimited run type-check
 
       # The frontend's generated GraphQL types are committed but only refresh
       # when someone runs codegen by hand. When they go stale, main can stop
