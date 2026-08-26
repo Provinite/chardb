@@ -1338,7 +1338,6 @@ enum ModerationRejectionReason {
 """The moderation status of an image"""
 enum ModerationStatus {
   APPROVED
-  CANCELLED
   PENDING
   REJECTED
 }

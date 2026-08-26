@@ -760,7 +760,8 @@ export type ExternalAccount = {
 /** The external account provider type */
 export enum ExternalAccountProvider {
   Deviantart = 'DEVIANTART',
-  Discord = 'DISCORD'
+  Discord = 'DISCORD',
+  Toyhouse = 'TOYHOUSE'
 }
 
 export type FollowListResult = {

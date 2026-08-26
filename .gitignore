@@ -98,6 +98,7 @@ packages/database/src/generated/
 # Temporary files
 .tmp/
 tmp/
+to-delete/
 
 # AI tools and extensions
 .claude/
