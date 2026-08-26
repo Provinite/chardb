@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Type check & generated file drift
+    runs-on: ubuntu-latest
+
+    env:
+      # prisma generate resolves env("DATABASE_URL") from the datasource block.
+      # It never connects, so a placeholder is enough.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Generate Prisma client
+        run: yarn workspace @chardb/database prisma generate
+
+      - name: Type check
+        run: yarn type-check
+
+      # The frontend's generated GraphQL types are committed but only refresh
+      # when someone runs codegen by hand. When they go stale, main can stop
+      # compiling -- regenerate and fail if the result differs from what is
+      # checked in.
+      - name: Check GraphQL codegen is up to date
+        run: |
+          yarn workspace @chardb/frontend codegen
+          if ! git diff --quiet -- apps/frontend/src/generated/graphql.ts; then
+            echo "::error file=apps/frontend/src/generated/graphql.ts::Generated GraphQL types are out of date. Run 'yarn workspace @chardb/frontend codegen' and commit the result."
+            git diff -- apps/frontend/src/generated/graphql.ts
+            exit 1
+          fi
+          echo "Generated GraphQL types are up to date."
