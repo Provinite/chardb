@@ -67,9 +67,22 @@ jobs:
             --include '@chardb/ui' \
             run build
 
+      # tsc reuses these to skip re-checking unchanged files. A restored file
+      # from an older commit is safe: tsc validates it against current file
+      # contents and rechecks anything stale, including files whose
+      # dependencies changed.
+      - name: Restore TypeScript build info
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/frontend/tsconfig.tsbuildinfo
+            apps/backend/dist/tsconfig.tsbuildinfo
+          key: tsbuildinfo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            tsbuildinfo-${{ runner.os }}-
+
       # Kept sequential deliberately: ubuntu-latest has 4 vCPUs, and running
-      # all six workspace tsc processes at once measured slower (59s) than
-      # sequential (40s) through contention.
+      # all six workspace tsc processes at once contends rather than helps.
       - name: Type check
         run: yarn type-check
 
