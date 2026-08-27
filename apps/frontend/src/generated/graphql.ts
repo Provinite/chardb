@@ -1239,7 +1239,7 @@ export type Mutation = {
   createTrait: Trait;
   /** Create a new trait list entry */
   createTraitListEntry: TraitListEntry;
-  /** Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. */
+  /** Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. A character with no species has no community to resolve permissions from, so once it has been removed from its species (see kickCharacterFromSpecies) only a global admin can delete it. */
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
   deleteCommunityColor: Scalars['Boolean']['output'];
