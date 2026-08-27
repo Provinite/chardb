@@ -139,7 +139,7 @@ input CharacterFiltersInput {
 
 """A record of character ownership transfer between users"""
 type CharacterOwnershipChange {
-  character: Character!
+  character: Character
 
   """The ID of the character whose ownership was changed"""
   characterId: ID!

@@ -1,5 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { notDeleted } from '../common/utils/prisma-filters';
+
+/**
+ * Tag popularity counts only live characters. Without this filter a
+ * soft-deleted character keeps its CharacterTag rows and goes on inflating tag
+ * counts and suggestion ordering forever.
+ */
+const liveCharacterTags = { where: { character: notDeleted } } as const;
+
+/**
+ * Note: the `orderBy: { characters: { _count } }` clauses below remain
+ * unfiltered -- Prisma cannot apply a `where` to a relation count used for
+ * ordering. So a tag's displayed count excludes soft-deleted characters while
+ * its rank may still reflect them. That is acceptable for a suggestion list;
+ * fixing it would mean sorting in memory and giving up cursor pagination.
+ */
 
 @Injectable()
 export class TagsService {
@@ -26,7 +42,7 @@ export class TagsService {
       include: {
         _count: {
           select: {
-            characters: true,
+            characters: liveCharacterTags,
             images: true,
             media: true,
           },
@@ -71,7 +87,7 @@ export class TagsService {
       include: {
         _count: {
           select: {
-            characters: true,
+            characters: liveCharacterTags,
             images: true,
             media: true,
           },

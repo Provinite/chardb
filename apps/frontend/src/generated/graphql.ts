@@ -151,7 +151,7 @@ export type CharacterFiltersInput = {
 /** A record of character ownership transfer between users */
 export type CharacterOwnershipChange = {
   __typename?: 'CharacterOwnershipChange';
-  character: Character;
+  character: Maybe<Character>;
   /** The ID of the character whose ownership was changed */
   characterId: Scalars['ID']['output'];
   /** When the ownership change occurred */
