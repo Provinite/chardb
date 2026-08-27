@@ -50,10 +50,9 @@ export function makeSeedCtx(prisma: PrismaClient): SeedCtx {
       });
 
       // Login is by EMAIL, not username.
-      const { login } = await anon.gql<{ login: { accessToken: string } }>(
-        LOGIN,
-        { input: { email, password } },
-      );
+      const { login } = await anon.gql<{
+        login: { accessToken: string; refreshToken: string };
+      }>(LOGIN, { input: { email, password } });
 
       const persona: Persona = {
         key,
@@ -62,6 +61,7 @@ export function makeSeedCtx(prisma: PrismaClient): SeedCtx {
         email,
         password,
         accessToken: login.accessToken,
+        refreshToken: login.refreshToken,
         isAdmin: created.isAdmin,
       };
       personas[key] = persona;

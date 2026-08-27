@@ -1,36 +1,45 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../src/fixtures.js";
 import { CFG } from "../src/config.js";
 import { withClient } from "../src/db/sql.js";
-import { createSnapshot, restoreSnapshot } from "../src/db/snapshot.js";
+
+test.use({ preset: "community-basic", persona: "anon" });
 
 /**
- * Guards the one assumption the whole reset design rests on: that TRUNCATE +
+ * Guards the assumption the whole reset design rests on: that TRUNCATE +
  * re-INSERT underneath a running backend does not poison its Prisma connection
- * pool. If this ever fails, the fallback is restarting the backend between spec
- * files -- much slower, so it is worth an explicit test.
+ * pool. If this ever regresses the fallback is restarting the backend between
+ * spec files, which is far slower -- so it is worth an explicit test.
+ *
+ * Doubles as an end-to-end check that a reset is actually visible through the
+ * API, not just in the database.
  */
-test("backend keeps serving across a snapshot restore", async ({ request }) => {
-  const gql = async (query: string) =>
-    (await request.post(CFG.graphqlUrl, { data: { query } })).json();
+test("backend keeps serving across a snapshot restore", async ({
+  request,
+  world,
+}) => {
+  const total = async (): Promise<number> => {
+    const res = await request.post(CFG.graphqlUrl, {
+      data: { query: `{ characters { total } }` },
+    });
+    const body = await res.json();
+    expect(body.errors, JSON.stringify(body.errors)).toBeUndefined();
+    return body.data.characters.total;
+  };
 
+  const before = await total();
+  expect(before).toBeGreaterThan(0);
+
+  // Mutate underneath the backend, then confirm it observes the change --
+  // proving the reads are not being served from a stale cache.
   await withClient(CFG.databaseUrl, (c) =>
-    c.query(`INSERT INTO users (id, username, email, password_hash, created_at, updated_at)
-             VALUES ('pool-1','pooluser','pool@e.local','x', now(), now())`),
+    c.query(`DELETE FROM characters WHERE id = $1`, [
+      world.characters.plain.id,
+    ]),
   );
-  await createSnapshot("pooltest");
+  expect(await total()).toBe(before - 1);
 
-  const before = await gql(`{ characters { total } }`);
-  expect(before.errors, JSON.stringify(before.errors)).toBeUndefined();
+  // Full TRUNCATE + restore of all 33 tables, on the same pooled connections.
+  await world.reset();
 
-  await restoreSnapshot("pooltest");
-
-  // Same pooled connections, immediately after the tables were replaced.
-  const after = await gql(`{ characters { total } }`);
-  expect(after.errors, JSON.stringify(after.errors)).toBeUndefined();
-  expect(after.data.characters.total).toBe(0);
-
-  const users = await withClient(CFG.databaseUrl, (c) =>
-    c.query(`SELECT id FROM users WHERE id = 'pool-1'`),
-  );
-  expect(users.rowCount).toBe(1);
+  expect(await total()).toBe(before);
 });

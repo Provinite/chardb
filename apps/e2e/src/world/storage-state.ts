@@ -18,11 +18,16 @@ export const statePath = (preset: string, persona: string): string =>
  *    mysteriously logged out with no error. CFG.host is the single source for
  *    both this and Playwright's baseURL; the assertion below pins that.
  *
- * 2. Only `accessToken` is written, never `refreshToken`. AuthContext's mount
- *    effect calls refreshAccessToken() whenever a refresh token exists and the
- *    user isn't loaded yet -- that would add a network round-trip to every
- *    navigation in the suite. useMeQuery is gated on accessToken alone, so
- *    omitting the refresh token is a pure win. Don't "fix" this back.
+ * 2. BOTH tokens are written, exactly as a real login leaves them.
+ *
+ *    Writing only `accessToken` looks tempting -- it avoids a refresh
+ *    round-trip on every navigation -- but it breaks every protected route.
+ *    AuthContext's mount effect (AuthContext.tsx:65) reads `refreshToken`, and
+ *    when it is absent takes the `else` branch and calls setLoading(false)
+ *    immediately, before useMeQuery has resolved. ProtectedRoute then sees
+ *    loading: false with user: null and redirects to /login, even though the
+ *    access token is perfectly valid. Storing both matches what the app itself
+ *    produces on login, so the harness exercises the real state.
  */
 export async function writeStorageStates(
   preset: string,
@@ -49,6 +54,7 @@ export async function writeStorageStates(
               origin,
               localStorage: [
                 { name: "accessToken", value: persona.accessToken },
+                { name: "refreshToken", value: persona.refreshToken },
               ],
             },
           ],

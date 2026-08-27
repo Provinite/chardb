@@ -8,6 +8,7 @@ export interface Persona {
   email: string;
   password: string;
   accessToken: string;
+  refreshToken: string;
   isAdmin: boolean;
 }
 
