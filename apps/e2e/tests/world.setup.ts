@@ -37,13 +37,14 @@ setup("build preset snapshots", async () => {
  * each encoding an authorization rule that is easy to get wrong when editing
  * the preset.
  *
- * Asserted through the API rather than the database. Both would catch a value
- * that was never written -- reading the `roles` table directly is in fact how
- * the canDeleteCharacter mapper bug was originally found. The API version is
- * strictly stronger because it also covers the read path: a permission that is
- * persisted correctly but not *served* correctly fails here and would pass a
- * direct table read. It is also the same path the app itself uses, so it cannot
- * drift from what the UI actually sees.
+ * This is a FIXTURE check, not a behavior test. It answers "did the preset build
+ * the world the specs assume?" -- so that a broken fixture fails here with a
+ * clear message instead of surfacing as a confusing assertion failure three
+ * files away. Application behavior is asserted in the specs, through the UI.
+ *
+ * It reads through the API rather than the database for the same reason the
+ * specs do: it is the path the app itself uses, so the fixture cannot be
+ * "correct" in a way the app never sees.
  */
 setup("community-basic has the shape the specs rely on", async () => {
   const world = await seedPreset("community-basic");

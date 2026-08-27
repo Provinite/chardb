@@ -137,10 +137,3 @@ query SeedCharacter($id: ID!) {
     }
   }
 }
-
-# Admin-only hard delete. Its lookup deliberately omits the notDeleted filter,
-# so it succeeds on a soft-deleted character and 404s on one that was really
-# removed -- which makes it the API-level probe for "the row still exists".
-mutation SeedPurgeCharacter($id: ID!) {
-  purgeCharacter(id: $id)
-}

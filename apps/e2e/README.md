@@ -206,20 +206,24 @@ When something breaks after a schema change, it is one of these three. There is 
 
    Everything else is asserted through the UI or the API. See below.
 
-### Assertions go through the API, never the database
+### What belongs in this suite
 
-An E2E suite that reads the database is checking a layer the user never touches. A bug that persists correctly but *serves* incorrectly would pass; so would one where the UI never renders a correct response. So every behavioral assertion here goes through the UI, or through the same GraphQL API the app uses.
+These tests are about the **app and its observable behavior**. If a user cannot see the difference, it does not belong here — it belongs in a backend unit or integration test, next to the code it describes.
 
-The one case that resisted this is worth knowing about. `deletedAt` is **not exposed anywhere in the GraphQL schema**, so soft-vs-hard delete is not directly observable. The probe is `purgeCharacter`: its lookup deliberately omits the `notDeleted` filter, so it succeeds while the row exists and 404s once it is really gone.
+Concretely, this suite asserts that a deleted character stops appearing in browse and its page 404s. It does **not** assert that the delete was soft. Nothing in the product lists or restores deleted characters, so soft-vs-hard is invisible, and `deletedAt` is not exposed anywhere in the GraphQL schema. Asserting it from a browser test would couple this suite to a storage decision three layers away that it cannot observe.
 
-```ts
-// proves the "delete" was soft, using only the public API
-const { purgeCharacter } = await world.as("siteadmin")
-  .gql(SeedPurgeCharacterDocument, { id: character.id });
-expect(purgeCharacter).toBe(true);
-```
+That coverage already exists where it belongs:
 
-**Open product gap:** #235 describes soft deletes as "reversible by a site admin", but there is no API or UI for listing or restoring a deleted character. Until there is, recoverability cannot be verified through any interface — the purge probe only shows the row survived.
+| Behavior | Covered by |
+|---|---|
+| `softDelete` sets `deletedAt`/`deletedById`, cancels pending reviews | `apps/backend/src/characters/characters.service.spec.ts` |
+| `purge` hard-deletes, and finds soft-deleted rows | same file, *"should purge a soft-deleted character"* |
+| `kickFromSpecies` nulls species fields and clears `traitValues` | same file |
+| Soft-deleted characters are invisible to comments, likes, species deletion | `apps/backend/src/characters/deleted-character-isolation.e2e.spec.ts` |
+
+The rule of thumb when adding a spec: **if you cannot phrase the assertion as something a person using the site would notice, it goes in a backend test.**
+
+And where an assertion does need to read state — the fixture contract check in `tests/world.setup.ts` — it goes through the API, never the database, so it cannot be "correct" in a way the app never sees.
 
 ### The GraphQL layer is generated, not hand-written
 

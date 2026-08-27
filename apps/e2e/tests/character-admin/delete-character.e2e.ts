@@ -1,7 +1,15 @@
 import { test, expect, acceptNextDialog } from "../../src/fixtures.js";
-import { SeedPurgeCharacterDocument } from "../../src/generated/graphql.js";
 
 test.use({ preset: "community-basic", persona: "moderator" });
+
+// Scope note: this file asserts what a user can observe -- the character stops
+// appearing in browse and its page 404s. It deliberately does NOT assert that
+// the delete was *soft*. There is no user-visible difference (nothing lists or
+// restores deleted characters), so that is implementation, and it is already
+// covered where it belongs: apps/backend/src/characters/characters.service.spec.ts
+// ("softDelete should set deletedAt and cancel pending trait reviews", and
+// "should purge a soft-deleted character"). Re-asserting it from a browser test
+// would couple this suite to a backend storage decision it cannot see.
 
 // Destructive: restore before every test rather than once per file (~66ms).
 test.beforeEach(async ({ world }) => {
@@ -35,32 +43,6 @@ test("deleting a character removes it everywhere", async ({ page, world }) => {
   await expect(
     page.getByRole("heading", { level: 3, name: "Character not found" }),
   ).toBeVisible();
-});
-
-test("delete is a soft delete, not a purge", async ({ page, world }) => {
-  const character = world.characters.plain;
-  await page.goto(character.url);
-
-  acceptNextDialog(page);
-  await page
-    .getByTestId("character-admin-actions")
-    .getByRole("button", { name: "Delete Character" })
-    .click();
-  await expect(page).toHaveURL(/\/characters$/);
-
-  // `deletedAt` is not exposed anywhere in the GraphQL schema, so soft-vs-hard
-  // is not directly observable. purgeCharacter is the probe: its lookup omits
-  // the notDeleted filter, so it succeeds only while the row still exists. A
-  // hard delete would have made this throw "Character not found".
-  const { purgeCharacter } = await world
-    .as("siteadmin")
-    .gql(SeedPurgeCharacterDocument, { id: character.id });
-  expect(purgeCharacter).toBe(true);
-
-  // ...and now it really is gone, which also covers purgeCharacter itself.
-  await expect(
-    world.as("siteadmin").gql(SeedPurgeCharacterDocument, { id: character.id }),
-  ).rejects.toThrow(/Character not found/);
 });
 
 test("cancelling the confirm leaves the character alone", async ({

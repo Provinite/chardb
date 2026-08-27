@@ -1,7 +1,14 @@
 import { test, expect, acceptNextDialog } from "../../src/fixtures.js";
-import { SeedCharacterDocument } from "../../src/generated/graphql.js";
 
 test.use({ preset: "community-basic", persona: "moderator" });
+
+// Scope note: asserts what the page shows -- trait values reappearing as custom
+// fields with their display names, the traits and species sections gone, the
+// pending badge cleared. The persisted shape behind that (speciesId nulled,
+// traitValues emptied, review set to CANCELLED) is covered in
+// apps/backend/src/characters/characters.service.spec.ts and is not re-asserted
+// here. That the review actually leaves the moderation queue is covered by
+// trait-review-queue.e2e.ts, which is the user-visible consequence.
 
 test.beforeEach(async ({ world }) => {
   await world.reset();
@@ -62,31 +69,4 @@ test("cancels the pending trait review", async ({ page, world }) => {
   await removeFromSpecies(page);
 
   await expect(page.getByText("Traits Pending Review")).toHaveCount(0);
-
-  const { character: after } = await world
-    .as("moderator")
-    .gql(SeedCharacterDocument, { id: character.id });
-  expect(after.traitReviewStatus).toBeNull();
-});
-
-test("serves the flattened shape through the API", async ({ page, world }) => {
-  const character = world.characters.pending;
-  await page.goto(character.url);
-
-  await removeFromSpecies(page);
-
-  // Read back through the same query the app uses, rather than the database:
-  // this proves the API actually serves the flattened state, which is what any
-  // other client would see.
-  const { character: after } = await world
-    .as("moderator")
-    .gql(SeedCharacterDocument, { id: character.id });
-
-  expect(after.speciesId).toBeNull();
-  expect(after.speciesVariantId).toBeNull();
-  expect(after.species).toBeNull();
-  expect(after.traitValues).toEqual([]);
-  expect(JSON.parse(after.customFields ?? "{}")).toMatchObject({
-    "Eye Color": "Blue",
-  });
 });
