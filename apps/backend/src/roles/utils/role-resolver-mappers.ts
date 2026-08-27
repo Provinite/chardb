@@ -33,6 +33,7 @@ export function mapCreateRoleInputToService(input: CreateRoleInput): CreateRoleS
     canUploadOwnCharacterImages: input.canUploadOwnCharacterImages,
     canUploadCharacterImages: input.canUploadCharacterImages,
     canModerateImages: input.canModerateImages,
+    canDeleteCharacter: input.canDeleteCharacter,
   };
 }
 
@@ -62,6 +63,7 @@ export function mapUpdateRoleInputToService(input: UpdateRoleInput): UpdateRoleS
   if (input.canUploadOwnCharacterImages !== undefined) result.canUploadOwnCharacterImages = input.canUploadOwnCharacterImages;
   if (input.canUploadCharacterImages !== undefined) result.canUploadCharacterImages = input.canUploadCharacterImages;
   if (input.canModerateImages !== undefined) result.canModerateImages = input.canModerateImages;
+  if (input.canDeleteCharacter !== undefined) result.canDeleteCharacter = input.canDeleteCharacter;
 
   return result;
 }
