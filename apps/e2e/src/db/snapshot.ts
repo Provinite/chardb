@@ -113,3 +113,16 @@ export async function dropSnapshots(): Promise<void> {
     }
   });
 }
+
+/**
+ * Empties every public table. Used before building a preset so that presets
+ * never stack on one another -- which also means the globally-unique
+ * Community.name / Species.name constraints can never collide between presets.
+ */
+export async function truncateAll(): Promise<void> {
+  await withClient(CFG.databaseUrl, async (client) => {
+    const tables = await listPublicTables(client);
+    const list = tables.map((t) => `${q("public")}.${q(t)}`).join(", ");
+    await client.query(`TRUNCATE TABLE ${list}`);
+  });
+}
