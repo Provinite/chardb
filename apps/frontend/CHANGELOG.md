@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Added two `data-testid` container attributes for the browser E2E suite: `character-admin-actions` on the character page's admin strip and `trait-review-card` (with `data-character-id`) on trait review rows. Both mark elements that have no accessible role and no unambiguous text; everything else is selected by role or href. (#235)
+- Scoped `vitest.config.ts`'s `include` to `src/**`, so Vitest's defaults cannot collect Playwright specs. (#235)
 - Regenerated GraphQL codegen output so `ExternalAccountProvider` includes `TOYHOUSE`, keeping the generated types in sync with the backend schema. Also drops the phantom `ModerationStatus.Cancelled` member, which had no backing migration on `main`.
 - Enabled `incremental` type-checking (`tsconfig.json`), cutting a no-change `tsc --noEmit` from ~22s to ~3s locally and in CI. `*.tsbuildinfo` is already gitignored.
 

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Browser E2E suite** (`apps/e2e`): Playwright driving real Chromium against the production frontend bundle and a real backend. Playwright's `webServer` brings up the test Postgres, creates and migrates a dedicated `chardb_e2e_ui` database, and boots both apps on ports 4310/4311. Seeding uses named presets (direct-Prisma users, then the GraphQL API as those users) with a raw-GraphQL escape hatch, and state resets between spec files via a Postgres snapshot schema in ~66ms. `yarn workspace @chardb/e2e world <preset> --json` prints a seeded world's ids, URLs and credentials for driving the app by hand. (#235)
 - **E2E test Postgres service**: `docker/services/postgres-test.yml` and `docker/compose.test.yml` provide an isolated Postgres container on port 5440 for backend e2e runs, started and torn down by the Jest global setup. (#235)
 - **Docs walkthrough**: `docs/docs/character-deletion.html` documents character deletion and species removal with screenshots, linked from the docs index. (#235)
 - **ToyHouse OAuth account linking**: Full OAuth2 integration allowing users to link their ToyHouse accounts to CharDB for identity verification and pending ownership auto-claim. Includes Passport strategy, controller, frontend callback page, Terraform secrets management, and a Prisma migration adding `TOYHOUSE` to `ExternalAccountProvider`. (#242)

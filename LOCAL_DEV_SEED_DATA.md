@@ -293,3 +293,18 @@ yarn workspace @chardb/database db:seed-personas
 - [README.md](./README.md) - Project overview
 - [TEST_WORKFLOWS.md](./TEST_WORKFLOWS.md) - Testing workflows
 - [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) - Deployment instructions
+
+## E2E presets vs. dev personas
+
+The personas documented above are for the **long-lived dev database** (port 5433) and are seeded with `yarn workspace @chardb/database db:seed-personas` against a running backend.
+
+The browser E2E suite in `apps/e2e` does not use them. It seeds **presets** into its own ephemeral database (`chardb_e2e_ui`, port 5440), built fresh on every run and reset between spec files. Presets follow the same hybrid pattern — users created directly via Prisma, everything else through the GraphQL API as those users — but are defined in `apps/e2e/src/world/presets/`.
+
+Extend the presets for browser tests; extend the personas here for day-to-day local development.
+
+```bash
+yarn workspace @chardb/e2e world --list                  # available presets
+yarn workspace @chardb/e2e world community-basic --json  # ids, URLs, credentials
+```
+
+See [apps/e2e/README.md](./apps/e2e/README.md) for the "Adding a preset" walkthrough.
