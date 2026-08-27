@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`canDeleteCharacter` dropped by the role mappers**: `mapCreateRoleInputToService` and `mapUpdateRoleInputToService` omitted the field, so the permission could not be granted to or revoked from any custom role through the API. The mutation succeeded and silently returned `canDeleteCharacter: false`. Only the auto-created Admin role (set directly in `CommunitiesService.create`) and global admins had the permission. (#235)
 - **Soft-delete filter coverage**: Every character `findUnique`/`findFirst`/`findMany`/`count` call site now applies the shared `notDeleted` filter from `common/utils/prisma-filters.ts`, so soft-deleted characters cannot leak through ownership checks, guards, galleries, comments, images, media, social, species, or trait review. (#235)
 - **ENUM trait values stored as UUIDs**: `kickFromSpecies` now indexes the enum value map by both name and ID, so trait values resolve to their display name regardless of which path created them. (#235)
 - **Circular module dependencies**: Added `forwardRef` between `AuthModule` and `UsersModule`/`ExternalAccountsModule`/`InviteCodesModule`/`CommunityMembersModule`, which previously broke module compilation when a feature module was loaded in isolation under test. (#235)
