@@ -1,5 +1,5 @@
+import * as fs from "node:fs";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 
 const num = (v: string | undefined, d: number): number => (v ? Number(v) : d);
 
@@ -10,10 +10,33 @@ const num = (v: string | undefined, d: number): number => (v ? Number(v) : d);
  */
 const idx = num(process.env.TEST_PARALLEL_INDEX, 0);
 
-export const REPO_ROOT = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../..",
-);
+/**
+ * Walks up from cwd to the workspace root.
+ *
+ * Deliberately avoids `import.meta.url` and `__dirname`: this module is loaded
+ * both by tsx as ESM (the server scripts) and by Playwright, which transpiles
+ * its config to CJS. Neither construct works in both.
+ */
+function findRepoRoot(): string {
+  let dir = process.cwd();
+  for (;;) {
+    const pkg = path.join(dir, "package.json");
+    if (fs.existsSync(pkg)) {
+      try {
+        if (JSON.parse(fs.readFileSync(pkg, "utf8")).workspaces) return dir;
+      } catch {
+        // keep walking
+      }
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      throw new Error("Could not locate the workspace root from " + process.cwd());
+    }
+    dir = parent;
+  }
+}
+
+export const REPO_ROOT = findRepoRoot();
 export const E2E_ROOT = path.resolve(REPO_ROOT, "apps/e2e");
 export const ARTIFACTS = path.resolve(E2E_ROOT, ".artifacts");
 
