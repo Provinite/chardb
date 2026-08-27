@@ -238,7 +238,7 @@ const { createRole } = await ctx.as("commadmin").gql(SeedCreateRoleDocument, {
 
 The generated file is **gitignored** — `e2e`, `world` and `type-check` all run codegen first, so it cannot be stale and there is no drift check to maintain. (This differs from `apps/frontend`, which commits its generated types because the app build consumes them and CI guards them.)
 
-**The repo's existing CI already covers these operations.** Root `yarn type-check` runs each workspace's `type-check`, and this one is `yarn codegen && tsc --noEmit`. So even though the browser suite itself is not in CI, a schema change that breaks an E2E document fails the existing PR check:
+**Two CI jobs cover these operations.** Besides the `e2e` job that runs the suite, root `yarn type-check` runs each workspace's `type-check`, and this one is `yarn codegen && tsc --noEmit` — so a schema change that breaks an E2E document fails the fast `verify` job in about two minutes, without waiting for a browser to start:
 
 ```
 [FAILED] Cannot query field "canDeleteCharacterTypo" on type "Role".
@@ -259,6 +259,16 @@ There are three, and they are **not** interchangeable:
 The overlap is real: all three encode "make a user, make a community, make a character". They share no code, so a change to community-creation semantics touches all three. That is the known maintenance cost of this layout. It was accepted rather than solved because the three have genuinely different lifetimes and constraints — long-lived and idempotent, in-process with a mocked module graph, and ephemeral against a live HTTP API. Unifying them would mean the slowest constraints win everywhere.
 
 If they do drift far enough to hurt, the consolidation to make is `seed-personas` onto this preset system — they already share the direct-Prisma-then-GraphQL shape — leaving `TestApp` alone, since in-process supertest is a genuinely different problem.
+
+## CI
+
+The `e2e` job in `.github/workflows/ci.yml` runs this suite on every pull request and every push to `main`, in parallel with the `verify` (type check) job.
+
+It deliberately does **not** use a GitHub `services:` container for Postgres — the suite starts its own through `docker/compose.test.yml`, exactly as it does locally, so a CI failure reproduces with a plain `yarn workspace @chardb/e2e e2e` and there is no second environment to keep in sync.
+
+- **Browsers are cached** on `~/.cache/ms-playwright`, keyed by the resolved Playwright version, so a version bump busts it automatically. On a cache hit the job still runs `playwright install-deps` — the binary is cached but the system libraries it links against are not.
+- **`retries: 1` in CI only** (`retries: 0` locally). A test that fails twice still fails the run; this only absorbs a slow cold start or a dropped connection.
+- **The HTML report and traces upload on failure** as the `playwright-report` artifact, kept 7 days. Traces, videos, and screenshots are `retain-on-failure`, so a red run comes with a step-by-step replay rather than just a stack trace.
 
 ## Parallelism
 

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ToyHouse OAuth account linking**: Full OAuth2 integration allowing users to link their ToyHouse accounts to CharDB for identity verification and pending ownership auto-claim. Includes Passport strategy, controller, frontend callback page, Terraform secrets management, and a Prisma migration adding `TOYHOUSE` to `ExternalAccountProvider`. (#242)
 - `scripts/restart-dev-server.sh`: reboots the dev EC2 docker host by looking up its instance ID from the `Name` tag.
 - `packages/da-import/scripts/excluded-to-discord.ts`: renders `data/excluded.json` as Discord-ready markdown grouped by exclusion reason.
+- **CI `e2e` job**: runs the browser E2E suite on every pull request and push to `main`, in parallel with the type-check job. Starts its own Postgres via `docker/compose.test.yml` rather than a GitHub service container, so a CI failure reproduces locally with `yarn workspace @chardb/e2e e2e`. Caches Chromium keyed by Playwright version, retries once in CI only, and uploads the HTML report plus traces on failure. (#235)
 - **CI workflow** (`.github/workflows/ci.yml`): runs `yarn type-check` on every pull request and fails if the committed GraphQL codegen output differs from a fresh regeneration. The repo previously had no PR checks, which let a non-compiling `main` land.
 
 ### Fixed

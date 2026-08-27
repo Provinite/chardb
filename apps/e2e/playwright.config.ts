@@ -13,7 +13,12 @@ export default defineConfig({
   fullyParallel: false,
 
   forbidOnly: !!process.env.CI,
-  retries: 0,
+  // One retry in CI only. The suite resets state between spec files and runs
+  // serially, so genuine flake should be rare -- this absorbs the residual
+  // (a slow cold start, a dropped connection) without masking a real failure,
+  // since a test that fails twice still fails the run. Locally it stays 0 so a
+  // flaky test is visible while you are writing it.
+  retries: process.env.CI ? 1 : 0,
   timeout: 45_000,
   expect: { timeout: 10_000 },
   reporter: [["list"], ["html", { open: "never" }]],
