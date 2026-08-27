@@ -1463,7 +1463,6 @@ type Mutation {
     """Trait list entry creation data"""
     createTraitListEntryInput: CreateTraitListEntryInput!
   ): TraitListEntry!
-  deleteAccount: RemovalResponse!
 
   """
   Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin.

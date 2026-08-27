@@ -1239,7 +1239,6 @@ export type Mutation = {
   createTrait: Trait;
   /** Create a new trait list entry */
   createTraitListEntry: TraitListEntry;
-  deleteAccount: RemovalResponse;
   /** Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. */
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];

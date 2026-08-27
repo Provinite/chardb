@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **E2E test infrastructure**: `docker/compose.test.yml` runs an isolated Postgres container for e2e runs, started and stopped by a Jest global setup. Adds cross-service isolation coverage asserting soft-deleted characters are invisible to list/fetch queries, guards, galleries, comments, likes, and species deletion counts. (#235)
 - **ToyHouse OAuth account linking**: Users can now link their ToyHouse accounts via OAuth2. Linked accounts trigger automatic claiming of pending character/item ownership registered to that ToyHouse username. (#242)
 
+### Removed
+
+- **`deleteAccount` mutation**: removed along with `UsersService.remove()`. It hard-deleted the user row and let FK cascades erase everything they touched — characters, galleries, media, comments, and ownership history where they were the recipient — with no confirmation, grace period, or audit trail. No UI ever called it and no operation document referenced it. Account removal, if it returns, should be a deliberate reversible flow rather than a single unconfirmed mutation. (#235)
+
 ### Fixed
 
 - **Tag counts included soft-deleted characters**: `TagsService` counted every `CharacterTag` row, so a deleted character kept inflating tag popularity forever. Counts now filter on live characters. (Ordering by relation count remains unfiltered — Prisma cannot apply a `where` to a count used in `orderBy`.) (#235)

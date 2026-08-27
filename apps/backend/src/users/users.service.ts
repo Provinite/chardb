@@ -124,12 +124,6 @@ export class UsersService {
     });
   }
 
-  async remove(id: string) {
-    return this.db.user.delete({
-      where: { id },
-    });
-  }
-
   async getUserCharactersCount(userId: string, includePrivate = false) {
     const visibilityFilter = includePrivate
       ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
