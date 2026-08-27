@@ -174,7 +174,7 @@ Short version: **additive changes need no work here.** The harness reads the sch
 | New table | **None.** `listPublicTables` enumerates `pg_class` at runtime, so a new table is truncated, snapshotted and restored automatically. |
 | New column (nullable or defaulted) | **None.** Snapshots are `CREATE TABLE ... AS TABLE`, rebuilt from the live schema on every run. |
 | New column that is required with no default | Only matters if a **preset** writes that table directly. Today that is one place: `ctx.user()` in `src/world/ctx.ts`, which creates `User` rows via Prisma. Everything else goes through the API and is unaffected. |
-| Renamed / dropped column | Breaks any spec asserting on it in raw SQL. See the coupling list below. |
+| Renamed / dropped column | Nothing, unless it also changes the API. No spec asserts on columns. |
 | Renamed / dropped GraphQL field | Fails `yarn codegen` with the file, line, and a suggested field name. |
 | New required field on a GraphQL input | Fails `yarn type-check`. Variables are typed from the generated input types. |
 | Schema edited without a migration | Caught by the drift check. The run refuses to start and names the table and column. |
@@ -200,12 +200,26 @@ When something breaks after a schema change, it is one of these three. There is 
 
 1. **`src/world/ctx.ts`** — the only direct-Prisma write (`User` creation). Required because `signup` demands an invite code and grants no global permission flags.
 2. **`src/world/operations/*.graphql`** — the GraphQL documents. These are *checked*, not merely coupled: `graphql-codegen` validates every operation against `apps/backend/src/schema.gql` and generates both the result and variables types, so `Actor.gql` infers them. A renamed field, a wrong argument name, or a new required input fails `yarn codegen` / `yarn type-check` with a file and line — never at seed time, and never as a wrong-shaped response that type-checks against a stale hand-written annotation.
-3. **Raw SQL assertions in specs** — deliberately few, and only where asserting through the UI would be weaker:
-   - `tests/world.setup.ts` — role permission columns, `trait_reviews.status`
-   - `tests/character-admin/delete-character.e2e.ts` — `characters.deleted_at`, `deleted_by_id`
-   - `tests/character-admin/remove-from-species.e2e.ts` — `species_id`, `trait_values`, `custom_fields`, `trait_reviews.status`
+3. **Raw SQL** — there is none in any behavioral assertion. Two `withClient` calls remain and neither is about application behavior:
+   - `tests/world.setup.ts` — `assertSuperuser`, a precondition of the reset mechanism.
+   - `tests/pool-survives-reset.e2e.ts` — one deliberate out-of-band `DELETE`, whose whole purpose is to change state behind the API's back and prove the backend observes it.
 
-   These exist to prove *persisted shape* (a soft delete really is soft; a flatten really wrote custom fields) which the UI alone cannot show. That is a deliberate trade: they are the parts that need updating on a rename, and they are the parts that catch a silently-wrong write.
+   Everything else is asserted through the UI or the API. See below.
+
+### Assertions go through the API, never the database
+
+An E2E suite that reads the database is checking a layer the user never touches. A bug that persists correctly but *serves* incorrectly would pass; so would one where the UI never renders a correct response. So every behavioral assertion here goes through the UI, or through the same GraphQL API the app uses.
+
+The one case that resisted this is worth knowing about. `deletedAt` is **not exposed anywhere in the GraphQL schema**, so soft-vs-hard delete is not directly observable. The probe is `purgeCharacter`: its lookup deliberately omits the `notDeleted` filter, so it succeeds while the row exists and 404s once it is really gone.
+
+```ts
+// proves the "delete" was soft, using only the public API
+const { purgeCharacter } = await world.as("siteadmin")
+  .gql(SeedPurgeCharacterDocument, { id: character.id });
+expect(purgeCharacter).toBe(true);
+```
+
+**Open product gap:** #235 describes soft deletes as "reversible by a site admin", but there is no API or UI for listing or restoring a deleted character. Until there is, recoverability cannot be verified through any interface — the purge probe only shows the row survived.
 
 ### The GraphQL layer is generated, not hand-written
 

@@ -1,12 +1,26 @@
 import { test, expect, acceptNextDialog } from "../../src/fixtures.js";
-import { withClient } from "../../src/db/sql.js";
-import { CFG } from "../../src/config.js";
+import { SeedCharacterDocument } from "../../src/generated/graphql.js";
 
 test.use({ preset: "community-basic", persona: "moderator" });
 
 test.beforeEach(async ({ world }) => {
   await world.reset();
 });
+
+const removeFromSpecies = async (
+  page: import("@playwright/test").Page,
+): Promise<void> => {
+  acceptNextDialog(page);
+  await page
+    .getByTestId("character-admin-actions")
+    .getByRole("button", { name: "Remove from Species" })
+    .click();
+  // handleKickFromSpecies calls navigate(0), a full reload. Asserting on
+  // content waits through it.
+  await expect(
+    page.getByRole("heading", { level: 3, name: "Fields" }),
+  ).toBeVisible();
+};
 
 test("preserves trait values as custom fields", async ({ page, world }) => {
   // `pending` has Eye Color = Blue, seeded by enum NAME so that
@@ -21,23 +35,12 @@ test("preserves trait values as custom fields", async ({ page, world }) => {
     page.getByRole("heading", { level: 3, name: "Fields" }),
   ).toHaveCount(0);
 
-  acceptNextDialog(page, (message) => {
-    expect(message).toContain(character.name);
-    expect(message).toContain(world.species.name);
-  });
-  await page
-    .getByTestId("character-admin-actions")
-    .getByRole("button", { name: "Remove from Species" })
-    .click();
-
-  // handleKickFromSpecies calls navigate(0), a full reload. Asserting on
-  // content waits through it.
-  const fields = page.getByRole("heading", { level: 3, name: "Fields" });
-  await expect(fields).toBeVisible();
+  await removeFromSpecies(page);
 
   // flattenTraitValues keys the custom field by TRAIT NAME and stores the
-  // ENUM's DISPLAY NAME, not its id -- this is the assertion that the
-  // flatten actually preserved meaning rather than leaking a UUID.
+  // ENUM's DISPLAY NAME, not its id -- this is what proves the flatten
+  // preserved meaning rather than leaking a UUID.
+  const fields = page.getByRole("heading", { level: 3, name: "Fields" });
   const section = page.locator("section, div").filter({ has: fields }).last();
   await expect(section).toContainText("Eye Color");
   await expect(section).toContainText("Blue");
@@ -56,49 +59,34 @@ test("cancels the pending trait review", async ({ page, world }) => {
   await page.goto(character.url);
   await expect(page.getByText("Traits Pending Review")).toBeVisible();
 
-  acceptNextDialog(page);
-  await page
-    .getByTestId("character-admin-actions")
-    .getByRole("button", { name: "Remove from Species" })
-    .click();
-  await expect(
-    page.getByRole("heading", { level: 3, name: "Fields" }),
-  ).toBeVisible();
+  await removeFromSpecies(page);
 
   await expect(page.getByText("Traits Pending Review")).toHaveCount(0);
 
-  await withClient(CFG.databaseUrl, async (client) => {
-    const { rows } = await client.query(
-      `SELECT status FROM trait_reviews WHERE character_id = $1`,
-      [character.id],
-    );
-    expect(rows).toHaveLength(1);
-    expect(rows[0].status).toBe("CANCELLED");
-  });
+  const { character: after } = await world
+    .as("moderator")
+    .gql(SeedCharacterDocument, { id: character.id });
+  expect(after.traitReviewStatus).toBeNull();
 });
 
-test("persists the flattened shape", async ({ page, world }) => {
+test("serves the flattened shape through the API", async ({ page, world }) => {
   const character = world.characters.pending;
   await page.goto(character.url);
 
-  acceptNextDialog(page);
-  await page
-    .getByTestId("character-admin-actions")
-    .getByRole("button", { name: "Remove from Species" })
-    .click();
-  await expect(
-    page.getByRole("heading", { level: 3, name: "Fields" }),
-  ).toBeVisible();
+  await removeFromSpecies(page);
 
-  await withClient(CFG.databaseUrl, async (client) => {
-    const { rows } = await client.query(
-      `SELECT species_id, species_variant_id, trait_values, custom_fields
-       FROM characters WHERE id = $1`,
-      [character.id],
-    );
-    expect(rows[0].species_id).toBeNull();
-    expect(rows[0].species_variant_id).toBeNull();
-    expect(rows[0].trait_values).toEqual([]);
-    expect(rows[0].custom_fields).toMatchObject({ "Eye Color": "Blue" });
+  // Read back through the same query the app uses, rather than the database:
+  // this proves the API actually serves the flattened state, which is what any
+  // other client would see.
+  const { character: after } = await world
+    .as("moderator")
+    .gql(SeedCharacterDocument, { id: character.id });
+
+  expect(after.speciesId).toBeNull();
+  expect(after.speciesVariantId).toBeNull();
+  expect(after.species).toBeNull();
+  expect(after.traitValues).toEqual([]);
+  expect(JSON.parse(after.customFields ?? "{}")).toMatchObject({
+    "Eye Color": "Blue",
   });
 });

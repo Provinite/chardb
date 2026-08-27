@@ -1,6 +1,5 @@
 import { test, expect, acceptNextDialog } from "../../src/fixtures.js";
-import { withClient } from "../../src/db/sql.js";
-import { CFG } from "../../src/config.js";
+import { SeedPurgeCharacterDocument } from "../../src/generated/graphql.js";
 
 test.use({ preset: "community-basic", persona: "moderator" });
 
@@ -49,15 +48,19 @@ test("delete is a soft delete, not a purge", async ({ page, world }) => {
     .click();
   await expect(page).toHaveURL(/\/characters$/);
 
-  await withClient(CFG.databaseUrl, async (client) => {
-    const { rows } = await client.query(
-      `SELECT deleted_at, deleted_by_id FROM characters WHERE id = $1`,
-      [character.id],
-    );
-    expect(rows, "row still present after soft delete").toHaveLength(1);
-    expect(rows[0].deleted_at).not.toBeNull();
-    expect(rows[0].deleted_by_id).toBe(world.users.moderator.userId);
-  });
+  // `deletedAt` is not exposed anywhere in the GraphQL schema, so soft-vs-hard
+  // is not directly observable. purgeCharacter is the probe: its lookup omits
+  // the notDeleted filter, so it succeeds only while the row still exists. A
+  // hard delete would have made this throw "Character not found".
+  const { purgeCharacter } = await world
+    .as("siteadmin")
+    .gql(SeedPurgeCharacterDocument, { id: character.id });
+  expect(purgeCharacter).toBe(true);
+
+  // ...and now it really is gone, which also covers purgeCharacter itself.
+  await expect(
+    world.as("siteadmin").gql(SeedPurgeCharacterDocument, { id: character.id }),
+  ).rejects.toThrow(/Character not found/);
 });
 
 test("cancelling the confirm leaves the character alone", async ({

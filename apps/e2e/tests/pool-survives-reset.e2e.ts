@@ -31,8 +31,10 @@ test("backend keeps serving across a snapshot restore", async ({
   const before = await total();
   expect(before).toBeGreaterThan(0);
 
-  // Mutate underneath the backend, then confirm it observes the change --
-  // proving the reads are not being served from a stale cache.
+  // The one deliberate out-of-band write in the suite. Going behind the API is
+  // the point here, not a shortcut: it proves the backend observes changes it
+  // did not make itself, rather than serving a cached view. Every assertion
+  // about application behavior goes through the API or the UI.
   await withClient(CFG.databaseUrl, (c) =>
     c.query(`DELETE FROM characters WHERE id = $1`, [
       world.characters.plain.id,
