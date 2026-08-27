@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@chardb/database";
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 
 export interface Persona {
   /** The key used in `ctx.user(key)` / `world.as(key)`. */
@@ -30,11 +31,17 @@ export interface UserSpec {
 export interface Actor {
   key: string;
   persona: Persona | null;
-  /** POSTs to /graphql as this actor. Throws on any GraphQL error. */
-  gql<T = Record<string, unknown>>(
-    query: string,
-    variables?: Record<string, unknown>,
-  ): Promise<T>;
+  /**
+   * POSTs to /graphql as this actor. Throws on any GraphQL error.
+   *
+   * Takes a generated TypedDocumentNode from src/generated/graphql.ts, so the
+   * result and variables types both come from the schema. A renamed field or a
+   * new required input fails `yarn codegen` / `yarn type-check`, not at runtime.
+   */
+  gql<TResult, TVariables>(
+    document: TypedDocumentNode<TResult, TVariables>,
+    variables?: TVariables,
+  ): Promise<TResult>;
   /** Escape hatch for the REST surface (e.g. multipart POST /images/upload). */
   rest(path: string, init?: RequestInit): Promise<Response>;
 }

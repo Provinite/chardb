@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { PrismaClient } from "@chardb/database";
 import { CFG } from "../config.js";
 import { makeActor } from "./actor.js";
-import { LOGIN } from "./gql.js";
+import { SeedLoginDocument } from "../generated/graphql.js";
 import type { Actor, Persona, SeedCtx, UserSpec } from "./types.js";
 
 /** Matches AuthService.signup and the existing persona seeder. */
@@ -50,9 +50,9 @@ export function makeSeedCtx(prisma: PrismaClient): SeedCtx {
       });
 
       // Login is by EMAIL, not username.
-      const { login } = await anon.gql<{
-        login: { accessToken: string; refreshToken: string };
-      }>(LOGIN, { input: { email, password } });
+      const { login } = await anon.gql(SeedLoginDocument, {
+        input: { email, password },
+      });
 
       const persona: Persona = {
         key,

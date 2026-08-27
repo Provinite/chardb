@@ -1,5 +1,7 @@
 import { test, expect } from "../src/fixtures.js";
+import { print } from "graphql";
 import { CFG } from "../src/config.js";
+import { SeedCharacterCountDocument } from "../src/generated/graphql.js";
 import { withClient } from "../src/db/sql.js";
 
 test.use({ preset: "community-basic", persona: "anon" });
@@ -19,7 +21,7 @@ test("backend keeps serving across a snapshot restore", async ({
 }) => {
   const total = async (): Promise<number> => {
     const res = await request.post(CFG.graphqlUrl, {
-      data: { query: `{ characters { total } }` },
+      data: { query: print(SeedCharacterCountDocument) },
     });
     const body = await res.json();
     expect(body.errors, JSON.stringify(body.errors)).toBeUndefined();

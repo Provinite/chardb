@@ -1,14 +1,15 @@
 import {
-  CREATE_CHARACTER,
-  CREATE_COMMUNITY,
-  CREATE_COMMUNITY_MEMBER,
-  CREATE_ENUM_VALUE,
-  CREATE_ROLE,
-  CREATE_SPECIES,
-  CREATE_SPECIES_VARIANT,
-  CREATE_TRAIT,
-  ROLES_BY_COMMUNITY,
-} from "../gql.js";
+  SeedCreateCharacterDocument,
+  SeedCreateCommunityDocument,
+  SeedCreateCommunityMemberDocument,
+  SeedCreateEnumValueDocument,
+  SeedCreateRoleDocument,
+  SeedCreateSpeciesDocument,
+  SeedCreateSpeciesVariantDocument,
+  SeedCreateTraitDocument,
+  SeedRolesByCommunityDocument,
+  TraitValueType,
+} from "../../generated/graphql.js";
 import { definePreset, type Persona } from "../types.js";
 
 export interface CommunityBasicWorld {
@@ -56,16 +57,13 @@ export default definePreset<CommunityBasicWorld>({
     // creator (commadmin) to Admin.
     const { createCommunity: community } = await ctx
       .as("commadmin")
-      .gql<{ createCommunity: { id: string; name: string } }>(CREATE_COMMUNITY, {
+      .gql(SeedCreateCommunityDocument, {
         createCommunityInput: { name: "Willowmere" },
       });
 
     const { rolesByCommunity } = await ctx
       .as("commadmin")
-      .gql<{ rolesByCommunity: { nodes: Array<{ id: string; name: string }> } }>(
-        ROLES_BY_COMMUNITY,
-        { communityId: community.id },
-      );
+      .gql(SeedRolesByCommunityDocument, { communityId: community.id });
     const stock = Object.fromEntries(
       rolesByCommunity.nodes.map((r) => [r.name, r.id]),
     );
@@ -76,7 +74,7 @@ export default definePreset<CommunityBasicWorld>({
     // gate independently rather than as one lump.
     const { createRole: modPlus } = await ctx
       .as("commadmin")
-      .gql<{ createRole: { id: string } }>(CREATE_ROLE, {
+      .gql(SeedCreateRoleDocument, {
         createRoleInput: {
           name: "Moderator Plus",
           communityId: community.id,
@@ -99,7 +97,7 @@ export default definePreset<CommunityBasicWorld>({
     ] as const) {
       await ctx
         .as("siteadmin")
-        .gql(CREATE_COMMUNITY_MEMBER, {
+        .gql(SeedCreateCommunityMemberDocument, {
           createCommunityMemberInput: { userId, roleId },
         });
     }
@@ -108,7 +106,7 @@ export default definePreset<CommunityBasicWorld>({
     // genuinely hold canCreateSpecies here -- commadmin does, via Admin.
     const { createSpecies: species } = await ctx
       .as("commadmin")
-      .gql<{ createSpecies: { id: string; name: string } }>(CREATE_SPECIES, {
+      .gql(SeedCreateSpeciesDocument, {
         createSpeciesInput: {
           communityId: community.id,
           name: "Willowisp",
@@ -118,17 +116,17 @@ export default definePreset<CommunityBasicWorld>({
 
     const { createSpeciesVariant: variant } = await ctx
       .as("commadmin")
-      .gql<{ createSpeciesVariant: { id: string } }>(CREATE_SPECIES_VARIANT, {
+      .gql(SeedCreateSpeciesVariantDocument, {
         createSpeciesVariantInput: { speciesId: species.id, name: "Standard" },
       });
 
     const { createTrait: eyeColor } = await ctx
       .as("commadmin")
-      .gql<{ createTrait: { id: string; name: string } }>(CREATE_TRAIT, {
+      .gql(SeedCreateTraitDocument, {
         createTraitInput: {
           speciesId: species.id,
           name: "Eye Color",
-          valueType: "ENUM",
+          valueType: TraitValueType.Enum,
           allowsClarifier: false,
           allowsMultipleValues: false,
         },
@@ -138,7 +136,7 @@ export default definePreset<CommunityBasicWorld>({
     for (const [i, name] of ["Blue", "Green"].entries()) {
       const { createEnumValue } = await ctx
         .as("commadmin")
-        .gql<{ createEnumValue: { id: string } }>(CREATE_ENUM_VALUE, {
+        .gql(SeedCreateEnumValueDocument, {
           createEnumValueInput: { traitId: eyeColor.id, name, order: i },
         });
       values[name.toLowerCase()] = createEnumValue.id;
@@ -150,7 +148,7 @@ export default definePreset<CommunityBasicWorld>({
     // to the display name "Blue" when it flattens into custom fields.
     const { createCharacter: pending } = await ctx
       .as("member")
-      .gql<{ createCharacter: { id: string; name: string } }>(CREATE_CHARACTER, {
+      .gql(SeedCreateCharacterDocument, {
         input: {
           name: "Mossbrand",
           speciesId: species.id,
@@ -161,7 +159,7 @@ export default definePreset<CommunityBasicWorld>({
 
     const { createCharacter: plain } = await ctx
       .as("othermember")
-      .gql<{ createCharacter: { id: string; name: string } }>(CREATE_CHARACTER, {
+      .gql(SeedCreateCharacterDocument, {
         input: {
           name: "Cinderfall",
           speciesId: species.id,

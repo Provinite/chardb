@@ -24,6 +24,8 @@ Ports default to **4310** (backend) and **4311** (frontend) so a running `yarn d
 ## How it works
 
 ```
+codegen       apps/backend/src/schema.gql -> src/generated/graphql.ts
+              (runs first in `e2e`, `world` and `type-check`; output is gitignored)
 webServer[0]  docker compose up postgres-test
               CREATE DATABASE chardb_e2e_ui   (dropped + recreated each run)
               prisma migrate deploy  +  drift check
@@ -173,7 +175,8 @@ Short version: **additive changes need no work here.** The harness reads the sch
 | New column (nullable or defaulted) | **None.** Snapshots are `CREATE TABLE ... AS TABLE`, rebuilt from the live schema on every run. |
 | New column that is required with no default | Only matters if a **preset** writes that table directly. Today that is one place: `ctx.user()` in `src/world/ctx.ts`, which creates `User` rows via Prisma. Everything else goes through the API and is unaffected. |
 | Renamed / dropped column | Breaks any spec asserting on it in raw SQL. See the coupling list below. |
-| New required field on a GraphQL input | Breaks the relevant document in `src/world/gql.ts` — loudly, at seed time, before any browser opens. |
+| Renamed / dropped GraphQL field | Fails `yarn codegen` with the file, line, and a suggested field name. |
+| New required field on a GraphQL input | Fails `yarn type-check`. Variables are typed from the generated input types. |
 | Schema edited without a migration | Caught by the drift check. The run refuses to start and names the table and column. |
 
 Verified by adding a table (`e2e_probes`) plus a column and running the suite: 31/31 passed with no harness change, and both appeared in the snapshot schema. Then removing the migration while keeping the schema edit produced:
@@ -196,13 +199,34 @@ Note this differs from the backend's Jest e2e suite, which still `db push`es its
 When something breaks after a schema change, it is one of these three. There is nothing else.
 
 1. **`src/world/ctx.ts`** — the only direct-Prisma write (`User` creation). Required because `signup` demands an invite code and grants no global permission flags.
-2. **`src/world/gql.ts`** — the GraphQL documents. Fails loudly at seed time.
+2. **`src/world/operations/*.graphql`** — the GraphQL documents. These are *checked*, not merely coupled: `graphql-codegen` validates every operation against `apps/backend/src/schema.gql` and generates both the result and variables types, so `Actor.gql` infers them. A renamed field, a wrong argument name, or a new required input fails `yarn codegen` / `yarn type-check` with a file and line — never at seed time, and never as a wrong-shaped response that type-checks against a stale hand-written annotation.
 3. **Raw SQL assertions in specs** — deliberately few, and only where asserting through the UI would be weaker:
    - `tests/world.setup.ts` — role permission columns, `trait_reviews.status`
    - `tests/character-admin/delete-character.e2e.ts` — `characters.deleted_at`, `deleted_by_id`
    - `tests/character-admin/remove-from-species.e2e.ts` — `species_id`, `trait_values`, `custom_fields`, `trait_reviews.status`
 
    These exist to prove *persisted shape* (a soft delete really is soft; a flatten really wrote custom fields) which the UI alone cannot show. That is a deliberate trade: they are the parts that need updating on a rename, and they are the parts that catch a silently-wrong write.
+
+### The GraphQL layer is generated, not hand-written
+
+Operations live in `src/world/operations/*.graphql`. `yarn codegen` reads the committed code-first schema from disk (no running backend) and emits `TypedDocumentNode`s, so a call site carries no hand-written types at all:
+
+```ts
+// result and variables both inferred from the schema
+const { createRole } = await ctx.as("commadmin").gql(SeedCreateRoleDocument, {
+  createRoleInput: { name: "Moderator Plus", communityId, canDeleteCharacter: true },
+});
+```
+
+The generated file is **gitignored** — `e2e`, `world` and `type-check` all run codegen first, so it cannot be stale and there is no drift check to maintain. (This differs from `apps/frontend`, which commits its generated types because the app build consumes them and CI guards them.)
+
+**The repo's existing CI already covers these operations.** Root `yarn type-check` runs each workspace's `type-check`, and this one is `yarn codegen && tsc --noEmit`. So even though the browser suite itself is not in CI, a schema change that breaks an E2E document fails the existing PR check:
+
+```
+[FAILED] Cannot query field "canDeleteCharacterTypo" on type "Role".
+         Did you mean "canDeleteCharacter", ...?
+[FAILED]   at apps/e2e/src/world/operations/seed.graphql:29:7
+```
 
 ### Relationship to the other seeding systems
 
