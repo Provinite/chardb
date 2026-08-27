@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Corepack must be enabled before setup-node: `cache: yarn` shells out to
       # `yarn cache dir` inside that step, and the runner's default Yarn 1.22
@@ -30,7 +30,7 @@ jobs:
         run: corepack enable
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: yarn
@@ -41,7 +41,7 @@ jobs:
       # installing altogether.
       - name: Restore node_modules
         id: node-modules-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             node_modules
@@ -72,7 +72,7 @@ jobs:
       # contents and rechecks anything stale, including files whose
       # dependencies changed.
       - name: Restore TypeScript build info
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             apps/frontend/tsconfig.tsbuildinfo
@@ -109,20 +109,20 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: yarn
 
       - name: Restore node_modules
         id: node-modules-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             node_modules
@@ -143,7 +143,7 @@ jobs:
 
       - name: Restore Playwright browsers
         id: playwright-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
@@ -177,7 +177,7 @@ jobs:
 
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: |
