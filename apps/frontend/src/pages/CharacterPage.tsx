@@ -630,7 +630,7 @@ export const CharacterPage: React.FC = () => {
           {(canUserEditCharacter(character, user, permissions) ||
             permissions.canDeleteCharacter ||
             (user?.isAdmin ?? false)) && (
-            <CharacterActions>
+            <CharacterActions data-testid="character-admin-actions">
               <AdminActionsLabel>Admin</AdminActionsLabel>
               {canUserEditCharacter(character, user, permissions) && (
                 <Button variant="outline" size="sm" onClick={handleEditClick}>

@@ -7,9 +7,15 @@ import type { PresetDef } from "../types.js";
  */
 export const PRESETS = {
   "community-basic": communityBasic,
-} as const satisfies Record<string, PresetDef<any>>;
+} as const satisfies Record<string, PresetDef<unknown>>;
 
 export type PresetName = keyof typeof PRESETS;
+
+/** Union of every preset's handle -- what a spec sees when the preset is not
+ *  statically known (e.g. through the Playwright `world` fixture). */
+export type AnyPresetHandle = {
+  [K in PresetName]: PresetHandle<K>;
+}[PresetName];
 
 export type PresetHandle<K extends PresetName> =
   (typeof PRESETS)[K] extends PresetDef<infer H> ? H : never;

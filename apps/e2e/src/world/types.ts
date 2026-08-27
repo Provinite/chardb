@@ -30,7 +30,7 @@ export interface Actor {
   key: string;
   persona: Persona | null;
   /** POSTs to /graphql as this actor. Throws on any GraphQL error. */
-  gql<T = Record<string, any>>(
+  gql<T = Record<string, unknown>>(
     query: string,
     variables?: Record<string, unknown>,
   ): Promise<T>;
