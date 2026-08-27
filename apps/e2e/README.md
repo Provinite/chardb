@@ -163,6 +163,61 @@ Prints every id, URL and credential for the seeded world. With `--json` only the
 
 **Stale data after editing a preset.** Snapshots are rebuilt unconditionally on every run, so this should not happen — but `E2E_KEEP_DB=1` from a previous run plus a schema change can confuse things. Drop the database and rerun.
 
+## When the database schema changes
+
+Short version: **additive changes need no work here.** The harness reads the schema at runtime rather than hardcoding it.
+
+| Change | Effort |
+|---|---|
+| New table | **None.** `listPublicTables` enumerates `pg_class` at runtime, so a new table is truncated, snapshotted and restored automatically. |
+| New column (nullable or defaulted) | **None.** Snapshots are `CREATE TABLE ... AS TABLE`, rebuilt from the live schema on every run. |
+| New column that is required with no default | Only matters if a **preset** writes that table directly. Today that is one place: `ctx.user()` in `src/world/ctx.ts`, which creates `User` rows via Prisma. Everything else goes through the API and is unaffected. |
+| Renamed / dropped column | Breaks any spec asserting on it in raw SQL. See the coupling list below. |
+| New required field on a GraphQL input | Breaks the relevant document in `src/world/gql.ts` — loudly, at seed time, before any browser opens. |
+| Schema edited without a migration | Caught by the drift check. The run refuses to start and names the table and column. |
+
+Verified by adding a table (`e2e_probes`) plus a column and running the suite: 31/31 passed with no harness change, and both appeared in the snapshot schema. Then removing the migration while keeping the schema edit produced:
+
+```
+[*] Changed the `e2e_probes` table
+  [+] Added column `forgotten_col`
+Migration drift: the committed migrations do not reproduce schema.prisma.
+Generate a migration for the outstanding schema changes before running E2E.
+```
+
+### Why drift cannot silently rot
+
+The E2E database applies **`prisma migrate deploy`**, not `db push`. `db push` derives the schema from `schema.prisma`, so it structurally cannot notice that a migration fails to reproduce it — the tests would pass and production would break. Running the real chain, then asserting `prisma migrate diff --exit-code`, means the suite is testing the schema production will actually have.
+
+Note this differs from the backend's Jest e2e suite, which still `db push`es its own `chardb_test`. The two use separate databases and do not interfere.
+
+### The coupling points, in full
+
+When something breaks after a schema change, it is one of these three. There is nothing else.
+
+1. **`src/world/ctx.ts`** — the only direct-Prisma write (`User` creation). Required because `signup` demands an invite code and grants no global permission flags.
+2. **`src/world/gql.ts`** — the GraphQL documents. Fails loudly at seed time.
+3. **Raw SQL assertions in specs** — deliberately few, and only where asserting through the UI would be weaker:
+   - `tests/world.setup.ts` — role permission columns, `trait_reviews.status`
+   - `tests/character-admin/delete-character.e2e.ts` — `characters.deleted_at`, `deleted_by_id`
+   - `tests/character-admin/remove-from-species.e2e.ts` — `species_id`, `trait_values`, `custom_fields`, `trait_reviews.status`
+
+   These exist to prove *persisted shape* (a soft delete really is soft; a flatten really wrote custom fields) which the UI alone cannot show. That is a deliberate trade: they are the parts that need updating on a rename, and they are the parts that catch a silently-wrong write.
+
+### Relationship to the other seeding systems
+
+There are three, and they are **not** interchangeable:
+
+| System | Database | Used by | Extend it when |
+|---|---|---|---|
+| `packages/database/src/seed-personas/` | dev, port 5433, long-lived | manual local dev | you want data while clicking around by hand |
+| `apps/backend/test/setup-e2e.ts` (`TestApp`) | `chardb_test`, port 5440 | backend Jest `*.e2e.spec.ts` | writing an API-level test |
+| `apps/e2e/src/world/presets/` | `chardb_e2e_ui`, port 5440, per-run | this suite | writing a browser test |
+
+The overlap is real: all three encode "make a user, make a community, make a character". They share no code, so a change to community-creation semantics touches all three. That is the known maintenance cost of this layout. It was accepted rather than solved because the three have genuinely different lifetimes and constraints — long-lived and idempotent, in-process with a mocked module graph, and ephemeral against a live HTTP API. Unifying them would mean the slowest constraints win everywhere.
+
+If they do drift far enough to hurt, the consolidation to make is `seed-personas` onto this preset system — they already share the direct-Prisma-then-GraphQL shape — leaving `TestApp` alone, since in-process supertest is a genuinely different problem.
+
 ## Parallelism
 
 `workers: 1`, deliberately. Every port and the database name are already offset by `TEST_PARALLEL_INDEX`, so raising it is a config change rather than a rewrite — but note that a per-worker database **partitions** state, it does not isolate tests from each other within a worker, since a worker runs many spec files sequentially. Per-test isolation comes from `world.reset()`, not from worker count.
