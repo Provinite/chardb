@@ -194,7 +194,11 @@ model Character {
   updatedAt         DateTime   @updatedAt @map("updated_at")
 
   // Relations
-  owner          User?           @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  // SetNull, not Cascade: deleting a user must not destroy characters. They are
+  // tradeable objects with history that matters to other people (ownership
+  // changes, comments, galleries), and `ownerId` is already nullable -- the
+  // codebase models ownerless characters as "orphaned" throughout.
+  owner          User?           @relation("CharacterOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   creator        User?           @relation("CharacterCreator", fields: [creatorId], references: [id], onDelete: SetNull)
   deletedBy      User?           @relation("CharacterDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
   mainMedia      Media?          @relation("CharacterMainMedia", fields: [mainMediaId], references: [id], onDelete: SetNull)

@@ -151,7 +151,7 @@ export type CharacterFiltersInput = {
 /** A record of character ownership transfer between users */
 export type CharacterOwnershipChange = {
   __typename?: 'CharacterOwnershipChange';
-  character: Character;
+  character: Maybe<Character>;
   /** The ID of the character whose ownership was changed */
   characterId: Scalars['ID']['output'];
   /** When the ownership change occurred */
@@ -1239,8 +1239,7 @@ export type Mutation = {
   createTrait: Trait;
   /** Create a new trait list entry */
   createTraitListEntry: TraitListEntry;
-  deleteAccount: RemovalResponse;
-  /** Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. */
+  /** Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. A character with no species has no community to resolve permissions from, so once it has been removed from its species (see kickCharacterFromSpecies) only a global admin can delete it. */
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
   deleteCommunityColor: Scalars['Boolean']['output'];

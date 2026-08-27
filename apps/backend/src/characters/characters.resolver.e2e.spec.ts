@@ -465,6 +465,45 @@ describe('CharactersResolver (e2e)', () => {
       expect(deleteResponse.body.errors).toBeDefined();
       expect(deleteResponse.body.errors[0].message).toContain('Forbidden');
     });
+
+    it('requires a global admin once a character has been kicked from its species', async () => {
+      // Intentional, not a gap: deleteCharacter resolves the community via
+      // @ResolveCommunityFrom({ characterId }), and getCharacterCommunity
+      // returns null for a speciesless character. kickCharacterFromSpecies
+      // produces exactly that, so once a character leaves its species no
+      // community permission can reach it and deletion is site-admin only.
+      const createResponse = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        { input: { name: 'Kicked Then Deleted', speciesId: testSpeciesId } },
+        testToken
+      );
+      const characterId = createResponse.body.data.createCharacter.id;
+
+      await testApp.authenticatedGraphqlRequest(
+        `mutation kick($id: ID!) { kickCharacterFromSpecies(id: $id) }`,
+        { id: characterId },
+        testToken
+      );
+
+      // The same community moderator who could delete it a moment ago cannot now.
+      const deniedResponse = await testApp.authenticatedGraphqlRequest(
+        `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
+        { id: characterId },
+        testToken
+      );
+      expect(deniedResponse.body.errors).toBeDefined();
+
+      // A global admin still can.
+      const admin = await testApp.createTestUser({ isAdmin: true });
+      const adminToken = await testApp.generateTestToken(admin.id, admin.username);
+      const adminResponse = await testApp.authenticatedGraphqlRequest(
+        `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
+        { id: characterId },
+        adminToken
+      );
+      expect(adminResponse.body.errors).toBeUndefined();
+      expect(adminResponse.body.data.deleteCharacter).toBe(true);
+    });
   });
 
   describe('purgeCharacter', () => {
