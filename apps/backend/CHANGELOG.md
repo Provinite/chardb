@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Character soft-delete and species removal**: New `deleteCharacter` (soft-delete, sets `deletedAt`/`deletedById`), `purgeCharacter` (hard-delete, global admin only), and `kickCharacterFromSpecies` (clears species/variant/registry and flattens trait values into custom fields) mutations. All three cancel any pending trait reviews. Adds the `CANCELLED` moderation status and the `canDeleteCharacter` role permission, granted to the default Admin role at community creation. (#235)
+
+  Note a consequence worth knowing before granting the permission: `deleteCharacter` resolves its community from the character's species, and a character with no species resolves to none — so **once a character has been removed from its species it can only be deleted by a global admin**, not by the community moderator who removed it. This is inherent to how community permissions resolve, not a bug; it is stated in the mutation's schema description and pinned by a test in `characters.resolver.e2e.spec.ts`. (#235)
 - **E2E test infrastructure**: `docker/compose.test.yml` runs an isolated Postgres container for e2e runs, started and stopped by a Jest global setup. Adds cross-service isolation coverage asserting soft-deleted characters are invisible to list/fetch queries, guards, galleries, comments, likes, and species deletion counts. (#235)
 - **ToyHouse OAuth account linking**: Users can now link their ToyHouse accounts via OAuth2. Linked accounts trigger automatic claiming of pending character/item ownership registered to that ToyHouse username. (#242)
 
