@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Hooks are no longer called conditionally in six page components**: `SpeciesManagementPage`, `SpeciesVariantManagementPage`, `TraitBuilderPage`, `VariantDetailPage`, `EnumValueManagementPage` and `EnumValueSettingsPage` each ran an early `return` for a missing route param *before* their hooks. A render that hit the guard therefore called a different number of hooks than one that did not — the exact hazard `react-hooks/rules-of-hooks` exists to catch, and 40 violations of it.
+
+  These never crashed in practice because the guard cannot fire on a matched route: React Router only renders the component when the param is present. The bug was latent, and would have surfaced the first time one of these pages was rendered from a route whose param was optional.
+
+  The guard now runs after the last hook, with the queries that consumed the param passing `skip` rather than firing with a placeholder. Placing it before the event handlers keeps the param narrowed to `string` for the closures below, so no non-null assertions were needed — several existing ones were removed.
+
+  Verified by driving the running app: all six pages render against seeded data with no console errors, including `VariantDetailPage`'s dependent query chain (variant → `speciesId` → traits) and trait creation through `TraitBuilderPage`. None of these pages have unit or E2E coverage, so this was checked by hand rather than by the suite.
+- **`VariantDetailPage.handleAddTrait` no longer asserts non-null on an optional chain**: `...nodes.find(...)?.valueType!` would have sent `undefined` as the required `valueType` had the trait been absent from the loaded species traits. It now looks the trait up, and bails with a toast if it is missing.
 - **Hardened session restore against a partially-populated token store**: `AuthProvider`'s mount effect called `setLoading(false)` whenever `refreshToken` was absent — before the `me` query had resolved — so `ProtectedRoute` saw `loading: false` with `user: null` and redirected to `/login` even when the access token was valid. The effect now only clears `loading` when nothing is in flight.
 
   This is defensive, not a user-facing fix: no application path produces an access token without a refresh token. `login`/`signup` write both, `refreshAccessToken` overwrites only the access token and leaves the refresh token in place, and `logout` and the Apollo 401 handler clear both. It matters only if that state is reached some other way (storage cleared by hand or by an extension, or a future client that stores only what it needs). Covered by `apps/e2e/tests/smoke/session-restore.e2e.ts`, including a negative case asserting an invalid token still redirects. (#235)
