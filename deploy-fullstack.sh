@@ -53,7 +53,7 @@ fi
 
 # Get backend URL for frontend
 echo "📋 Getting backend URL for frontend..."
-source <(./scripts/get-terraform-outputs.sh "$ENVIRONMENT" | grep "^export")
+source ./scripts/get-terraform-outputs.sh "$ENVIRONMENT"
 
 
 if [ -z "$BACKEND_URL" ]; then

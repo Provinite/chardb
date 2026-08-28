@@ -10,12 +10,12 @@ ENVIRONMENT="dev"
 echo "🔌 Getting SSH connection details for $ENVIRONMENT..."
 
 # Source the outputs
-source <(./scripts/get-terraform-outputs.sh "$ENVIRONMENT" | grep "^export")
+source ./scripts/get-terraform-outputs.sh "$ENVIRONMENT"
 
-if [ -z "$SERVER_IP" ] || [ -z "$SSH_KEY_PATH" ]; then
+if [ -z "$SERVER_IP" ] || [ -z "$SSH_PRIVATE_KEY" ]; then
     echo "❌ Missing required connection details"
     echo "SERVER_IP: $SERVER_IP"
-    echo "SSH_KEY_PATH: $SSH_KEY_PATH" 
+    echo "SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:+[present]}"
     exit 1
 fi
 

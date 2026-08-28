@@ -22,10 +22,21 @@
 setup_remote_transport() {
     local transport="${DEPLOY_TRANSPORT:-ssm}"
 
-    if [ -z "$SSH_KEY_PATH" ]; then
-        echo "❌ SSH_KEY_PATH is not set (source scripts/get-terraform-outputs.sh first)" >&2
+    if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$SSH_KEY_NAME" ]; then
+        echo "❌ SSH_PRIVATE_KEY is not set (source scripts/get-terraform-outputs.sh first)" >&2
         return 1
     fi
+
+    # `ssh -i` takes a path, but the key lives in Terraform state as a string,
+    # so someone has to put it on disk. That someone is this function rather
+    # than the outputs script: this is the only code that needs a key file, and
+    # a script called "get terraform outputs" has no business writing private
+    # keys. A CI runner has no ~/.ssh until something creates it.
+    mkdir -p "$HOME/.ssh"
+    chmod 700 "$HOME/.ssh"
+    SSH_KEY_PATH="$HOME/.ssh/${SSH_KEY_NAME}.pem"
+    printf '%s\n' "$SSH_PRIVATE_KEY" > "$SSH_KEY_PATH"
+    chmod 600 "$SSH_KEY_PATH"
 
     SSH_OPTS=(
         -i "$SSH_KEY_PATH"

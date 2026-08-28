@@ -78,13 +78,13 @@ fi
 ##############################################################################
 # Dev Deployment (EC2 with Docker Compose)
 ##############################################################################
-# Source the outputs
-source <(./scripts/get-terraform-outputs.sh "$ENVIRONMENT" | grep "^export")
+# Load TF outputs into env
+source ./scripts/get-terraform-outputs.sh "$ENVIRONMENT"
 
-if [ -z "$SERVER_IP" ] || [ -z "$SSH_KEY_PATH" ] || [ -z "$ECR_REPOSITORY_URL" ]; then
+if [ -z "$SERVER_IP" ] || [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$ECR_REPOSITORY_URL" ]; then
     echo "❌ Missing required Terraform outputs"
     echo "SERVER_IP: $SERVER_IP"
-    echo "SSH_KEY_PATH: $SSH_KEY_PATH" 
+    echo "SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:+[present]}"
     echo "ECR_REPOSITORY_URL: $ECR_REPOSITORY_URL"
     exit 1
 fi

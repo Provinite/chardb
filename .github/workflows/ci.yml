@@ -343,7 +343,7 @@ jobs:
       # before calling the deploy good.
       - name: Verify backend health
         run: |
-          source <(./scripts/get-terraform-outputs.sh "$TF_ENVIRONMENT" | grep "^export")
+          source ./scripts/get-terraform-outputs.sh "$TF_ENVIRONMENT"
           echo "Polling http://$SERVER_IP:4000/health"
           for attempt in $(seq 1 30); do
             if curl -fsS --max-time 10 "http://$SERVER_IP:4000/health" > /dev/null; then
@@ -435,7 +435,7 @@ jobs:
       # per environment rather than promoted between them.
       - name: Build and publish frontend
         run: |
-          source <(./scripts/get-terraform-outputs.sh "$TF_ENVIRONMENT" | grep "^export")
+          source ./scripts/get-terraform-outputs.sh "$TF_ENVIRONMENT"
 
           if [ -z "$BACKEND_URL" ]; then
             echo "::error::Could not resolve BACKEND_URL from Terraform outputs"
