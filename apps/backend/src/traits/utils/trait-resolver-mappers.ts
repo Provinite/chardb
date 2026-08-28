@@ -11,7 +11,9 @@ import { assertNever } from "../../shared/utils/assertNever";
 /**
  * Converts GraphQL TraitValueType to Prisma TraitValueType
  */
-function mapGraphQLTraitValueTypeToPrisma(gqlType: TraitValueType): $Enums.TraitValueType {
+function mapGraphQLTraitValueTypeToPrisma(
+  gqlType: TraitValueType,
+): $Enums.TraitValueType {
   switch (gqlType) {
     case TraitValueType.STRING:
       return $Enums.TraitValueType.STRING;
@@ -29,7 +31,9 @@ function mapGraphQLTraitValueTypeToPrisma(gqlType: TraitValueType): $Enums.Trait
 /**
  * Converts Prisma TraitValueType to GraphQL TraitValueType
  */
-function mapPrismaTraitValueTypeToGraphQL(prismaType: $Enums.TraitValueType): TraitValueType {
+function mapPrismaTraitValueTypeToGraphQL(
+  prismaType: $Enums.TraitValueType,
+): TraitValueType {
   switch (prismaType) {
     case $Enums.TraitValueType.STRING:
       return TraitValueType.STRING;
@@ -72,9 +76,12 @@ export function mapUpdateTraitInputToService(input: UpdateTraitInput) {
   } = {};
 
   if (input.name !== undefined) result.name = input.name;
-  if (input.valueType !== undefined) result.valueType = mapGraphQLTraitValueTypeToPrisma(input.valueType);
-  if (input.allowsMultipleValues !== undefined) result.allowsMultipleValues = input.allowsMultipleValues;
-  if (input.allowsClarifier !== undefined) result.allowsClarifier = input.allowsClarifier;
+  if (input.valueType !== undefined)
+    result.valueType = mapGraphQLTraitValueTypeToPrisma(input.valueType);
+  if (input.allowsMultipleValues !== undefined)
+    result.allowsMultipleValues = input.allowsMultipleValues;
+  if (input.allowsClarifier !== undefined)
+    result.allowsClarifier = input.allowsClarifier;
   if (input.speciesId !== undefined) result.speciesId = input.speciesId;
   if (input.colorId !== undefined) result.colorId = input.colorId;
 

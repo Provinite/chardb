@@ -19,7 +19,8 @@ export class CharacterTraitValueInput {
 
   /** Optional free-text clarifier displayed parenthetically with the value */
   @Field(() => String, {
-    description: "Optional free-text clarifier displayed parenthetically with the value",
+    description:
+      "Optional free-text clarifier displayed parenthetically with the value",
     nullable: true,
   })
   @IsOptional()

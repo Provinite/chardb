@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import { ChevronDown, Check, Search } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useCommunityMembersByUserQuery } from '../../generated/graphql';
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import { ChevronDown, Check, Search } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import { useCommunityMembersByUserQuery } from "../../generated/graphql";
 
 interface CommunitySwitcherProps {
   className?: string;
@@ -67,7 +67,7 @@ const Dropdown = styled.div<{ $isOpen: boolean }>`
   max-height: 400px;
   overflow-y: auto;
   z-index: 1000;
-  display: ${({ $isOpen }) => ($isOpen ? 'block' : 'none')};
+  display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
 
   /* Custom scrollbar */
   &::-webkit-scrollbar {
@@ -143,7 +143,7 @@ const CommunityItem = styled.button<{ $isActive: boolean }>`
   width: 100%;
   padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
   background-color: ${({ theme, $isActive }) =>
-    $isActive ? `${theme.colors.primary}15` : 'transparent'};
+    $isActive ? `${theme.colors.primary}15` : "transparent"};
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   color: ${({ theme, $isActive }) =>
@@ -215,54 +215,58 @@ const EmptyState = styled.div`
 
 export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
   className,
-  communityId
+  communityId,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const { data, loading } = useCommunityMembersByUserQuery({
-    variables: { userId: user?.id || '', first: 100 },
+    variables: { userId: user?.id || "", first: 100 },
     skip: !user?.id,
   });
 
-  const communities = data?.communityMembersByUser?.nodes?.map((m) => m.role.community) || [];
+  const communities =
+    data?.communityMembersByUser?.nodes?.map((m) => m.role.community) || [];
   const currentCommunity = communities.find((c) => c.id === communityId);
 
   // Filter communities based on search query
   const filteredCommunities = communities.filter((community) =>
-    community.name.toLowerCase().includes(searchQuery.toLowerCase())
+    community.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
 
   const handleCommunitySelect = (selectedCommunityId: string) => {
     navigate(`/communities/${selectedCommunityId}`);
     setIsOpen(false);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const handleBrowseAll = () => {
-    navigate('/my/communities');
+    navigate("/my/communities");
     setIsOpen(false);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   return (
@@ -274,7 +278,9 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
         aria-label="Switch community"
       >
         <CommunityName>
-          {loading ? 'Loading...' : currentCommunity?.name || 'Select Community'}
+          {loading
+            ? "Loading..."
+            : currentCommunity?.name || "Select Community"}
         </CommunityName>
         <ChevronDown />
       </SwitcherButton>
@@ -296,7 +302,9 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
         <CommunityList>
           {filteredCommunities.length === 0 ? (
             <EmptyState>
-              {searchQuery ? 'No communities found' : 'You are not a member of any communities'}
+              {searchQuery
+                ? "No communities found"
+                : "You are not a member of any communities"}
             </EmptyState>
           ) : (
             filteredCommunities.map((community) => (
@@ -317,7 +325,7 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
         {communities.length > 0 && (
           <>
             <Divider />
-            <div style={{ padding: '4px' }}>
+            <div style={{ padding: "4px" }}>
               <BrowseAllButton onClick={handleBrowseAll}>
                 Browse All Communities →
               </BrowseAllButton>

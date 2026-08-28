@@ -16,7 +16,7 @@ import {
   type MeQuery,
 } from "../generated/graphql";
 
-type User = MeQuery['me'];
+type User = MeQuery["me"];
 
 interface AuthContextType {
   user: User | null;
@@ -83,65 +83,79 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // ProtectedRoute would bounce a perfectly valid session to /login.
   }, []);
 
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
-    try {
-      const { data } = await loginMutation({
-        variables: { input: { email, password } },
-      });
+  const login = useCallback(
+    async (email: string, password: string): Promise<boolean> => {
+      try {
+        const { data } = await loginMutation({
+          variables: { input: { email, password } },
+        });
 
-      if (data?.login) {
-        localStorage.setItem("accessToken", data.login.accessToken);
-        localStorage.setItem("refreshToken", data.login.refreshToken);
-        // Fetch user data via authenticated 'me' query
-        await refetchMe();
-        toast.success("Welcome back!");
-        return true;
+        if (data?.login) {
+          localStorage.setItem("accessToken", data.login.accessToken);
+          localStorage.setItem("refreshToken", data.login.refreshToken);
+          // Fetch user data via authenticated 'me' query
+          await refetchMe();
+          toast.success("Welcome back!");
+          return true;
+        }
+        return false;
+      } catch (error: any) {
+        console.error("Login error:", error);
+        const errorMessage =
+          error?.graphQLErrors?.[0]?.message ||
+          error?.networkError?.message ||
+          error?.message ||
+          "Login failed";
+        toast.error(errorMessage);
+        return false;
       }
-      return false;
-    } catch (error: any) {
-      console.error("Login error:", error);
-      const errorMessage =
-        error?.graphQLErrors?.[0]?.message ||
-        error?.networkError?.message ||
-        error?.message ||
-        "Login failed";
-      toast.error(errorMessage);
-      return false;
-    }
-  }, [loginMutation, refetchMe]);
+    },
+    [loginMutation, refetchMe],
+  );
 
-  const signup = useCallback(async (
-    username: string,
-    email: string,
-    password: string,
-    displayName?: string,
-    inviteCode?: string,
-  ): Promise<boolean> => {
-    try {
-      const { data } = await signupMutation({
-        variables: { input: { username, email, password, displayName, inviteCode: inviteCode || '' } },
-      });
+  const signup = useCallback(
+    async (
+      username: string,
+      email: string,
+      password: string,
+      displayName?: string,
+      inviteCode?: string,
+    ): Promise<boolean> => {
+      try {
+        const { data } = await signupMutation({
+          variables: {
+            input: {
+              username,
+              email,
+              password,
+              displayName,
+              inviteCode: inviteCode || "",
+            },
+          },
+        });
 
-      if (data?.signup) {
-        localStorage.setItem("accessToken", data.signup.accessToken);
-        localStorage.setItem("refreshToken", data.signup.refreshToken);
-        // Fetch user data via authenticated 'me' query
-        await refetchMe();
-        toast.success("Account created successfully!");
-        return true;
+        if (data?.signup) {
+          localStorage.setItem("accessToken", data.signup.accessToken);
+          localStorage.setItem("refreshToken", data.signup.refreshToken);
+          // Fetch user data via authenticated 'me' query
+          await refetchMe();
+          toast.success("Account created successfully!");
+          return true;
+        }
+        return false;
+      } catch (error: any) {
+        console.error("Signup error:", error);
+        const errorMessage =
+          error?.graphQLErrors?.[0]?.message ||
+          error?.networkError?.message ||
+          error?.message ||
+          "Signup failed";
+        toast.error(errorMessage);
+        return false;
       }
-      return false;
-    } catch (error: any) {
-      console.error("Signup error:", error);
-      const errorMessage =
-        error?.graphQLErrors?.[0]?.message ||
-        error?.networkError?.message ||
-        error?.message ||
-        "Signup failed";
-      toast.error(errorMessage);
-      return false;
-    }
-  }, [signupMutation, refetchMe]);
+    },
+    [signupMutation, refetchMe],
+  );
 
   const logout = useCallback(() => {
     localStorage.removeItem("accessToken");
@@ -173,14 +187,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [refreshTokenMutation, refetchMe, logout]);
 
-  const value = useMemo<AuthContextType>(() => ({
-    user,
-    loading,
-    login,
-    signup,
-    logout,
-    refreshAccessToken,
-  }), [user, loading, login, signup, logout, refreshAccessToken]);
+  const value = useMemo<AuthContextType>(
+    () => ({
+      user,
+      loading,
+      login,
+      signup,
+      logout,
+      refreshAccessToken,
+    }),
+    [user, loading, login, signup, logout, refreshAccessToken],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

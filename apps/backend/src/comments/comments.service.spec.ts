@@ -1,18 +1,22 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { CommentsService, CommentableTypeFilter } from './comments.service';
-import { DatabaseService } from '../database/database.service';
-import { mockDatabaseService } from '../../test/setup';
+import { Test, TestingModule } from "@nestjs/testing";
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from "@nestjs/common";
+import { CommentsService, CommentableTypeFilter } from "./comments.service";
+import { DatabaseService } from "../database/database.service";
+import { mockDatabaseService } from "../../test/setup";
 
-describe('CommentsService', () => {
+describe("CommentsService", () => {
   let service: CommentsService;
   let db: typeof mockDatabaseService;
 
   const mockComment = {
-    id: 'comment-1',
-    content: 'Test comment',
-    authorId: 'user-1',
-    characterId: 'character-1',
+    id: "comment-1",
+    content: "Test comment",
+    authorId: "user-1",
+    characterId: "character-1",
     imageId: null,
     galleryId: null,
     userId: null,
@@ -23,9 +27,9 @@ describe('CommentsService', () => {
   };
 
   const mockCharacter = {
-    id: 'character-1',
-    name: 'Test Character',
-    ownerId: 'user-1',
+    id: "character-1",
+    name: "Test Character",
+    ownerId: "user-1",
   };
 
   beforeEach(async () => {
@@ -40,100 +44,102 @@ describe('CommentsService', () => {
     }).compile();
 
     service = module.get<CommentsService>(CommentsService);
-    db = module.get<DatabaseService>(DatabaseService) as unknown as typeof mockDatabaseService;
+    db = module.get<DatabaseService>(
+      DatabaseService,
+    ) as unknown as typeof mockDatabaseService;
   });
 
-  describe('create', () => {
-    it('should create a comment successfully', async () => {
+  describe("create", () => {
+    it("should create a comment successfully", async () => {
       const input = {
-        content: 'Test comment',
+        content: "Test comment",
         entityType: CommentableTypeFilter.CHARACTER,
-        entityId: 'character-1',
+        entityId: "character-1",
       };
 
       db.character.findFirst.mockResolvedValue(mockCharacter);
       db.comment.create.mockResolvedValue(mockComment);
 
-      const result = await service.create('user-1', input);
+      const result = await service.create("user-1", input);
 
-      expect(result.content).toBe('Test comment');
+      expect(result.content).toBe("Test comment");
       expect(db.character.findFirst).toHaveBeenCalledWith({
-        where: { id: 'character-1', deletedAt: null },
+        where: { id: "character-1", deletedAt: null },
       });
       expect(db.comment.create).toHaveBeenCalledWith({
         data: {
-          content: 'Test comment',
-          authorId: 'user-1',
-          characterId: 'character-1',
+          content: "Test comment",
+          authorId: "user-1",
+          characterId: "character-1",
           parentId: undefined,
         },
       });
     });
 
-    it('should throw BadRequestException when entity does not exist', async () => {
+    it("should throw BadRequestException when entity does not exist", async () => {
       const input = {
-        content: 'Test comment',
+        content: "Test comment",
         entityType: CommentableTypeFilter.CHARACTER,
-        entityId: 'non-existent',
+        entityId: "non-existent",
       };
 
       db.character.findFirst.mockResolvedValue(null);
 
-      await expect(service.create('user-1', input)).rejects.toThrow(
+      await expect(service.create("user-1", input)).rejects.toThrow(
         BadRequestException,
       );
     });
 
-    it('should validate parent comment belongs to same entity', async () => {
+    it("should validate parent comment belongs to same entity", async () => {
       const input = {
-        content: 'Test reply',
+        content: "Test reply",
         entityType: CommentableTypeFilter.CHARACTER,
-        entityId: 'character-1',
-        parentId: 'parent-comment-1',
+        entityId: "character-1",
+        parentId: "parent-comment-1",
       };
 
       const parentComment = {
         ...mockComment,
-        id: 'parent-comment-1',
+        id: "parent-comment-1",
         characterId: null,
-        imageId: 'image-1',
+        imageId: "image-1",
       };
 
       db.character.findFirst.mockResolvedValue(mockCharacter);
       db.comment.findUnique.mockResolvedValue(parentComment);
 
-      await expect(service.create('user-1', input)).rejects.toThrow(
+      await expect(service.create("user-1", input)).rejects.toThrow(
         BadRequestException,
       );
     });
   });
 
-  describe('findOne', () => {
-    it('should return a comment', async () => {
+  describe("findOne", () => {
+    it("should return a comment", async () => {
       db.comment.findUnique.mockResolvedValue(mockComment);
 
-      const result = await service.findOne('comment-1');
+      const result = await service.findOne("comment-1");
 
-      expect(result.id).toBe('comment-1');
+      expect(result.id).toBe("comment-1");
       expect(db.comment.findUnique).toHaveBeenCalledWith({
-        where: { id: 'comment-1' },
+        where: { id: "comment-1" },
       });
     });
 
-    it('should throw NotFoundException when comment does not exist', async () => {
+    it("should throw NotFoundException when comment does not exist", async () => {
       db.comment.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne('non-existent')).rejects.toThrow(
+      await expect(service.findOne("non-existent")).rejects.toThrow(
         NotFoundException,
       );
     });
   });
 
-  describe('findMany', () => {
-    it('should return comments with pagination', async () => {
+  describe("findMany", () => {
+    it("should return comments with pagination", async () => {
       const filters = {
         entityType: CommentableTypeFilter.CHARACTER,
-        entityId: 'character-1',
+        entityId: "character-1",
         limit: 10,
         offset: 0,
       };
@@ -148,10 +154,10 @@ describe('CommentsService', () => {
       expect(result.hasMore).toBe(false);
     });
 
-    it('should filter by parentId', async () => {
+    it("should filter by parentId", async () => {
       const filters = {
         entityType: CommentableTypeFilter.CHARACTER,
-        entityId: 'character-1',
+        entityId: "character-1",
         parentId: null,
         limit: 10,
         offset: 0,
@@ -164,77 +170,80 @@ describe('CommentsService', () => {
 
       expect(db.comment.findMany).toHaveBeenCalledWith({
         where: {
-          characterId: 'character-1',
+          characterId: "character-1",
           parentId: null,
           isHidden: false,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         take: 10,
         skip: 0,
       });
     });
   });
 
-  describe('update', () => {
-    it('should update a comment successfully', async () => {
-      const input = { content: 'Updated content' };
-      const updatedComment = { ...mockComment, content: 'Updated content' };
+  describe("update", () => {
+    it("should update a comment successfully", async () => {
+      const input = { content: "Updated content" };
+      const updatedComment = { ...mockComment, content: "Updated content" };
 
       db.comment.findUnique.mockResolvedValue(mockComment);
       db.comment.update.mockResolvedValue(updatedComment);
 
-      const result = await service.update('comment-1', 'user-1', input);
+      const result = await service.update("comment-1", "user-1", input);
 
-      expect(result.content).toBe('Updated content');
+      expect(result.content).toBe("Updated content");
       expect(db.comment.update).toHaveBeenCalledWith({
-        where: { id: 'comment-1' },
-        data: { content: 'Updated content' },
+        where: { id: "comment-1" },
+        data: { content: "Updated content" },
       });
     });
 
-    it('should throw ForbiddenException when user is not the author', async () => {
-      const input = { content: 'Updated content' };
-      const otherUserComment = { ...mockComment, authorId: 'other-user' };
+    it("should throw ForbiddenException when user is not the author", async () => {
+      const input = { content: "Updated content" };
+      const otherUserComment = { ...mockComment, authorId: "other-user" };
 
       db.comment.findUnique.mockResolvedValue(otherUserComment);
 
       await expect(
-        service.update('comment-1', 'user-1', input),
+        service.update("comment-1", "user-1", input),
       ).rejects.toThrow(ForbiddenException);
     });
   });
 
-  describe('remove', () => {
-    it('should delete a comment successfully', async () => {
+  describe("remove", () => {
+    it("should delete a comment successfully", async () => {
       db.comment.findUnique.mockResolvedValue(mockComment);
       db.comment.delete.mockResolvedValue(mockComment);
 
-      const result = await service.remove('comment-1', 'user-1');
+      const result = await service.remove("comment-1", "user-1");
 
       expect(result).toBe(true);
       expect(db.comment.delete).toHaveBeenCalledWith({
-        where: { id: 'comment-1' },
+        where: { id: "comment-1" },
       });
     });
 
-    it('should allow admin to delete any comment', async () => {
-      const otherUserComment = { ...mockComment, authorId: 'other-user' };
+    it("should allow admin to delete any comment", async () => {
+      const otherUserComment = { ...mockComment, authorId: "other-user" };
       db.comment.findUnique.mockResolvedValue(otherUserComment);
       db.comment.delete.mockResolvedValue(otherUserComment);
 
-      const result = await service.remove('comment-1', 'admin-user', true);
+      const result = await service.remove("comment-1", "admin-user", true);
 
       expect(result).toBe(true);
     });
 
-    it('should throw ForbiddenException when non-admin tries to delete others comment', async () => {
-      const otherUserComment = { ...mockComment, authorId: 'other-user' };
+    it("should throw ForbiddenException when non-admin tries to delete others comment", async () => {
+      const otherUserComment = { ...mockComment, authorId: "other-user" };
       db.comment.findUnique.mockResolvedValue(otherUserComment);
       // user-1 does not own the character the comment is on
-      db.character.findFirst.mockResolvedValue({ id: 'character-1', ownerId: 'other-user' });
+      db.character.findFirst.mockResolvedValue({
+        id: "character-1",
+        ownerId: "other-user",
+      });
 
       await expect(
-        service.remove('comment-1', 'user-1', false),
+        service.remove("comment-1", "user-1", false),
       ).rejects.toThrow(ForbiddenException);
     });
   });

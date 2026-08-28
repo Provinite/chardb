@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { Prisma, Visibility } from '@chardb/database';
-import { notDeleted } from '../common/utils/prisma-filters';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { Prisma, Visibility } from "@chardb/database";
+import { notDeleted } from "../common/utils/prisma-filters";
 
 /**
  * Service layer input types for gallery operations.
@@ -47,7 +51,13 @@ export class GalleriesService {
   constructor(private readonly db: DatabaseService) {}
 
   async create(userId: string, input: CreateGalleryServiceInput) {
-    const { name, description, characterId, visibility = Visibility.PUBLIC, sortOrder = 0 } = input;
+    const {
+      name,
+      description,
+      characterId,
+      visibility = Visibility.PUBLIC,
+      sortOrder = 0,
+    } = input;
 
     // Verify character ownership if specified
     if (characterId) {
@@ -78,7 +88,7 @@ export class GalleriesService {
     const where: Prisma.GalleryWhereInput = {
       AND: [
         // Visibility filter
-        userId 
+        userId
           ? {
               OR: [
                 { visibility: Visibility.PUBLIC },
@@ -87,7 +97,7 @@ export class GalleriesService {
               ],
             }
           : { visibility: Visibility.PUBLIC },
-        
+
         // Other filters
         ownerId ? { ownerId } : {},
         characterId ? { characterId } : {},
@@ -98,10 +108,7 @@ export class GalleriesService {
     const [galleries, total] = await Promise.all([
       this.db.gallery.findMany({
         where,
-        orderBy: [
-          { sortOrder: 'asc' },
-          { createdAt: 'desc' },
-        ],
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
         take: limit,
         skip: offset,
       }),
@@ -116,9 +123,12 @@ export class GalleriesService {
   }
 
   /** Get user like status for a gallery - used by field resolvers */
-  async getUserHasLikedGallery(galleryId: string, userId?: string): Promise<boolean> {
+  async getUserHasLikedGallery(
+    galleryId: string,
+    userId?: string,
+  ): Promise<boolean> {
     if (!userId) return false;
-    
+
     const like = await this.db.like.findUnique({
       where: {
         userId_galleryId: {
@@ -127,7 +137,7 @@ export class GalleriesService {
         },
       },
     });
-    
+
     return !!like;
   }
 
@@ -144,13 +154,13 @@ export class GalleriesService {
     });
 
     if (!gallery) {
-      throw new NotFoundException('Gallery not found');
+      throw new NotFoundException("Gallery not found");
     }
 
     // Check visibility permissions
     if (gallery.visibility === Visibility.PRIVATE) {
       if (!userId || gallery.ownerId !== userId) {
-        throw new ForbiddenException('Gallery is private');
+        throw new ForbiddenException("Gallery is private");
       }
     }
 
@@ -162,7 +172,7 @@ export class GalleriesService {
 
     // Check ownership
     if (gallery.ownerId !== userId) {
-      throw new ForbiddenException('You can only edit your own galleries');
+      throw new ForbiddenException("You can only edit your own galleries");
     }
 
     // Verify new character ownership if changing
@@ -181,7 +191,7 @@ export class GalleriesService {
 
     // Check ownership
     if (gallery.ownerId !== userId) {
-      throw new ForbiddenException('You can only delete your own galleries');
+      throw new ForbiddenException("You can only delete your own galleries");
     }
 
     await this.db.gallery.delete({
@@ -194,7 +204,6 @@ export class GalleriesService {
   // NOTE: Image-gallery association now handled through Media system
   // These methods are deprecated and should be replaced with media-based operations
 
-
   async reorderGalleries(userId: string, galleryIds: string[]) {
     // Verify all galleries belong to the user
     const userGalleries = await this.db.gallery.findMany({
@@ -205,7 +214,7 @@ export class GalleriesService {
     });
 
     if (userGalleries.length !== galleryIds.length) {
-      throw new ForbiddenException('Some galleries do not belong to you');
+      throw new ForbiddenException("Some galleries do not belong to you");
     }
 
     // Update sort orders
@@ -213,7 +222,7 @@ export class GalleriesService {
       this.db.gallery.update({
         where: { id },
         data: { sortOrder: index },
-      })
+      }),
     );
 
     await Promise.all(updatePromises);
@@ -223,7 +232,7 @@ export class GalleriesService {
       where: {
         id: { in: galleryIds },
       },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: { sortOrder: "asc" },
     });
   }
 
@@ -242,23 +251,28 @@ export class GalleriesService {
         ],
       },
       orderBy: [
-        { createdAt: 'desc' }, // Most recently created first
+        { createdAt: "desc" }, // Most recently created first
       ],
     });
   }
 
-  private async verifyCharacterOwnership(characterId: string, userId: string): Promise<void> {
+  private async verifyCharacterOwnership(
+    characterId: string,
+    userId: string,
+  ): Promise<void> {
     const character = await this.db.character.findFirst({
       where: { id: characterId, ...notDeleted },
       select: { ownerId: true },
     });
 
     if (!character) {
-      throw new NotFoundException('Character not found');
+      throw new NotFoundException("Character not found");
     }
 
     if (character.ownerId !== userId) {
-      throw new ForbiddenException('You can only create galleries for your own characters');
+      throw new ForbiddenException(
+        "You can only create galleries for your own characters",
+      );
     }
   }
 }

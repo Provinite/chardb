@@ -1,9 +1,12 @@
 import { Prisma } from "@chardb/database";
 import { CreateCharacterOwnershipChangeInput } from "../dto/character-ownership-change.dto";
-import { CharacterOwnershipChange, CharacterOwnershipChangeConnection } from "../entities/character-ownership-change.entity";
-import { 
+import {
+  CharacterOwnershipChange,
+  CharacterOwnershipChangeConnection,
+} from "../entities/character-ownership-change.entity";
+import {
   CreateCharacterOwnershipChangeServiceInput,
-  CharacterOwnershipChangeFiltersServiceInput
+  CharacterOwnershipChangeFiltersServiceInput,
 } from "../character-ownership-changes.service";
 
 /**
@@ -14,7 +17,7 @@ import {
  * Maps CreateCharacterOwnershipChangeInput to service input format
  */
 export function mapCreateCharacterOwnershipChangeInputToService(
-  input: CreateCharacterOwnershipChangeInput
+  input: CreateCharacterOwnershipChangeInput,
 ): CreateCharacterOwnershipChangeServiceInput {
   return {
     characterId: input.characterId,
@@ -23,7 +26,8 @@ export function mapCreateCharacterOwnershipChangeInputToService(
   };
 }
 
-type PrismaCharacterOwnershipChange = Prisma.CharacterOwnershipChangeGetPayload<{}>;
+type PrismaCharacterOwnershipChange =
+  Prisma.CharacterOwnershipChangeGetPayload<{}>;
 
 /**
  * Maps Prisma CharacterOwnershipChange result to GraphQL CharacterOwnershipChange entity

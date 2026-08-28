@@ -1,17 +1,17 @@
-import React from 'react';
-import { Tooltip as MantineTooltip } from '@mantine/core';
-import { useTheme } from 'styled-components';
+import React from "react";
+import { Tooltip as MantineTooltip } from "@mantine/core";
+import { useTheme } from "styled-components";
 
 interface CustomTooltipProps {
   label: string;
   children: React.ReactElement;
-  position?: 'top' | 'bottom' | 'left' | 'right';
+  position?: "top" | "bottom" | "left" | "right";
 }
 
-export const Tooltip: React.FC<CustomTooltipProps> = ({ 
-  label, 
-  children, 
-  position = 'top' 
+export const Tooltip: React.FC<CustomTooltipProps> = ({
+  label,
+  children,
+  position = "top",
 }) => {
   const theme = useTheme();
 
@@ -33,7 +33,7 @@ export const Tooltip: React.FC<CustomTooltipProps> = ({
         arrow: {
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.border,
-        }
+        },
       }}
     >
       {children}

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
 import {
   DndContext,
   closestCenter,
@@ -8,23 +8,23 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Save, AlertCircle } from 'lucide-react';
-import { Button } from '@chardb/ui';
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, Save, AlertCircle } from "lucide-react";
+import { Button } from "@chardb/ui";
 import {
   useTraitListEntriesByVariantQuery,
   useUpdateTraitOrdersMutation,
   TraitListEntryDetailsFragment,
-} from '../../generated/graphql';
-import { toast } from 'react-hot-toast';
+} from "../../generated/graphql";
+import { toast } from "react-hot-toast";
 
 interface TraitOrderManagerProps {
   variantId: string;
@@ -74,7 +74,7 @@ const SortableItem = styled.div<SortableItemProps>`
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  cursor: ${({ $isDragging }) => ($isDragging ? 'grabbing' : 'grab')};
+  cursor: ${({ $isDragging }) => ($isDragging ? "grabbing" : "grab")};
   transition: all 0.2s ease;
   opacity: ${({ $isDragging }) => ($isDragging ? 0.5 : 1)};
 
@@ -160,7 +160,10 @@ interface SortableTraitItemProps {
   index: number;
 }
 
-const SortableTraitItem: React.FC<SortableTraitItemProps> = ({ entry, index }) => {
+const SortableTraitItem: React.FC<SortableTraitItemProps> = ({
+  entry,
+  index,
+}) => {
   const {
     attributes,
     listeners,
@@ -189,7 +192,7 @@ const SortableTraitItem: React.FC<SortableTraitItemProps> = ({ entry, index }) =
       <TraitInfo>
         <TraitName>{entry.trait.name}</TraitName>
         <TraitMeta>
-          {entry.required ? 'Required' : 'Optional'} • {entry.valueType}
+          {entry.required ? "Required" : "Optional"} • {entry.valueType}
         </TraitMeta>
       </TraitInfo>
     </SortableItem>
@@ -210,16 +213,18 @@ export const TraitOrderManager: React.FC<TraitOrderManagerProps> = ({
   });
 
   // Update trait orders mutation
-  const [updateTraitOrders, { loading: saving }] = useUpdateTraitOrdersMutation({
-    onCompleted: () => {
-      toast.success('Trait order updated successfully');
-      setHasChanges(false);
-      refetch();
+  const [updateTraitOrders, { loading: saving }] = useUpdateTraitOrdersMutation(
+    {
+      onCompleted: () => {
+        toast.success("Trait order updated successfully");
+        setHasChanges(false);
+        refetch();
+      },
+      onError: (error) => {
+        toast.error(`Failed to update trait order: ${error.message}`);
+      },
     },
-    onError: (error) => {
-      toast.error(`Failed to update trait order: ${error.message}`);
-    },
-  });
+  );
 
   // Initialize entries from query data
   useEffect(() => {
@@ -321,7 +326,7 @@ export const TraitOrderManager: React.FC<TraitOrderManagerProps> = ({
       <Header>
         <Title>Trait Display Order</Title>
         <Description>
-          Drag and drop to reorder how traits appear in character forms for{' '}
+          Drag and drop to reorder how traits appear in character forms for{" "}
           {variantName}
         </Description>
       </Header>
@@ -337,11 +342,7 @@ export const TraitOrderManager: React.FC<TraitOrderManagerProps> = ({
         >
           <TraitList>
             {entries.map((entry, index) => (
-              <SortableTraitItem
-                key={entry.id}
-                entry={entry}
-                index={index}
-              />
+              <SortableTraitItem key={entry.id} entry={entry} index={index} />
             ))}
           </TraitList>
         </SortableContext>
@@ -365,7 +366,7 @@ export const TraitOrderManager: React.FC<TraitOrderManagerProps> = ({
           disabled={!hasChanges || saving}
         >
           <Save size={16} />
-          {saving ? 'Saving...' : 'Save Order'}
+          {saving ? "Saving..." : "Save Order"}
         </Button>
       </Actions>
     </Container>

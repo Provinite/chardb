@@ -1,6 +1,16 @@
-import { Field, InputType, ObjectType, Int, ID } from '@nestjs/graphql';
-import { IsString, IsOptional, IsNumber, IsUUID, IsEnum, MaxLength, Min, Max, IsArray } from 'class-validator';
-import { Visibility } from '@chardb/database';
+import { Field, InputType, ObjectType, Int, ID } from "@nestjs/graphql";
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsUUID,
+  IsEnum,
+  MaxLength,
+  Min,
+  Max,
+  IsArray,
+} from "class-validator";
+import { Visibility } from "@chardb/database";
 
 @InputType()
 export class CreateGalleryInput {
@@ -94,12 +104,11 @@ export class GalleryFiltersInput {
   visibility?: Visibility;
 }
 
-
 @InputType()
 export class ReorderGalleriesInput {
   @Field(() => [ID])
   @IsArray()
-  @IsUUID('all', { each: true })
+  @IsUUID("all", { each: true })
   galleryIds: string[];
 }
 

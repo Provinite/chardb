@@ -20,7 +20,7 @@ export class DeviantArtClient {
     private readonly clientId: string,
     private readonly clientSecret: string,
     minIntervalMs = 2000,
-    maxIntervalMs = 3000
+    maxIntervalMs = 3000,
   ) {
     this.rateLimiter = new RateLimiter(minIntervalMs, maxIntervalMs);
   }
@@ -50,7 +50,7 @@ export class DeviantArtClient {
     const contentType = resp.headers.get("content-type") ?? "";
     if (!contentType.includes("application/json")) {
       throw new Error(
-        `DA auth returned unexpected content-type: ${contentType}. Are your DEVIANTART_CLIENT_ID and DEVIANTART_CLIENT_SECRET correct?`
+        `DA auth returned unexpected content-type: ${contentType}. Are your DEVIANTART_CLIENT_ID and DEVIANTART_CLIENT_SECRET correct?`,
       );
     }
 
@@ -85,7 +85,7 @@ export class DeviantArtClient {
       if (resp.status === 429 || resp.status >= 500) {
         const delay = Math.pow(2, attempt) * 1000;
         logger.warn(
-          `DA API ${resp.status} on attempt ${attempt + 1}, retrying in ${delay}ms...`
+          `DA API ${resp.status} on attempt ${attempt + 1}, retrying in ${delay}ms...`,
         );
         await new Promise((r) => setTimeout(r, delay));
         continue;
@@ -107,7 +107,7 @@ export class DeviantArtClient {
     folderId: string,
     username: string,
     offset = 0,
-    limit = 24
+    limit = 24,
   ): Promise<DAGalleryResponse> {
     const url = `${DA_API_BASE}/gallery/${folderId}?username=${encodeURIComponent(username)}&offset=${offset}&limit=${limit}&mature_content=true`;
     const resp = await this.fetchWithRetry(url);
@@ -135,7 +135,7 @@ export class DeviantArtClient {
    * the /content API endpoint is not available with Client Credentials auth.
    */
   async scrapeDeviationPage(
-    pageUrl: string
+    pageUrl: string,
   ): Promise<{ uuid: string; descriptionHtml: string }> {
     await this.rateLimiter.wait();
 
@@ -151,7 +151,7 @@ export class DeviantArtClient {
     // Extract UUID from da:appurl meta tag
     let uuid = "";
     const appUrlMatch = html.match(
-      /property="da:appurl"\s+content="DeviantArt:\/\/deviation\/([^"]+)"/
+      /property="da:appurl"\s+content="DeviantArt:\/\/deviation\/([^"]+)"/,
     );
     if (appUrlMatch) {
       uuid = appUrlMatch[1];
@@ -164,7 +164,7 @@ export class DeviantArtClient {
 
     if (!uuid) {
       throw new Error(
-        "Could not resolve deviation UUID from page. The URL may be invalid."
+        "Could not resolve deviation UUID from page. The URL may be invalid.",
       );
     }
 

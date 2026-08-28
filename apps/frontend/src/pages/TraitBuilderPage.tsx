@@ -243,17 +243,18 @@ const ValueTypeOption = styled.label<{ $selected: boolean }>`
   display: flex;
   align-items: center;
   padding: 0.75rem;
-  border: 1px solid ${({ theme, $selected }) => 
-    $selected ? theme.colors.primary : theme.colors.border};
+  border: 1px solid
+    ${({ theme, $selected }) =>
+      $selected ? theme.colors.primary : theme.colors.border};
   border-radius: 4px;
   cursor: pointer;
-  background-color: ${({ theme, $selected }) => 
-    $selected ? theme.colors.primary + '20' : theme.colors.surface};
+  background-color: ${({ theme, $selected }) =>
+    $selected ? theme.colors.primary + "20" : theme.colors.surface};
   transition: all 0.2s ease;
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
-    background-color: ${({ theme }) => theme.colors.primary + '10'};
+    background-color: ${({ theme }) => theme.colors.primary + "10"};
   }
 `;
 
@@ -274,7 +275,7 @@ const ValueTypeDescription = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
-const ValueTypeRadio = styled.input.attrs({ type: 'radio' })`
+const ValueTypeRadio = styled.input.attrs({ type: "radio" })`
   margin-right: 0.75rem;
   accent-color: ${({ theme }) => theme.colors.primary};
 `;
@@ -323,7 +324,7 @@ interface TraitModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: TraitFormData) => void;
-  trait?: TraitsBySpeciesQuery['traitsBySpecies']['nodes'][0];
+  trait?: TraitsBySpeciesQuery["traitsBySpecies"]["nodes"][0];
   title: string;
   communityId: string;
 }
@@ -375,7 +376,12 @@ const TraitModal: React.FC<TraitModalProps> = ({
     try {
       await onSubmit(formData);
       if (!trait) {
-        setFormData({ name: "", valueType: TraitValueType.String, allowsMultipleValues: false, allowsClarifier: false });
+        setFormData({
+          name: "",
+          valueType: TraitValueType.String,
+          allowsMultipleValues: false,
+          allowsClarifier: false,
+        });
       }
       onClose();
     } catch (error) {
@@ -425,9 +431,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
                 <ValueTypeContent>
                   {getTraitTypeIcon(type)}
                   <div>
-                    <ValueTypeLabel>
-                      {getTraitTypeLabel(type)}
-                    </ValueTypeLabel>
+                    <ValueTypeLabel>{getTraitTypeLabel(type)}</ValueTypeLabel>
                     <ValueTypeDescription>
                       {getTraitTypeDescription(type)}
                     </ValueTypeDescription>
@@ -464,9 +468,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
               disabled={isSubmitting}
               style={{ width: "18px", height: "18px", cursor: "pointer" }}
             />
-            <span style={{ fontSize: "0.875rem" }}>
-              Allow multiple values
-            </span>
+            <span style={{ fontSize: "0.875rem" }}>Allow multiple values</span>
           </label>
           <FormNote>
             When enabled, characters can have multiple values for this trait
@@ -495,13 +497,12 @@ const TraitModal: React.FC<TraitModalProps> = ({
               disabled={isSubmitting}
               style={{ width: "18px", height: "18px", cursor: "pointer" }}
             />
-            <span style={{ fontSize: "0.875rem" }}>
-              Allow clarifier text
-            </span>
+            <span style={{ fontSize: "0.875rem" }}>Allow clarifier text</span>
           </label>
           <FormNote>
             When enabled, users can attach an optional free-text note to each
-            value, displayed parenthetically (e.g., "Common Body Mod (extra horns)")
+            value, displayed parenthetically (e.g., "Common Body Mod (extra
+            horns)")
           </FormNote>
         </FormSection>
 
@@ -550,7 +551,7 @@ export const TraitBuilderPage: React.FC = () => {
   const { speciesId } = useParams<{ speciesId: string }>();
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  
+
   // GraphQL operations
   const {
     data: traitsData,
@@ -563,7 +564,9 @@ export const TraitBuilderPage: React.FC = () => {
   });
 
   const traits = traitsData?.traitsBySpecies?.nodes || [];
-  const [editingTrait, setEditingTrait] = useState<TraitsBySpeciesQuery['traitsBySpecies']['nodes'][0] | null>(null);
+  const [editingTrait, setEditingTrait] = useState<
+    TraitsBySpeciesQuery["traitsBySpecies"]["nodes"][0] | null
+  >(null);
 
   if (!speciesId) {
     return (
@@ -645,10 +648,10 @@ export const TraitBuilderPage: React.FC = () => {
     });
   };
 
-  const handleDeleteTrait = async (trait: typeof traits[0]) => {
+  const handleDeleteTrait = async (trait: (typeof traits)[0]) => {
     if (
       !window.confirm(
-        `Are you sure you want to delete the trait "${trait.name}"? This will also delete all associated enum values and character trait data.`
+        `Are you sure you want to delete the trait "${trait.name}"? This will also delete all associated enum values and character trait data.`,
       )
     ) {
       return;
@@ -659,11 +662,11 @@ export const TraitBuilderPage: React.FC = () => {
     });
   };
 
-  const handleEditTrait = (trait: typeof traits[0]) => {
+  const handleEditTrait = (trait: (typeof traits)[0]) => {
     setEditingTrait(trait);
   };
 
-  const handleManageEnumValues = (trait: typeof traits[0]) => {
+  const handleManageEnumValues = (trait: (typeof traits)[0]) => {
     navigate(`/traits/${trait.id}/enum-values`);
   };
 
@@ -701,7 +704,9 @@ export const TraitBuilderPage: React.FC = () => {
   return (
     <Container>
       <Breadcrumb>
-        <Link to={`/communities/${species.communityId}/species`}>Species Management</Link>
+        <Link to={`/communities/${species.communityId}/species`}>
+          Species Management
+        </Link>
         <span>/</span>
         <Link to={`/species/${species.id}`}>{species.name}</Link>
         <span>/</span>

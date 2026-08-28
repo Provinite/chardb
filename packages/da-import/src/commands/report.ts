@@ -63,9 +63,7 @@ async function reportParsed(): Promise<void> {
       }
     }
 
-    const sorted = [...unmappedCounts.entries()].sort(
-      (a, b) => b[1] - a[1]
-    );
+    const sorted = [...unmappedCounts.entries()].sort((a, b) => b[1] - a[1]);
 
     logger.info(`\nTop unmapped trait lines (by frequency):`);
     for (const [line, count] of sorted.slice(0, 30)) {

@@ -1,6 +1,10 @@
-import React from 'react';
-import styled from 'styled-components';
-import { UseFormRegister, UseFormSetValue, UseFormWatch } from 'react-hook-form';
+import React from "react";
+import styled from "styled-components";
+import {
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormWatch,
+} from "react-hook-form";
 
 const FieldsContainer = styled.div`
   display: flex;
@@ -18,25 +22,25 @@ const FieldRow = styled.div`
 const Input = styled.input`
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid ${props => props.theme.colors.border};
+  border: 1px solid ${(props) => props.theme.colors.border};
   border-radius: 4px;
-  background: ${props => props.theme.colors.surface};
-  color: ${props => props.theme.colors.text.primary};
+  background: ${(props) => props.theme.colors.surface};
+  color: ${(props) => props.theme.colors.text.primary};
   font-size: 14px;
 
   &:focus {
     outline: none;
-    border-color: ${props => props.theme.colors.primary};
+    border-color: ${(props) => props.theme.colors.primary};
   }
 
   &::placeholder {
-    color: ${props => props.theme.colors.text.muted};
+    color: ${(props) => props.theme.colors.text.muted};
   }
 `;
 
 const RemoveButton = styled.button`
   padding: 8px 12px;
-  background: ${props => props.theme.colors.danger};
+  background: ${(props) => props.theme.colors.danger};
   color: white;
   border: none;
   border-radius: 4px;
@@ -45,14 +49,15 @@ const RemoveButton = styled.button`
   transition: background 0.2s;
 
   &:hover {
-    background: ${props => props.theme.colors.dangerHover || props.theme.colors.danger};
+    background: ${(props) =>
+      props.theme.colors.dangerHover || props.theme.colors.danger};
     opacity: 0.9;
   }
 `;
 
 const AddButton = styled.button`
   padding: 8px 16px;
-  background: ${props => props.theme.colors.primary};
+  background: ${(props) => props.theme.colors.primary};
   color: white;
   border: none;
   border-radius: 4px;
@@ -69,8 +74,8 @@ const AddButton = styled.button`
 const EmptyState = styled.div`
   padding: 20px;
   text-align: center;
-  color: ${props => props.theme.colors.text.muted};
-  border: 1px dashed ${props => props.theme.colors.border};
+  color: ${(props) => props.theme.colors.text.muted};
+  border: 1px dashed ${(props) => props.theme.colors.border};
   border-radius: 4px;
   font-size: 14px;
 `;
@@ -80,14 +85,14 @@ const Label = styled.label`
   margin-bottom: 4px;
   font-weight: 500;
   font-size: 14px;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${(props) => props.theme.colors.text.primary};
 `;
 
 const SectionTitle = styled.h3`
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 12px;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${(props) => props.theme.colors.text.primary};
 `;
 
 interface CustomField {
@@ -110,7 +115,7 @@ export const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
   register,
   setValue,
   watch,
-  fieldName = 'customFields',
+  fieldName = "customFields",
   disabled = false,
 }) => {
   // Watch the customFields value
@@ -121,14 +126,15 @@ export const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
     if (!customFieldsValue) return [];
 
     try {
-      const parsed = typeof customFieldsValue === 'string'
-        ? JSON.parse(customFieldsValue)
-        : customFieldsValue;
+      const parsed =
+        typeof customFieldsValue === "string"
+          ? JSON.parse(customFieldsValue)
+          : customFieldsValue;
 
-      if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+      if (typeof parsed === "object" && !Array.isArray(parsed)) {
         return Object.entries(parsed).map(([key, value]) => ({
           // Convert temporary keys back to empty strings
-          key: key.startsWith('__empty_') ? '' : key,
+          key: key.startsWith("__empty_") ? "" : key,
           value: String(value),
         }));
       }
@@ -139,19 +145,22 @@ export const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
   }, [customFieldsValue]);
 
   const updateCustomFields = (newFields: CustomField[]) => {
-    const fieldsObject = newFields.reduce((acc, field, index) => {
-      // Allow empty keys in state - they'll be filtered on submit
-      // Use temporary key for empty fields to preserve them
-      const key = field.key.trim() || `__empty_${index}`;
-      acc[key] = field.value;
-      return acc;
-    }, {} as Record<string, string>);
+    const fieldsObject = newFields.reduce(
+      (acc, field, index) => {
+        // Allow empty keys in state - they'll be filtered on submit
+        // Use temporary key for empty fields to preserve them
+        const key = field.key.trim() || `__empty_${index}`;
+        acc[key] = field.value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
     setValue(fieldName, JSON.stringify(fieldsObject), { shouldDirty: true });
   };
 
   const addField = () => {
-    const newFields = [...customFields, { key: '', value: '' }];
+    const newFields = [...customFields, { key: "", value: "" }];
     updateCustomFields(newFields);
   };
 
@@ -160,7 +169,11 @@ export const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
     updateCustomFields(newFields);
   };
 
-  const updateField = (index: number, key: 'key' | 'value', newValue: string) => {
+  const updateField = (
+    index: number,
+    key: "key" | "value",
+    newValue: string,
+  ) => {
     const newFields = [...customFields];
     newFields[index][key] = newValue;
     updateCustomFields(newFields);
@@ -185,7 +198,8 @@ export const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
             <FieldRow>
               <Label>Field Name</Label>
               <Label>Value</Label>
-              <div style={{ width: '70px' }} /> {/* Spacer for remove button column */}
+              <div style={{ width: "70px" }} />{" "}
+              {/* Spacer for remove button column */}
             </FieldRow>
 
             {customFields.map((field, index) => (
@@ -194,14 +208,14 @@ export const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
                   type="text"
                   placeholder="e.g., Age, Pronouns, Occupation"
                   value={field.key}
-                  onChange={(e) => updateField(index, 'key', e.target.value)}
+                  onChange={(e) => updateField(index, "key", e.target.value)}
                   disabled={disabled}
                 />
                 <Input
                   type="text"
                   placeholder="e.g., 25, they/them, Merchant"
                   value={field.value}
-                  onChange={(e) => updateField(index, 'value', e.target.value)}
+                  onChange={(e) => updateField(index, "value", e.target.value)}
                   disabled={disabled}
                 />
                 <RemoveButton

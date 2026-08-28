@@ -200,7 +200,7 @@ const InfoAlert = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.info}40;
   border-radius: 6px;
   margin-bottom: 1rem;
-  
+
   ${Caption} {
     color: ${({ theme }) => theme.colors.text.primary} !important;
   }
@@ -363,8 +363,8 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
             acc[perm.key] = editingRole[perm.key as PermissionKey];
             return acc;
           },
-          {} as Record<string, boolean>
-        )
+          {} as Record<string, boolean>,
+        ),
       );
     } else {
       // Reset form for new role
@@ -550,7 +550,7 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
                           onChange={(e) =>
                             handlePermissionChange(
                               permission.key,
-                              e.target.checked
+                              e.target.checked,
                             )
                           }
                           disabled={isLoading}

@@ -149,12 +149,12 @@ export class CommunityMembersResolver {
     const isSelf = this.permissionService.isSelf(currentUser.id, userId);
     const isAdmin = this.permissionService.hasGlobalPermission(
       currentUser,
-      GlobalPermission.IsAdmin
+      GlobalPermission.IsAdmin,
     );
 
     if (!isSelf && !isAdmin) {
       throw new ForbiddenException(
-        "You can only view your own community memberships"
+        "You can only view your own community memberships",
       );
     }
 
@@ -203,7 +203,8 @@ export class CommunityMembersResolver {
 
   @AllowAnyAuthenticated()
   @Mutation(() => CommunityMember, {
-    description: "Remove a community membership (leave community OR remove member with permission)",
+    description:
+      "Remove a community membership (leave community OR remove member with permission)",
   })
   async removeCommunityMember(
     @Args("id", { type: () => ID, description: "Community member ID" })
@@ -222,22 +223,23 @@ export class CommunityMembersResolver {
     }
 
     // Check all authorization conditions
-    const isSelf = this.permissionService.isSelf(currentUser.id, membership.userId);
+    const isSelf = this.permissionService.isSelf(
+      currentUser.id,
+      membership.userId,
+    );
     const isAdmin = this.permissionService.hasGlobalPermission(
       currentUser,
-      GlobalPermission.IsAdmin
+      GlobalPermission.IsAdmin,
     );
     const hasPermission = await this.permissionService.hasCommunityPermission(
       currentUser.id,
       community.id,
-      CommunityPermission.CanRemoveCommunityMember
+      CommunityPermission.CanRemoveCommunityMember,
     );
 
     // Allow if: self-removal OR admin OR has permission
     if (!isSelf && !isAdmin && !hasPermission) {
-      throw new ForbiddenException(
-        "Cannot remove this community member"
-      );
+      throw new ForbiddenException("Cannot remove this community member");
     }
 
     const result = await this.communityMembersService.remove(id);

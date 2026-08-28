@@ -1,13 +1,13 @@
-import { ObjectType, Field, ID, Int, registerEnumType } from '@nestjs/graphql';
-import { Visibility } from '@chardb/database';
+import { ObjectType, Field, ID, Int, registerEnumType } from "@nestjs/graphql";
+import { Visibility } from "@chardb/database";
 
 // Register enum for GraphQL
 registerEnumType(Visibility, {
-  name: 'Visibility',
-  description: 'Visibility levels for content',
+  name: "Visibility",
+  description: "Visibility levels for content",
 });
-import { User } from '../../users/entities/user.entity';
-import { Character } from '../../characters/entities/character.entity';
+import { User } from "../../users/entities/user.entity";
+import { Character } from "../../characters/entities/character.entity";
 
 @ObjectType()
 export class GalleryCount {

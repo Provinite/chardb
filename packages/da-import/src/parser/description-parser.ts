@@ -32,12 +32,12 @@ function normalizeTraitLine(line: string): string {
   // Fix missing space after rarity (CommonMouth → Common Mouth)
   s = s.replace(
     /^(Common|Uncommon|Rare|Legendary|Exclusive|Special)(?=[A-Z])/,
-    "$1 "
+    "$1 ",
   );
 
   // Handle "Standard [Rarity] ..." → "[Rarity] Standard ..."
   const stdRarityMatch = s.match(
-    /^standard\s+(common|uncommon|rare|very\s+rare|legendary|exclusive|special)\s+/i
+    /^standard\s+(common|uncommon|rare|very\s+rare|legendary|exclusive|special)\s+/i,
   );
   if (stdRarityMatch) {
     s = stdRarityMatch[1] + " Standard " + s.slice(stdRarityMatch[0].length);
@@ -84,7 +84,7 @@ export interface ParsedDescription {
 export function parseDescription(
   html: string,
   fallbackName: string,
-  exactLineRules: ExactLineRule[] = []
+  exactLineRules: ExactLineRule[] = [],
 ): ParsedDescription {
   const $ = cheerio.load(html);
 
@@ -138,10 +138,10 @@ export function parseDescription(
     //   Current: https://www.deviantart.com/username
     const afterOwner = html.slice(ownerIdx);
     const newLinkMatch = afterOwner.match(
-      /href="https?:\/\/www\.deviantart\.com\/([^"/?]+)"/
+      /href="https?:\/\/www\.deviantart\.com\/([^"/?]+)"/,
     );
     const oldLinkMatch = afterOwner.match(
-      /href="https?:\/\/([^.]+)\.deviantart\.com"/
+      /href="https?:\/\/([^.]+)\.deviantart\.com"/,
     );
     if (newLinkMatch) {
       ownerUsername = newLinkMatch[1];
@@ -170,10 +170,10 @@ export function parseDescription(
     if (idx !== -1) {
       const afterLabel = html.slice(idx);
       const newLink = afterLabel.match(
-        /href="https?:\/\/www\.deviantart\.com\/([^"/?]+)"/
+        /href="https?:\/\/www\.deviantart\.com\/([^"/?]+)"/,
       );
       const oldLink = afterLabel.match(
-        /href="https?:\/\/([^.]+)\.deviantart\.com"/
+        /href="https?:\/\/([^.]+)\.deviantart\.com"/,
       );
       if (newLink) {
         firstArtist = newLink[1];
@@ -192,10 +192,10 @@ export function parseDescription(
     if (idx !== -1) {
       const afterLabel = html.slice(idx);
       const newLink = afterLabel.match(
-        /href="https?:\/\/www\.deviantart\.com\/([^"/?]+)"/
+        /href="https?:\/\/www\.deviantart\.com\/([^"/?]+)"/,
       );
       const oldLink = afterLabel.match(
-        /href="https?:\/\/([^.]+)\.deviantart\.com"/
+        /href="https?:\/\/([^.]+)\.deviantart\.com"/,
       );
       if (newLink) {
         firstDesigner = newLink[1];
@@ -210,19 +210,19 @@ export function parseDescription(
   let currentRefUrl = "";
   {
     const refMatch = html.match(
-      /current\s+(?:ref|design|reference|artwork)|updated\s+ref/i
+      /current\s+(?:ref|design|reference|artwork)|updated\s+ref/i,
     );
     if (refMatch) {
       const afterLabel = html.slice(refMatch.index!);
       const hrefMatch = afterLabel.match(
-        /href="(https?:\/\/sta\.sh\/[a-zA-Z0-9]+)"/
+        /href="(https?:\/\/sta\.sh\/[a-zA-Z0-9]+)"/,
       );
       if (hrefMatch) {
         currentRefUrl = hrefMatch[1];
       } else {
         // DA embeds sta.sh links as HTML-entity-encoded JSON in data-deviation attrs
         const entityMatch = afterLabel.match(
-          /&quot;shortUrl&quot;:&quot;(https?:\/\/sta\.sh\/[a-zA-Z0-9]+)&quot;/
+          /&quot;shortUrl&quot;:&quot;(https?:\/\/sta\.sh\/[a-zA-Z0-9]+)&quot;/,
         );
         if (entityMatch) {
           currentRefUrl = entityMatch[1];
@@ -259,7 +259,7 @@ export function parseDescription(
       inFeatures = true;
       // The rest of this line after "Features:" might have content
       const afterLabel = normalizeTraitLine(
-        line.replace(/^features\s*:?\s*/i, "").trim()
+        line.replace(/^features\s*:?\s*/i, "").trim(),
       );
       if (afterLabel && RARITY_PATTERN.test(afterLabel)) {
         traitLines.push(afterLabel);

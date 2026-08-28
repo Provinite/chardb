@@ -1,8 +1,15 @@
-import { IsString, IsEnum, IsOptional, IsNumber, Min, ValidateIf } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsNumber,
+  Min,
+  ValidateIf,
+} from "class-validator";
 
 export enum PrizeEventType {
-  ITEM_AWARDED = 'ITEM_AWARDED',
-  CHARACTER_AWARDED = 'CHARACTER_AWARDED',
+  ITEM_AWARDED = "ITEM_AWARDED",
+  CHARACTER_AWARDED = "CHARACTER_AWARDED",
 }
 
 export class PrizeEventDto {

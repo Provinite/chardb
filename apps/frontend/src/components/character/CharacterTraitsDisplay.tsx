@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
-import styled from 'styled-components';
-import { Type, Hash, Calendar, List } from 'lucide-react';
-import { GetCharacterQuery, TraitValueType } from '../../generated/graphql';
-import { ColorPip } from '../colors/ColorPip';
+import React, { useMemo } from "react";
+import styled from "styled-components";
+import { Type, Hash, Calendar, List } from "lucide-react";
+import { GetCharacterQuery, TraitValueType } from "../../generated/graphql";
+import { ColorPip } from "../colors/ColorPip";
 
 /**
  * Character Traits Display Component
@@ -108,7 +108,9 @@ const EmptyState = styled.div`
   font-style: italic;
 `;
 
-type CharacterTraitValue = NonNullable<GetCharacterQuery['character']>['traitValues'][0];
+type CharacterTraitValue = NonNullable<
+  GetCharacterQuery["character"]
+>["traitValues"][0];
 
 interface CharacterTraitsDisplayProps {
   traitValues: CharacterTraitValue[];
@@ -135,15 +137,18 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
 }) => {
   // Group trait values by traitId
   const groupedTraits = useMemo(() => {
-    const grouped = new Map<string, {
-      trait: NonNullable<CharacterTraitValue['trait']>;
-      values: Array<{
-        value: string | number | boolean | null;
-        enumValueName?: string | null;
-        enumValueColor?: string | null;
-        clarifier?: string | null;
-      }>;
-    }>();
+    const grouped = new Map<
+      string,
+      {
+        trait: NonNullable<CharacterTraitValue["trait"]>;
+        values: Array<{
+          value: string | number | boolean | null;
+          enumValueName?: string | null;
+          enumValueColor?: string | null;
+          clarifier?: string | null;
+        }>;
+      }
+    >();
 
     for (const tv of traitValues) {
       // Skip if trait definition is missing (deleted trait)
@@ -170,9 +175,7 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
 
   if (groupedTraits.length === 0) {
     return (
-      <EmptyState>
-        No trait values configured for this character.
-      </EmptyState>
+      <EmptyState>No trait values configured for this character.</EmptyState>
     );
   }
 
@@ -185,9 +188,7 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
           return (
             <TraitItem key={trait.name}>
               <TraitHeader>
-                <TraitIcon>
-                  {getTraitTypeIcon(trait.valueType)}
-                </TraitIcon>
+                <TraitIcon>{getTraitTypeIcon(trait.valueType)}</TraitIcon>
                 <TraitName>{trait.name}</TraitName>
                 {isMultiValue && (
                   <MultiValueIndicator>×{values.length}</MultiValueIndicator>
@@ -203,7 +204,9 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
                       ? `${baseValue} (${v.clarifier})`
                       : baseValue;
                     return (
-                      <ValueChip key={`${v.value}-${v.clarifier ?? ""}-${index}`}>
+                      <ValueChip
+                        key={`${v.value}-${v.clarifier ?? ""}-${index}`}
+                      >
                         {v.enumValueColor && (
                           <ColorPipWrapper>
                             <ColorPip color={v.enumValueColor} size="sm" />

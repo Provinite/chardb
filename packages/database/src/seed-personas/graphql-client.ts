@@ -30,7 +30,7 @@ export class GraphQLClient {
 
   async request<T>(
     query: string,
-    variables?: Record<string, unknown>
+    variables?: Record<string, unknown>,
   ): Promise<T> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -49,7 +49,8 @@ export class GraphQLClient {
     const json = (await response.json()) as GraphQLResponse<T>;
 
     if (!response.ok) {
-      const errorMessage = json.errors?.map((e) => e.message).join(", ") ?? response.statusText;
+      const errorMessage =
+        json.errors?.map((e) => e.message).join(", ") ?? response.statusText;
       throw new Error(`HTTP error: ${response.status} - ${errorMessage}`);
     }
 

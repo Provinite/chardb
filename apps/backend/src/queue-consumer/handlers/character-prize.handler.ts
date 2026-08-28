@@ -1,9 +1,14 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { ExternalAccountProvider } from '@chardb/database';
-import { DatabaseService } from '../../database/database.service';
-import { PendingOwnershipService } from '../../pending-ownership/pending-ownership.service';
-import { notDeleted } from '../../common/utils/prisma-filters';
-import { PrizeEventDto } from '../dto/prize-event.dto';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { ExternalAccountProvider } from "@chardb/database";
+import { DatabaseService } from "../../database/database.service";
+import { PendingOwnershipService } from "../../pending-ownership/pending-ownership.service";
+import { notDeleted } from "../../common/utils/prisma-filters";
+import { PrizeEventDto } from "../dto/prize-event.dto";
 
 @Injectable()
 export class CharacterPrizeHandler {
@@ -20,7 +25,9 @@ export class CharacterPrizeHandler {
     );
 
     if (!event.characterId) {
-      throw new BadRequestException('characterId is required for CHARACTER_AWARDED events');
+      throw new BadRequestException(
+        "characterId is required for CHARACTER_AWARDED events",
+      );
     }
 
     // Step 1: Look up the character
@@ -47,7 +54,9 @@ export class CharacterPrizeHandler {
       );
     }
 
-    this.logger.log(`Character ${character.name} is orphaned, proceeding with ownership transfer`);
+    this.logger.log(
+      `Character ${character.name} is orphaned, proceeding with ownership transfer`,
+    );
 
     // Step 3: Verify character's species belongs to the community associated with the Discord guild
     // (This is optional validation - the user said no validation needed, but it's good practice)

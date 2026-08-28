@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-import { useGetMyCharactersForImageUploadQuery, useGetCharacterQuery } from "../generated/graphql";
+import {
+  useGetMyCharactersForImageUploadQuery,
+  useGetCharacterQuery,
+} from "../generated/graphql";
 
 interface Character {
   id: string;
@@ -123,7 +126,7 @@ export const CharacterTypeahead: React.FC<CharacterTypeaheadProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
-    null
+    null,
   );
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -175,10 +178,12 @@ export const CharacterTypeahead: React.FC<CharacterTypeaheadProps> = ({
         setSelectedCharacter({
           id: char.id,
           name: char.name,
-          species: char.species ? {
-            id: char.species.id,
-            name: char.species.name,
-          } : null,
+          species: char.species
+            ? {
+                id: char.species.id,
+                name: char.species.name,
+              }
+            : null,
         });
         setSearchQuery(char.name);
       }

@@ -3,7 +3,10 @@ import styled from "styled-components";
 import { useParams, Link } from "react-router-dom";
 import { Package, Plus, Edit2, Trash2, Gift, ExternalLink } from "lucide-react";
 import { Button, Card } from "@chardb/ui";
-import { GrantTargetSelector, GrantTarget } from "../components/GrantTargetSelector";
+import {
+  GrantTargetSelector,
+  GrantTarget,
+} from "../components/GrantTargetSelector";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ColorSelector, ColorPip } from "../components/colors";
 import { CopyIdButton } from "../components/CopyIdButton";
@@ -473,7 +476,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
       return;
     }
 
-    if (grantTarget.type === 'pending' && !isGrantTargetValid) {
+    if (grantTarget.type === "pending" && !isGrantTargetValid) {
       toast.error("Please verify the Discord account before granting");
       return;
     }
@@ -485,9 +488,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
         quantity: parseInt(grantFormData.quantity),
       };
 
-      if (grantTarget.type === 'user') {
+      if (grantTarget.type === "user") {
         input.userId = grantTarget.userId;
-      } else if (grantTarget.type === 'pending') {
+      } else if (grantTarget.type === "pending") {
         input.userId = null; // Orphaned item
         input.pendingOwner = {
           provider: grantTarget.provider,
@@ -562,10 +565,12 @@ export const CommunityItemsAdminPage: React.FC = () => {
       <Section>
         <SectionHeader>
           <SectionTitle>Item Types</SectionTitle>
-          <Button onClick={() => {
-            setImageFile(null);
-            setIsCreateModalOpen(true);
-          }}>
+          <Button
+            onClick={() => {
+              setImageFile(null);
+              setIsCreateModalOpen(true);
+            }}
+          >
             <Plus size={16} /> Create Item Type
           </Button>
         </SectionHeader>
@@ -587,7 +592,10 @@ export const CommunityItemsAdminPage: React.FC = () => {
                   <ItemTypeIcon color={itemType.color?.hexCode}>
                     {itemType.image ? (
                       <ItemTypeImage
-                        src={itemType.image.thumbnailUrl || itemType.image.originalUrl}
+                        src={
+                          itemType.image.thumbnailUrl ||
+                          itemType.image.originalUrl
+                        }
                         alt={itemType.image.altText || itemType.name}
                       />
                     ) : (
@@ -595,8 +603,16 @@ export const CommunityItemsAdminPage: React.FC = () => {
                     )}
                   </ItemTypeIcon>
                   <ItemTypeInfo>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <ItemTypeName title={itemType.name}>{itemType.name}</ItemTypeName>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <ItemTypeName title={itemType.name}>
+                        {itemType.name}
+                      </ItemTypeName>
                       {itemType.color && (
                         <ColorPip color={itemType.color.hexCode} size="sm" />
                       )}
@@ -948,7 +964,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
               </Button>
               <Button
                 type="submit"
-                disabled={grantTarget?.type === 'pending' && !isGrantTargetValid}
+                disabled={
+                  grantTarget?.type === "pending" && !isGrantTargetValid
+                }
               >
                 Grant Item
               </Button>

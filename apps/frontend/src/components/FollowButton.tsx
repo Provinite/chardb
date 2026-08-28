@@ -2,7 +2,11 @@ import React from "react";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
-import { useToggleFollowMutation, useGetFollowStatusQuery, GetFollowStatusDocument } from "../generated/graphql";
+import {
+  useToggleFollowMutation,
+  useGetFollowStatusQuery,
+  GetFollowStatusDocument,
+} from "../generated/graphql";
 import toast from "react-hot-toast";
 
 const FollowButtonContainer = styled.div`

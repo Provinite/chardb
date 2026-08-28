@@ -8,7 +8,11 @@ import {
   truncateAll,
 } from "../db/snapshot.js";
 import { makePrisma, makeSeedCtx } from "./ctx.js";
-import { PRESETS, type PresetHandle, type PresetName } from "./presets/index.js";
+import {
+  PRESETS,
+  type PresetHandle,
+  type PresetName,
+} from "./presets/index.js";
 import { statePath, writeStorageStates } from "./storage-state.js";
 import { makeActor } from "./actor.js";
 import type { Persona, World } from "./types.js";
@@ -83,7 +87,7 @@ export async function seedPreset<K extends PresetName>(
     preset,
     users: stored.personas,
     as: (key: string) =>
-      makeActor(key, key === "anon" ? null : stored!.personas[key] ?? null),
+      makeActor(key, key === "anon" ? null : (stored!.personas[key] ?? null)),
     storageState: (key: string) => statePath(preset, key),
     reset: () => restoreSnapshot(preset),
   };

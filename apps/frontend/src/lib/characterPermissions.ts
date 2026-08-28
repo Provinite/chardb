@@ -1,8 +1,8 @@
-import type { GetCharacterQuery } from '../graphql/characters.graphql';
-import type { MeQuery } from '../graphql/auth.graphql';
+import type { GetCharacterQuery } from "../graphql/characters.graphql";
+import type { MeQuery } from "../graphql/auth.graphql";
 
-type Character = NonNullable<GetCharacterQuery['character']>;
-type User = MeQuery['me'];
+type Character = NonNullable<GetCharacterQuery["character"]>;
+type User = MeQuery["me"];
 
 interface Permissions {
   canCreateOrphanedCharacter: boolean;
@@ -31,7 +31,7 @@ interface Permissions {
 export function canUserEditCharacter(
   character: Character | null | undefined,
   user: User | null | undefined,
-  permissions: Permissions
+  permissions: Permissions,
 ): boolean {
   if (!character || !user) {
     return false;
@@ -43,8 +43,7 @@ export function canUserEditCharacter(
   // Character is orphaned
   if (isOrphaned) {
     return (
-      permissions.canCreateOrphanedCharacter ||
-      permissions.canEditCharacter
+      permissions.canCreateOrphanedCharacter || permissions.canEditCharacter
     );
   }
 
@@ -56,8 +55,7 @@ export function canUserEditCharacter(
   // User owns the character and has any edit permission
   if (isOwner) {
     return !!(
-      permissions.canEditOwnCharacter ||
-      permissions.canEditOwnCharacterRegistry
+      permissions.canEditOwnCharacter || permissions.canEditOwnCharacterRegistry
     );
   }
 
@@ -76,7 +74,7 @@ export function canUserEditCharacter(
 export function canUserEditCharacterProfile(
   character: Character | null | undefined,
   user: User | null | undefined,
-  permissions: Permissions
+  permissions: Permissions,
 ): boolean {
   if (!character || !user) {
     return false;
@@ -88,8 +86,7 @@ export function canUserEditCharacterProfile(
   // Character is orphaned
   if (isOrphaned) {
     return (
-      permissions.canCreateOrphanedCharacter ||
-      permissions.canEditCharacter
+      permissions.canCreateOrphanedCharacter || permissions.canEditCharacter
     );
   }
 
@@ -119,7 +116,7 @@ export function canUserEditCharacterProfile(
 export function canUserEditCharacterRegistry(
   character: Character | null | undefined,
   user: User | null | undefined,
-  permissions: Permissions
+  permissions: Permissions,
 ): boolean {
   if (!character || !user) {
     return false;

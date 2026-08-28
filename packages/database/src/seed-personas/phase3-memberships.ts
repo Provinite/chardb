@@ -43,11 +43,11 @@ const QUERY_COMMUNITY_MEMBERS = `
 
 async function getExistingMemberships(
   client: GraphQLClient,
-  communityId: string
+  communityId: string,
 ): Promise<Map<string, CommunityMemberNode>> {
   const response = await client.request<CommunityMembersResponse>(
     QUERY_COMMUNITY_MEMBERS,
-    { communityId, first: 100 }
+    { communityId, first: 100 },
   );
 
   const memberships = new Map<string, CommunityMemberNode>();
@@ -60,7 +60,7 @@ async function getExistingMemberships(
 async function createMembership(
   client: GraphQLClient,
   userId: string,
-  roleId: string
+  roleId: string,
 ): Promise<void> {
   await client.request<CreateCommunityMemberResponse>(
     MUTATIONS.createCommunityMember,
@@ -69,7 +69,7 @@ async function createMembership(
         userId,
         roleId,
       },
-    }
+    },
   );
 }
 
@@ -77,7 +77,7 @@ export async function runPhase3(
   client: GraphQLClient,
   users: Map<string, User>,
   communityId: string,
-  roles: Map<string, RoleInfo>
+  roles: Map<string, RoleInfo>,
 ): Promise<void> {
   log.phase("Phase 3: Assigning roles...");
 
@@ -98,7 +98,9 @@ export async function runPhase3(
 
     // Skip site admin - they were already assigned Admin role when creating the community
     if (persona.email === PERSONAS.siteAdmin.email) {
-      log.skip(`${persona.displayName} -> ${persona.roleName} (community creator)`);
+      log.skip(
+        `${persona.displayName} -> ${persona.roleName} (community creator)`,
+      );
       existsCount++;
       continue;
     }
@@ -118,7 +120,9 @@ export async function runPhase3(
         log.skip(`${persona.displayName} -> ${persona.roleName} (exists)`);
         existsCount++;
       } else {
-        log.skip(`${persona.displayName} -> ${persona.roleName} (has different role)`);
+        log.skip(
+          `${persona.displayName} -> ${persona.roleName} (has different role)`,
+        );
         existsCount++;
       }
       continue;
@@ -133,13 +137,15 @@ export async function runPhase3(
         log.skip(`${persona.displayName} -> ${persona.roleName} (exists)`);
         existsCount++;
       } else {
-        log.error(`${persona.displayName}: ${error instanceof Error ? error.message : String(error)}`);
+        log.error(
+          `${persona.displayName}: ${error instanceof Error ? error.message : String(error)}`,
+        );
         errorCount++;
       }
     }
   }
 
   log.info(
-    `Memberships: ${assignedCount} assigned, ${existsCount} existing, ${errorCount} errors`
+    `Memberships: ${assignedCount} assigned, ${existsCount} existing, ${errorCount} errors`,
   );
 }

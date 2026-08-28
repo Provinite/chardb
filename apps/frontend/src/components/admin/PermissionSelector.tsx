@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import styled from 'styled-components';
+import React, { useState, useMemo } from "react";
+import styled from "styled-components";
 import {
   Check,
   ChevronDown,
@@ -8,30 +8,25 @@ import {
   Users,
   Database,
   Crown,
-  X
-} from 'lucide-react';
-import {
-  Heading5,
-  Caption,
-  HelpText,
-  SmallText
-} from '@chardb/ui';
+  X,
+} from "lucide-react";
+import { Heading5, Caption, HelpText, SmallText } from "@chardb/ui";
 import {
   ALL_PERMISSIONS,
   PERMISSION_CATEGORIES as PERMISSION_CATEGORY_META,
   type Permission,
-} from '../../lib/permissions';
+} from "../../lib/permissions";
 
 /**
  * Permission Selector Component
- * 
+ *
  * Multi-select component for choosing permissions with categorization and search.
  * Provides bulk operations and visual grouping for better user experience.
- * 
+ *
  * Features:
  * - Multi-select with checkboxes
  * - Permission categorization
- * - Search and filter functionality  
+ * - Search and filter functionality
  * - Select all/none operations
  * - Visual permission grouping
  * - Keyboard navigation support
@@ -53,11 +48,11 @@ const Header = styled.div<{ $expanded: boolean }>`
   padding: 0.75rem 1rem;
   cursor: pointer;
   background: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ $expanded }) => $expanded ? '8px 8px 0 0' : '8px'};
-  border-bottom: ${({ theme, $expanded }) => 
-    $expanded ? `1px solid ${theme.colors.border}` : 'none'};
+  border-radius: ${({ $expanded }) => ($expanded ? "8px 8px 0 0" : "8px")};
+  border-bottom: ${({ theme, $expanded }) =>
+    $expanded ? `1px solid ${theme.colors.border}` : "none"};
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.background};
   }
@@ -91,13 +86,14 @@ const ExpandIcon = styled.div<{ $expanded: boolean }>`
   align-items: center;
   justify-content: center;
   color: ${({ theme }) => theme.colors.text.muted};
-  transform: ${({ $expanded }) => $expanded ? 'rotate(180deg)' : 'rotate(0deg)'};
+  transform: ${({ $expanded }) =>
+    $expanded ? "rotate(180deg)" : "rotate(0deg)"};
   transition: transform 0.2s ease;
 `;
 
 const DropdownContent = styled.div<{ $expanded: boolean }>`
-  max-height: ${({ $expanded }) => $expanded ? '400px' : '0'};
-  overflow: ${({ $expanded }) => $expanded ? 'visible' : 'hidden'};
+  max-height: ${({ $expanded }) => ($expanded ? "400px" : "0")};
+  overflow: ${({ $expanded }) => ($expanded ? "visible" : "hidden")};
   transition: max-height 0.2s ease;
 `;
 
@@ -115,7 +111,7 @@ const SearchInput = styled.input`
   background: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: 0.875rem;
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -155,7 +151,7 @@ const BulkButton = styled.button`
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.primary}10;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -202,20 +198,20 @@ const PermissionList = styled.div`
 `;
 
 const PermissionItem = styled.label<{ $filtered?: boolean }>`
-  display: ${({ $filtered }) => $filtered ? 'none' : 'flex'};
+  display: ${({ $filtered }) => ($filtered ? "none" : "flex")};
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.surface};
   }
 `;
 
-const PermissionCheckbox = styled.input.attrs({ type: 'checkbox' })`
+const PermissionCheckbox = styled.input.attrs({ type: "checkbox" })`
   width: 1rem;
   height: 1rem;
   accent-color: ${({ theme }) => theme.colors.primary};
@@ -265,17 +261,17 @@ const PERMISSION_CATEGORIES = {
 export const PermissionSelector: React.FC<PermissionSelectorProps> = ({
   selectedPermissions,
   onPermissionChange,
-  label = 'Permissions',
+  label = "Permissions",
   helpText,
-  disabled = false
+  disabled = false,
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Group permissions by category
   const permissionsByCategory = useMemo(() => {
     const grouped: Record<string, Permission[]> = {};
-    ALL_PERMISSIONS.forEach(permission => {
+    ALL_PERMISSIONS.forEach((permission) => {
       if (!grouped[permission.category]) {
         grouped[permission.category] = [];
       }
@@ -287,56 +283,63 @@ export const PermissionSelector: React.FC<PermissionSelectorProps> = ({
   // Filter permissions based on search
   const filteredPermissions = useMemo(() => {
     if (!searchTerm.trim()) return permissionsByCategory;
-    
+
     const term = searchTerm.toLowerCase();
     const filtered: Record<string, Permission[]> = {};
-    
+
     Object.entries(permissionsByCategory).forEach(([category, permissions]) => {
-      const filteredPerms = permissions.filter(perm =>
-        perm.name.toLowerCase().includes(term) ||
-        perm.description.toLowerCase().includes(term) ||
-        PERMISSION_CATEGORIES[category as keyof typeof PERMISSION_CATEGORIES]?.title.toLowerCase().includes(term)
+      const filteredPerms = permissions.filter(
+        (perm) =>
+          perm.name.toLowerCase().includes(term) ||
+          perm.description.toLowerCase().includes(term) ||
+          PERMISSION_CATEGORIES[
+            category as keyof typeof PERMISSION_CATEGORIES
+          ]?.title
+            .toLowerCase()
+            .includes(term),
       );
-      
+
       if (filteredPerms.length > 0) {
         filtered[category] = filteredPerms;
       }
     });
-    
+
     return filtered;
   }, [permissionsByCategory, searchTerm]);
 
   const handlePermissionToggle = (permissionKey: string) => {
     if (disabled) return;
-    
+
     const newPermissions = selectedPermissions.includes(permissionKey)
-      ? selectedPermissions.filter(p => p !== permissionKey)
+      ? selectedPermissions.filter((p) => p !== permissionKey)
       : [...selectedPermissions, permissionKey];
-    
+
     onPermissionChange(newPermissions);
   };
 
   const handleSelectAll = () => {
     if (disabled) return;
-    
+
     const allVisiblePermissions = Object.values(filteredPermissions)
       .flat()
-      .map(p => p.key);
-    
-    onPermissionChange([...new Set([...selectedPermissions, ...allVisiblePermissions])]);
+      .map((p) => p.key);
+
+    onPermissionChange([
+      ...new Set([...selectedPermissions, ...allVisiblePermissions]),
+    ]);
   };
 
   const handleSelectNone = () => {
     if (disabled) return;
-    
+
     const allVisiblePermissions = Object.values(filteredPermissions)
       .flat()
-      .map(p => p.key);
-    
-    const newPermissions = selectedPermissions.filter(p => 
-      !allVisiblePermissions.includes(p)
+      .map((p) => p.key);
+
+    const newPermissions = selectedPermissions.filter(
+      (p) => !allVisiblePermissions.includes(p),
     );
-    
+
     onPermissionChange(newPermissions);
   };
 
@@ -347,7 +350,7 @@ export const PermissionSelector: React.FC<PermissionSelectorProps> = ({
     <div>
       {label && <Heading5>{label}</Heading5>}
       {helpText && <HelpText>{helpText}</HelpText>}
-      
+
       <Container>
         <Header $expanded={expanded} onClick={() => setExpanded(!expanded)}>
           <HeaderContent>
@@ -394,36 +397,47 @@ export const PermissionSelector: React.FC<PermissionSelectorProps> = ({
           </BulkActions>
 
           <PermissionGroups>
-            {Object.entries(filteredPermissions).map(([categoryKey, permissions]) => {
-              const category = PERMISSION_CATEGORIES[categoryKey as keyof typeof PERMISSION_CATEGORIES];
-              
-              return (
-                <PermissionGroup key={categoryKey}>
-                  <GroupHeader>
-                    <GroupIcon>
-                      <category.icon size={12} />
-                    </GroupIcon>
-                    <GroupTitle>{category.title}</GroupTitle>
-                  </GroupHeader>
-                  
-                  <PermissionList>
-                    {permissions.map(permission => (
-                      <PermissionItem key={permission.key}>
-                        <PermissionCheckbox
-                          checked={selectedPermissions.includes(permission.key)}
-                          onChange={() => handlePermissionToggle(permission.key)}
-                          disabled={disabled}
-                        />
-                        <PermissionDetails>
-                          <PermissionName>{permission.name}</PermissionName>
-                          <PermissionDescription>{permission.description}</PermissionDescription>
-                        </PermissionDetails>
-                      </PermissionItem>
-                    ))}
-                  </PermissionList>
-                </PermissionGroup>
-              );
-            })}
+            {Object.entries(filteredPermissions).map(
+              ([categoryKey, permissions]) => {
+                const category =
+                  PERMISSION_CATEGORIES[
+                    categoryKey as keyof typeof PERMISSION_CATEGORIES
+                  ];
+
+                return (
+                  <PermissionGroup key={categoryKey}>
+                    <GroupHeader>
+                      <GroupIcon>
+                        <category.icon size={12} />
+                      </GroupIcon>
+                      <GroupTitle>{category.title}</GroupTitle>
+                    </GroupHeader>
+
+                    <PermissionList>
+                      {permissions.map((permission) => (
+                        <PermissionItem key={permission.key}>
+                          <PermissionCheckbox
+                            checked={selectedPermissions.includes(
+                              permission.key,
+                            )}
+                            onChange={() =>
+                              handlePermissionToggle(permission.key)
+                            }
+                            disabled={disabled}
+                          />
+                          <PermissionDetails>
+                            <PermissionName>{permission.name}</PermissionName>
+                            <PermissionDescription>
+                              {permission.description}
+                            </PermissionDescription>
+                          </PermissionDetails>
+                        </PermissionItem>
+                      ))}
+                    </PermissionList>
+                  </PermissionGroup>
+                );
+              },
+            )}
           </PermissionGroups>
         </DropdownContent>
       </Container>

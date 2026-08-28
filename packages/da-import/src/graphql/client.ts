@@ -37,7 +37,7 @@ export class CharDBClient {
 
   async request<T>(
     query: string,
-    variables?: Record<string, unknown>
+    variables?: Record<string, unknown>,
   ): Promise<T> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -83,31 +83,41 @@ export class CharDBClient {
     return token;
   }
 
-  async getSpeciesByCommunity(communityId: string): Promise<SpeciesByCommunityResponse["speciesByCommunity"]["nodes"]> {
+  async getSpeciesByCommunity(
+    communityId: string,
+  ): Promise<SpeciesByCommunityResponse["speciesByCommunity"]["nodes"]> {
     const data = await this.request<SpeciesByCommunityResponse>(
       QUERIES.speciesByCommunity,
-      { communityId, first: 100 }
+      { communityId, first: 100 },
     );
     return data.speciesByCommunity.nodes;
   }
 
-  async getVariantsBySpecies(speciesId: string): Promise<SpeciesVariantsBySpeciesResponse["speciesVariantsBySpecies"]["nodes"]> {
+  async getVariantsBySpecies(
+    speciesId: string,
+  ): Promise<
+    SpeciesVariantsBySpeciesResponse["speciesVariantsBySpecies"]["nodes"]
+  > {
     const data = await this.request<SpeciesVariantsBySpeciesResponse>(
       QUERIES.speciesVariantsBySpecies,
-      { speciesId, first: 100 }
+      { speciesId, first: 100 },
     );
     return data.speciesVariantsBySpecies.nodes;
   }
 
-  async getTraitsBySpecies(speciesId: string): Promise<TraitsBySpeciesResponse["traitsBySpecies"]["nodes"]> {
+  async getTraitsBySpecies(
+    speciesId: string,
+  ): Promise<TraitsBySpeciesResponse["traitsBySpecies"]["nodes"]> {
     const data = await this.request<TraitsBySpeciesResponse>(
       QUERIES.traitsBySpecies,
-      { speciesId, first: 100 }
+      { speciesId, first: 100 },
     );
     return data.traitsBySpecies.nodes;
   }
 
-  async getAllCharactersForSpecies(speciesId: string): Promise<CharacterNode[]> {
+  async getAllCharactersForSpecies(
+    speciesId: string,
+  ): Promise<CharacterNode[]> {
     const allCharacters: CharacterNode[] = [];
     let offset = 0;
     const limit = 100;
@@ -142,7 +152,7 @@ export class CharDBClient {
   }): Promise<CreateCharacterResponse["createCharacter"]> {
     const data = await this.request<CreateCharacterResponse>(
       MUTATIONS.createCharacter,
-      { input }
+      { input },
     );
     return data.createCharacter;
   }
@@ -151,7 +161,7 @@ export class CharDBClient {
     filePath: string,
     characterId: string,
     title: string,
-    artist?: { name: string; url: string }
+    artist?: { name: string; url: string },
   ): Promise<UploadImageResponse> {
     if (!this.token) {
       throw new Error("Not authenticated — call login() first");
@@ -177,7 +187,7 @@ export class CharDBClient {
     formData.append(
       "file",
       new Blob([fileBuffer], { type: mimeType }),
-      fileName
+      fileName,
     );
     formData.append("characterId", characterId);
     formData.append("title", title);
@@ -206,21 +216,21 @@ export class CharDBClient {
 
   async setCharacterMainMedia(
     characterId: string,
-    mediaId: string
+    mediaId: string,
   ): Promise<void> {
     await this.request<SetCharacterMainMediaResponse>(
       MUTATIONS.setCharacterMainMedia,
-      { id: characterId, input: { mediaId } }
+      { id: characterId, input: { mediaId } },
     );
   }
 
   async updateCharacterRegistry(
     characterId: string,
-    input: { registryId?: string; speciesVariantId?: string }
+    input: { registryId?: string; speciesVariantId?: string },
   ): Promise<UpdateCharacterRegistryResponse["updateCharacterRegistry"]> {
     const data = await this.request<UpdateCharacterRegistryResponse>(
       MUTATIONS.updateCharacterRegistry,
-      { id: characterId, input }
+      { id: characterId, input },
     );
     return data.updateCharacterRegistry;
   }

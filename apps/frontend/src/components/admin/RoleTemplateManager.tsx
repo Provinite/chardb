@@ -1,15 +1,7 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { 
-  FileText,
-  Plus,
-  Edit3,
-  Copy,
-  Trash2,
-  Check,
-  Star
-} from 'lucide-react';
-import { 
+import React, { useState } from "react";
+import styled from "styled-components";
+import { FileText, Plus, Edit3, Copy, Trash2, Check, Star } from "lucide-react";
+import {
   Button,
   Modal,
   Input,
@@ -18,17 +10,17 @@ import {
   SmallText,
   Caption,
   Card,
-  Label
-} from '@chardb/ui';
-import { PermissionSelector } from './PermissionSelector';
-import { PERMISSION_LABELS, type PermissionKey } from '../../lib/permissions';
+  Label,
+} from "@chardb/ui";
+import { PermissionSelector } from "./PermissionSelector";
+import { PERMISSION_LABELS, type PermissionKey } from "../../lib/permissions";
 
 /**
  * Role Template Manager Component
- * 
+ *
  * Manages predefined role templates that can be used for quick role creation.
  * Templates store common permission combinations with descriptive names.
- * 
+ *
  * Features:
  * - Create custom role templates
  * - Edit existing templates
@@ -80,7 +72,7 @@ const TemplateCard = styled(Card)`
   position: relative;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
     transform: translateY(-2px);
@@ -143,7 +135,7 @@ const ActionButton = styled.button`
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.primary}10;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -217,93 +209,98 @@ interface RoleTemplateManagerProps {
 // Default system templates
 const SYSTEM_TEMPLATES: RoleTemplate[] = [
   {
-    id: 'template-member',
-    name: 'Basic Member',
-    description: 'Standard community member with character creation rights',
-    permissions: ['canCreateCharacter', 'canEditOwnCharacter', 'canUploadOwnCharacterImages'],
-    isSystem: true,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 'template-moderator',
-    name: 'Moderator',
-    description: 'Trusted member with content moderation abilities',
+    id: "template-member",
+    name: "Basic Member",
+    description: "Standard community member with character creation rights",
     permissions: [
-      'canCreateCharacter',
-      'canEditOwnCharacter',
-      'canEditCharacter',
-      'canEditSpecies',
-      'canUploadOwnCharacterImages',
-      'canUploadCharacterImages',
-      'canGrantItems',
-      'canCreateInviteCode',
-      'canListInviteCodes'
+      "canCreateCharacter",
+      "canEditOwnCharacter",
+      "canUploadOwnCharacterImages",
     ],
     isSystem: true,
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   },
   {
-    id: 'template-admin',
-    name: 'Administrator',
-    description: 'Full administrative access to all community features',
+    id: "template-moderator",
+    name: "Moderator",
+    description: "Trusted member with content moderation abilities",
     permissions: [
-      'canCreateCharacter',
-      'canCreateOrphanedCharacter',
-      'canEditOwnCharacter',
-      'canEditCharacter',
-      'canCreateSpecies',
-      'canEditSpecies',
-      'canManageItems',
-      'canGrantItems',
-      'canUploadOwnCharacterImages',
-      'canUploadCharacterImages',
-      'canCreateInviteCode',
-      'canListInviteCodes',
-      'canRemoveCommunityMember',
-      'canManageMemberRoles',
-      'canCreateRole',
-      'canEditRole'
+      "canCreateCharacter",
+      "canEditOwnCharacter",
+      "canEditCharacter",
+      "canEditSpecies",
+      "canUploadOwnCharacterImages",
+      "canUploadCharacterImages",
+      "canGrantItems",
+      "canCreateInviteCode",
+      "canListInviteCodes",
     ],
     isSystem: true,
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   },
   {
-    id: 'template-content-creator',
-    name: 'Content Creator',
-    description: 'Focused on species and character content creation',
+    id: "template-admin",
+    name: "Administrator",
+    description: "Full administrative access to all community features",
     permissions: [
-      'canCreateCharacter',
-      'canEditOwnCharacter',
-      'canCreateSpecies',
-      'canEditSpecies',
-      'canUploadOwnCharacterImages'
+      "canCreateCharacter",
+      "canCreateOrphanedCharacter",
+      "canEditOwnCharacter",
+      "canEditCharacter",
+      "canCreateSpecies",
+      "canEditSpecies",
+      "canManageItems",
+      "canGrantItems",
+      "canUploadOwnCharacterImages",
+      "canUploadCharacterImages",
+      "canCreateInviteCode",
+      "canListInviteCodes",
+      "canRemoveCommunityMember",
+      "canManageMemberRoles",
+      "canCreateRole",
+      "canEditRole",
     ],
     isSystem: true,
     createdAt: new Date(),
-    updatedAt: new Date()
-  }
+    updatedAt: new Date(),
+  },
+  {
+    id: "template-content-creator",
+    name: "Content Creator",
+    description: "Focused on species and character content creation",
+    permissions: [
+      "canCreateCharacter",
+      "canEditOwnCharacter",
+      "canCreateSpecies",
+      "canEditSpecies",
+      "canUploadOwnCharacterImages",
+    ],
+    isSystem: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
-
 
 export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
   onTemplateApply,
-  allowEditing = true
+  allowEditing = true,
 }) => {
   const [templates, setTemplates] = useState<RoleTemplate[]>(SYSTEM_TEMPLATES);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<RoleTemplate | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<RoleTemplate | null>(
+    null,
+  );
 
   // Form state
-  const [templateName, setTemplateName] = useState('');
-  const [templateDescription, setTemplateDescription] = useState('');
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
   const handleCreateTemplate = () => {
-    setTemplateName('');
-    setTemplateDescription('');
+    setTemplateName("");
+    setTemplateDescription("");
     setSelectedPermissions([]);
     setEditingTemplate(null);
     setShowCreateModal(true);
@@ -311,7 +308,7 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
 
   const handleEditTemplate = (template: RoleTemplate) => {
     if (template.isSystem && !allowEditing) return;
-    
+
     setTemplateName(template.name);
     setTemplateDescription(template.description);
     setSelectedPermissions(template.permissions);
@@ -328,8 +325,8 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
   };
 
   const handleDeleteTemplate = (templateId: string) => {
-    if (window.confirm('Are you sure you want to delete this template?')) {
-      setTemplates(templates.filter(t => t.id !== templateId));
+    if (window.confirm("Are you sure you want to delete this template?")) {
+      setTemplates(templates.filter((t) => t.id !== templateId));
     }
   };
 
@@ -337,20 +334,22 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
     if (!templateName.trim() || selectedPermissions.length === 0) return;
 
     const now = new Date();
-    
+
     if (editingTemplate) {
       // Update existing template
-      setTemplates(templates.map(t => 
-        t.id === editingTemplate.id 
-          ? {
-              ...t,
-              name: templateName,
-              description: templateDescription,
-              permissions: selectedPermissions,
-              updatedAt: now
-            }
-          : t
-      ));
+      setTemplates(
+        templates.map((t) =>
+          t.id === editingTemplate.id
+            ? {
+                ...t,
+                name: templateName,
+                description: templateDescription,
+                permissions: selectedPermissions,
+                updatedAt: now,
+              }
+            : t,
+        ),
+      );
     } else {
       // Create new template
       const newTemplate: RoleTemplate = {
@@ -360,9 +359,9 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
         permissions: selectedPermissions,
         isSystem: false,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
       };
-      
+
       setTemplates([...templates, newTemplate]);
     }
 
@@ -374,7 +373,7 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
   };
 
   const getPermissionChips = (permissions: string[]) => {
-    return permissions.slice(0, 3).map(perm => (
+    return permissions.slice(0, 3).map((perm) => (
       <PermissionChip key={perm}>
         <Check size={10} />
         {PERMISSION_LABELS[perm as PermissionKey] || perm}
@@ -391,12 +390,12 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
           </HeaderIcon>
           <div>
             <Heading3>Role Templates</Heading3>
-            <SmallText style={{ margin: 0, color: 'muted' }}>
+            <SmallText style={{ margin: 0, color: "muted" }}>
               Predefined role configurations for quick setup
             </SmallText>
           </div>
         </HeaderContent>
-        
+
         {allowEditing && (
           <Button
             variant="primary"
@@ -409,7 +408,7 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
       </Header>
 
       <TemplateGrid>
-        {templates.map(template => (
+        {templates.map((template) => (
           <TemplateCard key={template.id}>
             <TemplateHeader>
               <TemplateInfo>
@@ -422,9 +421,11 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
                     </SystemBadge>
                   )}
                 </TemplateName>
-                <TemplateDescription>{template.description}</TemplateDescription>
+                <TemplateDescription>
+                  {template.description}
+                </TemplateDescription>
               </TemplateInfo>
-              
+
               <TemplateActions>
                 {allowEditing && (
                   <>
@@ -437,7 +438,7 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
                     >
                       <Copy size={12} />
                     </ActionButton>
-                    
+
                     {(!template.isSystem || allowEditing) && (
                       <ActionButton
                         onClick={(e) => {
@@ -449,7 +450,7 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
                         <Edit3 size={12} />
                       </ActionButton>
                     )}
-                    
+
                     {!template.isSystem && (
                       <ActionButton
                         onClick={(e) => {
@@ -457,7 +458,7 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
                           handleDeleteTemplate(template.id);
                         }}
                         title="Delete template"
-                        style={{ color: 'var(--colors-danger)' }}
+                        style={{ color: "var(--colors-danger)" }}
                       >
                         <Trash2 size={12} />
                       </ActionButton>
@@ -480,7 +481,7 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
               <PermissionCount>
                 {template.permissions.length} permissions
               </PermissionCount>
-              
+
               {onTemplateApply && (
                 <UseButton
                   variant="outline"
@@ -498,7 +499,7 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
       <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title={editingTemplate ? 'Edit Template' : 'Create Template'}
+        title={editingTemplate ? "Edit Template" : "Create Template"}
       >
         <FormContainer>
           <FormSection>
@@ -533,19 +534,24 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
             />
           </FormSection>
 
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateModal(false)}
-            >
+          <div
+            style={{
+              display: "flex",
+              gap: "0.75rem",
+              justifyContent: "flex-end",
+            }}
+          >
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
               Cancel
             </Button>
             <Button
               variant="primary"
               onClick={handleSaveTemplate}
-              disabled={!templateName.trim() || selectedPermissions.length === 0}
+              disabled={
+                !templateName.trim() || selectedPermissions.length === 0
+              }
             >
-              {editingTemplate ? 'Update Template' : 'Create Template'}
+              {editingTemplate ? "Update Template" : "Create Template"}
             </Button>
           </div>
         </FormContainer>

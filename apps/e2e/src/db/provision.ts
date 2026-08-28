@@ -2,7 +2,11 @@ import { execFileSync } from "node:child_process";
 import { CFG, REPO_ROOT } from "../config.js";
 import { q, withClient } from "./sql.js";
 
-const run = (cmd: string, args: string[], env: NodeJS.ProcessEnv = {}): void => {
+const run = (
+  cmd: string,
+  args: string[],
+  env: NodeJS.ProcessEnv = {},
+): void => {
   execFileSync(cmd, args, {
     cwd: REPO_ROOT,
     stdio: "inherit",

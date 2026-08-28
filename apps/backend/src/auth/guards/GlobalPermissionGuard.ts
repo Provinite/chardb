@@ -38,7 +38,7 @@ export class GlobalPermissionGuard implements CanActivate {
     // Get the required permission from metadata
     const requiredPermission = this.reflector.getAllAndOverride(
       AllowGlobalPermission,
-      [context.getHandler(), context.getClass()]
+      [context.getHandler(), context.getClass()],
     );
 
     if (!requiredPermission) {

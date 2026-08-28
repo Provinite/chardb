@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { useGetGalleryQuery, useGetMediaQuery, LikeableType, CommentableType } from "../generated/graphql";
+import {
+  useGetGalleryQuery,
+  useGetMediaQuery,
+  LikeableType,
+  CommentableType,
+} from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { LikeButton } from "../components/LikeButton";
 import { CommentList } from "../components/CommentList";
@@ -420,8 +425,15 @@ export const GalleryPage: React.FC = () => {
             <OwnerAvatar>
               {gallery.owner.avatarImage ? (
                 <img
-                  src={gallery.owner.avatarImage.thumbnailUrl || gallery.owner.avatarImage.originalUrl}
-                  alt={gallery.owner.avatarImage.altText || gallery.owner.displayName || gallery.owner.username}
+                  src={
+                    gallery.owner.avatarImage.thumbnailUrl ||
+                    gallery.owner.avatarImage.originalUrl
+                  }
+                  alt={
+                    gallery.owner.avatarImage.altText ||
+                    gallery.owner.displayName ||
+                    gallery.owner.username
+                  }
                 />
               ) : (
                 gallery.owner.displayName?.[0] || gallery.owner.username[0]

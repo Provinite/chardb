@@ -47,13 +47,17 @@ async function main() {
   }
 
   const variants = json.data.speciesVariantsBySpecies.nodes.map(
-    (v: { id: string; name: string; enumValueSettings: { enumValueId: string }[] }) => ({
+    (v: {
+      id: string;
+      name: string;
+      enumValueSettings: { enumValueId: string }[];
+    }) => ({
       id: v.id,
       name: v.name,
       allowedEnumValueIds: v.enumValueSettings.map(
-        (s: { enumValueId: string }) => s.enumValueId
+        (s: { enumValueId: string }) => s.enumValueId,
       ),
-    })
+    }),
   );
 
   const outPath = path.join(__dirname, "..", "config", "variant-settings.json");
@@ -61,7 +65,9 @@ async function main() {
 
   console.log(`Wrote ${variants.length} variants to ${outPath}`);
   for (const v of variants) {
-    console.log(`  ${v.name}: ${v.allowedEnumValueIds.length} allowed enum values`);
+    console.log(
+      `  ${v.name}: ${v.allowedEnumValueIds.length} allowed enum values`,
+    );
   }
 }
 

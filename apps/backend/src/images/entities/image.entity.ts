@@ -1,7 +1,7 @@
-import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
-import { User } from '../../users/entities/user.entity';
-import { Tag } from '../../shared/entities/tag.entity';
-import { ModerationStatus } from '@prisma/client';
+import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
+import { User } from "../../users/entities/user.entity";
+import { Tag } from "../../shared/entities/tag.entity";
+import { ModerationStatus } from "@prisma/client";
 
 @ObjectType()
 export class Image {
@@ -23,11 +23,8 @@ export class Image {
   @Field({ nullable: true })
   altText?: string;
 
-
   @Field(() => ID)
   uploaderId: string;
-
-
 
   // Artist attribution
   @Field(() => ID, { nullable: true })
@@ -60,7 +57,9 @@ export class Image {
   @Field({ nullable: true })
   sensitiveContentDescription?: string;
 
-  @Field(() => ModerationStatus, { description: 'Current moderation status of the image' })
+  @Field(() => ModerationStatus, {
+    description: "Current moderation status of the image",
+  })
   moderationStatus: ModerationStatus;
 
   @Field()
@@ -75,8 +74,6 @@ export class Image {
 
   @Field(() => User, { nullable: true })
   artist?: User;
-
-
 
   @Field(() => [ImageTag], { nullable: true })
   tags_rel?: ImageTag[];

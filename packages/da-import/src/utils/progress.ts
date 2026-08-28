@@ -4,7 +4,7 @@ export class ProgressTracker {
 
   constructor(
     private readonly total: number,
-    private readonly label: string
+    private readonly label: string,
   ) {}
 
   increment(): void {
@@ -13,14 +13,14 @@ export class ProgressTracker {
     if (pct !== this.lastPrintedPct && pct % 5 === 0) {
       this.lastPrintedPct = pct;
       process.stdout.write(
-        `\r  ${this.label}: ${this.current}/${this.total} (${pct}%)`
+        `\r  ${this.label}: ${this.current}/${this.total} (${pct}%)`,
       );
     }
   }
 
   finish(): void {
     process.stdout.write(
-      `\r  ${this.label}: ${this.current}/${this.total} (100%)\n`
+      `\r  ${this.label}: ${this.current}/${this.total} (100%)\n`,
     );
   }
 }

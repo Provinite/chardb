@@ -1,20 +1,27 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { Character } from '../generated/graphql';
-import { Tag } from './Tag';
-import { TagsContainer } from './TagsContainer';
-import { CopyIdButton } from './CopyIdButton';
+import React from "react";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { Character } from "../generated/graphql";
+import { Tag } from "./Tag";
+import { TagsContainer } from "./TagsContainer";
+import { CopyIdButton } from "./CopyIdButton";
 
-export type CharacterCardItem = Pick<Character,
-  'id' | 'name' | 'visibility' | 'tags' | 'isSellable' | 'price'
+export type CharacterCardItem = Pick<
+  Character,
+  "id" | "name" | "visibility" | "tags" | "isSellable" | "price"
 > & {
-  species?: Pick<NonNullable<Character['species']>, 'name'> | null;
-  owner?: Pick<NonNullable<Character['owner']>, 'displayName' | 'username'> | null;
+  species?: Pick<NonNullable<Character["species"]>, "name"> | null;
+  owner?: Pick<
+    NonNullable<Character["owner"]>,
+    "displayName" | "username"
+  > | null;
   mainMedia?: {
-    image?: Pick<NonNullable<NonNullable<Character['mainMedia']>['image']>, 'thumbnailUrl' | 'originalUrl' | 'altText'> | null;
+    image?: Pick<
+      NonNullable<NonNullable<Character["mainMedia"]>["image"]>,
+      "thumbnailUrl" | "originalUrl" | "altText"
+    > | null;
   } | null;
-  _count?: Pick<NonNullable<Character['_count']>, 'media'> | null;
+  _count?: Pick<NonNullable<Character["_count"]>, "media"> | null;
 };
 
 const Card = styled(Link)`
@@ -108,22 +115,25 @@ const ImageCount = styled.span`
 `;
 
 const VisibilityBadge = styled.span.withConfig({
-  shouldForwardProp: (prop) => prop !== 'visibility'
+  shouldForwardProp: (prop) => prop !== "visibility",
 })<{ visibility: string }>`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  background: ${props => 
-    props.visibility === 'PUBLIC' ? props.theme.colors.success + '20' :
-    props.visibility === 'UNLISTED' ? props.theme.colors.warning + '20' : props.theme.colors.error + '20'
-  };
-  color: ${props => 
-    props.visibility === 'PUBLIC' ? props.theme.colors.success :
-    props.visibility === 'UNLISTED' ? props.theme.colors.warning : props.theme.colors.error
-  };
+  background: ${(props) =>
+    props.visibility === "PUBLIC"
+      ? props.theme.colors.success + "20"
+      : props.visibility === "UNLISTED"
+        ? props.theme.colors.warning + "20"
+        : props.theme.colors.error + "20"};
+  color: ${(props) =>
+    props.visibility === "PUBLIC"
+      ? props.theme.colors.success
+      : props.visibility === "UNLISTED"
+        ? props.theme.colors.warning
+        : props.theme.colors.error};
 `;
-
 
 const ButtonGroup = styled.div`
   position: absolute;
@@ -171,7 +181,7 @@ interface CharacterCardProps {
 export const CharacterCard: React.FC<CharacterCardProps> = ({
   character,
   showOwner = true,
-  showEditButton = false
+  showEditButton = false,
 }) => {
   return (
     <Card
@@ -181,36 +191,32 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       <ButtonGroup>
         <CopyIdButton id={character.id} />
         {showEditButton && (
-          <EditButton
-            to={`/character/${character.id}/edit`}
-          >
-            Edit
-          </EditButton>
+          <EditButton to={`/character/${character.id}/edit`}>Edit</EditButton>
         )}
       </ButtonGroup>
       <ImageSection>
         {character.mainMedia?.image ? (
           <MainImage
-            src={character.mainMedia.image.thumbnailUrl || character.mainMedia.image.originalUrl}
-            alt={character.mainMedia.image.altText || `${character.name} main image`}
+            src={
+              character.mainMedia.image.thumbnailUrl ||
+              character.mainMedia.image.originalUrl
+            }
+            alt={
+              character.mainMedia.image.altText ||
+              `${character.name} main image`
+            }
           />
         ) : (
-          <ImagePlaceholder>
-            No main image
-          </ImagePlaceholder>
+          <ImagePlaceholder>No main image</ImagePlaceholder>
         )}
       </ImageSection>
-      
+
       <Content>
         <Name>{character.name}</Name>
-        {character.species?.name && (
-          <Species>
-            {character.species.name}
-          </Species>
-        )}
+        {character.species?.name && <Species>{character.species.name}</Species>}
 
         {character.tags && character.tags.length > 0 && (
-          <TagsContainer size="sm" style={{ marginBottom: '0.75rem' }}>
+          <TagsContainer size="sm" style={{ marginBottom: "0.75rem" }}>
             {character.tags.slice(0, 3).map((tag, index) => (
               <Tag key={index} size="sm">
                 {tag}
@@ -223,12 +229,14 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
             )}
           </TagsContainer>
         )}
-        
+
         <Meta>
           {showOwner ? (
             <OwnerInfo>
               {character.owner ? (
-                <>by {character.owner.displayName || character.owner.username}</>
+                <>
+                  by {character.owner.displayName || character.owner.username}
+                </>
               ) : (
                 <>Community Character</>
               )}

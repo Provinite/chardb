@@ -15,7 +15,9 @@ export class ExternalAccountsResolver {
     description: "Get all external accounts linked to the current user",
   })
   @AllowAnyAuthenticated()
-  async getMyExternalAccounts(@CurrentUser() user: User): Promise<ExternalAccount[]> {
+  async getMyExternalAccounts(
+    @CurrentUser() user: User,
+  ): Promise<ExternalAccount[]> {
     return this.externalAccountsService.findByUserId(user.id);
   }
 
@@ -27,6 +29,9 @@ export class ExternalAccountsResolver {
     @CurrentUser() user: User,
     @Args("input") input: UnlinkExternalAccountInput,
   ): Promise<boolean> {
-    return this.externalAccountsService.unlinkExternalAccount(user.id, input.provider);
+    return this.externalAccountsService.unlinkExternalAccount(
+      user.id,
+      input.provider,
+    );
   }
 }

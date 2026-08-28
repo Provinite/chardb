@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService} from "@nestjs/config";
+import { ConfigService } from "@nestjs/config";
 import {
   S3Client,
   PutObjectCommand,
@@ -12,7 +12,7 @@ export interface UploadImageOptions {
   filename: string;
   mimeType: string;
   imageId: string; // Image ID for S3 key generation
-  sizeVariant?: 'original' | 'thumbnail' | 'medium' | 'full';
+  sizeVariant?: "original" | "thumbnail" | "medium" | "full";
 }
 
 export interface UploadImageResult {
@@ -32,11 +32,11 @@ export class S3Service {
     const region = this.configService.get<string>("AWS_REGION", "us-east-1");
     this.bucketName = this.configService.get<string>(
       "S3_IMAGES_BUCKET",
-      "chardb-images-local"
+      "chardb-images-local",
     );
     this.cloudfrontDomain = this.configService.get<string>(
       "CLOUDFRONT_IMAGES_DOMAIN",
-      "localhost:4566/chardb-images-local"
+      "localhost:4566/chardb-images-local",
     );
     this.endpointUrl = this.configService.get<string>("AWS_ENDPOINT_URL");
 
@@ -65,7 +65,7 @@ export class S3Service {
     const extension = this.getExtension(filename, mimeType);
 
     // Generate S3 key with pattern: {imageId}/{variant}.{ext}
-    const variantSuffix = sizeVariant || 'original';
+    const variantSuffix = sizeVariant || "original";
     const key = `${imageId}/${variantSuffix}.${extension}`;
 
     // Sanitize filename for Content-Disposition header
@@ -97,7 +97,10 @@ export class S3Service {
 
       return { key, url };
     } catch (error) {
-      this.logger.error(`Failed to upload image to S3: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to upload image to S3: ${error.message}`,
+        error.stack,
+      );
       throw new Error(`Failed to upload image: ${error.message}`);
     }
   }
@@ -126,7 +129,7 @@ export class S3Service {
     } catch (error) {
       this.logger.error(
         `Failed to delete image from S3: ${error.message}`,
-        error.stack
+        error.stack,
       );
       // Don't throw - deletion failures shouldn't break the application
     }
@@ -137,7 +140,7 @@ export class S3Service {
    */
   async deleteImages(keysOrUrls: string[]): Promise<void> {
     const deletePromises = keysOrUrls.map((keyOrUrl) =>
-      this.deleteImage(keyOrUrl)
+      this.deleteImage(keyOrUrl),
     );
     await Promise.all(deletePromises);
   }
@@ -169,7 +172,10 @@ export class S3Service {
       const parsedUrl = new URL(url);
 
       // LocalStack format: http://localhost:4566/bucket-name/key
-      if (parsedUrl.hostname === "localhost" || parsedUrl.hostname === "127.0.0.1") {
+      if (
+        parsedUrl.hostname === "localhost" ||
+        parsedUrl.hostname === "127.0.0.1"
+      ) {
         const pathParts = parsedUrl.pathname.split("/").filter((p) => p);
         // Remove bucket name (first part), rest is the key
         return pathParts.slice(1).join("/");

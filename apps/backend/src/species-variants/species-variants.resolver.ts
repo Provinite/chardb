@@ -222,13 +222,17 @@ export class SpeciesVariantsResolver {
     nullable: true,
     description: "The color associated with this species variant",
   })
-  async resolveColor(@Parent() speciesVariant: SpeciesVariant): Promise<CommunityColor | null> {
+  async resolveColor(
+    @Parent() speciesVariant: SpeciesVariant,
+  ): Promise<CommunityColor | null> {
     if (!speciesVariant.colorId) {
       return null;
     }
 
     try {
-      return await this.communityColorsService.findCommunityColorById(speciesVariant.colorId) as CommunityColor;
+      return (await this.communityColorsService.findCommunityColorById(
+        speciesVariant.colorId,
+      )) as CommunityColor;
     } catch (error) {
       if (error instanceof NotFoundException) {
         return null;

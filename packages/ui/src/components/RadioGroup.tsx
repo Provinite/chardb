@@ -1,5 +1,5 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 /**
  * RadioGroup - A group of radio buttons with consistent styling and theme integration
@@ -48,7 +48,9 @@ interface RadioGroupContextValue {
   name: string;
 }
 
-const RadioGroupContext = React.createContext<RadioGroupContextValue | null>(null);
+const RadioGroupContext = React.createContext<RadioGroupContextValue | null>(
+  null,
+);
 
 interface RadioGroupProps {
   /** Current selected value */
@@ -75,7 +77,7 @@ const StyledRadioGroup = styled.div`
 export const RadioGroup: React.FC<RadioGroupProps> = ({
   value,
   onChange,
-  name = 'radio-group',
+  name = "radio-group",
   children,
   className,
 }) => {
@@ -101,7 +103,7 @@ const RadioContainer = styled.label<{ $disabled?: boolean }>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
-  cursor: ${({ $disabled }) => ($disabled ? 'not-allowed' : 'pointer')};
+  cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
   opacity: ${({ $disabled }) => ($disabled ? 0.6 : 1)};
   padding: ${({ theme }) => theme.spacing.xs};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
@@ -112,7 +114,7 @@ const RadioContainer = styled.label<{ $disabled?: boolean }>`
   }
 `;
 
-const HiddenRadio = styled.input.attrs({ type: 'radio' })`
+const HiddenRadio = styled.input.attrs({ type: "radio" })`
   position: absolute;
   opacity: 0;
   pointer-events: none;
@@ -121,10 +123,11 @@ const HiddenRadio = styled.input.attrs({ type: 'radio' })`
 const StyledRadio = styled.div<{ $checked: boolean; $disabled?: boolean }>`
   width: 20px;
   height: 20px;
-  border: 2px solid ${({ theme, $checked, $disabled }) => {
-    if ($disabled) return theme.colors.text.muted;
-    return $checked ? theme.colors.primary : theme.colors.border;
-  }};
+  border: 2px solid
+    ${({ theme, $checked, $disabled }) => {
+      if ($disabled) return theme.colors.text.muted;
+      return $checked ? theme.colors.primary : theme.colors.border;
+    }};
   border-radius: ${({ theme }) => theme.borderRadius.full};
   display: flex;
   align-items: center;
@@ -133,16 +136,16 @@ const StyledRadio = styled.div<{ $checked: boolean; $disabled?: boolean }>`
   flex-shrink: 0;
 
   ${HiddenRadio}:focus + & {
-    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.primary + '20'};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.primary + "20"};
   }
 
   &::after {
-    content: '';
+    content: "";
     width: 10px;
     height: 10px;
     border-radius: ${({ theme }) => theme.borderRadius.full};
     background-color: ${({ theme, $checked, $disabled }) => {
-      if (!$checked) return 'transparent';
+      if (!$checked) return "transparent";
       if ($disabled) return theme.colors.text.muted;
       return theme.colors.primary;
     }};
@@ -160,11 +163,15 @@ const RadioLabel = styled.span`
 /**
  * Individual Radio button component (must be used within RadioGroup)
  */
-export const Radio: React.FC<RadioProps> = ({ value, children, disabled = false }) => {
+export const Radio: React.FC<RadioProps> = ({
+  value,
+  children,
+  disabled = false,
+}) => {
   const context = React.useContext(RadioGroupContext);
 
   if (!context) {
-    throw new Error('Radio must be used within a RadioGroup');
+    throw new Error("Radio must be used within a RadioGroup");
   }
 
   const { value: groupValue, onChange, name } = context;
@@ -177,7 +184,7 @@ export const Radio: React.FC<RadioProps> = ({ value, children, disabled = false 
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       handleChange();
     }

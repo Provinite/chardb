@@ -46,31 +46,31 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
     // Load variant settings
     const variantSettingsPath = path.join(
       getConfigDir(),
-      "variant-settings.json"
+      "variant-settings.json",
     );
     const variantSettings: VariantSetting[] = JSON.parse(
-      await fs.readFile(variantSettingsPath, "utf-8")
+      await fs.readFile(variantSettingsPath, "utf-8"),
     );
     logger.info(
-      `Loaded ${variantSettings.length} variant settings from ${variantSettingsPath}`
+      `Loaded ${variantSettings.length} variant settings from ${variantSettingsPath}`,
     );
 
     // Validate mapping config — check for TODOs
     const todoRules = config.rules.filter(
-      (r) => r.traitId === "TODO" || r.enumValueId === "TODO"
+      (r) => r.traitId === "TODO" || r.enumValueId === "TODO",
     );
     if (todoRules.length > 0) {
       logger.warn(
-        `${todoRules.length} rules still have TODO placeholders — these traits won't be mapped.`
+        `${todoRules.length} rules still have TODO placeholders — these traits won't be mapped.`,
       );
     }
 
     const todoVariants = Object.entries(config.rarityToVariantId).filter(
-      ([, id]) => id === "TODO"
+      ([, id]) => id === "TODO",
     );
     if (todoVariants.length > 0) {
       logger.warn(
-        `${todoVariants.length} rarity-to-variant mappings still have TODO placeholders.`
+        `${todoVariants.length} rarity-to-variant mappings still have TODO placeholders.`,
       );
     }
 
@@ -82,18 +82,18 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
     const deviationsDir = getDeviationsDir();
     const allFiles = await listJsonFiles(deviationsDir);
     const files = allFiles.filter(
-      (f) => !excludedIds.has(f.replace(".json", ""))
+      (f) => !excludedIds.has(f.replace(".json", "")),
     );
     logger.info(
       `Found ${allFiles.length} downloaded deviations` +
         (excludedIds.size > 0
           ? ` (${excludedIds.size} excluded, parsing ${files.length}).`
-          : ".")
+          : "."),
     );
 
     // Build deviation override lookup
     const deviationOverrides = new Map(
-      config.deviationOverrides.map((o) => [o.numericId, o.traits])
+      config.deviationOverrides.map((o) => [o.numericId, o.traits]),
     );
 
     const parsedCharacters: ParsedCharacter[] = [];
@@ -110,20 +110,20 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
       const parsed = parseDescription(
         deviation.descriptionHtml,
         deviation.title,
-        config.exactLineRules
+        config.exactLineRules,
       );
 
       // Map trait lines
       const { mappedTraits, unmappedLines, warnings } = mapTraitLines(
         parsed.traitLines,
-        config
+        config,
       );
 
       // Filter out TODO-mapped traits
       const validMappedTraits = mappedTraits.filter(
         (t) =>
           t.traitId !== "TODO" &&
-          (!("enumValueId" in t) || t.enumValueId !== "TODO")
+          (!("enumValueId" in t) || t.enumValueId !== "TODO"),
       );
 
       // Add traits from exact line matches
@@ -160,15 +160,18 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
           });
         } else {
           parsed.warnings.push(
-            `No category badge mapping for category: "${parsed.category}"`
+            `No category badge mapping for category: "${parsed.category}"`,
           );
         }
 
         // Assign voided badge if category matches a voided pattern
-        if (config.categoryBadges.voidedBadgeEnumId && config.categoryBadges.voidedPatterns) {
+        if (
+          config.categoryBadges.voidedBadgeEnumId &&
+          config.categoryBadges.voidedPatterns
+        ) {
           const catLower = parsed.category.toLowerCase();
-          const isVoided = config.categoryBadges.voidedPatterns.some(
-            (p) => catLower.includes(p.toLowerCase())
+          const isVoided = config.categoryBadges.voidedPatterns.some((p) =>
+            catLower.includes(p.toLowerCase()),
           );
           if (isVoided) {
             validMappedTraits.push({
@@ -180,10 +183,13 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
         }
 
         // Assign retired badge if category matches a retired pattern
-        if (config.categoryBadges.retiredBadgeEnumId && config.categoryBadges.retiredPatterns) {
+        if (
+          config.categoryBadges.retiredBadgeEnumId &&
+          config.categoryBadges.retiredPatterns
+        ) {
           const catLower = parsed.category.toLowerCase();
-          const isRetired = config.categoryBadges.retiredPatterns.some(
-            (p) => catLower.includes(p.toLowerCase())
+          const isRetired = config.categoryBadges.retiredPatterns.some((p) =>
+            catLower.includes(p.toLowerCase()),
           );
           if (isRetired) {
             validMappedTraits.push({
@@ -225,7 +231,7 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
       const ACCENTS_TRAIT = "24b0cb2b-c7fb-4565-9922-9754168466b6";
 
       const singleAccessoryCount = validMappedTraits.filter(
-        (t) => "enumValueId" in t && t.enumValueId === SINGLE_ACCESSORY_ENUM
+        (t) => "enumValueId" in t && t.enumValueId === SINGLE_ACCESSORY_ENUM,
       ).length;
 
       if (singleAccessoryCount > 1) {
@@ -257,7 +263,7 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
       const { variantId, rarity } = deriveVariant(
         deduped,
         config,
-        variantSettings
+        variantSettings,
       );
 
       const allWarnings = [...parsed.warnings, ...warnings];
@@ -296,14 +302,12 @@ export const parseCommand: CommandModule<object, ParseArgs> = {
 
     // Print summary
     const fullyMapped = parsedCharacters.filter(
-      (c) => c.unmappedLines.length === 0
+      (c) => c.unmappedLines.length === 0,
     ).length;
     const withUnmapped = parsedCharacters.filter(
-      (c) => c.unmappedLines.length > 0
+      (c) => c.unmappedLines.length > 0,
     ).length;
-    const noOwner = parsedCharacters.filter(
-      (c) => !c.ownerDaUsername
-    ).length;
+    const noOwner = parsedCharacters.filter((c) => !c.ownerDaUsername).length;
 
     logger.info(`\nParse results:`);
     logger.info(`  Total characters: ${parsedCharacters.length}`);

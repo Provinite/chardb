@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useCommunityMembersByUserQuery } from '../generated/graphql';
+import { useMemo } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useCommunityMembersByUserQuery } from "../generated/graphql";
 
 /**
  * Custom hook to get the user's role and permissions within a specific community
@@ -9,7 +9,7 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
   const { user } = useAuth();
 
   const { data, loading, error } = useCommunityMembersByUserQuery({
-    variables: { userId: user?.id || '', first: 50 },
+    variables: { userId: user?.id || "", first: 50 },
     skip: !user?.id,
   });
 
@@ -19,7 +19,7 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
     }
 
     const membership = data.communityMembersByUser?.nodes?.find(
-      (m: any) => m.role.community.id === communityId
+      (m: any) => m.role.community.id === communityId,
     );
 
     return membership?.role || null;

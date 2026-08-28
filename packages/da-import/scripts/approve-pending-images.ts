@@ -29,8 +29,14 @@ if (!email || !password) {
   process.exit(1);
 }
 
-async function gql<T>(query: string, variables: Record<string, unknown>, token?: string): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+async function gql<T>(
+  query: string,
+  variables: Record<string, unknown>,
+  token?: string,
+): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const resp = await fetch(API_URL, {
@@ -41,7 +47,9 @@ async function gql<T>(query: string, variables: Record<string, unknown>, token?:
 
   const json = await resp.json();
   if (json.errors?.length) {
-    throw new Error(`GraphQL: ${json.errors.map((e: { message: string }) => e.message).join(", ")}`);
+    throw new Error(
+      `GraphQL: ${json.errors.map((e: { message: string }) => e.message).join(", ")}`,
+    );
   }
   return json.data as T;
 }
@@ -89,9 +97,13 @@ async function main() {
   console.log("Logged in.");
 
   // Get pending count
-  const countData = await gql<{ pendingImageCount: number }>(PENDING_COUNT, {
-    communityId: COMMUNITY_ID,
-  }, token);
+  const countData = await gql<{ pendingImageCount: number }>(
+    PENDING_COUNT,
+    {
+      communityId: COMMUNITY_ID,
+    },
+    token,
+  );
   const total = countData.pendingImageCount;
   console.log(`Pending images: ${total}`);
 
@@ -101,7 +113,9 @@ async function main() {
   }
 
   if (dryRun) {
-    console.log(`\n=== DRY RUN — would approve ${limit > 0 ? Math.min(limit, total) : total} images ===`);
+    console.log(
+      `\n=== DRY RUN — would approve ${limit > 0 ? Math.min(limit, total) : total} images ===`,
+    );
   }
   if (limit > 0) {
     console.log(`Limit: ${limit}`);
@@ -119,7 +133,11 @@ async function main() {
         hasMore: boolean;
         items: Array<{ image: { id: string }; characterId: string | null }>;
       };
-    }>(QUEUE, { communityId: COMMUNITY_ID, first: PAGE_SIZE, offset: queryOffset }, token);
+    }>(
+      QUEUE,
+      { communityId: COMMUNITY_ID, first: PAGE_SIZE, offset: queryOffset },
+      token,
+    );
 
     const items = data.imageModerationQueue.items;
     if (items.length === 0) break;
@@ -127,7 +145,9 @@ async function main() {
     for (const item of items) {
       if (limit > 0 && approved >= limit) break;
       if (dryRun) {
-        console.log(`[DRY RUN] approveImage(${item.image.id}) — character: ${item.characterId ?? "(none)"}`);
+        console.log(
+          `[DRY RUN] approveImage(${item.image.id}) — character: ${item.characterId ?? "(none)"}`,
+        );
       } else {
         await gql(APPROVE, { input: { imageId: item.image.id } }, token);
       }

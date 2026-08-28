@@ -1,7 +1,7 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { Button } from '@chardb/ui';
+import React from "react";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { Button } from "@chardb/ui";
 
 const Container = styled.div`
   max-width: 600px;
@@ -36,8 +36,8 @@ export const NotFoundPage: React.FC = () => {
       <ErrorCode>404</ErrorCode>
       <ErrorTitle>Page Not Found</ErrorTitle>
       <ErrorDescription>
-        The page you're looking for doesn't exist. It might have been moved, deleted, 
-        or you entered the wrong URL.
+        The page you're looking for doesn't exist. It might have been moved,
+        deleted, or you entered the wrong URL.
       </ErrorDescription>
       <Button as={Link} to="/" variant="primary">
         Go Home

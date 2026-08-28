@@ -1,6 +1,12 @@
-import { CreateCommunityInput, UpdateCommunityInput } from "../dto/community.dto";
+import {
+  CreateCommunityInput,
+  UpdateCommunityInput,
+} from "../dto/community.dto";
 import { Community, CommunityConnection } from "../entities/community.entity";
-import { CreateCommunityServiceInput, UpdateCommunityServiceInput } from "../communities.service";
+import {
+  CreateCommunityServiceInput,
+  UpdateCommunityServiceInput,
+} from "../communities.service";
 import { Prisma } from "@chardb/database";
 
 /**
@@ -10,7 +16,10 @@ import { Prisma } from "@chardb/database";
 /**
  * Maps CreateCommunityInput to service input format
  */
-export function mapCreateCommunityInputToService(input: CreateCommunityInput, creatorId: string): CreateCommunityServiceInput {
+export function mapCreateCommunityInputToService(
+  input: CreateCommunityInput,
+  creatorId: string,
+): CreateCommunityServiceInput {
   return {
     name: input.name,
     creatorId: creatorId,
@@ -20,7 +29,9 @@ export function mapCreateCommunityInputToService(input: CreateCommunityInput, cr
 /**
  * Maps UpdateCommunityInput to service input format
  */
-export function mapUpdateCommunityInputToService(input: UpdateCommunityInput): UpdateCommunityServiceInput {
+export function mapUpdateCommunityInputToService(
+  input: UpdateCommunityInput,
+): UpdateCommunityServiceInput {
   const result: UpdateCommunityServiceInput = {};
 
   if (input.name !== undefined) result.name = input.name;
@@ -34,7 +45,9 @@ type PrismaCommunity = Prisma.CommunityGetPayload<{}>;
  * Maps Prisma Community result to GraphQL Community entity
  * Since Community has no relations or computed fields, this is a direct mapping
  */
-export function mapPrismaCommunityToGraphQL(prismaCommunity: PrismaCommunity): Community {
+export function mapPrismaCommunityToGraphQL(
+  prismaCommunity: PrismaCommunity,
+): Community {
   return {
     id: prismaCommunity.id,
     name: prismaCommunity.name,

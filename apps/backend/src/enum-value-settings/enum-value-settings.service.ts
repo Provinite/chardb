@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { Prisma } from "@chardb/database";
 
 /**
  * Service layer input types for enum value settings operations.
@@ -37,11 +37,11 @@ export class EnumValueSettingsService {
     return this.prisma.enumValueSetting.create({
       data: {
         enumValue: {
-          connect: { id: input.enumValueId }
+          connect: { id: input.enumValueId },
         },
         speciesVariant: {
-          connect: { id: input.speciesVariantId }
-        }
+          connect: { id: input.speciesVariantId },
+        },
       },
     });
   }
@@ -57,15 +57,17 @@ export class EnumValueSettingsService {
         skip,
         cursor,
         orderBy: [
-          { speciesVariant: { name: 'asc' } },
-          { enumValue: { order: 'asc' } },
+          { speciesVariant: { name: "asc" } },
+          { enumValue: { order: "asc" } },
         ],
       }),
       this.prisma.enumValueSetting.count(),
     ]);
 
     const hasNextPage = enumValueSettings.length > first;
-    const nodes = hasNextPage ? enumValueSettings.slice(0, -1) : enumValueSettings;
+    const nodes = hasNextPage
+      ? enumValueSettings.slice(0, -1)
+      : enumValueSettings;
 
     return {
       nodes,
@@ -76,7 +78,11 @@ export class EnumValueSettingsService {
   }
 
   /** Find enum value settings by species variant ID with pagination */
-  async findBySpeciesVariant(speciesVariantId: string, first: number = 20, after?: string) {
+  async findBySpeciesVariant(
+    speciesVariantId: string,
+    first: number = 20,
+    after?: string,
+  ) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -86,7 +92,7 @@ export class EnumValueSettingsService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { enumValue: { order: 'asc' } },
+        orderBy: { enumValue: { order: "asc" } },
       }),
       this.prisma.enumValueSetting.count({
         where: { speciesVariantId },
@@ -94,7 +100,9 @@ export class EnumValueSettingsService {
     ]);
 
     const hasNextPage = enumValueSettings.length > first;
-    const nodes = hasNextPage ? enumValueSettings.slice(0, -1) : enumValueSettings;
+    const nodes = hasNextPage
+      ? enumValueSettings.slice(0, -1)
+      : enumValueSettings;
 
     return {
       nodes,
@@ -105,7 +113,11 @@ export class EnumValueSettingsService {
   }
 
   /** Find enum value settings by enum value ID with pagination */
-  async findByEnumValue(enumValueId: string, first: number = 20, after?: string) {
+  async findByEnumValue(
+    enumValueId: string,
+    first: number = 20,
+    after?: string,
+  ) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -115,7 +127,7 @@ export class EnumValueSettingsService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { speciesVariant: { name: 'asc' } },
+        orderBy: { speciesVariant: { name: "asc" } },
       }),
       this.prisma.enumValueSetting.count({
         where: { enumValueId },
@@ -123,7 +135,9 @@ export class EnumValueSettingsService {
     ]);
 
     const hasNextPage = enumValueSettings.length > first;
-    const nodes = hasNextPage ? enumValueSettings.slice(0, -1) : enumValueSettings;
+    const nodes = hasNextPage
+      ? enumValueSettings.slice(0, -1)
+      : enumValueSettings;
 
     return {
       nodes,
@@ -151,7 +165,7 @@ export class EnumValueSettingsService {
     await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.EnumValueSettingUpdateInput = {};
-    
+
     if (input.enumValueId !== undefined) {
       updateData.enumValue = { connect: { id: input.enumValueId } };
     }

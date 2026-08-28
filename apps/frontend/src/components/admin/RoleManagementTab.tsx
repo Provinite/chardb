@@ -1,30 +1,19 @@
-import React from 'react';
-import styled from 'styled-components';
-import { 
-  Shield,
-  Trash2,
-  Edit,
-  Plus
-} from 'lucide-react';
-import { 
-  Button,
-  Heading3,
-  SmallText,
-  HelpText,
-  Card
-} from '@chardb/ui';
+import React from "react";
+import styled from "styled-components";
+import { Shield, Trash2, Edit, Plus } from "lucide-react";
+import { Button, Heading3, SmallText, HelpText, Card } from "@chardb/ui";
 import {
   useRolesByCommunityDetailedQuery,
-  RolesByCommunityDetailedQuery
-} from '../../generated/graphql';
-import { PERMISSION_LABELS } from '../../lib/permissions';
+  RolesByCommunityDetailedQuery,
+} from "../../generated/graphql";
+import { PERMISSION_LABELS } from "../../lib/permissions";
 
 /**
  * Role Management Tab Component
- * 
+ *
  * Displays all community roles with management actions.
  * Integrates with RoleEditor for creating and editing roles.
- * 
+ *
  * Features:
  * - List all community roles
  * - Show role details and member counts
@@ -78,7 +67,7 @@ const RoleGrid = styled.div`
 
 const RoleCard = styled(Card)`
   transition: all 0.2s ease;
-  
+
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -175,12 +164,12 @@ const PermissionStatus = styled.div<{ $granted: boolean }>`
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  color: ${({ theme, $granted }) => 
+  color: ${({ theme, $granted }) =>
     $granted ? theme.colors.success : theme.colors.text.muted};
-  font-weight: ${({ $granted }) => $granted ? '500' : '400'};
-  
+  font-weight: ${({ $granted }) => ($granted ? "500" : "400")};
+
   &:before {
-    content: ${({ $granted }) => $granted ? '"✓"' : '"✗"'};
+    content: ${({ $granted }) => ($granted ? '"✓"' : '"✗"')};
     font-size: 0.75rem;
   }
 `;
@@ -201,7 +190,9 @@ const EmptyIcon = styled.div`
   opacity: 0.5;
 `;
 
-type RoleFromQuery = NonNullable<RolesByCommunityDetailedQuery['rolesByCommunity']>['nodes'][0];
+type RoleFromQuery = NonNullable<
+  RolesByCommunityDetailedQuery["rolesByCommunity"]
+>["nodes"][0];
 
 interface RoleManagementTabProps {
   communityId: string;
@@ -209,17 +200,16 @@ interface RoleManagementTabProps {
   onCreateRole?: () => void;
 }
 
-
 export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   communityId,
   onEditRole,
-  onCreateRole
+  onCreateRole,
 }) => {
   // Fetch roles for the community
-  const { 
-    data: rolesData, 
+  const {
+    data: rolesData,
     loading: rolesLoading,
-    error: rolesError
+    error: rolesError,
   } = useRolesByCommunityDetailedQuery({
     variables: { communityId, first: 50, after: null },
     skip: !communityId,
@@ -262,7 +252,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
             </HeaderIcon>
             <HeaderText>
               <Heading3>Role Management</Heading3>
-              <SmallText style={{ margin: 0, color: 'muted' }}>
+              <SmallText style={{ margin: 0, color: "muted" }}>
                 No roles found in this community
               </SmallText>
             </HeaderText>
@@ -275,14 +265,15 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
             Create First Role
           </Button>
         </Header>
-        
+
         <EmptyState>
           <EmptyIcon>
             <Shield size={64} />
           </EmptyIcon>
           <Heading3>No Roles Yet</Heading3>
           <HelpText>
-            Create your first community role to start managing member permissions and access levels.
+            Create your first community role to start managing member
+            permissions and access levels.
           </HelpText>
         </EmptyState>
       </Container>
@@ -291,7 +282,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
 
   const getPermissionCount = (role: RoleFromQuery) => {
     return Object.keys(PERMISSION_LABELS).filter(
-      (key) => role[key as keyof RoleFromQuery]
+      (key) => role[key as keyof RoleFromQuery],
     ).length;
   };
 
@@ -304,8 +295,9 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
           </HeaderIcon>
           <HeaderText>
             <Heading3>Role Management</Heading3>
-            <SmallText style={{ margin: 0, color: 'muted' }}>
-              Manage {roles.length} role{roles.length === 1 ? '' : 's'} in this community
+            <SmallText style={{ margin: 0, color: "muted" }}>
+              Manage {roles.length} role{roles.length === 1 ? "" : "s"} in this
+              community
             </SmallText>
           </HeaderText>
         </HeaderInfo>
@@ -365,8 +357,10 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                 {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
                   <PermissionItem key={key}>
                     <span>{label}</span>
-                    <PermissionStatus $granted={!!role[key as keyof RoleFromQuery]}>
-                      {role[key as keyof RoleFromQuery] ? 'Granted' : 'Denied'}
+                    <PermissionStatus
+                      $granted={!!role[key as keyof RoleFromQuery]}
+                    >
+                      {role[key as keyof RoleFromQuery] ? "Granted" : "Denied"}
                     </PermissionStatus>
                   </PermissionItem>
                 ))}

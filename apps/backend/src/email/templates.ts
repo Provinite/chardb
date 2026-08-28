@@ -1,4 +1,4 @@
-import { escapeHtml } from './escape-html';
+import { escapeHtml } from "./escape-html";
 
 /**
  * Email template contexts
@@ -442,7 +442,7 @@ export const imageRejectedTemplate = (
         <div class="reason-box">
             <div class="reason-title">Reason:</div>
             <p>${escapeHtml(context.reason)}</p>
-            ${context.reasonText ? `<p><strong>Details:</strong> ${escapeHtml(context.reasonText)}</p>` : ''}
+            ${context.reasonText ? `<p><strong>Details:</strong> ${escapeHtml(context.reasonText)}</p>` : ""}
         </div>
 
         <p>If you believe this was a mistake, please review our community guidelines and contact support if you have questions.</p>

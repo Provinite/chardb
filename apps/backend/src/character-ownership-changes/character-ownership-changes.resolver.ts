@@ -153,12 +153,12 @@ export class CharacterOwnershipChangesResolver {
     const isSelf = this.permissionService.isSelf(currentUser.id, userId);
     const isAdmin = this.permissionService.hasGlobalPermission(
       currentUser,
-      GlobalPermission.IsAdmin
+      GlobalPermission.IsAdmin,
     );
 
     if (!isSelf && !isAdmin) {
       throw new ForbiddenException(
-        "You can only view your own ownership changes"
+        "You can only view your own ownership changes",
       );
     }
 

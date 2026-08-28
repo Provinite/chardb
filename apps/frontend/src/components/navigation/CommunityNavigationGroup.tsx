@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { ChevronDown, ChevronRight, LucideIcon } from 'lucide-react';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { ChevronDown, ChevronRight, LucideIcon } from "lucide-react";
 
 interface CommunityNavigationGroupProps {
   title: string;
@@ -54,20 +54,17 @@ const GroupTitle = styled.span`
 const ChevronIcon = styled.span<{ $isExpanded: boolean }>`
   display: flex;
   transition: transform 0.2s ease;
-  transform: rotate(${({ $isExpanded }) => ($isExpanded ? '0deg' : '0deg')});
+  transform: rotate(${({ $isExpanded }) => ($isExpanded ? "0deg" : "0deg")});
 `;
 
 const GroupContent = styled.div<{ $isExpanded: boolean }>`
-  display: ${({ $isExpanded }) => ($isExpanded ? 'block' : 'none')};
+  display: ${({ $isExpanded }) => ($isExpanded ? "block" : "none")};
   padding-top: ${({ theme }) => theme.spacing.xs};
 `;
 
-export const CommunityNavigationGroup: React.FC<CommunityNavigationGroupProps> = ({
-  title,
-  icon: Icon,
-  children,
-  defaultExpanded = true,
-}) => {
+export const CommunityNavigationGroup: React.FC<
+  CommunityNavigationGroupProps
+> = ({ title, icon: Icon, children, defaultExpanded = true }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
@@ -75,7 +72,7 @@ export const CommunityNavigationGroup: React.FC<CommunityNavigationGroupProps> =
       <GroupHeader
         onClick={() => setIsExpanded(!isExpanded)}
         aria-expanded={isExpanded}
-        aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${title} section`}
+        aria-label={`${isExpanded ? "Collapse" : "Expand"} ${title} section`}
       >
         {Icon && <Icon />}
         <GroupTitle>{title}</GroupTitle>

@@ -1,8 +1,11 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '@chardb/database';
+import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
+import { PrismaClient } from "@chardb/database";
 
 @Injectable()
-export class DatabaseService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class DatabaseService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   async onModuleInit() {
     await this.$connect();
   }

@@ -61,14 +61,16 @@ export const scaffoldMappingCommand: CommandModule<object, ScaffoldArgs> = {
     await client.login(email, password);
 
     // Fetch species
-    logger.info(`Looking up species "${speciesName}" in community ${communityId}...`);
+    logger.info(
+      `Looking up species "${speciesName}" in community ${communityId}...`,
+    );
     const species = await client.getSpeciesByCommunity(communityId);
     const targetSpecies = species.find(
-      (s) => s.name.toLowerCase() === speciesName.toLowerCase()
+      (s) => s.name.toLowerCase() === speciesName.toLowerCase(),
     );
     if (!targetSpecies) {
       logger.error(
-        `Species "${speciesName}" not found. Available: ${species.map((s) => s.name).join(", ")}`
+        `Species "${speciesName}" not found. Available: ${species.map((s) => s.name).join(", ")}`,
       );
       process.exit(1);
     }
@@ -76,7 +78,9 @@ export const scaffoldMappingCommand: CommandModule<object, ScaffoldArgs> = {
     // Fetch variants
     logger.info("Fetching species variants...");
     const variants = await client.getVariantsBySpecies(targetSpecies.id);
-    logger.info(`  Found ${variants.length} variants: ${variants.map((v) => v.name).join(", ")}`);
+    logger.info(
+      `  Found ${variants.length} variants: ${variants.map((v) => v.name).join(", ")}`,
+    );
 
     // Fetch traits with enum values
     logger.info("Fetching traits...");
@@ -95,7 +99,7 @@ export const scaffoldMappingCommand: CommandModule<object, ScaffoldArgs> = {
       const deviation = await readJson(filePath, DownloadedDeviationSchema);
       const parsed = parseDescription(
         deviation.descriptionHtml,
-        deviation.title
+        deviation.title,
       );
 
       for (const line of parsed.traitLines) {
@@ -130,7 +134,7 @@ export const scaffoldMappingCommand: CommandModule<object, ScaffoldArgs> = {
     const rarityToVariantId: Record<string, string> = {};
     for (const rarity of rarityOrder) {
       const matchingVariant = variants.find(
-        (v) => v.name.toLowerCase() === rarity.toLowerCase()
+        (v) => v.name.toLowerCase() === rarity.toLowerCase(),
       );
       rarityToVariantId[rarity] = matchingVariant?.id ?? "TODO";
     }
@@ -143,7 +147,10 @@ export const scaffoldMappingCommand: CommandModule<object, ScaffoldArgs> = {
     }> = [];
 
     // Build a lookup: lowercase enum value name → { traitId, enumValueId }
-    const enumLookup = new Map<string, { traitId: string; enumValueId: string }>();
+    const enumLookup = new Map<
+      string,
+      { traitId: string; enumValueId: string }
+    >();
     for (const trait of traits) {
       if (trait.valueType === "enum") {
         for (const ev of trait.enumValues) {

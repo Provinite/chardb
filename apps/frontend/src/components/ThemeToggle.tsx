@@ -1,6 +1,6 @@
-import React from 'react';
-import styled from 'styled-components';
-import { useTheme } from '../contexts/ThemeContext';
+import React from "react";
+import styled from "styled-components";
+import { useTheme } from "../contexts/ThemeContext";
 
 const ToggleButton = styled.button`
   background: none;
@@ -35,7 +35,7 @@ const ToggleButton = styled.button`
 const Icon = styled.span`
   font-size: 1.25rem;
   transition: transform 0.3s ease;
-  
+
   ${ToggleButton}:hover & {
     transform: rotate(20deg);
   }
@@ -47,12 +47,10 @@ export const ThemeToggle: React.FC = () => {
   return (
     <ToggleButton
       onClick={toggleTheme}
-      aria-label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
-      title={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
+      aria-label={`Switch to ${mode === "light" ? "dark" : "light"} mode`}
+      title={`Switch to ${mode === "light" ? "dark" : "light"} mode`}
     >
-      <Icon>
-        {mode === 'light' ? '🌙' : '☀️'}
-      </Icon>
+      <Icon>{mode === "light" ? "🌙" : "☀️"}</Icon>
     </ToggleButton>
   );
 };

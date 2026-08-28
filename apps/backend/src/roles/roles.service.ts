@@ -232,7 +232,8 @@ export class RolesService {
     if (input.canEditOwnCharacter !== undefined)
       updateData.canEditOwnCharacter = input.canEditOwnCharacter;
     if (input.canEditOwnCharacterRegistry !== undefined)
-      updateData.canEditOwnCharacterRegistry = input.canEditOwnCharacterRegistry;
+      updateData.canEditOwnCharacterRegistry =
+        input.canEditOwnCharacterRegistry;
     if (input.canEditCharacterRegistry !== undefined)
       updateData.canEditCharacterRegistry = input.canEditCharacterRegistry;
     if (input.canEditSpecies !== undefined)
@@ -254,7 +255,8 @@ export class RolesService {
     if (input.canGrantItems !== undefined)
       updateData.canGrantItems = input.canGrantItems;
     if (input.canUploadOwnCharacterImages !== undefined)
-      updateData.canUploadOwnCharacterImages = input.canUploadOwnCharacterImages;
+      updateData.canUploadOwnCharacterImages =
+        input.canUploadOwnCharacterImages;
     if (input.canUploadCharacterImages !== undefined)
       updateData.canUploadCharacterImages = input.canUploadCharacterImages;
     if (input.canModerateImages !== undefined)

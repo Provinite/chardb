@@ -1,34 +1,45 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { ImagesService } from './images.service';
-import { DatabaseService } from '../database/database.service';
-import { TagsService } from '../tags/tags.service';
-import { S3Service } from './s3.service';
-import { PermissionService } from '../auth/PermissionService';
-import { CommunityResolverService } from '../auth/services/community-resolver.service';
-import { mockDatabaseService } from '../../test/setup';
+import { Test, TestingModule } from "@nestjs/testing";
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from "@nestjs/common";
+import { ImagesService } from "./images.service";
+import { DatabaseService } from "../database/database.service";
+import { TagsService } from "../tags/tags.service";
+import { S3Service } from "./s3.service";
+import { PermissionService } from "../auth/PermissionService";
+import { CommunityResolverService } from "../auth/services/community-resolver.service";
+import { mockDatabaseService } from "../../test/setup";
 
-jest.mock('sharp', () => {
+jest.mock("sharp", () => {
   return jest.fn(() => ({
     metadata: jest.fn().mockResolvedValue({
       width: 1000,
       height: 800,
-      format: 'jpeg',
+      format: "jpeg",
       size: 500000,
     }),
     resize: jest.fn().mockReturnThis(),
     jpeg: jest.fn().mockReturnThis(),
     png: jest.fn().mockReturnThis(),
-    toBuffer: jest.fn().mockResolvedValue(Buffer.from('processed-image')),
+    toBuffer: jest.fn().mockResolvedValue(Buffer.from("processed-image")),
   }));
 });
 
-const mockTagsService = { findOrCreateTags: jest.fn(), getImageTags: jest.fn() };
-const mockS3Service = { uploadImage: jest.fn(), deleteImage: jest.fn(), deleteImages: jest.fn() };
+const mockTagsService = {
+  findOrCreateTags: jest.fn(),
+  getImageTags: jest.fn(),
+};
+const mockS3Service = {
+  uploadImage: jest.fn(),
+  deleteImage: jest.fn(),
+  deleteImages: jest.fn(),
+};
 const mockPermissionService = { hasCommunityPermission: jest.fn() };
 const mockCommunityResolverService = { resolve: jest.fn() };
 
-describe('ImagesService', () => {
+describe("ImagesService", () => {
   let service: ImagesService;
   let db: typeof mockDatabaseService;
 
@@ -40,45 +51,50 @@ describe('ImagesService', () => {
         { provide: TagsService, useValue: mockTagsService },
         { provide: S3Service, useValue: mockS3Service },
         { provide: PermissionService, useValue: mockPermissionService },
-        { provide: CommunityResolverService, useValue: mockCommunityResolverService },
+        {
+          provide: CommunityResolverService,
+          useValue: mockCommunityResolverService,
+        },
       ],
     }).compile();
 
     service = module.get<ImagesService>(ImagesService);
-    db = module.get<DatabaseService>(DatabaseService) as unknown as typeof mockDatabaseService;
+    db = module.get<DatabaseService>(
+      DatabaseService,
+    ) as unknown as typeof mockDatabaseService;
   });
 
-  describe('upload', () => {
+  describe("upload", () => {
     const mockFile = {
-      originalname: 'test.jpg',
-      mimetype: 'image/jpeg',
+      originalname: "test.jpg",
+      mimetype: "image/jpeg",
       size: 500000,
-      buffer: Buffer.from('test-image-data'),
+      buffer: Buffer.from("test-image-data"),
     } as Express.Multer.File;
 
-    const mockS3Result = { url: 'https://test.s3.amazonaws.com/test.jpg' };
+    const mockS3Result = { url: "https://test.s3.amazonaws.com/test.jpg" };
 
-    it('should upload an image successfully', async () => {
-      const userId = 'user1';
+    it("should upload an image successfully", async () => {
+      const userId = "user1";
 
       const mockImage = {
-        id: 'img1',
-        filename: 'test-uuid.jpg',
-        originalFilename: 'test.jpg',
+        id: "img1",
+        filename: "test-uuid.jpg",
+        originalFilename: "test.jpg",
         uploaderId: userId,
-        mimeType: 'image/jpeg',
+        mimeType: "image/jpeg",
         fileSize: 500000,
         width: 1000,
         height: 800,
-        uploader: { id: userId, username: 'testuser' },
+        uploader: { id: userId, username: "testuser" },
         tags_rel: [],
       };
       const mockMedia = {
-        id: 'media1',
+        id: "media1",
         ownerId: userId,
-        imageId: 'img1',
+        imageId: "img1",
         image: mockImage,
-        owner: { id: userId, username: 'testuser' },
+        owner: { id: userId, username: "testuser" },
       };
 
       mockS3Service.uploadImage.mockResolvedValue(mockS3Result);
@@ -91,8 +107,8 @@ describe('ImagesService', () => {
       expect(db.image.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            originalFilename: 'test.jpg',
-            mimeType: 'image/jpeg',
+            originalFilename: "test.jpg",
+            mimeType: "image/jpeg",
             fileSize: 500000,
             uploaderId: userId,
             isNsfw: false,
@@ -103,45 +119,48 @@ describe('ImagesService', () => {
       expect(result).toEqual(mockMedia);
     });
 
-    it('should reject invalid file types', async () => {
+    it("should reject invalid file types", async () => {
       const invalidFile = {
         ...mockFile,
-        mimetype: 'text/plain',
+        mimetype: "text/plain",
       } as Express.Multer.File;
 
-      await expect(service.upload('user1', { file: invalidFile }))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.upload("user1", { file: invalidFile }),
+      ).rejects.toThrow(BadRequestException);
     });
 
-    it('should reject files that are too large', async () => {
+    it("should reject files that are too large", async () => {
       const largeFile = {
         ...mockFile,
         size: 15 * 1024 * 1024,
       } as Express.Multer.File;
 
-      await expect(service.upload('user1', { file: largeFile }))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.upload("user1", { file: largeFile }),
+      ).rejects.toThrow(BadRequestException);
     });
 
-    it('should verify character ownership when specified', async () => {
+    it("should verify character ownership when specified", async () => {
       db.character.findFirst.mockResolvedValue({
-        id: 'char1',
-        ownerId: 'user2',
+        id: "char1",
+        ownerId: "user2",
       });
 
-      await expect(service.upload('user1', { file: mockFile, characterId: 'char1' }))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.upload("user1", { file: mockFile, characterId: "char1" }),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
-  describe('findOne', () => {
-    it('should find an image', async () => {
-      const imageId = 'img1';
+  describe("findOne", () => {
+    it("should find an image", async () => {
+      const imageId = "img1";
       const mockImage = {
         id: imageId,
-        originalFilename: 'test.jpg',
-        uploaderId: 'user1',
-        uploader: { id: 'user1' },
+        originalFilename: "test.jpg",
+        uploaderId: "user1",
+        uploader: { id: "user1" },
         tags_rel: [],
       };
 
@@ -156,18 +175,20 @@ describe('ImagesService', () => {
       expect(result).toEqual(mockImage);
     });
 
-    it('should throw NotFoundException for non-existent image', async () => {
+    it("should throw NotFoundException for non-existent image", async () => {
       db.image.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne("nonexistent")).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
-  describe('update', () => {
-    it('should update image successfully', async () => {
-      const imageId = 'img1';
-      const userId = 'user1';
-      const input = { altText: 'Updated alt text' };
+  describe("update", () => {
+    it("should update image successfully", async () => {
+      const imageId = "img1";
+      const userId = "user1";
+      const input = { altText: "Updated alt text" };
 
       const mockExistingImage = {
         id: imageId,
@@ -190,23 +211,24 @@ describe('ImagesService', () => {
       expect(result).toEqual(mockUpdatedImage);
     });
 
-    it('should throw ForbiddenException when non-uploader tries to update', async () => {
+    it("should throw ForbiddenException when non-uploader tries to update", async () => {
       db.image.findUnique.mockResolvedValue({
-        id: 'img1',
-        uploaderId: 'user1',
-        uploader: { id: 'user1' },
+        id: "img1",
+        uploaderId: "user1",
+        uploader: { id: "user1" },
         tags_rel: [],
       });
 
-      await expect(service.update('img1', 'user2', { altText: 'Hacked' }))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.update("img1", "user2", { altText: "Hacked" }),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
-  describe('remove', () => {
-    it('should delete image successfully', async () => {
-      const imageId = 'img1';
-      const userId = 'user1';
+  describe("remove", () => {
+    it("should delete image successfully", async () => {
+      const imageId = "img1";
+      const userId = "user1";
 
       db.image.findUnique.mockResolvedValue({
         id: imageId,
@@ -222,24 +244,25 @@ describe('ImagesService', () => {
       expect(result).toBe(true);
     });
 
-    it('should throw ForbiddenException when non-uploader tries to delete', async () => {
+    it("should throw ForbiddenException when non-uploader tries to delete", async () => {
       db.image.findUnique.mockResolvedValue({
-        id: 'img1',
-        uploaderId: 'user1',
-        uploader: { id: 'user1' },
+        id: "img1",
+        uploaderId: "user1",
+        uploader: { id: "user1" },
         tags_rel: [],
       });
 
-      await expect(service.remove('img1', 'user2'))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.remove("img1", "user2")).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
-  describe('findAll', () => {
-    it('should return paginated images with proper filtering', async () => {
+  describe("findAll", () => {
+    it("should return paginated images with proper filtering", async () => {
       const mockImages = [
-        { id: 'img1', originalFilename: 'Image 1' },
-        { id: 'img2', originalFilename: 'Image 2' },
+        { id: "img1", originalFilename: "Image 1" },
+        { id: "img2", originalFilename: "Image 2" },
       ];
 
       db.image.findMany.mockResolvedValue(mockImages);
@@ -256,22 +279,20 @@ describe('ImagesService', () => {
       expect(db.image.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            AND: expect.arrayContaining([
-              { moderationStatus: 'APPROVED' },
-            ]),
+            AND: expect.arrayContaining([{ moderationStatus: "APPROVED" }]),
           }),
           include: expect.objectContaining({
             uploader: true,
           }),
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 10,
           skip: 0,
         }),
       );
     });
 
-    it('should filter by uploader when specified', async () => {
-      const uploaderId = 'user1';
+    it("should filter by uploader when specified", async () => {
+      const uploaderId = "user1";
       const filters = { uploaderId, limit: 10, offset: 0 };
 
       db.image.findMany.mockResolvedValue([]);
@@ -282,9 +303,7 @@ describe('ImagesService', () => {
       expect(db.image.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            AND: expect.arrayContaining([
-              { uploaderId },
-            ]),
+            AND: expect.arrayContaining([{ uploaderId }]),
           }),
         }),
       );

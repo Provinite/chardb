@@ -50,7 +50,10 @@ describe("ToyhouseStrategy.fetchUserProfile", () => {
     const done = jest.fn();
     await strategy.fetchUserProfile("token-abc", done);
 
-    expect(done).toHaveBeenCalledWith(null, { id: "12345", username: "cooluser" });
+    expect(done).toHaveBeenCalledWith(null, {
+      id: "12345",
+      username: "cooluser",
+    });
   });
 
   it("calls done with an error when the API response is not ok", async () => {
@@ -98,7 +101,7 @@ describe("ToyhouseStrategy.fetchUserProfile", () => {
     );
   });
 
-  it("does not produce the string \"undefined\" as providerAccountId when id is absent", async () => {
+  it('does not produce the string "undefined" as providerAccountId when id is absent', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ username: "cooluser" }), // id missing

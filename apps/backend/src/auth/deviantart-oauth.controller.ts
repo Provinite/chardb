@@ -29,10 +29,12 @@ export class DeviantArtOAuthController {
     const jwtSecret = this.configService.get("JWT_SECRET");
     const state = this.jwtService.sign(
       { sub: user.id },
-      { secret: jwtSecret + "_O", expiresIn: "10m" }
+      { secret: jwtSecret + "_O", expiresIn: "10m" },
     );
     const clientId = this.configService.get("DEVIANTART_CLIENT_ID");
-    const callbackUrl = this.configService.get("DEVIANTART_CALLBACK_URL") || "http://localhost:4000/auth/deviantart/callback";
+    const callbackUrl =
+      this.configService.get("DEVIANTART_CALLBACK_URL") ||
+      "http://localhost:4000/auth/deviantart/callback";
 
     const params = new URLSearchParams({
       client_id: clientId,
@@ -54,7 +56,8 @@ export class DeviantArtOAuthController {
   @AllowUnauthenticated()
   @UseGuards(AuthGuard("deviantart"))
   async handleCallback(@Req() req: Request, @Res() res: Response) {
-    const frontendUrl = this.configService.get("FRONTEND_URL") || "http://localhost:3000";
+    const frontendUrl =
+      this.configService.get("FRONTEND_URL") || "http://localhost:3000";
 
     try {
       const state = req.query.state as string;
@@ -65,7 +68,9 @@ export class DeviantArtOAuthController {
       let userId: string;
       try {
         const jwtSecret = this.configService.get("JWT_SECRET");
-        const statePayload = this.jwtService.verify(state, { secret: jwtSecret + "_O" });
+        const statePayload = this.jwtService.verify(state, {
+          secret: jwtSecret + "_O",
+        });
         userId = statePayload.sub;
       } catch (error) {
         throw new Error("Invalid or expired state token");
@@ -82,17 +87,23 @@ export class DeviantArtOAuthController {
         userId,
         ExternalAccountProvider.DEVIANTART,
         oauthData.providerAccountId,
-        oauthData.displayName
+        oauthData.displayName,
       );
 
       // Redirect to frontend with success status and claimed items info
       const callbackUrl = new URL(`${frontendUrl}/auth/deviantart/callback`);
-      callbackUrl.searchParams.set('success', 'true');
+      callbackUrl.searchParams.set("success", "true");
       if (result.claimedCharacterIds.length > 0) {
-        callbackUrl.searchParams.set('claimedCharacters', result.claimedCharacterIds.length.toString());
+        callbackUrl.searchParams.set(
+          "claimedCharacters",
+          result.claimedCharacterIds.length.toString(),
+        );
       }
       if (result.claimedItemIds.length > 0) {
-        callbackUrl.searchParams.set('claimedItems', result.claimedItemIds.length.toString());
+        callbackUrl.searchParams.set(
+          "claimedItems",
+          result.claimedItemIds.length.toString(),
+        );
       }
       res.redirect(callbackUrl.toString());
     } catch (error) {

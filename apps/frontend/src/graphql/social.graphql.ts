@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 // User fragment for social features
 const USER_AVATAR_FRAGMENT = gql`

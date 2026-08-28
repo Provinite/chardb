@@ -1,7 +1,10 @@
 import * as path from "path";
 import type { CommandModule } from "yargs";
 import { DeviantArtClient } from "../da-api/client";
-import type { DownloadedDeviation, DownloadState } from "../types/downloaded-deviation";
+import type {
+  DownloadedDeviation,
+  DownloadState,
+} from "../types/downloaded-deviation";
 import {
   DownloadedDeviationSchema,
   DownloadStateSchema,
@@ -45,7 +48,7 @@ async function loadState(stateFile: string): Promise<DownloadState | null> {
 async function downloadSingleDeviation(
   client: DeviantArtClient,
   deviationUrl: string,
-  deviationsDir: string
+  deviationsDir: string,
 ): Promise<void> {
   const numericId = extractNumericId(deviationUrl);
   if (!numericId) {
@@ -56,7 +59,8 @@ async function downloadSingleDeviation(
   logger.info(`Fetching deviation ${numericId}...`);
 
   // Scrape page for UUID and description in one request
-  const { uuid, descriptionHtml } = await client.scrapeDeviationPage(deviationUrl);
+  const { uuid, descriptionHtml } =
+    await client.scrapeDeviationPage(deviationUrl);
 
   // Fetch full deviation metadata via the API
   const deviation = await client.getDeviation(uuid);
@@ -102,11 +106,13 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
     },
     "client-id": {
       type: "string" as const,
-      describe: "DeviantArt OAuth client ID (or set DEVIANTART_CLIENT_ID env var)",
+      describe:
+        "DeviantArt OAuth client ID (or set DEVIANTART_CLIENT_ID env var)",
     },
     "client-secret": {
       type: "string" as const,
-      describe: "DeviantArt OAuth client secret (or set DEVIANTART_CLIENT_SECRET env var)",
+      describe:
+        "DeviantArt OAuth client secret (or set DEVIANTART_CLIENT_SECRET env var)",
     },
     resume: {
       type: "boolean" as const,
@@ -144,11 +150,12 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
     } = argv;
 
     const clientId = clientIdArg || process.env.DEVIANTART_CLIENT_ID || "";
-    const clientSecret = clientSecretArg || process.env.DEVIANTART_CLIENT_SECRET || "";
+    const clientSecret =
+      clientSecretArg || process.env.DEVIANTART_CLIENT_SECRET || "";
 
     if (!clientId || !clientSecret) {
       logger.error(
-        "DeviantArt credentials required. Set DEVIANTART_CLIENT_ID and DEVIANTART_CLIENT_SECRET env vars, or use --client-id and --client-secret flags."
+        "DeviantArt credentials required. Set DEVIANTART_CLIENT_ID and DEVIANTART_CLIENT_SECRET env vars, or use --client-id and --client-secret flags.",
       );
       process.exit(1);
     }
@@ -175,7 +182,7 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
       }
 
       logger.info(
-        `Found ${emptyFiles.length} deviations with empty descriptions. Re-downloading...`
+        `Found ${emptyFiles.length} deviations with empty descriptions. Re-downloading...`,
       );
 
       const progress = new ProgressTracker(emptyFiles.length, "Re-downloading");
@@ -197,7 +204,7 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
           }
         } catch (err) {
           logger.warn(
-            `Failed to re-download description for ${dev.numericId}: ${err}`
+            `Failed to re-download description for ${dev.numericId}: ${err}`,
           );
           failCount++;
         }
@@ -207,7 +214,7 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
 
       progress.finish();
       logger.info(
-        `Re-download complete: ${successCount} recovered, ${failCount} still empty.`
+        `Re-download complete: ${successCount} recovered, ${failCount} still empty.`,
       );
       return;
     }
@@ -220,7 +227,9 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
 
     // Folder mode — require username and folders
     if (!username || !foldersArg) {
-      logger.error("Either --url or both --username and --folders are required.");
+      logger.error(
+        "Either --url or both --username and --folders are required.",
+      );
       process.exit(1);
     }
 
@@ -229,18 +238,16 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
 
     // Load or initialize state
     let state: DownloadState = resume
-      ? (await loadState(stateFile)) ?? {
+      ? ((await loadState(stateFile)) ?? {
           folders: {},
           lastUpdated: new Date().toISOString(),
-        }
+        })
       : { folders: {}, lastUpdated: new Date().toISOString() };
 
     // Get folder listing
     logger.info(`Fetching gallery folders for ${username}...`);
     const foldersResp = await client.getGalleryFolders(username);
-    const folderMap = new Map(
-      foldersResp.results.map((f) => [f.name, f])
-    );
+    const folderMap = new Map(foldersResp.results.map((f) => [f.name, f]));
 
     let totalDownloaded = 0;
 
@@ -248,7 +255,7 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
       const folder = folderMap.get(folderName);
       if (!folder) {
         logger.warn(
-          `Folder "${folderName}" not found. Available: ${foldersResp.results.map((f) => f.name).join(", ")}`
+          `Folder "${folderName}" not found. Available: ${foldersResp.results.map((f) => f.name).join(", ")}`,
         );
         continue;
       }
@@ -262,7 +269,7 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
 
       const startOffset = folderState?.offset ?? 0;
       logger.info(
-        `Downloading folder "${folderName}" (${folder.size} items, starting at offset ${startOffset})...`
+        `Downloading folder "${folderName}" (${folder.size} items, starting at offset ${startOffset})...`,
       );
 
       let offset = startOffset;
@@ -273,14 +280,14 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
         const page = await client.getGalleryFolder(
           folder.folderid,
           username,
-          offset
+          offset,
         );
 
         for (const deviation of page.results) {
           const numericId = extractNumericId(deviation.url);
           if (!numericId) {
             logger.warn(
-              `Could not extract numeric ID from URL: ${deviation.url}`
+              `Could not extract numeric ID from URL: ${deviation.url}`,
             );
             continue;
           }
@@ -289,11 +296,11 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
           let descriptionHtml = "";
           try {
             descriptionHtml = await client.getDeviationDescription(
-              deviation.url
+              deviation.url,
             );
           } catch (err) {
             logger.warn(
-              `Failed to fetch description for ${deviation.deviationid}: ${err}`
+              `Failed to fetch description for ${deviation.deviationid}: ${err}`,
             );
           }
 
@@ -331,14 +338,14 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
         await writeJson(stateFile, state);
 
         logger.info(
-          `  ${folderName}: ${offset}/${folder.size} deviations processed`
+          `  ${folderName}: ${offset}/${folder.size} deviations processed`,
         );
 
         if (!page.has_more) break;
       }
 
       logger.info(
-        `Completed folder "${folderName}": ${downloadedCount} new deviations saved.`
+        `Completed folder "${folderName}": ${downloadedCount} new deviations saved.`,
       );
 
       if (limit > 0 && totalDownloaded >= limit) {

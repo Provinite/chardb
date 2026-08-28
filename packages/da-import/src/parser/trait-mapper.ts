@@ -21,7 +21,7 @@ function stripParenthetical(text: string): string {
  */
 function lookupRule(
   traitText: string,
-  ruleLookup: Map<string, { traitId: string; enumValueId: string }>
+  ruleLookup: Map<string, { traitId: string; enumValueId: string }>,
 ): { traitId: string; enumValueId: string } | undefined {
   const exact = ruleLookup.get(traitText.toLowerCase());
   if (exact) return exact;
@@ -33,10 +33,7 @@ function lookupRule(
   return undefined;
 }
 
-function matchesIgnorePattern(
-  line: string,
-  ignorePatterns: string[]
-): boolean {
+function matchesIgnorePattern(line: string, ignorePatterns: string[]): boolean {
   for (const pattern of ignorePatterns) {
     const regex = new RegExp(pattern, "i");
     if (regex.test(line)) {
@@ -54,7 +51,7 @@ interface CompositeResult {
 function tryCompositeRules(
   line: string,
   compositeRules: CompositeRule[],
-  ruleLookup: Map<string, { traitId: string; enumValueId: string }>
+  ruleLookup: Map<string, { traitId: string; enumValueId: string }>,
 ): CompositeResult | null {
   for (const rule of compositeRules) {
     const regex = new RegExp(rule.linePattern, "i");
@@ -97,7 +94,7 @@ function tryCompositeRules(
       const errors: string[] = [];
       if (failedGroups.length > 0) {
         errors.push(
-          `Composite rule matched line "${line}" but ${failedGroups.length} capture group(s) failed to resolve: ${failedGroups.map((g) => `"${g}"`).join(", ")}`
+          `Composite rule matched line "${line}" but ${failedGroups.length} capture group(s) failed to resolve: ${failedGroups.map((g) => `"${g}"`).join(", ")}`,
         );
       }
       return { traits: results, errors };
@@ -108,7 +105,7 @@ function tryCompositeRules(
 
 export function mapTraitLines(
   lines: string[],
-  config: MappingConfig
+  config: MappingConfig,
 ): TraitMappingResult {
   const mappedTraits: MappedTrait[] = [];
   const unmappedLines: string[] = [];
@@ -116,7 +113,10 @@ export function mapTraitLines(
   const captureGroupErrors: string[] = [];
 
   // Build a case-insensitive lookup map for simple rules
-  const ruleLookup = new Map<string, { traitId: string; enumValueId: string }>();
+  const ruleLookup = new Map<
+    string,
+    { traitId: string; enumValueId: string }
+  >();
   for (const rule of config.rules) {
     ruleLookup.set(rule.pattern.toLowerCase(), {
       traitId: rule.traitId,
@@ -134,7 +134,11 @@ export function mapTraitLines(
     }
 
     // Try composite rules first
-    const compositeMatch = tryCompositeRules(trimmed, config.compositeRules, ruleLookup);
+    const compositeMatch = tryCompositeRules(
+      trimmed,
+      config.compositeRules,
+      ruleLookup,
+    );
     if (compositeMatch) {
       mappedTraits.push(...compositeMatch.traits);
       captureGroupErrors.push(...compositeMatch.errors);
@@ -182,7 +186,7 @@ export interface VariantSetting {
 export function deriveVariant(
   mappedTraits: MappedTrait[],
   config: MappingConfig,
-  variantSettings: VariantSetting[]
+  variantSettings: VariantSetting[],
 ): { variantId: string | null; rarity: string | null } {
   const selectedEnumValues = new Set<string>();
   for (const trait of mappedTraits) {

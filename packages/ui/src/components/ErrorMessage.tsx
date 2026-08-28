@@ -1,13 +1,13 @@
-import React from 'react';
-import styled from 'styled-components';
-import { AlertCircle } from 'lucide-react';
+import React from "react";
+import styled from "styled-components";
+import { AlertCircle } from "lucide-react";
 
 /**
  * Styled error card with theme-based error colors and subtle background
  */
 const ErrorCard = styled.div`
-  background: ${({ theme }) => theme.colors.error + '10'};
-  border: 1px solid ${({ theme }) => theme.colors.error + '30'};
+  background: ${({ theme }) => theme.colors.error + "10"};
+  border: 1px solid ${({ theme }) => theme.colors.error + "30"};
   border-radius: 12px;
   padding: ${({ theme }) => theme.spacing.lg};
   margin-bottom: ${({ theme }) => theme.spacing.xl};
@@ -52,39 +52,39 @@ interface ErrorMessageProps {
 
 /**
  * ErrorMessage - A reusable error display component with consistent theming
- * 
+ *
  * Displays error messages in a styled card with an alert icon and customizable title.
  * Uses theme colors for consistent error styling across the application.
- * 
+ *
  * @example
  * ```tsx
  * // Basic usage with just a message
  * <ErrorMessage message="Failed to load data" />
- * 
+ *
  * // With custom title
- * <ErrorMessage 
- *   title="Network Error" 
- *   message="Unable to connect to the server. Please try again later." 
+ * <ErrorMessage
+ *   title="Network Error"
+ *   message="Unable to connect to the server. Please try again later."
  * />
- * 
+ *
  * // In a GraphQL error scenario
  * if (error) {
  *   return <ErrorMessage message={error.message} title="GraphQL Error" />;
  * }
- * 
+ *
  * // In a form validation scenario
- * <ErrorMessage 
- *   title="Validation Failed" 
- *   message="Please check the required fields and try again." 
+ * <ErrorMessage
+ *   title="Validation Failed"
+ *   message="Please check the required fields and try again."
  * />
  * ```
- * 
+ *
  * @param props - The component props
  * @param props.message - The error message text to display
  * @param props.title - Optional custom title (defaults to "Error")
  * @returns A styled error message component
  */
-export function ErrorMessage({ message, title = 'Error' }: ErrorMessageProps) {
+export function ErrorMessage({ message, title = "Error" }: ErrorMessageProps) {
   return (
     <ErrorCard>
       <ErrorHeader>

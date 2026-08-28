@@ -25,10 +25,12 @@ export interface SeedPersonasOptions {
 }
 
 export async function seedPersonas(
-  options: SeedPersonasOptions = {}
+  options: SeedPersonasOptions = {},
 ): Promise<void> {
-  const { graphqlEndpoint = "http://localhost:4000/graphql", skipSampleData = false } =
-    options;
+  const {
+    graphqlEndpoint = "http://localhost:4000/graphql",
+    skipSampleData = false,
+  } = options;
 
   const prisma = new PrismaClient();
   const client = new GraphQLClient(graphqlEndpoint);
@@ -51,7 +53,7 @@ export async function seedPersonas(
       client,
       phase1Result.users,
       phase2Result.communityId,
-      phase2Result.roles
+      phase2Result.roles,
     );
 
     // Phase 4: Create sample data (optional)
@@ -85,4 +87,9 @@ export async function seedPersonas(
 }
 
 // Re-export for external use
-export { PERSONAS, PERSONA_LIST, TEST_PASSWORD, TEST_COMMUNITY_NAME } from "./personas";
+export {
+  PERSONAS,
+  PERSONA_LIST,
+  TEST_PASSWORD,
+  TEST_COMMUNITY_NAME,
+} from "./personas";

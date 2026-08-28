@@ -1,6 +1,9 @@
 import { UpdateUserInput } from "../dto/update-user.input";
 import { User, UserConnection } from "../entities/user.entity";
-import { CreateUserServiceInput, UpdateUserServiceInput } from "../users.service";
+import {
+  CreateUserServiceInput,
+  UpdateUserServiceInput,
+} from "../users.service";
 import { Prisma } from "@chardb/database";
 
 /**
@@ -10,9 +13,12 @@ import { Prisma } from "@chardb/database";
 /**
  * Maps CreateUserInput to service input format
  */
-export function mapCreateUserInputToService(
-  input: { username: string; email: string; password: string; displayName?: string }
-): CreateUserServiceInput {
+export function mapCreateUserInputToService(input: {
+  username: string;
+  email: string;
+  password: string;
+  displayName?: string;
+}): CreateUserServiceInput {
   return {
     username: input.username,
     email: input.email,
@@ -24,7 +30,9 @@ export function mapCreateUserInputToService(
 /**
  * Maps UpdateUserInput to service input format
  */
-export function mapUpdateUserInputToService(input: UpdateUserInput): UpdateUserServiceInput {
+export function mapUpdateUserInputToService(
+  input: UpdateUserInput,
+): UpdateUserServiceInput {
   const result: UpdateUserServiceInput = {};
 
   if (input.displayName !== undefined) result.displayName = input.displayName;
@@ -33,7 +41,8 @@ export function mapUpdateUserInputToService(input: UpdateUserInput): UpdateUserS
   if (input.dateOfBirth !== undefined) {
     result.dateOfBirth = new Date(input.dateOfBirth);
   }
-  if (input.privacySettings !== undefined) result.privacySettings = input.privacySettings;
+  if (input.privacySettings !== undefined)
+    result.privacySettings = input.privacySettings;
 
   return result;
 }

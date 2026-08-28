@@ -1,0 +1,23 @@
+node_modules
+dist
+build
+coverage
+.yarn
+.tmp
+to-delete
+*.log
+
+# Generated -- rewritten by codegen/prisma, not hand-edited.
+apps/frontend/src/generated
+packages/database/generated
+
+# Playwright output.
+apps/e2e/playwright-report
+apps/e2e/test-results
+
+# Prose and config are left alone deliberately: formatting them would churn
+# large documents (TEST_WORKFLOWS.md is 74KB) for no review benefit.
+*.md
+*.json
+*.yml
+*.yaml

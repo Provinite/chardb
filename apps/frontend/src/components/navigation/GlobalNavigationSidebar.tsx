@@ -1,6 +1,6 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
+import React from "react";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
 import {
   User,
   Heart,
@@ -11,12 +11,12 @@ import {
   Plus,
   Building2,
   Search,
-} from 'lucide-react';
-import { spotlight } from '@mantine/spotlight';
-import { CommunityNavigationItem } from './CommunityNavigationItem';
-import { CommunityNavigationGroup } from './CommunityNavigationGroup';
-import { useAuth } from '../../contexts/AuthContext';
-import { useCommunityMembersByUserQuery } from '../../generated/graphql';
+} from "lucide-react";
+import { spotlight } from "@mantine/spotlight";
+import { CommunityNavigationItem } from "./CommunityNavigationItem";
+import { CommunityNavigationGroup } from "./CommunityNavigationGroup";
+import { useAuth } from "../../contexts/AuthContext";
+import { useCommunityMembersByUserQuery } from "../../generated/graphql";
 
 interface GlobalNavigationSidebarProps {
   className?: string;
@@ -63,7 +63,7 @@ const SidebarContent = styled.nav`
 `;
 
 const SidebarHeader = styled(Link)`
-  padding: ${({ theme}) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   display: flex;
   align-items: center;
@@ -155,7 +155,9 @@ const Kbd = styled.kbd`
   }
 `;
 
-const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+const isMac =
+  typeof navigator !== "undefined" &&
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
 const LoadingContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.md};
@@ -164,36 +166,49 @@ const LoadingContainer = styled.div`
   text-align: center;
 `;
 
-export const GlobalNavigationSidebar: React.FC<GlobalNavigationSidebarProps> = ({
-  className,
-  onToggleToCommunity,
-}) => {
+export const GlobalNavigationSidebar: React.FC<
+  GlobalNavigationSidebarProps
+> = ({ className, onToggleToCommunity }) => {
   const { user } = useAuth();
 
   // Fetch user's communities
-  const { data: communitiesData, loading: communitiesLoading } = useCommunityMembersByUserQuery({
-    variables: { userId: user?.id || '', first: 50 },
-    skip: !user?.id,
-  });
+  const { data: communitiesData, loading: communitiesLoading } =
+    useCommunityMembersByUserQuery({
+      variables: { userId: user?.id || "", first: 50 },
+      skip: !user?.id,
+    });
 
-  const communities = communitiesData?.communityMembersByUser?.nodes?.map((m) => m.role.community) || [];
+  const communities =
+    communitiesData?.communityMembersByUser?.nodes?.map(
+      (m) => m.role.community,
+    ) || [];
 
   return (
-    <SidebarContainer className={className} role="navigation" aria-label="Global navigation">
+    <SidebarContainer
+      className={className}
+      role="navigation"
+      aria-label="Global navigation"
+    >
       <SidebarHeader to="/dashboard">
         <LayoutGrid size={20} />
         Dashboard
       </SidebarHeader>
 
       <SidebarContent>
-        <SearchTrigger onClick={() => spotlight.open()} aria-label="Search pages">
+        <SearchTrigger
+          onClick={() => spotlight.open()}
+          aria-label="Search pages"
+        >
           <Search size={16} />
           Find page...
-          <Kbd>{isMac ? '⌘K' : 'Ctrl+K'}</Kbd>
+          <Kbd>{isMac ? "⌘K" : "Ctrl+K"}</Kbd>
         </SearchTrigger>
 
         {onToggleToCommunity && (
-          <ToggleButton onClick={onToggleToCommunity} aria-label="View community navigation">
+          <ToggleButton
+            onClick={onToggleToCommunity}
+            aria-label="View community navigation"
+          >
             <Building2 />
             View Community Navigation
           </ToggleButton>
@@ -202,7 +217,11 @@ export const GlobalNavigationSidebar: React.FC<GlobalNavigationSidebarProps> = (
         {user && (
           <>
             {/* Personal Content Section */}
-            <CommunityNavigationGroup title="My Content" icon={User} defaultExpanded>
+            <CommunityNavigationGroup
+              title="My Content"
+              icon={User}
+              defaultExpanded
+            >
               <CommunityNavigationItem
                 to="/my/characters"
                 icon={User}
@@ -291,9 +310,13 @@ export const GlobalNavigationSidebar: React.FC<GlobalNavigationSidebarProps> = (
         <Divider />
 
         {/* Communities Section */}
-        <CommunityNavigationGroup title="Communities" icon={Users} defaultExpanded>
-          {user && (
-            communitiesLoading ? (
+        <CommunityNavigationGroup
+          title="Communities"
+          icon={Users}
+          defaultExpanded
+        >
+          {user &&
+            (communitiesLoading ? (
               <LoadingContainer>Loading communities...</LoadingContainer>
             ) : communities.length > 0 ? (
               <>
@@ -316,8 +339,7 @@ export const GlobalNavigationSidebar: React.FC<GlobalNavigationSidebarProps> = (
               </>
             ) : (
               <LoadingContainer>No communities yet</LoadingContainer>
-            )
-          )}
+            ))}
           <CommunityNavigationItem
             to="/join-community"
             icon={Plus}

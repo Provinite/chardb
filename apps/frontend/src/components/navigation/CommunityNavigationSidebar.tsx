@@ -1,6 +1,6 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import styled from 'styled-components';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import styled from "styled-components";
 import {
   BarChart3,
   Users,
@@ -16,20 +16,20 @@ import {
   LayoutGrid,
   Package,
   Search,
-} from 'lucide-react';
-import { spotlight } from '@mantine/spotlight';
-import { CommunityNavigationItem } from './CommunityNavigationItem';
-import { CommunityNavigationGroup } from './CommunityNavigationGroup';
-import { CommunitySwitcher } from './CommunitySwitcher';
-import { GlobalNavigationSidebar } from './GlobalNavigationSidebar';
-import { useUserCommunityRole } from '../../hooks/useUserCommunityRole';
+} from "lucide-react";
+import { spotlight } from "@mantine/spotlight";
+import { CommunityNavigationItem } from "./CommunityNavigationItem";
+import { CommunityNavigationGroup } from "./CommunityNavigationGroup";
+import { CommunitySwitcher } from "./CommunitySwitcher";
+import { GlobalNavigationSidebar } from "./GlobalNavigationSidebar";
+import { useUserCommunityRole } from "../../hooks/useUserCommunityRole";
 import {
   useSpeciesByIdQuery,
   useGetCharacterQuery,
   useSpeciesVariantByIdQuery,
   useTraitByIdQuery,
   useGetItemTypeQuery,
-} from '../../generated/graphql';
+} from "../../generated/graphql";
 
 interface CommunityNavigationSidebarProps {
   className?: string;
@@ -187,7 +187,9 @@ const Kbd = styled.kbd`
   }
 `;
 
-const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+const isMac =
+  typeof navigator !== "undefined" &&
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
 const SubsectionLabel = styled.div`
   padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.xl}`};
@@ -263,10 +265,9 @@ const extractItemTypeId = (pathname: string): string | undefined => {
   return match ? match[1] : undefined;
 };
 
-export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProps> = ({
-  className,
-  onToggleToGlobal,
-}) => {
+export const CommunityNavigationSidebar: React.FC<
+  CommunityNavigationSidebarProps
+> = ({ className, onToggleToGlobal }) => {
   const location = useLocation();
 
   // Extract communityId from URL path instead of useParams (Layout is outside Routes)
@@ -279,31 +280,33 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
 
   // If we're on a species route, fetch the species to get its communityId
   const { data: speciesData, loading: speciesLoading } = useSpeciesByIdQuery({
-    variables: { id: speciesId || '' },
+    variables: { id: speciesId || "" },
     skip: !speciesId,
   });
 
   // If we're on a character route, fetch the character to get its species
-  const { data: characterData, loading: characterLoading } = useGetCharacterQuery({
-    variables: { id: characterId || '' },
-    skip: !characterId,
-  });
+  const { data: characterData, loading: characterLoading } =
+    useGetCharacterQuery({
+      variables: { id: characterId || "" },
+      skip: !characterId,
+    });
 
   // If we're on a variant route, fetch the variant to get its species
-  const { data: variantData, loading: variantLoading } = useSpeciesVariantByIdQuery({
-    variables: { id: variantId || '' },
-    skip: !variantId,
-  });
+  const { data: variantData, loading: variantLoading } =
+    useSpeciesVariantByIdQuery({
+      variables: { id: variantId || "" },
+      skip: !variantId,
+    });
 
   // If we're on a trait route, fetch the trait to get its species
   const { data: traitData, loading: traitLoading } = useTraitByIdQuery({
-    variables: { id: traitId || '' },
+    variables: { id: traitId || "" },
     skip: !traitId,
   });
 
   // If we're on an item type route, fetch the item type to get its communityId
   const { data: itemTypeData } = useGetItemTypeQuery({
-    variables: { id: itemTypeId || '' },
+    variables: { id: itemTypeId || "" },
     skip: !itemTypeId,
   });
 
@@ -361,7 +364,7 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
   } = useUserCommunityRole(communityId);
 
   // Debug logging
-  console.log('[CommunityNavigationSidebar] Debug Info:', {
+  console.log("[CommunityNavigationSidebar] Debug Info:", {
     pathname: location.pathname,
     communityId,
     speciesId,
@@ -383,7 +386,9 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
 
   // Only render sidebar for community-scoped routes
   if (!isCommunityRoute(location.pathname)) {
-    console.log('[CommunityNavigationSidebar] Not rendering - not a community route, showing global sidebar');
+    console.log(
+      "[CommunityNavigationSidebar] Not rendering - not a community route, showing global sidebar",
+    );
     return <GlobalNavigationSidebar onToggleToCommunity={undefined} />;
   }
 
@@ -395,9 +400,13 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
     (variantId && variantLoading) ||
     (traitId && traitLoading)
   ) {
-    console.log('[CommunityNavigationSidebar] Showing loading state');
+    console.log("[CommunityNavigationSidebar] Showing loading state");
     return (
-      <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
+      <SidebarContainer
+        className={className}
+        role="navigation"
+        aria-label="Community navigation"
+      >
         <CommunityHeader>
           <LoadingContainer>Loading...</LoadingContainer>
         </CommunityHeader>
@@ -407,17 +416,23 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
 
   // After loading, check if we have a communityId
   if (!communityId) {
-    console.log('[CommunityNavigationSidebar] Not rendering - no communityId after loading, showing global sidebar');
+    console.log(
+      "[CommunityNavigationSidebar] Not rendering - no communityId after loading, showing global sidebar",
+    );
     return <GlobalNavigationSidebar onToggleToCommunity={undefined} />;
   }
 
   // Show error state if query failed
   if (error) {
-    console.error('[CommunityNavigationSidebar] GraphQL Error:', error);
+    console.error("[CommunityNavigationSidebar] GraphQL Error:", error);
     return (
-      <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
+      <SidebarContainer
+        className={className}
+        role="navigation"
+        aria-label="Community navigation"
+      >
         <CommunityHeader>
-          <LoadingContainer style={{ color: 'red' }}>
+          <LoadingContainer style={{ color: "red" }}>
             Error loading community data
           </LoadingContainer>
         </CommunityHeader>
@@ -427,28 +442,40 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
 
   // Don't render if user is not a member
   if (!isMember) {
-    console.log('[CommunityNavigationSidebar] Not rendering - user is not a member, showing global sidebar');
+    console.log(
+      "[CommunityNavigationSidebar] Not rendering - user is not a member, showing global sidebar",
+    );
     return <GlobalNavigationSidebar onToggleToCommunity={undefined} />;
   }
 
-  console.log('[CommunityNavigationSidebar] Rendering full sidebar');
+  console.log("[CommunityNavigationSidebar] Rendering full sidebar");
 
   const communityBasePath = `/communities/${communityId}`;
 
   return (
-    <SidebarContainer className={className} role="navigation" aria-label="Community navigation">
+    <SidebarContainer
+      className={className}
+      role="navigation"
+      aria-label="Community navigation"
+    >
       <CommunityHeader>
         <CommunitySwitcher communityId={communityId} />
         {onToggleToGlobal && (
-          <ToggleButton onClick={onToggleToGlobal} aria-label="View global navigation">
+          <ToggleButton
+            onClick={onToggleToGlobal}
+            aria-label="View global navigation"
+          >
             <Globe />
             View Global Navigation
           </ToggleButton>
         )}
-        <SearchTrigger onClick={() => spotlight.open()} aria-label="Search pages">
+        <SearchTrigger
+          onClick={() => spotlight.open()}
+          aria-label="Search pages"
+        >
           <Search size={16} />
           Find page...
-          <Kbd>{isMac ? '⌘K' : 'Ctrl+K'}</Kbd>
+          <Kbd>{isMac ? "⌘K" : "Ctrl+K"}</Kbd>
         </SearchTrigger>
         <DashboardLink to="/dashboard">
           <LayoutGrid />
@@ -516,7 +543,9 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
                 {/* Current Species Context - shown when viewing a specific species or character */}
                 {contextSpeciesId && (
                   <>
-                    <SubsectionLabel>Current: {contextSpeciesName || 'Loading...'}</SubsectionLabel>
+                    <SubsectionLabel>
+                      Current: {contextSpeciesName || "Loading..."}
+                    </SubsectionLabel>
                     <CommunityNavigationItem
                       to={`/species/${contextSpeciesId}`}
                       icon={Dna}
@@ -564,7 +593,8 @@ export const CommunityNavigationSidebar: React.FC<CommunityNavigationSidebarProp
           {hasAdminPermissions && (
             <CommunityNavigationGroup title="Administration" icon={Shield}>
               {/* Dashboard - requires member management permissions */}
-              {(permissions.canRemoveCommunityMember || permissions.canManageMemberRoles) && (
+              {(permissions.canRemoveCommunityMember ||
+                permissions.canManageMemberRoles) && (
                 <CommunityNavigationItem
                   to={`${communityBasePath}/admin`}
                   icon={Shield}

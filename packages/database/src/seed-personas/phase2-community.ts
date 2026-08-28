@@ -42,16 +42,16 @@ async function loginAsSiteAdmin(client: GraphQLClient): Promise<string> {
 }
 
 async function findOrCreateCommunity(
-  client: GraphQLClient
+  client: GraphQLClient,
 ): Promise<{ id: string; created: boolean }> {
   // Check if community already exists
   const communitiesResponse = await client.request<CommunitiesResponse>(
     QUERIES.communities,
-    { first: 100 }
+    { first: 100 },
   );
 
   const existingCommunity = communitiesResponse.communities.nodes.find(
-    (c) => c.name === TEST_COMMUNITY_NAME
+    (c) => c.name === TEST_COMMUNITY_NAME,
   );
 
   if (existingCommunity) {
@@ -65,7 +65,7 @@ async function findOrCreateCommunity(
       input: {
         name: TEST_COMMUNITY_NAME,
       },
-    }
+    },
   );
 
   return { id: response.createCommunity.id, created: true };
@@ -73,11 +73,11 @@ async function findOrCreateCommunity(
 
 async function getExistingRoles(
   client: GraphQLClient,
-  communityId: string
+  communityId: string,
 ): Promise<Map<string, RoleInfo>> {
   const response = await client.request<RolesByCommunityResponse>(
     QUERIES.rolesByCommunity,
-    { communityId, first: 100 }
+    { communityId, first: 100 },
   );
 
   const roles = new Map<string, RoleInfo>();
@@ -90,7 +90,7 @@ async function getExistingRoles(
 async function createCustomRoles(
   client: GraphQLClient,
   communityId: string,
-  existingRoles: Map<string, RoleInfo>
+  existingRoles: Map<string, RoleInfo>,
 ): Promise<Map<string, RoleInfo>> {
   const roles = new Map(existingRoles);
 
@@ -118,10 +118,12 @@ async function createCustomRoles(
             communityId,
             canCreateCharacter: permissions.canCreateCharacter,
             canEditOwnCharacter: permissions.canEditOwnCharacter,
-            canEditOwnCharacterRegistry: permissions.canEditOwnCharacterRegistry,
-            canUploadOwnCharacterImages: permissions.canUploadOwnCharacterImages,
+            canEditOwnCharacterRegistry:
+              permissions.canEditOwnCharacterRegistry,
+            canUploadOwnCharacterImages:
+              permissions.canUploadOwnCharacterImages,
           },
-        }
+        },
       );
 
       roles.set(persona.roleName, {
@@ -143,7 +145,7 @@ async function createCustomRoles(
 
 export async function runPhase2(
   client: GraphQLClient,
-  users: Map<string, User>
+  users: Map<string, User>,
 ): Promise<Phase2Result> {
   log.phase("Phase 2: Setting up community...");
 
@@ -165,7 +167,7 @@ export async function runPhase2(
   // Get existing roles (includes default Admin, Moderator, Member)
   const existingRoles = await getExistingRoles(client, communityId);
   log.info(
-    `Found ${existingRoles.size} existing roles: ${Array.from(existingRoles.keys()).join(", ")}`
+    `Found ${existingRoles.size} existing roles: ${Array.from(existingRoles.keys()).join(", ")}`,
   );
 
   // Create custom roles

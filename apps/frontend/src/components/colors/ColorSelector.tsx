@@ -1,8 +1,8 @@
-import React from 'react';
-import styled from 'styled-components';
-import { useGetCommunityColorsQuery } from '../../generated/graphql';
-import { ColorPip } from './ColorPip';
-import { LoadingSpinner } from '../LoadingSpinner';
+import React from "react";
+import styled from "styled-components";
+import { useGetCommunityColorsQuery } from "../../generated/graphql";
+import { ColorPip } from "./ColorPip";
+import { LoadingSpinner } from "../LoadingSpinner";
 
 const SelectContainer = styled.div`
   display: flex;
@@ -85,8 +85,8 @@ export const ColorSelector: React.FC<ColorSelectorProps> = ({
   communityId,
   value,
   onChange,
-  label = 'Color',
-  placeholder = 'Select a color',
+  label = "Color",
+  placeholder = "Select a color",
   allowNone = true,
   disabled = false,
   className,
@@ -98,10 +98,12 @@ export const ColorSelector: React.FC<ColorSelectorProps> = ({
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newValue = event.target.value;
-    onChange(newValue === '' ? null : newValue);
+    onChange(newValue === "" ? null : newValue);
   };
 
-  const selectedColor = data?.communityColors?.find(color => color.id === value);
+  const selectedColor = data?.communityColors?.find(
+    (color) => color.id === value,
+  );
 
   if (loading) {
     return (
@@ -126,11 +128,7 @@ export const ColorSelector: React.FC<ColorSelectorProps> = ({
   return (
     <SelectContainer className={className}>
       {label && <Label>{label}</Label>}
-      <Select
-        value={value || ''}
-        onChange={handleChange}
-        disabled={disabled}
-      >
+      <Select value={value || ""} onChange={handleChange} disabled={disabled}>
         {allowNone && <Option value="">{placeholder}</Option>}
         {colors.map((color) => (
           <Option key={color.id} value={color.id}>

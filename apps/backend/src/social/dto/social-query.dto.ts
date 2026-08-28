@@ -1,6 +1,6 @@
-import { ObjectType, Field, InputType, Int } from '@nestjs/graphql';
-import { IsOptional, IsNumber, Min, Max } from 'class-validator';
-import { User } from '../../users/entities/user.entity';
+import { ObjectType, Field, InputType, Int } from "@nestjs/graphql";
+import { IsOptional, IsNumber, Min, Max } from "class-validator";
+import { User } from "../../users/entities/user.entity";
 
 @ObjectType()
 export class FollowListResult {

@@ -1,13 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { MailerService } from '@nestjs-modules/mailer';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from "@nestjs/common";
+import { MailerService } from "@nestjs-modules/mailer";
+import { ConfigService } from "@nestjs/config";
 import {
   passwordResetTemplate,
   passwordChangedTemplate,
   imageApprovedTemplate,
   imageRejectedTemplate,
-} from './templates';
-import { ModerationRejectionReason } from '@prisma/client';
+} from "./templates";
+import { ModerationRejectionReason } from "@prisma/client";
 
 @Injectable()
 export class EmailService {
@@ -19,8 +19,8 @@ export class EmailService {
     private readonly configService: ConfigService,
   ) {
     this.frontendUrl = this.configService.get<string>(
-      'FRONTEND_URL',
-      'http://localhost:3000',
+      "FRONTEND_URL",
+      "http://localhost:3000",
     );
   }
 
@@ -40,7 +40,7 @@ export class EmailService {
     try {
       await this.mailerService.sendMail({
         to: email,
-        subject: 'Reset Your Password',
+        subject: "Reset Your Password",
         html: passwordResetTemplate({
           username,
           resetUrl,
@@ -54,7 +54,7 @@ export class EmailService {
         `Failed to send password reset email to ${email}`,
         error.stack,
       );
-      throw new Error('Failed to send password reset email');
+      throw new Error("Failed to send password reset email");
     }
   }
 
@@ -70,12 +70,12 @@ export class EmailService {
     try {
       await this.mailerService.sendMail({
         to: email,
-        subject: 'Your Password Has Been Changed',
+        subject: "Your Password Has Been Changed",
         html: passwordChangedTemplate({
           username,
           supportEmail: this.configService.get<string>(
-            'EMAIL_FROM',
-            'noreply@example.com',
+            "EMAIL_FROM",
+            "noreply@example.com",
           ),
         }),
       });
@@ -101,7 +101,7 @@ export class EmailService {
     try {
       await this.mailerService.sendMail({
         to: email,
-        subject: 'Your Image Has Been Approved',
+        subject: "Your Image Has Been Approved",
         html: imageApprovedTemplate({
           username,
           imageName,
@@ -129,17 +129,17 @@ export class EmailService {
     reasonText?: string,
   ): Promise<void> {
     const reasonLabels: Record<ModerationRejectionReason, string> = {
-      TOS_VIOLATION: 'Terms of Service Violation',
-      NSFW_NOT_TAGGED: 'NSFW Content Not Properly Tagged',
-      SPAM_LOW_QUALITY: 'Spam or Low Quality Content',
-      COPYRIGHT_ISSUE: 'Copyright or Intellectual Property Issue',
-      OTHER: 'Other Policy Violation',
+      TOS_VIOLATION: "Terms of Service Violation",
+      NSFW_NOT_TAGGED: "NSFW Content Not Properly Tagged",
+      SPAM_LOW_QUALITY: "Spam or Low Quality Content",
+      COPYRIGHT_ISSUE: "Copyright or Intellectual Property Issue",
+      OTHER: "Other Policy Violation",
     };
 
     try {
       await this.mailerService.sendMail({
         to: email,
-        subject: 'Your Image Was Not Approved',
+        subject: "Your Image Was Not Approved",
         html: imageRejectedTemplate({
           username,
           imageName,

@@ -1,33 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import styled from 'styled-components';
-import { Button } from '@chardb/ui';
-import { useAuth } from '../contexts/AuthContext';
-import { useInviteCodeByIdQuery } from '../graphql/inviteCodes.graphql';
-import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import styled from "styled-components";
+import { Button } from "@chardb/ui";
+import { useAuth } from "../contexts/AuthContext";
+import { useInviteCodeByIdQuery } from "../graphql/inviteCodes.graphql";
+import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
-const signupSchema = z.object({
-  inviteCode: z.string()
-    .min(1, 'Invite code is required')
-    .max(50, 'Invite code must be less than 50 characters')
-    .regex(/^[a-zA-Z0-9_-]+$/, 'Invite code can only contain letters, numbers, underscores, and hyphens'),
-  username: z.string()
-    .min(2, 'Username must be at least 2 characters')
-    .max(30, 'Username must be less than 30 characters')
-    .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores, and hyphens'),
-  email: z.string().email('Please enter a valid email'),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .max(100, 'Password must be less than 100 characters'),
-  confirmPassword: z.string(),
-  displayName: z.string().max(100, 'Display name must be less than 100 characters').optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const signupSchema = z
+  .object({
+    inviteCode: z
+      .string()
+      .min(1, "Invite code is required")
+      .max(50, "Invite code must be less than 50 characters")
+      .regex(
+        /^[a-zA-Z0-9_-]+$/,
+        "Invite code can only contain letters, numbers, underscores, and hyphens",
+      ),
+    username: z
+      .string()
+      .min(2, "Username must be at least 2 characters")
+      .max(30, "Username must be less than 30 characters")
+      .regex(
+        /^[a-zA-Z0-9_-]+$/,
+        "Username can only contain letters, numbers, underscores, and hyphens",
+      ),
+    email: z.string().email("Please enter a valid email"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(100, "Password must be less than 100 characters"),
+    confirmPassword: z.string(),
+    displayName: z
+      .string()
+      .max(100, "Display name must be less than 100 characters")
+      .optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 type SignupForm = z.infer<typeof signupSchema>;
 
@@ -78,11 +92,11 @@ const Input = styled.input`
   background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.text.primary};
   transition: all 0.2s ease;
-  
+
   &::placeholder {
     color: ${({ theme }) => theme.colors.text.muted};
   }
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -101,23 +115,28 @@ const HelpText = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
-const ValidationMessage = styled.div<{ $status: 'valid' | 'invalid' | 'loading' }>`
+const ValidationMessage = styled.div<{
+  $status: "valid" | "invalid" | "loading";
+}>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   color: ${({ $status, theme }) => {
     switch ($status) {
-      case 'valid': return theme.colors.success;
-      case 'invalid': return theme.colors.error;
-      case 'loading': return theme.colors.text.secondary;
+      case "valid":
+        return theme.colors.success;
+      case "invalid":
+        return theme.colors.error;
+      case "loading":
+        return theme.colors.text.secondary;
     }
   }};
 `;
 
 const CommunityPreview = styled.div`
-  background: ${({ theme }) => theme.colors.primary + '10'};
-  border: 1px solid ${({ theme }) => theme.colors.primary + '30'};
+  background: ${({ theme }) => theme.colors.primary + "10"};
+  border: 1px solid ${({ theme }) => theme.colors.primary + "30"};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   padding: ${({ theme }) => theme.spacing.md};
   margin-top: ${({ theme }) => theme.spacing.sm};
@@ -155,7 +174,7 @@ const Footer = styled.div`
 const LoginLink = styled(Link)`
   color: ${({ theme }) => theme.colors.primary};
   text-decoration: none;
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -177,27 +196,31 @@ export const SignupPage: React.FC = () => {
     resolver: zodResolver(signupSchema),
   });
 
-  const inviteCode = watch('inviteCode');
-  
+  const inviteCode = watch("inviteCode");
+
   // Auto-populate invite code from URL parameter (run once on mount)
   useEffect(() => {
-    const inviteParam = searchParams.get('invite');
+    const inviteParam = searchParams.get("invite");
     if (inviteParam) {
-      setValue('inviteCode', inviteParam);
+      setValue("inviteCode", inviteParam);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Redirect to join community page if already logged in with invite code
   useEffect(() => {
-    const inviteParam = searchParams.get('invite');
+    const inviteParam = searchParams.get("invite");
     if (user && inviteParam) {
       navigate(`/join-community?invite=${inviteParam}`);
     }
   }, [user, searchParams, navigate]);
 
   // Query to validate invite code
-  const { data: inviteCodeData, loading: inviteCodeLoading, error: inviteCodeError } = useInviteCodeByIdQuery({
-    variables: { id: inviteCode || '' },
+  const {
+    data: inviteCodeData,
+    loading: inviteCodeLoading,
+    error: inviteCodeError,
+  } = useInviteCodeByIdQuery({
+    variables: { id: inviteCode || "" },
     skip: !inviteCode || inviteCode.length < 2,
   });
 
@@ -209,10 +232,10 @@ export const SignupPage: React.FC = () => {
         data.email,
         data.password,
         data.displayName,
-        data.inviteCode
+        data.inviteCode,
       );
       if (success) {
-        navigate('/dashboard');
+        navigate("/dashboard");
       }
     } finally {
       setIsLoading(false);
@@ -221,7 +244,7 @@ export const SignupPage: React.FC = () => {
 
   const getInviteCodeValidation = () => {
     if (!inviteCode || inviteCode.length < 2) return null;
-    
+
     if (inviteCodeLoading) {
       return (
         <ValidationMessage $status="loading">
@@ -230,7 +253,7 @@ export const SignupPage: React.FC = () => {
         </ValidationMessage>
       );
     }
-    
+
     if (inviteCodeError || !inviteCodeData?.inviteCodeById) {
       return (
         <ValidationMessage $status="invalid">
@@ -239,7 +262,7 @@ export const SignupPage: React.FC = () => {
         </ValidationMessage>
       );
     }
-    
+
     const code = inviteCodeData.inviteCodeById;
     if (!code.isAvailable) {
       return (
@@ -249,7 +272,7 @@ export const SignupPage: React.FC = () => {
         </ValidationMessage>
       );
     }
-    
+
     return (
       <ValidationMessage $status="valid">
         <CheckCircle size={16} />
@@ -262,102 +285,123 @@ export const SignupPage: React.FC = () => {
     <Container>
       <Card>
         <Title>Join CharDB</Title>
-        
+
         <Form onSubmit={handleSubmit(onSubmit)}>
           <FormGroup>
             <Label htmlFor="inviteCode">Invite Code *</Label>
             <Input
-              {...register('inviteCode')}
+              {...register("inviteCode")}
               type="text"
               id="inviteCode"
               placeholder="Enter your invite code"
             />
-            {errors.inviteCode && <ErrorMessage>{errors.inviteCode.message}</ErrorMessage>}
+            {errors.inviteCode && (
+              <ErrorMessage>{errors.inviteCode.message}</ErrorMessage>
+            )}
             {getInviteCodeValidation()}
             {inviteCodeData?.inviteCodeById?.role && (
               <CommunityPreview>
                 <CommunityInfo>
-                  <CommunityName>{inviteCodeData.inviteCodeById.role.community.name}</CommunityName>
-                  <RoleInfo>as {inviteCodeData.inviteCodeById.role.name}</RoleInfo>
+                  <CommunityName>
+                    {inviteCodeData.inviteCodeById.role.community.name}
+                  </CommunityName>
+                  <RoleInfo>
+                    as {inviteCodeData.inviteCodeById.role.name}
+                  </RoleInfo>
                 </CommunityInfo>
                 <PreviewText>
-                  You'll be joining this community and assigned the {inviteCodeData.inviteCodeById.role.name} role.
+                  You'll be joining this community and assigned the{" "}
+                  {inviteCodeData.inviteCodeById.role.name} role.
                 </PreviewText>
               </CommunityPreview>
             )}
-            {inviteCodeData?.inviteCodeById && !inviteCodeData.inviteCodeById.role && (
-              <CommunityPreview>
-                <PreviewText>
-                  <strong>Site Registration:</strong> This code will give you access to the platform.
-                </PreviewText>
-              </CommunityPreview>
-            )}
+            {inviteCodeData?.inviteCodeById &&
+              !inviteCodeData.inviteCodeById.role && (
+                <CommunityPreview>
+                  <PreviewText>
+                    <strong>Site Registration:</strong> This code will give you
+                    access to the platform.
+                  </PreviewText>
+                </CommunityPreview>
+              )}
           </FormGroup>
 
           <FormGroup>
             <Label htmlFor="username">Username</Label>
             <Input
-              {...register('username')}
+              {...register("username")}
               type="text"
               id="username"
               placeholder="Choose a username"
             />
-            {errors.username && <ErrorMessage>{errors.username.message}</ErrorMessage>}
-            <HelpText>This will be your unique identifier on the platform</HelpText>
+            {errors.username && (
+              <ErrorMessage>{errors.username.message}</ErrorMessage>
+            )}
+            <HelpText>
+              This will be your unique identifier on the platform
+            </HelpText>
           </FormGroup>
 
           <FormGroup>
             <Label htmlFor="email">Email</Label>
             <Input
-              {...register('email')}
+              {...register("email")}
               type="email"
               id="email"
               placeholder="Enter your email"
             />
-            {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
+            {errors.email && (
+              <ErrorMessage>{errors.email.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <FormGroup>
             <Label htmlFor="displayName">Display Name (Optional)</Label>
             <Input
-              {...register('displayName')}
+              {...register("displayName")}
               type="text"
               id="displayName"
               placeholder="How others will see your name"
             />
-            {errors.displayName && <ErrorMessage>{errors.displayName.message}</ErrorMessage>}
+            {errors.displayName && (
+              <ErrorMessage>{errors.displayName.message}</ErrorMessage>
+            )}
             <HelpText>This can be different from your username</HelpText>
           </FormGroup>
 
           <FormGroup>
             <Label htmlFor="password">Password</Label>
             <Input
-              {...register('password')}
+              {...register("password")}
               type="password"
               id="password"
               placeholder="Create a password"
             />
-            {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
+            {errors.password && (
+              <ErrorMessage>{errors.password.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <FormGroup>
             <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input
-              {...register('confirmPassword')}
+              {...register("confirmPassword")}
               type="password"
               id="confirmPassword"
               placeholder="Confirm your password"
             />
-            {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword.message}</ErrorMessage>}
+            {errors.confirmPassword && (
+              <ErrorMessage>{errors.confirmPassword.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <Button type="submit" loading={isLoading} disabled={isLoading}>
-            {isLoading ? 'Creating Account...' : 'Create Account'}
+            {isLoading ? "Creating Account..." : "Create Account"}
           </Button>
         </Form>
 
         <Footer>
-          Already have an account?{' '}
+          Already have an account?{" "}
           <LoginLink to="/login">Sign in here</LoginLink>
         </Footer>
       </Card>

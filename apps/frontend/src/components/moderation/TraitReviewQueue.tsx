@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
-import { toast } from 'react-hot-toast';
-import { Button, Heading3, HelpText, SmallText, Caption } from '@chardb/ui';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { Button, Heading3, HelpText, SmallText, Caption } from "@chardb/ui";
 import {
   useTraitReviewQueueQuery,
   useApproveTraitReviewMutation,
   useRevertTraitReviewMutation,
   useDeleteCharacterMutation,
   useKickCharacterFromSpeciesMutation,
-} from '../../generated/graphql';
-import { useAuth } from '../../contexts/AuthContext';
-import { useUserCommunityRole } from '../../hooks/useUserCommunityRole';
-import { TraitReviewCard } from './TraitReviewCard';
+} from "../../generated/graphql";
+import { useAuth } from "../../contexts/AuthContext";
+import { useUserCommunityRole } from "../../hooks/useUserCommunityRole";
+import { TraitReviewCard } from "./TraitReviewCard";
 
 const Container = styled.div`
   display: flex;
@@ -115,7 +115,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
 
   const { data, loading, error, refetch } = useTraitReviewQueueQuery({
     variables: { communityId, first: PAGE_SIZE, offset },
-    fetchPolicy: 'network-only',
+    fetchPolicy: "network-only",
   });
 
   const [approveReview] = useApproveTraitReviewMutation();
@@ -132,11 +132,11 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
     setActionInProgress(reviewId);
     try {
       await approveReview({ variables: { input: { reviewId } } });
-      toast.success('Trait review approved');
+      toast.success("Trait review approved");
       await refetch();
     } catch (err) {
-      console.error('Failed to approve trait review:', err);
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error("Failed to approve trait review:", err);
+      const message = err instanceof Error ? err.message : "Unknown error";
       toast.error(`Failed to approve: ${message}`);
     } finally {
       setActionInProgress(null);
@@ -147,11 +147,11 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
     setActionInProgress(reviewId);
     try {
       await revertReview({ variables: { input: { reviewId, reason } } });
-      toast.success('Trait values reverted');
+      toast.success("Trait values reverted");
       await refetch();
     } catch (err) {
-      console.error('Failed to revert trait review:', err);
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error("Failed to revert trait review:", err);
+      const message = err instanceof Error ? err.message : "Unknown error";
       toast.error(`Failed to revert: ${message}`);
     } finally {
       setActionInProgress(null);
@@ -159,30 +159,44 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
   };
 
   const handleDelete = async (characterId: string, characterName: string) => {
-    if (!window.confirm(`Delete "${characterName}"? This soft-deletes the character and removes it from the queue.`)) return;
+    if (
+      !window.confirm(
+        `Delete "${characterName}"? This soft-deletes the character and removes it from the queue.`,
+      )
+    )
+      return;
     setActionInProgress(characterId);
     try {
       await deleteCharacter({ variables: { id: characterId } });
       toast.success(`"${characterName}" deleted`);
       await refetch();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = err instanceof Error ? err.message : "Unknown error";
       toast.error(`Failed to delete: ${message}`);
     } finally {
       setActionInProgress(null);
     }
   };
 
-  const handleKickFromSpecies = async (characterId: string, characterName: string, speciesName: string | undefined) => {
-    const speciesLabel = speciesName ? `"${speciesName}"` : 'its species';
-    if (!window.confirm(`Remove "${characterName}" from ${speciesLabel}? Trait values will be saved as custom fields.`)) return;
+  const handleKickFromSpecies = async (
+    characterId: string,
+    characterName: string,
+    speciesName: string | undefined,
+  ) => {
+    const speciesLabel = speciesName ? `"${speciesName}"` : "its species";
+    if (
+      !window.confirm(
+        `Remove "${characterName}" from ${speciesLabel}? Trait values will be saved as custom fields.`,
+      )
+    )
+      return;
     setActionInProgress(characterId);
     try {
       await kickFromSpecies({ variables: { id: characterId } });
       toast.success(`"${characterName}" removed from ${speciesLabel}`);
       await refetch();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = err instanceof Error ? err.message : "Unknown error";
       toast.error(`Failed to remove from species: ${message}`);
     } finally {
       setActionInProgress(null);
@@ -190,7 +204,8 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
   };
 
   const canDelete = permissions.canDeleteCharacter || (user?.isAdmin ?? false);
-  const canKick = permissions.canEditCharacterRegistry || (user?.isAdmin ?? false);
+  const canKick =
+    permissions.canEditCharacterRegistry || (user?.isAdmin ?? false);
 
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -231,7 +246,8 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
 
       <HelpText>
         Review proposed trait values for imported or user-submitted characters.
-        You can approve, revert to previous values, or edit the traits before approving.
+        You can approve, revert to previous values, or edit the traits before
+        approving.
       </HelpText>
 
       {loading ? (
@@ -260,7 +276,10 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
                 onRevert={handleRevert}
                 onDelete={canDelete ? handleDelete : undefined}
                 onKickFromSpecies={canKick ? handleKickFromSpecies : undefined}
-                actionInProgress={actionInProgress === item.review.id || actionInProgress === item.characterId}
+                actionInProgress={
+                  actionInProgress === item.review.id ||
+                  actionInProgress === item.characterId
+                }
               />
             ))}
           </QueueList>
@@ -290,7 +309,6 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
           )}
         </>
       )}
-
     </Container>
   );
 };

@@ -227,7 +227,10 @@ describe("DiscordService", () => {
     it("should return null when user not found", async () => {
       mockApiGuildsSearchForMembers.mockResolvedValue([]);
 
-      const result = await service.resolveUsernameToId("guild123", "nonexistent");
+      const result = await service.resolveUsernameToId(
+        "guild123",
+        "nonexistent",
+      );
       expect(result).toBeNull();
     });
 
@@ -273,7 +276,8 @@ describe("DiscordService", () => {
         userId: "user123",
         username: "testuser",
         displayName: "Test User",
-        avatarUrl: "https://cdn.discordapp.com/avatars/user123/abcdef123456.png",
+        avatarUrl:
+          "https://cdn.discordapp.com/avatars/user123/abcdef123456.png",
       });
     });
 

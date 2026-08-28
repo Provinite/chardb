@@ -1,30 +1,30 @@
-import { Resolver, Query, Mutation, Args, Int, ID } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
-import { ImageModerationService } from './image-moderation.service';
-import { MediaService } from '../media/media.service';
+import { Resolver, Query, Mutation, Args, Int, ID } from "@nestjs/graphql";
+import { UseGuards } from "@nestjs/common";
+import { ImageModerationService } from "./image-moderation.service";
+import { MediaService } from "../media/media.service";
 import {
   ImageModerationAction,
   ImageModerationQueueConnection,
-} from './entities/image-moderation-action.entity';
-import { MediaConnection } from '../media/entities/media.entity';
+} from "./entities/image-moderation-action.entity";
+import { MediaConnection } from "../media/entities/media.entity";
 import {
   ImageModerationQueueFiltersInput,
   ApproveImageInput,
   RejectImageInput,
-} from './dto/image-moderation.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/CurrentUser';
-import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
-import { AllowGlobalAdmin } from '../auth/decorators/AllowGlobalAdmin';
-import { AllowCommunityPermission } from '../auth/decorators/AllowCommunityPermission';
-import { CommunityPermission } from '../auth/CommunityPermission';
-import { ResolveCommunityFrom } from '../auth/decorators/ResolveCommunityFrom';
-import { AllowAnyAuthenticated } from '../auth/decorators/AllowAnyAuthenticated';
-import { mapPrismaMediaConnectionToGraphQL } from '../media/utils/media-resolver-mappers';
+} from "./dto/image-moderation.dto";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { CurrentUser } from "../auth/decorators/CurrentUser";
+import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
+import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
+import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
+import { CommunityPermission } from "../auth/CommunityPermission";
+import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
+import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import { mapPrismaMediaConnectionToGraphQL } from "../media/utils/media-resolver-mappers";
 import {
   mapQueueResultToGraphQL,
   mapPrismaImageModerationActionToGraphQL,
-} from './utils/image-moderation-mappers';
+} from "./utils/image-moderation-mappers";
 
 @Resolver()
 export class ImageModerationResolver {
@@ -38,18 +38,26 @@ export class ImageModerationResolver {
    */
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanModerateImages)
-  @ResolveCommunityFrom({ communityId: 'communityId' })
+  @ResolveCommunityFrom({ communityId: "communityId" })
   @UseGuards(JwtAuthGuard)
   @Query(() => ImageModerationQueueConnection, {
-    description: 'Get pending images for a community moderation queue',
+    description: "Get pending images for a community moderation queue",
   })
   async imageModerationQueue(
-    @Args('communityId', { type: () => ID }) communityId: string,
-    @Args('filters', { nullable: true }) filters: ImageModerationQueueFiltersInput,
-    @Args('first', { nullable: true, defaultValue: 20, type: () => Int }) first: number,
-    @Args('offset', { nullable: true, defaultValue: 0, type: () => Int }) offset: number,
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("filters", { nullable: true })
+    filters: ImageModerationQueueFiltersInput,
+    @Args("first", { nullable: true, defaultValue: 20, type: () => Int })
+    first: number,
+    @Args("offset", { nullable: true, defaultValue: 0, type: () => Int })
+    offset: number,
   ): Promise<ImageModerationQueueConnection> {
-    const result = await this.imageModerationService.getQueueForCommunity(communityId, filters, first, offset);
+    const result = await this.imageModerationService.getQueueForCommunity(
+      communityId,
+      filters,
+      first,
+      offset,
+    );
     return mapQueueResultToGraphQL(result);
   }
 
@@ -59,17 +67,24 @@ export class ImageModerationResolver {
    */
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanModerateImages)
-  @ResolveCommunityFrom({ communityId: 'communityId' })
+  @ResolveCommunityFrom({ communityId: "communityId" })
   @UseGuards(JwtAuthGuard)
   @Query(() => MediaConnection, {
-    description: 'Get pending media for moderation queue (use pendingModerationImage field for actual image URLs)',
+    description:
+      "Get pending media for moderation queue (use pendingModerationImage field for actual image URLs)",
   })
   async mediaModerationQueue(
-    @Args('communityId', { type: () => ID }) communityId: string,
-    @Args('first', { nullable: true, defaultValue: 20, type: () => Int }) first: number,
-    @Args('offset', { nullable: true, defaultValue: 0, type: () => Int }) offset: number,
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("first", { nullable: true, defaultValue: 20, type: () => Int })
+    first: number,
+    @Args("offset", { nullable: true, defaultValue: 0, type: () => Int })
+    offset: number,
   ): Promise<MediaConnection> {
-    const result = await this.mediaService.findPendingForModeration(communityId, first, offset);
+    const result = await this.mediaService.findPendingForModeration(
+      communityId,
+      first,
+      offset,
+    );
     return mapPrismaMediaConnectionToGraphQL(result);
   }
 
@@ -79,14 +94,21 @@ export class ImageModerationResolver {
   @AllowGlobalAdmin()
   @UseGuards(JwtAuthGuard)
   @Query(() => ImageModerationQueueConnection, {
-    description: 'Get all pending images across all communities (admin only)',
+    description: "Get all pending images across all communities (admin only)",
   })
   async globalImageModerationQueue(
-    @Args('filters', { nullable: true }) filters: ImageModerationQueueFiltersInput,
-    @Args('first', { nullable: true, defaultValue: 20, type: () => Int }) first: number,
-    @Args('offset', { nullable: true, defaultValue: 0, type: () => Int }) offset: number,
+    @Args("filters", { nullable: true })
+    filters: ImageModerationQueueFiltersInput,
+    @Args("first", { nullable: true, defaultValue: 20, type: () => Int })
+    first: number,
+    @Args("offset", { nullable: true, defaultValue: 0, type: () => Int })
+    offset: number,
   ): Promise<ImageModerationQueueConnection> {
-    const result = await this.imageModerationService.getGlobalQueue(filters, first, offset);
+    const result = await this.imageModerationService.getGlobalQueue(
+      filters,
+      first,
+      offset,
+    );
     return mapQueueResultToGraphQL(result);
   }
 
@@ -95,13 +117,13 @@ export class ImageModerationResolver {
    */
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanModerateImages)
-  @ResolveCommunityFrom({ communityId: 'communityId' })
+  @ResolveCommunityFrom({ communityId: "communityId" })
   @UseGuards(JwtAuthGuard)
   @Query(() => Int, {
-    description: 'Get count of pending images for a community',
+    description: "Get count of pending images for a community",
   })
   async pendingImageCount(
-    @Args('communityId', { type: () => ID }) communityId: string,
+    @Args("communityId", { type: () => ID }) communityId: string,
   ): Promise<number> {
     return this.imageModerationService.getPendingCountForCommunity(communityId);
   }
@@ -112,7 +134,8 @@ export class ImageModerationResolver {
   @AllowGlobalAdmin()
   @UseGuards(JwtAuthGuard)
   @Query(() => Int, {
-    description: 'Get count of all pending images across all communities (admin only)',
+    description:
+      "Get count of all pending images across all communities (admin only)",
   })
   async globalPendingImageCount(): Promise<number> {
     return this.imageModerationService.getGlobalPendingCount();
@@ -124,13 +147,16 @@ export class ImageModerationResolver {
   @AllowAnyAuthenticated()
   @UseGuards(JwtAuthGuard)
   @Mutation(() => ImageModerationAction, {
-    description: 'Approve an image (moderator action)',
+    description: "Approve an image (moderator action)",
   })
   async approveImage(
-    @Args('input') input: ApproveImageInput,
+    @Args("input") input: ApproveImageInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<ImageModerationAction> {
-    const action = await this.imageModerationService.approveImage(input.imageId, user.id);
+    const action = await this.imageModerationService.approveImage(
+      input.imageId,
+      user.id,
+    );
     return mapPrismaImageModerationActionToGraphQL(action);
   }
 
@@ -140,10 +166,10 @@ export class ImageModerationResolver {
   @AllowAnyAuthenticated()
   @UseGuards(JwtAuthGuard)
   @Mutation(() => ImageModerationAction, {
-    description: 'Reject an image (moderator action)',
+    description: "Reject an image (moderator action)",
   })
   async rejectImage(
-    @Args('input') input: RejectImageInput,
+    @Args("input") input: RejectImageInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<ImageModerationAction> {
     const action = await this.imageModerationService.rejectImage(

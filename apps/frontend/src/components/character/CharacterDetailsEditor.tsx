@@ -1,5 +1,5 @@
-import React from 'react';
-import { MarkdownEditor } from '../MarkdownEditor';
+import React from "react";
+import { MarkdownEditor } from "../MarkdownEditor";
 
 interface CharacterDetailsEditorProps {
   value: string;

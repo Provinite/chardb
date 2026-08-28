@@ -36,10 +36,10 @@ export class CharacterProfileEditGuard implements CanActivate {
       return false;
     }
 
-    const config = this.reflector.getAllAndOverride(AllowCharacterProfileEditor, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const config = this.reflector.getAllAndOverride(
+      AllowCharacterProfileEditor,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!config || !config.characterId) {
       return false;
@@ -90,15 +90,13 @@ export class CharacterProfileEditGuard implements CanActivate {
 
       // For orphaned characters, check if user has permission to manage orphaned characters
       // OR has canEditCharacter permission (profile-level)
-      const permissions =
-        await this.permissionService.getCommunityPermissions(
-          user.id,
-          community.id,
-        );
+      const permissions = await this.permissionService.getCommunityPermissions(
+        user.id,
+        community.id,
+      );
 
       return !!(
-        permissions.canCreateOrphanedCharacter ||
-        permissions.canEditCharacter
+        permissions.canCreateOrphanedCharacter || permissions.canEditCharacter
       );
     }
 
@@ -131,8 +129,7 @@ export class CharacterProfileEditGuard implements CanActivate {
     if (isOwner) {
       // Owner can edit if they have canEditOwnCharacter or canEditCharacter
       return !!(
-        permissions.canEditOwnCharacter ||
-        permissions.canEditCharacter
+        permissions.canEditOwnCharacter || permissions.canEditCharacter
       );
     } else {
       // Non-owner needs canEditCharacter permission

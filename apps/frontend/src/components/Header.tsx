@@ -1,9 +1,9 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import { Button } from '@chardb/ui';
-import { useAuth } from '../contexts/AuthContext';
-import { ThemeToggle } from './ThemeToggle';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import { Button } from "@chardb/ui";
+import { useAuth } from "../contexts/AuthContext";
+import { ThemeToggle } from "./ThemeToggle";
 
 const HeaderContainer = styled.header`
   background-color: ${({ theme }) => theme.colors.surface};
@@ -37,7 +37,7 @@ const NavLink = styled(Link)`
   color: ${({ theme }) => theme.colors.text.primary};
   text-decoration: none;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  
+
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
   }
@@ -56,7 +56,7 @@ const UserInfo = styled(Link)`
   text-decoration: none;
   color: inherit;
   transition: opacity 0.2s ease;
-  
+
   &:hover {
     opacity: 0.8;
   }
@@ -80,7 +80,7 @@ export const Header: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -98,7 +98,10 @@ export const Header: React.FC = () => {
               <UserInfo to={`/user/${user.username}`}>
                 {user.avatarImage && (
                   <Avatar
-                    src={user.avatarImage.thumbnailUrl || user.avatarImage.originalUrl}
+                    src={
+                      user.avatarImage.thumbnailUrl ||
+                      user.avatarImage.originalUrl
+                    }
                     alt={user.avatarImage.altText || user.username}
                   />
                 )}
@@ -110,10 +113,18 @@ export const Header: React.FC = () => {
             </UserMenu>
           ) : (
             <UserMenu>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/login")}
+              >
                 Login
               </Button>
-              <Button variant="primary" size="sm" onClick={() => navigate('/signup')}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => navigate("/signup")}
+              >
                 Sign Up
               </Button>
             </UserMenu>

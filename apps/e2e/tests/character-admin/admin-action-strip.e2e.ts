@@ -32,7 +32,10 @@ test.describe("plain member", () => {
     await page.goto(world.characters.plain.url);
 
     await expect(
-      page.getByRole("heading", { level: 1, name: world.characters.plain.name }),
+      page.getByRole("heading", {
+        level: 1,
+        name: world.characters.plain.name,
+      }),
     ).toBeVisible();
     await expect(strip(page)).toHaveCount(0);
   });
@@ -64,7 +67,10 @@ test.describe("anonymous visitor", () => {
   test("sees no strip at all", async ({ page, world }) => {
     await page.goto(world.characters.plain.url);
     await expect(
-      page.getByRole("heading", { level: 1, name: world.characters.plain.name }),
+      page.getByRole("heading", {
+        level: 1,
+        name: world.characters.plain.name,
+      }),
     ).toBeVisible();
     await expect(strip(page)).toHaveCount(0);
   });

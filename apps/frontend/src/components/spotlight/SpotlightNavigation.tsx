@@ -1,8 +1,8 @@
-import React from 'react';
-import { Spotlight } from '@mantine/spotlight';
-import { useSpotlightActions } from './useSpotlightActions';
+import React from "react";
+import { Spotlight } from "@mantine/spotlight";
+import { useSpotlightActions } from "./useSpotlightActions";
 
-const SEARCH_PROPS = { placeholder: 'Search pages...' } as const;
+const SEARCH_PROPS = { placeholder: "Search pages..." } as const;
 
 export const SpotlightNavigation: React.FC = () => {
   const actions = useSpotlightActions();

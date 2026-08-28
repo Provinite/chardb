@@ -95,11 +95,9 @@ export default definePreset<CommunityBasicWorld>({
       [member.userId, stock.Member],
       [othermember.userId, stock.Member],
     ] as const) {
-      await ctx
-        .as("siteadmin")
-        .gql(SeedCreateCommunityMemberDocument, {
-          createCommunityMemberInput: { userId, roleId },
-        });
+      await ctx.as("siteadmin").gql(SeedCreateCommunityMemberDocument, {
+        createCommunityMemberInput: { userId, roleId },
+      });
     }
 
     // --- species. createSpecies has NO global-admin bypass, so the actor must
@@ -187,7 +185,11 @@ export default definePreset<CommunityBasicWorld>({
           name: pending.name,
           url: `/character/${pending.id}`,
         },
-        plain: { id: plain.id, name: plain.name, url: `/character/${plain.id}` },
+        plain: {
+          id: plain.id,
+          name: plain.name,
+          url: `/character/${plain.id}`,
+        },
       },
     };
   },

@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import styled from 'styled-components';
-import toast from 'react-hot-toast';
-import { Button } from '@chardb/ui';
-import { useForgotPasswordMutation } from '../graphql/auth.graphql';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import styled from "styled-components";
+import toast from "react-hot-toast";
+import { Button } from "@chardb/ui";
+import { useForgotPasswordMutation } from "../graphql/auth.graphql";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email('Please enter a valid email'),
+  email: z.string().email("Please enter a valid email"),
 });
 
 type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
@@ -133,10 +133,10 @@ export const ForgotPasswordPage: React.FC = () => {
         },
       });
       setIsSuccess(true);
-      toast.success('Password reset email sent successfully');
+      toast.success("Password reset email sent successfully");
     } catch (error) {
-      console.error('Forgot password error:', error);
-      toast.error('Failed to send reset email. Please try again.');
+      console.error("Forgot password error:", error);
+      toast.error("Failed to send reset email. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -148,8 +148,8 @@ export const ForgotPasswordPage: React.FC = () => {
         <Card>
           <Title>Check Your Email</Title>
           <SuccessMessage>
-            If an account exists with that email address, you will receive a password reset link shortly.
-            The link will expire in 1 hour.
+            If an account exists with that email address, you will receive a
+            password reset link shortly. The link will expire in 1 hour.
           </SuccessMessage>
           <Footer>
             <BackLink to="/login">Back to login</BackLink>
@@ -164,29 +164,31 @@ export const ForgotPasswordPage: React.FC = () => {
       <Card>
         <Title>Forgot Password</Title>
         <Description>
-          Enter your email address and we'll send you a link to reset your password.
+          Enter your email address and we'll send you a link to reset your
+          password.
         </Description>
 
         <Form onSubmit={handleSubmit(onSubmit)}>
           <FormGroup>
             <Label htmlFor="email">Email</Label>
             <Input
-              {...register('email')}
+              {...register("email")}
               type="email"
               id="email"
               placeholder="Enter your email"
             />
-            {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
+            {errors.email && (
+              <ErrorMessage>{errors.email.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <Button type="submit" loading={isLoading} disabled={isLoading}>
-            {isLoading ? 'Sending...' : 'Send Reset Link'}
+            {isLoading ? "Sending..." : "Send Reset Link"}
           </Button>
         </Form>
 
         <Footer>
-          Remember your password?{' '}
-          <BackLink to="/login">Back to login</BackLink>
+          Remember your password? <BackLink to="/login">Back to login</BackLink>
         </Footer>
       </Card>
     </Container>

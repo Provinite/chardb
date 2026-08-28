@@ -1,6 +1,9 @@
 import { CreateRoleInput, UpdateRoleInput } from "../dto/role.dto";
 import { Role, RoleConnection } from "../entities/role.entity";
-import { CreateRoleServiceInput, UpdateRoleServiceInput } from "../roles.service";
+import {
+  CreateRoleServiceInput,
+  UpdateRoleServiceInput,
+} from "../roles.service";
 import { Prisma } from "@chardb/database";
 
 /**
@@ -10,7 +13,9 @@ import { Prisma } from "@chardb/database";
 /**
  * Maps CreateRoleInput to service input format
  */
-export function mapCreateRoleInputToService(input: CreateRoleInput): CreateRoleServiceInput {
+export function mapCreateRoleInputToService(
+  input: CreateRoleInput,
+): CreateRoleServiceInput {
   return {
     name: input.name,
     communityId: input.communityId,
@@ -40,30 +45,51 @@ export function mapCreateRoleInputToService(input: CreateRoleInput): CreateRoleS
 /**
  * Maps UpdateRoleInput to service input format
  */
-export function mapUpdateRoleInputToService(input: UpdateRoleInput): UpdateRoleServiceInput {
+export function mapUpdateRoleInputToService(
+  input: UpdateRoleInput,
+): UpdateRoleServiceInput {
   const result: UpdateRoleServiceInput = {};
 
   if (input.name !== undefined) result.name = input.name;
-  if (input.canCreateSpecies !== undefined) result.canCreateSpecies = input.canCreateSpecies;
-  if (input.canCreateCharacter !== undefined) result.canCreateCharacter = input.canCreateCharacter;
-  if (input.canCreateOrphanedCharacter !== undefined) result.canCreateOrphanedCharacter = input.canCreateOrphanedCharacter;
-  if (input.canEditCharacter !== undefined) result.canEditCharacter = input.canEditCharacter;
-  if (input.canEditOwnCharacter !== undefined) result.canEditOwnCharacter = input.canEditOwnCharacter;
-  if (input.canEditOwnCharacterRegistry !== undefined) result.canEditOwnCharacterRegistry = input.canEditOwnCharacterRegistry;
-  if (input.canEditCharacterRegistry !== undefined) result.canEditCharacterRegistry = input.canEditCharacterRegistry;
-  if (input.canEditSpecies !== undefined) result.canEditSpecies = input.canEditSpecies;
-  if (input.canCreateInviteCode !== undefined) result.canCreateInviteCode = input.canCreateInviteCode;
-  if (input.canListInviteCodes !== undefined) result.canListInviteCodes = input.canListInviteCodes;
-  if (input.canCreateRole !== undefined) result.canCreateRole = input.canCreateRole;
+  if (input.canCreateSpecies !== undefined)
+    result.canCreateSpecies = input.canCreateSpecies;
+  if (input.canCreateCharacter !== undefined)
+    result.canCreateCharacter = input.canCreateCharacter;
+  if (input.canCreateOrphanedCharacter !== undefined)
+    result.canCreateOrphanedCharacter = input.canCreateOrphanedCharacter;
+  if (input.canEditCharacter !== undefined)
+    result.canEditCharacter = input.canEditCharacter;
+  if (input.canEditOwnCharacter !== undefined)
+    result.canEditOwnCharacter = input.canEditOwnCharacter;
+  if (input.canEditOwnCharacterRegistry !== undefined)
+    result.canEditOwnCharacterRegistry = input.canEditOwnCharacterRegistry;
+  if (input.canEditCharacterRegistry !== undefined)
+    result.canEditCharacterRegistry = input.canEditCharacterRegistry;
+  if (input.canEditSpecies !== undefined)
+    result.canEditSpecies = input.canEditSpecies;
+  if (input.canCreateInviteCode !== undefined)
+    result.canCreateInviteCode = input.canCreateInviteCode;
+  if (input.canListInviteCodes !== undefined)
+    result.canListInviteCodes = input.canListInviteCodes;
+  if (input.canCreateRole !== undefined)
+    result.canCreateRole = input.canCreateRole;
   if (input.canEditRole !== undefined) result.canEditRole = input.canEditRole;
-  if (input.canRemoveCommunityMember !== undefined) result.canRemoveCommunityMember = input.canRemoveCommunityMember;
-  if (input.canManageMemberRoles !== undefined) result.canManageMemberRoles = input.canManageMemberRoles;
-  if (input.canManageItems !== undefined) result.canManageItems = input.canManageItems;
-  if (input.canGrantItems !== undefined) result.canGrantItems = input.canGrantItems;
-  if (input.canUploadOwnCharacterImages !== undefined) result.canUploadOwnCharacterImages = input.canUploadOwnCharacterImages;
-  if (input.canUploadCharacterImages !== undefined) result.canUploadCharacterImages = input.canUploadCharacterImages;
-  if (input.canModerateImages !== undefined) result.canModerateImages = input.canModerateImages;
-  if (input.canDeleteCharacter !== undefined) result.canDeleteCharacter = input.canDeleteCharacter;
+  if (input.canRemoveCommunityMember !== undefined)
+    result.canRemoveCommunityMember = input.canRemoveCommunityMember;
+  if (input.canManageMemberRoles !== undefined)
+    result.canManageMemberRoles = input.canManageMemberRoles;
+  if (input.canManageItems !== undefined)
+    result.canManageItems = input.canManageItems;
+  if (input.canGrantItems !== undefined)
+    result.canGrantItems = input.canGrantItems;
+  if (input.canUploadOwnCharacterImages !== undefined)
+    result.canUploadOwnCharacterImages = input.canUploadOwnCharacterImages;
+  if (input.canUploadCharacterImages !== undefined)
+    result.canUploadCharacterImages = input.canUploadCharacterImages;
+  if (input.canModerateImages !== undefined)
+    result.canModerateImages = input.canModerateImages;
+  if (input.canDeleteCharacter !== undefined)
+    result.canDeleteCharacter = input.canDeleteCharacter;
 
   return result;
 }

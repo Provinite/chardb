@@ -1,18 +1,18 @@
-import { INestApplication } from '@nestjs/common';
-import { TestApp } from '../../test/setup-e2e';
-import { CharactersModule } from './characters.module';
-import { CommentsModule } from '../comments/comments.module';
-import { SocialModule } from '../social/social.module';
-import { SpeciesModule } from '../species/species.module';
-import { DatabaseModule } from '../database/database.module';
-import { AuthModule } from '../auth/auth.module';
-import { Visibility } from '@chardb/database';
+import { INestApplication } from "@nestjs/common";
+import { TestApp } from "../../test/setup-e2e";
+import { CharactersModule } from "./characters.module";
+import { CommentsModule } from "../comments/comments.module";
+import { SocialModule } from "../social/social.module";
+import { SpeciesModule } from "../species/species.module";
+import { DatabaseModule } from "../database/database.module";
+import { AuthModule } from "../auth/auth.module";
+import { Visibility } from "@chardb/database";
 
 /**
  * Verifies that soft-deleted characters are invisible across all services
  * that were updated to include the notDeleted filter.
  */
-describe('Deleted character cross-service isolation (e2e)', () => {
+describe("Deleted character cross-service isolation (e2e)", () => {
   let testApp: TestApp;
   let app: INestApplication;
   let testUserId: string;
@@ -25,7 +25,14 @@ describe('Deleted character cross-service isolation (e2e)', () => {
   beforeAll(async () => {
     testApp = new TestApp();
     await testApp.setup({
-      imports: [DatabaseModule, AuthModule, CharactersModule, CommentsModule, SocialModule, SpeciesModule],
+      imports: [
+        DatabaseModule,
+        AuthModule,
+        CharactersModule,
+        CommentsModule,
+        SocialModule,
+        SpeciesModule,
+      ],
     });
     app = testApp.getApp();
   });
@@ -42,7 +49,7 @@ describe('Deleted character cross-service isolation (e2e)', () => {
     const db = testApp.getDb();
     const character = await db.character.create({
       data: {
-        name: 'Deleted Character',
+        name: "Deleted Character",
         ownerId: testUserId,
         creatorId: testUserId,
         visibility: Visibility.PUBLIC,
@@ -57,52 +64,52 @@ describe('Deleted character cross-service isolation (e2e)', () => {
     await testApp.teardown();
   });
 
-  describe('comments on deleted character', () => {
-    it('should reject createComment targeting a soft-deleted character', async () => {
+  describe("comments on deleted character", () => {
+    it("should reject createComment targeting a soft-deleted character", async () => {
       const response = await testApp.authenticatedGraphqlRequest(
         `mutation createComment($input: CreateCommentInput!) {
           createComment(input: $input) { id content }
         }`,
         {
           input: {
-            entityType: 'CHARACTER',
+            entityType: "CHARACTER",
             entityId: deletedCharacterId,
-            content: 'Should not be posted',
+            content: "Should not be posted",
           },
         },
-        testToken
+        testToken,
       );
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('character not found');
+      expect(response.body.errors[0].message).toContain("character not found");
     });
   });
 
-  describe('likes on deleted character', () => {
-    it('should reject toggleLike targeting a soft-deleted character', async () => {
+  describe("likes on deleted character", () => {
+    it("should reject toggleLike targeting a soft-deleted character", async () => {
       const response = await testApp.authenticatedGraphqlRequest(
         `mutation toggleLike($input: ToggleLikeInput!) {
           toggleLike(input: $input) { isLiked likesCount }
         }`,
         {
           input: {
-            entityType: 'CHARACTER',
+            entityType: "CHARACTER",
             entityId: deletedCharacterId,
           },
         },
-        testToken
+        testToken,
       );
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
       // validateEntity throws BadRequestException when the character isn't found
-      expect(response.body.errors[0].message).toContain('character not found');
+      expect(response.body.errors[0].message).toContain("character not found");
     });
   });
 
-  describe('species deletion respects soft-deleted characters', () => {
-    it('should allow deleting a species once its only character has been soft-deleted', async () => {
+  describe("species deletion respects soft-deleted characters", () => {
+    it("should allow deleting a species once its only character has been soft-deleted", async () => {
       // Create a fresh species with one character, then soft-delete the character
       const db = testApp.getDb();
       const setup = await testApp.createTestCommunitySetup(testUserId);
@@ -110,7 +117,7 @@ describe('Deleted character cross-service isolation (e2e)', () => {
 
       await db.character.create({
         data: {
-          name: 'Only Character',
+          name: "Only Character",
           ownerId: testUserId,
           creatorId: testUserId,
           visibility: Visibility.PUBLIC,
@@ -123,7 +130,7 @@ describe('Deleted character cross-service isolation (e2e)', () => {
       const deleteResponse = await testApp.authenticatedGraphqlRequest(
         `mutation removeSpecies($id: ID!) { removeSpecies(id: $id) { removed } }`,
         { id: freshSpeciesId },
-        testToken
+        testToken,
       );
 
       // No character-count error; species deletion should succeed
@@ -132,14 +139,14 @@ describe('Deleted character cross-service isolation (e2e)', () => {
       expect(deleteResponse.body.data.removeSpecies.removed).toBe(true);
     });
 
-    it('should block species deletion when a live character still uses it', async () => {
+    it("should block species deletion when a live character still uses it", async () => {
       const db = testApp.getDb();
       const setup = await testApp.createTestCommunitySetup(testUserId);
       const freshSpeciesId = setup.speciesId;
 
       await db.character.create({
         data: {
-          name: 'Live Character',
+          name: "Live Character",
           ownerId: testUserId,
           creatorId: testUserId,
           visibility: Visibility.PUBLIC,
@@ -150,12 +157,12 @@ describe('Deleted character cross-service isolation (e2e)', () => {
       const deleteResponse = await testApp.authenticatedGraphqlRequest(
         `mutation removeSpecies($id: ID!) { removeSpecies(id: $id) { removed } }`,
         { id: freshSpeciesId },
-        testToken
+        testToken,
       );
 
       expect(deleteResponse.status).toBe(200);
       expect(deleteResponse.body.errors).toBeDefined();
-      expect(deleteResponse.body.errors[0].message).toContain('character');
+      expect(deleteResponse.body.errors[0].message).toContain("character");
     });
   });
 });

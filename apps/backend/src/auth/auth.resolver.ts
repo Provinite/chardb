@@ -1,18 +1,18 @@
-import { Resolver, Mutation, Args } from '@nestjs/graphql';
-import { AuthService } from './auth.service';
+import { Resolver, Mutation, Args } from "@nestjs/graphql";
+import { AuthService } from "./auth.service";
 import {
   LoginInput,
   SignupInput,
   AuthPayload,
   ForgotPasswordInput,
   ResetPasswordInput,
-} from './dto/auth.dto';
+} from "./dto/auth.dto";
 import {
   mapLoginInputToService,
   mapSignupInputToService,
   mapAuthResponseToGraphQL,
-} from './utils/auth-resolver-mappers';
-import { AllowUnauthenticated } from './decorators/AllowUnauthenticated';
+} from "./utils/auth-resolver-mappers";
+import { AllowUnauthenticated } from "./decorators/AllowUnauthenticated";
 
 @Resolver()
 export class AuthResolver {
@@ -20,7 +20,7 @@ export class AuthResolver {
 
   @AllowUnauthenticated()
   @Mutation(() => AuthPayload)
-  async login(@Args('input') loginInput: LoginInput): Promise<AuthPayload> {
+  async login(@Args("input") loginInput: LoginInput): Promise<AuthPayload> {
     const serviceInput = mapLoginInputToService(loginInput);
     const serviceResult = await this.authService.login(serviceInput);
     return mapAuthResponseToGraphQL(serviceResult);
@@ -28,7 +28,7 @@ export class AuthResolver {
 
   @AllowUnauthenticated()
   @Mutation(() => AuthPayload)
-  async signup(@Args('input') signupInput: SignupInput): Promise<AuthPayload> {
+  async signup(@Args("input") signupInput: SignupInput): Promise<AuthPayload> {
     const serviceInput = mapSignupInputToService(signupInput);
     const serviceResult = await this.authService.signup(serviceInput);
     return mapAuthResponseToGraphQL(serviceResult);
@@ -36,7 +36,7 @@ export class AuthResolver {
 
   @AllowUnauthenticated()
   @Mutation(() => String)
-  async refreshToken(@Args('token') token: string): Promise<string> {
+  async refreshToken(@Args("token") token: string): Promise<string> {
     const result = await this.authService.refreshToken(token);
     return result.accessToken;
   }
@@ -44,7 +44,7 @@ export class AuthResolver {
   @AllowUnauthenticated()
   @Mutation(() => Boolean)
   async forgotPassword(
-    @Args('input') input: ForgotPasswordInput,
+    @Args("input") input: ForgotPasswordInput,
   ): Promise<boolean> {
     await this.authService.requestPasswordReset(input.email);
     // Always return true to prevent email enumeration
@@ -54,7 +54,7 @@ export class AuthResolver {
   @AllowUnauthenticated()
   @Mutation(() => Boolean)
   async resetPassword(
-    @Args('input') input: ResetPasswordInput,
+    @Args("input") input: ResetPasswordInput,
   ): Promise<boolean> {
     await this.authService.resetPassword(input.token, input.newPassword);
     return true;

@@ -1,18 +1,18 @@
 import { Prisma } from "@chardb/database";
-import { 
+import {
   MediaFiltersInput,
   CreateTextMediaInput,
   UpdateMediaInput,
   UpdateTextContentInput,
-  MediaType
+  MediaType,
 } from "../dto/media.dto";
 import { Media, MediaConnection } from "../entities/media.entity";
-import { 
+import {
   MediaFiltersServiceInput,
   CreateTextMediaServiceInput,
   UpdateMediaServiceInput,
   UpdateTextContentServiceInput,
-  MediaTypeFilter
+  MediaTypeFilter,
 } from "../media.service";
 
 /**
@@ -22,12 +22,16 @@ import {
 /**
  * Maps GraphQL MediaFiltersInput to service input format
  */
-export function mapMediaFiltersInputToService(input?: MediaFiltersInput): MediaFiltersServiceInput {
+export function mapMediaFiltersInputToService(
+  input?: MediaFiltersInput,
+): MediaFiltersServiceInput {
   if (!input) return {};
-  
+
   return {
     search: input.search,
-    mediaType: input.mediaType ? mapGraphQLMediaTypeToService(input.mediaType) : undefined,
+    mediaType: input.mediaType
+      ? mapGraphQLMediaTypeToService(input.mediaType)
+      : undefined,
     visibility: input.visibility,
     ownerId: input.ownerId,
     characterId: input.characterId,
@@ -55,7 +59,7 @@ function mapGraphQLMediaTypeToService(mediaType: MediaType): MediaTypeFilter {
  * Maps CreateTextMediaInput to service input format
  */
 export function mapCreateTextMediaInputToService(
-  input: CreateTextMediaInput
+  input: CreateTextMediaInput,
 ): CreateTextMediaServiceInput {
   return {
     title: input.title,
@@ -73,17 +77,17 @@ export function mapCreateTextMediaInputToService(
  * Maps UpdateMediaInput to service input format
  */
 export function mapUpdateMediaInputToService(
-  input: UpdateMediaInput
+  input: UpdateMediaInput,
 ): UpdateMediaServiceInput {
   const result: UpdateMediaServiceInput = {};
-  
+
   if (input.title !== undefined) result.title = input.title;
   if (input.description !== undefined) result.description = input.description;
   if (input.visibility !== undefined) result.visibility = input.visibility;
   if (input.characterId !== undefined) result.characterId = input.characterId;
   if (input.galleryId !== undefined) result.galleryId = input.galleryId;
   if (input.tags !== undefined) result.tags = input.tags;
-  
+
   return result;
 }
 
@@ -91,13 +95,13 @@ export function mapUpdateMediaInputToService(
  * Maps UpdateTextContentInput to service input format
  */
 export function mapUpdateTextContentInputToService(
-  input: UpdateTextContentInput
+  input: UpdateTextContentInput,
 ): UpdateTextContentServiceInput {
   const result: UpdateTextContentServiceInput = {};
-  
+
   if (input.content !== undefined) result.content = input.content;
   if (input.formatting !== undefined) result.formatting = input.formatting;
-  
+
   return result;
 }
 

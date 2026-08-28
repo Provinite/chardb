@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const SEARCH_TAGS = gql`
   query SearchTags($search: String, $limit: Float) {
@@ -19,4 +19,4 @@ export {
   type SearchTagsQuery,
   type SearchTagsQueryVariables,
   type Tag,
-} from '../generated/graphql';
+} from "../generated/graphql";

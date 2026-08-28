@@ -1,12 +1,12 @@
-import { Prisma } from '@chardb/database';
+import { Prisma } from "@chardb/database";
 import {
   TraitReview,
   TraitReviewQueueItem,
   TraitReviewQueueConnection,
-} from '../entities/trait-review.entity';
-import { mapPrismaCharacterToGraphQL } from '../../characters/utils/character-resolver-mappers';
-import { mapPrismaUserToGraphQL } from '../../users/utils/user-resolver-mappers';
-import { CharacterTraitValue } from '../../shared/types/character-trait.types';
+} from "../entities/trait-review.entity";
+import { mapPrismaCharacterToGraphQL } from "../../characters/utils/character-resolver-mappers";
+import { mapPrismaUserToGraphQL } from "../../users/utils/user-resolver-mappers";
+import { CharacterTraitValue } from "../../shared/types/character-trait.types";
 
 /**
  * Shared include pattern for trait review with character and resolver
@@ -46,7 +46,9 @@ export type PrismaTraitReviewQueueItem = Prisma.TraitReviewGetPayload<{
 /**
  * Map JSON trait values to GraphQL CharacterTraitValue array
  */
-function mapTraitValuesJson(json: PrismaJson.CharacterTraitValuesJson): CharacterTraitValue[] {
+function mapTraitValuesJson(
+  json: PrismaJson.CharacterTraitValuesJson,
+): CharacterTraitValue[] {
   return json.map((tv) => ({
     traitId: tv.traitId,
     value: tv.value,

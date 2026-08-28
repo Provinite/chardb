@@ -1,4 +1,11 @@
-import { Injectable, ConflictException, NotFoundException, Logger, Inject, forwardRef } from "@nestjs/common";
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  Logger,
+  Inject,
+  forwardRef,
+} from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { ExternalAccount, ExternalAccountProvider } from "@chardb/database";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
@@ -32,7 +39,10 @@ export class ExternalAccountsService {
   /**
    * Find an external account by provider and user ID
    */
-  async findByProviderAndUserId(provider: ExternalAccountProvider, userId: string) {
+  async findByProviderAndUserId(
+    provider: ExternalAccountProvider,
+    userId: string,
+  ) {
     return this.database.externalAccount.findUnique({
       where: {
         provider_userId: {
@@ -83,15 +93,24 @@ export class ExternalAccountsService {
 
     if (existingAccount) {
       if (existingAccount.userId === userId) {
-        throw new ConflictException("This account is already linked to your profile");
+        throw new ConflictException(
+          "This account is already linked to your profile",
+        );
       }
-      throw new ConflictException("This external account is already linked to another user");
+      throw new ConflictException(
+        "This external account is already linked to another user",
+      );
     }
 
     // Check if user already has an account linked for this provider
-    const existingUserLink = await this.findByProviderAndUserId(provider, userId);
+    const existingUserLink = await this.findByProviderAndUserId(
+      provider,
+      userId,
+    );
     if (existingUserLink) {
-      throw new ConflictException(`You already have a ${provider} account linked. Please unlink it first.`);
+      throw new ConflictException(
+        `You already have a ${provider} account linked. Please unlink it first.`,
+      );
     }
 
     // Create the link
@@ -105,7 +124,9 @@ export class ExternalAccountsService {
     });
 
     // Automatically claim any pending items/characters for this account
-    this.logger.log(`Checking for pending items for ${provider}:${providerAccountId}...`);
+    this.logger.log(
+      `Checking for pending items for ${provider}:${providerAccountId}...`,
+    );
     const claimedItems = await this.pendingOwnershipService.claimAllForAccount(
       userId,
       provider,
@@ -125,7 +146,9 @@ export class ExternalAccountsService {
         `Claimed ${claimedCharacterIds.length} characters and ${claimedItemIds.length} items for user ${userId}`,
       );
     } else {
-      this.logger.log(`No pending items found for ${provider}:${providerAccountId}`);
+      this.logger.log(
+        `No pending items found for ${provider}:${providerAccountId}`,
+      );
     }
 
     return {
@@ -138,11 +161,19 @@ export class ExternalAccountsService {
   /**
    * Unlink an external account from a user
    */
-  async unlinkExternalAccount(userId: string, provider: ExternalAccountProvider) {
-    const existingAccount = await this.findByProviderAndUserId(provider, userId);
+  async unlinkExternalAccount(
+    userId: string,
+    provider: ExternalAccountProvider,
+  ) {
+    const existingAccount = await this.findByProviderAndUserId(
+      provider,
+      userId,
+    );
 
     if (!existingAccount) {
-      throw new NotFoundException(`No ${provider} account found linked to your profile`);
+      throw new NotFoundException(
+        `No ${provider} account found linked to your profile`,
+      );
     }
 
     await this.database.externalAccount.delete({

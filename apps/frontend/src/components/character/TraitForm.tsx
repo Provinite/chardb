@@ -80,7 +80,7 @@ const ProgressText = styled.span`
 const TraitGrid = styled.div`
   display: grid;
   gap: 1.5rem;
-  
+
   @media (min-width: 768px) {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
@@ -190,8 +190,8 @@ export const TraitForm: React.FC<TraitFormProps> = ({
     const total = traits.length;
     const uniqueTraitIdsWithValues = new Set(
       traitValues
-        .filter(tv => tv.value && tv.value.trim() !== "")
-        .map(tv => tv.traitId)
+        .filter((tv) => tv.value && tv.value.trim() !== "")
+        .map((tv) => tv.traitId),
     );
     const filled = uniqueTraitIdsWithValues.size;
     return { filledTraits: filled, totalTraits: total };
@@ -200,7 +200,9 @@ export const TraitForm: React.FC<TraitFormProps> = ({
   // Helper function to get trait values by trait ID (returns array for multi-value support)
   const getTraitValues = (traitId: string): TraitValueEntry[] => {
     return traitValues
-      .filter((tv) => tv.traitId === traitId && tv.value && tv.value.trim() !== "")
+      .filter(
+        (tv) => tv.traitId === traitId && tv.value && tv.value.trim() !== "",
+      )
       .map((tv) => ({
         value: tv.value!,
         clarifier: tv.clarifier ?? null,
@@ -250,7 +252,9 @@ export const TraitForm: React.FC<TraitFormProps> = ({
           <Settings size={20} />
           Character Traits
         </SectionTitle>
-        <ErrorMessage message={`Failed to load traits: ${traitsError.message}`} />
+        <ErrorMessage
+          message={`Failed to load traits: ${traitsError.message}`}
+        />
       </Container>
     );
   }
@@ -267,8 +271,8 @@ export const TraitForm: React.FC<TraitFormProps> = ({
           <Settings size={48} />
           <h4>No traits configured</h4>
           <p>
-            This species doesn't have any traits configured yet. 
-            Characters can still be created without trait values.
+            This species doesn't have any traits configured yet. Characters can
+            still be created without trait values.
           </p>
         </EmptyState>
       </Container>
@@ -282,8 +286,8 @@ export const TraitForm: React.FC<TraitFormProps> = ({
         Character Traits
       </SectionTitle>
       <SectionDescription>
-        Configure the traits for your character. Each trait defines a specific characteristic
-        or property that makes your character unique.
+        Configure the traits for your character. Each trait defines a specific
+        characteristic or property that makes your character unique.
       </SectionDescription>
 
       {/* Variant Info */}
@@ -311,7 +315,8 @@ export const TraitForm: React.FC<TraitFormProps> = ({
             <AlertTriangle size={16} />
             <ProgressText>
               {filledTraits} of {totalTraits} traits filled
-              {totalTraits > filledTraits && " • Complete remaining traits or leave them blank"}
+              {totalTraits > filledTraits &&
+                " • Complete remaining traits or leave them blank"}
             </ProgressText>
           </>
         )}

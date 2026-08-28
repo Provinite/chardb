@@ -3,7 +3,10 @@ import styled from "styled-components";
 import { useParams, Link } from "react-router-dom";
 import { Package } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { useCommunityByIdQuery, useGetMyInventoryQuery } from "../generated/graphql";
+import {
+  useCommunityByIdQuery,
+  useGetMyInventoryQuery,
+} from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 
 const Container = styled.div`
@@ -151,7 +154,6 @@ const LoadingContainer = styled.div`
   min-height: 400px;
 `;
 
-
 export const CommunityInventoryPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
   const { user } = useAuth();
@@ -162,10 +164,11 @@ export const CommunityInventoryPage: React.FC = () => {
       skip: !communityId,
     });
 
-  const { data: inventoryData, loading: inventoryLoading } = useGetMyInventoryQuery({
-    variables: { communityId },
-    skip: !communityId || !user,
-  });
+  const { data: inventoryData, loading: inventoryLoading } =
+    useGetMyInventoryQuery({
+      variables: { communityId },
+      skip: !communityId || !user,
+    });
 
   if (!user) {
     return (
@@ -208,28 +211,39 @@ export const CommunityInventoryPage: React.FC = () => {
           </EmptyIcon>
           <EmptyTitle>No Items Yet</EmptyTitle>
           <EmptyDescription>
-            You don't have any items in this community yet. Items can be granted by
-            community administrators.
+            You don't have any items in this community yet. Items can be granted
+            by community administrators.
           </EmptyDescription>
         </EmptyState>
       ) : (
         <InventoryGrid>
           {items.map((item: any) => (
-            <ItemCard key={item.id} to={`/items/${item.itemType.id}`} color={item.itemType.color}>
+            <ItemCard
+              key={item.id}
+              to={`/items/${item.itemType.id}`}
+              color={item.itemType.color}
+            >
               <ItemIconContainer color={item.itemType.color}>
                 {item.itemType.image ? (
                   <ItemImage
-                    src={item.itemType.image.thumbnailUrl || item.itemType.image.originalUrl}
+                    src={
+                      item.itemType.image.thumbnailUrl ||
+                      item.itemType.image.originalUrl
+                    }
                     alt={item.itemType.image.altText || item.itemType.name}
                   />
                 ) : (
                   <Package size={48} />
                 )}
-                {item.quantity > 1 && <QuantityBadge>×{item.quantity}</QuantityBadge>}
+                {item.quantity > 1 && (
+                  <QuantityBadge>×{item.quantity}</QuantityBadge>
+                )}
               </ItemIconContainer>
 
               <ItemInfo>
-                <ItemName title={item.itemType.name}>{item.itemType.name}</ItemName>
+                <ItemName title={item.itemType.name}>
+                  {item.itemType.name}
+                </ItemName>
                 {item.itemType.category && (
                   <ItemCategory>{item.itemType.category}</ItemCategory>
                 )}

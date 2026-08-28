@@ -1,19 +1,25 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
-const Pip = styled.div<{ $color: string; $size: 'sm' | 'md' | 'lg' }>`
+const Pip = styled.div<{ $color: string; $size: "sm" | "md" | "lg" }>`
   width: ${({ $size }) => {
     switch ($size) {
-      case 'sm': return '12px';
-      case 'md': return '16px';
-      case 'lg': return '24px';
+      case "sm":
+        return "12px";
+      case "md":
+        return "16px";
+      case "lg":
+        return "24px";
     }
   }};
   height: ${({ $size }) => {
     switch ($size) {
-      case 'sm': return '12px';
-      case 'md': return '16px';
-      case 'lg': return '24px';
+      case "sm":
+        return "12px";
+      case "md":
+        return "16px";
+      case "lg":
+        return "24px";
     }
   }};
   border-radius: 50%;
@@ -27,7 +33,7 @@ const Pip = styled.div<{ $color: string; $size: 'sm' | 'md' | 'lg' }>`
 const Container = styled.span<{ $hasLabel: boolean }>`
   display: inline-flex;
   align-items: center;
-  gap: ${({ theme, $hasLabel }) => $hasLabel ? theme.spacing.sm : 0};
+  gap: ${({ theme, $hasLabel }) => ($hasLabel ? theme.spacing.sm : 0)};
 `;
 
 const Label = styled.span`
@@ -38,7 +44,7 @@ const Label = styled.span`
 export interface ColorPipProps {
   color: string;
   label?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -49,7 +55,7 @@ export interface ColorPipProps {
 export const ColorPip: React.FC<ColorPipProps> = ({
   color,
   label,
-  size = 'md',
+  size = "md",
   className,
 }) => {
   return (

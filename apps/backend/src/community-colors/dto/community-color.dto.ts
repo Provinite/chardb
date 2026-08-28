@@ -1,4 +1,4 @@
-import { Field, InputType, ID } from '@nestjs/graphql';
+import { Field, InputType, ID } from "@nestjs/graphql";
 import {
   IsString,
   IsOptional,
@@ -6,7 +6,7 @@ import {
   MinLength,
   MaxLength,
   Matches,
-} from 'class-validator';
+} from "class-validator";
 
 @InputType()
 export class CreateCommunityColorInput {
@@ -19,7 +19,7 @@ export class CreateCommunityColorInput {
   @Field()
   @IsString()
   @Matches(/^#[0-9A-Fa-f]{6}$/, {
-    message: 'hexCode must be a valid hex color code (e.g., #FF5733)',
+    message: "hexCode must be a valid hex color code (e.g., #FF5733)",
   })
   @MaxLength(7)
   hexCode: string;
@@ -42,7 +42,7 @@ export class UpdateCommunityColorInput {
   @IsOptional()
   @IsString()
   @Matches(/^#[0-9A-Fa-f]{6}$/, {
-    message: 'hexCode must be a valid hex color code (e.g., #FF5733)',
+    message: "hexCode must be a valid hex color code (e.g., #FF5733)",
   })
   @MaxLength(7)
   hexCode?: string;

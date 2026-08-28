@@ -88,7 +88,8 @@ export class TraitsResolver {
   @ResolveCommunityFrom({ speciesId: "speciesId" })
   @Query(() => TraitConnection, {
     name: "traitsBySpecies",
-    description: "Get traits by species ID with pagination, optionally ordered by variant-specific order",
+    description:
+      "Get traits by species ID with pagination, optionally ordered by variant-specific order",
   })
   async findBySpecies(
     @Args("speciesId", { type: () => ID, description: "Species ID" })
@@ -206,7 +207,9 @@ export class TraitsResolver {
     }
 
     try {
-      return await this.communityColorsService.findCommunityColorById(trait.colorId) as CommunityColor;
+      return (await this.communityColorsService.findCommunityColorById(
+        trait.colorId,
+      )) as CommunityColor;
     } catch (error) {
       if (error instanceof NotFoundException) {
         return null;

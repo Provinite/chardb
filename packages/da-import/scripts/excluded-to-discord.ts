@@ -11,7 +11,7 @@ interface ExcludedEntry {
 }
 
 const data: ExcludedEntry[] = JSON.parse(
-  readFileSync(resolve(__dirname, "../data/excluded.json"), "utf-8")
+  readFileSync(resolve(__dirname, "../data/excluded.json"), "utf-8"),
 );
 
 // Group by reason
@@ -26,7 +26,7 @@ const lines: string[] = [];
 lines.push("# Excluded Deviations");
 lines.push("");
 lines.push(
-  `**${data.length}** deviations excluded from automated import and require manual review.`
+  `**${data.length}** deviations excluded from automated import and require manual review.`,
 );
 lines.push("");
 

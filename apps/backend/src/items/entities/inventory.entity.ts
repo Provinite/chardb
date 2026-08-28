@@ -1,5 +1,5 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { Item as ItemEntity } from './item.entity';
+import { ObjectType, Field, ID } from "@nestjs/graphql";
+import { Item as ItemEntity } from "./item.entity";
 
 /**
  * Represents a user's inventory within a specific community.

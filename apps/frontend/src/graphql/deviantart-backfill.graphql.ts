@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const RUN_DEVIANTART_UUID_BACKFILL = gql`
   mutation RunDeviantartUuidBackfill($jobId: String!) {

@@ -67,7 +67,9 @@ export class User {
   @Field(() => [ExternalAccount])
   externalAccounts: ExternalAccount[];
 
-  @Field(() => [CommunityMember], { description: "User's community memberships with roles" })
+  @Field(() => [CommunityMember], {
+    description: "User's community memberships with roles",
+  })
   communityMemberships: CommunityMember[];
 }
 

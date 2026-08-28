@@ -1,13 +1,18 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import * as bcrypt from "bcrypt";
+import * as crypto from "crypto";
 
-import { UsersService } from '../users/users.service';
-import { InviteCodesService } from '../invite-codes/invite-codes.service';
-import { DatabaseService } from '../database/database.service';
-import { EmailService } from '../email/email.service';
-import { Prisma } from '@chardb/database';
+import { UsersService } from "../users/users.service";
+import { InviteCodesService } from "../invite-codes/invite-codes.service";
+import { DatabaseService } from "../database/database.service";
+import { EmailService } from "../email/email.service";
+import { Prisma } from "@chardb/database";
 
 /**
  * Service layer input types for auth operations.
@@ -46,7 +51,7 @@ export interface SignupServiceInput {
  */
 export interface AuthResponse {
   /** User data without password */
-  user: Omit<Prisma.UserGetPayload<{}>, 'passwordHash'>;
+  user: Omit<Prisma.UserGetPayload<{}>, "passwordHash">;
   /** JWT access token */
   accessToken: string;
   /** JWT refresh token */
@@ -73,16 +78,23 @@ export class AuthService {
     private emailService: EmailService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<Omit<PrismaUser, 'passwordHash'> | null> {
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<Omit<PrismaUser, "passwordHash"> | null> {
     try {
       const user = await this.usersService.findByEmail(email);
-      if (user && user.passwordHash && await bcrypt.compare(password, user.passwordHash)) {
+      if (
+        user &&
+        user.passwordHash &&
+        (await bcrypt.compare(password, user.passwordHash))
+      ) {
         const { passwordHash, ...result } = user;
         return result;
       }
       return null;
     } catch (error) {
-      console.error('validateUser error:', error);
+      console.error("validateUser error:", error);
       throw error;
     }
   }
@@ -90,12 +102,12 @@ export class AuthService {
   async login(input: LoginServiceInput): Promise<AuthResponse> {
     const user = await this.validateUser(input.email, input.password);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     const payload = { email: user.email, sub: user.id };
     const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: "7d" });
 
     return {
       user,
@@ -108,25 +120,27 @@ export class AuthService {
     const normalizedEmail = input.email.toLowerCase();
     return await this.prisma.$transaction(async (tx) => {
       // 1. Validate invite code first (using regular service, not transaction)
-      const inviteCode = await this.inviteCodesService.findOne(input.inviteCode);
+      const inviteCode = await this.inviteCodesService.findOne(
+        input.inviteCode,
+      );
       if (inviteCode.claimCount >= inviteCode.maxClaims) {
-        throw new BadRequestException('Invite code has been exhausted');
+        throw new BadRequestException("Invite code has been exhausted");
       }
 
       // 2. Check for existing user by email (within transaction)
       const existingUserByEmail = await tx.user.findUnique({
-        where: { email: normalizedEmail }
+        where: { email: normalizedEmail },
       });
       if (existingUserByEmail) {
-        throw new ConflictException('User with this email already exists');
+        throw new ConflictException("User with this email already exists");
       }
 
       // 3. Check for existing user by username (within transaction)
       const existingUserByUsername = await tx.user.findUnique({
-        where: { username: input.username }
+        where: { username: input.username },
       });
       if (existingUserByUsername) {
-        throw new ConflictException('User with this username already exists');
+        throw new ConflictException("User with this username already exists");
       }
 
       // 4. Create user (within transaction)
@@ -160,8 +174,10 @@ export class AuthService {
           });
         } catch (error: any) {
           // Handle unique constraint violation with a more user-friendly error
-          if (error.code === 'P2002') {
-            throw new ConflictException('You are already a member of this community');
+          if (error.code === "P2002") {
+            throw new ConflictException(
+              "You are already a member of this community",
+            );
           }
           throw error;
         }
@@ -171,7 +187,7 @@ export class AuthService {
       const { passwordHash, ...userWithoutPassword } = user;
       const payload = { email: user.email, sub: user.id };
       const accessToken = this.jwtService.sign(payload);
-      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+      const refreshToken = this.jwtService.sign(payload, { expiresIn: "7d" });
 
       return {
         user: userWithoutPassword,
@@ -187,7 +203,7 @@ export class AuthService {
       const user = await this.usersService.findById(payload.sub);
 
       if (!user) {
-        throw new UnauthorizedException('User not found');
+        throw new UnauthorizedException("User not found");
       }
 
       const newPayload = { email: user.email, sub: user.id };
@@ -195,7 +211,7 @@ export class AuthService {
 
       return { accessToken };
     } catch (error) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException("Invalid refresh token");
     }
   }
 
@@ -229,10 +245,10 @@ export class AuthService {
     }
 
     // Generate a secure random token
-    const token = crypto.randomBytes(32).toString('hex');
+    const token = crypto.randomBytes(32).toString("hex");
 
     // Hash the token before storing (SHA-256)
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
     // Calculate expiry time (1 hour from now)
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
@@ -257,7 +273,7 @@ export class AuthService {
    */
   async resetPassword(token: string, newPassword: string): Promise<void> {
     // Hash the provided token to look it up
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
     // Find the token in the database
     const resetToken = await this.prisma.passwordResetToken.findUnique({
@@ -267,17 +283,17 @@ export class AuthService {
 
     // Validate token exists
     if (!resetToken) {
-      throw new BadRequestException('Invalid or expired reset token');
+      throw new BadRequestException("Invalid or expired reset token");
     }
 
     // Validate token hasn't been used
     if (resetToken.used) {
-      throw new BadRequestException('This reset token has already been used');
+      throw new BadRequestException("This reset token has already been used");
     }
 
     // Validate token hasn't expired
     if (resetToken.expiresAt < new Date()) {
-      throw new BadRequestException('This reset token has expired');
+      throw new BadRequestException("This reset token has expired");
     }
 
     // Hash the new password

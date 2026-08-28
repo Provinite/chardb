@@ -212,7 +212,11 @@ interface ColorFormData {
 export const CommunityColorPalettePage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingColor, setEditingColor] = useState<{ id: string; name: string; hexCode: string } | null>(null);
+  const [editingColor, setEditingColor] = useState<{
+    id: string;
+    name: string;
+    hexCode: string;
+  } | null>(null);
   const [formData, setFormData] = useState<ColorFormData>({
     name: "",
     hexCode: "#000000",
@@ -268,7 +272,11 @@ export const CommunityColorPalettePage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleOpenEditModal = (color: { id: string; name: string; hexCode: string }) => {
+  const handleOpenEditModal = (color: {
+    id: string;
+    name: string;
+    hexCode: string;
+  }) => {
     setEditingColor(color);
     setFormData({ name: color.name, hexCode: color.hexCode });
     setIsModalOpen(true);
@@ -351,7 +359,10 @@ export const CommunityColorPalettePage: React.FC = () => {
 
         {colors.length === 0 ? (
           <EmptyState>
-            <Palette size={48} style={{ margin: "0 auto 1rem", opacity: 0.3 }} />
+            <Palette
+              size={48}
+              style={{ margin: "0 auto 1rem", opacity: 0.3 }}
+            />
             <p>No colors yet. Create your first color to get started!</p>
           </EmptyState>
         ) : (
@@ -445,7 +456,11 @@ export const CommunityColorPalettePage: React.FC = () => {
             </FormGroup>
 
             <FormActions>
-              <Button type="button" variant="secondary" onClick={handleCloseModal}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleCloseModal}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={creating || updating}>

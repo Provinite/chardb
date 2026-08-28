@@ -1,7 +1,10 @@
 import React, { useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import styled from "styled-components";
-import { useGetCharactersQuery, CharacterFiltersInput } from "../generated/graphql";
+import {
+  useGetCharactersQuery,
+  CharacterFiltersInput,
+} from "../generated/graphql";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { CharacterGrid } from "./CharacterGrid";
 import { RandomCharacterButton } from "./RandomCharacterButton";
@@ -245,27 +248,38 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
     return params;
   }, [searchParams, baseFilters, defaultFilters]);
 
-  const [filters, setFilters] = useState<CharacterFiltersInput>(getInitialFilters);
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [filters, setFilters] =
+    useState<CharacterFiltersInput>(getInitialFilters);
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") || "",
+  );
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [currentAdvancedFilters, setCurrentAdvancedFilters] =
     useState<AdvancedSearchFilters>({});
 
   // Update URL when filters change
-  const updateURL = useCallback((newFilters: CharacterFiltersInput) => {
-    const params = new URLSearchParams();
+  const updateURL = useCallback(
+    (newFilters: CharacterFiltersInput) => {
+      const params = new URLSearchParams();
 
-    if (newFilters.search) params.set("search", newFilters.search);
-    if (newFilters.isSellable !== undefined) params.set("isSellable", String(newFilters.isSellable));
-    if (newFilters.isTradeable !== undefined) params.set("isTradeable", String(newFilters.isTradeable));
-    if (newFilters.minPrice !== undefined) params.set("minPrice", String(newFilters.minPrice));
-    if (newFilters.maxPrice !== undefined) params.set("maxPrice", String(newFilters.maxPrice));
-    if (newFilters.sortBy) params.set("sortBy", newFilters.sortBy);
-    if (newFilters.sortOrder) params.set("sortOrder", newFilters.sortOrder);
-    if (newFilters.searchFields) params.set("searchFields", newFilters.searchFields);
+      if (newFilters.search) params.set("search", newFilters.search);
+      if (newFilters.isSellable !== undefined)
+        params.set("isSellable", String(newFilters.isSellable));
+      if (newFilters.isTradeable !== undefined)
+        params.set("isTradeable", String(newFilters.isTradeable));
+      if (newFilters.minPrice !== undefined)
+        params.set("minPrice", String(newFilters.minPrice));
+      if (newFilters.maxPrice !== undefined)
+        params.set("maxPrice", String(newFilters.maxPrice));
+      if (newFilters.sortBy) params.set("sortBy", newFilters.sortBy);
+      if (newFilters.sortOrder) params.set("sortOrder", newFilters.sortOrder);
+      if (newFilters.searchFields)
+        params.set("searchFields", newFilters.searchFields);
 
-    setSearchParams(params, { replace: true });
-  }, [setSearchParams]);
+      setSearchParams(params, { replace: true });
+    },
+    [setSearchParams],
+  );
 
   const { data, loading, error, fetchMore } = useGetCharactersQuery({
     variables: { filters },

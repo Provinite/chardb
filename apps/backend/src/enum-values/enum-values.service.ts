@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
-import { CommunityColorsService } from '../community-colors/community-colors.service';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { Prisma } from "@chardb/database";
+import { CommunityColorsService } from "../community-colors/community-colors.service";
 
 /**
  * Service layer input types for enum values operations.
@@ -70,7 +70,7 @@ export class EnumValuesService {
         name: input.name,
         order: input.order ?? 0,
         trait: {
-          connect: { id: input.traitId }
+          connect: { id: input.traitId },
         },
         ...(input.colorId && {
           color: {
@@ -91,7 +91,7 @@ export class EnumValuesService {
         take: first + 1, // Take one extra to check if there's a next page
         skip,
         cursor,
-        orderBy: [{ trait: { name: 'asc' } }, { order: 'asc' }],
+        orderBy: [{ trait: { name: "asc" } }, { order: "asc" }],
       }),
       this.prisma.enumValue.count(),
     ]);
@@ -118,7 +118,7 @@ export class EnumValuesService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { order: 'asc' },
+        orderBy: { order: "asc" },
       }),
       this.prisma.enumValue.count({
         where: { traitId },
@@ -170,7 +170,9 @@ export class EnumValuesService {
         });
 
         if (!trait) {
-          throw new NotFoundException(`Trait with ID ${enumValue.traitId} not found`);
+          throw new NotFoundException(
+            `Trait with ID ${enumValue.traitId} not found`,
+          );
         }
 
         // Validate the color belongs to the same community
@@ -180,7 +182,9 @@ export class EnumValuesService {
         );
       }
 
-      updateData.color = input.colorId ? { connect: { id: input.colorId } } : { disconnect: true };
+      updateData.color = input.colorId
+        ? { connect: { id: input.colorId } }
+        : { disconnect: true };
     }
 
     return this.prisma.enumValue.update({

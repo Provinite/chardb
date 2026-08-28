@@ -1,8 +1,8 @@
-import { Prisma } from '@chardb/database';
+import { Prisma } from "@chardb/database";
 import {
   ItemType as ItemTypeEntity,
   ItemTypeConnection,
-} from '../entities/item-type.entity';
+} from "../entities/item-type.entity";
 
 // Type alias for Prisma ItemType payload
 type PrismaItemType = Prisma.ItemTypeGetPayload<{}>;

@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import styled from 'styled-components';
-import { Header } from './Header';
-import { Footer } from './Footer';
-import { CommunityNavigationSidebar } from './navigation/CommunityNavigationSidebar';
-import { GlobalNavigationSidebar } from './navigation/GlobalNavigationSidebar';
+import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
+import styled from "styled-components";
+import { Header } from "./Header";
+import { Footer } from "./Footer";
+import { CommunityNavigationSidebar } from "./navigation/CommunityNavigationSidebar";
+import { GlobalNavigationSidebar } from "./navigation/GlobalNavigationSidebar";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-type SidebarPreference = 'auto' | 'global' | 'community';
+type SidebarPreference = "auto" | "global" | "community";
 
 const LayoutContainer = styled.div`
   display: flex;
@@ -47,22 +47,25 @@ const isCommunityRoute = (pathname: string): boolean => {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
-  const [sidebarPreference, setSidebarPreference] = useState<SidebarPreference>('auto');
+  const [sidebarPreference, setSidebarPreference] =
+    useState<SidebarPreference>("auto");
 
   const isCommunityScopedRoute = isCommunityRoute(location.pathname);
 
   // Determine which sidebar to show based on preference and route
   const showCommunitySidebar =
-    sidebarPreference === 'community' ? true :
-    sidebarPreference === 'global' ? false :
-    isCommunityScopedRoute; // auto mode - use route detection
+    sidebarPreference === "community"
+      ? true
+      : sidebarPreference === "global"
+        ? false
+        : isCommunityScopedRoute; // auto mode - use route detection
 
   // Reset preference to auto when navigating to a different route type
   React.useEffect(() => {
-    setSidebarPreference('auto');
+    setSidebarPreference("auto");
   }, [location.pathname]);
 
-  const handleToggleSidebar = (preference: 'global' | 'community') => {
+  const handleToggleSidebar = (preference: "global" | "community") => {
     setSidebarPreference(preference);
   };
 
@@ -72,16 +75,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <ContentWrapper>
         {showCommunitySidebar ? (
           <CommunityNavigationSidebar
-            onToggleToGlobal={() => handleToggleSidebar('global')}
+            onToggleToGlobal={() => handleToggleSidebar("global")}
           />
         ) : (
           <GlobalNavigationSidebar
-            onToggleToCommunity={isCommunityScopedRoute ? () => handleToggleSidebar('community') : undefined}
+            onToggleToCommunity={
+              isCommunityScopedRoute
+                ? () => handleToggleSidebar("community")
+                : undefined
+            }
           />
         )}
-        <Main>
-          {children}
-        </Main>
+        <Main>{children}</Main>
       </ContentWrapper>
       <Footer />
     </LayoutContainer>

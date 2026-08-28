@@ -1,24 +1,24 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 /**
  * GraphQL operations for species management in the frontend.
  * Provides comprehensive species CRUD operations, community-scoped queries,
  * variant management, and trait configuration capabilities.
- * 
+ *
  * @example Basic species query usage:
  * ```tsx
  * const { data, loading, error } = useSpeciesQuery({
  *   variables: { first: 10 }
  * });
  * ```
- * 
+ *
  * @example Community-scoped species query:
  * ```tsx
  * const { data } = useSpeciesByCommunityQuery({
  *   variables: { communityId: "community-uuid", first: 20 }
  * });
  * ```
- * 
+ *
  * @example Creating a new species:
  * ```tsx
  * const [createSpecies] = useCreateSpeciesMutation({
@@ -26,7 +26,7 @@ import { gql } from '@apollo/client';
  *     console.log('Species created:', data.createSpecies);
  *   }
  * });
- * 
+ *
  * await createSpecies({
  *   variables: {
  *     createSpeciesInput: {
@@ -73,7 +73,7 @@ export const SPECIES_CONNECTION_FRAGMENT = gql`
 /**
  * Query to fetch all species with pagination support.
  * Returns a paginated list of species across all communities.
- * 
+ *
  * @param first - Number of species to fetch (default: 20)
  * @param after - Cursor for pagination (optional)
  * @returns SpeciesConnection with nodes and pagination metadata
@@ -90,7 +90,7 @@ export const SPECIES_QUERY = gql`
 /**
  * Query to fetch species by community ID with pagination.
  * Essential for community-scoped species management interfaces.
- * 
+ *
  * @param communityId - ID of the community to filter by
  * @param first - Number of species to fetch (default: 20)
  * @param after - Cursor for pagination (optional)
@@ -98,7 +98,11 @@ export const SPECIES_QUERY = gql`
  */
 export const SPECIES_BY_COMMUNITY_QUERY = gql`
   query SpeciesByCommunity($communityId: ID!, $first: Int, $after: String) {
-    speciesByCommunity(communityId: $communityId, first: $first, after: $after) {
+    speciesByCommunity(
+      communityId: $communityId
+      first: $first
+      after: $after
+    ) {
       ...SpeciesConnectionDetails
     }
   }
@@ -108,7 +112,7 @@ export const SPECIES_BY_COMMUNITY_QUERY = gql`
 /**
  * Query to fetch a single species by ID with full details.
  * Used for species detail views and editing forms.
- * 
+ *
  * @param id - ID of the species to fetch
  * @returns Single Species entity with all fields
  */
@@ -130,7 +134,7 @@ export const SPECIES_BY_ID_QUERY = gql`
 /**
  * Mutation to create a new species within a community.
  * Automatically associates the species with the specified community.
- * 
+ *
  * @param createSpeciesInput - Species creation data including name, community, and image flag
  * @returns Newly created Species entity
  */
@@ -146,7 +150,7 @@ export const CREATE_SPECIES_MUTATION = gql`
 /**
  * Mutation to update an existing species.
  * Supports partial updates - only provide fields that need to change.
- * 
+ *
  * @param id - ID of the species to update
  * @param updateSpeciesInput - Partial species update data
  * @returns Updated Species entity
@@ -164,7 +168,7 @@ export const UPDATE_SPECIES_MUTATION = gql`
  * Mutation to delete a species.
  * WARNING: This will also delete all associated variants, traits, and character data.
  * Should include confirmation dialogs in UI implementations.
- * 
+ *
  * @param id - ID of the species to delete
  * @returns RemovalResponse with success confirmation
  */
@@ -217,7 +221,7 @@ export const SPECIES_VARIANT_CONNECTION_FRAGMENT = gql`
 /**
  * Query to fetch all species variants with pagination.
  * Used for global variant management interfaces.
- * 
+ *
  * @param first - Number of variants to fetch (default: 20)
  * @param after - Cursor for pagination (optional)
  * @returns SpeciesVariantConnection with all variants
@@ -234,7 +238,7 @@ export const SPECIES_VARIANTS_QUERY = gql`
 /**
  * Query to fetch variants by species ID with pagination.
  * Essential for species-specific variant management.
- * 
+ *
  * @param speciesId - ID of the parent species
  * @param first - Number of variants to fetch (default: 20)
  * @param after - Cursor for pagination (optional)
@@ -242,7 +246,11 @@ export const SPECIES_VARIANTS_QUERY = gql`
  */
 export const SPECIES_VARIANTS_BY_SPECIES_QUERY = gql`
   query SpeciesVariantsBySpecies($speciesId: ID!, $first: Int, $after: String) {
-    speciesVariantsBySpecies(speciesId: $speciesId, first: $first, after: $after) {
+    speciesVariantsBySpecies(
+      speciesId: $speciesId
+      first: $first
+      after: $after
+    ) {
       ...SpeciesVariantConnectionDetails
     }
   }
@@ -252,7 +260,7 @@ export const SPECIES_VARIANTS_BY_SPECIES_QUERY = gql`
 /**
  * Query to fetch a single species variant by ID.
  * Includes parent species data for context.
- * 
+ *
  * @param id - ID of the species variant to fetch
  * @returns Single SpeciesVariant with species context
  */
@@ -279,13 +287,17 @@ export const SPECIES_VARIANT_BY_ID_QUERY = gql`
 /**
  * Mutation to create a new species variant.
  * Associates the variant with an existing species.
- * 
+ *
  * @param createSpeciesVariantInput - Variant creation data including name and species ID
  * @returns Newly created SpeciesVariant entity
  */
 export const CREATE_SPECIES_VARIANT_MUTATION = gql`
-  mutation CreateSpeciesVariant($createSpeciesVariantInput: CreateSpeciesVariantInput!) {
-    createSpeciesVariant(createSpeciesVariantInput: $createSpeciesVariantInput) {
+  mutation CreateSpeciesVariant(
+    $createSpeciesVariantInput: CreateSpeciesVariantInput!
+  ) {
+    createSpeciesVariant(
+      createSpeciesVariantInput: $createSpeciesVariantInput
+    ) {
       ...SpeciesVariantDetails
     }
   }
@@ -295,14 +307,20 @@ export const CREATE_SPECIES_VARIANT_MUTATION = gql`
 /**
  * Mutation to update an existing species variant.
  * Supports moving variants between species if needed.
- * 
+ *
  * @param id - ID of the species variant to update
  * @param updateSpeciesVariantInput - Partial variant update data
  * @returns Updated SpeciesVariant entity
  */
 export const UPDATE_SPECIES_VARIANT_MUTATION = gql`
-  mutation UpdateSpeciesVariant($id: ID!, $updateSpeciesVariantInput: UpdateSpeciesVariantInput!) {
-    updateSpeciesVariant(id: $id, updateSpeciesVariantInput: $updateSpeciesVariantInput) {
+  mutation UpdateSpeciesVariant(
+    $id: ID!
+    $updateSpeciesVariantInput: UpdateSpeciesVariantInput!
+  ) {
+    updateSpeciesVariant(
+      id: $id
+      updateSpeciesVariantInput: $updateSpeciesVariantInput
+    ) {
       ...SpeciesVariantDetails
     }
   }
@@ -312,7 +330,7 @@ export const UPDATE_SPECIES_VARIANT_MUTATION = gql`
 /**
  * Mutation to delete a species variant.
  * WARNING: This will also delete associated trait configurations and character data.
- * 
+ *
  * @param id - ID of the species variant to delete
  * @returns RemovalResponse with success confirmation
  */
@@ -376,8 +394,18 @@ export const TRAIT_CONNECTION_FRAGMENT = gql`
  * @returns TraitConnection filtered by species, optionally ordered by variant-specific order
  */
 export const TRAITS_BY_SPECIES_QUERY = gql`
-  query TraitsBySpecies($speciesId: ID!, $first: Int, $after: String, $variantId: ID) {
-    traitsBySpecies(speciesId: $speciesId, first: $first, after: $after, variantId: $variantId) {
+  query TraitsBySpecies(
+    $speciesId: ID!
+    $first: Int
+    $after: String
+    $variantId: ID
+  ) {
+    traitsBySpecies(
+      speciesId: $speciesId
+      first: $first
+      after: $after
+      variantId: $variantId
+    ) {
       ...TraitConnectionDetails
     }
   }
@@ -387,7 +415,7 @@ export const TRAITS_BY_SPECIES_QUERY = gql`
 /**
  * Query to fetch a single trait by ID with full context.
  * Includes parent species and enum values for ENUM-type traits.
- * 
+ *
  * @param id - ID of the trait to fetch
  * @returns Single Trait with species context and enum values
  */
@@ -414,7 +442,7 @@ export const TRAIT_BY_ID_QUERY = gql`
 /**
  * Mutation to create a new trait for a species.
  * Supports all trait value types (STRING, INTEGER, TIMESTAMP, ENUM).
- * 
+ *
  * @param createTraitInput - Trait creation data including name, type, and species ID
  * @returns Newly created Trait entity
  */
@@ -430,7 +458,7 @@ export const CREATE_TRAIT_MUTATION = gql`
 /**
  * Mutation to update an existing trait.
  * Note: Changing valueType may require additional enum value management.
- * 
+ *
  * @param id - ID of the trait to update
  * @param updateTraitInput - Partial trait update data
  * @returns Updated Trait entity
@@ -447,7 +475,7 @@ export const UPDATE_TRAIT_MUTATION = gql`
 /**
  * Mutation to delete a trait.
  * WARNING: This will also delete all enum values and character trait data.
- * 
+ *
  * @param id - ID of the trait to delete
  * @returns RemovalResponse with success confirmation
  */

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { TextContent, TextFormatting } from '../generated/graphql';
-import { Markdown } from './Markdown';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { TextContent, TextFormatting } from "../generated/graphql";
+import { Markdown } from "./Markdown";
 
 const Container = styled.div`
   background: ${({ theme }) => theme.colors.background};
@@ -32,18 +32,22 @@ const FormatToggle = styled.div`
 
 const ToggleButton = styled.button<{ active: boolean }>`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.border};
-  background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.background};
-  color: ${props => props.active ? 'white' : props.theme.colors.text.secondary};
+  border: 1px solid
+    ${(props) =>
+      props.active ? props.theme.colors.primary : props.theme.colors.border};
+  background: ${(props) =>
+    props.active ? props.theme.colors.primary : props.theme.colors.background};
+  color: ${(props) =>
+    props.active ? "white" : props.theme.colors.text.secondary};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -52,7 +56,7 @@ const ToggleButton = styled.button<{ active: boolean }>`
 
 const ContentContainer = styled.div<{ maxHeight?: string }>`
   padding: ${({ theme }) => theme.spacing.lg};
-  max-height: ${props => props.maxHeight || 'none'};
+  max-height: ${(props) => props.maxHeight || "none"};
   overflow-y: auto;
 `;
 
@@ -65,7 +69,6 @@ const PlainTextContent = styled.div`
   word-wrap: break-word;
 `;
 
-
 const ExpandButton = styled.button`
   width: 100%;
   padding: ${({ theme }) => theme.spacing.md};
@@ -76,11 +79,11 @@ const ExpandButton = styled.button`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   cursor: pointer;
   transition: background-color 0.2s;
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.primary}10;
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: -2px;
@@ -98,33 +101,28 @@ interface TextViewerProps {
   allowFormatToggle?: boolean;
 }
 
-
 /**
  * A component for displaying text content with optional markdown formatting
  * Supports collapsible content and format switching between raw and rendered text
  */
 export const TextViewer: React.FC<TextViewerProps> = ({
   textContent,
-  maxHeight = '400px',
+  maxHeight = "400px",
   showWordCount = true,
   allowFormatToggle = true,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [viewMode, setViewMode] = useState<'raw' | 'formatted'>('formatted');
-  
+  const [viewMode, setViewMode] = useState<"raw" | "formatted">("formatted");
+
   const shouldShowExpandButton = maxHeight && !isExpanded;
-  const displayHeight = isExpanded ? 'none' : maxHeight;
-  
+  const displayHeight = isExpanded ? "none" : maxHeight;
+
   const isMarkdown = textContent.formatting === TextFormatting.Markdown;
   const showFormatToggle = allowFormatToggle && isMarkdown;
-  
+
   const renderContent = () => {
-    if (!isMarkdown || viewMode === 'raw') {
-      return (
-        <PlainTextContent>
-          {textContent.content}
-        </PlainTextContent>
-      );
+    if (!isMarkdown || viewMode === "raw") {
+      return <PlainTextContent>{textContent.content}</PlainTextContent>;
     }
 
     return <Markdown>{textContent.content}</Markdown>;
@@ -135,21 +133,19 @@ export const TextViewer: React.FC<TextViewerProps> = ({
       {(showWordCount || showFormatToggle) && (
         <Header>
           {showWordCount && (
-            <WordCount>
-              {textContent.wordCount} words
-            </WordCount>
+            <WordCount>{textContent.wordCount} words</WordCount>
           )}
           {showFormatToggle && (
             <FormatToggle>
               <ToggleButton
-                active={viewMode === 'formatted'}
-                onClick={() => setViewMode('formatted')}
+                active={viewMode === "formatted"}
+                onClick={() => setViewMode("formatted")}
               >
                 Formatted
               </ToggleButton>
               <ToggleButton
-                active={viewMode === 'raw'}
-                onClick={() => setViewMode('raw')}
+                active={viewMode === "raw"}
+                onClick={() => setViewMode("raw")}
               >
                 Raw
               </ToggleButton>
@@ -157,11 +153,11 @@ export const TextViewer: React.FC<TextViewerProps> = ({
           )}
         </Header>
       )}
-      
+
       <ContentContainer maxHeight={displayHeight}>
         {renderContent()}
       </ContentContainer>
-      
+
       {shouldShowExpandButton && (
         <ExpandButton onClick={() => setIsExpanded(true)}>
           Show More

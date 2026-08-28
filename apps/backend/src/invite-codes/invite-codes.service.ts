@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { Prisma } from "@chardb/database";
 
 /**
  * Service layer input types for invite codes operations.
@@ -52,16 +57,18 @@ export class InviteCodesService {
           id: input.id,
           maxClaims: input.maxClaims,
           creator: {
-            connect: { id: input.creatorId }
+            connect: { id: input.creatorId },
           },
           ...(input.roleId && {
-            role: { connect: { id: input.roleId } }
+            role: { connect: { id: input.roleId } },
           }),
         },
       });
     } catch (error: any) {
-      if (error.code === 'P2002') {
-        throw new ConflictException('An invite code with this ID already exists');
+      if (error.code === "P2002") {
+        throw new ConflictException(
+          "An invite code with this ID already exists",
+        );
       }
       throw error;
     }
@@ -73,15 +80,16 @@ export class InviteCodesService {
     const cursor = after ? { id: after } : undefined;
 
     // Build where clause based on communityId parameter
-    const whereClause: Prisma.InviteCodeWhereInput = communityId === null 
-      ? { roleId: null } // Global invite codes have no role (roleId is null)
-      : communityId 
-        ? { 
-            role: {
-              communityId: communityId 
-            }
-          } // Community-specific invite codes
-        : {}; // If communityId is undefined, return all codes
+    const whereClause: Prisma.InviteCodeWhereInput =
+      communityId === null
+        ? { roleId: null } // Global invite codes have no role (roleId is null)
+        : communityId
+          ? {
+              role: {
+                communityId: communityId,
+              },
+            } // Community-specific invite codes
+          : {}; // If communityId is undefined, return all codes
 
     const [inviteCodes, totalCount] = await Promise.all([
       this.prisma.inviteCode.findMany({
@@ -89,7 +97,7 @@ export class InviteCodesService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.inviteCode.count({
         where: whereClause,
@@ -118,7 +126,7 @@ export class InviteCodesService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.inviteCode.count({
         where: { creatorId },
@@ -147,7 +155,7 @@ export class InviteCodesService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.inviteCode.count({
         where: { roleId },
@@ -183,13 +191,17 @@ export class InviteCodesService {
     const inviteCode = await this.findOne(id); // This will throw if not found
 
     // Validate that we're not reducing maxClaims below current claimCount
-    if (input.maxClaims !== undefined && 
-        input.maxClaims < inviteCode.claimCount) {
-      throw new BadRequestException(`Cannot set maxClaims (${input.maxClaims}) below current claimCount (${inviteCode.claimCount})`);
+    if (
+      input.maxClaims !== undefined &&
+      input.maxClaims < inviteCode.claimCount
+    ) {
+      throw new BadRequestException(
+        `Cannot set maxClaims (${input.maxClaims}) below current claimCount (${inviteCode.claimCount})`,
+      );
     }
 
     const updateData: Prisma.InviteCodeUpdateInput = {};
-    
+
     if (input.maxClaims !== undefined) updateData.maxClaims = input.maxClaims;
     if (input.roleId !== undefined) {
       if (input.roleId === null) {
@@ -211,7 +223,7 @@ export class InviteCodesService {
 
     // Check if invite code is still available
     if (inviteCode.claimCount >= inviteCode.maxClaims) {
-      throw new BadRequestException('This invite code has been fully claimed');
+      throw new BadRequestException("This invite code has been fully claimed");
     }
 
     // Use transaction to ensure atomicity between claim increment and membership creation
@@ -237,8 +249,10 @@ export class InviteCodesService {
           });
         } catch (error: any) {
           // Handle unique constraint violation with a more user-friendly error
-          if (error.code === 'P2002') {
-            throw new ConflictException('You are already a member of this community');
+          if (error.code === "P2002") {
+            throw new ConflictException(
+              "You are already a member of this community",
+            );
           }
           throw error;
         }
