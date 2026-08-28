@@ -184,9 +184,11 @@ fi
 # them into .env. Once get-terraform-outputs.sh stops exporting them they will
 # not touch a developer machine or a CI runner at all.
 #
-# Exported into this shell rather than appended to .env: compose resolves ${VAR}
-# from the environment first, and a secret containing a single quote makes
-# compose fail to parse an env file at all. Exporting also keeps them off disk.
+# They are written into .env, not just exported, so that `docker compose up -d`
+# run by hand on the box still works. Without them in the file compose resolves
+# ${DISCORD_BOT_TOKEN} to an empty string with only a warning, silently
+# recreating the backend with blank OAuth config -- exactly when someone is
+# already recovering the host.
 #
 # Discovered by path rather than from a hardcoded list, so adding a parameter
 # needs no change here.
@@ -224,20 +226,40 @@ if [ -n "$PLACEHOLDERS" ]; then
     exit 1
 fi
 
-# Values are carried base64-encoded so that quotes, backslashes, newlines and
-# dollar signs in a secret cannot break the parse -- there is no escaping scheme
-# to get wrong. The parameter's basename becomes the variable name, so
-# /chardb/dev/discord-bot-token exports DISCORD_BOT_TOKEN.
+# jq hands the value over base64-encoded so it survives the pipe intact whatever
+# bytes it contains; the escaping below is what compose's env-file parser needs
+# to read it back byte-exact. Order matters: backslash first, or the escapes
+# introduced by the later substitutions get escaped again.
+#
+#   \  ->  \\     "  ->  \"     $  ->  $$   (compose's literal-dollar escape)
+#
+# Single quotes need no escaping inside double quotes -- but they are why the
+# value cannot simply be single-quoted: compose rejects the whole file.
+{
+    echo ""
+    echo "# Fetched from Parameter Store at deploy time by deploy-remote.sh"
+} >> .env
+
 while read -r key encoded; do
     [ -n "$key" ] || continue
-    export "$key=$(printf '%s' "$encoded" | base64 -d)"
+    value=$(printf '%s' "$encoded" | base64 -d)
+    escaped=${value//\\/\\\\}
+    escaped=${escaped//\"/\\\"}
+    escaped=${escaped//\$/\$\$}
+    printf '%s="%s"\n' "$key" "$escaped" >> .env
 done < <(echo "$SECRETS_JSON" | jq -r '
     .Parameters[]
     | (.Name | split("/") | last | ascii_upcase | gsub("-"; "_")) as $key
     | "\($key) \(.Value | @base64)"
 ')
+unset value escaped
 
-echo "✅ Loaded $SECRET_COUNT secrets from Parameter Store"
+# Re-source so this shell sees them too.
+set -a
+source .env
+set +a
+
+echo "✅ Loaded $SECRET_COUNT secrets from Parameter Store into .env"
 
 echo "🛑 Stopping existing services..."
 docker compose down || true
