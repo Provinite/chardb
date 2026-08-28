@@ -8,7 +8,6 @@
 # scripts/lint-changed.mjs also reads this file, and drops these commits when
 # working out which files a change touched -- otherwise a tree-wide commit
 # would pull the whole repo into the lint gate's changed-file set.
-#
-# TODO: once the "style: format repository with prettier" PR is squash-merged,
-# add the resulting commit SHA on main below. It cannot be filled in ahead of
-# time because the squash rewrites the SHA.
+
+# style: format repository with prettier (#250)
+e9b01d776ad496d93a004376abf985c04c3b5335
