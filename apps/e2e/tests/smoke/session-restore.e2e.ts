@@ -5,12 +5,18 @@ test.use({ preset: "community-basic", persona: "anon" });
 /**
  * A valid access token alone must be enough to restore a session.
  *
- * `me` is gated on `accessToken`, and a refresh token is an optimization for
- * renewing an expired one -- not a precondition for being logged in. A session
- * holding only an access token is reachable in normal use: the refresh token
- * expires after 7 days while the access token lasts 24 hours, so any tab open
- * across that boundary, or any client that stores only what it needs, lands
- * here.
+ * `me` is gated on `accessToken`; a refresh token is how you renew an expired
+ * access token, not a precondition for being logged in. Before the fix these
+ * redirected to /login despite a valid token, because AuthProvider's mount
+ * effect cleared `loading` before the `me` query resolved.
+ *
+ * Scope, so nobody mistakes these for a regression guard on a live bug: no
+ * application path produces this state. login/signup write both tokens,
+ * refreshAccessToken overwrites only the access token and leaves the refresh
+ * token alone, and logout and the Apollo 401 handler clear both. localStorage
+ * does not expire entries either -- JWT expiry lives inside the token. These
+ * pin correct behavior for a state that is representable but not currently
+ * produced; treat them as hardening, not as covering a reported failure.
  */
 test.describe("session restore with only an access token", () => {
   test("stays on a protected route", async ({ page, world }) => {

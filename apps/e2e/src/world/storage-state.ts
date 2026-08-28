@@ -20,11 +20,10 @@ export const statePath = (preset: string, persona: string): string =>
  *
  * 2. BOTH tokens are written, exactly as a real login leaves them.
  *
- *    This is a fidelity choice, not a workaround: the harness should reproduce
- *    the state the app actually creates. An access-token-only session is also
- *    valid and is covered deliberately by tests/smoke/session-restore.e2e.ts --
- *    that case used to redirect to /login even with a valid token, which is the
- *    bug those tests pin.
+ *    A fidelity choice: the harness should reproduce the state the app itself
+ *    creates, and login writes both. Writing only the access token would test a
+ *    state no application path produces. That single-token case is still
+ *    exercised deliberately, in tests/smoke/session-restore.e2e.ts.
  */
 export async function writeStorageStates(
   preset: string,

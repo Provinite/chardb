@@ -157,7 +157,9 @@ Prints every id, URL and credential for the seeded world. With `--json` only the
 
 ## Troubleshooting
 
-**A test unexpectedly lands on `/login`.** An auth problem, not a UI one. Note that `AuthContext`'s mount effect (`AuthContext.tsx:65`) calls `setLoading(false)` immediately when no `refreshToken` is present — before `useMeQuery` resolves — so `ProtectedRoute` redirects even with a valid access token. This is why `storageState` writes **both** tokens.
+**A test unexpectedly lands on `/login`.** An auth problem, not a UI one — the token in `storageState` is missing, malformed, or written under the wrong origin. Check that `E2E_HOST` matches the origin in the state file; a mismatch drops the entries silently and the page looks logged out with no error.
+
+(Historically this also happened with a *valid* token: `AuthProvider`'s mount effect cleared `loading` before the `me` query resolved whenever no `refreshToken` was present. Fixed, and pinned by `tests/smoke/session-restore.e2e.ts`.)
 
 **"timed out waiting for URL".** Usually a port collision. Both servers pre-probe their port and Vite runs with `--strictPort`, so the real error should appear above.
 
