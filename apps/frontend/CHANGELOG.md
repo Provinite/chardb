@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Tests for the species/variant/trait admin pages** (`src/pages/__tests__/`): `route-param-guards.test.tsx` covers all six pages that had conditional hooks — each asserts the guard message renders when the route param is missing, and that hook order survives the param disappearing between renders on a single mounted instance. That second assertion is the regression test proper: run against the pre-fix components it fails on all six with React's "Rendered fewer hooks than expected." `SpeciesManagementPage.test.tsx` covers the happy path, so the `skip` flags the queries gained are exercised in both states. 29 frontend tests total, up from 14.
+
 - **Character admin action strip**: Edit / Remove from Species / Delete Character buttons render inside the character info column under an "ADMIN" label, gated by `canDeleteCharacter` and `canEditCharacterRegistry` (or global admin). (#235)
 - **Trait Review Queue inline actions**: Review cards expose Remove from Species and Delete Character alongside Approve, each with a confirm dialog and toast feedback, so moderators never need to leave the queue. The queue refreshes after every action. (#235)
 - `canDeleteCharacter` is exposed through the role queries, `useUserCommunityRole`, the permissions helper, and the RoleEditor presets. (#235)
