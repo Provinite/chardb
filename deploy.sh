@@ -123,21 +123,14 @@ NODE_ENV=production
 FRONTEND_URL="$FRONTEND_URL"
 EMAIL_FROM="noreply@dev.chardb.cc"
 
-# DeviantArt OAuth
-DEVIANTART_CLIENT_ID="${DEVIANTART_CLIENT_ID//$/\\$}"
-DEVIANTART_CLIENT_SECRET="${DEVIANTART_CLIENT_SECRET//$/\\$}"
+# OAuth callback URLs. The matching client ids, client secrets and bot token are
+# NOT written here -- the host fetches them from Parameter Store under the path
+# below, using its instance role, so they never pass through this machine or a
+# CI runner.
 DEVIANTART_CALLBACK_URL="$DEVIANTART_CALLBACK_URL"
-
-# Discord OAuth
-DISCORD_CLIENT_ID="${DISCORD_CLIENT_ID//$/\\$}"
-DISCORD_CLIENT_SECRET="${DISCORD_CLIENT_SECRET//$/\\$}"
 DISCORD_CALLBACK_URL="$DISCORD_CALLBACK_URL"
-DISCORD_BOT_TOKEN="${DISCORD_BOT_TOKEN//$/\\$}"
-
-# ToyHouse OAuth
-TOYHOUSE_CLIENT_ID="${TOYHOUSE_CLIENT_ID//$/\\$}"
-TOYHOUSE_CLIENT_SECRET="${TOYHOUSE_CLIENT_SECRET//$/\\$}"
 TOYHOUSE_CALLBACK_URL="$TOYHOUSE_CALLBACK_URL"
+SSM_PARAMETER_PATH="/chardb/$ENVIRONMENT"
 
 # AWS SQS Configuration
 AWS_SQS_ENABLED="true"
@@ -184,6 +177,67 @@ else
 fi
 
 ./ecr-login.sh
+
+# Load application secrets from Parameter Store.
+#
+# Fetched here, on the host, using its instance role; deploy.sh no longer writes
+# them into .env. Once get-terraform-outputs.sh stops exporting them they will
+# not touch a developer machine or a CI runner at all.
+#
+# Exported into this shell rather than appended to .env: compose resolves ${VAR}
+# from the environment first, and a secret containing a single quote makes
+# compose fail to parse an env file at all. Exporting also keeps them off disk.
+#
+# Discovered by path rather than from a hardcoded list, so adding a parameter
+# needs no change here.
+echo "🔑 Fetching application secrets from ${SSM_PARAMETER_PATH}..."
+
+if [ -z "$SSM_PARAMETER_PATH" ]; then
+    echo "❌ SSM_PARAMETER_PATH is not set in .env"
+    exit 1
+fi
+
+SECRETS_JSON=$(aws ssm get-parameters-by-path \
+    --path "$SSM_PARAMETER_PATH" \
+    --recursive --with-decryption \
+    --region "$AWS_REGION" \
+    --output json) || {
+    echo "❌ Could not read $SSM_PARAMETER_PATH -- check the instance role"
+    exit 1
+}
+
+SECRET_COUNT=$(echo "$SECRETS_JSON" | jq '.Parameters | length')
+if [ "$SECRET_COUNT" -eq 0 ]; then
+    echo "❌ No parameters found under $SSM_PARAMETER_PATH"
+    exit 1
+fi
+
+# A parameter still holding the Terraform placeholder means someone created the
+# infrastructure but never set the real value. Fail rather than boot an app
+# that will reject every OAuth callback.
+PLACEHOLDERS=$(echo "$SECRETS_JSON" \
+    | jq -r '.Parameters[] | select(.Value == "not-managed-by-terraform") | .Name')
+if [ -n "$PLACEHOLDERS" ]; then
+    echo "❌ These parameters still hold the placeholder value:"
+    echo "$PLACEHOLDERS" | sed 's/^/     /'
+    echo "   Set them with: aws ssm put-parameter --overwrite --type SecureString --name <name> --value ..."
+    exit 1
+fi
+
+# Values are carried base64-encoded so that quotes, backslashes, newlines and
+# dollar signs in a secret cannot break the parse -- there is no escaping scheme
+# to get wrong. The parameter's basename becomes the variable name, so
+# /chardb/dev/discord-bot-token exports DISCORD_BOT_TOKEN.
+while read -r key encoded; do
+    [ -n "$key" ] || continue
+    export "$key=$(printf '%s' "$encoded" | base64 -d)"
+done < <(echo "$SECRETS_JSON" | jq -r '
+    .Parameters[]
+    | (.Name | split("/") | last | ascii_upcase | gsub("-"; "_")) as $key
+    | "\($key) \(.Value | @base64)"
+')
+
+echo "✅ Loaded $SECRET_COUNT secrets from Parameter Store"
 
 echo "🛑 Stopping existing services..."
 docker compose down || true
