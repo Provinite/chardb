@@ -3,6 +3,11 @@ output "instance_id" {
   value       = aws_instance.docker_host.id
 }
 
+output "instance_arn" {
+  description = "ARN of the EC2 instance"
+  value       = aws_instance.docker_host.arn
+}
+
 output "public_ip" {
   description = "Public IP address of the instance"
   value       = aws_eip.docker_host.public_ip

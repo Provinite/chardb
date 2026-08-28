@@ -178,6 +178,29 @@ module "frontend" {
   route53_zone_id     = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : null
 }
 
+# CD identity for GitHub Actions.
+#
+# Grants the deploy workflow exactly what `deploy-fullstack.sh` needs and
+# nothing else: push a backend image, read (never write) this environment's
+# Terraform state, publish the frontend bundle, invalidate its cache, and open a
+# Session Manager tunnel to the docker host.
+module "github_actions_deploy" {
+  source = "../../modules/github-actions-deploy"
+
+  name              = "${var.project_name}-${var.environment}"
+  github_repository = var.github_repository
+  allowed_refs      = var.github_deploy_refs
+
+  ecr_repository_arn         = module.backend_ecr.repository_arn
+  terraform_state_bucket     = "clovercoin-tf-state"
+  terraform_state_key_prefix = "chardb/environments/${var.environment}"
+
+  frontend_bucket_arn                  = module.frontend.bucket_arn
+  frontend_cloudfront_distribution_arn = module.frontend.cloudfront_distribution_arn
+  docker_host_instance_arn             = module.backend.instance_arn
+
+  tags = local.common_tags
+}
 
 locals {
   common_tags = {

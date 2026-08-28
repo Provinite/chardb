@@ -1,3 +1,8 @@
+output "instance_arn" {
+  description = "ARN of the EC2 instance"
+  value       = module.backend_docker_host.instance_arn
+}
+
 output "instance_id" {
   description = "ID of the EC2 instance"
   value       = module.backend_docker_host.instance_id

@@ -22,3 +22,13 @@ output "deployment_bucket_name" {
   description = "S3 bucket name for deployment scripts"
   value       = module.frontend_static_site.deployment_bucket_name
 }
+
+output "bucket_arn" {
+  description = "ARN of the S3 bucket"
+  value       = module.frontend_static_site.bucket_arn
+}
+
+output "cloudfront_distribution_arn" {
+  description = "ARN of the CloudFront distribution"
+  value       = module.frontend_static_site.cloudfront_distribution_arn
+}

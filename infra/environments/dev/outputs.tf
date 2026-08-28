@@ -188,3 +188,9 @@ output "backend_sqs_queue_arn" {
   description = "ARN of the prize distribution SQS queue"
   value       = module.backend.sqs_queue_arn
 }
+
+# GitHub Actions CD outputs
+output "github_actions_deploy_role_arn" {
+  description = "ARN of the role the deploy workflow assumes via OIDC"
+  value       = module.github_actions_deploy.role_arn
+}

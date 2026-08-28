@@ -127,6 +127,85 @@ terraform output > terraform-outputs.txt
 - ✅ Custom error pages for SPA routing (404/403 → index.html)
 - ✅ Environment-specific cache settings (dev: no cache, prod: optimized)
 
+## 🤖 Continuous Deployment to Staging
+
+**A push to `main` deploys itself.** Once `lint`, `verify` and `e2e` pass, the
+`deploy-backend` and `deploy-frontend` jobs in `.github/workflows/ci.yml` run the
+same chain the manual sections below describe. The rest of Phase 2 is for first-time
+setup, for the `prod` environment, and for deploying from a branch by hand.
+
+### How the workflow reaches AWS
+
+There is no AWS access key in this repository — it is public. The jobs assume an
+IAM role through GitHub's OIDC provider instead. The role's trust policy pins the
+token's `sub` claim to `repo:Provinite/chardb:ref:refs/heads/main`, so only a
+workflow running on `main` can assume it, and its permissions stop at *reading*
+Terraform state: the deploy can never change infrastructure.
+
+> ⚠️ The deploy jobs must not declare `environment:`. GitHub rewrites the OIDC
+> `sub` claim to `repo:<owner>/<repo>:environment:<name>` when a job targets an
+> environment, which would no longer match the trust policy. To use one, add the
+> environment subject to `github_deploy_refs` handling in
+> `infra/modules/github-actions-deploy` first.
+
+### How the workflow reaches the host
+
+SSH is tunnelled over AWS Systems Manager Session Manager. The instance carries
+`AmazonSSMManagedInstanceCore`, and both `deploy.sh` and `scripts/ssh-dev.sh`
+address it by instance id through an `aws ssm start-session` `ProxyCommand` (see
+`scripts/lib/remote-host.sh`). The tunnel emerges on the instance's own loopback,
+so the security group never needs to name a GitHub runner IP.
+
+This is also the local default, so **install the Session Manager plugin**:
+
+```bash
+# https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
+curl -fsSLo /tmp/session-manager-plugin.deb \
+  "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb"
+sudo dpkg -i /tmp/session-manager-plugin.deb
+```
+
+If the SSM agent is unhealthy, fall back to a direct connection from an address
+listed in `backend_ssh_allowed_cidr_blocks`:
+
+```bash
+DEPLOY_TRANSPORT=direct ./scripts/ssh-dev.sh
+DEPLOY_TRANSPORT=direct ./deploy.sh dev latest
+```
+
+### One-time setup
+
+```bash
+# 1. Create the OIDC provider, deploy role and SSM instance permissions.
+cd infra/environments/dev
+terraform apply -var-file=dev.tfvars
+
+# 2. Hand the role ARN to GitHub.
+gh secret set AWS_DEPLOY_ROLE_ARN --body "$(terraform output -raw github_actions_deploy_role_arn)"
+
+# 3. Confirm the host registered as an SSM managed node (takes a few minutes).
+aws ssm describe-instance-information \
+  --query 'InstanceInformationList[].{Id:InstanceId,Ping:PingStatus}' --output table
+```
+
+The role ARN is not really a secret, but keeping it in one avoids publishing the
+AWS account id in a public repository.
+
+### What the jobs do
+
+| Job | Runner | Steps |
+| --- | --- | --- |
+| `deploy-backend` | `ubuntu-24.04-arm` | Build the arm64 image natively, push to ECR as `v-<sha>`, deploy over the SSM tunnel, then poll `/health` for up to 5 minutes |
+| `deploy-frontend` | `ubuntu-latest` | Build the bundle against the deployed API URL, `s3 sync --delete`, invalidate CloudFront |
+
+`deploy-frontend` waits on `deploy-backend` so a bundle never ships expecting a
+schema the deployed API does not have yet. Both hold non-cancelling concurrency
+groups, and a run on `main` is never cancelled by a newer push — a cancelled
+deploy could leave the host with images pulled and no containers running.
+
+Database migrations need no step of their own: the backend image's entrypoint
+(`scripts/migrate-and-start.sh`) runs `prisma migrate deploy` before the app boots.
+
 ## 🏗️ Phase 2: Application Build and Deployment
 
 ### Step 5: **Full-Stack Deployment (Recommended)**

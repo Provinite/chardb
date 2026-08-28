@@ -183,6 +183,18 @@ resource "aws_iam_role_policy" "s3_images_access" {
   })
 }
 
+# Session Manager access.
+#
+# Deploys reach this host by tunnelling SSH over SSM rather than opening port 22
+# to the internet (see deploy.sh). That requires the instance to register as a
+# managed node, which is what this policy grants. The SSM agent ships enabled on
+# Amazon Linux 2023, so no user_data change is needed; the instance registers
+# within a few minutes of the policy attaching.
+resource "aws_iam_role_policy_attachment" "ssm_core" {
+  role       = aws_iam_role.docker_host.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # IAM instance profile
 resource "aws_iam_instance_profile" "docker_host" {
   name = "${var.name}-docker-host-profile"

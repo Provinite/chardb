@@ -131,3 +131,16 @@ variable "toyhouse_callback_url" {
 
 # Note: Using default VPC, no need to specify VPC/subnet variables
 
+
+# GitHub Actions CD
+variable "github_repository" {
+  description = "GitHub repository allowed to assume the deploy role, as owner/name"
+  type        = string
+  default     = "Provinite/chardb"
+}
+
+variable "github_deploy_refs" {
+  description = "Git refs whose workflow runs may assume the deploy role"
+  type        = list(string)
+  default     = ["refs/heads/main"]
+}

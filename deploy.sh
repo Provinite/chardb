@@ -91,8 +91,13 @@ fi
 
 echo "🚀 Deploying CharDB to $SERVER_IP (environment: $ENVIRONMENT)"
 
-# Get variables from terraform outputs
-source <(./scripts/get-terraform-outputs.sh "$ENVIRONMENT" | grep "^export")
+# Resolve how to reach the host. Defaults to tunnelling SSH over Session
+# Manager, which is what lets GitHub Actions deploy without the security group
+# naming a runner IP. See scripts/lib/remote-host.sh.
+source ./scripts/lib/remote-host.sh
+setup_remote_transport
+
+mkdir -p .tmp
 
 # URL-encode the password for DATABASE_URL
 ENCODED_PASSWORD=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$POSTGRES_PASSWORD', safe=''))")
@@ -207,26 +212,30 @@ EOF
 
 # Copy deployment files to server
 echo "📦 Copying deployment files..."
-scp -i "$SSH_KEY_PATH" docker/docker-compose.prod.yml ec2-user@$SERVER_IP:~/app/compose.yaml
+# ~/app is created by user_data on a fresh instance, but a tunnelled scp fails
+# unhelpfully if it is missing, so make sure of it first.
+ssh "${SSH_OPTS[@]}" "$REMOTE_TARGET" 'mkdir -p ~/app'
+
+scp "${SSH_OPTS[@]}" docker/docker-compose.prod.yml "$REMOTE_TARGET:~/app/compose.yaml"
 echo "1/6"
-scp -i "$SSH_KEY_PATH" docker/docker-compose.overrides.prod.yml ec2-user@$SERVER_IP:~/app/compose.override.yaml
+scp "${SSH_OPTS[@]}" docker/docker-compose.overrides.prod.yml "$REMOTE_TARGET:~/app/compose.override.yaml"
 echo "2/6"
-scp -i "$SSH_KEY_PATH" -r docker/services/ ec2-user@$SERVER_IP:~/app/
+scp "${SSH_OPTS[@]}" -r docker/services/ "$REMOTE_TARGET:~/app/"
 echo "3/6"
-scp -i "$SSH_KEY_PATH" scripts/ecr-login.sh ec2-user@$SERVER_IP:~/app/ecr-login.sh
+scp "${SSH_OPTS[@]}" scripts/ecr-login.sh "$REMOTE_TARGET:~/app/ecr-login.sh"
 echo "4/6"
-scp -i "$SSH_KEY_PATH" .tmp/.env ec2-user@$SERVER_IP:~/app/.env
+scp "${SSH_OPTS[@]}" .tmp/.env "$REMOTE_TARGET:~/app/.env"
 echo "5/6"
-scp -i "$SSH_KEY_PATH" .tmp/deploy-remote.sh ec2-user@$SERVER_IP:~/app/deploy-remote.sh
+scp "${SSH_OPTS[@]}" .tmp/deploy-remote.sh "$REMOTE_TARGET:~/app/deploy-remote.sh"
 echo "6/6"
 
 # Execute deployment script
 echo "🚀 Executing deployment on server..."
-ssh -i "$SSH_KEY_PATH" ec2-user@$SERVER_IP "cd ~/app && chmod +x deploy-remote.sh && ./deploy-remote.sh"
+ssh "${SSH_OPTS[@]}" "$REMOTE_TARGET" "cd ~/app && chmod +x deploy-remote.sh && ./deploy-remote.sh"
 
 echo "✅ Deployment completed successfully!"
 echo "🌐 Your application should be available at:"
 echo "   - Backend API: http://$SERVER_IP:4000"
 echo ""
 echo "📝 To SSH into the server:"
-echo "   ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP"
+echo "   ./scripts/ssh-dev.sh"

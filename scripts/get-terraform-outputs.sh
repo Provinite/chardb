@@ -44,6 +44,7 @@ get_output() {
 
 # Extract all outputs
 SERVER_IP=$(get_output "backend_public_ip")
+INSTANCE_ID=$(get_output "backend_instance_id")
 SSH_KEY_CONTENT=$(get_output "backend_ssh_private_key")
 SSH_KEY_NAME=$(get_output "backend_ssh_key_name")
 ECR_REPOSITORY_URL=$(get_output "backend_ecr_repository_url")
@@ -79,7 +80,9 @@ if [ "$ENVIRONMENT" = "dev" ]; then
         exit 1
     fi
 
-    # Create SSH key file
+    # Create SSH key file. A CI runner has no ~/.ssh until something makes one.
+    mkdir -p "$HOME/.ssh"
+    chmod 700 "$HOME/.ssh"
     SSH_KEY_PATH="$HOME/.ssh/${SSH_KEY_NAME}.pem"
     echo "$SSH_KEY_CONTENT" > "$SSH_KEY_PATH"
     chmod 600 "$SSH_KEY_PATH"
@@ -93,8 +96,28 @@ else
     BACKEND_URL=$(get_output "api_url")
 fi
 
+# Mask every sensitive value before it can reach a log. Callers consume this
+# script's stdout through `source <(... | grep "^export")`, so the export lines
+# are normally swallowed by the pipe -- but this repository is public, and one
+# step that runs the script without capturing stdout would publish live
+# credentials. GitHub parses workflow commands from stderr too, so masking here
+# covers every caller rather than each one remembering to.
+if [ -n "$GITHUB_ACTIONS" ]; then
+    for secret in "$SSH_KEY_CONTENT" "$DB_PASSWORD" "$JWT_SECRET" \
+        "$DEVIANTART_CLIENT_ID" "$DEVIANTART_CLIENT_SECRET" \
+        "$DISCORD_CLIENT_ID" "$DISCORD_CLIENT_SECRET" "$DISCORD_BOT_TOKEN" \
+        "$TOYHOUSE_CLIENT_ID" "$TOYHOUSE_CLIENT_SECRET"; do
+        [ -n "$secret" ] || continue
+        # Multi-line values (the SSH key) must be masked a line at a time.
+        while IFS= read -r line; do
+            [ -n "$line" ] && echo "::add-mask::$line" >&2
+        done <<< "$secret"
+    done
+fi
+
 echo "✅ Terraform outputs retrieved:"
 echo "   Server IP: $SERVER_IP"
+echo "   Instance ID: $INSTANCE_ID"
 echo "   Backend URL: $BACKEND_URL"
 echo "   Frontend URL: $FRONTEND_URL"
 echo "   SSH Key: $SSH_KEY_PATH"
@@ -117,6 +140,7 @@ echo "   CloudFront Images Domain: $CLOUDFRONT_IMAGES_DOMAIN"
 echo ""
 echo "Export these variables:"
 echo "export SERVER_IP='$SERVER_IP'"
+echo "export INSTANCE_ID='$INSTANCE_ID'"
 echo "export BACKEND_URL='$BACKEND_URL'"
 echo "export SSH_KEY_PATH='$SSH_KEY_PATH'"
 echo "export ECR_REPOSITORY_URL='$ECR_REPOSITORY_URL'"
