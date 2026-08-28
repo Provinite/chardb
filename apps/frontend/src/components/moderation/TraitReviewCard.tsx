@@ -203,7 +203,7 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
 
   return (
     <>
-      <Card>
+      <Card data-testid="trait-review-card" data-character-id={item.characterId}>
         <ImageSection>
           {imageUrl ? (
             <MainImage src={imageUrl} alt={item.characterName} />
