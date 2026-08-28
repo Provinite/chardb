@@ -178,6 +178,72 @@ module "frontend" {
   route53_zone_id     = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : null
 }
 
+# Application secrets.
+#
+# The OAuth values below come from Discord's, DeviantArt's and ToyHouse's
+# developer portals -- places Terraform cannot see -- so they are created with a
+# placeholder and then ignored. Populate each once with:
+#
+#   aws ssm put-parameter --overwrite --type SecureString \
+#     --name /chardb/dev/discord-bot-token --value '...'
+#
+# Nothing reads these yet: the deploy still renders the host's .env from
+# Terraform outputs. Repointing the backend at Parameter Store is the follow-up
+# that lets the corresponding variables and outputs be deleted, and with them
+# the .tfvars file.
+module "app_secrets" {
+  source = "../../modules/app-secrets"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  unmanaged_secrets = {
+    "deviantart-client-id"     = "DeviantArt OAuth client id"
+    "deviantart-client-secret" = "DeviantArt OAuth client secret"
+    "discord-client-id"        = "Discord OAuth client id"
+    "discord-client-secret"    = "Discord OAuth client secret"
+    "discord-bot-token"        = "Discord bot token"
+    "toyhouse-client-id"       = "ToyHouse OAuth client id"
+    "toyhouse-client-secret"   = "ToyHouse OAuth client secret"
+  }
+
+  tags = local.common_tags
+}
+
+# Let the docker host read them. Granted on the path rather than a list of ARNs
+# so adding a secret later needs no IAM change.
+resource "aws_iam_role_policy" "backend_read_secrets" {
+  name = "${var.project_name}-${var.environment}-read-app-secrets"
+  role = module.backend.iam_role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        Resource = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${module.app_secrets.path_prefix}/*"
+      },
+      {
+        Effect = "Allow"
+        # SecureString parameters are decrypted with the AWS-managed aws/ssm
+        # key; the grant is scoped by which SSM calls it can accompany.
+        Action   = "kms:Decrypt"
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "kms:ViaService" = "ssm.${var.aws_region}.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+}
+
 # CD identity for GitHub Actions.
 #
 # Grants the deploy workflow exactly what `deploy-fullstack.sh` needs and

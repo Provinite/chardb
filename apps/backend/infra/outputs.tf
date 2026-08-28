@@ -1,3 +1,8 @@
+output "iam_role_name" {
+  description = "Name of the IAM role attached to the instance"
+  value       = module.backend_docker_host.iam_role_name
+}
+
 output "instance_arn" {
   description = "ARN of the EC2 instance"
   value       = module.backend_docker_host.instance_arn

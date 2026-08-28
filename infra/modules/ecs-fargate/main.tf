@@ -119,9 +119,11 @@ resource "aws_iam_role_policy_attachment" "task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Additional permissions for Secrets Manager (if using secrets)
+# Permission to resolve the task definition's `secrets` at task start. This is
+# on the execution role, not the task role: ECS itself fetches these before the
+# container exists, and injects them as environment variables.
 resource "aws_iam_role_policy" "task_execution_secrets" {
-  count = length(var.secrets_arns) > 0 ? 1 : 0
+  count = length(var.secret_arns) > 0 ? 1 : 0
 
   name   = "${var.name_prefix}-task-execution-secrets"
   role   = aws_iam_role.task_execution.id
@@ -129,13 +131,27 @@ resource "aws_iam_role_policy" "task_execution_secrets" {
 }
 
 data "aws_iam_policy_document" "task_execution_secrets" {
-  count = length(var.secrets_arns) > 0 ? 1 : 0
+  count = length(var.secret_arns) > 0 ? 1 : 0
 
   statement {
     actions = [
-      "secretsmanager:GetSecretValue",
+      "ssm:GetParameters",
     ]
-    resources = var.secrets_arns
+    resources = var.secret_arns
+  }
+
+  # SecureString parameters are encrypted under the AWS-managed aws/ssm key,
+  # which has no ARN to name here; the grant is instead confined to decrypt
+  # calls made on SSM's behalf.
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["ssm.${var.aws_region}.amazonaws.com"]
+    }
   }
 }
 

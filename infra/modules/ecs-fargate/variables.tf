@@ -82,7 +82,7 @@ variable "environment_variables" {
 }
 
 variable "secret_variables" {
-  description = "Secret variables from Secrets Manager or Parameter Store"
+  description = "Secret variables injected from SSM Parameter Store, as name/valueFrom pairs"
   type = list(object({
     name      = string
     valueFrom = string
@@ -90,8 +90,8 @@ variable "secret_variables" {
   default = []
 }
 
-variable "secrets_arns" {
-  description = "ARNs of secrets in Secrets Manager that the task needs access to"
+variable "secret_arns" {
+  description = "SSM parameter ARNs the execution role may read to resolve `secret_variables`"
   type        = list(string)
   default     = []
 }

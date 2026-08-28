@@ -50,111 +50,73 @@ resource "random_password" "jwt_secret" {
 }
 
 ##############################################################################
-# AWS Secrets Manager - Store sensitive application secrets
+# Application secrets (SSM Parameter Store)
+#
+# These replaced eight Secrets Manager secrets. Two reasons, in order:
+#
+# 1. Five of them took their value from a Terraform *input variable* sourced
+#    from a gitignored prod.tfvars, and the OAuth values then had no home except
+#    Terraform state. Only the laptop holding that file could apply, and a
+#    secret rotated in Discord's dashboard drifted silently. Those five are now
+#    created with a placeholder and their value is ignored forever, so the real
+#    secret lives in Parameter Store alone.
+#
+# 2. Secrets Manager bills $0.40 per secret per month; Standard-tier parameters
+#    are free. The features paying for that -- native rotation, resource
+#    policies -- are unused here, and ECS reads a Parameter Store ARN in
+#    `valueFrom` exactly as it read a Secrets Manager one.
+#
+# ⚠️  MIGRATION ORDER MATTERS. Applying this destroys the old secrets and points
+#     the task definition at parameters holding "not-managed-by-terraform".
+#     Copy the live values across BEFORE applying:
+#
+#       for s in deviantart-secret toyhouse-secret discord-secret \
+#                discord-bot-token otel-otlp-headers; do
+#         aws secretsmanager get-secret-value \
+#           --secret-id "chardb-prod-$s" --query SecretString --output text
+#       done
+#
+#     then `aws ssm put-parameter --overwrite --type SecureString --name
+#     /chardb/prod/<name> --value '...'` for each. The destroyed secrets keep
+#     AWS's 30-day recovery window, so a botched cutover is recoverable.
 ##############################################################################
 
-# Database password secret
-resource "aws_secretsmanager_secret" "db_password" {
-  name        = "${var.project_name}-${var.environment}-db-password"
-  description = "RDS database password for ${var.project_name}"
+module "app_secrets" {
+  source = "../../modules/app-secrets"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  unmanaged_secrets = {
+    "deviantart-client-secret" = "DeviantArt OAuth client secret"
+    "toyhouse-client-secret"   = "ToyHouse OAuth client secret"
+    "discord-client-secret"    = "Discord OAuth client secret"
+    "discord-bot-token"        = "Discord bot token"
+    "otel-otlp-headers"        = "OpenTelemetry OTLP exporter auth headers"
+  }
 
   tags = local.common_tags
 }
 
-resource "aws_secretsmanager_secret_version" "db_password" {
-  secret_id     = aws_secretsmanager_secret.db_password.id
-  secret_string = module.rds.db_password
+# The two parameters Terraform genuinely owns, because Terraform generates the
+# value. A placeholder here would break the application, so these are explicit
+# resources next to what produces them rather than part of the module above.
+resource "aws_ssm_parameter" "jwt_secret" {
+  name        = "/${var.project_name}/${var.environment}/jwt-secret"
+  description = "JWT signing secret"
+  type        = "SecureString"
+  value       = random_password.jwt_secret.result
+
+  tags = merge(local.common_tags, { ValueManagedBy = "terraform" })
 }
 
-# JWT secret
-resource "aws_secretsmanager_secret" "jwt_secret" {
-  name        = "${var.project_name}-${var.environment}-jwt-secret"
-  description = "JWT secret for authentication"
+resource "aws_ssm_parameter" "database_url" {
+  name        = "/${var.project_name}/${var.environment}/database-url"
+  description = "PostgreSQL connection URL for Prisma"
+  type        = "SecureString"
+  value       = "postgresql://${module.rds.db_username}:${urlencode(module.rds.db_password)}@${module.rds.db_address}:${module.rds.db_port}/${module.rds.db_name}"
 
-  tags = local.common_tags
-}
-
-resource "aws_secretsmanager_secret_version" "jwt_secret" {
-  secret_id     = aws_secretsmanager_secret.jwt_secret.id
-  secret_string = random_password.jwt_secret.result
-}
-
-# DeviantArt client secret
-resource "aws_secretsmanager_secret" "deviantart_client_secret" {
-  name        = "${var.project_name}-${var.environment}-deviantart-secret"
-  description = "DeviantArt OAuth client secret"
-
-  tags = local.common_tags
-}
-
-resource "aws_secretsmanager_secret_version" "deviantart_client_secret" {
-  secret_id     = aws_secretsmanager_secret.deviantart_client_secret.id
-  secret_string = var.deviantart_client_secret
-}
-
-# ToyHouse client secret
-resource "aws_secretsmanager_secret" "toyhouse_client_secret" {
-  name        = "${var.project_name}-${var.environment}-toyhouse-secret"
-  description = "ToyHouse OAuth client secret"
-
-  tags = local.common_tags
-}
-
-resource "aws_secretsmanager_secret_version" "toyhouse_client_secret" {
-  secret_id     = aws_secretsmanager_secret.toyhouse_client_secret.id
-  secret_string = var.toyhouse_client_secret
-}
-
-# Discord client secret
-resource "aws_secretsmanager_secret" "discord_client_secret" {
-  name        = "${var.project_name}-${var.environment}-discord-secret"
-  description = "Discord OAuth client secret"
-
-  tags = local.common_tags
-}
-
-resource "aws_secretsmanager_secret_version" "discord_client_secret" {
-  secret_id     = aws_secretsmanager_secret.discord_client_secret.id
-  secret_string = var.discord_client_secret
-}
-
-# Discord bot token
-resource "aws_secretsmanager_secret" "discord_bot_token" {
-  name        = "${var.project_name}-${var.environment}-discord-bot-token"
-  description = "Discord bot token for bot integration"
-
-  tags = local.common_tags
-}
-
-resource "aws_secretsmanager_secret_version" "discord_bot_token" {
-  secret_id     = aws_secretsmanager_secret.discord_bot_token.id
-  secret_string = var.discord_bot_token
-}
-
-# Database URL (complete connection string)
-resource "aws_secretsmanager_secret" "database_url" {
-  name        = "${var.project_name}-${var.environment}-database-url"
-  description = "Complete PostgreSQL connection URL for Prisma"
-
-  tags = local.common_tags
-}
-
-resource "aws_secretsmanager_secret_version" "database_url" {
-  secret_id     = aws_secretsmanager_secret.database_url.id
-  secret_string = "postgresql://${module.rds.db_username}:${urlencode(module.rds.db_password)}@${module.rds.db_address}:${module.rds.db_port}/${module.rds.db_name}"
-}
-
-# OpenTelemetry OTLP headers
-resource "aws_secretsmanager_secret" "otel_otlp_headers" {
-  name        = "${var.project_name}-${var.environment}-otel-otlp-headers"
-  description = "OpenTelemetry OTLP exporter headers for authentication"
-
-  tags = local.common_tags
-}
-
-resource "aws_secretsmanager_secret_version" "otel_otlp_headers" {
-  secret_id     = aws_secretsmanager_secret.otel_otlp_headers.id
-  secret_string = var.otel_otlp_headers
+  tags = merge(local.common_tags, { ValueManagedBy = "terraform" })
 }
 
 ##############################################################################
@@ -451,7 +413,7 @@ module "prize_distribution_queue" {
 
   queue_name            = "${var.project_name}-prize-distribution-${var.environment}"
   visibility_timeout    = 30
-  message_retention     = 345600  # 4 days
+  message_retention     = 345600 # 4 days
   max_receive_count     = 3
   dlq_message_retention = 1209600 # 14 days
   receive_wait_time     = 5       # Long polling - reduces API calls and costs
@@ -640,48 +602,47 @@ module "ecs" {
     },
   ]
 
-  # Secrets from AWS Secrets Manager
+  # Secrets from SSM Parameter Store. ECS resolves a Parameter Store ARN in
+  # valueFrom exactly as it did a Secrets Manager one, so only the ARNs change.
   secret_variables = [
     {
       name      = "DATABASE_URL"
-      valueFrom = aws_secretsmanager_secret.database_url.arn
+      valueFrom = aws_ssm_parameter.database_url.arn
     },
     {
       name      = "JWT_SECRET"
-      valueFrom = aws_secretsmanager_secret.jwt_secret.arn
+      valueFrom = aws_ssm_parameter.jwt_secret.arn
     },
     {
       name      = "DEVIANTART_CLIENT_SECRET"
-      valueFrom = aws_secretsmanager_secret.deviantart_client_secret.arn
+      valueFrom = module.app_secrets.arns["deviantart-client-secret"]
     },
     {
       name      = "TOYHOUSE_CLIENT_SECRET"
-      valueFrom = aws_secretsmanager_secret.toyhouse_client_secret.arn
+      valueFrom = module.app_secrets.arns["toyhouse-client-secret"]
     },
     {
       name      = "DISCORD_CLIENT_SECRET"
-      valueFrom = aws_secretsmanager_secret.discord_client_secret.arn
+      valueFrom = module.app_secrets.arns["discord-client-secret"]
     },
     {
       name      = "DISCORD_BOT_TOKEN"
-      valueFrom = aws_secretsmanager_secret.discord_bot_token.arn
+      valueFrom = module.app_secrets.arns["discord-bot-token"]
     },
     {
       name      = "OTEL_EXPORTER_OTLP_HEADERS"
-      valueFrom = aws_secretsmanager_secret.otel_otlp_headers.arn
+      valueFrom = module.app_secrets.arns["otel-otlp-headers"]
     },
   ]
 
-  # Secret ARNs for IAM permissions
-  secrets_arns = [
-    aws_secretsmanager_secret.database_url.arn,
-    aws_secretsmanager_secret.jwt_secret.arn,
-    aws_secretsmanager_secret.deviantart_client_secret.arn,
-    aws_secretsmanager_secret.toyhouse_client_secret.arn,
-    aws_secretsmanager_secret.discord_client_secret.arn,
-    aws_secretsmanager_secret.discord_bot_token.arn,
-    aws_secretsmanager_secret.otel_otlp_headers.arn,
-  ]
+  # Parameter ARNs the task execution role must be able to read.
+  secret_arns = concat(
+    [
+      aws_ssm_parameter.database_url.arn,
+      aws_ssm_parameter.jwt_secret.arn,
+    ],
+    module.app_secrets.arn_list,
+  )
 
   # Container Health Check
   health_check = {

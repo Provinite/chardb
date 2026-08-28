@@ -127,6 +127,80 @@ terraform output > terraform-outputs.txt
 - ✅ Custom error pages for SPA routing (404/403 → index.html)
 - ✅ Environment-specific cache settings (dev: no cache, prod: optimized)
 
+## 🔑 Application Secrets
+
+Secrets live in **SSM Parameter Store** under `/chardb/<environment>/`, not in
+Terraform variables and not in Terraform state.
+
+Terraform creates each parameter with the placeholder `not-managed-by-terraform`
+and then carries `lifecycle { ignore_changes = [value] }`, so it never reads or
+overwrites the real value. Setting or rotating one is a single command with no
+Terraform run and no plan diff:
+
+```bash
+aws ssm put-parameter --overwrite --type SecureString \
+  --name /chardb/dev/discord-bot-token --value 'the-real-token'
+```
+
+Two parameters are the exception, and deliberately stay Terraform-managed
+because Terraform *generates* their value: `/chardb/prod/jwt-secret` (a
+`random_password`) and `/chardb/prod/database-url` (built from the RDS password
+Terraform created). Writing a placeholder over those would break the app.
+
+### Why not Terraform variables
+
+The OAuth secrets used to be declared as Terraform inputs, supplied from a
+gitignored `.tfvars`, and then re-exported as Terraform outputs for the deploy to
+read back. That made Terraform state their only durable record and the `.tfvars`
+file a hand-maintained cache of Terraform's own output — the dev file's header
+still records a round trip through it ("DeviantArt/Discord pulled from terraform
+state"). Practical consequences: only the machine holding `.tfvars` could apply,
+and a secret rotated in Discord's dashboard drifted silently because re-applying
+just pushed the stale value back.
+
+### ⚠️ Migrating prod off Secrets Manager
+
+Prod's eight Secrets Manager secrets are replaced by parameters. **Applying
+before the values are copied across will start injecting
+`not-managed-by-terraform` into the running task.** Do this first:
+
+```bash
+# 1. Read the live values out of Secrets Manager.
+for name in deviantart-secret toyhouse-secret discord-secret \
+            discord-bot-token otel-otlp-headers; do
+  echo "=== $name"
+  aws secretsmanager get-secret-value \
+    --secret-id "chardb-prod-$name" --query SecretString --output text
+done
+
+# 2. Write each into Parameter Store under its new name.
+#    chardb-prod-deviantart-secret  -> /chardb/prod/deviantart-client-secret
+#    chardb-prod-toyhouse-secret    -> /chardb/prod/toyhouse-client-secret
+#    chardb-prod-discord-secret     -> /chardb/prod/discord-client-secret
+#    chardb-prod-discord-bot-token  -> /chardb/prod/discord-bot-token
+#    chardb-prod-otel-otlp-headers  -> /chardb/prod/otel-otlp-headers
+aws ssm put-parameter --overwrite --type SecureString \
+  --name /chardb/prod/deviantart-client-secret --value '...'
+
+# 3. Now apply. This destroys the old secrets and rolls a new task definition.
+terraform -chdir=infra/environments/prod apply -var-file=prod.tfvars
+```
+
+The destroyed secrets keep AWS's 30-day recovery window, so a botched cutover is
+recoverable with `aws secretsmanager restore-secret`.
+
+Afterwards, delete these five now-undeclared lines from your local
+`prod.tfvars`, or Terraform will warn about them on every run:
+`deviantart_client_secret`, `discord_client_secret`, `toyhouse_client_secret`,
+`discord_bot_token`, `otel_otlp_headers`.
+
+### Dev is not migrated yet
+
+The `/chardb/dev/` parameters exist and the docker host can read them, but
+nothing consumes them: `deploy.sh` still renders the host's `.env` from Terraform
+outputs. Repointing the backend at Parameter Store is the follow-up that lets the
+dev variables, the outputs, and `dev.tfvars` itself be deleted.
+
 ## 🤖 Continuous Deployment to Staging
 
 **A push to `main` deploys itself.** Once `lint`, `verify` and `e2e` pass, the
