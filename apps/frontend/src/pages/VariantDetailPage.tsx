@@ -179,21 +179,14 @@ export const VariantDetailPage: React.FC = () => {
   const [isInactiveTraitsExpanded, setIsInactiveTraitsExpanded] =
     useState(false);
 
-  if (!variantId) {
-    return (
-      <Container>
-        <ErrorMessage message="Variant ID is required" />
-      </Container>
-    );
-  }
-
   // GraphQL queries
   const {
     data: variantData,
     loading: variantLoading,
     error: variantError,
   } = useSpeciesVariantByIdQuery({
-    variables: { id: variantId },
+    variables: { id: variantId ?? "" },
+    skip: !variantId,
     onCompleted: (data) => {
       if (data.speciesVariantById) {
         setVariantName(data.speciesVariantById.name);
@@ -207,7 +200,8 @@ export const VariantDetailPage: React.FC = () => {
     loading: entriesLoading,
     error: entriesError,
   } = useTraitListEntriesByVariantQuery({
-    variables: { variantId, first: 100 },
+    variables: { variantId: variantId ?? "", first: 100 },
+    skip: !variantId,
   });
 
   // Initialize/reset entries state when query data changes (from initial load or refetch)
@@ -222,13 +216,14 @@ export const VariantDetailPage: React.FC = () => {
   const speciesId = variant?.speciesId;
 
   const { data: speciesTraitsData } = useTraitsBySpeciesQuery({
-    variables: { speciesId: speciesId!, first: 100 },
+    variables: { speciesId: speciesId ?? "", first: 100 },
     skip: !speciesId,
   });
 
   const { data: enumSettingsData } =
     useSpeciesVariantWithEnumValueSettingsQuery({
-      variables: { variantId },
+      variables: { variantId: variantId ?? "" },
+      skip: !variantId,
     });
 
   // Mutations
@@ -319,6 +314,14 @@ export const VariantDetailPage: React.FC = () => {
       (trait) => !activeTraitIds.has(trait.id),
     );
   }, [speciesTraitsData, entries]);
+
+  if (!variantId) {
+    return (
+      <Container>
+        <ErrorMessage message="Variant ID is required" />
+      </Container>
+    );
+  }
 
   // Handlers
   const handleSaveVariantName = async () => {
@@ -412,6 +415,16 @@ export const VariantDetailPage: React.FC = () => {
   };
 
   const handleAddTrait = async (traitId: string) => {
+    // valueType is required by the mutation, so bail rather than sending
+    // undefined if the trait is missing from the loaded species traits.
+    const trait = speciesTraitsData?.traitsBySpecies?.nodes.find(
+      (t) => t.id === traitId,
+    );
+    if (!trait) {
+      toast.error("Could not find that trait for this species.");
+      return;
+    }
+
     // Add trait at the bottom of the list
     const maxOrder =
       entries.length > 0 ? Math.max(...entries.map((e) => e.order)) : -1;
@@ -423,9 +436,7 @@ export const VariantDetailPage: React.FC = () => {
           speciesVariantId: variantId,
           order: maxOrder + 1,
           required: false,
-          valueType: speciesTraitsData?.traitsBySpecies?.nodes.find(
-            (t) => t.id === traitId,
-          )?.valueType!,
+          valueType: trait.valueType,
         },
       },
     });

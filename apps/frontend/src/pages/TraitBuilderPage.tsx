@@ -559,7 +559,7 @@ export const TraitBuilderPage: React.FC = () => {
     error: traitsError,
     refetch,
   } = useTraitsBySpeciesQuery({
-    variables: { speciesId: speciesId!, first: 100 },
+    variables: { speciesId: speciesId ?? "", first: 100 },
     skip: !speciesId,
   });
 
@@ -568,20 +568,12 @@ export const TraitBuilderPage: React.FC = () => {
     TraitsBySpeciesQuery["traitsBySpecies"]["nodes"][0] | null
   >(null);
 
-  if (!speciesId) {
-    return (
-      <Container>
-        <ErrorMessage message="Species ID is required" />
-      </Container>
-    );
-  }
-
   const {
     data: speciesData,
     loading: speciesLoading,
     error: speciesError,
   } = useSpeciesByIdQuery({
-    variables: { id: speciesId! },
+    variables: { id: speciesId ?? "" },
     skip: !speciesId,
   });
 
@@ -614,6 +606,14 @@ export const TraitBuilderPage: React.FC = () => {
       toast.error(`Failed to delete trait: ${error.message}`);
     },
   });
+
+  if (!speciesId) {
+    return (
+      <Container>
+        <ErrorMessage message="Species ID is required" />
+      </Container>
+    );
+  }
 
   // Event handlers
   const handleCreateTrait = async (formData: TraitFormData) => {
