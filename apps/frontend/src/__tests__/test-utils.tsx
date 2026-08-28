@@ -5,6 +5,7 @@ import { MockedProvider, MockedResponse } from "@apollo/client/testing";
 import { ThemeProvider as StyledThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
 import { vi } from "vitest";
+import type { MeQuery, UpdateProfileMutation } from "../generated/graphql";
 
 // Create mock functions first (before vi.mock calls to avoid hoisting issues)
 export const mockNavigate = vi.fn();
@@ -31,13 +32,6 @@ vi.mock("react-hot-toast", () => ({
   Toaster: () => React.createElement("div", { "data-testid": "toaster" }),
 }));
 
-// Mock AuthContext for testing
-const MockAuthProvider: React.FC<{ children: React.ReactNode; user?: any }> = ({
-  children,
-}) => {
-  return <div data-testid="mock-auth-provider">{children}</div>;
-};
-
 // Mock ThemeProvider for testing
 const MockThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -50,23 +44,24 @@ const MockThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 interface AllTheProvidersProps {
   children: React.ReactNode;
   mocks?: readonly MockedResponse[];
-  user?: any;
-  initialEntries?: string[];
 }
 
 const AllTheProviders: React.FC<AllTheProvidersProps> = ({
   children,
   mocks = [],
-  user,
 }) => {
   return (
-    <MockedProvider mocks={mocks} addTypename={false}>
+    // `addTypename` is deliberately left at its default (true). Turning it off
+    // makes mocks that omit __typename fail *silently*: the query resolves,
+    // nothing is logged, and the component renders as though the server
+    // returned nothing. Keep __typename on your mock data instead --
+    // `createMockUser` below does, and the generated types will tell you what
+    // each shape needs.
+    <MockedProvider mocks={mocks}>
       <BrowserRouter>
         <MockThemeProvider>
-          <MockAuthProvider user={user}>
-            {children}
-            <div data-testid="toaster" />
-          </MockAuthProvider>
+          {children}
+          <div data-testid="toaster" />
         </MockThemeProvider>
       </BrowserRouter>
     </MockedProvider>
@@ -75,18 +70,14 @@ const AllTheProviders: React.FC<AllTheProvidersProps> = ({
 
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   mocks?: readonly MockedResponse[];
-  user?: any;
-  initialEntries?: string[];
 }
 
 const customRender = (ui: ReactElement, options: CustomRenderOptions = {}) => {
-  const { mocks, user, ...renderOptions } = options;
+  const { mocks, ...renderOptions } = options;
 
   return render(ui, {
     wrapper: ({ children }) => (
-      <AllTheProviders mocks={mocks} user={user}>
-        {children}
-      </AllTheProviders>
+      <AllTheProviders mocks={mocks}>{children}</AllTheProviders>
     ),
     ...renderOptions,
   });
@@ -96,20 +87,58 @@ const customRender = (ui: ReactElement, options: CustomRenderOptions = {}) => {
 export * from "@testing-library/react";
 export { customRender as render };
 
-// Create mock user factory
-export const createMockUser = (overrides = {}) => ({
+/**
+ * The `me` shape exactly as ME_QUERY selects it. Typing the factory against
+ * the generated query means a field the query adds later is a compile error
+ * here rather than a missing-field warning at runtime.
+ */
+export type MockUser = MeQuery["me"];
+
+export const createMockUser = (
+  overrides: Partial<MockUser> = {},
+): MockUser => ({
+  __typename: "User",
   id: "1",
   username: "testuser",
   email: "test@example.com",
   displayName: "Test User",
-  avatarUrl: null,
-  isVerified: false,
-  isAdmin: false,
   bio: null,
   website: null,
   dateOfBirth: null,
+  isVerified: false,
+  isAdmin: false,
+  canCreateInviteCode: false,
+  canListInviteCodes: false,
+  canCreateCommunity: false,
+  canGrantGlobalPermissions: false,
+  canListUsers: false,
   privacySettings: null,
   createdAt: "2023-01-01T00:00:00Z",
   updatedAt: "2023-01-01T00:00:00Z",
+  avatarImage: null,
+  communityMemberships: [],
+  ...overrides,
+});
+
+/**
+ * The `updateProfile` shape exactly as UPDATE_PROFILE selects it. Same
+ * reasoning as createMockUser: let the generated type police the fields.
+ */
+export type MockUpdatedProfile = UpdateProfileMutation["updateProfile"];
+
+export const createMockUpdatedProfile = (
+  overrides: Partial<MockUpdatedProfile> = {},
+): MockUpdatedProfile => ({
+  __typename: "User",
+  id: "1",
+  username: "testuser",
+  displayName: "Test User",
+  bio: null,
+  website: null,
+  dateOfBirth: null,
+  isVerified: false,
+  createdAt: "2023-01-01T00:00:00Z",
+  updatedAt: "2023-01-01T00:00:00Z",
+  avatarImage: null,
   ...overrides,
 });

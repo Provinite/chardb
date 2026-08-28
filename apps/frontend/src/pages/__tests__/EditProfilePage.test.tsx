@@ -32,7 +32,11 @@ vi.mock("react-hot-toast", () => ({
 import { EditProfilePage } from "../EditProfilePage";
 import { ME_QUERY } from "../../graphql/auth.graphql";
 import { UPDATE_PROFILE } from "../../graphql/users.graphql";
-import { render, createMockUser } from "../../__tests__/test-utils";
+import {
+  render,
+  createMockUser,
+  createMockUpdatedProfile,
+} from "../../__tests__/test-utils";
 
 // Mock GraphQL queries
 const mockUserData = createMockUser({
@@ -125,18 +129,13 @@ const mockUpdateProfileMutation: MockedResponse = {
   },
   result: {
     data: {
-      updateProfile: {
-        id: "1",
+      updateProfile: createMockUpdatedProfile({
         username: "johndoe",
         displayName: "Updated Name",
         bio: "Updated bio description",
-        avatarUrl: null,
         website: "https://johndoe.com",
         dateOfBirth: "1990-01-01T00:00:00.000Z",
-        isVerified: false,
-        createdAt: "2023-01-01T00:00:00Z",
-        updatedAt: "2023-01-01T00:00:00Z",
-      },
+      }),
     },
   },
 };
@@ -477,18 +476,13 @@ describe("EditProfilePage", () => {
         },
         result: {
           data: {
-            updateProfile: {
-              id: "1",
+            updateProfile: createMockUpdatedProfile({
               username: "johndoe",
               displayName: "Just Changed Display Name",
               bio: "Software developer and open source enthusiast",
-              avatarUrl: null,
               website: "https://johndoe.com",
               dateOfBirth: "1990-01-01T00:00:00.000Z",
-              isVerified: false,
-              createdAt: "2023-01-01T00:00:00Z",
-              updatedAt: "2023-01-01T00:00:00Z",
-            },
+            }),
           },
         },
       };
@@ -626,18 +620,10 @@ describe("EditProfilePage", () => {
         },
         result: {
           data: {
-            updateProfile: {
-              id: "1",
+            updateProfile: createMockUpdatedProfile({
               username: "johndoe",
               displayName: "Only Required Field",
-              bio: null,
-              avatarUrl: null,
-              website: null,
-              dateOfBirth: null,
-              isVerified: false,
-              createdAt: "2023-01-01T00:00:00Z",
-              updatedAt: "2023-01-01T00:00:00Z",
-            },
+            }),
           },
         },
       };

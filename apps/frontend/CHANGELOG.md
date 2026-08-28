@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Tests for the species/variant/trait admin pages** (`src/pages/__tests__/`): `route-param-guards.test.tsx` covers all six pages that had conditional hooks — each asserts the guard message renders when the route param is missing, and that hook order survives the param disappearing between renders on a single mounted instance. That second assertion is the regression test proper: run against the pre-fix components it fails on all six with React's "Rendered fewer hooks than expected." `SpeciesManagementPage.test.tsx` covers the happy path, so the `skip` flags the queries gained are exercised in both states. 29 frontend tests total, up from 14.
+
 - **Character admin action strip**: Edit / Remove from Species / Delete Character buttons render inside the character info column under an "ADMIN" label, gated by `canDeleteCharacter` and `canEditCharacterRegistry` (or global admin). (#235)
 - **Trait Review Queue inline actions**: Review cards expose Remove from Species and Delete Character alongside Approve, each with a confirm dialog and toast feedback, so moderators never need to leave the queue. The queue refreshes after every action. (#235)
 - `canDeleteCharacter` is exposed through the role queries, `useUserCommunityRole`, the permissions helper, and the RoleEditor presets. (#235)
@@ -16,6 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`test-utils.tsx` no longer disables Apollo's `addTypename`**: the shared test wrapper passed `addTypename={false}`, which makes any mock omitting `__typename` fail *silently* — the query resolves, nothing is logged, and the component renders as though the server returned nothing. It cost real debugging time while writing the page tests above. The wrapper now uses the default, and the mock factories carry `__typename`.
+
+  `createMockUser` is typed as `MeQuery["me"]` and a new `createMockUpdatedProfile` as `UpdateProfileMutation["updateProfile"]`, so a field the query gains later is a compile error in the factory rather than a runtime warning. Both were missing fields the queries already selected (`avatarImage`, `canListUsers`, `communityMemberships` and the other permission flags), and the `EditProfilePage` mutation mocks still set a long-removed `avatarUrl`. The frontend suite now runs with **zero** Apollo "missing field" errors, down from several per run.
+- **Removed two no-op options from the test `render` helper**: `user` and `initialEntries` were accepted, documented, and then silently dropped — `MockAuthProvider` ignored the user it was handed, and the wrapper used `BrowserRouter` with no way to seed history. Nothing passed either. Documented the actual pattern (supply the user through a `ME_QUERY` mock) in `src/__tests__/README.md` instead.
+
+- **Hooks are no longer called conditionally in six page components**: `SpeciesManagementPage`, `SpeciesVariantManagementPage`, `TraitBuilderPage`, `VariantDetailPage`, `EnumValueManagementPage` and `EnumValueSettingsPage` each ran an early `return` for a missing route param *before* their hooks. A render that hit the guard therefore called a different number of hooks than one that did not — the exact hazard `react-hooks/rules-of-hooks` exists to catch, and 40 violations of it.
+
+  These never crashed in practice because the guard cannot fire on a matched route: React Router only renders the component when the param is present. The bug was latent, and would have surfaced the first time one of these pages was rendered from a route whose param was optional.
+
+  The guard now runs after the last hook, with the queries that consumed the param passing `skip` rather than firing with a placeholder. Placing it before the event handlers keeps the param narrowed to `string` for the closures below, so no non-null assertions were needed — several existing ones were removed.
+
+  Verified by driving the running app: all six pages render against seeded data with no console errors, including `VariantDetailPage`'s dependent query chain (variant → `speciesId` → traits) and trait creation through `TraitBuilderPage`. None of these pages have unit or E2E coverage, so this was checked by hand rather than by the suite.
+- **`VariantDetailPage.handleAddTrait` no longer asserts non-null on an optional chain**: `...nodes.find(...)?.valueType!` would have sent `undefined` as the required `valueType` had the trait been absent from the loaded species traits. It now looks the trait up, and bails with a toast if it is missing.
 - **Hardened session restore against a partially-populated token store**: `AuthProvider`'s mount effect called `setLoading(false)` whenever `refreshToken` was absent — before the `me` query had resolved — so `ProtectedRoute` saw `loading: false` with `user: null` and redirected to `/login` even when the access token was valid. The effect now only clears `loading` when nothing is in flight.
 
   This is defensive, not a user-facing fix: no application path produces an access token without a refresh token. `login`/`signup` write both, `refreshAccessToken` overwrites only the access token and leaves the refresh token in place, and `logout` and the Apollo 401 handler clear both. It matters only if that state is reached some other way (storage cleared by hand or by an extension, or a future client that stores only what it needs). Covered by `apps/e2e/tests/smoke/session-restore.e2e.ts`, including a negative case asserting an invalid token still redirects. (#235)
