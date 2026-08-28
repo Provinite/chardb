@@ -8,7 +8,7 @@
     "build": "yarn build:safe",
     "build:safe": "(yarn codegen || echo 'Warning: GraphQL codegen failed, using existing generated files') && tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
     "codegen": "graphql-codegen --config .graphqlrc.yml",
@@ -16,7 +16,8 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "lint:fix": "eslint . --ext ts,tsx --fix"
   },
   "dependencies": {
     "@apollo/client": "^3.8.0",

@@ -10,6 +10,71 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    name: Lint & format (changed files)
+    runs-on: ubuntu-latest
+    # Deliberately scoped to changed files. The repo predates a working lint
+    # setup, so a repo-wide gate would fail on hundreds of pre-existing
+    # violations; this holds new and modified code to the full rule set instead.
+
+    steps:
+      # Full history: the changed-file set is a diff against the merge base,
+      # which a shallow clone would not contain.
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            .yarn/install-state.gz
+          key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: yarn install --immutable
+
+      # No build step: the lint preset is the non-type-checked one, so it needs
+      # no declaration files from packages/*.
+      - name: Resolve diff base
+        id: base
+        run: |
+          if [ -n "${{ github.base_ref }}" ]; then
+            # Pull request: diff against the target branch.
+            # Explicit refspec so the remote-tracking ref definitely exists.
+            git fetch --no-tags origin \
+              "+refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}"
+            echo "ref=origin/${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            # Push to main: diff against whatever the branch pointed at before.
+            # `before` is all-zeroes for a branch's first push or after a force
+            # push, in which case fall back to the previous commit.
+            before="${{ github.event.before }}"
+            if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ] \
+               || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
+              before="$(git rev-parse HEAD~1)"
+            fi
+            echo "ref=$before" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Lint changed files
+        run: yarn lint:changed --base "${{ steps.base.outputs.ref }}"
+
   verify:
     name: Type check & generated file drift
     runs-on: ubuntu-latest

@@ -14,16 +14,25 @@
     "dev:frontend": "yarn workspace @chardb/frontend dev",
     "dev:agent": "yarn dev | tee dev.log",
     "test": "yarn workspaces foreach -A run test",
-    "lint": "yarn workspaces foreach -A run lint",
+    "lint": "eslint .",
     "type-check": "yarn workspaces foreach -A run type-check",
     "clean": "yarn workspaces foreach -A run clean",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint:changed": "node scripts/lint-changed.mjs",
+    "lint:fix": "eslint . --fix && prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,css}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,cjs,mjs,css}\""
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/supertest": "^6.0.3",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
     "concurrently": "^9.1.2",
     "eslint": "^8.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.20",
     "husky": "^9.1.7",
     "prettier": "^3.0.0",
     "typescript": "^5.0.0"

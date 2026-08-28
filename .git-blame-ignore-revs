@@ -1,0 +1,13 @@
+# Revisions skipped by `git blame`: mechanical, tree-wide changes with no
+# behavioural content.
+#
+# Enable locally with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# GitHub applies this file automatically.
+#
+# scripts/lint-changed.mjs also reads this file, and drops these commits when
+# working out which files a change touched -- otherwise a tree-wide commit
+# would pull the whole repo into the lint gate's changed-file set.
+
+# style: format repository with prettier (#250)
+e9b01d776ad496d93a004376abf985c04c3b5335
