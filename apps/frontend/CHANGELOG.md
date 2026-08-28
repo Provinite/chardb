@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A valid session was bounced to `/login` when it had no refresh token**: `AuthProvider`'s mount effect called `setLoading(false)` whenever `refreshToken` was absent — before the `me` query had resolved. `ProtectedRoute` then saw `loading: false` with `user: null` and redirected, despite a perfectly valid access token. Reachable in normal use, since refresh tokens last 7 days while access tokens last 24 hours, so a long-lived session outlives its refresh token. The effect now only clears `loading` when there is genuinely nothing in flight. Covered by `apps/e2e/tests/smoke/session-restore.e2e.ts`, including a negative case asserting an invalid token still redirects. (#235)
 - Added two `data-testid` container attributes for the browser E2E suite: `character-admin-actions` on the character page's admin strip and `trait-review-card` (with `data-character-id`) on trait review rows. Both mark elements that have no accessible role and no unambiguous text; everything else is selected by role or href. (#235)
 - Scoped `vitest.config.ts`'s `include` to `src/**`, so Vitest's defaults cannot collect Playwright specs. (#235)
 - Regenerated GraphQL codegen output so `ExternalAccountProvider` includes `TOYHOUSE`, keeping the generated types in sync with the backend schema. Also drops the phantom `ModerationStatus.Cancelled` member, which had no backing migration on `main`.

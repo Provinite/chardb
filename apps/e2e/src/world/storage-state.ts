@@ -20,14 +20,11 @@ export const statePath = (preset: string, persona: string): string =>
  *
  * 2. BOTH tokens are written, exactly as a real login leaves them.
  *
- *    Writing only `accessToken` looks tempting -- it avoids a refresh
- *    round-trip on every navigation -- but it breaks every protected route.
- *    AuthContext's mount effect (AuthContext.tsx:65) reads `refreshToken`, and
- *    when it is absent takes the `else` branch and calls setLoading(false)
- *    immediately, before useMeQuery has resolved. ProtectedRoute then sees
- *    loading: false with user: null and redirects to /login, even though the
- *    access token is perfectly valid. Storing both matches what the app itself
- *    produces on login, so the harness exercises the real state.
+ *    This is a fidelity choice, not a workaround: the harness should reproduce
+ *    the state the app actually creates. An access-token-only session is also
+ *    valid and is covered deliberately by tests/smoke/session-restore.e2e.ts --
+ *    that case used to redirect to /login even with a valid token, which is the
+ *    bug those tests pin.
  */
 export async function writeStorageStates(
   preset: string,
