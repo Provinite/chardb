@@ -101,8 +101,10 @@ resource "aws_iam_role_policy" "deploy" {
         Effect = "Allow"
         # Read-only: the deploy resolves its targets from state and must not be
         # able to change infrastructure.
-        Action   = "s3:GetObject"
-        Resource = "arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket}/${var.terraform_state_key_prefix}*"
+        Action = "s3:GetObject"
+        # Exact key, not a prefix wildcard: "chardb/environments/dev*" would
+        # also match a future "chardb/environments/dev-anything".
+        Resource = "arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket}/${var.terraform_state_key}"
       },
       {
         Sid      = "ListTerraformStateBucket"
@@ -110,8 +112,8 @@ resource "aws_iam_role_policy" "deploy" {
         Action   = "s3:ListBucket"
         Resource = "arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket}"
         Condition = {
-          StringLike = {
-            "s3:prefix" = ["${var.terraform_state_key_prefix}*"]
+          StringEquals = {
+            "s3:prefix" = [var.terraform_state_key]
           }
         }
       },
@@ -148,6 +150,13 @@ resource "aws_iam_role_policy" "deploy" {
           # SSH over SSM runs through this AWS-owned document.
           "arn:${data.aws_partition.current.partition}:ssm:${data.aws_region.current.name}::document/AWS-StartSSHSession"
         ]
+        Condition = {
+          # Forces AWS to check the document as well as the instance. Without
+          # it, the instance ARN alone authorises a session with any document.
+          BoolIfExists = {
+            "ssm:SessionDocumentAccessCheck" = "true"
+          }
+        }
       },
       {
         Sid    = "CloseOwnSessions"

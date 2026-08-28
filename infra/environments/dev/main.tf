@@ -199,6 +199,16 @@ module "app_secrets" {
   tags = local.common_tags
 }
 
+data "aws_kms_key" "ssm" {
+  key_id = "alias/aws/ssm"
+}
+
+locals {
+  dev_parameter_arns = [
+    "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${module.app_secrets.path_prefix}/*",
+  ]
+}
+
 resource "aws_iam_role_policy" "backend_read_secrets" {
   name = "${var.project_name}-${var.environment}-read-app-secrets"
   role = module.backend.iam_role_name
@@ -213,14 +223,24 @@ resource "aws_iam_role_policy" "backend_read_secrets" {
           "ssm:GetParameters",
           "ssm:GetParametersByPath"
         ]
-        Resource = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${module.app_secrets.path_prefix}/*"
+        Resource = local.dev_parameter_arns
       },
       {
-        Effect = "Allow"
-        # The AWS-managed aws/ssm key has no ARN to name here, so the condition
-        # is what scopes this.
+        # AmazonSSMManagedInstanceCore, attached to this same role, allows
+        # ssm:GetParameter on "*" -- which would let the staging host read
+        # /chardb/prod/*. An explicit Deny overrides that Allow.
+        Effect = "Deny"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        NotResource = local.dev_parameter_arns
+      },
+      {
+        Effect   = "Allow"
         Action   = "kms:Decrypt"
-        Resource = "*"
+        Resource = data.aws_kms_key.ssm.arn
         Condition = {
           StringEquals = {
             "kms:ViaService" = "ssm.${var.aws_region}.amazonaws.com"
@@ -245,9 +265,9 @@ module "github_actions_deploy" {
   allowed_environments = [var.github_deploy_environment]
   required_ref         = var.github_deploy_ref
 
-  ecr_repository_arn         = module.backend_ecr.repository_arn
-  terraform_state_bucket     = "clovercoin-tf-state"
-  terraform_state_key_prefix = "chardb/environments/${var.environment}"
+  ecr_repository_arn     = module.backend_ecr.repository_arn
+  terraform_state_bucket = "clovercoin-tf-state"
+  terraform_state_key    = "chardb/environments/${var.environment}"
 
   frontend_bucket_arn                  = module.frontend.bucket_arn
   frontend_cloudfront_distribution_arn = module.frontend.cloudfront_distribution_arn

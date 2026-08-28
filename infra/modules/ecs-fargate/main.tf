@@ -129,6 +129,10 @@ resource "aws_iam_role_policy" "task_execution_secrets" {
   policy = data.aws_iam_policy_document.task_execution_secrets[0].json
 }
 
+data "aws_kms_key" "ssm" {
+  key_id = "alias/aws/ssm"
+}
+
 data "aws_iam_policy_document" "task_execution_secrets" {
   count = length(var.secret_arns) > 0 ? 1 : 0
 
@@ -139,11 +143,9 @@ data "aws_iam_policy_document" "task_execution_secrets" {
     resources = var.secret_arns
   }
 
-  # The AWS-managed aws/ssm key has no ARN to name here, so the condition is
-  # what scopes this.
   statement {
     actions   = ["kms:Decrypt"]
-    resources = ["*"]
+    resources = [data.aws_kms_key.ssm.arn]
 
     condition {
       test     = "StringEquals"

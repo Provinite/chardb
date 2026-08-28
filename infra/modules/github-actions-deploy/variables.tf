@@ -49,8 +49,8 @@ variable "terraform_state_bucket" {
   type        = string
 }
 
-variable "terraform_state_key_prefix" {
-  description = "Key prefix within the state bucket that the workflow may read"
+variable "terraform_state_key" {
+  description = "Exact object key of this environment's Terraform state"
   type        = string
 }
 
