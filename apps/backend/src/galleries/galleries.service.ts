@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Prisma, Visibility } from '@chardb/database';
+import { notDeleted } from '../common/utils/prisma-filters';
 
 /**
  * Service layer input types for gallery operations.
@@ -247,8 +248,8 @@ export class GalleriesService {
   }
 
   private async verifyCharacterOwnership(characterId: string, userId: string): Promise<void> {
-    const character = await this.db.character.findUnique({
-      where: { id: characterId },
+    const character = await this.db.character.findFirst({
+      where: { id: characterId, ...notDeleted },
       select: { ownerId: true },
     });
 

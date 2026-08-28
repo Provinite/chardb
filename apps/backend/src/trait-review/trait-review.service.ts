@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { ModerationStatus, TraitReviewSource, Prisma } from "@prisma/client";
+import { notDeleted } from "../common/utils/prisma-filters";
 import { TraitReviewQueueFiltersInput } from "./dto/trait-review.dto";
 import {
   traitReviewInclude,
@@ -28,8 +29,8 @@ export class TraitReviewService {
   ) {
     const client = tx ?? this.db;
 
-    const character = await client.character.findUnique({
-      where: { id: characterId },
+    const character = await client.character.findFirst({
+      where: { id: characterId, ...notDeleted },
     });
 
     if (!character) {

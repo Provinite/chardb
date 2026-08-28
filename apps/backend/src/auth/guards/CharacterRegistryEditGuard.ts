@@ -8,6 +8,7 @@ import { getUserFromContext } from "../utils/get-user-from-context";
 import { getNestedValue } from "../../common/utils/getNestedValue";
 import { AllowCharacterRegistryEditor } from "../decorators/AllowCharacterRegistryEditor";
 import { CommunityPermission } from "../CommunityPermission";
+import { notDeleted } from "../../common/utils/prisma-filters";
 
 /**
  * Guard that checks character registry edit permissions based on ownership.
@@ -56,8 +57,8 @@ export class CharacterRegistryEditGuard implements CanActivate {
     }
 
     // Fetch character with species info
-    const character = await this.prisma.character.findUnique({
-      where: { id: characterId },
+    const character = await this.prisma.character.findFirst({
+      where: { id: characterId, ...notDeleted },
       select: {
         ownerId: true,
         speciesId: true,

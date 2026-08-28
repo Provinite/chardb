@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Visibility, Prisma } from "@chardb/database";
+import { notDeleted } from "../common/utils/prisma-filters";
 
 /**
  * Service layer input types for user operations.
@@ -123,12 +124,6 @@ export class UsersService {
     });
   }
 
-  async remove(id: string) {
-    return this.db.user.delete({
-      where: { id },
-    });
-  }
-
   async getUserCharactersCount(userId: string, includePrivate = false) {
     const visibilityFilter = includePrivate
       ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
@@ -138,6 +133,7 @@ export class UsersService {
       where: {
         ownerId: userId,
         visibility: { in: visibilityFilter },
+        ...notDeleted,
       },
     });
   }
@@ -172,6 +168,7 @@ export class UsersService {
       where: {
         ownerId: userId,
         visibility: { in: visibilityFilter },
+        ...notDeleted,
       },
       take: limit,
       orderBy: { updatedAt: "desc" },
@@ -209,6 +206,7 @@ export class UsersService {
       where: {
         ownerId: userId,
         visibility: Visibility.PUBLIC,
+        ...notDeleted,
       },
       take: limit,
       orderBy: { updatedAt: "desc" },

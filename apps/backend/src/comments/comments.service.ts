@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import type { Prisma } from "@chardb/database";
+import { notDeleted } from "../common/utils/prisma-filters";
 
 /**
  * Service layer input types for comment operations.
@@ -216,8 +217,8 @@ export class CommentsService {
   ): Promise<boolean> {
     // Check character ownership
     if (comment.characterId) {
-      const character = await this.databaseService.character.findUnique({
-        where: { id: comment.characterId },
+      const character = await this.databaseService.character.findFirst({
+        where: { id: comment.characterId, ...notDeleted },
         select: { ownerId: true },
       });
       return character?.ownerId === userId;
@@ -257,8 +258,8 @@ export class CommentsService {
 
     switch (entityType) {
       case CommentableTypeFilter.CHARACTER:
-        const character = await this.databaseService.character.findUnique({
-          where: { id: entityId },
+        const character = await this.databaseService.character.findFirst({
+          where: { id: entityId, ...notDeleted },
         });
         exists = !!character;
         break;

@@ -7,14 +7,16 @@ This directory contains a modular Docker Compose setup for the CharDB applicatio
 ```
 docker/
 ├── services/                    # Individual service definitions
-│   ├── postgres.yml            # PostgreSQL database
+│   ├── postgres.yml            # PostgreSQL database (dev, port 5433)
+│   ├── postgres-test.yml       # PostgreSQL database (e2e tests, port 5440)
 │   ├── redis.yml               # Redis cache
 │   ├── backend.yml             # Backend API service
 │   ├── frontend.yml            # Frontend React app
 │   ├── jaeger.yml              # Jaeger tracing UI
 │   └── otel-collector.yml      # OpenTelemetry collector
-├── docker compose.yml          # Development environment (uses include)
-├── docker compose.prod.yml     # Production environment (uses include)
+├── compose.yaml                # Development environment (uses include)
+├── compose.test.yml            # Test environment (postgres-test only)
+├── docker-compose.prod.yml     # Production environment (uses include)
 └── otel-collector-config.yml   # OTEL collector configuration
 ```
 
@@ -41,14 +43,29 @@ JWT_SECRET=your-secret \
 docker compose -f docker compose.prod.yml up
 ```
 
-### Testing
-```bash
-# Individual services for testing
-docker compose -f services/postgres.yml -f services/redis.yml up
+### Testing (E2E)
 
-# Quick database for tests
-docker compose -f services/postgres.yml up
+The e2e tests require a dedicated test database on port 5440. Run once before executing tests:
+
+```bash
+# From repo root — start the test database
+docker compose -f docker/compose.test.yml up -d
+
+# Push the Prisma schema to the test database
+yarn workspace @chardb/backend test:e2e:setup
+
+# Run e2e tests
+yarn workspace @chardb/backend test:e2e
+
+# Or combined — set up and run
+yarn workspace @chardb/backend test:e2e:setup && yarn workspace @chardb/backend test:e2e
+
+# Tear down when done
+docker compose -f docker/compose.test.yml down
 ```
+
+The test database is ephemeral (no persistent volume) — data is discarded when the container stops.
+Both the dev database (5433) and test database (5440) can run simultaneously.
 
 ## Service Definitions
 

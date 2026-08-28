@@ -184,6 +184,7 @@ export const COMMUNITY_MEMBERS_BY_USER_QUERY = gql`
           canManageItems
           canGrantItems
           canModerateImages
+          canDeleteCharacter
         }
         user {
           id

@@ -15,7 +15,6 @@ import { User, UserConnection } from "./entities/user.entity";
 import { UserProfile, UserStats } from "./entities/user-profile.entity";
 import { UpdateUserInput } from "./dto/update-user.input";
 import { CurrentUser, CurrentUserType } from "../auth/decorators/CurrentUser";
-import { RemovalResponse } from "../shared/entities/removal-response.entity";
 import {
   mapUpdateUserInputToService,
   mapPrismaUserToGraphQL,
@@ -102,18 +101,6 @@ export class UsersResolver {
     const serviceInput = mapUpdateUserInputToService(updateUserInput);
     const prismaResult = await this.usersService.update(user.id, serviceInput);
     return mapPrismaUserToGraphQL(prismaResult);
-  }
-
-  @AllowAnyAuthenticated()
-  @Mutation(() => RemovalResponse)
-  async deleteAccount(
-    @CurrentUser() user: CurrentUserType,
-  ): Promise<RemovalResponse> {
-    if (!user) {
-      throw new NotFoundException("User not found");
-    }
-    await this.usersService.remove(user.id);
-    return { removed: true, message: "User account successfully deleted" };
   }
 
   @AllowUnauthenticated()

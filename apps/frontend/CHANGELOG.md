@@ -9,10 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Character admin action strip**: Edit / Remove from Species / Delete Character buttons render inside the character info column under an "ADMIN" label, gated by `canDeleteCharacter` and `canEditCharacterRegistry` (or global admin). (#235)
+- **Trait Review Queue inline actions**: Review cards expose Remove from Species and Delete Character alongside Approve, each with a confirm dialog and toast feedback, so moderators never need to leave the queue. The queue refreshes after every action. (#235)
+- `canDeleteCharacter` is exposed through the role queries, `useUserCommunityRole`, the permissions helper, and the RoleEditor presets. (#235)
 - **ToyHouse account linking UI**: "Link ToyHouse Account" button on the Edit Profile page initiates the OAuth2 flow. Linked accounts are shown in the Connected Accounts section with a "TH" badge. On successful callback, shows a success toast and (if pending items were claimed) a summary of claimed characters/items. (#242)
 
 ### Fixed
 
+- **Hardened session restore against a partially-populated token store**: `AuthProvider`'s mount effect called `setLoading(false)` whenever `refreshToken` was absent — before the `me` query had resolved — so `ProtectedRoute` saw `loading: false` with `user: null` and redirected to `/login` even when the access token was valid. The effect now only clears `loading` when nothing is in flight.
+
+  This is defensive, not a user-facing fix: no application path produces an access token without a refresh token. `login`/`signup` write both, `refreshAccessToken` overwrites only the access token and leaves the refresh token in place, and `logout` and the Apollo 401 handler clear both. It matters only if that state is reached some other way (storage cleared by hand or by an extension, or a future client that stores only what it needs). Covered by `apps/e2e/tests/smoke/session-restore.e2e.ts`, including a negative case asserting an invalid token still redirects. (#235)
+- Added two `data-testid` container attributes for the browser E2E suite: `character-admin-actions` on the character page's admin strip and `trait-review-card` (with `data-character-id`) on trait review rows. Both mark elements that have no accessible role and no unambiguous text; everything else is selected by role or href. (#235)
+- Scoped `vitest.config.ts`'s `include` to `src/**`, so Vitest's defaults cannot collect Playwright specs. (#235)
 - Regenerated GraphQL codegen output so `ExternalAccountProvider` includes `TOYHOUSE`, keeping the generated types in sync with the backend schema. Also drops the phantom `ModerationStatus.Cancelled` member, which had no backing migration on `main`.
 - Enabled `incremental` type-checking (`tsconfig.json`), cutting a no-change `tsc --noEmit` from ~22s to ~3s locally and in CI. `*.tsbuildinfo` is already gitignored.
 

@@ -8,6 +8,7 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import { Prisma, Visibility, ModerationStatus } from "@chardb/database";
+import { notDeleted } from "../common/utils/prisma-filters";
 import * as sharp from "sharp";
 import { v4 as uuid } from "uuid";
 import { extname } from "path";
@@ -596,8 +597,8 @@ export class ImagesService {
     if (user?.isAdmin) return;
 
     // Fetch character with species info
-    const character = await this.db.character.findUnique({
-      where: { id: characterId },
+    const character = await this.db.character.findFirst({
+      where: { id: characterId, ...notDeleted },
       select: {
         ownerId: true,
         speciesId: true,

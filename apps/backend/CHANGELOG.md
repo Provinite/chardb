@@ -9,10 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Character soft-delete and species removal**: New `deleteCharacter` (soft-delete, sets `deletedAt`/`deletedById`), `purgeCharacter` (hard-delete, global admin only), and `kickCharacterFromSpecies` (clears species/variant/registry and flattens trait values into custom fields) mutations. All three cancel any pending trait reviews. Adds the `CANCELLED` moderation status and the `canDeleteCharacter` role permission, granted to the default Admin role at community creation. (#235)
+
+  Note a consequence worth knowing before granting the permission: `deleteCharacter` resolves its community from the character's species, and a character with no species resolves to none — so **once a character has been removed from its species it can only be deleted by a global admin**, not by the community moderator who removed it. This is inherent to how community permissions resolve, not a bug; it is stated in the mutation's schema description and pinned by a test in `characters.resolver.e2e.spec.ts`. (#235)
+- **E2E test infrastructure**: `docker/compose.test.yml` runs an isolated Postgres container for e2e runs, started and stopped by a Jest global setup. Adds cross-service isolation coverage asserting soft-deleted characters are invisible to list/fetch queries, guards, galleries, comments, likes, and species deletion counts. (#235)
 - **ToyHouse OAuth account linking**: Users can now link their ToyHouse accounts via OAuth2. Linked accounts trigger automatic claiming of pending character/item ownership registered to that ToyHouse username. (#242)
+
+### Removed
+
+- **`deleteAccount` mutation**: removed along with `UsersService.remove()`. It hard-deleted the user row and let FK cascades erase everything they touched — characters, galleries, media, comments, and ownership history where they were the recipient — with no confirmation, grace period, or audit trail. No UI ever called it and no operation document referenced it. Account removal, if it returns, should be a deliberate reversible flow rather than a single unconfirmed mutation. (#235)
 
 ### Fixed
 
+- **Tag counts included soft-deleted characters**: `TagsService` counted every `CharacterTag` row, so a deleted character kept inflating tag popularity forever. Counts now filter on live characters. (Ordering by relation count remains unfiltered — Prisma cannot apply a `where` to a count used in `orderBy`.) (#235)
+- **Ownership history broke on deleted characters**: `CharacterOwnershipChange.character` was non-nullable and did not catch `NotFoundException`. Before soft-delete these rows cascaded away with the character; now they persist, so any ownership-history query touching a deleted character threw. The field is now nullable and returns `null`, matching `GalleriesResolver.resolveCharacter`. (#235)
+- **Deleting a user destroyed their characters**: `characters.owner_id` was `ON DELETE CASCADE`, so `deleteAccount` permanently erased every character a user owned — including soft-deleted ones and history other users depend on. Changed to `ON DELETE SET NULL`; characters survive as orphaned, which the codebase already models throughout. (#235)
+- **`canDeleteCharacter` dropped by the role mappers**: `mapCreateRoleInputToService` and `mapUpdateRoleInputToService` omitted the field, so the permission could not be granted to or revoked from any custom role through the API. The mutation succeeded and silently returned `canDeleteCharacter: false`. Only the auto-created Admin role (set directly in `CommunitiesService.create`) and global admins had the permission. (#235)
+- **Soft-delete filter coverage**: Every character `findUnique`/`findFirst`/`findMany`/`count` call site now applies the shared `notDeleted` filter from `common/utils/prisma-filters.ts`, so soft-deleted characters cannot leak through ownership checks, guards, galleries, comments, images, media, social, species, or trait review. (#235)
+- **ENUM trait values stored as UUIDs**: `kickFromSpecies` now indexes the enum value map by both name and ID, so trait values resolve to their display name regardless of which path created them. (#235)
+- **Circular module dependencies**: Added `forwardRef` between `AuthModule` and `UsersModule`/`ExternalAccountsModule`/`InviteCodesModule`/`CommunityMembersModule`, which previously broke module compilation when a feature module was loaded in isolation under test. (#235)
+- `getPendingOwnershipCommunity` returns `null` instead of throwing when no community is found. (#235)
 - **SQS enabled flag coercion**: `AWS_SQS_ENABLED=false` now correctly disables the SQS consumer. Previously, `ConfigService.get<boolean>()` returned the raw string `"false"` (truthy), so the consumer would start regardless of the flag value.
 - **Phantom `CANCELLED` moderation status**: Removed `CANCELLED` from the generated `schema.gql`. The value has no migration on `main` (it belongs to the unmerged character soft-delete work), so it leaked into the committed schema from a locally generated Prisma client and advertised an enum value the deployed API does not serve.
 

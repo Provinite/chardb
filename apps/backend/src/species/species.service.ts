@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Prisma } from '@chardb/database';
+import { notDeleted } from '../common/utils/prisma-filters';
 
 /**
  * Service layer input types for species operations.
@@ -159,7 +160,7 @@ export class SpeciesService {
 
     // Check if any characters are using this species
     const characterCount = await this.prisma.character.count({
-      where: { speciesId: id }
+      where: { speciesId: id, ...notDeleted }
     });
 
     if (characterCount > 0) {

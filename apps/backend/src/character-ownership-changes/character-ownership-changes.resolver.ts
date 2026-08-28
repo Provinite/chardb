@@ -207,14 +207,27 @@ export class CharacterOwnershipChangesResolver {
   }
 
   // Field resolvers for relations
-  @ResolveField("character", () => Character)
+
+  /**
+   * Nullable because ownership history outlives the character it describes.
+   * Before soft-delete, deleting a character cascaded these rows away; now they
+   * persist and `findOne` correctly refuses to return a deleted character. A
+   * non-nullable field would make the whole history query fail. Mirrors how
+   * GalleriesResolver.resolveCharacter handles the same situation.
+   */
+  @ResolveField("character", () => Character, { nullable: true })
   async resolveCharacter(
     @Parent() ownershipChange: CharacterOwnershipChange,
-  ): Promise<Character> {
-    const prismaCharacter = await this.charactersService.findOne(
-      ownershipChange.characterId,
-    );
-    return mapPrismaCharacterToGraphQL(prismaCharacter);
+  ): Promise<Character | null> {
+    try {
+      const prismaCharacter = await this.charactersService.findOne(
+        ownershipChange.characterId,
+      );
+      return mapPrismaCharacterToGraphQL(prismaCharacter);
+    } catch (error) {
+      if (error instanceof NotFoundException) return null;
+      throw error;
+    }
   }
 
   @ResolveField("fromUser", () => User, { nullable: true })

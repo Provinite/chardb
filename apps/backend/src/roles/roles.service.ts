@@ -54,6 +54,8 @@ export interface CreateRoleServiceInput {
   canUploadCharacterImages?: boolean;
   /** Permission to moderate images */
   canModerateImages?: boolean;
+  /** Permission to soft-delete characters */
+  canDeleteCharacter?: boolean;
 }
 
 /**
@@ -100,6 +102,8 @@ export interface UpdateRoleServiceInput {
   canUploadCharacterImages?: boolean;
   /** Permission to moderate images */
   canModerateImages?: boolean;
+  /** Permission to soft-delete characters */
+  canDeleteCharacter?: boolean;
 }
 
 @Injectable()
@@ -130,6 +134,7 @@ export class RolesService {
         canUploadOwnCharacterImages: input.canUploadOwnCharacterImages ?? false,
         canUploadCharacterImages: input.canUploadCharacterImages ?? false,
         canModerateImages: input.canModerateImages ?? false,
+        canDeleteCharacter: input.canDeleteCharacter ?? false,
         community: {
           connect: { id: input.communityId },
         },
@@ -254,6 +259,8 @@ export class RolesService {
       updateData.canUploadCharacterImages = input.canUploadCharacterImages;
     if (input.canModerateImages !== undefined)
       updateData.canModerateImages = input.canModerateImages;
+    if (input.canDeleteCharacter !== undefined)
+      updateData.canDeleteCharacter = input.canDeleteCharacter;
 
     return this.prisma.role.update({
       where: { id },

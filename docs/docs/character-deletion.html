@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Character Deletion &amp; Species Removal - Feature Walkthrough</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .warning-box {
+        background: #fff8f0;
+        border-left: 4px solid #f59e0b;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .warning-box strong {
+        color: #d97706;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Character Deletion &amp; Species Removal</h1>
+        <p>
+          A walkthrough of the community admin tools for managing characters
+        </p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Community admins and moderators now have two new character management
+            tools: <strong>Delete Character</strong> and
+            <strong>Remove from Species</strong>. These actions are available
+            directly on the character page and, for efficiency, on every card in
+            the <a href="trait-review.html" style="color: #667eea">Trait Review Queue</a>.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">🗑️</div>
+              <h4>Delete Character</h4>
+              <p>Deletes the character and removes it from all public views.</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">↩️</div>
+              <h4>Remove from Species</h4>
+              <p>Detaches the character from its species, preserving trait data as custom fields.</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🛡️</div>
+              <h4>Permission-gated</h4>
+              <p>Requires the <code>canDeleteCharacter</code> role permission or global admin.</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">📋</div>
+              <h4>Queue integration</h4>
+              <p>Both actions are available inline on Trait Review cards.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: Character page buttons -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Action buttons on the character page</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            When viewing a character that belongs to your community, three action
+            buttons appear in the character info section — provided you
+            have the <strong>canDeleteCharacter</strong> or
+            <strong>canEditCharacterRegistry</strong> permission (or are a
+            global site admin):
+          </p>
+          <ul>
+            <li><strong>Edit Character</strong> — opens the character edit form</li>
+            <li>
+              <strong>Remove from Species</strong> — detaches the character from
+              its species (only shown when the character has a species assigned)
+            </li>
+            <li><strong>Delete Character</strong> — deletes the character</li>
+          </ul>
+          <div class="highlight-box">
+            <strong>Note:</strong> The buttons only appear while the character
+            is viewed in a community context (i.e., the character belongs to a
+            species within your community). A character that has already been
+            removed from its species will not show community action buttons.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-action-buttons.png"
+            alt="Character page showing Edit Character, Remove from Species, and Delete Character buttons in the top-right of the character card"
+          />
+          <div class="screenshot-caption">
+            Character page viewed as a community admin — the three action buttons
+            appear alongside the character owner info
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Delete Character -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Deleting a character</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Clicking <strong>Delete Character</strong> shows a confirmation
+            dialog describing what will happen:
+          </p>
+          <ul>
+            <li>The character is deleted and hidden from all public views.</li>
+            <li>Any pending trait reviews for the character are cancelled.</li>
+            <li>After confirmation you are redirected to the character browse page.</li>
+          </ul>
+          <div class="warning-box">
+            <strong>Important:</strong> This action is not self-service reversible.
+            Use it for characters that violate community rules or are otherwise no longer
+            appropriate.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Remove from Species -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Removing a character from its species</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Clicking <strong>Remove from Species</strong> shows a confirmation
+            dialog before proceeding. The operation:
+          </p>
+          <ul>
+            <li>
+              Clears the character's species, variant, registry ID, and trait
+              values.
+            </li>
+            <li>
+              <strong>Preserves the trait data</strong> — all existing trait
+              values are flattened into the character's custom fields
+              (e.g., <em>Eye Color → Amber</em> becomes a custom field entry)
+              so no information is lost.
+            </li>
+            <li>
+              Cancels any pending trait reviews for that character.
+            </li>
+            <li>
+              The character remains visible on its owner's profile and in global
+              browse — it simply no longer appears under the species in the
+              community.
+            </li>
+          </ul>
+          <div class="highlight-box">
+            <strong>Tip:</strong> Use this action when a character was
+            registered to a species in error, or when the owner requests
+            removal from the species registry without losing their character
+            entirely.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-after-species-removal.png"
+            alt="Character page after species removal, showing Eye Color: Amber preserved as a custom field under a Fields section"
+          />
+          <div class="screenshot-caption">
+            After removal: the character's <em>Eye Color</em> trait value
+            ("Amber") is preserved as a custom field — no data is lost
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Trait review queue -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Actions in the Trait Review Queue</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Both actions are also available directly on each card in the
+            <a href="trait-review.html" style="color: #667eea">Trait Review Queue</a>.
+            This lets moderators handle problematic submissions without leaving
+            the queue — approve legitimate traits, remove a character from the
+            species if the traits are incorrect, or delete the character if it
+            violates community rules.
+          </p>
+          <ul>
+            <li>
+              <strong>Approve</strong> — confirms the proposed trait values
+            </li>
+            <li>
+              <strong>Remove from Species</strong> — kicks the character from the
+              species, flattening its traits to custom fields and removing the
+              review entry from the queue
+            </li>
+            <li>
+              <strong>Delete</strong> — soft-deletes the character, which also
+              cancels the pending review and removes it from the queue
+            </li>
+          </ul>
+          <div class="highlight-box">
+            <strong>Tip:</strong> The Reject button (for sending the character's
+            traits back to the previous approved state) is still available for
+            cases where you want to roll back values without removing the
+            character from the species.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-deletion-review-queue.png"
+            alt="Trait Review Queue card showing a pending Eye Color trait review with Approve, Remove from Species, and Delete buttons"
+          />
+          <div class="screenshot-caption">
+            Trait Review card with the new <em>Remove from Species</em> and
+            <em>Delete</em> action buttons alongside the existing Approve button
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Permissions -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Setting up the permission</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The two actions use different permissions:
+          </p>
+          <ul>
+            <li>
+              <strong>Delete Character</strong> requires the
+              <code>canDeleteCharacter</code> permission. Enable the
+              <strong>Delete Characters</strong> toggle on any role you want
+              to grant this ability.
+            </li>
+            <li>
+              <strong>Remove from Species</strong> requires the
+              <code>canEditCharacterRegistry</code> permission (the same
+              permission used for editing registry IDs and trait values).
+              Enable the <strong>Edit Any Character (Registry)</strong> toggle.
+            </li>
+          </ul>
+          <p>
+            Go to <strong>Community Settings → Permissions → Role Management</strong>,
+            open the role you want to configure, and toggle the appropriate
+            permissions. Save the role — changes apply immediately to all
+            members with that role.
+          </p>
+          <div class="highlight-box">
+            <strong>Default roles:</strong> The <em>Admin</em> role created
+            automatically when a new community is started includes both
+            <code>canDeleteCharacter</code> and
+            <code>canEditCharacterRegistry</code> by default. Moderator and
+            Member roles do not have <code>canDeleteCharacter</code>;
+            Moderator has <code>canEditCharacterRegistry</code>.
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Character Deletion &amp; Species Removal &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>

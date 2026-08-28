@@ -372,6 +372,18 @@ export const DELETE_CHARACTER = gql`
   }
 `;
 
+export const PURGE_CHARACTER = gql`
+  mutation PurgeCharacter($id: ID!) {
+    purgeCharacter(id: $id)
+  }
+`;
+
+export const KICK_CHARACTER_FROM_SPECIES = gql`
+  mutation KickCharacterFromSpecies($id: ID!) {
+    kickCharacterFromSpecies(id: $id)
+  }
+`;
+
 export const TRANSFER_CHARACTER = gql`
   mutation TransferCharacter($id: ID!, $input: TransferCharacterInput!) {
     transferCharacter(id: $id, input: $input) {

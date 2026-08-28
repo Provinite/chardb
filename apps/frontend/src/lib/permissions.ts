@@ -95,6 +95,11 @@ export const PERMISSIONS_MAP = {
     description: 'Allow reviewing and approving/rejecting uploaded images in the community',
     category: 'content',
   },
+  canDeleteCharacter: {
+    name: 'Delete Characters',
+    description: 'Allow soft-deleting characters in the community',
+    category: 'content',
+  },
   // Community Management
   canCreateInviteCode: {
     name: 'Create Invite Codes',

@@ -14,10 +14,38 @@ const mockPrismaService = {
   character: {
     create: jest.fn(),
     findUnique: jest.fn(),
+    findFirst: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
     count: jest.fn(),
+  },
+  traitReview: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    updateMany: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+  },
+  trait: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+  },
+  enumValue: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
   },
   characterTag: {
     create: jest.fn(),
@@ -85,10 +113,31 @@ const mockPrismaService = {
     delete: jest.fn(),
     count: jest.fn(),
   },
-  $transaction: jest.fn((callback: (prisma: any) => any): any =>
-    callback(mockPrismaService),
-  ),
+  media: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+  },
+  itemType: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+  },
+  $transaction: jest.fn(),
 };
+
+// Wire up $transaction to pass itself as the tx argument.
+// jest.clearAllMocks() only clears call history, not implementations, so this persists.
+mockPrismaService.$transaction.mockImplementation(
+  (callback: (prisma: typeof mockPrismaService) => unknown) =>
+    callback(mockPrismaService),
+);
 
 // Global test utilities
 export const createTestingModule = async (providers = []) => {

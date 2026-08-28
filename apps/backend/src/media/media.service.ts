@@ -9,6 +9,7 @@ import { TagsService } from "../tags/tags.service";
 import type { Prisma, Visibility, TextFormatting } from "@chardb/database";
 import { ModerationStatus } from "@prisma/client";
 import { ImagesService } from "../images/images.service";
+import { notDeleted } from "../common/utils/prisma-filters";
 
 /**
  * Service layer input types for media operations.
@@ -530,7 +531,7 @@ export class MediaService {
    */
   async getMediaCharacterCount(mediaId: string): Promise<number> {
     return this.db.character.count({
-      where: { mainMediaId: mediaId },
+      where: { mainMediaId: mediaId, ...notDeleted },
     });
   }
 

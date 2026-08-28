@@ -127,6 +127,12 @@ export class CreateRoleInput {
   @IsBoolean()
   @IsOptional()
   canModerateImages?: boolean = false;
+
+  /** Permission to soft-delete characters */
+  @Field(() => Boolean, { description: 'Whether members with this role can delete characters in this community', defaultValue: false })
+  @IsBoolean()
+  @IsOptional()
+  canDeleteCharacter?: boolean = false;
 }
 
 @InputType({ description: 'Input for updating an existing role' })
@@ -251,4 +257,10 @@ export class UpdateRoleInput {
   @IsOptional()
   @IsBoolean()
   canModerateImages?: boolean;
+
+  /** Permission to soft-delete characters */
+  @Field(() => Boolean, { description: 'Whether members with this role can delete characters in this community', nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  canDeleteCharacter?: boolean;
 }

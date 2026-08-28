@@ -49,6 +49,7 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
         canManageItems: false,
         canGrantItems: false,
         canModerateImages: false,
+        canDeleteCharacter: false,
       };
     }
 
@@ -70,6 +71,7 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
       canManageItems: userRole.canManageItems,
       canGrantItems: userRole.canGrantItems,
       canModerateImages: userRole.canModerateImages,
+      canDeleteCharacter: userRole.canDeleteCharacter,
     };
   }, [userRole]);
 

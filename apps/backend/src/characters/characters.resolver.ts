@@ -247,12 +247,43 @@ export class CharactersResolver {
   }
 
   @AllowGlobalAdmin()
-  @Mutation(() => Boolean)
+  @AllowCommunityPermission(CommunityPermission.CanDeleteCharacter)
+  @ResolveCommunityFrom({ characterId: "id" })
+  @Mutation(() => Boolean, {
+    description:
+      "Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. " +
+      "A character with no species has no community to resolve permissions from, so once it has been removed from its " +
+      "species (see kickCharacterFromSpecies) only a global admin can delete it.",
+  })
   async deleteCharacter(
     @Args("id", { type: () => ID }) id: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
-    return this.charactersService.remove(id, user.id);
+    return this.charactersService.softDelete(id, user.id);
+  }
+
+  @AllowGlobalAdmin()
+  @Mutation(() => Boolean, {
+    description:
+      "Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete.",
+  })
+  async purgeCharacter(
+    @Args("id", { type: () => ID }) id: string,
+  ): Promise<boolean> {
+    return this.charactersService.purge(id);
+  }
+
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
+  @ResolveCommunityFrom({ characterId: "id" })
+  @Mutation(() => Boolean, {
+    description:
+      "Remove a character from its species, flattening its trait values into custom fields. Requires CanEditCharacterRegistry permission.",
+  })
+  async kickCharacterFromSpecies(
+    @Args("id", { type: () => ID }) id: string,
+  ): Promise<boolean> {
+    return this.charactersService.kickFromSpecies(id);
   }
 
   @AllowEntityOwner({ characterId: "id" })

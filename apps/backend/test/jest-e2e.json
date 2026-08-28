@@ -3,11 +3,13 @@
   "rootDir": "../src",
   "testEnvironment": "node",
   "testRegex": ".e2e.spec.ts$",
+  "runInBand": true,
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "moduleNameMapper": {
     "^@/(.*)$": "<rootDir>/$1"
   },
+  "globalSetup": "<rootDir>/../test/global-setup-e2e.ts",
   "setupFilesAfterEnv": ["<rootDir>/../test/setup-e2e.ts"]
 }

@@ -65,12 +65,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Try to refresh token on app load
-    const token = localStorage.getItem("refreshToken");
-    if (token && !user) {
+    const refreshToken = localStorage.getItem("refreshToken");
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (refreshToken && !user) {
       refreshAccessToken();
-    } else {
+    } else if (!accessToken) {
+      // Nothing to restore: `me` is skipped without an access token, so no
+      // request is in flight and there is nothing left to wait for.
       setLoading(false);
     }
+    // An access token with no refresh token is a real state -- refresh tokens
+    // last 7 days while access tokens last 24 hours, so a long-lived session
+    // outlives its refresh token. `me` is in flight for it, and the effect
+    // above clears `loading` when that settles. Calling setLoading(false) here
+    // would report "not loading, no user" before the query resolves, and
+    // ProtectedRoute would bounce a perfectly valid session to /login.
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
