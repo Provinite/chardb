@@ -1,23 +1,23 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export enum Visibility {
-  PUBLIC = 'PUBLIC',
-  UNLISTED = 'UNLISTED',
-  PRIVATE = 'PRIVATE',
+  PUBLIC = "PUBLIC",
+  UNLISTED = "UNLISTED",
+  PRIVATE = "PRIVATE",
 }
 
 export enum CommentableType {
-  CHARACTER = 'CHARACTER',
-  IMAGE = 'IMAGE',
-  GALLERY = 'GALLERY',
-  USER = 'USER',
+  CHARACTER = "CHARACTER",
+  IMAGE = "IMAGE",
+  GALLERY = "GALLERY",
+  USER = "USER",
 }
 
 export enum LikeableType {
-  CHARACTER = 'CHARACTER',
-  IMAGE = 'IMAGE',
-  GALLERY = 'GALLERY',
-  COMMENT = 'COMMENT',
+  CHARACTER = "CHARACTER",
+  IMAGE = "IMAGE",
+  GALLERY = "GALLERY",
+  COMMENT = "COMMENT",
 }
 
 export const PaginationSchema = z.object({

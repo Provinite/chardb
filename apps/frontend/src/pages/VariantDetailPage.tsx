@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import styled from 'styled-components';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Save, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useMemo } from "react";
+import styled from "styled-components";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Save, ChevronDown, ChevronUp } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -10,15 +10,15 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { Button, Input, ErrorMessage } from '@chardb/ui';
-import { ColorSelector } from '../components/colors';
+} from "@dnd-kit/sortable";
+import { Button, Input, ErrorMessage } from "@chardb/ui";
+import { ColorSelector } from "../components/colors";
 import {
   useSpeciesVariantByIdQuery,
   useTraitListEntriesByVariantQuery,
@@ -32,10 +32,13 @@ import {
   useCreateEnumValueSettingMutation,
   useDeleteEnumValueSettingMutation,
   TraitListEntryDetailsFragment,
-} from '../generated/graphql';
-import { toast } from 'react-hot-toast';
-import { TraitListEntryRow, EntryUpdates } from '../components/variants/TraitListEntryRow';
-import { InactiveTraitCard } from '../components/variants/InactiveTraitCard';
+} from "../generated/graphql";
+import { toast } from "react-hot-toast";
+import {
+  TraitListEntryRow,
+  EntryUpdates,
+} from "../components/variants/TraitListEntryRow";
+import { InactiveTraitCard } from "../components/variants/InactiveTraitCard";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -168,12 +171,13 @@ export const VariantDetailPage: React.FC = () => {
   const navigate = useNavigate();
 
   // State
-  const [variantName, setVariantName] = useState('');
+  const [variantName, setVariantName] = useState("");
   const [variantColorId, setVariantColorId] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [entries, setEntries] = useState<TraitListEntryDetailsFragment[]>([]);
   const [hasOrderChanges, setHasOrderChanges] = useState(false);
-  const [isInactiveTraitsExpanded, setIsInactiveTraitsExpanded] = useState(false);
+  const [isInactiveTraitsExpanded, setIsInactiveTraitsExpanded] =
+    useState(false);
 
   if (!variantId) {
     return (
@@ -184,16 +188,19 @@ export const VariantDetailPage: React.FC = () => {
   }
 
   // GraphQL queries
-  const { data: variantData, loading: variantLoading, error: variantError } =
-    useSpeciesVariantByIdQuery({
-      variables: { id: variantId },
-      onCompleted: (data) => {
-        if (data.speciesVariantById) {
-          setVariantName(data.speciesVariantById.name);
-          setVariantColorId(data.speciesVariantById.colorId || null);
-        }
-      },
-    });
+  const {
+    data: variantData,
+    loading: variantLoading,
+    error: variantError,
+  } = useSpeciesVariantByIdQuery({
+    variables: { id: variantId },
+    onCompleted: (data) => {
+      if (data.speciesVariantById) {
+        setVariantName(data.speciesVariantById.name);
+        setVariantColorId(data.speciesVariantById.colorId || null);
+      }
+    },
+  });
 
   const {
     data: entriesData,
@@ -227,7 +234,7 @@ export const VariantDetailPage: React.FC = () => {
   // Mutations
   const [updateVariantName] = useUpdateSpeciesVariantMutation({
     onCompleted: () => {
-      toast.success('Variant updated successfully!');
+      toast.success("Variant updated successfully!");
     },
     onError: (error) => {
       toast.error(`Failed to update variant: ${error.message}`);
@@ -235,9 +242,9 @@ export const VariantDetailPage: React.FC = () => {
   });
 
   const [createTraitListEntry] = useCreateTraitListEntryMutation({
-    refetchQueries: ['TraitListEntriesByVariant'],
+    refetchQueries: ["TraitListEntriesByVariant"],
     onCompleted: () => {
-      toast.success('Trait added to variant!');
+      toast.success("Trait added to variant!");
     },
     onError: (error) => {
       toast.error(`Failed to add trait: ${error.message}`);
@@ -245,9 +252,9 @@ export const VariantDetailPage: React.FC = () => {
   });
 
   const [updateTraitListEntry] = useUpdateTraitListEntryMutation({
-    refetchQueries: ['TraitListEntriesByVariant'],
+    refetchQueries: ["TraitListEntriesByVariant"],
     onCompleted: () => {
-      toast.success('Trait configuration updated!');
+      toast.success("Trait configuration updated!");
     },
     onError: (error) => {
       toast.error(`Failed to update trait: ${error.message}`);
@@ -255,9 +262,9 @@ export const VariantDetailPage: React.FC = () => {
   });
 
   const [removeTraitListEntry] = useRemoveTraitListEntryMutation({
-    refetchQueries: ['TraitListEntriesByVariant'],
+    refetchQueries: ["TraitListEntriesByVariant"],
     onCompleted: () => {
-      toast.success('Trait removed from variant!');
+      toast.success("Trait removed from variant!");
     },
     onError: (error) => {
       toast.error(`Failed to remove trait: ${error.message}`);
@@ -265,9 +272,9 @@ export const VariantDetailPage: React.FC = () => {
   });
 
   const [updateTraitOrders] = useUpdateTraitOrdersMutation({
-    refetchQueries: ['TraitListEntriesByVariant'],
+    refetchQueries: ["TraitListEntriesByVariant"],
     onCompleted: () => {
-      toast.success('Trait order updated!');
+      toast.success("Trait order updated!");
       setHasOrderChanges(false);
     },
     onError: (error) => {
@@ -276,9 +283,9 @@ export const VariantDetailPage: React.FC = () => {
   });
 
   const [createEnumValueSetting] = useCreateEnumValueSettingMutation({
-    refetchQueries: ['SpeciesVariantWithEnumValueSettings'],
+    refetchQueries: ["SpeciesVariantWithEnumValueSettings"],
     onCompleted: () => {
-      toast.success('Enum value enabled!');
+      toast.success("Enum value enabled!");
     },
     onError: (error) => {
       toast.error(`Failed to enable enum value: ${error.message}`);
@@ -286,9 +293,9 @@ export const VariantDetailPage: React.FC = () => {
   });
 
   const [deleteEnumValueSetting] = useDeleteEnumValueSettingMutation({
-    refetchQueries: ['SpeciesVariantWithEnumValueSettings'],
+    refetchQueries: ["SpeciesVariantWithEnumValueSettings"],
     onCompleted: () => {
-      toast.success('Enum value disabled!');
+      toast.success("Enum value disabled!");
     },
     onError: (error) => {
       toast.error(`Failed to disable enum value: ${error.message}`);
@@ -300,7 +307,7 @@ export const VariantDetailPage: React.FC = () => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // Calculate inactive traits
@@ -309,7 +316,7 @@ export const VariantDetailPage: React.FC = () => {
 
     const activeTraitIds = new Set(entries.map((e) => e.traitId));
     return speciesTraitsData.traitsBySpecies.nodes.filter(
-      (trait) => !activeTraitIds.has(trait.id)
+      (trait) => !activeTraitIds.has(trait.id),
     );
   }, [speciesTraitsData, entries]);
 
@@ -382,7 +389,11 @@ export const VariantDetailPage: React.FC = () => {
   };
 
   const handleRemoveEntry = async (entryId: string) => {
-    if (!window.confirm('Are you sure you want to remove this trait from the variant?')) {
+    if (
+      !window.confirm(
+        "Are you sure you want to remove this trait from the variant?",
+      )
+    ) {
       return;
     }
 
@@ -402,7 +413,8 @@ export const VariantDetailPage: React.FC = () => {
 
   const handleAddTrait = async (traitId: string) => {
     // Add trait at the bottom of the list
-    const maxOrder = entries.length > 0 ? Math.max(...entries.map((e) => e.order)) : -1;
+    const maxOrder =
+      entries.length > 0 ? Math.max(...entries.map((e) => e.order)) : -1;
 
     await createTraitListEntry({
       variables: {
@@ -411,8 +423,9 @@ export const VariantDetailPage: React.FC = () => {
           speciesVariantId: variantId,
           order: maxOrder + 1,
           required: false,
-          valueType: speciesTraitsData?.traitsBySpecies?.nodes.find((t) => t.id === traitId)
-            ?.valueType!,
+          valueType: speciesTraitsData?.traitsBySpecies?.nodes.find(
+            (t) => t.id === traitId,
+          )?.valueType!,
         },
       },
     });
@@ -421,7 +434,7 @@ export const VariantDetailPage: React.FC = () => {
   const handleToggleEnumValue = async (
     enumValueId: string,
     isEnabled: boolean,
-    settingId?: string
+    settingId?: string,
   ) => {
     if (isEnabled && settingId) {
       await deleteEnumValueSetting({
@@ -478,7 +491,9 @@ export const VariantDetailPage: React.FC = () => {
           Species Management
         </Link>
         <span>/</span>
-        <Link to={`/species/${variant.speciesId}`}>{variant.species?.name}</Link>
+        <Link to={`/species/${variant.speciesId}`}>
+          {variant.species?.name}
+        </Link>
         <span>/</span>
         <Link to={`/species/${variant.speciesId}/variants`}>Variants</Link>
         <span>/</span>
@@ -525,7 +540,7 @@ export const VariantDetailPage: React.FC = () => {
         <ColorRow>
           <ColorLabel>Color:</ColorLabel>
           <ColorSelector
-            communityId={variant.species?.communityId || ''}
+            communityId={variant.species?.communityId || ""}
             value={variantColorId}
             onChange={setVariantColorId}
             label=""
@@ -538,7 +553,7 @@ export const VariantDetailPage: React.FC = () => {
         <SectionHeader>
           <SectionTitle>Active Traits</SectionTitle>
           {hasOrderChanges && (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
               <Button variant="secondary" size="sm" onClick={handleResetOrder}>
                 Reset Order
               </Button>
@@ -579,7 +594,8 @@ export const VariantDetailPage: React.FC = () => {
                     onRemove={() => handleRemoveEntry(entry.id)}
                     onUpdate={(updates) => handleUpdateEntry(entry.id, updates)}
                     enumValueSettings={
-                      enumSettingsData?.speciesVariantById?.enumValueSettings || []
+                      enumSettingsData?.speciesVariantById?.enumValueSettings ||
+                      []
                     }
                     onToggleEnumValue={handleToggleEnumValue}
                   />
@@ -594,18 +610,24 @@ export const VariantDetailPage: React.FC = () => {
         <CollapsibleHeader
           onClick={() => setIsInactiveTraitsExpanded(!isInactiveTraitsExpanded)}
         >
-          <SectionTitle>Available Traits ({inactiveTraits.length})</SectionTitle>
-          {isInactiveTraitsExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          <SectionTitle>
+            Available Traits ({inactiveTraits.length})
+          </SectionTitle>
+          {isInactiveTraitsExpanded ? (
+            <ChevronUp size={20} />
+          ) : (
+            <ChevronDown size={20} />
+          )}
         </CollapsibleHeader>
 
         {isInactiveTraitsExpanded && (
           <>
             {inactiveTraits.length === 0 ? (
-              <EmptyState style={{ marginTop: '1rem' }}>
+              <EmptyState style={{ marginTop: "1rem" }}>
                 All species traits have been added to this variant.
               </EmptyState>
             ) : (
-              <TraitList style={{ marginTop: '1rem' }}>
+              <TraitList style={{ marginTop: "1rem" }}>
                 {inactiveTraits.map((trait) => (
                   <InactiveTraitCard
                     key={trait.id}

@@ -384,7 +384,8 @@ export class MediaResolver {
   @AllowUnauthenticated()
   @ResolveField(() => Image, {
     nullable: true,
-    description: "Image content (populated for image media). URLs are masked for pending/rejected images.",
+    description:
+      "Image content (populated for image media). URLs are masked for pending/rejected images.",
   })
   async image(
     @Parent() media: MediaEntity,
@@ -392,7 +393,10 @@ export class MediaResolver {
   ): Promise<Image | null> {
     if (!media.imageId) return null;
 
-    const prismaImage = await this.imagesService.findOne(media.imageId, user?.id);
+    const prismaImage = await this.imagesService.findOne(
+      media.imageId,
+      user?.id,
+    );
     if (!prismaImage) return null;
 
     const image = mapPrismaImageToGraphQL(prismaImage);
@@ -421,7 +425,8 @@ export class MediaResolver {
   @UseFilters(NullOnForbiddenFilter)
   @ResolveField(() => Image, {
     nullable: true,
-    description: "Actual image for moderation review (moderators only, pending images only)",
+    description:
+      "Actual image for moderation review (moderators only, pending images only)",
     middleware: [sentinelValueMiddleware],
   })
   async pendingModerationImage(
@@ -430,7 +435,10 @@ export class MediaResolver {
   ): Promise<Image | null> {
     if (!media.imageId) return null;
 
-    const prismaImage = await this.imagesService.findOne(media.imageId, user?.id);
+    const prismaImage = await this.imagesService.findOne(
+      media.imageId,
+      user?.id,
+    );
     if (!prismaImage) return null;
 
     // Only return for PENDING images

@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
-import { Button, Heading3, HelpText, SmallText, Caption } from '@chardb/ui';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
+import { Button, Heading3, HelpText, SmallText, Caption } from "@chardb/ui";
 import {
   useMediaModerationQueueQuery,
   useApproveImageMutation,
   useRejectImageMutation,
   ModerationRejectionReason,
-} from '../../generated/graphql';
-import { ImageModerationCard } from './ImageModerationCard';
+} from "../../generated/graphql";
+import { ImageModerationCard } from "./ImageModerationCard";
 
 const Container = styled.div`
   display: flex;
@@ -107,7 +107,7 @@ const SuccessToast = styled.div<{ $visible: boolean }>`
   color: white;
   border-radius: 8px;
   box-shadow: ${({ theme }) => theme.shadows.lg};
-  transform: translateY(${({ $visible }) => ($visible ? '0' : '100px')});
+  transform: translateY(${({ $visible }) => ($visible ? "0" : "100px")});
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   transition: all 0.3s ease;
   z-index: 1000;
@@ -132,7 +132,7 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
       first: PAGE_SIZE,
       offset,
     },
-    fetchPolicy: 'network-only',
+    fetchPolicy: "network-only",
   });
 
   const [approveImage] = useApproveImageMutation();
@@ -154,10 +154,10 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
       await approveImage({
         variables: { input: { imageId } },
       });
-      showToast('Image approved successfully');
+      showToast("Image approved successfully");
       await refetch();
     } catch (err) {
-      console.error('Failed to approve image:', err);
+      console.error("Failed to approve image:", err);
     } finally {
       setActionInProgress(null);
     }
@@ -166,7 +166,7 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
   const handleReject = async (
     imageId: string,
     reason: ModerationRejectionReason,
-    reasonText?: string
+    reasonText?: string,
   ) => {
     setActionInProgress(imageId);
     try {
@@ -179,10 +179,10 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
           },
         },
       });
-      showToast('Image rejected');
+      showToast("Image rejected");
       await refetch();
     } catch (err) {
-      console.error('Failed to reject image:', err);
+      console.error("Failed to reject image:", err);
     } finally {
       setActionInProgress(null);
     }
@@ -236,9 +236,9 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
       </Header>
 
       <HelpText>
-        Review and approve or reject uploaded images. Approved images will become
-        visible to the community. Rejected images will be hidden and uploaders will
-        be notified via email.
+        Review and approve or reject uploaded images. Approved images will
+        become visible to the community. Rejected images will be hidden and
+        uploaders will be notified via email.
       </HelpText>
 
       {loading ? (
@@ -253,7 +253,8 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
           </EmptyIcon>
           <Heading3>All Caught Up!</Heading3>
           <HelpText>
-            There are no images pending moderation. Check back later for new uploads.
+            There are no images pending moderation. Check back later for new
+            uploads.
           </HelpText>
         </EmptyState>
       ) : (
@@ -283,8 +284,10 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
                     },
                     characterId: mediaItem.characterId ?? null,
                     characterName: mediaItem.character?.name ?? null,
-                    communityId: mediaItem.character?.species?.community?.id ?? null,
-                    communityName: mediaItem.character?.species?.community?.name ?? null,
+                    communityId:
+                      mediaItem.character?.species?.community?.id ?? null,
+                    communityName:
+                      mediaItem.character?.species?.community?.name ?? null,
                     mediaTitle: mediaItem.title,
                   }}
                   onApprove={handleApprove}

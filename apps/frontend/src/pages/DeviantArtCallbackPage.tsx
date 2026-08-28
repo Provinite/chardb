@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import styled from 'styled-components';
-import toast from 'react-hot-toast';
-import { Alert } from '@chardb/ui';
+import { useEffect, useState, useRef } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import styled from "styled-components";
+import toast from "react-hot-toast";
+import { Alert } from "@chardb/ui";
 
 const Container = styled.div`
   display: flex;
@@ -15,7 +15,7 @@ const Container = styled.div`
 
 const Message = styled.div`
   font-size: 1.125rem;
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${(props) => props.theme.colors.text.secondary};
   text-align: center;
 `;
 
@@ -30,7 +30,7 @@ const SuccessContainer = styled.div`
 const Title = styled.h2`
   font-size: 1.5rem;
   font-weight: 600;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${(props) => props.theme.colors.text.primary};
   text-align: center;
   margin: 0;
 `;
@@ -38,7 +38,7 @@ const Title = styled.h2`
 const ViewLink = styled(Link)`
   display: inline-block;
   margin-top: 0.5rem;
-  color: ${props => props.theme.colors.primary};
+  color: ${(props) => props.theme.colors.primary};
   text-decoration: none;
   font-weight: 500;
 
@@ -48,8 +48,8 @@ const ViewLink = styled(Link)`
 `;
 
 const Spinner = styled.div`
-  border: 3px solid ${props => props.theme.colors.border};
-  border-top-color: ${props => props.theme.colors.primary};
+  border: 3px solid ${(props) => props.theme.colors.border};
+  border-top-color: ${(props) => props.theme.colors.primary};
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -79,35 +79,37 @@ export function DeviantArtCallbackPage() {
       }
       hasProcessed.current = true;
 
-      const error = searchParams.get('error');
-      const success = searchParams.get('success');
-      const claimedChars = searchParams.get('claimedCharacters');
-      const claimedItms = searchParams.get('claimedItems');
+      const error = searchParams.get("error");
+      const success = searchParams.get("success");
+      const claimedChars = searchParams.get("claimedCharacters");
+      const claimedItms = searchParams.get("claimedItems");
 
       setIsProcessing(false);
 
       if (error) {
         toast.error(`Failed to link DeviantArt account: ${error}`);
-        setTimeout(() => navigate('/profile/edit'), 2000);
+        setTimeout(() => navigate("/profile/edit"), 2000);
       } else if (success) {
-        const charsCount = parseInt(claimedChars || '0', 10);
-        const itemsCount = parseInt(claimedItms || '0', 10);
+        const charsCount = parseInt(claimedChars || "0", 10);
+        const itemsCount = parseInt(claimedItms || "0", 10);
 
         setClaimedCharacters(charsCount);
         setClaimedItems(itemsCount);
 
         if (charsCount > 0 || itemsCount > 0) {
           setShowSuccess(true);
-          toast.success('Successfully linked DeviantArt account and claimed pending items!');
+          toast.success(
+            "Successfully linked DeviantArt account and claimed pending items!",
+          );
           // Auto-redirect after 5 seconds
-          setTimeout(() => navigate('/profile'), 5000);
+          setTimeout(() => navigate("/profile"), 5000);
         } else {
-          toast.success('Successfully linked DeviantArt account!');
-          setTimeout(() => navigate('/profile/edit'), 2000);
+          toast.success("Successfully linked DeviantArt account!");
+          setTimeout(() => navigate("/profile/edit"), 2000);
         }
       } else {
-        toast.error('Invalid callback response');
-        setTimeout(() => navigate('/profile/edit'), 2000);
+        toast.error("Invalid callback response");
+        setTimeout(() => navigate("/profile/edit"), 2000);
       }
     };
 
@@ -132,12 +134,23 @@ export function DeviantArtCallbackPage() {
           <Alert variant="success">
             <div>
               <strong>Congratulations!</strong> You've claimed:
-              <ul style={{ marginTop: '0.5rem', marginBottom: '0.5rem', paddingLeft: '1.5rem' }}>
+              <ul
+                style={{
+                  marginTop: "0.5rem",
+                  marginBottom: "0.5rem",
+                  paddingLeft: "1.5rem",
+                }}
+              >
                 {claimedCharacters > 0 && (
-                  <li>{claimedCharacters} character{claimedCharacters > 1 ? 's' : ''}</li>
+                  <li>
+                    {claimedCharacters} character
+                    {claimedCharacters > 1 ? "s" : ""}
+                  </li>
                 )}
                 {claimedItems > 0 && (
-                  <li>{claimedItems} item{claimedItems > 1 ? 's' : ''}</li>
+                  <li>
+                    {claimedItems} item{claimedItems > 1 ? "s" : ""}
+                  </li>
                 )}
               </ul>
               <ViewLink to="/profile">View Your Profile →</ViewLink>

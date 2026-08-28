@@ -1,31 +1,31 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
-import { SocialService } from './social.service';
-import { DatabaseService } from '../database/database.service';
-import { LikeableType } from './dto/like.dto';
-import { mockDatabaseService } from '../../test/setup';
+import { Test, TestingModule } from "@nestjs/testing";
+import { BadRequestException } from "@nestjs/common";
+import { SocialService } from "./social.service";
+import { DatabaseService } from "../database/database.service";
+import { LikeableType } from "./dto/like.dto";
+import { mockDatabaseService } from "../../test/setup";
 
-describe('SocialService', () => {
+describe("SocialService", () => {
   let service: SocialService;
   let db: typeof mockDatabaseService;
 
   const mockCharacter = {
-    id: 'character-1',
-    name: 'Test Character',
-    ownerId: 'user-1',
+    id: "character-1",
+    name: "Test Character",
+    ownerId: "user-1",
   };
 
   const mockLike = {
-    id: 'like-1',
-    userId: 'user-1',
-    characterId: 'character-1',
+    id: "like-1",
+    userId: "user-1",
+    characterId: "character-1",
     imageId: null,
     galleryId: null,
     commentId: null,
     createdAt: new Date(),
     user: {
-      id: 'user-1',
-      username: 'testuser',
+      id: "user-1",
+      username: "testuser",
     },
   };
 
@@ -41,22 +41,24 @@ describe('SocialService', () => {
     }).compile();
 
     service = module.get<SocialService>(SocialService);
-    db = module.get<DatabaseService>(DatabaseService) as unknown as typeof mockDatabaseService;
+    db = module.get<DatabaseService>(
+      DatabaseService,
+    ) as unknown as typeof mockDatabaseService;
   });
 
-  describe('toggleLike', () => {
-    it('should create a like when user has not liked the entity', async () => {
+  describe("toggleLike", () => {
+    it("should create a like when user has not liked the entity", async () => {
       const input = {
         entityType: LikeableType.CHARACTER,
-        entityId: 'character-1',
+        entityId: "character-1",
       };
 
       // Mock entity exists
       db.character.findFirst.mockResolvedValue(mockCharacter);
-      
+
       // Mock no existing like
       db.like.findUnique.mockResolvedValue(null);
-      
+
       // Mock transaction
       db.$transaction.mockImplementation(async (callback) => {
         db.like.findUnique.mockResolvedValue(null);
@@ -65,25 +67,25 @@ describe('SocialService', () => {
         return callback(db);
       });
 
-      const result = await service.toggleLike('user-1', input);
+      const result = await service.toggleLike("user-1", input);
 
       expect(result).toEqual({
         isLiked: true,
         likesCount: 1,
         entityType: LikeableType.CHARACTER,
-        entityId: 'character-1',
+        entityId: "character-1",
       });
     });
 
-    it('should remove a like when user has already liked the entity', async () => {
+    it("should remove a like when user has already liked the entity", async () => {
       const input = {
         entityType: LikeableType.CHARACTER,
-        entityId: 'character-1',
+        entityId: "character-1",
       };
 
       // Mock entity exists
       db.character.findFirst.mockResolvedValue(mockCharacter);
-      
+
       // Mock transaction with existing like
       db.$transaction.mockImplementation(async (callback) => {
         db.like.findUnique.mockResolvedValue(mockLike);
@@ -92,53 +94,55 @@ describe('SocialService', () => {
         return callback(db);
       });
 
-      const result = await service.toggleLike('user-1', input);
+      const result = await service.toggleLike("user-1", input);
 
       expect(result).toEqual({
         isLiked: false,
         likesCount: 0,
         entityType: LikeableType.CHARACTER,
-        entityId: 'character-1',
+        entityId: "character-1",
       });
     });
 
-    it('should throw BadRequestException when entity does not exist', async () => {
+    it("should throw BadRequestException when entity does not exist", async () => {
       const input = {
         entityType: LikeableType.CHARACTER,
-        entityId: 'non-existent',
+        entityId: "non-existent",
       };
 
       db.character.findFirst.mockResolvedValue(null);
 
-      await expect(service.toggleLike('user-1', input)).rejects.toThrow(
+      await expect(service.toggleLike("user-1", input)).rejects.toThrow(
         BadRequestException,
       );
     });
 
-    it('should validate all entity types', async () => {
+    it("should validate all entity types", async () => {
       const testCases = [
-        { type: LikeableType.CHARACTER, mock: 'character' },
-        { type: LikeableType.IMAGE, mock: 'image' },
-        { type: LikeableType.GALLERY, mock: 'gallery' },
-        { type: LikeableType.COMMENT, mock: 'comment' },
+        { type: LikeableType.CHARACTER, mock: "character" },
+        { type: LikeableType.IMAGE, mock: "image" },
+        { type: LikeableType.GALLERY, mock: "gallery" },
+        { type: LikeableType.COMMENT, mock: "comment" },
       ];
 
       for (const testCase of testCases) {
         const input = {
           entityType: testCase.type,
-          entityId: 'test-id',
+          entityId: "test-id",
         };
 
         // character uses findFirst (soft-delete filter); others use findUnique
-        if (testCase.mock === 'character') {
-          db.character.findFirst.mockResolvedValue({ id: 'test-id' });
+        if (testCase.mock === "character") {
+          db.character.findFirst.mockResolvedValue({ id: "test-id" });
         } else {
           const mockEntities: Record<string, { findUnique: jest.Mock }> = {
             image: db.image,
             gallery: db.gallery,
             comment: db.comment,
           };
-          mockEntities[testCase.mock].findUnique.mockResolvedValue({ id: 'test-id' });
+          mockEntities[testCase.mock].findUnique.mockResolvedValue({
+            id: "test-id",
+          });
         }
         db.$transaction.mockImplementation(async (callback) => {
           db.like.findUnique.mockResolvedValue(null);
@@ -147,21 +151,21 @@ describe('SocialService', () => {
           return callback(db);
         });
 
-        const result = await service.toggleLike('user-1', input);
+        const result = await service.toggleLike("user-1", input);
         expect(result.isLiked).toBe(true);
       }
     });
   });
 
-  describe('getLikeStatus', () => {
-    it('should return like status for authenticated user', async () => {
+  describe("getLikeStatus", () => {
+    it("should return like status for authenticated user", async () => {
       db.like.count.mockResolvedValue(5);
       db.like.findUnique.mockResolvedValue(mockLike);
 
       const result = await service.getLikeStatus(
         LikeableType.CHARACTER,
-        'character-1',
-        'user-1',
+        "character-1",
+        "user-1",
       );
 
       expect(result).toEqual({
@@ -170,12 +174,12 @@ describe('SocialService', () => {
       });
     });
 
-    it('should return like status for unauthenticated user', async () => {
+    it("should return like status for unauthenticated user", async () => {
       db.like.count.mockResolvedValue(5);
 
       const result = await service.getLikeStatus(
         LikeableType.CHARACTER,
-        'character-1',
+        "character-1",
       );
 
       expect(result).toEqual({
@@ -184,14 +188,14 @@ describe('SocialService', () => {
       });
     });
 
-    it('should return false when user has not liked the entity', async () => {
+    it("should return false when user has not liked the entity", async () => {
       db.like.count.mockResolvedValue(3);
       db.like.findUnique.mockResolvedValue(null);
 
       const result = await service.getLikeStatus(
         LikeableType.CHARACTER,
-        'character-1',
-        'user-1',
+        "character-1",
+        "user-1",
       );
 
       expect(result).toEqual({
@@ -201,53 +205,53 @@ describe('SocialService', () => {
     });
   });
 
-  describe('getLikesCount', () => {
-    it('should return the correct likes count', async () => {
+  describe("getLikesCount", () => {
+    it("should return the correct likes count", async () => {
       db.like.count.mockResolvedValue(10);
 
       const result = await service.getLikesCount(
         LikeableType.CHARACTER,
-        'character-1',
+        "character-1",
       );
 
       expect(result).toBe(10);
       expect(db.like.count).toHaveBeenCalledWith({
         where: {
-          characterId: 'character-1',
+          characterId: "character-1",
         },
       });
     });
   });
 
-  describe('getUserHasLiked', () => {
-    it('should return true when user has liked the entity', async () => {
+  describe("getUserHasLiked", () => {
+    it("should return true when user has liked the entity", async () => {
       db.like.findUnique.mockResolvedValue(mockLike);
 
       const result = await service.getUserHasLiked(
         LikeableType.CHARACTER,
-        'character-1',
-        'user-1',
+        "character-1",
+        "user-1",
       );
 
       expect(result).toBe(true);
     });
 
-    it('should return false when user has not liked the entity', async () => {
+    it("should return false when user has not liked the entity", async () => {
       db.like.findUnique.mockResolvedValue(null);
 
       const result = await service.getUserHasLiked(
         LikeableType.CHARACTER,
-        'character-1',
-        'user-1',
+        "character-1",
+        "user-1",
       );
 
       expect(result).toBe(false);
     });
 
-    it('should return false when no user is provided', async () => {
+    it("should return false when no user is provided", async () => {
       const result = await service.getUserHasLiked(
         LikeableType.CHARACTER,
-        'character-1',
+        "character-1",
       );
 
       expect(result).toBe(false);
@@ -257,26 +261,26 @@ describe('SocialService', () => {
 
   // Follow System Tests
 
-  describe('toggleFollow', () => {
+  describe("toggleFollow", () => {
     const mockUser = {
-      id: 'user-2',
-      username: 'targetuser',
-      email: 'target@example.com',
+      id: "user-2",
+      username: "targetuser",
+      email: "target@example.com",
     };
 
     const mockFollow = {
-      id: 'follow-1',
-      followerId: 'user-1',
-      followingId: 'user-2',
+      id: "follow-1",
+      followerId: "user-1",
+      followingId: "user-2",
       createdAt: new Date(),
     };
 
-    it('should create a follow when user has not followed the target', async () => {
-      const input = { targetUserId: 'user-2' };
+    it("should create a follow when user has not followed the target", async () => {
+      const input = { targetUserId: "user-2" };
 
       // Mock target user exists
       db.user.findUnique.mockResolvedValue(mockUser);
-      
+
       // Mock transaction
       db.$transaction.mockImplementation(async (callback) => {
         const txDb = {
@@ -284,7 +288,8 @@ describe('SocialService', () => {
           follow: {
             findUnique: jest.fn().mockResolvedValue(null),
             create: jest.fn().mockResolvedValue(mockFollow),
-            count: jest.fn()
+            count: jest
+              .fn()
               .mockResolvedValueOnce(1) // followers count
               .mockResolvedValueOnce(1), // following count
           },
@@ -292,22 +297,22 @@ describe('SocialService', () => {
         return callback(txDb);
       });
 
-      const result = await service.toggleFollow('user-1', input);
+      const result = await service.toggleFollow("user-1", input);
 
       expect(result).toEqual({
         isFollowing: true,
         followersCount: 1,
         followingCount: 1,
-        targetUserId: 'user-2',
+        targetUserId: "user-2",
       });
     });
 
-    it('should remove a follow when user has already followed the target', async () => {
-      const input = { targetUserId: 'user-2' };
+    it("should remove a follow when user has already followed the target", async () => {
+      const input = { targetUserId: "user-2" };
 
       // Mock target user exists
       db.user.findUnique.mockResolvedValue(mockUser);
-      
+
       // Mock transaction with existing follow
       db.$transaction.mockImplementation(async (callback) => {
         const txDb = {
@@ -315,7 +320,8 @@ describe('SocialService', () => {
           follow: {
             findUnique: jest.fn().mockResolvedValue(mockFollow),
             delete: jest.fn().mockResolvedValue(mockFollow),
-            count: jest.fn()
+            count: jest
+              .fn()
               .mockResolvedValueOnce(0) // followers count
               .mockResolvedValueOnce(0), // following count
           },
@@ -323,41 +329,41 @@ describe('SocialService', () => {
         return callback(txDb);
       });
 
-      const result = await service.toggleFollow('user-1', input);
+      const result = await service.toggleFollow("user-1", input);
 
       expect(result).toEqual({
         isFollowing: false,
         followersCount: 0,
         followingCount: 0,
-        targetUserId: 'user-2',
+        targetUserId: "user-2",
       });
     });
 
-    it('should throw BadRequestException when target user does not exist', async () => {
-      const input = { targetUserId: 'non-existent' };
+    it("should throw BadRequestException when target user does not exist", async () => {
+      const input = { targetUserId: "non-existent" };
 
       db.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.toggleFollow('user-1', input)).rejects.toThrow(
+      await expect(service.toggleFollow("user-1", input)).rejects.toThrow(
         BadRequestException,
       );
     });
 
-    it('should throw BadRequestException when user tries to follow themselves', async () => {
-      const input = { targetUserId: 'user-1' };
+    it("should throw BadRequestException when user tries to follow themselves", async () => {
+      const input = { targetUserId: "user-1" };
 
-      await expect(service.toggleFollow('user-1', input)).rejects.toThrow(
-        'Users cannot follow themselves',
+      await expect(service.toggleFollow("user-1", input)).rejects.toThrow(
+        "Users cannot follow themselves",
       );
     });
   });
 
-  describe('getFollowStatus', () => {
-    it('should return follow status for authenticated user', async () => {
+  describe("getFollowStatus", () => {
+    it("should return follow status for authenticated user", async () => {
       const mockFollow = {
-        id: 'follow-1',
-        followerId: 'user-1',
-        followingId: 'user-2',
+        id: "follow-1",
+        followerId: "user-1",
+        followingId: "user-2",
         createdAt: new Date(),
       };
 
@@ -365,7 +371,7 @@ describe('SocialService', () => {
       db.follow.count.mockResolvedValueOnce(5); // following count
       db.follow.findUnique.mockResolvedValue(mockFollow);
 
-      const result = await service.getFollowStatus('user-2', 'user-1');
+      const result = await service.getFollowStatus("user-2", "user-1");
 
       expect(result).toEqual({
         isFollowing: true,
@@ -374,11 +380,11 @@ describe('SocialService', () => {
       });
     });
 
-    it('should return follow status for unauthenticated user', async () => {
+    it("should return follow status for unauthenticated user", async () => {
       db.follow.count.mockResolvedValueOnce(10); // followers count
       db.follow.count.mockResolvedValueOnce(5); // following count
 
-      const result = await service.getFollowStatus('user-2');
+      const result = await service.getFollowStatus("user-2");
 
       expect(result).toEqual({
         isFollowing: false,
@@ -387,11 +393,11 @@ describe('SocialService', () => {
       });
     });
 
-    it('should return false when current user is the same as target user', async () => {
+    it("should return false when current user is the same as target user", async () => {
       db.follow.count.mockResolvedValueOnce(10); // followers count
       db.follow.count.mockResolvedValueOnce(5); // following count
 
-      const result = await service.getFollowStatus('user-1', 'user-1');
+      const result = await service.getFollowStatus("user-1", "user-1");
 
       expect(result).toEqual({
         isFollowing: false,
@@ -401,65 +407,65 @@ describe('SocialService', () => {
     });
   });
 
-  describe('getFollowersCount', () => {
-    it('should return the correct followers count', async () => {
+  describe("getFollowersCount", () => {
+    it("should return the correct followers count", async () => {
       db.follow.count.mockResolvedValue(15);
 
-      const result = await service.getFollowersCount('user-1');
+      const result = await service.getFollowersCount("user-1");
 
       expect(result).toBe(15);
       expect(db.follow.count).toHaveBeenCalledWith({
-        where: { followingId: 'user-1' },
+        where: { followingId: "user-1" },
       });
     });
   });
 
-  describe('getFollowingCount', () => {
-    it('should return the correct following count', async () => {
+  describe("getFollowingCount", () => {
+    it("should return the correct following count", async () => {
       db.follow.count.mockResolvedValue(8);
 
-      const result = await service.getFollowingCount('user-1');
+      const result = await service.getFollowingCount("user-1");
 
       expect(result).toBe(8);
       expect(db.follow.count).toHaveBeenCalledWith({
-        where: { followerId: 'user-1' },
+        where: { followerId: "user-1" },
       });
     });
   });
 
-  describe('getUserIsFollowing', () => {
-    it('should return true when user is following the target', async () => {
+  describe("getUserIsFollowing", () => {
+    it("should return true when user is following the target", async () => {
       const mockFollow = {
-        id: 'follow-1',
-        followerId: 'user-1',
-        followingId: 'user-2',
+        id: "follow-1",
+        followerId: "user-1",
+        followingId: "user-2",
         createdAt: new Date(),
       };
-      
+
       db.follow.findUnique.mockResolvedValue(mockFollow);
 
-      const result = await service.getUserIsFollowing('user-2', 'user-1');
+      const result = await service.getUserIsFollowing("user-2", "user-1");
 
       expect(result).toBe(true);
     });
 
-    it('should return false when user is not following the target', async () => {
+    it("should return false when user is not following the target", async () => {
       db.follow.findUnique.mockResolvedValue(null);
 
-      const result = await service.getUserIsFollowing('user-2', 'user-1');
+      const result = await service.getUserIsFollowing("user-2", "user-1");
 
       expect(result).toBe(false);
     });
 
-    it('should return false when no current user is provided', async () => {
-      const result = await service.getUserIsFollowing('user-2');
+    it("should return false when no current user is provided", async () => {
+      const result = await service.getUserIsFollowing("user-2");
 
       expect(result).toBe(false);
       expect(db.follow.findUnique).not.toHaveBeenCalled();
     });
 
-    it('should return false when current user is the same as target user', async () => {
-      const result = await service.getUserIsFollowing('user-1', 'user-1');
+    it("should return false when current user is the same as target user", async () => {
+      const result = await service.getUserIsFollowing("user-1", "user-1");
 
       expect(result).toBe(false);
       expect(db.follow.findUnique).not.toHaveBeenCalled();

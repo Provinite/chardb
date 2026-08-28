@@ -1,17 +1,23 @@
-import { InputType, Field, ID, ObjectType, registerEnumType } from '@nestjs/graphql';
-import { IsString, IsEnum, IsNotEmpty } from 'class-validator';
+import {
+  InputType,
+  Field,
+  ID,
+  ObjectType,
+  registerEnumType,
+} from "@nestjs/graphql";
+import { IsString, IsEnum, IsNotEmpty } from "class-validator";
 
 export enum LikeableType {
-  CHARACTER = 'CHARACTER',
-  IMAGE = 'IMAGE',
-  GALLERY = 'GALLERY',
-  COMMENT = 'COMMENT',
-  MEDIA = 'MEDIA',
+  CHARACTER = "CHARACTER",
+  IMAGE = "IMAGE",
+  GALLERY = "GALLERY",
+  COMMENT = "COMMENT",
+  MEDIA = "MEDIA",
 }
 
 registerEnumType(LikeableType, {
-  name: 'LikeableType',
-  description: 'Types of entities that can be liked',
+  name: "LikeableType",
+  description: "Types of entities that can be liked",
 });
 
 @InputType()

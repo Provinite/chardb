@@ -30,16 +30,16 @@ interface SpeciesInfo {
 
 async function findOrCreateSpecies(
   client: GraphQLClient,
-  communityId: string
+  communityId: string,
 ): Promise<SpeciesInfo> {
   // Check if species already exists
   const speciesResponse = await client.request<SpeciesByCommunityResponse>(
     QUERIES.speciesByCommunity,
-    { communityId, first: 100 }
+    { communityId, first: 100 },
   );
 
   const existingSpecies = speciesResponse.speciesByCommunity.nodes.find(
-    (s) => s.name === TEST_SPECIES_NAME
+    (s) => s.name === TEST_SPECIES_NAME,
   );
 
   if (existingSpecies) {
@@ -58,7 +58,7 @@ async function findOrCreateSpecies(
         name: TEST_SPECIES_NAME,
         communityId,
       },
-    }
+    },
   );
 
   return {
@@ -75,16 +75,17 @@ interface VariantInfo {
 
 async function findOrCreateVariant(
   client: GraphQLClient,
-  speciesId: string
+  speciesId: string,
 ): Promise<VariantInfo> {
   // Check if variant already exists
-  const variantsResponse = await client.request<SpeciesVariantsBySpeciesResponse>(
-    QUERIES.speciesVariantsBySpecies,
-    { speciesId, first: 100 }
-  );
+  const variantsResponse =
+    await client.request<SpeciesVariantsBySpeciesResponse>(
+      QUERIES.speciesVariantsBySpecies,
+      { speciesId, first: 100 },
+    );
 
   const existingVariant = variantsResponse.speciesVariantsBySpecies.nodes.find(
-    (v) => v.name === TEST_VARIANT_NAME
+    (v) => v.name === TEST_VARIANT_NAME,
   );
 
   if (existingVariant) {
@@ -99,18 +100,21 @@ async function findOrCreateVariant(
         name: TEST_VARIANT_NAME,
         speciesId,
       },
-    }
+    },
   );
 
   return { id: response.createSpeciesVariant.id, created: true };
 }
 
 async function getExistingCharacterNames(
-  client: GraphQLClient
+  client: GraphQLClient,
 ): Promise<Set<string>> {
-  const response = await client.request<CharactersResponse>(QUERIES.characters, {
-    filters: { limit: 100 },
-  });
+  const response = await client.request<CharactersResponse>(
+    QUERIES.characters,
+    {
+      filters: { limit: 100 },
+    },
+  );
 
   // Set of character names
   const characterNames = new Set<string>();
@@ -127,7 +131,7 @@ async function createCharacterForPersona(
   user: User,
   characterName: string,
   speciesId: string,
-  variantId: string
+  variantId: string,
 ): Promise<boolean> {
   try {
     // Create orphaned character (assignToSelf: false)
@@ -142,7 +146,7 @@ async function createCharacterForPersona(
           visibility: "PUBLIC",
           assignToSelf: false,
         },
-      }
+      },
     );
 
     // Assign ownership to the intended user
@@ -153,7 +157,7 @@ async function createCharacterForPersona(
         input: {
           ownerIdUpdate: { set: user.id },
         },
-      }
+      },
     );
 
     return true;
@@ -168,7 +172,7 @@ async function createCharacterForPersona(
 export async function runPhase4(
   client: GraphQLClient,
   users: Map<string, User>,
-  communityId: string
+  communityId: string,
 ): Promise<void> {
   log.phase("Phase 4: Creating sample data...");
 
@@ -219,11 +223,13 @@ export async function runPhase4(
         user,
         characterName,
         species.id,
-        variantId
+        variantId,
       );
 
       if (created) {
-        log.success(`${characterName} (created, owned by ${persona.displayName})`);
+        log.success(
+          `${characterName} (created, owned by ${persona.displayName})`,
+        );
         createdCount++;
       } else {
         log.skip(`${characterName} (exists)`);
@@ -231,7 +237,7 @@ export async function runPhase4(
       }
     } catch (error) {
       log.error(
-        `${characterName}: ${error instanceof Error ? error.message : String(error)}`
+        `${characterName}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

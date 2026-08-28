@@ -1,14 +1,8 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { AlertTriangle } from 'lucide-react';
-import {
-  Modal,
-  Button,
-  Label,
-  HelpText,
-  ErrorMessage,
-} from '@chardb/ui';
-import { ModerationRejectionReason } from '../../generated/graphql';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { AlertTriangle } from "lucide-react";
+import { Modal, Button, Label, HelpText, ErrorMessage } from "@chardb/ui";
+import { ModerationRejectionReason } from "../../generated/graphql";
 
 const FormContainer = styled.div`
   display: flex;
@@ -27,11 +21,12 @@ const ReasonOption = styled.label<{ $selected?: boolean }>`
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.75rem;
-  border: 1px solid ${({ theme, $selected }) =>
-    $selected ? theme.colors.primary : theme.colors.border};
+  border: 1px solid
+    ${({ theme, $selected }) =>
+      $selected ? theme.colors.primary : theme.colors.border};
   border-radius: 8px;
   background: ${({ theme, $selected }) =>
-    $selected ? theme.colors.primary + '10' : theme.colors.surface};
+    $selected ? theme.colors.primary + "10" : theme.colors.surface};
   cursor: pointer;
   transition: all 0.2s ease;
 
@@ -40,7 +35,7 @@ const ReasonOption = styled.label<{ $selected?: boolean }>`
   }
 `;
 
-const RadioInput = styled.input.attrs({ type: 'radio' })`
+const RadioInput = styled.input.attrs({ type: "radio" })`
   margin-top: 0.125rem;
   accent-color: ${({ theme }) => theme.colors.primary};
 `;
@@ -120,28 +115,28 @@ const REJECTION_REASONS: Array<{
 }> = [
   {
     value: ModerationRejectionReason.TosViolation,
-    label: 'Terms of Service Violation',
-    description: 'Content violates community guidelines or terms of service',
+    label: "Terms of Service Violation",
+    description: "Content violates community guidelines or terms of service",
   },
   {
     value: ModerationRejectionReason.NsfwNotTagged,
-    label: 'NSFW Not Tagged',
-    description: 'Adult content that was not properly marked as NSFW',
+    label: "NSFW Not Tagged",
+    description: "Adult content that was not properly marked as NSFW",
   },
   {
     value: ModerationRejectionReason.SpamLowQuality,
-    label: 'Spam / Low Quality',
-    description: 'Spam, duplicate content, or extremely low quality images',
+    label: "Spam / Low Quality",
+    description: "Spam, duplicate content, or extremely low quality images",
   },
   {
     value: ModerationRejectionReason.CopyrightIssue,
-    label: 'Copyright Issue',
-    description: 'Potential copyright infringement or unauthorized use',
+    label: "Copyright Issue",
+    description: "Potential copyright infringement or unauthorized use",
   },
   {
     value: ModerationRejectionReason.Other,
-    label: 'Other',
-    description: 'Other reason not listed above (please specify)',
+    label: "Other",
+    description: "Other reason not listed above (please specify)",
   },
 ];
 
@@ -160,20 +155,24 @@ export const RejectImageModal: React.FC<RejectImageModalProps> = ({
   loading = false,
   imageName,
 }) => {
-  const [selectedReason, setSelectedReason] = useState<ModerationRejectionReason | null>(null);
-  const [reasonText, setReasonText] = useState('');
-  const [error, setError] = useState<string>('');
+  const [selectedReason, setSelectedReason] =
+    useState<ModerationRejectionReason | null>(null);
+  const [reasonText, setReasonText] = useState("");
+  const [error, setError] = useState<string>("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (!selectedReason) {
-      setError('Please select a rejection reason');
+      setError("Please select a rejection reason");
       return;
     }
 
-    if (selectedReason === ModerationRejectionReason.Other && !reasonText.trim()) {
+    if (
+      selectedReason === ModerationRejectionReason.Other &&
+      !reasonText.trim()
+    ) {
       setError('Please provide additional details for "Other" reason');
       return;
     }
@@ -183,8 +182,8 @@ export const RejectImageModal: React.FC<RejectImageModalProps> = ({
 
   const handleClose = () => {
     setSelectedReason(null);
-    setReasonText('');
-    setError('');
+    setReasonText("");
+    setError("");
     onClose();
   };
 
@@ -197,14 +196,15 @@ export const RejectImageModal: React.FC<RejectImageModalProps> = ({
               <AlertTriangle size={20} />
             </WarningIcon>
             <span>
-              This action will reject the image{imageName ? ` "${imageName}"` : ''} and notify the
-              uploader via email.
+              This action will reject the image
+              {imageName ? ` "${imageName}"` : ""} and notify the uploader via
+              email.
             </span>
           </WarningBanner>
 
           <div>
             <Label>Rejection Reason</Label>
-            <HelpText style={{ marginBottom: '0.75rem' }}>
+            <HelpText style={{ marginBottom: "0.75rem" }}>
               Select the primary reason for rejecting this image.
             </HelpText>
             <ReasonOptions>
@@ -231,7 +231,10 @@ export const RejectImageModal: React.FC<RejectImageModalProps> = ({
 
           <TextAreaContainer>
             <Label htmlFor="reason-text">
-              Additional Details {selectedReason === ModerationRejectionReason.Other ? '(Required)' : '(Optional)'}
+              Additional Details{" "}
+              {selectedReason === ModerationRejectionReason.Other
+                ? "(Required)"
+                : "(Optional)"}
             </Label>
             <TextArea
               id="reason-text"
@@ -241,7 +244,8 @@ export const RejectImageModal: React.FC<RejectImageModalProps> = ({
               disabled={loading}
             />
             <HelpText>
-              This message will be included in the notification email sent to the uploader.
+              This message will be included in the notification email sent to
+              the uploader.
             </HelpText>
           </TextAreaContainer>
 

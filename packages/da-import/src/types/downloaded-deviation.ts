@@ -21,7 +21,7 @@ export const DownloadStateSchema = z.object({
       folderId: z.string(),
       offset: z.number(),
       complete: z.boolean(),
-    })
+    }),
   ),
   lastUpdated: z.string(),
 });

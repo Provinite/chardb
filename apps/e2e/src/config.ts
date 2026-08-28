@@ -30,7 +30,9 @@ function findRepoRoot(): string {
     }
     const parent = path.dirname(dir);
     if (parent === dir) {
-      throw new Error("Could not locate the workspace root from " + process.cwd());
+      throw new Error(
+        "Could not locate the workspace root from " + process.cwd(),
+      );
     }
     dir = parent;
   }
@@ -72,7 +74,9 @@ export const CFG = {
   dbName,
 
   /** `preview` serves the real production bundle; `dev` is an escape hatch. */
-  frontendMode: (process.env.E2E_FRONTEND_MODE ?? "preview") as "preview" | "dev",
+  frontendMode: (process.env.E2E_FRONTEND_MODE ?? "preview") as
+    | "preview"
+    | "dev",
   /** Reuse apps/frontend/dist instead of rebuilding -- fast spec iteration. */
   skipBuild: process.env.E2E_SKIP_BUILD === "1",
   /** Keep the database after teardown for post-mortem inspection. */

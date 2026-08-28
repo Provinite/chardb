@@ -1,11 +1,11 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 /**
  * Full-screen overlay that dims the background content
  */
 const ModalOverlay = styled.div<{ $isOpen: boolean }>`
-  display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
+  display: ${({ $isOpen }) => ($isOpen ? "flex" : "none")};
   position: fixed;
   top: 0;
   left: 0;
@@ -58,25 +58,25 @@ interface ModalProps {
 
 /**
  * Modal - A reusable modal dialog component with overlay and theme integration
- * 
+ *
  * Provides a centered modal dialog with a semi-transparent overlay. The modal can be
  * closed by clicking outside the content area. Supports optional title and custom content.
  * Uses theme colors and spacing for consistent styling across the application.
- * 
+ *
  * Features:
  * - Fixed positioning with high z-index (1000)
  * - Click-outside-to-close functionality
  * - Responsive sizing (90% width, max 500px)
  * - Scrollable content when needed (max-height 80vh)
  * - Theme-based styling and shadows
- * 
+ *
  * @example
  * ```tsx
  * // Basic modal with title
  * const [isOpen, setIsOpen] = useState(false);
- * 
- * <Modal 
- *   isOpen={isOpen} 
+ *
+ * <Modal
+ *   isOpen={isOpen}
  *   onClose={() => setIsOpen(false)}
  *   title="Confirm Action"
  * >
@@ -84,7 +84,7 @@ interface ModalProps {
  *   <button onClick={() => setIsOpen(false)}>Cancel</button>
  *   <button onClick={handleConfirm}>Confirm</button>
  * </Modal>
- * 
+ *
  * // Form modal without title
  * <Modal isOpen={showForm} onClose={() => setShowForm(false)}>
  *   <form onSubmit={handleSubmit}>
@@ -92,10 +92,10 @@ interface ModalProps {
  *     <button type="submit">Save</button>
  *   </form>
  * </Modal>
- * 
+ *
  * // Complex content modal
- * <Modal 
- *   isOpen={showDetails} 
+ * <Modal
+ *   isOpen={showDetails}
  *   onClose={() => setShowDetails(false)}
  *   title="User Details"
  * >
@@ -108,7 +108,7 @@ interface ModalProps {
  *   </div>
  * </Modal>
  * ```
- * 
+ *
  * @param props - The component props
  * @param props.isOpen - Whether the modal is currently visible
  * @param props.onClose - Function called when the modal should be closed

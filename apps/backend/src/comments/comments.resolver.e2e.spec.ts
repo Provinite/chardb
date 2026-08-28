@@ -1,29 +1,29 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { CommentsResolver } from './comments.resolver';
-import { CommentsService } from './comments.service';
-import { UsersService } from '../users/users.service';
-import { CharactersService } from '../characters/characters.service';
-import { ImagesService } from '../images/images.service';
-import { GalleriesService } from '../galleries/galleries.service';
-import { DatabaseService } from '../database/database.service';
-import { CommentableType } from './dto/comment.dto';
-import { mockDatabaseService } from '../../test/setup';
-import { AuthenticatedCurrentUserType } from '../auth/types/current-user.type';
+import { Test, TestingModule } from "@nestjs/testing";
+import { CommentsResolver } from "./comments.resolver";
+import { CommentsService } from "./comments.service";
+import { UsersService } from "../users/users.service";
+import { CharactersService } from "../characters/characters.service";
+import { ImagesService } from "../images/images.service";
+import { GalleriesService } from "../galleries/galleries.service";
+import { DatabaseService } from "../database/database.service";
+import { CommentableType } from "./dto/comment.dto";
+import { mockDatabaseService } from "../../test/setup";
+import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 
 const mockUsersService = { findOne: jest.fn() };
 const mockCharactersService = { findOne: jest.fn() };
 const mockImagesService = { findOne: jest.fn() };
 const mockGalleriesService = { findOne: jest.fn() };
 
-describe('CommentsResolver', () => {
+describe("CommentsResolver", () => {
   let resolver: CommentsResolver;
   let db: typeof mockDatabaseService;
 
   const mockUser: AuthenticatedCurrentUserType = {
-    id: 'user-1',
-    username: 'testuser',
-    email: 'test@example.com',
-    passwordHash: 'hash',
+    id: "user-1",
+    username: "testuser",
+    email: "test@example.com",
+    passwordHash: "hash",
     displayName: null,
     bio: null,
     avatarImageId: null,
@@ -43,13 +43,13 @@ describe('CommentsResolver', () => {
 
   // Mock comment using DB schema fields (direct FKs, not polymorphic commentableType/Id)
   const mockDbComment = {
-    id: 'comment-1',
-    content: 'Test comment',
-    characterId: 'character-1',
+    id: "comment-1",
+    content: "Test comment",
+    characterId: "character-1",
     imageId: null,
     galleryId: null,
     userId: null,
-    authorId: 'user-1',
+    authorId: "user-1",
     parentId: null,
     isHidden: false,
     createdAt: new Date(),
@@ -70,33 +70,38 @@ describe('CommentsResolver', () => {
     }).compile();
 
     resolver = module.get<CommentsResolver>(CommentsResolver);
-    db = module.get<DatabaseService>(DatabaseService) as unknown as typeof mockDatabaseService;
+    db = module.get<DatabaseService>(
+      DatabaseService,
+    ) as unknown as typeof mockDatabaseService;
   });
 
-  describe('createComment', () => {
-    it('should create a comment successfully', async () => {
+  describe("createComment", () => {
+    it("should create a comment successfully", async () => {
       const input = {
-        content: 'Test comment',
+        content: "Test comment",
         entityType: CommentableType.CHARACTER,
-        entityId: 'character-1',
+        entityId: "character-1",
       };
 
-      db.character.findFirst.mockResolvedValue({ id: 'character-1', name: 'Test Character' });
+      db.character.findFirst.mockResolvedValue({
+        id: "character-1",
+        name: "Test Character",
+      });
       db.comment.create.mockResolvedValue(mockDbComment);
 
       const result = await resolver.createComment(input, mockUser);
 
-      expect(result.content).toBe('Test comment');
+      expect(result.content).toBe("Test comment");
       expect(result.commentableType).toBe(CommentableType.CHARACTER);
-      expect(result.commentableId).toBe('character-1');
+      expect(result.commentableId).toBe("character-1");
     });
   });
 
-  describe('comments query', () => {
-    it('should return comments for an entity', async () => {
+  describe("comments query", () => {
+    it("should return comments for an entity", async () => {
       const filters = {
         entityType: CommentableType.CHARACTER,
-        entityId: 'character-1',
+        entityId: "character-1",
         limit: 10,
         offset: 0,
       };
@@ -112,39 +117,39 @@ describe('CommentsResolver', () => {
     });
   });
 
-  describe('updateComment', () => {
-    it('should update own comment', async () => {
-      const input = { content: 'Updated content' };
-      const updatedComment = { ...mockDbComment, content: 'Updated content' };
+  describe("updateComment", () => {
+    it("should update own comment", async () => {
+      const input = { content: "Updated content" };
+      const updatedComment = { ...mockDbComment, content: "Updated content" };
 
       db.comment.findUnique.mockResolvedValue(mockDbComment);
       db.comment.update.mockResolvedValue(updatedComment);
 
-      const result = await resolver.updateComment('comment-1', input, mockUser);
+      const result = await resolver.updateComment("comment-1", input, mockUser);
 
-      expect(result.content).toBe('Updated content');
+      expect(result.content).toBe("Updated content");
     });
   });
 
-  describe('deleteComment', () => {
-    it('should delete own comment', async () => {
+  describe("deleteComment", () => {
+    it("should delete own comment", async () => {
       db.comment.findUnique.mockResolvedValue(mockDbComment);
       db.comment.delete.mockResolvedValue(mockDbComment);
 
-      const result = await resolver.deleteComment('comment-1', mockUser);
+      const result = await resolver.deleteComment("comment-1", mockUser);
 
       expect(result).toBe(true);
     });
   });
 
-  describe('findOne', () => {
-    it('should return a comment by id', async () => {
+  describe("findOne", () => {
+    it("should return a comment by id", async () => {
       db.comment.findUnique.mockResolvedValue(mockDbComment);
 
-      const result = await resolver.comment('comment-1');
+      const result = await resolver.comment("comment-1");
 
-      expect(result.id).toBe('comment-1');
-      expect(result.content).toBe('Test comment');
+      expect(result.id).toBe("comment-1");
+      expect(result.content).toBe("Test comment");
     });
   });
 });

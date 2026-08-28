@@ -46,9 +46,10 @@ export const queueImageInclude = {
 /**
  * Prisma payload type for ImageModerationAction with full includes
  */
-export type PrismaImageModerationAction = Prisma.ImageModerationActionGetPayload<{
-  include: typeof moderationActionInclude;
-}>;
+export type PrismaImageModerationAction =
+  Prisma.ImageModerationActionGetPayload<{
+    include: typeof moderationActionInclude;
+  }>;
 
 /**
  * Prisma payload type for queue item image with full relation chain
@@ -61,7 +62,7 @@ export type PrismaQueueImage = Prisma.ImageGetPayload<{
  * Maps Prisma ImageModerationAction to GraphQL entity
  */
 export function mapPrismaImageModerationActionToGraphQL(
-  prismaAction: PrismaImageModerationAction
+  prismaAction: PrismaImageModerationAction,
 ): ImageModerationAction {
   return {
     id: prismaAction.id,
@@ -80,7 +81,7 @@ export function mapPrismaImageModerationActionToGraphQL(
  * Maps Prisma queue image to GraphQL ImageModerationQueueItem
  */
 export function mapPrismaQueueImageToGraphQL(
-  prismaImage: PrismaQueueImage
+  prismaImage: PrismaQueueImage,
 ): ImageModerationQueueItem {
   const media = prismaImage.media[0];
   const character = media?.character;
@@ -109,7 +110,7 @@ export interface QueueServiceResult {
  * Maps service queue result to GraphQL ImageModerationQueueConnection
  */
 export function mapQueueResultToGraphQL(
-  result: QueueServiceResult
+  result: QueueServiceResult,
 ): ImageModerationQueueConnection {
   return {
     items: result.items.map(mapPrismaQueueImageToGraphQL),

@@ -23,11 +23,14 @@ export const loggerConfig: WinstonModuleOptions = {
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
-        winston.format.printf(({ level, message, timestamp, context, ...meta }) => {
-          const contextStr = context ? `[${context}]` : "";
-          const metaStr = Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : "";
-          return `${timestamp} ${level} ${contextStr} ${message}${metaStr}`;
-        }),
+        winston.format.printf(
+          ({ level, message, timestamp, context, ...meta }) => {
+            const contextStr = context ? `[${context}]` : "";
+            const metaStr =
+              Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : "";
+            return `${timestamp} ${level} ${contextStr} ${message}${metaStr}`;
+          },
+        ),
       ),
     }),
     // OpenTelemetry transport for production logging to Grafana Cloud

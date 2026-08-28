@@ -58,27 +58,27 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     if (typeof document !== "undefined") {
       // Temporarily disable transitions
       const bodyTransition = document.body.style.transition;
-      document.body.style.transition = 'none';
-      
-      const rootElement = document.getElementById('root');
+      document.body.style.transition = "none";
+
+      const rootElement = document.getElementById("root");
       const rootTransition = rootElement?.style.transition;
       if (rootElement) {
-        rootElement.style.transition = 'none';
+        rootElement.style.transition = "none";
       }
-      
+
       // Apply theme colors
       document.body.style.backgroundColor = theme.colors.background;
       document.body.style.color = theme.colors.text.primary;
-      
+
       if (rootElement) {
         rootElement.style.backgroundColor = theme.colors.background;
       }
-      
+
       // Re-enable transitions after a brief delay
       setTimeout(() => {
         document.body.style.transition = bodyTransition;
         if (rootElement) {
-          rootElement.style.transition = rootTransition || '';
+          rootElement.style.transition = rootTransition || "";
         }
       }, 50);
     }
@@ -86,9 +86,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Enable blanket transitions briefly during theme switch
   const enableThemeTransition = () => {
-    document.documentElement.classList.add('theme-transitioning');
+    document.documentElement.classList.add("theme-transitioning");
     setTimeout(() => {
-      document.documentElement.classList.remove('theme-transitioning');
+      document.documentElement.classList.remove("theme-transitioning");
     }, 350);
   };
 

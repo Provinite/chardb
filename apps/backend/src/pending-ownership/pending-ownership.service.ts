@@ -1,8 +1,18 @@
-import { Injectable, ConflictException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { ExternalAccountProvider, PendingOwnership, Prisma } from '@chardb/database';
-import { notDeleted } from '../common/utils/prisma-filters';
-import { ExternalAccountsService } from '../external-accounts/external-accounts.service';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import {
+  ExternalAccountProvider,
+  PendingOwnership,
+  Prisma,
+} from "@chardb/database";
+import { notDeleted } from "../common/utils/prisma-filters";
+import { ExternalAccountsService } from "../external-accounts/external-accounts.service";
 
 @Injectable()
 export class PendingOwnershipService {
@@ -25,7 +35,11 @@ export class PendingOwnershipService {
     provider: ExternalAccountProvider,
     providerAccountId: string,
     displayIdentifier?: string,
-  ): Promise<{ claimed: boolean; ownerId?: string; pendingOwnership?: PendingOwnership }> {
+  ): Promise<{
+    claimed: boolean;
+    ownerId?: string;
+    pendingOwnership?: PendingOwnership;
+  }> {
     // Check if character exists
     const character = await this.prisma.character.findFirst({
       where: { id: characterId, ...notDeleted },
@@ -45,7 +59,10 @@ export class PendingOwnershipService {
     }
 
     // Check if the external account is already linked to a user (auto-claim check)
-    const claimedUserId = await this.checkIfAccountClaimed(provider, providerAccountId);
+    const claimedUserId = await this.checkIfAccountClaimed(
+      provider,
+      providerAccountId,
+    );
 
     if (claimedUserId) {
       // Account is already claimed - assign character to the user who owns the account
@@ -89,7 +106,11 @@ export class PendingOwnershipService {
     provider: ExternalAccountProvider,
     providerAccountId: string,
     displayIdentifier?: string,
-  ): Promise<{ claimed: boolean; ownerId?: string; pendingOwnership?: PendingOwnership }> {
+  ): Promise<{
+    claimed: boolean;
+    ownerId?: string;
+    pendingOwnership?: PendingOwnership;
+  }> {
     // Check if item exists
     const item = await this.prisma.item.findUnique({
       where: { id: itemId },
@@ -109,7 +130,10 @@ export class PendingOwnershipService {
     }
 
     // Check if the external account is already linked to a user (auto-claim check)
-    const claimedUserId = await this.checkIfAccountClaimed(provider, providerAccountId);
+    const claimedUserId = await this.checkIfAccountClaimed(
+      provider,
+      providerAccountId,
+    );
 
     if (claimedUserId) {
       // Account is already claimed - assign item to the user who owns the account
@@ -149,10 +173,11 @@ export class PendingOwnershipService {
     provider: ExternalAccountProvider,
     providerAccountId: string,
   ): Promise<string | null> {
-    const externalAccount = await this.externalAccountsService.findByProviderAndAccountId(
-      provider,
-      providerAccountId,
-    );
+    const externalAccount =
+      await this.externalAccountsService.findByProviderAndAccountId(
+        provider,
+        providerAccountId,
+      );
     return externalAccount?.userId ?? null;
   }
 
@@ -250,47 +275,14 @@ export class PendingOwnershipService {
     providerAccountId: string,
   ): Promise<PendingOwnership[]> {
     // Use a transaction to ensure atomicity and prevent race conditions
-    const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Query for unclaimed items INSIDE transaction to ensure consistent snapshot
-      const pendingItems = await tx.pendingOwnership.findMany({
-        where: {
-          provider,
-          providerAccountId,
-          claimedAt: null,
-        },
-        include: {
-          character: true,
-          item: true,
-        },
-      });
-
-      if (pendingItems.length === 0) {
-        return [];
-      }
-
-      const claimed: PendingOwnership[] = [];
-      const now = new Date();
-
-      for (const pending of pendingItems) {
-        // Transfer ownership based on entity type
-        if (pending.characterId) {
-          await tx.character.update({
-            where: { id: pending.characterId },
-            data: { ownerId: userId },
-          });
-        } else if (pending.itemId) {
-          await tx.item.update({
-            where: { id: pending.itemId },
-            data: { ownerId: userId },
-          });
-        }
-
-        // Mark as claimed
-        const updated = await tx.pendingOwnership.update({
-          where: { id: pending.id },
-          data: {
-            claimedAt: now,
-            claimedByUserId: userId,
+    const result = await this.prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // Query for unclaimed items INSIDE transaction to ensure consistent snapshot
+        const pendingItems = await tx.pendingOwnership.findMany({
+          where: {
+            provider,
+            providerAccountId,
+            claimedAt: null,
           },
           include: {
             character: true,
@@ -298,11 +290,46 @@ export class PendingOwnershipService {
           },
         });
 
-        claimed.push(updated);
-      }
+        if (pendingItems.length === 0) {
+          return [];
+        }
 
-      return claimed;
-    });
+        const claimed: PendingOwnership[] = [];
+        const now = new Date();
+
+        for (const pending of pendingItems) {
+          // Transfer ownership based on entity type
+          if (pending.characterId) {
+            await tx.character.update({
+              where: { id: pending.characterId },
+              data: { ownerId: userId },
+            });
+          } else if (pending.itemId) {
+            await tx.item.update({
+              where: { id: pending.itemId },
+              data: { ownerId: userId },
+            });
+          }
+
+          // Mark as claimed
+          const updated = await tx.pendingOwnership.update({
+            where: { id: pending.id },
+            data: {
+              claimedAt: now,
+              claimedByUserId: userId,
+            },
+            include: {
+              character: true,
+              item: true,
+            },
+          });
+
+          claimed.push(updated);
+        }
+
+        return claimed;
+      },
+    );
 
     return result;
   }
@@ -333,7 +360,9 @@ export class PendingOwnershipService {
   /**
    * Find pending ownership for a character
    */
-  async findByCharacterId(characterId: string): Promise<PendingOwnership | null> {
+  async findByCharacterId(
+    characterId: string,
+  ): Promise<PendingOwnership | null> {
     return this.prisma.pendingOwnership.findUnique({
       where: { characterId },
     });
@@ -360,11 +389,12 @@ export class PendingOwnershipService {
       where: {
         provider: filters?.provider,
         providerAccountId: filters?.providerAccountId,
-        claimedAt: filters?.claimed === undefined
-          ? undefined
-          : filters.claimed
-            ? { not: null }
-            : null,
+        claimedAt:
+          filters?.claimed === undefined
+            ? undefined
+            : filters.claimed
+              ? { not: null }
+              : null,
       },
       include: {
         character: true,

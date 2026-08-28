@@ -1,8 +1,8 @@
-import React from 'react';
-import styled from 'styled-components';
-import { Plus } from 'lucide-react';
-import { Button } from '@chardb/ui';
-import { TraitValueType } from '../../generated/graphql';
+import React from "react";
+import styled from "styled-components";
+import { Plus } from "lucide-react";
+import { Button } from "@chardb/ui";
+import { TraitValueType } from "../../generated/graphql";
 
 interface InactiveTraitCardProps {
   trait: {
@@ -94,9 +94,7 @@ export const InactiveTraitCard: React.FC<InactiveTraitCardProps> = ({
       <TraitInfo>
         <TraitName>{trait.name}</TraitName>
         <TraitMeta>
-          <TypeBadge $valueType={trait.valueType}>
-            {trait.valueType}
-          </TypeBadge>
+          <TypeBadge $valueType={trait.valueType}>{trait.valueType}</TypeBadge>
         </TraitMeta>
       </TraitInfo>
 

@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { notDeleted } from '../common/utils/prisma-filters';
+import { Injectable } from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { notDeleted } from "../common/utils/prisma-filters";
 
 /**
  * Tag popularity counts only live characters. Without this filter a
@@ -31,11 +31,11 @@ export class TagsService {
       orderBy: [
         {
           characters: {
-            _count: 'desc',
+            _count: "desc",
           },
         },
         {
-          name: 'asc',
+          name: "asc",
         },
       ],
       take: limit,
@@ -63,23 +63,23 @@ export class TagsService {
     }
 
     const searchTerm = search.trim().toLowerCase();
-    
+
     return this.db.tag.findMany({
       where: {
         name: {
           contains: searchTerm,
-          mode: 'insensitive' as const,
+          mode: "insensitive" as const,
         },
       },
       orderBy: [
         // Exact matches first
         {
-          name: 'asc',
+          name: "asc",
         },
         // Then by popularity
         {
           characters: {
-            _count: 'desc',
+            _count: "desc",
           },
         },
       ],
@@ -103,19 +103,19 @@ export class TagsService {
    */
   async findOrCreateTags(tagNames: string[]) {
     const tags = [];
-    
+
     for (const tagName of tagNames) {
       const tag = await this.db.tag.upsert({
         where: { name: tagName.toLowerCase() },
-        create: { 
+        create: {
           name: tagName.toLowerCase(),
-          displayName: tagName 
+          displayName: tagName,
         },
         update: {},
       });
       tags.push(tag);
     }
-    
+
     return tags;
   }
 
@@ -144,5 +144,4 @@ export class TagsService {
     });
     return characterTags.map((ct) => ct.tag);
   }
-
 }

@@ -302,7 +302,6 @@ const SectionTitle = styled.h3`
   border-bottom: 2px solid ${({ theme }) => theme.colors.border};
 `;
 
-
 const TradingInfo = styled.div`
   background: ${({ theme }) => theme.colors.surface};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
@@ -449,7 +448,8 @@ export const CharacterPage: React.FC = () => {
   );
 
   const [deleteCharacter, { loading: deleting }] = useDeleteCharacterMutation();
-  const [kickFromSpecies, { loading: kicking }] = useKickCharacterFromSpeciesMutation();
+  const [kickFromSpecies, { loading: kicking }] =
+    useKickCharacterFromSpeciesMutation();
 
   const handleBackClick = () => {
     navigate("/characters");
@@ -461,25 +461,41 @@ export const CharacterPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!id) return;
-    if (!window.confirm(`Delete "${character?.name}"? This action soft-deletes the character and cannot be undone without admin intervention.`)) return;
+    if (
+      !window.confirm(
+        `Delete "${character?.name}"? This action soft-deletes the character and cannot be undone without admin intervention.`,
+      )
+    )
+      return;
     setActionError(null);
     try {
       await deleteCharacter({ variables: { id } });
       navigate("/characters");
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Failed to delete character");
+      setActionError(
+        e instanceof Error ? e.message : "Failed to delete character",
+      );
     }
   };
 
   const handleKickFromSpecies = async () => {
     if (!id) return;
-    if (!window.confirm(`Remove "${character?.name}" from its species? Trait values will be flattened to custom fields and the character will no longer be part of "${character?.species?.name}".`)) return;
+    if (
+      !window.confirm(
+        `Remove "${character?.name}" from its species? Trait values will be flattened to custom fields and the character will no longer be part of "${character?.species?.name}".`,
+      )
+    )
+      return;
     setActionError(null);
     try {
       await kickFromSpecies({ variables: { id } });
       navigate(0); // reload page to reflect updated character state
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Failed to remove character from species");
+      setActionError(
+        e instanceof Error
+          ? e.message
+          : "Failed to remove character from species",
+      );
     }
   };
 
@@ -595,7 +611,8 @@ export const CharacterPage: React.FC = () => {
                 {character.pendingOwnership.provider === "DISCORD"
                   ? "🎮"
                   : "🎨"}{" "}
-                {character.pendingOwnership.displayIdentifier ?? character.pendingOwnership.providerAccountId}
+                {character.pendingOwnership.displayIdentifier ??
+                  character.pendingOwnership.providerAccountId}
               </MetaBadge>
             )}
             {character.isSellable && (
@@ -640,15 +657,15 @@ export const CharacterPage: React.FC = () => {
               {character.speciesId &&
                 (permissions.canEditCharacterRegistry ||
                   (user?.isAdmin ?? false)) && (
-                <RemoveFromSpeciesButton
-                  variant="outline"
-                  size="sm"
-                  onClick={handleKickFromSpecies}
-                  disabled={kicking}
-                >
-                  {kicking ? "Removing..." : "Remove from Species"}
-                </RemoveFromSpeciesButton>
-              )}
+                  <RemoveFromSpeciesButton
+                    variant="outline"
+                    size="sm"
+                    onClick={handleKickFromSpecies}
+                    disabled={kicking}
+                  >
+                    {kicking ? "Removing..." : "Remove from Species"}
+                  </RemoveFromSpeciesButton>
+                )}
               {(permissions.canDeleteCharacter || (user?.isAdmin ?? false)) && (
                 <Button
                   variant="danger"
@@ -662,7 +679,13 @@ export const CharacterPage: React.FC = () => {
             </CharacterActions>
           )}
           {actionError && (
-            <div style={{ color: "red", marginTop: "0.5rem", fontSize: "0.875rem" }}>
+            <div
+              style={{
+                color: "red",
+                marginTop: "0.5rem",
+                fontSize: "0.875rem",
+              }}
+            >
               {actionError}
             </div>
           )}
@@ -718,7 +741,6 @@ export const CharacterPage: React.FC = () => {
             )}
           </OwnerInfo>
         )}
-
       </CharacterHeader>
 
       {character._count && (
@@ -820,7 +842,6 @@ export const CharacterPage: React.FC = () => {
         entityType={CommentableType.Character}
         entityId={character.id}
       />
-
     </Container>
   );
 };

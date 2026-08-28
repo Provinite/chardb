@@ -1,11 +1,22 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, ChevronDown, ChevronUp, Trash2, Check, X, Save } from 'lucide-react';
-import { Button, Input } from '@chardb/ui';
-import { TraitValueType } from '../../generated/graphql';
-import { TraitDefaultValueInput, DefaultValueState } from './TraitDefaultValueInput';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+  GripVertical,
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+  Check,
+  X,
+  Save,
+} from "lucide-react";
+import { Button, Input } from "@chardb/ui";
+import { TraitValueType } from "../../generated/graphql";
+import {
+  TraitDefaultValueInput,
+  DefaultValueState,
+} from "./TraitDefaultValueInput";
 
 interface TraitListEntryRowProps {
   entry: {
@@ -35,7 +46,11 @@ interface TraitListEntryRowProps {
     id: string;
     enumValueId: string;
   }>;
-  onToggleEnumValue?: (enumValueId: string, isEnabled: boolean, settingId?: string) => Promise<void>;
+  onToggleEnumValue?: (
+    enumValueId: string,
+    isEnabled: boolean,
+    settingId?: string,
+  ) => Promise<void>;
   disabled?: boolean;
 }
 
@@ -116,7 +131,7 @@ const RequiredToggle = styled.label`
   font-size: 0.875rem;
   color: ${({ theme }) => theme.colors.text.primary};
 
-  input[type='checkbox'] {
+  input[type="checkbox"] {
     width: 18px;
     height: 18px;
     cursor: pointer;
@@ -258,19 +273,24 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
 
   // Get enum values that are enabled for this variant
   const settingsLookup = new Map(
-    enumValueSettings.map(setting => [setting.enumValueId, setting.id])
+    enumValueSettings.map((setting) => [setting.enumValueId, setting.id]),
   );
 
   const sortedEnumValues = [...(entry.trait.enumValues || [])].sort(
-    (a, b) => a.order - b.order
+    (a, b) => a.order - b.order,
   );
 
-  const enabledCount = sortedEnumValues.filter(ev =>
-    settingsLookup.has(ev.id)
+  const enabledCount = sortedEnumValues.filter((ev) =>
+    settingsLookup.has(ev.id),
   ).length;
 
   return (
-    <RowContainer ref={setNodeRef} style={style} $isDragging={isDragging} {...attributes}>
+    <RowContainer
+      ref={setNodeRef}
+      style={style}
+      $isDragging={isDragging}
+      {...attributes}
+    >
       <RowHeader>
         <DragHandle {...listeners}>
           <GripVertical size={20} />
@@ -289,9 +309,11 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
           variant="secondary"
           size="sm"
           onClick={onToggleExpand}
-          icon={isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          icon={
+            isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+          }
         >
-          {isExpanded ? 'Collapse' : 'Expand'}
+          {isExpanded ? "Collapse" : "Expand"}
         </Button>
 
         <Button
@@ -328,35 +350,44 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
               disabled={disabled}
             />
 
-            {entry.valueType === TraitValueType.Enum && sortedEnumValues.length > 0 && (
-              <EnumOptionsSection>
-                <SectionTitle>
-                  Enum Options ({enabledCount} of {sortedEnumValues.length} enabled)
-                </SectionTitle>
-                <EnumValuesGrid>
-                  {sortedEnumValues.map((enumValue) => {
-                    const isEnabled = settingsLookup.has(enumValue.id);
-                    const settingId = settingsLookup.get(enumValue.id);
+            {entry.valueType === TraitValueType.Enum &&
+              sortedEnumValues.length > 0 && (
+                <EnumOptionsSection>
+                  <SectionTitle>
+                    Enum Options ({enabledCount} of {sortedEnumValues.length}{" "}
+                    enabled)
+                  </SectionTitle>
+                  <EnumValuesGrid>
+                    {sortedEnumValues.map((enumValue) => {
+                      const isEnabled = settingsLookup.has(enumValue.id);
+                      const settingId = settingsLookup.get(enumValue.id);
 
-                    return (
-                      <EnumValueCard key={enumValue.id} $isEnabled={isEnabled}>
-                        <EnumValueName>{enumValue.name}</EnumValueName>
-                        <ToggleButton
+                      return (
+                        <EnumValueCard
+                          key={enumValue.id}
                           $isEnabled={isEnabled}
-                          onClick={() =>
-                            onToggleEnumValue?.(enumValue.id, isEnabled, settingId)
-                          }
-                          disabled={disabled}
-                          title={isEnabled ? 'Disable' : 'Enable'}
                         >
-                          {isEnabled ? <Check size={16} /> : <X size={16} />}
-                        </ToggleButton>
-                      </EnumValueCard>
-                    );
-                  })}
-                </EnumValuesGrid>
-              </EnumOptionsSection>
-            )}
+                          <EnumValueName>{enumValue.name}</EnumValueName>
+                          <ToggleButton
+                            $isEnabled={isEnabled}
+                            onClick={() =>
+                              onToggleEnumValue?.(
+                                enumValue.id,
+                                isEnabled,
+                                settingId,
+                              )
+                            }
+                            disabled={disabled}
+                            title={isEnabled ? "Disable" : "Enable"}
+                          >
+                            {isEnabled ? <Check size={16} /> : <X size={16} />}
+                          </ToggleButton>
+                        </EnumValueCard>
+                      );
+                    })}
+                  </EnumValuesGrid>
+                </EnumOptionsSection>
+              )}
           </ConfigSection>
 
           <Actions>
@@ -377,7 +408,7 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
               disabled={disabled || !hasChanges || isSaving}
               icon={<Save size={14} />}
             >
-              {isSaving ? 'Saving...' : 'Save Configuration'}
+              {isSaving ? "Saving..." : "Save Configuration"}
             </Button>
           </Actions>
         </ExpandableContent>

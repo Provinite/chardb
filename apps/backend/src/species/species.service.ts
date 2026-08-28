@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
-import { notDeleted } from '../common/utils/prisma-filters';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { Prisma } from "@chardb/database";
+import { notDeleted } from "../common/utils/prisma-filters";
 
 /**
  * Service layer input types for species operations.
@@ -44,8 +48,8 @@ export class SpeciesService {
         name: input.name,
         hasImage: input.hasImage ?? false,
         community: {
-          connect: { id: input.communityId }
-        }
+          connect: { id: input.communityId },
+        },
       },
     });
   }
@@ -78,7 +82,7 @@ export class SpeciesService {
         take: first + 1, // Take one extra to check if there's a next page
         skip,
         cursor,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.species.count({ where }),
     ]);
@@ -95,7 +99,11 @@ export class SpeciesService {
   }
 
   /** Find species by community ID with pagination */
-  async findByCommunity(communityId: string, first: number = 20, after?: string) {
+  async findByCommunity(
+    communityId: string,
+    first: number = 20,
+    after?: string,
+  ) {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -105,7 +113,7 @@ export class SpeciesService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.species.count({
         where: { communityId },
@@ -141,7 +149,7 @@ export class SpeciesService {
     const species = await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.SpeciesUpdateInput = {};
-    
+
     if (input.name !== undefined) updateData.name = input.name;
     if (input.hasImage !== undefined) updateData.hasImage = input.hasImage;
     if (input.communityId !== undefined) {
@@ -160,12 +168,12 @@ export class SpeciesService {
 
     // Check if any characters are using this species
     const characterCount = await this.prisma.character.count({
-      where: { speciesId: id, ...notDeleted }
+      where: { speciesId: id, ...notDeleted },
     });
 
     if (characterCount > 0) {
       throw new BadRequestException(
-        `Cannot delete species. ${characterCount} character${characterCount === 1 ? '' : 's'} ${characterCount === 1 ? 'is' : 'are'} using this species. Please delete or reassign ${characterCount === 1 ? 'this character' : 'these characters'} before deleting the species.`
+        `Cannot delete species. ${characterCount} character${characterCount === 1 ? "" : "s"} ${characterCount === 1 ? "is" : "are"} using this species. Please delete or reassign ${characterCount === 1 ? "this character" : "these characters"} before deleting the species.`,
       );
     }
 

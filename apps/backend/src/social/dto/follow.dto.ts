@@ -1,5 +1,5 @@
-import { InputType, Field, ID, ObjectType } from '@nestjs/graphql';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { InputType, Field, ID, ObjectType } from "@nestjs/graphql";
+import { IsString, IsNotEmpty } from "class-validator";
 
 @InputType()
 export class ToggleFollowInput {

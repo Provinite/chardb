@@ -56,13 +56,17 @@ async function fetchAllPillowings(): Promise<CharacterNode[]> {
     });
 
     if (!resp.ok) {
-      throw new Error(`API request failed: ${resp.status} ${await resp.text()}`);
+      throw new Error(
+        `API request failed: ${resp.status} ${await resp.text()}`,
+      );
     }
 
     const json = await resp.json();
 
     if (json.errors) {
-      throw new Error(`GraphQL errors: ${JSON.stringify(json.errors, null, 2)}`);
+      throw new Error(
+        `GraphQL errors: ${JSON.stringify(json.errors, null, 2)}`,
+      );
     }
 
     const page = json.data.characters;
@@ -91,7 +95,7 @@ async function main() {
         csvEscape(c.name),
         c.id,
         c.ownerId ?? "",
-      ].join(",")
+      ].join(","),
     );
   }
 
@@ -101,7 +105,9 @@ async function main() {
   console.error(`\nWrote ${characters.length} Pillowings to ${outPath}`);
   const withRegistry = characters.filter((c) => c.registryId);
   const withoutRegistry = characters.filter((c) => !c.registryId);
-  console.error(`${withRegistry.length} with registryId, ${withoutRegistry.length} without`);
+  console.error(
+    `${withRegistry.length} with registryId, ${withoutRegistry.length} without`,
+  );
 }
 
 main().catch((err) => {

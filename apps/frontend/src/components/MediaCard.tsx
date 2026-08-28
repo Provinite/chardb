@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
-import styled from 'styled-components';
-import { Link } from 'react-router-dom';
-import { MediaGridItem } from './MediaGrid';
-import { stripMarkdown } from '../lib/stripMarkdown';
+import React, { useMemo } from "react";
+import styled from "styled-components";
+import { Link } from "react-router-dom";
+import { MediaGridItem } from "./MediaGrid";
+import { stripMarkdown } from "../lib/stripMarkdown";
 
 const Card = styled(Link)`
   display: block;
@@ -55,15 +55,18 @@ const TextPreview = styled.div`
   white-space: pre-wrap;
   overflow-wrap: break-word;
   position: relative;
-  
+
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     height: 20px;
-    background: linear-gradient(transparent, ${({ theme }) => theme.colors.surface});
+    background: linear-gradient(
+      transparent,
+      ${({ theme }) => theme.colors.surface}
+    );
   }
 `;
 
@@ -139,16 +142,12 @@ const Badge = styled.span`
 `;
 
 const TypeBadge = styled(Badge)<{ $isImage: boolean }>`
-  background: ${props =>
+  background: ${(props) =>
     props.$isImage
-      ? props.theme.colors.primary + '20'
-      : props.theme.colors.secondary + '20'
-  };
-  color: ${props =>
-    props.$isImage
-      ? props.theme.colors.primary
-      : props.theme.colors.secondary
-  };
+      ? props.theme.colors.primary + "20"
+      : props.theme.colors.secondary + "20"};
+  color: ${(props) =>
+    props.$isImage ? props.theme.colors.primary : props.theme.colors.secondary};
 `;
 
 const VisibilityBadge = styled.span<{ visibility: string }>`
@@ -156,17 +155,21 @@ const VisibilityBadge = styled.span<{ visibility: string }>`
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  background: ${props => 
-    props.visibility === 'PUBLIC' ? props.theme.colors.success + '20' :
-    props.visibility === 'UNLISTED' ? props.theme.colors.warning + '20' : props.theme.colors.error + '20'
-  };
-  color: ${props => 
-    props.visibility === 'PUBLIC' ? props.theme.colors.success :
-    props.visibility === 'UNLISTED' ? props.theme.colors.warning : props.theme.colors.error
-  };
+  background: ${(props) =>
+    props.visibility === "PUBLIC"
+      ? props.theme.colors.success + "20"
+      : props.visibility === "UNLISTED"
+        ? props.theme.colors.warning + "20"
+        : props.theme.colors.error + "20"};
+  color: ${(props) =>
+    props.visibility === "PUBLIC"
+      ? props.theme.colors.success
+      : props.visibility === "UNLISTED"
+        ? props.theme.colors.warning
+        : props.theme.colors.error};
 `;
 
-const ActionButton = styled.button<{ variant?: 'primary' | 'danger' }>`
+const ActionButton = styled.button<{ variant?: "primary" | "danger" }>`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
@@ -174,17 +177,17 @@ const ActionButton = styled.button<{ variant?: 'primary' | 'danger' }>`
   border: none;
   cursor: pointer;
   transition: all 0.2s;
-  
-  background: ${props => 
-    props.variant === 'danger' ? props.theme.colors.error :
-    props.theme.colors.primary
-  };
+
+  background: ${(props) =>
+    props.variant === "danger"
+      ? props.theme.colors.error
+      : props.theme.colors.primary};
   color: white;
-  
+
   &:hover {
     opacity: 0.8;
   }
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -200,7 +203,7 @@ const ActionsOverlay = styled.div`
   opacity: 0;
   transition: opacity 0.2s;
   z-index: 1;
-  
+
   ${Card}:hover & {
     opacity: 1;
   }
@@ -247,15 +250,15 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   currentMainMediaId,
   onSetAsMain,
   onRemoveAsMain,
-  isSettingMain = false
+  isSettingMain = false,
 }) => {
   const isImage = !!media.image;
   const isText = !!media.textContent;
   const isMainMedia = currentMainMediaId === media.id;
   const showSetAsMainActions = !!characterId && !!onSetAsMain;
   const plainDescription = useMemo(
-    () => media.description ? stripMarkdown(media.description) : '',
-    [media.description]
+    () => (media.description ? stripMarkdown(media.description) : ""),
+    [media.description],
   );
 
   const renderMediaPreview = () => {
@@ -268,17 +271,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({
         />
       );
     } else if (isText && media.textContent) {
-      return (
-        <TextPreview>
-          {media.textContent.content}
-        </TextPreview>
-      );
+      return <TextPreview>{media.textContent.content}</TextPreview>;
     } else {
       return (
         <PlaceholderContent>
-          <TextIcon>
-            {isImage ? '🖼️' : '📝'}
-          </TextIcon>
+          <TextIcon>{isImage ? "🖼️" : "📝"}</TextIcon>
           <span>No content available</span>
         </PlaceholderContent>
       );
@@ -302,18 +299,14 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   return (
     <Card
       to={`/media/${media.id}`}
-      aria-label={`View ${isImage ? 'image' : 'text'} ${media.title}`}
+      aria-label={`View ${isImage ? "image" : "text"} ${media.title}`}
     >
       <MediaSection>
         {renderMediaPreview()}
-        
+
         {/* Main Image Badge */}
-        {isMainMedia && (
-          <MainImageBadge>
-            Main Image
-          </MainImageBadge>
-        )}
-        
+        {isMainMedia && <MainImageBadge>Main Image</MainImageBadge>}
+
         {/* Set as Main Actions */}
         {showSetAsMainActions && (
           <ActionsOverlay>
@@ -324,7 +317,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
                 disabled={isSettingMain}
                 title="Remove as main image"
               >
-                {isSettingMain ? '...' : 'Remove Main'}
+                {isSettingMain ? "..." : "Remove Main"}
               </ActionButton>
             ) : (
               <ActionButton
@@ -332,19 +325,17 @@ export const MediaCard: React.FC<MediaCardProps> = ({
                 disabled={isSettingMain}
                 title="Set as main image"
               >
-                {isSettingMain ? '...' : 'Set as Main'}
+                {isSettingMain ? "..." : "Set as Main"}
               </ActionButton>
             )}
           </ActionsOverlay>
         )}
       </MediaSection>
-      
+
       <Content>
         <Title>{media.title}</Title>
-        {plainDescription && (
-          <Description>{plainDescription}</Description>
-        )}
-        
+        {plainDescription && <Description>{plainDescription}</Description>}
+
         <Meta>
           {showOwner ? (
             <OwnerInfo>
@@ -355,7 +346,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
           )}
           <MetaContainer>
             <TypeBadge $isImage={isImage}>
-              {isImage ? 'image' : 'text'}
+              {isImage ? "image" : "text"}
             </TypeBadge>
             {isText && media.textContent && (
               <Badge>{media.textContent.wordCount} words</Badge>

@@ -1,14 +1,23 @@
-import { Injectable, ForbiddenException, BadRequestException, NotFoundException } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { PermissionService } from '../auth/PermissionService';
-import { CommunityPermission } from '../auth/CommunityPermission';
-import { EmailService } from '../email/email.service';
-import { ModerationStatus, ModerationRejectionReason, Prisma } from '@prisma/client';
-import { ImageModerationQueueFiltersInput } from './dto/image-moderation.dto';
+import {
+  Injectable,
+  ForbiddenException,
+  BadRequestException,
+  NotFoundException,
+} from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { PermissionService } from "../auth/PermissionService";
+import { CommunityPermission } from "../auth/CommunityPermission";
+import { EmailService } from "../email/email.service";
+import {
+  ModerationStatus,
+  ModerationRejectionReason,
+  Prisma,
+} from "@prisma/client";
+import { ImageModerationQueueFiltersInput } from "./dto/image-moderation.dto";
 import {
   queueImageInclude,
   moderationActionInclude,
-} from './utils/image-moderation-mappers';
+} from "./utils/image-moderation-mappers";
 
 @Injectable()
 export class ImageModerationService {
@@ -39,7 +48,10 @@ export class ImageModerationService {
   /**
    * Check if a user can moderate a specific image
    */
-  async canUserModerateImage(userId: string, imageId: string): Promise<boolean> {
+  async canUserModerateImage(
+    userId: string,
+    imageId: string,
+  ): Promise<boolean> {
     // Check if user is a global admin
     const user = await this.db.user.findUnique({
       where: { id: userId },
@@ -128,7 +140,7 @@ export class ImageModerationService {
       this.db.image.findMany({
         where: whereClause,
         include: queueImageInclude,
-        orderBy: { createdAt: 'asc' },
+        orderBy: { createdAt: "asc" },
         skip: offset,
         take: first + 1, // Fetch one extra to check hasMore
       }),
@@ -172,7 +184,7 @@ export class ImageModerationService {
       this.db.image.findMany({
         where: whereClause,
         include: queueImageInclude,
-        orderBy: { createdAt: 'asc' },
+        orderBy: { createdAt: "asc" },
         skip: offset,
         take: first + 1,
       }),
@@ -192,7 +204,9 @@ export class ImageModerationService {
     // Verify permission
     const canModerate = await this.canUserModerateImage(moderatorId, imageId);
     if (!canModerate) {
-      throw new ForbiddenException('You do not have permission to moderate this image');
+      throw new ForbiddenException(
+        "You do not have permission to moderate this image",
+      );
     }
 
     // Get the image
@@ -202,11 +216,11 @@ export class ImageModerationService {
     });
 
     if (!image) {
-      throw new NotFoundException('Image not found');
+      throw new NotFoundException("Image not found");
     }
 
     if (image.moderationStatus !== ModerationStatus.PENDING) {
-      throw new BadRequestException('Image is not pending moderation');
+      throw new BadRequestException("Image is not pending moderation");
     }
 
     // Update image and create action record in a transaction
@@ -226,7 +240,11 @@ export class ImageModerationService {
     ]);
 
     // Send notification email
-    await this.sendApprovalNotification(image.uploader.email, image.uploader.username, image.originalFilename);
+    await this.sendApprovalNotification(
+      image.uploader.email,
+      image.uploader.username,
+      image.originalFilename,
+    );
 
     return action;
   }
@@ -242,13 +260,17 @@ export class ImageModerationService {
   ) {
     // Validate reasonText is provided when reason is OTHER
     if (reason === ModerationRejectionReason.OTHER && !reasonText) {
-      throw new BadRequestException('Reason text is required when rejection reason is OTHER');
+      throw new BadRequestException(
+        "Reason text is required when rejection reason is OTHER",
+      );
     }
 
     // Verify permission
     const canModerate = await this.canUserModerateImage(moderatorId, imageId);
     if (!canModerate) {
-      throw new ForbiddenException('You do not have permission to moderate this image');
+      throw new ForbiddenException(
+        "You do not have permission to moderate this image",
+      );
     }
 
     // Get the image
@@ -258,11 +280,11 @@ export class ImageModerationService {
     });
 
     if (!image) {
-      throw new NotFoundException('Image not found');
+      throw new NotFoundException("Image not found");
     }
 
     if (image.moderationStatus !== ModerationStatus.PENDING) {
-      throw new BadRequestException('Image is not pending moderation');
+      throw new BadRequestException("Image is not pending moderation");
     }
 
     // Update image and create action record in a transaction
@@ -329,12 +351,20 @@ export class ImageModerationService {
   /**
    * Send approval notification email
    */
-  private async sendApprovalNotification(email: string, username: string, imageName: string): Promise<void> {
+  private async sendApprovalNotification(
+    email: string,
+    username: string,
+    imageName: string,
+  ): Promise<void> {
     try {
-      await this.emailService.sendImageApprovedEmail(email, username, imageName);
+      await this.emailService.sendImageApprovedEmail(
+        email,
+        username,
+        imageName,
+      );
     } catch (error) {
       // Log but don't fail the operation
-      console.error('Failed to send approval notification email:', error);
+      console.error("Failed to send approval notification email:", error);
     }
   }
 
@@ -349,10 +379,16 @@ export class ImageModerationService {
     reasonText?: string,
   ): Promise<void> {
     try {
-      await this.emailService.sendImageRejectedEmail(email, username, imageName, reason, reasonText);
+      await this.emailService.sendImageRejectedEmail(
+        email,
+        username,
+        imageName,
+        reason,
+        reasonText,
+      );
     } catch (error) {
       // Log but don't fail the operation
-      console.error('Failed to send rejection notification email:', error);
+      console.error("Failed to send rejection notification email:", error);
     }
   }
 }

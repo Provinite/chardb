@@ -31,12 +31,18 @@ export async function ensureDir(dir: string): Promise<void> {
   await fs.mkdir(dir, { recursive: true });
 }
 
-export async function writeJson(filePath: string, data: unknown): Promise<void> {
+export async function writeJson(
+  filePath: string,
+  data: unknown,
+): Promise<void> {
   await ensureDir(path.dirname(filePath));
   await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf-8");
 }
 
-export async function readJson<T extends z.ZodTypeAny>(filePath: string, schema: T): Promise<z.output<T>> {
+export async function readJson<T extends z.ZodTypeAny>(
+  filePath: string,
+  schema: T,
+): Promise<z.output<T>> {
   const raw = await fs.readFile(filePath, "utf-8");
   const parsed = JSON.parse(raw);
   return schema.parse(parsed) as z.output<T>;

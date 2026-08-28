@@ -1,7 +1,7 @@
-import React from 'react';
-import styled from 'styled-components';
-import { Input } from '@chardb/ui';
-import { TraitValueType } from '../../generated/graphql';
+import React from "react";
+import styled from "styled-components";
+import { Input } from "@chardb/ui";
+import { TraitValueType } from "../../generated/graphql";
 
 interface TraitDefaultValueInputProps {
   valueType: TraitValueType;
@@ -69,7 +69,7 @@ export const TraitDefaultValueInput: React.FC<TraitDefaultValueInputProps> = ({
   };
 
   const handleIntChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value === '' ? null : parseInt(e.target.value, 10);
+    const value = e.target.value === "" ? null : parseInt(e.target.value, 10);
     onChange({
       defaultValueString: null,
       defaultValueInt: value,
@@ -86,7 +86,7 @@ export const TraitDefaultValueInput: React.FC<TraitDefaultValueInputProps> = ({
   };
 
   const handleEnumChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value === '' ? null : e.target.value;
+    const value = e.target.value === "" ? null : e.target.value;
     onChange({
       defaultValueString: value,
       defaultValueInt: null,
@@ -101,7 +101,7 @@ export const TraitDefaultValueInput: React.FC<TraitDefaultValueInputProps> = ({
           <Label>Default Value</Label>
           <Input
             type="text"
-            value={defaultValueString || ''}
+            value={defaultValueString || ""}
             onChange={handleStringChange}
             placeholder="Enter default text value..."
             disabled={disabled}
@@ -115,7 +115,11 @@ export const TraitDefaultValueInput: React.FC<TraitDefaultValueInputProps> = ({
           <Label>Default Value</Label>
           <Input
             type="number"
-            value={defaultValueInt !== null && defaultValueInt !== undefined ? defaultValueInt : ''}
+            value={
+              defaultValueInt !== null && defaultValueInt !== undefined
+                ? defaultValueInt
+                : ""
+            }
             onChange={handleIntChange}
             placeholder="Enter default number..."
             disabled={disabled}
@@ -129,7 +133,9 @@ export const TraitDefaultValueInput: React.FC<TraitDefaultValueInputProps> = ({
           <Label>Default Value</Label>
           <Input
             type="date"
-            value={defaultValueTimestamp ? defaultValueTimestamp.split('T')[0] : ''}
+            value={
+              defaultValueTimestamp ? defaultValueTimestamp.split("T")[0] : ""
+            }
             onChange={handleTimestampChange}
             disabled={disabled}
           />
@@ -141,7 +147,7 @@ export const TraitDefaultValueInput: React.FC<TraitDefaultValueInputProps> = ({
         <Container>
           <Label>Default Value</Label>
           <Select
-            value={defaultValueString || ''}
+            value={defaultValueString || ""}
             onChange={handleEnumChange}
             disabled={disabled || enumValues.length === 0}
           >

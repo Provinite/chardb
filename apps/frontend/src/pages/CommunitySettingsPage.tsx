@@ -1,17 +1,17 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import styled from 'styled-components';
-import { Settings, ArrowLeft } from 'lucide-react';
+import React from "react";
+import { useParams } from "react-router-dom";
+import styled from "styled-components";
+import { Settings, ArrowLeft } from "lucide-react";
 import {
   Button,
   Heading2,
   SmallText,
   HelpText,
-  ErrorMessage
-} from '@chardb/ui';
-import { useCommunityByIdQuery } from '../graphql/communities.graphql';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { DiscordIntegrationSettings } from '../components/DiscordIntegrationSettings';
+  ErrorMessage,
+} from "@chardb/ui";
+import { useCommunityByIdQuery } from "../graphql/communities.graphql";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { DiscordIntegrationSettings } from "../components/DiscordIntegrationSettings";
 
 const Container = styled.div`
   display: flex;
@@ -86,7 +86,7 @@ export const CommunitySettingsPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
 
   const { data, loading, error, refetch } = useCommunityByIdQuery({
-    variables: { id: communityId || '' },
+    variables: { id: communityId || "" },
     skip: !communityId,
   });
 
@@ -123,7 +123,7 @@ export const CommunitySettingsPage: React.FC = () => {
             </BackButton>
           </HeaderTop>
         </Header>
-        <ErrorMessage message={error?.message || 'Community not found'} />
+        <ErrorMessage message={error?.message || "Community not found"} />
       </Container>
     );
   }
@@ -150,7 +150,7 @@ export const CommunitySettingsPage: React.FC = () => {
             </HeaderIcon>
             <HeaderText>
               <Heading2>{community.name} Settings</Heading2>
-              <SmallText style={{ margin: 0, color: 'muted' }}>
+              <SmallText style={{ margin: 0, color: "muted" }}>
                 Configure community information and preferences
               </SmallText>
             </HeaderText>
@@ -159,7 +159,10 @@ export const CommunitySettingsPage: React.FC = () => {
       </Header>
 
       <Content>
-        <DiscordIntegrationSettings community={community} onUpdate={() => refetch()} />
+        <DiscordIntegrationSettings
+          community={community}
+          onUpdate={() => refetch()}
+        />
       </Content>
     </Container>
   );

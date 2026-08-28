@@ -1,14 +1,9 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import styled from 'styled-components';
-import { Image, ArrowLeft } from 'lucide-react';
-import {
-  Button,
-  Heading2,
-  SmallText,
-  HelpText
-} from '@chardb/ui';
-import { ImageModerationQueue } from '../components/moderation';
+import React from "react";
+import { useParams } from "react-router-dom";
+import styled from "styled-components";
+import { Image, ArrowLeft } from "lucide-react";
+import { Button, Heading2, SmallText, HelpText } from "@chardb/ui";
+import { ImageModerationQueue } from "../components/moderation";
 
 const Container = styled.div`
   display: flex;
@@ -73,7 +68,9 @@ export const ImageModerationPage: React.FC = () => {
     return (
       <Container>
         <Heading2>Invalid Community</Heading2>
-        <HelpText>Community ID is required to access moderation tools.</HelpText>
+        <HelpText>
+          Community ID is required to access moderation tools.
+        </HelpText>
       </Container>
     );
   }
@@ -98,7 +95,7 @@ export const ImageModerationPage: React.FC = () => {
             </HeaderIcon>
             <HeaderText>
               <Heading2>Image Moderation</Heading2>
-              <SmallText style={{ margin: 0, color: 'muted' }}>
+              <SmallText style={{ margin: 0, color: "muted" }}>
                 Review and approve or reject uploaded images
               </SmallText>
             </HeaderText>

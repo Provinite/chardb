@@ -1,7 +1,7 @@
-import React from 'react';
-import styled from 'styled-components';
-import { toast } from 'react-hot-toast';
-import { useAuth } from '../contexts/AuthContext';
+import React from "react";
+import styled from "styled-components";
+import { toast } from "react-hot-toast";
+import { useAuth } from "../contexts/AuthContext";
 
 const Button = styled.button`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
@@ -38,7 +38,7 @@ interface CopyIdButtonProps {
  */
 export const CopyIdButton: React.FC<CopyIdButtonProps> = ({
   id,
-  label = '📋',
+  label = "📋",
   onCopy,
   onClick,
   className,
@@ -53,7 +53,7 @@ export const CopyIdButton: React.FC<CopyIdButtonProps> = ({
     e.preventDefault();
     e.stopPropagation();
     navigator.clipboard.writeText(id);
-    toast.success('ID copied to clipboard');
+    toast.success("ID copied to clipboard");
     onCopy?.();
     onClick?.(e);
   };

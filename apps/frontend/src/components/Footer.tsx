@@ -1,5 +1,5 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 const FooterContainer = styled.footer`
   background-color: ${({ theme }) => theme.colors.surface};
@@ -18,8 +18,8 @@ const FooterContent = styled.div`
 `;
 
 export const Footer: React.FC = () => {
-  const version = import.meta.env.VITE_VERSION || 'unknown';
-  
+  const version = import.meta.env.VITE_VERSION || "unknown";
+
   return (
     <FooterContainer>
       <FooterContent>

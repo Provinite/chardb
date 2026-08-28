@@ -1,6 +1,6 @@
-import React from 'react';
-import styled from 'styled-components';
-import { CharacterCard, CharacterCardItem } from './CharacterCard';
+import React from "react";
+import styled from "styled-components";
+import { CharacterCard, CharacterCardItem } from "./CharacterCard";
 
 const Grid = styled.div`
   display: grid;
@@ -15,10 +15,10 @@ interface CharacterGridProps {
   showEditButton?: boolean;
 }
 
-export const CharacterGrid: React.FC<CharacterGridProps> = ({ 
-  characters, 
+export const CharacterGrid: React.FC<CharacterGridProps> = ({
+  characters,
   showOwner = true,
-  showEditButton = false
+  showEditButton = false,
 }) => {
   return (
     <Grid>

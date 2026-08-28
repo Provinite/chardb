@@ -1,6 +1,15 @@
-import { CreateCommunityMemberInput, UpdateCommunityMemberInput } from "../dto/community-member.dto";
-import { CommunityMember, CommunityMemberConnection } from "../entities/community-member.entity";
-import { CreateCommunityMemberServiceInput, UpdateCommunityMemberServiceInput } from "../community-members.service";
+import {
+  CreateCommunityMemberInput,
+  UpdateCommunityMemberInput,
+} from "../dto/community-member.dto";
+import {
+  CommunityMember,
+  CommunityMemberConnection,
+} from "../entities/community-member.entity";
+import {
+  CreateCommunityMemberServiceInput,
+  UpdateCommunityMemberServiceInput,
+} from "../community-members.service";
 import { Prisma } from "@chardb/database";
 
 /**
@@ -10,7 +19,9 @@ import { Prisma } from "@chardb/database";
 /**
  * Maps CreateCommunityMemberInput to service input format
  */
-export function mapCreateCommunityMemberInputToService(input: CreateCommunityMemberInput): CreateCommunityMemberServiceInput {
+export function mapCreateCommunityMemberInputToService(
+  input: CreateCommunityMemberInput,
+): CreateCommunityMemberServiceInput {
   return {
     userId: input.userId,
     roleId: input.roleId,
@@ -20,7 +31,9 @@ export function mapCreateCommunityMemberInputToService(input: CreateCommunityMem
 /**
  * Maps UpdateCommunityMemberInput to service input format
  */
-export function mapUpdateCommunityMemberInputToService(input: UpdateCommunityMemberInput): UpdateCommunityMemberServiceInput {
+export function mapUpdateCommunityMemberInputToService(
+  input: UpdateCommunityMemberInput,
+): UpdateCommunityMemberServiceInput {
   const result: UpdateCommunityMemberServiceInput = {};
 
   if (input.roleId !== undefined) result.roleId = input.roleId;
@@ -34,7 +47,9 @@ type PrismaCommunityMember = Prisma.CommunityMemberGetPayload<{}>;
  * Maps Prisma CommunityMember result to GraphQL CommunityMember entity
  * Only includes scalar fields - relations handled by field resolvers
  */
-export function mapPrismaCommunityMemberToGraphQL(prismaCommunityMember: PrismaCommunityMember): CommunityMember {
+export function mapPrismaCommunityMemberToGraphQL(
+  prismaCommunityMember: PrismaCommunityMember,
+): CommunityMember {
   return {
     id: prismaCommunityMember.id,
     userId: prismaCommunityMember.userId,

@@ -67,11 +67,13 @@ export type DescriptionBadge = z.infer<typeof DescriptionBadgeSchema>;
 
 export const DeviationOverrideSchema = z.object({
   numericId: z.string(),
-  traits: z.array(z.object({
-    traitId: z.string(),
-    enumValueId: z.string(),
-    rarity: z.string().optional(),
-  })),
+  traits: z.array(
+    z.object({
+      traitId: z.string(),
+      enumValueId: z.string(),
+      rarity: z.string().optional(),
+    }),
+  ),
 });
 
 export type DeviationOverride = z.infer<typeof DeviationOverrideSchema>;

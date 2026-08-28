@@ -15,7 +15,8 @@ import { seedPersonas } from "./seed-personas/index";
 const args = process.argv.slice(2);
 
 const options = {
-  graphqlEndpoint: process.env.GRAPHQL_ENDPOINT ?? "http://localhost:4000/graphql",
+  graphqlEndpoint:
+    process.env.GRAPHQL_ENDPOINT ?? "http://localhost:4000/graphql",
   skipSampleData: args.includes("--skip-sample-data"),
 };
 

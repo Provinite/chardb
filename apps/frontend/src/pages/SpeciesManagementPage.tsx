@@ -133,7 +133,7 @@ const ClickableCard = styled(Link)`
   text-decoration: none;
   color: inherit;
   display: block;
-  
+
   ${Card} {
     cursor: pointer;
   }
@@ -150,7 +150,6 @@ const SpeciesName = styled.h3`
   margin: 0;
   line-height: 1.2;
 `;
-
 
 const CardMeta = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
@@ -293,9 +292,7 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
 
         <div style={{ marginBottom: "1rem" }}>
           <label>Community</label>
-          <CommunityDisplay>
-            {communityName}
-          </CommunityDisplay>
+          <CommunityDisplay>{communityName}</CommunityDisplay>
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
@@ -364,18 +361,15 @@ export const SpeciesManagementPage: React.FC = () => {
   });
 
   // Fetch the specific community
-  const {
-    data: communityData,
-    loading: communityLoading,
-  } = useCommunityByIdQuery({
-    variables: { id: communityId },
-  });
-
+  const { data: communityData, loading: communityLoading } =
+    useCommunityByIdQuery({
+      variables: { id: communityId },
+    });
 
   const [createSpeciesMutation] = useCreateSpeciesMutation({
     onCompleted: (data) => {
       toast.success(
-        `Species "${data.createSpecies.name}" created successfully!`
+        `Species "${data.createSpecies.name}" created successfully!`,
       );
       refetch();
     },
@@ -405,7 +399,7 @@ export const SpeciesManagementPage: React.FC = () => {
     if (!searchQuery.trim()) return nodes;
 
     return nodes.filter((species) =>
-      species.name.toLowerCase().includes(searchQuery.toLowerCase())
+      species.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [speciesData, searchQuery]);
 
@@ -422,10 +416,10 @@ export const SpeciesManagementPage: React.FC = () => {
     });
   };
 
-  const handleDeleteSpecies = async (species: typeof filteredSpecies[0]) => {
+  const handleDeleteSpecies = async (species: (typeof filteredSpecies)[0]) => {
     if (
       !window.confirm(
-        `Are you sure you want to delete "${species.name}"? This action cannot be undone and will also delete all associated variants, traits, and character data.`
+        `Are you sure you want to delete "${species.name}"? This action cannot be undone and will also delete all associated variants, traits, and character data.`,
       )
     ) {
       return;
@@ -436,17 +430,17 @@ export const SpeciesManagementPage: React.FC = () => {
     });
   };
 
-  const handleEditSpecies = (species: typeof filteredSpecies[0]) => {
+  const handleEditSpecies = (species: (typeof filteredSpecies)[0]) => {
     // Navigate to species detail/edit page
     navigate(`/species/${species.id}/edit`);
   };
 
-  const handleManageTraits = (species: typeof filteredSpecies[0]) => {
+  const handleManageTraits = (species: (typeof filteredSpecies)[0]) => {
     // Navigate to trait builder for this species
     navigate(`/species/${species.id}/traits`);
   };
 
-  const handleManageVariants = (species: typeof filteredSpecies[0]) => {
+  const handleManageVariants = (species: (typeof filteredSpecies)[0]) => {
     // Navigate to variant management for this species
     navigate(`/species/${species.id}/variants`);
   };
@@ -493,17 +487,15 @@ export const SpeciesManagementPage: React.FC = () => {
       <Header>
         <Title>Species Management</Title>
         <Subtitle>
-          Manage species for {currentCommunity?.name || 'this community'} ({totalCount} species)
+          Manage species for {currentCommunity?.name || "this community"} (
+          {totalCount} species)
         </Subtitle>
       </Header>
 
       {communityId && currentCommunity && (
         <FilterInfo>
           <p>
-            Explore all species in{' '}
-            <strong>
-              {currentCommunity.name}
-            </strong>
+            Explore all species in <strong>{currentCommunity.name}</strong>
           </p>
         </FilterInfo>
       )}
@@ -610,7 +602,7 @@ export const SpeciesManagementPage: React.FC = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateSpecies}
-        communityName={currentCommunity?.name || 'Loading...'}
+        communityName={currentCommunity?.name || "Loading..."}
       />
     </Container>
   );

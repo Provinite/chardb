@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
-import styled from 'styled-components';
-import { Type, Hash, Calendar, List } from 'lucide-react';
-import { TraitValueType } from '../../generated/graphql';
-import { ColorPip } from '../colors/ColorPip';
+import React, { useMemo } from "react";
+import styled from "styled-components";
+import { Type, Hash, Calendar, List } from "lucide-react";
+import { TraitValueType } from "../../generated/graphql";
+import { ColorPip } from "../colors/ColorPip";
 
 type TraitValue = {
   traitId: string;
@@ -20,7 +20,7 @@ type TraitValue = {
   } | null;
 };
 
-type DiffStatus = 'added' | 'removed' | 'changed' | 'unchanged';
+type DiffStatus = "added" | "removed" | "changed" | "unchanged";
 
 type GroupedValue = {
   value: string | number | boolean | null;
@@ -72,14 +72,19 @@ const TraitGrid = styled.div`
 const TraitItem = styled.div<{ $status: DiffStatus }>`
   padding: 1rem;
   background: ${({ theme }) => theme.colors.surface};
-  border: 2px solid ${({ theme, $status }) => {
-    switch ($status) {
-      case 'added': return theme.colors.success;
-      case 'removed': return theme.colors.error;
-      case 'changed': return theme.colors.warning;
-      default: return theme.colors.border;
-    }
-  }};
+  border: 2px solid
+    ${({ theme, $status }) => {
+      switch ($status) {
+        case "added":
+          return theme.colors.success;
+        case "removed":
+          return theme.colors.error;
+        case "changed":
+          return theme.colors.warning;
+        default:
+          return theme.colors.border;
+      }
+    }};
   border-radius: 8px;
 `;
 
@@ -117,18 +122,26 @@ const StatusBadge = styled.span<{ $status: DiffStatus }>`
   border-radius: 4px;
   background: ${({ theme, $status }) => {
     switch ($status) {
-      case 'added': return theme.colors.success + '20';
-      case 'removed': return theme.colors.error + '20';
-      case 'changed': return theme.colors.warning + '20';
-      default: return 'transparent';
+      case "added":
+        return theme.colors.success + "20";
+      case "removed":
+        return theme.colors.error + "20";
+      case "changed":
+        return theme.colors.warning + "20";
+      default:
+        return "transparent";
     }
   }};
   color: ${({ theme, $status }) => {
     switch ($status) {
-      case 'added': return theme.colors.success;
-      case 'removed': return theme.colors.error;
-      case 'changed': return theme.colors.warning;
-      default: return theme.colors.text.muted;
+      case "added":
+        return theme.colors.success;
+      case "removed":
+        return theme.colors.error;
+      case "changed":
+        return theme.colors.warning;
+      default:
+        return theme.colors.text.muted;
     }
   }};
 `;
@@ -139,25 +152,27 @@ const TraitValues = styled.div`
   gap: 0.5rem;
 `;
 
-const ValueChip = styled.span<{ $diff?: 'added' | 'removed' }>`
+const ValueChip = styled.span<{ $diff?: "added" | "removed" }>`
   display: inline-flex;
   align-items: center;
   padding: 0.375rem 0.75rem;
   background: ${({ theme, $diff }) => {
-    if ($diff === 'added') return theme.colors.success + '15';
-    if ($diff === 'removed') return theme.colors.error + '15';
-    return theme.colors.primary + '15';
+    if ($diff === "added") return theme.colors.success + "15";
+    if ($diff === "removed") return theme.colors.error + "15";
+    return theme.colors.primary + "15";
   }};
-  border: 1px solid ${({ theme, $diff }) => {
-    if ($diff === 'added') return theme.colors.success + '30';
-    if ($diff === 'removed') return theme.colors.error + '30';
-    return theme.colors.primary + '30';
-  }};
+  border: 1px solid
+    ${({ theme, $diff }) => {
+      if ($diff === "added") return theme.colors.success + "30";
+      if ($diff === "removed") return theme.colors.error + "30";
+      return theme.colors.primary + "30";
+    }};
   border-radius: 16px;
   font-size: 0.875rem;
   color: ${({ theme }) => theme.colors.text.primary};
   font-weight: 500;
-  ${({ $diff }) => $diff === 'removed' && 'text-decoration: line-through; opacity: 0.7;'}
+  ${({ $diff }) =>
+    $diff === "removed" && "text-decoration: line-through; opacity: 0.7;"}
 `;
 
 const ColorPipWrapper = styled.span`
@@ -173,21 +188,29 @@ const TraitValue = styled.span`
 
 const getTraitTypeIcon = (type: TraitValueType) => {
   switch (type) {
-    case TraitValueType.String: return <Type size={14} />;
-    case TraitValueType.Integer: return <Hash size={14} />;
-    case TraitValueType.Timestamp: return <Calendar size={14} />;
-    case TraitValueType.Enum: return <List size={14} />;
-    default: return null;
+    case TraitValueType.String:
+      return <Type size={14} />;
+    case TraitValueType.Integer:
+      return <Hash size={14} />;
+    case TraitValueType.Timestamp:
+      return <Calendar size={14} />;
+    case TraitValueType.Enum:
+      return <List size={14} />;
+    default:
+      return null;
   }
 };
 
 function groupTraitValues(traitValues: TraitValue[]) {
-  const grouped = new Map<string, {
-    traitName: string;
-    valueType: TraitValueType;
-    allowsMultipleValues: boolean;
-    values: GroupedValue[];
-  }>();
+  const grouped = new Map<
+    string,
+    {
+      traitName: string;
+      valueType: TraitValueType;
+      allowsMultipleValues: boolean;
+      values: GroupedValue[];
+    }
+  >();
 
   for (const tv of traitValues) {
     if (!tv.trait) continue;
@@ -231,7 +254,7 @@ export const TraitDiffDisplay: React.FC<TraitDiffDisplayProps> = ({
           traitName: prop.traitName,
           valueType: prop.valueType,
           allowsMultipleValues: prop.allowsMultipleValues,
-          status: 'added',
+          status: "added",
           previousValues: [],
           proposedValues: prop.values,
         });
@@ -241,14 +264,15 @@ export const TraitDiffDisplay: React.FC<TraitDiffDisplayProps> = ({
           traitName: prev.traitName,
           valueType: prev.valueType,
           allowsMultipleValues: prev.allowsMultipleValues,
-          status: 'removed',
+          status: "removed",
           previousValues: prev.values,
           proposedValues: [],
         });
       } else if (prev && prop) {
         const prevKeys = new Set(prev.values.map(diffKey));
         const propKeys = new Set(prop.values.map(diffKey));
-        const isChanged = prevKeys.size !== propKeys.size ||
+        const isChanged =
+          prevKeys.size !== propKeys.size ||
           [...prevKeys].some((k) => !propKeys.has(k));
 
         result.push({
@@ -256,7 +280,7 @@ export const TraitDiffDisplay: React.FC<TraitDiffDisplayProps> = ({
           traitName: prop.traitName,
           valueType: prop.valueType,
           allowsMultipleValues: prop.allowsMultipleValues,
-          status: isChanged ? 'changed' : 'unchanged',
+          status: isChanged ? "changed" : "unchanged",
           previousValues: prev.values,
           proposedValues: prop.values,
         });
@@ -272,35 +296,47 @@ export const TraitDiffDisplay: React.FC<TraitDiffDisplayProps> = ({
         {diffedTraits.map((trait) => (
           <TraitItem key={trait.traitId} $status={trait.status}>
             <TraitHeader>
-              <TraitIcon>
-                {getTraitTypeIcon(trait.valueType)}
-              </TraitIcon>
+              <TraitIcon>{getTraitTypeIcon(trait.valueType)}</TraitIcon>
               <TraitName>{trait.traitName}</TraitName>
-              {trait.status !== 'unchanged' && (
+              {trait.status !== "unchanged" && (
                 <StatusBadge $status={trait.status}>{trait.status}</StatusBadge>
               )}
             </TraitHeader>
 
             <TraitValues>
-              {trait.status === 'changed' && trait.allowsMultipleValues ? (
+              {trait.status === "changed" && trait.allowsMultipleValues ? (
                 // For multi-value changed traits, show individual value diffs
                 <>
                   {trait.previousValues
-                    .filter((pv) => !trait.proposedValues.some((v) => diffKey(v) === diffKey(pv)))
+                    .filter(
+                      (pv) =>
+                        !trait.proposedValues.some(
+                          (v) => diffKey(v) === diffKey(pv),
+                        ),
+                    )
                     .map((v, i) => (
                       <ValueChip key={`removed-${i}`} $diff="removed">
                         {v.enumValueColor && (
-                          <ColorPipWrapper><ColorPip color={v.enumValueColor} size="sm" /></ColorPipWrapper>
+                          <ColorPipWrapper>
+                            <ColorPip color={v.enumValueColor} size="sm" />
+                          </ColorPipWrapper>
                         )}
                         {renderLabel(v)}
                       </ValueChip>
                     ))}
                   {trait.proposedValues.map((v, i) => {
-                    const isNew = !trait.previousValues.some((pv) => diffKey(pv) === diffKey(v));
+                    const isNew = !trait.previousValues.some(
+                      (pv) => diffKey(pv) === diffKey(v),
+                    );
                     return (
-                      <ValueChip key={`prop-${i}`} $diff={isNew ? 'added' : undefined}>
+                      <ValueChip
+                        key={`prop-${i}`}
+                        $diff={isNew ? "added" : undefined}
+                      >
                         {v.enumValueColor && (
-                          <ColorPipWrapper><ColorPip color={v.enumValueColor} size="sm" /></ColorPipWrapper>
+                          <ColorPipWrapper>
+                            <ColorPip color={v.enumValueColor} size="sm" />
+                          </ColorPipWrapper>
                         )}
                         {renderLabel(v)}
                       </ValueChip>
@@ -309,10 +345,15 @@ export const TraitDiffDisplay: React.FC<TraitDiffDisplayProps> = ({
                 </>
               ) : (
                 // For single-value or non-changed traits, show the proposed (or previous for removed)
-                (trait.status === 'removed' ? trait.previousValues : trait.proposedValues).map((v, i) => (
+                (trait.status === "removed"
+                  ? trait.previousValues
+                  : trait.proposedValues
+                ).map((v, i) => (
                   <ValueChip key={i}>
                     {v.enumValueColor && (
-                      <ColorPipWrapper><ColorPip color={v.enumValueColor} size="sm" /></ColorPipWrapper>
+                      <ColorPipWrapper>
+                        <ColorPip color={v.enumValueColor} size="sm" />
+                      </ColorPipWrapper>
                     )}
                     {renderLabel(v)}
                   </ValueChip>

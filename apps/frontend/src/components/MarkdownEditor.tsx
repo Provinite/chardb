@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { Markdown } from './Markdown';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { Markdown } from "./Markdown";
 
 const Container = styled.div`
   background: ${({ theme }) => theme.colors.background};
@@ -125,7 +125,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   maxLength = 3000,
   disabled = false,
   placeholder,
-  minHeight = '150px',
+  minHeight = "150px",
 }) => {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const charCount = value.length;
@@ -139,13 +139,14 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             <ToolbarButton
               type="button"
               onClick={() => setIsPreviewMode(!isPreviewMode)}
-              title={isPreviewMode ? 'Switch to edit mode' : 'Preview markdown'}
+              title={isPreviewMode ? "Switch to edit mode" : "Preview markdown"}
             >
-              {isPreviewMode ? '✏️ Edit' : '👁️ Preview'}
+              {isPreviewMode ? "✏️ Edit" : "👁️ Preview"}
             </ToolbarButton>
           </ToolbarButtons>
           <ToolbarHint>
-            Markdown supported: **bold**, *italic*, ~~strikethrough~~, `code`, # headers, &gt; quotes
+            Markdown supported: **bold**, *italic*, ~~strikethrough~~, `code`, #
+            headers, &gt; quotes
           </ToolbarHint>
         </Toolbar>
 
@@ -160,13 +161,18 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           />
         ) : (
           <PreviewContainer $minHeight={minHeight}>
-            {value ? <Markdown>{value}</Markdown> : <p style={{ color: '#999' }}>No content to preview</p>}
+            {value ? (
+              <Markdown>{value}</Markdown>
+            ) : (
+              <p style={{ color: "#999" }}>No content to preview</p>
+            )}
           </PreviewContainer>
         )}
 
         <Footer>
           <CharCount $isNearLimit={isNearLimit}>
-            {charCount.toLocaleString()} / {maxLength.toLocaleString()} characters
+            {charCount.toLocaleString()} / {maxLength.toLocaleString()}{" "}
+            characters
           </CharCount>
         </Footer>
       </Container>

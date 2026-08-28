@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 // Shared user fragment for basic user info with avatar
 export const USER_BASIC_FRAGMENT = gql`

@@ -1,11 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
-import { GalleriesService } from './galleries.service';
-import { DatabaseService } from '../database/database.service';
-import { Visibility } from '@chardb/database';
-import { mockDatabaseService } from '../../test/setup';
+import { Test, TestingModule } from "@nestjs/testing";
+import { NotFoundException, ForbiddenException } from "@nestjs/common";
+import { GalleriesService } from "./galleries.service";
+import { DatabaseService } from "../database/database.service";
+import { Visibility } from "@chardb/database";
+import { mockDatabaseService } from "../../test/setup";
 
-describe('GalleriesService', () => {
+describe("GalleriesService", () => {
   let service: GalleriesService;
   let db: typeof mockDatabaseService;
 
@@ -21,26 +21,28 @@ describe('GalleriesService', () => {
     }).compile();
 
     service = module.get<GalleriesService>(GalleriesService);
-    db = module.get<DatabaseService>(DatabaseService) as unknown as typeof mockDatabaseService;
+    db = module.get<DatabaseService>(
+      DatabaseService,
+    ) as unknown as typeof mockDatabaseService;
   });
 
-  describe('create', () => {
-    it('should create a gallery successfully', async () => {
-      const userId = 'user1';
+  describe("create", () => {
+    it("should create a gallery successfully", async () => {
+      const userId = "user1";
       const input = {
-        name: 'Test Gallery',
-        description: 'A test gallery',
+        name: "Test Gallery",
+        description: "A test gallery",
         visibility: Visibility.PUBLIC,
         sortOrder: 0,
       };
 
       const mockGallery = {
-        id: 'gallery1',
+        id: "gallery1",
         ...input,
         ownerId: userId,
         createdAt: new Date(),
         updatedAt: new Date(),
-        owner: { id: userId, username: 'testuser' },
+        owner: { id: userId, username: "testuser" },
         character: null,
       };
 
@@ -50,8 +52,8 @@ describe('GalleriesService', () => {
 
       expect(db.gallery.create).toHaveBeenCalledWith({
         data: {
-          name: 'Test Gallery',
-          description: 'A test gallery',
+          name: "Test Gallery",
+          description: "A test gallery",
           ownerId: userId,
           characterId: undefined,
           visibility: Visibility.PUBLIC,
@@ -61,36 +63,37 @@ describe('GalleriesService', () => {
       expect(result).toEqual(mockGallery);
     });
 
-    it('should verify character ownership when specified', async () => {
-      const userId = 'user1';
+    it("should verify character ownership when specified", async () => {
+      const userId = "user1";
       const input = {
-        name: 'Character Gallery',
-        characterId: 'char1',
+        name: "Character Gallery",
+        characterId: "char1",
       };
 
       db.character.findFirst.mockResolvedValue({
-        id: 'char1',
-        ownerId: 'user2', // Different user
+        id: "char1",
+        ownerId: "user2", // Different user
       });
 
-      await expect(service.create(userId, input))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.create(userId, input)).rejects.toThrow(
+        ForbiddenException,
+      );
 
       expect(db.character.findFirst).toHaveBeenCalledWith({
-        where: { id: 'char1', deletedAt: null },
+        where: { id: "char1", deletedAt: null },
         select: { ownerId: true },
       });
     });
   });
 
-  describe('findOne', () => {
-    it('should find a public gallery', async () => {
-      const galleryId = 'gallery1';
+  describe("findOne", () => {
+    it("should find a public gallery", async () => {
+      const galleryId = "gallery1";
       const mockGallery = {
         id: galleryId,
-        name: 'Public Gallery',
+        name: "Public Gallery",
         visibility: Visibility.PUBLIC,
-        ownerId: 'user1',
+        ownerId: "user1",
       };
 
       db.gallery.findUnique.mockResolvedValue(mockGallery);
@@ -103,48 +106,52 @@ describe('GalleriesService', () => {
       expect(result).toEqual(mockGallery);
     });
 
-    it('should throw NotFoundException for non-existent gallery', async () => {
-      const galleryId = 'nonexistent';
+    it("should throw NotFoundException for non-existent gallery", async () => {
+      const galleryId = "nonexistent";
       db.gallery.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(galleryId)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(galleryId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
-    it('should throw ForbiddenException for private gallery accessed by non-owner', async () => {
-      const galleryId = 'gallery1';
+    it("should throw ForbiddenException for private gallery accessed by non-owner", async () => {
+      const galleryId = "gallery1";
       const mockGallery = {
         id: galleryId,
-        name: 'Private Gallery',
+        name: "Private Gallery",
         visibility: Visibility.PRIVATE,
-        ownerId: 'user1',
+        ownerId: "user1",
       };
 
       db.gallery.findUnique.mockResolvedValue(mockGallery);
 
-      await expect(service.findOne(galleryId, 'user2')).rejects.toThrow(ForbiddenException);
+      await expect(service.findOne(galleryId, "user2")).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
-    it('should allow owner to access private gallery', async () => {
-      const galleryId = 'gallery1';
+    it("should allow owner to access private gallery", async () => {
+      const galleryId = "gallery1";
       const mockGallery = {
         id: galleryId,
-        name: 'Private Gallery',
+        name: "Private Gallery",
         visibility: Visibility.PRIVATE,
-        ownerId: 'user1',
+        ownerId: "user1",
       };
 
       db.gallery.findUnique.mockResolvedValue(mockGallery);
 
-      const result = await service.findOne(galleryId, 'user1');
+      const result = await service.findOne(galleryId, "user1");
       expect(result).toEqual(mockGallery);
     });
   });
 
-  describe('update', () => {
-    it('should update gallery successfully', async () => {
-      const galleryId = 'gallery1';
-      const userId = 'user1';
-      const input = { name: 'Updated Gallery' };
+  describe("update", () => {
+    it("should update gallery successfully", async () => {
+      const galleryId = "gallery1";
+      const userId = "user1";
+      const input = { name: "Updated Gallery" };
 
       const mockExistingGallery = {
         id: galleryId,
@@ -169,46 +176,48 @@ describe('GalleriesService', () => {
       expect(result).toEqual(mockUpdatedGallery);
     });
 
-    it('should throw ForbiddenException when non-owner tries to update', async () => {
-      const galleryId = 'gallery1';
+    it("should throw ForbiddenException when non-owner tries to update", async () => {
+      const galleryId = "gallery1";
       const mockGallery = {
         id: galleryId,
-        ownerId: 'user1',
+        ownerId: "user1",
         visibility: Visibility.PUBLIC,
       };
 
       db.gallery.findUnique.mockResolvedValue(mockGallery);
 
-      await expect(service.update(galleryId, 'user2', { name: 'Hacked' }))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.update(galleryId, "user2", { name: "Hacked" }),
+      ).rejects.toThrow(ForbiddenException);
     });
 
-    it('should verify new character ownership when changing character', async () => {
-      const galleryId = 'gallery1';
-      const userId = 'user1';
-      const input = { characterId: 'char2' };
+    it("should verify new character ownership when changing character", async () => {
+      const galleryId = "gallery1";
+      const userId = "user1";
+      const input = { characterId: "char2" };
 
       const mockExistingGallery = {
         id: galleryId,
         ownerId: userId,
-        characterId: 'char1',
+        characterId: "char1",
       };
 
       db.gallery.findUnique.mockResolvedValue(mockExistingGallery);
       db.character.findFirst.mockResolvedValue({
-        id: 'char2',
-        ownerId: 'user2', // Different user
+        id: "char2",
+        ownerId: "user2", // Different user
       });
 
-      await expect(service.update(galleryId, userId, input))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.update(galleryId, userId, input)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
-  describe('remove', () => {
-    it('should delete gallery successfully', async () => {
-      const galleryId = 'gallery1';
-      const userId = 'user1';
+  describe("remove", () => {
+    it("should delete gallery successfully", async () => {
+      const galleryId = "gallery1";
+      const userId = "user1";
 
       const mockGallery = {
         id: galleryId,
@@ -227,26 +236,27 @@ describe('GalleriesService', () => {
       expect(result).toBe(true);
     });
 
-    it('should throw ForbiddenException when non-owner tries to delete', async () => {
-      const galleryId = 'gallery1';
+    it("should throw ForbiddenException when non-owner tries to delete", async () => {
+      const galleryId = "gallery1";
       const mockGallery = {
         id: galleryId,
-        ownerId: 'user1',
+        ownerId: "user1",
         visibility: Visibility.PUBLIC,
       };
 
       db.gallery.findUnique.mockResolvedValue(mockGallery);
 
-      await expect(service.remove(galleryId, 'user2'))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.remove(galleryId, "user2")).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
-  describe('findAll', () => {
-    it('should return paginated galleries with proper filtering', async () => {
+  describe("findAll", () => {
+    it("should return paginated galleries with proper filtering", async () => {
       const mockGalleries = [
-        { id: 'gallery1', name: 'Gallery 1', visibility: Visibility.PUBLIC },
-        { id: 'gallery2', name: 'Gallery 2', visibility: Visibility.PUBLIC },
+        { id: "gallery1", name: "Gallery 1", visibility: Visibility.PUBLIC },
+        { id: "gallery2", name: "Gallery 2", visibility: Visibility.PUBLIC },
       ];
 
       db.gallery.findMany.mockResolvedValue(mockGalleries);
@@ -262,14 +272,14 @@ describe('GalleriesService', () => {
 
       expect(db.gallery.findMany).toHaveBeenCalledWith({
         where: expect.any(Object),
-        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
         take: 10,
         skip: 0,
       });
     });
 
-    it('should filter by character when specified', async () => {
-      const characterId = 'char1';
+    it("should filter by character when specified", async () => {
+      const characterId = "char1";
       const filters = { characterId, limit: 10, offset: 0 };
 
       db.gallery.findMany.mockResolvedValue([]);
@@ -279,11 +289,9 @@ describe('GalleriesService', () => {
 
       expect(db.gallery.findMany).toHaveBeenCalledWith({
         where: expect.objectContaining({
-          AND: expect.arrayContaining([
-            { characterId },
-          ]),
+          AND: expect.arrayContaining([{ characterId }]),
         }),
-        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
         take: 10,
         skip: 0,
       });
@@ -292,10 +300,10 @@ describe('GalleriesService', () => {
 
   // NOTE: addImage and removeImage tests removed - operations now handled through Media system
 
-  describe('reorderGalleries', () => {
-    it('should reorder galleries successfully', async () => {
-      const userId = 'user1';
-      const galleryIds = ['gallery1', 'gallery2', 'gallery3'];
+  describe("reorderGalleries", () => {
+    it("should reorder galleries successfully", async () => {
+      const userId = "user1";
+      const galleryIds = ["gallery1", "gallery2", "gallery3"];
 
       const mockGalleries = galleryIds.map((id, index) => ({
         id,
@@ -307,11 +315,13 @@ describe('GalleriesService', () => {
         id,
         ownerId: userId,
         sortOrder: index,
-        owner: { id: userId, username: 'testuser' },
+        owner: { id: userId, username: "testuser" },
         character: null,
       }));
 
-      db.gallery.findMany.mockResolvedValueOnce(mockGalleries).mockResolvedValueOnce(mockReorderedGalleries);
+      db.gallery.findMany
+        .mockResolvedValueOnce(mockGalleries)
+        .mockResolvedValueOnce(mockReorderedGalleries);
       db.gallery.update.mockResolvedValue({});
 
       const result = await service.reorderGalleries(userId, galleryIds);
@@ -334,20 +344,21 @@ describe('GalleriesService', () => {
       expect(result).toEqual(mockReorderedGalleries);
     });
 
-    it('should throw ForbiddenException when some galleries do not belong to user', async () => {
-      const userId = 'user1';
-      const galleryIds = ['gallery1', 'gallery2', 'gallery3'];
+    it("should throw ForbiddenException when some galleries do not belong to user", async () => {
+      const userId = "user1";
+      const galleryIds = ["gallery1", "gallery2", "gallery3"];
 
       // Only return 2 galleries instead of 3
       const mockGalleries = [
-        { id: 'gallery1', ownerId: userId },
-        { id: 'gallery2', ownerId: userId },
+        { id: "gallery1", ownerId: userId },
+        { id: "gallery2", ownerId: userId },
       ];
 
       db.gallery.findMany.mockResolvedValue(mockGalleries);
 
-      await expect(service.reorderGalleries(userId, galleryIds))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.reorderGalleries(userId, galleryIds),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

@@ -166,13 +166,11 @@ export class CommunityInvitationsResolver {
     const isSelf = this.permissionService.isSelf(currentUser.id, inviteeId);
     const isAdmin = this.permissionService.hasGlobalPermission(
       currentUser,
-      GlobalPermission.IsAdmin
+      GlobalPermission.IsAdmin,
     );
 
     if (!isSelf && !isAdmin) {
-      throw new ForbiddenException(
-        "You can only view your own invitations"
-      );
+      throw new ForbiddenException("You can only view your own invitations");
     }
 
     const serviceResult = await this.communityInvitationsService.findByInvitee(
@@ -201,7 +199,7 @@ export class CommunityInvitationsResolver {
     const isInviterOrInvitee = await this.ownershipService.isOwnerOf(
       currentUser.id,
       "inviterOrInviteeOfInvitation",
-      id
+      id,
     );
 
     if (isInviterOrInvitee) {

@@ -1,4 +1,7 @@
-import { CreateEnumValueInput, UpdateEnumValueInput } from "../dto/enum-value.dto";
+import {
+  CreateEnumValueInput,
+  UpdateEnumValueInput,
+} from "../dto/enum-value.dto";
 import { EnumValue, EnumValueConnection } from "../entities/enum-value.entity";
 import { Prisma } from "@chardb/database";
 
@@ -43,7 +46,9 @@ type PrismaEnumValue = Prisma.EnumValueGetPayload<{}>;
  * Maps Prisma EnumValue result to GraphQL EnumValue entity
  * Only includes scalar fields - relations are handled by field resolvers
  */
-export function mapPrismaEnumValueToGraphQL(prismaEnumValue: PrismaEnumValue): EnumValue {
+export function mapPrismaEnumValueToGraphQL(
+  prismaEnumValue: PrismaEnumValue,
+): EnumValue {
   return {
     id: prismaEnumValue.id,
     name: prismaEnumValue.name,

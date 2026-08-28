@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const IMAGE_MODERATION_QUEUE = gql`
   query ImageModerationQueue(
@@ -45,7 +45,11 @@ export const IMAGE_MODERATION_QUEUE = gql`
 
 export const MEDIA_MODERATION_QUEUE = gql`
   query MediaModerationQueue($communityId: ID!, $first: Int, $offset: Int) {
-    mediaModerationQueue(communityId: $communityId, first: $first, offset: $offset) {
+    mediaModerationQueue(
+      communityId: $communityId
+      first: $first
+      offset: $offset
+    ) {
       media {
         id
         title

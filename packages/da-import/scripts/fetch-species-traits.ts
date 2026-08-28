@@ -49,7 +49,12 @@ async function main() {
   }
 
   const traits = json.data.traitsBySpecies.nodes.map(
-    (t: { id: string; name: string; valueType: string; enumValues: { id: string; name: string }[] }) => ({
+    (t: {
+      id: string;
+      name: string;
+      valueType: string;
+      enumValues: { id: string; name: string }[];
+    }) => ({
       id: t.id,
       name: t.name,
       valueType: t.valueType,
@@ -57,7 +62,7 @@ async function main() {
         id: ev.id,
         name: ev.name,
       })),
-    })
+    }),
   );
 
   const outPath = path.join(__dirname, "..", "config", "species-traits.json");
@@ -65,7 +70,9 @@ async function main() {
 
   console.log(`Wrote ${traits.length} traits to ${outPath}`);
   for (const t of traits) {
-    console.log(`  ${t.name}: ${t.enumValues.length} enum values (${t.valueType})`);
+    console.log(
+      `  ${t.name}: ${t.enumValues.length} enum values (${t.valueType})`,
+    );
   }
 }
 

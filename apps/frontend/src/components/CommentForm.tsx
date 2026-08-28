@@ -200,8 +200,12 @@ export const CommentForm: React.FC<CommentFormProps> = ({
           <UserAvatar>
             {user.avatarImage ? (
               <img
-                src={user.avatarImage.thumbnailUrl || user.avatarImage.originalUrl}
-                alt={user.avatarImage.altText || user.displayName || user.username}
+                src={
+                  user.avatarImage.thumbnailUrl || user.avatarImage.originalUrl
+                }
+                alt={
+                  user.avatarImage.altText || user.displayName || user.username
+                }
                 style={{
                   width: "100%",
                   height: "100%",

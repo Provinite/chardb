@@ -1,7 +1,14 @@
 import React from "react";
 import styled from "styled-components";
 import { useParams, Link } from "react-router-dom";
-import { Database, Users, Settings, List, FileText, Palette } from "lucide-react";
+import {
+  Database,
+  Users,
+  Settings,
+  List,
+  FileText,
+  Palette,
+} from "lucide-react";
 import { Title, Subtitle, Card } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import {

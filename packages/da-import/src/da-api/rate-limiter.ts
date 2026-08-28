@@ -3,7 +3,7 @@ export class RateLimiter {
 
   constructor(
     private readonly minIntervalMs: number = 2000,
-    private readonly maxIntervalMs: number = 3000
+    private readonly maxIntervalMs: number = 3000,
   ) {}
 
   async wait(): Promise<void> {

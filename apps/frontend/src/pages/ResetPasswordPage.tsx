@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import styled from 'styled-components';
-import toast from 'react-hot-toast';
-import { Button } from '@chardb/ui';
-import { useResetPasswordMutation } from '../graphql/auth.graphql';
+import React, { useState } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import styled from "styled-components";
+import toast from "react-hot-toast";
+import { Button } from "@chardb/ui";
+import { useResetPasswordMutation } from "../graphql/auth.graphql";
 
-const resetPasswordSchema = z.object({
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string().min(1, 'Please confirm your password'),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-});
+const resetPasswordSchema = z
+  .object({
+    newPassword: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 
@@ -167,14 +169,15 @@ export const ResetPasswordPage: React.FC = () => {
         },
       });
       setIsSuccess(true);
-      toast.success('Password reset successfully');
+      toast.success("Password reset successfully");
       // Redirect to login after 2 seconds
       setTimeout(() => {
-        navigate('/login');
+        navigate("/login");
       }, 2000);
     } catch (error: any) {
-      console.error('Reset password error:', error);
-      const errorMessage = error.message || 'Failed to reset password. The link may have expired.';
+      console.error("Reset password error:", error);
+      const errorMessage =
+        error.message || "Failed to reset password. The link may have expired.";
       setResetError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -188,7 +191,8 @@ export const ResetPasswordPage: React.FC = () => {
         <Card>
           <Title>Password Reset Successful</Title>
           <SuccessMessage>
-            Your password has been reset successfully. You will be redirected to the login page...
+            Your password has been reset successfully. You will be redirected to
+            the login page...
           </SuccessMessage>
           <Footer>
             <BackLink to="/login">Go to login now</BackLink>
@@ -202,45 +206,44 @@ export const ResetPasswordPage: React.FC = () => {
     <Container>
       <Card>
         <Title>Reset Your Password</Title>
-        <Description>
-          Enter your new password below.
-        </Description>
+        <Description>Enter your new password below.</Description>
 
-        {resetError && (
-          <ErrorBox>{resetError}</ErrorBox>
-        )}
+        {resetError && <ErrorBox>{resetError}</ErrorBox>}
 
         <Form onSubmit={handleSubmit(onSubmit)}>
           <FormGroup>
             <Label htmlFor="newPassword">New Password</Label>
             <Input
-              {...register('newPassword')}
+              {...register("newPassword")}
               type="password"
               id="newPassword"
               placeholder="Enter your new password"
             />
-            {errors.newPassword && <ErrorMessage>{errors.newPassword.message}</ErrorMessage>}
+            {errors.newPassword && (
+              <ErrorMessage>{errors.newPassword.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <FormGroup>
             <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input
-              {...register('confirmPassword')}
+              {...register("confirmPassword")}
               type="password"
               id="confirmPassword"
               placeholder="Confirm your new password"
             />
-            {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword.message}</ErrorMessage>}
+            {errors.confirmPassword && (
+              <ErrorMessage>{errors.confirmPassword.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <Button type="submit" loading={isLoading} disabled={isLoading}>
-            {isLoading ? 'Resetting...' : 'Reset Password'}
+            {isLoading ? "Resetting..." : "Reset Password"}
           </Button>
         </Form>
 
         <Footer>
-          Remember your password?{' '}
-          <BackLink to="/login">Back to login</BackLink>
+          Remember your password? <BackLink to="/login">Back to login</BackLink>
         </Footer>
       </Card>
     </Container>

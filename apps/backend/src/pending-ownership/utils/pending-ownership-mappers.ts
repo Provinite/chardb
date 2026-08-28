@@ -1,5 +1,5 @@
-import { Prisma } from '@chardb/database';
-import { PendingOwnership } from '../entities/pending-ownership.entity';
+import { Prisma } from "@chardb/database";
+import { PendingOwnership } from "../entities/pending-ownership.entity";
 
 type PrismaPendingOwnership = Prisma.PendingOwnershipGetPayload<{}>;
 

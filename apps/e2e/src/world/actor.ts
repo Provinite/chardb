@@ -57,7 +57,11 @@ export function makeActor(key: string, persona: Persona | null): Actor {
         errors?: Array<{ message: string }>;
       };
       if (body.errors?.length) {
-        throw new GraphQLRequestError(key, operationName(document), body.errors);
+        throw new GraphQLRequestError(
+          key,
+          operationName(document),
+          body.errors,
+        );
       }
       if (!res.ok) {
         throw new Error(

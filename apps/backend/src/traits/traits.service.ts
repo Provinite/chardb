@@ -64,7 +64,9 @@ export class TraitsService {
       });
 
       if (!species) {
-        throw new NotFoundException(`Species with ID ${input.speciesId} not found`);
+        throw new NotFoundException(
+          `Species with ID ${input.speciesId} not found`,
+        );
       }
 
       // Validate the color belongs to the same community
@@ -239,8 +241,10 @@ export class TraitsService {
 
     if (input.name !== undefined) updateData.name = input.name;
     if (input.valueType !== undefined) updateData.valueType = input.valueType;
-    if (input.allowsMultipleValues !== undefined) updateData.allowsMultipleValues = input.allowsMultipleValues;
-    if (input.allowsClarifier !== undefined) updateData.allowsClarifier = input.allowsClarifier;
+    if (input.allowsMultipleValues !== undefined)
+      updateData.allowsMultipleValues = input.allowsMultipleValues;
+    if (input.allowsClarifier !== undefined)
+      updateData.allowsClarifier = input.allowsClarifier;
     if (input.speciesId !== undefined) {
       updateData.species = { connect: { id: input.speciesId } };
     }
@@ -254,7 +258,9 @@ export class TraitsService {
         });
 
         if (!species) {
-          throw new NotFoundException(`Species with ID ${trait.speciesId} not found`);
+          throw new NotFoundException(
+            `Species with ID ${trait.speciesId} not found`,
+          );
         }
 
         // Validate the color belongs to the same community
@@ -264,7 +270,9 @@ export class TraitsService {
         );
       }
 
-      updateData.color = input.colorId ? { connect: { id: input.colorId } } : { disconnect: true };
+      updateData.color = input.colorId
+        ? { connect: { id: input.colorId } }
+        : { disconnect: true };
     }
 
     return this.prisma.trait.update({

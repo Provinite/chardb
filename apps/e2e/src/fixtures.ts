@@ -52,7 +52,9 @@ export const test = base.extend<Options & Fixtures, WorkerFixtures>({
   // fixture must resolve first so the storageState file exists on disk.
   storageState: async ({ preset, persona, world }, use) => {
     await use(
-      persona === "anon" ? { cookies: [], origins: [] } : world.storageState(persona),
+      persona === "anon"
+        ? { cookies: [], origins: [] }
+        : world.storageState(persona),
     );
   },
 });

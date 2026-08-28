@@ -1,6 +1,13 @@
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { Settings, Users, Shield, Database, Activity, RefreshCw } from 'lucide-react';
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import {
+  Settings,
+  Users,
+  Shield,
+  Database,
+  Activity,
+  RefreshCw,
+} from "lucide-react";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -43,12 +50,12 @@ const AdminCard = styled(Link)`
   transition: all 0.2s;
   position: relative;
   overflow: hidden;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -124,7 +131,7 @@ export function SiteAdminPage() {
         <Title>Site Administration</Title>
         <Subtitle>Manage system-wide settings, users, and communities</Subtitle>
       </Header>
-      
+
       <Grid>
         <AdminCard to="/admin/site-invite-codes">
           <CardIcon>
@@ -141,9 +148,7 @@ export function SiteAdminPage() {
             <Users size={24} />
           </CardIcon>
           <CardTitle>User Management</CardTitle>
-          <CardDescription>
-            Manage users across all communities
-          </CardDescription>
+          <CardDescription>Manage users across all communities</CardDescription>
         </AdminCard>
 
         <AdminCard to="/admin/communities">
@@ -151,9 +156,7 @@ export function SiteAdminPage() {
             <Database size={24} />
           </CardIcon>
           <CardTitle>Community Oversight</CardTitle>
-          <CardDescription>
-            Monitor and manage all communities
-          </CardDescription>
+          <CardDescription>Monitor and manage all communities</CardDescription>
         </AdminCard>
 
         <AdminCard to="/admin/system">

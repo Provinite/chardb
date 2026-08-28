@@ -533,8 +533,15 @@ export const MediaPage: React.FC = () => {
           <AuthorAvatar>
             {media.owner.avatarImage ? (
               <img
-                src={media.owner.avatarImage.thumbnailUrl || media.owner.avatarImage.originalUrl}
-                alt={media.owner.avatarImage.altText || media.owner.displayName || media.owner.username}
+                src={
+                  media.owner.avatarImage.thumbnailUrl ||
+                  media.owner.avatarImage.originalUrl
+                }
+                alt={
+                  media.owner.avatarImage.altText ||
+                  media.owner.displayName ||
+                  media.owner.username
+                }
               />
             ) : (
               media.owner.displayName?.[0] || media.owner.username[0]

@@ -28,7 +28,7 @@ import { OwnershipService } from "../OwnershipService";
 export class OwnershipGuard implements CanActivate {
   constructor(
     private ownershipService: OwnershipService,
-    private reflector: Reflector
+    private reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -60,12 +60,12 @@ export class OwnershipGuard implements CanActivate {
     return this.ownershipService.isOwnerOf(
       user.id,
       entityType,
-      resolvedIds.value
+      resolvedIds.value,
     );
   }
 
   private getEntityType(
-    key: keyof OwnershipResolutionConfig
+    key: keyof OwnershipResolutionConfig,
   ):
     | "character"
     | "media"
@@ -88,7 +88,7 @@ export class OwnershipGuard implements CanActivate {
 
   private resolveEntityIds(
     context: ExecutionContext,
-    config: OwnershipResolutionConfig
+    config: OwnershipResolutionConfig,
   ): OwnershipResolutionReference {
     const gqlContext = GqlExecutionContext.create(context);
     const args = gqlContext.getArgs();

@@ -71,7 +71,10 @@ export class DeviantArtService {
       );
     }
 
-    return this.fetchUserProfile(username, { authRetried: false, rateLimitRetries: 0 });
+    return this.fetchUserProfile(username, {
+      authRetried: false,
+      rateLimitRetries: 0,
+    });
   }
 
   private async fetchUserProfile(
@@ -92,14 +95,23 @@ export class DeviantArtService {
 
       // Token expired unexpectedly — clear cache and retry once
       if (response.status === 401 && !retryState.authRetried) {
-        this.logger.warn("DeviantArt token rejected (401), refreshing and retrying");
+        this.logger.warn(
+          "DeviantArt token rejected (401), refreshing and retrying",
+        );
         this.cachedToken = null;
-        return this.fetchUserProfile(username, { ...retryState, authRetried: true });
+        return this.fetchUserProfile(username, {
+          ...retryState,
+          authRetried: true,
+        });
       }
 
       // Rate limited — exponential backoff
-      if (response.status === 429 && retryState.rateLimitRetries < MAX_429_RETRIES) {
-        const backoffMs = INITIAL_BACKOFF_MS * Math.pow(2, retryState.rateLimitRetries);
+      if (
+        response.status === 429 &&
+        retryState.rateLimitRetries < MAX_429_RETRIES
+      ) {
+        const backoffMs =
+          INITIAL_BACKOFF_MS * Math.pow(2, retryState.rateLimitRetries);
         this.logger.warn(
           `DeviantArt rate limited (429) for "${username}", retrying in ${backoffMs}ms (attempt ${retryState.rateLimitRetries + 1}/${MAX_429_RETRIES})`,
         );
@@ -127,9 +139,7 @@ export class DeviantArtService {
           const errorData = JSON.parse(errorText);
           if (
             errorData.error_description &&
-            errorData.error_description
-              .toLowerCase()
-              .includes("user not found")
+            errorData.error_description.toLowerCase().includes("user not found")
           ) {
             throw new NotFoundException(
               `DeviantArt user "${username}" not found. Please verify the username is correct.`,
@@ -159,7 +169,9 @@ export class DeviantArtService {
 
       const { userid, username: canonicalUsername } = parsed.data.user;
 
-      this.logger.debug(`Resolved DeviantArt user "${username}" to UUID ${userid}`);
+      this.logger.debug(
+        `Resolved DeviantArt user "${username}" to UUID ${userid}`,
+      );
       return { uuid: userid, username: canonicalUsername };
     } catch (error) {
       if (

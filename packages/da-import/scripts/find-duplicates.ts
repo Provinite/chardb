@@ -44,7 +44,9 @@ async function loadCharDBPillowings(): Promise<CharDBCharacter[]> {
 
   return lines.map((line) => {
     // Simple CSV parse — our data doesn't have commas in fields except possibly names
-    const match = line.match(/^([^,]*),("(?:[^"]|"")*"|[^,]*),([^,]*),([^,]*)$/);
+    const match = line.match(
+      /^([^,]*),("(?:[^"]|"")*"|[^,]*),([^,]*),([^,]*)$/,
+    );
     if (!match) throw new Error(`Failed to parse CSV line: ${line}`);
     const [, registryId, rawName, id, ownerId] = match;
     const name = rawName.startsWith('"')
@@ -111,7 +113,8 @@ async function main() {
   // Sort by DA name
   matches.sort((a, b) => a.daName.localeCompare(b.daName));
 
-  const header = "da_name,da_registryId,da_owner,da_url,chardb_name,chardb_id,chardb_registryId,chardb_ownerId";
+  const header =
+    "da_name,da_registryId,da_owner,da_url,chardb_name,chardb_id,chardb_registryId,chardb_ownerId";
   const lines = [header];
   for (const m of matches) {
     lines.push(
@@ -124,7 +127,7 @@ async function main() {
         m.chardbId,
         csvEscape(m.chardbRegistryId),
         m.chardbOwnerId,
-      ].join(",")
+      ].join(","),
     );
   }
 
@@ -137,7 +140,9 @@ async function main() {
   if (matches.length > 0) {
     console.error("\nMatches:");
     for (const m of matches) {
-      console.error(`  "${m.daName}" (DA: ${m.daRegistryId}) <-> "${m.chardbName}" (CharDB: ${m.chardbId})`);
+      console.error(
+        `  "${m.daName}" (DA: ${m.daRegistryId}) <-> "${m.chardbName}" (CharDB: ${m.chardbId})`,
+      );
     }
   }
 }

@@ -1,13 +1,13 @@
-import { useState, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useCallback, useRef } from "react";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { useAuth } from "../contexts/AuthContext";
 import {
   useRunDeviantartUuidBackfillMutation,
   useCancelDeviantartUuidBackfillMutation,
   useDeviantartUuidBackfillProgressSubscription,
   type DeviantartUuidBackfillRecordResult,
-} from '../generated/graphql';
+} from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -34,18 +34,19 @@ const Description = styled.p`
 `;
 
 const RunButton = styled.button<{ $disabled?: boolean }>`
-  background: ${({ theme, $disabled }) => $disabled ? theme.colors.text.muted : theme.colors.primary};
+  background: ${({ theme, $disabled }) =>
+    $disabled ? theme.colors.text.muted : theme.colors.primary};
   color: white;
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.md};
   padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.lg}`};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-  cursor: ${({ $disabled }) => $disabled ? 'not-allowed' : 'pointer'};
+  cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
   transition: opacity 0.2s;
 
   &:hover {
-    opacity: ${({ $disabled }) => $disabled ? 1 : 0.9};
+    opacity: ${({ $disabled }) => ($disabled ? 1 : 0.9)};
   }
 `;
 
@@ -148,7 +149,8 @@ const LogEntry = styled.div`
 `;
 
 const LogEntryHeader = styled.div<{ $success: boolean }>`
-  color: ${({ theme, $success }) => $success ? theme.colors.success : theme.colors.error};
+  color: ${({ theme, $success }) =>
+    $success ? theme.colors.success : theme.colors.error};
 `;
 
 const LogLabel = styled.span`
@@ -207,12 +209,22 @@ export function DeviantArtBackfillPage() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [isDone, setIsDone] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
-  const [records, setRecords] = useState<DeviantartUuidBackfillRecordResult[]>([]);
-  const [stats, setStats] = useState({ total: 0, processed: 0, succeeded: 0, failed: 0, claimed: 0 });
+  const [records, setRecords] = useState<DeviantartUuidBackfillRecordResult[]>(
+    [],
+  );
+  const [stats, setStats] = useState({
+    total: 0,
+    processed: 0,
+    succeeded: 0,
+    failed: 0,
+    claimed: 0,
+  });
   const logRef = useRef<HTMLDivElement>(null);
 
-  const [runBackfill, { error: runError }] = useRunDeviantartUuidBackfillMutation();
-  const [cancelBackfill, { error: cancelError }] = useCancelDeviantartUuidBackfillMutation();
+  const [runBackfill, { error: runError }] =
+    useRunDeviantartUuidBackfillMutation();
+  const [cancelBackfill, { error: cancelError }] =
+    useCancelDeviantartUuidBackfillMutation();
 
   useDeviantartUuidBackfillProgressSubscription({
     variables: { jobId: jobId! },
@@ -228,10 +240,13 @@ export function DeviantArtBackfillPage() {
         claimed: progress.claimed,
       });
       if (progress.currentRecord) {
-        setRecords(prev => [...prev, progress.currentRecord!]);
+        setRecords((prev) => [...prev, progress.currentRecord!]);
         // Auto-scroll to bottom
         requestAnimationFrame(() => {
-          logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
+          logRef.current?.scrollTo({
+            top: logRef.current.scrollHeight,
+            behavior: "smooth",
+          });
         });
       }
       if (progress.done) {
@@ -266,36 +281,33 @@ export function DeviantArtBackfillPage() {
   }
 
   const isRunning = !!jobId;
-  const percent = stats.total > 0 ? Math.round((stats.processed / stats.total) * 100) : 0;
+  const percent =
+    stats.total > 0 ? Math.round((stats.processed / stats.total) * 100) : 0;
 
   return (
     <Container>
       <Header>
         <Title>DeviantArt UUID Backfill</Title>
         <Description>
-          Resolves DeviantArt usernames stored in pending ownership records to their corresponding
-          DeviantArt UUIDs. Records that match a linked DeviantArt account will be automatically
-          claimed by the account owner.
+          Resolves DeviantArt usernames stored in pending ownership records to
+          their corresponding DeviantArt UUIDs. Records that match a linked
+          DeviantArt account will be automatically claimed by the account owner.
         </Description>
       </Header>
 
       <RunButton $disabled={isRunning} onClick={handleRun} disabled={isRunning}>
-        {isRunning ? 'Running...' : isDone ? 'Run Again' : 'Run Backfill'}
+        {isRunning ? "Running..." : isDone ? "Run Again" : "Run Backfill"}
       </RunButton>
-      {isRunning && (
-        <CancelButton onClick={handleCancel}>Cancel</CancelButton>
-      )}
+      {isRunning && <CancelButton onClick={handleCancel}>Cancel</CancelButton>}
 
-      {runError && (
-        <ErrorMessage>{runError.message}</ErrorMessage>
-      )}
-      {cancelError && (
-        <ErrorMessage>{cancelError.message}</ErrorMessage>
-      )}
+      {runError && <ErrorMessage>{runError.message}</ErrorMessage>}
+      {cancelError && <ErrorMessage>{cancelError.message}</ErrorMessage>}
 
       {(isRunning || isDone) && (
         <ProgressSection>
-          <ProgressLabel>{stats.processed} / {stats.total} records processed ({percent}%)</ProgressLabel>
+          <ProgressLabel>
+            {stats.processed} / {stats.total} records processed ({percent}%)
+          </ProgressLabel>
           <ProgressBarContainer>
             <ProgressBarFill $percent={percent} />
           </ProgressBarContainer>
@@ -323,12 +335,13 @@ export function DeviantArtBackfillPage() {
               {records.map((record) => (
                 <LogEntry key={record.pendingOwnershipId}>
                   <LogEntryHeader $success={record.success}>
-                    {record.success ? '✓' : '✗'}{' '}
-                    {record.oldValue}
+                    {record.success ? "✓" : "✗"} {record.oldValue}
                     {record.success && <> → {record.newValue}</>}
                     {record.claimed && <LogLabel>(auto-claimed)</LogLabel>}
                     {record.characterId && (
-                      <CharLink to={`/character/${record.characterId}`}>view</CharLink>
+                      <CharLink to={`/character/${record.characterId}`}>
+                        view
+                      </CharLink>
                     )}
                   </LogEntryHeader>
                   {record.error && <LogError>{record.error}</LogError>}
@@ -339,12 +352,15 @@ export function DeviantArtBackfillPage() {
 
           {isDone && !isCancelled && (
             <DoneMessage>
-              Backfill complete — {stats.succeeded} succeeded, {stats.failed} failed, {stats.claimed} auto-claimed
+              Backfill complete — {stats.succeeded} succeeded, {stats.failed}{" "}
+              failed, {stats.claimed} auto-claimed
             </DoneMessage>
           )}
           {isDone && isCancelled && (
             <CancelledMessage>
-              Backfill cancelled — {stats.processed} of {stats.total} processed ({stats.succeeded} succeeded, {stats.failed} failed, {stats.claimed} auto-claimed)
+              Backfill cancelled — {stats.processed} of {stats.total} processed
+              ({stats.succeeded} succeeded, {stats.failed} failed,{" "}
+              {stats.claimed} auto-claimed)
             </CancelledMessage>
           )}
         </ProgressSection>

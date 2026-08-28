@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const LOGIN_MUTATION = gql`
   mutation Login($input: LoginInput!) {
@@ -108,4 +108,4 @@ export {
   type SignupInput,
   type ForgotPasswordInput,
   type ResetPasswordInput,
-} from '../generated/graphql';
+} from "../generated/graphql";

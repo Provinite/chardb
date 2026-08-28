@@ -23,7 +23,9 @@ export class DiscordService {
   constructor(private configService: ConfigService) {
     const botToken = this.configService.get<string>("DISCORD_BOT_TOKEN");
     const clientId = this.configService.get<string>("DISCORD_CLIENT_ID");
-    const clientSecret = this.configService.get<string>("DISCORD_CLIENT_SECRET");
+    const clientSecret = this.configService.get<string>(
+      "DISCORD_CLIENT_SECRET",
+    );
 
     // Validate all required Discord configuration
     if (!botToken) {
@@ -79,10 +81,7 @@ export class DiscordService {
       };
     } catch (error) {
       // Bot doesn't have access to this guild
-      this.logger.debug(
-        `Bot doesn't have access to guild ${guildId}:`,
-        error,
-      );
+      this.logger.debug(`Bot doesn't have access to guild ${guildId}:`, error);
       return {
         id: guildId,
         name: "Unknown",
@@ -115,7 +114,8 @@ export class DiscordService {
 
       // Find exact match (case-insensitive)
       const member = members.find(
-        (m) => m.user?.username.toLowerCase() === normalizedUsername.toLowerCase(),
+        (m) =>
+          m.user?.username.toLowerCase() === normalizedUsername.toLowerCase(),
       );
 
       if (!member || !member.user) {

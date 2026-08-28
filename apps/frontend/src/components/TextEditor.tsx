@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import styled from 'styled-components';
-import { TextFormatting, Visibility } from '../generated/graphql';
-import { Markdown } from './Markdown';
+import React, { useState, useCallback } from "react";
+import styled from "styled-components";
+import { TextFormatting, Visibility } from "../generated/graphql";
+import { Markdown } from "./Markdown";
 
 const Container = styled.div`
   background: ${({ theme }) => theme.colors.background};
@@ -21,7 +21,7 @@ const FormGrid = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.md};
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
@@ -44,7 +44,7 @@ const Input = styled.input`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -58,7 +58,7 @@ const Select = styled.select`
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   background: ${({ theme }) => theme.colors.background};
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -105,41 +105,36 @@ const ButtonGroup = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
-const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
+const Button = styled.button<{ variant?: "primary" | "secondary" }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${props => 
-    props.variant === 'primary' 
-      ? props.theme.colors.primary 
-      : props.theme.colors.border
-  };
-  background: ${props => 
-    props.variant === 'primary' 
-      ? props.theme.colors.primary 
-      : props.theme.colors.background
-  };
-  color: ${props => 
-    props.variant === 'primary' 
-      ? 'white' 
-      : props.theme.colors.text.primary
-  };
+  border: 1px solid
+    ${(props) =>
+      props.variant === "primary"
+        ? props.theme.colors.primary
+        : props.theme.colors.border};
+  background: ${(props) =>
+    props.variant === "primary"
+      ? props.theme.colors.primary
+      : props.theme.colors.background};
+  color: ${(props) =>
+    props.variant === "primary" ? "white" : props.theme.colors.text.primary};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   cursor: pointer;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   transition: all 0.2s;
-  
+
   &:hover:not(:disabled) {
-    background: ${props => 
-      props.variant === 'primary' 
+    background: ${(props) =>
+      props.variant === "primary"
         ? props.theme.colors.secondary
-        : props.theme.colors.surface
-    };
+        : props.theme.colors.surface};
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
   }
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -153,7 +148,6 @@ const PreviewContainer = styled.div`
   max-height: 200px;
   overflow-y: auto;
 `;
-
 
 /** Data structure for text editor content */
 export interface TextEditorData {
@@ -192,9 +186,11 @@ interface TextEditorProps {
  * Calculates the word count for text content
  */
 const calculateWordCount = (text: string): number => {
-  return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0).length;
 };
-
 
 /**
  * A rich text editor component with markdown support and live preview
@@ -209,9 +205,9 @@ export const TextEditor: React.FC<TextEditorProps> = ({
   characters = [],
 }) => {
   const [data, setData] = useState<TextEditorData>({
-    title: initialData.title || '',
-    description: initialData.description || '',
-    content: initialData.content || '',
+    title: initialData.title || "",
+    description: initialData.description || "",
+    content: initialData.content || "",
     formatting: initialData.formatting || TextFormatting.Plaintext,
     visibility: initialData.visibility || Visibility.Public,
     characterId: initialData.characterId,
@@ -242,70 +238,82 @@ export const TextEditor: React.FC<TextEditorProps> = ({
               id="title"
               type="text"
               value={data.title}
-              onChange={(e) => setData(prev => ({ ...prev, title: e.target.value }))}
+              onChange={(e) =>
+                setData((prev) => ({ ...prev, title: e.target.value }))
+              }
               placeholder="Enter a title for your text..."
               maxLength={255}
             />
           </FormField>
-          
+
           <FormField>
             <Label htmlFor="formatting">Format</Label>
             <Select
               id="formatting"
               value={data.formatting}
-              onChange={(e) => setData(prev => ({ 
-                ...prev, 
-                formatting: e.target.value as TextFormatting 
-              }))}
+              onChange={(e) =>
+                setData((prev) => ({
+                  ...prev,
+                  formatting: e.target.value as TextFormatting,
+                }))
+              }
             >
               <option value={TextFormatting.Plaintext}>Plain Text</option>
               <option value={TextFormatting.Markdown}>Markdown</option>
             </Select>
           </FormField>
-          
+
           <FormField>
             <Label htmlFor="visibility">Visibility</Label>
             <Select
               id="visibility"
               value={data.visibility}
-              onChange={(e) => setData(prev => ({ 
-                ...prev, 
-                visibility: e.target.value as Visibility 
-              }))}
+              onChange={(e) =>
+                setData((prev) => ({
+                  ...prev,
+                  visibility: e.target.value as Visibility,
+                }))
+              }
             >
               <option value={Visibility.Public}>Public</option>
               <option value={Visibility.Unlisted}>Unlisted</option>
               <option value={Visibility.Private}>Private</option>
             </Select>
           </FormField>
-          
+
           {characters.length > 0 && (
             <FormField>
               <Label htmlFor="character">Character (optional)</Label>
               <Select
                 id="character"
-                value={data.characterId || ''}
-                onChange={(e) => setData(prev => ({ 
-                  ...prev, 
-                  characterId: e.target.value || undefined 
-                }))}
+                value={data.characterId || ""}
+                onChange={(e) =>
+                  setData((prev) => ({
+                    ...prev,
+                    characterId: e.target.value || undefined,
+                  }))
+                }
               >
                 <option value="">No character</option>
-                {characters.map(char => (
-                  <option key={char.id} value={char.id}>{char.name}</option>
+                {characters.map((char) => (
+                  <option key={char.id} value={char.id}>
+                    {char.name}
+                  </option>
                 ))}
               </Select>
             </FormField>
           )}
         </FormGrid>
-        
+
         <FormField>
           <Label htmlFor="description">Description (optional)</Label>
           <Input
             id="description"
             type="text"
             value={data.description}
-            onChange={(e) => setData(prev => ({ ...prev, description: e.target.value }))}
+            onChange={(e) =>
+              setData((prev) => ({ ...prev, description: e.target.value }))
+            }
             placeholder="Brief description of your text..."
             maxLength={500}
           />
@@ -315,9 +323,11 @@ export const TextEditor: React.FC<TextEditorProps> = ({
       {!isPreviewMode ? (
         <TextArea
           value={data.content}
-          onChange={(e) => setData(prev => ({ ...prev, content: e.target.value }))}
+          onChange={(e) =>
+            setData((prev) => ({ ...prev, content: e.target.value }))
+          }
           placeholder={
-            isMarkdown 
+            isMarkdown
               ? "Start writing your text... You can use Markdown formatting:\n\n# Heading 1\n## Heading 2\n**Bold text**\n*Italic text*\n`Code`"
               : "Start writing your text..."
           }
@@ -327,36 +337,30 @@ export const TextEditor: React.FC<TextEditorProps> = ({
           {isMarkdown ? (
             <Markdown>{data.content}</Markdown>
           ) : (
-            <div style={{ whiteSpace: 'pre-wrap' }}>{data.content}</div>
+            <div style={{ whiteSpace: "pre-wrap" }}>{data.content}</div>
           )}
         </PreviewContainer>
       )}
 
       <Footer>
-        <WordCount>
-          {wordCount} words
-        </WordCount>
-        
+        <WordCount>{wordCount} words</WordCount>
+
         <ButtonGroup>
           {showPreview && isMarkdown && (
             <Button
               onClick={() => setIsPreviewMode(!isPreviewMode)}
               disabled={isLoading}
             >
-              {isPreviewMode ? 'Edit' : 'Preview'}
+              {isPreviewMode ? "Edit" : "Preview"}
             </Button>
           )}
-          
+
           <Button onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>
-          
-          <Button
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={!canSave}
-          >
-            {isLoading ? 'Saving...' : 'Save'}
+
+          <Button variant="primary" onClick={handleSubmit} disabled={!canSave}>
+            {isLoading ? "Saving..." : "Save"}
           </Button>
         </ButtonGroup>
       </Footer>

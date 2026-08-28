@@ -14,7 +14,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromExtractors([
         (req: unknown) => {
           const params = (
-            req as { connectionParams?: { authorization?: unknown } } | undefined
+            req as
+              | { connectionParams?: { authorization?: unknown } }
+              | undefined
           )?.connectionParams;
           const auth = params?.authorization;
           if (typeof auth === "string" && auth.startsWith("Bearer ")) {

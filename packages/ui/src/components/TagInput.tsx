@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
-import { Theme } from '../theme';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import styled from "styled-components";
+import { Theme } from "../theme";
 
 export interface Tag {
   id: string;
@@ -24,7 +24,9 @@ export interface TagInputProps {
 const Container = styled.div<{ $hasError?: boolean }>`
   position: relative;
   min-height: 42px;
-  border: 2px solid ${({ theme, $hasError }) => $hasError ? theme.colors.error : theme.colors.border};
+  border: 2px solid
+    ${({ theme, $hasError }) =>
+      $hasError ? theme.colors.error : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   background: ${({ theme }) => theme.colors.background};
   padding: ${({ theme }) => theme.spacing.xs};
@@ -36,11 +38,13 @@ const Container = styled.div<{ $hasError?: boolean }>`
   transition: border-color 0.2s;
 
   &:focus-within {
-    border-color: ${({ theme, $hasError }) => $hasError ? theme.colors.error : theme.colors.primary};
+    border-color: ${({ theme, $hasError }) =>
+      $hasError ? theme.colors.error : theme.colors.primary};
   }
 
   &:hover:not(:focus-within) {
-    border-color: ${({ theme, $hasError }) => $hasError ? theme.colors.error : theme.colors.text.muted};
+    border-color: ${({ theme, $hasError }) =>
+      $hasError ? theme.colors.error : theme.colors.text.muted};
   }
 `;
 
@@ -55,7 +59,7 @@ const TagChip = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   max-width: 200px;
-  
+
   span {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -121,7 +125,7 @@ const SuggestionsDropdown = styled.div<{ $isOpen: boolean }>`
   z-index: 1000;
   max-height: 200px;
   overflow-y: auto;
-  display: ${({ $isOpen }) => $isOpen ? 'block' : 'none'};
+  display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
   margin-top: 2px;
 `;
 
@@ -129,14 +133,14 @@ const SuggestionItem = styled.button<{ $isHighlighted: boolean }>`
   width: 100%;
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   border: none;
-  background: ${({ theme, $isHighlighted }) => 
-    $isHighlighted ? theme.colors.surface : 'transparent'};
+  background: ${({ theme, $isHighlighted }) =>
+    $isHighlighted ? theme.colors.surface : "transparent"};
   color: ${({ theme }) => theme.colors.text.primary};
   text-align: left;
   cursor: pointer;
   transition: background 0.2s;
   font-size: ${({ theme }) => theme.typography.fontSize.md};
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.surface};
   }
@@ -171,7 +175,7 @@ export const TagInput: React.FC<TagInputProps> = ({
   error,
   maxTags,
 }) => {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -179,17 +183,22 @@ export const TagInput: React.FC<TagInputProps> = ({
 
   // Filter suggestions to exclude already selected tags
   const availableSuggestions = suggestions.filter(
-    suggestion => !value.includes(suggestion.name.toLowerCase())
+    (suggestion) => !value.includes(suggestion.name.toLowerCase()),
   );
 
   // Debounced search
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
+    null,
+  );
 
-  const performSearch = useCallback((query: string) => {
-    if (onSearch) {
-      onSearch(query);
-    }
-  }, [onSearch]);
+  const performSearch = useCallback(
+    (query: string) => {
+      if (onSearch) {
+        onSearch(query);
+      }
+    },
+    [onSearch],
+  );
 
   useEffect(() => {
     if (searchTimeout) {
@@ -213,14 +222,17 @@ export const TagInput: React.FC<TagInputProps> = ({
   // Handle clicks outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
         setHighlightedIndex(-1);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const addTag = (tagName: string) => {
@@ -228,7 +240,7 @@ export const TagInput: React.FC<TagInputProps> = ({
     if (normalizedTag && !value.includes(normalizedTag)) {
       if (!maxTags || value.length < maxTags) {
         onChange([...value, normalizedTag]);
-        setInputValue('');
+        setInputValue("");
         setIsOpen(false);
         setHighlightedIndex(-1);
       }
@@ -250,7 +262,7 @@ export const TagInput: React.FC<TagInputProps> = ({
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     switch (e.key) {
-      case 'Enter':
+      case "Enter":
         e.preventDefault();
         if (highlightedIndex >= 0 && availableSuggestions[highlightedIndex]) {
           addTag(availableSuggestions[highlightedIndex].name);
@@ -258,32 +270,32 @@ export const TagInput: React.FC<TagInputProps> = ({
           addTag(inputValue.trim());
         }
         break;
-      
-      case 'Escape':
+
+      case "Escape":
         setIsOpen(false);
         setHighlightedIndex(-1);
         break;
-      
-      case 'ArrowDown':
+
+      case "ArrowDown":
         e.preventDefault();
-        setHighlightedIndex(prev => 
-          prev < availableSuggestions.length - 1 ? prev + 1 : prev
+        setHighlightedIndex((prev) =>
+          prev < availableSuggestions.length - 1 ? prev + 1 : prev,
         );
         break;
-      
-      case 'ArrowUp':
+
+      case "ArrowUp":
         e.preventDefault();
-        setHighlightedIndex(prev => prev > -1 ? prev - 1 : -1);
+        setHighlightedIndex((prev) => (prev > -1 ? prev - 1 : -1));
         break;
-      
-      case 'Backspace':
+
+      case "Backspace":
         if (!inputValue && value.length > 0) {
           removeTag(value.length - 1);
         }
         break;
-      
-      case ',':
-      case 'Tab':
+
+      case ",":
+      case "Tab":
         if (inputValue.trim()) {
           e.preventDefault();
           addTag(inputValue.trim());
@@ -303,10 +315,7 @@ export const TagInput: React.FC<TagInputProps> = ({
 
   return (
     <div ref={containerRef}>
-      <Container 
-        $hasError={!!error} 
-        onClick={handleContainerClick}
-      >
+      <Container $hasError={!!error} onClick={handleContainerClick}>
         {value.map((tag, index) => (
           <TagChip key={`${tag}-${index}`}>
             <span title={tag}>{tag}</span>
@@ -323,7 +332,7 @@ export const TagInput: React.FC<TagInputProps> = ({
             </RemoveButton>
           </TagChip>
         ))}
-        
+
         <Input
           ref={inputRef}
           type="text"
@@ -331,12 +340,14 @@ export const TagInput: React.FC<TagInputProps> = ({
           onChange={handleInputChange}
           onKeyDown={handleInputKeyDown}
           onFocus={() => setIsOpen(true)}
-          placeholder={value.length === 0 ? placeholder : ''}
+          placeholder={value.length === 0 ? placeholder : ""}
           disabled={disabled}
           aria-label="Add tags"
         />
-        
-        <SuggestionsDropdown $isOpen={isOpen && (loading || availableSuggestions.length > 0)}>
+
+        <SuggestionsDropdown
+          $isOpen={isOpen && (loading || availableSuggestions.length > 0)}
+        >
           {loading ? (
             <LoadingIndicator>Searching...</LoadingIndicator>
           ) : (
@@ -353,7 +364,7 @@ export const TagInput: React.FC<TagInputProps> = ({
           )}
         </SuggestionsDropdown>
       </Container>
-      
+
       {error && <ErrorMessage>{error}</ErrorMessage>}
     </div>
   );

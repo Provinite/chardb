@@ -1,7 +1,7 @@
-import React from 'react';
-import styled from 'styled-components';
-import { useForm } from 'react-hook-form';
-import { Button } from '@chardb/ui';
+import React from "react";
+import styled from "styled-components";
+import { useForm } from "react-hook-form";
+import { Button } from "@chardb/ui";
 
 const SearchForm = styled.form`
   display: flex;
@@ -42,7 +42,7 @@ const Input = styled.input`
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   background: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.text.primary};
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -58,7 +58,7 @@ const Select = styled.select`
   background: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -114,22 +114,27 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
 }) => {
   const { register, handleSubmit, reset } = useForm<AdvancedSearchFilters>({
     defaultValues: {
-      search: initialFilters.search || '',
-      ageRange: initialFilters.ageRange || '',
+      search: initialFilters.search || "",
+      ageRange: initialFilters.ageRange || "",
       minPrice: initialFilters.minPrice,
       maxPrice: initialFilters.maxPrice,
       isSellable: initialFilters.isSellable,
       isTradeable: initialFilters.isTradeable,
-      sortBy: initialFilters.sortBy || 'created',
-      sortOrder: initialFilters.sortOrder || 'desc',
-      searchFields: initialFilters.searchFields || 'all',
+      sortBy: initialFilters.sortBy || "created",
+      sortOrder: initialFilters.sortOrder || "desc",
+      searchFields: initialFilters.searchFields || "all",
     },
   });
 
   const handleFormSubmit = (data: AdvancedSearchFilters) => {
     // Remove empty strings and undefined values
     const cleanFilters = Object.entries(data).reduce((acc, [key, value]) => {
-      if (value !== '' && value !== undefined && value !== null && !(typeof value === 'number' && isNaN(value))) {
+      if (
+        value !== "" &&
+        value !== undefined &&
+        value !== null &&
+        !(typeof value === "number" && isNaN(value))
+      ) {
         acc[key as keyof AdvancedSearchFilters] = value;
       }
       return acc;
@@ -140,15 +145,15 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
 
   const handleClear = () => {
     reset({
-      search: '',
-      ageRange: '',
+      search: "",
+      ageRange: "",
       minPrice: undefined,
       maxPrice: undefined,
       isSellable: undefined,
       isTradeable: undefined,
-      sortBy: 'created',
-      sortOrder: 'desc',
-      searchFields: 'all',
+      sortBy: "created",
+      sortOrder: "desc",
+      searchFields: "all",
     });
     onClear();
   };
@@ -162,13 +167,13 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
             id="search"
             type="text"
             placeholder="Search characters..."
-            {...register('search')}
+            {...register("search")}
           />
         </FormGroup>
-        
+
         <FormGroup>
           <Label htmlFor="searchFields">Search In</Label>
-          <Select id="searchFields" {...register('searchFields')}>
+          <Select id="searchFields" {...register("searchFields")}>
             <option value="all">All Fields</option>
             <option value="name">Name Only</option>
             <option value="details">Details Only</option>
@@ -183,7 +188,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
             id="ageRange"
             type="text"
             placeholder="e.g., Young, Adult, Elder"
-            {...register('ageRange')}
+            {...register("ageRange")}
           />
         </FormGroup>
       </SearchRow>
@@ -197,7 +202,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
               placeholder="Min"
               min="0"
               step="0.01"
-              {...register('minPrice', { valueAsNumber: true })}
+              {...register("minPrice", { valueAsNumber: true })}
             />
             <PriceSeparator>to</PriceSeparator>
             <PriceInput
@@ -205,23 +210,29 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
               placeholder="Max"
               min="0"
               step="0.01"
-              {...register('maxPrice', { valueAsNumber: true })}
+              {...register("maxPrice", { valueAsNumber: true })}
             />
           </PriceGroup>
         </FormGroup>
-        
+
         <FormGroup>
           <Label htmlFor="isSellable">Status</Label>
-          <Select id="isSellable" {...register('isSellable', { valueAsNumber: false })}>
+          <Select
+            id="isSellable"
+            {...register("isSellable", { valueAsNumber: false })}
+          >
             <option value="">Any Status</option>
             <option value="true">For Sale</option>
             <option value="false">Not For Sale</option>
           </Select>
         </FormGroup>
-        
+
         <FormGroup>
           <Label htmlFor="isTradeable">Trading</Label>
-          <Select id="isTradeable" {...register('isTradeable', { valueAsNumber: false })}>
+          <Select
+            id="isTradeable"
+            {...register("isTradeable", { valueAsNumber: false })}
+          >
             <option value="">Any Trading</option>
             <option value="true">Open to Trades</option>
             <option value="false">Not Trading</option>
@@ -232,17 +243,17 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
       <SearchRow>
         <FormGroup>
           <Label htmlFor="sortBy">Sort By</Label>
-          <Select id="sortBy" {...register('sortBy')}>
+          <Select id="sortBy" {...register("sortBy")}>
             <option value="created">Date Created</option>
             <option value="updated">Last Updated</option>
             <option value="name">Name</option>
             <option value="price">Price</option>
           </Select>
         </FormGroup>
-        
+
         <FormGroup>
           <Label htmlFor="sortOrder">Order</Label>
-          <Select id="sortOrder" {...register('sortOrder')}>
+          <Select id="sortOrder" {...register("sortOrder")}>
             <option value="desc">Newest First</option>
             <option value="asc">Oldest First</option>
           </Select>
@@ -251,7 +262,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
 
       <ButtonRow>
         <Button type="submit" disabled={loading}>
-          {loading ? 'Searching...' : 'Search Characters'}
+          {loading ? "Searching..." : "Search Characters"}
         </Button>
         <Button type="button" variant="secondary" onClick={handleClear}>
           Clear Filters

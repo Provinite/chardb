@@ -1,5 +1,9 @@
 import { LoginInput, SignupInput, AuthPayload } from "../dto/auth.dto";
-import { LoginServiceInput, SignupServiceInput, AuthResponse } from "../auth.service";
+import {
+  LoginServiceInput,
+  SignupServiceInput,
+  AuthResponse,
+} from "../auth.service";
 
 /**
  * Resolver layer mapping functions to convert between GraphQL DTOs and service types
@@ -18,7 +22,9 @@ export function mapLoginInputToService(input: LoginInput): LoginServiceInput {
 /**
  * Maps SignupInput to service input format
  */
-export function mapSignupInputToService(input: SignupInput): SignupServiceInput {
+export function mapSignupInputToService(
+  input: SignupInput,
+): SignupServiceInput {
   return {
     username: input.username,
     email: input.email,
@@ -33,7 +39,9 @@ export function mapSignupInputToService(input: SignupInput): SignupServiceInput 
  * Note: User data is not included to prevent bypassing field-level authorization.
  * Clients should fetch user data via the authenticated 'me' query after login.
  */
-export function mapAuthResponseToGraphQL(serviceResponse: AuthResponse): AuthPayload {
+export function mapAuthResponseToGraphQL(
+  serviceResponse: AuthResponse,
+): AuthPayload {
   return {
     accessToken: serviceResponse.accessToken,
     refreshToken: serviceResponse.refreshToken,

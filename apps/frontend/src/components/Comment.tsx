@@ -277,8 +277,15 @@ export const Comment: React.FC<CommentProps> = ({
         <AuthorAvatar>
           {comment.author.avatarImage ? (
             <img
-              src={comment.author.avatarImage.thumbnailUrl || comment.author.avatarImage.originalUrl}
-              alt={comment.author.avatarImage.altText || comment.author.displayName || comment.author.username}
+              src={
+                comment.author.avatarImage.thumbnailUrl ||
+                comment.author.avatarImage.originalUrl
+              }
+              alt={
+                comment.author.avatarImage.altText ||
+                comment.author.displayName ||
+                comment.author.username
+              }
               style={{
                 width: "100%",
                 height: "100%",

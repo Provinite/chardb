@@ -3,13 +3,13 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
-} from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { PendingOwnershipService } from '../pending-ownership/pending-ownership.service';
-import { DiscordService } from '../discord/discord.service';
-import { Prisma, ExternalAccountProvider } from '@chardb/database';
-import { ItemTypeFilters } from './dto/item-type.dto';
-import { ItemFilters } from './dto/item.dto';
+} from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import { DiscordService } from "../discord/discord.service";
+import { Prisma, ExternalAccountProvider } from "@chardb/database";
+import { ItemTypeFilters } from "./dto/item-type.dto";
+import { ItemFilters } from "./dto/item.dto";
 
 export interface PendingOwnerInput {
   provider: ExternalAccountProvider;
@@ -36,10 +36,10 @@ export class ItemsService {
         },
       });
     } catch (error) {
-      if (error.code === 'P2002') {
+      if (error.code === "P2002") {
         // Unique constraint violation
         throw new ConflictException(
-          'An item type with this name already exists in this community',
+          "An item type with this name already exists in this community",
         );
       }
       throw error;
@@ -56,8 +56,8 @@ export class ItemsService {
         search
           ? {
               OR: [
-                { name: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
+                { name: { contains: search, mode: "insensitive" } },
+                { description: { contains: search, mode: "insensitive" } },
               ],
             }
           : {},
@@ -69,7 +69,7 @@ export class ItemsService {
         where,
         skip: offset,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           community: true,
         },
@@ -111,13 +111,13 @@ export class ItemsService {
 
       return itemType;
     } catch (error) {
-      if (error.code === 'P2025') {
+      if (error.code === "P2025") {
         // Record not found
         throw new NotFoundException(`ItemType with ID ${id} not found`);
       }
-      if (error.code === 'P2002') {
+      if (error.code === "P2002") {
         throw new ConflictException(
-          'An item type with this name already exists in this community',
+          "An item type with this name already exists in this community",
         );
       }
       throw error;
@@ -142,7 +142,7 @@ export class ItemsService {
       });
       return true;
     } catch (error) {
-      if (error.code === 'P2025') {
+      if (error.code === "P2025") {
         throw new NotFoundException(`ItemType with ID ${id} not found`);
       }
       throw error;
@@ -172,7 +172,7 @@ export class ItemsService {
     // Unlike characters, items cannot be fully orphaned
     if (!userId && !pendingOwner) {
       throw new BadRequestException(
-        'Items must have either an owner or pending owner. Cannot create fully orphaned items.',
+        "Items must have either an owner or pending owner. Cannot create fully orphaned items.",
       );
     }
 
@@ -181,7 +181,7 @@ export class ItemsService {
     let actualOwnerId = pendingOwner ? null : userId;
 
     if (quantity < 1) {
-      throw new BadRequestException('Quantity must be at least 1');
+      throw new BadRequestException("Quantity must be at least 1");
     }
 
     // Get the item type to check if it's stackable
@@ -217,15 +217,18 @@ export class ItemsService {
         displayIdentifier = pendingOwner.providerAccountId;
         resolvedAccountId = pendingOwner.providerAccountId;
       } else {
-        throw new BadRequestException(`Unsupported provider: ${pendingOwner.provider}`);
+        throw new BadRequestException(
+          `Unsupported provider: ${pendingOwner.provider}`,
+        );
       }
 
       // Check if the external account has already been claimed by a user
       // If so, assign directly to that user instead of creating pending ownership
-      const claimedUserId = await this.pendingOwnershipService.checkIfAccountClaimed(
-        pendingOwner.provider,
-        resolvedAccountId,
-      );
+      const claimedUserId =
+        await this.pendingOwnershipService.checkIfAccountClaimed(
+          pendingOwner.provider,
+          resolvedAccountId,
+        );
 
       if (claimedUserId) {
         // Account is already claimed - assign directly to that user
@@ -338,8 +341,13 @@ export class ItemsService {
   }
 
   async findAllItems(filters: ItemFilters = {}) {
-    const { limit = 20, offset = 0, ownerId, itemTypeId, communityId } =
-      filters;
+    const {
+      limit = 20,
+      offset = 0,
+      ownerId,
+      itemTypeId,
+      communityId,
+    } = filters;
 
     const where: Prisma.ItemWhereInput = {
       AND: [
@@ -354,7 +362,7 @@ export class ItemsService {
         where,
         skip: offset,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           itemType: {
             include: {
@@ -411,7 +419,7 @@ export class ItemsService {
 
       return item;
     } catch (error) {
-      if (error.code === 'P2025') {
+      if (error.code === "P2025") {
         throw new NotFoundException(`Item with ID ${id} not found`);
       }
       throw error;
@@ -425,7 +433,7 @@ export class ItemsService {
       });
       return true;
     } catch (error) {
-      if (error.code === 'P2025') {
+      if (error.code === "P2025") {
         throw new NotFoundException(`Item with ID ${id} not found`);
       }
       throw error;

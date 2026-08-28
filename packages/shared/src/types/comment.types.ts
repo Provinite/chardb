@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { CommentableType } from './common.types';
+import { z } from "zod";
+import { CommentableType } from "./common.types";
 
 export const CommentSchema = z.object({
   id: z.string().uuid(),

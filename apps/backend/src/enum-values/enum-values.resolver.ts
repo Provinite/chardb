@@ -169,13 +169,17 @@ export class EnumValuesResolver {
     nullable: true,
     description: "The color associated with this enum value",
   })
-  async resolveColor(@Parent() enumValue: EnumValue): Promise<CommunityColor | null> {
+  async resolveColor(
+    @Parent() enumValue: EnumValue,
+  ): Promise<CommunityColor | null> {
     if (!enumValue.colorId) {
       return null;
     }
 
     try {
-      return await this.communityColorsService.findCommunityColorById(enumValue.colorId) as CommunityColor;
+      return (await this.communityColorsService.findCommunityColorById(
+        enumValue.colorId,
+      )) as CommunityColor;
     } catch (error) {
       if (error instanceof NotFoundException) {
         return null;

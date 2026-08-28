@@ -1,4 +1,4 @@
-import { Field, InputType, Int, ID } from '@nestjs/graphql';
+import { Field, InputType, Int, ID } from "@nestjs/graphql";
 import {
   IsString,
   IsOptional,
@@ -9,9 +9,9 @@ import {
   ValidateNested,
   IsNotEmpty,
   ValidateIf,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { PendingOwnerInput } from '../../pending-ownership/dto/pending-ownership.dto';
+} from "class-validator";
+import { Type } from "class-transformer";
+import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
 
 @InputType()
 export class GrantItemInput {
@@ -19,9 +19,13 @@ export class GrantItemInput {
   @IsUUID()
   itemTypeId: string;
 
-  @Field(() => ID, { nullable: true, description: 'User ID to grant item to. Required if pendingOwner is not provided.' })
+  @Field(() => ID, {
+    nullable: true,
+    description:
+      "User ID to grant item to. Required if pendingOwner is not provided.",
+  })
   @ValidateIf((o) => !o.pendingOwner)
-  @IsNotEmpty({ message: 'Items must have either userId or pendingOwner' })
+  @IsNotEmpty({ message: "Items must have either userId or pendingOwner" })
   @IsUUID()
   userId?: string;
 
@@ -36,7 +40,10 @@ export class GrantItemInput {
   @IsOptional()
   metadata?: any; // JSON field for instance-specific data
 
-  @Field(() => PendingOwnerInput, { nullable: true, description: 'Create item with pending ownership for an external account' })
+  @Field(() => PendingOwnerInput, {
+    nullable: true,
+    description: "Create item with pending ownership for an external account",
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => PendingOwnerInput)

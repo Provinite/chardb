@@ -365,7 +365,12 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
 
   const renderAvatar = (user: SelectedUser) => {
     if (user.avatarImage) {
-      return <Avatar src={user.avatarImage.thumbnailUrl || user.avatarImage.originalUrl} alt={user.avatarImage.altText || user.username} />;
+      return (
+        <Avatar
+          src={user.avatarImage.thumbnailUrl || user.avatarImage.originalUrl}
+          alt={user.avatarImage.altText || user.username}
+        />
+      );
     }
     return (
       <AvatarPlaceholder>

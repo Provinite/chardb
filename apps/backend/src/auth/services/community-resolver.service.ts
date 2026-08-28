@@ -226,7 +226,9 @@ export class CommunityResolverService {
    * @returns The community ID
    * @throws Error if community member doesn't exist
    */
-  async getCommunityMemberCommunity(communityMemberId: string): Promise<string> {
+  async getCommunityMemberCommunity(
+    communityMemberId: string,
+  ): Promise<string> {
     const communityMember = await this.prisma.communityMember.findUnique({
       where: { id: communityMemberId },
       select: {
@@ -252,14 +254,19 @@ export class CommunityResolverService {
    * @returns The community ID
    * @throws Error if community invitation doesn't exist
    */
-  async getCommunityInvitationCommunity(communityInvitationId: string): Promise<string> {
-    const communityInvitation = await this.prisma.communityInvitation.findUnique({
-      where: { id: communityInvitationId },
-      select: { communityId: true },
-    });
+  async getCommunityInvitationCommunity(
+    communityInvitationId: string,
+  ): Promise<string> {
+    const communityInvitation =
+      await this.prisma.communityInvitation.findUnique({
+        where: { id: communityInvitationId },
+        select: { communityId: true },
+      });
 
     if (!communityInvitation) {
-      throw new Error(`CommunityInvitation with ID ${communityInvitationId} not found`);
+      throw new Error(
+        `CommunityInvitation with ID ${communityInvitationId} not found`,
+      );
     }
 
     return communityInvitation.communityId;
@@ -390,7 +397,9 @@ export class CommunityResolverService {
    * @returns The community ID
    * @throws Error if pending ownership doesn't exist or has no associated community
    */
-  async getPendingOwnershipCommunity(pendingOwnershipId: string): Promise<string | null> {
+  async getPendingOwnershipCommunity(
+    pendingOwnershipId: string,
+  ): Promise<string | null> {
     const pending = await this.prisma.pendingOwnership.findUnique({
       where: { id: pendingOwnershipId },
       select: {
@@ -412,7 +421,9 @@ export class CommunityResolverService {
     });
 
     if (!pending) {
-      throw new Error(`PendingOwnership with ID ${pendingOwnershipId} not found`);
+      throw new Error(
+        `PendingOwnership with ID ${pendingOwnershipId} not found`,
+      );
     }
 
     const communityId =

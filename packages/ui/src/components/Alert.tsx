@@ -1,6 +1,6 @@
-import React from 'react';
-import styled, { css } from 'styled-components';
-import { Theme } from '../theme';
+import React from "react";
+import styled, { css } from "styled-components";
+import { Theme } from "../theme";
 
 /**
  * Alert - A versatile alert/notification component with multiple variants
@@ -49,7 +49,7 @@ import { Theme } from '../theme';
 
 interface AlertProps {
   /** Visual variant of the alert */
-  variant?: 'info' | 'success' | 'warning' | 'error';
+  variant?: "info" | "success" | "warning" | "error";
   /** Content of the alert */
   children: React.ReactNode;
   /** Optional icon to display */
@@ -64,28 +64,28 @@ interface AlertProps {
 
 const getVariantStyles = (variant: string, theme: Theme) => {
   switch (variant) {
-    case 'success':
+    case "success":
       return css`
-        background-color: ${theme.colors.success + '15'};
+        background-color: ${theme.colors.success + "15"};
         border-color: ${theme.colors.success};
         color: ${theme.colors.success};
       `;
-    case 'warning':
+    case "warning":
       return css`
-        background-color: ${theme.colors.warning + '15'};
+        background-color: ${theme.colors.warning + "15"};
         border-color: ${theme.colors.warning};
         color: ${theme.colors.warning};
       `;
-    case 'error':
+    case "error":
       return css`
-        background-color: ${theme.colors.error + '15'};
+        background-color: ${theme.colors.error + "15"};
         border-color: ${theme.colors.error};
         color: ${theme.colors.error};
       `;
-    case 'info':
+    case "info":
     default:
       return css`
-        background-color: ${theme.colors.info + '15'};
+        background-color: ${theme.colors.info + "15"};
         border-color: ${theme.colors.info};
         color: ${theme.colors.info};
       `;
@@ -165,7 +165,7 @@ const CloseIcon = () => (
  * Alert component for displaying contextual notifications and messages
  */
 export const Alert: React.FC<AlertProps> = ({
-  variant = 'info',
+  variant = "info",
   children,
   icon,
   dismissible = false,
@@ -173,10 +173,10 @@ export const Alert: React.FC<AlertProps> = ({
   className,
 }) => {
   const roleMap = {
-    info: 'status',
-    success: 'status',
-    warning: 'alert',
-    error: 'alert',
+    info: "status",
+    success: "status",
+    warning: "alert",
+    error: "alert",
   };
 
   return (
@@ -184,7 +184,7 @@ export const Alert: React.FC<AlertProps> = ({
       variant={variant}
       className={className}
       role={roleMap[variant]}
-      aria-live={variant === 'error' ? 'assertive' : 'polite'}
+      aria-live={variant === "error" ? "assertive" : "polite"}
     >
       {icon && <AlertIcon>{icon}</AlertIcon>}
       <AlertContent>{children}</AlertContent>

@@ -1,7 +1,7 @@
-import React from 'react';
-import styled from 'styled-components';
-import { X } from 'lucide-react';
-import { ColorPip } from '../colors/ColorPip';
+import React from "react";
+import styled from "styled-components";
+import { X } from "lucide-react";
+import { ColorPip } from "../colors/ColorPip";
 
 /**
  * Trait Value Chip Component
@@ -37,13 +37,13 @@ const Chip = styled.div<{ $disabled?: boolean }>`
   color: ${({ theme }) => theme.colors.text.primary};
   transition: all 0.2s ease;
   opacity: ${({ $disabled }) => ($disabled ? 0.6 : 1)};
-  cursor: ${({ $disabled }) => ($disabled ? 'not-allowed' : 'default')};
+  cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "default")};
 
   &:hover {
     background: ${({ theme, $disabled }) =>
-      $disabled ? theme.colors.primary + '15' : theme.colors.primary + '20'};
+      $disabled ? theme.colors.primary + "15" : theme.colors.primary + "20"};
     border-color: ${({ theme, $disabled }) =>
-      $disabled ? theme.colors.primary + '30' : theme.colors.primary + '50'};
+      $disabled ? theme.colors.primary + "30" : theme.colors.primary + "50"};
   }
 `;
 
@@ -68,7 +68,7 @@ const RemoveButton = styled.button<{ $disabled?: boolean }>`
   border: none;
   background: transparent;
   color: ${({ theme }) => theme.colors.text.muted};
-  cursor: ${({ $disabled }) => ($disabled ? 'not-allowed' : 'pointer')};
+  cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
   transition: color 0.2s ease;
 
   &:hover:not(:disabled) {

@@ -71,7 +71,9 @@ export const excludeCommand: CommandModule<object, ExcludeArgs> = {
       } else {
         logger.info(`Excluded deviations (${exclusions.length}):`);
         for (const entry of exclusions) {
-          logger.info(`  ${entry.numericId} — ${entry.reason} (${entry.excludedAt})`);
+          logger.info(
+            `  ${entry.numericId} — ${entry.reason} (${entry.excludedAt})`,
+          );
         }
       }
       return;
@@ -90,7 +92,9 @@ export const excludeCommand: CommandModule<object, ExcludeArgs> = {
     }
 
     if (!id) {
-      logger.error("Specify --id to exclude or --remove to un-exclude or --list to view.");
+      logger.error(
+        "Specify --id to exclude or --remove to un-exclude or --list to view.",
+      );
       process.exit(1);
     }
 

@@ -317,7 +317,10 @@ export const CREATE_CHARACTER = gql`
 `;
 
 export const ASSIGN_CHARACTER_SPECIES = gql`
-  mutation AssignCharacterSpecies($id: ID!, $input: AssignCharacterSpeciesInput!) {
+  mutation AssignCharacterSpecies(
+    $id: ID!
+    $input: AssignCharacterSpeciesInput!
+  ) {
     assignCharacterSpecies(id: $id, input: $input) {
       id
       name
@@ -476,7 +479,10 @@ export const SET_CHARACTER_MAIN_MEDIA = gql`
 `;
 
 export const UPDATE_CHARACTER_PROFILE = gql`
-  mutation UpdateCharacterProfile($id: ID!, $input: UpdateCharacterProfileInput!) {
+  mutation UpdateCharacterProfile(
+    $id: ID!
+    $input: UpdateCharacterProfileInput!
+  ) {
     updateCharacterProfile(id: $id, input: $input) {
       id
       name
@@ -518,7 +524,10 @@ export const UPDATE_CHARACTER_PROFILE = gql`
 `;
 
 export const UPDATE_CHARACTER_REGISTRY = gql`
-  mutation UpdateCharacterRegistry($id: ID!, $input: UpdateCharacterRegistryInput!) {
+  mutation UpdateCharacterRegistry(
+    $id: ID!
+    $input: UpdateCharacterRegistryInput!
+  ) {
     updateCharacterRegistry(id: $id, input: $input) {
       id
       name

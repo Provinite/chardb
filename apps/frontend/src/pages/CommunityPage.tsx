@@ -271,12 +271,14 @@ export const CommunityPage: React.FC = () => {
   // Get actual counts from GraphQL queries
   const speciesCount = speciesData?.speciesByCommunity?.totalCount || 0;
   const charactersCount = charactersData?.characters?.total || 0;
-  const membersCount = membersData?.communityMembersByCommunity?.totalCount || 0;
+  const membersCount =
+    membersData?.communityMembersByCommunity?.totalCount || 0;
 
   // Check if current user is a member of this community
-  const isMember = userMembershipsData?.communityMembersByUser?.nodes.some(
-    (membership) => membership.role.community.id === communityId
-  ) || false;
+  const isMember =
+    userMembershipsData?.communityMembersByUser?.nodes.some(
+      (membership) => membership.role.community.id === communityId,
+    ) || false;
 
   const sections = [
     {
@@ -330,7 +332,9 @@ export const CommunityPage: React.FC = () => {
               </MetaItem>
               <MetaItem>
                 <Users size={16} />
-                <span>{membersCount} {membersCount === 1 ? 'member' : 'members'}</span>
+                <span>
+                  {membersCount} {membersCount === 1 ? "member" : "members"}
+                </span>
               </MetaItem>
             </CommunityMeta>
 
@@ -341,7 +345,7 @@ export const CommunityPage: React.FC = () => {
                     <Button
                       variant="primary"
                       icon={<UserPlus size={16} />}
-                      onClick={() => navigate('/join-community')}
+                      onClick={() => navigate("/join-community")}
                     >
                       Join Community
                     </Button>

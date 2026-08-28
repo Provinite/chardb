@@ -384,7 +384,11 @@ export const EditProfilePage: React.FC = () => {
       window.location.href = data.url;
     } catch (error: unknown) {
       console.error("Error initiating OAuth:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to start DeviantArt linking");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to start DeviantArt linking",
+      );
     }
   };
 
@@ -421,7 +425,11 @@ export const EditProfilePage: React.FC = () => {
       window.location.href = data.url;
     } catch (error: unknown) {
       console.error("Error initiating OAuth:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to start Discord linking");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to start Discord linking",
+      );
     }
   };
 
@@ -455,7 +463,11 @@ export const EditProfilePage: React.FC = () => {
       window.location.href = data.url;
     } catch (error: unknown) {
       console.error("Error initiating OAuth:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to start ToyHouse linking");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to start ToyHouse linking",
+      );
     }
   };
 
@@ -474,7 +486,11 @@ export const EditProfilePage: React.FC = () => {
       refetchAccounts();
     } catch (error: unknown) {
       console.error("Error unlinking account:", error);
-      toast.error(error instanceof Error ? error.message : `Failed to unlink ${provider} account`);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : `Failed to unlink ${provider} account`,
+      );
     }
   };
 

@@ -30,12 +30,15 @@ export function mapPrismaImageToGraphQL(prismaImage: PrismaImage): Image {
     fileSize: prismaImage.fileSize,
     mimeType: prismaImage.mimeType,
     isNsfw: prismaImage.isNsfw,
-    sensitiveContentDescription: prismaImage.sensitiveContentDescription ?? undefined,
+    sensitiveContentDescription:
+      prismaImage.sensitiveContentDescription ?? undefined,
     moderationStatus: prismaImage.moderationStatus,
     createdAt: prismaImage.createdAt,
     updatedAt: prismaImage.updatedAt,
     uploader: mapPrismaUserToGraphQL(prismaImage.uploader),
-    artist: prismaImage.artist ? mapPrismaUserToGraphQL(prismaImage.artist) : undefined,
+    artist: prismaImage.artist
+      ? mapPrismaUserToGraphQL(prismaImage.artist)
+      : undefined,
     tags_rel: [],
     likesCount: 0,
     userHasLiked: false,

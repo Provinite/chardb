@@ -44,7 +44,9 @@ test("inline Delete clears the row and soft-deletes the character", async ({
   await page.goto(`${world.community.url}/moderation/traits`);
   await expect(cards(page)).toHaveCount(1);
 
-  acceptNextDialog(page, (message) => expect(message).toContain(character.name));
+  acceptNextDialog(page, (message) =>
+    expect(message).toContain(character.name),
+  );
   await cardFor(page, character.id)
     .getByRole("button", { name: "Delete", exact: true })
     .click();

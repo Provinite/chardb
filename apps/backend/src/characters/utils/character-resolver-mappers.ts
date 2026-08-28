@@ -1,4 +1,8 @@
-import { ExternalAccountProvider, Prisma, TraitReviewSource } from "@chardb/database";
+import {
+  ExternalAccountProvider,
+  Prisma,
+  TraitReviewSource,
+} from "@chardb/database";
 import {
   CreateCharacterInput,
   UpdateCharacterProfileInput,
@@ -40,7 +44,13 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
   assignToSelf?: boolean;
   traitReviewSource?: TraitReviewSource;
 } {
-  const { tags, pendingOwner, assignToSelf, traitReviewSource, ...characterData } = input;
+  const {
+    tags,
+    pendingOwner,
+    assignToSelf,
+    traitReviewSource,
+    ...characterData
+  } = input;
 
   const prismaCharacterData: Omit<
     Prisma.CharacterCreateInput,

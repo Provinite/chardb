@@ -1,6 +1,6 @@
-import { ExecutionContext } from '@nestjs/common';
-import { GqlExecutionContext } from '@nestjs/graphql';
-import { CurrentUserType } from '../types/current-user.type';
+import { ExecutionContext } from "@nestjs/common";
+import { GqlExecutionContext } from "@nestjs/graphql";
+import { CurrentUserType } from "../types/current-user.type";
 
 /**
  * Extracts the current user from an ExecutionContext.
@@ -20,7 +20,9 @@ import { CurrentUserType } from '../types/current-user.type';
  * }
  * ```
  */
-export function getUserFromContext(context: ExecutionContext): CurrentUserType | null {
+export function getUserFromContext(
+  context: ExecutionContext,
+): CurrentUserType | null {
   const ctx = GqlExecutionContext.create(context);
   const user = ctx.getContext().req?.user;
   return user ?? null;

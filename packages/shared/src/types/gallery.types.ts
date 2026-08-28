@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { Visibility } from './common.types';
+import { z } from "zod";
+import { Visibility } from "./common.types";
 
 export const GallerySchema = z.object({
   id: z.string().uuid(),

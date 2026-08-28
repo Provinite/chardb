@@ -1,16 +1,24 @@
-import { InputType, Field, ID, Int, registerEnumType } from '@nestjs/graphql';
-import { IsString, IsOptional, IsEnum, IsNotEmpty, MaxLength, IsInt, Min } from 'class-validator';
+import { InputType, Field, ID, Int, registerEnumType } from "@nestjs/graphql";
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsNotEmpty,
+  MaxLength,
+  IsInt,
+  Min,
+} from "class-validator";
 
 export enum CommentableType {
-  CHARACTER = 'CHARACTER',
-  IMAGE = 'IMAGE',
-  GALLERY = 'GALLERY',
-  USER = 'USER',
+  CHARACTER = "CHARACTER",
+  IMAGE = "IMAGE",
+  GALLERY = "GALLERY",
+  USER = "USER",
 }
 
 registerEnumType(CommentableType, {
-  name: 'CommentableType',
-  description: 'Types of entities that can be commented on',
+  name: "CommentableType",
+  description: "Types of entities that can be commented on",
 });
 
 @InputType()
@@ -18,7 +26,7 @@ export class CreateCommentInput {
   @Field()
   @IsString()
   @IsNotEmpty()
-  @MaxLength(2000, { message: 'Comment content cannot exceed 2000 characters' })
+  @MaxLength(2000, { message: "Comment content cannot exceed 2000 characters" })
   content: string;
 
   @Field(() => CommentableType)
@@ -41,7 +49,7 @@ export class UpdateCommentInput {
   @Field()
   @IsString()
   @IsNotEmpty()
-  @MaxLength(2000, { message: 'Comment content cannot exceed 2000 characters' })
+  @MaxLength(2000, { message: "Comment content cannot exceed 2000 characters" })
   content: string;
 }
 

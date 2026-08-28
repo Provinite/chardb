@@ -1,9 +1,9 @@
 import { CreateGalleryInput, UpdateGalleryInput } from "../dto/gallery.dto";
 import { Gallery, GalleryConnection } from "../entities/gallery.entity";
-import { 
-  CreateGalleryServiceInput, 
+import {
+  CreateGalleryServiceInput,
   UpdateGalleryServiceInput,
-  GalleryFiltersServiceInput 
+  GalleryFiltersServiceInput,
 } from "../galleries.service";
 import { Prisma } from "@chardb/database";
 
@@ -14,7 +14,9 @@ import { Prisma } from "@chardb/database";
 /**
  * Maps CreateGalleryInput to service input format
  */
-export function mapCreateGalleryInputToService(input: CreateGalleryInput): CreateGalleryServiceInput {
+export function mapCreateGalleryInputToService(
+  input: CreateGalleryInput,
+): CreateGalleryServiceInput {
   return {
     name: input.name,
     description: input.description,
@@ -27,7 +29,9 @@ export function mapCreateGalleryInputToService(input: CreateGalleryInput): Creat
 /**
  * Maps UpdateGalleryInput to service input format
  */
-export function mapUpdateGalleryInputToService(input: UpdateGalleryInput): UpdateGalleryServiceInput {
+export function mapUpdateGalleryInputToService(
+  input: UpdateGalleryInput,
+): UpdateGalleryServiceInput {
   const result: UpdateGalleryServiceInput = {};
 
   if (input.name !== undefined) result.name = input.name;
@@ -45,7 +49,9 @@ type PrismaGallery = Prisma.GalleryGetPayload<{}>;
  * Maps Prisma Gallery result to GraphQL Gallery entity
  * Only includes scalar fields - relations handled by field resolvers
  */
-export function mapPrismaGalleryToGraphQL(prismaGallery: PrismaGallery): Gallery {
+export function mapPrismaGalleryToGraphQL(
+  prismaGallery: PrismaGallery,
+): Gallery {
   return {
     id: prismaGallery.id,
     name: prismaGallery.name,

@@ -1,7 +1,10 @@
 import React, { useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
-import { useGetGalleriesQuery, GalleryFiltersInput } from "../generated/graphql";
+import {
+  useGetGalleriesQuery,
+  GalleryFiltersInput,
+} from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -365,7 +368,6 @@ export const GalleriesPage: React.FC = () => {
       });
     }
   }, [data, filters, fetchMore]);
-
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {

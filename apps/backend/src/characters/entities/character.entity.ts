@@ -1,12 +1,12 @@
-import { ObjectType, Field, ID, Float, Int } from '@nestjs/graphql';
-import { Visibility, ModerationStatus } from '@chardb/database';
-import { User } from '../../users/entities/user.entity';
-import { Tag } from '../../shared/entities/tag.entity';
-import { Image } from '../../images/entities/image.entity';
-import { Media } from '../../media/entities/media.entity';
-import { CharacterTraitValue } from '../../shared/types/character-trait.types';
-import { SpeciesVariant } from '../../species-variants/entities/species-variant.entity';
-import { Species } from '../../species/entities/species.entity';
+import { ObjectType, Field, ID, Float, Int } from "@nestjs/graphql";
+import { Visibility, ModerationStatus } from "@chardb/database";
+import { User } from "../../users/entities/user.entity";
+import { Tag } from "../../shared/entities/tag.entity";
+import { Image } from "../../images/entities/image.entity";
+import { Media } from "../../media/entities/media.entity";
+import { CharacterTraitValue } from "../../shared/types/character-trait.types";
+import { SpeciesVariant } from "../../species-variants/entities/species-variant.entity";
+import { Species } from "../../species/entities/species.entity";
 
 @ObjectType()
 export class CharacterCount {
@@ -22,28 +22,45 @@ export class Character {
   @Field()
   name: string;
 
-  @Field({ nullable: true, description: 'Official registry identifier for this character within its species' })
+  @Field({
+    nullable: true,
+    description:
+      "Official registry identifier for this character within its species",
+  })
   registryId?: string;
 
-  @Field(() => ID, { nullable: true, description: 'ID of the species this character belongs to' })
+  @Field(() => ID, {
+    nullable: true,
+    description: "ID of the species this character belongs to",
+  })
   speciesId?: string;
 
-  @Field(() => ID, { nullable: true, description: 'ID of the species variant this character belongs to' })
+  @Field(() => ID, {
+    nullable: true,
+    description: "ID of the species variant this character belongs to",
+  })
   speciesVariantId?: string;
 
   @Field({ nullable: true })
   details?: string;
 
-  @Field(() => ID, { nullable: true, description: 'ID of the owner. Null for orphaned/community-owned characters.' })
+  @Field(() => ID, {
+    nullable: true,
+    description:
+      "ID of the owner. Null for orphaned/community-owned characters.",
+  })
   ownerId?: string;
 
-  @Field({ description: 'Whether this character is orphaned (no owner)' })
+  @Field({ description: "Whether this character is orphaned (no owner)" })
   isOrphaned: boolean;
 
   @Field(() => ID, { nullable: true })
   creatorId?: string;
 
-  @Field(() => ID, { nullable: true, description: 'ID of the main media item for this character' })
+  @Field(() => ID, {
+    nullable: true,
+    description: "ID of the main media item for this character",
+  })
   mainMediaId?: string;
 
   @Field(() => Visibility)
@@ -65,10 +82,15 @@ export class Character {
   customFields?: string; // JSON string
 
   /** Trait values assigned to this character */
-  @Field(() => [CharacterTraitValue], { description: 'Trait values assigned to this character' })
+  @Field(() => [CharacterTraitValue], {
+    description: "Trait values assigned to this character",
+  })
   traitValues!: CharacterTraitValue[];
 
-  @Field(() => ModerationStatus, { nullable: true, description: 'Trait review moderation status' })
+  @Field(() => ModerationStatus, {
+    nullable: true,
+    description: "Trait review moderation status",
+  })
   traitReviewStatus?: ModerationStatus;
 
   @Field()

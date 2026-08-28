@@ -54,11 +54,15 @@ async function main(): Promise<void> {
     });
     // `vite build` directly, NOT `yarn build`/`build:safe`: that chains tsc, and
     // a type error unrelated to E2E should not be able to take the suite down.
-    execFileSync("yarn", ["workspace", "@chardb/frontend", "exec", "vite", "build"], {
-      cwd: REPO_ROOT,
-      stdio: "inherit",
-      env,
-    });
+    execFileSync(
+      "yarn",
+      ["workspace", "@chardb/frontend", "exec", "vite", "build"],
+      {
+        cwd: REPO_ROOT,
+        stdio: "inherit",
+        env,
+      },
+    );
   }
 
   // --strictPort in BOTH modes. Without it Vite silently moves to the next free

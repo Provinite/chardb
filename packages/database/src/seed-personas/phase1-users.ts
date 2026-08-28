@@ -16,7 +16,7 @@ export interface Phase1Result {
 
 async function createOrUpdateUser(
   prisma: PrismaClient,
-  persona: PersonaDefinition
+  persona: PersonaDefinition,
 ): Promise<{ user: User; created: boolean }> {
   const passwordHash = await bcrypt.hash(persona.password, BCRYPT_ROUNDS);
 

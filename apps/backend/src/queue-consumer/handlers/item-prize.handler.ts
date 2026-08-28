@@ -1,8 +1,13 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { ExternalAccountProvider } from '@chardb/database';
-import { DatabaseService } from '../../database/database.service';
-import { ItemsService } from '../../items/items.service';
-import { PrizeEventDto } from '../dto/prize-event.dto';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { ExternalAccountProvider } from "@chardb/database";
+import { DatabaseService } from "../../database/database.service";
+import { ItemsService } from "../../items/items.service";
+import { PrizeEventDto } from "../dto/prize-event.dto";
 
 @Injectable()
 export class ItemPrizeHandler {
@@ -19,7 +24,9 @@ export class ItemPrizeHandler {
     );
 
     if (!event.itemTypeId) {
-      throw new BadRequestException('itemTypeId is required for ITEM_AWARDED events');
+      throw new BadRequestException(
+        "itemTypeId is required for ITEM_AWARDED events",
+      );
     }
 
     // Step 1: Lookup community by Discord guild ID

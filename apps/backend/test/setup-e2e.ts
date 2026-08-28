@@ -1,16 +1,20 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, ModuleMetadata } from '@nestjs/common';
-import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { ConfigModule } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
-import { ThrottlerModule } from '@nestjs/throttler';
-import * as request from 'supertest';
-import { DatabaseService } from '../src/database/database.service';
-import { CustomThrottlerGuard } from '../src/middleware/custom-throttler.guard';
-import { OptionalJwtAuthGuard } from '../src/auth/guards/optional-jwt-auth.guard';
+import { Test, TestingModule } from "@nestjs/testing";
+import {
+  INestApplication,
+  ValidationPipe,
+  ModuleMetadata,
+} from "@nestjs/common";
+import { GraphQLModule } from "@nestjs/graphql";
+import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
+import { ConfigModule } from "@nestjs/config";
+import { JwtModule } from "@nestjs/jwt";
+import { ThrottlerModule } from "@nestjs/throttler";
+import * as request from "supertest";
+import { DatabaseService } from "../src/database/database.service";
+import { CustomThrottlerGuard } from "../src/middleware/custom-throttler.guard";
+import { OptionalJwtAuthGuard } from "../src/auth/guards/optional-jwt-auth.guard";
 // Ensure ModerationStatus and other enums are registered for GraphQL schema generation
-import '../src/image-moderation/dto/image-moderation.dto';
+import "../src/image-moderation/dto/image-moderation.dto";
 
 // NestJS app startup + DB operations can take well over 5s
 jest.setTimeout(60000);
@@ -21,16 +25,16 @@ export class TestApp {
   private moduleRef: TestingModule;
   private db: DatabaseService;
 
-  async setup(moduleMetadata: Pick<ModuleMetadata, 'imports' | 'providers'>) {
+  async setup(moduleMetadata: Pick<ModuleMetadata, "imports" | "providers">) {
     this.moduleRef = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
-          envFilePath: '.env.test',
+          envFilePath: ".env.test",
         }),
         ThrottlerModule.forRoot([
-          { name: 'short', ttl: 1000, limit: 10000 },
-          { name: 'long', ttl: 60000, limit: 100000 },
+          { name: "short", ttl: 1000, limit: 10000 },
+          { name: "long", ttl: 60000, limit: 100000 },
         ]),
         GraphQLModule.forRoot<ApolloDriverConfig>({
           driver: ApolloDriver,
@@ -40,8 +44,8 @@ export class TestApp {
           introspection: false,
         }),
         JwtModule.register({
-          secret: 'test-jwt-secret-key-for-testing-only',
-          signOptions: { expiresIn: '15m' },
+          secret: "test-jwt-secret-key-for-testing-only",
+          signOptions: { expiresIn: "15m" },
         }),
         ...(moduleMetadata.imports ?? []),
       ],
@@ -49,15 +53,17 @@ export class TestApp {
     }).compile();
 
     this.app = this.moduleRef.createNestApplication();
-    this.app.useGlobalPipes(new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }));
+    this.app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
     this.app.useGlobalGuards(
       this.app.get(CustomThrottlerGuard),
       this.app.get(OptionalJwtAuthGuard),
-      this.app.get('PERMISSION_OR_GUARD'),
+      this.app.get("PERMISSION_OR_GUARD"),
     );
 
     this.db = this.app.get(DatabaseService);
@@ -105,7 +111,7 @@ export class TestApp {
 
   async graphqlRequest(query: string, variables = {}, headers = {}) {
     return request(this.app.getHttpServer())
-      .post('/graphql')
+      .post("/graphql")
       .set(headers)
       .send({
         query,
@@ -113,9 +119,13 @@ export class TestApp {
       });
   }
 
-  async authenticatedGraphqlRequest(query: string, variables = {}, token: string) {
+  async authenticatedGraphqlRequest(
+    query: string,
+    variables = {},
+    token: string,
+  ) {
     return this.graphqlRequest(query, variables, {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     });
   }
 
@@ -124,8 +134,8 @@ export class TestApp {
     const defaultUser = {
       username: `testuser_${timestamp}`,
       email: `test_${timestamp}@example.com`,
-      displayName: 'Test User',
-      passwordHash: '$2b$10$test.hash.for.testing',
+      displayName: "Test User",
+      passwordHash: "$2b$10$test.hash.for.testing",
       ...userData,
     };
 
@@ -140,7 +150,7 @@ export class TestApp {
       data: {
         username: `invite_creator_${timestamp}`,
         email: `invite_creator_${timestamp}@example.com`,
-        passwordHash: '$2b$10$test.hash.for.testing',
+        passwordHash: "$2b$10$test.hash.for.testing",
       },
     });
     const code = `testcode${timestamp}`;
@@ -155,7 +165,9 @@ export class TestApp {
     return code;
   }
 
-  async createTestCommunity(name?: string): Promise<{ id: string; name: string }> {
+  async createTestCommunity(
+    name?: string,
+  ): Promise<{ id: string; name: string }> {
     const timestamp = Date.now();
     return this.db.community.create({
       data: {
@@ -221,15 +233,20 @@ export class TestApp {
     });
     const species = await this.createTestSpecies(community.id);
     await this.createTestCommunityMember(userId, role.id);
-    return { communityId: community.id, speciesId: species.id, roleId: role.id };
+    return {
+      communityId: community.id,
+      speciesId: species.id,
+      roleId: role.id,
+    };
   }
 
   async generateTestToken(userId: string, username?: string) {
-    const jwt = require('jsonwebtoken');
+    const jwt = require("jsonwebtoken");
     return jwt.sign(
       { sub: userId, username: username || `testuser_${userId}` },
-      process.env.JWT_SECRET || 'development-jwt-secret-key-change-in-production',
-      { expiresIn: '15m' }
+      process.env.JWT_SECRET ||
+        "development-jwt-secret-key-change-in-production",
+      { expiresIn: "15m" },
     );
   }
 
@@ -239,12 +256,12 @@ export class TestApp {
 }
 
 // Mock authentication for testing
-export const mockJwtToken = 'mock-jwt-token';
+export const mockJwtToken = "mock-jwt-token";
 export const mockUser = {
-  id: 'test-user-id',
-  username: 'testuser',
-  email: 'test@example.com',
-  displayName: 'Test User',
+  id: "test-user-id",
+  username: "testuser",
+  email: "test@example.com",
+  displayName: "Test User",
 };
 
 // Common GraphQL queries for testing

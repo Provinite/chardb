@@ -53,7 +53,9 @@ export class PermissionService {
       communityId,
     );
 
-    const permissions: Partial<Record<CommunityPermission, boolean>> & { hasMembership: boolean } = {
+    const permissions: Partial<Record<CommunityPermission, boolean>> & {
+      hasMembership: boolean;
+    } = {
       hasMembership: roles.length > 0,
     };
 

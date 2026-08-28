@@ -1,12 +1,7 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { AlertTriangle } from 'lucide-react';
-import {
-  Modal,
-  Button,
-  Label,
-  HelpText,
-} from '@chardb/ui';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { AlertTriangle } from "lucide-react";
+import { Modal, Button, Label, HelpText } from "@chardb/ui";
 
 const FormContainer = styled.div`
   display: flex;
@@ -63,7 +58,7 @@ export const RevertTraitReviewModal: React.FC<RevertTraitReviewModalProps> = ({
   onCancel,
   submitting,
 }) => {
-  const [reason, setReason] = useState('');
+  const [reason, setReason] = useState("");
 
   const handleSubmit = () => {
     if (reason.trim()) {
@@ -72,11 +67,7 @@ export const RevertTraitReviewModal: React.FC<RevertTraitReviewModalProps> = ({
   };
 
   return (
-    <Modal
-      isOpen
-      onClose={onCancel}
-      title={`Revert Traits: ${characterName}`}
-    >
+    <Modal isOpen onClose={onCancel} title={`Revert Traits: ${characterName}`}>
       <FormContainer>
         <WarningBanner>
           <AlertTriangle size={18} />
@@ -103,7 +94,7 @@ export const RevertTraitReviewModal: React.FC<RevertTraitReviewModalProps> = ({
             onClick={handleSubmit}
             disabled={!reason.trim() || submitting}
           >
-            {submitting ? 'Reverting...' : 'Revert'}
+            {submitting ? "Reverting..." : "Revert"}
           </Button>
         </Actions>
       </FormContainer>

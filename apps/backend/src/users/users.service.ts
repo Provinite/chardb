@@ -20,7 +20,7 @@ export interface UserPrivacySettings {
   /** Whether to allow direct messages */
   allowDirectMessages?: boolean;
   /** Who can comment on user's content */
-  allowCommentsFrom?: 'everyone' | 'following' | 'none';
+  allowCommentsFrom?: "everyone" | "following" | "none";
 }
 
 /**
@@ -159,7 +159,11 @@ export class UsersService {
     });
   }
 
-  async getUserRecentCharacters(userId: string, includePrivate = false, limit = 6) {
+  async getUserRecentCharacters(
+    userId: string,
+    includePrivate = false,
+    limit = 6,
+  ) {
     const visibilityFilter = includePrivate
       ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
       : [Visibility.PUBLIC];
@@ -175,7 +179,11 @@ export class UsersService {
     });
   }
 
-  async getUserRecentGalleries(userId: string, includePrivate = false, limit = 6) {
+  async getUserRecentGalleries(
+    userId: string,
+    includePrivate = false,
+    limit = 6,
+  ) {
     const visibilityFilter = includePrivate
       ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
       : [Visibility.PUBLIC];

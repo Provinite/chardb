@@ -225,8 +225,15 @@ export const FollowersPage: React.FC = () => {
               <UserAvatar>
                 {follower.avatarImage ? (
                   <img
-                    src={follower.avatarImage.thumbnailUrl || follower.avatarImage.originalUrl}
-                    alt={follower.avatarImage.altText || follower.displayName || follower.username}
+                    src={
+                      follower.avatarImage.thumbnailUrl ||
+                      follower.avatarImage.originalUrl
+                    }
+                    alt={
+                      follower.avatarImage.altText ||
+                      follower.displayName ||
+                      follower.username
+                    }
                     style={{
                       width: "100%",
                       height: "100%",

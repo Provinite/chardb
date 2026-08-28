@@ -1,16 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, NotFoundException } from '@nestjs/common';
-import { ExternalAccountsService } from './external-accounts.service';
-import { DatabaseService } from '../database/database.service';
-import { PendingOwnershipService } from '../pending-ownership/pending-ownership.service';
-import { ExternalAccountProvider } from '@prisma/client';
-import { mockDatabaseService } from '../../test/setup';
+import { Test, TestingModule } from "@nestjs/testing";
+import { ConflictException, NotFoundException } from "@nestjs/common";
+import { ExternalAccountsService } from "./external-accounts.service";
+import { DatabaseService } from "../database/database.service";
+import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import { ExternalAccountProvider } from "@prisma/client";
+import { mockDatabaseService } from "../../test/setup";
 
 const mockPendingOwnershipService = {
   claimAllForAccount: jest.fn(),
 };
 
-describe('ExternalAccountsService', () => {
+describe("ExternalAccountsService", () => {
   let service: ExternalAccountsService;
   let db: typeof mockDatabaseService;
 
@@ -30,21 +30,23 @@ describe('ExternalAccountsService', () => {
     }).compile();
 
     service = module.get<ExternalAccountsService>(ExternalAccountsService);
-    db = module.get<DatabaseService>(DatabaseService) as unknown as typeof mockDatabaseService;
+    db = module.get<DatabaseService>(
+      DatabaseService,
+    ) as unknown as typeof mockDatabaseService;
   });
 
-  describe('findByUserId', () => {
-    it('should find all external accounts for a user', async () => {
-      const userId = 'user1';
+  describe("findByUserId", () => {
+    it("should find all external accounts for a user", async () => {
+      const userId = "user1";
       const mockAccounts = [
         {
-          id: 'account1',
+          id: "account1",
           userId,
           provider: ExternalAccountProvider.DEVIANTART,
-          providerAccountId: 'da123',
-          displayName: 'testuser',
-          createdAt: new Date('2025-01-01'),
-          updatedAt: new Date('2025-01-01'),
+          providerAccountId: "da123",
+          displayName: "testuser",
+          createdAt: new Date("2025-01-01"),
+          updatedAt: new Date("2025-01-01"),
         },
       ];
 
@@ -54,13 +56,13 @@ describe('ExternalAccountsService', () => {
 
       expect(db.externalAccount.findMany).toHaveBeenCalledWith({
         where: { userId },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       });
       expect(result).toEqual(mockAccounts);
     });
 
-    it('should return empty array when user has no linked accounts', async () => {
-      const userId = 'user1';
+    it("should return empty array when user has no linked accounts", async () => {
+      const userId = "user1";
       db.externalAccount.findMany.mockResolvedValue([]);
 
       const result = await service.findByUserId(userId);
@@ -69,16 +71,16 @@ describe('ExternalAccountsService', () => {
     });
   });
 
-  describe('findByProviderAndUserId', () => {
-    it('should find an external account by provider and user ID', async () => {
-      const userId = 'user1';
+  describe("findByProviderAndUserId", () => {
+    it("should find an external account by provider and user ID", async () => {
+      const userId = "user1";
       const provider = ExternalAccountProvider.DEVIANTART;
       const mockAccount = {
-        id: 'account1',
+        id: "account1",
         userId,
         provider,
-        providerAccountId: 'da123',
-        displayName: 'testuser',
+        providerAccountId: "da123",
+        displayName: "testuser",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -98,8 +100,8 @@ describe('ExternalAccountsService', () => {
       expect(result).toEqual(mockAccount);
     });
 
-    it('should return null when no account is found', async () => {
-      const userId = 'user1';
+    it("should return null when no account is found", async () => {
+      const userId = "user1";
       const provider = ExternalAccountProvider.DEVIANTART;
 
       db.externalAccount.findUnique.mockResolvedValue(null);
@@ -110,15 +112,15 @@ describe('ExternalAccountsService', () => {
     });
   });
 
-  describe('linkExternalAccount', () => {
-    it('should link an external account successfully', async () => {
-      const userId = 'user1';
+  describe("linkExternalAccount", () => {
+    it("should link an external account successfully", async () => {
+      const userId = "user1";
       const provider = ExternalAccountProvider.DEVIANTART;
-      const providerAccountId = 'da123';
-      const displayName = 'testuser';
+      const providerAccountId = "da123";
+      const displayName = "testuser";
 
       const mockLinkedAccount = {
-        id: 'account1',
+        id: "account1",
         userId,
         provider,
         providerAccountId,
@@ -129,7 +131,7 @@ describe('ExternalAccountsService', () => {
 
       // Mock that this provider account is not linked to anyone
       db.externalAccount.findUnique
-        .mockResolvedValueOnce(null)  // First check: provider account not linked
+        .mockResolvedValueOnce(null) // First check: provider account not linked
         .mockResolvedValueOnce(null); // Second check (via findByProviderAndUserId): user doesn't have provider linked
 
       db.externalAccount.create.mockResolvedValue(mockLinkedAccount);
@@ -176,14 +178,14 @@ describe('ExternalAccountsService', () => {
       });
     });
 
-    it('should throw ConflictException when provider account is already linked to same user', async () => {
-      const userId = 'user1';
+    it("should throw ConflictException when provider account is already linked to same user", async () => {
+      const userId = "user1";
       const provider = ExternalAccountProvider.DEVIANTART;
-      const providerAccountId = 'da123';
-      const displayName = 'testuser';
+      const providerAccountId = "da123";
+      const displayName = "testuser";
 
       const existingAccount = {
-        id: 'account1',
+        id: "account1",
         userId, // Same user
         provider,
         providerAccountId,
@@ -195,23 +197,28 @@ describe('ExternalAccountsService', () => {
       db.externalAccount.findUnique.mockResolvedValue(existingAccount);
 
       await expect(
-        service.linkExternalAccount(userId, provider, providerAccountId, displayName),
+        service.linkExternalAccount(
+          userId,
+          provider,
+          providerAccountId,
+          displayName,
+        ),
       ).rejects.toThrow(
-        new ConflictException('This account is already linked to your profile'),
+        new ConflictException("This account is already linked to your profile"),
       );
 
       expect(db.externalAccount.create).not.toHaveBeenCalled();
     });
 
-    it('should throw ConflictException when provider account is already linked to different user', async () => {
-      const userId = 'user1';
+    it("should throw ConflictException when provider account is already linked to different user", async () => {
+      const userId = "user1";
       const provider = ExternalAccountProvider.DEVIANTART;
-      const providerAccountId = 'da123';
-      const displayName = 'testuser';
+      const providerAccountId = "da123";
+      const displayName = "testuser";
 
       const existingAccount = {
-        id: 'account1',
-        userId: 'user2', // Different user
+        id: "account1",
+        userId: "user2", // Different user
         provider,
         providerAccountId,
         displayName,
@@ -222,36 +229,48 @@ describe('ExternalAccountsService', () => {
       db.externalAccount.findUnique.mockResolvedValue(existingAccount);
 
       await expect(
-        service.linkExternalAccount(userId, provider, providerAccountId, displayName),
+        service.linkExternalAccount(
+          userId,
+          provider,
+          providerAccountId,
+          displayName,
+        ),
       ).rejects.toThrow(
-        new ConflictException('This external account is already linked to another user'),
+        new ConflictException(
+          "This external account is already linked to another user",
+        ),
       );
 
       expect(db.externalAccount.create).not.toHaveBeenCalled();
     });
 
-    it('should throw ConflictException when user already has an account linked for this provider', async () => {
-      const userId = 'user1';
+    it("should throw ConflictException when user already has an account linked for this provider", async () => {
+      const userId = "user1";
       const provider = ExternalAccountProvider.DEVIANTART;
-      const providerAccountId = 'da123';
-      const displayName = 'testuser';
+      const providerAccountId = "da123";
+      const displayName = "testuser";
 
       const existingUserLink = {
-        id: 'account1',
+        id: "account1",
         userId,
         provider,
-        providerAccountId: 'da456', // Different provider account ID
-        displayName: 'olduser',
+        providerAccountId: "da456", // Different provider account ID
+        displayName: "olduser",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       db.externalAccount.findUnique
-        .mockResolvedValueOnce(null)  // First check: provider account not linked to anyone
+        .mockResolvedValueOnce(null) // First check: provider account not linked to anyone
         .mockResolvedValueOnce(existingUserLink); // Second check: user already has this provider
 
       await expect(
-        service.linkExternalAccount(userId, provider, providerAccountId, displayName),
+        service.linkExternalAccount(
+          userId,
+          provider,
+          providerAccountId,
+          displayName,
+        ),
       ).rejects.toThrow(
         new ConflictException(
           `You already have a ${provider} account linked. Please unlink it first.`,
@@ -262,17 +281,17 @@ describe('ExternalAccountsService', () => {
     });
   });
 
-  describe('unlinkExternalAccount', () => {
-    it('should unlink an external account successfully', async () => {
-      const userId = 'user1';
+  describe("unlinkExternalAccount", () => {
+    it("should unlink an external account successfully", async () => {
+      const userId = "user1";
       const provider = ExternalAccountProvider.DEVIANTART;
 
       const existingAccount = {
-        id: 'account1',
+        id: "account1",
         userId,
         provider,
-        providerAccountId: 'da123',
-        displayName: 'testuser',
+        providerAccountId: "da123",
+        displayName: "testuser",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -298,14 +317,18 @@ describe('ExternalAccountsService', () => {
       expect(result).toBe(true);
     });
 
-    it('should throw NotFoundException when no account is found to unlink', async () => {
-      const userId = 'user1';
+    it("should throw NotFoundException when no account is found to unlink", async () => {
+      const userId = "user1";
       const provider = ExternalAccountProvider.DEVIANTART;
 
       db.externalAccount.findUnique.mockResolvedValue(null);
 
-      await expect(service.unlinkExternalAccount(userId, provider)).rejects.toThrow(
-        new NotFoundException(`No ${provider} account found linked to your profile`),
+      await expect(
+        service.unlinkExternalAccount(userId, provider),
+      ).rejects.toThrow(
+        new NotFoundException(
+          `No ${provider} account found linked to your profile`,
+        ),
       );
 
       expect(db.externalAccount.delete).not.toHaveBeenCalled();

@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import styled from 'styled-components';
-import { Button } from '@chardb/ui';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import styled from "styled-components";
+import { Button } from "@chardb/ui";
+import { useAuth } from "../contexts/AuthContext";
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email("Please enter a valid email"),
+  password: z.string().min(1, "Password is required"),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -61,11 +61,11 @@ const Input = styled.input`
   background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.text.primary};
   transition: all 0.2s ease;
-  
+
   &::placeholder {
     color: ${({ theme }) => theme.colors.text.muted};
   }
-  
+
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
@@ -88,7 +88,7 @@ const Footer = styled.div`
 const SignupLink = styled(Link)`
   color: ${({ theme }) => theme.colors.primary};
   text-decoration: none;
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -100,7 +100,7 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = location.state?.from?.pathname || "/dashboard";
 
   const {
     register,
@@ -126,32 +126,36 @@ export const LoginPage: React.FC = () => {
     <Container>
       <Card>
         <Title>Welcome Back</Title>
-        
+
         <Form onSubmit={handleSubmit(onSubmit)}>
           <FormGroup>
             <Label htmlFor="email">Email</Label>
             <Input
-              {...register('email')}
+              {...register("email")}
               type="email"
               id="email"
               placeholder="Enter your email"
             />
-            {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
+            {errors.email && (
+              <ErrorMessage>{errors.email.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <FormGroup>
             <Label htmlFor="password">Password</Label>
             <Input
-              {...register('password')}
+              {...register("password")}
               type="password"
               id="password"
               placeholder="Enter your password"
             />
-            {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
+            {errors.password && (
+              <ErrorMessage>{errors.password.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <Button type="submit" loading={isLoading} disabled={isLoading}>
-            {isLoading ? 'Signing In...' : 'Sign In'}
+            {isLoading ? "Signing In..." : "Sign In"}
           </Button>
         </Form>
 
@@ -160,7 +164,7 @@ export const LoginPage: React.FC = () => {
         </Footer>
 
         <Footer>
-          Don't have an account?{' '}
+          Don't have an account?{" "}
           <SignupLink to="/signup">Sign up here</SignupLink>
         </Footer>
       </Card>

@@ -1,5 +1,5 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { Community } from '../../communities/entities/community.entity';
+import { ObjectType, Field, ID } from "@nestjs/graphql";
+import { Community } from "../../communities/entities/community.entity";
 
 @ObjectType()
 export class CommunityColor {

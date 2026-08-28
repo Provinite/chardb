@@ -1,10 +1,21 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { Link } from 'react-router-dom';
-import { Check, X, User, Image as ImageIcon, Clock, ExternalLink, AlertTriangle } from 'lucide-react';
-import { Button, SmallText, Caption } from '@chardb/ui';
-import { ModerationRejectionReason, ModerationStatus } from '../../generated/graphql';
-import { RejectImageModal } from './RejectImageModal';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { Link } from "react-router-dom";
+import {
+  Check,
+  X,
+  User,
+  Image as ImageIcon,
+  Clock,
+  ExternalLink,
+  AlertTriangle,
+} from "lucide-react";
+import { Button, SmallText, Caption } from "@chardb/ui";
+import {
+  ModerationRejectionReason,
+  ModerationStatus,
+} from "../../generated/graphql";
+import { RejectImageModal } from "./RejectImageModal";
 
 /**
  * Local type for the image moderation card item.
@@ -180,7 +191,11 @@ const TimestampText = styled(Caption)`
 interface ImageModerationCardProps {
   item: ImageModerationCardItem;
   onApprove: (imageId: string) => Promise<void>;
-  onReject: (imageId: string, reason: ModerationRejectionReason, reasonText?: string) => Promise<void>;
+  onReject: (
+    imageId: string,
+    reason: ModerationRejectionReason,
+    reasonText?: string,
+  ) => Promise<void>;
   approving?: boolean;
   rejecting?: boolean;
 }
@@ -202,7 +217,10 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
     await onApprove(image.id);
   };
 
-  const handleRejectConfirm = async (reason: ModerationRejectionReason, reasonText?: string) => {
+  const handleRejectConfirm = async (
+    reason: ModerationRejectionReason,
+    reasonText?: string,
+  ) => {
     await onReject(image.id, reason, reasonText);
     setShowRejectModal(false);
   };
@@ -210,10 +228,10 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -224,7 +242,7 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
           {image.thumbnailUrl || image.originalUrl ? (
             <StyledImage
               src={image.thumbnailUrl || image.originalUrl}
-              alt={image.altText || image.originalFilename || 'Pending image'}
+              alt={image.altText || image.originalFilename || "Pending image"}
               onClick={() => setShowFullImage(true)}
             />
           ) : (
@@ -311,7 +329,7 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
         <ImageModal onClick={() => setShowFullImage(false)}>
           <FullImage
             src={image.originalUrl}
-            alt={image.altText || image.originalFilename || 'Full size image'}
+            alt={image.altText || image.originalFilename || "Full size image"}
             onClick={(e) => e.stopPropagation()}
           />
         </ImageModal>

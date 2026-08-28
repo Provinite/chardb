@@ -1,5 +1,11 @@
-import { CreateEnumValueSettingInput, UpdateEnumValueSettingInput } from "../dto/enum-value-setting.dto";
-import { EnumValueSetting, EnumValueSettingConnection } from "../entities/enum-value-setting.entity";
+import {
+  CreateEnumValueSettingInput,
+  UpdateEnumValueSettingInput,
+} from "../dto/enum-value-setting.dto";
+import {
+  EnumValueSetting,
+  EnumValueSettingConnection,
+} from "../entities/enum-value-setting.entity";
 import { Prisma } from "@chardb/database";
 
 /**
@@ -9,7 +15,9 @@ import { Prisma } from "@chardb/database";
 /**
  * Maps CreateEnumValueSettingInput to service input format
  */
-export function mapCreateEnumValueSettingInputToService(input: CreateEnumValueSettingInput) {
+export function mapCreateEnumValueSettingInputToService(
+  input: CreateEnumValueSettingInput,
+) {
   return {
     enumValueId: input.enumValueId,
     speciesVariantId: input.speciesVariantId,
@@ -19,14 +27,17 @@ export function mapCreateEnumValueSettingInputToService(input: CreateEnumValueSe
 /**
  * Maps UpdateEnumValueSettingInput to service input format
  */
-export function mapUpdateEnumValueSettingInputToService(input: UpdateEnumValueSettingInput) {
+export function mapUpdateEnumValueSettingInputToService(
+  input: UpdateEnumValueSettingInput,
+) {
   const result: {
     enumValueId?: string;
     speciesVariantId?: string;
   } = {};
 
   if (input.enumValueId !== undefined) result.enumValueId = input.enumValueId;
-  if (input.speciesVariantId !== undefined) result.speciesVariantId = input.speciesVariantId;
+  if (input.speciesVariantId !== undefined)
+    result.speciesVariantId = input.speciesVariantId;
 
   return result;
 }
@@ -37,7 +48,9 @@ type PrismaEnumValueSetting = Prisma.EnumValueSettingGetPayload<{}>;
  * Maps Prisma EnumValueSetting result to GraphQL EnumValueSetting entity
  * Only includes scalar fields - relations are handled by field resolvers
  */
-export function mapPrismaEnumValueSettingToGraphQL(prismaEnumValueSetting: PrismaEnumValueSetting): EnumValueSetting {
+export function mapPrismaEnumValueSettingToGraphQL(
+  prismaEnumValueSetting: PrismaEnumValueSetting,
+): EnumValueSetting {
   return {
     id: prismaEnumValueSetting.id,
     enumValueId: prismaEnumValueSetting.enumValueId,

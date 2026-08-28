@@ -26,7 +26,11 @@ interface TraitReviewCardProps {
   onRevert: (reviewId: string, reason: string) => Promise<void>;
   onEditAndApprove?: (reviewId: string) => void;
   onDelete?: (characterId: string, characterName: string) => Promise<void>;
-  onKickFromSpecies?: (characterId: string, characterName: string, speciesName: string | undefined) => Promise<void>;
+  onKickFromSpecies?: (
+    characterId: string,
+    characterName: string,
+    speciesName: string | undefined,
+  ) => Promise<void>;
   actionInProgress: boolean;
 }
 
@@ -203,7 +207,10 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
 
   return (
     <>
-      <Card data-testid="trait-review-card" data-character-id={item.characterId}>
+      <Card
+        data-testid="trait-review-card"
+        data-character-id={item.characterId}
+      >
         <ImageSection>
           {imageUrl ? (
             <MainImage src={imageUrl} alt={item.characterName} />
@@ -282,7 +289,13 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onKickFromSpecies(item.characterId, item.characterName, item.speciesName ?? undefined)}
+                onClick={() =>
+                  onKickFromSpecies(
+                    item.characterId,
+                    item.characterName,
+                    item.speciesName ?? undefined,
+                  )
+                }
                 disabled={actionInProgress}
                 icon={<Unlink size={14} />}
               >

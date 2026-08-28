@@ -50,14 +50,11 @@ export class DiscordStrategy extends PassportStrategy(Strategy, "discord") {
     done: (err?: Error | null, profile?: any) => void,
   ) {
     try {
-      const response = await fetch(
-        "https://discord.com/api/v10/users/@me",
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+      const response = await fetch("https://discord.com/api/v10/users/@me", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
         },
-      );
+      });
 
       if (!response.ok) {
         return done(new Error("Failed to fetch Discord user profile"));

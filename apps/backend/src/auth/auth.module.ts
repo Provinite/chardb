@@ -51,7 +51,11 @@ import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
     EmailModule,
     forwardRef(() => CommunityMembersModule),
   ],
-  controllers: [DeviantArtOAuthController, DiscordOAuthController, ToyhouseOAuthController],
+  controllers: [
+    DeviantArtOAuthController,
+    DiscordOAuthController,
+    ToyhouseOAuthController,
+  ],
   providers: [
     AuthService,
     AuthResolver,

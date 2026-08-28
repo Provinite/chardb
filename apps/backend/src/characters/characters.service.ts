@@ -11,7 +11,14 @@ import { DiscordService } from "../discord/discord.service";
 import { DeviantArtService } from "../deviantart/deviantart.service";
 import { PermissionService } from "../auth/PermissionService";
 import { CommunityPermission } from "../auth/CommunityPermission";
-import { Prisma, Visibility, ExternalAccountProvider, ModerationStatus, TraitReviewSource, TraitValueType } from "@chardb/database";
+import {
+  Prisma,
+  Visibility,
+  ExternalAccountProvider,
+  ModerationStatus,
+  TraitReviewSource,
+  TraitValueType,
+} from "@chardb/database";
 import { TraitReviewService } from "../trait-review/trait-review.service";
 import { notDeleted } from "../common/utils/prisma-filters";
 
@@ -94,7 +101,7 @@ export class CharactersService {
     // - If assignToSelf is false, character is orphaned (ownerId = null)
     // - Otherwise, owner is the current user (userId)
     // - Can be reassigned if external account is already claimed
-    let actualOwnerId = (pendingOwner || !assignToSelf) ? null : userId;
+    let actualOwnerId = pendingOwner || !assignToSelf ? null : userId;
 
     // Extract speciesId early for validation and Discord resolution
     const speciesId = characterData.species?.connect?.id;
@@ -157,7 +164,9 @@ export class CharactersService {
       const created = await tx.character.create({
         data: {
           // Owner connection (may be null for orphaned characters)
-          ...(actualOwnerId ? { owner: { connect: { id: actualOwnerId } } } : {}),
+          ...(actualOwnerId
+            ? { owner: { connect: { id: actualOwnerId } } }
+            : {}),
           // Creator is always the user creating the character
           creator: {
             connect: { id: userId },
@@ -714,9 +723,8 @@ export class CharactersService {
         } else if (provider === ExternalAccountProvider.DEVIANTART) {
           // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
           // Resolve the username to a UUID so it matches external_accounts.
-          const resolved = await this.deviantArtService.resolveUsername(
-            providerAccountId,
-          );
+          const resolved =
+            await this.deviantArtService.resolveUsername(providerAccountId);
           resolvedAccountId = resolved.uuid;
           displayIdentifier = resolved.username;
         }
@@ -755,7 +763,9 @@ export class CharactersService {
   }
 
   async softDelete(id: string, userId: string): Promise<boolean> {
-    const character = await this.db.character.findFirst({ where: { id, ...notDeleted } });
+    const character = await this.db.character.findFirst({
+      where: { id, ...notDeleted },
+    });
     if (!character) {
       throw new NotFoundException("Character not found");
     }
@@ -791,20 +801,30 @@ export class CharactersService {
   }
 
   async kickFromSpecies(id: string): Promise<boolean> {
-    const character = await this.db.character.findFirst({ where: { id, ...notDeleted } });
+    const character = await this.db.character.findFirst({
+      where: { id, ...notDeleted },
+    });
     if (!character) {
       throw new NotFoundException("Character not found");
     }
     if (!character.speciesId) {
-      throw new BadRequestException("Character does not have a species assigned");
+      throw new BadRequestException(
+        "Character does not have a species assigned",
+      );
     }
 
-    const traitValues = character.traitValues as PrismaJson.CharacterTraitValuesJson;
+    const traitValues =
+      character.traitValues as PrismaJson.CharacterTraitValuesJson;
 
-    const flattenedFields = await this.flattenTraitValues(character.speciesId, traitValues);
+    const flattenedFields = await this.flattenTraitValues(
+      character.speciesId,
+      traitValues,
+    );
 
     const existingCustomFields =
-      character.customFields && typeof character.customFields === "object" && !Array.isArray(character.customFields)
+      character.customFields &&
+      typeof character.customFields === "object" &&
+      !Array.isArray(character.customFields)
         ? (character.customFields as Record<string, string>)
         : {};
 
@@ -861,7 +881,10 @@ export class CharactersService {
     // Index by both lowercased name AND UUID to handle both storage formats
     const enumValueMap = new Map<string, string>();
     for (const ev of enumValues) {
-      enumValueMap.set(`${ev.traitId}::${String(ev.name).toLowerCase()}`, ev.name);
+      enumValueMap.set(
+        `${ev.traitId}::${String(ev.name).toLowerCase()}`,
+        ev.name,
+      );
       enumValueMap.set(`${ev.traitId}::${ev.id}`, ev.name);
     }
 
@@ -1022,9 +1045,8 @@ export class CharactersService {
         } else if (provider === ExternalAccountProvider.DEVIANTART) {
           // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
           // Resolve the username to a UUID so it matches external_accounts.
-          const resolved = await this.deviantArtService.resolveUsername(
-            providerAccountId,
-          );
+          const resolved =
+            await this.deviantArtService.resolveUsername(providerAccountId);
           resolvedAccountId = resolved.uuid;
           displayIdentifier = resolved.username;
         }
@@ -1124,7 +1146,9 @@ export class CharactersService {
       select: { id: true, communityId: true },
     });
     if (!species) {
-      throw new NotFoundException(`Species with ID ${input.speciesId} not found`);
+      throw new NotFoundException(
+        `Species with ID ${input.speciesId} not found`,
+      );
     }
 
     // Verify user has canCreateCharacter permission for the target species
@@ -1374,7 +1398,10 @@ export class CharactersService {
     return updatedCharacter;
   }
 
-  private buildSearchConditions(search: string, searchFields: string): Prisma.CharacterWhereInput[] {
+  private buildSearchConditions(
+    search: string,
+    searchFields: string,
+  ): Prisma.CharacterWhereInput[] {
     const searchTerm = { contains: search, mode: "insensitive" as const };
 
     switch (searchFields) {
@@ -1391,7 +1418,10 @@ export class CharactersService {
     }
   }
 
-  private buildOrderBy(sortBy: string, sortOrder: string): Prisma.CharacterOrderByWithRelationInput {
+  private buildOrderBy(
+    sortBy: string,
+    sortOrder: string,
+  ): Prisma.CharacterOrderByWithRelationInput {
     const order = sortOrder === "asc" ? "asc" : "desc";
 
     switch (sortBy) {

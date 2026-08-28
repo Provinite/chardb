@@ -366,8 +366,16 @@ export const EditCharacterPage: React.FC = () => {
   );
 
   // Compute section-specific edit permissions
-  const canEditProfile = canUserEditCharacterProfile(character, user, permissions);
-  const canEditRegistry = canUserEditCharacterRegistry(character, user, permissions);
+  const canEditProfile = canUserEditCharacterProfile(
+    character,
+    user,
+    permissions,
+  );
+  const canEditRegistry = canUserEditCharacterRegistry(
+    character,
+    user,
+    permissions,
+  );
 
   // Reset form when character data loads
   useEffect(() => {
@@ -445,16 +453,20 @@ export const EditCharacterPage: React.FC = () => {
       if (data.customFields) {
         try {
           const parsed = JSON.parse(data.customFields);
-          const filtered = Object.entries(parsed).reduce((acc, [key, value]) => {
-            // Remove temporary keys and empty keys
-            if (key && !key.startsWith('__empty_') && key.trim()) {
-              acc[key] = value;
-            }
-            return acc;
-          }, {} as Record<string, unknown>);
-          cleanedCustomFields = Object.keys(filtered).length > 0
-            ? JSON.stringify(filtered)
-            : undefined;
+          const filtered = Object.entries(parsed).reduce(
+            (acc, [key, value]) => {
+              // Remove temporary keys and empty keys
+              if (key && !key.startsWith("__empty_") && key.trim()) {
+                acc[key] = value;
+              }
+              return acc;
+            },
+            {} as Record<string, unknown>,
+          );
+          cleanedCustomFields =
+            Object.keys(filtered).length > 0
+              ? JSON.stringify(filtered)
+              : undefined;
         } catch {
           cleanedCustomFields = undefined;
         }
@@ -524,7 +536,8 @@ export const EditCharacterPage: React.FC = () => {
       }
 
       // Check if we're doing first-time species assignment (special case)
-      const isFirstTimeSpeciesAssignment = !character.speciesId && selectedSpecies;
+      const isFirstTimeSpeciesAssignment =
+        !character.speciesId && selectedSpecies;
 
       if (isFirstTimeSpeciesAssignment) {
         // First assign the species
@@ -731,11 +744,17 @@ export const EditCharacterPage: React.FC = () => {
               <Label>Trading Options</Label>
               <CheckboxGroup>
                 <CheckboxLabel>
-                  <Checkbox {...register("isTradeable")} disabled={!canEditProfile} />
+                  <Checkbox
+                    {...register("isTradeable")}
+                    disabled={!canEditProfile}
+                  />
                   Available for trading
                 </CheckboxLabel>
                 <CheckboxLabel>
-                  <Checkbox {...register("isSellable")} disabled={!canEditProfile} />
+                  <Checkbox
+                    {...register("isSellable")}
+                    disabled={!canEditProfile}
+                  />
                   Available for sale
                 </CheckboxLabel>
               </CheckboxGroup>
@@ -887,13 +906,15 @@ export const EditCharacterPage: React.FC = () => {
           <FormSection>
             <SectionTitle>Species Details</SectionTitle>
             <InfoBox>
-              These fields are managed by species administrators. They include the official identifier and character traits.
+              These fields are managed by species administrators. They include
+              the official identifier and character traits.
             </InfoBox>
             {!canEditRegistry && (
               <WarningBox>
                 <AlertTriangle size={20} />
                 <div>
-                  You don't have permission to edit species details for this character.
+                  You don't have permission to edit species details for this
+                  character.
                 </div>
               </WarningBox>
             )}

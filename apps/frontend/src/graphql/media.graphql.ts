@@ -1,5 +1,5 @@
-import { gql } from '@apollo/client';
-import { USER_BASIC_FRAGMENT } from './users.graphql';
+import { gql } from "@apollo/client";
+import { USER_BASIC_FRAGMENT } from "./users.graphql";
 
 export const GET_MEDIA = gql`
   query GetMedia($filters: MediaFiltersInput) {
@@ -450,7 +450,7 @@ export {
   useGetMediaItemQuery,
   useGetCharacterMediaQuery,
   useGetMyMediaQuery,
-  
+
   // Mutation Hooks
   useCreateTextMediaMutation,
   useUpdateMediaMutation,
@@ -459,7 +459,7 @@ export {
   useDeleteMediaMutation,
   useAddMediaTagsMutation,
   useRemoveMediaTagsMutation,
-  
+
   // Types
   type Media,
   type TextContent,
@@ -490,4 +490,4 @@ export {
   type UpdateImageMutationVariables,
   type DeleteMediaMutation,
   type DeleteMediaMutationVariables,
-} from '../generated/graphql';
+} from "../generated/graphql";

@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const TRAIT_VALUE_FIELDS_FRAGMENT = gql`
   fragment TraitValueFields on CharacterTraitValue {

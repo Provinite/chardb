@@ -151,7 +151,7 @@ export const EditSpeciesPage: React.FC = () => {
     useUpdateSpeciesMutation({
       onCompleted: (data) => {
         toast.success(
-          `Species "${data.updateSpecies.name}" updated successfully!`
+          `Species "${data.updateSpecies.name}" updated successfully!`,
         );
         // Navigate back to the community species management page
         navigate(`/communities/${data.updateSpecies.communityId}/species`);

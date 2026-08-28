@@ -1,20 +1,20 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import { ApolloProvider } from '@apollo/client'
-import { ThemedMantineProvider } from './components/ThemedMantineProvider'
-import '@mantine/core/styles.css'
-import '@mantine/spotlight/styles.css'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { ApolloProvider } from "@apollo/client";
+import { ThemedMantineProvider } from "./components/ThemedMantineProvider";
+import "@mantine/core/styles.css";
+import "@mantine/spotlight/styles.css";
 
-import { client } from './lib/apollo'
-import { ThemeProvider } from './contexts/ThemeContext'
-import { AuthProvider } from './contexts/AuthContext'
-import { ThemedToaster } from './components/ThemedToaster'
-import App from './App'
-import { SpotlightNavigation } from './components/spotlight/SpotlightNavigation'
-import './index.css'
+import { client } from "./lib/apollo";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ThemedToaster } from "./components/ThemedToaster";
+import App from "./App";
+import { SpotlightNavigation } from "./components/spotlight/SpotlightNavigation";
+import "./index.css";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ApolloProvider client={client}>
       <BrowserRouter>
@@ -30,4 +30,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       </BrowserRouter>
     </ApolloProvider>
   </React.StrictMode>,
-)
+);

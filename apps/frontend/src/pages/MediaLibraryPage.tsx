@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import { Button } from '@chardb/ui';
-import { useGetMediaQuery, MediaType } from '../generated/graphql';
-import { LoadingSpinner } from '../components/LoadingSpinner';
-import { MediaGrid } from '../components/MediaGrid';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import { Button } from "@chardb/ui";
+import { useGetMediaQuery, MediaType } from "../generated/graphql";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { MediaGrid } from "../components/MediaGrid";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -66,22 +66,26 @@ const FilterTabs = styled.div`
 `;
 
 const FilterTab = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'active',
+  shouldForwardProp: (prop) => prop !== "active",
 })<{ active: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.border};
-  background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.background};
-  color: ${props => props.active ? 'white' : props.theme.colors.text.secondary};
+  border: 1px solid
+    ${(props) =>
+      props.active ? props.theme.colors.primary : props.theme.colors.border};
+  background: ${(props) =>
+    props.active ? props.theme.colors.primary : props.theme.colors.background};
+  color: ${(props) =>
+    props.active ? "white" : props.theme.colors.text.secondary};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   cursor: pointer;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   transition: all 0.2s;
-  
+
   &:hover:not([data-active="true"]) {
     border-color: ${({ theme }) => theme.colors.primary};
     background: ${({ theme }) => theme.colors.primary}10;
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -95,14 +99,12 @@ const LoadingContainer = styled.div`
   min-height: 200px;
 `;
 
-
-
-type MediaFilter = 'all' | 'images' | 'text';
+type MediaFilter = "all" | "images" | "text";
 
 export const MediaLibraryPage: React.FC = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
 
   const { data, loading, error } = useGetMediaQuery({
     variables: {
@@ -110,8 +112,12 @@ export const MediaLibraryPage: React.FC = () => {
         limit: 50,
         offset: 0,
         search: searchTerm || undefined,
-        mediaType: mediaFilter === 'all' ? undefined : 
-                  mediaFilter === 'images' ? MediaType.Image : MediaType.Text,
+        mediaType:
+          mediaFilter === "all"
+            ? undefined
+            : mediaFilter === "images"
+              ? MediaType.Image
+              : MediaType.Text,
       },
     },
   });
@@ -120,8 +126,8 @@ export const MediaLibraryPage: React.FC = () => {
   const totalCount = data?.media?.total || 0;
 
   // Count media by type for filter tabs
-  const imageCount = media.filter(item => item.image).length;
-  const textCount = media.filter(item => item.textContent).length;
+  const imageCount = media.filter((item) => item.image).length;
+  const textCount = media.filter((item) => item.textContent).length;
 
   if (loading) {
     return (
@@ -136,7 +142,7 @@ export const MediaLibraryPage: React.FC = () => {
   if (error) {
     return (
       <Container>
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'red' }}>
+        <div style={{ textAlign: "center", padding: "2rem", color: "red" }}>
           <h3>Error Loading Media</h3>
           <p>Unable to load media. Please try again later.</p>
         </div>
@@ -158,10 +164,7 @@ export const MediaLibraryPage: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Button
-            variant="primary"
-            onClick={() => navigate('/upload')}
-          >
+          <Button variant="primary" onClick={() => navigate("/upload")}>
             Add Media
           </Button>
         </Controls>
@@ -170,20 +173,20 @@ export const MediaLibraryPage: React.FC = () => {
       {totalCount > 0 && (
         <FilterTabs>
           <FilterTab
-            active={mediaFilter === 'all'}
-            onClick={() => setMediaFilter('all')}
+            active={mediaFilter === "all"}
+            onClick={() => setMediaFilter("all")}
           >
             All ({totalCount})
           </FilterTab>
           <FilterTab
-            active={mediaFilter === 'images'}
-            onClick={() => setMediaFilter('images')}
+            active={mediaFilter === "images"}
+            onClick={() => setMediaFilter("images")}
           >
             Images ({imageCount})
           </FilterTab>
           <FilterTab
-            active={mediaFilter === 'text'}
-            onClick={() => setMediaFilter('text')}
+            active={mediaFilter === "text"}
+            onClick={() => setMediaFilter("text")}
           >
             Text ({textCount})
           </FilterTab>
@@ -195,15 +198,15 @@ export const MediaLibraryPage: React.FC = () => {
         showOwner={true}
         loading={loading}
         emptyMessage={
-          searchTerm 
-            ? "No media matches your search criteria" 
-            : mediaFilter === 'all' 
-              ? "No media found" 
+          searchTerm
+            ? "No media matches your search criteria"
+            : mediaFilter === "all"
+              ? "No media found"
               : `No ${mediaFilter} found`
         }
         emptyDescription={
-          searchTerm 
-            ? "Try adjusting your search terms." 
+          searchTerm
+            ? "Try adjusting your search terms."
             : "Start building your collection by uploading your first media."
         }
       />

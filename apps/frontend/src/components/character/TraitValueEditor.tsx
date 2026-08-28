@@ -2,11 +2,11 @@ import React from "react";
 import styled from "styled-components";
 import { Type, Hash, Calendar, List, AlertCircle, Plus } from "lucide-react";
 import { Input, ErrorMessage, Button } from "@chardb/ui";
+import { TraitValueType, TraitDetailsFragment } from "../../generated/graphql";
 import {
-  TraitValueType,
-  TraitDetailsFragment,
+  useEnumValuesByTraitQuery,
+  useEnumValueSettingsBySpeciesVariantQuery,
 } from "../../generated/graphql";
-import { useEnumValuesByTraitQuery, useEnumValueSettingsBySpeciesVariantQuery } from "../../generated/graphql";
 import { TraitValueChip } from "./TraitValueChip";
 
 /**
@@ -221,13 +221,11 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
   });
 
   // Fetch enum value settings for variant filtering
-  const {
-    data: enumSettingsData,
-    loading: enumSettingsLoading,
-  } = useEnumValueSettingsBySpeciesVariantQuery({
-    variables: { speciesVariantId: speciesVariantId || "", first: 1000 },
-    skip: !speciesVariantId || trait.valueType !== TraitValueType.Enum,
-  });
+  const { data: enumSettingsData, loading: enumSettingsLoading } =
+    useEnumValueSettingsBySpeciesVariantQuery({
+      variables: { speciesVariantId: speciesVariantId || "", first: 1000 },
+      skip: !speciesVariantId || trait.valueType !== TraitValueType.Enum,
+    });
 
   const trimmedClarifier = currentClarifier.trim();
 
@@ -303,7 +301,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
     if (trait.valueType !== TraitValueType.Enum) return [];
 
     const allEnumValues = enumValuesData?.enumValuesByTrait?.nodes || [];
-    
+
     if (!speciesVariantId || !enumSettingsData) {
       // If no variant selected or settings not loaded, show all enum values
       return allEnumValues;
@@ -312,12 +310,12 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
     // Filter enum values based on settings (only show enabled ones)
     const enabledEnumValueIds = new Set(
       enumSettingsData.enumValueSettingsBySpeciesVariant?.nodes?.map(
-        setting => setting.enumValueId
-      ) || []
+        (setting) => setting.enumValueId,
+      ) || [],
     );
 
-    return allEnumValues.filter(enumValue => 
-      enabledEnumValueIds.has(enumValue.id)
+    return allEnumValues.filter((enumValue) =>
+      enabledEnumValueIds.has(enumValue.id),
     );
   }, [trait.valueType, enumValuesData, enumSettingsData, speciesVariantId]);
 
@@ -332,9 +330,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         value={value}
         onChange={(e) => onChangeFn(e.target.value)}
         placeholder={
-          options.multi
-            ? "Clarifier (optional)..."
-            : "Clarifier (optional)..."
+          options.multi ? "Clarifier (optional)..." : "Clarifier (optional)..."
         }
         maxLength={200}
         disabled={disabled}
@@ -346,7 +342,8 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
     // For multi-value traits, use Add button pattern
     const isMultiValue = trait.allowsMultipleValues;
     const singleValue = values.length > 0 ? values[0].value : "";
-    const singleClarifier = values.length > 0 ? values[0].clarifier ?? "" : "";
+    const singleClarifier =
+      values.length > 0 ? (values[0].clarifier ?? "") : "";
 
     switch (trait.valueType) {
       case TraitValueType.String:
@@ -371,7 +368,9 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
               </InputWrapper>
               {trait.allowsClarifier && (
                 <InputWrapper>
-                  {renderClarifierInput(currentClarifier, setCurrentClarifier, { multi: true })}
+                  {renderClarifierInput(currentClarifier, setCurrentClarifier, {
+                    multi: true,
+                  })}
                 </InputWrapper>
               )}
               <Button
@@ -399,7 +398,10 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
             </InputWrapper>
             {trait.allowsClarifier && (
               <InputWrapper>
-                {renderClarifierInput(singleClarifier, handleSingleClarifierChange)}
+                {renderClarifierInput(
+                  singleClarifier,
+                  handleSingleClarifierChange,
+                )}
               </InputWrapper>
             )}
           </AddValueContainer>
@@ -428,7 +430,9 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
               </InputWrapper>
               {trait.allowsClarifier && (
                 <InputWrapper>
-                  {renderClarifierInput(currentClarifier, setCurrentClarifier, { multi: true })}
+                  {renderClarifierInput(currentClarifier, setCurrentClarifier, {
+                    multi: true,
+                  })}
                 </InputWrapper>
               )}
               <Button
@@ -457,7 +461,10 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
             </InputWrapper>
             {trait.allowsClarifier && (
               <InputWrapper>
-                {renderClarifierInput(singleClarifier, handleSingleClarifierChange)}
+                {renderClarifierInput(
+                  singleClarifier,
+                  handleSingleClarifierChange,
+                )}
               </InputWrapper>
             )}
           </AddValueContainer>
@@ -478,7 +485,9 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
               </InputWrapper>
               {trait.allowsClarifier && (
                 <InputWrapper>
-                  {renderClarifierInput(currentClarifier, setCurrentClarifier, { multi: true })}
+                  {renderClarifierInput(currentClarifier, setCurrentClarifier, {
+                    multi: true,
+                  })}
                 </InputWrapper>
               )}
               <Button
@@ -505,7 +514,10 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
             </InputWrapper>
             {trait.allowsClarifier && (
               <InputWrapper>
-                {renderClarifierInput(singleClarifier, handleSingleClarifierChange)}
+                {renderClarifierInput(
+                  singleClarifier,
+                  handleSingleClarifierChange,
+                )}
               </InputWrapper>
             )}
           </AddValueContainer>
@@ -534,8 +546,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
               <LoadingOption>
                 {speciesVariantId
                   ? "No options available for this variant"
-                  : "No options configured"
-                }
+                  : "No options configured"}
               </LoadingOption>
             </Select>
           );
@@ -555,12 +566,16 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
                   disabled={disabled}
                 >
                   <option value="">
-                    {required ? `Select ${trait.name.toLowerCase()}...` : `Optional - Select ${trait.name.toLowerCase()}...`}
+                    {required
+                      ? `Select ${trait.name.toLowerCase()}...`
+                      : `Optional - Select ${trait.name.toLowerCase()}...`}
                   </option>
                   {[...availableEnumValues]
                     .sort((a, b) => a.order - b.order)
                     .filter((enumValue) =>
-                      trait.allowsClarifier ? true : !selectedIds.has(enumValue.id),
+                      trait.allowsClarifier
+                        ? true
+                        : !selectedIds.has(enumValue.id),
                     )
                     .map((enumValue) => (
                       <EnumValueOption key={enumValue.id} value={enumValue.id}>
@@ -571,7 +586,9 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
               </InputWrapper>
               {trait.allowsClarifier && (
                 <InputWrapper>
-                  {renderClarifierInput(currentClarifier, setCurrentClarifier, { multi: true })}
+                  {renderClarifierInput(currentClarifier, setCurrentClarifier, {
+                    multi: true,
+                  })}
                 </InputWrapper>
               )}
               <Button
@@ -595,7 +612,9 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
                 disabled={disabled}
               >
                 <option value="">
-                  {required ? `Select ${trait.name.toLowerCase()}...` : `Optional - Select ${trait.name.toLowerCase()}...`}
+                  {required
+                    ? `Select ${trait.name.toLowerCase()}...`
+                    : `Optional - Select ${trait.name.toLowerCase()}...`}
                 </option>
                 {[...availableEnumValues]
                   .sort((a, b) => a.order - b.order)
@@ -608,7 +627,10 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
             </InputWrapper>
             {trait.allowsClarifier && (
               <InputWrapper>
-                {renderClarifierInput(singleClarifier, handleSingleClarifierChange)}
+                {renderClarifierInput(
+                  singleClarifier,
+                  handleSingleClarifierChange,
+                )}
               </InputWrapper>
             )}
           </AddValueContainer>
@@ -631,23 +653,21 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
   // Get display names for enum values
   const getEnumValueName = (enumValueId: string): string => {
     if (trait.valueType !== TraitValueType.Enum) return enumValueId;
-    const enumValue = availableEnumValues.find(ev => ev.id === enumValueId);
+    const enumValue = availableEnumValues.find((ev) => ev.id === enumValueId);
     return enumValue?.name || enumValueId;
   };
 
   // Get color hex code for enum values
   const getEnumValueColor = (enumValueId: string): string | null => {
     if (trait.valueType !== TraitValueType.Enum) return null;
-    const enumValue = availableEnumValues.find(ev => ev.id === enumValueId);
+    const enumValue = availableEnumValues.find((ev) => ev.id === enumValueId);
     return enumValue?.color?.hexCode || null;
   };
 
   return (
     <Container>
       <Label htmlFor={`trait-${trait.id}`}>
-        <TraitIcon>
-          {getTraitTypeIcon(trait.valueType)}
-        </TraitIcon>
+        <TraitIcon>{getTraitTypeIcon(trait.valueType)}</TraitIcon>
         {trait.name}
         {required && <RequiredIndicator>*</RequiredIndicator>}
         {trait.allowsMultipleValues && (
@@ -670,11 +690,19 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
           {values.map((entry, index) => (
             <TraitValueChip
               key={`${entry.value}-${entry.clarifier ?? ""}-${index}`}
-              value={trait.valueType === TraitValueType.Enum ? getEnumValueName(entry.value) : entry.value}
+              value={
+                trait.valueType === TraitValueType.Enum
+                  ? getEnumValueName(entry.value)
+                  : entry.value
+              }
               clarifier={entry.clarifier ?? null}
               onRemove={() => handleRemoveValueAt(index)}
               disabled={disabled}
-              color={trait.valueType === TraitValueType.Enum ? getEnumValueColor(entry.value) : null}
+              color={
+                trait.valueType === TraitValueType.Enum
+                  ? getEnumValueColor(entry.value)
+                  : null
+              }
             />
           ))}
         </ValuesContainer>
@@ -689,12 +717,14 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         </ValidationHint>
       )}
 
-      {trait.valueType === TraitValueType.Enum && availableEnumValues.length === 0 && speciesVariantId && (
-        <ValidationHint>
-          <AlertCircle size={12} />
-          This trait has no available options for the selected variant
-        </ValidationHint>
-      )}
+      {trait.valueType === TraitValueType.Enum &&
+        availableEnumValues.length === 0 &&
+        speciesVariantId && (
+          <ValidationHint>
+            <AlertCircle size={12} />
+            This trait has no available options for the selected variant
+          </ValidationHint>
+        )}
 
       {error && (
         <ErrorContainer>

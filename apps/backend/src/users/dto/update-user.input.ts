@@ -1,6 +1,12 @@
-import { InputType, Field } from '@nestjs/graphql';
-import { IsString, MaxLength, IsOptional, IsUrl, IsDateString } from 'class-validator';
-import { GraphQLJSON } from 'graphql-type-json';
+import { InputType, Field } from "@nestjs/graphql";
+import {
+  IsString,
+  MaxLength,
+  IsOptional,
+  IsUrl,
+  IsDateString,
+} from "class-validator";
+import { GraphQLJSON } from "graphql-type-json";
 
 @InputType()
 export class UpdateUserInput {

@@ -21,8 +21,8 @@ import { notDeleted } from "../common/utils/prisma-filters";
  * Enum for filtering media by type (service layer equivalent)
  */
 export enum MediaTypeFilter {
-  IMAGE = 'IMAGE',
-  TEXT = 'TEXT'
+  IMAGE = "IMAGE",
+  TEXT = "TEXT",
 }
 
 /**
@@ -103,7 +103,7 @@ export interface UpdateTextContentServiceInput {
 @Injectable()
 export class MediaService {
   private readonly logger = new Logger(MediaService.name);
-  
+
   constructor(
     private readonly db: DatabaseService,
     private readonly tagsService: TagsService,
@@ -164,8 +164,12 @@ export class MediaService {
           : {},
 
         // Type-specific filters (using new nullable FK structure)
-        filters?.mediaType === MediaTypeFilter.IMAGE ? { imageId: { not: null } } : {},
-        filters?.mediaType === MediaTypeFilter.TEXT ? { textContentId: { not: null } } : {},
+        filters?.mediaType === MediaTypeFilter.IMAGE
+          ? { imageId: { not: null } }
+          : {},
+        filters?.mediaType === MediaTypeFilter.TEXT
+          ? { textContentId: { not: null } }
+          : {},
         filters?.ownerId ? { ownerId: filters.ownerId } : {},
         filters?.characterId ? { characterId: filters.characterId } : {},
         filters?.galleryId ? { galleryId: filters.galleryId } : {},
@@ -181,11 +185,11 @@ export class MediaService {
         skip: offset,
       }),
       this.db.media.count({ where }),
-      this.db.media.count({ 
-        where: { ...where, imageId: { not: null } } 
+      this.db.media.count({
+        where: { ...where, imageId: { not: null } },
       }),
-      this.db.media.count({ 
-        where: { ...where, textContentId: { not: null } } 
+      this.db.media.count({
+        where: { ...where, textContentId: { not: null } },
       }),
     ]);
 
@@ -207,8 +211,10 @@ export class MediaService {
    * @throws ForbiddenException if user lacks access to private media
    */
   async findOne(id: string, userId?: string) {
-    this.logger.debug(`Finding media with id: ${id}, userId: ${userId || 'anonymous'}`);
-    
+    this.logger.debug(
+      `Finding media with id: ${id}, userId: ${userId || "anonymous"}`,
+    );
+
     const media = await this.db.media.findUnique({
       where: { id },
     });
@@ -275,7 +281,11 @@ export class MediaService {
    * @throws NotFoundException if media doesn't exist
    * @throws ForbiddenException if user doesn't own the media
    */
-  async updateMedia(id: string, userId: string, input: UpdateMediaServiceInput) {
+  async updateMedia(
+    id: string,
+    userId: string,
+    input: UpdateMediaServiceInput,
+  ) {
     const media = await this.db.media.findUnique({
       where: { id },
     });
@@ -298,10 +308,7 @@ export class MediaService {
         visibility: input.visibility,
       },
     });
-
   }
-
-
 
   /**
    * Updates the text content of a text media item
@@ -390,7 +397,6 @@ export class MediaService {
 
     return true;
   }
-
 
   /**
    * Adds tags to a media item

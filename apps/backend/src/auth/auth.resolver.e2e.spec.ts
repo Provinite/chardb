@@ -1,11 +1,11 @@
-import { INestApplication } from '@nestjs/common';
-import { TestApp, AUTH_QUERIES } from '../../test/setup-e2e';
-import { AuthModule } from './auth.module';
-import { DatabaseModule } from '../database/database.module';
-import { UsersModule } from '../users/users.module';
-import * as bcrypt from 'bcrypt';
+import { INestApplication } from "@nestjs/common";
+import { TestApp, AUTH_QUERIES } from "../../test/setup-e2e";
+import { AuthModule } from "./auth.module";
+import { DatabaseModule } from "../database/database.module";
+import { UsersModule } from "../users/users.module";
+import * as bcrypt from "bcrypt";
 
-describe('AuthResolver (e2e)', () => {
+describe("AuthResolver (e2e)", () => {
   let testApp: TestApp;
   let app: INestApplication;
 
@@ -25,21 +25,20 @@ describe('AuthResolver (e2e)', () => {
     await testApp.teardown();
   });
 
-  describe('signup', () => {
-    it('should create a new user with valid input', async () => {
+  describe("signup", () => {
+    it("should create a new user with valid input", async () => {
       const inviteCode = await testApp.createTestInviteCode();
       const input = {
-        username: 'newuser',
-        email: 'newuser@example.com',
-        password: 'password123',
-        displayName: 'New User',
+        username: "newuser",
+        email: "newuser@example.com",
+        password: "password123",
+        displayName: "New User",
         inviteCode,
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.SIGNUP,
-        { input }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
@@ -58,13 +57,13 @@ describe('AuthResolver (e2e)', () => {
       expect(user!.username).toBe(input.username);
     });
 
-    it('should reject duplicate email', async () => {
+    it("should reject duplicate email", async () => {
       const inviteCode = await testApp.createTestInviteCode();
       const input = {
-        username: 'user1',
-        email: 'test@example.com',
-        password: 'password123',
-        displayName: 'User 1',
+        username: "user1",
+        email: "test@example.com",
+        password: "password123",
+        displayName: "User 1",
         inviteCode,
       };
 
@@ -74,27 +73,26 @@ describe('AuthResolver (e2e)', () => {
       // Try to create second user with same email (invite code still has claims remaining)
       const duplicateInput = {
         ...input,
-        username: 'user2',
-        displayName: 'User 2',
+        username: "user2",
+        displayName: "User 2",
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.SIGNUP,
-        { input: duplicateInput }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input: duplicateInput,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('email already exists');
+      expect(response.body.errors[0].message).toContain("email already exists");
     });
 
-    it('should reject duplicate username', async () => {
+    it("should reject duplicate username", async () => {
       const inviteCode = await testApp.createTestInviteCode();
       const input = {
-        username: 'testuser',
-        email: 'user1@example.com',
-        password: 'password123',
-        displayName: 'User 1',
+        username: "testuser",
+        email: "user1@example.com",
+        password: "password123",
+        displayName: "User 1",
         inviteCode,
       };
 
@@ -104,82 +102,80 @@ describe('AuthResolver (e2e)', () => {
       // Try to create second user with same username
       const duplicateInput = {
         ...input,
-        email: 'user2@example.com',
-        displayName: 'User 2',
+        email: "user2@example.com",
+        displayName: "User 2",
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.SIGNUP,
-        { input: duplicateInput }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input: duplicateInput,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('username already exists');
+      expect(response.body.errors[0].message).toContain(
+        "username already exists",
+      );
     });
 
-    it('should validate email format', async () => {
+    it("should validate email format", async () => {
       const input = {
-        username: 'testuser',
-        email: 'invalid-email',
-        password: 'password123',
-        displayName: 'Test User',
-        inviteCode: 'dummy-code',
+        username: "testuser",
+        email: "invalid-email",
+        password: "password123",
+        displayName: "Test User",
+        inviteCode: "dummy-code",
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.SIGNUP,
-        { input }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
     });
 
-    it('should validate password length', async () => {
+    it("should validate password length", async () => {
       const input = {
-        username: 'testuser',
-        email: 'test@example.com',
-        password: '123', // Too short
-        displayName: 'Test User',
-        inviteCode: 'dummy-code',
+        username: "testuser",
+        email: "test@example.com",
+        password: "123", // Too short
+        displayName: "Test User",
+        inviteCode: "dummy-code",
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.SIGNUP,
-        { input }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
     });
   });
 
-  describe('login', () => {
+  describe("login", () => {
     beforeEach(async () => {
       const db = testApp.getDb();
-      const passwordHash = await bcrypt.hash('password123', 10);
+      const passwordHash = await bcrypt.hash("password123", 10);
 
       await db.user.create({
         data: {
-          username: 'testuser',
-          email: 'test@example.com',
-          displayName: 'Test User',
+          username: "testuser",
+          email: "test@example.com",
+          displayName: "Test User",
           passwordHash,
         },
       });
     });
 
-    it('should login with valid email and password', async () => {
+    it("should login with valid email and password", async () => {
       const input = {
-        email: 'test@example.com',
-        password: 'password123',
+        email: "test@example.com",
+        password: "password123",
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.LOGIN,
-        { input }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
@@ -189,40 +185,38 @@ describe('AuthResolver (e2e)', () => {
       });
     });
 
-    it('should reject invalid email', async () => {
+    it("should reject invalid email", async () => {
       const input = {
-        email: 'wrong@example.com',
-        password: 'password123',
+        email: "wrong@example.com",
+        password: "password123",
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.LOGIN,
-        { input }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('Invalid credentials');
+      expect(response.body.errors[0].message).toContain("Invalid credentials");
     });
 
-    it('should reject invalid password', async () => {
+    it("should reject invalid password", async () => {
       const input = {
-        email: 'test@example.com',
-        password: 'wrongpassword',
+        email: "test@example.com",
+        password: "wrongpassword",
       };
 
-      const response = await testApp.graphqlRequest(
-        AUTH_QUERIES.LOGIN,
-        { input }
-      );
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('Invalid credentials');
+      expect(response.body.errors[0].message).toContain("Invalid credentials");
     });
   });
 
-  describe('me query', () => {
+  describe("me query", () => {
     let testUserId: string;
     let testUsername: string;
     let testEmail: string;
@@ -236,11 +230,11 @@ describe('AuthResolver (e2e)', () => {
       testToken = await testApp.generateTestToken(testUserId);
     });
 
-    it('should return user info when authenticated', async () => {
+    it("should return user info when authenticated", async () => {
       const response = await testApp.authenticatedGraphqlRequest(
         AUTH_QUERIES.ME,
         {},
-        testToken
+        testToken,
       );
 
       expect(response.status).toBe(200);
@@ -249,60 +243,59 @@ describe('AuthResolver (e2e)', () => {
         id: testUserId,
         username: testUsername,
         email: testEmail,
-        displayName: 'Test User',
+        displayName: "Test User",
       });
     });
 
-    it('should reject unauthenticated requests', async () => {
+    it("should reject unauthenticated requests", async () => {
       const response = await testApp.graphqlRequest(AUTH_QUERIES.ME, {});
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].extensions.code).toBe('FORBIDDEN');
+      expect(response.body.errors[0].extensions.code).toBe("FORBIDDEN");
     });
 
-    it('should reject invalid tokens', async () => {
+    it("should reject invalid tokens", async () => {
       const response = await testApp.authenticatedGraphqlRequest(
         AUTH_QUERIES.ME,
         {},
-        'invalid-token'
+        "invalid-token",
       );
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].extensions.code).toBe('FORBIDDEN');
+      expect(response.body.errors[0].extensions.code).toBe("FORBIDDEN");
     });
   });
 
-  describe('refreshToken', () => {
+  describe("refreshToken", () => {
     let refreshToken: string;
 
     beforeEach(async () => {
       const inviteCode = await testApp.createTestInviteCode();
       const input = {
-        username: 'testuser',
-        email: 'test@example.com',
-        password: 'password123',
-        displayName: 'Test User',
+        username: "testuser",
+        email: "test@example.com",
+        password: "password123",
+        displayName: "Test User",
         inviteCode,
       };
 
-      const signupResponse = await testApp.graphqlRequest(
-        AUTH_QUERIES.SIGNUP,
-        { input }
-      );
+      const signupResponse = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input,
+      });
 
       refreshToken = signupResponse.body.data.signup.refreshToken;
     });
 
-    it('should generate new access token with valid refresh token', async () => {
+    it("should generate new access token with valid refresh token", async () => {
       const response = await testApp.graphqlRequest(
         `
           mutation refreshToken($token: String!) {
             refreshToken(token: $token)
           }
         `,
-        { token: refreshToken }
+        { token: refreshToken },
       );
 
       expect(response.status).toBe(200);
@@ -310,19 +303,21 @@ describe('AuthResolver (e2e)', () => {
       expect(response.body.data.refreshToken).toEqual(expect.any(String));
     });
 
-    it('should reject invalid refresh token', async () => {
+    it("should reject invalid refresh token", async () => {
       const response = await testApp.graphqlRequest(
         `
           mutation refreshToken($token: String!) {
             refreshToken(token: $token)
           }
         `,
-        { token: 'invalid-refresh-token' }
+        { token: "invalid-refresh-token" },
       );
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('Invalid refresh token');
+      expect(response.body.errors[0].message).toContain(
+        "Invalid refresh token",
+      );
     });
   });
 });

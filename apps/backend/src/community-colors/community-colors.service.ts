@@ -3,9 +3,9 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
-} from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { Prisma } from '@chardb/database';
+} from "@nestjs/common";
+import { DatabaseService } from "../database/database.service";
+import { Prisma } from "@chardb/database";
 
 @Injectable()
 export class CommunityColorsService {
@@ -20,10 +20,10 @@ export class CommunityColorsService {
         },
       });
     } catch (error) {
-      if (error.code === 'P2002') {
+      if (error.code === "P2002") {
         // Unique constraint violation
         throw new ConflictException(
-          'A color with this name already exists in this community',
+          "A color with this name already exists in this community",
         );
       }
       throw error;
@@ -33,7 +33,7 @@ export class CommunityColorsService {
   async findAllCommunityColors(communityId: string) {
     return await this.db.communityColor.findMany({
       where: { communityId },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
       include: {
         community: true,
       },
@@ -55,7 +55,10 @@ export class CommunityColorsService {
     return color;
   }
 
-  async updateCommunityColor(id: string, input: Prisma.CommunityColorUpdateInput) {
+  async updateCommunityColor(
+    id: string,
+    input: Prisma.CommunityColorUpdateInput,
+  ) {
     try {
       const color = await this.db.communityColor.update({
         where: { id },
@@ -67,12 +70,12 @@ export class CommunityColorsService {
 
       return color;
     } catch (error) {
-      if (error.code === 'P2025') {
+      if (error.code === "P2025") {
         throw new NotFoundException(`Community color with ID ${id} not found`);
       }
-      if (error.code === 'P2002') {
+      if (error.code === "P2002") {
         throw new ConflictException(
-          'A color with this name already exists in this community',
+          "A color with this name already exists in this community",
         );
       }
       throw error;
@@ -86,26 +89,31 @@ export class CommunityColorsService {
       });
       return true;
     } catch (error) {
-      if (error.code === 'P2025') {
+      if (error.code === "P2025") {
         throw new NotFoundException(`Community color with ID ${id} not found`);
       }
       throw error;
     }
   }
 
-  async validateColorBelongsToCommunity(colorId: string, communityId: string): Promise<boolean> {
+  async validateColorBelongsToCommunity(
+    colorId: string,
+    communityId: string,
+  ): Promise<boolean> {
     const color = await this.db.communityColor.findUnique({
       where: { id: colorId },
       select: { communityId: true },
     });
 
     if (!color) {
-      throw new NotFoundException(`Community color with ID ${colorId} not found`);
+      throw new NotFoundException(
+        `Community color with ID ${colorId} not found`,
+      );
     }
 
     if (color.communityId !== communityId) {
       throw new BadRequestException(
-        'Color does not belong to the same community as the entity',
+        "Color does not belong to the same community as the entity",
       );
     }
 

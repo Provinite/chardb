@@ -1,5 +1,5 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 /**
  * Reusable Card component for consistent styling across the application.
@@ -23,8 +23,10 @@ export const Card = styled.div<{ clickable?: boolean }>`
   border: 1px solid ${({ theme }) => theme.colors.border};
   padding: 1.5rem;
   transition: all 0.2s ease;
-  
-  ${({ clickable }) => clickable && `
+
+  ${({ clickable }) =>
+    clickable &&
+    `
     cursor: pointer;
   `}
 
@@ -64,7 +66,7 @@ export const CardMeta = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
   font-size: 0.875rem;
   margin-bottom: 1rem;
-  
+
   p {
     margin: 0.25rem 0;
   }

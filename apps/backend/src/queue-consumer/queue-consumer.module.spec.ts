@@ -9,7 +9,8 @@ function makeConfig(vars: Record<string, string>): ConfigService {
 
 describe("sqsModuleFactory", () => {
   const baseVars = {
-    AWS_SQS_QUEUE_URL: "http://localhost:4566/000000000000/chardb-prize-distribution",
+    AWS_SQS_QUEUE_URL:
+      "http://localhost:4566/000000000000/chardb-prize-distribution",
     AWS_REGION: "us-east-1",
   };
 

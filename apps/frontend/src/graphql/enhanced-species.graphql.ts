@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const SPECIES_WITH_TRAITS_AND_ENUM_VALUES = gql`
   query SpeciesWithTraitsAndEnumValues($speciesId: ID!) {

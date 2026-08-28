@@ -1,19 +1,19 @@
-import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { PrismaClient } from "@prisma/client";
+import * as bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding database...');
+  console.log("Seeding database...");
 
   // Create admin user
-  const adminPassword = await bcrypt.hash('admin123', 10);
+  const adminPassword = await bcrypt.hash("admin123", 10);
   const admin = await prisma.user.create({
     data: {
-      username: 'admin',
-      email: 'admin@chardb.com',
+      username: "admin",
+      email: "admin@chardb.com",
       passwordHash: adminPassword,
-      displayName: 'Administrator',
+      displayName: "Administrator",
       isAdmin: true,
       isVerified: true,
       // Grant all global permissions
@@ -26,34 +26,46 @@ async function main() {
   });
 
   // Create test user
-  const testPassword = await bcrypt.hash('test123', 10);
+  const testPassword = await bcrypt.hash("test123", 10);
   const testUser = await prisma.user.create({
     data: {
-      username: 'testuser',
-      email: 'test@example.com',
+      username: "testuser",
+      email: "test@example.com",
       passwordHash: testPassword,
-      displayName: 'Test User',
-      bio: 'A test user for development purposes',
+      displayName: "Test User",
+      bio: "A test user for development purposes",
     },
   });
 
   // Create sample tags
   const tags = await Promise.all([
-    prisma.tag.create({ data: { name: 'furry', displayName: 'Furry', category: 'species' } }),
-    prisma.tag.create({ data: { name: 'anthro', displayName: 'Anthro', category: 'species' } }),
-    prisma.tag.create({ data: { name: 'dragon', displayName: 'Dragon', category: 'species' } }),
-    prisma.tag.create({ data: { name: 'wolf', displayName: 'Wolf', category: 'species' } }),
-    prisma.tag.create({ data: { name: 'original', displayName: 'Original', category: 'type' } }),
-    prisma.tag.create({ data: { name: 'commission', displayName: 'Commission', category: 'type' } }),
+    prisma.tag.create({
+      data: { name: "furry", displayName: "Furry", category: "species" },
+    }),
+    prisma.tag.create({
+      data: { name: "anthro", displayName: "Anthro", category: "species" },
+    }),
+    prisma.tag.create({
+      data: { name: "dragon", displayName: "Dragon", category: "species" },
+    }),
+    prisma.tag.create({
+      data: { name: "wolf", displayName: "Wolf", category: "species" },
+    }),
+    prisma.tag.create({
+      data: { name: "original", displayName: "Original", category: "type" },
+    }),
+    prisma.tag.create({
+      data: { name: "commission", displayName: "Commission", category: "type" },
+    }),
   ]);
 
   // Create sample character
   const character = await prisma.character.create({
     data: {
-      name: 'Aria Moonwhisper',
+      name: "Aria Moonwhisper",
       customFields: {
-        Age: '23',
-        Gender: 'Female',
+        Age: "23",
+        Gender: "Female",
       },
       details: `# Description
 A mysterious wolf with silver fur and glowing blue eyes.
@@ -73,13 +85,13 @@ Born in the northern mountains, Aria learned magic from the ancient spirits.`,
     prisma.characterTag.create({
       data: {
         characterId: character.id,
-        tagId: tags.find(t => t.name === 'wolf')!.id,
+        tagId: tags.find((t) => t.name === "wolf")!.id,
       },
     }),
     prisma.characterTag.create({
       data: {
         characterId: character.id,
-        tagId: tags.find(t => t.name === 'original')!.id,
+        tagId: tags.find((t) => t.name === "original")!.id,
       },
     }),
   ]);
@@ -87,18 +99,21 @@ Born in the northern mountains, Aria learned magic from the ancient spirits.`,
   // Create sample gallery
   const gallery = await prisma.gallery.create({
     data: {
-      name: 'Aria\'s Art Collection',
-      description: 'Official artwork of Aria Moonwhisper',
+      name: "Aria's Art Collection",
+      description: "Official artwork of Aria Moonwhisper",
       ownerId: testUser.id,
       characterId: character.id,
     },
   });
 
-  console.log('Database seeded successfully!');
-  console.log('Created users:', { admin: admin.username, testUser: testUser.username });
-  console.log('Created character:', character.name);
-  console.log('Created gallery:', gallery.name);
-  console.log('Created tags:', tags.length);
+  console.log("Database seeded successfully!");
+  console.log("Created users:", {
+    admin: admin.username,
+    testUser: testUser.username,
+  });
+  console.log("Created character:", character.name);
+  console.log("Created gallery:", gallery.name);
+  console.log("Created tags:", tags.length);
 }
 
 main()

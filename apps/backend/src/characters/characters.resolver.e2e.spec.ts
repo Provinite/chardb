@@ -1,11 +1,11 @@
-import { INestApplication } from '@nestjs/common';
-import { TestApp, CHARACTER_QUERIES } from '../../test/setup-e2e';
-import { CharactersModule } from './characters.module';
-import { DatabaseModule } from '../database/database.module';
-import { AuthModule } from '../auth/auth.module';
-import { Visibility } from '@chardb/database';
+import { INestApplication } from "@nestjs/common";
+import { TestApp, CHARACTER_QUERIES } from "../../test/setup-e2e";
+import { CharactersModule } from "./characters.module";
+import { DatabaseModule } from "../database/database.module";
+import { AuthModule } from "../auth/auth.module";
+import { Visibility } from "@chardb/database";
 
-describe('CharactersResolver (e2e)', () => {
+describe("CharactersResolver (e2e)", () => {
   let testApp: TestApp;
   let app: INestApplication;
   let testUserId: string;
@@ -33,10 +33,10 @@ describe('CharactersResolver (e2e)', () => {
     await testApp.teardown();
   });
 
-  describe('createCharacter', () => {
-    it('should create a character with valid input', async () => {
+  describe("createCharacter", () => {
+    it("should create a character with valid input", async () => {
       const input = {
-        name: 'Test Dragon',
+        name: "Test Dragon",
         speciesId: testSpeciesId,
         visibility: Visibility.PUBLIC,
       };
@@ -44,7 +44,7 @@ describe('CharactersResolver (e2e)', () => {
       const response = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         { input },
-        testToken
+        testToken,
       );
 
       expect(response.status).toBe(200);
@@ -60,33 +60,33 @@ describe('CharactersResolver (e2e)', () => {
       });
     });
 
-    it('should require authentication', async () => {
+    it("should require authentication", async () => {
       const input = {
-        name: 'Unauthorized Character',
+        name: "Unauthorized Character",
         speciesId: testSpeciesId,
       };
 
       const response = await testApp.graphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
-        { input }
+        { input },
       );
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].extensions.code).toBe('FORBIDDEN');
+      expect(response.body.errors[0].extensions.code).toBe("FORBIDDEN");
     });
 
-    it('should validate required fields', async () => {
+    it("should validate required fields", async () => {
       // Empty name triggers @MinLength(1) class-validator error (HTTP 200 with errors)
       const input = {
-        name: '',
+        name: "",
         speciesId: testSpeciesId,
       };
 
       const response = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         { input },
-        testToken
+        testToken,
       );
 
       expect(response.status).toBe(200);
@@ -94,10 +94,10 @@ describe('CharactersResolver (e2e)', () => {
     });
   });
 
-  describe('character query', () => {
-    it('should fetch a public character', async () => {
+  describe("character query", () => {
+    it("should fetch a public character", async () => {
       const createInput = {
-        name: 'Public Dragon',
+        name: "Public Dragon",
         speciesId: testSpeciesId,
         visibility: Visibility.PUBLIC,
       };
@@ -105,7 +105,7 @@ describe('CharactersResolver (e2e)', () => {
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         { input: createInput },
-        testToken
+        testToken,
       );
 
       expect(createResponse.body.errors).toBeUndefined();
@@ -113,7 +113,7 @@ describe('CharactersResolver (e2e)', () => {
 
       const fetchResponse = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
-        { id: characterId }
+        { id: characterId },
       );
 
       expect(fetchResponse.status).toBe(200);
@@ -126,20 +126,20 @@ describe('CharactersResolver (e2e)', () => {
       });
     });
 
-    it('should return error for non-existent character', async () => {
+    it("should return error for non-existent character", async () => {
       const response = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
-        { id: 'non-existent-id' }
+        { id: "non-existent-id" },
       );
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('Character not found');
+      expect(response.body.errors[0].message).toContain("Character not found");
     });
 
-    it('should block access to private characters for non-owners', async () => {
+    it("should block access to private characters for non-owners", async () => {
       const createInput = {
-        name: 'Private Dragon',
+        name: "Private Dragon",
         speciesId: testSpeciesId,
         visibility: Visibility.PRIVATE,
       };
@@ -147,50 +147,52 @@ describe('CharactersResolver (e2e)', () => {
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         { input: createInput },
-        testToken
+        testToken,
       );
 
       const characterId = createResponse.body.data.createCharacter.id;
 
       const fetchResponse = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
-        { id: characterId }
+        { id: characterId },
       );
 
       expect(fetchResponse.status).toBe(200);
       expect(fetchResponse.body.errors).toBeDefined();
-      expect(fetchResponse.body.errors[0].message).toContain('Character is private');
+      expect(fetchResponse.body.errors[0].message).toContain(
+        "Character is private",
+      );
     });
   });
 
-  describe('characters query', () => {
+  describe("characters query", () => {
     beforeEach(async () => {
       await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
           input: {
-            name: 'Public Dragon',
+            name: "Public Dragon",
             speciesId: testSpeciesId,
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
 
       await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
           input: {
-            name: 'Private Phoenix',
+            name: "Private Phoenix",
             speciesId: testSpeciesId,
             visibility: Visibility.PRIVATE,
           },
         },
-        testToken
+        testToken,
       );
     });
 
-    it('should fetch paginated characters', async () => {
+    it("should fetch paginated characters", async () => {
       const response = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTERS,
         {
@@ -198,7 +200,7 @@ describe('CharactersResolver (e2e)', () => {
             limit: 10,
             offset: 0,
           },
-        }
+        },
       );
 
       expect(response.status).toBe(200);
@@ -210,28 +212,30 @@ describe('CharactersResolver (e2e)', () => {
       });
     });
 
-    it('should filter by name search', async () => {
+    it("should filter by name search", async () => {
       const response = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTERS,
         {
           filters: {
-            search: 'Dragon',
+            search: "Dragon",
             limit: 10,
             offset: 0,
           },
-        }
+        },
       );
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
 
       // Should only return characters with 'Dragon' in their name
-      response.body.data.characters.characters.forEach((char: { name: string }) => {
-        expect(char.name).toContain('Dragon');
-      });
+      response.body.data.characters.characters.forEach(
+        (char: { name: string }) => {
+          expect(char.name).toContain("Dragon");
+        },
+      );
     });
 
-    it('should respect visibility controls', async () => {
+    it("should respect visibility controls", async () => {
       const response = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTERS,
         {
@@ -239,7 +243,7 @@ describe('CharactersResolver (e2e)', () => {
             limit: 50,
             offset: 0,
           },
-        }
+        },
       );
 
       expect(response.status).toBe(200);
@@ -247,32 +251,33 @@ describe('CharactersResolver (e2e)', () => {
 
       // Should not include private characters in public query
       const privateCharacters = response.body.data.characters.characters.filter(
-        (char: { visibility: string }) => char.visibility === Visibility.PRIVATE
+        (char: { visibility: string }) =>
+          char.visibility === Visibility.PRIVATE,
       );
 
       expect(privateCharacters).toHaveLength(0);
 
       // Should include public characters
       const publicCharacters = response.body.data.characters.characters.filter(
-        (char: { visibility: string }) => char.visibility === Visibility.PUBLIC
+        (char: { visibility: string }) => char.visibility === Visibility.PUBLIC,
       );
 
       expect(publicCharacters.length).toBeGreaterThan(0);
     });
   });
 
-  describe('updateCharacterProfile', () => {
-    it('should update character when user is owner', async () => {
+  describe("updateCharacterProfile", () => {
+    it("should update character when user is owner", async () => {
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
           input: {
-            name: 'Original Name',
+            name: "Original Name",
             speciesId: testSpeciesId,
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
 
       const characterId = createResponse.body.data.createCharacter.id;
@@ -289,33 +294,33 @@ describe('CharactersResolver (e2e)', () => {
         {
           id: characterId,
           input: {
-            name: 'Updated Name',
+            name: "Updated Name",
           },
         },
-        testToken
+        testToken,
       );
 
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.body.errors).toBeUndefined();
       expect(updateResponse.body.data.updateCharacterProfile).toMatchObject({
         id: characterId,
-        name: 'Updated Name',
+        name: "Updated Name",
       });
     });
   });
 
-  describe('kickCharacterFromSpecies', () => {
-    it('should remove the character from its species and return true', async () => {
+  describe("kickCharacterFromSpecies", () => {
+    it("should remove the character from its species and return true", async () => {
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
           input: {
-            name: 'To Kick',
+            name: "To Kick",
             speciesId: testSpeciesId,
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
 
       const characterId = createResponse.body.data.createCharacter.id;
@@ -327,7 +332,7 @@ describe('CharactersResolver (e2e)', () => {
           }
         `,
         { id: characterId },
-        testToken
+        testToken,
       );
 
       expect(kickResponse.status).toBe(200);
@@ -345,16 +350,16 @@ describe('CharactersResolver (e2e)', () => {
           }
         `,
         { id: characterId },
-        testToken
+        testToken,
       );
 
       expect(fetchResponse.body.errors).toBeUndefined();
       const updated = fetchResponse.body.data.character;
       expect(updated.speciesId).toBeNull();
-      expect(JSON.parse(updated.customFields ?? '{}')).toEqual({});
+      expect(JSON.parse(updated.customFields ?? "{}")).toEqual({});
     });
 
-    it('should return forbidden when the character has no species (no community context to resolve)', async () => {
+    it("should return forbidden when the character has no species (no community context to resolve)", async () => {
       // Create a character, kick it once, then try again.
       // After kicking, speciesId is null so the community resolver can't find a
       // community for the character — the guard denies before the service runs.
@@ -362,12 +367,12 @@ describe('CharactersResolver (e2e)', () => {
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
           input: {
-            name: 'Already Kicked',
+            name: "Already Kicked",
             speciesId: testSpeciesId,
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
 
       const characterId = createResponse.body.data.createCharacter.id;
@@ -375,32 +380,32 @@ describe('CharactersResolver (e2e)', () => {
       await testApp.authenticatedGraphqlRequest(
         `mutation kickCharacterFromSpecies($id: ID!) { kickCharacterFromSpecies(id: $id) }`,
         { id: characterId },
-        testToken
+        testToken,
       );
 
       const secondKick = await testApp.authenticatedGraphqlRequest(
         `mutation kickCharacterFromSpecies($id: ID!) { kickCharacterFromSpecies(id: $id) }`,
         { id: characterId },
-        testToken
+        testToken,
       );
 
       expect(secondKick.body.errors).toBeDefined();
-      expect(secondKick.body.errors[0].message).toContain('Forbidden');
+      expect(secondKick.body.errors[0].message).toContain("Forbidden");
     });
   });
 
-  describe('deleteCharacter', () => {
-    it('should delete character when user has canDeleteCharacter permission', async () => {
+  describe("deleteCharacter", () => {
+    it("should delete character when user has canDeleteCharacter permission", async () => {
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
           input: {
-            name: 'To Delete',
+            name: "To Delete",
             speciesId: testSpeciesId,
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
 
       const characterId = createResponse.body.data.createCharacter.id;
@@ -412,7 +417,7 @@ describe('CharactersResolver (e2e)', () => {
           }
         `,
         { id: characterId },
-        testToken
+        testToken,
       );
 
       expect(deleteResponse.status).toBe(200);
@@ -421,52 +426,58 @@ describe('CharactersResolver (e2e)', () => {
 
       const fetchResponse = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
-        { id: characterId }
+        { id: characterId },
       );
 
       expect(fetchResponse.body.errors).toBeDefined();
-      expect(fetchResponse.body.errors[0].message).toContain('Character not found');
+      expect(fetchResponse.body.errors[0].message).toContain(
+        "Character not found",
+      );
     });
 
-    it('should return forbidden when user lacks canDeleteCharacter permission', async () => {
+    it("should return forbidden when user lacks canDeleteCharacter permission", async () => {
       // Create a character owned by the privileged user
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
           input: {
-            name: 'Cannot Delete This',
+            name: "Cannot Delete This",
             speciesId: testSpeciesId,
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
       const characterId = createResponse.body.data.createCharacter.id;
 
       // Create a second user with a role that explicitly lacks canDeleteCharacter
       const unprivilegedUser = await testApp.createTestUser();
-      const { communityId } = await testApp.createTestCommunitySetup(testUserId);
+      const { communityId } =
+        await testApp.createTestCommunitySetup(testUserId);
       const readOnlyRole = await testApp.createTestRole(communityId, {
         canCreateCharacter: false,
         canDeleteCharacter: false,
       });
-      await testApp.createTestCommunityMember(unprivilegedUser.id, readOnlyRole.id);
+      await testApp.createTestCommunityMember(
+        unprivilegedUser.id,
+        readOnlyRole.id,
+      );
       const unprivilegedToken = await testApp.generateTestToken(
         unprivilegedUser.id,
-        unprivilegedUser.username
+        unprivilegedUser.username,
       );
 
       const deleteResponse = await testApp.authenticatedGraphqlRequest(
         `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
         { id: characterId },
-        unprivilegedToken
+        unprivilegedToken,
       );
 
       expect(deleteResponse.body.errors).toBeDefined();
-      expect(deleteResponse.body.errors[0].message).toContain('Forbidden');
+      expect(deleteResponse.body.errors[0].message).toContain("Forbidden");
     });
 
-    it('requires a global admin once a character has been kicked from its species', async () => {
+    it("requires a global admin once a character has been kicked from its species", async () => {
       // Intentional, not a gap: deleteCharacter resolves the community via
       // @ResolveCommunityFrom({ characterId }), and getCharacterCommunity
       // returns null for a speciesless character. kickCharacterFromSpecies
@@ -474,60 +485,66 @@ describe('CharactersResolver (e2e)', () => {
       // community permission can reach it and deletion is site-admin only.
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
-        { input: { name: 'Kicked Then Deleted', speciesId: testSpeciesId } },
-        testToken
+        { input: { name: "Kicked Then Deleted", speciesId: testSpeciesId } },
+        testToken,
       );
       const characterId = createResponse.body.data.createCharacter.id;
 
       await testApp.authenticatedGraphqlRequest(
         `mutation kick($id: ID!) { kickCharacterFromSpecies(id: $id) }`,
         { id: characterId },
-        testToken
+        testToken,
       );
 
       // The same community moderator who could delete it a moment ago cannot now.
       const deniedResponse = await testApp.authenticatedGraphqlRequest(
         `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
         { id: characterId },
-        testToken
+        testToken,
       );
       expect(deniedResponse.body.errors).toBeDefined();
 
       // A global admin still can.
       const admin = await testApp.createTestUser({ isAdmin: true });
-      const adminToken = await testApp.generateTestToken(admin.id, admin.username);
+      const adminToken = await testApp.generateTestToken(
+        admin.id,
+        admin.username,
+      );
       const adminResponse = await testApp.authenticatedGraphqlRequest(
         `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
         { id: characterId },
-        adminToken
+        adminToken,
       );
       expect(adminResponse.body.errors).toBeUndefined();
       expect(adminResponse.body.data.deleteCharacter).toBe(true);
     });
   });
 
-  describe('purgeCharacter', () => {
-    it('should permanently delete a character when called by a global admin', async () => {
+  describe("purgeCharacter", () => {
+    it("should permanently delete a character when called by a global admin", async () => {
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
           input: {
-            name: 'To Purge',
+            name: "To Purge",
             speciesId: testSpeciesId,
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
       const characterId = createResponse.body.data.createCharacter.id;
 
       const adminUser = await testApp.createTestUser({ isAdmin: true });
-      const adminToken = await testApp.generateTestToken(adminUser.id, adminUser.username);
+      const adminToken = await testApp.generateTestToken(
+        adminUser.id,
+        adminUser.username,
+      );
 
       const purgeResponse = await testApp.authenticatedGraphqlRequest(
         `mutation purgeCharacter($id: ID!) { purgeCharacter(id: $id) }`,
         { id: characterId },
-        adminToken
+        adminToken,
       );
 
       expect(purgeResponse.status).toBe(200);
@@ -537,141 +554,175 @@ describe('CharactersResolver (e2e)', () => {
       // Character should be gone — not just hidden, but absent from the DB
       const fetchResponse = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
-        { id: characterId }
+        { id: characterId },
       );
       expect(fetchResponse.body.errors).toBeDefined();
-      expect(fetchResponse.body.errors[0].message).toContain('Character not found');
+      expect(fetchResponse.body.errors[0].message).toContain(
+        "Character not found",
+      );
     });
 
-    it('should return forbidden when called by a non-admin user', async () => {
+    it("should return forbidden when called by a non-admin user", async () => {
       const createResponse = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
         {
           input: {
-            name: 'Cannot Purge This',
+            name: "Cannot Purge This",
             speciesId: testSpeciesId,
             visibility: Visibility.PUBLIC,
           },
         },
-        testToken
+        testToken,
       );
       const characterId = createResponse.body.data.createCharacter.id;
 
       const purgeResponse = await testApp.authenticatedGraphqlRequest(
         `mutation purgeCharacter($id: ID!) { purgeCharacter(id: $id) }`,
         { id: characterId },
-        testToken
+        testToken,
       );
 
       expect(purgeResponse.body.errors).toBeDefined();
-      expect(purgeResponse.body.errors[0].message).toContain('Forbidden');
+      expect(purgeResponse.body.errors[0].message).toContain("Forbidden");
     });
   });
 
-  describe('soft-deleted character isolation', () => {
-    it('should exclude soft-deleted characters from the characters list', async () => {
+  describe("soft-deleted character isolation", () => {
+    it("should exclude soft-deleted characters from the characters list", async () => {
       // Create two characters, delete one, confirm only the live one is returned
       await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
-        { input: { name: 'Live Dragon', speciesId: testSpeciesId, visibility: Visibility.PUBLIC } },
-        testToken
+        {
+          input: {
+            name: "Live Dragon",
+            speciesId: testSpeciesId,
+            visibility: Visibility.PUBLIC,
+          },
+        },
+        testToken,
       );
       const toDeleteRes = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
-        { input: { name: 'Deleted Dragon', speciesId: testSpeciesId, visibility: Visibility.PUBLIC } },
-        testToken
+        {
+          input: {
+            name: "Deleted Dragon",
+            speciesId: testSpeciesId,
+            visibility: Visibility.PUBLIC,
+          },
+        },
+        testToken,
       );
       const deletedId = toDeleteRes.body.data.createCharacter.id;
 
       await testApp.authenticatedGraphqlRequest(
         `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
         { id: deletedId },
-        testToken
+        testToken,
       );
 
       const listResponse = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTERS,
-        { filters: { limit: 50, offset: 0 } }
+        { filters: { limit: 50, offset: 0 } },
       );
 
       expect(listResponse.body.errors).toBeUndefined();
       const ids = listResponse.body.data.characters.characters.map(
-        (c: { id: string }) => c.id
+        (c: { id: string }) => c.id,
       );
       expect(ids).not.toContain(deletedId);
     });
 
-    it('should return not-found for a soft-deleted character by id', async () => {
+    it("should return not-found for a soft-deleted character by id", async () => {
       const createRes = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
-        { input: { name: 'Soon Gone', speciesId: testSpeciesId, visibility: Visibility.PUBLIC } },
-        testToken
+        {
+          input: {
+            name: "Soon Gone",
+            speciesId: testSpeciesId,
+            visibility: Visibility.PUBLIC,
+          },
+        },
+        testToken,
       );
       const characterId = createRes.body.data.createCharacter.id;
 
       await testApp.authenticatedGraphqlRequest(
         `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
         { id: characterId },
-        testToken
+        testToken,
       );
 
       const fetchResponse = await testApp.graphqlRequest(
         CHARACTER_QUERIES.GET_CHARACTER,
-        { id: characterId }
+        { id: characterId },
       );
 
       expect(fetchResponse.body.errors).toBeDefined();
-      expect(fetchResponse.body.errors[0].message).toContain('Character not found');
+      expect(fetchResponse.body.errors[0].message).toContain(
+        "Character not found",
+      );
     });
 
-    it('should reject updateCharacterProfile for a soft-deleted character', async () => {
+    it("should reject updateCharacterProfile for a soft-deleted character", async () => {
       const createRes = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
-        { input: { name: 'To Be Locked', speciesId: testSpeciesId, visibility: Visibility.PUBLIC } },
-        testToken
+        {
+          input: {
+            name: "To Be Locked",
+            speciesId: testSpeciesId,
+            visibility: Visibility.PUBLIC,
+          },
+        },
+        testToken,
       );
       const characterId = createRes.body.data.createCharacter.id;
 
       await testApp.authenticatedGraphqlRequest(
         `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
         { id: characterId },
-        testToken
+        testToken,
       );
 
       const updateResponse = await testApp.authenticatedGraphqlRequest(
         `mutation updateCharacterProfile($id: ID!, $input: UpdateCharacterProfileInput!) {
           updateCharacterProfile(id: $id, input: $input) { id name }
         }`,
-        { id: characterId, input: { name: 'Should Not Work' } },
-        testToken
+        { id: characterId, input: { name: "Should Not Work" } },
+        testToken,
       );
 
       expect(updateResponse.body.errors).toBeDefined();
-      expect(updateResponse.body.errors[0].extensions.code).toBe('FORBIDDEN');
+      expect(updateResponse.body.errors[0].extensions.code).toBe("FORBIDDEN");
     });
 
-    it('should reject kickCharacterFromSpecies for a soft-deleted character', async () => {
+    it("should reject kickCharacterFromSpecies for a soft-deleted character", async () => {
       const createRes = await testApp.authenticatedGraphqlRequest(
         CHARACTER_QUERIES.CREATE_CHARACTER,
-        { input: { name: 'Deleted With Species', speciesId: testSpeciesId, visibility: Visibility.PUBLIC } },
-        testToken
+        {
+          input: {
+            name: "Deleted With Species",
+            speciesId: testSpeciesId,
+            visibility: Visibility.PUBLIC,
+          },
+        },
+        testToken,
       );
       const characterId = createRes.body.data.createCharacter.id;
 
       await testApp.authenticatedGraphqlRequest(
         `mutation deleteCharacter($id: ID!) { deleteCharacter(id: $id) }`,
         { id: characterId },
-        testToken
+        testToken,
       );
 
       const kickResponse = await testApp.authenticatedGraphqlRequest(
         `mutation kickCharacterFromSpecies($id: ID!) { kickCharacterFromSpecies(id: $id) }`,
         { id: characterId },
-        testToken
+        testToken,
       );
 
       expect(kickResponse.body.errors).toBeDefined();
-      expect(kickResponse.body.errors[0].message).toContain('Forbidden');
+      expect(kickResponse.body.errors[0].message).toContain("Forbidden");
     });
   });
 });

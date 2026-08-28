@@ -1,31 +1,31 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { SqsMessageHandler } from '@ssut/nestjs-sqs';
-import { Message } from '@aws-sdk/client-sqs';
-import { trace, context, SpanStatusCode, SpanKind } from '@opentelemetry/api';
-import { validate } from 'class-validator';
-import { plainToClass } from 'class-transformer';
-import { PrizeEventDto, PrizeEventType } from '../dto/prize-event.dto';
-import { ItemPrizeHandler } from './item-prize.handler';
-import { CharacterPrizeHandler } from './character-prize.handler';
+import { Injectable, Logger } from "@nestjs/common";
+import { SqsMessageHandler } from "@ssut/nestjs-sqs";
+import { Message } from "@aws-sdk/client-sqs";
+import { trace, context, SpanStatusCode, SpanKind } from "@opentelemetry/api";
+import { validate } from "class-validator";
+import { plainToClass } from "class-transformer";
+import { PrizeEventDto, PrizeEventType } from "../dto/prize-event.dto";
+import { ItemPrizeHandler } from "./item-prize.handler";
+import { CharacterPrizeHandler } from "./character-prize.handler";
 
 @Injectable()
 export class PrizeQueueHandler {
   private readonly logger = new Logger(PrizeQueueHandler.name);
-  private readonly tracer = trace.getTracer('chardb-prize-queue', '1.0.0');
+  private readonly tracer = trace.getTracer("chardb-prize-queue", "1.0.0");
 
   constructor(
     private readonly itemPrizeHandler: ItemPrizeHandler,
     private readonly characterPrizeHandler: CharacterPrizeHandler,
   ) {}
 
-  @SqsMessageHandler('prize-distribution', false)
+  @SqsMessageHandler("prize-distribution", false)
   async handleMessage(message: Message) {
-    const span = this.tracer.startSpan('sqs.process_message', {
+    const span = this.tracer.startSpan("sqs.process_message", {
       kind: SpanKind.CONSUMER,
       attributes: {
-        'messaging.system': 'aws_sqs',
-        'messaging.message_id': message.MessageId,
-        'messaging.operation': 'process',
+        "messaging.system": "aws_sqs",
+        "messaging.message_id": message.MessageId,
+        "messaging.operation": "process",
       },
     });
 
@@ -37,9 +37,9 @@ export class PrizeQueueHandler {
         const prizeEvent = await this.parseAndValidateMessage(message);
 
         span.setAttributes({
-          'prize.event_type': prizeEvent.eventType,
-          'prize.discord_guild_id': prizeEvent.discordGuildId,
-          'prize.discord_user_id': prizeEvent.discordUserId,
+          "prize.event_type": prizeEvent.eventType,
+          "prize.discord_guild_id": prizeEvent.discordGuildId,
+          "prize.discord_user_id": prizeEvent.discordUserId,
         });
 
         // Route to appropriate handler based on event type
@@ -55,7 +55,9 @@ export class PrizeQueueHandler {
         }
 
         span.setStatus({ code: SpanStatusCode.OK });
-        this.logger.log(`✅ Successfully processed message: ${message.MessageId}`);
+        this.logger.log(
+          `✅ Successfully processed message: ${message.MessageId}`,
+        );
       });
     } catch (error) {
       this.logger.error(
@@ -73,9 +75,11 @@ export class PrizeQueueHandler {
     }
   }
 
-  private async parseAndValidateMessage(message: Message): Promise<PrizeEventDto> {
+  private async parseAndValidateMessage(
+    message: Message,
+  ): Promise<PrizeEventDto> {
     if (!message.Body) {
-      throw new Error('Message body is empty');
+      throw new Error("Message body is empty");
     }
 
     let parsed: any;
@@ -92,8 +96,8 @@ export class PrizeQueueHandler {
     const errors = await validate(prizeEvent);
     if (errors.length > 0) {
       const errorMessages = errors
-        .map((e) => Object.values(e.constraints || {}).join(', '))
-        .join('; ');
+        .map((e) => Object.values(e.constraints || {}).join(", "))
+        .join("; ");
       throw new Error(`Message validation failed: ${errorMessages}`);
     }
 

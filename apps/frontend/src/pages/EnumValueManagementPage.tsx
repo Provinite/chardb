@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Plus, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { Button, Modal, Input, ErrorMessage } from "@chardb/ui";
 import {
   useEnumValuesByTraitQuery,
@@ -181,7 +188,7 @@ interface EnumValueModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: EnumValueFormData) => void;
-  enumValue?: EnumValuesByTraitQuery['enumValuesByTrait']['nodes'][0];
+  enumValue?: EnumValuesByTraitQuery["enumValuesByTrait"]["nodes"][0];
   title: string;
   maxOrder: number;
   communityId: string;
@@ -263,12 +270,21 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
             min="1"
             value={formData.order}
             onChange={(e) =>
-              setFormData((prev) => ({ ...prev, order: parseInt(e.target.value) || 1 }))
+              setFormData((prev) => ({
+                ...prev,
+                order: parseInt(e.target.value) || 1,
+              }))
             }
             required
             disabled={isSubmitting}
           />
-          <p style={{ fontSize: "0.875rem", color: "#666", margin: "0.25rem 0 0 0" }}>
+          <p
+            style={{
+              fontSize: "0.875rem",
+              color: "#666",
+              margin: "0.25rem 0 0 0",
+            }}
+          >
             Lower numbers appear first in selection lists
           </p>
         </div>
@@ -284,7 +300,13 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
             placeholder="No color"
             disabled={isSubmitting}
           />
-          <p style={{ fontSize: "0.875rem", color: "#666", margin: "0.25rem 0 0 0" }}>
+          <p
+            style={{
+              fontSize: "0.875rem",
+              color: "#666",
+              margin: "0.25rem 0 0 0",
+            }}
+          >
             Assign a color to help visually distinguish this option
           </p>
         </div>
@@ -320,7 +342,9 @@ export const EnumValueManagementPage: React.FC = () => {
   const { traitId } = useParams<{ traitId: string }>();
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingEnumValue, setEditingEnumValue] = useState<EnumValuesByTraitQuery['enumValuesByTrait']['nodes'][0] | null>(null);
+  const [editingEnumValue, setEditingEnumValue] = useState<
+    EnumValuesByTraitQuery["enumValuesByTrait"]["nodes"][0] | null
+  >(null);
 
   if (!traitId) {
     return (
@@ -350,7 +374,9 @@ export const EnumValueManagementPage: React.FC = () => {
 
   const [createEnumValueMutation] = useCreateEnumValueMutation({
     onCompleted: (data) => {
-      toast.success(`Option "${data.createEnumValue.name}" created successfully!`);
+      toast.success(
+        `Option "${data.createEnumValue.name}" created successfully!`,
+      );
       refetch();
     },
     onError: (error) => {
@@ -360,7 +386,9 @@ export const EnumValueManagementPage: React.FC = () => {
 
   const [updateEnumValueMutation] = useUpdateEnumValueMutation({
     onCompleted: (data) => {
-      toast.success(`Option "${data.updateEnumValue.name}" updated successfully!`);
+      toast.success(
+        `Option "${data.updateEnumValue.name}" updated successfully!`,
+      );
       refetch();
     },
     onError: (error) => {
@@ -411,10 +439,12 @@ export const EnumValueManagementPage: React.FC = () => {
     });
   };
 
-  const handleDeleteEnumValue = async (enumValue: typeof sortedEnumValues[0]) => {
+  const handleDeleteEnumValue = async (
+    enumValue: (typeof sortedEnumValues)[0],
+  ) => {
     if (
       !window.confirm(
-        `Are you sure you want to delete the option "${enumValue.name}"? This will also delete all associated character trait data using this value.`
+        `Are you sure you want to delete the option "${enumValue.name}"? This will also delete all associated character trait data using this value.`,
       )
     ) {
       return;
@@ -425,12 +455,14 @@ export const EnumValueManagementPage: React.FC = () => {
     });
   };
 
-  const handleEditEnumValue = (enumValue: typeof sortedEnumValues[0]) => {
+  const handleEditEnumValue = (enumValue: (typeof sortedEnumValues)[0]) => {
     setEditingEnumValue(enumValue);
   };
 
-  const handleMoveUp = async (enumValue: typeof sortedEnumValues[0]) => {
-    const currentIndex = sortedEnumValues.findIndex(ev => ev.id === enumValue.id);
+  const handleMoveUp = async (enumValue: (typeof sortedEnumValues)[0]) => {
+    const currentIndex = sortedEnumValues.findIndex(
+      (ev) => ev.id === enumValue.id,
+    );
     if (currentIndex <= 0) return;
 
     const newOrder = sortedEnumValues[currentIndex - 1].order;
@@ -442,8 +474,10 @@ export const EnumValueManagementPage: React.FC = () => {
     });
   };
 
-  const handleMoveDown = async (enumValue: typeof sortedEnumValues[0]) => {
-    const currentIndex = sortedEnumValues.findIndex(ev => ev.id === enumValue.id);
+  const handleMoveDown = async (enumValue: (typeof sortedEnumValues)[0]) => {
+    const currentIndex = sortedEnumValues.findIndex(
+      (ev) => ev.id === enumValue.id,
+    );
     if (currentIndex >= sortedEnumValues.length - 1) return;
 
     const newOrder = sortedEnumValues[currentIndex + 1].order;
@@ -489,9 +523,13 @@ export const EnumValueManagementPage: React.FC = () => {
   return (
     <Container>
       <Breadcrumb>
-        <Link to={`/communities/${trait.species?.communityId}/species`}>Species Management</Link>
+        <Link to={`/communities/${trait.species?.communityId}/species`}>
+          Species Management
+        </Link>
         <span>/</span>
-        <Link to={`/species/${trait.species?.id}`}>{trait.species?.name || 'Species'}</Link>
+        <Link to={`/species/${trait.species?.id}`}>
+          {trait.species?.name || "Species"}
+        </Link>
         <span>/</span>
         <Link to={`/species/${trait.species?.id}/traits`}>Traits</Link>
         <span>/</span>
@@ -504,7 +542,8 @@ export const EnumValueManagementPage: React.FC = () => {
         <HeaderLeft>
           <Title>Manage Options</Title>
           <Subtitle>
-            Configure options for "{trait.name}" trait ({sortedEnumValues.length} options)
+            Configure options for "{trait.name}" trait (
+            {sortedEnumValues.length} options)
           </Subtitle>
         </HeaderLeft>
 
@@ -528,9 +567,7 @@ export const EnumValueManagementPage: React.FC = () => {
         <EmptyState>
           <ArrowUpDown size={48} />
           <h3>No options configured</h3>
-          <p>
-            Add predefined options that users can select for this trait.
-          </p>
+          <p>Add predefined options that users can select for this trait.</p>
           <Button
             onClick={() => setIsCreateModalOpen(true)}
             icon={<Plus size={16} />}
@@ -545,14 +582,21 @@ export const EnumValueManagementPage: React.FC = () => {
               <EnumValueInfo>
                 <OrderBadge>#{enumValue.order}</OrderBadge>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
+                  >
                     <EnumValueName>{enumValue.name}</EnumValueName>
                     {enumValue.color && (
                       <ColorPip color={enumValue.color.hexCode} size="sm" />
                     )}
                   </div>
                   <EnumValueMeta>
-                    Created: {new Date(enumValue.createdAt).toLocaleDateString()}
+                    Created:{" "}
+                    {new Date(enumValue.createdAt).toLocaleDateString()}
                   </EnumValueMeta>
                 </div>
               </EnumValueInfo>
@@ -605,7 +649,7 @@ export const EnumValueManagementPage: React.FC = () => {
         onSubmit={handleCreateEnumValue}
         title="Create New Option"
         maxOrder={maxOrder}
-        communityId={trait.species?.communityId || ''}
+        communityId={trait.species?.communityId || ""}
       />
 
       {/* Edit Enum Value Modal */}
@@ -616,7 +660,7 @@ export const EnumValueManagementPage: React.FC = () => {
         enumValue={editingEnumValue || undefined}
         title="Edit Option"
         maxOrder={maxOrder}
-        communityId={trait.species?.communityId || ''}
+        communityId={trait.species?.communityId || ""}
       />
     </Container>
   );

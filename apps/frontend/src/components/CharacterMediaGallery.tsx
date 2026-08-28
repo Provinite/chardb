@@ -2,7 +2,11 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
-import { MediaType, useGetCharacterMediaQuery, useSetCharacterMainMediaMutation } from "../generated/graphql";
+import {
+  MediaType,
+  useGetCharacterMediaQuery,
+  useSetCharacterMainMediaMutation,
+} from "../generated/graphql";
 import { MediaGrid } from "./MediaGrid";
 import toast from "react-hot-toast";
 
@@ -39,22 +43,26 @@ const FilterTabs = styled.div`
 `;
 
 const FilterTab = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'active',
+  shouldForwardProp: (prop) => prop !== "active",
 })<{ active: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.border};
-  background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.background};
-  color: ${props => props.active ? 'white' : props.theme.colors.text.secondary};
+  border: 1px solid
+    ${(props) =>
+      props.active ? props.theme.colors.primary : props.theme.colors.border};
+  background: ${(props) =>
+    props.active ? props.theme.colors.primary : props.theme.colors.background};
+  color: ${(props) =>
+    props.active ? "white" : props.theme.colors.text.secondary};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   cursor: pointer;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   transition: all 0.2s;
-  
+
   &:hover:not([data-active="true"]) {
     border-color: ${({ theme }) => theme.colors.primary};
     background: ${({ theme }) => theme.colors.primary}10;
   }
-  
+
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
@@ -85,8 +93,7 @@ const LoadingState = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
-
-type MediaFilter = 'all' | 'images' | 'text';
+type MediaFilter = "all" | "images" | "text";
 
 interface CharacterMediaGalleryProps {
   /** ID of the character whose media to display */
@@ -109,7 +116,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
   limit = 8,
   currentMainMediaId,
 }) => {
-  const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all');
+  const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [isSettingMain, setIsSettingMain] = useState(false);
 
   const { data, loading, error } = useGetCharacterMediaQuery({
@@ -117,8 +124,12 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
       characterId,
       filters: {
         limit,
-        mediaType: mediaFilter === 'all' ? undefined : 
-                  mediaFilter === 'images' ? MediaType.Image : MediaType.Text,
+        mediaType:
+          mediaFilter === "all"
+            ? undefined
+            : mediaFilter === "images"
+              ? MediaType.Image
+              : MediaType.Text,
       },
     },
   });
@@ -134,7 +145,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
   });
 
   const [setCharacterMainMedia] = useSetCharacterMainMediaMutation({
-    refetchQueries: ['GetCharacter', 'GetCharacterMedia'],
+    refetchQueries: ["GetCharacter", "GetCharacterMedia"],
   });
 
   const media = data?.characterMedia?.media || [];
@@ -145,7 +156,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
 
   const handleSetAsMain = async (mediaId: string) => {
     if (!canUpload) return;
-    
+
     setIsSettingMain(true);
     try {
       await setCharacterMainMedia({
@@ -154,10 +165,10 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
           input: { mediaId },
         },
       });
-      toast.success('Main image updated successfully');
+      toast.success("Main image updated successfully");
     } catch (error) {
-      console.error('Failed to set main media:', error);
-      toast.error('Failed to update main image');
+      console.error("Failed to set main media:", error);
+      toast.error("Failed to update main image");
     } finally {
       setIsSettingMain(false);
     }
@@ -165,7 +176,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
 
   const handleRemoveAsMain = async () => {
     if (!canUpload) return;
-    
+
     setIsSettingMain(true);
     try {
       await setCharacterMainMedia({
@@ -174,17 +185,17 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
           input: { mediaId: null },
         },
       });
-      toast.success('Main image removed successfully');
+      toast.success("Main image removed successfully");
     } catch (error) {
-      console.error('Failed to remove main media:', error);
-      toast.error('Failed to remove main image');
+      console.error("Failed to remove main media:", error);
+      toast.error("Failed to remove main image");
     } finally {
       setIsSettingMain(false);
     }
   };
 
   if (error) {
-    toast.error('Failed to load media');
+    toast.error("Failed to load media");
     return (
       <GalleryContainer>
         <EmptyState>
@@ -197,13 +208,10 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
   if (loading) {
     return (
       <GalleryContainer>
-        <LoadingState>
-          Loading media...
-        </LoadingState>
+        <LoadingState>Loading media...</LoadingState>
       </GalleryContainer>
     );
   }
-
 
   return (
     <GalleryContainer>
@@ -211,7 +219,12 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
         <SectionTitle>Media Gallery</SectionTitle>
         <HeaderActions>
           {canUpload && (
-            <Button as={Link} to={`/upload?character=${characterId}`} variant="primary" size="sm">
+            <Button
+              as={Link}
+              to={`/upload?character=${characterId}`}
+              variant="primary"
+              size="sm"
+            >
               Add Media
             </Button>
           )}
@@ -228,20 +241,20 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
       {totalCount > 0 && (
         <FilterTabs>
           <FilterTab
-            active={mediaFilter === 'all'}
-            onClick={() => setMediaFilter('all')}
+            active={mediaFilter === "all"}
+            onClick={() => setMediaFilter("all")}
           >
             All ({totalCount})
           </FilterTab>
           <FilterTab
-            active={mediaFilter === 'images'}
-            onClick={() => setMediaFilter('images')}
+            active={mediaFilter === "images"}
+            onClick={() => setMediaFilter("images")}
           >
             Images ({imageCount})
           </FilterTab>
           <FilterTab
-            active={mediaFilter === 'text'}
-            onClick={() => setMediaFilter('text')}
+            active={mediaFilter === "text"}
+            onClick={() => setMediaFilter("text")}
           >
             Text ({textCount})
           </FilterTab>
@@ -253,12 +266,12 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
         showOwner={false}
         loading={loading}
         emptyMessage={
-          mediaFilter === 'all' 
+          mediaFilter === "all"
             ? "No media uploaded yet for this character"
             : `No ${mediaFilter} uploaded yet for this character`
         }
         emptyDescription={
-          canUpload 
+          canUpload
             ? "Upload some images or create text content to get started!"
             : "Check back later for updates."
         }
@@ -278,7 +291,6 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
           </Link>
         </ViewAllContainer>
       )}
-
     </GalleryContainer>
   );
 };

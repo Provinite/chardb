@@ -60,7 +60,7 @@ async function uploadCharacterImages(
   characterId: string,
   numericId: string,
   manifest: ImageManifest,
-  imagesDir: string
+  imagesDir: string,
 ): Promise<{ imageStatus: ImageUploadStatus; imageError?: string }> {
   const entry = manifest.entries[numericId];
   if (!entry) {
@@ -84,13 +84,16 @@ async function uploadCharacterImages(
     const filePath = path.join(imagesDir, entry.original.localPath);
     if (await fileExists(filePath)) {
       const artist = entry.original.artistDaUsername
-        ? { name: entry.original.artistDaUsername, url: `https://www.deviantart.com/${entry.original.artistDaUsername}` }
+        ? {
+            name: entry.original.artistDaUsername,
+            url: `https://www.deviantart.com/${entry.original.artistDaUsername}`,
+          }
         : undefined;
       const media = await client.uploadImage(
         filePath,
         characterId,
         `${entry.name} - Original`,
-        artist
+        artist,
       );
       originalMediaId = media.id;
     }
@@ -101,13 +104,16 @@ async function uploadCharacterImages(
     const filePath = path.join(imagesDir, entry.currentRef.localPath);
     if (await fileExists(filePath)) {
       const artist = entry.currentRef.artistDaUsername
-        ? { name: entry.currentRef.artistDaUsername, url: `https://www.deviantart.com/${entry.currentRef.artistDaUsername}` }
+        ? {
+            name: entry.currentRef.artistDaUsername,
+            url: `https://www.deviantart.com/${entry.currentRef.artistDaUsername}`,
+          }
         : undefined;
       const media = await client.uploadImage(
         filePath,
         characterId,
         `${entry.name} - Reference`,
-        artist
+        artist,
       );
       currentRefMediaId = media.id;
     }
@@ -197,19 +203,29 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     // Load parsed characters
     const parsedPath = path.join(getDataDir(), "parsed-characters.json");
     logger.info("Loading parsed characters...");
-    const allParsed = await readJson(parsedPath, z.array(ParsedCharacterSchema));
+    const allParsed = await readJson(
+      parsedPath,
+      z.array(ParsedCharacterSchema),
+    );
 
     // Filter out excluded deviations
     const exclusions = await loadExclusions();
     const excludedIds = new Set(exclusions.map((e) => e.numericId));
-    const afterExclusions = allParsed.filter((c) => !excludedIds.has(c.numericId));
+    const afterExclusions = allParsed.filter(
+      (c) => !excludedIds.has(c.numericId),
+    );
     if (excludedIds.size > 0) {
-      logger.info(`  Excluded ${allParsed.length - afterExclusions.length} characters (${excludedIds.size} exclusion rules)`);
+      logger.info(
+        `  Excluded ${allParsed.length - afterExclusions.length} characters (${excludedIds.size} exclusion rules)`,
+      );
     }
 
-    const parsed = limit > 0 ? afterExclusions.slice(0, limit) : afterExclusions;
+    const parsed =
+      limit > 0 ? afterExclusions.slice(0, limit) : afterExclusions;
     if (limit > 0) {
-      logger.info(`  Limited to first ${limit} of ${afterExclusions.length} characters`);
+      logger.info(
+        `  Limited to first ${limit} of ${afterExclusions.length} characters`,
+      );
     }
 
     // Load mapping config
@@ -224,7 +240,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
       logger.info(`Loaded image manifest with ${entryCount} entries`);
     } else if (uploadImages) {
       logger.warn(
-        "Image manifest not found — run download-images first to enable image uploads"
+        "Image manifest not found — run download-images first to enable image uploads",
       );
     }
 
@@ -240,13 +256,15 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     logger.info(`  Fully mapped: ${fullyMapped.length}`);
     logger.info(`  With unmapped traits: ${withUnmapped.length}`);
     logger.info(
-      `  To import: ${importable.length}${skipUnmapped ? " (skipping unmapped)" : ""}`
+      `  To import: ${importable.length}${skipUnmapped ? " (skipping unmapped)" : ""}`,
     );
 
     if (dryRun) {
       logger.info("\n=== DRY RUN — no writes will be made ===\n");
     } else if (!email || !password) {
-      logger.error("--email and --password are required unless --dry-run is set");
+      logger.error(
+        "--email and --password are required unless --dry-run is set",
+      );
       process.exit(1);
     }
 
@@ -259,32 +277,35 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     // Build existing character index
     logger.info("Building existing character index...");
     const existingChars = await client.getAllCharactersForSpecies(
-      config.speciesId
+      config.speciesId,
     );
     const existingByRegistryId = new Map(
       existingChars
         .filter((c) => c.registryId)
-        .map((c) => [c.registryId!, c.id])
+        .map((c) => [c.registryId!, c.id]),
     );
     // Name-based index for characters missing a registryId — used to
     // set the registryId on existing characters without duplicating them.
     const existingWithoutRegistryByName = new Map(
       existingChars
         .filter((c) => !c.registryId)
-        .map((c) => [c.name.trim().toLowerCase(), c.id])
+        .map((c) => [c.name.trim().toLowerCase(), c.id]),
     );
-    logger.info(`  Found ${existingChars.length} existing characters (${existingByRegistryId.size} with registryId, ${existingWithoutRegistryByName.size} without)`);
+    logger.info(
+      `  Found ${existingChars.length} existing characters (${existingByRegistryId.size} with registryId, ${existingWithoutRegistryByName.size} without)`,
+    );
 
     // Count how many would fall into each bucket
     const wouldSkipExisting = importable.filter((c) =>
-      existingByRegistryId.has(c.registryId)
+      existingByRegistryId.has(c.registryId),
     ).length;
     const wouldUpdateRegistry = importable.filter(
       (c) =>
         !existingByRegistryId.has(c.registryId) &&
-        existingWithoutRegistryByName.has(c.name.trim().toLowerCase())
+        existingWithoutRegistryByName.has(c.name.trim().toLowerCase()),
     ).length;
-    const wouldCreate = importable.length - wouldSkipExisting - wouldUpdateRegistry;
+    const wouldCreate =
+      importable.length - wouldSkipExisting - wouldUpdateRegistry;
 
     logger.info(`  Would create: ${wouldCreate}`);
     logger.info(`  Would update registry only: ${wouldUpdateRegistry}`);
@@ -293,7 +314,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
     // Review prompt (skip for dry run)
     if (!dryRun && !force) {
       const proceed = await promptConfirm(
-        `\nProceed with importing ${wouldCreate} new + ${wouldUpdateRegistry} registry updates?`
+        `\nProceed with importing ${wouldCreate} new + ${wouldUpdateRegistry} registry updates?`,
       );
       if (!proceed) {
         logger.info("Import cancelled.");
@@ -358,13 +379,21 @@ export const importCommand: CommandModule<object, ImportArgs> = {
           if (dryRun) {
             const imgEntry = manifest.entries[char.numericId];
             if (imgEntry) {
-              const hasOrig = imgEntry.original.status === "downloaded" && imgEntry.original.localPath;
-              const hasRef = imgEntry.currentRef.status === "downloaded" && imgEntry.currentRef.localPath;
+              const hasOrig =
+                imgEntry.original.status === "downloaded" &&
+                imgEntry.original.localPath;
+              const hasRef =
+                imgEntry.currentRef.status === "downloaded" &&
+                imgEntry.currentRef.localPath;
               if (hasOrig) {
-                logger.info(`[DRY RUN]   image (original) for existing ${existingId}: "${imgEntry.name} - Original", file: ${imgEntry.original.localPath}, artist: ${imgEntry.original.artistDaUsername ?? "(none)"}`);
+                logger.info(
+                  `[DRY RUN]   image (original) for existing ${existingId}: "${imgEntry.name} - Original", file: ${imgEntry.original.localPath}, artist: ${imgEntry.original.artistDaUsername ?? "(none)"}`,
+                );
               }
               if (hasRef) {
-                logger.info(`[DRY RUN]   image (ref) for existing ${existingId}: "${imgEntry.name} - Reference", file: ${imgEntry.currentRef.localPath}, artist: ${imgEntry.currentRef.artistDaUsername ?? "(none)"}`);
+                logger.info(
+                  `[DRY RUN]   image (ref) for existing ${existingId}: "${imgEntry.name} - Reference", file: ${imgEntry.currentRef.localPath}, artist: ${imgEntry.currentRef.artistDaUsername ?? "(none)"}`,
+                );
               }
             }
           } else {
@@ -374,7 +403,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
                 existingId,
                 char.numericId,
                 manifest,
-                imagesDir
+                imagesDir,
               );
               entry.imageStatus = imgResult.imageStatus;
               entry.imageError = imgResult.imageError;
@@ -384,7 +413,9 @@ export const importCommand: CommandModule<object, ImportArgs> = {
               entry.imageStatus = "failed";
               entry.imageError = msg;
               imagesFailed++;
-              logger.warn(`Image upload failed for existing ${char.numericId}: ${msg}`);
+              logger.warn(
+                `Image upload failed for existing ${char.numericId}: ${msg}`,
+              );
             }
           }
         }
@@ -401,7 +432,9 @@ export const importCommand: CommandModule<object, ImportArgs> = {
       const existingByNameId = existingWithoutRegistryByName.get(nameKey);
       if (existingByNameId) {
         if (dryRun) {
-          logger.info(`[DRY RUN] updateCharacterRegistry(${existingByNameId}, { registryId: "${char.registryId}" }) — ${char.name}`);
+          logger.info(
+            `[DRY RUN] updateCharacterRegistry(${existingByNameId}, { registryId: "${char.registryId}" }) — ${char.name}`,
+          );
         } else {
           try {
             await client.updateCharacterRegistry(existingByNameId, {
@@ -417,7 +450,9 @@ export const importCommand: CommandModule<object, ImportArgs> = {
               characterId: existingByNameId,
             });
             failed++;
-            logger.warn(`Failed to update registry for ${char.name}: ${errorMsg}`);
+            logger.warn(
+              `Failed to update registry for ${char.name}: ${errorMsg}`,
+            );
             progress.increment();
             await saveResults();
             continue;
@@ -444,7 +479,9 @@ export const importCommand: CommandModule<object, ImportArgs> = {
         name: char.name,
         registryId: char.registryId,
         speciesId: config.speciesId,
-        speciesVariantId: char.derivedVariantId ?? config.rarityToVariantId[config.rarityOrder[0]],
+        speciesVariantId:
+          char.derivedVariantId ??
+          config.rarityToVariantId[config.rarityOrder[0]],
         traitValues: char.mappedTraits.map((t) => ({
           traitId: t.traitId,
           value: "enumValueId" in t ? t.enumValueId : t.textValue,
@@ -463,30 +500,46 @@ export const importCommand: CommandModule<object, ImportArgs> = {
       if (dryRun) {
         logger.info(`[DRY RUN] createCharacter("${char.name}")`);
         logger.info(`[DRY RUN]   registryId: "${char.registryId}"`);
-        logger.info(`[DRY RUN]   variant: ${char.derivedVariantId ?? "default"} (${char.derivedRarity ?? "unknown rarity"})`);
+        logger.info(
+          `[DRY RUN]   variant: ${char.derivedVariantId ?? "default"} (${char.derivedRarity ?? "unknown rarity"})`,
+        );
         if (char.ownerDaUsername) {
-          logger.info(`[DRY RUN]   pendingOwner: { provider: "DEVIANTART", providerAccountId: "${char.ownerDaUsername}" }`);
+          logger.info(
+            `[DRY RUN]   pendingOwner: { provider: "DEVIANTART", providerAccountId: "${char.ownerDaUsername}" }`,
+          );
         } else {
           logger.info(`[DRY RUN]   pendingOwner: (none)`);
         }
         logger.info(`[DRY RUN]   traits (${char.mappedTraits.length}):`);
         for (const t of char.mappedTraits) {
           if ("enumValueId" in t) {
-            logger.info(`[DRY RUN]     ${t.sourceLine} -> traitId: ${t.traitId}, enumValueId: ${t.enumValueId}`);
+            logger.info(
+              `[DRY RUN]     ${t.sourceLine} -> traitId: ${t.traitId}, enumValueId: ${t.enumValueId}`,
+            );
           } else {
-            logger.info(`[DRY RUN]     ${t.sourceLine} -> traitId: ${t.traitId}, text: "${t.textValue}"`);
+            logger.info(
+              `[DRY RUN]     ${t.sourceLine} -> traitId: ${t.traitId}, text: "${t.textValue}"`,
+            );
           }
         }
         if (manifest && uploadImages) {
           const imgEntry = manifest.entries[char.numericId];
           if (imgEntry) {
-            const hasOrig = imgEntry.original.status === "downloaded" && imgEntry.original.localPath;
-            const hasRef = imgEntry.currentRef.status === "downloaded" && imgEntry.currentRef.localPath;
+            const hasOrig =
+              imgEntry.original.status === "downloaded" &&
+              imgEntry.original.localPath;
+            const hasRef =
+              imgEntry.currentRef.status === "downloaded" &&
+              imgEntry.currentRef.localPath;
             if (hasOrig) {
-              logger.info(`[DRY RUN]   image (original): "${imgEntry.name} - Original", file: ${imgEntry.original.localPath}, artist: ${imgEntry.original.artistDaUsername ?? "(none)"}`);
+              logger.info(
+                `[DRY RUN]   image (original): "${imgEntry.name} - Original", file: ${imgEntry.original.localPath}, artist: ${imgEntry.original.artistDaUsername ?? "(none)"}`,
+              );
             }
             if (hasRef) {
-              logger.info(`[DRY RUN]   image (ref): "${imgEntry.name} - Reference", file: ${imgEntry.currentRef.localPath}, artist: ${imgEntry.currentRef.artistDaUsername ?? "(none)"}`);
+              logger.info(
+                `[DRY RUN]   image (ref): "${imgEntry.name} - Reference", file: ${imgEntry.currentRef.localPath}, artist: ${imgEntry.currentRef.artistDaUsername ?? "(none)"}`,
+              );
             }
             if (!hasOrig && !hasRef) {
               logger.info(`[DRY RUN]   images: none available`);
@@ -519,7 +572,7 @@ export const importCommand: CommandModule<object, ImportArgs> = {
                 result.id,
                 char.numericId,
                 manifest,
-                imagesDir
+                imagesDir,
               );
               entry.imageStatus = imgResult.imageStatus;
               entry.imageError = imgResult.imageError;
@@ -558,7 +611,9 @@ export const importCommand: CommandModule<object, ImportArgs> = {
               error: errorMsg,
             });
             failed++;
-            logger.warn(`Failed to create ${char.numericId} (${char.name}): ${errorMsg}`);
+            logger.warn(
+              `Failed to create ${char.numericId} (${char.name}): ${errorMsg}`,
+            );
           }
         }
       }

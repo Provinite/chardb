@@ -1,8 +1,8 @@
-import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkBreaks from 'remark-breaks';
-import remarkGfm from 'remark-gfm';
-import styled from 'styled-components';
+import React from "react";
+import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
+import remarkGfm from "remark-gfm";
+import styled from "styled-components";
 
 const StyledMarkdown = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.md};
@@ -16,7 +16,8 @@ const StyledMarkdown = styled.div`
   h4,
   h5,
   h6 {
-    margin: ${({ theme }) => theme.spacing.md} 0 ${({ theme }) => theme.spacing.sm};
+    margin: ${({ theme }) => theme.spacing.md} 0
+      ${({ theme }) => theme.spacing.sm};
     font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
   }
 

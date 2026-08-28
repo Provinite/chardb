@@ -238,7 +238,8 @@ export class CommunitiesResolver {
   })
   async resolveDiscordUser(
     @Args("identifier", {
-      description: "Discord username (@handle), display name, or numeric user ID",
+      description:
+        "Discord username (@handle), display name, or numeric user ID",
     })
     identifier: string,
     @Args("communityId", {

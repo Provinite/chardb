@@ -2,7 +2,12 @@ import React from "react";
 import styled from "styled-components";
 import { Heart } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { useToggleLikeMutation, useGetLikeStatusQuery, LikeableType, GetLikeStatusDocument } from "../generated/graphql";
+import {
+  useToggleLikeMutation,
+  useGetLikeStatusQuery,
+  LikeableType,
+  GetLikeStatusDocument,
+} from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 
 // Helper function to map LikeableType to GraphQL type names
@@ -124,10 +129,11 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
   const { user } = useAuth();
   const isAuthenticated = !!user;
 
-  const { data: likeStatusData, loading: statusLoading } = useGetLikeStatusQuery({
-    variables: { entityType, entityId },
-    skip: !isAuthenticated,
-  });
+  const { data: likeStatusData, loading: statusLoading } =
+    useGetLikeStatusQuery({
+      variables: { entityType, entityId },
+      skip: !isAuthenticated,
+    });
 
   // Get current state for optimistic response
   const currentIsLiked = likeStatusData?.likeStatus.isLiked ?? false;

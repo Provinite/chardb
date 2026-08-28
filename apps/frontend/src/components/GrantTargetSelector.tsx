@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import styled from 'styled-components';
-import { UserTypeahead, SelectedUser } from '@chardb/ui';
-import { RadioGroup, Radio } from '@chardb/ui';
-import { Input } from '@chardb/ui';
-import { Alert } from '@chardb/ui';
-import { useResolveDiscordUserLazyQuery } from '../graphql/communities.graphql';
-import { ExternalAccountProvider } from '../generated/graphql';
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import styled from "styled-components";
+import { UserTypeahead, SelectedUser } from "@chardb/ui";
+import { RadioGroup, Radio } from "@chardb/ui";
+import { Input } from "@chardb/ui";
+import { Alert } from "@chardb/ui";
+import { useResolveDiscordUserLazyQuery } from "../graphql/communities.graphql";
+import { ExternalAccountProvider } from "../generated/graphql";
 
 /**
  * GrantTargetSelector - Component for selecting a grant/ownership target
@@ -51,9 +51,9 @@ import { ExternalAccountProvider } from '../generated/graphql';
  */
 
 export type GrantTarget =
-  | { type: 'user'; userId: string; user: SelectedUser }
+  | { type: "user"; userId: string; user: SelectedUser }
   | {
-      type: 'pending';
+      type: "pending";
       provider: ExternalAccountProvider;
       providerAccountId: string;
     };
@@ -238,9 +238,9 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   allowUnassigned = true,
   discordGuildId,
   discordGuildName,
-  unassignedLabel = 'Leave Unassigned',
-  userLabel = 'Assign to User',
-  pendingOwnerLabel = 'Orphaned with Pending Owner',
+  unassignedLabel = "Leave Unassigned",
+  userLabel = "Assign to User",
+  pendingOwnerLabel = "Orphaned with Pending Owner",
   disabled = false,
   communityId,
   onValidationChange,
@@ -253,11 +253,17 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   const [resolveDiscordUser] = useResolveDiscordUserLazyQuery();
 
   // Component state
-  const [selectionMode, setSelectionMode] = useState<'user' | 'pending' | 'unassigned'>('user');
-  const [provider, setProvider] = useState<ExternalAccountProvider>(ExternalAccountProvider.Discord);
-  const [accountId, setAccountId] = useState('');
+  const [selectionMode, setSelectionMode] = useState<
+    "user" | "pending" | "unassigned"
+  >("user");
+  const [provider, setProvider] = useState<ExternalAccountProvider>(
+    ExternalAccountProvider.Discord,
+  );
+  const [accountId, setAccountId] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [resolvedUser, setResolvedUser] = useState<ResolvedDiscordUser | null>(null);
+  const [resolvedUser, setResolvedUser] = useState<ResolvedDiscordUser | null>(
+    null,
+  );
   const [isChecking, setIsChecking] = useState(false);
   const [checkError, setCheckError] = useState<string | null>(null);
 
@@ -270,15 +276,15 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
   // Calculate validation state
   const isValid = useMemo(() => {
-    if (selectionMode === 'unassigned') {
+    if (selectionMode === "unassigned") {
       // Unassigned mode: always valid, no value required
       return true;
     }
-    if (selectionMode === 'user') {
+    if (selectionMode === "user") {
       // User mode: valid if a user is selected
       return !!value;
     }
-    if (selectionMode === 'pending') {
+    if (selectionMode === "pending") {
       // Pending mode: must have a value
       if (!value) return false;
 
@@ -300,10 +306,10 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
   // Initialize state from value
   useEffect(() => {
-    if (value?.type === 'user') {
-      setSelectionMode('user');
-    } else if (value?.type === 'pending') {
-      setSelectionMode('pending');
+    if (value?.type === "user") {
+      setSelectionMode("user");
+    } else if (value?.type === "pending") {
+      setSelectionMode("pending");
       setProvider(value.provider);
       setAccountId(value.providerAccountId);
     }
@@ -313,10 +319,16 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
   // Auto-select currentUser when switching to user mode (only once, and only if defaultToSelf is true)
   useEffect(() => {
-    if (defaultToSelf && selectionMode === 'user' && currentUser && !value && !hasAutoSelected.current) {
+    if (
+      defaultToSelf &&
+      selectionMode === "user" &&
+      currentUser &&
+      !value &&
+      !hasAutoSelected.current
+    ) {
       hasAutoSelected.current = true; // Mark that we've done the initial auto-select
       onChange({
-        type: 'user',
+        type: "user",
         userId: currentUser.id,
         user: currentUser,
       });
@@ -325,7 +337,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
   // Reset auto-select flag when selection mode changes away from 'user'
   useEffect(() => {
-    if (selectionMode !== 'user') {
+    if (selectionMode !== "user") {
       hasAutoSelected.current = false;
     }
   }, [selectionMode]);
@@ -337,7 +349,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     // If includeSelf is true, always include currentUser in results
     if (includeSelf) {
       if (!users || users.length === 0) return [currentUser];
-      const isCurrentUserInList = users.some(u => u.id === currentUser.id);
+      const isCurrentUserInList = users.some((u) => u.id === currentUser.id);
       if (isCurrentUserInList) return users;
       return [currentUser, ...users];
     }
@@ -354,10 +366,13 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   }, [currentUser, users, includeSelf, defaultToSelf, searchQuery]);
 
   // Handle user selection
-  const handleUserChange = (userId: string | null, user: SelectedUser | null) => {
+  const handleUserChange = (
+    userId: string | null,
+    user: SelectedUser | null,
+  ) => {
     setValidationError(null);
     if (userId && user) {
-      onChange({ type: 'user', userId, user });
+      onChange({ type: "user", userId, user });
     } else {
       onChange(null);
     }
@@ -370,7 +385,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     setResolvedUser(null);
     setProvider(newProvider as ExternalAccountProvider);
     // Clear account ID when switching providers
-    setAccountId('');
+    setAccountId("");
     // Reset check state
     setHasSuccessfulCheck(false);
     setCheckedAccountId(null);
@@ -398,11 +413,11 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     // Validate Discord numeric ID format if provided
     if (provider === ExternalAccountProvider.Discord) {
       const isNumeric = /^\d{17,19}$/.test(trimmed);
-      const hasAtSign = trimmed.startsWith('@');
+      const hasAtSign = trimmed.startsWith("@");
 
       if (!isNumeric && !hasAtSign && !discordGuildId) {
         setValidationError(
-          'Discord numeric ID (17-19 digits) required when Discord server is not connected'
+          "Discord numeric ID (17-19 digits) required when Discord server is not connected",
         );
         onChange(null);
         return;
@@ -411,7 +426,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
     // Valid input
     onChange({
-      type: 'pending',
+      type: "pending",
       provider,
       providerAccountId: trimmed,
     });
@@ -433,7 +448,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
       });
 
       if (!result.data?.resolveDiscordUser) {
-        throw new Error('Failed to resolve Discord user');
+        throw new Error("Failed to resolve Discord user");
       }
 
       const user = result.data.resolveDiscordUser;
@@ -448,7 +463,10 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
       setCheckedAccountId(accountId.trim());
       setHasSuccessfulCheck(true);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to resolve Discord user';
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to resolve Discord user";
       setCheckError(errorMessage);
       setResolvedUser(null);
       // Reset check state on error
@@ -461,7 +479,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
   // Handle selection mode change
   const handleModeChange = (mode: string) => {
-    setSelectionMode(mode as 'user' | 'pending' | 'unassigned');
+    setSelectionMode(mode as "user" | "pending" | "unassigned");
     setValidationError(null);
     setCheckError(null);
     setResolvedUser(null);
@@ -494,10 +512,10 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
       </Section>
 
       {/* User Selection */}
-      {selectionMode === 'user' && (
+      {selectionMode === "user" && (
         <Section>
           <UserTypeahead
-            value={value?.type === 'user' ? value.userId : null}
+            value={value?.type === "user" ? value.userId : null}
             onChange={handleUserChange}
             onSearch={onUserSearch}
             users={availableUsers}
@@ -509,7 +527,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
       )}
 
       {/* Pending Owner Selection */}
-      {selectionMode === 'pending' && (
+      {selectionMode === "pending" && (
         <>
           <Section>
             <Label>Account Provider</Label>
@@ -526,8 +544,8 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
           <Section>
             <Label>
               {provider === ExternalAccountProvider.Discord
-                ? 'Search Discord Account'
-                : 'Search DeviantArt Account'}
+                ? "Search Discord Account"
+                : "Search DeviantArt Account"}
             </Label>
             <InputRow>
               <InputWrapper>
@@ -536,10 +554,13 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
                   value={accountId}
                   onChange={(e) => handleAccountIdChange(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       // Optionally trigger Check for Discord
-                      if (provider === ExternalAccountProvider.Discord && accountId.trim()) {
+                      if (
+                        provider === ExternalAccountProvider.Discord &&
+                        accountId.trim()
+                      ) {
                         handleCheckDiscordUser();
                       }
                     }
@@ -547,9 +568,9 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
                   placeholder={
                     provider === ExternalAccountProvider.Discord
                       ? discordGuildId
-                        ? 'Search by @handle or numeric ID'
-                        : 'Numeric Discord ID (17-19 digits)'
-                      : 'Search by account name'
+                        ? "Search by @handle or numeric ID"
+                        : "Numeric Discord ID (17-19 digits)"
+                      : "Search by account name"
                   }
                   autoComplete="off"
                   disabled={disabled}
@@ -560,18 +581,27 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
                 <HelpText>
                   {provider === ExternalAccountProvider.Discord
                     ? discordGuildId
-                      ? `Enter Discord handle (with @) or numeric user ID. Server: ${discordGuildName || 'Connected'}`
-                      : 'Enter numeric Discord user ID (17-19 digits). No Discord server connected to this community.'
-                    : 'Enter DeviantArt account name'}
+                      ? `Enter Discord handle (with @) or numeric user ID. Server: ${discordGuildName || "Connected"}`
+                      : "Enter numeric Discord user ID (17-19 digits). No Discord server connected to this community."
+                    : "Enter DeviantArt account name"}
                 </HelpText>
               </InputWrapper>
               {provider === ExternalAccountProvider.Discord && (
                 <CheckButton
                   onClick={handleCheckDiscordUser}
-                  disabled={disabled || isChecking || !accountId.trim() || hasSuccessfulCheck}
+                  disabled={
+                    disabled ||
+                    isChecking ||
+                    !accountId.trim() ||
+                    hasSuccessfulCheck
+                  }
                   type="button"
                 >
-                  {isChecking ? 'Checking...' : hasSuccessfulCheck ? 'Check ✓' : 'Check'}
+                  {isChecking
+                    ? "Checking..."
+                    : hasSuccessfulCheck
+                      ? "Check ✓"
+                      : "Check"}
                 </CheckButton>
               )}
             </InputRow>
@@ -579,7 +609,10 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
             {resolvedUser && (
               <ResolvedUserCard>
                 {resolvedUser.avatarUrl && (
-                  <Avatar src={resolvedUser.avatarUrl} alt={resolvedUser.username} />
+                  <Avatar
+                    src={resolvedUser.avatarUrl}
+                    alt={resolvedUser.username}
+                  />
                 )}
                 <UserInfo>
                   <Username>
@@ -593,9 +626,9 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
           {!discordGuildId && provider === ExternalAccountProvider.Discord && (
             <Alert variant="warning">
-              No Discord server is linked to this community. You must use numeric
-              Discord user IDs. Handle resolution requires a connected Discord
-              server.
+              No Discord server is linked to this community. You must use
+              numeric Discord user IDs. Handle resolution requires a connected
+              Discord server.
             </Alert>
           )}
         </>

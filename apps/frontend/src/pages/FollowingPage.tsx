@@ -226,8 +226,15 @@ export const FollowingPage: React.FC = () => {
               <UserAvatar>
                 {followedUser.avatarImage ? (
                   <img
-                    src={followedUser.avatarImage.thumbnailUrl || followedUser.avatarImage.originalUrl}
-                    alt={followedUser.avatarImage.altText || followedUser.displayName || followedUser.username}
+                    src={
+                      followedUser.avatarImage.thumbnailUrl ||
+                      followedUser.avatarImage.originalUrl
+                    }
+                    alt={
+                      followedUser.avatarImage.altText ||
+                      followedUser.displayName ||
+                      followedUser.username
+                    }
                     style={{
                       width: "100%",
                       height: "100%",

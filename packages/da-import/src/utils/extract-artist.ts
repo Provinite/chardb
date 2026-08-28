@@ -1,5 +1,6 @@
 const DA_USERNAME_RE = /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/;
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_USERNAME_LENGTH = 20;
 
 function isValidDaUsername(s: string): boolean {
@@ -27,9 +28,7 @@ function isUuidTitle(title: string): boolean {
  * - 1 dash → check if second part is a valid username
  * - >1 dashes → first dash where the remainder is a valid username
  */
-export function extractArtistFromTitle(
-  title: string
-): string | undefined {
+export function extractArtistFromTitle(title: string): string | undefined {
   if (isUuidTitle(title)) return undefined;
 
   for (let i = 0; i < title.length; i++) {

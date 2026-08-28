@@ -117,7 +117,7 @@ const PropertiesList = styled.div`
   margin-top: 1rem;
 `;
 
-const PropertyBadge = styled.div<{ $variant?: 'default' | 'success' | 'info' }>`
+const PropertyBadge = styled.div<{ $variant?: "default" | "success" | "info" }>`
   display: inline-flex;
   align-items: center;
   padding: 0.375rem 0.875rem;
@@ -126,19 +126,19 @@ const PropertyBadge = styled.div<{ $variant?: 'default' | 'success' | 'info' }>`
   font-weight: 500;
   background: ${({ theme, $variant }) => {
     switch ($variant) {
-      case 'success':
-        return theme.colors.success + '20';
-      case 'info':
-        return theme.colors.primary + '20';
+      case "success":
+        return theme.colors.success + "20";
+      case "info":
+        return theme.colors.primary + "20";
       default:
-        return theme.colors.text.muted + '20';
+        return theme.colors.text.muted + "20";
     }
   }};
   color: ${({ theme, $variant }) => {
     switch ($variant) {
-      case 'success':
+      case "success":
         return theme.colors.success;
-      case 'info':
+      case "info":
         return theme.colors.primary;
       default:
         return theme.colors.text.muted;
@@ -202,7 +202,7 @@ export const ItemTypePage: React.FC = () => {
     variables: { id: itemTypeId! },
     skip: !itemTypeId,
     fetchPolicy: "cache-and-network",
-    errorPolicy: "all"
+    errorPolicy: "all",
   });
 
   if (loading) {
@@ -271,7 +271,9 @@ export const ItemTypePage: React.FC = () => {
             <ItemMeta>
               <MetaItem>
                 <Calendar size={16} />
-                <span>Created {new Date(itemType.createdAt).toLocaleDateString()}</span>
+                <span>
+                  Created {new Date(itemType.createdAt).toLocaleDateString()}
+                </span>
               </MetaItem>
               {itemType.community && (
                 <MetaItem>
@@ -287,7 +289,9 @@ export const ItemTypePage: React.FC = () => {
               {itemType.color && (
                 <ColorInfo>
                   <ColorPip color={itemType.color.hexCode} size="sm" />
-                  <SmallText style={{ margin: 0 }}>{itemType.color.name}</SmallText>
+                  <SmallText style={{ margin: 0 }}>
+                    {itemType.color.name}
+                  </SmallText>
                 </ColorInfo>
               )}
             </ItemMeta>
@@ -302,7 +306,7 @@ export const ItemTypePage: React.FC = () => {
       )}
 
       <PropertiesSection>
-        <Heading2 style={{ marginBottom: '0.5rem' }}>Properties</Heading2>
+        <Heading2 style={{ marginBottom: "0.5rem" }}>Properties</Heading2>
         <PropertiesList>
           {itemType.isStackable && (
             <PropertyBadge $variant="success">
@@ -316,9 +320,11 @@ export const ItemTypePage: React.FC = () => {
           {itemType.isConsumable && (
             <PropertyBadge $variant="info">Consumable</PropertyBadge>
           )}
-          {!itemType.isStackable && !itemType.isTradeable && !itemType.isConsumable && (
-            <PropertyBadge>No special properties</PropertyBadge>
-          )}
+          {!itemType.isStackable &&
+            !itemType.isTradeable &&
+            !itemType.isConsumable && (
+              <PropertyBadge>No special properties</PropertyBadge>
+            )}
         </PropertiesList>
       </PropertiesSection>
     </Container>

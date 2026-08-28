@@ -100,7 +100,9 @@ import { Request, Response } from "express";
               },
 
               // Helper method to remove sensitive data from logs
-              sanitizeVariables(variables: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+              sanitizeVariables(
+                variables: Record<string, unknown> | undefined,
+              ): Record<string, unknown> | undefined {
                 if (!variables) return variables;
 
                 const sensitiveFields = new Set([
@@ -111,14 +113,24 @@ import { Request, Response } from "express";
                   "refreshToken",
                 ]);
 
-                const sanitize = (obj: Record<string, unknown>, depth: number): Record<string, unknown> => {
+                const sanitize = (
+                  obj: Record<string, unknown>,
+                  depth: number,
+                ): Record<string, unknown> => {
                   if (depth <= 0) return obj;
                   const result: Record<string, unknown> = {};
                   for (const [key, value] of Object.entries(obj)) {
                     if (sensitiveFields.has(key)) {
                       result[key] = "[REDACTED]";
-                    } else if (value && typeof value === "object" && !Array.isArray(value)) {
-                      result[key] = sanitize(value as Record<string, unknown>, depth - 1);
+                    } else if (
+                      value &&
+                      typeof value === "object" &&
+                      !Array.isArray(value)
+                    ) {
+                      result[key] = sanitize(
+                        value as Record<string, unknown>,
+                        depth - 1,
+                      );
                     } else {
                       result[key] = value;
                     }
