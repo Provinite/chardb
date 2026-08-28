@@ -240,9 +240,10 @@ resource "aws_iam_role_policy" "backend_read_secrets" {
 module "github_actions_deploy" {
   source = "../../modules/github-actions-deploy"
 
-  name              = "${var.project_name}-${var.environment}"
-  github_repository = var.github_repository
-  allowed_refs      = var.github_deploy_refs
+  name                 = "${var.project_name}-${var.environment}"
+  github_repository    = var.github_repository
+  allowed_environments = [var.github_deploy_environment]
+  required_ref         = var.github_deploy_ref
 
   ecr_repository_arn         = module.backend_ecr.repository_arn
   terraform_state_bucket     = "clovercoin-tf-state"

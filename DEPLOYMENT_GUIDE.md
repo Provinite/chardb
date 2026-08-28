@@ -211,16 +211,30 @@ setup, for the `prod` environment, and for deploying from a branch by hand.
 ### How the workflow reaches AWS
 
 There is no AWS access key in this repository — it is public. The jobs assume an
-IAM role through GitHub's OIDC provider instead. The role's trust policy pins the
-token's `sub` claim to `repo:Provinite/chardb:ref:refs/heads/main`, so only a
-workflow running on `main` can assume it, and its permissions stop at *reading*
-Terraform state: the deploy can never change infrastructure.
+IAM role through GitHub's OIDC provider instead, and its permissions stop at
+*reading* Terraform state: the deploy can never change infrastructure.
 
-> ⚠️ The deploy jobs must not declare `environment:`. GitHub rewrites the OIDC
-> `sub` claim to `repo:<owner>/<repo>:environment:<name>` when a job targets an
-> environment, which would no longer match the trust policy. To use one, add the
-> environment subject to `github_deploy_refs` handling in
-> `infra/modules/github-actions-deploy` first.
+Two claims on the minted token are pinned, and a job must satisfy both:
+
+| Claim | Required value | Comes from |
+| --- | --- | --- |
+| `sub` | `repo:Provinite/chardb:environment:staging` | the job's `environment: staging` |
+| `ref` | `refs/heads/main` | the branch the run is on |
+
+The `ref` pin is the reason both are needed. An environment subject says nothing
+about which branch deployed to it, so on its own it would let a run from any
+branch that targets `staging` assume the role.
+
+> ⚠️ `environment: staging` in the workflow is load-bearing. Removing or
+> renaming it changes the `sub` claim and the AWS login fails with "Not
+> authorized to perform sts:AssumeRoleWithWebIdentity". Change
+> `github_deploy_environment` in `infra/environments/dev` alongside it.
+
+This is also what gives you a per-environment approval gate later: point a
+production role's trust policy at `repo:Provinite/chardb:environment:production`
+and add a required reviewer to that environment, and the role becomes
+unassumable until someone approves. That is enforced when the token is minted,
+which branch protection is not.
 
 ### How the workflow reaches the host
 
@@ -254,10 +268,21 @@ DEPLOY_TRANSPORT=direct ./deploy.sh dev latest
 cd infra/environments/dev
 terraform apply -var-file=dev.tfvars
 
-# 2. Hand the role ARN to GitHub.
-gh secret set AWS_DEPLOY_ROLE_ARN --body "$(terraform output -raw github_actions_deploy_role_arn)"
+# 2. Create the staging environment and restrict it to main. Without the branch
+#    policy, a run on any branch could target it -- the trust policy's `ref` pin
+#    already blocks that, so this is defence in depth rather than the control.
+gh api -X PUT repos/Provinite/chardb/environments/staging \
+  -F 'deployment_branch_policy[protected_branches]=false' \
+  -F 'deployment_branch_policy[custom_branch_policies]=true'
+gh api -X POST repos/Provinite/chardb/environments/staging/deployment-branch-policies \
+  -f name='main' -f type='branch'
 
-# 3. Confirm the host registered as an SSM managed node (takes a few minutes).
+# 3. Hand the role ARN to the environment, not the repository, so a production
+#    environment can later carry a different one under the same name.
+gh secret set AWS_DEPLOY_ROLE_ARN --env staging \
+  --body "$(terraform output -raw github_actions_deploy_role_arn)"
+
+# 4. Confirm the host registered as an SSM managed node (takes a few minutes).
 aws ssm describe-instance-information \
   --query 'InstanceInformationList[].{Id:InstanceId,Ping:PingStatus}' --output table
 ```

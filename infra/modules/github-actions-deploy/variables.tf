@@ -9,13 +9,25 @@ variable "github_repository" {
 }
 
 variable "allowed_refs" {
-  description = <<-EOT
-    Git refs within the repository allowed to assume the role, in the form
-    accepted by the GitHub OIDC `sub` claim (e.g. "refs/heads/main"). Keep this
-    tight: any workflow running on a listed ref can deploy.
-  EOT
+  description = "Git refs whose jobs may assume the role, e.g. \"refs/heads/main\""
   type        = list(string)
-  default     = ["refs/heads/main"]
+  default     = []
+}
+
+variable "allowed_environments" {
+  description = "GitHub environment names whose jobs may assume the role"
+  type        = list(string)
+  default     = []
+}
+
+variable "required_ref" {
+  description = <<-EOT
+    Ref a job must additionally be running on, e.g. "refs/heads/main". Pair this
+    with allowed_environments: an environment subject alone does not constrain
+    which branch deployed to it.
+  EOT
+  type        = string
+  default     = null
 }
 
 variable "create_oidc_provider" {

@@ -139,8 +139,14 @@ variable "github_repository" {
   default     = "Provinite/chardb"
 }
 
-variable "github_deploy_refs" {
-  description = "Git refs whose workflow runs may assume the deploy role"
-  type        = list(string)
-  default     = ["refs/heads/main"]
+variable "github_deploy_environment" {
+  description = "GitHub environment the deploy jobs run in"
+  type        = string
+  default     = "staging"
+}
+
+variable "github_deploy_ref" {
+  description = "Ref the deploy jobs must be running on"
+  type        = string
+  default     = "refs/heads/main"
 }

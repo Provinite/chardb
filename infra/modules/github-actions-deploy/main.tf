@@ -6,9 +6,22 @@ locals {
   oidc_provider_url = "token.actions.githubusercontent.com"
   oidc_provider_arn = var.create_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${local.oidc_provider_url}"
 
-  allowed_subjects = [
-    for ref in var.allowed_refs : "repo:${var.github_repository}:ref:${ref}"
-  ]
+  allowed_subjects = concat(
+    [for r in var.allowed_refs : "repo:${var.github_repository}:ref:${r}"],
+    [for e in var.allowed_environments : "repo:${var.github_repository}:environment:${e}"],
+  )
+
+  trust_conditions = merge(
+    {
+      "${local.oidc_provider_url}:aud" = "sts.amazonaws.com"
+      "${local.oidc_provider_url}:sub" = local.allowed_subjects
+    },
+    # An environment subject says nothing about which branch deployed to it, so
+    # without this any branch targeting the environment could assume the role.
+    var.required_ref == null ? {} : {
+      "${local.oidc_provider_url}:ref" = var.required_ref
+    },
+  )
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
@@ -36,19 +49,23 @@ resource "aws_iam_role" "deploy" {
           Federated = local.oidc_provider_arn
         }
         Action = "sts:AssumeRoleWithWebIdentity"
+        # Pinning `sub` is what stops a fork's pull request -- or any other
+        # workflow in the repo -- from assuming this role.
         Condition = {
-          StringEquals = {
-            "${local.oidc_provider_url}:aud" = "sts.amazonaws.com"
-            # Pinning `sub` to specific refs is what stops a fork's pull request
-            # -- or any other workflow in the repo -- from assuming this role.
-            "${local.oidc_provider_url}:sub" = local.allowed_subjects
-          }
+          StringEquals = local.trust_conditions
         }
       }
     ]
   })
 
   tags = var.tags
+
+  lifecycle {
+    precondition {
+      condition     = length(local.allowed_subjects) > 0
+      error_message = "Set allowed_refs or allowed_environments; otherwise nothing constrains who may assume this role."
+    }
+  }
 }
 
 resource "aws_iam_role_policy" "deploy" {
