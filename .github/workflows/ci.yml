@@ -257,9 +257,12 @@ jobs:
   # ---------------------------------------------------------------------------
   # Continuous deployment to staging.
   #
-  # Neither job may declare `environment:` -- that rewrites the OIDC subject
-  # claim to `repo:<repo>:environment:<name>`, which the deploy role's trust
-  # policy does not match.
+  # Adding `environment:` to either job below breaks the AWS login. GitHub then
+  # mints the OIDC token with subject `repo:<repo>:environment:<name>` rather
+  # than `repo:<repo>:ref:refs/heads/main`, and the deploy role's trust policy
+  # matches that string exactly, so the job fails with "Not authorized to
+  # perform sts:AssumeRoleWithWebIdentity". Teach allowed_subjects in
+  # infra/modules/github-actions-deploy the environment form first.
   # ---------------------------------------------------------------------------
   deploy-backend:
     name: Deploy backend to staging
