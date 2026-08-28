@@ -7,6 +7,28 @@
 # Update system
 dnf update -y
 
+# Create swap.
+#
+# This host has ~910 MB usable RAM. Amazon Linux 2023's zram-generator only
+# creates zram swap on systems with <= 800 MB, so this instance gets none by
+# default. Without swap, memory pressure livelocks the kernel and kills the
+# ENA transmit path: the instance keeps reporting as "running" while being
+# completely unreachable, and a soft reboot cannot recover it.
+#
+# Kept in sync with scripts/ensure-swap.sh, which applies the same setup to an
+# already-running instance (user_data only runs on first boot).
+if ! swapon --show=NAME --noheadings | grep -qx /swapfile; then
+  # dd rather than fallocate: the root filesystem is XFS, and swapon rejects
+  # files with unwritten extents.
+  dd if=/dev/zero of=/swapfile bs=1M count=2048
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  echo 'vm.swappiness = 10' > /etc/sysctl.d/99-swappiness.conf
+  sysctl -w vm.swappiness=10
+fi
+
 # Install basic dependencies
 dnf install -y git unzip dnf-plugins-core
 # Remove any existing Docker packages

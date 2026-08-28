@@ -143,8 +143,10 @@ S3_IMAGES_BUCKET="$S3_IMAGES_BUCKET"
 CLOUDFRONT_IMAGES_DOMAIN="$CLOUDFRONT_IMAGES_DOMAIN"
 
 # OpenTelemetry settings
-OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4320/v1/traces
-OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://otel-collector:4320/v1/metrics
+# Tracing is disabled on this host: Jaeger and the OTEL collector are no longer
+# deployed here (see docker/docker-compose.prod.yml). Must be the literal
+# string "true" - @opentelemetry/core only accepts "true"/"false", not "1".
+OTEL_SDK_DISABLED=true
 
 # GraphQL settings
 GRAPHQL_PLAYGROUND=true
@@ -153,10 +155,6 @@ GRAPHQL_CSRF_PREVENTION=false
 
 # Port configurations
 BACKEND_PORT=4000
-JAEGER_UI_PORT=16686
-OTEL_GRPC_PORT=4319
-OTEL_HTTP_PORT=4320
-OTEL_METRICS_PORT=8889
 EOF
 
 # Create simple deploy script that relies on .env file
@@ -198,26 +196,29 @@ echo "🔍 Checking service status..."
 docker compose ps
 
 echo "✅ Deployment complete!"
-echo "🌐 Backend API: http://\$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):4000"
-echo "📊 Jaeger UI: http://\$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):16686"
+# IMDSv2: the instance sets http_tokens = "required", so an unauthenticated
+# IMDS read returns 401.
+IMDS_TOKEN=$(curl -sX PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+PUBLIC_IP=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" \
+  http://169.254.169.254/latest/meta-data/public-ipv4)
+echo "🌐 Backend API: http://$PUBLIC_IP:4000"
 EOF
 
 # Copy deployment files to server
 echo "📦 Copying deployment files..."
 scp -i "$SSH_KEY_PATH" docker/docker-compose.prod.yml ec2-user@$SERVER_IP:~/app/compose.yaml
-echo "1/7"
+echo "1/6"
 scp -i "$SSH_KEY_PATH" docker/docker-compose.overrides.prod.yml ec2-user@$SERVER_IP:~/app/compose.override.yaml
-echo "2/7"
+echo "2/6"
 scp -i "$SSH_KEY_PATH" -r docker/services/ ec2-user@$SERVER_IP:~/app/
-echo "3/7"
-scp -i "$SSH_KEY_PATH" docker/otel-collector-config.yml ec2-user@$SERVER_IP:~/app/otel-collector-config.yml
-echo "4/7"
+echo "3/6"
 scp -i "$SSH_KEY_PATH" scripts/ecr-login.sh ec2-user@$SERVER_IP:~/app/ecr-login.sh
-echo "5/7"
+echo "4/6"
 scp -i "$SSH_KEY_PATH" .tmp/.env ec2-user@$SERVER_IP:~/app/.env
-echo "6/7"
+echo "5/6"
 scp -i "$SSH_KEY_PATH" .tmp/deploy-remote.sh ec2-user@$SERVER_IP:~/app/deploy-remote.sh
-echo "7/7"
+echo "6/6"
 
 # Execute deployment script
 echo "🚀 Executing deployment on server..."
@@ -226,7 +227,6 @@ ssh -i "$SSH_KEY_PATH" ec2-user@$SERVER_IP "cd ~/app && chmod +x deploy-remote.s
 echo "✅ Deployment completed successfully!"
 echo "🌐 Your application should be available at:"
 echo "   - Backend API: http://$SERVER_IP:4000"
-echo "   - Jaeger UI: http://$SERVER_IP:16686"
 echo ""
 echo "📝 To SSH into the server:"
 echo "   ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP"

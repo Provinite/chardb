@@ -69,8 +69,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      otel-collector:
-        condition: service_started
+      # No dependency on otel-collector: it is not deployed to dev/staging (see
+      # docker-compose.prod.yml), and declaring it here would make that compose
+      # project invalid. The OTLP exporter retries, so start ordering against
+      # the collector was never load-bearing in local development either.
     healthcheck:
       test:
         ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT:-4000}/health"]
