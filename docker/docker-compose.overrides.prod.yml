@@ -3,10 +3,9 @@ services:
   backend:
     # Use pre-built ECR image instead of building locally
     image: ${ECR_REPOSITORY_URL}:${IMAGE_TAG:-latest}
-    # Bound the blast radius of a runaway process on the 910 MB host. Docker
-    # defaults memswap_limit to 2x mem_limit, so this also gives the
-    # `prisma migrate deploy` entrypoint room to spill into swap rather than
-    # being OOM-killed mid-deploy.
+    # Bound the blast radius of a runaway process on the 910 MB host. The host
+    # has no swap, so this is a hard ceiling -- `prisma migrate deploy` runs
+    # under it at container start.
     mem_limit: 512m
     environment:
       NODE_ENV: production
