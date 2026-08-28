@@ -178,19 +178,8 @@ module "frontend" {
   route53_zone_id     = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : null
 }
 
-# Application secrets.
-#
-# The OAuth values below come from Discord's, DeviantArt's and ToyHouse's
-# developer portals -- places Terraform cannot see -- so they are created with a
-# placeholder and then ignored. Populate each once with:
-#
-#   aws ssm put-parameter --overwrite --type SecureString \
-#     --name /chardb/dev/discord-bot-token --value '...'
-#
-# Nothing reads these yet: the deploy still renders the host's .env from
-# Terraform outputs. Repointing the backend at Parameter Store is the follow-up
-# that lets the corresponding variables and outputs be deleted, and with them
-# the .tfvars file.
+# Nothing reads these yet; deploy.sh still renders the host's .env from
+# Terraform outputs.
 module "app_secrets" {
   source = "../../modules/app-secrets"
 
@@ -210,8 +199,6 @@ module "app_secrets" {
   tags = local.common_tags
 }
 
-# Let the docker host read them. Granted on the path rather than a list of ARNs
-# so adding a secret later needs no IAM change.
 resource "aws_iam_role_policy" "backend_read_secrets" {
   name = "${var.project_name}-${var.environment}-read-app-secrets"
   role = module.backend.iam_role_name
@@ -230,8 +217,8 @@ resource "aws_iam_role_policy" "backend_read_secrets" {
       },
       {
         Effect = "Allow"
-        # SecureString parameters are decrypted with the AWS-managed aws/ssm
-        # key; the grant is scoped by which SSM calls it can accompany.
+        # The AWS-managed aws/ssm key has no ARN to name here, so the condition
+        # is what scopes this.
         Action   = "kms:Decrypt"
         Resource = "*"
         Condition = {

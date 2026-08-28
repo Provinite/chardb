@@ -1,11 +1,3 @@
-# Federated identity for GitHub Actions.
-#
-# The deploy workflow assumes this role through OIDC rather than holding an
-# access key. The repository is public, so a long-lived credential in repo
-# secrets would be one misconfigured workflow away from exfiltration; a
-# federated token is minted per job, expires with it, and is bound to the
-# repository and ref in the trust policy below.
-
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 data "aws_partition" "current" {}
@@ -90,9 +82,8 @@ resource "aws_iam_role_policy" "deploy" {
       {
         Sid    = "ReadTerraformState"
         Effect = "Allow"
-        # Read-only on purpose: the deploy resolves its targets from state but
-        # must never be able to modify infrastructure. `terraform apply` stays a
-        # human action.
+        # Read-only: the deploy resolves its targets from state and must not be
+        # able to change infrastructure.
         Action   = "s3:GetObject"
         Resource = "arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket}/${var.terraform_state_key_prefix}*"
       },

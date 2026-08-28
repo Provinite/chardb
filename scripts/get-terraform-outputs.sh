@@ -7,17 +7,8 @@
 #   source ./scripts/get-terraform-outputs.sh dev
 #   echo "$SERVER_IP"
 #
-# A script run as ./get-terraform-outputs.sh is a child process, and a child
-# cannot alter its parent's environment -- which is why this used to print a
-# block of `export FOO='bar'` lines for callers to eval back through
-# `source <(... | grep "^export")`. That round trip put every secret in state,
-# including the Discord bot token and the JWT secret, on stdout in plaintext.
-# Harmless while every caller remembered the pipe, one forgotten pipe away from
-# a public build log otherwise. Sourcing removes the round trip: the exports
-# below land directly in the caller's shell and no secret is ever printed.
-#
-# Executing it anyway is still useful -- it prints a redacted summary of what is
-# deployed -- so that path is kept, and just tells you how to source it.
+# Executing it instead prints a redacted summary and exports nothing, since a
+# child process cannot alter its parent's environment.
 #
 # ---------------------------------------------------------------------------
 # VARIABLES EXPORTED
@@ -51,14 +42,6 @@
 #     SQS_QUEUE_URL             Prize distribution queue
 #     S3_IMAGES_BUCKET          Image storage bucket name
 #     CLOUDFRONT_IMAGES_DOMAIN  Image CDN domain
-#
-# NOT EXPORTED (deliberately)
-#     DATABASE_URL was previously emitted as
-#     'postgresql://app:$POSTGRES_PASSWORD@localhost:5432/app' inside single
-#     quotes, so the password never expanded and the value was a literal. It had
-#     no consumers -- deploy.sh builds its own URL-encoded copy -- so rather than
-#     carry a broken variable forward it is gone. A password generated with
-#     special characters needs percent-encoding before it can go in a URL.
 # ---------------------------------------------------------------------------
 
 _tf_outputs_load() {

@@ -50,35 +50,11 @@ resource "random_password" "jwt_secret" {
 }
 
 ##############################################################################
-# Application secrets (SSM Parameter Store)
+# Application secrets
 #
-# These replaced eight Secrets Manager secrets. Two reasons, in order:
-#
-# 1. Five of them took their value from a Terraform *input variable* sourced
-#    from a gitignored prod.tfvars, and the OAuth values then had no home except
-#    Terraform state. Only the laptop holding that file could apply, and a
-#    secret rotated in Discord's dashboard drifted silently. Those five are now
-#    created with a placeholder and their value is ignored forever, so the real
-#    secret lives in Parameter Store alone.
-#
-# 2. Secrets Manager bills $0.40 per secret per month; Standard-tier parameters
-#    are free. The features paying for that -- native rotation, resource
-#    policies -- are unused here, and ECS reads a Parameter Store ARN in
-#    `valueFrom` exactly as it read a Secrets Manager one.
-#
-# ⚠️  MIGRATION ORDER MATTERS. Applying this destroys the old secrets and points
-#     the task definition at parameters holding "not-managed-by-terraform".
-#     Copy the live values across BEFORE applying:
-#
-#       for s in deviantart-secret toyhouse-secret discord-secret \
-#                discord-bot-token otel-otlp-headers; do
-#         aws secretsmanager get-secret-value \
-#           --secret-id "chardb-prod-$s" --query SecretString --output text
-#       done
-#
-#     then `aws ssm put-parameter --overwrite --type SecureString --name
-#     /chardb/prod/<name> --value '...'` for each. The destroyed secrets keep
-#     AWS's 30-day recovery window, so a botched cutover is recoverable.
+# Cutover from Secrets Manager is order-dependent: copy the live values into
+# Parameter Store before applying, or the task definition will inject the
+# placeholder. See DEPLOYMENT_GUIDE.md.
 ##############################################################################
 
 module "app_secrets" {
@@ -98,9 +74,8 @@ module "app_secrets" {
   tags = local.common_tags
 }
 
-# The two parameters Terraform genuinely owns, because Terraform generates the
-# value. A placeholder here would break the application, so these are explicit
-# resources next to what produces them rather than part of the module above.
+# Not in the module above: Terraform generates these two values, so it does
+# manage them.
 resource "aws_ssm_parameter" "jwt_secret" {
   name        = "/${var.project_name}/${var.environment}/jwt-secret"
   description = "JWT signing secret"
@@ -602,8 +577,6 @@ module "ecs" {
     },
   ]
 
-  # Secrets from SSM Parameter Store. ECS resolves a Parameter Store ARN in
-  # valueFrom exactly as it did a Secrets Manager one, so only the ARNs change.
   secret_variables = [
     {
       name      = "DATABASE_URL"
@@ -635,7 +608,6 @@ module "ecs" {
     },
   ]
 
-  # Parameter ARNs the task execution role must be able to read.
   secret_arns = concat(
     [
       aws_ssm_parameter.database_url.arn,

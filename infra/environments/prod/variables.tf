@@ -271,9 +271,3 @@ variable "email_from" {
   type        = string
   default     = "noreply@chardb.cc"
 }
-
-# Note: deviantart_client_secret, discord_client_secret, toyhouse_client_secret,
-# discord_bot_token and otel_otlp_headers used to be declared here and supplied
-# through prod.tfvars. They now live only in SSM Parameter Store under
-# /chardb/prod/, set out of band, so Terraform never sees their values and they
-# never enter state. See the app secrets block in main.tf.

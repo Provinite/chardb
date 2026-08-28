@@ -255,31 +255,22 @@ jobs:
           if-no-files-found: ignore
 
   # ---------------------------------------------------------------------------
-  # Continuous deployment to staging
+  # Continuous deployment to staging.
   #
-  # Everything below runs only on a push to main, and only once lint, type
-  # checking and the browser E2E suite are green -- a broken commit never
-  # reaches the staging host.
-  #
-  # The jobs authenticate to AWS through OIDC, assuming the role defined in
-  # infra/modules/github-actions-deploy. There is no long-lived AWS credential
-  # in this repository, which matters because it is public. Note that neither
-  # job declares `environment:`: doing so would change the OIDC subject claim
-  # from `repo:<repo>:ref:refs/heads/main` to `repo:<repo>:environment:<name>`
-  # and no longer match the role's trust policy.
+  # Neither job may declare `environment:` -- that rewrites the OIDC subject
+  # claim to `repo:<repo>:environment:<name>`, which the deploy role's trust
+  # policy does not match.
   # ---------------------------------------------------------------------------
   deploy-backend:
     name: Deploy backend to staging
     needs: [lint, verify, e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-    # The staging host is a t4g (Graviton) instance, so the image must be arm64.
-    # An arm runner builds it natively; ubuntu-latest would need QEMU emulation,
-    # which turns a few minutes into tens of them. Free on public repositories.
+    # The host is Graviton, so the image must be arm64. Building on x86 would
+    # need QEMU emulation.
     runs-on: ubuntu-24.04-arm
 
-    # Deploys are serialised and never cancelled. Two overlapping runs of
-    # `docker compose up` against one host is the failure mode this prevents.
+    # Serialised: two concurrent `docker compose up` runs against one host.
     concurrency:
       group: deploy-staging-backend
       cancel-in-progress: false
@@ -309,14 +300,10 @@ jobs:
         with:
           terraform_wrapper: false
 
-      # The deploy scripts read every target (ECR URL, instance id, app secrets)
-      # from state rather than from repository secrets, so state stays the single
-      # source of truth. The role has read-only access to it.
       - name: Initialise Terraform
         run: terraform -chdir=infra/environments/${{ env.TF_ENVIRONMENT }} init -input=false
 
-      # Turns `aws ssm start-session` into a usable tunnel. deploy.sh proxies SSH
-      # through it, which is why no security group rule names a runner IP.
+      # Required by the ProxyCommand in scripts/lib/remote-host.sh.
       - name: Install Session Manager plugin
         run: |
           curl -fsSLo /tmp/session-manager-plugin.deb \
@@ -324,10 +311,8 @@ jobs:
           sudo dpkg -i /tmp/session-manager-plugin.deb
           session-manager-plugin --version
 
-      # Deploy by immutable commit tag rather than `latest`, so what is running
-      # on the host can always be traced back to a commit. The `v-` prefix is
-      # load-bearing: the ECR lifecycle policy expires all but the last 10
-      # images whose tag starts with "v", so automated pushes stay bounded.
+      # The `v-` prefix is load-bearing: the ECR lifecycle policy only expires
+      # images whose tag starts with "v".
       - name: Resolve image tag
         id: image
         run: echo "tag=v-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
@@ -338,9 +323,8 @@ jobs:
       - name: Deploy to staging host
         run: ./deploy.sh "$TF_ENVIRONMENT" "${{ steps.image.outputs.tag }}"
 
-      # deploy.sh returns as soon as compose reports the containers up. The
-      # backend still has to run migrations and boot, so poll the health endpoint
-      # before calling the deploy good.
+      # deploy.sh returns once compose reports the containers up; the backend
+      # still has migrations to run before it serves.
       - name: Verify backend health
         run: |
           source ./scripts/get-terraform-outputs.sh "$TF_ENVIRONMENT"
@@ -358,8 +342,8 @@ jobs:
 
   deploy-frontend:
     name: Deploy frontend to staging
-    # Sequenced after the backend on purpose: shipping a bundle that expects a
-    # schema the deployed API does not have yet is the ordering bug this avoids.
+    # After the backend, so a bundle never ships expecting a schema the deployed
+    # API does not have.
     needs: deploy-backend
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest

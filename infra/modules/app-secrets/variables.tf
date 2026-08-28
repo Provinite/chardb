@@ -9,11 +9,7 @@ variable "environment" {
 }
 
 variable "unmanaged_secrets" {
-  description = <<-EOT
-    Secrets whose value Terraform must never manage, as a map of parameter name
-    to description. Created with `placeholder_value` and then ignored, so the
-    real value is set out of band and rotating it produces no plan diff.
-  EOT
+  description = "Map of parameter name to description. Values are not managed here."
   type        = map(string)
   default     = {}
 }

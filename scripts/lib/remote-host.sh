@@ -10,14 +10,9 @@
 #   scp "${SSH_OPTS[@]}" file "$REMOTE_TARGET:~/app/"
 #   ssh "${SSH_OPTS[@]}" "$REMOTE_TARGET" 'uptime'
 #
-# The default transport tunnels SSH through Session Manager, addressing the host
-# by instance id rather than IP. Nothing listens on port 22 from the internet's
-# point of view: the tunnel emerges on the instance's own loopback, so GitHub
-# Actions can deploy without the security group ever naming a runner IP.
-#
-# Set DEPLOY_TRANSPORT=direct to connect straight to the Elastic IP instead.
-# That path still works from an address in backend_ssh_allowed_cidr_blocks and
-# is the break-glass route if the SSM agent is unhealthy.
+# Defaults to tunnelling through Session Manager, targeting the instance id.
+# DEPLOY_TRANSPORT=direct connects to the Elastic IP instead, which requires the
+# caller's address in backend_ssh_allowed_cidr_blocks.
 
 setup_remote_transport() {
     local transport="${DEPLOY_TRANSPORT:-ssm}"
@@ -27,11 +22,7 @@ setup_remote_transport() {
         return 1
     fi
 
-    # `ssh -i` takes a path, but the key lives in Terraform state as a string,
-    # so someone has to put it on disk. That someone is this function rather
-    # than the outputs script: this is the only code that needs a key file, and
-    # a script called "get terraform outputs" has no business writing private
-    # keys. A CI runner has no ~/.ssh until something creates it.
+    # `ssh -i` needs a path, not the PEM contents. A CI runner has no ~/.ssh.
     mkdir -p "$HOME/.ssh"
     chmod 700 "$HOME/.ssh"
     SSH_KEY_PATH="$HOME/.ssh/${SSH_KEY_NAME}.pem"
