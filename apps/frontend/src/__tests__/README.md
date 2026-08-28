@@ -44,25 +44,31 @@ The `test-utils.tsx` file provides:
 - Custom `render` function that wraps components with necessary providers
 - Mock implementations for common dependencies
 - Factory functions for creating mock data
-- Provider mocks for Apollo Client, Router, Theme, and Auth
+- Provider wrappers for Apollo Client, Router and Theme
 
 ### Usage Example
 
 ```tsx
 import { render, screen, createMockUser } from '../__tests__/test-utils';
+import { ME_QUERY } from '../graphql/auth.graphql';
 import { MyComponent } from '../MyComponent';
 
-test('renders component', () => {
-  const mockUser = createMockUser({ displayName: 'Test User' });
-  
+test('renders component', async () => {
   render(<MyComponent />, {
-    user: mockUser,
-    mocks: [/* GraphQL mocks */]
+    mocks: [
+      {
+        request: { query: ME_QUERY },
+        result: { data: { me: createMockUser({ displayName: 'Test User' }) } },
+      },
+    ],
   });
-  
-  expect(screen.getByText('Test User')).toBeInTheDocument();
+
+  expect(await screen.findByText('Test User')).toBeInTheDocument();
 });
 ```
+
+There is no `user` render option: components read the current user through
+`ME_QUERY`, so supply it as a GraphQL mock like any other data.
 
 ## Mocking Strategy
 
@@ -70,6 +76,13 @@ test('renders component', () => {
 - Use `MockedProvider` from Apollo Client
 - Create typed mock responses for queries and mutations
 - Mock both success and error scenarios
+- **Keep `__typename` on mock data.** `addTypename` is left at its default
+  (`true`) deliberately. With it switched off, a mock missing `__typename`
+  fails *silently*: the query resolves, nothing is logged, and the component
+  renders as though the server returned nothing. Build mock shapes from the
+  generated query types (`createMockUser` is typed as `MeQuery["me"]`, so a
+  field the query gains later becomes a compile error rather than a runtime
+  surprise).
 
 ### Router
 - Mock `useNavigate` for navigation testing

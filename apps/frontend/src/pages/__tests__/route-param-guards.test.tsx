@@ -56,8 +56,9 @@ import { EnumValueSettingsPage } from "../EnumValueSettingsPage";
 
 const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   // No mocks: with the param missing every query skips, and with it present
-  // the queries only need to *start*, not resolve.
-  <MockedProvider mocks={[]} addTypename={false}>
+  // the queries only need to *start*, not resolve. `addTypename` stays at its
+  // default -- switching it off makes __typename-less mocks fail silently.
+  <MockedProvider mocks={[]}>
     <MemoryRouter>
       <ThemeProvider theme={lightTheme}>{children}</ThemeProvider>
     </MemoryRouter>
