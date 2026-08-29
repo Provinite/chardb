@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v10.2.0] - 2026-08-29
+
 ### Added
 
 - **Character soft-delete and species removal**: New `deleteCharacter` (soft-delete, sets `deletedAt`/`deletedById`), `purgeCharacter` (hard-delete, global admin only), and `kickCharacterFromSpecies` (clears species/variant/registry and flattens trait values into custom fields) mutations. All three cancel any pending trait reviews. Adds the `CANCELLED` moderation status and the `canDeleteCharacter` role permission, granted to the default Admin role at community creation. (#235)
