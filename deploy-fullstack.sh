@@ -53,7 +53,7 @@ fi
 
 # Get backend URL for frontend
 echo "📋 Getting backend URL for frontend..."
-source <(./scripts/get-terraform-outputs.sh "$ENVIRONMENT" | grep "^export")
+source ./scripts/get-terraform-outputs.sh "$ENVIRONMENT"
 
 
 if [ -z "$BACKEND_URL" ]; then
@@ -93,7 +93,6 @@ echo ""
 if [ "$DEPLOY_BACKEND" = "true" ]; then
     echo "🔗 Backend services:"
     echo "   - GraphQL API: $BACKEND_URL/graphql"
-    echo "   - Jaeger tracing: http://$SERVER_IP:16686"
 fi
 
 if [ "$DEPLOY_FRONTEND" = "true" ]; then

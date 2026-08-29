@@ -150,21 +150,11 @@ module "backend" {
   api_acm_certificate_arn  = var.domain_name != null ? aws_acm_certificate_validation.main[0].certificate_arn : ""
   api_route53_zone_id      = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : ""
 
-  # DeviantArt OAuth Configuration
-  deviantart_client_id     = var.deviantart_client_id
-  deviantart_client_secret = var.deviantart_client_secret
-  deviantart_callback_url  = var.deviantart_callback_url
-
-  # Discord OAuth Configuration
-  discord_client_id        = var.discord_client_id
-  discord_client_secret    = var.discord_client_secret
-  discord_callback_url     = var.discord_callback_url
-  discord_bot_token        = var.discord_bot_token
-
-  # ToyHouse OAuth Configuration
-  toyhouse_client_id       = var.toyhouse_client_id
-  toyhouse_client_secret   = var.toyhouse_client_secret
-  toyhouse_callback_url    = var.toyhouse_callback_url
+  # OAuth redirect URIs. The client ids, client secrets and bot token are not
+  # here: they live in SSM Parameter Store, read at deploy time.
+  deviantart_callback_url = var.deviantart_callback_url
+  discord_callback_url    = var.discord_callback_url
+  toyhouse_callback_url   = var.toyhouse_callback_url
 }
 
 # Frontend infrastructure
@@ -178,6 +168,105 @@ module "frontend" {
   route53_zone_id     = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : null
 }
 
+module "app_secrets" {
+  source = "../../modules/app-secrets"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  unmanaged_secrets = {
+    "deviantart-client-id"     = "DeviantArt OAuth client id"
+    "deviantart-client-secret" = "DeviantArt OAuth client secret"
+    "discord-client-id"        = "Discord OAuth client id"
+    "discord-client-secret"    = "Discord OAuth client secret"
+    "discord-bot-token"        = "Discord bot token"
+    "toyhouse-client-id"       = "ToyHouse OAuth client id"
+    "toyhouse-client-secret"   = "ToyHouse OAuth client secret"
+  }
+
+  tags = local.common_tags
+}
+
+data "aws_kms_key" "ssm" {
+  key_id = "alias/aws/ssm"
+}
+
+locals {
+  # Two ARNs, because the two call shapes authorise against different things:
+  # GetParametersByPath against the path itself, GetParameter(s) against the
+  # parameters under it. Omitting the first denies the deploy's own fetch.
+  dev_parameter_arns = [
+    "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${module.app_secrets.path_prefix}",
+    "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${module.app_secrets.path_prefix}/*",
+  ]
+}
+
+resource "aws_iam_role_policy" "backend_read_secrets" {
+  name = "${var.project_name}-${var.environment}-read-app-secrets"
+  role = module.backend.iam_role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        Resource = local.dev_parameter_arns
+      },
+      {
+        # AmazonSSMManagedInstanceCore, attached to this same role, allows
+        # ssm:GetParameter on "*" -- which would let the staging host read
+        # /chardb/prod/*. An explicit Deny overrides that Allow.
+        Effect = "Deny"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        NotResource = local.dev_parameter_arns
+      },
+      {
+        Effect   = "Allow"
+        Action   = "kms:Decrypt"
+        Resource = data.aws_kms_key.ssm.arn
+        Condition = {
+          StringEquals = {
+            "kms:ViaService" = "ssm.${var.aws_region}.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+}
+
+# CD identity for GitHub Actions.
+#
+# Grants the deploy workflow exactly what `deploy-fullstack.sh` needs and
+# nothing else: push a backend image, read (never write) this environment's
+# Terraform state, publish the frontend bundle, invalidate its cache, and open a
+# Session Manager tunnel to the docker host.
+module "github_actions_deploy" {
+  source = "../../modules/github-actions-deploy"
+
+  name                 = "${var.project_name}-${var.environment}"
+  github_repository    = var.github_repository
+  allowed_environments = [var.github_deploy_environment]
+  required_ref         = var.github_deploy_ref
+
+  ecr_repository_arn     = module.backend_ecr.repository_arn
+  terraform_state_bucket = "clovercoin-tf-state"
+  terraform_state_key    = "chardb/environments/${var.environment}"
+
+  frontend_bucket_arn                  = module.frontend.bucket_arn
+  frontend_cloudfront_distribution_arn = module.frontend.cloudfront_distribution_arn
+  docker_host_instance_arn             = module.backend.instance_arn
+
+  tags = local.common_tags
+}
 
 locals {
   common_tags = {

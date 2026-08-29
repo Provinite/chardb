@@ -4,8 +4,12 @@
 # Usage: docker compose -f docker-compose.prod.yml up
 
 # Include core services (frontend excluded as it's served via S3 + CloudFront)
+#
+# Jaeger and the OTEL collector are deliberately NOT included here. The staging
+# host is a t4g.micro (910 MB usable, no swap) and Jaeger all-in-one uses
+# unbounded in-memory span storage, which exhausted the host roughly two days
+# after every boot. Tracing remains available in local development via
+# docker/compose.yaml. See CHANGELOG.md.
 include:
   - services/postgres.yml
   - services/backend.yml
-  - services/jaeger.yml
-  - services/otel-collector.yml

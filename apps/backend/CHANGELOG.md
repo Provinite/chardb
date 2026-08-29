@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **E2E test infrastructure**: `docker/compose.test.yml` runs an isolated Postgres container for e2e runs, started and stopped by a Jest global setup. Adds cross-service isolation coverage asserting soft-deleted characters are invisible to list/fetch queries, guards, galleries, comments, likes, and species deletion counts. (#235)
 - **ToyHouse OAuth account linking**: Users can now link their ToyHouse accounts via OAuth2. Linked accounts trigger automatic claiming of pending character/item ownership registered to that ToyHouse username. (#242)
 
+### Changed
+
+- **Tracing can be switched off with `OTEL_SDK_DISABLED=true`** (`src/tracing.ts`). `main.ts` imports the tracing module unconditionally, and the module previously had no off switch, so a deployment without a collector left the OTLP exporter retrying forever and queueing spans in the backend's own heap.
+
+  `NodeSDK` does honour `OTEL_SDK_DISABLED` on its own — it sets an internal `_disabled` flag in its constructor and `start()` returns early, so no tracer provider is registered and no export pipeline exists. But that check happens *after* our instrumentations have been constructed, and the Node `InstrumentationBase` constructor eagerly patches `http`/`express`/`graphql`/`winston` via require-in-the-middle. Those patches then emit into a no-op tracer: harmless and leak-free, but not free. Guarding in `tracing.ts` before anything is constructed makes a disabled deployment a true no-op.
+
+  The value is parsed as `@opentelemetry/core` parses it — trimmed and lowercased, with only the literal `"true"` counting. **`OTEL_SDK_DISABLED=1` does not disable the SDK**; it logs a diagnostic warning and falls back to `false`.
+
+  The `SIGTERM` handler is still registered when tracing is off. It is the only one in the process — `main.ts` does not call `enableShutdownHooks()` — so dropping it would leave the container to be `SIGKILL`ed on every deploy.
+
 ### Removed
 
 - **`deleteAccount` mutation**: removed along with `UsersService.remove()`. It hard-deleted the user row and let FK cascades erase everything they touched — characters, galleries, media, comments, and ownership history where they were the recipient — with no confirmation, grace period, or audit trail. No UI ever called it and no operation document referenced it. Account removal, if it returns, should be a deliberate reversible flow rather than a single unconfirmed mutation. (#235)

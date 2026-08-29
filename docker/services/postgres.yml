@@ -24,7 +24,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-chardb}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chardb_password}
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"
+      # Loopback only. Other containers reach postgres over the compose network
+      # as `postgres:5432`; this mapping exists for host tooling (psql, GUIs).
+      # Binding 0.0.0.0 previously exposed the deployed staging database to the
+      # internet through the EC2 security group.
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

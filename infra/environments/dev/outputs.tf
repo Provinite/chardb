@@ -74,56 +74,14 @@ output "backend_jwt_secret" {
   sensitive   = true
 }
 
-output "backend_deviantart_client_id" {
-  description = "DeviantArt OAuth client ID for backend"
-  value       = module.backend.deviantart_client_id
-  sensitive   = true
-}
-
-output "backend_deviantart_client_secret" {
-  description = "DeviantArt OAuth client secret for backend"
-  value       = module.backend.deviantart_client_secret
-  sensitive   = true
-}
-
 output "backend_deviantart_callback_url" {
   description = "DeviantArt OAuth callback URL for backend"
   value       = module.backend.deviantart_callback_url
 }
 
-output "backend_discord_client_id" {
-  description = "Discord OAuth client ID for backend"
-  value       = module.backend.discord_client_id
-  sensitive   = true
-}
-
-output "backend_discord_client_secret" {
-  description = "Discord OAuth client secret for backend"
-  value       = module.backend.discord_client_secret
-  sensitive   = true
-}
-
 output "backend_discord_callback_url" {
   description = "Discord OAuth callback URL for backend"
   value       = module.backend.discord_callback_url
-}
-
-output "backend_discord_bot_token" {
-  description = "Discord bot token for backend"
-  value       = module.backend.discord_bot_token
-  sensitive   = true
-}
-
-output "backend_toyhouse_client_id" {
-  description = "ToyHouse OAuth client ID for backend"
-  value       = module.backend.toyhouse_client_id
-  sensitive   = true
-}
-
-output "backend_toyhouse_client_secret" {
-  description = "ToyHouse OAuth client secret for backend"
-  value       = module.backend.toyhouse_client_secret
-  sensitive   = true
 }
 
 output "backend_toyhouse_callback_url" {
@@ -187,4 +145,10 @@ output "backend_sqs_queue_url" {
 output "backend_sqs_queue_arn" {
   description = "ARN of the prize distribution SQS queue"
   value       = module.backend.sqs_queue_arn
+}
+
+# GitHub Actions CD outputs
+output "github_actions_deploy_role_arn" {
+  description = "ARN of the role the deploy workflow assumes via OIDC"
+  value       = module.github_actions_deploy.role_arn
 }

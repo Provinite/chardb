@@ -1,139 +1,165 @@
 #!/bin/bash
+#
+# Terraform outputs -> environment variables.
+#
+# SOURCE this; do not execute it:
+#
+#   source ./scripts/get-terraform-outputs.sh dev
+#   echo "$SERVER_IP"
+#
+# Executing it instead prints a redacted summary and exports nothing, since a
+# child process cannot alter its parent's environment.
+#
+# ---------------------------------------------------------------------------
+# VARIABLES EXPORTED
+#
+# Every name below is exported into the calling shell. Nothing else is.
+#
+#   Connection and infrastructure
+#     SERVER_IP                 Elastic IP of the docker host (dev only)
+#     INSTANCE_ID               EC2 instance id; the SSM tunnel targets this
+#     SSH_KEY_NAME              Key pair name; "" for prod
+#     BACKEND_URL               API base URL (dev: EC2/CloudFront, prod: api_url)
+#     FRONTEND_URL              Public website URL
+#     ECR_REPOSITORY_URL        Backend image repository
+#
+#   Secrets -- exported, never printed
+#     SSH_PRIVATE_KEY           Host SSH key, PEM contents; "" for prod
+#     POSTGRES_PASSWORD         Database password
+#     JWT_SECRET                Token signing secret
+#
+#   The OAuth client ids, client secrets and bot token are deliberately absent:
+#   they live in SSM Parameter Store under /chardb/<environment>/ and are read
+#   by whatever needs them (the host at deploy time, ECS via the task
+#   definition), so they never enter a developer or CI shell.
+#
+#   Non-secret application config
+#     DEVIANTART_CALLBACK_URL   DeviantArt OAuth redirect URI
+#     DISCORD_CALLBACK_URL      Discord OAuth redirect URI
+#     TOYHOUSE_CALLBACK_URL     ToyHouse OAuth redirect URI
+#     SQS_QUEUE_URL             Prize distribution queue
+#     S3_IMAGES_BUCKET          Image storage bucket name
+#     CLOUDFRONT_IMAGES_DOMAIN  Image CDN domain
+# ---------------------------------------------------------------------------
 
-# Get Terraform Outputs Script
-# Extracts infrastructure details from Terraform state
-# Handles both dev (EC2) and prod (ECS) environments
+_tf_outputs_load() {
+    local environment="${1:-prod}"
+    local repo_root terraform_dir outputs_json
 
-set -e
+    # Resolve paths from this file rather than the caller's working directory.
+    repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    terraform_dir="$repo_root/infra/environments/$environment"
 
-ENVIRONMENT=${1:-prod}
-TERRAFORM_DIR="infra/environments/$ENVIRONMENT"
+    if [ ! -d "$terraform_dir" ]; then
+        echo "❌ Terraform directory not found: $terraform_dir" >&2
+        echo "   Available environments:" >&2
+        ls -1 "$repo_root/infra/environments/" >&2
+        return 1
+    fi
 
-if [ ! -d "$TERRAFORM_DIR" ]; then
-    echo "❌ Terraform directory not found: $TERRAFORM_DIR"
-    echo "Available environments:"
-    ls -la infra/environments/
-    exit 1
-fi
+    if ! command -v jq &> /dev/null; then
+        echo "❌ jq is required but not installed." >&2
+        return 1
+    fi
 
-echo "📋 Getting Terraform outputs for environment: $ENVIRONMENT"
+    echo "📋 Reading Terraform outputs for environment: $environment" >&2
 
-cd "$TERRAFORM_DIR"
+    # -chdir rather than cd: this function runs in the caller's shell, and a cd
+    # here would strand them in infra/environments/<env>.
+    if ! outputs_json=$(terraform -chdir="$terraform_dir" output -json 2>/dev/null) \
+        || [ -z "$outputs_json" ]; then
+        echo "❌ Failed to read Terraform outputs from $terraform_dir" >&2
+        echo "   Run 'terraform -chdir=$terraform_dir init' if you have not already." >&2
+        return 1
+    fi
 
-# Check if jq is installed
-if ! command -v jq &> /dev/null; then
-    echo "❌ jq is required but not installed. Please install jq to use this script."
-    exit 1
-fi
+    _tf_output() { jq -r ".$1.value // empty" <<< "$outputs_json"; }
 
-# Get all Terraform outputs in a single call
-echo "🔍 Fetching Terraform outputs..."
-TERRAFORM_OUTPUTS=$(terraform output -json 2>/dev/null)
+    # Kept in the same order as the VARIABLES EXPORTED block above.
+    export SERVER_IP INSTANCE_ID SSH_KEY_NAME BACKEND_URL FRONTEND_URL \
+        ECR_REPOSITORY_URL \
+        SSH_PRIVATE_KEY POSTGRES_PASSWORD JWT_SECRET \
+        DEVIANTART_CALLBACK_URL DISCORD_CALLBACK_URL TOYHOUSE_CALLBACK_URL \
+        SQS_QUEUE_URL S3_IMAGES_BUCKET CLOUDFRONT_IMAGES_DOMAIN
 
-if [ $? -ne 0 ] || [ -z "$TERRAFORM_OUTPUTS" ]; then
-    echo "❌ Failed to get Terraform outputs"
-    echo "Available outputs:"
-    terraform output
-    exit 1
-fi
+    SERVER_IP=$(_tf_output "backend_public_ip")
+    INSTANCE_ID=$(_tf_output "backend_instance_id")
+    FRONTEND_URL=$(_tf_output "frontend_website_url")
+    ECR_REPOSITORY_URL=$(_tf_output "backend_ecr_repository_url")
 
-# Helper function to extract output value
-get_output() {
-    echo "$TERRAFORM_OUTPUTS" | jq -r ".$1.value // empty"
+    POSTGRES_PASSWORD=$(_tf_output "backend_db_password")
+    JWT_SECRET=$(_tf_output "backend_jwt_secret")
+
+    DEVIANTART_CALLBACK_URL=$(_tf_output "backend_deviantart_callback_url")
+    DISCORD_CALLBACK_URL=$(_tf_output "backend_discord_callback_url")
+    TOYHOUSE_CALLBACK_URL=$(_tf_output "backend_toyhouse_callback_url")
+    SQS_QUEUE_URL=$(_tf_output "backend_sqs_queue_url")
+    S3_IMAGES_BUCKET=$(_tf_output "images_bucket_name")
+    CLOUDFRONT_IMAGES_DOMAIN=$(_tf_output "images_cloudfront_domain")
+
+    if [ "$environment" = "dev" ]; then
+        if [ -z "$SERVER_IP" ]; then
+            echo "❌ backend_public_ip is empty (required for dev)" >&2
+            unset -f _tf_output
+            return 1
+        fi
+
+        SSH_PRIVATE_KEY=$(_tf_output "backend_ssh_private_key")
+        SSH_KEY_NAME=$(_tf_output "backend_ssh_key_name")
+
+        if [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "❌ backend_ssh_private_key is empty (required for dev)" >&2
+            unset -f _tf_output
+            return 1
+        fi
+
+        BACKEND_URL=$(_tf_output "backend_url")
+    else
+        SSH_PRIVATE_KEY=""
+        SSH_KEY_NAME=""
+        BACKEND_URL=$(_tf_output "api_url")
+    fi
+
+    unset -f _tf_output
+    return 0
 }
 
-# Extract all outputs
-SERVER_IP=$(get_output "backend_public_ip")
-SSH_KEY_CONTENT=$(get_output "backend_ssh_private_key")
-SSH_KEY_NAME=$(get_output "backend_ssh_key_name")
-ECR_REPOSITORY_URL=$(get_output "backend_ecr_repository_url")
-DB_PASSWORD=$(get_output "backend_db_password")
-JWT_SECRET=$(get_output "backend_jwt_secret")
-DEVIANTART_CLIENT_ID=$(get_output "backend_deviantart_client_id")
-DEVIANTART_CLIENT_SECRET=$(get_output "backend_deviantart_client_secret")
-DEVIANTART_CALLBACK_URL=$(get_output "backend_deviantart_callback_url")
-DISCORD_CLIENT_ID=$(get_output "backend_discord_client_id")
-DISCORD_CLIENT_SECRET=$(get_output "backend_discord_client_secret")
-DISCORD_CALLBACK_URL=$(get_output "backend_discord_callback_url")
-DISCORD_BOT_TOKEN=$(get_output "backend_discord_bot_token")
-TOYHOUSE_CLIENT_ID=$(get_output "backend_toyhouse_client_id")
-TOYHOUSE_CLIENT_SECRET=$(get_output "backend_toyhouse_client_secret")
-TOYHOUSE_CALLBACK_URL=$(get_output "backend_toyhouse_callback_url")
-SQS_QUEUE_URL=$(get_output "backend_sqs_queue_url")
-S3_IMAGES_BUCKET=$(get_output "images_bucket_name")
-CLOUDFRONT_IMAGES_DOMAIN=$(get_output "images_cloudfront_domain")
-FRONTEND_URL=$(get_output "frontend_website_url")
+_tf_outputs_summary() {
+    cat >&2 <<SUMMARY
+✅ Terraform outputs loaded:
+   Environment:         ${1:-prod}
+   Server IP:           $SERVER_IP
+   Instance ID:         $INSTANCE_ID
+   Backend URL:         $BACKEND_URL
+   Frontend URL:        $FRONTEND_URL
+   SSH key pair:        ${SSH_KEY_NAME:-(none)}
+   ECR repository:      $ECR_REPOSITORY_URL
+   SQS queue:           $SQS_QUEUE_URL
+   Images bucket:       $S3_IMAGES_BUCKET
+   Images CDN:          $CLOUDFRONT_IMAGES_DOMAIN
+   DeviantArt callback: $DEVIANTART_CALLBACK_URL
+   Discord callback:    $DISCORD_CALLBACK_URL
+   ToyHouse callback:   $TOYHOUSE_CALLBACK_URL
 
-# Environment-specific validations and setup
-if [ "$ENVIRONMENT" = "dev" ]; then
-    # Dev environment validations
-    if [ -z "$SERVER_IP" ]; then
-        echo "❌ Could not get server IP from Terraform outputs (required for dev)"
-        echo "Available outputs:"
-        terraform output
-        exit 1
-    fi
+   Secrets (database password, JWT secret, OAuth client secrets, bot token)
+   are exported but deliberately not printed.
+SUMMARY
+}
 
-    if [ -z "$SSH_KEY_CONTENT" ]; then
-        echo "❌ Could not get SSH key from Terraform outputs (required for dev)"
-        exit 1
-    fi
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+    # Executed rather than sourced. The exports die with this shell, so all we
+    # can usefully do is report what is deployed and say how to load it.
+    _tf_outputs_load "$@" || exit 1
+    _tf_outputs_summary "${1:-prod}"
+    cat >&2 <<HINT
 
-    # Create SSH key file
-    SSH_KEY_PATH="$HOME/.ssh/${SSH_KEY_NAME}.pem"
-    echo "$SSH_KEY_CONTENT" > "$SSH_KEY_PATH"
-    chmod 600 "$SSH_KEY_PATH"
+ℹ️  Run as a script, these variables live only in this shell. To load them into
+   your own shell, source it instead:
 
-    # Dev uses EC2 direct IP
-    BACKEND_URL=$(get_output "backend_url")
-else
-    # Prod environment
-    SSH_KEY_PATH=""
-    # Prod uses CloudFront API endpoint
-    BACKEND_URL=$(get_output "api_url")
+       source ${BASH_SOURCE[0]} ${1:-prod}
+HINT
+    exit 0
 fi
 
-echo "✅ Terraform outputs retrieved:"
-echo "   Server IP: $SERVER_IP"
-echo "   Backend URL: $BACKEND_URL"
-echo "   Frontend URL: $FRONTEND_URL"
-echo "   SSH Key: $SSH_KEY_PATH"
-echo "   ECR Repository: $ECR_REPOSITORY_URL"
-echo "   Database Password: [REDACTED]"
-echo "   JWT Secret: [REDACTED]"
-echo "   DeviantArt Client ID: [REDACTED]"
-echo "   DeviantArt Client Secret: [REDACTED]"
-echo "   DeviantArt Callback URL: $DEVIANTART_CALLBACK_URL"
-echo "   Discord Client ID: [REDACTED]"
-echo "   Discord Client Secret: [REDACTED]"
-echo "   Discord Callback URL: $DISCORD_CALLBACK_URL"
-echo "   Discord Bot Token: [REDACTED]"
-echo "   ToyHouse Client ID: [REDACTED]"
-echo "   ToyHouse Client Secret: [REDACTED]"
-echo "   ToyHouse Callback URL: $TOYHOUSE_CALLBACK_URL"
-echo "   SQS Queue URL: $SQS_QUEUE_URL"
-echo "   S3 Images Bucket: $S3_IMAGES_BUCKET"
-echo "   CloudFront Images Domain: $CLOUDFRONT_IMAGES_DOMAIN"
-echo ""
-echo "Export these variables:"
-echo "export SERVER_IP='$SERVER_IP'"
-echo "export BACKEND_URL='$BACKEND_URL'"
-echo "export SSH_KEY_PATH='$SSH_KEY_PATH'"
-echo "export ECR_REPOSITORY_URL='$ECR_REPOSITORY_URL'"
-echo "export POSTGRES_PASSWORD='$DB_PASSWORD'"
-echo "export JWT_SECRET='$JWT_SECRET'"
-echo "export DEVIANTART_CLIENT_ID='$DEVIANTART_CLIENT_ID'"
-echo "export DEVIANTART_CLIENT_SECRET='$DEVIANTART_CLIENT_SECRET'"
-echo "export DEVIANTART_CALLBACK_URL='$DEVIANTART_CALLBACK_URL'"
-echo "export DISCORD_CLIENT_ID='$DISCORD_CLIENT_ID'"
-echo "export DISCORD_CLIENT_SECRET='$DISCORD_CLIENT_SECRET'"
-echo "export DISCORD_CALLBACK_URL='$DISCORD_CALLBACK_URL'"
-echo "export DISCORD_BOT_TOKEN='$DISCORD_BOT_TOKEN'"
-echo "export TOYHOUSE_CLIENT_ID='$TOYHOUSE_CLIENT_ID'"
-echo "export TOYHOUSE_CLIENT_SECRET='$TOYHOUSE_CLIENT_SECRET'"
-echo "export TOYHOUSE_CALLBACK_URL='$TOYHOUSE_CALLBACK_URL'"
-echo "export SQS_QUEUE_URL='$SQS_QUEUE_URL'"
-echo "export S3_IMAGES_BUCKET='$S3_IMAGES_BUCKET'"
-echo "export CLOUDFRONT_IMAGES_DOMAIN='$CLOUDFRONT_IMAGES_DOMAIN'"
-echo "export DATABASE_URL='postgresql://app:\$POSTGRES_PASSWORD@localhost:5432/app'"
-echo "export FRONTEND_URL='$FRONTEND_URL'"
+_tf_outputs_load "$@" || return 1
+_tf_outputs_summary "${1:-prod}"

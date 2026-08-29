@@ -7,7 +7,10 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # A superseded pull request push is safe to cancel. A run on main is not: it
+  # ends in a deploy, and cancelling mid-flight can leave the staging host with
+  # images pulled and no containers running. Runs on main queue instead.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   lint:
@@ -250,3 +253,187 @@ jobs:
             apps/e2e/test-results/
           retention-days: 7
           if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # Continuous deployment to staging.
+  #
+  # `environment: staging` is load-bearing, not decoration: it is what puts
+  # `repo:<repo>:environment:staging` in the OIDC token's subject claim, which
+  # is what the deploy role's trust policy matches. Renaming or removing it
+  # fails the AWS login with "Not authorized to perform
+  # sts:AssumeRoleWithWebIdentity".
+  # ---------------------------------------------------------------------------
+  deploy-backend:
+    name: Deploy backend to staging
+    needs: [lint, verify, e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    # The host is Graviton, so the image must be arm64. Building on x86 would
+    # need QEMU emulation.
+    runs-on: ubuntu-24.04-arm
+
+    environment: staging
+
+    # Serialised: two concurrent `docker compose up` runs against one host.
+    concurrency:
+      group: deploy-staging-backend
+      cancel-in-progress: false
+
+    permissions:
+      id-token: write # mint the OIDC token used to assume the deploy role
+      contents: read
+
+    env:
+      AWS_REGION: us-east-1
+      TF_ENVIRONMENT: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      # terraform_wrapper wraps the binary in a script that captures output;
+      # the deploy scripts parse `terraform output -json`, so it has to be off.
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_wrapper: false
+
+      - name: Initialise Terraform
+        run: terraform -chdir=infra/environments/${{ env.TF_ENVIRONMENT }} init -input=false
+
+      # Required by the ProxyCommand in scripts/lib/remote-host.sh.
+      - name: Install Session Manager plugin
+        run: |
+          curl -fsSLo /tmp/session-manager-plugin.deb \
+            "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_arm64/session-manager-plugin.deb"
+          sudo dpkg -i /tmp/session-manager-plugin.deb
+          session-manager-plugin --version
+
+      # The `v-` prefix is load-bearing: the ECR lifecycle policy only expires
+      # images whose tag starts with "v".
+      - name: Resolve image tag
+        id: image
+        run: echo "tag=v-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push backend image
+        run: ./scripts/build-and-push.sh "$TF_ENVIRONMENT" "${{ steps.image.outputs.tag }}"
+
+      - name: Deploy to staging host
+        run: ./deploy.sh "$TF_ENVIRONMENT" "${{ steps.image.outputs.tag }}"
+
+      # deploy.sh returns once compose reports the containers up; the backend
+      # still has migrations to run before it serves.
+      - name: Verify backend health
+        run: |
+          source ./scripts/get-terraform-outputs.sh "$TF_ENVIRONMENT"
+          echo "Polling http://$SERVER_IP:4000/health"
+          for attempt in $(seq 1 30); do
+            if curl -fsS --max-time 10 "http://$SERVER_IP:4000/health" > /dev/null; then
+              echo "✅ Backend healthy after ${attempt} attempt(s)"
+              exit 0
+            fi
+            echo "  attempt ${attempt}: not ready yet"
+            sleep 10
+          done
+          echo "::error::Backend did not become healthy within 5 minutes"
+          exit 1
+
+  deploy-frontend:
+    name: Deploy frontend to staging
+    # After the backend, so a bundle never ships expecting a schema the deployed
+    # API does not have.
+    needs: deploy-backend
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    environment:
+      name: staging
+      url: https://dev.chardb.cc
+
+    concurrency:
+      group: deploy-staging-frontend
+      cancel-in-progress: false
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      AWS_REGION: us-east-1
+      TF_ENVIRONMENT: dev
+      # @chardb/database's build runs prisma generate, which resolves
+      # env("DATABASE_URL") without ever connecting.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            .yarn/install-state.gz
+          key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: yarn install --immutable
+
+      # The frontend imports these through their `types` field, which points at
+      # gitignored dist/ directories.
+      - name: Build workspace packages
+        run: |
+          yarn workspaces foreach -A --parallel \
+            --include '@chardb/database' \
+            --include '@chardb/shared' \
+            --include '@chardb/ui' \
+            run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_wrapper: false
+
+      - name: Initialise Terraform
+        run: terraform -chdir=infra/environments/${{ env.TF_ENVIRONMENT }} init -input=false
+
+      # VITE_API_URL is baked in at build time, so the bundle has to be rebuilt
+      # per environment rather than promoted between them.
+      - name: Build and publish frontend
+        run: |
+          source ./scripts/get-terraform-outputs.sh "$TF_ENVIRONMENT"
+
+          if [ -z "$BACKEND_URL" ]; then
+            echo "::error::Could not resolve BACKEND_URL from Terraform outputs"
+            exit 1
+          fi
+
+          VERSION=$(node -p "require('./apps/frontend/package.json').version")
+          ./scripts/build-frontend.sh "$TF_ENVIRONMENT" "$BACKEND_URL" "$VERSION"
+          ./scripts/deploy-frontend.sh "$TF_ENVIRONMENT"

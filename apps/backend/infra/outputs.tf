@@ -1,3 +1,13 @@
+output "iam_role_name" {
+  description = "Name of the IAM role attached to the instance"
+  value       = module.backend_docker_host.iam_role_name
+}
+
+output "instance_arn" {
+  description = "ARN of the EC2 instance"
+  value       = module.backend_docker_host.instance_arn
+}
+
 output "instance_id" {
   description = "ID of the EC2 instance"
   value       = module.backend_docker_host.instance_id
@@ -59,8 +69,8 @@ output "cloudfront_distribution_id" {
 output "backend_url" {
   description = "Backend URL (CloudFront if enabled, otherwise direct EC2)"
   value = var.enable_api_gateway ? (
-    var.api_custom_domain_name != "" ? 
-    "https://${var.api_custom_domain_name}" : 
+    var.api_custom_domain_name != "" ?
+    "https://${var.api_custom_domain_name}" :
     module.cloudfront_api[0].api_url
   ) : "http://${module.backend_docker_host.public_dns}:${var.backend_port}"
 }
@@ -77,56 +87,14 @@ output "jwt_secret" {
   sensitive   = true
 }
 
-output "deviantart_client_id" {
-  description = "DeviantArt OAuth client ID"
-  value       = module.backend_docker_host.deviantart_client_id
-  sensitive   = true
-}
-
-output "deviantart_client_secret" {
-  description = "DeviantArt OAuth client secret"
-  value       = module.backend_docker_host.deviantart_client_secret
-  sensitive   = true
-}
-
 output "deviantart_callback_url" {
   description = "DeviantArt OAuth callback URL"
   value       = module.backend_docker_host.deviantart_callback_url
 }
 
-output "discord_client_id" {
-  description = "Discord OAuth client ID"
-  value       = module.backend_docker_host.discord_client_id
-  sensitive   = true
-}
-
-output "discord_client_secret" {
-  description = "Discord OAuth client secret"
-  value       = module.backend_docker_host.discord_client_secret
-  sensitive   = true
-}
-
 output "discord_callback_url" {
   description = "Discord OAuth callback URL"
   value       = module.backend_docker_host.discord_callback_url
-}
-
-output "discord_bot_token" {
-  description = "Discord bot token for bot integration"
-  value       = module.backend_docker_host.discord_bot_token
-  sensitive   = true
-}
-
-output "toyhouse_client_id" {
-  description = "ToyHouse OAuth client ID"
-  value       = module.backend_docker_host.toyhouse_client_id
-  sensitive   = true
-}
-
-output "toyhouse_client_secret" {
-  description = "ToyHouse OAuth client secret"
-  value       = module.backend_docker_host.toyhouse_client_secret
-  sensitive   = true
 }
 
 output "toyhouse_callback_url" {

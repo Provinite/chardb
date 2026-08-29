@@ -84,22 +84,23 @@ resource "aws_security_group" "docker_host" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Common application ports (can be configured during deployment)
+  # Backend API. CloudFront fetches from this host over plain HTTP on this port
+  # (see modules/cloudfront-api: origin_protocol_policy = "http-only"), so it
+  # must stay reachable from the public internet.
+  #
+  # This replaces a 3000-8000 range that was open to 0.0.0.0/0. That range
+  # included 5432, which exposed the staging Postgres to the internet behind
+  # nothing but a password.
+  #
+  # Follow-up worth doing: restrict this to the AWS-managed
+  # com.amazonaws.global.cloudfront.origin-facing prefix list so only
+  # CloudFront edges can reach the origin directly.
   ingress {
-    from_port   = 3000
-    to_port     = 8000
+    from_port   = var.backend_port
+    to_port     = var.backend_port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Common application ports"
-  }
-
-  # Observability ports (Jaeger, metrics, etc.)
-  ingress {
-    from_port   = 16686
-    to_port     = 16686
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Jaeger UI"
+    description = "Backend API (CloudFront origin)"
   }
 
   # All outbound traffic
@@ -182,6 +183,18 @@ resource "aws_iam_role_policy" "s3_images_access" {
   })
 }
 
+# Session Manager access.
+#
+# Deploys reach this host by tunnelling SSH over SSM rather than opening port 22
+# to the internet (see deploy.sh). That requires the instance to register as a
+# managed node, which is what this policy grants. The SSM agent ships enabled on
+# Amazon Linux 2023, so no user_data change is needed; the instance registers
+# within a few minutes of the policy attaching.
+resource "aws_iam_role_policy_attachment" "ssm_core" {
+  role       = aws_iam_role.docker_host.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # IAM instance profile
 resource "aws_iam_instance_profile" "docker_host" {
   name = "${var.name}-docker-host-profile"
@@ -235,12 +248,12 @@ resource "aws_instance" "docker_host" {
   iam_instance_profile   = aws_iam_instance_profile.docker_host.name
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    db_password    = random_password.db_password.result
-    jwt_secret     = random_password.jwt_secret.result
-    db_host        = var.db_host
-    db_name        = var.db_name
-    db_user        = var.db_user
-    sqs_queue_url  = var.sqs_queue_url
+    db_password   = random_password.db_password.result
+    jwt_secret    = random_password.jwt_secret.result
+    db_host       = var.db_host
+    db_name       = var.db_name
+    db_user       = var.db_user
+    sqs_queue_url = var.sqs_queue_url
   }))
 
   root_block_device {
@@ -251,8 +264,8 @@ resource "aws_instance" "docker_host" {
 
   metadata_options {
     http_endpoint               = "enabled"
-    http_tokens                 = "required"  # IMDSv2 only
-    http_put_response_hop_limit = 2           # Allow Docker containers to access IMDS
+    http_tokens                 = "required" # IMDSv2 only
+    http_put_response_hop_limit = 2          # Allow Docker containers to access IMDS
     instance_metadata_tags      = "enabled"
   }
 
