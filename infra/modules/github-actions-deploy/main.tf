@@ -68,107 +68,176 @@ resource "aws_iam_role" "deploy" {
   }
 }
 
+locals {
+  base_statements = [
+    {
+      Sid    = "EcrLogin"
+      Effect = "Allow"
+      # GetAuthorizationToken is account-scoped and cannot name a repository.
+      Action   = "ecr:GetAuthorizationToken"
+      Resource = "*"
+    },
+    {
+      Sid    = "EcrPushBackendImage"
+      Effect = "Allow"
+      Action = [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:CompleteLayerUpload",
+        "ecr:DescribeImages",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:InitiateLayerUpload",
+        "ecr:PutImage",
+        "ecr:UploadLayerPart"
+      ]
+      Resource = var.ecr_repository_arn
+    },
+    {
+      Sid    = "ReadTerraformState"
+      Effect = "Allow"
+      # Read-only: the deploy resolves its targets from state and must not be
+      # able to change infrastructure.
+      Action   = "s3:GetObject"
+      Resource = "arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket}/${var.terraform_state_key}"
+    },
+    {
+      Sid    = "ListTerraformStateBucket"
+      Effect = "Allow"
+      Action = "s3:ListBucket"
+      # Unconditioned: `terraform init` enumerates workspaces with prefix
+      # "env:/", so a prefix condition naming only this environment fails init.
+      Resource = "arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket}"
+    },
+    {
+      Sid    = "PublishFrontend"
+      Effect = "Allow"
+      Action = [
+        "s3:DeleteObject",
+        "s3:GetObject",
+        "s3:PutObject"
+      ]
+      Resource = "${var.frontend_bucket_arn}/*"
+    },
+    {
+      Sid    = "ListFrontendBucket"
+      Effect = "Allow"
+      # `aws s3 sync --delete` enumerates the bucket to work out what to remove.
+      Action   = "s3:ListBucket"
+      Resource = var.frontend_bucket_arn
+    },
+    {
+      Sid      = "InvalidateFrontendCache"
+      Effect   = "Allow"
+      Action   = "cloudfront:CreateInvalidation"
+      Resource = var.frontend_cloudfront_distribution_arn
+    },
+  ]
+
+  # Pull-only access to another environment's repository, so a release can
+  # promote the exact image staging ran rather than rebuilding it. Rebuilding
+  # produces a different artifact: different layer digests, and any unpinned
+  # transitive dependency can resolve differently.
+  _pull_all = [
+    {
+      Sid    = "PullImageForPromotion"
+      Effect = "Allow"
+      Action = [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:DescribeImages",
+        "ecr:GetDownloadUrlForLayer"
+      ]
+      Resource = var.ecr_pull_repository_arns
+    },
+  ]
+
+  # Only for environments with a docker host reached over SSM. A filtered for
+  # rather than a ternary: both branches of a ternary must share a type, and
+  # an empty tuple is not the same type as a populated one.
+  _ssm_all = [
+    {
+      Sid    = "OpenSessionManagerTunnel"
+      Effect = "Allow"
+      Action = "ssm:StartSession"
+      Resource = [
+        var.docker_host_instance_arn,
+        # SSH over SSM runs through this AWS-owned document.
+        "arn:${data.aws_partition.current.partition}:ssm:${data.aws_region.current.name}::document/AWS-StartSSHSession"
+      ]
+      Condition = {
+        # Forces AWS to check the document as well as the instance.
+        BoolIfExists = {
+          "ssm:SessionDocumentAccessCheck" = "true"
+        }
+      }
+    },
+    {
+      Sid    = "CloseOwnSessions"
+      Effect = "Allow"
+      Action = [
+        "ssm:ResumeSession",
+        "ssm:TerminateSession"
+      ]
+      Resource = "arn:${data.aws_partition.current.partition}:ssm:*:*:session/$${aws:userid}-*"
+    },
+  ]
+
+  # Only for environments deployed as an ECS service. The workflow reads the
+  # revision Terraform last created, swaps the image, registers a new revision
+  # and rolls the service onto it.
+  _ecs_all = [
+    {
+      Sid    = "DescribeTaskDefinitions"
+      Effect = "Allow"
+      # DescribeTaskDefinition genuinely takes no resource -- IAM does not match
+      # it against a task-definition ARN, so "*" is the only option.
+      Action   = "ecs:DescribeTaskDefinition"
+      Resource = "*"
+    },
+    {
+      Sid    = "RegisterTaskDefinitionRevision"
+      Effect = "Allow"
+      # This one CAN be scoped, to the family whose revisions may be created.
+      # Without it the role could register a task definition in any family and
+      # -- paired with PassRole -- run it.
+      Action   = "ecs:RegisterTaskDefinition"
+      Resource = var.ecs_task_definition_family_arn_pattern
+    },
+    {
+      Sid    = "DeployEcsService"
+      Effect = "Allow"
+      Action = [
+        "ecs:DescribeServices",
+        "ecs:UpdateService"
+      ]
+      Resource = var.ecs_service_arn
+    },
+    {
+      Sid    = "PassTaskRoles"
+      Effect = "Allow"
+      # Required to register a task definition naming these roles. Scoped to
+      # exactly the two: a broad iam:PassRole would let this role attach any
+      # role to a task it launches, which is a privilege-escalation path.
+      Action   = "iam:PassRole"
+      Resource = var.ecs_pass_role_arns
+      Condition = {
+        StringEquals = {
+          "iam:PassedToService" = "ecs-tasks.amazonaws.com"
+        }
+      }
+    },
+  ]
+  pull_statements = [for st in local._pull_all : st if length(var.ecr_pull_repository_arns) > 0]
+  ssm_statements  = [for st in local._ssm_all : st if var.docker_host_instance_arn != null]
+  ecs_statements  = [for st in local._ecs_all : st if var.ecs_service_arn != null]
+}
+
 resource "aws_iam_role_policy" "deploy" {
   name = "${var.name}-github-actions-deploy"
   role = aws_iam_role.deploy.id
 
   policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "EcrLogin"
-        Effect = "Allow"
-        # GetAuthorizationToken is account-scoped and cannot name a repository.
-        Action   = "ecr:GetAuthorizationToken"
-        Resource = "*"
-      },
-      {
-        Sid    = "EcrPushBackendImage"
-        Effect = "Allow"
-        Action = [
-          "ecr:BatchCheckLayerAvailability",
-          "ecr:BatchGetImage",
-          "ecr:CompleteLayerUpload",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:InitiateLayerUpload",
-          "ecr:PutImage",
-          "ecr:UploadLayerPart"
-        ]
-        Resource = var.ecr_repository_arn
-      },
-      {
-        Sid    = "ReadTerraformState"
-        Effect = "Allow"
-        # Read-only: the deploy resolves its targets from state and must not be
-        # able to change infrastructure.
-        Action = "s3:GetObject"
-        # Exact key, not a prefix wildcard: "chardb/environments/dev*" would
-        # also match a future "chardb/environments/dev-anything".
-        Resource = "arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket}/${var.terraform_state_key}"
-      },
-      {
-        Sid    = "ListTerraformStateBucket"
-        Effect = "Allow"
-        Action = "s3:ListBucket"
-        # Deliberately unconditioned. `terraform init` enumerates workspaces
-        # with prefix "env:/", not the state key, so any s3:prefix condition
-        # naming only this environment fails init with "Failed to get existing
-        # workspaces". Listing keys in a private state bucket reveals little,
-        # and reading is still scoped to one exact object below.
-        Resource = "arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket}"
-      },
-      {
-        Sid    = "PublishFrontend"
-        Effect = "Allow"
-        Action = [
-          "s3:DeleteObject",
-          "s3:GetObject",
-          "s3:PutObject"
-        ]
-        Resource = "${var.frontend_bucket_arn}/*"
-      },
-      {
-        Sid    = "ListFrontendBucket"
-        Effect = "Allow"
-        # `aws s3 sync --delete` needs to enumerate the bucket to work out what
-        # to remove.
-        Action   = "s3:ListBucket"
-        Resource = var.frontend_bucket_arn
-      },
-      {
-        Sid      = "InvalidateFrontendCache"
-        Effect   = "Allow"
-        Action   = "cloudfront:CreateInvalidation"
-        Resource = var.frontend_cloudfront_distribution_arn
-      },
-      {
-        Sid    = "OpenSessionManagerTunnel"
-        Effect = "Allow"
-        Action = "ssm:StartSession"
-        Resource = [
-          var.docker_host_instance_arn,
-          # SSH over SSM runs through this AWS-owned document.
-          "arn:${data.aws_partition.current.partition}:ssm:${data.aws_region.current.name}::document/AWS-StartSSHSession"
-        ]
-        Condition = {
-          # Forces AWS to check the document as well as the instance. Without
-          # it, the instance ARN alone authorises a session with any document.
-          BoolIfExists = {
-            "ssm:SessionDocumentAccessCheck" = "true"
-          }
-        }
-      },
-      {
-        Sid    = "CloseOwnSessions"
-        Effect = "Allow"
-        Action = [
-          "ssm:ResumeSession",
-          "ssm:TerminateSession"
-        ]
-        # ${aws:userid} resolves to the role id plus this job's session name, so
-        # a job can only tear down the sessions it opened.
-        Resource = "arn:${data.aws_partition.current.partition}:ssm:*:*:session/$${aws:userid}-*"
-      }
-    ]
+    Version   = "2012-10-17"
+    Statement = concat(local.base_statements, local.pull_statements, local.ssm_statements, local.ecs_statements)
   })
 }

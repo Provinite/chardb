@@ -65,8 +65,50 @@ variable "frontend_cloudfront_distribution_arn" {
 }
 
 variable "docker_host_instance_arn" {
-  description = "ARN of the EC2 instance the workflow opens a Session Manager tunnel to"
+  description = <<-EOT
+    ARN of the EC2 instance the workflow opens a Session Manager tunnel to.
+    Null for environments with no docker host, which omits the SSM grants.
+  EOT
   type        = string
+  default     = null
+}
+
+variable "ecs_service_arn" {
+  description = <<-EOT
+    ARN of the ECS service the workflow deploys to. Null for environments with
+    no ECS service, which omits the ECS grants.
+  EOT
+  type        = string
+  default     = null
+}
+
+variable "ecs_task_definition_family_arn_pattern" {
+  description = <<-EOT
+    ARN pattern matching every revision of the task definition family, e.g.
+    "arn:aws:ecs:<region>:<acct>:task-definition/<family>:*". Scopes which
+    families the workflow may register revisions in.
+  EOT
+  type        = string
+  default     = null
+}
+
+variable "ecr_pull_repository_arns" {
+  description = <<-EOT
+    Repositories the workflow may pull from, for promoting an image built in
+    another environment. Pull only -- it can never push to these.
+  EOT
+  type        = list(string)
+  default     = []
+}
+
+variable "ecs_pass_role_arns" {
+  description = <<-EOT
+    Task and execution role ARNs the workflow may reference when registering a
+    task definition. Scope this tightly: a broad iam:PassRole lets a caller
+    attach any role to a task it launches.
+  EOT
+  type        = list(string)
+  default     = []
 }
 
 variable "tags" {

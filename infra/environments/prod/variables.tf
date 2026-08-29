@@ -283,3 +283,28 @@ variable "email_from" {
   type        = string
   default     = "noreply@chardb.cc"
 }
+
+##############################################################################
+# GitHub Actions CD
+##############################################################################
+
+variable "github_repository" {
+  description = "GitHub repository allowed to assume the deploy role, as owner/name"
+  type        = string
+  default     = "Provinite/chardb"
+}
+
+variable "promotion_source_environment" {
+  description = <<-EOT
+    Environment whose ECR repository a release is promoted from. A release
+    deploys the image that environment already ran rather than rebuilding it.
+  EOT
+  type        = string
+  default     = "dev"
+}
+
+variable "github_deploy_environment" {
+  description = "GitHub environment the release deploy runs in"
+  type        = string
+  default     = "production"
+}

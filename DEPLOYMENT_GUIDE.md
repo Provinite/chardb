@@ -366,6 +366,82 @@ deploy could leave the host with images pulled and no containers running.
 Database migrations need no step of their own: the backend image's entrypoint
 (`scripts/migrate-and-start.sh`) runs `prisma migrate deploy` before the app boots.
 
+## 🏷️ Releasing to Production
+
+**Publishing a GitHub release deploys it.** `.github/workflows/release.yml`
+promotes the image staging already ran into the production repository under the
+release tag, registers an ECS task definition revision carrying it, and rolls
+the service onto it. The frontend follows, built with the tag as `VITE_VERSION`.
+
+The backend is **promoted, not rebuilt**. A rebuild produces a different
+artifact -- different layer digests, and any unpinned transitive dependency can
+resolve differently -- so production would run something staging never tested.
+Staging tags its images `v-<first 12 of sha>` on every merge to `main`, and the
+release looks up the tag's commit to find it. Promotion is skipped when the
+production repository already has the tag, so re-running a release is cheap.
+
+This means **a release must be cut from a commit staging has deployed**. If it
+was not, the promotion fails with a message saying so rather than quietly
+building something new.
+
+```bash
+# cut a release from main
+gh release create v10.2.0 --generate-notes
+
+# or redeploy one that already exists
+gh workflow run release.yml -f tag=v10.2.0
+```
+
+### Why the deploy derives from Terraform's revision
+
+The ECS service ignores `task_definition` changes, so an apply cannot revert
+production to an older release. The cost is that a task definition change made
+in Terraform does not deploy itself.
+
+`scripts/deploy-prod-release.sh` closes that gap: it reads the
+`ecs_task_definition_arn` output -- the revision **Terraform** last created, not
+the one currently running -- swaps only the image, and registers from there. Any
+Terraform change to the definition is therefore picked up by the next release.
+
+Deriving from the *running* revision instead would compound: each deploy would
+build on the last deploy and Terraform's changes would never land.
+
+### Guards
+
+- **The tag must be an ancestor of `main`.** A release can be cut from any
+  commit, and production runs migrations at container start, so an unmerged
+  commit could change the schema in ways `main` does not describe.
+- **The image must already exist** in both repositories at the right moments:
+  in staging's for the promotion to find, and in production's before the
+  service is touched. Either missing fails the deploy rather than leaving ECS
+  unable to pull.
+- **The `production` environment gates it.** The deploy role's trust policy pins
+  the OIDC subject to that environment, so protection rules on it are enforced
+  before AWS mints a token. To require approval:
+  ```bash
+  gh api -X PUT repos/Provinite/chardb/environments/production \
+    -F 'reviewers[][type]=User' -F "reviewers[][id]=$(gh api user --jq .id)"
+  ```
+
+### Rollback
+
+Redeploy the previous tag:
+
+```bash
+gh workflow run release.yml -f tag=v10.1.0
+```
+
+Note the ECR lifecycle policy keeps only the **last 10** images tagged `v*`, so
+releases older than that are no longer pullable. For an immediate revert without
+a build, point the service back at a prior revision directly:
+
+```bash
+aws ecs update-service --cluster chardb-prod-cluster \
+  --service chardb-prod-service --task-definition chardb-prod-task:<n>
+```
+
+Migrations do not roll back.
+
 ## 🏗️ Phase 2: Application Build and Deployment
 
 ### Step 5: **Full-Stack Deployment (Recommended)**

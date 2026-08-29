@@ -754,6 +754,52 @@ module "frontend" {
 # Local Variables
 ##############################################################################
 
+# CD identity for the release workflow.
+#
+# No SSM grants: prod has no docker host. Instead it can read the task
+# definition Terraform last created, register a revision with a new image, and
+# roll the service onto it -- but it cannot apply Terraform, so it can never
+# change the shape of that definition.
+#
+# The trust policy pins the OIDC subject to the "production" GitHub
+# environment, so protection rules on that environment gate the deploy before
+# a token is ever minted.
+module "github_actions_deploy" {
+  source = "../../modules/github-actions-deploy"
+
+  name              = "${var.project_name}-${var.environment}"
+  github_repository = var.github_repository
+  # Prod already has an OIDC provider from the dev environment; there is one
+  # per account.
+  create_oidc_provider = false
+  allowed_environments = [var.github_deploy_environment]
+
+  ecr_repository_arn     = module.backend_ecr.repository_arn
+  terraform_state_bucket = "clovercoin-tf-state"
+  terraform_state_key    = "chardb/environments/${var.environment}"
+
+  frontend_bucket_arn                  = module.frontend.bucket_arn
+  frontend_cloudfront_distribution_arn = module.frontend.cloudfront_distribution_arn
+
+  # Pull-only on the source environment's repository. Its ARN is constructed
+  # rather than read: it lives in that environment's state, which this role
+  # deliberately cannot see.
+  ecr_pull_repository_arns = [
+    "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/${var.project_name}-backend-${var.promotion_source_environment}",
+  ]
+
+  ecs_service_arn = module.ecs.service_id
+  # Revisions of this family only. Register is a write, and paired with
+  # PassRole an unscoped one would let the role run a task of its own design.
+  ecs_task_definition_family_arn_pattern = "arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:task-definition/${module.ecs.task_definition_family}:*"
+  ecs_pass_role_arns = [
+    module.ecs.task_role_arn,
+    module.ecs.task_execution_role_arn,
+  ]
+
+  tags = local.common_tags
+}
+
 locals {
   common_tags = {
     Environment = var.environment

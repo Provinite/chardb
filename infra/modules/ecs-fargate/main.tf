@@ -260,9 +260,16 @@ resource "aws_ecs_service" "app" {
     container_port   = var.container_port
   }
 
-  # Ignore changes to desired_count for auto-scaling
   lifecycle {
-    ignore_changes = [desired_count]
+    # desired_count: owned by auto-scaling.
+    # task_definition: owned by the deploy, which registers a revision from the
+    # one Terraform last created and rolls the service onto it. Without this,
+    # the next apply would revert production to an older release.
+    #
+    # Consequence worth knowing: a task definition change made here does not
+    # deploy itself. It lands on the next release, because the deploy derives
+    # its revision from Terraform's rather than from the running one.
+    ignore_changes = [desired_count, task_definition]
   }
 
   tags = merge(
