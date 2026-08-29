@@ -160,34 +160,60 @@ just pushed the stale value back.
 
 ### ⚠️ Migrating prod off Secrets Manager
 
-Prod's eight Secrets Manager secrets are replaced by parameters. **Applying
-before the values are copied across will start injecting
-`not-managed-by-terraform` into the running task.** Do this first:
+Prod's eight Secrets Manager secrets are replaced by Parameter Store
+parameters. This takes **two applies**, and the order is not optional:
+
+- A single apply would create the parameters holding
+  `not-managed-by-terraform` *and* repoint the task definition at them in the
+  same run, so ECS would inject placeholders into production.
+- Creating the parameters by hand first does not help either: Terraform would
+  then try to create resources that already exist and fail with
+  `ParameterAlreadyExists`, since the module does not set `overwrite`.
+
+So let Terraform create them empty, fill them, then apply the rest.
 
 ```bash
-# 1. Read the live values out of Secrets Manager.
-for name in deviantart-secret toyhouse-secret discord-secret \
-            discord-bot-token otel-otlp-headers; do
-  echo "=== $name"
-  aws secretsmanager get-secret-value \
-    --secret-id "chardb-prod-$name" --query SecretString --output text
+cd infra/environments/prod
+
+# 1. Create only the parameters. Nothing else in the plan runs, so the task
+#    definition still points at Secrets Manager and prod keeps working.
+terraform apply -var-file=prod.tfvars -target=module.app_secrets
+
+# 2. Copy each live value across. Old name -> new name:
+#      chardb-prod-deviantart-secret  ->  /chardb/prod/deviantart-client-secret
+#      chardb-prod-toyhouse-secret    ->  /chardb/prod/toyhouse-client-secret
+#      chardb-prod-discord-secret     ->  /chardb/prod/discord-client-secret
+#      chardb-prod-discord-bot-token  ->  /chardb/prod/discord-bot-token
+#      chardb-prod-otel-otlp-headers  ->  /chardb/prod/otel-otlp-headers
+#
+#    Piped directly so the value is never printed:
+for pair in \
+  "chardb-prod-deviantart-secret:/chardb/prod/deviantart-client-secret" \
+  "chardb-prod-toyhouse-secret:/chardb/prod/toyhouse-client-secret" \
+  "chardb-prod-discord-secret:/chardb/prod/discord-client-secret" \
+  "chardb-prod-discord-bot-token:/chardb/prod/discord-bot-token" \
+  "chardb-prod-otel-otlp-headers:/chardb/prod/otel-otlp-headers"
+do
+  src="${pair%%:*}"; dst="${pair##*:}"
+  aws ssm put-parameter --overwrite --type SecureString --name "$dst" \
+    --value "$(aws secretsmanager get-secret-value \
+                 --secret-id "$src" --query SecretString --output text)" \
+    >/dev/null && echo "copied -> $dst"
 done
 
-# 2. Write each into Parameter Store under its new name.
-#    chardb-prod-deviantart-secret  -> /chardb/prod/deviantart-client-secret
-#    chardb-prod-toyhouse-secret    -> /chardb/prod/toyhouse-client-secret
-#    chardb-prod-discord-secret     -> /chardb/prod/discord-client-secret
-#    chardb-prod-discord-bot-token  -> /chardb/prod/discord-bot-token
-#    chardb-prod-otel-otlp-headers  -> /chardb/prod/otel-otlp-headers
-aws ssm put-parameter --overwrite --type SecureString \
-  --name /chardb/prod/deviantart-client-secret --value '...'
+# 3. Confirm nothing still holds the placeholder before going further.
+aws ssm get-parameters-by-path --path /chardb/prod --recursive --with-decryption \
+  --query "Parameters[?Value=='not-managed-by-terraform'].Name" --output text
 
-# 3. Now apply. This destroys the old secrets and rolls a new task definition.
-terraform -chdir=infra/environments/prod apply -var-file=prod.tfvars
+# 4. Full apply: repoints the task definition and destroys the old secrets.
+terraform apply -var-file=prod.tfvars
 ```
 
-The destroyed secrets keep AWS's 30-day recovery window, so a botched cutover is
-recoverable with `aws secretsmanager restore-secret`.
+`jwt-secret` and `database-url` are not in that list on purpose — Terraform
+generates those values, so it writes them itself in step 4.
+
+The destroyed Secrets Manager entries keep AWS's 30-day recovery window, so a
+botched cutover is recoverable with `aws secretsmanager restore-secret`.
 
 Afterwards, delete these five now-undeclared lines from your local
 `prod.tfvars`, or Terraform will warn about them on every run:
