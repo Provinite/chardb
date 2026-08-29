@@ -442,16 +442,19 @@ module "ecs" {
 
   # Container Configuration
   container_name = "backend"
-  # The released version, not :latest. A release deploys an immutable tag, so
-  # naming :latest here left Terraform's definition permanently disagreeing with
-  # the deployed one, and every plan proposed a replacement.
+  # A placeholder, deliberately. image is a required field, so the computed
+  # definition needs one to be registrable -- but the deploy overwrites it with
+  # the released tag, so whatever stands here is never pulled.
   #
-  # The version comes from the root package.json, which the release process
-  # bumps in the same commit that gets tagged, so this tracks releases without
-  # a second thing to remember. Terraform still never deploys it: the service
-  # ignores task_definition, and a release derives its own revision from this
-  # one and swaps the image in.
-  container_image = var.backend_container_image != "" ? var.backend_container_image : "${module.backend_ecr.repository_url}:v${local.backend_version}"
+  # It used to be the version from package.json. That tracked releases, which
+  # sounds right and was not: the release bumps package.json, so the output
+  # changed on every release and every plan afterwards showed a diff, for a
+  # value nothing deploys. A constant keeps plans empty between real changes.
+  #
+  # The tag intentionally does not exist in ECR. Registering straight from this
+  # output, bypassing the deploy, then fails on the image pull rather than
+  # quietly running whatever tag happened to be named here.
+  container_image = var.backend_container_image != "" ? var.backend_container_image : "${module.backend_ecr.repository_url}:image-set-by-deploy"
   container_port  = var.backend_container_port
 
   # Task Configuration
@@ -815,8 +818,4 @@ locals {
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
-
-  # Read backend version from package.json
-  backend_package_json = jsondecode(file("${path.module}/../../../apps/backend/package.json"))
-  backend_version      = local.backend_package_json.version
 }

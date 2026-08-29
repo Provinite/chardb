@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Terraform no longer manages a production task definition, so an apply stops registering revisions nothing deploys and a release stops leaving a pending replacement behind (#262).
 - Production plans no longer propose a task definition replacement on every run, which had buried real changes (#261).
 - Registered task definitions now match what AWS returns, and declare `runtimePlatform` as `LINUX/ARM64` explicitly instead of relying on ECS inferring it.
+- Production plans stay empty between real changes: the placeholder image no longer embeds the version and the unread current-revision output is gone, so a release no longer leaves a diff behind for values nothing deploys.
 
 ### Removed
 
