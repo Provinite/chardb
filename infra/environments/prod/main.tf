@@ -781,6 +781,13 @@ module "github_actions_deploy" {
   frontend_bucket_arn                  = module.frontend.bucket_arn
   frontend_cloudfront_distribution_arn = module.frontend.cloudfront_distribution_arn
 
+  # Pull-only on the source environment's repository. Its ARN is constructed
+  # rather than read: it lives in that environment's state, which this role
+  # deliberately cannot see.
+  ecr_pull_repository_arns = [
+    "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/${var.project_name}-backend-${var.promotion_source_environment}",
+  ]
+
   ecs_service_arn = module.ecs.service_id
   ecs_pass_role_arns = [
     module.ecs.task_role_arn,

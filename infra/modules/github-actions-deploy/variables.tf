@@ -88,6 +88,15 @@ variable "ecs_task_definition_family_arn_pattern" {
   default     = null
 }
 
+variable "ecr_pull_repository_arns" {
+  description = <<-EOT
+    Repositories the workflow may pull from, for promoting an image built in
+    another environment. Pull only -- it can never push to these.
+  EOT
+  type        = list(string)
+  default     = []
+}
+
 variable "ecs_pass_role_arns" {
   description = <<-EOT
     Task and execution role ARNs the workflow may reference when registering a

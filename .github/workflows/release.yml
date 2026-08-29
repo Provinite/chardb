@@ -60,6 +60,7 @@ jobs:
       # merged. Production runs migrations at container start, so deploying an
       # unmerged commit can change the schema in ways main does not describe.
       - name: Require the tag to be on main
+        id: commit
         run: |
           git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
           if git merge-base --is-ancestor HEAD origin/main; then
@@ -68,6 +69,7 @@ jobs:
             echo "::error::${{ steps.v.outputs.tag }} is not on main. Releases must be cut from merged commits."
             exit 1
           fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -83,8 +85,11 @@ jobs:
       - name: Initialise Terraform
         run: terraform -chdir=infra/environments/${{ env.TF_ENVIRONMENT }} init -input=false
 
-      - name: Build and push the released image
-        run: ./scripts/build-and-push.sh "$TF_ENVIRONMENT" "${{ steps.v.outputs.tag }}"
+      # Promote rather than rebuild: production runs the artifact staging ran,
+      # not a fresh build of the same source. Skips the copy if the tag is
+      # already in the production repository, so re-running a release is cheap.
+      - name: Promote the staging image
+        run: ./scripts/promote-image.sh "${{ steps.v.outputs.tag }}" "${{ steps.commit.outputs.sha }}"
 
       - name: Deploy to production
         run: ./scripts/deploy-prod-release.sh "${{ steps.v.outputs.tag }}"

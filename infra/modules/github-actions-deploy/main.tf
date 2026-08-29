@@ -133,6 +133,24 @@ locals {
     },
   ]
 
+  # Pull-only access to another environment's repository, so a release can
+  # promote the exact image staging ran rather than rebuilding it. Rebuilding
+  # produces a different artifact: different layer digests, and any unpinned
+  # transitive dependency can resolve differently.
+  _pull_all = [
+    {
+      Sid    = "PullImageForPromotion"
+      Effect = "Allow"
+      Action = [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:DescribeImages",
+        "ecr:GetDownloadUrlForLayer"
+      ]
+      Resource = var.ecr_pull_repository_arns
+    },
+  ]
+
   # Only for environments with a docker host reached over SSM. A filtered for
   # rather than a ternary: both branches of a ternary must share a type, and
   # an empty tuple is not the same type as a populated one.
@@ -202,8 +220,9 @@ locals {
       }
     },
   ]
-  ssm_statements = [for st in local._ssm_all : st if var.docker_host_instance_arn != null]
-  ecs_statements = [for st in local._ecs_all : st if var.ecs_service_arn != null]
+  pull_statements = [for st in local._pull_all : st if length(var.ecr_pull_repository_arns) > 0]
+  ssm_statements  = [for st in local._ssm_all : st if var.docker_host_instance_arn != null]
+  ecs_statements  = [for st in local._ecs_all : st if var.ecs_service_arn != null]
 }
 
 resource "aws_iam_role_policy" "deploy" {
@@ -212,6 +231,6 @@ resource "aws_iam_role_policy" "deploy" {
 
   policy = jsonencode({
     Version   = "2012-10-17"
-    Statement = concat(local.base_statements, local.ssm_statements, local.ecs_statements)
+    Statement = concat(local.base_statements, local.pull_statements, local.ssm_statements, local.ecs_statements)
   })
 }
