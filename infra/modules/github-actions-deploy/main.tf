@@ -107,15 +107,15 @@ resource "aws_iam_role_policy" "deploy" {
         Resource = "arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket}/${var.terraform_state_key}"
       },
       {
-        Sid      = "ListTerraformStateBucket"
-        Effect   = "Allow"
-        Action   = "s3:ListBucket"
+        Sid    = "ListTerraformStateBucket"
+        Effect = "Allow"
+        Action = "s3:ListBucket"
+        # Deliberately unconditioned. `terraform init` enumerates workspaces
+        # with prefix "env:/", not the state key, so any s3:prefix condition
+        # naming only this environment fails init with "Failed to get existing
+        # workspaces". Listing keys in a private state bucket reveals little,
+        # and reading is still scoped to one exact object below.
         Resource = "arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket}"
-        Condition = {
-          StringEquals = {
-            "s3:prefix" = [var.terraform_state_key]
-          }
-        }
       },
       {
         Sid    = "PublishFrontend"
