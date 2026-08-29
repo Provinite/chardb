@@ -254,11 +254,6 @@ done < <(echo "$SECRETS_JSON" | jq -r '
 ')
 unset value escaped
 
-# Re-source so this shell sees them too.
-set -a
-source .env
-set +a
-
 echo "✅ Loaded $SECRET_COUNT secrets from Parameter Store into .env"
 
 echo "🛑 Stopping existing services..."
