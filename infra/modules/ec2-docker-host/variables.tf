@@ -16,7 +16,8 @@ variable "instance_type" {
 variable "ssh_allowed_cidr_blocks" {
   description = "CIDR blocks allowed for SSH access"
   type        = list(string)
-  default     = ["0.0.0.0/0"]
+  # Deliberately no default: the previous one was ["0.0.0.0/0"], which would
+  # open port 22 to the internet for any caller that forgot to set it.
 }
 
 variable "ecr_repository_url" {
