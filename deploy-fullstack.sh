@@ -93,7 +93,6 @@ echo ""
 if [ "$DEPLOY_BACKEND" = "true" ]; then
     echo "🔗 Backend services:"
     echo "   - GraphQL API: $BACKEND_URL/graphql"
-    echo "   - Jaeger tracing: http://$SERVER_IP:16686"
 fi
 
 if [ "$DEPLOY_FRONTEND" = "true" ]; then
