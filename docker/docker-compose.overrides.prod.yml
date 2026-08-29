@@ -12,6 +12,10 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       FRONTEND_URL: ${FRONTEND_URL}
+      # Pinned, not read from .env: this host runs no collector, so an enabled
+      # exporter would retry forever and queue spans in the heap against the
+      # mem_limit above. A dropped .env line must not be able to re-enable it.
+      OTEL_SDK_DISABLED: "true"
   postgres:
     mem_limit: 256m
     environment:
