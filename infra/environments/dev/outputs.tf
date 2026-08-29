@@ -147,3 +147,21 @@ output "github_actions_deploy_role_arn" {
   description = "ARN of the role the deploy workflow assumes via OIDC"
   value       = module.github_actions_deploy.role_arn
 }
+
+output "backend_deviantart_client_id" {
+  description = "DeviantArt OAuth client ID for backend"
+  value       = module.backend.deviantart_client_id
+  sensitive   = true
+}
+
+output "backend_discord_client_id" {
+  description = "Discord OAuth client ID for backend"
+  value       = module.backend.discord_client_id
+  sensitive   = true
+}
+
+output "backend_toyhouse_client_id" {
+  description = "ToyHouse OAuth client ID for backend"
+  value       = module.backend.toyhouse_client_id
+  sensitive   = true
+}

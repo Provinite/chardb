@@ -80,3 +80,21 @@ output "toyhouse_callback_url" {
   description = "ToyHouse OAuth callback URL"
   value       = var.toyhouse_callback_url
 }
+
+output "deviantart_client_id" {
+  description = "DeviantArt OAuth client ID"
+  value       = var.deviantart_client_id
+  sensitive   = true
+}
+
+output "discord_client_id" {
+  description = "Discord OAuth client ID"
+  value       = var.discord_client_id
+  sensitive   = true
+}
+
+output "toyhouse_client_id" {
+  description = "ToyHouse OAuth client ID"
+  value       = var.toyhouse_client_id
+  sensitive   = true
+}

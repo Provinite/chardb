@@ -90,3 +90,21 @@ variable "s3_images_bucket_arn" {
   type        = string
   default     = null
 }
+
+variable "deviantart_client_id" {
+  description = "DeviantArt OAuth client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "discord_client_id" {
+  description = "Discord OAuth client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "toyhouse_client_id" {
+  description = "ToyHouse OAuth client ID"
+  type        = string
+  sensitive   = true
+}

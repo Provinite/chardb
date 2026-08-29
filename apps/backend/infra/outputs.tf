@@ -122,3 +122,21 @@ output "sqs_producer_policy_arn" {
   description = "ARN of the IAM policy for queue producers (Discord bot)"
   value       = module.prize_distribution_queue.producer_policy_arn
 }
+
+output "deviantart_client_id" {
+  description = "DeviantArt OAuth client ID"
+  value       = module.backend_docker_host.deviantart_client_id
+  sensitive   = true
+}
+
+output "discord_client_id" {
+  description = "Discord OAuth client ID"
+  value       = module.backend_docker_host.discord_client_id
+  sensitive   = true
+}
+
+output "toyhouse_client_id" {
+  description = "ToyHouse OAuth client ID"
+  value       = module.backend_docker_host.toyhouse_client_id
+  sensitive   = true
+}

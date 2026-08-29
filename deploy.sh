@@ -123,10 +123,13 @@ NODE_ENV=production
 FRONTEND_URL="$FRONTEND_URL"
 EMAIL_FROM="noreply@dev.chardb.cc"
 
-# OAuth callback URLs. The matching client ids, client secrets and bot token are
-# NOT written here -- the host fetches them from Parameter Store under the path
-# below, using its instance role, so they never pass through this machine or a
-# CI runner.
+# OAuth client ids and callback URLs. Neither is secret. The client secrets and
+# bot token are NOT written here -- the host fetches those from Parameter Store
+# under the path below, using its instance role, so they never pass through this
+# machine or a CI runner.
+DEVIANTART_CLIENT_ID="$DEVIANTART_CLIENT_ID"
+DISCORD_CLIENT_ID="$DISCORD_CLIENT_ID"
+TOYHOUSE_CLIENT_ID="$TOYHOUSE_CLIENT_ID"
 DEVIANTART_CALLBACK_URL="$DEVIANTART_CALLBACK_URL"
 DISCORD_CALLBACK_URL="$DISCORD_CALLBACK_URL"
 TOYHOUSE_CALLBACK_URL="$TOYHOUSE_CALLBACK_URL"
