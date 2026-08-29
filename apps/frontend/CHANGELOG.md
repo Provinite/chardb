@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v10.2.0] - 2026-08-29
+
 ### Added
 
 - **Tests for the species/variant/trait admin pages** (`src/pages/__tests__/`): `route-param-guards.test.tsx` covers all six pages that had conditional hooks — each asserts the guard message renders when the route param is missing, and that hook order survives the param disappearing between renders on a single mounted instance. That second assertion is the regression test proper: run against the pre-fix components it fails on all six with React's "Rendered fewer hooks than expected." `SpeciesManagementPage.test.tsx` covers the happy path, so the `skip` flags the queries gained are exercised in both states. 29 frontend tests total, up from 14.

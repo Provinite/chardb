@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v10.2.0] - 2026-08-29
+
 ### Added
 
 - **Releasing to production**: publishing a GitHub release promotes the image staging already ran into the production repository under that tag, and rolls the ECS service onto a task definition carrying it. The backend is promoted rather than rebuilt, so production runs the artifact staging tested rather than a fresh build of the same source; a release must therefore be cut from a commit staging has deployed — `gh release create v10.2.0`, or `gh workflow run release.yml -f tag=v10.2.0` to redeploy an existing one. Production stops running a mutable `:latest`, so what is deployed is identifiable and a rollback has an artifact to point at. The deploy refuses a tag that is not an ancestor of `main`, and refuses an image that is not in ECR. Approval before deploy is available by adding a required reviewer to the `production` GitHub environment; the deploy role's trust policy is pinned to that environment, so the gate holds before AWS mints credentials. Note the ECR lifecycle keeps the last 10 `v*` images, which bounds how far back a redeploy can reach.
