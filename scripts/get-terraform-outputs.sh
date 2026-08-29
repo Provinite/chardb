@@ -27,13 +27,11 @@
 #     SSH_PRIVATE_KEY           Host SSH key, PEM contents; "" for prod
 #     POSTGRES_PASSWORD         Database password
 #     JWT_SECRET                Token signing secret
-#     DEVIANTART_CLIENT_ID      DeviantArt OAuth client id
-#     DEVIANTART_CLIENT_SECRET  DeviantArt OAuth client secret
-#     DISCORD_CLIENT_ID         Discord OAuth client id
-#     DISCORD_CLIENT_SECRET     Discord OAuth client secret
-#     DISCORD_BOT_TOKEN         Discord bot token
-#     TOYHOUSE_CLIENT_ID        ToyHouse OAuth client id
-#     TOYHOUSE_CLIENT_SECRET    ToyHouse OAuth client secret
+#
+#   The OAuth client ids, client secrets and bot token are deliberately absent:
+#   they live in SSM Parameter Store under /chardb/<environment>/ and are read
+#   by whatever needs them (the host at deploy time, ECS via the task
+#   definition), so they never enter a developer or CI shell.
 #
 #   Non-secret application config
 #     DEVIANTART_CALLBACK_URL   DeviantArt OAuth redirect URI
@@ -81,9 +79,6 @@ _tf_outputs_load() {
     export SERVER_IP INSTANCE_ID SSH_KEY_NAME BACKEND_URL FRONTEND_URL \
         ECR_REPOSITORY_URL \
         SSH_PRIVATE_KEY POSTGRES_PASSWORD JWT_SECRET \
-        DEVIANTART_CLIENT_ID DEVIANTART_CLIENT_SECRET \
-        DISCORD_CLIENT_ID DISCORD_CLIENT_SECRET DISCORD_BOT_TOKEN \
-        TOYHOUSE_CLIENT_ID TOYHOUSE_CLIENT_SECRET \
         DEVIANTART_CALLBACK_URL DISCORD_CALLBACK_URL TOYHOUSE_CALLBACK_URL \
         SQS_QUEUE_URL S3_IMAGES_BUCKET CLOUDFRONT_IMAGES_DOMAIN
 
@@ -94,13 +89,6 @@ _tf_outputs_load() {
 
     POSTGRES_PASSWORD=$(_tf_output "backend_db_password")
     JWT_SECRET=$(_tf_output "backend_jwt_secret")
-    DEVIANTART_CLIENT_ID=$(_tf_output "backend_deviantart_client_id")
-    DEVIANTART_CLIENT_SECRET=$(_tf_output "backend_deviantart_client_secret")
-    DISCORD_CLIENT_ID=$(_tf_output "backend_discord_client_id")
-    DISCORD_CLIENT_SECRET=$(_tf_output "backend_discord_client_secret")
-    DISCORD_BOT_TOKEN=$(_tf_output "backend_discord_bot_token")
-    TOYHOUSE_CLIENT_ID=$(_tf_output "backend_toyhouse_client_id")
-    TOYHOUSE_CLIENT_SECRET=$(_tf_output "backend_toyhouse_client_secret")
 
     DEVIANTART_CALLBACK_URL=$(_tf_output "backend_deviantart_callback_url")
     DISCORD_CALLBACK_URL=$(_tf_output "backend_discord_callback_url")

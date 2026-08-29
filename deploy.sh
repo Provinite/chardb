@@ -180,9 +180,9 @@ fi
 
 # Load application secrets from Parameter Store.
 #
-# Fetched here, on the host, using its instance role; deploy.sh no longer writes
-# them into .env. Once get-terraform-outputs.sh stops exporting them they will
-# not touch a developer machine or a CI runner at all.
+# Fetched here, on the host, using its instance role. Nothing upstream carries
+# them: deploy.sh does not write them into .env, and get-terraform-outputs.sh
+# does not export them, so they never enter a developer or CI shell.
 #
 # They are written into .env, not just exported, so that `docker compose up -d`
 # run by hand on the box still works. Without them in the file compose resolves
