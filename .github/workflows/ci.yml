@@ -4,6 +4,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  # A run that fails at startup cannot be re-run, so without this the only way
+  # to retry a deploy is to push another commit to main.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -266,7 +269,9 @@ jobs:
   deploy-backend:
     name: Deploy backend to staging
     needs: [lint, verify, e2e]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
 
     # The host is Graviton, so the image must be arm64. Building on x86 would
     # need QEMU emulation.
@@ -349,7 +354,9 @@ jobs:
     # After the backend, so a bundle never ships expecting a schema the deployed
     # API does not have.
     needs: deploy-backend
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
 
     environment:
