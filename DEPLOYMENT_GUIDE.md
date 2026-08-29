@@ -417,12 +417,14 @@ the old shape and the change waits for the one after.
 
 Two fields are the deploy's, not Terraform's:
 
-- **The image**, which is the point of a release.
-- **`OTEL_SERVICE_VERSION`**, which has to agree with the image. Terraform reads
-  the version from `package.json` at apply time, so its value is only correct
-  until the next release; leaving it to Terraform means telemetry attributes a
-  new build to the previous version. Nothing fails when that happens, which is
-  why the deploy sets it and refuses to run if the key is missing.
+- **The image**, which is the point of a release. Terraform still emits one,
+  because a container definition without an image is not registrable; the deploy
+  overwrites it.
+- **`OTEL_SERVICE_VERSION`**, which has to agree with the image. Terraform only
+  knows the version at apply time, so any release cut after an apply would label
+  the new build with the previous version — silently, since nothing fails and
+  telemetry simply misattributes it. Terraform omits the key and the deploy
+  appends it, so the value has one author.
 
 ### Guards
 

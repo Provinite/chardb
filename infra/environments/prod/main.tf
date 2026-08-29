@@ -544,13 +544,13 @@ module "ecs" {
       value = "true"
     },
     # OpenTelemetry Configuration
+    #
+    # OTEL_SERVICE_VERSION is deliberately absent: it has to agree with the
+    # deployed image, and Terraform only knows the version at apply time. See
+    # scripts/deploy-prod-release.sh, which appends it.
     {
       name  = "OTEL_SERVICE_NAME"
       value = "${var.project_name}-backend"
-    },
-    {
-      name  = "OTEL_SERVICE_VERSION"
-      value = local.backend_version
     },
     {
       name  = "OTEL_EXPORTER_OTLP_ENDPOINT"

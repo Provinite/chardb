@@ -58,26 +58,26 @@ echo "📦 Registering a task definition revision with the released image..."
 # output, which returns revision, status and friends that register rejects.
 terraform -chdir="$TF_DIR" output -raw ecs_task_definition_input > "$WORK/base.json"
 
-# OTEL_SERVICE_VERSION is set here, not left to Terraform's value.
+# OTEL_SERVICE_VERSION is the deploy's, not Terraform's.
 #
-# Terraform reads the version from package.json when it applies, so its value is
-# only correct until the next release. Releasing without applying would ship the
-# previous version's label -- silently, since nothing fails and telemetry just
-# attributes the new build to the old version. The image and the label are the
-# same fact, so the deploy sets both.
+# It has to agree with the deployed image, and Terraform only knows the version
+# at apply time -- so any release cut after an apply would label the new build
+# with the previous version. Nothing fails when that happens; telemetry just
+# misattributes the build. Terraform omits the key entirely and this appends it,
+# so the value has one author rather than two.
 #
-# Terraform still emits the key, so a revision registered straight from the
-# output is valid; only the value is stale there. Fail loudly if it goes
-# missing, or this substitution would quietly become a no-op.
-jq -e '.containerDefinitions[0].environment | map(.name) | index("OTEL_SERVICE_VERSION")' \
-    "$WORK/base.json" >/dev/null \
-    || { echo "❌ OTEL_SERVICE_VERSION absent from the Terraform output -- refusing to deploy an unlabelled build" >&2; exit 1; }
-
+# The image is not omitted the same way, because it is a required field:
+# Terraform has to emit something for its output to be a registrable definition,
+# and that placeholder is overwritten here.
+#
+# The filter is defensive. If the key ever comes back on Terraform's side, this
+# still produces exactly one, rather than two entries with ECS picking a winner.
 jq --arg img "$IMAGE" --arg ver "${VERSION#v}" '
       .containerDefinitions[0].image = $img
-    | .containerDefinitions[0].environment |= map(
-          if .name == "OTEL_SERVICE_VERSION" then .value = $ver else . end
-      )' "$WORK/base.json" > "$WORK/new.json"
+    | .containerDefinitions[0].environment |=
+        (map(select(.name != "OTEL_SERVICE_VERSION"))
+          + [{name: "OTEL_SERVICE_VERSION", value: $ver}])
+  ' "$WORK/base.json" > "$WORK/new.json"
 
 NEW_TD=$(aws ecs register-task-definition --region "$AWS_REGION" \
     --cli-input-json "file://$WORK/new.json" \
