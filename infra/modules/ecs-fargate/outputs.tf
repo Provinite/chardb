@@ -41,11 +41,6 @@ output "task_definition_family" {
   value       = "${var.name_prefix}-task"
 }
 
-output "current_task_definition_arn" {
-  description = "Revision the service is running now, read from AWS rather than owned by Terraform"
-  value       = data.aws_ecs_task_definition.current.arn
-}
-
 output "task_execution_role_arn" {
   description = "ARN of the task execution role"
   value       = aws_iam_role.task_execution.arn

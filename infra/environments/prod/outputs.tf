@@ -345,11 +345,6 @@ output "ecs_task_definition_input" {
   sensitive   = true
 }
 
-output "ecs_current_task_definition_arn" {
-  description = "Revision the service is running now"
-  value       = module.ecs.current_task_definition_arn
-}
-
 output "github_actions_deploy_role_arn" {
   description = "ARN of the role the release workflow assumes via OIDC"
   value       = module.github_actions_deploy.role_arn
