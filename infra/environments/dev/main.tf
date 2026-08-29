@@ -192,7 +192,11 @@ data "aws_kms_key" "ssm" {
 }
 
 locals {
+  # Two ARNs, because the two call shapes authorise against different things:
+  # GetParametersByPath against the path itself, GetParameter(s) against the
+  # parameters under it. Omitting the first denies the deploy's own fetch.
   dev_parameter_arns = [
+    "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${module.app_secrets.path_prefix}",
     "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${module.app_secrets.path_prefix}/*",
   ]
 }
