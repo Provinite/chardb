@@ -402,13 +402,29 @@ permanently disagreeing with the running one.
 Instead Terraform *computes* the definition and exposes it as the
 `ecs_task_definition_input` output: environment, secrets, sizing, roles and
 logging, all derived from its own configuration. `deploy-prod-release.sh` reads
-that output, substitutes the released image, and registers a revision.
+that output, substitutes the release identity, and registers a revision.
 
-So Terraform owns the shape and the deploy owns the image, with neither holding
-a copy of the other's decision. A Terraform change to the definition lands on
-the next release, because the deploy builds from the output rather than from the
-running revision -- building from the running one would compound, each deploy
-layering on the last and Terraform's changes never arriving.
+So Terraform owns the shape and the deploy owns the release, with neither
+holding a copy of the other's decision. A Terraform change to the definition
+lands on the next release, because the deploy builds from the output rather than
+from the running revision -- building from the running one would compound, each
+deploy layering on the last and Terraform's changes never arriving.
+
+**Apply before releasing.** The deploy reads the output from state, so a change
+to the definition that has not been applied is invisible to it. A shape change
+and a release in the same merge need the apply in between, or the release ships
+the old shape and the change waits for the one after.
+
+Two fields are the deploy's, not Terraform's:
+
+- **The image**, which is the point of a release. Terraform still emits one,
+  because a container definition without an image is not registrable; the deploy
+  overwrites it.
+- **`OTEL_SERVICE_VERSION`**, which has to agree with the image. Terraform only
+  knows the version at apply time, so any release cut after an apply would label
+  the new build with the previous version — silently, since nothing fails and
+  telemetry simply misattributes it. Terraform omits the key and the deploy
+  appends it, so the value has one author.
 
 ### Guards
 

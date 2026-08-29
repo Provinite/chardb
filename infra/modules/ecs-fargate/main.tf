@@ -205,10 +205,15 @@ locals {
     image     = var.container_image
     essential = true
 
-    # hostPort and the three empty lists are what AWS fills in when it
+    # cpu, hostPort and the three empty lists are what AWS fills in when it
     # normalises a definition. Emitting them keeps a registered revision
     # byte-identical to what the API returns, so successive deploys of the same
     # version produce no spurious difference.
+    #
+    # cpu = 0 means "no container-level reservation": the task-level cpu above
+    # is the real limit. It is not a throttle.
+    cpu = 0
+
     portMappings = [
       {
         containerPort = var.container_port
@@ -252,8 +257,16 @@ locals {
   }
 }
 
-# The revision the service currently runs. Read, never written: this is what
-# lets the service be declared without Terraform owning a task definition.
+# Read, never written: this is what lets the service be declared without
+# Terraform owning a task definition. aws_ecs_service requires a task_definition
+# argument, so something has to supply one.
+#
+# A bare family name (rather than family:revision) resolves to the family's
+# latest ACTIVE revision -- which is the one the deploy most recently
+# registered, not necessarily the one the service is running. Those diverge when
+# a rollout fails: the revision exists and is ACTIVE, but the service stayed
+# where it was. The ignore_changes on the service below is what stops that
+# divergence from becoming a plan that moves production.
 data "aws_ecs_task_definition" "current" {
   task_definition = "${var.name_prefix}-task"
 }
@@ -262,8 +275,10 @@ data "aws_ecs_task_definition" "current" {
 resource "aws_ecs_service" "app" {
   name    = "${var.name_prefix}-service"
   cluster = aws_ecs_cluster.main.id
-  # Whatever revision is live. Paired with the ignore_changes below, Terraform
-  # neither chooses nor reverts the running revision -- the deploy does.
+  # Satisfies the required argument with a value that is already true, so a
+  # freshly imported service does not immediately propose a change. Paired with
+  # the ignore_changes below, Terraform neither chooses nor reverts the running
+  # revision -- the deploy does.
   task_definition = data.aws_ecs_task_definition.current.arn
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
@@ -282,13 +297,14 @@ resource "aws_ecs_service" "app" {
 
   lifecycle {
     # desired_count: owned by auto-scaling.
-    # task_definition: owned by the deploy, which registers a revision from the
-    # one Terraform last created and rolls the service onto it. Without this,
-    # the next apply would revert production to an older release.
+    # task_definition: owned by the deploy, which builds a revision from the
+    # task_definition_input output and rolls the service onto it. Without this,
+    # an apply could move production off the revision the deploy chose.
     #
     # Consequence worth knowing: a task definition change made here does not
-    # deploy itself. It lands on the next release, because the deploy derives
-    # its revision from Terraform's rather than from the running one.
+    # deploy itself. It lands on the next release *after an apply* -- the deploy
+    # reads the task_definition_input output, which comes from state, so an
+    # unapplied change is invisible to it.
     ignore_changes = [desired_count, task_definition]
   }
 

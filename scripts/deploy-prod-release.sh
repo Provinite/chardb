@@ -9,7 +9,8 @@
 #
 # The definition is built from the ecs_task_definition_input output, which
 # Terraform computes from the environment, secrets, sizing, roles and logging it
-# owns. Only the image comes from here.
+# owns. Only the release identity comes from here: the image and the version
+# label that must agree with it.
 #
 # Terraform holds no task definition in state, so it never registers a revision
 # nothing deploys and never disagrees with the running one. It still owns the
@@ -57,8 +58,26 @@ echo "📦 Registering a task definition revision with the released image..."
 # output, which returns revision, status and friends that register rejects.
 terraform -chdir="$TF_DIR" output -raw ecs_task_definition_input > "$WORK/base.json"
 
-jq --arg img "$IMAGE" '.containerDefinitions[0].image = $img' \
-    "$WORK/base.json" > "$WORK/new.json"
+# OTEL_SERVICE_VERSION is the deploy's, not Terraform's.
+#
+# It has to agree with the deployed image, and Terraform only knows the version
+# at apply time -- so any release cut after an apply would label the new build
+# with the previous version. Nothing fails when that happens; telemetry just
+# misattributes the build. Terraform omits the key entirely and this appends it,
+# so the value has one author rather than two.
+#
+# The image is not omitted the same way, because it is a required field:
+# Terraform has to emit something for its output to be a registrable definition,
+# and that placeholder is overwritten here.
+#
+# The filter is defensive. If the key ever comes back on Terraform's side, this
+# still produces exactly one, rather than two entries with ECS picking a winner.
+jq --arg img "$IMAGE" --arg ver "${VERSION#v}" '
+      .containerDefinitions[0].image = $img
+    | .containerDefinitions[0].environment |=
+        (map(select(.name != "OTEL_SERVICE_VERSION"))
+          + [{name: "OTEL_SERVICE_VERSION", value: $ver}])
+  ' "$WORK/base.json" > "$WORK/new.json"
 
 NEW_TD=$(aws ecs register-task-definition --region "$AWS_REGION" \
     --cli-input-json "file://$WORK/new.json" \
