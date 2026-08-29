@@ -150,21 +150,11 @@ module "backend" {
   api_acm_certificate_arn  = var.domain_name != null ? aws_acm_certificate_validation.main[0].certificate_arn : ""
   api_route53_zone_id      = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : ""
 
-  # DeviantArt OAuth Configuration
-  deviantart_client_id     = var.deviantart_client_id
-  deviantart_client_secret = var.deviantart_client_secret
-  deviantart_callback_url  = var.deviantart_callback_url
-
-  # Discord OAuth Configuration
-  discord_client_id        = var.discord_client_id
-  discord_client_secret    = var.discord_client_secret
-  discord_callback_url     = var.discord_callback_url
-  discord_bot_token        = var.discord_bot_token
-
-  # ToyHouse OAuth Configuration
-  toyhouse_client_id       = var.toyhouse_client_id
-  toyhouse_client_secret   = var.toyhouse_client_secret
-  toyhouse_callback_url    = var.toyhouse_callback_url
+  # OAuth redirect URIs. The client ids, client secrets and bot token are not
+  # here: they live in SSM Parameter Store, read at deploy time.
+  deviantart_callback_url = var.deviantart_callback_url
+  discord_callback_url    = var.discord_callback_url
+  toyhouse_callback_url   = var.toyhouse_callback_url
 }
 
 # Frontend infrastructure
@@ -178,8 +168,6 @@ module "frontend" {
   route53_zone_id     = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : null
 }
 
-# Nothing reads these yet; deploy.sh still renders the host's .env from
-# Terraform outputs.
 module "app_secrets" {
   source = "../../modules/app-secrets"
 

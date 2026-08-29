@@ -71,56 +71,14 @@ output "jwt_secret" {
   sensitive   = true
 }
 
-output "deviantart_client_id" {
-  description = "DeviantArt OAuth client ID"
-  value       = var.deviantart_client_id
-  sensitive   = true
-}
-
-output "deviantart_client_secret" {
-  description = "DeviantArt OAuth client secret"
-  value       = var.deviantart_client_secret
-  sensitive   = true
-}
-
 output "deviantart_callback_url" {
   description = "DeviantArt OAuth callback URL"
   value       = var.deviantart_callback_url
 }
 
-output "discord_client_id" {
-  description = "Discord OAuth client ID"
-  value       = var.discord_client_id
-  sensitive   = true
-}
-
-output "discord_client_secret" {
-  description = "Discord OAuth client secret"
-  value       = var.discord_client_secret
-  sensitive   = true
-}
-
 output "discord_callback_url" {
   description = "Discord OAuth callback URL"
   value       = var.discord_callback_url
-}
-
-output "discord_bot_token" {
-  description = "Discord bot token for bot integration"
-  value       = var.discord_bot_token
-  sensitive   = true
-}
-
-output "toyhouse_client_id" {
-  description = "ToyHouse OAuth client ID"
-  value       = var.toyhouse_client_id
-  sensitive   = true
-}
-
-output "toyhouse_client_secret" {
-  description = "ToyHouse OAuth client secret"
-  value       = var.toyhouse_client_secret
-  sensitive   = true
 }
 
 output "toyhouse_callback_url" {

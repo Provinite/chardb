@@ -13,7 +13,7 @@ module "prize_distribution_queue" {
 
   queue_name            = "${var.project_name}-prize-distribution-${var.environment}"
   visibility_timeout    = 30
-  message_retention     = 345600  # 4 days
+  message_retention     = 345600 # 4 days
   max_receive_count     = 3
   dlq_message_retention = 1209600 # 14 days
   receive_wait_time     = 5       # Long polling - reduces API calls and costs
@@ -42,20 +42,13 @@ module "backend_docker_host" {
   s3_images_bucket_arn = var.s3_images_bucket_arn
 
   # DeviantArt OAuth Configuration
-  deviantart_client_id     = var.deviantart_client_id
-  deviantart_client_secret = var.deviantart_client_secret
-  deviantart_callback_url  = var.deviantart_callback_url
+  deviantart_callback_url = var.deviantart_callback_url
 
   # Discord Configuration
-  discord_client_id     = var.discord_client_id
-  discord_client_secret = var.discord_client_secret
-  discord_callback_url  = var.discord_callback_url
-  discord_bot_token     = var.discord_bot_token
+  discord_callback_url = var.discord_callback_url
 
   # ToyHouse OAuth Configuration
-  toyhouse_client_id     = var.toyhouse_client_id
-  toyhouse_client_secret = var.toyhouse_client_secret
-  toyhouse_callback_url  = var.toyhouse_callback_url
+  toyhouse_callback_url = var.toyhouse_callback_url
 
   # SQS Queue URL
   sqs_queue_url = module.prize_distribution_queue.queue_url
@@ -70,14 +63,14 @@ module "cloudfront_api" {
 
   app_name    = var.project_name
   environment = var.environment
-  
+
   backend_public_dns = module.backend_docker_host.public_dns
   backend_port       = var.backend_port
-  
+
   # Optional custom domain
-  custom_domain_name    = var.api_custom_domain_name
-  acm_certificate_arn   = var.api_acm_certificate_arn
-  route53_zone_id       = var.api_route53_zone_id
+  custom_domain_name  = var.api_custom_domain_name
+  acm_certificate_arn = var.api_acm_certificate_arn
+  route53_zone_id     = var.api_route53_zone_id
 }
 
 # Attach SQS consumer policy to backend instance role

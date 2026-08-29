@@ -74,56 +74,14 @@ output "backend_jwt_secret" {
   sensitive   = true
 }
 
-output "backend_deviantart_client_id" {
-  description = "DeviantArt OAuth client ID for backend"
-  value       = module.backend.deviantart_client_id
-  sensitive   = true
-}
-
-output "backend_deviantart_client_secret" {
-  description = "DeviantArt OAuth client secret for backend"
-  value       = module.backend.deviantart_client_secret
-  sensitive   = true
-}
-
 output "backend_deviantart_callback_url" {
   description = "DeviantArt OAuth callback URL for backend"
   value       = module.backend.deviantart_callback_url
 }
 
-output "backend_discord_client_id" {
-  description = "Discord OAuth client ID for backend"
-  value       = module.backend.discord_client_id
-  sensitive   = true
-}
-
-output "backend_discord_client_secret" {
-  description = "Discord OAuth client secret for backend"
-  value       = module.backend.discord_client_secret
-  sensitive   = true
-}
-
 output "backend_discord_callback_url" {
   description = "Discord OAuth callback URL for backend"
   value       = module.backend.discord_callback_url
-}
-
-output "backend_discord_bot_token" {
-  description = "Discord bot token for backend"
-  value       = module.backend.discord_bot_token
-  sensitive   = true
-}
-
-output "backend_toyhouse_client_id" {
-  description = "ToyHouse OAuth client ID for backend"
-  value       = module.backend.toyhouse_client_id
-  sensitive   = true
-}
-
-output "backend_toyhouse_client_secret" {
-  description = "ToyHouse OAuth client secret for backend"
-  value       = module.backend.toyhouse_client_secret
-  sensitive   = true
 }
 
 output "backend_toyhouse_callback_url" {
