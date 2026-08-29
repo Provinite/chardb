@@ -51,11 +51,6 @@ To save the SSH key and connect:
 EOT
 }
 
-output "jaeger_url" {
-  description = "Jaeger UI URL"
-  value       = module.backend.jaeger_url
-}
-
 # CloudFront API outputs (when enabled)
 output "api_gateway_url" {
   description = "CloudFront API URL (if enabled)"

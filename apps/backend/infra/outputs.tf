@@ -29,11 +29,6 @@ output "private_ip" {
 }
 
 
-output "jaeger_url" {
-  description = "Jaeger UI URL"
-  value       = module.backend_docker_host.jaeger_url
-}
-
 output "ssh_command" {
   description = "SSH command to connect to the instance"
   value       = module.backend_docker_host.ssh_command

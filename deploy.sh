@@ -257,7 +257,11 @@ unset value escaped
 echo "✅ Loaded $SECRET_COUNT secrets from Parameter Store into .env"
 
 echo "🛑 Stopping existing services..."
-docker compose down || true
+# --remove-orphans: `docker compose down` only stops services the *current*
+# compose files define. A service removed from the config leaves its container
+# running, invisible to compose and still consuming memory -- which is what
+# happened when jaeger and otel-collector were retired.
+docker compose down --remove-orphans || true
 
 echo "📥 Pulling latest images..."
 docker compose pull
