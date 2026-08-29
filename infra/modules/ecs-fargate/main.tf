@@ -205,10 +205,15 @@ locals {
     image     = var.container_image
     essential = true
 
-    # hostPort and the three empty lists are what AWS fills in when it
+    # cpu, hostPort and the three empty lists are what AWS fills in when it
     # normalises a definition. Emitting them keeps a registered revision
     # byte-identical to what the API returns, so successive deploys of the same
     # version produce no spurious difference.
+    #
+    # cpu = 0 means "no container-level reservation": the task-level cpu above
+    # is the real limit. It is not a throttle.
+    cpu = 0
+
     portMappings = [
       {
         containerPort = var.container_port
@@ -287,8 +292,9 @@ resource "aws_ecs_service" "app" {
     # the next apply would revert production to an older release.
     #
     # Consequence worth knowing: a task definition change made here does not
-    # deploy itself. It lands on the next release, because the deploy derives
-    # its revision from Terraform's rather than from the running one.
+    # deploy itself. It lands on the next release *after an apply* -- the deploy
+    # reads the task_definition_input output, which comes from state, so an
+    # unapplied change is invisible to it.
     ignore_changes = [desired_count, task_definition]
   }
 

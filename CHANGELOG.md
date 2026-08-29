@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v10.2.1] - 2026-08-29
+
+### Fixed
+
+- Production telemetry reported the version Terraform last applied rather than the one actually deployed, labelling production `10.1.0` while it ran `v10.2.0`; the deploy now sets `OTEL_SERVICE_VERSION` alongside the image.
+- Terraform no longer manages a production task definition, so an apply stops registering revisions nothing deploys and a release stops leaving a pending replacement behind (#262).
+- Production plans no longer propose a task definition replacement on every run, which had buried real changes (#261).
+- Registered task definitions now match what AWS returns, and declare `runtimePlatform` as `LINUX/ARM64` explicitly instead of relying on ECS inferring it.
+
+### Removed
+
+- 14 unused Secrets Manager entries in production, superseded by SSM Parameter Store and recoverable for 30 days.
+
 ## [v10.2.0] - 2026-08-29
 
 ### Added

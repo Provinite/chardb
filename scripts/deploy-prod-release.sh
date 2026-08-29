@@ -9,7 +9,8 @@
 #
 # The definition is built from the ecs_task_definition_input output, which
 # Terraform computes from the environment, secrets, sizing, roles and logging it
-# owns. Only the image comes from here.
+# owns. Only the release identity comes from here: the image and the version
+# label that must agree with it.
 #
 # Terraform holds no task definition in state, so it never registers a revision
 # nothing deploys and never disagrees with the running one. It still owns the
@@ -57,8 +58,26 @@ echo "📦 Registering a task definition revision with the released image..."
 # output, which returns revision, status and friends that register rejects.
 terraform -chdir="$TF_DIR" output -raw ecs_task_definition_input > "$WORK/base.json"
 
-jq --arg img "$IMAGE" '.containerDefinitions[0].image = $img' \
-    "$WORK/base.json" > "$WORK/new.json"
+# OTEL_SERVICE_VERSION is set here, not left to Terraform's value.
+#
+# Terraform reads the version from package.json when it applies, so its value is
+# only correct until the next release. Releasing without applying would ship the
+# previous version's label -- silently, since nothing fails and telemetry just
+# attributes the new build to the old version. The image and the label are the
+# same fact, so the deploy sets both.
+#
+# Terraform still emits the key, so a revision registered straight from the
+# output is valid; only the value is stale there. Fail loudly if it goes
+# missing, or this substitution would quietly become a no-op.
+jq -e '.containerDefinitions[0].environment | map(.name) | index("OTEL_SERVICE_VERSION")' \
+    "$WORK/base.json" >/dev/null \
+    || { echo "❌ OTEL_SERVICE_VERSION absent from the Terraform output -- refusing to deploy an unlabelled build" >&2; exit 1; }
+
+jq --arg img "$IMAGE" --arg ver "${VERSION#v}" '
+      .containerDefinitions[0].image = $img
+    | .containerDefinitions[0].environment |= map(
+          if .name == "OTEL_SERVICE_VERSION" then .value = $ver else . end
+      )' "$WORK/base.json" > "$WORK/new.json"
 
 NEW_TD=$(aws ecs register-task-definition --region "$AWS_REGION" \
     --cli-input-json "file://$WORK/new.json" \
