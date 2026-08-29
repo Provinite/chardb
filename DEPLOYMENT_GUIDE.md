@@ -440,7 +440,7 @@ aws ecs update-service --cluster chardb-prod-cluster \
   --service chardb-prod-service --task-definition chardb-prod-task:<n>
 ```
 
-Migrations do not roll back. That is what the pre-deploy RDS snapshot is for.
+Migrations do not roll back.
 
 ## 🏗️ Phase 2: Application Build and Deployment
 

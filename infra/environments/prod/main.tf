@@ -789,6 +789,9 @@ module "github_actions_deploy" {
   ]
 
   ecs_service_arn = module.ecs.service_id
+  # Revisions of this family only. Register is a write, and paired with
+  # PassRole an unscoped one would let the role run a task of its own design.
+  ecs_task_definition_family_arn_pattern = "arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:task-definition/${module.ecs.task_definition_family}:*"
   ecs_pass_role_arns = [
     module.ecs.task_role_arn,
     module.ecs.task_execution_role_arn,

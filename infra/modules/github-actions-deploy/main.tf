@@ -187,14 +187,21 @@ locals {
   # and rolls the service onto it.
   _ecs_all = [
     {
-      Sid    = "ReadTaskDefinitions"
+      Sid    = "DescribeTaskDefinitions"
       Effect = "Allow"
-      # DescribeTaskDefinition and RegisterTaskDefinition take no resource.
-      Action = [
-        "ecs:DescribeTaskDefinition",
-        "ecs:RegisterTaskDefinition"
-      ]
+      # DescribeTaskDefinition genuinely takes no resource -- IAM does not match
+      # it against a task-definition ARN, so "*" is the only option.
+      Action   = "ecs:DescribeTaskDefinition"
       Resource = "*"
+    },
+    {
+      Sid    = "RegisterTaskDefinitionRevision"
+      Effect = "Allow"
+      # This one CAN be scoped, to the family whose revisions may be created.
+      # Without it the role could register a task definition in any family and
+      # -- paired with PassRole -- run it.
+      Action   = "ecs:RegisterTaskDefinition"
+      Resource = var.ecs_task_definition_family_arn_pattern
     },
     {
       Sid    = "DeployEcsService"

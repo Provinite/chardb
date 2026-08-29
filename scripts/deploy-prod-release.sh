@@ -74,7 +74,7 @@ aws ecs update-service --region "$AWS_REGION" \
     --cluster "$CLUSTER" --service "$SERVICE" \
     --task-definition "$NEW_TD" --no-cli-pager >/dev/null
 
-echo "⏳ Waiting for the service to stabilise (migrations run at container start)..."
+echo "⏳ Waiting for the service to stabilise..."
 aws ecs wait services-stable --region "$AWS_REGION" \
     --cluster "$CLUSTER" --services "$SERVICE"
 

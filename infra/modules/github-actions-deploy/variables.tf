@@ -83,7 +83,11 @@ variable "ecs_service_arn" {
 }
 
 variable "ecs_task_definition_family_arn_pattern" {
-  description = "ARN pattern matching every revision of the task definition family"
+  description = <<-EOT
+    ARN pattern matching every revision of the task definition family, e.g.
+    "arn:aws:ecs:<region>:<acct>:task-definition/<family>:*". Scopes which
+    families the workflow may register revisions in.
+  EOT
   type        = string
   default     = null
 }
