@@ -339,9 +339,15 @@ Next Steps:
 EOT
 }
 
-output "ecs_task_definition_arn" {
-  description = "Task definition revision Terraform last created; the release deploy derives from this"
-  value       = module.ecs.task_definition_arn
+output "ecs_task_definition_input" {
+  description = "register-task-definition payload the release deploy builds from"
+  value       = module.ecs.task_definition_input
+  sensitive   = true
+}
+
+output "ecs_current_task_definition_arn" {
+  description = "Revision the service is running now"
+  value       = module.ecs.current_task_definition_arn
 }
 
 output "github_actions_deploy_role_arn" {
