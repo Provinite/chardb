@@ -754,6 +754,42 @@ module "frontend" {
 # Local Variables
 ##############################################################################
 
+# CD identity for the release workflow.
+#
+# No SSM grants: prod has no docker host. Instead it can read the task
+# definition Terraform last created, register a revision with a new image, and
+# roll the service onto it -- but it cannot apply Terraform, so it can never
+# change the shape of that definition.
+#
+# The trust policy pins the OIDC subject to the "production" GitHub
+# environment, so protection rules on that environment gate the deploy before
+# a token is ever minted.
+module "github_actions_deploy" {
+  source = "../../modules/github-actions-deploy"
+
+  name              = "${var.project_name}-${var.environment}"
+  github_repository = var.github_repository
+  # Prod already has an OIDC provider from the dev environment; there is one
+  # per account.
+  create_oidc_provider = false
+  allowed_environments = [var.github_deploy_environment]
+
+  ecr_repository_arn     = module.backend_ecr.repository_arn
+  terraform_state_bucket = "clovercoin-tf-state"
+  terraform_state_key    = "chardb/environments/${var.environment}"
+
+  frontend_bucket_arn                  = module.frontend.bucket_arn
+  frontend_cloudfront_distribution_arn = module.frontend.cloudfront_distribution_arn
+
+  ecs_service_arn = module.ecs.service_id
+  ecs_pass_role_arns = [
+    module.ecs.task_role_arn,
+    module.ecs.task_execution_role_arn,
+  ]
+
+  tags = local.common_tags
+}
+
 locals {
   common_tags = {
     Environment = var.environment

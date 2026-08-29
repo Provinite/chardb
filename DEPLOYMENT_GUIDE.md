@@ -366,6 +366,69 @@ deploy could leave the host with images pulled and no containers running.
 Database migrations need no step of their own: the backend image's entrypoint
 (`scripts/migrate-and-start.sh`) runs `prisma migrate deploy` before the app boots.
 
+## 🏷️ Releasing to Production
+
+**Publishing a GitHub release deploys it.** `.github/workflows/release.yml` builds
+the released commit, pushes it to ECR under the tag, registers an ECS task
+definition revision carrying that image, and rolls the service onto it. The
+frontend follows, built with the tag as `VITE_VERSION`.
+
+```bash
+# cut a release from main
+gh release create v10.2.0 --generate-notes
+
+# or redeploy one that already exists
+gh workflow run release.yml -f tag=v10.2.0
+```
+
+### Why the deploy derives from Terraform's revision
+
+The ECS service ignores `task_definition` changes, so an apply cannot revert
+production to an older release. The cost is that a task definition change made
+in Terraform does not deploy itself.
+
+`scripts/deploy-prod-release.sh` closes that gap: it reads the
+`ecs_task_definition_arn` output -- the revision **Terraform** last created, not
+the one currently running -- swaps only the image, and registers from there. Any
+Terraform change to the definition is therefore picked up by the next release.
+
+Deriving from the *running* revision instead would compound: each deploy would
+build on the last deploy and Terraform's changes would never land.
+
+### Guards
+
+- **The tag must be an ancestor of `main`.** A release can be cut from any
+  commit, and production runs migrations at container start, so an unmerged
+  commit could change the schema in ways `main` does not describe.
+- **The image must already exist in ECR** before the service is touched, so a
+  missing image fails the deploy rather than leaving ECS unable to pull.
+- **The `production` environment gates it.** The deploy role's trust policy pins
+  the OIDC subject to that environment, so protection rules on it are enforced
+  before AWS mints a token. To require approval:
+  ```bash
+  gh api -X PUT repos/Provinite/chardb/environments/production \
+    -F 'reviewers[][type]=User' -F "reviewers[][id]=$(gh api user --jq .id)"
+  ```
+
+### Rollback
+
+Redeploy the previous tag:
+
+```bash
+gh workflow run release.yml -f tag=v10.1.0
+```
+
+Note the ECR lifecycle policy keeps only the **last 10** images tagged `v*`, so
+releases older than that are no longer pullable. For an immediate revert without
+a build, point the service back at a prior revision directly:
+
+```bash
+aws ecs update-service --cluster chardb-prod-cluster \
+  --service chardb-prod-service --task-definition chardb-prod-task:<n>
+```
+
+Migrations do not roll back. That is what the pre-deploy RDS snapshot is for.
+
 ## 🏗️ Phase 2: Application Build and Deployment
 
 ### Step 5: **Full-Stack Deployment (Recommended)**

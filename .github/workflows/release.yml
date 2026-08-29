@@ -1,0 +1,185 @@
+name: Release
+
+# Publishing a GitHub release deploys that version to production.
+#
+# Unlike the staging deploy in ci.yml, this one is gated on the `production`
+# environment: the deploy role's trust policy pins the OIDC subject to it, so
+# any protection rules configured there are enforced before AWS ever mints a
+# token.
+on:
+  release:
+    types: [published]
+  # Redeploy an existing release without cutting a new one.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to deploy, e.g. v10.2.0"
+        required: true
+        type: string
+
+concurrency:
+  group: release-production
+  cancel-in-progress: false
+
+jobs:
+  deploy-backend:
+    name: Deploy backend to production
+    # Prod Fargate runs ARM64 (runtime_platform in modules/ecs-fargate), so the
+    # image must be arm64. An arm runner builds it natively.
+    runs-on: ubuntu-24.04-arm
+
+    environment:
+      name: production
+      url: https://chardb.cc
+
+    permissions:
+      id-token: write # mint the OIDC token used to assume the deploy role
+      contents: read
+
+    env:
+      AWS_REGION: us-east-1
+      TF_ENVIRONMENT: prod
+
+    steps:
+      - name: Resolve version
+        id: v
+        run: |
+          tag="${{ github.event.release.tag_name || inputs.tag }}"
+          [ -n "$tag" ] || { echo "::error::no tag resolved"; exit 1; }
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Deploying $tag"
+
+      # Full history so the ancestry check below has main to compare against.
+      - name: Checkout the released commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.v.outputs.tag }}
+          fetch-depth: 0
+
+      # A release can be cut from any commit, including one never reviewed or
+      # merged. Production runs migrations at container start, so deploying an
+      # unmerged commit can change the schema in ways main does not describe.
+      - name: Require the tag to be on main
+        run: |
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          if git merge-base --is-ancestor HEAD origin/main; then
+            echo "$(git rev-parse --short HEAD) is an ancestor of main"
+          else
+            echo "::error::${{ steps.v.outputs.tag }} is not on main. Releases must be cut from merged commits."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_wrapper: false
+
+      - name: Initialise Terraform
+        run: terraform -chdir=infra/environments/${{ env.TF_ENVIRONMENT }} init -input=false
+
+      - name: Build and push the released image
+        run: ./scripts/build-and-push.sh "$TF_ENVIRONMENT" "${{ steps.v.outputs.tag }}"
+
+      - name: Deploy to production
+        run: ./scripts/deploy-prod-release.sh "${{ steps.v.outputs.tag }}"
+
+      # services-stable already waited for a steady state; this confirms the
+      # deployed revision actually serves.
+      - name: Verify production health
+        run: |
+          for attempt in $(seq 1 20); do
+            if curl -fsS --max-time 10 https://api.chardb.cc/health > /dev/null; then
+              echo "✅ healthy after ${attempt} attempt(s)"
+              exit 0
+            fi
+            echo "  attempt ${attempt}: not ready yet"
+            sleep 15
+          done
+          echo "::error::production did not become healthy within 5 minutes"
+          exit 1
+
+  deploy-frontend:
+    name: Deploy frontend to production
+    # After the backend, so a bundle never ships expecting a schema the
+    # deployed API does not have.
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+      url: https://chardb.cc
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      AWS_REGION: us-east-1
+      TF_ENVIRONMENT: prod
+      # @chardb/database's build runs prisma generate, which resolves
+      # env("DATABASE_URL") without ever connecting.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+    steps:
+      - name: Resolve version
+        id: v
+        run: echo "tag=${{ github.event.release.tag_name || inputs.tag }}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout the released commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.v.outputs.tag }}
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build workspace packages
+        run: |
+          yarn workspaces foreach -A --parallel \
+            --include '@chardb/database' \
+            --include '@chardb/shared' \
+            --include '@chardb/ui' \
+            run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_wrapper: false
+
+      - name: Initialise Terraform
+        run: terraform -chdir=infra/environments/${{ env.TF_ENVIRONMENT }} init -input=false
+
+      # VITE_API_URL and VITE_VERSION are baked in at build time. The version
+      # shown in the UI is the release tag, not the package.json version.
+      - name: Build and publish frontend
+        run: |
+          source ./scripts/get-terraform-outputs.sh "$TF_ENVIRONMENT"
+
+          if [ -z "$BACKEND_URL" ]; then
+            echo "::error::Could not resolve BACKEND_URL from Terraform outputs"
+            exit 1
+          fi
+
+          ./scripts/build-frontend.sh "$TF_ENVIRONMENT" "$BACKEND_URL" "${{ steps.v.outputs.tag }}"
+          ./scripts/deploy-frontend.sh "$TF_ENVIRONMENT"
