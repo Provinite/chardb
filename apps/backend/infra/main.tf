@@ -42,6 +42,10 @@ module "backend_docker_host" {
   s3_images_bucket_arn = var.s3_images_bucket_arn
 
   # DeviantArt OAuth Configuration
+  deviantart_client_id = var.deviantart_client_id
+  discord_client_id    = var.discord_client_id
+  toyhouse_client_id   = var.toyhouse_client_id
+
   deviantart_callback_url = var.deviantart_callback_url
 
   # Discord Configuration

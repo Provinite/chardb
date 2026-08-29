@@ -28,12 +28,16 @@
 #     POSTGRES_PASSWORD         Database password
 #     JWT_SECRET                Token signing secret
 #
-#   The OAuth client ids, client secrets and bot token are deliberately absent:
-#   they live in SSM Parameter Store under /chardb/<environment>/ and are read
-#   by whatever needs them (the host at deploy time, ECS via the task
-#   definition), so they never enter a developer or CI shell.
+#   The OAuth client secrets and bot token are deliberately absent: they live in
+#   SSM Parameter Store under /chardb/<environment>/ and are read by whatever
+#   needs them (the host at deploy time, ECS via the task definition), so they
+#   never enter a developer or CI shell. Client ids are not secret -- they are
+#   sent in the authorization URL -- so they travel as ordinary config.
 #
 #   Non-secret application config
+#     DEVIANTART_CLIENT_ID      DeviantArt OAuth client id
+#     DISCORD_CLIENT_ID         Discord OAuth client id
+#     TOYHOUSE_CLIENT_ID        ToyHouse OAuth client id
 #     DEVIANTART_CALLBACK_URL   DeviantArt OAuth redirect URI
 #     DISCORD_CALLBACK_URL      Discord OAuth redirect URI
 #     TOYHOUSE_CALLBACK_URL     ToyHouse OAuth redirect URI
@@ -79,6 +83,7 @@ _tf_outputs_load() {
     export SERVER_IP INSTANCE_ID SSH_KEY_NAME BACKEND_URL FRONTEND_URL \
         ECR_REPOSITORY_URL \
         SSH_PRIVATE_KEY POSTGRES_PASSWORD JWT_SECRET \
+        DEVIANTART_CLIENT_ID DISCORD_CLIENT_ID TOYHOUSE_CLIENT_ID \
         DEVIANTART_CALLBACK_URL DISCORD_CALLBACK_URL TOYHOUSE_CALLBACK_URL \
         SQS_QUEUE_URL S3_IMAGES_BUCKET CLOUDFRONT_IMAGES_DOMAIN
 
@@ -89,6 +94,10 @@ _tf_outputs_load() {
 
     POSTGRES_PASSWORD=$(_tf_output "backend_db_password")
     JWT_SECRET=$(_tf_output "backend_jwt_secret")
+
+    DEVIANTART_CLIENT_ID=$(_tf_output "backend_deviantart_client_id")
+    DISCORD_CLIENT_ID=$(_tf_output "backend_discord_client_id")
+    TOYHOUSE_CLIENT_ID=$(_tf_output "backend_toyhouse_client_id")
 
     DEVIANTART_CALLBACK_URL=$(_tf_output "backend_deviantart_callback_url")
     DISCORD_CALLBACK_URL=$(_tf_output "backend_discord_callback_url")

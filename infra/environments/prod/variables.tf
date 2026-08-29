@@ -64,7 +64,10 @@ variable "rds_storage_type" {
 variable "rds_engine_version" {
   description = "PostgreSQL engine version"
   type        = string
-  default     = "17.6"
+  # Track what AWS has actually installed. auto_minor_version_upgrade is on, so
+  # AWS moves this forward on its own; leaving a lower value here asks Terraform
+  # to downgrade, which RDS cannot do. Bump this after each minor upgrade.
+  default = "17.9"
 }
 
 variable "rds_database_name" {
@@ -92,9 +95,14 @@ variable "rds_multi_az" {
 }
 
 variable "rds_management_cidr_blocks" {
-  description = "CIDR blocks allowed to access RDS for management"
+  description = "CIDR blocks allowed to reach RDS on 5432 for administration"
   type        = list(string)
-  default     = []
+  # Empty by default so nothing is exposed implicitly. Set it in prod.tfvars,
+  # which is gitignored -- an address does not belong in a public repository.
+  # Note the live environment has a rule for an address that is not in any
+  # tfvars, so an apply will DESTROY it and remove direct psql access. Put the
+  # address here first if you want to keep it.
+  default = []
 }
 
 variable "rds_backup_retention_period" {
@@ -174,7 +182,11 @@ variable "backend_container_image" {
 variable "backend_container_port" {
   description = "Port the backend container listens on"
   type        = number
-  default     = 3000
+  # 4000, not 3000: this is what the application actually binds (see
+  # docker/services/backend.yml and the Dockerfile healthcheck) and what the
+  # live task definition, container port and NLB target group already use.
+  # Leaving it at 3000 makes any apply replace the target group.
+  default = 4000
 }
 
 variable "backend_health_check_path" {

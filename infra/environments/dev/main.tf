@@ -5,7 +5,7 @@ terraform {
       version = "~> 5.0"
     }
   }
-  
+
   backend "s3" {
     bucket = "clovercoin-tf-state"
     key    = "chardb/environments/dev"
@@ -28,8 +28,8 @@ data "aws_caller_identity" "current" {}
 
 # ACM Certificate for both API and frontend subdomains (if domain_name is provided)
 resource "aws_acm_certificate" "main" {
-  count           = var.domain_name != null ? 1 : 0
-  domain_name     = "*.${var.environment}.${var.domain_name}"
+  count             = var.domain_name != null ? 1 : 0
+  domain_name       = "*.${var.environment}.${var.domain_name}"
   validation_method = "DNS"
 
   subject_alternative_names = [
@@ -45,8 +45,8 @@ resource "aws_acm_certificate" "main" {
 
 # ACM Certificate validation
 resource "aws_acm_certificate_validation" "main" {
-  count           = var.domain_name != null ? 1 : 0
-  certificate_arn = aws_acm_certificate.main[0].arn
+  count                   = var.domain_name != null ? 1 : 0
+  certificate_arn         = aws_acm_certificate.main[0].arn
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
@@ -143,15 +143,20 @@ module "backend" {
   backend_ecr_repository_url = module.backend_ecr.repository_url
 
   # S3 image storage configuration
-  s3_images_bucket_arn       = module.image_storage.bucket_arn
+  s3_images_bucket_arn = module.image_storage.bucket_arn
 
   # Custom domain configuration (if domain_name is provided)
-  api_custom_domain_name   = var.domain_name != null ? "api.${var.environment}.${var.domain_name}" : ""
-  api_acm_certificate_arn  = var.domain_name != null ? aws_acm_certificate_validation.main[0].certificate_arn : ""
-  api_route53_zone_id      = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : ""
+  api_custom_domain_name  = var.domain_name != null ? "api.${var.environment}.${var.domain_name}" : ""
+  api_acm_certificate_arn = var.domain_name != null ? aws_acm_certificate_validation.main[0].certificate_arn : ""
+  api_route53_zone_id     = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : ""
 
-  # OAuth redirect URIs. The client ids, client secrets and bot token are not
-  # here: they live in SSM Parameter Store, read at deploy time.
+  # OAuth client ids and redirect URIs. Neither is secret -- a client id is sent
+  # in the authorization URL -- so they travel as ordinary config, matching prod.
+  # Only the client secrets and bot token live in Parameter Store.
+  deviantart_client_id = var.deviantart_client_id
+  discord_client_id    = var.discord_client_id
+  toyhouse_client_id   = var.toyhouse_client_id
+
   deviantart_callback_url = var.deviantart_callback_url
   discord_callback_url    = var.discord_callback_url
   toyhouse_callback_url   = var.toyhouse_callback_url
@@ -160,7 +165,7 @@ module "backend" {
 # Frontend infrastructure
 module "frontend" {
   source = "../../../apps/frontend/infra"
-  
+
   environment         = var.environment
   project_name        = var.project_name
   domain_name         = var.domain_name != null ? "${var.environment}.${var.domain_name}" : null
@@ -175,12 +180,9 @@ module "app_secrets" {
   environment  = var.environment
 
   unmanaged_secrets = {
-    "deviantart-client-id"     = "DeviantArt OAuth client id"
     "deviantart-client-secret" = "DeviantArt OAuth client secret"
-    "discord-client-id"        = "Discord OAuth client id"
     "discord-client-secret"    = "Discord OAuth client secret"
     "discord-bot-token"        = "Discord bot token"
-    "toyhouse-client-id"       = "ToyHouse OAuth client id"
     "toyhouse-client-secret"   = "ToyHouse OAuth client secret"
   }
 

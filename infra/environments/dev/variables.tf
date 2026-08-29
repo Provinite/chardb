@@ -20,13 +20,13 @@ variable "project_name" {
 variable "backend_instance_type" {
   description = "EC2 instance type for backend"
   type        = string
-  default     = "t4g.micro"  # Cost-effective default
+  default     = "t4g.micro" # Cost-effective default
 }
 
 variable "backend_root_volume_size" {
   description = "Size of the root volume in GB for backend"
   type        = number
-  default     = 50  # Increased for application needs
+  default     = 50 # Increased for application needs
 }
 
 variable "backend_ssh_allowed_cidr_blocks" {
@@ -38,7 +38,7 @@ variable "backend_ssh_allowed_cidr_blocks" {
 variable "backend_enable_api_gateway" {
   description = "Whether to enable API Gateway for backend"
   type        = bool
-  default     = true  # Enable for custom domain support
+  default     = true # Enable for custom domain support
 }
 
 # Domain configuration
@@ -104,4 +104,22 @@ variable "github_deploy_ref" {
   description = "Ref the deploy jobs must be running on"
   type        = string
   default     = "refs/heads/main"
+}
+
+variable "deviantart_client_id" {
+  description = "DeviantArt OAuth client ID for backend"
+  type        = string
+  sensitive   = true
+}
+
+variable "discord_client_id" {
+  description = "Discord OAuth client ID for backend"
+  type        = string
+  sensitive   = true
+}
+
+variable "toyhouse_client_id" {
+  description = "ToyHouse OAuth client ID for backend"
+  type        = string
+  sensitive   = true
 }
