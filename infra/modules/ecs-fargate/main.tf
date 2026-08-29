@@ -208,12 +208,22 @@ resource "aws_ecs_task_definition" "app" {
       image     = var.container_image
       essential = true
 
+      # hostPort, and the three empty lists below, are what AWS fills in when it
+      # normalises a task definition. Terraform string-compares the JSON it
+      # renders against the JSON the API returns, so omitting them makes every
+      # plan propose a replacement that changes nothing. Emitting them keeps
+      # plans clean between real changes.
       portMappings = [
         {
           containerPort = var.container_port
+          hostPort      = var.container_port
           protocol      = "tcp"
         }
       ]
+
+      mountPoints    = []
+      volumesFrom    = []
+      systemControls = []
 
       environment = var.environment_variables
 
