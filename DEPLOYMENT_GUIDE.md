@@ -86,11 +86,19 @@ backend_enable_api_gateway = true          # Enable HTTPS via API Gateway
 **For Development (`infra/environments/dev/dev.tfvars`):**
 
 ```hcl
-# More permissive for development
-backend_ssh_allowed_cidr_blocks = ["0.0.0.0/0"]  # Allow from anywhere (dev only!)
-backend_instance_type = "t3.medium"              # More powerful for development
-backend_enable_api_gateway = false               # Direct access for simplicity
+# Your address only. Never 0.0.0.0/0: this opens sshd to the internet, and the
+# host is reachable over Session Manager anyway (see below), so the rule is a
+# fallback rather than the primary path.
+backend_ssh_allowed_cidr_blocks = ["YOUR_IP_ADDRESS/32"]
+
+# The staging host is a t4g.micro. It has ~910 MB of RAM and no swap, so what
+# runs on it is deliberately kept small.
+backend_instance_type = "t4g.micro"
+backend_enable_api_gateway = false
 ```
+
+This file is gitignored and, since the OAuth secrets moved to Parameter Store,
+holds only the CIDR above and the three OAuth callback URLs — no secrets.
 
 ### Step 4: **Initialize and Apply Terraform**
 
@@ -114,7 +122,7 @@ terraform output > terraform-outputs.txt
 **Backend Infrastructure:**
 - ✅ ECR repository for Docker images
 - ✅ EC2 instance with Docker installed
-- ✅ Security groups with appropriate ports (22, 80, 443, 3000-8000, 16686)
+- ✅ Security group opening 22 (your address only), 80, 443 and 4000
 - ✅ SSH key pair (auto-generated and stored in Terraform state)
 - ✅ Elastic IP for static addressing
 - ✅ IAM roles and policies
@@ -130,10 +138,10 @@ terraform output > terraform-outputs.txt
 ## 🔑 Application Secrets
 
 Secrets live in **SSM Parameter Store** under `/chardb/<environment>/`, not in
-Terraform variables and not in Terraform state.
+Terraform variables and not in a `.tfvars` file.
 
 Terraform creates each parameter with the placeholder `not-managed-by-terraform`
-and then carries `lifecycle { ignore_changes = [value] }`, so it never reads or
+and then carries `lifecycle { ignore_changes = [value] }`, so it never
 overwrites the real value. Setting or rotating one is a single command with no
 Terraform run and no plan diff:
 
@@ -146,6 +154,11 @@ Two parameters are the exception, and deliberately stay Terraform-managed
 because Terraform *generates* their value: `/chardb/prod/jwt-secret` (a
 `random_password`) and `/chardb/prod/database-url` (built from the RDS password
 Terraform created). Writing a placeholder over those would break the app.
+
+> **The values are still in Terraform state.** `ignore_changes` stops Terraform
+> writing a value, not reading one — every refresh fetches the decrypted
+> parameter and stores it. So "read the state bucket" still implies "read every
+> application secret". See issue #255 for the fix, which needs Terraform ≥ 1.11.
 
 ### Why not Terraform variables
 
@@ -301,7 +314,22 @@ DEPLOY_TRANSPORT=direct ./deploy.sh dev latest
 cd infra/environments/dev
 terraform apply -var-file=dev.tfvars
 
-# 2. Create the staging environment and restrict it to main. Without the branch
+# 2. Put real values in the parameters the apply just created. They hold
+#    "not-managed-by-terraform" until you do, and the deploy refuses to start
+#    while any of them still does.
+for name in deviantart-client-id deviantart-client-secret \
+            discord-client-id discord-client-secret discord-bot-token \
+            toyhouse-client-id toyhouse-client-secret; do
+  aws ssm put-parameter --overwrite --type SecureString \
+    --name "/chardb/dev/$name" --value 'REPLACE_ME'
+done
+
+#    Then confirm none are left. This is the same check the deploy runs, so an
+#    empty result here means the deploy will get past it.
+aws ssm get-parameters-by-path --path /chardb/dev --recursive --with-decryption \
+  --query "Parameters[?Value=='not-managed-by-terraform'].Name" --output text
+
+# 3. Create the staging environment and restrict it to main. Without the branch
 #    policy, a run on any branch could target it -- the trust policy's `ref` pin
 #    already blocks that, so this is defence in depth rather than the control.
 gh api -X PUT repos/Provinite/chardb/environments/staging \
@@ -310,12 +338,12 @@ gh api -X PUT repos/Provinite/chardb/environments/staging \
 gh api -X POST repos/Provinite/chardb/environments/staging/deployment-branch-policies \
   -f name='main' -f type='branch'
 
-# 3. Hand the role ARN to the environment, not the repository, so a production
+# 4. Hand the role ARN to the environment, not the repository, so a production
 #    environment can later carry a different one under the same name.
 gh secret set AWS_DEPLOY_ROLE_ARN --env staging \
   --body "$(terraform output -raw github_actions_deploy_role_arn)"
 
-# 4. Confirm the host registered as an SSM managed node (takes a few minutes).
+# 5. Confirm the host registered as an SSM managed node (takes a few minutes).
 aws ssm describe-instance-information \
   --query 'InstanceInformationList[].{Id:InstanceId,Ping:PingStatus}' --output table
 ```
@@ -385,9 +413,7 @@ export BACKEND_URL="http://$SERVER_IP:4000"
 
 **Backend Services:**
 - ✅ Backend API (NestJS/GraphQL) on port 4000
-- ✅ PostgreSQL database (containerized) on port 5432
-- ✅ Jaeger UI (observability) on port 16686
-- ✅ OpenTelemetry Collector for metrics/tracing
+- ✅ PostgreSQL database (containerized), bound to loopback -- reach it over an SSH tunnel
 
 **Frontend Services:**
 - ✅ React SPA hosted on CloudFront + S3
@@ -436,9 +462,6 @@ curl http://$SERVER_IP:4000/health
 curl -X POST http://$SERVER_IP:4000/graphql \
   -H "Content-Type: application/json" \
   -d '{"query":"{ __schema { types { name } } }"}'
-
-# Access Jaeger UI for observability
-echo "Jaeger UI: http://$SERVER_IP:16686"
 
 # Check service status on server
 ssh -i $SSH_KEY_PATH ec2-user@$SERVER_IP "cd ~/app && docker compose ps"
@@ -593,7 +616,7 @@ Once deployed, you have access to:
 
 - **Application Logs**: `docker compose logs backend`
 - **Database Logs**: `docker compose logs postgres`
-- **Distributed Tracing**: Jaeger UI at `http://$SERVER_IP:16686`
+- **Distributed Tracing**: local development only (`docker/compose.yaml`); the staging host runs no collector
 - **Health Endpoint**: `http://$SERVER_IP:4000/health`
 - **GraphQL Playground**: `http://$SERVER_IP:4000/graphql` (development mode)
 
