@@ -7,12 +7,14 @@
 # Registers a new ECS task definition revision carrying the released image and
 # rolls the service onto it.
 #
-# The new revision is derived from the revision Terraform last created -- read
-# from the ecs_task_definition_arn output -- not from the one currently running.
-# That matters: the service ignores task_definition changes so deploys are not
-# reverted by an apply, which also means a Terraform change to the definition
-# does not deploy itself. Deriving from Terraform's revision is what lets those
-# changes land on the next release instead of being stranded.
+# The definition is built from the ecs_task_definition_input output, which
+# Terraform computes from the environment, secrets, sizing, roles and logging it
+# owns. Only the image comes from here.
+#
+# Terraform holds no task definition in state, so it never registers a revision
+# nothing deploys and never disagrees with the running one. It still owns the
+# shape: a change there lands on the next release, because this reads the output
+# rather than the running revision.
 
 set -euo pipefail
 
@@ -32,13 +34,11 @@ done
 echo "🔎 Resolving deployment targets from Terraform..."
 CLUSTER=$(terraform -chdir="$TF_DIR" output -raw ecs_cluster_name)
 SERVICE=$(terraform -chdir="$TF_DIR" output -raw ecs_service_name)
-BASE_TD=$(terraform -chdir="$TF_DIR" output -raw ecs_task_definition_arn)
 ECR_URL=$(terraform -chdir="$TF_DIR" output -raw backend_ecr_repository_url)
 IMAGE="${ECR_URL}:${VERSION}"
 
 echo "   cluster:  $CLUSTER"
 echo "   service:  $SERVICE"
-echo "   base:     ${BASE_TD##*/}"
 echo "   image:    ${IMAGE##*/}"
 
 # Fail before touching the service if the image was never pushed. Otherwise ECS
@@ -52,17 +52,13 @@ aws ecr describe-images --region "$AWS_REGION" \
 WORK=$(mktemp -d); trap 'rm -rf "$WORK"' EXIT
 
 echo "📦 Registering a task definition revision with the released image..."
-aws ecs describe-task-definition --region "$AWS_REGION" \
-    --task-definition "$BASE_TD" --query 'taskDefinition' > "$WORK/base.json"
+# Terraform's computed payload. Already in register-task-definition shape, so
+# there are no read-only fields to strip -- unlike describe-task-definition
+# output, which returns revision, status and friends that register rejects.
+terraform -chdir="$TF_DIR" output -raw ecs_task_definition_input > "$WORK/base.json"
 
-# register-task-definition rejects the read-only fields describe returns.
-jq --arg img "$IMAGE" '
-    .containerDefinitions[0].image = $img
-    | del(
-        .taskDefinitionArn, .revision, .status, .requiresAttributes,
-        .compatibilities, .registeredAt, .registeredBy, .deregisteredAt
-      )
-' "$WORK/base.json" > "$WORK/new.json"
+jq --arg img "$IMAGE" '.containerDefinitions[0].image = $img' \
+    "$WORK/base.json" > "$WORK/new.json"
 
 NEW_TD=$(aws ecs register-task-definition --region "$AWS_REGION" \
     --cli-input-json "file://$WORK/new.json" \

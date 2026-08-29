@@ -187,74 +187,84 @@ resource "aws_iam_role_policy" "task_custom" {
 }
 
 # Task Definition
-resource "aws_ecs_task_definition" "app" {
-  family                   = "${var.name_prefix}-task"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.task_cpu
-  memory                   = var.task_memory
+# The task definition is deliberately NOT a Terraform resource.
+#
+# Deploys register a revision carrying the released image, so a Terraform
+# resource here would create a revision on every apply that nothing ever
+# deploys -- the service takes whatever the deploy pointed it at. Terraform
+# would then hold a task definition in state permanently disagreeing with the
+# running one.
+#
+# Instead Terraform computes the definition and exposes it as an output. It
+# still owns the shape -- environment, secrets, sizing, roles, logging -- while
+# the deploy owns only the image. See scripts/deploy-prod-release.sh and the
+# task_definition_input output.
+locals {
+  container_definition = {
+    name      = var.container_name
+    image     = var.container_image
+    essential = true
 
-  execution_role_arn = aws_iam_role.task_execution.arn
-  task_role_arn      = aws_iam_role.task.arn
+    # hostPort and the three empty lists are what AWS fills in when it
+    # normalises a definition. Emitting them keeps a registered revision
+    # byte-identical to what the API returns, so successive deploys of the same
+    # version produce no spurious difference.
+    portMappings = [
+      {
+        containerPort = var.container_port
+        hostPort      = var.container_port
+        protocol      = "tcp"
+      }
+    ]
 
-  runtime_platform {
-    operating_system_family = "LINUX"
-    cpu_architecture        = "ARM64"
+    mountPoints    = []
+    volumesFrom    = []
+    systemControls = []
+
+    environment = var.environment_variables
+    secrets     = var.secret_variables
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.ecs.name
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+
+    healthCheck = var.health_check != null ? var.health_check : null
   }
 
-  container_definitions = jsonencode([
-    {
-      name      = var.container_name
-      image     = var.container_image
-      essential = true
-
-      # hostPort, and the three empty lists below, are what AWS fills in when it
-      # normalises a task definition. Terraform string-compares the JSON it
-      # renders against the JSON the API returns, so omitting them makes every
-      # plan propose a replacement that changes nothing. Emitting them keeps
-      # plans clean between real changes.
-      portMappings = [
-        {
-          containerPort = var.container_port
-          hostPort      = var.container_port
-          protocol      = "tcp"
-        }
-      ]
-
-      mountPoints    = []
-      volumesFrom    = []
-      systemControls = []
-
-      environment = var.environment_variables
-
-      secrets = var.secret_variables
-
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.ecs.name
-          "awslogs-region"        = var.aws_region
-          "awslogs-stream-prefix" = "ecs"
-        }
-      }
-
-      healthCheck = var.health_check != null ? var.health_check : null
+  task_definition_input = {
+    family                  = "${var.name_prefix}-task"
+    networkMode             = "awsvpc"
+    requiresCompatibilities = ["FARGATE"]
+    cpu                     = tostring(var.task_cpu)
+    memory                  = tostring(var.task_memory)
+    executionRoleArn        = aws_iam_role.task_execution.arn
+    taskRoleArn             = aws_iam_role.task.arn
+    runtimePlatform = {
+      operatingSystemFamily = "LINUX"
+      cpuArchitecture       = "ARM64"
     }
-  ])
+    containerDefinitions = [local.container_definition]
+  }
+}
 
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.name_prefix}-task-definition"
-    }
-  )
+# The revision the service currently runs. Read, never written: this is what
+# lets the service be declared without Terraform owning a task definition.
+data "aws_ecs_task_definition" "current" {
+  task_definition = "${var.name_prefix}-task"
 }
 
 # ECS Service
 resource "aws_ecs_service" "app" {
-  name            = "${var.name_prefix}-service"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.app.arn
+  name    = "${var.name_prefix}-service"
+  cluster = aws_ecs_cluster.main.id
+  # Whatever revision is live. Paired with the ignore_changes below, Terraform
+  # neither chooses nor reverts the running revision -- the deploy does.
+  task_definition = data.aws_ecs_task_definition.current.arn
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
 

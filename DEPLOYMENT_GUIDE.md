@@ -392,19 +392,23 @@ gh release create v10.2.0 --generate-notes
 gh workflow run release.yml -f tag=v10.2.0
 ```
 
-### Why the deploy derives from Terraform's revision
+### Why Terraform owns no task definition
 
-The ECS service ignores `task_definition` changes, so an apply cannot revert
-production to an older release. The cost is that a task definition change made
-in Terraform does not deploy itself.
+Terraform does not manage an `aws_ecs_task_definition` resource. If it did, every
+apply would register a revision nothing deploys -- the service runs whatever the
+last deploy pointed it at -- and Terraform would hold a definition in state
+permanently disagreeing with the running one.
 
-`scripts/deploy-prod-release.sh` closes that gap: it reads the
-`ecs_task_definition_arn` output -- the revision **Terraform** last created, not
-the one currently running -- swaps only the image, and registers from there. Any
-Terraform change to the definition is therefore picked up by the next release.
+Instead Terraform *computes* the definition and exposes it as the
+`ecs_task_definition_input` output: environment, secrets, sizing, roles and
+logging, all derived from its own configuration. `deploy-prod-release.sh` reads
+that output, substitutes the released image, and registers a revision.
 
-Deriving from the *running* revision instead would compound: each deploy would
-build on the last deploy and Terraform's changes would never land.
+So Terraform owns the shape and the deploy owns the image, with neither holding
+a copy of the other's decision. A Terraform change to the definition lands on
+the next release, because the deploy builds from the output rather than from the
+running revision -- building from the running one would compound, each deploy
+layering on the last and Terraform's changes never arriving.
 
 ### Guards
 
