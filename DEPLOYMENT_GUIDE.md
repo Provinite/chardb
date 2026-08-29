@@ -220,12 +220,19 @@ Afterwards, delete these five now-undeclared lines from your local
 `deviantart_client_secret`, `discord_client_secret`, `toyhouse_client_secret`,
 `discord_bot_token`, `otel_otlp_headers`.
 
-### Dev is not migrated yet
+### How dev reads them
 
-The `/chardb/dev/` parameters exist and the docker host can read them, but
-nothing consumes them: `deploy.sh` still renders the host's `.env` from Terraform
-outputs. Repointing the backend at Parameter Store is the follow-up that lets the
-dev variables, the outputs, and `dev.tfvars` itself be deleted.
+`deploy.sh` no longer writes the OAuth client ids, client secrets or bot token
+into the `.env` it uploads. The deploy script running on the host reads them from
+`/chardb/dev/` with its instance role and appends them to `.env` there, so
+`docker compose up -d` run by hand on the box keeps working. It aborts the
+deploy if any parameter is missing or still holds the placeholder.
+
+The matching Terraform variables and outputs are gone, so `dev.tfvars` now needs
+only `backend_ssh_allowed_cidr_blocks` and the three callback URLs — no secrets.
+
+> Note: the values are still present in Terraform state, because Terraform
+> creates the parameters and reads them back on refresh. See issue #255.
 
 ## 🤖 Continuous Deployment to Staging
 
