@@ -164,6 +164,15 @@ model User {
   notifications      Notification[] @relation("NotificationRecipient")
   causedNotifications Notification[] @relation("NotificationActor")
 
+  // Trading. Two relations for the offers themselves, and four more because
+  // every line on the table names both ends of its own movement.
+  proposedTrades           Trade[]             @relation("TradeProposer")
+  receivedTrades           Trade[]             @relation("TradeRecipient")
+  tradeItemsGiven          TradeItem[]         @relation("TradeItemSource")
+  tradeItemsReceived       TradeItem[]         @relation("TradeItemDestination")
+  tradeCurrencyGiven       TradeCurrencyLine[] @relation("TradeCurrencySource")
+  tradeCurrencyReceived    TradeCurrencyLine[] @relation("TradeCurrencyDestination")
+
   @@map("users")
 }
 
@@ -513,6 +522,7 @@ model Community {
   itemTransactions     ItemTransaction[]
   currencies           Currency[]
   notifications        Notification[]
+  trades               Trade[]
 
   @@map("communities")
 }
@@ -734,6 +744,9 @@ model Item {
   // Pending ownership
   pendingOwnership PendingOwnership?
 
+  // Every offer this item has been named in, settled or not.
+  tradeLines TradeItem[]
+
   // Ledger
   transactions ItemTransaction[]
 
@@ -824,6 +837,7 @@ model Currency {
   color        CommunityColor?       @relation(fields: [colorId], references: [id], onDelete: SetNull)
   balances     CurrencyBalance[]
   transactions CurrencyTransaction[]
+  tradeLines   TradeCurrencyLine[]
 
   @@unique([communityId, code])
   @@unique([communityId, name])
@@ -1128,6 +1142,12 @@ enum NotificationKind {
   ITEM_REVOKED
   /// Currency reached your balance.
   CURRENCY_RECEIVED
+  /// Someone offered you a trade.
+  TRADE_OFFERED
+  /// A trade you proposed was accepted and has settled.
+  TRADE_ACCEPTED
+  /// A trade you proposed was declined.
+  TRADE_DECLINED
 }
 
 /// What clicking a notification opens.
@@ -1146,6 +1166,7 @@ enum NotificationSubjectType {
   ITEM
   CURRENCY
   USER
+  TRADE
 }
 
 /// One notification, already addressed to one recipient. An event concerning
@@ -1197,4 +1218,123 @@ model Notification {
   /// The badge count -- the only query here that runs on a timer.
   @@index([recipientId, seenAt])
   @@map("notifications")
+}
+
+/// Where an offer stands.
+///
+/// There is no EXPIRED value on purpose. Expiry is a date, and a stored status
+/// that has to be flipped by a job is a status that is wrong between the moment
+/// it lapses and the moment the job next runs. A PENDING trade past its
+/// `expiresAt` reads as expired and refuses to settle; nothing has to sweep.
+enum TradeStatus {
+  /// Sent, unanswered, and not yet past `expiresAt`.
+  PENDING
+  /// Settled. Items and coin have moved and the ledgers say so.
+  ACCEPTED
+  /// The recipient said no.
+  DECLINED
+  /// The proposer withdrew it.
+  CANCELLED
+}
+
+/// One member's offer to another: some items each way, and coin.
+///
+/// Nothing is escrowed while an offer stands. Items and balances are checked
+/// when it is composed and checked again when it is accepted, and only the
+/// second check decides anything -- so an offer never holds property hostage,
+/// and a declined or abandoned offer needs nothing released. The cost is that
+/// an offer can become unhonourable while it sits, which settlement reports
+/// rather than prevents.
+model Trade {
+  id          String      @id @default(uuid())
+  communityId String      @map("community_id")
+  proposerId  String      @map("proposer_id")
+  recipientId String      @map("recipient_id")
+  status      TradeStatus @default(PENDING)
+
+  /// Member-facing note from the proposer. Read by the recipient, and by
+  /// anyone who can see the trade afterwards.
+  note String? @db.Text
+
+  /// When this stops being acceptable. Compared at read and re-compared at
+  /// settlement; never written to `status`.
+  expiresAt DateTime @map("expires_at")
+
+  /// When it was accepted, declined or cancelled. Null exactly while PENDING.
+  respondedAt DateTime? @map("responded_at")
+
+  /// The batch id shared by every ledger row settlement wrote, on both the item
+  /// and the currency ledger. Null until accepted. This is what makes a trade
+  /// traceable to its consequences without storing those consequences twice.
+  settlementBatchId String? @map("settlement_batch_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  community     Community           @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  proposer      User                @relation("TradeProposer", fields: [proposerId], references: [id], onDelete: Cascade)
+  recipient     User                @relation("TradeRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  items         TradeItem[]
+  currencyLines TradeCurrencyLine[]
+
+  /// Both inboxes: "offers waiting on me" and "offers I have out".
+  @@index([recipientId, status, createdAt])
+  @@index([proposerId, status, createdAt])
+  @@index([communityId, createdAt])
+  @@map("trades")
+}
+
+/// One item on the table, and which way it moves.
+///
+/// `sourceUserId` and `destinationUserId` rather than a side flag: a line
+/// becomes an `ItemTransaction` at settlement and that row is shaped the same
+/// way, so settlement copies rather than translates. It also means a line reads
+/// on its own, without joining the trade to find out who the parties are.
+model TradeItem {
+  id      String @id @default(uuid())
+  tradeId String @map("trade_id")
+  itemId  String @map("item_id")
+
+  /// Who hands it over. Stored rather than derived from `Item.ownerId`: if the
+  /// item changes hands while the offer sits, deriving would silently flip
+  /// which way the trade points. Settlement compares this against the item's
+  /// real owner and refuses when they disagree.
+  sourceUserId      String @map("source_user_id")
+  destinationUserId String @map("destination_user_id")
+
+  trade           Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  item            Item  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  sourceUser      User  @relation("TradeItemSource", fields: [sourceUserId], references: [id], onDelete: Cascade)
+  destinationUser User  @relation("TradeItemDestination", fields: [destinationUserId], references: [id], onDelete: Cascade)
+
+  /// The same item cannot be on the table twice in one trade.
+  @@unique([tradeId, itemId])
+  @@index([itemId])
+  @@map("trade_items")
+}
+
+/// Coin on the table, in one direction.
+///
+/// `amount` is always positive; direction is the source/destination pair rather
+/// than a sign. Opposing amounts in the same currency are netted by the service
+/// before they are written, so "give 250, ask 100 back" is stored once as 150 --
+/// coin is fungible and the two halves have no separate meaning.
+model TradeCurrencyLine {
+  id         String @id @default(uuid())
+  tradeId    String @map("trade_id")
+  currencyId String @map("currency_id")
+  amount     Int
+
+  sourceUserId      String @map("source_user_id")
+  destinationUserId String @map("destination_user_id")
+
+  trade           Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  currency        Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+  sourceUser      User     @relation("TradeCurrencySource", fields: [sourceUserId], references: [id], onDelete: Cascade)
+  destinationUser User     @relation("TradeCurrencyDestination", fields: [destinationUserId], references: [id], onDelete: Cascade)
+
+  /// One line per currency per direction. With netting on write this means at
+  /// most one line per currency in practice.
+  @@unique([tradeId, currencyId, sourceUserId])
+  @@map("trade_currency_lines")
 }
