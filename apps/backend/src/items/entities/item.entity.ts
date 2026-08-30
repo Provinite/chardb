@@ -1,7 +1,5 @@
 import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
 import { GraphQLJSON } from "graphql-type-json";
-import { ItemType } from "./item-type.entity";
-import { User } from "../../users/entities/user.entity";
 
 @ObjectType()
 export class Item {
@@ -14,11 +12,16 @@ export class Item {
   @Field(() => ID, { nullable: true })
   ownerId?: string;
 
-  @Field(() => Int)
-  quantity: number;
+  @Field(() => Date, {
+    nullable: true,
+    description:
+      "Set when the item was revoked or consumed. Destroyed items keep their " +
+      "provenance but never appear in an inventory.",
+  })
+  destroyedAt?: Date | null;
 
   @Field(() => GraphQLJSON, { nullable: true })
-  metadata?: any; // JSON object
+  metadata?: unknown;
 
   @Field()
   createdAt: Date;

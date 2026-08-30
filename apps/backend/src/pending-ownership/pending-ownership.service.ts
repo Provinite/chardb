@@ -8,11 +8,13 @@ import {
 import { DatabaseService } from "../database/database.service";
 import {
   ExternalAccountProvider,
+  ItemTransactionKind,
   PendingOwnership,
   Prisma,
 } from "@chardb/database";
 import { notDeleted } from "../common/utils/prisma-filters";
 import { ExternalAccountsService } from "../external-accounts/external-accounts.service";
+import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
 
 @Injectable()
 export class PendingOwnershipService {
@@ -20,7 +22,44 @@ export class PendingOwnershipService {
     private prisma: DatabaseService,
     @Inject(forwardRef(() => ExternalAccountsService))
     private externalAccountsService: ExternalAccountsService,
+    private itemTransactions: ItemTransactionsService,
   ) {}
+
+  /**
+   * Write the CLAIM row for an item that has just found its owner.
+   *
+   * The matching GRANT row recorded a null recipient precisely so this row is
+   * the one that names them, rather than the history claiming an owner who did
+   * not exist yet.
+   *
+   * Always called with the transaction that moved the item, so the ownership
+   * change and its ledger row commit together.
+   */
+  private async recordItemClaim(
+    tx: Prisma.TransactionClient,
+    itemId: string,
+    userId: string,
+    provider: ExternalAccountProvider,
+  ): Promise<void> {
+    const item = await tx.item.findUnique({
+      where: { id: itemId },
+      include: { itemType: { select: { communityId: true } } },
+    });
+    if (!item) return;
+
+    await this.itemTransactions.recordBatch(
+      {
+        communityId: item.itemType.communityId,
+        itemTypeId: item.itemTypeId,
+        itemIds: [item.id],
+        kind: ItemTransactionKind.CLAIM,
+        toUserId: userId,
+        actorLabel: "system",
+        reason: `${provider} account linked, pending grant released`,
+      },
+      tx,
+    );
+  }
 
   /**
    * Create a pending ownership record for a character, with auto-claim if account is already linked.
@@ -137,9 +176,12 @@ export class PendingOwnershipService {
 
     if (claimedUserId) {
       // Account is already claimed - assign item to the user who owns the account
-      await this.prisma.item.update({
-        where: { id: itemId },
-        data: { ownerId: claimedUserId },
+      await this.prisma.$transaction(async (tx) => {
+        await tx.item.update({
+          where: { id: itemId },
+          data: { ownerId: claimedUserId },
+        });
+        await this.recordItemClaim(tx, itemId, claimedUserId, provider);
       });
 
       return {
@@ -230,6 +272,7 @@ export class PendingOwnershipService {
         where: { id: entityId.itemId },
         data: { ownerId: userId },
       });
+      await this.recordItemClaim(tx, entityId.itemId, userId, provider);
     }
 
     await tx.pendingOwnership.update({
@@ -309,6 +352,7 @@ export class PendingOwnershipService {
               where: { id: pending.itemId },
               data: { ownerId: userId },
             });
+            await this.recordItemClaim(tx, pending.itemId, userId, provider);
           }
 
           // Mark as claimed

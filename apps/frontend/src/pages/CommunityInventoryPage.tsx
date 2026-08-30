@@ -6,6 +6,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import {
   useCommunityByIdQuery,
   useGetMyInventoryQuery,
+  type ItemFieldsFragment,
 } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -154,6 +155,37 @@ const LoadingContainer = styled.div`
   min-height: 400px;
 `;
 
+type InventoryItem = ItemFieldsFragment;
+
+interface DisplayStack {
+  itemType: InventoryItem["itemType"];
+  count: number;
+}
+
+/**
+ * Rolls per-instance items up by item type for display.
+ *
+ * Every item is its own row now, so a member holding three potions has three
+ * items. Collapsing them into one tile is the presentation half of that
+ * trade -- the database keeps them separate so each can answer for its own
+ * provenance.
+ *
+ * Insertion order is preserved so the grid does not reshuffle when a member
+ * gains a second copy of something they already hold.
+ */
+function groupIntoStacks(items: readonly InventoryItem[]): DisplayStack[] {
+  const byType = new Map<string, DisplayStack>();
+  for (const item of items) {
+    const existing = byType.get(item.itemType.id);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      byType.set(item.itemType.id, { itemType: item.itemType, count: 1 });
+    }
+  }
+  return Array.from(byType.values());
+}
+
 export const CommunityInventoryPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
   const { user } = useAuth();
@@ -195,6 +227,8 @@ export const CommunityInventoryPage: React.FC = () => {
   const inventory = inventoryData?.me?.inventories?.[0];
   const items = inventory?.items || [];
 
+  const stacks = groupIntoStacks(items);
+
   return (
     <Container>
       <Header>
@@ -204,7 +238,7 @@ export const CommunityInventoryPage: React.FC = () => {
         </Subtitle>
       </Header>
 
-      {items.length === 0 ? (
+      {stacks.length === 0 ? (
         <EmptyState>
           <EmptyIcon>
             <Package size={40} />
@@ -217,38 +251,42 @@ export const CommunityInventoryPage: React.FC = () => {
         </EmptyState>
       ) : (
         <InventoryGrid>
-          {items.map((item: any) => (
+          {stacks.map((stack) => (
             <ItemCard
-              key={item.id}
-              to={`/items/${item.itemType.id}`}
-              color={item.itemType.color}
+              key={stack.itemType.id}
+              // Links to the item type, not an instance. A stack of three has
+              // three provenances; picking one arbitrarily would be a lie.
+              to={`/items/${stack.itemType.id}`}
+              color={stack.itemType.color?.hexCode}
             >
-              <ItemIconContainer color={item.itemType.color}>
-                {item.itemType.image ? (
+              <ItemIconContainer color={stack.itemType.color?.hexCode}>
+                {stack.itemType.image ? (
                   <ItemImage
                     src={
-                      item.itemType.image.thumbnailUrl ||
-                      item.itemType.image.originalUrl
+                      stack.itemType.image.thumbnailUrl ||
+                      stack.itemType.image.originalUrl
                     }
-                    alt={item.itemType.image.altText || item.itemType.name}
+                    alt={stack.itemType.image.altText || stack.itemType.name}
                   />
                 ) : (
                   <Package size={48} />
                 )}
-                {item.quantity > 1 && (
-                  <QuantityBadge>×{item.quantity}</QuantityBadge>
+                {stack.count > 1 && (
+                  <QuantityBadge>×{stack.count}</QuantityBadge>
                 )}
               </ItemIconContainer>
 
               <ItemInfo>
-                <ItemName title={item.itemType.name}>
-                  {item.itemType.name}
+                <ItemName title={stack.itemType.name}>
+                  {stack.itemType.name}
                 </ItemName>
-                {item.itemType.category && (
-                  <ItemCategory>{item.itemType.category}</ItemCategory>
+                {stack.itemType.category && (
+                  <ItemCategory>{stack.itemType.category}</ItemCategory>
                 )}
-                {item.itemType.description && (
-                  <ItemDescription>{item.itemType.description}</ItemDescription>
+                {stack.itemType.description && (
+                  <ItemDescription>
+                    {stack.itemType.description}
+                  </ItemDescription>
                 )}
               </ItemInfo>
             </ItemCard>

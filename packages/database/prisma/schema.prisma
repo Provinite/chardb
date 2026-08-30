@@ -55,6 +55,16 @@ enum ModerationRejectionReason {
   OTHER
 }
 
+/// How an item moved. One row per item per event, so the kind alone says what
+/// happened -- there is no quantity to interpret.
+enum ItemTransactionKind {
+  GRANT
+  REVOKE
+  TRANSFER
+  CLAIM
+  USE
+}
+
 enum TraitReviewSource {
   IMPORT
   MYO
@@ -120,6 +130,13 @@ model User {
 
   // Inventory relations
   items                  Item[]           @relation("UserItems")
+  destroyedItems         Item[]           @relation("ItemDestroyer")
+
+  // Item ledger. Three separate relations because one row can name three
+  // different people: who it left, who it reached, and who did it.
+  itemTransactionsFrom   ItemTransaction[] @relation("ItemTransactionFrom")
+  itemTransactionsTo     ItemTransaction[] @relation("ItemTransactionTo")
+  itemTransactionsActed  ItemTransaction[] @relation("ItemTransactionActor")
 
   // Pending ownership claims
   claimedPendingItems    PendingOwnership[]
@@ -479,6 +496,7 @@ model Community {
   communityInvitations CommunityInvitation[]
   itemTypes            ItemType[]
   communityColors      CommunityColor[]
+  itemTransactions     ItemTransaction[]
 
   @@map("communities")
 }
@@ -640,9 +658,9 @@ model ItemType {
   communityId String  @map("community_id")
   category    String? @db.VarChar(50)
 
-  // Item properties
-  isStackable    Boolean @default(true) @map("is_stackable")
-  maxStackSize   Int?    @map("max_stack_size")
+  // Item properties. There is deliberately no stacking flag: every item is an
+  // individually tracked row, and rolling several of them up into one tile is a
+  // presentation choice the frontend makes, not a storage one.
   isTradeable    Boolean @default(true) @map("is_tradeable")
   isConsumable   Boolean @default(false) @map("is_consumable")
 
@@ -661,19 +679,32 @@ model ItemType {
   color          CommunityColor? @relation(fields: [colorId], references: [id], onDelete: SetNull)
   image          Image?          @relation("ItemTypeImage", fields: [imageId], references: [id], onDelete: SetNull)
   items          Item[]
+  transactions   ItemTransaction[]
 
   @@unique([name, communityId])
   @@map("item_types")
 }
 
+/// One row per item. There is no quantity column and no stacking: three
+/// potions are three rows.
+///
+/// Stacking and provenance cannot both be true. A row whose quantity went
+/// 2 -> 4 -> 3 has no answerable history -- asked which two of the three came
+/// from a given trade, it cannot say. Per-instance rows give every item one
+/// unbroken chain, which is the whole point of provenance being public.
 model Item {
   id           String  @id @default(uuid())
   itemTypeId   String  @map("item_type_id")
   ownerId      String? @map("owner_id")
-  quantity     Int     @default(1)
 
   // Item state
   metadata     Json    @default("{}") // Instance-specific data
+
+  /// Set when revoked or consumed. Soft, not hard: a destroyed item keeps its
+  /// provenance readable, which is exactly the history a dispute needs. Mirrors
+  /// Character.deletedAt.
+  destroyedAt   DateTime? @map("destroyed_at")
+  destroyedById String?   @map("destroyed_by_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -681,11 +712,74 @@ model Item {
   // Relations
   itemType     ItemType @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
   owner        User?    @relation("UserItems", fields: [ownerId], references: [id], onDelete: Cascade)
+  destroyedBy  User?    @relation("ItemDestroyer", fields: [destroyedById], references: [id], onDelete: SetNull)
 
   // Pending ownership
   pendingOwnership PendingOwnership?
 
+  // Ledger
+  transactions ItemTransaction[]
+
+  // Inventory reads are always "this holder, live items only", and the holdings
+  // view adds the type. Destroyed rows accumulate forever, so they are kept out
+  // of the index rather than filtered after the fact.
+  @@index([ownerId, destroyedAt, itemTypeId])
+  @@index([itemTypeId, destroyedAt])
   @@map("items")
+}
+
+/// One row per item, per event. Granting twelve tokens writes twelve rows;
+/// collapsing them back into "Granted 12" is the frontend's job, and `batchId`
+/// is the exact key it groups on.
+///
+/// `communityId` and `itemTypeId` are denormalised so the two hot reads -- a
+/// community's ledger and one item's provenance -- never join to filter.
+model ItemTransaction {
+  id          String              @id @default(uuid())
+  communityId String              @map("community_id")
+  itemTypeId  String              @map("item_type_id")
+  itemId      String              @map("item_id")
+  kind        ItemTransactionKind
+
+  /// Shared by every row one operation wrote. Grouping on this is exact;
+  /// grouping on a matching timestamp is a guess that breaks under load.
+  batchId     String              @map("batch_id")
+
+  /// Who it left. Null for a grant -- the item is minted, not moved.
+  fromUserId  String?             @map("from_user_id")
+  /// Who it reached. Null for a revoke or a use -- the item is destroyed.
+  toUserId    String?             @map("to_user_id")
+  /// Who performed it. Null for anything the system did on its own.
+  actorUserId String?             @map("actor_user_id")
+  /// Names a non-user actor: "discord-bot", "system". Set exactly when
+  /// actorUserId is null.
+  actorLabel  String?             @map("actor_label") @db.VarChar(50)
+
+  /// Member-facing. Visible to anyone who can read the ledger.
+  reason      String?             @db.Text
+  /// Staff-only. Never returned to a viewer without item permissions in this
+  /// community. Keeps candid internal detail out of a public audit trail.
+  staffNote   String?             @map("staff_note") @db.Text
+
+  createdAt   DateTime            @default(now()) @map("created_at")
+
+  // Relations
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  itemType  ItemType  @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
+  item      Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  fromUser  User?     @relation("ItemTransactionFrom", fields: [fromUserId], references: [id], onDelete: SetNull)
+  toUser    User?     @relation("ItemTransactionTo", fields: [toUserId], references: [id], onDelete: SetNull)
+  actorUser User?     @relation("ItemTransactionActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  // One row per item per event means this table grows fastest of anything here,
+  // so every read path it serves gets a covering leading column.
+  @@index([communityId, createdAt])
+  @@index([itemId, createdAt])
+  @@index([itemTypeId, createdAt])
+  @@index([toUserId, createdAt])
+  @@index([fromUserId, createdAt])
+  @@index([batchId])
+  @@map("item_transactions")
 }
 
 model Species {

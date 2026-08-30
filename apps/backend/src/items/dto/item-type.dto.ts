@@ -1,4 +1,5 @@
 import { Field, InputType, Int, ID } from "@nestjs/graphql";
+import { Prisma } from "@chardb/database";
 import {
   IsString,
   IsOptional,
@@ -38,18 +39,6 @@ export class CreateItemTypeInput {
   @Field({ defaultValue: true })
   @IsOptional()
   @IsBoolean()
-  isStackable?: boolean;
-
-  @Field(() => Int, { nullable: true })
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(9999)
-  maxStackSize?: number;
-
-  @Field({ defaultValue: true })
-  @IsOptional()
-  @IsBoolean()
   isTradeable?: boolean;
 
   @Field({ defaultValue: false })
@@ -81,7 +70,7 @@ export class CreateItemTypeInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  metadata?: any; // JSON field
+  metadata?: Prisma.InputJsonValue;
 }
 
 @InputType()
@@ -104,18 +93,6 @@ export class UpdateItemTypeInput {
   @IsString()
   @MaxLength(50)
   category?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsBoolean()
-  isStackable?: boolean;
-
-  @Field(() => Int, { nullable: true })
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(9999)
-  maxStackSize?: number;
 
   @Field({ nullable: true })
   @IsOptional()
@@ -151,7 +128,7 @@ export class UpdateItemTypeInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  metadata?: any; // JSON field
+  metadata?: Prisma.InputJsonValue;
 }
 
 @InputType()

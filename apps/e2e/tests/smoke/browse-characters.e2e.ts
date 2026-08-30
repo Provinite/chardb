@@ -1,6 +1,6 @@
-import { test, expect } from "../../src/fixtures.js";
+import { presetTest, expect } from "../../src/fixtures.js";
 
-test.use({ preset: "community-basic" });
+const test = presetTest("community-basic");
 
 // href selectors key off the seeded UUID, so they assert identity rather than
 // mere presence -- stronger than a test id and immune to copy changes.

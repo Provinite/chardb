@@ -4,8 +4,9 @@ import {
   ItemTypeConnection,
 } from "../entities/item-type.entity";
 
-// Type alias for Prisma ItemType payload
-type PrismaItemType = Prisma.ItemTypeGetPayload<{}>;
+// `object` rather than `{}`: the point is "no include clause", not "any
+// non-nullish value".
+type PrismaItemType = Prisma.ItemTypeGetPayload<object>;
 
 /**
  * Maps a Prisma ItemType model to a GraphQL ItemType entity
@@ -19,8 +20,6 @@ export function mapPrismaItemTypeToGraphQL(
     description: prismaItemType.description ?? undefined,
     communityId: prismaItemType.communityId,
     category: prismaItemType.category ?? undefined,
-    isStackable: prismaItemType.isStackable,
-    maxStackSize: prismaItemType.maxStackSize ?? undefined,
     isTradeable: prismaItemType.isTradeable,
     isConsumable: prismaItemType.isConsumable,
     imageId: prismaItemType.imageId ?? undefined,

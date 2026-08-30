@@ -64,12 +64,17 @@ export class ItemPrizeHandler {
     // This will handle pending ownership if Discord account not linked
     const quantity = event.quantity || 1;
 
-    const item = await this.itemsService.grantItem({
+    await this.itemsService.grantItem({
       itemTypeId: event.itemTypeId,
       quantity,
       pendingOwner: {
         provider: ExternalAccountProvider.DISCORD,
         providerAccountId: event.discordUserId,
+      },
+      // No logged-in user on this path, so the ledger names the bot instead.
+      actor: {
+        actorLabel: "discord-bot",
+        reason: event.reason ?? "Discord prize award",
       },
     });
 

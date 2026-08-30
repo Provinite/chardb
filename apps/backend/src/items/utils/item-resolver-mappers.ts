@@ -13,8 +13,9 @@ type PrismaItem = Prisma.ItemGetPayload<{
   };
 }>;
 
-// Also support basic Item without includes
-type PrismaItemBasic = Prisma.ItemGetPayload<{}>;
+// Also support basic Item without includes. `object` rather than `{}`: the
+// point is "no include clause", not "any non-nullish value".
+type PrismaItemBasic = Prisma.ItemGetPayload<object>;
 
 /**
  * Maps a Prisma Item model to a GraphQL Item entity
@@ -27,7 +28,7 @@ export function mapPrismaItemToGraphQL(
     id: prismaItem.id,
     itemTypeId: prismaItem.itemTypeId,
     ownerId: prismaItem.ownerId ?? undefined,
-    quantity: prismaItem.quantity,
+    destroyedAt: prismaItem.destroyedAt,
     metadata: prismaItem.metadata,
     createdAt: prismaItem.createdAt,
     updatedAt: prismaItem.updatedAt,

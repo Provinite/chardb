@@ -1,6 +1,7 @@
-import { test, expect } from "../../src/fixtures.js";
+import { presetTest, expect } from "../../src/fixtures.js";
 
-test.use({ preset: "community-basic", persona: "member" });
+const test = presetTest("community-basic");
+test.use({ persona: "member" });
 
 test("opens a character from the list", async ({ page, world }) => {
   const character = world.characters.pending;

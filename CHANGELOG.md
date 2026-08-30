@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - CI runs the unit test suites (backend Jest, frontend Vitest, da-import Vitest) on every pull request and on pushes to main, and a staging deploy now waits on them.
+- **E2E: `presetTest(name)`** in `apps/e2e/src/fixtures.ts`, plus a `community-items` preset and 23 specs covering the item ledger.
+
+  Adding a second preset broke every existing spec's types: `test.use({ preset })` is a runtime option, so the shared `world` fixture was typed as the union of every preset's handle and each `world.characters` access stopped compiling. The harness had only ever been correct for one preset. `presetTest` names the preset once at module scope and replaces `test.use({ preset })`, so the declared preset and the handle type cannot disagree. All existing specs were migrated — two lines each.
+
+### Security
+
+- **Item mutations were reachable by any logged-in user.** Fixed for `items.resolver.ts`; see the backend changelog for the mechanism.
+
+  **The same pattern exists elsewhere and is not fixed here.** The global permission guard ORs every decorator together, so `@AllowAnyAuthenticated()` sitting beside `@AllowCommunityPermission(...)` or `@AllowGlobalPermission(...)` neutralises the second check. `characters.resolver.ts` has at least one such handler, and `communities`, `roles`, `media`, `community-members` and `image-moderation` resolvers each carry both decorators and are worth auditing. This needs its own pass — it is an authorization audit, not a side effect of an inventory change.
 
 ## [v10.2.2] - 2026-08-29
 

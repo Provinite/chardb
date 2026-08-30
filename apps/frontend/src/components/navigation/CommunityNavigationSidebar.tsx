@@ -15,6 +15,7 @@ import {
   Globe,
   LayoutGrid,
   Package,
+  ScrollText,
   Search,
 } from "lucide-react";
 import { spotlight } from "@mantine/spotlight";
@@ -511,6 +512,16 @@ export const CommunityNavigationSidebar: React.FC<
               to={`${communityBasePath}/inventory`}
               icon={Package}
               label="Inventory"
+              isNested
+            />
+
+            {/* Item Ledger - deliberately NOT under Administration. Provenance
+                is readable by any member so it can act as a trust signal in
+                trades; only the mutations that write it are gated. */}
+            <CommunityNavigationItem
+              to={`${communityBasePath}/items/ledger`}
+              icon={ScrollText}
+              label="Item Ledger"
               isNested
             />
 

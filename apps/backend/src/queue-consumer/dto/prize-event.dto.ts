@@ -37,4 +37,13 @@ export class PrizeEventDto {
   @ValidateIf((o) => o.eventType === PrizeEventType.CHARACTER_AWARDED)
   @IsString()
   characterId?: string;
+
+  /**
+   * Why the bot awarded this, recorded on the item ledger and shown to members.
+   * Optional and additive: an existing producer that omits it still validates,
+   * and the handler falls back to a generic reason.
+   */
+  @IsOptional()
+  @IsString()
+  reason?: string;
 }

@@ -501,9 +501,7 @@ export type CreateItemTypeInput = {
   imageId?: InputMaybe<Scalars['ID']['input']>;
   imageUrl?: InputMaybe<Scalars['String']['input']>;
   isConsumable?: Scalars['Boolean']['input'];
-  isStackable?: Scalars['Boolean']['input'];
   isTradeable?: Scalars['Boolean']['input'];
-  maxStackSize?: InputMaybe<Scalars['Int']['input']>;
   metadata?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
 };
@@ -836,6 +834,10 @@ export type GrantItemInput = {
   /** Create item with pending ownership for an external account */
   pendingOwner?: InputMaybe<PendingOwnerInput>;
   quantity?: Scalars['Int']['input'];
+  /** Member-facing note recorded on the ledger. Visible to anyone who can read the community's item history. */
+  reason?: InputMaybe<Scalars['String']['input']>;
+  /** Staff-only detail recorded on the ledger. Never shown to members. */
+  staffNote?: InputMaybe<Scalars['String']['input']>;
   /** User ID to grant item to. Required if pendingOwner is not provided. */
   userId?: InputMaybe<Scalars['ID']['input']>;
 };
@@ -995,6 +997,8 @@ export type InviteCodeConnection = {
 export type Item = {
   __typename?: 'Item';
   createdAt: Scalars['DateTime']['output'];
+  /** Set when the item was revoked or consumed. Destroyed items keep their provenance but never appear in an inventory. */
+  destroyedAt: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   itemType: ItemType;
   itemTypeId: Scalars['ID']['output'];
@@ -1002,9 +1006,72 @@ export type Item = {
   owner: Maybe<User>;
   ownerId: Maybe<Scalars['ID']['output']>;
   pendingOwnership: Maybe<PendingOwnership>;
-  quantity: Scalars['Int']['output'];
   updatedAt: Scalars['DateTime']['output'];
 };
+
+/** One item, one event. Granting twelve tokens writes twelve rows; group them by batchId to collapse them back into one line. */
+export type ItemTransaction = {
+  __typename?: 'ItemTransaction';
+  /** Names a non-user actor ("discord-bot", "system"). Set exactly when actorUserId is null. */
+  actorLabel: Maybe<Scalars['String']['output']>;
+  actorUser: Maybe<User>;
+  /** Null for anything the system did on its own. */
+  actorUserId: Maybe<Scalars['ID']['output']>;
+  /** Shared by every row one operation wrote. Group on this to collapse a bulk grant into a single line. */
+  batchId: Scalars['ID']['output'];
+  communityId: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  fromUser: Maybe<User>;
+  fromUserId: Maybe<Scalars['ID']['output']>;
+  id: Scalars['ID']['output'];
+  item: Maybe<Item>;
+  itemId: Scalars['ID']['output'];
+  itemType: ItemType;
+  itemTypeId: Scalars['ID']['output'];
+  kind: ItemTransactionKind;
+  /** Member-facing. Visible to anyone who can read the ledger. */
+  reason: Maybe<Scalars['String']['output']>;
+  /** Staff-only note. Null unless the viewer holds canManageItems or canGrantItems in this community. */
+  staffNote: Maybe<Scalars['String']['output']>;
+  toUser: Maybe<User>;
+  toUserId: Maybe<Scalars['ID']['output']>;
+};
+
+export type ItemTransactionConnection = {
+  __typename?: 'ItemTransactionConnection';
+  hasMore: Scalars['Boolean']['output'];
+  total: Scalars['Int']['output'];
+  transactions: Array<ItemTransaction>;
+};
+
+export type ItemTransactionFiltersInput = {
+  /** Required. The ledger is always scoped to one community. */
+  communityId: Scalars['ID']['input'];
+  itemId?: InputMaybe<Scalars['ID']['input']>;
+  itemTypeId?: InputMaybe<Scalars['ID']['input']>;
+  /** Match any of these kinds. Omit for all kinds. */
+  kinds?: InputMaybe<Array<ItemTransactionKind>>;
+  limit?: Scalars['Int']['input'];
+  offset?: Scalars['Int']['input'];
+  /** Matches item type name, public reason, and actor label. Never searches staff notes -- a member must not be able to probe for hidden text. */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Matches rows where this user is the source, the recipient, or the actor. */
+  userId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** How an item moved. */
+export enum ItemTransactionKind {
+  /** Released from pending ownership once an external account was linked. */
+  Claim = 'CLAIM',
+  /** Minted by staff or a bot and given to someone. */
+  Grant = 'GRANT',
+  /** Taken back and destroyed. Always a correction. */
+  Revoke = 'REVOKE',
+  /** Moved between two members. */
+  Transfer = 'TRANSFER',
+  /** Consumed by its holder. */
+  Use = 'USE'
+}
 
 export type ItemType = {
   __typename?: 'ItemType';
@@ -1018,9 +1085,7 @@ export type ItemType = {
   id: Scalars['ID']['output'];
   image: Maybe<Image>;
   isConsumable: Scalars['Boolean']['output'];
-  isStackable: Scalars['Boolean']['output'];
   isTradeable: Scalars['Boolean']['output'];
-  maxStackSize: Maybe<Scalars['Int']['output']>;
   metadata: Maybe<Scalars['JSON']['output']>;
   name: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
@@ -1245,16 +1310,14 @@ export type Mutation = {
   deleteCommunityColor: Scalars['Boolean']['output'];
   deleteGallery: RemovalResponse;
   deleteImage: Scalars['Boolean']['output'];
-  /** Delete an item (admin only) */
-  deleteItem: Scalars['Boolean']['output'];
   deleteItemType: Scalars['Boolean']['output'];
   /** Deletes a media item and its associated content */
   deleteMedia: Scalars['Boolean']['output'];
   /** Edit and approve a trait review (moderator action) */
   editAndApproveTraitReview: TraitReview;
   forgotPassword: Scalars['Boolean']['output'];
-  /** Grant an item to a user (admin only) */
-  grantItem: Item;
+  /** Grant items to a user. Returns one Item per unit granted -- there is no stacking, so a quantity of 3 creates three items. */
+  grantItem: Array<Item>;
   /** Remove a character from its species, flattening its trait values into custom fields. Requires CanEditCharacterRegistry permission. */
   kickCharacterFromSpecies: Scalars['Boolean']['output'];
   /** Link a Discord guild to a community */
@@ -1298,6 +1361,8 @@ export type Mutation = {
   respondToCommunityInvitation: CommunityInvitation;
   /** Revert a trait review, restoring previous trait values (moderator action) */
   revertTraitReview: TraitReview;
+  /** Revoke items, destroying them. Soft: a destroyed item keeps its provenance readable. A public reason is required -- it is written to the ledger and shown to anyone who can read it. Returns the count. */
+  revokeItems: Scalars['Int']['output'];
   /** Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this). */
   runDeviantartUuidBackfill: Scalars['Boolean']['output'];
   /** Sets or clears the main media for a character */
@@ -1328,7 +1393,7 @@ export type Mutation = {
   updateImage: Image;
   /** Update an invite code */
   updateInviteCode: InviteCode;
-  /** Update an item (admin only) */
+  /** Update one item's instance metadata. Quantity is not updatable: an item is one item, so more means grantItem and fewer means revokeItems. */
   updateItem: Item;
   updateItemType: ItemType;
   /** Updates media metadata (title, description, etc.) */
@@ -1500,11 +1565,6 @@ export type MutationDeleteImageArgs = {
 };
 
 
-export type MutationDeleteItemArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
 export type MutationDeleteItemTypeArgs = {
   id: Scalars['ID']['input'];
 };
@@ -1651,6 +1711,13 @@ export type MutationRespondToCommunityInvitationArgs = {
 
 export type MutationRevertTraitReviewArgs = {
   input: RevertTraitReviewInput;
+};
+
+
+export type MutationRevokeItemsArgs = {
+  itemIds: Array<Scalars['ID']['input']>;
+  reason: Scalars['String']['input'];
+  staffNote?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1947,6 +2014,10 @@ export type Query = {
   inviteCodesByCreator: InviteCodeConnection;
   /** Get invite codes by role ID with pagination */
   inviteCodesByRole: InviteCodeConnection;
+  /** Every ledger row for one stack, oldest first. The provenance timeline. */
+  itemProvenance: Array<ItemTransaction>;
+  /** The item ledger for one community, newest first. Readable by any member. */
+  itemTransactions: ItemTransactionConnection;
   itemType: ItemType;
   itemTypes: ItemTypeConnection;
   likeStatus: LikeStatus;
@@ -2299,6 +2370,16 @@ export type QueryInviteCodesByRoleArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   roleId: Scalars['ID']['input'];
+};
+
+
+export type QueryItemProvenanceArgs = {
+  itemId: Scalars['ID']['input'];
+};
+
+
+export type QueryItemTransactionsArgs = {
+  filters: ItemTransactionFiltersInput;
 };
 
 
@@ -3055,7 +3136,6 @@ export type UpdateInviteCodeInput = {
 
 export type UpdateItemInput = {
   metadata?: InputMaybe<Scalars['String']['input']>;
-  quantity?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type UpdateItemTypeInput = {
@@ -3066,9 +3146,7 @@ export type UpdateItemTypeInput = {
   imageId?: InputMaybe<Scalars['ID']['input']>;
   imageUrl?: InputMaybe<Scalars['String']['input']>;
   isConsumable?: InputMaybe<Scalars['Boolean']['input']>;
-  isStackable?: InputMaybe<Scalars['Boolean']['input']>;
   isTradeable?: InputMaybe<Scalars['Boolean']['input']>;
-  maxStackSize?: InputMaybe<Scalars['Int']['input']>;
   metadata?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3914,30 +3992,30 @@ export type RolesByCommunityQueryVariables = Exact<{
 
 export type RolesByCommunityQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Role', id: string, name: string, canCreateInviteCode: boolean, community: { __typename?: 'Community', id: string, name: string } }> } };
 
-export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
+export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
 
-export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
+export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
 
 export type GetItemTypesQueryVariables = Exact<{
   filters?: InputMaybe<ItemTypeFiltersInput>;
 }>;
 
 
-export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
+export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type GetItemTypeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateItemTypeMutationVariables = Exact<{
   input: CreateItemTypeInput;
 }>;
 
 
-export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type UpdateItemTypeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3945,7 +4023,7 @@ export type UpdateItemTypeMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type DeleteItemTypeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3954,21 +4032,21 @@ export type DeleteItemTypeMutationVariables = Exact<{
 
 export type DeleteItemTypeMutation = { __typename?: 'Mutation', deleteItemType: boolean };
 
-export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type GetMyInventoryQueryVariables = Exact<{
   communityId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> }> } };
+export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> }> } };
 
 export type GrantItemMutationVariables = Exact<{
   input: GrantItemInput;
 }>;
 
 
-export type GrantItemMutation = { __typename?: 'Mutation', grantItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null } };
+export type GrantItemMutation = { __typename?: 'Mutation', grantItem: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type UpdateItemMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3976,14 +4054,32 @@ export type UpdateItemMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, quantity: number, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isStackable: boolean, maxStackSize: number | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null } };
+export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null } };
 
-export type DeleteItemMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
+export type RevokeItemsMutationVariables = Exact<{
+  itemIds: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  reason: Scalars['String']['input'];
+  staffNote?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type DeleteItemMutation = { __typename?: 'Mutation', deleteItem: boolean };
+export type RevokeItemsMutation = { __typename?: 'Mutation', revokeItems: number };
+
+export type ItemTransactionFieldsFragment = { __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
+
+export type GetItemTransactionsQueryVariables = Exact<{
+  filters: ItemTransactionFiltersInput;
+}>;
+
+
+export type GetItemTransactionsQuery = { __typename?: 'Query', itemTransactions: { __typename?: 'ItemTransactionConnection', total: number, hasMore: boolean, transactions: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
+
+export type GetItemProvenanceQueryVariables = Exact<{
+  itemId: Scalars['ID']['input'];
+}>;
+
+
+export type GetItemProvenanceQuery = { __typename?: 'Query', itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type GetMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -4532,8 +4628,6 @@ export const ItemTypeFieldsFragmentDoc = gql`
   description
   communityId
   category
-  isStackable
-  maxStackSize
   isTradeable
   isConsumable
   image {
@@ -4571,7 +4665,7 @@ export const ItemFieldsFragmentDoc = gql`
   id
   itemTypeId
   ownerId
-  quantity
+  destroyedAt
   metadata
   createdAt
   updatedAt
@@ -4599,6 +4693,43 @@ export const InventoryFieldsFragmentDoc = gql`
   }
 }
     ${ItemFieldsFragmentDoc}`;
+export const ItemTransactionFieldsFragmentDoc = gql`
+    fragment ItemTransactionFields on ItemTransaction {
+  id
+  communityId
+  kind
+  batchId
+  reason
+  staffNote
+  actorLabel
+  createdAt
+  itemId
+  itemType {
+    id
+    name
+    category
+    color {
+      id
+      hexCode
+    }
+    image {
+      id
+      thumbnailUrl
+      originalUrl
+      altText
+    }
+  }
+  fromUser {
+    ...UserBasic
+  }
+  toUser {
+    ...UserBasic
+  }
+  actorUser {
+    ...UserBasic
+  }
+}
+    ${UserBasicFragmentDoc}`;
 export const UserWithAvatarFragmentDoc = gql`
     fragment UserWithAvatar on User {
   id
@@ -9160,37 +9291,123 @@ export function useUpdateItemMutation(baseOptions?: Apollo.MutationHookOptions<U
 export type UpdateItemMutationHookResult = ReturnType<typeof useUpdateItemMutation>;
 export type UpdateItemMutationResult = Apollo.MutationResult<UpdateItemMutation>;
 export type UpdateItemMutationOptions = Apollo.BaseMutationOptions<UpdateItemMutation, UpdateItemMutationVariables>;
-export const DeleteItemDocument = gql`
-    mutation DeleteItem($id: ID!) {
-  deleteItem(id: $id)
+export const RevokeItemsDocument = gql`
+    mutation RevokeItems($itemIds: [ID!]!, $reason: String!, $staffNote: String) {
+  revokeItems(itemIds: $itemIds, reason: $reason, staffNote: $staffNote)
 }
     `;
-export type DeleteItemMutationFn = Apollo.MutationFunction<DeleteItemMutation, DeleteItemMutationVariables>;
+export type RevokeItemsMutationFn = Apollo.MutationFunction<RevokeItemsMutation, RevokeItemsMutationVariables>;
 
 /**
- * __useDeleteItemMutation__
+ * __useRevokeItemsMutation__
  *
- * To run a mutation, you first call `useDeleteItemMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteItemMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRevokeItemsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRevokeItemsMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [deleteItemMutation, { data, loading, error }] = useDeleteItemMutation({
+ * const [revokeItemsMutation, { data, loading, error }] = useRevokeItemsMutation({
  *   variables: {
- *      id: // value for 'id'
+ *      itemIds: // value for 'itemIds'
+ *      reason: // value for 'reason'
+ *      staffNote: // value for 'staffNote'
  *   },
  * });
  */
-export function useDeleteItemMutation(baseOptions?: Apollo.MutationHookOptions<DeleteItemMutation, DeleteItemMutationVariables>) {
+export function useRevokeItemsMutation(baseOptions?: Apollo.MutationHookOptions<RevokeItemsMutation, RevokeItemsMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteItemMutation, DeleteItemMutationVariables>(DeleteItemDocument, options);
+        return Apollo.useMutation<RevokeItemsMutation, RevokeItemsMutationVariables>(RevokeItemsDocument, options);
       }
-export type DeleteItemMutationHookResult = ReturnType<typeof useDeleteItemMutation>;
-export type DeleteItemMutationResult = Apollo.MutationResult<DeleteItemMutation>;
-export type DeleteItemMutationOptions = Apollo.BaseMutationOptions<DeleteItemMutation, DeleteItemMutationVariables>;
+export type RevokeItemsMutationHookResult = ReturnType<typeof useRevokeItemsMutation>;
+export type RevokeItemsMutationResult = Apollo.MutationResult<RevokeItemsMutation>;
+export type RevokeItemsMutationOptions = Apollo.BaseMutationOptions<RevokeItemsMutation, RevokeItemsMutationVariables>;
+export const GetItemTransactionsDocument = gql`
+    query GetItemTransactions($filters: ItemTransactionFiltersInput!) {
+  itemTransactions(filters: $filters) {
+    transactions {
+      ...ItemTransactionFields
+    }
+    total
+    hasMore
+  }
+}
+    ${ItemTransactionFieldsFragmentDoc}`;
+
+/**
+ * __useGetItemTransactionsQuery__
+ *
+ * To run a query within a React component, call `useGetItemTransactionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetItemTransactionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetItemTransactionsQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useGetItemTransactionsQuery(baseOptions: Apollo.QueryHookOptions<GetItemTransactionsQuery, GetItemTransactionsQueryVariables> & ({ variables: GetItemTransactionsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetItemTransactionsQuery, GetItemTransactionsQueryVariables>(GetItemTransactionsDocument, options);
+      }
+export function useGetItemTransactionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetItemTransactionsQuery, GetItemTransactionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetItemTransactionsQuery, GetItemTransactionsQueryVariables>(GetItemTransactionsDocument, options);
+        }
+export function useGetItemTransactionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetItemTransactionsQuery, GetItemTransactionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetItemTransactionsQuery, GetItemTransactionsQueryVariables>(GetItemTransactionsDocument, options);
+        }
+export type GetItemTransactionsQueryHookResult = ReturnType<typeof useGetItemTransactionsQuery>;
+export type GetItemTransactionsLazyQueryHookResult = ReturnType<typeof useGetItemTransactionsLazyQuery>;
+export type GetItemTransactionsSuspenseQueryHookResult = ReturnType<typeof useGetItemTransactionsSuspenseQuery>;
+export type GetItemTransactionsQueryResult = Apollo.QueryResult<GetItemTransactionsQuery, GetItemTransactionsQueryVariables>;
+export const GetItemProvenanceDocument = gql`
+    query GetItemProvenance($itemId: ID!) {
+  itemProvenance(itemId: $itemId) {
+    ...ItemTransactionFields
+  }
+}
+    ${ItemTransactionFieldsFragmentDoc}`;
+
+/**
+ * __useGetItemProvenanceQuery__
+ *
+ * To run a query within a React component, call `useGetItemProvenanceQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetItemProvenanceQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetItemProvenanceQuery({
+ *   variables: {
+ *      itemId: // value for 'itemId'
+ *   },
+ * });
+ */
+export function useGetItemProvenanceQuery(baseOptions: Apollo.QueryHookOptions<GetItemProvenanceQuery, GetItemProvenanceQueryVariables> & ({ variables: GetItemProvenanceQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetItemProvenanceQuery, GetItemProvenanceQueryVariables>(GetItemProvenanceDocument, options);
+      }
+export function useGetItemProvenanceLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetItemProvenanceQuery, GetItemProvenanceQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetItemProvenanceQuery, GetItemProvenanceQueryVariables>(GetItemProvenanceDocument, options);
+        }
+export function useGetItemProvenanceSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetItemProvenanceQuery, GetItemProvenanceQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetItemProvenanceQuery, GetItemProvenanceQueryVariables>(GetItemProvenanceDocument, options);
+        }
+export type GetItemProvenanceQueryHookResult = ReturnType<typeof useGetItemProvenanceQuery>;
+export type GetItemProvenanceLazyQueryHookResult = ReturnType<typeof useGetItemProvenanceLazyQuery>;
+export type GetItemProvenanceSuspenseQueryHookResult = ReturnType<typeof useGetItemProvenanceSuspenseQuery>;
+export type GetItemProvenanceQueryResult = Apollo.QueryResult<GetItemProvenanceQuery, GetItemProvenanceQueryVariables>;
 export const GetMediaDocument = gql`
     query GetMedia($filters: MediaFiltersInput) {
   media(filters: $filters) {

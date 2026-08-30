@@ -2,9 +2,15 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
-import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { Logger } from "@nestjs/common";
 import { join } from "path";
+import type {
+  BaseContext,
+  GraphQLRequestContextDidEncounterErrors,
+  GraphQLRequestContextDidResolveOperation,
+  GraphQLRequestContextWillSendResponse,
+} from "@apollo/server";
 
 import { DatabaseModule } from "./database/database.module";
 import { AuthModule } from "./auth/auth.module";
@@ -31,6 +37,7 @@ import { InviteCodesModule } from "./invite-codes/invite-codes.module";
 import { CharacterOwnershipChangesModule } from "./character-ownership-changes/character-ownership-changes.module";
 import { ExternalAccountsModule } from "./external-accounts/external-accounts.module";
 import { ItemsModule } from "./items/items.module";
+import { ItemTransactionsModule } from "./item-transactions/item-transactions.module";
 import { CommunityColorsModule } from "./community-colors/community-colors.module";
 import { PendingOwnershipModule } from "./pending-ownership/pending-ownership.module";
 import { DiscordModule } from "./discord/discord.module";
@@ -79,7 +86,9 @@ import { Request, Response } from "express";
             const logger = new Logger("GraphQL");
 
             return {
-              async didResolveOperation(requestContext: any) {
+              async didResolveOperation(
+                requestContext: GraphQLRequestContextDidResolveOperation<BaseContext>,
+              ) {
                 const { request, operationName } = requestContext;
                 const operationType =
                   request.query?.match(
@@ -141,17 +150,25 @@ import { Request, Response } from "express";
                 return sanitize(variables, 5);
               },
 
-              async willSendResponse(requestContext: any) {
+              async willSendResponse(
+                requestContext: GraphQLRequestContextWillSendResponse<BaseContext>,
+              ) {
                 const { request, response, operationName } = requestContext;
                 const operationType =
                   request.query?.match(
                     /^\s*(query|mutation|subscription)/i,
                   )?.[1] || "unknown";
-                const hasErrors = response.errors && response.errors.length > 0;
+                // Apollo 4 moved errors under response.body; `response.errors`
+                // has never existed here, so this branch was silently dead and
+                // every failing operation logged as a success.
+                const errors =
+                  response.body.kind === "single"
+                    ? response.body.singleResult.errors
+                    : undefined;
 
-                if (hasErrors) {
+                if (errors && errors.length > 0) {
                   logger.error(
-                    `${operationType}: ${operationName || "unnamed"} - Errors: ${JSON.stringify(response.errors)}`,
+                    `${operationType}: ${operationName || "unnamed"} - Errors: ${JSON.stringify(errors)}`,
                   );
                 } else {
                   logger.log(
@@ -160,7 +177,9 @@ import { Request, Response } from "express";
                 }
               },
 
-              async didEncounterErrors(requestContext: any) {
+              async didEncounterErrors(
+                requestContext: GraphQLRequestContextDidEncounterErrors<BaseContext>,
+              ) {
                 const { request, errors, operationName } = requestContext;
                 const operationType =
                   request.query?.match(
@@ -182,7 +201,7 @@ import { Request, Response } from "express";
                 logger.error(`Variables: ${variables}`);
                 logger.error(`Query: ${request.query}`);
 
-                errors.forEach((error: any, index: number) => {
+                errors.forEach((error, index) => {
                   logger.error(`Error ${index + 1}:`);
                   logger.error(`  Message: ${error.message}`);
                   logger.error(
@@ -239,6 +258,7 @@ import { Request, Response } from "express";
     CharacterOwnershipChangesModule,
     ExternalAccountsModule,
     ItemsModule,
+    ItemTransactionsModule,
     CommunityColorsModule,
     PendingOwnershipModule,
     DiscordModule,

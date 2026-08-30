@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Item ledger**: New `ItemTransaction` model recording every item movement — `GRANT`, `REVOKE`, `TRANSFER`, `CLAIM`, `USE` — with the actor, both parties, and a reason. Every write path produces rows inside the same database transaction as the item mutation, including the SQS prize consumer and the pending-ownership claim job. Exposed as `itemTransactions(filters)` (a community's ledger) and `itemProvenance(itemId)` (one item's history).
+
+  Reading is gated on **community membership only**, not on item permissions. That is deliberate: provenance is public within a community so it can act as a trust signal in member-to-member trades. Only the mutations that write rows stay permission-gated.
+
+- **Public reason, private staff note**: Item mutations take a member-facing `reason` and a staff-only `staffNote`. `staffNote` is resolved per viewer and returns null unless the viewer holds `canManageItems` or `canGrantItems` in that community. It is also deliberately excluded from the ledger's `search` filter, so a member cannot probe for the contents of a note they cannot read.
+
+- **`batchId` on ledger rows**: Shared by every row one operation writes. One item movement is one row, so granting twelve tokens writes twelve rows; the frontend collapses them back into a single line by grouping on this key rather than guessing from matching timestamps.
+
+- **`reason` on `PrizeEventDto`**: Optional and additive — an existing Discord bot producer that omits it still validates, and the handler falls back to a generic reason.
+
+### Changed
+
+- **Items are one row per instance. `Item.quantity` is gone.** Three potions are three rows.
+
+  Stacking and provenance cannot both be true: a row whose quantity went 2 → 4 → 3 cannot answer which two of the three came from a given trade. Per-instance rows give every item one unbroken chain, which is the point of provenance being readable at all. Three things fall out: partial transfers become an owner reassignment rather than a decrement-here-increment-there that leaves neither row's history true; `Item.metadata` starts meaning something, having been incoherent on a stack of three; and the concurrent-grant race disappears, because granting N is N inserts with no read-then-write.
+
+  **Breaking**: `grantItem` now returns `[Item!]!` rather than `Item!`. `UpdateItemInput` no longer accepts `quantity` — more items means `grantItem`, fewer means `revokeItems`.
+
+- **`ItemType.isStackable` and `ItemType.maxStackSize` removed.** Stacking is now purely a presentation choice, so neither flag described anything the database did.
+
+- **`deleteItem` replaced by `revokeItems(itemIds, reason, staffNote)`.** Soft, not hard: revoked items get `destroyedAt`/`destroyedById` and stay out of every inventory read, but keep their provenance readable — which is exactly the history a dispute wants. Mirrors how characters are deleted. `reason` is required because it is public. Takes a list because revoking two of someone's three potions means naming two specific items, and the whole revoke should land as one ledger event.
+
+### Fixed
+
+- **Item mutations were not permission-gated.** Every mutation in `items.resolver.ts` carried both `@AllowAnyAuthenticated()` and `@AllowCommunityPermission(...)`. The global guard ORs all permission decorators together, so the pair meant *authenticated OR permitted* — which is just *authenticated*. **Any logged-in user could create item types, grant items, and delete items in any community.** Removing `@AllowAnyAuthenticated()` from those handlers makes the community check bind.
+
+  This pattern appears elsewhere in the codebase and the remaining occurrences are **not** fixed here — see the note in the root changelog.
+
+- **Every failing GraphQL operation logged as a success.** The Apollo logging plugin in `app.module.ts` read `response.errors`, which Apollo 4 does not have — errors live under `response.body.singleResult`. The check was always falsy. Found by typing the plugin's `any` parameters against Apollo's own request-context types.
+
 ## [v10.2.0] - 2026-08-29
 
 ### Added

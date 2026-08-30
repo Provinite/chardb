@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Item Ledger page** (`/communities/:communityId/items/ledger`): every item movement in a community, with kind filter chips, search, and pagination. Linked from the community sidebar under **Community**, not Administration — any member can read it.
+
+  Rows arrive one per item and are collapsed by `batchId`, so a grant of twelve shows as one line reading `+12`. A batch split across a page boundary shows as two lines until the next page loads, which self-corrects on "Load more".
+
+  Staff notes render inline under the public reason. The page gates nothing itself — the server returns null for viewers without item permissions, so the same document serves both audiences.
+
+### Changed
+
+- **Inventory tiles roll items up by type.** Items are now one row per instance, so three potions arrive as three items and the page groups them into one tile reading ×3. Insertion order is preserved, so gaining a second copy of something does not reshuffle the grid.
+- **Item type form drops the Stackable and Max Stack Size fields**, along with the matching badges on the admin grid and the item type page. Neither described anything the database does any more.
+
+### Fixed
+
+- **Item card borders rendered an object instead of a colour.** `CommunityInventoryPage` passed `itemType.color` — a `{ id, name, hexCode }` object — into a `color?: string` styled-component prop. Now passes `color.hexCode`. The item was typed `any`, which is why nothing caught it.
+- **Editing an item type prefilled two fields that do not exist on it.** The edit modal read `itemType.imageUrl` and `itemType.iconUrl`; `ItemType` exposes neither, so both were always `undefined`. Also hidden by an `any`.
+
 ## [v10.2.0] - 2026-08-29
 
 ### Added

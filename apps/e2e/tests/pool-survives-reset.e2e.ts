@@ -1,10 +1,11 @@
-import { test, expect } from "../src/fixtures.js";
+import { presetTest, expect } from "../src/fixtures.js";
 import { print } from "graphql";
 import { CFG } from "../src/config.js";
 import { SeedCharacterCountDocument } from "../src/generated/graphql.js";
 import { withClient } from "../src/db/sql.js";
 
-test.use({ preset: "community-basic", persona: "anon" });
+const test = presetTest("community-basic");
+test.use({ persona: "anon" });
 
 /**
  * Guards the assumption the whole reset design rests on: that TRUNCATE +

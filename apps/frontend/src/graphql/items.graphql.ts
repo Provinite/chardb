@@ -10,8 +10,6 @@ export const ITEM_TYPE_FRAGMENT = gql`
     description
     communityId
     category
-    isStackable
-    maxStackSize
     isTradeable
     isConsumable
     image {
@@ -39,7 +37,7 @@ export const ITEM_FRAGMENT = gql`
     id
     itemTypeId
     ownerId
-    quantity
+    destroyedAt
     metadata
     createdAt
     updatedAt
@@ -144,6 +142,7 @@ export const GET_MY_INVENTORY = gql`
 
 // ==================== Item Mutations ====================
 
+// Returns one Item per unit granted -- there is no stacking.
 export const GRANT_ITEM = gql`
   mutation GrantItem($input: GrantItemInput!) {
     grantItem(input: $input) {
@@ -162,8 +161,74 @@ export const UPDATE_ITEM = gql`
   ${ITEM_FRAGMENT}
 `;
 
-export const DELETE_ITEM = gql`
-  mutation DeleteItem($id: ID!) {
-    deleteItem(id: $id)
+// Soft: destroyed items keep their provenance. Returns the count revoked.
+export const REVOKE_ITEMS = gql`
+  mutation RevokeItems($itemIds: [ID!]!, $reason: String!, $staffNote: String) {
+    revokeItems(itemIds: $itemIds, reason: $reason, staffNote: $staffNote)
   }
+`;
+
+// ==================== Item Ledger ====================
+
+export const ITEM_TRANSACTION_FRAGMENT = gql`
+  fragment ItemTransactionFields on ItemTransaction {
+    id
+    communityId
+    kind
+    batchId
+    reason
+    # Resolves to null for viewers without item permissions, so the same
+    # document serves staff and members.
+    staffNote
+    actorLabel
+    createdAt
+    itemId
+    itemType {
+      id
+      name
+      category
+      color {
+        id
+        hexCode
+      }
+      image {
+        id
+        thumbnailUrl
+        originalUrl
+        altText
+      }
+    }
+    fromUser {
+      ...UserBasic
+    }
+    toUser {
+      ...UserBasic
+    }
+    actorUser {
+      ...UserBasic
+    }
+  }
+  ${USER_BASIC_FRAGMENT}
+`;
+
+export const GET_ITEM_TRANSACTIONS = gql`
+  query GetItemTransactions($filters: ItemTransactionFiltersInput!) {
+    itemTransactions(filters: $filters) {
+      transactions {
+        ...ItemTransactionFields
+      }
+      total
+      hasMore
+    }
+  }
+  ${ITEM_TRANSACTION_FRAGMENT}
+`;
+
+export const GET_ITEM_PROVENANCE = gql`
+  query GetItemProvenance($itemId: ID!) {
+    itemProvenance(itemId: $itemId) {
+      ...ItemTransactionFields
+    }
+  }
+  ${ITEM_TRANSACTION_FRAGMENT}
 `;
