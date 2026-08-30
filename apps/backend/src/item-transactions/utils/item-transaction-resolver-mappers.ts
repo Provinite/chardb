@@ -1,4 +1,6 @@
 import { ItemTransaction as PrismaItemTransaction } from "@chardb/database";
+
+type WithBatchSize = PrismaItemTransaction & { batchSize: number };
 import {
   ItemTransaction,
   ItemTransactionConnection,
@@ -10,7 +12,7 @@ import {
  * skipped by a caller that forgets to null it.
  */
 export function mapPrismaItemTransactionToGraphQL(
-  transaction: PrismaItemTransaction,
+  transaction: WithBatchSize,
 ): ItemTransaction {
   return {
     id: transaction.id,
@@ -19,6 +21,7 @@ export function mapPrismaItemTransactionToGraphQL(
     itemId: transaction.itemId,
     kind: transaction.kind,
     batchId: transaction.batchId,
+    batchSize: transaction.batchSize,
     fromUserId: transaction.fromUserId,
     toUserId: transaction.toUserId,
     actorUserId: transaction.actorUserId,
@@ -29,7 +32,7 @@ export function mapPrismaItemTransactionToGraphQL(
 }
 
 export function mapPrismaItemTransactionConnectionToGraphQL(result: {
-  transactions: PrismaItemTransaction[];
+  transactions: WithBatchSize[];
   total: number;
   hasMore: boolean;
 }): ItemTransactionConnection {

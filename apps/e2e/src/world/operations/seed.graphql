@@ -183,6 +183,7 @@ query SeedItemTransactions($filters: ItemTransactionFiltersInput!) {
       id
       kind
       batchId
+      batchSize
       reason
       staffNote
       actorLabel
@@ -214,5 +215,20 @@ query SeedItemProvenance($itemId: ID!) {
     batchId
     reason
     staffNote
+  }
+}
+
+# Verification: what item types exist, so a spec can assert a create was
+# refused rather than matching on error copy.
+query SeedItemTypes($filters: ItemTypeFiltersInput) {
+  itemTypes(filters: $filters) {
+    total
+    itemTypes {
+      id
+      name
+      category
+      isTradeable
+      isConsumable
+    }
   }
 }

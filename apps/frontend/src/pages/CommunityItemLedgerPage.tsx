@@ -9,6 +9,7 @@ import {
   useGetItemTransactionsQuery,
   type ItemTransactionFieldsFragment,
 } from "../generated/graphql";
+import { collapseByBatch } from "../lib/itemDisplay";
 
 /**
  * The item ledger: every movement of every item in one community.
@@ -382,38 +383,6 @@ const LoadingContainer = styled.div`
   align-items: center;
   min-height: 400px;
 `;
-
-/**
- * One ledger row per item, collapsed back into one line per event.
- *
- * The server writes a row per item so each one carries its own provenance;
- * granting twelve tokens is twelve rows. `batchId` is shared by every row one
- * operation wrote, which makes the grouping exact rather than a guess from
- * matching timestamps.
- *
- * Grouping happens over the rows currently loaded, so a batch split across a
- * page boundary shows as two lines until the next page is fetched. That is
- * visible only at the boundary and self-corrects on "Load more".
- */
-interface LedgerEntry {
-  row: ItemTransactionFieldsFragment;
-  count: number;
-}
-
-function collapseByBatch(
-  rows: readonly ItemTransactionFieldsFragment[],
-): LedgerEntry[] {
-  const byBatch = new Map<string, LedgerEntry>();
-  for (const row of rows) {
-    const existing = byBatch.get(row.batchId);
-    if (existing) {
-      existing.count += 1;
-    } else {
-      byBatch.set(row.batchId, { row, count: 1 });
-    }
-  }
-  return Array.from(byBatch.values());
-}
 
 /** Which way the count reads for this kind of event. */
 const signFor = (kind: ItemTransactionKind) =>

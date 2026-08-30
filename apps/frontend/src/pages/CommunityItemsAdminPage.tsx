@@ -581,7 +581,14 @@ export const CommunityItemsAdminPage: React.FC = () => {
         ) : (
           <ItemTypeGrid>
             {itemTypes.map((itemType) => (
-              <ItemTypeCard key={itemType.id}>
+              // Container with no role and no unambiguous text of its own, so
+              // it carries an id the way trait-review-card does. The item type
+              // id makes the selector assert identity, not mere presence.
+              <ItemTypeCard
+                key={itemType.id}
+                data-testid="item-type-card"
+                data-item-type-id={itemType.id}
+              >
                 <StyledCopyIdButton id={itemType.id} />
                 <ItemTypeHeader>
                   <ItemTypeIcon color={itemType.color?.hexCode}>
@@ -676,8 +683,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
           <ModalTitle>Create Item Type</ModalTitle>
           <Form onSubmit={handleCreateItemType}>
             <FormGroup>
-              <Label>Name *</Label>
+              <Label htmlFor="create-item-name">Name *</Label>
               <Input
+                id="create-item-name"
                 required
                 value={formData.name}
                 onChange={(e) =>
@@ -687,8 +695,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Description</Label>
+              <Label htmlFor="create-item-description">Description</Label>
               <TextArea
+                id="create-item-description"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -697,8 +706,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Category</Label>
+              <Label htmlFor="create-item-category">Category</Label>
               <Input
+                id="create-item-category"
                 value={formData.category}
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value })
@@ -767,8 +777,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
           <ModalTitle>Edit Item Type</ModalTitle>
           <Form onSubmit={handleUpdateItemType}>
             <FormGroup>
-              <Label>Name *</Label>
+              <Label htmlFor="edit-item-name">Name *</Label>
               <Input
+                id="edit-item-name"
                 required
                 value={formData.name}
                 onChange={(e) =>
@@ -778,8 +789,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Description</Label>
+              <Label htmlFor="edit-item-description">Description</Label>
               <TextArea
+                id="edit-item-description"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -788,8 +800,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Category</Label>
+              <Label htmlFor="edit-item-category">Category</Label>
               <Input
+                id="edit-item-category"
                 value={formData.category}
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value })
@@ -876,8 +889,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Quantity *</Label>
+              <Label htmlFor="grant-item-quantity">Quantity *</Label>
               <Input
+                id="grant-item-quantity"
                 required
                 type="number"
                 min="1"

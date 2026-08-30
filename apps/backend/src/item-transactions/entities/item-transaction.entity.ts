@@ -44,6 +44,13 @@ export class ItemTransaction {
   })
   batchId: string;
 
+  @Field(() => Int, {
+    description:
+      "How many items this event touched in total. Counting loaded rows is " +
+      "wrong once a batch straddles a page boundary, so the server counts it.",
+  })
+  batchSize: number;
+
   @Field(() => ID, { nullable: true })
   fromUserId?: string | null;
 

@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   Staff notes render inline under the public reason. The page gates nothing itself — the server returns null for viewers without item permissions, so the same document serves both audiences.
 
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
+
 ### Changed
 
 - **Inventory tiles roll items up by type.** Items are now one row per instance, so three potions arrive as three items and the page groups them into one tile reading ×3. Insertion order is preserved, so gaining a second copy of something does not reshuffle the grid.
@@ -99,6 +103,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Paginated queue with pending count badge and refresh
 - **Separate moderation pages**: Split Image Moderation and Trait Review into dedicated pages with their own sidebar links and spotlight actions (note: image moderation URL changed from `/moderation` to `/moderation/images`)
 
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
+
 ### Changed
 
 - **Character delete button hidden**: Removed the delete button from the character page UI
@@ -119,11 +127,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Markdown support for media descriptions**: Image captions and descriptions now support bold, italic, headings, links, lists, and other markdown formatting with a live preview toggle
 - **Markdown links open safely**: Links in rendered markdown open in a new tab so users are never navigated away unexpectedly
 
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
+
 ### Changed
 
 - **Media description limit increased**: Description fields now allow up to 3,000 characters (previously 1,000)
 
 ## [v9.0.0] - 2026-02-09
+
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
 
 ### Changed
 
@@ -135,6 +151,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Title field on upload form**: Users can set a custom title when uploading images; defaults to original filename if left blank
+
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
 
 ### Changed
 
@@ -185,6 +205,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Upload Character Images Permissions**: New permissions for controlling image upload character selection
   - Added `canUploadOwnCharacterImages` and `canUploadCharacterImages` to permission UI
   - Centralized type-safe permission definitions in `lib/permissions.ts`
+
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
 
 ### Changed
 
@@ -289,6 +313,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Role Editor integration for permission assignment
   - Role list display shows orphaned character permission status
 
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
+
 ### Changed
 
 - **Character Creation UX (#125)**: Moved Character Ownership section below Species Selection for more logical form flow
@@ -311,6 +339,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Color pips on trait cards in trait builder
   - Color pips on variant cards and item type cards
   - Consistent color pip sizing and positioning across all displays
+
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
 
 ### Changed
 
@@ -365,6 +397,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enables custom trait ordering in character creation/editing forms per variant
 - **Character Edit Page with Species and Trait Management (#101)**: Added species/variant selection and comprehensive trait editing with read-only species display after assignment
 - **Character Details Editor (#109)**: Added markdown editor component with live preview, syntax hints, and character counter for unified character details
+
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
 
 ### Changed
 
@@ -526,6 +562,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MediaGrid Component**: Enhanced with proper TypeScript interfaces and error boundary handling
 - **CharacterMediaGallery Component**: Refactored filtering logic to use separate queries for display vs. counts
 
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
+
 ### Changed
 
 #### Media Gallery Behavior
@@ -579,6 +619,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v1.0.0] - 2025-01-12
 
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
+
 ### Changed
 
 - Minor internal breaking changes to tag system
@@ -594,6 +638,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `useTagSearch` hook for managing tag search state and API integration
 - Visual tag chip design with purple styling and hover effects
 - Support for creating new tags and selecting from existing suggestions
+
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
 
 ### Changed
 
@@ -633,6 +681,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Character edit form missing tags field and validation
 - Character detail page not displaying simple tag arrays as fallback
 
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
+
 ### Changed
 
 - Enhanced character edit form with Tags section matching create form styling
@@ -640,6 +692,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved tag processing with comma-separated string to array conversion
 
 ## [v0.0.2] - 2025-08-10
+
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
 
 ### Changed
 
@@ -666,6 +722,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Character sale price input validation
 - Image URL routing from /image/ to /media/
 - Page scroll behavior in media upload flow
+
+### Tests
+
+- `src/lib/itemDisplay.ts` extracted from the two pages so `groupIntoStacks` and `collapseByBatch` can be tested directly, with 9 unit tests covering rollup, ordering stability, and the partial-page batch count.
 
 ### Changed
 

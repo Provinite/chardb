@@ -18,6 +18,12 @@ export interface CommunityItemsWorld {
   };
   /** The three potions `member` holds, granted during seeding as one batch. */
   grantedItems: { ids: string[] };
+  /**
+   * Items standing in for what the migration produces: pre-existing holdings
+   * with one IMPORT row each, all sharing a batch id. Deliberately larger than
+   * the ledger's page size of 25 so the batch straddles a page boundary.
+   */
+  importedItems: { ids: string[]; batchId: string; count: number };
   roles: { admin: string; quartermaster: string; member: string };
   users: {
     siteadmin: Persona;
@@ -130,6 +136,41 @@ export default definePreset<CommunityItemsWorld>({
         },
       });
 
+    // The migration writes one IMPORT row per item that already existed, all in
+    // one batch. Nothing in the API can produce those -- by definition they
+    // predate the ledger -- so they are seeded directly, in the same shape the
+    // migration emits. Without this the most common row type in a real ledger
+    // would never be rendered by any test.
+    const IMPORT_BATCH = "00000000-0000-0000-0000-0000000000ff";
+    const IMPORT_COUNT = 30;
+
+    const importedIds: string[] = [];
+    for (let i = 0; i < IMPORT_COUNT; i++) {
+      const item = await ctx.prisma.item.create({
+        data: {
+          itemTypeId: locket.id,
+          ownerId: othermember.userId,
+          createdAt: new Date("2025-01-15T00:00:00Z"),
+        },
+      });
+      importedIds.push(item.id);
+    }
+
+    await ctx.prisma.itemTransaction.createMany({
+      data: importedIds.map((itemId) => ({
+        communityId: community.id,
+        itemTypeId: locket.id,
+        itemId,
+        kind: "IMPORT" as const,
+        batchId: IMPORT_BATCH,
+        toUserId: othermember.userId,
+        actorLabel: "system",
+        reason:
+          "Recorded when the item ledger was introduced. Earlier history was not tracked.",
+        createdAt: new Date("2025-01-15T00:00:00Z"),
+      })),
+    });
+
     return {
       community: {
         id: community.id,
@@ -142,6 +183,11 @@ export default definePreset<CommunityItemsWorld>({
         locket: { id: locket.id, name: locket.name },
       },
       grantedItems: { ids: grantItem.map((i) => i.id) },
+      importedItems: {
+        ids: importedIds,
+        batchId: IMPORT_BATCH,
+        count: IMPORT_COUNT,
+      },
       roles: {
         admin: stock.Admin,
         quartermaster: quartermasterRole.id,

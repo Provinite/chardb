@@ -1153,6 +1153,11 @@ type ItemTransaction {
   Shared by every row one operation wrote. Group on this to collapse a bulk grant into a single line.
   """
   batchId: ID!
+
+  """
+  How many items this event touched in total. Counting loaded rows is wrong once a batch straddles a page boundary, so the server counts it.
+  """
+  batchSize: Int!
   communityId: ID!
   createdAt: DateTime!
   fromUser: User

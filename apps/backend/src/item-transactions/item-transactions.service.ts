@@ -69,6 +69,34 @@ export class ItemTransactionsService {
     return batchId;
   }
 
+  /**
+   * Annotate rows with the true size of the batch they belong to.
+   *
+   * The frontend collapses a batch into one line, and counting the rows it
+   * happens to have loaded is wrong the moment a batch straddles a page
+   * boundary -- the migration writes one batch per pre-existing item, so the
+   * very first page of a real ledger would otherwise read "+25" for a batch of
+   * several hundred. One extra grouped count per page buys the honest number.
+   */
+  private async withBatchSizes<T extends { batchId: string }>(
+    rows: T[],
+  ): Promise<(T & { batchSize: number })[]> {
+    if (rows.length === 0) return [];
+
+    const batchIds = [...new Set(rows.map((r) => r.batchId))];
+    const counts = await this.db.itemTransaction.groupBy({
+      by: ["batchId"],
+      where: { batchId: { in: batchIds } },
+      _count: { _all: true },
+    });
+    const sizeByBatch = new Map(counts.map((c) => [c.batchId, c._count._all]));
+
+    return rows.map((r) => ({
+      ...r,
+      batchSize: sizeByBatch.get(r.batchId) ?? 1,
+    }));
+  }
+
   private buildWhere(
     filters: ItemTransactionFilters,
   ): Prisma.ItemTransactionWhereInput {
@@ -126,7 +154,7 @@ export class ItemTransactionsService {
     ]);
 
     return {
-      transactions,
+      transactions: await this.withBatchSizes(transactions),
       total,
       hasMore: offset + transactions.length < total,
     };
@@ -134,9 +162,10 @@ export class ItemTransactionsService {
 
   /** Every row for one item, oldest first -- the provenance timeline. */
   async findByItem(itemId: string) {
-    return this.db.itemTransaction.findMany({
+    const rows = await this.db.itemTransaction.findMany({
       where: { itemId },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     });
+    return this.withBatchSizes(rows);
   }
 }

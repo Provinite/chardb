@@ -6,9 +6,9 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import {
   useCommunityByIdQuery,
   useGetMyInventoryQuery,
-  type ItemFieldsFragment,
 } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
+import { groupIntoStacks } from "../lib/itemDisplay";
 
 const Container = styled.div`
   max-width: 1400px;
@@ -154,37 +154,6 @@ const LoadingContainer = styled.div`
   align-items: center;
   min-height: 400px;
 `;
-
-type InventoryItem = ItemFieldsFragment;
-
-interface DisplayStack {
-  itemType: InventoryItem["itemType"];
-  count: number;
-}
-
-/**
- * Rolls per-instance items up by item type for display.
- *
- * Every item is its own row now, so a member holding three potions has three
- * items. Collapsing them into one tile is the presentation half of that
- * trade -- the database keeps them separate so each can answer for its own
- * provenance.
- *
- * Insertion order is preserved so the grid does not reshuffle when a member
- * gains a second copy of something they already hold.
- */
-function groupIntoStacks(items: readonly InventoryItem[]): DisplayStack[] {
-  const byType = new Map<string, DisplayStack>();
-  for (const item of items) {
-    const existing = byType.get(item.itemType.id);
-    if (existing) {
-      existing.count += 1;
-    } else {
-      byType.set(item.itemType.id, { itemType: item.itemType, count: 1 });
-    }
-  }
-  return Array.from(byType.values());
-}
 
 export const CommunityInventoryPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();

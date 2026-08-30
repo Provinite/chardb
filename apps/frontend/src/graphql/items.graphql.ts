@@ -176,6 +176,7 @@ export const ITEM_TRANSACTION_FRAGMENT = gql`
     communityId
     kind
     batchId
+    batchSize
     reason
     # Resolves to null for viewers without item permissions, so the same
     # document serves staff and members.

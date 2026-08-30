@@ -17,9 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`IMPORT` transaction kind**: written once, by the migration, for every item that already existed. It says only that the item predates the ledger — inventing a `GRANT` would put fabricated provenance on a page members can read, and an empty timeline reads to a member as a broken page rather than as missing history.
 
+- **`batchSize` on ledger rows**: the true size of the event a row belongs to, counted server-side with one grouped query per page. Counting loaded rows instead is wrong the moment a batch straddles a page boundary — the migration writes one batch per pre-existing item, so a real ledger would have opened on "+25" for a batch of several hundred.
+
 - **`batchId` on ledger rows**: Shared by every row one operation writes. One item movement is one row, so granting twelve tokens writes twelve rows; the frontend collapses them back into a single line by grouping on this key rather than guessing from matching timestamps.
 
 - **`reason` on `PrizeEventDto`**: Optional and additive — an existing Discord bot producer that omits it still validates, and the handler falls back to a generic reason.
+
+### Tests
+
+- `items.service.spec.ts` (17) and `item-transactions.service.spec.ts` (15): per-instance granting, the absence of any stack read, soft revoke, cross-type and cross-owner revoke refusals, staff notes excluded from search, batch-size reporting on a partial page, and ledger rows written through the caller's transaction client rather than the pool.
 
 ### Migration
 
@@ -587,6 +593,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Expected Performance Degradation**: Field resolver pattern may introduce N+1 queries until dataloader patterns are implemented
 - **Optimization Opportunities**: Media type counting now uses efficient parallel queries, reducing response time for character gallery pages
 - **Database Indexing**: Added GIN index on Character.traitValues for fast JSON queries
+
+### Tests
+
+- `items.service.spec.ts` (17) and `item-transactions.service.spec.ts` (15): per-instance granting, the absence of any stack read, soft revoke, cross-type and cross-owner revoke refusals, staff notes excluded from search, batch-size reporting on a partial page, and ledger rows written through the caller's transaction client rather than the pool.
 
 ### Migration Notes
 
