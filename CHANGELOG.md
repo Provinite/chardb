@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Production telemetry reported the version Terraform last applied rather than the one actually deployed, labelling production `10.1.0` while it ran `v10.2.0`; the deploy now sets `OTEL_SERVICE_VERSION` alongside the image.
 - Terraform no longer manages a production task definition, so an apply stops registering revisions nothing deploys and a release stops leaving a pending replacement behind (#262).
 - Production plans no longer propose a task definition replacement on every run, which had buried real changes (#261).
-- Registered task definitions now match what AWS returns, and declare `runtimePlatform` as `LINUX/ARM64` explicitly instead of relying on ECS inferring it.
+- Registered task definitions now emit the container-level `cpu` that AWS fills in during normalisation, so a registered revision matches the API's own copy of it.
 - Production plans stay empty between real changes: the placeholder image no longer embeds the version and the unread current-revision output is gone, so a release no longer leaves a diff behind for values nothing deploys.
 
 ### Removed
