@@ -5,7 +5,7 @@ import { ShoppingCart, Package, Undo2, Check } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { useShopCart } from "../hooks/useShopCart";
+import { useShopCart, MAX_UNITS_PER_ITEM } from "../hooks/useShopCart";
 import {
   useGetShopItemsQuery,
   useGetMyShopPurchasesQuery,
@@ -575,6 +575,7 @@ export const CommunityShopPage: React.FC = () => {
                     <QtyInput
                       type="number"
                       min={0}
+                      max={MAX_UNITS_PER_ITEM}
                       step={1}
                       value={line.quantity}
                       aria-label={`Quantity of ${item.name || item.itemType.name}`}

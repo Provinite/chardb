@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- One checkout may buy at most ten of a listing, counted across lines so the
+  limit cannot be split around.
+
 - Refunding a buyer who had left the community destroyed their item and
   returned no coin. It is now refused.
 

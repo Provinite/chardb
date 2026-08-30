@@ -21,6 +21,32 @@ export interface CartLine {
 
 const KEY_PREFIX = "chardb.shopCart.";
 
+/**
+ * How many of one listing a single checkout may buy. Mirrors the server's
+ * `MAX_UNITS_PER_ITEM`; it is the server's rule, this just stops the cart
+ * asking for something it will be refused.
+ */
+export const MAX_UNITS_PER_ITEM = 10;
+
+/**
+ * The most this line may hold without the listing exceeding the cap.
+ *
+ * Counted across price options, not per line, because the cap is on the
+ * listing: five potions bought one way and six bought another is eleven
+ * potions, which is what the server will say too.
+ */
+function clampForItem(
+  lines: CartLine[],
+  shopItemId: string,
+  shopPriceId: string,
+  desired: number,
+): number {
+  const otherOptions = lines
+    .filter((l) => l.shopItemId === shopItemId && l.shopPriceId !== shopPriceId)
+    .reduce((total, l) => total + l.quantity, 0);
+  return Math.max(0, Math.min(desired, MAX_UNITS_PER_ITEM - otherOptions));
+}
+
 /** Carts are per community: coin does not travel between them, so nor should carts. */
 const keyFor = (communityId: string) => `${KEY_PREFIX}${communityId}`;
 
@@ -40,7 +66,8 @@ function read(communityId: string): CartLine[] {
         typeof (line as CartLine).shopItemId === "string" &&
         typeof (line as CartLine).shopPriceId === "string" &&
         Number.isInteger((line as CartLine).quantity) &&
-        (line as CartLine).quantity > 0,
+        (line as CartLine).quantity > 0 &&
+        (line as CartLine).quantity <= MAX_UNITS_PER_ITEM,
     );
   } catch {
     // A private window, cleared site data, or storage disabled entirely. An
@@ -85,12 +112,14 @@ export function useShopCart(communityId: string | undefined) {
       const existing = lines.find(
         (l) => l.shopItemId === shopItemId && l.shopPriceId === shopPriceId,
       );
+      const wanted = (existing?.quantity ?? 0) + quantity;
+      const capped = clampForItem(lines, shopItemId, shopPriceId, wanted);
+      if (capped === (existing?.quantity ?? 0)) return;
+
       persist(
         existing
-          ? lines.map((l) =>
-              l === existing ? { ...l, quantity: l.quantity + quantity } : l,
-            )
-          : [...lines, { shopItemId, shopPriceId, quantity }],
+          ? lines.map((l) => (l === existing ? { ...l, quantity: capped } : l))
+          : [...lines, { shopItemId, shopPriceId, quantity: capped }],
       );
     },
     [lines, persist],
@@ -98,15 +127,16 @@ export function useShopCart(communityId: string | undefined) {
 
   const setQuantity = useCallback(
     (shopItemId: string, shopPriceId: string, quantity: number) => {
+      const capped = clampForItem(lines, shopItemId, shopPriceId, quantity);
       persist(
-        quantity <= 0
+        capped <= 0
           ? lines.filter(
               (l) =>
                 !(l.shopItemId === shopItemId && l.shopPriceId === shopPriceId),
             )
           : lines.map((l) =>
               l.shopItemId === shopItemId && l.shopPriceId === shopPriceId
-                ? { ...l, quantity }
+                ? { ...l, quantity: capped }
                 : l,
             ),
       );

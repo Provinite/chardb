@@ -15,6 +15,7 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { ItemsService } from "../items/items.service";
+import { MAX_UNITS_PER_ITEM } from "./dto/shop.dto";
 
 /**
  * How long a buyer may undo their own purchase.
@@ -475,6 +476,21 @@ export class ShopService {
     }
     if (lines.some((l) => l.quantity < 1)) {
       throw new BadRequestException("Quantity must be at least one");
+    }
+
+    // Summed per listing, not per line. The per-line cap in the DTO is not
+    // enough on its own: the same listing may legitimately appear on several
+    // lines when it was bought at different price options, and eleven of one
+    // thing split across two lines is still eleven.
+    const perItem = new Map<string, number>();
+    for (const line of lines) {
+      const total = (perItem.get(line.shopItemId) ?? 0) + line.quantity;
+      if (total > MAX_UNITS_PER_ITEM) {
+        throw new BadRequestException(
+          `You may buy at most ${MAX_UNITS_PER_ITEM} of one thing at a time`,
+        );
+      }
+      perItem.set(line.shopItemId, total);
     }
 
     const purchaseId = randomUUID();

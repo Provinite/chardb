@@ -359,6 +359,58 @@ test.describe("coin shop", () => {
       await expect(buy(2)).rejects.toThrow(/only have 3/i);
       await buy(1);
     });
+
+    test("refuses more than ten of one listing, however it is split", async ({
+      world,
+    }) => {
+      // Every unit is its own item, line, and ledger row inside one
+      // transaction, so quantity is a bound on the work one request can ask
+      // for. The per-line cap alone would be bypassed by using two lines.
+      await expect(
+        world.as("member").gql(SeedCheckoutDocument, {
+          input: {
+            communityId: world.community.id,
+            lines: [
+              {
+                shopItemId: world.shop.potionListing.id,
+                shopPriceId: world.shop.potionListing.priceIds[0],
+                quantity: 6,
+              },
+              {
+                shopItemId: world.shop.potionListing.id,
+                shopPriceId: world.shop.potionListing.priceIds[1],
+                quantity: 6,
+              },
+            ],
+          },
+        }),
+      ).rejects.toThrow(/at most 10 of one thing/i);
+
+      // Refused before anything was written, so no line survives.
+      const { myShopPurchases } = await world
+        .as("member")
+        .gql(SeedMyShopPurchasesDocument, { communityId: world.community.id });
+      expect(myShopPurchases).toHaveLength(0);
+    });
+
+    test("refuses a single line asking for more than ten", async ({
+      world,
+    }) => {
+      await expect(
+        world.as("member").gql(SeedCheckoutDocument, {
+          input: {
+            communityId: world.community.id,
+            lines: [
+              {
+                shopItemId: world.shop.potionListing.id,
+                shopPriceId: world.shop.potionListing.priceIds[0],
+                quantity: 11,
+              },
+            ],
+          },
+        }),
+      ).rejects.toThrow();
+    });
   });
 
   test.describe("refunds", () => {

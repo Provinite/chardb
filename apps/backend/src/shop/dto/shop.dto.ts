@@ -15,6 +15,17 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 
+/**
+ * How many of one listing a single checkout may buy.
+ *
+ * A bound on the work one request can ask for, not a game rule -- a listing
+ * that should be scarce says so with `stock` or `maxPerUser`. Every unit is
+ * its own item row, its own purchase line, and its own ledger entry, all
+ * written inside one transaction, so an unbounded quantity is an unbounded
+ * transaction holding a pool connection.
+ */
+export const MAX_UNITS_PER_ITEM = 10;
+
 @InputType()
 export class ShopPriceComponentInput {
   @Field(() => ID)
@@ -154,10 +165,12 @@ export class CheckoutLineInputDto {
   @IsUUID()
   shopPriceId: string;
 
-  @Field(() => Int)
+  @Field(() => Int, {
+    description: "At most ten. The same limit applies across lines.",
+  })
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(MAX_UNITS_PER_ITEM)
   quantity: number;
 }
 

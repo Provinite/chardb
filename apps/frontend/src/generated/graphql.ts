@@ -231,6 +231,7 @@ export type CheckoutInput = {
 };
 
 export type CheckoutLineInputDto = {
+  /** At most ten. The same limit applies across lines. */
   quantity: Scalars['Int']['input'];
   shopItemId: Scalars['ID']['input'];
   /** Which price option was chosen. */

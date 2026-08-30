@@ -237,6 +237,7 @@ input CheckoutInput {
 }
 
 input CheckoutLineInputDto {
+  """At most ten. The same limit applies across lines."""
   quantity: Int!
   shopItemId: ID!
 
