@@ -245,7 +245,10 @@ describe("formatPrice", () => {
 describe("sumPrices", () => {
   it("adds amounts of the same currency", () => {
     expect(
-      sumPrices([[{ amount: 20, currency: HC }], [{ amount: 30, currency: HC }]]),
+      sumPrices([
+        [{ amount: 20, currency: HC }],
+        [{ amount: 30, currency: HC }],
+      ]),
     ).toEqual([{ currency: HC, amount: 50 }]);
   });
 
@@ -253,7 +256,10 @@ describe("sumPrices", () => {
     // Currencies never convert. A cart costing 20 HC and 1 SS has no single
     // total, and inventing one would be a lie about what is being spent.
     expect(
-      sumPrices([[{ amount: 20, currency: HC }], [{ amount: 1, currency: SS }]]),
+      sumPrices([
+        [{ amount: 20, currency: HC }],
+        [{ amount: 1, currency: SS }],
+      ]),
     ).toEqual([
       { currency: HC, amount: 20 },
       { currency: SS, amount: 1 },
@@ -282,9 +288,10 @@ describe("sumPrices", () => {
 
   it("orders by currency code, so a total does not reshuffle as lines change", () => {
     expect(
-      sumPrices([[{ amount: 1, currency: SS }], [{ amount: 5, currency: GEM }]]).map(
-        (t) => t.currency.code,
-      ),
+      sumPrices([
+        [{ amount: 1, currency: SS }],
+        [{ amount: 5, currency: GEM }],
+      ]).map((t) => t.currency.code),
     ).toEqual(["GEM", "SS"]);
   });
 

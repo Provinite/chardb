@@ -163,10 +163,7 @@ export const CommunityShopPurchasesPage: React.FC = () => {
 
   const [refundLine] = useRefundShopPurchaseLineMutation();
 
-  const purchases = useMemo(
-    () => data?.communityShopPurchases ?? [],
-    [data],
-  );
+  const purchases = useMemo(() => data?.communityShopPurchases ?? [], [data]);
 
   // Filtered here rather than on the server: fifty purchases is a page, and a
   // round trip per keystroke buys nothing at that size.
@@ -282,7 +279,9 @@ export const CommunityShopPurchasesPage: React.FC = () => {
             {purchase.lines.map((line) => (
               <Line key={line.id}>
                 <LineName>
-                  <span>{line.shopItem.name || line.shopItem.itemType.name}</span>
+                  <span>
+                    {line.shopItem.name || line.shopItem.itemType.name}
+                  </span>
                   <Muted>{formatPrice(line.costs)}</Muted>
                 </LineName>
 

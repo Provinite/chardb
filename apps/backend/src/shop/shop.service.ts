@@ -909,10 +909,7 @@ function refundBlockedReason(
   // being fifteen minutes rather than forever.
   if (!isStaff) {
     if (line.buyerId !== viewerId) return "This is not your purchase";
-    if (
-      !line.refundedAt &&
-      now - line.createdAt.getTime() > REFUND_WINDOW_MS
-    ) {
+    if (!line.refundedAt && now - line.createdAt.getTime() > REFUND_WINDOW_MS) {
       return "The undo window has passed -- ask a moderator";
     }
   }

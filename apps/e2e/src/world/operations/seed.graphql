@@ -170,7 +170,11 @@ mutation SeedUpdateItem($id: ID!, $input: UpdateItemInput!) {
 # `reason` is required: it is public, and it is what a member sees on the
 # provenance of an item that was taken away from them. Soft -- the items stay
 # readable, marked destroyed. Returns the count revoked.
-mutation SeedRevokeItems($itemIds: [ID!]!, $reason: String!, $staffNote: String) {
+mutation SeedRevokeItems(
+  $itemIds: [ID!]!
+  $reason: String!
+  $staffNote: String
+) {
   revokeItems(itemIds: $itemIds, reason: $reason, staffNote: $staffNote)
 }
 

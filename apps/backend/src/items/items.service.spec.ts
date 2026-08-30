@@ -192,7 +192,11 @@ describe("ItemsService", () => {
 
       expect(mockNotificationsService.create).toHaveBeenCalledTimes(1);
       const [payload] = mockNotificationsService.create.mock.calls[0] as [
-        { recipientId: string; kind: NotificationKind; data: { count: number } },
+        {
+          recipientId: string;
+          kind: NotificationKind;
+          data: { count: number };
+        },
       ];
       expect(payload.recipientId).toBe("user1");
       expect(payload.kind).toBe(NotificationKind.ITEM_GRANTED);
@@ -221,16 +225,13 @@ describe("ItemsService", () => {
       // The notification belongs to grantItem, not to the shared core. A shop
       // purchase grants through createGranted, and telling buyers they have
       // received the thing they just bought is noise.
-      await service.createGranted(
-        mockDatabaseService as unknown as DbClient,
-        {
-          itemTypeId: "type1",
-          communityId: "comm1",
-          ownerId: "user1",
-          quantity: 1,
-          actor,
-        },
-      );
+      await service.createGranted(mockDatabaseService as unknown as DbClient, {
+        itemTypeId: "type1",
+        communityId: "comm1",
+        ownerId: "user1",
+        quantity: 1,
+        actor,
+      });
 
       expect(mockNotificationsService.create).not.toHaveBeenCalled();
     });
