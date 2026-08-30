@@ -1,5 +1,6 @@
 import { Test } from "@nestjs/testing";
 import { DatabaseService } from "../src/database/database.service";
+import type { AuthenticatedCurrentUserType } from "../src/auth/types/current-user.type";
 
 // Mock Prisma Client for testing
 const mockPrismaService = {
@@ -232,6 +233,41 @@ export const createTestingModule = async (providers = []) => {
 };
 
 export const mockDatabaseService = mockPrismaService;
+
+/**
+ * A complete user row, as the JWT strategy hands one to `@CurrentUser()`.
+ *
+ * `AuthenticatedCurrentUserType` is the whole Prisma row -- the strategy
+ * returns whatever `UsersService.findById` returns -- so a resolver that types
+ * its current user honestly will not accept a partial fixture.
+ *
+ * Pinned with `satisfies` rather than left to inference so this fixture cannot
+ * drift from the model: a new column fails here for want of a value, and a
+ * removed or renamed one fails here as an unknown property. Either way the
+ * error lands on this declaration instead of scattering across every spec that
+ * happens to pass it.
+ */
+export const mockAuthUser = {
+  id: "user-1",
+  username: "testuser",
+  email: "test@example.com",
+  passwordHash: "hashed",
+  displayName: "Test User",
+  bio: null,
+  avatarImageId: null,
+  website: null,
+  dateOfBirth: null,
+  isVerified: true,
+  isAdmin: false,
+  privacySettings: {},
+  canCreateCommunity: false,
+  canListUsers: false,
+  canListInviteCodes: false,
+  canCreateInviteCode: false,
+  canGrantGlobalPermissions: false,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+} satisfies AuthenticatedCurrentUserType;
 
 /**
  * Stand-in for NotificationsService.

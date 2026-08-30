@@ -3,6 +3,10 @@ import { NotificationKind, NotificationSubjectType } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { MediaFiltersInput } from "../media/dto/media.dto";
+import {
+  userMapperSelect,
+  type PublicUser,
+} from "../users/utils/user-resolver-mappers";
 import { notDeleted } from "../common/utils/prisma-filters";
 import {
   LikeableType,
@@ -411,17 +415,13 @@ export class SocialService {
     }
   }
 
-  // Methods to get user's liked content
+  // Methods to get user's liked content.
   //
-  // The `any` return types below are pre-existing and load-bearing. Each of
-  // these selects a partial row while its resolver declares the full GraphQL
-  // entity, so typing them honestly does not compile until the social
-  // resolver's return contracts are reworked -- a change well beyond the
-  // notification producer this file was opened for. Suppressed per line rather
-  // than per file so a new `any` here still fails.
+  // These return Prisma rows, as the rest of the service layer does. The
+  // resolver maps them to GraphQL entities -- the same split every other module
+  // uses, and the reason these signatures no longer need to lie.
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async getUserLikedCharacters(userId: string): Promise<any[]> {
+  async getUserLikedCharacters(userId: string) {
     const likes = await this.databaseService.like.findMany({
       where: {
         userId,
@@ -463,8 +463,7 @@ export class SocialService {
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async getUserLikedGalleries(userId: string): Promise<any[]> {
+  async getUserLikedGalleries(userId: string) {
     const likes = await this.databaseService.like.findMany({
       where: {
         userId,
@@ -499,8 +498,7 @@ export class SocialService {
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async getUserLikedImages(userId: string): Promise<any[]> {
+  async getUserLikedImages(userId: string) {
     const likes = await this.databaseService.like.findMany({
       where: {
         userId,
@@ -531,12 +529,7 @@ export class SocialService {
     });
   }
 
-  // The filters parameter is genuinely typed now -- only the return cascades.
-  async getUserLikedMedia(
-    userId: string,
-    filters?: MediaFiltersInput,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any> {
+  async getUserLikedMedia(userId: string, filters?: MediaFiltersInput) {
     const limit = filters?.limit || 20;
     const offset = filters?.offset || 0;
 
@@ -577,7 +570,7 @@ export class SocialService {
       ...(filters?.visibility ? { visibility: filters.visibility } : {}),
     };
 
-    const [media, total] = await Promise.all([
+    const [media, total, imageCount, textCount] = await Promise.all([
       this.databaseService.media.findMany({
         where,
         include: {
@@ -614,28 +607,32 @@ export class SocialService {
         skip: offset,
       }),
       this.databaseService.media.count({ where }),
+      // MediaConnection declares both of these non-null, and this path never
+      // produced them -- asking for `likedMedia { imageCount }` was an error at
+      // runtime. Counted the same way MediaService.findAll does.
+      this.databaseService.media.count({
+        where: { ...where, imageId: { not: null } },
+      }),
+      this.databaseService.media.count({
+        where: { ...where, textContentId: { not: null } },
+      }),
     ]);
 
     return {
       media,
       total,
+      imageCount,
+      textCount,
       hasMore: offset + limit < total,
     };
   }
 
   // Methods for follow lists and activity feed
-  async getFollowers(
-    username: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<{ user: any; followers: any[] }> {
+  async getFollowers(username: string) {
     // First find the user by username
     const user = await this.databaseService.user.findUnique({
       where: { username },
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
-      },
+      select: userMapperSelect,
     });
 
     if (!user) {
@@ -648,15 +645,7 @@ export class SocialService {
         followingId: user.id,
       },
       include: {
-        follower: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-            avatarImageId: true,
-            bio: true,
-          },
-        },
+        follower: { select: userMapperSelect },
       },
       orderBy: {
         createdAt: "desc",
@@ -671,18 +660,11 @@ export class SocialService {
     };
   }
 
-  async getFollowing(
-    username: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<{ user: any; following: any[] }> {
+  async getFollowing(username: string) {
     // First find the user by username
     const user = await this.databaseService.user.findUnique({
       where: { username },
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
-      },
+      select: userMapperSelect,
     });
 
     if (!user) {
@@ -695,15 +677,7 @@ export class SocialService {
         followerId: user.id,
       },
       include: {
-        following: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-            avatarImageId: true,
-            bio: true,
-          },
-        },
+        following: { select: userMapperSelect },
       },
       orderBy: {
         createdAt: "desc",
@@ -733,12 +707,7 @@ export class SocialService {
     });
   }
 
-  async getActivityFeed(
-    userId: string,
-    limit = 20,
-    offset = 0,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any[]> {
+  async getActivityFeed(userId: string, limit = 20, offset = 0) {
     // Get list of users that the current user follows
     const following = await this.databaseService.follow.findMany({
       where: {
@@ -767,14 +736,7 @@ export class SocialService {
           ...notDeleted,
         },
         include: {
-          owner: {
-            select: {
-              id: true,
-              username: true,
-              displayName: true,
-              avatarImageId: true,
-            },
-          },
+          owner: { select: userMapperSelect },
         },
         orderBy: {
           createdAt: "desc",
@@ -789,14 +751,7 @@ export class SocialService {
           ownerId: { in: followingUserIds },
         },
         include: {
-          owner: {
-            select: {
-              id: true,
-              username: true,
-              displayName: true,
-              avatarImageId: true,
-            },
-          },
+          owner: { select: userMapperSelect },
         },
         orderBy: {
           createdAt: "desc",
@@ -812,14 +767,7 @@ export class SocialService {
           ownerId: { in: followingUserIds },
         },
         include: {
-          owner: {
-            select: {
-              id: true,
-              username: true,
-              displayName: true,
-              avatarImageId: true,
-            },
-          },
+          owner: { select: userMapperSelect },
         },
         orderBy: {
           createdAt: "desc",
@@ -866,11 +814,22 @@ export class SocialService {
     ];
 
     // Sort by creation date and limit results
-    return activities
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      )
-      .slice(0, limit);
+    return (
+      activities
+        // Every row above was selected by `ownerId in followingUserIds`, so an
+        // owner cannot actually be null -- but a character's owner is nullable
+        // in the schema and the types cannot see the filter. Narrowing here
+        // beats asserting it, and an unattributable activity has no place in a
+        // feed of people you follow anyway.
+        .filter(
+          (activity): activity is typeof activity & { user: PublicUser } =>
+            activity.user !== null,
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        )
+        .slice(0, limit)
+    );
   }
 }

@@ -13,6 +13,7 @@ import { Visibility, ModerationStatus } from "@chardb/database";
 import { CommentableType } from "../comments/dto/comment.dto";
 import { LikeableType } from "./dto/like.dto";
 import {
+  mockAuthUser,
   mockDatabaseService,
   mockNotificationsService,
 } from "../../test/setup";
@@ -21,27 +22,6 @@ import { NotificationsService } from "../notifications/notifications.service";
 describe("SocialResolver", () => {
   let resolver: SocialResolver;
   let service: SocialService;
-
-  const mockUser = {
-    id: "user-1",
-    username: "testuser",
-    email: "test@example.com",
-    isAdmin: false,
-    isVerified: true,
-    privacySettings: {},
-    canCreateCommunity: false,
-    canListUsers: false,
-    canListInviteCodes: false,
-    canCreateInviteCode: false,
-    canGrantGlobalPermissions: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    externalAccounts: [],
-    communityMemberships: [],
-    followersCount: 0,
-    followingCount: 0,
-    userIsFollowing: false,
-  };
 
   const mockLikeResult = {
     isLiked: true,
@@ -84,7 +64,7 @@ describe("SocialResolver", () => {
 
       jest.spyOn(service, "toggleLike").mockResolvedValue(mockLikeResult);
 
-      const result = await resolver.toggleLike(input, mockUser);
+      const result = await resolver.toggleLike(input, mockAuthUser);
 
       expect(result).toEqual(mockLikeResult);
       expect(service.toggleLike).toHaveBeenCalledWith("user-1", input);
@@ -98,7 +78,7 @@ describe("SocialResolver", () => {
       const result = await resolver.likeStatus(
         LikeableType.CHARACTER,
         "character-1",
-        mockUser,
+        mockAuthUser,
       );
 
       expect(result).toEqual(mockLikeStatus);
@@ -205,7 +185,7 @@ describe("CharacterLikesResolver", () => {
     it("should return true when user has liked the character", async () => {
       jest.spyOn(service, "getUserHasLiked").mockResolvedValue(true);
 
-      const result = await resolver.userHasLiked(mockCharacter, mockUser);
+      const result = await resolver.userHasLiked(mockCharacter, mockAuthUser);
 
       expect(result).toBe(true);
       expect(service.getUserHasLiked).toHaveBeenCalledWith(
@@ -218,7 +198,7 @@ describe("CharacterLikesResolver", () => {
     it("should return like status for authenticated user", async () => {
       jest.spyOn(service, "getUserHasLiked").mockResolvedValue(false);
 
-      const result = await resolver.userHasLiked(mockCharacter, mockUser);
+      const result = await resolver.userHasLiked(mockCharacter, mockAuthUser);
 
       expect(result).toBe(false);
       expect(service.getUserHasLiked).toHaveBeenCalledWith(
@@ -508,7 +488,7 @@ describe("SocialResolver - Follow System", () => {
 
       jest.spyOn(service, "toggleFollow").mockResolvedValue(mockFollowResult);
 
-      const result = await resolver.toggleFollow(input, mockUser);
+      const result = await resolver.toggleFollow(input, mockAuthUser);
 
       expect(result).toEqual(mockFollowResult);
       expect(service.toggleFollow).toHaveBeenCalledWith("user-1", input);
@@ -521,7 +501,7 @@ describe("SocialResolver - Follow System", () => {
         .spyOn(service, "getFollowStatus")
         .mockResolvedValue(mockFollowStatus);
 
-      const result = await resolver.followStatus("user-2", mockUser);
+      const result = await resolver.followStatus("user-2", mockAuthUser);
 
       expect(result).toEqual(mockFollowStatus);
       expect(service.getFollowStatus).toHaveBeenCalledWith("user-2", "user-1");
@@ -535,7 +515,7 @@ describe("SocialResolver - Follow System", () => {
       };
       jest.spyOn(service, "getFollowStatus").mockResolvedValue(authStatus);
 
-      const result = await resolver.followStatus("user-2", mockUser);
+      const result = await resolver.followStatus("user-2", mockAuthUser);
 
       expect(result).toEqual(authStatus);
       expect(service.getFollowStatus).toHaveBeenCalledWith(
@@ -571,7 +551,11 @@ describe("UserFollowResolver", () => {
     userIsFollowing: false,
   };
 
+  // Deliberately a different person from the profile being viewed: these tests
+  // check that the resolver passes the target and the viewer in that order, and
+  // a shared fixture for both would pass whichever way round it got them.
   const mockCurrentUser = {
+    ...mockAuthUser,
     id: "user-2",
     username: "currentuser",
   };

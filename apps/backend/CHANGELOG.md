@@ -21,6 +21,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`likedMedia` never returned `imageCount` or `textCount`.** Both are non-null
+  on `MediaConnection`, so asking for either was an error at runtime. The social
+  service now counts them the way `MediaService.findAll` does.
+
+- **The social module returned raw Prisma rows where it declared GraphQL
+  entities**, held together by `any` on seven service methods. It now maps
+  through the same `mapPrismaXToGraphQL` functions every other module uses, so
+  `likedCharacters` returns a `Character` with its computed `isOrphaned` rather
+  than a row that merely resembled one.
+
 - **`schema:emit` reported a failed boot as a bare exit code.** It passed
   `logger: false`, and Nest reports an unresolvable dependency through the
   logger rather than as a thrown error, so a broken app produced no output at

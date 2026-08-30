@@ -50,6 +50,40 @@ export function mapUpdateUserInputToService(
 type PrismaUser = Prisma.UserGetPayload<Record<string, never>>;
 
 /**
+ * Every scalar `mapPrismaUserToGraphQL` reads, and nothing else.
+ *
+ * Spelled out rather than omitting `select` altogether so `passwordHash` stays
+ * in the database. The mapper deliberately does not accept it, and a bare
+ * `findMany` would pull every hash in the result set into memory to satisfy a
+ * function that never looks at them.
+ */
+export const userMapperSelect = {
+  id: true,
+  username: true,
+  email: true,
+  displayName: true,
+  bio: true,
+  avatarImageId: true,
+  website: true,
+  dateOfBirth: true,
+  isVerified: true,
+  isAdmin: true,
+  privacySettings: true,
+  canCreateCommunity: true,
+  canListUsers: true,
+  canListInviteCodes: true,
+  canCreateInviteCode: true,
+  canGrantGlobalPermissions: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.UserSelect;
+
+/** A user row shaped by {@link userMapperSelect}. */
+export type PublicUser = Prisma.UserGetPayload<{
+  select: typeof userMapperSelect;
+}>;
+
+/**
  * Maps Prisma User result to GraphQL User entity.
  * Only includes scalar fields - relations handled by field resolvers.
  *

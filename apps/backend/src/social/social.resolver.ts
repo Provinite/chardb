@@ -29,6 +29,15 @@ import { Follow } from "./entities/follow.entity";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
+import type {
+  AuthenticatedCurrentUserType,
+  CurrentUserType,
+} from "../auth/types/current-user.type";
+import { mapPrismaCharacterToGraphQL } from "../characters/utils/character-resolver-mappers";
+import { mapPrismaGalleryToGraphQL } from "../galleries/utils/gallery-resolver-mappers";
+import { mapPrismaImageToGraphQL } from "../images/utils/image-resolver-mappers";
+import { mapPrismaMediaConnectionToGraphQL } from "../media/utils/media-resolver-mappers";
+import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
 import { DatabaseService } from "../database/database.service";
 import { Character } from "../characters/entities/character.entity";
 import { Image } from "../images/entities/image.entity";
@@ -37,16 +46,6 @@ import { Comment } from "../comments/entities/comment.entity";
 import { User } from "../users/entities/user.entity";
 import { Media, MediaConnection } from "../media/entities/media.entity";
 import { MediaFiltersInput } from "../media/dto/media.dto";
-
-// Helper function to add default social fields to User objects
-function addDefaultSocialFields(user: any): User {
-  return {
-    ...user,
-    followersCount: 0,
-    followingCount: 0,
-    userIsFollowing: false,
-  };
-}
 
 @Resolver()
 export class SocialResolver {
@@ -59,7 +58,7 @@ export class SocialResolver {
   @Mutation(() => LikeResult)
   async toggleLike(
     @Args("input") input: ToggleLikeInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<LikeResult> {
     return this.socialService.toggleLike(user.id, input);
   }
@@ -69,7 +68,7 @@ export class SocialResolver {
   async likeStatus(
     @Args("entityType", { type: () => LikeableType }) entityType: LikeableType,
     @Args("entityId", { type: () => ID }) entityId: string,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<LikeStatus> {
     return this.socialService.getLikeStatus(entityType, entityId, user?.id);
   }
@@ -80,7 +79,7 @@ export class SocialResolver {
   @Mutation(() => FollowResult)
   async toggleFollow(
     @Args("input") input: ToggleFollowInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<FollowResult> {
     return this.socialService.toggleFollow(user.id, input);
   }
@@ -89,7 +88,7 @@ export class SocialResolver {
   @Query(() => FollowStatus)
   async followStatus(
     @Args("userId", { type: () => ID }) userId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<FollowStatus> {
     return this.socialService.getFollowStatus(userId, user.id);
   }
@@ -97,29 +96,42 @@ export class SocialResolver {
   // Queries for user's liked content
   @AllowAnyAuthenticated()
   @Query(() => [Character])
-  async likedCharacters(@CurrentUser() user: any): Promise<Character[]> {
-    return this.socialService.getUserLikedCharacters(user.id);
+  async likedCharacters(
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<Character[]> {
+    const characters = await this.socialService.getUserLikedCharacters(user.id);
+    return characters.map(mapPrismaCharacterToGraphQL);
   }
 
   @AllowAnyAuthenticated()
   @Query(() => [Gallery])
-  async likedGalleries(@CurrentUser() user: any): Promise<Gallery[]> {
-    return this.socialService.getUserLikedGalleries(user.id);
+  async likedGalleries(
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<Gallery[]> {
+    const galleries = await this.socialService.getUserLikedGalleries(user.id);
+    return galleries.map(mapPrismaGalleryToGraphQL);
   }
 
   @AllowAnyAuthenticated()
   @Query(() => [Image])
-  async likedImages(@CurrentUser() user: any): Promise<Image[]> {
-    return this.socialService.getUserLikedImages(user.id);
+  async likedImages(
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<Image[]> {
+    const images = await this.socialService.getUserLikedImages(user.id);
+    return images.map(mapPrismaImageToGraphQL);
   }
 
   @AllowAnyAuthenticated()
   @Query(() => MediaConnection)
   async likedMedia(
+    @CurrentUser() user: AuthenticatedCurrentUserType,
     @Args("filters", { nullable: true }) filters?: MediaFiltersInput,
-    @CurrentUser() user?: any,
   ): Promise<MediaConnection> {
-    return this.socialService.getUserLikedMedia(user.id, filters);
+    const connection = await this.socialService.getUserLikedMedia(
+      user.id,
+      filters,
+    );
+    return mapPrismaMediaConnectionToGraphQL(connection);
   }
 
   // Follow list queries
@@ -130,8 +142,8 @@ export class SocialResolver {
   ): Promise<FollowListResult> {
     const result = await this.socialService.getFollowers(username);
     return {
-      user: result.user,
-      followers: result.followers,
+      user: mapPrismaUserToGraphQL(result.user),
+      followers: result.followers.map(mapPrismaUserToGraphQL),
     };
   }
 
@@ -142,8 +154,8 @@ export class SocialResolver {
   ): Promise<FollowListResult> {
     const result = await this.socialService.getFollowing(username);
     return {
-      user: result.user,
-      following: result.following,
+      user: mapPrismaUserToGraphQL(result.user),
+      following: result.following.map(mapPrismaUserToGraphQL),
     };
   }
 
@@ -151,11 +163,19 @@ export class SocialResolver {
   @AllowAnyAuthenticated()
   @Query(() => [ActivityItem])
   async activityFeed(
+    @CurrentUser() user: AuthenticatedCurrentUserType,
     @Args("input", { nullable: true }) input?: ActivityFeedInput,
-    @CurrentUser() user?: any,
   ): Promise<ActivityItem[]> {
     const { limit = 20, offset = 0 } = input || {};
-    return this.socialService.getActivityFeed(user.id, limit, offset);
+    const activities = await this.socialService.getActivityFeed(
+      user.id,
+      limit,
+      offset,
+    );
+    return activities.map((activity) => ({
+      ...activity,
+      user: mapPrismaUserToGraphQL(activity.user),
+    }));
   }
 }
 
@@ -176,7 +196,7 @@ export class CharacterLikesResolver {
   @ResolveField(() => Boolean)
   async userHasLiked(
     @Parent() character: Character,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.socialService.getUserHasLiked(
       LikeableType.CHARACTER,
@@ -199,7 +219,7 @@ export class ImageLikesResolver {
   @ResolveField(() => Boolean)
   async userHasLiked(
     @Parent() image: Image,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.socialService.getUserHasLiked(
       LikeableType.IMAGE,
@@ -222,7 +242,7 @@ export class GalleryLikesResolver {
   @ResolveField(() => Boolean)
   async userHasLiked(
     @Parent() gallery: Gallery,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.socialService.getUserHasLiked(
       LikeableType.GALLERY,
@@ -245,7 +265,7 @@ export class CommentLikesResolver {
   @ResolveField(() => Boolean)
   async userHasLiked(
     @Parent() comment: Comment,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.socialService.getUserHasLiked(
       LikeableType.COMMENT,
@@ -268,7 +288,7 @@ export class MediaLikesResolver {
   @ResolveField(() => Boolean)
   async userHasLiked(
     @Parent() media: Media,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.socialService.getUserHasLiked(
       LikeableType.MEDIA,
@@ -296,7 +316,7 @@ export class UserFollowResolver {
   @ResolveField(() => Boolean)
   async userIsFollowing(
     @Parent() user: User,
-    @CurrentUser() currentUser: any,
+    @CurrentUser() currentUser: AuthenticatedCurrentUserType,
   ): Promise<boolean> {
     return this.socialService.getUserIsFollowing(user.id, currentUser.id);
   }
