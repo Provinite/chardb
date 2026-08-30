@@ -159,6 +159,11 @@ model User {
   // Trait review actions
   traitReviewActions TraitReview[] @relation("TraitReviewResolver")
 
+  // Notifications. Two relations because one row names two people: who it was
+  // addressed to, and who caused it.
+  notifications      Notification[] @relation("NotificationRecipient")
+  causedNotifications Notification[] @relation("NotificationActor")
+
   @@map("users")
 }
 
@@ -507,6 +512,7 @@ model Community {
   communityColors      CommunityColor[]
   itemTransactions     ItemTransaction[]
   currencies           Currency[]
+  notifications        Notification[]
 
   @@map("communities")
 }
@@ -1106,4 +1112,88 @@ model TraitReview {
   @@index([characterId])
   @@index([status])
   @@map("trait_reviews")
+}
+
+/// What happened. Each kind names the shape of `Notification.data`; the two are
+/// kept in step by `notification-payloads.ts`, which will not compile if a kind
+/// added here has no payload schema.
+enum NotificationKind {
+  /// Someone followed you. The actor is the whole story; there is no subject.
+  FOLLOW_RECEIVED
+  /// Someone commented on something of yours.
+  COMMENT_RECEIVED
+  /// Staff gave you one or more of an item type.
+  ITEM_GRANTED
+  /// Staff took one or more items back.
+  ITEM_REVOKED
+  /// Currency reached your balance.
+  CURRENCY_RECEIVED
+}
+
+/// What clicking a notification opens.
+///
+/// Deliberately not modelled as foreign keys. The row already carries
+/// everything it needs to render, so a deleted subject should leave a dead link
+/// and an intact message rather than delete the notification -- the opposite of
+/// what `Like` wants, because a like about a deleted thing is meaningless and a
+/// notification about one is still something that happened to you.
+enum NotificationSubjectType {
+  CHARACTER
+  COMMENT
+  GALLERY
+  MEDIA
+  ITEM
+  CURRENCY
+  USER
+}
+
+/// One notification, already addressed to one recipient. An event concerning
+/// five people writes five rows: read state is per person, and the unread badge
+/// has to be answerable with a single indexed count.
+///
+/// Rows are snapshots. Everything needed to render one is captured at write
+/// time in `data`, so the feed reads without joining five tables and a
+/// notification about a since-deleted item still says what happened.
+model Notification {
+  id          String           @id @default(uuid())
+  recipientId String           @map("recipient_id")
+  kind        NotificationKind
+
+  /// Who caused it. Null for anything the system did on its own.
+  actorUserId String? @map("actor_user_id")
+  /// Names a non-user actor: "system", "discord-bot". Set exactly when
+  /// actorUserId is null.
+  actorLabel  String? @map("actor_label") @db.VarChar(50)
+  /// Set when the notification belongs to one community. Null for global kinds
+  /// like a new follower.
+  communityId String? @map("community_id")
+
+  /// Free text, for the kinds that carry it. A mod message will be mostly this.
+  body String? @db.Text
+
+  /// Display values captured at write time -- subject name, counts, amounts.
+  /// The shape is per-kind, and validated by zod on the way in and on the way
+  /// back out.
+  /// [NotificationDataJson]
+  data Json @default("{}")
+
+  subjectType NotificationSubjectType? @map("subject_type")
+  subjectId   String?                  @map("subject_id")
+
+  /// When the badge last stopped counting this. Set in bulk for everything
+  /// unseen when the recipient opens the dropdown.
+  seenAt    DateTime? @map("seen_at")
+  /// When the recipient opened this particular one.
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  recipient User       @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actorUser User?      @relation("NotificationActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  community Community? @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  /// The feed, newest first.
+  @@index([recipientId, createdAt])
+  /// The badge count -- the only query here that runs on a timer.
+  @@index([recipientId, seenAt])
+  @@map("notifications")
 }
