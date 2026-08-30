@@ -89,7 +89,8 @@ export class CurrencyTransaction {
 
   @Field(() => String, {
     nullable: true,
-    description: "Member-facing. Visible to anyone who can read this statement.",
+    description:
+      "Member-facing. Visible to anyone who can read this statement.",
   })
   reason?: string | null;
 

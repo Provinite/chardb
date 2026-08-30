@@ -63,8 +63,6 @@ export class CurrenciesResolver {
   constructor(
     private readonly currencies: CurrenciesService,
     private readonly ledger: CurrencyLedgerService,
-    private readonly permissionService: PermissionService,
-    private readonly database: DatabaseService,
   ) {}
 
   // ==================== Queries ====================
@@ -90,9 +88,7 @@ export class CurrenciesResolver {
   @AllowCommunityPermission(CommunityPermission.Any)
   @ResolveCommunityFrom({ currencyId: "id" })
   @Query(() => Currency, { name: "currency" })
-  async findOne(
-    @Args("id", { type: () => ID }) id: string,
-  ): Promise<Currency> {
+  async findOne(@Args("id", { type: () => ID }) id: string): Promise<Currency> {
     const currency = await this.currencies.findByIdOrThrow(id);
     return mapPrismaCurrencyToGraphQL(currency);
   }
@@ -355,9 +351,7 @@ export class CurrencyBalanceFieldsResolver {
 
   @AllowAnyAuthenticated()
   @ResolveField(() => User, { name: "user", nullable: true })
-  async resolveUser(
-    @Parent() balance: CurrencyBalance,
-  ): Promise<User | null> {
+  async resolveUser(@Parent() balance: CurrencyBalance): Promise<User | null> {
     const user = await this.database.user.findUnique({
       where: { id: balance.userId },
     });

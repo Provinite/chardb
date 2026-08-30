@@ -254,7 +254,10 @@ export class CurrencyLedgerService {
     }
 
     const currency = await this.loadWritableCurrency(input.currencyId);
-    await this.assertMembers(currency.communityId, [fromUserId, input.toUserId]);
+    await this.assertMembers(currency.communityId, [
+      fromUserId,
+      input.toUserId,
+    ]);
     await this.ensureBalanceRows(currency.id, [fromUserId, input.toUserId]);
 
     const batchId = randomUUID();
@@ -479,7 +482,11 @@ export class CurrencyLedgerService {
       this.db.currencyTransaction.count({ where }),
     ]);
 
-    return { transactions, total, hasMore: offset + transactions.length < total };
+    return {
+      transactions,
+      total,
+      hasMore: offset + transactions.length < total,
+    };
   }
 
   /**
