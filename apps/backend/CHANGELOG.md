@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`Community.memberCount`** field resolver, readable unauthenticated like the
+  `community` query itself.
+
 ## [v11.3.0] - 2026-08-30
 
 ## [v11.2.0] - 2026-08-30

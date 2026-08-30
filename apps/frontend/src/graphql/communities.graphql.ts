@@ -41,6 +41,7 @@ export const COMMUNITY_BY_ID_QUERY = gql`
       name
       discordGuildId
       discordGuildName
+      memberCount
       createdAt
       updatedAt
     }

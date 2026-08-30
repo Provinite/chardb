@@ -279,6 +279,9 @@ type Community {
   """Unique identifier for the community"""
   id: ID!
 
+  """Number of members in the community"""
+  memberCount: Int!
+
   """Community members with optional search filtering"""
   members(limit: Int! = 10, search: String): [User!]!
 

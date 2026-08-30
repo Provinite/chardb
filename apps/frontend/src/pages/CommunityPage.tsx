@@ -16,7 +16,6 @@ import {
   useCommunityByIdQuery,
   useSpeciesByCommunityQuery,
   useGetCharactersQuery,
-  useCommunityMembersWithRolesQuery,
   useCommunityMembersByUserQuery,
 } from "../generated/graphql";
 import { Link } from "react-router-dom";
@@ -215,12 +214,6 @@ export const CommunityPage: React.FC = () => {
     },
   });
 
-  // Fetch community members count
-  const { data: membersData } = useCommunityMembersWithRolesQuery({
-    variables: { communityId: communityId!, first: 1 }, // Just get count
-    skip: !communityId,
-  });
-
   // Check if current user is a member of this community
   const { data: userMembershipsData } = useCommunityMembersByUserQuery({
     variables: { userId: user?.id || "", first: 100 },
@@ -271,8 +264,7 @@ export const CommunityPage: React.FC = () => {
   // Get actual counts from GraphQL queries
   const speciesCount = speciesData?.speciesByCommunity?.totalCount || 0;
   const charactersCount = charactersData?.characters?.total || 0;
-  const membersCount =
-    membersData?.communityMembersByCommunity?.totalCount || 0;
+  const membersCount = community.memberCount;
 
   // Check if current user is a member of this community
   const isMember =

@@ -225,4 +225,14 @@ export class CommunitiesService {
       orderBy: { username: "asc" },
     });
   }
+
+  /**
+   * Count the members of a community. Membership is reached through Role, so
+   * this counts memberships whose role belongs to the community.
+   */
+  async countMembers(communityId: string) {
+    return this.prisma.communityMember.count({
+      where: { role: { communityId } },
+    });
+  }
 }
