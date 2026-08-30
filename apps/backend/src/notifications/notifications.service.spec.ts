@@ -40,11 +40,14 @@ describe("notification payloads", () => {
   it("strips unknown keys when reading rather than rejecting the row", () => {
     // A rolling deploy has the old instance reading rows the new one wrote.
     // Rejecting those would break the feed for the length of the deploy.
-    const parsed = parseNotificationPayload(NotificationKind.CURRENCY_RECEIVED, {
-      subjectName: "Hollow Coin",
-      amount: 500,
-      fieldFromANewerVersion: true,
-    });
+    const parsed = parseNotificationPayload(
+      NotificationKind.CURRENCY_RECEIVED,
+      {
+        subjectName: "Hollow Coin",
+        amount: 500,
+        fieldFromANewerVersion: true,
+      },
+    );
 
     expect(parsed).toEqual({ subjectName: "Hollow Coin", amount: 500 });
   });
@@ -122,16 +125,13 @@ describe("NotificationsService", () => {
 
   describe("createMany", () => {
     it("does not notify the actor about their own action", async () => {
-      await service.createMany(
-        ["u1", "u2", "u3"],
-        {
-          kind: NotificationKind.ITEM_GRANTED,
-          actorUserId: "u2",
-          subjectType: NotificationSubjectType.ITEM,
-          subjectId: "i1",
-          data: { subjectName: "Rusty Locket", count: 1 },
-        },
-      );
+      await service.createMany(["u1", "u2", "u3"], {
+        kind: NotificationKind.ITEM_GRANTED,
+        actorUserId: "u2",
+        subjectType: NotificationSubjectType.ITEM,
+        subjectId: "i1",
+        data: { subjectName: "Rusty Locket", count: 1 },
+      });
 
       const rows = (
         mockDatabaseService.notification.createMany.mock.calls.at(-1)?.[0] as {
@@ -174,7 +174,9 @@ describe("NotificationsService", () => {
 
     it("does not query at all for an empty list", async () => {
       await service.markRead("u1", []);
-      expect(mockDatabaseService.notification.updateMany).not.toHaveBeenCalled();
+      expect(
+        mockDatabaseService.notification.updateMany,
+      ).not.toHaveBeenCalled();
     });
   });
 });

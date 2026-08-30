@@ -6,7 +6,9 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import type { Prisma } from "@chardb/database";
+// `CommentRow` is the plain table row, aliased because `Comment` is also the
+// name of the GraphQL type this service feeds.
+import type { Prisma, Comment as CommentRow } from "@chardb/database";
 import { NotificationKind, NotificationSubjectType } from "@chardb/database";
 import { NotificationsService } from "../notifications/notifications.service";
 import { notDeleted } from "../common/utils/prisma-filters";
@@ -376,30 +378,34 @@ export class CommentsService {
     let exists = false;
 
     switch (entityType) {
-      case CommentableTypeFilter.CHARACTER:
+      case CommentableTypeFilter.CHARACTER: {
         const character = await this.databaseService.character.findFirst({
           where: { id: entityId, ...notDeleted },
         });
         exists = !!character;
         break;
-      case CommentableTypeFilter.IMAGE:
+      }
+      case CommentableTypeFilter.IMAGE: {
         const image = await this.databaseService.image.findUnique({
           where: { id: entityId },
         });
         exists = !!image;
         break;
-      case CommentableTypeFilter.GALLERY:
+      }
+      case CommentableTypeFilter.GALLERY: {
         const gallery = await this.databaseService.gallery.findUnique({
           where: { id: entityId },
         });
         exists = !!gallery;
         break;
-      case CommentableTypeFilter.USER:
+      }
+      case CommentableTypeFilter.USER: {
         const user = await this.databaseService.user.findUnique({
           where: { id: entityId },
         });
         exists = !!user;
         break;
+      }
     }
 
     if (!exists) {
@@ -458,9 +464,7 @@ export class CommentsService {
     }
   }
 
-  private getEntityTypeFromComment(
-    comment: Prisma.CommentGetPayload<{}>,
-  ): CommentableTypeFilter {
+  private getEntityTypeFromComment(comment: CommentRow): CommentableTypeFilter {
     if (comment.characterId) return CommentableTypeFilter.CHARACTER;
     if (comment.imageId) return CommentableTypeFilter.IMAGE;
     if (comment.galleryId) return CommentableTypeFilter.GALLERY;
@@ -468,9 +472,7 @@ export class CommentsService {
     throw new BadRequestException("Comment has no valid entity type");
   }
 
-  private getEntityIdFromComment(
-    comment: Prisma.CommentGetPayload<{}>,
-  ): string {
+  private getEntityIdFromComment(comment: CommentRow): string {
     const entityId =
       comment.characterId ||
       comment.imageId ||

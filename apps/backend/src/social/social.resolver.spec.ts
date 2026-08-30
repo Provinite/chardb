@@ -9,6 +9,8 @@ import {
   UserFollowResolver,
 } from "./social.resolver";
 import { DatabaseService } from "../database/database.service";
+import { Visibility, ModerationStatus } from "@chardb/database";
+import { CommentableType } from "../comments/dto/comment.dto";
 import { LikeableType } from "./dto/like.dto";
 import {
   mockDatabaseService,
@@ -19,7 +21,6 @@ import { NotificationsService } from "../notifications/notifications.service";
 describe("SocialResolver", () => {
   let resolver: SocialResolver;
   let service: SocialService;
-  let db: typeof mockDatabaseService;
 
   const mockUser = {
     id: "user-1",
@@ -72,7 +73,6 @@ describe("SocialResolver", () => {
 
     resolver = module.get<SocialResolver>(SocialResolver);
     service = module.get<SocialService>(SocialService);
-    db = module.get<DatabaseService>(DatabaseService) as any;
   });
 
   describe("toggleLike", () => {
@@ -137,7 +137,7 @@ describe("CharacterLikesResolver", () => {
     name: "Test Character",
     ownerId: "user-1",
     isOrphaned: false,
-    visibility: "PUBLIC" as any,
+    visibility: Visibility.PUBLIC,
     isSellable: false,
     isTradeable: false,
     tags: [],
@@ -245,8 +245,8 @@ describe("ImageLikesResolver", () => {
     fileSize: 1000,
     mimeType: "image/jpeg",
     isNsfw: false,
-    visibility: "PUBLIC" as any,
-    moderationStatus: "APPROVED" as any,
+    visibility: Visibility.PUBLIC,
+    moderationStatus: ModerationStatus.APPROVED,
     createdAt: new Date(),
     updatedAt: new Date(),
     uploader: {
@@ -316,7 +316,7 @@ describe("GalleryLikesResolver", () => {
     id: "gallery-1",
     name: "Test Gallery",
     ownerId: "user-1",
-    visibility: "PUBLIC" as any,
+    visibility: Visibility.PUBLIC,
     sortOrder: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -381,7 +381,7 @@ describe("CommentLikesResolver", () => {
   const mockComment = {
     id: "comment-1",
     content: "Test comment",
-    commentableType: "CHARACTER" as any,
+    commentableType: CommentableType.CHARACTER,
     commentableId: "character-1",
     authorId: "user-1",
     isHidden: false,

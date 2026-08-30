@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from "@nestjs/common";
 import { NotificationKind, NotificationSubjectType } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { MediaFiltersInput } from "../media/dto/media.dto";
 import { notDeleted } from "../common/utils/prisma-filters";
 import {
   LikeableType,
@@ -211,36 +212,41 @@ export class SocialService {
     let exists = false;
 
     switch (entityType) {
-      case LikeableType.CHARACTER:
+      case LikeableType.CHARACTER: {
         const character = await this.databaseService.character.findFirst({
           where: { id: entityId, ...notDeleted },
         });
         exists = !!character;
         break;
-      case LikeableType.IMAGE:
+      }
+      case LikeableType.IMAGE: {
         const image = await this.databaseService.image.findUnique({
           where: { id: entityId },
         });
         exists = !!image;
         break;
-      case LikeableType.GALLERY:
+      }
+      case LikeableType.GALLERY: {
         const gallery = await this.databaseService.gallery.findUnique({
           where: { id: entityId },
         });
         exists = !!gallery;
         break;
-      case LikeableType.COMMENT:
+      }
+      case LikeableType.COMMENT: {
         const comment = await this.databaseService.comment.findUnique({
           where: { id: entityId },
         });
         exists = !!comment;
         break;
-      case LikeableType.MEDIA:
+      }
+      case LikeableType.MEDIA: {
         const media = await this.databaseService.media.findUnique({
           where: { id: entityId },
         });
         exists = !!media;
         break;
+      }
     }
 
     if (!exists) {
@@ -406,6 +412,15 @@ export class SocialService {
   }
 
   // Methods to get user's liked content
+  //
+  // The `any` return types below are pre-existing and load-bearing. Each of
+  // these selects a partial row while its resolver declares the full GraphQL
+  // entity, so typing them honestly does not compile until the social
+  // resolver's return contracts are reworked -- a change well beyond the
+  // notification producer this file was opened for. Suppressed per line rather
+  // than per file so a new `any` here still fails.
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getUserLikedCharacters(userId: string): Promise<any[]> {
     const likes = await this.databaseService.like.findMany({
       where: {
@@ -448,6 +463,7 @@ export class SocialService {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getUserLikedGalleries(userId: string): Promise<any[]> {
     const likes = await this.databaseService.like.findMany({
       where: {
@@ -483,6 +499,7 @@ export class SocialService {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getUserLikedImages(userId: string): Promise<any[]> {
     const likes = await this.databaseService.like.findMany({
       where: {
@@ -514,7 +531,12 @@ export class SocialService {
     });
   }
 
-  async getUserLikedMedia(userId: string, filters?: any): Promise<any> {
+  // The filters parameter is genuinely typed now -- only the return cascades.
+  async getUserLikedMedia(
+    userId: string,
+    filters?: MediaFiltersInput,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): Promise<any> {
     const limit = filters?.limit || 20;
     const offset = filters?.offset || 0;
 
@@ -604,6 +626,7 @@ export class SocialService {
   // Methods for follow lists and activity feed
   async getFollowers(
     username: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<{ user: any; followers: any[] }> {
     // First find the user by username
     const user = await this.databaseService.user.findUnique({
@@ -650,6 +673,7 @@ export class SocialService {
 
   async getFollowing(
     username: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<{ user: any; following: any[] }> {
     // First find the user by username
     const user = await this.databaseService.user.findUnique({
@@ -713,6 +737,7 @@ export class SocialService {
     userId: string,
     limit = 20,
     offset = 0,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<any[]> {
     // Get list of users that the current user follows
     const following = await this.databaseService.follow.findMany({
