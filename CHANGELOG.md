@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   working as items; converting them into balances is a separate, one-way
   decision that has not been made.
 
+- Added Open Graph metadata to all docs site pages, so shared links unfurl with a name and description.
+
+## [v11.2.0] - 2026-08-30
+
+### Added
+
+- **Three more steps in the item ledger walkthrough**, covering circulation, the member list, and a member's holdings, with screenshots taken against a seeded instance after the pages were reworked by hand.
+
 ## [v11.1.0] - 2026-08-30
 
 ### Added
