@@ -937,6 +937,7 @@ enum CurrencyTransactionSource {
   Awarded when uploaded media was approved in moderation. sourceId is the media -- an image is an implementation detail of a media.
   """
   MEDIA_APPROVAL
+  SHOP_PURCHASE
 }
 
 """
