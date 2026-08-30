@@ -85,11 +85,6 @@ jobs:
     name: Type check & generated file drift
     runs-on: ubuntu-latest
 
-    env:
-      # prisma generate resolves env("DATABASE_URL") from the datasource block.
-      # It never connects, so a placeholder is enough.
-      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
-
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -137,6 +132,12 @@ jobs:
             --include '@chardb/shared' \
             --include '@chardb/ui' \
             run build
+        env:
+          # prisma generate resolves env("DATABASE_URL") from the datasource
+          # block. It never connects, so a placeholder is enough. Scoped to this
+          # step rather than the job so it cannot shadow the real DATABASE_URL
+          # the schema check boots against.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
 
       # tsc reuses these to skip re-checking unchanged files. A restored file
       # from an older commit is safe: tsc validates it against current file
@@ -156,6 +157,29 @@ jobs:
       # all six workspace tsc processes at once contends rather than helps.
       - name: Type check
         run: yarn type-check
+
+      # Ordered before the codegen check on purpose: codegen reads schema.gql,
+      # so a stale schema makes graphql.ts stale too. Checking the source first
+      # reports the cause rather than the symptom.
+      #
+      # No `services:` block -- the same compose file the e2e suite uses, so a
+      # failure here reproduces locally with the two commands in the error
+      # message and nothing else.
+      - name: Start test database
+        run: docker compose -f docker/compose.test.yml up -d --wait
+
+      # schema.gql is committed but only written as a side effect of booting the
+      # backend, so it drifts whenever someone adds a field without running the
+      # app. Boot it here and fail if the result differs from what is checked in.
+      - name: Check GraphQL schema is up to date
+        run: |
+          yarn workspace @chardb/backend schema:emit
+          if ! git diff --quiet -- apps/backend/src/schema.gql; then
+            echo "::error file=apps/backend/src/schema.gql::Generated GraphQL schema is out of date. Run 'docker compose -f docker/compose.test.yml up -d --wait && yarn workspace @chardb/backend schema:emit' and commit the result."
+            git diff -- apps/backend/src/schema.gql
+            exit 1
+          fi
+          echo "Generated GraphQL schema is up to date."
 
       # The frontend's generated GraphQL types are committed but only refresh
       # when someone runs codegen by hand. When they go stale, main can stop
