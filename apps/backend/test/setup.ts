@@ -129,6 +129,34 @@ const mockPrismaService = {
     delete: jest.fn(),
     count: jest.fn(),
   },
+  item: {
+    create: jest.fn(),
+    createMany: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    updateMany: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+  },
+  itemTransaction: {
+    create: jest.fn(),
+    createMany: jest.fn(),
+    findMany: jest.fn(),
+    count: jest.fn(),
+    groupBy: jest.fn(),
+  },
+  communityMember: {
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+  },
+  pendingOwnership: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+  },
   $transaction: jest.fn(),
 };
 

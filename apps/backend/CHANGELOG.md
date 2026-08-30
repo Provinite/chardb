@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Item ledger**: New `ItemTransaction` model recording every item movement — `GRANT`, `REVOKE`, `TRANSFER`, `CLAIM`, `USE` — with the actor, both parties, and a reason. Every write path produces rows inside the same database transaction as the item mutation, including the SQS prize consumer and the pending-ownership claim job. Exposed as `itemTransactions(filters)` (a community's ledger) and `itemProvenance(itemId)` (one item's history).
+
+  Reading is gated on **community membership only**, not on item permissions. That is deliberate: provenance is public within a community so it can act as a trust signal in member-to-member trades. Only the mutations that write rows stay permission-gated.
+
+- **Public reason, private staff note**: Item mutations take a member-facing `reason` and a staff-only `staffNote`. `staffNote` is resolved per viewer and returns null unless the viewer holds `canManageItems` or `canGrantItems` in that community. It is also deliberately excluded from the ledger's `search` filter, so a member cannot probe for the contents of a note they cannot read.
+
+- **`IMPORT` transaction kind**: written once, by the migration, for every item that already existed. It says only that the item predates the ledger — inventing a `GRANT` would put fabricated provenance on a page members can read, and an empty timeline reads to a member as a broken page rather than as missing history.
+
+- **`batchSize` on ledger rows**: the true size of the event a row belongs to, counted server-side with one grouped query per page. Counting loaded rows instead is wrong the moment a batch straddles a page boundary — the migration writes one batch per pre-existing item, so a real ledger would have opened on "+25" for a batch of several hundred.
+
+- **`batchId` on ledger rows**: Shared by every row one operation writes. One item movement is one row, so granting twelve tokens writes twelve rows; the frontend collapses them back into a single line by grouping on this key rather than guessing from matching timestamps.
+
+- **`reason` on `PrizeEventDto`**: Optional and additive — an existing Discord bot producer that omits it still validates, and the handler falls back to a generic reason.
+
+### Tests
+
+- `items.service.spec.ts` (17) and `item-transactions.service.spec.ts` (15): per-instance granting, the absence of any stack read, soft revoke, cross-type and cross-owner revoke refusals, staff notes excluded from search, batch-size reporting on a partial page, and ledger rows written through the caller's transaction client rather than the pool.
+
+### Migration
+
+- **`20260830045119_item_ledger_and_instances`** does the schema change and the data migration in one file, in a required order: stacks are expanded while `items.quantity` still exists, and genesis rows are written after `item_transactions` exists.
+
+  1. **Expands stacks.** A row with quantity 3 keeps its own id and gains two siblings, so any id referenced elsewhere stays valid.
+  2. **Carries pending ownership onto the siblings.** `pending_ownership.item_id` is UNIQUE — one record per item, not per stack. Without this step, expanding a pending stack of 3 leaves two items with a null owner and no pending record: unowned, unclaimable, invisible to every query, and a silent permanent loss of someone's prize.
+  3. **Writes one `IMPORT` row per pre-existing item**, all sharing one batch id so the ledger shows the migration as a single event.
+
+  Verified against seeded stacked data: 3 rows totalling 8 units became 8 items, a pending stack of 4 became 4 pending records with the provider account preserved, zero unclaimable items, and every item ended with exactly one ledger row.
+
+  **This migration is not reversible.** Once stacks are expanded and `quantity` is dropped, nothing records which rows were one stack. Rolling back means restoring from a snapshot.
+
+### Changed
+
+- **Items are one row per instance. `Item.quantity` is gone.** Three potions are three rows.
+
+  Stacking and provenance cannot both be true: a row whose quantity went 2 → 4 → 3 cannot answer which two of the three came from a given trade. Per-instance rows give every item one unbroken chain, which is the point of provenance being readable at all. Three things fall out: partial transfers become an owner reassignment rather than a decrement-here-increment-there that leaves neither row's history true; `Item.metadata` starts meaning something, having been incoherent on a stack of three; and the concurrent-grant race disappears, because granting N is N inserts with no read-then-write.
+
+  **Breaking**: `grantItem` now returns `[Item!]!` rather than `Item!`. `UpdateItemInput` no longer accepts `quantity` — more items means `grantItem`, fewer means `revokeItems`.
+
+- **`ItemType.isStackable` and `ItemType.maxStackSize` removed.** Stacking is now purely a presentation choice, so neither flag described anything the database did.
+
+- **`deleteItem` replaced by `revokeItems(itemIds, reason, staffNote)`.** Soft, not hard: revoked items get `destroyedAt`/`destroyedById` and stay out of every inventory read, but keep their provenance readable — which is exactly the history a dispute wants. Mirrors how characters are deleted. `reason` is required because it is public. Takes a list because revoking two of someone's three potions means naming two specific items, and the whole revoke should land as one ledger event.
+
+### Fixed
+
+- **Item mutations were not permission-gated.** Every mutation in `items.resolver.ts` carried both `@AllowAnyAuthenticated()` and `@AllowCommunityPermission(...)`. The global guard ORs all permission decorators together, so the pair meant *authenticated OR permitted* — which is just *authenticated*. **Any logged-in user could create item types, grant items, and delete items in any community.** Removing `@AllowAnyAuthenticated()` from those handlers makes the community check bind.
+
+  Only the item resolvers are fixed here.
+
+- **Every failing GraphQL operation logged as a success.** The Apollo logging plugin in `app.module.ts` read `response.errors`, which Apollo 4 does not have — errors live under `response.body.singleResult`. The check was always falsy. Found by typing the plugin's `any` parameters against Apollo's own request-context types.
+
 ## [v10.2.0] - 2026-08-29
 
 ### Added
@@ -541,6 +593,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Expected Performance Degradation**: Field resolver pattern may introduce N+1 queries until dataloader patterns are implemented
 - **Optimization Opportunities**: Media type counting now uses efficient parallel queries, reducing response time for character gallery pages
 - **Database Indexing**: Added GIN index on Character.traitValues for fast JSON queries
+
+### Tests
+
+- `items.service.spec.ts` (17) and `item-transactions.service.spec.ts` (15): per-instance granting, the absence of any stack read, soft revoke, cross-type and cross-owner revoke refusals, staff notes excluded from search, batch-size reporting on a partial page, and ledger rows written through the caller's transaction client rather than the pool.
 
 ### Migration Notes
 

@@ -1,17 +1,14 @@
-import { Prisma } from "@chardb/database";
+import { ItemType } from "@chardb/database";
 import {
   ItemType as ItemTypeEntity,
   ItemTypeConnection,
 } from "../entities/item-type.entity";
 
-// Type alias for Prisma ItemType payload
-type PrismaItemType = Prisma.ItemTypeGetPayload<{}>;
-
 /**
  * Maps a Prisma ItemType model to a GraphQL ItemType entity
  */
 export function mapPrismaItemTypeToGraphQL(
-  prismaItemType: PrismaItemType,
+  prismaItemType: ItemType,
 ): ItemTypeEntity {
   return {
     id: prismaItemType.id,
@@ -19,8 +16,6 @@ export function mapPrismaItemTypeToGraphQL(
     description: prismaItemType.description ?? undefined,
     communityId: prismaItemType.communityId,
     category: prismaItemType.category ?? undefined,
-    isStackable: prismaItemType.isStackable,
-    maxStackSize: prismaItemType.maxStackSize ?? undefined,
     isTradeable: prismaItemType.isTradeable,
     isConsumable: prismaItemType.isConsumable,
     imageId: prismaItemType.imageId ?? undefined,
@@ -35,7 +30,7 @@ export function mapPrismaItemTypeToGraphQL(
  * Maps a service result to a GraphQL ItemTypeConnection
  */
 export function mapPrismaItemTypeConnectionToGraphQL(result: {
-  itemTypes: PrismaItemType[];
+  itemTypes: ItemType[];
   total: number;
   hasMore: boolean;
 }): ItemTypeConnection {

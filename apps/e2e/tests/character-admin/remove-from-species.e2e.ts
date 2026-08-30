@@ -1,6 +1,7 @@
-import { test, expect, acceptNextDialog } from "../../src/fixtures.js";
+import { presetTest, expect, acceptNextDialog } from "../../src/fixtures.js";
 
-test.use({ preset: "community-basic", persona: "moderator" });
+const test = presetTest("community-basic");
+test.use({ persona: "moderator" });
 
 // Scope note: asserts what the page shows -- trait values reappearing as custom
 // fields with their display names, the traits and species sections gone, the

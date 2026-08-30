@@ -10,6 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - CI runs the unit test suites (backend Jest, frontend Vitest, da-import Vitest) on every pull request and on pushes to main, and a staging deploy now waits on them.
+- **E2E: `presetTest(name)`** in `apps/e2e/src/fixtures.ts`, plus a `community-items` preset and 38 specs covering the item ledger, imported rows, and the item types admin page.
+
+  The imported-row specs seed an IMPORT batch directly through `ctx.prisma`, in the shape the migration emits. Nothing in the API can produce those rows — by definition they predate the ledger — so without seeding them the most common row type in a real ledger would never be rendered by any test.
+
+  The admin page had no coverage at all before this, which is how the stacking-field removal and the `grantItem` return-shape change went in unverified. Its form labels now carry `htmlFor`, which they lacked entirely; an unassociated label announces nothing to a screen reader.
+
+  Adding a second preset broke every existing spec's types: `test.use({ preset })` is a runtime option, so the shared `world` fixture was typed as the union of every preset's handle and each `world.characters` access stopped compiling. The harness had only ever been correct for one preset. `presetTest` names the preset once at module scope and replaces `test.use({ preset })`, so the declared preset and the handle type cannot disagree. All existing specs were migrated — two lines each.
+
+### Security
+
+- **Item mutations were reachable by any logged-in user.** Fixed for `items.resolver.ts`; see the backend changelog for the mechanism.
+
+  Covered by `apps/e2e/tests/items/item-permissions.e2e.ts` — 24 cases, one per gated operation, each attempting the call as a member without the permission and as a non-member, plus a permitted actor as a positive control. A matrix that only asserts rejection passes just as happily against a resolver that refuses everyone.
+
+  The tests were verified to fail against the bug: reintroducing `@AllowAnyAuthenticated()` on `grantItem` alone turned its three rejection cases red while the positive control and every other operation stayed green.
 
 ## [v10.2.2] - 2026-08-29
 

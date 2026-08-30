@@ -4,13 +4,13 @@ import {
   Mutation,
   Args,
   ID,
+  Int,
   ResolveField,
   Parent,
 } from "@nestjs/graphql";
 import { NotFoundException } from "@nestjs/common";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
-import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
@@ -38,11 +38,7 @@ import {
   UpdateItemTypeInput,
   ItemTypeFiltersInput,
 } from "./dto/item-type.dto";
-import {
-  GrantItemInput,
-  UpdateItemInput,
-  ItemFiltersInput,
-} from "./dto/item.dto";
+import { GrantItemInput, UpdateItemInput } from "./dto/item.dto";
 import {
   mapPrismaItemTypeConnectionToGraphQL,
   mapPrismaItemTypeToGraphQL,
@@ -63,20 +59,16 @@ export class ItemsResolver {
 
   // ==================== ItemType Mutations ====================
 
-  @AllowAnyAuthenticated()
   @AllowCommunityPermission(CommunityPermission.CanManageItems)
   @ResolveCommunityFrom({ communityId: "input.communityId" })
   @Mutation(() => ItemTypeEntity)
   async createItemType(
     @Args("input") input: CreateItemTypeInput,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<ItemTypeEntity> {
     const itemType = await this.itemsService.createItemType({
       name: input.name,
       description: input.description,
       category: input.category,
-      isStackable: input.isStackable ?? true,
-      maxStackSize: input.maxStackSize,
       isTradeable: input.isTradeable ?? true,
       isConsumable: input.isConsumable ?? false,
       image: input.imageId ? { connect: { id: input.imageId } } : undefined,
@@ -90,7 +82,6 @@ export class ItemsResolver {
     return mapPrismaItemTypeToGraphQL(itemType);
   }
 
-  @AllowAnyAuthenticated()
   @AllowCommunityPermission(CommunityPermission.CanManageItems)
   @ResolveCommunityFrom({ itemTypeId: "id" })
   @Mutation(() => ItemTypeEntity)
@@ -102,8 +93,6 @@ export class ItemsResolver {
       name: input.name,
       description: input.description,
       category: input.category,
-      isStackable: input.isStackable,
-      maxStackSize: input.maxStackSize,
       isTradeable: input.isTradeable,
       isConsumable: input.isConsumable,
       image:
@@ -124,7 +113,6 @@ export class ItemsResolver {
     return mapPrismaItemTypeToGraphQL(itemType);
   }
 
-  @AllowAnyAuthenticated()
   @AllowCommunityPermission(CommunityPermission.CanManageItems)
   @ResolveCommunityFrom({ itemTypeId: "id" })
   @Mutation(() => Boolean)
@@ -156,51 +144,80 @@ export class ItemsResolver {
 
   // ==================== Item Mutations ====================
 
-  @AllowAnyAuthenticated()
   @AllowCommunityPermission(CommunityPermission.CanGrantItems)
   @ResolveCommunityFrom({ itemTypeId: "input.itemTypeId" })
-  @Mutation(() => ItemEntity, {
-    description: "Grant an item to a user (admin only)",
+  @Mutation(() => [ItemEntity], {
+    description:
+      "Grant items to a user. Returns one Item per unit granted -- there is no " +
+      "stacking, so a quantity of 3 creates three items.",
   })
   async grantItem(
     @Args("input") input: GrantItemInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<ItemEntity> {
-    const item = await this.itemsService.grantItem({
+  ): Promise<ItemEntity[]> {
+    const items = await this.itemsService.grantItem({
       itemTypeId: input.itemTypeId,
       userId: input.userId,
       quantity: input.quantity ?? 1,
       metadata: input.metadata,
       pendingOwner: input.pendingOwner,
+      actor: {
+        actorUserId: user.id,
+        reason: input.reason,
+        staffNote: input.staffNote,
+      },
     });
 
-    return mapPrismaItemToGraphQL(item);
+    return items.map(mapPrismaItemToGraphQL);
   }
 
-  @AllowAnyAuthenticated()
   @AllowCommunityPermission(CommunityPermission.CanGrantItems)
   @ResolveCommunityFrom({ itemId: "id" })
-  @Mutation(() => ItemEntity, { description: "Update an item (admin only)" })
+  @Mutation(() => ItemEntity, {
+    description:
+      "Update one item's instance metadata. Quantity is not updatable: an " +
+      "item is one item, so more means grantItem and fewer means revokeItems.",
+  })
   async updateItem(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: UpdateItemInput,
   ): Promise<ItemEntity> {
     const item = await this.itemsService.updateItem(id, {
-      quantity: input.quantity,
       metadata: input.metadata,
     });
 
     return mapPrismaItemToGraphQL(item);
   }
 
-  @AllowAnyAuthenticated()
+  // The community is resolved from the first item only. Safe because the
+  // service rejects a revoke whose items span more than one item type, and an
+  // item type belongs to exactly one community.
   @AllowCommunityPermission(CommunityPermission.CanGrantItems)
-  @ResolveCommunityFrom({ itemId: "id" })
-  @Mutation(() => Boolean, { description: "Delete an item (admin only)" })
-  async deleteItem(
-    @Args("id", { type: () => ID }) id: string,
-  ): Promise<boolean> {
-    return this.itemsService.deleteItem(id);
+  @ResolveCommunityFrom({ itemId: "itemIds.0" })
+  @Mutation(() => Int, {
+    description:
+      "Revoke items, destroying them. Soft: a destroyed item keeps its " +
+      "provenance readable. A public reason is required -- it is written to " +
+      "the ledger and shown to anyone who can read it. Returns the count.",
+  })
+  async revokeItems(
+    @Args("itemIds", { type: () => [ID] }) itemIds: string[],
+    @Args("reason", {
+      description: "Member-facing. Shown on the items' public provenance.",
+    })
+    reason: string,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+    @Args("staffNote", {
+      nullable: true,
+      description: "Staff-only detail. Never shown to members.",
+    })
+    staffNote?: string,
+  ): Promise<number> {
+    return this.itemsService.revokeItems(itemIds, {
+      actorUserId: user.id,
+      reason,
+      staffNote,
+    });
   }
 
   // ==================== Field Resolvers ====================

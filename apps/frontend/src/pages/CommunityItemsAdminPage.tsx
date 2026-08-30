@@ -14,6 +14,8 @@ import { ImageUpload, ImageFile } from "../components/ImageUpload";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-hot-toast";
 import {
+  type GrantItemInput,
+  type ItemTypeFieldsFragment,
   useCommunityByIdQuery,
   useGetCommunityMembersQuery,
   useGetItemTypesQuery,
@@ -280,7 +282,8 @@ export const CommunityItemsAdminPage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isGrantModalOpen, setIsGrantModalOpen] = useState(false);
-  const [selectedItemType, setSelectedItemType] = useState<any>(null);
+  const [selectedItemType, setSelectedItemType] =
+    useState<ItemTypeFieldsFragment | null>(null);
   const [imageFile, setImageFile] = useState<ImageFile | null>(null);
 
   const { data: communityData, loading: communityLoading } =
@@ -307,8 +310,6 @@ export const CommunityItemsAdminPage: React.FC = () => {
     name: "",
     description: "",
     category: "",
-    isStackable: true,
-    maxStackSize: "",
     isTradeable: true,
     isConsumable: false,
     imageUrl: "",
@@ -381,9 +382,6 @@ export const CommunityItemsAdminPage: React.FC = () => {
           input: {
             ...formData,
             communityId,
-            maxStackSize: formData.maxStackSize
-              ? parseInt(formData.maxStackSize)
-              : null,
           },
         },
       });
@@ -399,8 +397,6 @@ export const CommunityItemsAdminPage: React.FC = () => {
         name: "",
         description: "",
         category: "",
-        isStackable: true,
-        maxStackSize: "",
         isTradeable: true,
         isConsumable: false,
         imageUrl: "",
@@ -427,9 +423,6 @@ export const CommunityItemsAdminPage: React.FC = () => {
           id: selectedItemType.id,
           input: {
             ...formData,
-            maxStackSize: formData.maxStackSize
-              ? parseInt(formData.maxStackSize)
-              : null,
           },
         },
       });
@@ -483,20 +476,21 @@ export const CommunityItemsAdminPage: React.FC = () => {
 
     try {
       // Build mutation input based on target type
-      const input: any = {
+      const input: GrantItemInput = {
         itemTypeId: grantFormData.itemTypeId,
         quantity: parseInt(grantFormData.quantity),
+        ...(grantTarget.type === "user"
+          ? { userId: grantTarget.userId }
+          : {
+              // Null owner plus a pending owner: the items are held unclaimed
+              // until the external account is linked.
+              userId: null,
+              pendingOwner: {
+                provider: grantTarget.provider,
+                providerAccountId: grantTarget.providerAccountId,
+              },
+            }),
       };
-
-      if (grantTarget.type === "user") {
-        input.userId = grantTarget.userId;
-      } else if (grantTarget.type === "pending") {
-        input.userId = null; // Orphaned item
-        input.pendingOwner = {
-          provider: grantTarget.provider,
-          providerAccountId: grantTarget.providerAccountId,
-        };
-      }
 
       await grantItem({
         variables: { input },
@@ -516,25 +510,26 @@ export const CommunityItemsAdminPage: React.FC = () => {
     }
   };
 
-  const openEditModal = (itemType: any) => {
+  const openEditModal = (itemType: ItemTypeFieldsFragment) => {
     setSelectedItemType(itemType);
     setFormData({
       name: itemType.name,
       description: itemType.description || "",
       category: itemType.category || "",
-      isStackable: itemType.isStackable,
-      maxStackSize: itemType.maxStackSize?.toString() || "",
       isTradeable: itemType.isTradeable,
       isConsumable: itemType.isConsumable,
-      imageUrl: itemType.imageUrl || "",
-      iconUrl: itemType.iconUrl || "",
+      // ItemType exposes no imageUrl/iconUrl -- images are attached through
+      // the upload endpoint and read back via `image`. These stay blank so the
+      // update does not clobber anything.
+      imageUrl: "",
+      iconUrl: "",
       colorId: itemType.colorId || null,
     });
     setImageFile(null);
     setIsEditModalOpen(true);
   };
 
-  const openGrantModal = (itemType: any) => {
+  const openGrantModal = (itemType: ItemTypeFieldsFragment) => {
     setGrantFormData({
       ...grantFormData,
       itemTypeId: itemType.id,
@@ -585,8 +580,15 @@ export const CommunityItemsAdminPage: React.FC = () => {
           </EmptyState>
         ) : (
           <ItemTypeGrid>
-            {itemTypes.map((itemType: any) => (
-              <ItemTypeCard key={itemType.id}>
+            {itemTypes.map((itemType) => (
+              // Container with no role and no unambiguous text of its own, so
+              // it carries an id the way trait-review-card does. The item type
+              // id makes the selector assert identity, not mere presence.
+              <ItemTypeCard
+                key={itemType.id}
+                data-testid="item-type-card"
+                data-item-type-id={itemType.id}
+              >
                 <StyledCopyIdButton id={itemType.id} />
                 <ItemTypeHeader>
                   <ItemTypeIcon color={itemType.color?.hexCode}>
@@ -630,12 +632,6 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 )}
 
                 <ItemTypeProperties>
-                  {itemType.isStackable && (
-                    <PropertyBadge>Stackable</PropertyBadge>
-                  )}
-                  {itemType.maxStackSize && (
-                    <PropertyBadge>Max: {itemType.maxStackSize}</PropertyBadge>
-                  )}
                   {itemType.isTradeable && (
                     <PropertyBadge>Tradeable</PropertyBadge>
                   )}
@@ -687,8 +683,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
           <ModalTitle>Create Item Type</ModalTitle>
           <Form onSubmit={handleCreateItemType}>
             <FormGroup>
-              <Label>Name *</Label>
+              <Label htmlFor="create-item-name">Name *</Label>
               <Input
+                id="create-item-name"
                 required
                 value={formData.name}
                 onChange={(e) =>
@@ -698,8 +695,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Description</Label>
+              <Label htmlFor="create-item-description">Description</Label>
               <TextArea
+                id="create-item-description"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -708,40 +706,15 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Category</Label>
+              <Label htmlFor="create-item-category">Category</Label>
               <Input
+                id="create-item-category"
                 value={formData.category}
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value })
                 }
               />
             </FormGroup>
-
-            <FormGroup>
-              <CheckboxLabel>
-                <Checkbox
-                  checked={formData.isStackable}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isStackable: e.target.checked })
-                  }
-                />
-                Stackable
-              </CheckboxLabel>
-            </FormGroup>
-
-            {formData.isStackable && (
-              <FormGroup>
-                <Label>Max Stack Size</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={formData.maxStackSize}
-                  onChange={(e) =>
-                    setFormData({ ...formData, maxStackSize: e.target.value })
-                  }
-                />
-              </FormGroup>
-            )}
 
             <FormGroup>
               <CheckboxLabel>
@@ -804,8 +777,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
           <ModalTitle>Edit Item Type</ModalTitle>
           <Form onSubmit={handleUpdateItemType}>
             <FormGroup>
-              <Label>Name *</Label>
+              <Label htmlFor="edit-item-name">Name *</Label>
               <Input
+                id="edit-item-name"
                 required
                 value={formData.name}
                 onChange={(e) =>
@@ -815,8 +789,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Description</Label>
+              <Label htmlFor="edit-item-description">Description</Label>
               <TextArea
+                id="edit-item-description"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -825,40 +800,15 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Category</Label>
+              <Label htmlFor="edit-item-category">Category</Label>
               <Input
+                id="edit-item-category"
                 value={formData.category}
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value })
                 }
               />
             </FormGroup>
-
-            <FormGroup>
-              <CheckboxLabel>
-                <Checkbox
-                  checked={formData.isStackable}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isStackable: e.target.checked })
-                  }
-                />
-                Stackable
-              </CheckboxLabel>
-            </FormGroup>
-
-            {formData.isStackable && (
-              <FormGroup>
-                <Label>Max Stack Size</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={formData.maxStackSize}
-                  onChange={(e) =>
-                    setFormData({ ...formData, maxStackSize: e.target.value })
-                  }
-                />
-              </FormGroup>
-            )}
 
             <FormGroup>
               <CheckboxLabel>
@@ -939,8 +889,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Quantity *</Label>
+              <Label htmlFor="grant-item-quantity">Quantity *</Label>
               <Input
+                id="grant-item-quantity"
                 required
                 type="number"
                 min="1"

@@ -137,3 +137,111 @@ query SeedCharacter($id: ID!) {
     }
   }
 }
+
+# --- Items and the item ledger -----------------------------------------------
+
+# Requires community CanManageItems.
+mutation SeedCreateItemType($input: CreateItemTypeInput!) {
+  createItemType(input: $input) {
+    id
+    name
+  }
+}
+
+# Requires community CanGrantItems. Returns one Item PER UNIT -- there is no
+# stacking, so quantity: 3 comes back as three items. `reason` and `staffNote`
+# land on the ledger rows this produces; staffNote is only ever returned to a
+# viewer holding item permissions in the same community.
+mutation SeedGrantItem($input: GrantItemInput!) {
+  grantItem(input: $input) {
+    id
+    ownerId
+    destroyedAt
+  }
+}
+
+mutation SeedUpdateItem($id: ID!, $input: UpdateItemInput!) {
+  updateItem(id: $id, input: $input) {
+    id
+    metadata
+  }
+}
+
+# `reason` is required: it is public, and it is what a member sees on the
+# provenance of an item that was taken away from them. Soft -- the items stay
+# readable, marked destroyed. Returns the count revoked.
+mutation SeedRevokeItems($itemIds: [ID!]!, $reason: String!, $staffNote: String) {
+  revokeItems(itemIds: $itemIds, reason: $reason, staffNote: $staffNote)
+}
+
+# Readable by any member of the community, staff or not.
+query SeedItemTransactions($filters: ItemTransactionFiltersInput!) {
+  itemTransactions(filters: $filters) {
+    total
+    hasMore
+    transactions {
+      id
+      kind
+      batchId
+      batchSize
+      reason
+      staffNote
+      actorLabel
+      itemId
+      itemType {
+        id
+        name
+      }
+      fromUser {
+        id
+        username
+      }
+      toUser {
+        id
+        username
+      }
+      actorUser {
+        id
+        username
+      }
+    }
+  }
+}
+
+query SeedItemProvenance($itemId: ID!) {
+  itemProvenance(itemId: $itemId) {
+    id
+    kind
+    batchId
+    reason
+    staffNote
+  }
+}
+
+# Verification: what item types exist, so a spec can assert a create was
+# refused rather than matching on error copy.
+query SeedItemTypes($filters: ItemTypeFiltersInput) {
+  itemTypes(filters: $filters) {
+    total
+    itemTypes {
+      id
+      name
+      category
+      isTradeable
+      isConsumable
+    }
+  }
+}
+
+# Both gated on CanManageItems. Present so the permission matrix can attempt
+# every mutation, not just the ones a happy-path spec happened to need.
+mutation SeedUpdateItemType($id: ID!, $input: UpdateItemTypeInput!) {
+  updateItemType(id: $id, input: $input) {
+    id
+    name
+  }
+}
+
+mutation SeedDeleteItemType($id: ID!) {
+  deleteItemType(id: $id)
+}

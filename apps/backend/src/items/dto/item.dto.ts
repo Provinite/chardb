@@ -6,11 +6,13 @@ import {
   IsUUID,
   Min,
   Max,
+  MaxLength,
   ValidateNested,
   IsNotEmpty,
   ValidateIf,
 } from "class-validator";
 import { Type } from "class-transformer";
+import { Prisma } from "@chardb/database";
 import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
 
 @InputType()
@@ -38,7 +40,7 @@ export class GrantItemInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  metadata?: any; // JSON field for instance-specific data
+  metadata?: Prisma.InputJsonValue; // Instance-specific data
 
   @Field(() => PendingOwnerInput, {
     nullable: true,
@@ -48,20 +50,34 @@ export class GrantItemInput {
   @ValidateNested()
   @Type(() => PendingOwnerInput)
   pendingOwner?: PendingOwnerInput;
+
+  @Field(() => String, {
+    nullable: true,
+    description:
+      "Member-facing note recorded on the ledger. Visible to anyone who can " +
+      "read the community's item history.",
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
+
+  @Field(() => String, {
+    nullable: true,
+    description:
+      "Staff-only detail recorded on the ledger. Never shown to members.",
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  staffNote?: string;
 }
 
 @InputType()
 export class UpdateItemInput {
-  @Field(() => Int, { nullable: true })
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(9999)
-  quantity?: number;
-
   @Field(() => String, { nullable: true })
   @IsOptional()
-  metadata?: any; // JSON field
+  metadata?: Prisma.InputJsonValue;
 }
 
 @InputType()

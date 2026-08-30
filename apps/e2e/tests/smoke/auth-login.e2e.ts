@@ -1,6 +1,7 @@
-import { test, expect } from "../../src/fixtures.js";
+import { presetTest, expect } from "../../src/fixtures.js";
 
-test.use({ preset: "community-basic", persona: "anon" });
+const test = presetTest("community-basic");
+test.use({ persona: "anon" });
 
 // Exercises the real login path once per persona. Every other spec injects the
 // token via storageState instead, so this is the only place LoginPage's markup

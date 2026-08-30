@@ -533,9 +533,7 @@ input CreateItemTypeInput {
   imageId: ID
   imageUrl: String
   isConsumable: Boolean! = false
-  isStackable: Boolean! = true
   isTradeable: Boolean! = true
-  maxStackSize: Int
   metadata: String
   name: String!
 }
@@ -940,6 +938,14 @@ input GrantItemInput {
   pendingOwner: PendingOwnerInput
   quantity: Int! = 1
 
+  """
+  Member-facing note recorded on the ledger. Visible to anyone who can read the community's item history.
+  """
+  reason: String
+
+  """Staff-only detail recorded on the ledger. Never shown to members."""
+  staffNote: String
+
   """User ID to grant item to. Required if pendingOwner is not provided."""
   userId: ID
 }
@@ -1115,6 +1121,11 @@ type InviteCodeConnection {
 
 type Item {
   createdAt: DateTime!
+
+  """
+  Set when the item was revoked or consumed. Destroyed items keep their provenance but never appear in an inventory.
+  """
+  destroyedAt: DateTime
   id: ID!
   itemType: ItemType!
   itemTypeId: ID!
@@ -1122,8 +1133,98 @@ type Item {
   owner: User
   ownerId: ID
   pendingOwnership: PendingOwnership
-  quantity: Int!
   updatedAt: DateTime!
+}
+
+"""
+One item, one event. Granting twelve tokens writes twelve rows; group them by batchId to collapse them back into one line.
+"""
+type ItemTransaction {
+  """
+  Names a non-user actor ("discord-bot", "system"). Set exactly when actorUserId is null.
+  """
+  actorLabel: String
+  actorUser: User
+
+  """Null for anything the system did on its own."""
+  actorUserId: ID
+
+  """
+  Shared by every row one operation wrote. Group on this to collapse a bulk grant into a single line.
+  """
+  batchId: ID!
+
+  """
+  How many items this event touched in total. Counting loaded rows is wrong once a batch straddles a page boundary, so the server counts it.
+  """
+  batchSize: Int!
+  communityId: ID!
+  createdAt: DateTime!
+  fromUser: User
+  fromUserId: ID
+  id: ID!
+  item: Item
+  itemId: ID!
+  itemType: ItemType!
+  itemTypeId: ID!
+  kind: ItemTransactionKind!
+
+  """Member-facing. Visible to anyone who can read the ledger."""
+  reason: String
+
+  """
+  Staff-only note. Null unless the viewer holds canManageItems or canGrantItems in this community.
+  """
+  staffNote: String
+  toUser: User
+  toUserId: ID
+}
+
+type ItemTransactionConnection {
+  hasMore: Boolean!
+  total: Int!
+  transactions: [ItemTransaction!]!
+}
+
+input ItemTransactionFiltersInput {
+  """Required. The ledger is always scoped to one community."""
+  communityId: ID!
+  itemId: ID
+  itemTypeId: ID
+
+  """Match any of these kinds. Omit for all kinds."""
+  kinds: [ItemTransactionKind!]
+  limit: Int! = 25
+  offset: Int! = 0
+
+  """
+  Matches item type name, public reason, and actor label. Never searches staff notes -- a member must not be able to probe for hidden text.
+  """
+  search: String
+
+  """
+  Matches rows where this user is the source, the recipient, or the actor.
+  """
+  userId: ID
+}
+
+"""How an item moved."""
+enum ItemTransactionKind {
+  """Released from pending ownership once an external account was linked."""
+  CLAIM
+
+  """Minted by staff or a bot and given to someone."""
+  GRANT
+  IMPORT
+
+  """Taken back and destroyed. Always a correction."""
+  REVOKE
+
+  """Moved between two members."""
+  TRANSFER
+
+  """Consumed by its holder."""
+  USE
 }
 
 type ItemType {
@@ -1137,9 +1238,7 @@ type ItemType {
   id: ID!
   image: Image
   isConsumable: Boolean!
-  isStackable: Boolean!
   isTradeable: Boolean!
-  maxStackSize: Int
   metadata: JSON
   name: String!
   updatedAt: DateTime!
@@ -1472,9 +1571,6 @@ type Mutation {
   deleteCommunityColor(id: ID!): Boolean!
   deleteGallery(id: ID!): RemovalResponse!
   deleteImage(id: ID!): Boolean!
-
-  """Delete an item (admin only)"""
-  deleteItem(id: ID!): Boolean!
   deleteItemType(id: ID!): Boolean!
 
   """Deletes a media item and its associated content"""
@@ -1487,8 +1583,10 @@ type Mutation {
   editAndApproveTraitReview(input: EditAndApproveTraitReviewInput!): TraitReview!
   forgotPassword(input: ForgotPasswordInput!): Boolean!
 
-  """Grant an item to a user (admin only)"""
-  grantItem(input: GrantItemInput!): Item!
+  """
+  Grant items to a user. Returns one Item per unit granted -- there is no stacking, so a quantity of 3 creates three items.
+  """
+  grantItem(input: GrantItemInput!): [Item!]!
 
   """
   Remove a character from its species, flattening its trait values into custom fields. Requires CanEditCharacterRegistry permission.
@@ -1615,6 +1713,19 @@ type Mutation {
   revertTraitReview(input: RevertTraitReviewInput!): TraitReview!
 
   """
+  Revoke items, destroying them. Soft: a destroyed item keeps its provenance readable. A public reason is required -- it is written to the ledger and shown to anyone who can read it. Returns the count.
+  """
+  revokeItems(
+    itemIds: [ID!]!
+
+    """Member-facing. Shown on the items' public provenance."""
+    reason: String!
+
+    """Staff-only detail. Never shown to members."""
+    staffNote: String
+  ): Int!
+
+  """
   Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this).
   """
   runDeviantartUuidBackfill(jobId: String!): Boolean!
@@ -1700,7 +1811,9 @@ type Mutation {
     updateInviteCodeInput: UpdateInviteCodeInput!
   ): InviteCode!
 
-  """Update an item (admin only)"""
+  """
+  Update one item's instance metadata. Quantity is not updatable: an item is one item, so more means grantItem and fewer means revokeItems.
+  """
   updateItem(id: ID!, input: UpdateItemInput!): Item!
   updateItemType(id: ID!, input: UpdateItemTypeInput!): ItemType!
 
@@ -2113,6 +2226,14 @@ type Query {
     """Role ID"""
     roleId: ID!
   ): InviteCodeConnection!
+
+  """Every ledger row for one stack, oldest first. The provenance timeline."""
+  itemProvenance(itemId: ID!): [ItemTransaction!]!
+
+  """
+  The item ledger for one community, newest first. Readable by any member.
+  """
+  itemTransactions(filters: ItemTransactionFiltersInput!): ItemTransactionConnection!
   itemType(id: ID!): ItemType!
   itemTypes(filters: ItemTypeFiltersInput): ItemTypeConnection!
   likeStatus(entityId: ID!, entityType: LikeableType!): LikeStatus!
@@ -2971,7 +3092,6 @@ input UpdateInviteCodeInput {
 
 input UpdateItemInput {
   metadata: String
-  quantity: Int
 }
 
 input UpdateItemTypeInput {
@@ -2982,9 +3102,7 @@ input UpdateItemTypeInput {
   imageId: ID
   imageUrl: String
   isConsumable: Boolean
-  isStackable: Boolean
   isTradeable: Boolean
-  maxStackSize: Int
   metadata: String
   name: String
 }

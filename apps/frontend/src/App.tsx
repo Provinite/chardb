@@ -64,6 +64,7 @@ import { DiscordCallbackPage } from "./pages/DiscordCallbackPage";
 import { ToyhouseCallbackPage } from "./pages/ToyhouseCallbackPage";
 import { CommunityItemsAdminPage } from "./pages/CommunityItemsAdminPage";
 import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
+import { CommunityItemLedgerPage } from "./pages/CommunityItemLedgerPage";
 import { CommunityColorPalettePage } from "./pages/CommunityColorPalettePage";
 import { ItemTypePage } from "./pages/ItemTypePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -379,6 +380,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CommunityInventoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/items/ledger"
+          element={
+            <ProtectedRoute>
+              <CommunityItemLedgerPage />
             </ProtectedRoute>
           }
         />

@@ -1,6 +1,7 @@
-import { test, expect } from "../../src/fixtures.js";
+import { presetTest, expect } from "../../src/fixtures.js";
 
-test.use({ preset: "community-basic", persona: "anon" });
+const test = presetTest("community-basic");
+test.use({ persona: "anon" });
 
 /**
  * A valid access token alone must be enough to restore a session.

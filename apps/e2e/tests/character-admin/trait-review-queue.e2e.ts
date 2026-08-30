@@ -1,7 +1,8 @@
-import { test, expect, acceptNextDialog } from "../../src/fixtures.js";
+import { presetTest, expect, acceptNextDialog } from "../../src/fixtures.js";
 import type { Page } from "@playwright/test";
 
-test.use({ preset: "community-basic", persona: "moderator" });
+const test = presetTest("community-basic");
+test.use({ persona: "moderator" });
 
 test.beforeEach(async ({ world }) => {
   await world.reset();

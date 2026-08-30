@@ -1,6 +1,7 @@
-import { test, expect, acceptNextDialog } from "../../src/fixtures.js";
+import { presetTest, expect, acceptNextDialog } from "../../src/fixtures.js";
 
-test.use({ preset: "community-basic", persona: "moderator" });
+const test = presetTest("community-basic");
+test.use({ persona: "moderator" });
 
 // Scope note: this file asserts what a user can observe -- the character stops
 // appearing in browse and its page 404s. It deliberately does NOT assert that

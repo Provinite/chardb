@@ -22,12 +22,6 @@ export class ItemType {
   category?: string;
 
   @Field()
-  isStackable: boolean;
-
-  @Field(() => Int, { nullable: true })
-  maxStackSize?: number;
-
-  @Field()
   isTradeable: boolean;
 
   @Field()
@@ -43,7 +37,7 @@ export class ItemType {
   colorId?: string;
 
   @Field(() => GraphQLJSON, { nullable: true })
-  metadata?: any; // JSON object
+  metadata?: unknown;
 
   @Field()
   createdAt: Date;

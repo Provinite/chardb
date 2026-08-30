@@ -5,6 +5,7 @@ import { UsersModule } from "../users/users.module";
 import { CommunityColorsModule } from "../community-colors/community-colors.module";
 import { PendingOwnershipModule } from "../pending-ownership/pending-ownership.module";
 import { DiscordModule } from "../discord/discord.module";
+import { ItemTransactionsModule } from "../item-transactions/item-transactions.module";
 import { ItemsService } from "./items.service";
 import { ItemsResolver, ItemFieldsResolver } from "./items.resolver";
 
@@ -16,6 +17,7 @@ import { ItemsResolver, ItemFieldsResolver } from "./items.resolver";
     CommunityColorsModule,
     PendingOwnershipModule,
     DiscordModule,
+    ItemTransactionsModule,
   ],
   providers: [ItemsService, ItemsResolver, ItemFieldsResolver],
   exports: [ItemsService],

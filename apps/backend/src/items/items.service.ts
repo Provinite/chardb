@@ -4,10 +4,16 @@ import {
   BadRequestException,
   ConflictException,
 } from "@nestjs/common";
+import { randomUUID } from "crypto";
 import { DatabaseService } from "../database/database.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
 import { DiscordService } from "../discord/discord.service";
-import { Prisma, ExternalAccountProvider } from "@chardb/database";
+import {
+  Prisma,
+  ExternalAccountProvider,
+  ItemTransactionKind,
+} from "@chardb/database";
+import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
 import { ItemTypeFilters } from "./dto/item-type.dto";
 import { ItemFilters } from "./dto/item.dto";
 
@@ -17,12 +23,27 @@ export interface PendingOwnerInput {
   displayIdentifier?: string;
 }
 
+/**
+ * Who caused a write, and why.
+ *
+ * Every item mutation carries one so the ledger row it produces can name a
+ * responsible party. `actorLabel` covers the paths with no logged-in user --
+ * the SQS prize consumer and the pending-ownership claim job.
+ */
+export interface ItemActor {
+  actorUserId?: string | null;
+  actorLabel?: string | null;
+  reason?: string | null;
+  staffNote?: string | null;
+}
+
 @Injectable()
 export class ItemsService {
   constructor(
     private readonly db: DatabaseService,
     private readonly pendingOwnershipService: PendingOwnershipService,
     private readonly discordService: DiscordService,
+    private readonly itemTransactions: ItemTransactionsService,
   ) {}
 
   // ==================== ItemType Methods ====================
@@ -125,9 +146,11 @@ export class ItemsService {
   }
 
   async deleteItemType(id: string) {
-    // Check if any items exist with this item type
+    // Only live items block deletion. Destroyed ones are history, and history
+    // is exactly what we promised not to lose -- but it should not keep a
+    // retired item type alive forever either.
     const itemCount = await this.db.item.count({
-      where: { itemTypeId: id },
+      where: { itemTypeId: id, destroyedAt: null },
     });
 
     if (itemCount > 0) {
@@ -152,18 +175,18 @@ export class ItemsService {
   // ==================== Item Methods ====================
 
   /**
-   * Grant an item to a user. If the item type is stackable and the user
-   * already has that item type, increment the quantity instead of creating
-   * a new item.
+   * Grant `quantity` items to a user, as `quantity` separate rows.
    *
-   * Can also create orphaned items (userId = null) or items with pending ownership.
+   * Can also create items with pending ownership, for a recipient who has not
+   * linked the external account yet.
    */
   async grantItem(input: {
     itemTypeId: string;
     userId?: string | null; // Optional for orphaned items
     quantity: number;
-    metadata?: any;
+    metadata?: Prisma.InputJsonValue;
     pendingOwner?: PendingOwnerInput; // For pending ownership
+    actor: ItemActor;
   }) {
     const { itemTypeId, userId, quantity, metadata } = input;
     let pendingOwner = input.pendingOwner;
@@ -271,73 +294,63 @@ export class ItemsService {
       }
     }
 
-    // Check if stackable and user already has this item type (skip for orphaned/pending items)
-    if (itemType.isStackable && actualOwnerId) {
-      const existingItem = await this.db.item.findFirst({
-        where: {
+    // Every item and every ledger row commit together or not at all. A ledger
+    // that can disagree with `items` is worse than none: it looks authoritative
+    // while being wrong.
+    //
+    // No stacking, so no read-then-write and no race: N items is N inserts.
+    // The ids are generated here rather than read back because createMany does
+    // not return them, and the ledger rows need them in the same statement.
+    const itemIds = Array.from({ length: quantity }, () => randomUUID());
+
+    const items = await this.db.$transaction(async (tx) => {
+      await tx.item.createMany({
+        data: itemIds.map((id) => ({
+          id,
           itemTypeId,
-          ownerId: actualOwnerId,
-        },
+          ownerId: actualOwnerId ?? null,
+          metadata: metadata || {},
+        })),
       });
 
-      if (existingItem) {
-        // Increment quantity on existing item
-        const newQuantity = existingItem.quantity + quantity;
+      await this.itemTransactions.recordBatch(
+        {
+          communityId: itemType.communityId,
+          itemTypeId,
+          itemIds,
+          kind: ItemTransactionKind.GRANT,
+          // Null for a grant still awaiting a claim: nobody holds it yet, and
+          // the CLAIM row written later is what names the eventual owner.
+          toUserId: actualOwnerId ?? null,
+          ...input.actor,
+        },
+        tx,
+      );
 
-        // Check max stack size
-        if (itemType.maxStackSize && newQuantity > itemType.maxStackSize) {
-          throw new BadRequestException(
-            `Cannot add ${quantity} items. Max stack size is ${itemType.maxStackSize} and user already has ${existingItem.quantity}`,
-          );
-        }
+      return tx.item.findMany({
+        where: { id: { in: itemIds } },
+        include: {
+          itemType: { include: { community: true } },
+          owner: true,
+        },
+        orderBy: { id: "asc" },
+      });
+    });
 
-        return await this.db.item.update({
-          where: { id: existingItem.id },
-          data: { quantity: newQuantity },
-          include: {
-            itemType: {
-              include: {
-                community: true,
-              },
-            },
-            owner: true,
-          },
-        });
+    // Pending ownership is one record per item -- PendingOwnership.itemId is
+    // unique, and each instance claims independently.
+    if (pendingOwner) {
+      for (const item of items) {
+        await this.pendingOwnershipService.createForItem(
+          item.id,
+          pendingOwner.provider,
+          pendingOwner.providerAccountId, // Already resolved earlier
+          pendingOwner.displayIdentifier,
+        );
       }
     }
 
-    // Create new item
-    const item = await this.db.item.create({
-      data: {
-        itemType: {
-          connect: { id: itemTypeId },
-        },
-        // Owner connection (may be null for orphaned items)
-        ...(actualOwnerId ? { owner: { connect: { id: actualOwnerId } } } : {}),
-        quantity,
-        metadata: metadata || {},
-      },
-      include: {
-        itemType: {
-          include: {
-            community: true,
-          },
-        },
-        owner: true,
-      },
-    });
-
-    // Create pending ownership record if still needed (not claimed)
-    if (pendingOwner) {
-      await this.pendingOwnershipService.createForItem(
-        item.id,
-        pendingOwner.provider,
-        pendingOwner.providerAccountId, // Already resolved earlier
-        pendingOwner.displayIdentifier,
-      );
-    }
-
-    return item;
+    return items;
   }
 
   async findAllItems(filters: ItemFilters = {}) {
@@ -351,6 +364,9 @@ export class ItemsService {
 
     const where: Prisma.ItemWhereInput = {
       AND: [
+        // Destroyed items are never inventory. They stay reachable one at a
+        // time through provenance, and nowhere else.
+        { destroyedAt: null },
         ownerId ? { ownerId } : {},
         itemTypeId ? { itemTypeId } : {},
         communityId ? { itemType: { communityId } } : {},
@@ -402,22 +418,20 @@ export class ItemsService {
     return item;
   }
 
+  /**
+   * Update one item's instance data. Quantity is gone: an item is one item, so
+   * "give them two more" is a grant and "take one back" is a revoke.
+   */
   async updateItem(id: string, input: Prisma.ItemUpdateInput) {
     try {
-      const item = await this.db.item.update({
+      return await this.db.item.update({
         where: { id },
         data: input,
         include: {
-          itemType: {
-            include: {
-              community: true,
-            },
-          },
+          itemType: { include: { community: true } },
           owner: true,
         },
       });
-
-      return item;
     } catch (error) {
       if (error.code === "P2025") {
         throw new NotFoundException(`Item with ID ${id} not found`);
@@ -426,18 +440,72 @@ export class ItemsService {
     }
   }
 
-  async deleteItem(id: string) {
-    try {
-      await this.db.item.delete({
-        where: { id },
-      });
-      return true;
-    } catch (error) {
-      if (error.code === "P2025") {
-        throw new NotFoundException(`Item with ID ${id} not found`);
-      }
-      throw error;
+  /**
+   * Revoke items, destroying them.
+   *
+   * Soft, not hard. A destroyed item keeps its provenance readable, which is
+   * exactly the history a dispute wants -- "this locket was revoked for fraud"
+   * should stay traceable rather than evaporating with the row. Mirrors how
+   * characters are deleted.
+   *
+   * Takes a list because revoking two of someone's three potions now means
+   * naming two specific items, and the whole revoke should land as one event.
+   */
+  async revokeItems(itemIds: string[], actor: ItemActor) {
+    if (itemIds.length === 0) {
+      throw new BadRequestException("No items given to revoke");
     }
+
+    return this.db.$transaction(async (tx) => {
+      const items = await tx.item.findMany({
+        where: { id: { in: itemIds }, destroyedAt: null },
+        include: { itemType: { select: { communityId: true } } },
+      });
+
+      if (items.length !== itemIds.length) {
+        throw new NotFoundException(
+          "One or more of those items does not exist or is already destroyed",
+        );
+      }
+
+      // A single revoke must not span item types: the ledger row carries the
+      // type, and callers that mix them are asking for two events, not one.
+      const typeIds = new Set(items.map((i) => i.itemTypeId));
+      if (typeIds.size > 1) {
+        throw new BadRequestException(
+          "All items in one revoke must share an item type",
+        );
+      }
+
+      const ownerIds = new Set(items.map((i) => i.ownerId));
+      if (ownerIds.size > 1) {
+        throw new BadRequestException(
+          "All items in one revoke must share an owner",
+        );
+      }
+
+      await tx.item.updateMany({
+        where: { id: { in: itemIds } },
+        data: {
+          destroyedAt: new Date(),
+          destroyedById: actor.actorUserId ?? null,
+        },
+      });
+
+      await this.itemTransactions.recordBatch(
+        {
+          communityId: items[0].itemType.communityId,
+          itemTypeId: items[0].itemTypeId,
+          itemIds,
+          kind: ItemTransactionKind.REVOKE,
+          fromUserId: items[0].ownerId,
+          ...actor,
+        },
+        tx,
+      );
+
+      return items.length;
+    });
   }
 
   /**

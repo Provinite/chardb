@@ -308,23 +308,15 @@ export const ItemTypePage: React.FC = () => {
       <PropertiesSection>
         <Heading2 style={{ marginBottom: "0.5rem" }}>Properties</Heading2>
         <PropertiesList>
-          {itemType.isStackable && (
-            <PropertyBadge $variant="success">
-              Stackable
-              {itemType.maxStackSize && ` (Max: ${itemType.maxStackSize})`}
-            </PropertyBadge>
-          )}
           {itemType.isTradeable && (
             <PropertyBadge $variant="info">Tradeable</PropertyBadge>
           )}
           {itemType.isConsumable && (
             <PropertyBadge $variant="info">Consumable</PropertyBadge>
           )}
-          {!itemType.isStackable &&
-            !itemType.isTradeable &&
-            !itemType.isConsumable && (
-              <PropertyBadge>No special properties</PropertyBadge>
-            )}
+          {!itemType.isTradeable && !itemType.isConsumable && (
+            <PropertyBadge>No special properties</PropertyBadge>
+          )}
         </PropertiesList>
       </PropertiesSection>
     </Container>

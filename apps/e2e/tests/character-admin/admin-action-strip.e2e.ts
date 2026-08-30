@@ -1,7 +1,7 @@
-import { test, expect } from "../../src/fixtures.js";
+import { presetTest, expect } from "../../src/fixtures.js";
 import type { Page } from "@playwright/test";
 
-test.use({ preset: "community-basic" });
+const test = presetTest("community-basic");
 
 const strip = (page: Page) => page.getByTestId("character-admin-actions");
 
