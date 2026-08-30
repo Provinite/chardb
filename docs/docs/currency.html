@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Community Currency - Feature Walkthrough</title>
+    <meta name="description" content="Communities can define their own currencies. Balances, member-to-member transfers, and a public ledger showing where every unit came from." />
+    <link rel="canonical" href="https://provinite.github.io/chardb/docs/currency.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Community Currency" />
+    <meta property="og:description" content="Communities can define their own currencies. Balances, member-to-member transfers, and a public ledger showing where every unit came from." />
+    <meta property="og:url" content="https://provinite.github.io/chardb/docs/currency.html" />
+    <meta property="og:image" content="https://provinite.github.io/chardb/docs/currency-supply-staff.png" />
+    <meta property="og:image:alt" content="The CharDB currency supply table showing circulation, holders, and 30-day flow for two currencies." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .dim {
+        color: #8b93c7;
+      }
+
+      .kinds {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      .kinds th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid #e0e0e0;
+        color: #333;
+      }
+
+      .kinds td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+        color: #555;
+        vertical-align: top;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.55rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .pill.granted {
+        color: #0e7c56;
+        background: #0e9f6e22;
+      }
+      .pill.revoked {
+        color: #b91c1c;
+        background: #dc262622;
+      }
+      .pill.traded {
+        color: #0e7490;
+        background: #0891b222;
+      }
+      .pill.claimed {
+        color: #a16207;
+        background: #d9770622;
+      }
+      .pill.used,
+      .pill.imported {
+        color: #52606d;
+        background: #64748b22;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Community Currency</h1>
+        <p>Coin your community defines, and a ledger that shows where it came from</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A community can define <strong>any number of currencies</strong> —
+            event coin, shop credit, a token that only spends during one
+            festival. Members earn them, hold them, and send them to each other.
+          </p>
+          <p>
+            Currency is deliberately <strong>not</strong> an item type. Items
+            are one row per instance, so each one carries its own history:
+            <em>this</em> potion was granted to you in March and traded twice.
+            Coin is fungible — asking which of your 250 came from a particular
+            prompt is not a question with an answer. So currency gets a balance
+            and a running statement instead.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">🪙</div>
+              <h4>Many currencies</h4>
+              <p>As many as your community needs</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">📊</div>
+              <h4>Public supply</h4>
+              <p>Anyone can see how much exists</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🤝</div>
+              <h4>Member transfers</h4>
+              <p>Send coin without staff involvement</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🧾</div>
+              <h4>Full ledger</h4>
+              <p>Every movement, readable by members</p>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <strong>There is no treasury.</strong> Currency is created when
+            staff grant it and it leaves circulation when it is spent or
+            removed. Every unit that exists is in somebody's hands — which is
+            what makes the circulation number on the next page mean something.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: creating -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Creating a currency</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Currencies</strong> lives under <strong>Community</strong>
+            in the sidebar, not Administration — the numbers are public, only
+            the actions are restricted.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-empty.png"
+              alt="The Currencies page for a community with none yet, showing an explanation and a Create the first one button"
+            />
+            <div class="screenshot-caption">
+              A community with no currencies yet.
+            </div>
+          </div>
+          <p>
+            A currency needs a <strong>name</strong> and a short
+            <strong>code</strong>. A <strong>symbol</strong> is optional; the
+            form shows you exactly how amounts will read before you commit.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-create.png"
+              alt="The new currency form filled in for Hollow Coin, code HC, symbol hexagon, with a live preview reading 1,250"
+            />
+            <div class="screenshot-caption">
+              With a symbol, amounts read <code>⬡1,250</code>. Without one, they
+              read <code>1,250 HC</code>.
+            </div>
+          </div>
+          <div class="highlight-box">
+            <strong>Codes are unique per community, and case doesn't help.</strong>
+            Trying to add a second currency with the code <code>hc</code> when
+            <code>HC</code> exists is refused — otherwise two currencies would
+            render identically everywhere they appear.
+          </div>
+          <div class="screenshot">
+            <img
+              src="currency-duplicate-code.png"
+              alt="An error reading This community already has a currency with the code HC"
+            />
+            <div class="screenshot-caption">
+              The error names the field you need to change.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: granting -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Granting currency</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Granting is how currency comes into existence. Pick an amount, pick
+            everyone who should receive it, and give a reason. Paying eleven
+            people the same amount is <strong>one event</strong>, not eleven
+            coincidences.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-grant.png"
+              alt="The grant dialog with 250 entered, three members checked, a public reason, a staff note, and a preview reading Creating 750 in total"
+            />
+            <div class="screenshot-caption">
+              The running total is the guard against a mistyped grant: 250 each
+              to three members is 750 new units of coin.
+            </div>
+          </div>
+          <p>
+            The <strong>reason</strong> is public — every member can read it in
+            the ledger. The <strong>staff note</strong> is not, and is for the
+            candid version.
+          </p>
+          <div class="highlight-box">
+            <strong>Who can grant:</strong> anyone with
+            <code>canGrantItems</code>. Currency reuses the item permissions
+            rather than adding its own, so whoever hands out prizes already has
+            what they need.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: supply table -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Reading the supply table</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The table is the point of the page. Before granting five thousand
+            more of something, you should be able to see how much already
+            exists without navigating anywhere.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-supply-staff.png"
+              alt="The currency supply table showing Hollow Coin with 500 in circulation, 2 holders, 750 granted and 250 removed over 30 days"
+            />
+            <div class="screenshot-caption">
+              750 granted less 250 removed leaves 500 in circulation. The
+              arithmetic is visible, which is the whole idea.
+            </div>
+          </div>
+          <table class="kinds">
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>What it counts</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>In circulation</strong></td>
+                <td>Every unit held by anybody, right now.</td>
+              </tr>
+              <tr>
+                <td><strong>Holders</strong></td>
+                <td>
+                  People with a non-zero balance. Not the same as circulation —
+                  500 held by two people is 500 in circulation and 2 holders.
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Granted 30d</strong></td>
+                <td>Created over the last thirty days.</td>
+              </tr>
+              <tr>
+                <td><strong>Removed 30d</strong></td>
+                <td>
+                  Taken back or spent over the same window. Transfers are not
+                  counted: moving coin between members changes nothing about how
+                  much exists.
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Largest</strong></td>
+                <td>
+                  The biggest single balance. A number well clear of the others
+                  is worth a look.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            <strong>Any member can read this page.</strong> They simply get no
+            buttons.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-supply-member.png"
+              alt="The same supply table seen by an ordinary member, with identical numbers and no action buttons"
+            />
+            <div class="screenshot-caption">
+              The same numbers, seen by an ordinary member. No Grant, no Remove,
+              no New currency.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: wallet -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">A member's wallet</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Currency sits above items on the inventory page rather than on a
+            page of its own. Coin and items are one answer to "what does this
+            person have", and splitting them would make a trade partner check
+            two places.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-wallet.png"
+              alt="A member's inventory page with a Currency section above their items, showing 190 Hollow Coin and 40 Lanternfall Mark"
+            />
+            <div class="screenshot-caption">
+              Both formatting styles side by side: <code>⬡190</code> for a
+              currency with a symbol, <code>40 LM</code> for one without.
+            </div>
+          </div>
+          <div class="highlight-box">
+            <strong>Currencies you hold none of are still listed.</strong> A
+            wallet showing only what you already have cannot tell you a currency
+            exists — which is the one thing you need to know before you can go
+            and earn any.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: transfers -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Sending currency to another member</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Members send their own coin without staff involvement. There is no
+            permission for it: <strong>the balance is the authorisation</strong>
+            — you cannot send what you do not hold.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-send.png"
+              alt="The send dialog with a recipient selected, 60 entered, a note, and a hint reading You hold 250"
+            />
+            <div class="screenshot-caption">
+              The hint shows what you hold, so you are not doing the subtraction
+              in your head.
+            </div>
+          </div>
+          <p>
+            Balances <strong>never go negative</strong>. An attempt to send or
+            remove more than someone holds is refused outright, and nothing
+            moves — the recipient is not credited from a balance that could not
+            fund it.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-overdraft-refused.png"
+              alt="An error reading That member does not hold 999 FT after trying to remove more than they have"
+            />
+            <div class="screenshot-caption">
+              Staff trying to remove more than a member holds gets the same
+              treatment.
+            </div>
+          </div>
+          <p>
+            Viewing <em>someone else's</em> wallet shows their balances and no
+            Send buttons. Balances are public within a community for the same
+            reason item provenance is: you should be able to check a trade
+            partner before the trade, not after.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-wallet-other.png"
+              alt="Another member's inventory showing their currency balances with no Send buttons"
+            />
+            <div class="screenshot-caption">
+              Another member's wallet. The dimmed card is a currency they hold
+              none of.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: ledger -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">The currency ledger</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Every movement of currency in the community, newest first,
+            filterable by kind and by currency, and searchable by reason.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-ledger-staff.png"
+              alt="The currency ledger showing a transfer, a removal and several grants, each with reasons and staff notes"
+            />
+            <div class="screenshot-caption">
+              The ledger as staff see it. The boxed lines beneath a reason are
+              private staff notes.
+            </div>
+          </div>
+          <table class="kinds">
+            <thead>
+              <tr>
+                <th>Kind</th>
+                <th>What happened</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pill granted">Granted</span></td>
+                <td>Staff created coin into a member's balance.</td>
+              </tr>
+              <tr>
+                <td><span class="pill traded">Transfer</span></td>
+                <td>One member sent coin to another.</td>
+              </tr>
+              <tr>
+                <td><span class="pill used">Spent</span></td>
+                <td>
+                  A member spent it. The coin leaves circulation rather than
+                  going anywhere.
+                </td>
+              </tr>
+              <tr>
+                <td><span class="pill revoked">Removed</span></td>
+                <td>Staff took coin back, as a correction or a penalty.</td>
+              </tr>
+              <tr>
+                <td><span class="pill imported">Imported</span></td>
+                <td>A balance that predates the ledger.</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="highlight-box">
+            <strong>A transfer is one line, not two.</strong> Underneath, it is
+            recorded as two entries — a debit and a credit — so that each
+            member's own statement reads correctly from their side. In the
+            community view both halves are visible at once, so they are shown as
+            the single movement they are.
+          </div>
+          <p>
+            A bulk grant is <em>not</em> collapsed the same way. Each recipient
+            genuinely received their own coin, and rolling eleven people into
+            one line would hide who was paid.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 7: staff notes -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <h2 class="step-title">What a member sees instead</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The ledger is readable by any member of the community. Staff notes
+            are the one exception, and the difference is worth seeing directly.
+            Compare this with the screenshot in the previous step — same page,
+            same events, same order.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-ledger-member.png"
+              alt="The same currency ledger seen by an ordinary member, with the staff notes absent"
+            />
+            <div class="screenshot-caption">
+              Same rows, same reasons, no staff notes.
+            </div>
+          </div>
+          <div class="highlight-box">
+            <strong>The notes are not merely hidden by the page.</strong> The
+            server does not send them to a viewer without item permissions, and
+            they are excluded from search — so a member cannot probe for the
+            contents of a note they cannot read, one guess at a time.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 8: archiving -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">8</div>
+          <h2 class="step-title">Retiring a currency</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Currencies are <strong>archived, never deleted</strong>. An archived
+            currency stops accepting new transactions, but every balance and
+            every statement line stays readable.
+          </p>
+          <div class="highlight-box">
+            <strong>Why not just delete it?</strong> Deleting a currency would
+            destroy the history of everything anyone ever bought with it. A
+            year-old dispute about a trade is exactly the case where that
+            history matters, and exactly the case where the currency involved is
+            most likely to be retired.
+          </div>
+          <p>
+            An archived currency still appears in the supply table — coin
+            already in members' hands does not vanish, so leaving it out would
+            understate what exists. It disappears from wallets and from the
+            grant flow, and can be restored at any time.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Community Currency &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>

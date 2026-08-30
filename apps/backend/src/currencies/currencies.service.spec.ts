@@ -284,5 +284,23 @@ describe("CurrenciesService", () => {
       };
       expect(call.where.archivedAt).toBeNull();
     });
+
+    it("sorts live currencies above archived ones", async () => {
+      mockDatabaseService.currency.findMany.mockResolvedValue([]);
+
+      await service.findByCommunity("comm1", true);
+
+      // A plain `archivedAt: "asc"` sorts archived to the TOP, because a live
+      // currency's archivedAt is null and Postgres puts nulls last ascending.
+      // That buried the currency a community actually uses underneath the one
+      // it retired -- caught by looking at the page, not by a passing test.
+      const call = mockDatabaseService.currency.findMany.mock.calls[0][0] as {
+        orderBy: Array<Record<string, unknown>>;
+      };
+      expect(call.orderBy[0]).toEqual({
+        archivedAt: { sort: "asc", nulls: "first" },
+      });
+      expect(call.orderBy[1]).toEqual({ name: "asc" });
+    });
   });
 });

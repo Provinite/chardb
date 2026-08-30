@@ -20,7 +20,16 @@ export class CurrenciesService {
         communityId,
         ...(includeArchived ? {} : { archivedAt: null }),
       },
-      orderBy: [{ archivedAt: "asc" }, { name: "asc" }],
+      // Live currencies first, then archived, each alphabetical.
+      //
+      // `archivedAt: "asc"` alone sorts archived to the TOP: a live currency
+      // has a null archivedAt, and Postgres puts nulls last on an ascending
+      // sort. That buries the currency the community actually uses underneath
+      // the one it retired.
+      orderBy: [
+        { archivedAt: { sort: "asc", nulls: "first" } },
+        { name: "asc" },
+      ],
     });
   }
 
