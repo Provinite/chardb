@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Community currency**: arbitrary many per community, with balances, a
+  ledger, member-to-member transfers, and an admin surface. Currency is a
+  separate instrument from items rather than an item type that happens to be
+  spent — items are one row per instance so each has a history, coin is
+  fungible, so a balance row plus a signed ledger is the shape that fits.
+
+  Reuses `canManageItems` / `canGrantItems` rather than defining its own
+  permissions. Sending your own coin needs only membership: the balance is the
+  authorisation.
+
+  The `100 cc` / `30 cc` item types in production are untouched. They keep
+  working as items; converting them into balances is a separate, one-way
+  decision that has not been made.
+
 - Added Open Graph metadata to all docs site pages, so shared links unfurl with a name and description.
 
 ## [v11.2.0] - 2026-08-30

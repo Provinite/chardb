@@ -5,6 +5,10 @@ import {
   SeedCreateRoleDocument,
   SeedGrantItemDocument,
   SeedRolesByCommunityDocument,
+  SeedCreateCurrencyDocument,
+  SeedUpdateCurrencyDocument,
+  SeedMintCurrencyDocument,
+  SeedTransferCurrencyDocument,
 } from "../../generated/graphql.js";
 import { definePreset, type Persona } from "../types.js";
 
@@ -24,6 +28,24 @@ export interface CommunityItemsWorld {
    * the ledger's page size of 25 so the batch straddles a page boundary.
    */
   importedItems: { ids: string[]; batchId: string; count: number };
+  /**
+   * Two live currencies and one archived one.
+   *
+   * Currency lives in the same preset as items on purpose: it reuses the item
+   * permissions, so the quartermaster persona is already exactly the actor a
+   * currency test needs, and a community that has both is the realistic case.
+   */
+  currencies: {
+    /** Carries a symbol, so symbol-first formatting is exercised. */
+    coin: { id: string; code: string; name: string };
+    /** No symbol, so code-after formatting is exercised. */
+    token: { id: string; code: string; name: string };
+    /** Archived. Must refuse new transactions but stay readable. */
+    retired: { id: string; code: string; name: string };
+  };
+  /** What each persona holds of `coin` after seeding. */
+  balances: { member: number; othermember: number };
+  currencyUrls: { admin: string; ledger: string };
   roles: { admin: string; quartermaster: string; member: string };
   users: {
     siteadmin: Persona;
@@ -171,12 +193,92 @@ export default definePreset<CommunityItemsWorld>({
       })),
     });
 
+    // ==================== Currency ====================
+
+    const asQuartermaster = ctx.as("quartermaster");
+
+    const { createCurrency: coin } = await asQuartermaster.gql(
+      SeedCreateCurrencyDocument,
+      {
+        input: {
+          communityId: community.id,
+          name: "Hollow Coin",
+          code: "HC",
+          symbol: "⬡",
+          description: "Earned from prompts and spent in the shop.",
+        },
+      },
+    );
+
+    const { createCurrency: token } = await asQuartermaster.gql(
+      SeedCreateCurrencyDocument,
+      {
+        input: {
+          communityId: community.id,
+          name: "Festival Token",
+          code: "FT",
+        },
+      },
+    );
+
+    // Archived after creation rather than seeded archived, because that is the
+    // only way it can happen in the product and the specs assert on what
+    // archiving does to a currency that already has a history.
+    const { createCurrency: retired } = await asQuartermaster.gql(
+      SeedCreateCurrencyDocument,
+      {
+        input: {
+          communityId: community.id,
+          name: "Old Bell Mark",
+          code: "OBM",
+        },
+      },
+    );
+    await asQuartermaster.gql(SeedUpdateCurrencyDocument, {
+      id: retired.id,
+      input: { archived: true },
+    });
+
+    // One grant to two members at once. Writes two rows sharing a batch id,
+    // which is what a prize round looks like.
+    await asQuartermaster.gql(SeedMintCurrencyDocument, {
+      input: {
+        currencyId: coin.id,
+        userIds: [member.userId, othermember.userId],
+        amount: 500,
+        reason: "Lanternfall placement payout",
+        staffNote: "Tier 2 flat rate, agreed in the mod channel",
+      },
+    });
+
+    // A member-to-member transfer, so the ledger has a two-legged event in it
+    // and the two balances end up different from each other. 500/500 would
+    // make an off-by-one in either direction invisible.
+    await ctx.as("member").gql(SeedTransferCurrencyDocument, {
+      input: {
+        currencyId: coin.id,
+        toUserId: othermember.userId,
+        amount: 120,
+        reason: "For the adopt",
+      },
+    });
+
     return {
       community: {
         id: community.id,
         name: community.name,
         url: `/communities/${community.id}`,
         ledgerUrl: `/communities/${community.id}/items/ledger`,
+      },
+      currencies: {
+        coin: { id: coin.id, code: coin.code, name: coin.name },
+        token: { id: token.id, code: token.code, name: token.name },
+        retired: { id: retired.id, code: retired.code, name: retired.name },
+      },
+      balances: { member: 380, othermember: 620 },
+      currencyUrls: {
+        admin: `/communities/${community.id}/currencies`,
+        ledger: `/communities/${community.id}/currencies/ledger`,
       },
       itemTypes: {
         potion: { id: potion.id, name: potion.name },

@@ -341,6 +341,28 @@ export class CommunityResolverService {
   }
 
   /**
+   * Get the community ID for a currency.
+   *
+   * Currencies have a direct communityId field.
+   *
+   * @param currencyId - The currency ID
+   * @returns The community ID
+   * @throws Error if the currency doesn't exist
+   */
+  async getCurrencyCommunity(currencyId: string): Promise<string> {
+    const currency = await this.prisma.currency.findUnique({
+      where: { id: currencyId },
+      select: { communityId: true },
+    });
+
+    if (!currency) {
+      throw new Error(`Currency with ID ${currencyId} not found`);
+    }
+
+    return currency.communityId;
+  }
+
+  /**
    * Get the community ID for a community color.
    *
    * CommunityColors have a direct communityId field.
@@ -489,6 +511,7 @@ export class CommunityResolverService {
       communityColorId: this.getCommunityColorCommunity.bind(this),
       pendingOwnershipId: this.getPendingOwnershipCommunity.bind(this),
       traitReviewId: this.getTraitReviewCommunity.bind(this),
+      currencyId: this.getCurrencyCommunity.bind(this),
     };
 
     if (!config.type) {

@@ -17,6 +17,7 @@ import {
   Package,
   ScrollText,
   Search,
+  Coins,
 } from "lucide-react";
 import { spotlight } from "@mantine/spotlight";
 import { CommunityNavigationItem } from "./CommunityNavigationItem";
@@ -522,6 +523,16 @@ export const CommunityNavigationSidebar: React.FC<
               to={`${communityBasePath}/items/ledger`}
               icon={ScrollText}
               label="Item Ledger"
+              isNested
+            />
+
+            {/* Currencies - also not under Administration, and for the same
+                reason. The supply table is readable by any member; only
+                granting and removing are gated. */}
+            <CommunityNavigationItem
+              to={`${communityBasePath}/currencies`}
+              icon={Coins}
+              label="Currencies"
               isNested
             />
 

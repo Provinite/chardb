@@ -70,6 +70,16 @@ export type AuthPayload = {
   refreshToken: Scalars['String']['output'];
 };
 
+export type BurnCurrencyInput = {
+  /** How much to remove, as a positive number. */
+  amount: Scalars['Int']['input'];
+  currencyId: Scalars['ID']['input'];
+  /** Member-facing. Required, because it is public. */
+  reason: Scalars['String']['input'];
+  staffNote?: InputMaybe<Scalars['String']['input']>;
+  userId: Scalars['ID']['input'];
+};
+
 export type Character = {
   __typename?: 'Character';
   _count: CharacterCount;
@@ -454,6 +464,16 @@ export type CreateCommunityMemberInput = {
   userId: Scalars['ID']['input'];
 };
 
+export type CreateCurrencyInput = {
+  /** Short display code, unique within the community. Letters and digits only, stored uppercase. */
+  code: Scalars['String']['input'];
+  colorId?: InputMaybe<Scalars['ID']['input']>;
+  communityId: Scalars['ID']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  symbol?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateEnumValueInput = {
   /** ID of the color for this enum value */
   colorId?: InputMaybe<Scalars['ID']['input']>;
@@ -625,6 +645,126 @@ export type CreateTraitListEntryInput = {
   /** Type of values this trait stores */
   valueType: TraitValueType;
 };
+
+/** A community-defined unit of account. A community may define any number of them; they never convert into one another and never leave their community. */
+export type Currency = {
+  __typename?: 'Currency';
+  /** When set, the currency takes no new transactions. Existing balances and statements stay readable -- deleting it would destroy the history of everything ever bought with it. */
+  archivedAt: Maybe<Scalars['DateTime']['output']>;
+  /** Short display code, unique within the community: "HC". */
+  code: Scalars['String']['output'];
+  colorId: Maybe<Scalars['ID']['output']>;
+  communityId: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  description: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  /** Glyph rendered before the amount. Readers should fall back to the code when this is null. */
+  symbol: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+/** What one member holds of one currency. */
+export type CurrencyBalance = {
+  __typename?: 'CurrencyBalance';
+  amount: Scalars['Int']['output'];
+  currency: Currency;
+  id: Scalars['ID']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  user: Maybe<User>;
+  userId: Scalars['ID']['output'];
+};
+
+export type CurrencyBalanceLine = {
+  __typename?: 'CurrencyBalanceLine';
+  /** Zero when the member has never held any of this currency. */
+  amount: Scalars['Int']['output'];
+  currency: Currency;
+  /** When this balance last moved. Null if it never has. */
+  updatedAt: Maybe<Scalars['DateTime']['output']>;
+};
+
+/** What a community's currency is doing, in aggregate. */
+export type CurrencySupply = {
+  __typename?: 'CurrencySupply';
+  currency: Currency;
+  /** Members holding a non-zero balance. */
+  holders: Scalars['Int']['output'];
+  /** Total held across every member. Coin at a sink has been burned, so this is the whole supply, not a share of it. */
+  inCirculation: Scalars['Int']['output'];
+  /** The largest single balance. Zero when nobody holds any. */
+  largestBalance: Scalars['Int']['output'];
+  /** Minted over the last 30 days. */
+  mintedLast30Days: Scalars['Int']['output'];
+  /** Removed over the last 30 days, as a positive number. Burns and spends together -- both leave circulation. */
+  removedLast30Days: Scalars['Int']['output'];
+};
+
+/** One member's side of one currency movement. A transfer is two rows sharing a batch id, so each member's statement reads correctly on its own. */
+export type CurrencyTransaction = {
+  __typename?: 'CurrencyTransaction';
+  /** Names a non-user actor ("discord-bot", "system"). Set exactly when actorUserId is null. */
+  actorLabel: Maybe<Scalars['String']['output']>;
+  actorUser: Maybe<User>;
+  /** Null for anything the system did on its own. */
+  actorUserId: Maybe<Scalars['ID']['output']>;
+  /** Signed delta on this row's owner. Negative for BURN, SPEND, and the sending side of a TRANSFER. */
+  amount: Scalars['Int']['output'];
+  /** The owner's balance immediately after this row was applied, as returned by the increment itself. */
+  balanceAfter: Scalars['Int']['output'];
+  /** Shared by every row one operation wrote -- both legs of a transfer, or every member in a bulk mint. */
+  batchId: Scalars['ID']['output'];
+  counterparty: Maybe<User>;
+  /** The member on the other side of a transfer. */
+  counterpartyId: Maybe<Scalars['ID']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  currency: Currency;
+  currencyId: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+  kind: CurrencyTransactionKind;
+  /** Member-facing. Visible to anyone who can read this statement. */
+  reason: Maybe<Scalars['String']['output']>;
+  /** Staff-only note. Null unless the viewer holds canManageItems or canGrantItems in this community. */
+  staffNote: Maybe<Scalars['String']['output']>;
+  user: Maybe<User>;
+  /** Whose balance this row moved. */
+  userId: Scalars['ID']['output'];
+};
+
+export type CurrencyTransactionConnection = {
+  __typename?: 'CurrencyTransactionConnection';
+  hasMore: Scalars['Boolean']['output'];
+  total: Scalars['Int']['output'];
+  transactions: Array<CurrencyTransaction>;
+};
+
+export type CurrencyTransactionFiltersInput = {
+  /** Required. A statement is always scoped to one community. */
+  communityId: Scalars['ID']['input'];
+  currencyId?: InputMaybe<Scalars['ID']['input']>;
+  /** Match any of these kinds. Omit for all kinds. */
+  kinds?: InputMaybe<Array<CurrencyTransactionKind>>;
+  limit?: Scalars['Int']['input'];
+  offset?: Scalars['Int']['input'];
+  /** Matches currency name and public reason. Never searches staff notes -- a member must not be able to probe for hidden text. */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Matches rows where this user owns the row, is the counterparty, or is the actor. */
+  userId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** How currency moved. */
+export enum CurrencyTransactionKind {
+  /** Removed from a member's balance by staff, as a correction or a penalty. */
+  Burn = 'BURN',
+  /** Written by a migration for a balance that predates this ledger. */
+  Import = 'IMPORT',
+  /** Created into a member's balance by staff. Coin has no other source. */
+  Mint = 'MINT',
+  /** Spent by the member at a sink. Leaves circulation; there is no treasury. */
+  Spend = 'SPEND',
+  /** Moved between two members. Writes one row per side, sharing a batch id. */
+  Transfer = 'TRANSFER'
+}
 
 export type DeviantartUuidBackfillProgress = {
   __typename?: 'DeviantartUuidBackfillProgress';
@@ -1298,6 +1438,29 @@ export type MemberHoldingsReport = {
   totalItems: Scalars['Int']['output'];
 };
 
+/**
+ * Every currency in a community alongside what this member holds of it, including the ones they hold none of.
+ *
+ * Currencies with a zero balance are included deliberately: a wallet that hides them cannot tell a member that a currency exists, which is exactly what they need to know before they can earn any.
+ */
+export type MemberWallet = {
+  __typename?: 'MemberWallet';
+  balances: Array<CurrencyBalanceLine>;
+  communityId: Scalars['ID']['output'];
+  userId: Scalars['ID']['output'];
+};
+
+export type MintCurrencyInput = {
+  /** How much each named member receives. Positive. */
+  amount: Scalars['Int']['input'];
+  currencyId: Scalars['ID']['input'];
+  /** Member-facing. Required, because it is public. */
+  reason: Scalars['String']['input'];
+  staffNote?: InputMaybe<Scalars['String']['input']>;
+  /** Who receives it. At least one. */
+  userIds: Array<Scalars['ID']['input']>;
+};
+
 /** The reason for rejecting an image */
 export enum ModerationRejectionReason {
   CopyrightIssue = 'COPYRIGHT_ISSUE',
@@ -1326,6 +1489,8 @@ export type Mutation = {
   approveTraitReview: TraitReview;
   /** Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species. */
   assignCharacterSpecies: Character;
+  /** Remove currency from a member's balance. Refuses to take more than they hold. */
+  burnCurrency: Scalars['String']['output'];
   /** Cancel a running DeviantArt UUID backfill job. */
   cancelDeviantartUuidBackfill: Scalars['Boolean']['output'];
   /** Claim an invite code to join a community */
@@ -1341,6 +1506,7 @@ export type Mutation = {
   createCommunityInvitation: CommunityInvitation;
   /** Create a new community membership */
   createCommunityMember: CommunityMember;
+  createCurrency: Currency;
   /** Create a new enum value */
   createEnumValue: EnumValue;
   /** Create a new enum value setting */
@@ -1380,6 +1546,8 @@ export type Mutation = {
   /** Link a Discord guild to a community */
   linkDiscordGuild: Community;
   login: AuthPayload;
+  /** Create currency into one or more members' balances. Returns the batch id every row it wrote shares. */
+  mintCurrency: Scalars['String']['output'];
   /** Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete. */
   purgeCharacter: Scalars['Boolean']['output'];
   refreshToken: Scalars['String']['output'];
@@ -1428,6 +1596,8 @@ export type Mutation = {
   toggleFollow: FollowResult;
   toggleLike: LikeResult;
   transferCharacter: Character;
+  /** Send currency to another member. Writes both sides as one batch. */
+  transferCurrency: Scalars['String']['output'];
   /** Unlink a Discord guild from a community */
   unlinkDiscordGuild: Community;
   /** Unlink an external account from the current user */
@@ -1442,6 +1612,7 @@ export type Mutation = {
   updateCommunityColor: CommunityColor;
   /** Update a community membership (change role) */
   updateCommunityMember: CommunityMember;
+  updateCurrency: Currency;
   /** Update an enum value */
   updateEnumValue: EnumValue;
   /** Update an enum value setting */
@@ -1501,6 +1672,11 @@ export type MutationAssignCharacterSpeciesArgs = {
 };
 
 
+export type MutationBurnCurrencyArgs = {
+  input: BurnCurrencyInput;
+};
+
+
 export type MutationClaimInviteCodeArgs = {
   claimInviteCodeInput: ClaimInviteCodeInput;
   id: Scalars['ID']['input'];
@@ -1539,6 +1715,11 @@ export type MutationCreateCommunityInvitationArgs = {
 
 export type MutationCreateCommunityMemberArgs = {
   createCommunityMemberInput: CreateCommunityMemberInput;
+};
+
+
+export type MutationCreateCurrencyArgs = {
+  input: CreateCurrencyInput;
 };
 
 
@@ -1660,6 +1841,11 @@ export type MutationLinkDiscordGuildArgs = {
 
 export type MutationLoginArgs = {
   input: LoginInput;
+};
+
+
+export type MutationMintCurrencyArgs = {
+  input: MintCurrencyInput;
 };
 
 
@@ -1810,6 +1996,11 @@ export type MutationTransferCharacterArgs = {
 };
 
 
+export type MutationTransferCurrencyArgs = {
+  input: TransferCurrencyInput;
+};
+
+
 export type MutationUnlinkDiscordGuildArgs = {
   communityId: Scalars['ID']['input'];
 };
@@ -1853,6 +2044,12 @@ export type MutationUpdateCommunityColorArgs = {
 export type MutationUpdateCommunityMemberArgs = {
   id: Scalars['ID']['input'];
   updateCommunityMemberInput: UpdateCommunityMemberInput;
+};
+
+
+export type MutationUpdateCurrencyArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateCurrencyInput;
 };
 
 
@@ -2031,6 +2228,15 @@ export type Query = {
   communityMembersByCommunity: CommunityMemberConnection;
   /** Get community members by user ID with pagination */
   communityMembersByUser: CommunityMemberConnection;
+  /** Every currency a community defines. Readable by any member. */
+  currencies: Array<Currency>;
+  currency: Currency;
+  /** Who holds a currency, largest balance first. */
+  currencyHolders: Array<CurrencyBalance>;
+  /** Circulation, holders, and 30-day mint and removal volume per currency. */
+  currencySupply: Array<CurrencySupply>;
+  /** The currency ledger for one community, newest first. A transfer is two rows sharing a batchId. Readable by any member. */
+  currencyTransactions: CurrencyTransactionConnection;
   /** Get the Discord bot invite URL */
   discordBotInviteUrl: Scalars['String']['output'];
   /** Get an enum value by ID */
@@ -2095,6 +2301,8 @@ export type Query = {
   mediaModerationQueue: MediaConnection;
   /** One member's live holdings in one community, grouped by item type and not paginated -- an inventory is a whole thing. */
   memberHoldings: MemberHoldingsReport;
+  /** What one member holds of every currency in a community, including the ones they hold none of. */
+  memberWallet: MemberWallet;
   myCharacters: CharacterConnection;
   /** Get characters the current user can upload images to */
   myCharactersForImageUpload: CharacterConnection;
@@ -2305,6 +2513,34 @@ export type QueryCommunityMembersByUserArgs = {
 };
 
 
+export type QueryCurrenciesArgs = {
+  communityId: Scalars['ID']['input'];
+  includeArchived?: Scalars['Boolean']['input'];
+};
+
+
+export type QueryCurrencyArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryCurrencyHoldersArgs = {
+  currencyId: Scalars['ID']['input'];
+  limit?: Scalars['Int']['input'];
+  offset?: Scalars['Int']['input'];
+};
+
+
+export type QueryCurrencySupplyArgs = {
+  communityId: Scalars['ID']['input'];
+};
+
+
+export type QueryCurrencyTransactionsArgs = {
+  filters: CurrencyTransactionFiltersInput;
+};
+
+
 export type QueryEnumValueByIdArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2495,6 +2731,12 @@ export type QueryMediaModerationQueueArgs = {
 
 
 export type QueryMemberHoldingsArgs = {
+  communityId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+};
+
+
+export type QueryMemberWalletArgs = {
   communityId: Scalars['ID']['input'];
   userId: Scalars['ID']['input'];
 };
@@ -3119,6 +3361,15 @@ export type TransferCharacterInput = {
   newOwnerId: Scalars['ID']['input'];
 };
 
+export type TransferCurrencyInput = {
+  amount: Scalars['Int']['input'];
+  currencyId: Scalars['ID']['input'];
+  /** Member-facing note on the transfer. */
+  reason?: InputMaybe<Scalars['String']['input']>;
+  /** Who receives it. */
+  toUserId: Scalars['ID']['input'];
+};
+
 export type UnlinkExternalAccountInput = {
   provider: ExternalAccountProvider;
 };
@@ -3168,6 +3419,16 @@ export type UpdateCommunityInput = {
 export type UpdateCommunityMemberInput = {
   /** The ID of the role to assign to the member */
   roleId: Scalars['ID']['input'];
+};
+
+export type UpdateCurrencyInput = {
+  /** Archive or restore. An archived currency takes no new transactions but keeps every balance and statement row readable. */
+  archived?: InputMaybe<Scalars['Boolean']['input']>;
+  code?: InputMaybe<Scalars['String']['input']>;
+  colorId?: InputMaybe<Scalars['ID']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  symbol?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateEnumValueInput = {
@@ -3739,6 +4000,85 @@ export type DeleteCommunityColorMutationVariables = Exact<{
 
 
 export type DeleteCommunityColorMutation = { __typename?: 'Mutation', deleteCommunityColor: boolean };
+
+export type CurrencyFieldsFragment = { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string };
+
+export type CurrencyTransactionFieldsFragment = { __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
+
+export type GetCurrenciesQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  includeArchived?: InputMaybe<Scalars['Boolean']['input']>;
+}>;
+
+
+export type GetCurrenciesQuery = { __typename?: 'Query', currencies: Array<{ __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string }> };
+
+export type GetCurrencySupplyQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type GetCurrencySupplyQuery = { __typename?: 'Query', currencySupply: Array<{ __typename?: 'CurrencySupply', inCirculation: number, holders: number, mintedLast30Days: number, removedLast30Days: number, largestBalance: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> };
+
+export type GetMemberWalletQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type GetMemberWalletQuery = { __typename?: 'Query', memberWallet: { __typename?: 'MemberWallet', userId: string, communityId: string, balances: Array<{ __typename?: 'CurrencyBalanceLine', amount: number, updatedAt: string | null, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> } };
+
+export type GetCurrencyTransactionsQueryVariables = Exact<{
+  filters: CurrencyTransactionFiltersInput;
+}>;
+
+
+export type GetCurrencyTransactionsQuery = { __typename?: 'Query', currencyTransactions: { __typename?: 'CurrencyTransactionConnection', total: number, hasMore: boolean, transactions: Array<{ __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
+
+export type GetCurrencyHoldersQueryVariables = Exact<{
+  currencyId: Scalars['ID']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetCurrencyHoldersQuery = { __typename?: 'Query', currencyHolders: Array<{ __typename?: 'CurrencyBalance', id: string, userId: string, amount: number, updatedAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+
+export type CreateCurrencyMutationVariables = Exact<{
+  input: CreateCurrencyInput;
+}>;
+
+
+export type CreateCurrencyMutation = { __typename?: 'Mutation', createCurrency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } };
+
+export type UpdateCurrencyMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateCurrencyInput;
+}>;
+
+
+export type UpdateCurrencyMutation = { __typename?: 'Mutation', updateCurrency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } };
+
+export type MintCurrencyMutationVariables = Exact<{
+  input: MintCurrencyInput;
+}>;
+
+
+export type MintCurrencyMutation = { __typename?: 'Mutation', mintCurrency: string };
+
+export type BurnCurrencyMutationVariables = Exact<{
+  input: BurnCurrencyInput;
+}>;
+
+
+export type BurnCurrencyMutation = { __typename?: 'Mutation', burnCurrency: string };
+
+export type TransferCurrencyMutationVariables = Exact<{
+  input: TransferCurrencyInput;
+}>;
+
+
+export type TransferCurrencyMutation = { __typename?: 'Mutation', transferCurrency: string };
 
 export type RunDeviantartUuidBackfillMutationVariables = Exact<{
   jobId: Scalars['String']['input'];
@@ -4677,6 +5017,63 @@ export const CommunityColorFieldsFragmentDoc = gql`
   updatedAt
 }
     `;
+export const CurrencyFieldsFragmentDoc = gql`
+    fragment CurrencyFields on Currency {
+  id
+  communityId
+  name
+  code
+  symbol
+  description
+  colorId
+  archivedAt
+  createdAt
+  updatedAt
+}
+    `;
+export const UserBasicFragmentDoc = gql`
+    fragment UserBasic on User {
+  id
+  username
+  displayName
+  avatarImage {
+    id
+    originalUrl
+    thumbnailUrl
+    altText
+  }
+}
+    `;
+export const CurrencyTransactionFieldsFragmentDoc = gql`
+    fragment CurrencyTransactionFields on CurrencyTransaction {
+  id
+  currencyId
+  userId
+  kind
+  amount
+  balanceAfter
+  batchId
+  counterpartyId
+  actorUserId
+  actorLabel
+  reason
+  staffNote
+  createdAt
+  currency {
+    ...CurrencyFields
+  }
+  user {
+    ...UserBasic
+  }
+  counterparty {
+    ...UserBasic
+  }
+  actorUser {
+    ...UserBasic
+  }
+}
+    ${CurrencyFieldsFragmentDoc}
+${UserBasicFragmentDoc}`;
 export const EnumValueSettingDetailsFragmentDoc = gql`
     fragment EnumValueSettingDetails on EnumValueSetting {
   id
@@ -4746,19 +5143,6 @@ export const ItemTypeFieldsFragmentDoc = gql`
   metadata
   createdAt
   updatedAt
-}
-    `;
-export const UserBasicFragmentDoc = gql`
-    fragment UserBasic on User {
-  id
-  username
-  displayName
-  avatarImage {
-    id
-    originalUrl
-    thumbnailUrl
-    altText
-  }
 }
     `;
 export const ItemFieldsFragmentDoc = gql`
@@ -6912,6 +7296,399 @@ export function useDeleteCommunityColorMutation(baseOptions?: Apollo.MutationHoo
 export type DeleteCommunityColorMutationHookResult = ReturnType<typeof useDeleteCommunityColorMutation>;
 export type DeleteCommunityColorMutationResult = Apollo.MutationResult<DeleteCommunityColorMutation>;
 export type DeleteCommunityColorMutationOptions = Apollo.BaseMutationOptions<DeleteCommunityColorMutation, DeleteCommunityColorMutationVariables>;
+export const GetCurrenciesDocument = gql`
+    query GetCurrencies($communityId: ID!, $includeArchived: Boolean) {
+  currencies(communityId: $communityId, includeArchived: $includeArchived) {
+    ...CurrencyFields
+  }
+}
+    ${CurrencyFieldsFragmentDoc}`;
+
+/**
+ * __useGetCurrenciesQuery__
+ *
+ * To run a query within a React component, call `useGetCurrenciesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCurrenciesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCurrenciesQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      includeArchived: // value for 'includeArchived'
+ *   },
+ * });
+ */
+export function useGetCurrenciesQuery(baseOptions: Apollo.QueryHookOptions<GetCurrenciesQuery, GetCurrenciesQueryVariables> & ({ variables: GetCurrenciesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCurrenciesQuery, GetCurrenciesQueryVariables>(GetCurrenciesDocument, options);
+      }
+export function useGetCurrenciesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCurrenciesQuery, GetCurrenciesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCurrenciesQuery, GetCurrenciesQueryVariables>(GetCurrenciesDocument, options);
+        }
+export function useGetCurrenciesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCurrenciesQuery, GetCurrenciesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCurrenciesQuery, GetCurrenciesQueryVariables>(GetCurrenciesDocument, options);
+        }
+export type GetCurrenciesQueryHookResult = ReturnType<typeof useGetCurrenciesQuery>;
+export type GetCurrenciesLazyQueryHookResult = ReturnType<typeof useGetCurrenciesLazyQuery>;
+export type GetCurrenciesSuspenseQueryHookResult = ReturnType<typeof useGetCurrenciesSuspenseQuery>;
+export type GetCurrenciesQueryResult = Apollo.QueryResult<GetCurrenciesQuery, GetCurrenciesQueryVariables>;
+export const GetCurrencySupplyDocument = gql`
+    query GetCurrencySupply($communityId: ID!) {
+  currencySupply(communityId: $communityId) {
+    currency {
+      ...CurrencyFields
+    }
+    inCirculation
+    holders
+    mintedLast30Days
+    removedLast30Days
+    largestBalance
+  }
+}
+    ${CurrencyFieldsFragmentDoc}`;
+
+/**
+ * __useGetCurrencySupplyQuery__
+ *
+ * To run a query within a React component, call `useGetCurrencySupplyQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCurrencySupplyQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCurrencySupplyQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useGetCurrencySupplyQuery(baseOptions: Apollo.QueryHookOptions<GetCurrencySupplyQuery, GetCurrencySupplyQueryVariables> & ({ variables: GetCurrencySupplyQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCurrencySupplyQuery, GetCurrencySupplyQueryVariables>(GetCurrencySupplyDocument, options);
+      }
+export function useGetCurrencySupplyLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCurrencySupplyQuery, GetCurrencySupplyQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCurrencySupplyQuery, GetCurrencySupplyQueryVariables>(GetCurrencySupplyDocument, options);
+        }
+export function useGetCurrencySupplySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCurrencySupplyQuery, GetCurrencySupplyQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCurrencySupplyQuery, GetCurrencySupplyQueryVariables>(GetCurrencySupplyDocument, options);
+        }
+export type GetCurrencySupplyQueryHookResult = ReturnType<typeof useGetCurrencySupplyQuery>;
+export type GetCurrencySupplyLazyQueryHookResult = ReturnType<typeof useGetCurrencySupplyLazyQuery>;
+export type GetCurrencySupplySuspenseQueryHookResult = ReturnType<typeof useGetCurrencySupplySuspenseQuery>;
+export type GetCurrencySupplyQueryResult = Apollo.QueryResult<GetCurrencySupplyQuery, GetCurrencySupplyQueryVariables>;
+export const GetMemberWalletDocument = gql`
+    query GetMemberWallet($communityId: ID!, $userId: ID!) {
+  memberWallet(communityId: $communityId, userId: $userId) {
+    userId
+    communityId
+    balances {
+      currency {
+        ...CurrencyFields
+      }
+      amount
+      updatedAt
+    }
+  }
+}
+    ${CurrencyFieldsFragmentDoc}`;
+
+/**
+ * __useGetMemberWalletQuery__
+ *
+ * To run a query within a React component, call `useGetMemberWalletQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMemberWalletQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMemberWalletQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useGetMemberWalletQuery(baseOptions: Apollo.QueryHookOptions<GetMemberWalletQuery, GetMemberWalletQueryVariables> & ({ variables: GetMemberWalletQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMemberWalletQuery, GetMemberWalletQueryVariables>(GetMemberWalletDocument, options);
+      }
+export function useGetMemberWalletLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMemberWalletQuery, GetMemberWalletQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMemberWalletQuery, GetMemberWalletQueryVariables>(GetMemberWalletDocument, options);
+        }
+export function useGetMemberWalletSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMemberWalletQuery, GetMemberWalletQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMemberWalletQuery, GetMemberWalletQueryVariables>(GetMemberWalletDocument, options);
+        }
+export type GetMemberWalletQueryHookResult = ReturnType<typeof useGetMemberWalletQuery>;
+export type GetMemberWalletLazyQueryHookResult = ReturnType<typeof useGetMemberWalletLazyQuery>;
+export type GetMemberWalletSuspenseQueryHookResult = ReturnType<typeof useGetMemberWalletSuspenseQuery>;
+export type GetMemberWalletQueryResult = Apollo.QueryResult<GetMemberWalletQuery, GetMemberWalletQueryVariables>;
+export const GetCurrencyTransactionsDocument = gql`
+    query GetCurrencyTransactions($filters: CurrencyTransactionFiltersInput!) {
+  currencyTransactions(filters: $filters) {
+    transactions {
+      ...CurrencyTransactionFields
+    }
+    total
+    hasMore
+  }
+}
+    ${CurrencyTransactionFieldsFragmentDoc}`;
+
+/**
+ * __useGetCurrencyTransactionsQuery__
+ *
+ * To run a query within a React component, call `useGetCurrencyTransactionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCurrencyTransactionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCurrencyTransactionsQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useGetCurrencyTransactionsQuery(baseOptions: Apollo.QueryHookOptions<GetCurrencyTransactionsQuery, GetCurrencyTransactionsQueryVariables> & ({ variables: GetCurrencyTransactionsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCurrencyTransactionsQuery, GetCurrencyTransactionsQueryVariables>(GetCurrencyTransactionsDocument, options);
+      }
+export function useGetCurrencyTransactionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCurrencyTransactionsQuery, GetCurrencyTransactionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCurrencyTransactionsQuery, GetCurrencyTransactionsQueryVariables>(GetCurrencyTransactionsDocument, options);
+        }
+export function useGetCurrencyTransactionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCurrencyTransactionsQuery, GetCurrencyTransactionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCurrencyTransactionsQuery, GetCurrencyTransactionsQueryVariables>(GetCurrencyTransactionsDocument, options);
+        }
+export type GetCurrencyTransactionsQueryHookResult = ReturnType<typeof useGetCurrencyTransactionsQuery>;
+export type GetCurrencyTransactionsLazyQueryHookResult = ReturnType<typeof useGetCurrencyTransactionsLazyQuery>;
+export type GetCurrencyTransactionsSuspenseQueryHookResult = ReturnType<typeof useGetCurrencyTransactionsSuspenseQuery>;
+export type GetCurrencyTransactionsQueryResult = Apollo.QueryResult<GetCurrencyTransactionsQuery, GetCurrencyTransactionsQueryVariables>;
+export const GetCurrencyHoldersDocument = gql`
+    query GetCurrencyHolders($currencyId: ID!, $limit: Int, $offset: Int) {
+  currencyHolders(currencyId: $currencyId, limit: $limit, offset: $offset) {
+    id
+    userId
+    amount
+    updatedAt
+    currency {
+      ...CurrencyFields
+    }
+    user {
+      ...UserBasic
+    }
+  }
+}
+    ${CurrencyFieldsFragmentDoc}
+${UserBasicFragmentDoc}`;
+
+/**
+ * __useGetCurrencyHoldersQuery__
+ *
+ * To run a query within a React component, call `useGetCurrencyHoldersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCurrencyHoldersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCurrencyHoldersQuery({
+ *   variables: {
+ *      currencyId: // value for 'currencyId'
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useGetCurrencyHoldersQuery(baseOptions: Apollo.QueryHookOptions<GetCurrencyHoldersQuery, GetCurrencyHoldersQueryVariables> & ({ variables: GetCurrencyHoldersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCurrencyHoldersQuery, GetCurrencyHoldersQueryVariables>(GetCurrencyHoldersDocument, options);
+      }
+export function useGetCurrencyHoldersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCurrencyHoldersQuery, GetCurrencyHoldersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCurrencyHoldersQuery, GetCurrencyHoldersQueryVariables>(GetCurrencyHoldersDocument, options);
+        }
+export function useGetCurrencyHoldersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCurrencyHoldersQuery, GetCurrencyHoldersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCurrencyHoldersQuery, GetCurrencyHoldersQueryVariables>(GetCurrencyHoldersDocument, options);
+        }
+export type GetCurrencyHoldersQueryHookResult = ReturnType<typeof useGetCurrencyHoldersQuery>;
+export type GetCurrencyHoldersLazyQueryHookResult = ReturnType<typeof useGetCurrencyHoldersLazyQuery>;
+export type GetCurrencyHoldersSuspenseQueryHookResult = ReturnType<typeof useGetCurrencyHoldersSuspenseQuery>;
+export type GetCurrencyHoldersQueryResult = Apollo.QueryResult<GetCurrencyHoldersQuery, GetCurrencyHoldersQueryVariables>;
+export const CreateCurrencyDocument = gql`
+    mutation CreateCurrency($input: CreateCurrencyInput!) {
+  createCurrency(input: $input) {
+    ...CurrencyFields
+  }
+}
+    ${CurrencyFieldsFragmentDoc}`;
+export type CreateCurrencyMutationFn = Apollo.MutationFunction<CreateCurrencyMutation, CreateCurrencyMutationVariables>;
+
+/**
+ * __useCreateCurrencyMutation__
+ *
+ * To run a mutation, you first call `useCreateCurrencyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCurrencyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCurrencyMutation, { data, loading, error }] = useCreateCurrencyMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateCurrencyMutation(baseOptions?: Apollo.MutationHookOptions<CreateCurrencyMutation, CreateCurrencyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateCurrencyMutation, CreateCurrencyMutationVariables>(CreateCurrencyDocument, options);
+      }
+export type CreateCurrencyMutationHookResult = ReturnType<typeof useCreateCurrencyMutation>;
+export type CreateCurrencyMutationResult = Apollo.MutationResult<CreateCurrencyMutation>;
+export type CreateCurrencyMutationOptions = Apollo.BaseMutationOptions<CreateCurrencyMutation, CreateCurrencyMutationVariables>;
+export const UpdateCurrencyDocument = gql`
+    mutation UpdateCurrency($id: ID!, $input: UpdateCurrencyInput!) {
+  updateCurrency(id: $id, input: $input) {
+    ...CurrencyFields
+  }
+}
+    ${CurrencyFieldsFragmentDoc}`;
+export type UpdateCurrencyMutationFn = Apollo.MutationFunction<UpdateCurrencyMutation, UpdateCurrencyMutationVariables>;
+
+/**
+ * __useUpdateCurrencyMutation__
+ *
+ * To run a mutation, you first call `useUpdateCurrencyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCurrencyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCurrencyMutation, { data, loading, error }] = useUpdateCurrencyMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateCurrencyMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCurrencyMutation, UpdateCurrencyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateCurrencyMutation, UpdateCurrencyMutationVariables>(UpdateCurrencyDocument, options);
+      }
+export type UpdateCurrencyMutationHookResult = ReturnType<typeof useUpdateCurrencyMutation>;
+export type UpdateCurrencyMutationResult = Apollo.MutationResult<UpdateCurrencyMutation>;
+export type UpdateCurrencyMutationOptions = Apollo.BaseMutationOptions<UpdateCurrencyMutation, UpdateCurrencyMutationVariables>;
+export const MintCurrencyDocument = gql`
+    mutation MintCurrency($input: MintCurrencyInput!) {
+  mintCurrency(input: $input)
+}
+    `;
+export type MintCurrencyMutationFn = Apollo.MutationFunction<MintCurrencyMutation, MintCurrencyMutationVariables>;
+
+/**
+ * __useMintCurrencyMutation__
+ *
+ * To run a mutation, you first call `useMintCurrencyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useMintCurrencyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [mintCurrencyMutation, { data, loading, error }] = useMintCurrencyMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useMintCurrencyMutation(baseOptions?: Apollo.MutationHookOptions<MintCurrencyMutation, MintCurrencyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<MintCurrencyMutation, MintCurrencyMutationVariables>(MintCurrencyDocument, options);
+      }
+export type MintCurrencyMutationHookResult = ReturnType<typeof useMintCurrencyMutation>;
+export type MintCurrencyMutationResult = Apollo.MutationResult<MintCurrencyMutation>;
+export type MintCurrencyMutationOptions = Apollo.BaseMutationOptions<MintCurrencyMutation, MintCurrencyMutationVariables>;
+export const BurnCurrencyDocument = gql`
+    mutation BurnCurrency($input: BurnCurrencyInput!) {
+  burnCurrency(input: $input)
+}
+    `;
+export type BurnCurrencyMutationFn = Apollo.MutationFunction<BurnCurrencyMutation, BurnCurrencyMutationVariables>;
+
+/**
+ * __useBurnCurrencyMutation__
+ *
+ * To run a mutation, you first call `useBurnCurrencyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBurnCurrencyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [burnCurrencyMutation, { data, loading, error }] = useBurnCurrencyMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useBurnCurrencyMutation(baseOptions?: Apollo.MutationHookOptions<BurnCurrencyMutation, BurnCurrencyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<BurnCurrencyMutation, BurnCurrencyMutationVariables>(BurnCurrencyDocument, options);
+      }
+export type BurnCurrencyMutationHookResult = ReturnType<typeof useBurnCurrencyMutation>;
+export type BurnCurrencyMutationResult = Apollo.MutationResult<BurnCurrencyMutation>;
+export type BurnCurrencyMutationOptions = Apollo.BaseMutationOptions<BurnCurrencyMutation, BurnCurrencyMutationVariables>;
+export const TransferCurrencyDocument = gql`
+    mutation TransferCurrency($input: TransferCurrencyInput!) {
+  transferCurrency(input: $input)
+}
+    `;
+export type TransferCurrencyMutationFn = Apollo.MutationFunction<TransferCurrencyMutation, TransferCurrencyMutationVariables>;
+
+/**
+ * __useTransferCurrencyMutation__
+ *
+ * To run a mutation, you first call `useTransferCurrencyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useTransferCurrencyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [transferCurrencyMutation, { data, loading, error }] = useTransferCurrencyMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useTransferCurrencyMutation(baseOptions?: Apollo.MutationHookOptions<TransferCurrencyMutation, TransferCurrencyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<TransferCurrencyMutation, TransferCurrencyMutationVariables>(TransferCurrencyDocument, options);
+      }
+export type TransferCurrencyMutationHookResult = ReturnType<typeof useTransferCurrencyMutation>;
+export type TransferCurrencyMutationResult = Apollo.MutationResult<TransferCurrencyMutation>;
+export type TransferCurrencyMutationOptions = Apollo.BaseMutationOptions<TransferCurrencyMutation, TransferCurrencyMutationVariables>;
 export const RunDeviantartUuidBackfillDocument = gql`
     mutation RunDeviantartUuidBackfill($jobId: String!) {
   runDeviantartUuidBackfill(jobId: $jobId)

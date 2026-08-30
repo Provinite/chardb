@@ -77,8 +77,6 @@ enum TraitReviewSource {
   CREATION
 }
 
-
-
 model User {
   id              String    @id @default(uuid())
   username        String    @unique @db.VarChar(30)
@@ -92,16 +90,16 @@ model User {
   isVerified      Boolean   @default(false) @map("is_verified")
   isAdmin         Boolean   @default(false) @map("is_admin")
   privacySettings Json      @default("{}") @map("privacy_settings")
-  
+
   // Identity permission fields (migrated from clovercoin-app Identity model)
   canCreateCommunity        Boolean @default(false) @map("can_create_community")
   canListUsers              Boolean @default(false) @map("can_list_users")
   canListInviteCodes        Boolean @default(false) @map("can_list_invite_codes")
   canCreateInviteCode       Boolean @default(false) @map("can_create_invite_code")
   canGrantGlobalPermissions Boolean @default(false) @map("can_grant_global_permissions")
-  
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   avatarImage       Image?      @relation("UserAvatar", fields: [avatarImageId], references: [id], onDelete: SetNull)
@@ -121,51 +119,57 @@ model User {
   following Follow[] @relation("UserFollower")
 
   // Community membership relations
-  communityMemberships   CommunityMember[]     @relation
-  receivedInvitations    CommunityInvitation[] @relation("ReceivedInvitations")
-  createdInvitations     CommunityInvitation[] @relation("CreatedInvitations")
-  createdInviteCodes     InviteCode[]
+  communityMemberships CommunityMember[]     @relation
+  receivedInvitations  CommunityInvitation[] @relation("ReceivedInvitations")
+  createdInvitations   CommunityInvitation[] @relation("CreatedInvitations")
+  createdInviteCodes   InviteCode[]
 
   // Character ownership change tracking
-  ownershipChangesFrom   CharacterOwnershipChange[] @relation("CharacterOwnershipChangeFrom")
-  ownershipChangesTo     CharacterOwnershipChange[] @relation("CharacterOwnershipChangeTo")
+  ownershipChangesFrom CharacterOwnershipChange[] @relation("CharacterOwnershipChangeFrom")
+  ownershipChangesTo   CharacterOwnershipChange[] @relation("CharacterOwnershipChangeTo")
 
   // External account linking
-  externalAccounts       ExternalAccount[]
+  externalAccounts ExternalAccount[]
 
   // Inventory relations
-  items                  Item[]           @relation("UserItems")
-  destroyedItems         Item[]           @relation("ItemDestroyer")
+  items          Item[] @relation("UserItems")
+  destroyedItems Item[] @relation("ItemDestroyer")
 
   // Item ledger. Three separate relations because one row can name three
   // different people: who it left, who it reached, and who did it.
-  itemTransactionsFrom   ItemTransaction[] @relation("ItemTransactionFrom")
-  itemTransactionsTo     ItemTransaction[] @relation("ItemTransactionTo")
-  itemTransactionsActed  ItemTransaction[] @relation("ItemTransactionActor")
+  itemTransactionsFrom  ItemTransaction[] @relation("ItemTransactionFrom")
+  itemTransactionsTo    ItemTransaction[] @relation("ItemTransactionTo")
+  itemTransactionsActed ItemTransaction[] @relation("ItemTransactionActor")
+
+  // Currency. A balance per currency held, plus the statement rows behind it.
+  currencyBalances                 CurrencyBalance[]
+  currencyTransactions             CurrencyTransaction[] @relation("CurrencyTransactionUser")
+  currencyTransactionsCounterparty CurrencyTransaction[] @relation("CurrencyTransactionCounterparty")
+  currencyTransactionsActed        CurrencyTransaction[] @relation("CurrencyTransactionActor")
 
   // Pending ownership claims
-  claimedPendingItems    PendingOwnership[]
+  claimedPendingItems PendingOwnership[]
 
   // Password reset tokens
-  passwordResetTokens    PasswordResetToken[]
+  passwordResetTokens PasswordResetToken[]
 
   // Image moderation actions
-  moderationActions      ImageModerationAction[] @relation("ModeratorActions")
+  moderationActions ImageModerationAction[] @relation("ModeratorActions")
 
   // Trait review actions
-  traitReviewActions     TraitReview[] @relation("TraitReviewResolver")
+  traitReviewActions TraitReview[] @relation("TraitReviewResolver")
 
   @@map("users")
 }
 
 model ExternalAccount {
-  id                 String                  @id @default(uuid())
-  userId             String                  @map("user_id")
-  provider           ExternalAccountProvider
-  providerAccountId  String                  @map("provider_account_id") @db.VarChar(255)
-  displayName        String                  @map("display_name") @db.VarChar(100)
-  createdAt          DateTime                @default(now()) @map("created_at")
-  updatedAt          DateTime                @updatedAt @map("updated_at")
+  id                String                  @id @default(uuid())
+  userId            String                  @map("user_id")
+  provider          ExternalAccountProvider
+  providerAccountId String                  @map("provider_account_id") @db.VarChar(255)
+  displayName       String                  @map("display_name") @db.VarChar(100)
+  createdAt         DateTime                @default(now()) @map("created_at")
+  updatedAt         DateTime                @updatedAt @map("updated_at")
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -177,12 +181,12 @@ model ExternalAccount {
 }
 
 model PasswordResetToken {
-  id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  tokenHash  String   @unique @map("token_hash") @db.VarChar(64)
-  expiresAt  DateTime @map("expires_at")
-  used       Boolean  @default(false)
-  createdAt  DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -193,27 +197,27 @@ model PasswordResetToken {
 }
 
 model Character {
-  id                String     @id @default(uuid())
-  name              String     @db.VarChar(100)
-  registryId        String?    @map("registry_id") @db.VarChar(100)
-  speciesId         String?    @map("species_id")
-  speciesVariantId  String?    @map("species_variant_id")
-  details           String?    @db.Text
-  ownerId           String?    @map("owner_id")
-  creatorId         String?    @map("creator_id")
-  mainMediaId       String?    @map("main_media_id")
-  visibility        Visibility @default(PUBLIC)
-  isSellable        Boolean    @default(false) @map("is_sellable")
-  isTradeable       Boolean    @default(false) @map("is_tradeable")
-  price             Decimal?   @db.Decimal(10, 2)
-  customFields      Json       @default("{}") @map("custom_fields")
+  id                String            @id @default(uuid())
+  name              String            @db.VarChar(100)
+  registryId        String?           @map("registry_id") @db.VarChar(100)
+  speciesId         String?           @map("species_id")
+  speciesVariantId  String?           @map("species_variant_id")
+  details           String?           @db.Text
+  ownerId           String?           @map("owner_id")
+  creatorId         String?           @map("creator_id")
+  mainMediaId       String?           @map("main_media_id")
+  visibility        Visibility        @default(PUBLIC)
+  isSellable        Boolean           @default(false) @map("is_sellable")
+  isTradeable       Boolean           @default(false) @map("is_tradeable")
+  price             Decimal?          @db.Decimal(10, 2)
+  customFields      Json              @default("{}") @map("custom_fields")
   /// [CharacterTraitValuesJson]
-  traitValues       Json       @default("[]") @map("trait_values")
+  traitValues       Json              @default("[]") @map("trait_values")
   traitReviewStatus ModerationStatus? @map("trait_review_status")
-  deletedAt         DateTime?  @map("deleted_at")
-  deletedById       String?    @map("deleted_by_id")
-  createdAt         DateTime   @default(now()) @map("created_at")
-  updatedAt         DateTime   @updatedAt @map("updated_at")
+  deletedAt         DateTime?         @map("deleted_at")
+  deletedById       String?           @map("deleted_by_id")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
 
   // Relations
   // SetNull, not Cascade: deleting a user must not destroy characters. They are
@@ -248,44 +252,44 @@ model Character {
 }
 
 model Image {
-  id               String     @id @default(uuid())
-  filename         String     @db.VarChar(255)
-  originalFilename String     @map("original_filename") @db.VarChar(255)
-  originalUrl      String     @map("original_url") @db.Text
-  mediumUrl        String?    @map("medium_url") @db.Text
-  thumbnailUrl     String?    @map("thumbnail_url") @db.Text
-  altText          String?    @map("alt_text") @db.VarChar(200)
-  uploaderId       String     @map("uploader_id")
+  id               String  @id @default(uuid())
+  filename         String  @db.VarChar(255)
+  originalFilename String  @map("original_filename") @db.VarChar(255)
+  originalUrl      String  @map("original_url") @db.Text
+  mediumUrl        String? @map("medium_url") @db.Text
+  thumbnailUrl     String? @map("thumbnail_url") @db.Text
+  altText          String? @map("alt_text") @db.VarChar(200)
+  uploaderId       String  @map("uploader_id")
 
   // Artist attribution
-  artistId         String?    @map("artist_id")
-  artistName       String?    @map("artist_name") @db.VarChar(255)
-  artistUrl        String?    @map("artist_url") @db.VarChar(500)
-  source           String?    @db.VarChar(500)
+  artistId   String? @map("artist_id")
+  artistName String? @map("artist_name") @db.VarChar(255)
+  artistUrl  String? @map("artist_url") @db.VarChar(500)
+  source     String? @db.VarChar(500)
 
-  width            Int
-  height           Int
-  fileSize         Int        @map("file_size")
-  mimeType         String     @map("mime_type") @db.VarChar(50)
-  isNsfw           Boolean    @default(false) @map("is_nsfw")
+  width                       Int
+  height                      Int
+  fileSize                    Int     @map("file_size")
+  mimeType                    String  @map("mime_type") @db.VarChar(50)
+  isNsfw                      Boolean @default(false) @map("is_nsfw")
   sensitiveContentDescription String? @map("sensitive_content_description") @db.Text
 
   // Moderation
   moderationStatus ModerationStatus @default(PENDING) @map("moderation_status")
 
-  createdAt        DateTime   @default(now()) @map("created_at")
-  updatedAt        DateTime   @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  uploader  User       @relation("ImageUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
-  artist    User?      @relation("ImageArtist", fields: [artistId], references: [id], onDelete: SetNull)
+  uploader User  @relation("ImageUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
+  artist   User? @relation("ImageArtist", fields: [artistId], references: [id], onDelete: SetNull)
 
-  comments Comment[]
-  likes    Like[]
-  tags_rel ImageTag[]
-  media    Media[]
-  userAvatars User[]     @relation("UserAvatar")
-  itemTypes   ItemType[] @relation("ItemTypeImage")
+  comments          Comment[]
+  likes             Like[]
+  tags_rel          ImageTag[]
+  media             Media[]
+  userAvatars       User[]                  @relation("UserAvatar")
+  itemTypes         ItemType[]              @relation("ItemTypeImage")
   moderationActions ImageModerationAction[]
 
   @@map("images")
@@ -333,15 +337,15 @@ model Comment {
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   // Self-referential relation for nested comments
-  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies  Comment[] @relation("CommentReplies")
-  
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("CommentReplies")
+
   // Relations with proper foreign key constraints
-  character      Character? @relation(fields: [characterId], references: [id], onDelete: Cascade)
-  image          Image?     @relation(fields: [imageId], references: [id], onDelete: Cascade)
-  media          Media?     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  gallery        Gallery?   @relation(fields: [galleryId], references: [id], onDelete: Cascade)
-  commentedUser  User?      @relation("UserComments", fields: [userId], references: [id], onDelete: Cascade)
+  character     Character? @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  image         Image?     @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  media         Media?     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  gallery       Gallery?   @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  commentedUser User?      @relation("UserComments", fields: [userId], references: [id], onDelete: Cascade)
 
   likes Like[]
 
@@ -363,9 +367,9 @@ model Follow {
 }
 
 model Like {
-  id          String   @id @default(uuid())
-  userId      String   @map("user_id")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Separate fields for each likeable type - only one will be non-null
   characterId String? @map("character_id")
@@ -391,11 +395,11 @@ model Like {
 }
 
 model Tag {
-  id          String  @id @default(uuid())
-  name        String  @unique @db.VarChar(50)
-  displayName String  @map("display_name") @db.VarChar(50)
-  category    String? @db.VarChar(30)
-  color       String? @db.VarChar(7)
+  id          String   @id @default(uuid())
+  name        String   @unique @db.VarChar(50)
+  displayName String   @map("display_name") @db.VarChar(50)
+  category    String?  @db.VarChar(30)
+  color       String?  @db.VarChar(7)
   createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
@@ -438,19 +442,19 @@ model Media {
   characterId String?    @map("character_id")
   galleryId   String?    @map("gallery_id")
   visibility  Visibility @default(PUBLIC)
-  
+
   // Content references (exactly one must be non-null)
-  imageId       String?  @map("image_id")
-  textContentId String?  @map("text_content_id")
-  
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  imageId       String? @map("image_id")
+  textContentId String? @map("text_content_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  character   Character?   @relation(fields: [characterId], references: [id], onDelete: SetNull)
-  gallery     Gallery?     @relation(fields: [galleryId], references: [id], onDelete: SetNull)
-  
+  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
+  gallery   Gallery?   @relation(fields: [galleryId], references: [id], onDelete: SetNull)
+
   // Content relations
   image       Image?       @relation(fields: [imageId], references: [id], onDelete: Cascade)
   textContent TextContent? @relation(fields: [textContentId], references: [id], onDelete: Cascade)
@@ -470,7 +474,7 @@ model TextContent {
   formatting TextFormatting @default(PLAINTEXT)
 
   // Relations
-  media      Media[]
+  media Media[]
 
   @@map("text_content")
 }
@@ -502,6 +506,7 @@ model Community {
   itemTypes            ItemType[]
   communityColors      CommunityColor[]
   itemTransactions     ItemTransaction[]
+  currencies           Currency[]
 
   @@map("communities")
 }
@@ -520,6 +525,7 @@ model CommunityColor {
   enumValues      EnumValue[]
   speciesVariants SpeciesVariant[]
   itemTypes       ItemType[]
+  currencies      Currency[]
 
   @@unique([communityId, name])
   @@map("community_colors")
@@ -533,22 +539,22 @@ model Role {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Community-scoped permissions
-  canCreateSpecies         Boolean @default(false) @map("can_create_species")
-  canCreateCharacter       Boolean @default(false) @map("can_create_character")
-  canCreateOrphanedCharacter Boolean @default(false) @map("can_create_orphaned_character")
-  canEditCharacter         Boolean @default(false) @map("can_edit_character")
-  canEditOwnCharacter      Boolean @default(false) @map("can_edit_own_character")
+  canCreateSpecies            Boolean @default(false) @map("can_create_species")
+  canCreateCharacter          Boolean @default(false) @map("can_create_character")
+  canCreateOrphanedCharacter  Boolean @default(false) @map("can_create_orphaned_character")
+  canEditCharacter            Boolean @default(false) @map("can_edit_character")
+  canEditOwnCharacter         Boolean @default(false) @map("can_edit_own_character")
   canEditOwnCharacterRegistry Boolean @default(false) @map("can_edit_own_character_registry")
   canEditCharacterRegistry    Boolean @default(false) @map("can_edit_character_registry")
-  canEditSpecies           Boolean @default(false) @map("can_edit_species")
-  canCreateInviteCode      Boolean @default(false) @map("can_create_invite_code")
-  canListInviteCodes       Boolean @default(false) @map("can_list_invite_codes")
-  canCreateRole            Boolean @default(false) @map("can_create_role")
-  canEditRole              Boolean @default(false) @map("can_edit_role")
-  canRemoveCommunityMember Boolean @default(false) @map("can_remove_community_member")
-  canManageMemberRoles     Boolean @default(false) @map("can_manage_member_roles")
-  canManageItems           Boolean @default(false) @map("can_manage_items")
-  canGrantItems            Boolean @default(false) @map("can_grant_items")
+  canEditSpecies              Boolean @default(false) @map("can_edit_species")
+  canCreateInviteCode         Boolean @default(false) @map("can_create_invite_code")
+  canListInviteCodes          Boolean @default(false) @map("can_list_invite_codes")
+  canCreateRole               Boolean @default(false) @map("can_create_role")
+  canEditRole                 Boolean @default(false) @map("can_edit_role")
+  canRemoveCommunityMember    Boolean @default(false) @map("can_remove_community_member")
+  canManageMemberRoles        Boolean @default(false) @map("can_manage_member_roles")
+  canManageItems              Boolean @default(false) @map("can_manage_items")
+  canGrantItems               Boolean @default(false) @map("can_grant_items")
   canUploadOwnCharacterImages Boolean @default(false) @map("can_upload_own_character_images")
   canUploadCharacterImages    Boolean @default(false) @map("can_upload_character_images")
   canModerateImages           Boolean @default(false) @map("can_moderate_images")
@@ -615,11 +621,11 @@ model InviteCode {
 }
 
 model CharacterOwnershipChange {
-  id            String   @id @default(uuid())
-  characterId   String   @map("character_id")
-  fromUserId    String?  @map("from_user_id")
-  toUserId      String   @map("to_user_id")
-  createdAt     DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  characterId String   @map("character_id")
+  fromUserId  String?  @map("from_user_id")
+  toUserId    String   @map("to_user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
   character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
@@ -630,21 +636,21 @@ model CharacterOwnershipChange {
 }
 
 model PendingOwnership {
-  id                 String   @id @default(uuid())
+  id String @id @default(uuid())
 
   // Exactly one must be set (enforced by CHECK constraint)
-  characterId        String?  @unique @map("character_id")
-  itemId             String?  @unique @map("item_id")
+  characterId String? @unique @map("character_id")
+  itemId      String? @unique @map("item_id")
 
   // External account info
-  provider           ExternalAccountProvider
-  providerAccountId  String   @map("provider_account_id") @db.VarChar(255)
-  displayIdentifier  String?  @map("display_identifier") @db.VarChar(255)
+  provider          ExternalAccountProvider
+  providerAccountId String                  @map("provider_account_id") @db.VarChar(255)
+  displayIdentifier String?                 @map("display_identifier") @db.VarChar(255)
 
   // Claiming info
-  createdAt          DateTime @default(now()) @map("created_at")
-  claimedAt          DateTime? @map("claimed_at")
-  claimedByUserId    String?  @map("claimed_by_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  claimedAt       DateTime? @map("claimed_at")
+  claimedByUserId String?   @map("claimed_by_user_id")
 
   // Relations
   character     Character? @relation(fields: [characterId], references: [id], onDelete: Cascade)
@@ -666,25 +672,25 @@ model ItemType {
   // Item properties. There is deliberately no stacking flag: every item is an
   // individually tracked row, and rolling several of them up into one tile is a
   // presentation choice the frontend makes, not a storage one.
-  isTradeable    Boolean @default(true) @map("is_tradeable")
-  isConsumable   Boolean @default(false) @map("is_consumable")
+  isTradeable  Boolean @default(true) @map("is_tradeable")
+  isConsumable Boolean @default(false) @map("is_consumable")
 
   // Visual properties
-  imageId        String? @map("image_id")
-  colorId        String? @map("color_id")
+  imageId String? @map("image_id")
+  colorId String? @map("color_id")
 
   // Metadata
-  metadata       Json    @default("{}") // Flexible properties
+  metadata Json @default("{}") // Flexible properties
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  community      Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  color          CommunityColor? @relation(fields: [colorId], references: [id], onDelete: SetNull)
-  image          Image?          @relation("ItemTypeImage", fields: [imageId], references: [id], onDelete: SetNull)
-  items          Item[]
-  transactions   ItemTransaction[]
+  community    Community         @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  color        CommunityColor?   @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  image        Image?            @relation("ItemTypeImage", fields: [imageId], references: [id], onDelete: SetNull)
+  items        Item[]
+  transactions ItemTransaction[]
 
   @@unique([name, communityId])
   @@map("item_types")
@@ -698,12 +704,12 @@ model ItemType {
 /// from a given trade, it cannot say. Per-instance rows give every item one
 /// unbroken chain, which is the whole point of provenance being public.
 model Item {
-  id           String  @id @default(uuid())
-  itemTypeId   String  @map("item_type_id")
-  ownerId      String? @map("owner_id")
+  id         String  @id @default(uuid())
+  itemTypeId String  @map("item_type_id")
+  ownerId    String? @map("owner_id")
 
   // Item state
-  metadata     Json    @default("{}") // Instance-specific data
+  metadata Json @default("{}") // Instance-specific data
 
   /// Set when revoked or consumed. Soft, not hard: a destroyed item keeps its
   /// provenance readable, which is exactly the history a dispute needs. Mirrors
@@ -715,9 +721,9 @@ model Item {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  itemType     ItemType @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
-  owner        User?    @relation("UserItems", fields: [ownerId], references: [id], onDelete: Cascade)
-  destroyedBy  User?    @relation("ItemDestroyer", fields: [destroyedById], references: [id], onDelete: SetNull)
+  itemType    ItemType @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
+  owner       User?    @relation("UserItems", fields: [ownerId], references: [id], onDelete: Cascade)
+  destroyedBy User?    @relation("ItemDestroyer", fields: [destroyedById], references: [id], onDelete: SetNull)
 
   // Pending ownership
   pendingOwnership PendingOwnership?
@@ -748,25 +754,25 @@ model ItemTransaction {
 
   /// Shared by every row one operation wrote. Grouping on this is exact;
   /// grouping on a matching timestamp is a guess that breaks under load.
-  batchId     String              @map("batch_id")
+  batchId String @map("batch_id")
 
   /// Who it left. Null for a grant -- the item is minted, not moved.
-  fromUserId  String?             @map("from_user_id")
+  fromUserId  String? @map("from_user_id")
   /// Who it reached. Null for a revoke or a use -- the item is destroyed.
-  toUserId    String?             @map("to_user_id")
+  toUserId    String? @map("to_user_id")
   /// Who performed it. Null for anything the system did on its own.
-  actorUserId String?             @map("actor_user_id")
+  actorUserId String? @map("actor_user_id")
   /// Names a non-user actor: "discord-bot", "system". Set exactly when
   /// actorUserId is null.
-  actorLabel  String?             @map("actor_label") @db.VarChar(50)
+  actorLabel  String? @map("actor_label") @db.VarChar(50)
 
   /// Member-facing. Visible to anyone who can read the ledger.
-  reason      String?             @db.Text
+  reason    String? @db.Text
   /// Staff-only. Never returned to a viewer without item permissions in this
   /// community. Keeps candid internal detail out of a public audit trail.
-  staffNote   String?             @map("staff_note") @db.Text
+  staffNote String? @map("staff_note") @db.Text
 
-  createdAt   DateTime            @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
@@ -787,16 +793,141 @@ model ItemTransaction {
   @@map("item_transactions")
 }
 
+/// A community-defined unit of account. A community may define any number of
+/// them; they do not convert into one another and never leave their community.
+model Currency {
+  id          String  @id @default(uuid())
+  communityId String  @map("community_id")
+  name        String  @db.VarChar(50)
+  /// Short display code, unique per community: "HC", "GEM".
+  code        String  @db.VarChar(10)
+  /// Optional glyph rendered before the amount. Falls back to the code.
+  symbol      String? @db.VarChar(8)
+  description String? @db.Text
+  colorId     String? @map("color_id")
+
+  /// Archived currencies stop accepting new transactions but keep every
+  /// balance and statement row readable. Deleting one would destroy the
+  /// history of everything ever bought with it.
+  archivedAt DateTime? @map("archived_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  community    Community             @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  color        CommunityColor?       @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  balances     CurrencyBalance[]
+  transactions CurrencyTransaction[]
+
+  @@unique([communityId, code])
+  @@unique([communityId, name])
+  @@index([communityId])
+  @@map("currencies")
+}
+
+/// One row per member per currency, holding the authoritative balance.
+///
+/// The balance is stored rather than summed from the ledger because it is read
+/// on every page that shows a price and written far less often. It is only ever
+/// written by an atomic increment inside the same transaction as the ledger row
+/// that explains it, and `currency_transactions.balance_after` records what the
+/// increment returned -- so the two can be checked against each other rather
+/// than merely trusted.
+model CurrencyBalance {
+  id         String @id @default(uuid())
+  currencyId String @map("currency_id")
+  userId     String @map("user_id")
+
+  /// Non-negative, enforced by a CHECK constraint rather than by application
+  /// code. A read-then-write balance check races; the constraint does not.
+  amount Int @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  currency Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([currencyId, userId])
+  @@index([userId])
+  @@index([currencyId, amount])
+  @@map("currency_balances")
+}
+
+enum CurrencyTransactionKind {
+  /// Created into a member's balance by staff. Coin has no source but this.
+  MINT
+  /// Removed from a member's balance by staff, as a correction or a penalty.
+  BURN
+  /// Moved between two members. Writes one row per side, sharing a batch id.
+  TRANSFER
+  /// Spent by the member at a sink. Leaves circulation; there is no treasury.
+  SPEND
+  /// Written once, by a migration, for a balance that predates this ledger.
+  IMPORT
+}
+
+/// One member's side of one currency movement. A transfer is two rows.
+///
+/// `amount` is the signed delta applied to `userId`'s balance, so a member's
+/// statement is this table filtered to them, and the community's total in
+/// circulation is the sum of every row.
+model CurrencyTransaction {
+  id         String                  @id @default(uuid())
+  currencyId String                  @map("currency_id")
+  userId     String                  @map("user_id")
+  kind       CurrencyTransactionKind
+
+  /// Signed delta on this row's owner. Negative for BURN, SPEND, and the
+  /// sending side of a TRANSFER.
+  amount       Int
+  /// The owner's balance immediately after this row was applied, as returned
+  /// by the increment itself. Lets a statement show a running total without
+  /// re-summing, and lets an audit find the exact row where the two diverged.
+  balanceAfter Int @map("balance_after")
+
+  /// Shared by every row one operation wrote -- both legs of a transfer, or
+  /// every member in a bulk mint.
+  batchId String @map("batch_id")
+
+  /// The member on the other side of a transfer. Null for every other kind.
+  counterpartyId String? @map("counterparty_id")
+  /// Who performed it. Null for anything the system did on its own.
+  actorUserId    String? @map("actor_user_id")
+  /// Names a non-user actor: "discord-bot", "system". Set exactly when
+  /// actorUserId is null.
+  actorLabel     String? @map("actor_label") @db.VarChar(50)
+
+  /// Member-facing, and readable by anyone who can read this statement.
+  reason    String? @db.Text
+  /// Staff-only. Nulled for viewers without item permissions in this
+  /// community, and excluded from search, exactly as on the item ledger.
+  staffNote String? @map("staff_note") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  currency     Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+  user         User     @relation("CurrencyTransactionUser", fields: [userId], references: [id], onDelete: Cascade)
+  counterparty User?    @relation("CurrencyTransactionCounterparty", fields: [counterpartyId], references: [id], onDelete: SetNull)
+  actorUser    User?    @relation("CurrencyTransactionActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([currencyId, createdAt])
+  @@index([userId, createdAt])
+  @@index([currencyId, userId, createdAt])
+  @@index([batchId])
+  @@map("currency_transactions")
+}
+
 model Species {
-  id          String    @id @default(uuid())
-  name        String    @unique @db.VarChar(100)
-  communityId String    @map("community_id")
-  hasImage    Boolean   @default(false) @map("has_image")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  name        String   @unique @db.VarChar(100)
+  communityId String   @map("community_id")
+  hasImage    Boolean  @default(false) @map("has_image")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  community       Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  community       Community        @relation(fields: [communityId], references: [id], onDelete: Cascade)
   characters      Character[]
   traits          Trait[]
   speciesVariants SpeciesVariant[]
@@ -864,17 +995,17 @@ model SpeciesVariant {
 }
 
 model TraitListEntry {
-  id                     String         @id @default(uuid())
-  traitId                String         @map("trait_id")
-  speciesVariantId       String         @map("species_variant_id")
-  order                  Int
-  required               Boolean
-  valueType              TraitValueType @map("value_type")
-  defaultValueString     String?        @map("default_value_string") @db.VarChar(255)
-  defaultValueInt        Int?           @map("default_value_int")
-  defaultValueTimestamp  DateTime?      @map("default_value_timestamp") @db.Timestamptz
-  createdAt              DateTime       @default(now()) @map("created_at")
-  updatedAt              DateTime       @updatedAt @map("updated_at")
+  id                    String         @id @default(uuid())
+  traitId               String         @map("trait_id")
+  speciesVariantId      String         @map("species_variant_id")
+  order                 Int
+  required              Boolean
+  valueType             TraitValueType @map("value_type")
+  defaultValueString    String?        @map("default_value_string") @db.VarChar(255)
+  defaultValueInt       Int?           @map("default_value_int")
+  defaultValueTimestamp DateTime?      @map("default_value_timestamp") @db.Timestamptz
+  createdAt             DateTime       @default(now()) @map("created_at")
+  updatedAt             DateTime       @updatedAt @map("updated_at")
 
   // Relations
   trait          Trait          @relation(fields: [traitId], references: [id], onDelete: Cascade)
@@ -918,27 +1049,27 @@ model ImageModerationAction {
 }
 
 model TraitReview {
-  id                  String            @id @default(uuid())
-  characterId         String            @map("character_id")
-  status              ModerationStatus  @default(PENDING)
-  source              TraitReviewSource
+  id          String            @id @default(uuid())
+  characterId String            @map("character_id")
+  status      ModerationStatus  @default(PENDING)
+  source      TraitReviewSource
 
   /// [CharacterTraitValuesJson]
-  proposedTraitValues Json              @map("proposed_trait_values")
+  proposedTraitValues Json  @map("proposed_trait_values")
   /// [CharacterTraitValuesJson]
-  previousTraitValues Json              @map("previous_trait_values")
+  previousTraitValues Json  @map("previous_trait_values")
   /// [CharacterTraitValuesJson]
-  appliedTraitValues  Json?             @map("applied_trait_values")
+  appliedTraitValues  Json? @map("applied_trait_values")
 
-  resolvedAt          DateTime?         @map("resolved_at")
-  resolvedById        String?           @map("resolved_by_id")
-  rejectionReason     String?           @map("rejection_reason") @db.Text
+  resolvedAt      DateTime? @map("resolved_at")
+  resolvedById    String?   @map("resolved_by_id")
+  rejectionReason String?   @map("rejection_reason") @db.Text
 
-  createdAt           DateTime          @default(now()) @map("created_at")
-  updatedAt           DateTime          @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  character           Character         @relation(fields: [characterId], references: [id], onDelete: Cascade)
-  resolvedBy          User?             @relation("TraitReviewResolver", fields: [resolvedById], references: [id])
+  character  Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  resolvedBy User?     @relation("TraitReviewResolver", fields: [resolvedById], references: [id])
 
   @@index([characterId])
   @@index([status])

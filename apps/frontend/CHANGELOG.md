@@ -11,6 +11,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Currencies page** (`/communities/:communityId/currencies`): the supply
+  table is the page — circulation, holders, 30-day granted and removed, and the
+  largest single balance, per currency. Someone about to grant 5,000 more of
+  something should see how much already exists without navigating. Granting and
+  removing both happen here; spending does not, because that is a member acting
+  on their own balance rather than staff acting on the economy.
+
+  Listed under **Community** in the sidebar, not Administration. The numbers are
+  readable by any member; only the actions are gated.
+
+- **Currency wallet** on the holdings page, above items rather than on a page of
+  its own — coin and items are one answer to "what does this person have", and
+  splitting them makes a trade partner check twice. Currencies held at zero are
+  shown deliberately: a wallet listing only what you already have cannot tell
+  you a currency exists, which is the one thing you need to know before you can
+  earn any. Send appears only on your own wallet, and only on a currency you
+  actually hold.
+
+- **Currency ledger** (`/communities/:communityId/currencies/ledger`): every
+  movement, newest first, filterable by kind, currency and text. A transfer's
+  two rows collapse to one line here; a bulk grant's do not, because each
+  recipient genuinely received their own coin and collapsing would hide who was
+  paid.
+
+- `src/lib/currencyDisplay.ts` with 27 unit tests. Amounts render symbol-first
+  when a currency has one and code-after when it does not, because "⬡250" and
+  "250 HC" both read naturally while "HC 250" does not.
+
+### Added
+
 - **Member list** (`/communities/:communityId/members`): replaces a placeholder that said member management was "under development". Lists everyone with their role, searchable, with a link to each member's holdings — which is the point, since holdings were previously reachable only by typing a URL.
 
 - **Circulation numbers on the admin items page**: the item type grid becomes a table carrying circulation, holders, grants and revokes over 30 days, and unclaimed count, with community totals above it. A type with items owed to nobody gets an amber stripe rather than only a number.
