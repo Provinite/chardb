@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { randomUUID } from "crypto";
-import { Prisma } from "@chardb/database";
+import { Prisma, ItemTransactionSource } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 import {
   ItemTransactionFilters,
@@ -63,6 +63,8 @@ export class ItemTransactionsService {
         actorLabel: input.actorUserId ? null : (input.actorLabel ?? null),
         reason: input.reason ?? null,
         staffNote: input.staffNote ?? null,
+        source: input.source ?? ItemTransactionSource.DIRECT,
+        sourceId: input.sourceId ?? null,
       })),
     });
 

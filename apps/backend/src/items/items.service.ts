@@ -12,8 +12,12 @@ import {
   Prisma,
   ExternalAccountProvider,
   ItemTransactionKind,
+  ItemTransactionSource,
 } from "@chardb/database";
-import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
+import {
+  ItemTransactionsService,
+  type DbClient,
+} from "../item-transactions/item-transactions.service";
 import { ItemTypeFilters } from "./dto/item-type.dto";
 import { ItemFilters } from "./dto/item.dto";
 
@@ -180,6 +184,76 @@ export class ItemsService {
    * Can also create items with pending ownership, for a recipient who has not
    * linked the external account yet.
    */
+  /**
+   * Create N items for a known owner and record the grant, on a given client.
+   *
+   * The core of {@link grantItem}, extracted so a caller that already has a
+   * transaction open -- a shop checkout paying for the item in the same breath
+   * -- can grant inside it rather than opening a second one. Everything
+   * grantItem does around this (resolving a Discord handle, opening pending
+   * ownership) is network work or a different shape entirely, and must stay
+   * outside a transaction.
+   *
+   * `source` lets the ledger say what caused the grant. Without it a shop
+   * purchase is indistinguishable from staff handing something over.
+   */
+  async createGranted(
+    client: DbClient,
+    input: {
+      itemTypeId: string;
+      communityId: string;
+      ownerId: string | null;
+      quantity: number;
+      metadata?: Prisma.InputJsonValue;
+      actor: ItemActor;
+      source?: ItemTransactionSource;
+      sourceId?: string | null;
+    },
+  ) {
+    // Every item and every ledger row commit together or not at all. A ledger
+    // that can disagree with `items` is worse than none: it looks
+    // authoritative while being wrong.
+    //
+    // No stacking, so no read-then-write and no race: N items is N inserts.
+    // The ids are generated here rather than read back because createMany does
+    // not return them, and the ledger rows need them in the same statement.
+    const itemIds = Array.from({ length: input.quantity }, () => randomUUID());
+
+    await client.item.createMany({
+      data: itemIds.map((id) => ({
+        id,
+        itemTypeId: input.itemTypeId,
+        ownerId: input.ownerId,
+        metadata: input.metadata || {},
+      })),
+    });
+
+    await this.itemTransactions.recordBatch(
+      {
+        communityId: input.communityId,
+        itemTypeId: input.itemTypeId,
+        itemIds,
+        kind: ItemTransactionKind.GRANT,
+        // Null for a grant still awaiting a claim: nobody holds it yet, and
+        // the CLAIM row written later is what names the eventual owner.
+        toUserId: input.ownerId,
+        source: input.source,
+        sourceId: input.sourceId,
+        ...input.actor,
+      },
+      client,
+    );
+
+    return client.item.findMany({
+      where: { id: { in: itemIds } },
+      include: {
+        itemType: { include: { community: true } },
+        owner: true,
+      },
+      orderBy: { id: "asc" },
+    });
+  }
+
   async grantItem(input: {
     itemTypeId: string;
     userId?: string | null; // Optional for orphaned items
@@ -301,41 +375,16 @@ export class ItemsService {
     // No stacking, so no read-then-write and no race: N items is N inserts.
     // The ids are generated here rather than read back because createMany does
     // not return them, and the ledger rows need them in the same statement.
-    const itemIds = Array.from({ length: quantity }, () => randomUUID());
-
-    const items = await this.db.$transaction(async (tx) => {
-      await tx.item.createMany({
-        data: itemIds.map((id) => ({
-          id,
-          itemTypeId,
-          ownerId: actualOwnerId ?? null,
-          metadata: metadata || {},
-        })),
-      });
-
-      await this.itemTransactions.recordBatch(
-        {
-          communityId: itemType.communityId,
-          itemTypeId,
-          itemIds,
-          kind: ItemTransactionKind.GRANT,
-          // Null for a grant still awaiting a claim: nobody holds it yet, and
-          // the CLAIM row written later is what names the eventual owner.
-          toUserId: actualOwnerId ?? null,
-          ...input.actor,
-        },
-        tx,
-      );
-
-      return tx.item.findMany({
-        where: { id: { in: itemIds } },
-        include: {
-          itemType: { include: { community: true } },
-          owner: true,
-        },
-        orderBy: { id: "asc" },
-      });
-    });
+    const items = await this.db.$transaction((tx) =>
+      this.createGranted(tx, {
+        itemTypeId,
+        communityId: itemType.communityId,
+        ownerId: actualOwnerId ?? null,
+        quantity,
+        metadata,
+        actor: input.actor,
+      }),
+    );
 
     // Pending ownership is one record per item -- PendingOwnership.itemId is
     // unique, and each instance claims independently.
