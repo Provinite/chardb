@@ -232,3 +232,16 @@ query SeedItemTypes($filters: ItemTypeFiltersInput) {
     }
   }
 }
+
+# Both gated on CanManageItems. Present so the permission matrix can attempt
+# every mutation, not just the ones a happy-path spec happened to need.
+mutation SeedUpdateItemType($id: ID!, $input: UpdateItemTypeInput!) {
+  updateItemType(id: $id, input: $input) {
+    id
+    name
+  }
+}
+
+mutation SeedDeleteItemType($id: ID!) {
+  deleteItemType(id: $id)
+}

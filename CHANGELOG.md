@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Item mutations were reachable by any logged-in user.** Fixed for `items.resolver.ts`; see the backend changelog for the mechanism.
 
+  Covered by `apps/e2e/tests/items/item-permissions.e2e.ts` — 24 cases, one per gated operation, each attempting the call as a member without the permission and as a non-member, plus a permitted actor as a positive control. A matrix that only asserts rejection passes just as happily against a resolver that refuses everyone.
+
+  The tests were verified to fail against the bug: reintroducing `@AllowAnyAuthenticated()` on `grantItem` alone turned its three rejection cases red while the positive control and every other operation stayed green.
+
   **The same pattern exists elsewhere and is not fixed here.** The global permission guard ORs every decorator together, so `@AllowAnyAuthenticated()` sitting beside `@AllowCommunityPermission(...)` or `@AllowGlobalPermission(...)` neutralises the second check. `characters.resolver.ts` has at least one such handler, and `communities`, `roles`, `media`, `community-members` and `image-moderation` resolvers each carry both decorators and are worth auditing. This needs its own pass — it is an authorization audit, not a side effect of an inventory change.
 
 ## [v10.2.2] - 2026-08-29

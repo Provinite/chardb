@@ -218,26 +218,4 @@ test.describe("as a member without item permissions", () => {
       "Should Not Exist",
     );
   });
-
-  test("cannot grant items through the API", async ({ world }) => {
-    // The page's grant control is reachable, so the server is the only thing
-    // standing between a member and minting themselves an heirloom.
-    await expect(
-      world.as("member").gql(SeedItemTypesDocument, {
-        filters: { communityId: world.community.id },
-      }),
-    ).resolves.toBeTruthy();
-
-    const { itemTransactions } = await world
-      .as("member")
-      .gql(SeedItemTransactionsDocument, {
-        filters: { communityId: world.community.id, limit: 100 },
-      });
-
-    expect(
-      itemTransactions.transactions.some(
-        (t) => t.actorUser?.username === world.users.member.username,
-      ),
-    ).toBe(false);
-  });
 });
