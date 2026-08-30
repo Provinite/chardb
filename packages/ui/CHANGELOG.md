@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`Avatar`**: a user's picture as a circle, or their initials when there is
   none, falling back to initials when the image fails to load.
 
+### Fixed
+
+- `UserTypeahead`'s debounced search no longer leaves a pending search to fire
+  after unmount.
+
 ## [v3.0.0] - 2025-10-19
 
 ### Added

@@ -227,11 +227,6 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Debounced search
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
-    null,
-  );
-
   const performSearch = useCallback(
     (query: string) => {
       onSearch(query);
@@ -239,23 +234,16 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
     [onSearch],
   );
 
+  // Debounced search. The timer lives in the closure rather than in state:
+  // a state value is a render behind by the time the cleanup reads it, so the
+  // cleanup cleared the previous run's timer and left the current one to fire
+  // -- including after unmount.
   useEffect(() => {
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
+    const query = inputValue.trim();
+    if (query.length < 2) return;
 
-    if (inputValue.trim() && inputValue.length >= 2) {
-      const timeout = setTimeout(() => {
-        performSearch(inputValue.trim());
-      }, 300); // 300ms debounce
-      setSearchTimeout(timeout);
-    }
-
-    return () => {
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
-      }
-    };
+    const timeout = setTimeout(() => performSearch(query), 300);
+    return () => clearTimeout(timeout);
   }, [inputValue, performSearch]);
 
   // Handle clicks outside

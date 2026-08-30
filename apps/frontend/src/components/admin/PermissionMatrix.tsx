@@ -327,8 +327,16 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
   const [updateCommunityMember, { loading: updating }] =
     useUpdateCommunityMemberMutation();
 
-  const members = membersData?.communityMembersByCommunity?.nodes || [];
-  const roles = rolesData?.rolesByCommunity?.nodes || [];
+  // Memoised because `?? []` mints a new array on every render where the query
+  // has no data, which would make the useMemos below recompute every time.
+  const members = useMemo(
+    () => membersData?.communityMembersByCommunity?.nodes ?? [],
+    [membersData],
+  );
+  const roles = useMemo(
+    () => rolesData?.rolesByCommunity?.nodes ?? [],
+    [rolesData],
+  );
 
   // Filter members based on search term
   const filteredMembers = useMemo(() => {
