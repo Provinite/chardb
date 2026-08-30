@@ -16,9 +16,39 @@ import { DatabaseService } from "../database/database.service";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { userMapperSelect } from "../users/utils/user-resolver-mappers";
 
 /** How long an offer stands when the proposer does not say otherwise. */
 const DEFAULT_EXPIRY_DAYS = 7;
+
+/**
+ * Everything a reader or settlement needs off a trade in one go.
+ *
+ * The people are included rather than left to field resolvers because every
+ * surface that shows a trade shows who is on each end of every line, and
+ * because a mapper that returns half-built User objects is the lie the social
+ * module was full of.
+ */
+export const TRADE_INCLUDE = {
+  community: true,
+  proposer: { select: userMapperSelect },
+  recipient: { select: userMapperSelect },
+  items: {
+    include: {
+      item: { include: { itemType: true } },
+      itemType: true,
+      sourceUser: { select: userMapperSelect },
+      destinationUser: { select: userMapperSelect },
+    },
+  },
+  currencyLines: {
+    include: {
+      currency: true,
+      sourceUser: { select: userMapperSelect },
+      destinationUser: { select: userMapperSelect },
+    },
+  },
+} satisfies Prisma.TradeInclude;
 
 /** A trade loaded with everything settlement needs to check and move. */
 type TradeForResponse = Prisma.TradeGetPayload<{
@@ -494,7 +524,7 @@ export class TradesService {
       await this.moveItems(tx, trade, resolved, batchId);
       await this.moveCoin(tx, trade, batchId);
 
-      return tx.trade.update({
+      const settled = await tx.trade.update({
         where: { id: tradeId },
         data: {
           status: TradeStatus.ACCEPTED,
@@ -503,6 +533,26 @@ export class TradesService {
         },
         include: { items: true, currencyLines: true },
       });
+
+      // Inside the transaction: a settlement that rolls back must not leave the
+      // proposer told their trade went through.
+      await this.notifications.create(
+        {
+          recipientId: trade.proposerId,
+          kind: NotificationKind.TRADE_ACCEPTED,
+          actorUserId: trade.recipientId,
+          communityId: trade.communityId,
+          subjectType: NotificationSubjectType.TRADE,
+          subjectId: trade.id,
+          data: {
+            itemCount: resolved.length,
+            currencyCount: trade.currencyLines.length,
+          },
+        },
+        tx,
+      );
+
+      return settled;
     });
   }
 
@@ -648,16 +698,41 @@ export class TradesService {
     }
   }
 
-  /** The recipient says no. Nothing was held, so nothing is released. */
+  /**
+   * The recipient says no. Nothing was held, so nothing is released.
+   *
+   * The proposer is told, because they are waiting on an answer. A counter is
+   * this plus a new offer -- the client declines and reopens the composer
+   * pre-filled -- so there is nothing here for it.
+   */
   async decline(tradeId: string, userId: string) {
     const trade = await this.loadForResponse(tradeId);
     if (trade.recipientId !== userId) {
       throw new ForbiddenException("Only the recipient can decline this trade");
     }
-    return this.close(tradeId, TradeStatus.DECLINED);
+
+    const closed = await this.close(tradeId, TradeStatus.DECLINED);
+
+    await this.notifications.create({
+      recipientId: trade.proposerId,
+      kind: NotificationKind.TRADE_DECLINED,
+      actorUserId: trade.recipientId,
+      communityId: trade.communityId,
+      subjectType: NotificationSubjectType.TRADE,
+      subjectId: trade.id,
+      data: {},
+    });
+
+    return closed;
   }
 
-  /** The proposer withdraws it. */
+  /**
+   * The proposer withdraws it.
+   *
+   * No notification: the recipient was told when it arrived, and telling them
+   * it is gone would be a second interruption about a thing that now needs
+   * nothing from them. It simply leaves their inbox.
+   */
   async cancel(tradeId: string, userId: string) {
     const trade = await this.loadForResponse(tradeId);
     if (trade.proposerId !== userId) {
@@ -678,6 +753,78 @@ export class TradesService {
       where: { id: tradeId },
       include: { items: true, currencyLines: true },
     });
+  }
+
+  /**
+   * One member's trades, newest first.
+   *
+   * Both inboxes in one query: offers waiting on you and offers you have out.
+   * `EXPIRED` is not a stored status, so filtering by it means asking for
+   * PENDING rows whose date has passed.
+   */
+  async findForMember(
+    userId: string,
+    filters: {
+      communityId?: string;
+      status?: EffectiveTradeStatus;
+      first?: number;
+      after?: string;
+    },
+  ) {
+    const take = Math.min(filters.first ?? 20, 100);
+    const now = new Date();
+
+    const statusWhere: Prisma.TradeWhereInput =
+      filters.status === "EXPIRED"
+        ? { status: TradeStatus.PENDING, expiresAt: { lte: now } }
+        : filters.status === TradeStatus.PENDING
+          ? { status: TradeStatus.PENDING, expiresAt: { gt: now } }
+          : filters.status
+            ? { status: filters.status }
+            : {};
+
+    const where: Prisma.TradeWhereInput = {
+      OR: [{ proposerId: userId }, { recipientId: userId }],
+      ...(filters.communityId ? { communityId: filters.communityId } : {}),
+      ...statusWhere,
+    };
+
+    const [rows, totalCount] = await Promise.all([
+      this.db.trade.findMany({
+        where,
+        include: TRADE_INCLUDE,
+        orderBy: { createdAt: "desc" },
+        take: take + 1,
+        ...(filters.after ? { skip: 1, cursor: { id: filters.after } } : {}),
+      }),
+      this.db.trade.count({ where }),
+    ]);
+
+    return {
+      nodes: rows.slice(0, take),
+      totalCount,
+      hasNextPage: rows.length > take,
+      hasPreviousPage: Boolean(filters.after),
+    };
+  }
+
+  /**
+   * One trade, readable by either party.
+   *
+   * Deliberately not public. An offer is a private conversation between two
+   * members until it settles -- the ledger is where a settled one becomes
+   * everybody's business.
+   */
+  async findOne(tradeId: string, userId: string) {
+    const trade = await this.db.trade.findUnique({
+      where: { id: tradeId },
+      include: TRADE_INCLUDE,
+    });
+    if (!trade) throw new NotFoundException("Trade not found");
+    if (trade.proposerId !== userId && trade.recipientId !== userId) {
+      throw new ForbiddenException("That trade is not yours");
+    }
+    return trade;
   }
 
   /**
