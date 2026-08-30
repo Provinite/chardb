@@ -12,6 +12,8 @@ import {
   CurrencyTransactionSource,
   CurrencyTransactionKind,
   SeedMintCurrencyDocument,
+  SeedCommunityMembersDocument,
+  SeedRemoveCommunityMemberDocument,
 } from "../../src/generated/graphql.js";
 
 const test = presetTest("community-items");
@@ -579,6 +581,56 @@ test.describe("coin shop", () => {
       await expect(
         world.as("othermember").gql(SeedRefundShopLineDocument, { lineId }),
       ).rejects.toThrow(/not your purchase/i);
+    });
+
+    test("a buyer who has left the community keeps their item", async ({
+      world,
+    }) => {
+      const { checkout } = await world.as("member").gql(SeedCheckoutDocument, {
+        input: {
+          communityId: world.community.id,
+          lines: [
+            {
+              shopItemId: world.shop.potionListing.id,
+              shopPriceId: world.shop.potionListing.priceIds[0],
+              quantity: 1,
+            },
+          ],
+        },
+      });
+      const lineId = checkout.lines[0].id;
+
+      const { communityMembersByCommunity } = await world
+        .as("commadmin")
+        .gql(SeedCommunityMembersDocument, {
+          communityId: world.community.id,
+        });
+      const membership = communityMembersByCommunity.nodes.find(
+        (n) => n.userId === world.users.member.userId,
+      );
+      if (!membership) throw new Error("member has no membership row");
+      await world
+        .as("commadmin")
+        .gql(SeedRemoveCommunityMemberDocument, { id: membership.id });
+
+      // Coin cannot be paid to a non-member, so the refund cannot complete.
+      // The thing that must not happen is the item being destroyed anyway:
+      // that would take the item and give nothing back.
+      await expect(
+        world.as("quartermaster").gql(SeedRefundShopLineDocument, { lineId }),
+      ).rejects.toThrow(/left this community/i);
+
+      const { memberHoldings } = await world
+        .as("quartermaster")
+        .gql(SeedMemberHoldingsDocument, {
+          communityId: world.community.id,
+          userId: world.users.member.userId,
+        });
+      const potions = memberHoldings.holdings.find(
+        (h) => h.itemType.id === world.itemTypes.potion.id,
+      );
+      // Three seeded plus the one just bought, none destroyed.
+      expect(potions?.count).toBe(4);
     });
 
     test("staff can refund somebody else's purchase", async ({ world }) => {

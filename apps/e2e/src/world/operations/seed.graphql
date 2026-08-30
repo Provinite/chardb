@@ -477,6 +477,23 @@ mutation SeedCheckout($input: CheckoutInput!) {
   }
 }
 
+# Used to take a buyer out of the community and check that a refund which
+# cannot pay them is refused rather than destroying their item for nothing.
+query SeedCommunityMembers($communityId: ID!) {
+  communityMembersByCommunity(communityId: $communityId, first: 50) {
+    nodes {
+      id
+      userId
+    }
+  }
+}
+
+mutation SeedRemoveCommunityMember($id: ID!) {
+  removeCommunityMember(id: $id) {
+    id
+  }
+}
+
 mutation SeedRefundShopLine($lineId: ID!) {
   refundShopPurchaseLine(lineId: $lineId) {
     id

@@ -520,6 +520,16 @@ export class ItemsService {
     actor: ItemActor,
     source?: ItemTransactionSource,
     sourceId?: string | null,
+    /**
+     * Refuse unless the items are still held by this user.
+     *
+     * For callers whose right to destroy depends on who owns the item -- a
+     * refund may only take back what the buyer still has -- checking the owner
+     * before calling here is not enough, because a trade can land in between.
+     * Passed through to the UPDATE itself so the database re-evaluates it
+     * under the row lock.
+     */
+    expectedOwnerId?: string,
   ) {
     const items = await client.item.findMany({
       where: { id: { in: itemIds }, destroyedAt: null },
@@ -548,13 +558,27 @@ export class ItemsService {
       );
     }
 
-    await client.item.updateMany({
-      where: { id: { in: itemIds } },
+    // The predicate goes in the UPDATE rather than being trusted from the
+    // read above. Postgres re-evaluates it after taking each row's lock, so a
+    // trade or a second revoke that commits in between makes this match
+    // nothing instead of destroying something it no longer should.
+    const destroyed = await client.item.updateMany({
+      where: {
+        id: { in: itemIds },
+        destroyedAt: null,
+        ...(expectedOwnerId === undefined ? {} : { ownerId: expectedOwnerId }),
+      },
       data: {
         destroyedAt: new Date(),
         destroyedById: actor.actorUserId ?? null,
       },
     });
+
+    if (destroyed.count !== itemIds.length) {
+      throw new ConflictException(
+        "Those items changed hands or were destroyed while this was running",
+      );
+    }
 
     await this.itemTransactions.recordBatch(
       {

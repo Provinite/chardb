@@ -714,6 +714,24 @@ export class ShopService {
       );
     }
 
+    // Coin cannot be paid to somebody outside the community, so a refund to a
+    // departed buyer cannot complete. Said here, where the answer names the
+    // problem -- the ledger's own check fires deep inside the transaction and
+    // can only name a user id.
+    // Membership hangs off the role, not off the community directly.
+    const stillAMember = await this.db.communityMember.findFirst({
+      where: {
+        userId: line.purchase.buyerId,
+        role: { communityId: line.purchase.communityId },
+      },
+      select: { id: true },
+    });
+    if (!stillAMember) {
+      throw new ConflictException(
+        "The buyer has left this community, so the coin cannot be returned",
+      );
+    }
+
     const refunded = await this.db.$transaction(async (tx) => {
       // Claim the line first. Two refunds racing on the same line both pass
       // the checks above; only one can move it out of the unrefunded state,
@@ -726,12 +744,16 @@ export class ShopService {
         throw new ConflictException("That has already been refunded");
       }
 
+      // The buyer is named explicitly: the ownership check above ran before
+      // this transaction opened, and a trade landing in between would
+      // otherwise take the item out of its new owner's hands.
       await this.items.destroyItems(
         tx,
         [grant.itemId],
         { actorUserId: actorId, reason: "Shop purchase refunded" },
         ItemTransactionSource.SHOP_PURCHASE,
         lineId,
+        line.purchase.buyerId,
       );
 
       // Only when the listing tracks stock at all. Incrementing a null would
@@ -757,9 +779,11 @@ export class ShopService {
           sourceId: lineId,
           batchId: refundBatchId,
           tx,
-          // The buyer may have left the community since. Refusing the whole
-          // refund over that would strand both the item and the coin.
-          skipNonMembers: true,
+          // Not skipNonMembers. A buyer who has left the community cannot be
+          // paid, and skipping the credit would destroy their item and give
+          // nothing back while reporting success. Failing here rolls the whole
+          // refund back and leaves them holding the item instead.
+          skipNonMembers: false,
         });
       }
 

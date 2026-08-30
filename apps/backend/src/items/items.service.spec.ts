@@ -1,6 +1,11 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
 import { ItemsService } from "./items.service";
+import type { DbClient } from "../item-transactions/item-transactions.service";
 import { DatabaseService } from "../database/database.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
 import { DiscordService } from "../discord/discord.service";
@@ -215,6 +220,12 @@ describe("ItemsService", () => {
   });
 
   describe("revokeItems", () => {
+    /** Every named row still matched when the UPDATE ran. */
+    const allMatched = (ids: string[]) =>
+      mockDatabaseService.item.updateMany.mockResolvedValue({
+        count: ids.length,
+      });
+
     const liveItems = [
       {
         id: "i1",
@@ -234,6 +245,7 @@ describe("ItemsService", () => {
 
     it("destroys softly, so provenance outlives the item", async () => {
       mockDatabaseService.item.findMany.mockResolvedValue(liveItems);
+      allMatched(["i1", "i2"]);
 
       await service.revokeItems(["i1", "i2"], actor);
 
@@ -247,6 +259,7 @@ describe("ItemsService", () => {
 
     it("records one REVOKE batch naming the former owner", async () => {
       mockDatabaseService.item.findMany.mockResolvedValue(liveItems);
+      allMatched(["i1", "i2"]);
 
       await service.revokeItems(["i1", "i2"], actor);
 
@@ -295,6 +308,56 @@ describe("ItemsService", () => {
       await expect(service.revokeItems([], actor)).rejects.toThrow(
         BadRequestException,
       );
+    });
+
+    it("re-checks in the UPDATE rather than trusting the read", async () => {
+      // The read said both were live; by the time the UPDATE ran, one was
+      // not. Reading and then writing would have destroyed the other anyway
+      // and recorded a ledger row for both.
+      mockDatabaseService.item.findMany.mockResolvedValue(liveItems);
+      mockDatabaseService.item.updateMany.mockResolvedValue({ count: 1 });
+
+      await expect(service.revokeItems(["i1", "i2"], actor)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(mockItemTransactions.recordBatch).not.toHaveBeenCalled();
+    });
+
+    it("scopes the destroy to an expected owner when given one", async () => {
+      // A refund may only take back what the buyer still holds. Naming the
+      // owner in the UPDATE is what makes a trade landing mid-refund lose the
+      // race rather than cost the new owner their item.
+      mockDatabaseService.item.findMany.mockResolvedValue([liveItems[0]]);
+      allMatched(["i1"]);
+
+      await service.destroyItems(
+        // The mock stands in for a transaction client; it implements the
+        // handful of models this touches rather than the whole interface.
+        mockDatabaseService as unknown as DbClient,
+        ["i1"],
+        actor,
+        undefined,
+        null,
+        "user1",
+      );
+
+      const call = mockDatabaseService.item.updateMany.mock.calls[0][0] as {
+        where: { ownerId?: string; destroyedAt: null };
+      };
+      expect(call.where.ownerId).toBe("user1");
+      expect(call.where.destroyedAt).toBeNull();
+    });
+
+    it("leaves the owner unconstrained when none is expected", async () => {
+      mockDatabaseService.item.findMany.mockResolvedValue([liveItems[0]]);
+      allMatched(["i1"]);
+
+      await service.revokeItems(["i1"], actor);
+
+      const call = mockDatabaseService.item.updateMany.mock.calls[0][0] as {
+        where: { ownerId?: string };
+      };
+      expect(call.where.ownerId).toBeUndefined();
     });
   });
 

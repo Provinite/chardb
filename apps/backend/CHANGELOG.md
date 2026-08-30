@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Refunding a buyer who had left the community destroyed their item and
+  returned no coin. It is now refused.
+
+- `destroyItems` re-checks in the UPDATE rather than trusting an earlier read,
+  and a refund names the buyer, so a trade cannot cost a new owner their item.
+
 - Shop mutations returned rows without their per-viewer fields, so any caller
   selecting them got an error after the write had already committed.
 
