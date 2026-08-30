@@ -7,15 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.1.0] - 2026-08-30
+
 ### Added
 
-- **Item provenance page** (`/items/:itemId`): one item's history, oldest first, phrased per event kind rather than as a raw from/to pair. A destroyed item still resolves and says so. Staff notes render inline for viewers who hold item permissions; the server nulls them for everyone else, so the page gates nothing itself.
+- **Item provenance page** (`/communities/:communityId/items/:itemId`): one item's history, oldest first, phrased per event kind rather than as a raw from/to pair. A destroyed item still resolves and says so. Staff notes render inline for viewers who hold item permissions; the server nulls them for everyone else, so the page gates nothing itself.
 
   This is what the public-provenance decision was for. The API shipped in v11.0.0 with no interface, so until now the ledger showed a community's firehose and nothing showed a single object's story.
 
+  Alongside the timeline: a **chain of custody** panel listing everyone who has held the item and for how long, derived from the history rather than stored separately so the two cannot disagree; and an **item facts** panel giving its origin, when it was first seen, whether it is tradeable or consumable, and its community.
+
+- **Revoke from the item page**: holders of `canGrantItems` get a Revoke action taking a required public reason and an optional staff note. `revokeItems` shipped in v11.0.0 with no way to reach it.
+
 ### Changed
 
-- **Item URLs**: `/items/:id` now means one item. The catalogue entry moved to `/item-types/:id`, which is what it always was. The legacy singular `/item/:id` redirects there rather than rendering a second copy of the same page, so there is one canonical URL and one forwarding rule.
+- **Item URLs**: the catalogue entry moved from `/items/:id` to `/item-types/:id`, which is what it always was. Links to the old URL will 404. The legacy singular `/item/:id` redirects to the new address rather than rendering a second copy of the same page, so there is one canonical URL and one forwarding rule.
+- **An item's own page is community-scoped**, at `/communities/:communityId/items/:itemId`, so it sits inside that community's navigation instead of dropping the reader into global nav mid-browse. An item belongs to exactly one community, so a URL naming a different one redirects to the right address.
 - **Inventory tiles** link to the item when a member holds exactly one, and to the catalogue entry when the tile groups several — three potions do not share a history, so pointing at one of them would be a lie.
 
 ## [v11.0.0] - 2026-08-30

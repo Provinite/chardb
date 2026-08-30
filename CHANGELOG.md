@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.1.0] - 2026-08-30
+
+### Added
+
+- **Product walkthrough for the item ledger** on the docs site (`docs/docs/item-ledger.html`), with screenshots taken against a seeded instance — including the same ledger viewed by staff and by an ordinary member, which is the clearest way to show what a staff note is.
+
 ## [v11.0.0] - 2026-08-30
 
 ### Added
