@@ -503,7 +503,6 @@ export class TradesService {
       throw new ForbiddenException("Only the recipient can accept this trade");
     }
 
-    const resolved = this.resolveSelections(trade, selections);
     const batchId = randomUUID();
 
     return this.db.$transaction(async (tx) => {
@@ -521,6 +520,7 @@ export class TradesService {
         throw new BadRequestException("That offer has expired");
       }
 
+      const resolved = await this.resolveSelections(tx, trade, selections);
       await this.moveItems(tx, trade, resolved, batchId);
       await this.moveCoin(tx, trade, batchId);
 
@@ -559,21 +559,30 @@ export class TradesService {
   /**
    * Turn every line into the concrete rows that will move.
    *
-   * A by-row line already is one. A by-type line is satisfied by whatever the
-   * recipient chose, which is checked here for count, ownership and type --
-   * a selection is a claim about someone's own property, so it is verified
-   * rather than trusted.
+   * A by-row line already is one. A by-type line is satisfied either by rows
+   * the recipient picked or, when they did not pick, by whichever rows the
+   * database hands back -- newest first.
+   *
+   * Choosing is an override, not a step. The whole point of a by-type line is
+   * that any rows will do, so demanding a choice would put a decision in front
+   * of someone who by definition does not have one to make. Someone who does
+   * care -- an old copy with a history they want to keep -- can say so.
+   *
+   * Runs inside the settlement transaction so the default sees ownership as it
+   * is at settlement, not as it was when the accept screen loaded.
    */
-  private resolveSelections(
+  private async resolveSelections(
+    tx: Prisma.TransactionClient,
     trade: TradeForResponse,
     selections: TradeSelection[],
-  ): ResolvedMove[] {
+  ): Promise<ResolvedMove[]> {
     const chosen = new Map(selections.map((s) => [s.tradeItemId, s.itemIds]));
     const moves: ResolvedMove[] = [];
-    const seen = new Set<string>();
+    const claimed = new Set<string>();
 
     for (const line of trade.items) {
       if (line.itemId) {
+        claimed.add(line.itemId);
         moves.push({
           itemId: line.itemId,
           itemTypeId: line.item?.itemTypeId as string,
@@ -584,22 +593,16 @@ export class TradesService {
         continue;
       }
 
-      const picks = chosen.get(line.id) ?? [];
       const wanted = line.quantity as number;
       const typeName = line.itemType?.name ?? "that item";
+      const picks = chosen.get(line.id);
 
-      if (picks.length !== wanted) {
-        throw new BadRequestException(
-          `Choose exactly ${wanted} ${typeName} to hand over`,
-        );
-      }
-      for (const itemId of picks) {
-        if (seen.has(itemId)) {
-          throw new BadRequestException(
-            `The same ${typeName} was chosen for two lines`,
-          );
-        }
-        seen.add(itemId);
+      const itemIds = picks
+        ? this.verifyPicks(picks, wanted, typeName, claimed)
+        : await this.pickDefault(tx, line, wanted, typeName, claimed);
+
+      for (const itemId of itemIds) {
+        claimed.add(itemId);
         moves.push({
           itemId,
           itemTypeId: line.itemTypeId as string,
@@ -611,6 +614,72 @@ export class TradesService {
     }
 
     return moves;
+  }
+
+  /**
+   * Check what the recipient picked.
+   *
+   * A selection is a claim about someone's own property, so the count and the
+   * absence of duplicates are verified here; ownership and type are verified by
+   * the conditional update that actually moves the row.
+   */
+  private verifyPicks(
+    picks: string[],
+    wanted: number,
+    typeName: string,
+    claimed: Set<string>,
+  ): string[] {
+    if (picks.length !== wanted) {
+      throw new BadRequestException(
+        `Choose exactly ${wanted} ${typeName} to hand over`,
+      );
+    }
+    if (new Set(picks).size !== picks.length) {
+      throw new BadRequestException(`The same ${typeName} was chosen twice`);
+    }
+    for (const id of picks) {
+      if (claimed.has(id)) {
+        throw new BadRequestException(
+          `The same ${typeName} is already on the table`,
+        );
+      }
+    }
+    return picks;
+  }
+
+  /**
+   * Pick rows when the recipient did not.
+   *
+   * Newest first, and the choice is genuinely arbitrary: rows of a type differ
+   * only by history, so this hands over the copies with the least of it. Rows
+   * already claimed by another line of the same trade are excluded, which is
+   * what stops a by-row request and a by-type request colliding on one item.
+   */
+  private async pickDefault(
+    tx: Prisma.TransactionClient,
+    line: TradeForResponse["items"][number],
+    wanted: number,
+    typeName: string,
+    claimed: Set<string>,
+  ): Promise<string[]> {
+    const rows = await tx.item.findMany({
+      where: {
+        itemTypeId: line.itemTypeId as string,
+        ownerId: line.sourceUserId,
+        destroyedAt: null,
+        id: { notIn: [...claimed] },
+      },
+      orderBy: { createdAt: "desc" },
+      take: wanted,
+      select: { id: true },
+    });
+
+    if (rows.length < wanted) {
+      throw new BadRequestException(
+        `That member no longer holds ${wanted} ${typeName}`,
+      );
+    }
+    return rows.map((r) => r.id);
   }
 
   /**

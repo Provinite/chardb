@@ -95,7 +95,9 @@ export class TradesResolver {
       type: () => [TradeSelectionInput],
       nullable: true,
       description:
-        "One entry per by-type line, naming which of your rows to hand over.",
+        "Optional. Names which of your rows satisfy a by-type line. Leave it " +
+        "out and rows are chosen for you, newest first -- by-type means any " +
+        "will do, so there is usually nothing to decide.",
     })
     selections?: TradeSelectionInput[],
   ): Promise<Trade> {

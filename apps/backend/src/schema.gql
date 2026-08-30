@@ -1837,7 +1837,9 @@ type Mutation {
   acceptTrade(
     id: ID!
 
-    """One entry per by-type line, naming which of your rows to hand over."""
+    """
+    Optional. Names which of your rows satisfy a by-type line. Leave it out and rows are chosen for you, newest first -- by-type means any will do, so there is usually nothing to decide.
+    """
     selections: [TradeSelectionInput!]
   ): Trade!
   addCharacterTags(id: ID!, input: ManageTagsInput!): Character!
@@ -3439,7 +3441,7 @@ type TradeItem {
 }
 
 """
-Which of your rows satisfy one by-type line. Required at accept for every such line: the giver chooses, and you are the giver who has not chosen yet.
+Which of your rows satisfy one by-type line. Optional -- omit it and rows are chosen for you, newest first. Supply it when one particular copy is one you would rather keep.
 """
 input TradeSelectionInput {
   """Exactly as many rows as the line's quantity."""

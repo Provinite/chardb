@@ -108,9 +108,9 @@ export class CreateTradeInput {
 
 @InputType({
   description:
-    "Which of your rows satisfy one by-type line. Required at accept for " +
-    "every such line: the giver chooses, and you are the giver who has not " +
-    "chosen yet.",
+    "Which of your rows satisfy one by-type line. Optional -- omit it and " +
+    "rows are chosen for you, newest first. Supply it when one particular " +
+    "copy is one you would rather keep.",
 })
 export class TradeSelectionInput {
   @Field(() => ID, { description: "The TradeItem line being satisfied." })
