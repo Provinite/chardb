@@ -119,7 +119,6 @@ function App() {
             rule for whatever was linking to it. */}
         <Route path="/item-types/:itemTypeId" element={<ItemTypePage />} />
         <Route path="/item/:itemTypeId" element={<RedirectToItemType />} />
-        <Route path="/items/:itemId" element={<ItemProvenancePage />} />
 
         {/* OAuth callback routes */}
         <Route
@@ -401,6 +400,17 @@ function App() {
           element={
             <ProtectedRoute>
               <CommunityItemLedgerPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Community-scoped so the page sits inside that community's
+            navigation. An item belongs to exactly one community, and the page
+            redirects if the URL names a different one. */}
+        <Route
+          path="/communities/:communityId/items/:itemId"
+          element={
+            <ProtectedRoute>
+              <ItemProvenancePage />
             </ProtectedRoute>
           }
         />

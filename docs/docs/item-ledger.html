@@ -455,11 +455,35 @@
             backwards.
           </p>
           <p>
-            Reach it from an inventory tile. A tile showing a single item links
-            straight to it. A tile grouping several does not — three potions do
-            not share a history, so picking one of them to represent the others
-            would be misleading, and the tile links to the item type instead.
+            Reach it from an inventory tile or from the ledger. A tile showing a
+            single item links straight to it. A tile grouping several does not —
+            three potions do not share a history, so picking one of them to
+            represent the others would be misleading, and the tile links to the
+            item type instead.
           </p>
+          <p>Beside the timeline sit two panels:</p>
+          <ul>
+            <li>
+              <strong>Chain of custody</strong> — everyone who has held the
+              item and for how long, newest first. It is derived from the
+              history rather than stored separately, so the two cannot disagree.
+            </li>
+            <li>
+              <strong>This item</strong> — where it came from, when it was first
+              seen, whether it can be traded or consumed, and which community it
+              belongs to.
+            </li>
+          </ul>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-provenance-staff.png"
+            alt="Item page showing the history timeline beside a chain of custody panel and an item facts panel"
+          />
+          <div class="screenshot-caption">
+            An item page: history on the left, who has held it and what it is on
+            the right.
+          </div>
         </div>
         <div class="screenshot">
           <img
@@ -581,14 +605,50 @@
             </li>
           </ul>
         </div>
+      </div>
+
+      <!-- Step 8: revoking -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">8</div>
+          <h2 class="step-title">Revoking an item</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Members holding the <strong>grant items</strong> permission see a
+            <strong>Revoke</strong> button on any item still in circulation. It
+            asks for two things:
+          </p>
+          <ul>
+            <li>
+              A <strong>reason</strong>, which is required. It is shown to the
+              member the item is taken from, on the item's own page.
+            </li>
+            <li>
+              An optional <strong>staff note</strong>, which only members with
+              item permissions ever see.
+            </li>
+          </ul>
+          <p>
+            The item leaves the holder's inventory immediately. Its page keeps
+            working, the chain of custody shows the run ending in
+            <em>(destroyed)</em>, and both halves of the story stay readable.
+          </p>
+
+          <div class="highlight-box">
+            <strong>There is no undo.</strong> Revoking is itself the
+            correction, and it is recorded like any other event — if it was a
+            mistake, grant the item again and say so in the reason.
+          </div>
+        </div>
         <div class="screenshot">
           <img
-            src="item-provenance-staff.png"
-            alt="Item page for a granted Trait Change Potion showing one grant entry with its reason and staff note"
+            src="item-revoke-dialog.png"
+            alt="Revoke dialog asking for a public reason and an optional private staff note"
           />
           <div class="screenshot-caption">
-            One of three potions granted together. Each carries its own history
-            from here on.
+            The revoke dialog. The confirm button stays disabled until a reason
+            is given.
           </div>
         </div>
       </div>

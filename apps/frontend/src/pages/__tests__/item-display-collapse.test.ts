@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { groupIntoStacks, collapseByBatch } from "../../lib/itemDisplay";
+import {
+  groupIntoStacks,
+  collapseByBatch,
+  chainOfCustody,
+} from "../../lib/itemDisplay";
 import { ItemTransactionKind } from "../../generated/graphql";
 import type { ItemTransactionFieldsFragment } from "../../generated/graphql";
 
@@ -151,5 +155,88 @@ describe("collapseByBatch", () => {
 
   it("returns nothing for an empty ledger", () => {
     expect(collapseByBatch([])).toEqual([]);
+  });
+});
+
+describe("chainOfCustody", () => {
+  const holder = (id: string, username: string) =>
+    ({ id, username, displayName: null, avatarImage: null }) as NonNullable<
+      ItemTransactionFieldsFragment["toUser"]
+    >;
+
+  const move = (
+    kind: ItemTransactionKind,
+    at: string,
+    to: ReturnType<typeof holder> | null,
+    from: ReturnType<typeof holder> | null = null,
+  ) =>
+    ({
+      ...row("x", `b-${at}`, 1, kind),
+      createdAt: at,
+      toUser: to,
+      fromUser: from,
+    }) as ItemTransactionFieldsFragment;
+
+  const alice = holder("a", "alice");
+  const bob = holder("b", "bob");
+
+  it("reports a single unbroken run for an item that never moved", () => {
+    const spells = chainOfCustody([
+      move(ItemTransactionKind.Grant, "2026-01-01T00:00:00Z", alice),
+    ]);
+
+    expect(spells).toHaveLength(1);
+    expect(spells[0].holder?.username).toBe("alice");
+    expect(spells[0].until).toBeNull();
+  });
+
+  it("closes one run and opens another when the item changes hands", () => {
+    const spells = chainOfCustody([
+      move(ItemTransactionKind.Grant, "2026-01-01T00:00:00Z", alice),
+      move(ItemTransactionKind.Transfer, "2026-02-01T00:00:00Z", bob, alice),
+    ]);
+
+    expect(spells.map((s) => s.holder?.username)).toEqual(["alice", "bob"]);
+    expect(spells[0].until).toBe("2026-02-01T00:00:00Z");
+    expect(spells[1].until).toBeNull();
+  });
+
+  it("treats an unclaimed grant as a run with no holder", () => {
+    // The item exists but nobody has it, which is a real state worth showing
+    // rather than an absence to skip over.
+    const spells = chainOfCustody([
+      move(ItemTransactionKind.Grant, "2026-01-01T00:00:00Z", null),
+      move(ItemTransactionKind.Claim, "2026-01-05T00:00:00Z", alice),
+    ]);
+
+    expect(spells).toHaveLength(2);
+    expect(spells[0].holder).toBeNull();
+    expect(spells[1].holder?.username).toBe("alice");
+  });
+
+  it("does not start a new run for an event that keeps the same hands", () => {
+    // A correction that re-states the holder is not a change of custody.
+    const spells = chainOfCustody([
+      move(ItemTransactionKind.Grant, "2026-01-01T00:00:00Z", alice),
+      move(ItemTransactionKind.Grant, "2026-01-02T00:00:00Z", alice),
+    ]);
+
+    expect(spells).toHaveLength(1);
+    expect(spells[0].since).toBe("2026-01-01T00:00:00Z");
+  });
+
+  it("closes the final run when the item is destroyed", () => {
+    const spells = chainOfCustody([
+      move(ItemTransactionKind.Grant, "2026-01-01T00:00:00Z", alice),
+      move(ItemTransactionKind.Revoke, "2026-03-01T00:00:00Z", null, alice),
+    ]);
+
+    expect(spells).toHaveLength(1);
+    expect(spells[0].until).toBe("2026-03-01T00:00:00Z");
+    expect(spells[0].endedByDestruction).toBe(true);
+  });
+
+  it("returns nothing for an item with no history", () => {
+    expect(chainOfCustody([])).toEqual([]);
   });
 });

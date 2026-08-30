@@ -230,7 +230,7 @@ export const CommunityInventoryPage: React.FC = () => {
               // -- so a grouped tile goes to the catalogue entry instead.
               to={
                 stack.count === 1
-                  ? `/items/${stack.itemId}`
+                  ? `/communities/${communityId}/items/${stack.itemId}`
                   : `/item-types/${stack.itemType.id}`
               }
               color={stack.itemType.color?.hexCode}

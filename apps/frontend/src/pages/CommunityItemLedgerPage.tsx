@@ -599,7 +599,16 @@ export const CommunityItemLedgerPage: React.FC = () => {
                           </Swatch>
                           <div>
                             <ItemName>
-                              <Link to={`/item-types/${row.itemType.id}`}>
+                              {/* A collapsed batch covers several items, which
+                                  do not share a history -- only a row standing
+                                  for one item can link to it. */}
+                              <Link
+                                to={
+                                  count === 1 && row.itemId
+                                    ? `/communities/${communityId}/items/${row.itemId}`
+                                    : `/item-types/${row.itemType.id}`
+                                }
+                              >
                                 {row.itemType.name}
                               </Link>
                             </ItemName>

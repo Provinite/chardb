@@ -1,14 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import styled, { css } from "styled-components";
-import { useParams, Link } from "react-router-dom";
-import { Package, ArrowLeft, Lock } from "lucide-react";
+import { useParams, Link, Navigate } from "react-router-dom";
+import { Package, ArrowLeft, Lock, Trash2 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import {
   ItemTransactionKind,
   useGetItemWithProvenanceQuery,
+  useRevokeItemsMutation,
   type ItemTransactionFieldsFragment,
 } from "../generated/graphql";
-import { KIND_LABEL, kindTone, type KindTone } from "../lib/itemDisplay";
+import {
+  chainOfCustody,
+  KIND_LABEL,
+  kindTone,
+  type KindTone,
+} from "../lib/itemDisplay";
 
 /**
  * One item's history.
@@ -276,6 +284,194 @@ const Empty = styled.div`
   font-size: 0.875rem;
 `;
 
+/* Timeline on the left, the facts that describe the item on the right. */
+const Columns = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const Side = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+`;
+
+const Facts = styled.dl`
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 1rem;
+  font-size: 0.875rem;
+  align-items: baseline;
+
+  dt {
+    color: ${({ theme }) => theme.colors.text.muted};
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  dd {
+    margin: 0;
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+`;
+
+const Custody = styled.ol`
+  list-style: none;
+  margin: 0;
+  padding: 1rem 1rem 1rem 2.25rem;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 1.3rem;
+    top: 1.4rem;
+    bottom: 1.4rem;
+    width: 2px;
+    background: ${({ theme }) => theme.colors.border};
+  }
+`;
+
+const Spell = styled.li<{ $current: boolean }>`
+  position: relative;
+  padding-bottom: 0.875rem;
+  font-size: 0.875rem;
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: -1.19rem;
+    top: 0.35rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid ${({ theme }) => theme.colors.background};
+    background: ${({ theme, $current }) =>
+      $current ? theme.colors.primary : theme.colors.text.muted};
+  }
+
+  .who {
+    font-weight: ${({ $current }) => ($current ? 600 : 500)};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+
+  .span {
+    display: block;
+    font-size: 0.75rem;
+    color: ${({ theme }) => theme.colors.text.muted};
+    font-variant-numeric: tabular-nums;
+  }
+`;
+
+const Actions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+`;
+
+const Button = styled.button<{ $danger?: boolean }>`
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.45rem 0.85rem;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  cursor: pointer;
+  border: 1px solid
+    ${({ theme, $danger }) =>
+      $danger ? theme.colors.danger : theme.colors.border};
+  background: ${({ theme }) => theme.colors.background};
+  color: ${({ theme, $danger }) =>
+    $danger ? theme.colors.danger : theme.colors.text.secondary};
+
+  &:hover:not(:disabled) {
+    background: ${({ theme, $danger }) =>
+      $danger ? `${theme.colors.danger}12` : theme.colors.surface};
+    color: ${({ theme, $danger }) =>
+      $danger ? theme.colors.danger : theme.colors.text.primary};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const Backdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+`;
+
+const Dialog = styled.div`
+  background: ${({ theme }) => theme.colors.background};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+
+  h2 {
+    font-size: 1.125rem;
+    margin: 0 0 0.5rem;
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+
+  p {
+    font-size: 0.875rem;
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin: 0 0 1rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: ${({ theme }) => theme.colors.text.muted};
+    margin-bottom: 0.3rem;
+  }
+
+  input {
+    width: 100%;
+    font: inherit;
+    font-size: 0.875rem;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid ${({ theme }) => theme.colors.border};
+    border-radius: ${({ theme }) => theme.borderRadius.md};
+    background: ${({ theme }) => theme.colors.background};
+    color: ${({ theme }) => theme.colors.text.primary};
+    margin-bottom: 1rem;
+  }
+`;
+
+const DialogActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+`;
+
 const LoadingContainer = styled.div`
   display: flex;
   justify-content: center;
@@ -357,12 +553,21 @@ const describe = (row: ItemTransactionFieldsFragment): React.ReactNode => {
 };
 
 export const ItemProvenancePage: React.FC = () => {
-  const { itemId } = useParams<{ itemId: string }>();
+  const { communityId, itemId } = useParams<{
+    communityId: string;
+    itemId: string;
+  }>();
+  const { permissions } = useUserCommunityRole(communityId);
+  const [revokeOpen, setRevokeOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [staffNote, setStaffNote] = useState("");
 
-  const { data, loading, error } = useGetItemWithProvenanceQuery({
+  const { data, loading, error, refetch } = useGetItemWithProvenanceQuery({
     variables: { itemId: itemId! },
     skip: !itemId,
   });
+
+  const [revokeItems, { loading: revoking }] = useRevokeItemsMutation();
 
   if (loading && !data) {
     return (
@@ -391,12 +596,49 @@ export const ItemProvenancePage: React.FC = () => {
 
   const item = data.item;
   const history = data.itemProvenance;
+  const community = item.itemType.community;
+
+  // The route carries a community so the page sits inside that community's
+  // navigation. If the URL names the wrong one, send the reader to the right
+  // address rather than showing them a sidebar for a community this item has
+  // nothing to do with.
+  if (community && communityId !== community.id) {
+    return (
+      <Navigate to={`/communities/${community.id}/items/${item.id}`} replace />
+    );
+  }
+
   const destroyed = Boolean(item.destroyedAt);
   const holder = name(item.owner);
-
-  // The history is oldest-first, so the last event is the most recent thing
-  // that happened to this item.
+  const custody = chainOfCustody(history);
+  const first = history.length ? history[0] : null;
   const latest = history.length ? history[history.length - 1] : null;
+
+  const origin =
+    first?.kind === ItemTransactionKind.Import
+      ? "Predates the ledger"
+      : first
+        ? KIND_LABEL[first.kind]
+        : "Unknown";
+
+  const submitRevoke = async () => {
+    try {
+      await revokeItems({
+        variables: {
+          itemIds: [item.id],
+          reason: reason.trim(),
+          staffNote: staffNote.trim() || undefined,
+        },
+      });
+      toast.success("Item revoked");
+      setRevokeOpen(false);
+      setReason("");
+      setStaffNote("");
+      await refetch();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not revoke the item");
+    }
+  };
 
   return (
     <Container>
@@ -430,9 +672,24 @@ export const ItemProvenancePage: React.FC = () => {
             ) : (
               <>Awaiting a claim</>
             )}
-            {item.itemType.category ? ` · ${item.itemType.category}` : null}
+            {item.itemType.category
+              ? ` \u00b7 ${item.itemType.category}`
+              : null}
           </Subtitle>
         </div>
+
+        {permissions.canGrantItems && !destroyed && (
+          <Actions>
+            <Button
+              $danger
+              type="button"
+              data-testid="revoke-item"
+              onClick={() => setRevokeOpen(true)}
+            >
+              <Trash2 size={14} /> Revoke
+            </Button>
+          </Actions>
+        )}
       </Header>
 
       {destroyed && (
@@ -441,7 +698,7 @@ export const ItemProvenancePage: React.FC = () => {
           <div>
             <strong>This item was destroyed</strong>
             {latest?.reason
-              ? `${formatWhen(item.destroyedAt as string)} — ${latest.reason}`
+              ? `${formatWhen(item.destroyedAt as string)} \u2014 ${latest.reason}`
               : formatWhen(item.destroyedAt as string)}
           </div>
         </Banner>
@@ -458,53 +715,159 @@ export const ItemProvenancePage: React.FC = () => {
         </Banner>
       )}
 
-      <Section>
-        <SectionHead>
-          <SectionTitle>History</SectionTitle>
-          <Hint>
-            {history.length} event{history.length === 1 ? "" : "s"}
-          </Hint>
-        </SectionHead>
+      <Columns>
+        <Section>
+          <SectionHead>
+            <SectionTitle>History</SectionTitle>
+            <Hint>
+              {history.length} event{history.length === 1 ? "" : "s"}
+            </Hint>
+          </SectionHead>
 
-        {history.length === 0 ? (
-          <Empty>
-            Nothing has happened to this item yet, which should not be possible
-            — every item gets at least one entry when it appears.
-          </Empty>
-        ) : (
-          <Timeline>
-            {/* Oldest first: a history reads forwards, unlike the ledger, which
-                is a feed and reads newest first. */}
-            {history.map((row) => (
-              <Event
-                key={row.id}
-                $tone={kindTone(row.kind)}
-                data-testid="provenance-event"
-                data-kind={row.kind}
+          {history.length === 0 ? (
+            <Empty>
+              Nothing has happened to this item yet, which should not be
+              possible \u2014 every item gets at least one entry when it
+              appears.
+            </Empty>
+          ) : (
+            <Timeline>
+              {/* Oldest first: a history reads forwards, unlike the ledger,
+                  which is a feed and reads newest first. */}
+              {history.map((row) => (
+                <Event
+                  key={row.id}
+                  $tone={kindTone(row.kind)}
+                  data-testid="provenance-event"
+                  data-kind={row.kind}
+                >
+                  <EventHead>
+                    <KindPill $tone={kindTone(row.kind)}>
+                      {KIND_LABEL[row.kind]}
+                    </KindPill>
+                    <When>{formatWhen(row.createdAt)}</When>
+                  </EventHead>
+                  <EventBody>
+                    {describe(row)}
+                    {row.reason && row.kind !== ItemTransactionKind.Import ? (
+                      <> {row.reason}</>
+                    ) : null}
+                    {row.staffNote && (
+                      <StaffNote>
+                        <Lock size={11} />
+                        <span>{row.staffNote}</span>
+                      </StaffNote>
+                    )}
+                  </EventBody>
+                </Event>
+              ))}
+            </Timeline>
+          )}
+        </Section>
+
+        <Side>
+          <Section data-testid="chain-of-custody">
+            <SectionHead>
+              <SectionTitle>Chain of custody</SectionTitle>
+              <Hint>
+                {custody.length} holder{custody.length === 1 ? "" : "s"}
+              </Hint>
+            </SectionHead>
+            {custody.length === 0 ? (
+              <Empty>Nobody has held this item.</Empty>
+            ) : (
+              <Custody>
+                {/* Newest first, so who has it now reads at the top. */}
+                {[...custody].reverse().map((spell, i) => (
+                  <Spell key={`${spell.since}-${i}`} $current={!spell.until}>
+                    <span className="who">
+                      {name(spell.holder) ?? "Awaiting a claim"}
+                    </span>
+                    <span className="span">
+                      {spell.until
+                        ? `${formatWhen(spell.since)} \u2013 ${formatWhen(spell.until)}`
+                        : `since ${formatWhen(spell.since)}`}
+                      {spell.endedByDestruction ? " (destroyed)" : ""}
+                    </span>
+                  </Spell>
+                ))}
+              </Custody>
+            )}
+          </Section>
+
+          <Section data-testid="item-facts">
+            <SectionHead>
+              <SectionTitle>This item</SectionTitle>
+            </SectionHead>
+            <Facts>
+              <dt>Origin</dt>
+              <dd>{origin}</dd>
+              <dt>First seen</dt>
+              <dd>{first ? formatWhen(first.createdAt) : "\u2014"}</dd>
+              <dt>Tradeable</dt>
+              <dd>{item.itemType.isTradeable ? "Yes" : "No"}</dd>
+              <dt>Consumable</dt>
+              <dd>{item.itemType.isConsumable ? "Yes" : "No"}</dd>
+              {community && (
+                <>
+                  <dt>Community</dt>
+                  <dd>
+                    <Link to={`/communities/${community.id}`}>
+                      {community.name}
+                    </Link>
+                  </dd>
+                </>
+              )}
+            </Facts>
+          </Section>
+        </Side>
+      </Columns>
+
+      {revokeOpen && (
+        <Backdrop
+          onClick={(e) => e.target === e.currentTarget && setRevokeOpen(false)}
+        >
+          <Dialog role="dialog" aria-modal="true" aria-label="Revoke item">
+            <h2>Revoke this item</h2>
+            <p>
+              It will leave {holder ?? "its holder"}'s inventory and cannot be
+              used or traded. Its history stays readable, including the reason
+              you give here.
+            </p>
+
+            <label htmlFor="revoke-reason">Reason (shown to members)</label>
+            <input
+              id="revoke-reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Duplicate payout from a bot retry"
+            />
+
+            <label htmlFor="revoke-staff-note">Staff note (private)</label>
+            <input
+              id="revoke-staff-note"
+              value={staffNote}
+              onChange={(e) => setStaffNote(e.target.value)}
+              placeholder="Optional. Never shown to members."
+            />
+
+            <DialogActions>
+              <Button type="button" onClick={() => setRevokeOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                $danger
+                type="button"
+                data-testid="confirm-revoke"
+                disabled={!reason.trim() || revoking}
+                onClick={submitRevoke}
               >
-                <EventHead>
-                  <KindPill $tone={kindTone(row.kind)}>
-                    {KIND_LABEL[row.kind]}
-                  </KindPill>
-                  <When>{formatWhen(row.createdAt)}</When>
-                </EventHead>
-                <EventBody>
-                  {describe(row)}
-                  {row.reason && row.kind !== ItemTransactionKind.Import ? (
-                    <> {row.reason}</>
-                  ) : null}
-                  {row.staffNote && (
-                    <StaffNote>
-                      <Lock size={11} />
-                      <span>{row.staffNote}</span>
-                    </StaffNote>
-                  )}
-                </EventBody>
-              </Event>
-            ))}
-          </Timeline>
-        )}
-      </Section>
+                {revoking ? "Revoking\u2026" : "Revoke item"}
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Backdrop>
+      )}
     </Container>
   );
 };
