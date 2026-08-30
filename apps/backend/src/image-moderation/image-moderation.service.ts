@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { PermissionService } from "../auth/PermissionService";
@@ -12,20 +13,59 @@ import {
   ModerationStatus,
   ModerationRejectionReason,
   Prisma,
+  CurrencyTransactionSource,
 } from "@prisma/client";
+import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { ImageModerationQueueFiltersInput } from "./dto/image-moderation.dto";
 import {
   queueImageInclude,
   moderationActionInclude,
 } from "./utils/image-moderation-mappers";
 
+/** The optional currency reward attached to an approval. */
+export interface ApproveImageAward {
+  currencyId?: string | null;
+  awards?: Array<{ userId: string; amount: number }>;
+  staffNote?: string | null;
+}
+
 @Injectable()
 export class ImageModerationService {
+  private readonly logger = new Logger(ImageModerationService.name);
+
   constructor(
     private readonly db: DatabaseService,
     private readonly permissionService: PermissionService,
     private readonly emailService: EmailService,
+    private readonly currencyLedger: CurrencyLedgerService,
   ) {}
+
+  /**
+   * Refuse an award from someone who may moderate but may not grant.
+   *
+   * Moderating images and handing out prizes are separate jobs with separate
+   * permissions, and most moderators hold only the first. This is the check
+   * that matters -- the widget being hidden is a convenience, not a control.
+   */
+  private async assertCanAward(userId: string, imageId: string) {
+    const communityId = await this.getImageCommunityId(imageId);
+    if (!communityId) {
+      throw new BadRequestException(
+        "This image does not belong to a community, so it has no currency to award",
+      );
+    }
+
+    const canGrant = await this.permissionService.hasCommunityPermission(
+      userId,
+      communityId,
+      CommunityPermission.CanGrantItems,
+    );
+    if (!canGrant) {
+      throw new ForbiddenException(
+        "You do not have permission to award currency in this community",
+      );
+    }
+  }
 
   /**
    * Get community IDs where the user has image moderation permission
@@ -200,7 +240,11 @@ export class ImageModerationService {
   /**
    * Approve an image
    */
-  async approveImage(imageId: string, moderatorId: string) {
+  async approveImage(
+    imageId: string,
+    moderatorId: string,
+    award?: ApproveImageAward,
+  ) {
     // Verify permission
     const canModerate = await this.canUserModerateImage(moderatorId, imageId);
     if (!canModerate) {
@@ -223,21 +267,59 @@ export class ImageModerationService {
       throw new BadRequestException("Image is not pending moderation");
     }
 
-    // Update image and create action record in a transaction
-    const [updatedImage, action] = await this.db.$transaction([
-      this.db.image.update({
+    const awards = (award?.awards ?? []).filter((a) => a.amount > 0);
+    if (awards.length > 0) {
+      // The award widget is hidden from viewers without this permission, but
+      // hiding a control is not a check. A mutation that trusted the client
+      // here would let anyone who can moderate mint unlimited currency.
+      await this.assertCanAward(moderatorId, imageId);
+      if (!award?.currencyId) {
+        throw new BadRequestException(
+          "A currency is required when awarding for an approval",
+        );
+      }
+    }
+
+    // Interactive form, not the array form: the currency credit has to run on
+    // the same client so that approving and paying commit together. A member
+    // paid for an approval that rolled back, or approved without the payment
+    // that was promised, are both worse than the whole thing failing.
+    const { action, credit } = await this.db.$transaction(async (tx) => {
+      await tx.image.update({
         where: { id: imageId },
         data: { moderationStatus: ModerationStatus.APPROVED },
-      }),
-      this.db.imageModerationAction.create({
+      });
+
+      const created = await tx.imageModerationAction.create({
         data: {
           imageId,
           moderatorId,
           action: ModerationStatus.APPROVED,
         },
         include: moderationActionInclude,
-      }),
-    ]);
+      });
+
+      const paid =
+        awards.length > 0 && award?.currencyId
+          ? await this.currencyLedger.credit({
+              currencyId: award.currencyId,
+              awards,
+              reason: "Upload approved",
+              staffNote: award.staffNote ?? null,
+              actorUserId: moderatorId,
+              // The moderator caused this, so the ledger names them. The
+              // permission to mint came from the community, not from the
+              // approval -- but "who did it" is still the moderator.
+              source: CurrencyTransactionSource.IMAGE_APPROVAL,
+              sourceId: imageId,
+              tx,
+              // Approving must not fail because an uploader has since left.
+              skipNonMembers: true,
+            })
+          : null;
+
+      return { action: created, credit: paid };
+    });
 
     // Send notification email
     await this.sendApprovalNotification(
@@ -245,6 +327,16 @@ export class ImageModerationService {
       image.uploader.username,
       image.originalFilename,
     );
+
+    if (credit && credit.skipped.length > 0) {
+      // Not an error -- the approval is what mattered and it succeeded -- but
+      // somebody the moderator chose to pay did not get paid, so it should be
+      // findable in the logs rather than only visible as an absence.
+      this.logger.warn(
+        `Approval of image ${imageId}: skipped currency award for ` +
+          `non-members ${credit.skipped.join(", ")}`,
+      );
+    }
 
     return action;
   }

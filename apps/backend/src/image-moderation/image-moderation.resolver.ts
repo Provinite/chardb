@@ -1,6 +1,19 @@
-import { Resolver, Query, Mutation, Args, Int, ID } from "@nestjs/graphql";
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Args,
+  Int,
+  ID,
+  ResolveField,
+  Parent,
+} from "@nestjs/graphql";
 import { UseGuards } from "@nestjs/common";
 import { ImageModerationService } from "./image-moderation.service";
+import { DatabaseService } from "../database/database.service";
+import { CurrencyTransactionSource } from "@prisma/client";
+import { CurrencyTransaction } from "../currencies/entities/currency-transaction.entity";
+import { mapPrismaCurrencyTransactionToGraphQL } from "../currencies/utils/currency-resolver-mappers";
 import { MediaService } from "../media/media.service";
 import {
   ImageModerationAction,
@@ -156,6 +169,11 @@ export class ImageModerationResolver {
     const action = await this.imageModerationService.approveImage(
       input.imageId,
       user.id,
+      {
+        currencyId: input.currencyId,
+        awards: input.awards,
+        staffNote: input.staffNote,
+      },
     );
     return mapPrismaImageModerationActionToGraphQL(action);
   }
@@ -179,5 +197,39 @@ export class ImageModerationResolver {
       input.reasonText,
     );
     return mapPrismaImageModerationActionToGraphQL(action);
+  }
+}
+
+/**
+ * What an approval actually paid out.
+ *
+ * Read back from the ledger rather than stored on the moderation row, so
+ * there is exactly one record of the money and it cannot disagree with
+ * itself. This is what the `source` / `sourceId` columns on a currency
+ * transaction are for: without them the only way to find the coin an approval
+ * created would be to match on reason text.
+ */
+@Resolver(() => ImageModerationAction)
+export class ImageModerationActionFieldsResolver {
+  constructor(private readonly database: DatabaseService) {}
+
+  @AllowAnyAuthenticated()
+  @ResolveField(() => [CurrencyTransaction], {
+    name: "currencyAwards",
+    description:
+      "Currency granted because this image was approved. Empty for a " +
+      "rejection, or when nothing was awarded.",
+  })
+  async resolveCurrencyAwards(
+    @Parent() action: ImageModerationAction,
+  ): Promise<CurrencyTransaction[]> {
+    const rows = await this.database.currencyTransaction.findMany({
+      where: {
+        source: CurrencyTransactionSource.IMAGE_APPROVAL,
+        sourceId: action.imageId,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    return rows.map(mapPrismaCurrencyTransactionToGraphQL);
   }
 }

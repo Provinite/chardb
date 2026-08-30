@@ -57,6 +57,8 @@ import { mapPrismaGalleryToGraphQL } from "../galleries/utils/gallery-resolver-m
 import { mapPrismaImageToGraphQL } from "../images/utils/image-resolver-mappers";
 import { FalseOnForbiddenFilter } from "../auth/filters/FalseOnForbiddenFilter";
 import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
+import { MediaAwardRecipient } from "./entities/media-award-recipient.entity";
+import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
 
 /**
  * GraphQL resolver for media operations
@@ -448,6 +450,53 @@ export class MediaResolver {
 
     // Return actual image with real URLs
     return mapPrismaImageToGraphQL(prismaImage);
+  }
+
+  /**
+   * Who could be rewarded for this media, for a viewer able to reward them.
+   *
+   * Null -- not an error, and not an empty list -- for anyone without
+   * `canGrantItems`, so the moderation queue still loads for moderators who
+   * only moderate, and the award widget simply does not render. Deciding this
+   * on the server rather than in the client is the point: the mutation refuses
+   * awards from the same people, and one of those checks being the only one
+   * would be the bug.
+   *
+   * An empty list means something different: the viewer may reward, but this
+   * media names nobody who can be paid.
+   */
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanGrantItems)
+  @ResolveCommunityFrom({ characterId: "$root.characterId" })
+  @UseFilters(NullOnForbiddenFilter)
+  @ResolveField(() => [MediaAwardRecipient], {
+    nullable: true,
+    description:
+      "People who could be awarded currency for this media. Null unless the " +
+      "viewer holds canGrantItems in the owning community.",
+    middleware: [sentinelValueMiddleware],
+  })
+  async awardRecipients(
+    @Parent() media: MediaEntity,
+  ): Promise<MediaAwardRecipient[] | null> {
+    // Currency is community-scoped, and a media reaches a community only
+    // through its character. Without one there is no currency to award.
+    if (!media.characterId) return null;
+
+    const communityId = await this.mediaService.getCommunityIdForMedia(
+      media.id,
+    );
+    if (!communityId) return null;
+
+    const recipients = await this.mediaService.findAwardRecipients(
+      media.id,
+      communityId,
+    );
+
+    return recipients.map((recipient) => ({
+      ...recipient,
+      user: mapPrismaUserToGraphQL(recipient.user),
+    }));
   }
 
   /**

@@ -867,6 +867,20 @@ enum CurrencyTransactionKind {
   IMPORT
 }
 
+/// What caused a currency movement.
+///
+/// The reason string says why in words; this says what in a form a query can
+/// follow. Without it a member reading "+25, upload approved" has no way to
+/// reach the upload, and staff auditing forty approvals cannot tell the rows
+/// apart at all. The item ledger never had this problem because every
+/// ItemTransaction names its item.
+enum CurrencyTransactionSource {
+  /// A member or staff acted directly, with no other record behind it.
+  DIRECT
+  /// Awarded when an uploaded image was approved. Source id is the image.
+  IMAGE_APPROVAL
+}
+
 /// One member's side of one currency movement. A transfer is two rows.
 ///
 /// `amount` is the signed delta applied to `userId`'s balance, so a member's
@@ -904,6 +918,16 @@ model CurrencyTransaction {
   /// community, and excluded from search, exactly as on the item ledger.
   staffNote String? @map("staff_note") @db.Text
 
+  /// What caused this row. DIRECT means somebody simply did it.
+  source   CurrencyTransactionSource @default(DIRECT)
+  /// The id of the record named by `source` -- an image id for IMAGE_APPROVAL.
+  ///
+  /// Deliberately not a foreign key: it points at a different table depending
+  /// on `source`, and a ledger row must outlive the thing that caused it. A
+  /// cascade from a deleted image that erased the coin it created would be a
+  /// far worse bug than a dangling id.
+  sourceId String?                   @map("source_id")
+
   createdAt DateTime @default(now()) @map("created_at")
 
   currency     Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
@@ -915,6 +939,10 @@ model CurrencyTransaction {
   @@index([userId, createdAt])
   @@index([currencyId, userId, createdAt])
   @@index([batchId])
+  /// Answers "what did approving this image pay out", which is the audit
+  /// direction moderation needs. Partial-ish in practice: most rows are
+  /// DIRECT with a null sourceId.
+  @@index([source, sourceId])
   @@map("currency_transactions")
 }
 
