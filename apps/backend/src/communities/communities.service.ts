@@ -72,7 +72,7 @@ export class CommunitiesService {
         },
       });
 
-      const moderatorRole = await prisma.role.create({
+      await prisma.role.create({
         data: {
           name: "Moderator",
           communityId: community.id,
@@ -95,7 +95,7 @@ export class CommunitiesService {
         },
       });
 
-      const memberRole = await prisma.role.create({
+      await prisma.role.create({
         data: {
           name: "Member",
           communityId: community.id,
@@ -168,7 +168,7 @@ export class CommunitiesService {
 
   /** Update a community */
   async update(id: string, input: UpdateCommunityServiceInput) {
-    const community = await this.findOne(id); // This will throw if not found
+    await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.CommunityUpdateInput = {};
 
