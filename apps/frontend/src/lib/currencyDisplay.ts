@@ -31,10 +31,7 @@ export function formatAmount(
  * A ledger row's whole meaning is its direction, so the sign is never dropped
  * -- "50 HC" in a statement is ambiguous in a way "+50 HC" is not.
  */
-export function formatDelta(
-  amount: number,
-  currency: DisplayCurrency,
-): string {
+export function formatDelta(amount: number, currency: DisplayCurrency): string {
   const sign = amount < 0 ? "−" : "+";
   const magnitude = Math.abs(amount).toLocaleString("en-US");
   return currency.symbol

@@ -1,7 +1,14 @@
 import React, { useMemo, useState } from "react";
 import styled, { css } from "styled-components";
 import { useParams, Link } from "react-router-dom";
-import { Coins, Plus, Edit2, Archive, ArchiveRestore, Send } from "lucide-react";
+import {
+  Coins,
+  Plus,
+  Edit2,
+  Archive,
+  ArchiveRestore,
+  Send,
+} from "lucide-react";
 import { Button } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -571,8 +578,8 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
           </p>
           <p>
             A currency is for something fungible that members earn and spend —
-            event coin, shop credit. Anything with its own history should stay an
-            item.
+            event coin, shop credit. Anything with its own history should stay
+            an item.
           </p>
           {canManage && (
             <Button onClick={openCreate}>
@@ -772,7 +779,7 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
 
       {/* ==================== Grant ==================== */}
       <Modal isOpen={modal === "mint"}>
-        <ModalContent>
+        <ModalContent data-testid="grant-dialog">
           <ModalTitle>Grant {active?.name}</ModalTitle>
           <Form onSubmit={handleMint}>
             <FormGroup>

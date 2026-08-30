@@ -112,10 +112,12 @@ const Chip = styled.button<{ $active: boolean }>`
   font-size: 0.8125rem;
   cursor: pointer;
   border: 1px solid
-    ${({ theme, $active }) => ($active ? theme.colors.primary : theme.colors.border)};
+    ${({ theme, $active }) =>
+      $active ? theme.colors.primary : theme.colors.border};
   background: ${({ theme, $active }) =>
     $active ? theme.colors.primary : theme.colors.surface};
-  color: ${({ theme, $active }) => ($active ? "#fff" : theme.colors.text.primary)};
+  color: ${({ theme, $active }) =>
+    $active ? "#fff" : theme.colors.text.primary};
 `;
 
 const List = styled.div`

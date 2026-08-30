@@ -9,6 +9,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Currency`, `CurrencyBalance`, `CurrencyTransaction`** with queries
+  `currencies`, `currency`, `currencySupply`, `memberWallet`,
+  `currencyTransactions`, `currencyHolders`, and mutations `createCurrency`,
+  `updateCurrency`, `mintCurrency`, `burnCurrency`, `transferCurrency`.
+
+  Reads are gated on community membership; writes on item permissions. Reading
+  is public within a community for the same reason item provenance is: an
+  economy nobody can inspect cannot be argued with, and a member about to trade
+  needs to see who holds what. Staff notes are resolved per viewer and returned
+  as null to anyone without item permissions, and are excluded from the search
+  filter so a member cannot probe for a note they cannot read.
+
+- **Balances are stored, not summed from the ledger.** They are read on every
+  surface showing a price and written far less often. They move only by
+  `UPDATE ... SET amount = amount + n RETURNING amount` inside the same
+  transaction as the row explaining them, and `balanceAfter` records what that
+  statement returned — so the two can be checked against each other rather than
+  merely trusted.
+
+- **A transfer is two signed rows sharing a batch id**, one per side. Each
+  member's own statement then reads correctly alone, and a community-wide view
+  can still collapse the pair into one line. A bulk grant also shares a batch
+  id but is never collapsed: each recipient received their own coin.
+
+- **Spending burns.** There is no treasury, because a treasury balance nobody
+  can see or spend is a number that only grows. `SPEND` is deliberately a
+  separate kind from `BURN`: a member buying something and staff taking coin
+  away are different events, and collapsing them would make a shop look like a
+  punishment in the member's own statement.
+
+### Migration
+
+- **`20260830105842_community_currency`** carries five CHECK constraints
+  Prisma cannot express, written by hand:
+
+  1. **A balance may not go negative.** This is not a belt over the service's
+     own check — "read the balance, compare, then write" races two concurrent
+     spends and lets both through. The constraint is evaluated by the same
+     statement that does the decrement, so the loser gets an error rather than
+     an overdraft.
+  2. A ledger row must move a non-zero amount.
+  3. A row names at most one kind of actor (a user, or a label, never both).
+  4. A counterparty is present exactly when the kind is `TRANSFER`.
+  5. The sign agrees with the kind: `MINT` adds, `BURN` and `SPEND` remove.
+
+  All five were verified firing against real Postgres, along with the increment
+  returning its post-value.
+
+  **Note for future maintenance**: Prisma surfaces a CHECK violation as
+  `PrismaClientUnknownRequestError` with *no* `code` field, so the overdraft
+  path is detected by matching the constraint name in the message. Matching on
+  a Prisma error code would compile, pass a mocked test, and then show members
+  a raw database error in production.
+
+### Fixed
+
+- **Deadlock avoidance in transfers and bulk grants.** Balance rows are touched
+  in sorted user-id order rather than sender-first. Each `UPDATE` holds its row
+  lock until commit, so ordering by the direction of the transfer would mean A
+  paying B while B pays A each held the row the other needed, and Postgres
+  would break the tie by killing one of them.
+
+### Tests
+
+- `currency-ledger.service.spec.ts` (29) and `currencies.service.spec.ts` (18).
+
+### Added
+
 - **`itemEconomy(communityId)`**: per item type, live circulation, distinct holders, grants and revokes over the last 30 days, and how many are unclaimed. Circulation and holders are counted separately on purpose — three potions held by one person is three in circulation and one holder, and an unclaimed item counts toward circulation but toward nobody's holdings.
 
 - **`memberHoldings(communityId, userId)`**: one member's live holdings, grouped by item type, with every individual item listed inside its group. Deliberately unpaginated: an inventory is a whole thing, and a count beside a truncated list is a lie.

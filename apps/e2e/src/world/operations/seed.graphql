@@ -255,3 +255,106 @@ query SeedItem($id: ID!) {
     destroyedAt
   }
 }
+
+# ==================== Currency ====================
+
+# Requires community CanManageItems -- currency reuses the item permissions
+# rather than defining its own.
+mutation SeedCreateCurrency($input: CreateCurrencyInput!) {
+  createCurrency(input: $input) {
+    id
+    name
+    code
+    symbol
+  }
+}
+
+mutation SeedUpdateCurrency($id: ID!, $input: UpdateCurrencyInput!) {
+  updateCurrency(id: $id, input: $input) {
+    id
+    archivedAt
+  }
+}
+
+# Requires community CanGrantItems. Returns the batch id every row it wrote
+# shares -- one row per recipient, so paying eleven people is one event.
+mutation SeedMintCurrency($input: MintCurrencyInput!) {
+  mintCurrency(input: $input)
+}
+
+mutation SeedBurnCurrency($input: BurnCurrencyInput!) {
+  burnCurrency(input: $input)
+}
+
+# Needs only community membership. The balance is the authorisation.
+mutation SeedTransferCurrency($input: TransferCurrencyInput!) {
+  transferCurrency(input: $input)
+}
+
+query SeedMemberWallet($communityId: ID!, $userId: ID!) {
+  memberWallet(communityId: $communityId, userId: $userId) {
+    userId
+    balances {
+      amount
+      currency {
+        id
+        code
+        name
+      }
+    }
+  }
+}
+
+query SeedCurrencySupply($communityId: ID!) {
+  currencySupply(communityId: $communityId) {
+    currency {
+      id
+      code
+    }
+    inCirculation
+    holders
+    mintedLast30Days
+    removedLast30Days
+    largestBalance
+  }
+}
+
+query SeedCurrencyTransactions($filters: CurrencyTransactionFiltersInput!) {
+  currencyTransactions(filters: $filters) {
+    total
+    hasMore
+    transactions {
+      id
+      kind
+      amount
+      balanceAfter
+      batchId
+      reason
+      staffNote
+      userId
+      counterpartyId
+      currency {
+        code
+      }
+    }
+  }
+}
+
+query SeedCurrencies($communityId: ID!, $includeArchived: Boolean) {
+  currencies(communityId: $communityId, includeArchived: $includeArchived) {
+    id
+    name
+    code
+    archivedAt
+  }
+}
+
+query SeedCurrencyHolders($currencyId: ID!) {
+  currencyHolders(currencyId: $currencyId) {
+    userId
+    amount
+    user {
+      username
+    }
+  }
+}

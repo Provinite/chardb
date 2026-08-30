@@ -201,10 +201,7 @@ export const CurrencyWallet: React.FC<CurrencyWalletProps> = ({
   const [transferCurrency, { loading: transferring }] =
     useTransferCurrencyMutation();
 
-  const balances = useMemo(
-    () => data?.memberWallet?.balances ?? [],
-    [data],
-  );
+  const balances = useMemo(() => data?.memberWallet?.balances ?? [], [data]);
 
   // Everyone but the sender. Transferring to yourself is refused server-side
   // anyway, but offering it as a choice is just a dead end in the form.
@@ -288,7 +285,7 @@ export const CurrencyWallet: React.FC<CurrencyWalletProps> = ({
       )}
 
       <Modal isOpen={Boolean(sending)}>
-        <ModalContent>
+        <ModalContent data-testid="transfer-dialog">
           <ModalTitle>Send {sending?.name}</ModalTitle>
           <Form onSubmit={handleTransfer}>
             <FormGroup>

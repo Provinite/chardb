@@ -237,7 +237,7 @@ export const downloadCommand: CommandModule<object, DownloadArgs> = {
     const stateFile = path.join(getDataDir(), "download-state.json");
 
     // Load or initialize state
-    let state: DownloadState = resume
+    const state: DownloadState = resume
       ? ((await loadState(stateFile)) ?? {
           folders: {},
           lastUpdated: new Date().toISOString(),
