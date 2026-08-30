@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Logging out did not clear the Apollo cache**, so the next person to sign in
+  on the same browser could see the previous user's cached data — their
+  notifications, their `me`, their liked characters — until each query's network
+  reply landed. Found during the security review of the notification work.
+
 - **The notification badge showed the previous session's count after signing
   in.** The header outlives a login, so the bell never remounted and nothing
   clears the Apollo cache in between — the number stayed stale until the
