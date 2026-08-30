@@ -18,6 +18,8 @@ import {
   ScrollText,
   Search,
   Coins,
+  ShoppingCart,
+  Store,
 } from "lucide-react";
 import { spotlight } from "@mantine/spotlight";
 import { CommunityNavigationItem } from "./CommunityNavigationItem";
@@ -536,6 +538,15 @@ export const CommunityNavigationSidebar: React.FC<
               isNested
             />
 
+            {/* Any member can shop; what is for sale is configured under
+                Administration. */}
+            <CommunityNavigationItem
+              to={`${communityBasePath}/shop`}
+              icon={ShoppingCart}
+              label="Shop"
+              isNested
+            />
+
             {/* Invite Codes - requires invite permissions */}
             {hasInvitePermissions && (
               <CommunityNavigationItem
@@ -627,6 +638,15 @@ export const CommunityNavigationSidebar: React.FC<
 
               {/* Items - requires item management permissions */}
               {(permissions.canManageItems || permissions.canGrantItems) && (
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/admin/shop`}
+                  icon={Store}
+                  label="Shop"
+                  isNested
+                />
+              )}
+
+              {hasAdminPermissions && (
                 <CommunityNavigationItem
                   to={`${communityBasePath}/admin/items`}
                   icon={Package}

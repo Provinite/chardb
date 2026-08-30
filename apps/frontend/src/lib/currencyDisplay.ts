@@ -147,3 +147,54 @@ export function netIssued(
     return total + row.amount;
   }, 0);
 }
+
+/** One currency and how much of it a price asks for. */
+export interface PriceComponent {
+  amount: number;
+  currency: DisplayCurrency;
+}
+
+/**
+ * Render a whole price option.
+ *
+ * Several components is one price asking for several currencies at once --
+ * "2 Clover and 1 Star" -- so they are joined with "and" rather than a list
+ * separator. A comma would read as a choice between them, which is exactly
+ * what a different price option is.
+ */
+export function formatPrice(components: PriceComponent[]): string {
+  if (components.length === 0) return "Free";
+  return components.map((c) => formatAmount(c.amount, c.currency)).join(" + ");
+}
+
+/**
+ * Add up a cart's cost, per currency.
+ *
+ * Currencies never convert into one another, so a total is a set of amounts
+ * rather than a number. Anything that reduced this to one figure would be
+ * inventing an exchange rate.
+ */
+export function sumPrices(
+  prices: PriceComponent[][],
+): Array<{ currency: DisplayCurrency; amount: number }> {
+  const byCode = new Map<
+    string,
+    { currency: DisplayCurrency; amount: number }
+  >();
+  for (const components of prices) {
+    for (const component of components) {
+      const existing = byCode.get(component.currency.code);
+      if (existing) {
+        existing.amount += component.amount;
+      } else {
+        byCode.set(component.currency.code, {
+          currency: component.currency,
+          amount: component.amount,
+        });
+      }
+    }
+  }
+  return [...byCode.values()].sort((a, b) =>
+    a.currency.code < b.currency.code ? -1 : 1,
+  );
+}
