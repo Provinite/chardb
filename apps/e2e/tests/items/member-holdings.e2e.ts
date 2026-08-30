@@ -1,10 +1,5 @@
 import { presetTest, expect } from "../../src/fixtures.js";
 import type { Page } from "@playwright/test";
-import {
-  ItemTransactionKind,
-  SeedItemProvenanceDocument,
-} from "../../src/generated/graphql.js";
-
 const test = presetTest("community-items");
 
 /**
@@ -116,14 +111,27 @@ test.describe("viewing another member", () => {
   });
 });
 
-test.describe("staff revoking from a member's page", () => {
+test.describe("staff have no actions here", () => {
   test.use({ persona: "quartermaster" });
 
-  test.beforeEach(async ({ world }) => {
-    await world.reset();
+  test("holdings offer no revoke, even with the permission", async ({
+    page,
+    world,
+  }) => {
+    // Deliberate: revoking happens on an item's own page, where its history is
+    // in front of you. You should not be able to take something away without
+    // first looking at what it is and where it came from.
+    await page.goto(memberUrl(world.community.id, world.users.member.username));
+
+    const potion = group(page, world.itemTypes.potion.id);
+    await potion.getByTestId("expand-group").click();
+
+    await expect(page.getByRole("checkbox")).toHaveCount(0);
+    await expect(page.getByTestId("selection-bar")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /revoke/i })).toHaveCount(0);
   });
 
-  test("can revoke selected items, naming which ones", async ({
+  test("an item links through to where revoking happens", async ({
     page,
     world,
   }) => {
@@ -131,74 +139,13 @@ test.describe("staff revoking from a member's page", () => {
 
     const potion = group(page, world.itemTypes.potion.id);
     await potion.getByTestId("expand-group").click();
+    await potion.getByTestId("holding-item").first().getByRole("link").click();
 
-    // Two of three: the whole reason items are individually addressable.
-    const boxes = potion.getByRole("checkbox");
-    await boxes.nth(0).check();
-    await boxes.nth(1).check();
-
-    await expect(page.getByTestId("selection-bar")).toContainText(
-      "2 items selected",
+    await expect(page).toHaveURL(
+      new RegExp(`/communities/${world.community.id}/items/`),
     );
-    await page.getByTestId("revoke-selected").click();
-    await page
-      .getByLabel("Reason (shown to members)")
-      .fill("Duplicate payout corrected");
-    await page.getByTestId("confirm-revoke").click();
-
-    await expect(group(page, world.itemTypes.potion.id)).toContainText("×1", {
-      timeout: 15_000,
-    });
-  });
-
-  test("the revoked items keep their history", async ({ page, world }) => {
-    await page.goto(memberUrl(world.community.id, world.users.member.username));
-
-    const potion = group(page, world.itemTypes.potion.id);
-    await potion.getByTestId("expand-group").click();
-    await potion.getByRole("checkbox").first().check();
-    await page.getByTestId("revoke-selected").click();
-    await page.getByLabel("Reason (shown to members)").fill("Taken back");
-    await page.getByTestId("confirm-revoke").click();
-
-    await expect(group(page, world.itemTypes.potion.id)).toContainText("×2", {
-      timeout: 15_000,
-    });
-
-    // Soft delete: whichever item was selected left the inventory, but its
-    // story survives. Checked across all three because the checkbox order is
-    // the page's, not the seed's.
-    const kinds = await Promise.all(
-      world.grantedItems.ids.map(async (id) => {
-        const { itemProvenance } = await world
-          .as("member")
-          .gql(SeedItemProvenanceDocument, { itemId: id });
-        return itemProvenance.map((t) => t.kind);
-      }),
-    );
-    expect(
-      kinds.filter((k) => k.includes(ItemTransactionKind.Revoke)),
-    ).toHaveLength(1);
-  });
-
-  test("the confirm button needs a reason", async ({ page, world }) => {
-    await page.goto(memberUrl(world.community.id, world.users.member.username));
-
-    const potion = group(page, world.itemTypes.potion.id);
-    await potion.getByTestId("expand-group").click();
-    await potion.getByRole("checkbox").first().check();
-    await page.getByTestId("revoke-selected").click();
-
-    await expect(page.getByTestId("confirm-revoke")).toBeDisabled();
-    await page.getByLabel("Reason (shown to members)").fill("Returned");
-    await expect(page.getByTestId("confirm-revoke")).toBeEnabled();
-  });
-
-  test("cannot revoke from their own page", async ({ page, world }) => {
-    // Holding the permission does not make your own inventory a staff target.
-    await page.goto(ownUrl(world.community.id));
-
-    await expect(page.getByTestId("selection-bar")).toHaveCount(0);
+    // The revoke control lives here, next to the history.
+    await expect(page.getByTestId("revoke-item")).toBeVisible();
   });
 });
 

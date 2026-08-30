@@ -1,16 +1,13 @@
 import React, { useState } from "react";
 import styled, { css } from "styled-components";
 import { useParams, Link } from "react-router-dom";
-import { Package, Trash2, ChevronDown } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { Package, ChevronDown } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
-import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import {
   useCommunityByIdQuery,
   useGetMemberHoldingsQuery,
   useGetUserProfileQuery,
-  useRevokeItemsMutation,
 } from "../generated/graphql";
 
 /**
@@ -18,14 +15,12 @@ import {
  *
  * One page, three audiences: a member looking at themselves, someone sizing up
  * a trade partner, and staff about to correct something. Inventories are public
- * within a community, so permissions add actions here — they never change what
- * is shown. Building three pages would have meant three places for the same
- * facts to drift apart.
+ * within a community, so all three see the same thing.
  *
- * Items are grouped by type because that is how people think about their own
- * inventory, but every item is individually addressable underneath: each has
- * its own history, and revoking two of someone's three potions means naming
- * which two.
+ * There are no staff actions here on purpose. Revoking happens on an item's own
+ * page, where its history is in front of you — you should not be able to take
+ * something away without first looking at what it is and where it came from.
+ * This page's job is to get you there.
  */
 
 const Container = styled.div`
@@ -100,13 +95,13 @@ const Group = styled.div`
 const GroupHead = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
+  gap: 1rem;
+  padding: 1.125rem 1.25rem;
 `;
 
 const Swatch = styled.div<{ $hex?: string | null }>`
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: ${({ theme }) => theme.borderRadius.md};
   flex: none;
   display: grid;
@@ -131,7 +126,9 @@ const GroupInfo = styled.div`
 
 const GroupName = styled.div`
   font-weight: 600;
+  font-size: 1.0625rem;
   color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: 0.125rem;
 `;
 
 const GroupMeta = styled.div`
@@ -142,7 +139,7 @@ const GroupMeta = styled.div`
 const Count = styled.span`
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.25rem;
   color: ${({ theme }) => theme.colors.text.primary};
   white-space: nowrap;
 `;
@@ -191,114 +188,35 @@ const Expand = styled(Button)<{ $open: boolean }>`
 const Items = styled.ul`
   list-style: none;
   margin: 0;
-  padding: 0.25rem 1rem 0.875rem 4.4rem;
+  padding: 0 1.25rem 1.125rem 4.75rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 `;
 
 const ItemRow = styled.li`
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  font-size: 0.8125rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-
   a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid ${({ theme }) => theme.colors.border};
+    border-radius: ${({ theme }) => theme.borderRadius.md};
+    font-size: 0.8125rem;
     font-variant-numeric: tabular-nums;
-  }
+    color: ${({ theme }) => theme.colors.text.secondary};
 
-  input[type="checkbox"] {
-    cursor: pointer;
+    &:hover {
+      background: ${({ theme }) => theme.colors.surface};
+      color: ${({ theme }) => theme.colors.text.primary};
+      border-color: ${({ theme }) => theme.colors.primary};
+    }
   }
 `;
 
 const Since = styled.span`
   color: ${({ theme }) => theme.colors.text.muted};
-  font-size: 0.75rem;
-`;
-
-const Actions = styled.div`
-  display: flex;
-  gap: 0.375rem;
-  flex-wrap: wrap;
-`;
-
-const SelectionBar = styled.div`
-  position: sticky;
-  bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid ${({ theme }) => theme.colors.primary};
-  background: ${({ theme }) => theme.colors.background};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  box-shadow: ${({ theme }) => theme.shadows.md};
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Backdrop = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-`;
-
-const Dialog = styled.div`
-  background: ${({ theme }) => theme.colors.background};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  padding: 1.5rem;
-  width: 100%;
-  max-width: 480px;
-  box-shadow: ${({ theme }) => theme.shadows.lg};
-
-  h2 {
-    font-size: 1.125rem;
-    margin: 0 0 0.5rem;
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
-
-  p {
-    font-size: 0.875rem;
-    color: ${({ theme }) => theme.colors.text.secondary};
-    margin: 0 0 1rem;
-  }
-
-  label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: ${({ theme }) => theme.colors.text.muted};
-    margin-bottom: 0.3rem;
-  }
-
-  input[type="text"] {
-    width: 100%;
-    font: inherit;
-    font-size: 0.875rem;
-    padding: 0.5rem 0.7rem;
-    border: 1px solid ${({ theme }) => theme.colors.border};
-    border-radius: ${({ theme }) => theme.borderRadius.md};
-    background: ${({ theme }) => theme.colors.background};
-    color: ${({ theme }) => theme.colors.text.primary};
-    margin-bottom: 1rem;
-  }
-`;
-
-const DialogActions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
+  font-size: 0.6875rem;
 `;
 
 const Empty = styled.div`
@@ -327,13 +245,8 @@ export const CommunityInventoryPage: React.FC = () => {
     username?: string;
   }>();
   const { user } = useAuth();
-  const { permissions } = useUserCommunityRole(communityId);
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [revokeOpen, setRevokeOpen] = useState(false);
-  const [reason, setReason] = useState("");
-  const [staffNote, setStaffNote] = useState("");
 
   const { data: communityData } = useCommunityByIdQuery({
     variables: { id: communityId! },
@@ -361,7 +274,6 @@ export const CommunityInventoryPage: React.FC = () => {
     data,
     loading: holdingsLoading,
     error,
-    refetch,
   } = useGetMemberHoldingsQuery({
     variables: { communityId: communityId!, userId: targetUserId ?? "" },
     skip: !communityId || !targetUserId,
@@ -369,11 +281,8 @@ export const CommunityInventoryPage: React.FC = () => {
 
   const loading = profileLoading || holdingsLoading;
 
-  const [revokeItems, { loading: revoking }] = useRevokeItemsMutation();
-
   const report = data?.memberHoldings;
   const holdings = report?.holdings ?? [];
-  const canRevoke = permissions.canGrantItems && !viewingSelf;
 
   const toggleGroup = (id: string) =>
     setExpanded((prev) => {
@@ -382,36 +291,6 @@ export const CommunityInventoryPage: React.FC = () => {
       else next.add(id);
       return next;
     });
-
-  const toggleItem = (id: string) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
-  const submitRevoke = async () => {
-    try {
-      const count = await revokeItems({
-        variables: {
-          itemIds: [...selected],
-          reason: reason.trim(),
-          staffNote: staffNote.trim() || undefined,
-        },
-      });
-      toast.success(
-        `Revoked ${count.data?.revokeItems ?? selected.size} item(s)`,
-      );
-      setRevokeOpen(false);
-      setSelected(new Set());
-      setReason("");
-      setStaffNote("");
-      await refetch();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not revoke");
-    }
-  };
 
   if (!user) {
     return (
@@ -521,37 +400,27 @@ export const CommunityInventoryPage: React.FC = () => {
                     </GroupMeta>
                   </GroupInfo>
                   <Count>×{h.count}</Count>
-                  <Actions>
-                    <Expand
-                      type="button"
-                      $open={open}
-                      data-testid="expand-group"
-                      onClick={() => toggleGroup(h.itemType.id)}
-                    >
-                      {open ? "Hide" : "Show"} items
-                      <ChevronDown size={14} />
-                    </Expand>
-                  </Actions>
+                  <Expand
+                    type="button"
+                    $open={open}
+                    data-testid="expand-group"
+                    onClick={() => toggleGroup(h.itemType.id)}
+                  >
+                    {open ? "Hide" : "Show"} items
+                    <ChevronDown size={14} />
+                  </Expand>
                 </GroupHead>
 
                 {open && (
                   <Items>
                     {h.items.map((item, i) => (
                       <ItemRow key={item.id} data-testid="holding-item">
-                        {canRevoke && (
-                          <input
-                            type="checkbox"
-                            aria-label={`Select ${h.itemType.name} ${i + 1}`}
-                            checked={selected.has(item.id)}
-                            onChange={() => toggleItem(item.id)}
-                          />
-                        )}
                         <Link
                           to={`/communities/${communityId}/items/${item.id}`}
                         >
-                          {h.itemType.name} #{i + 1}
+                          #{i + 1}
+                          <Since>{formatDate(item.createdAt)}</Since>
                         </Link>
-                        <Since>since {formatDate(item.createdAt)}</Since>
                       </ItemRow>
                     ))}
                   </Items>
@@ -560,74 +429,6 @@ export const CommunityInventoryPage: React.FC = () => {
             );
           })}
         </div>
-      )}
-
-      {canRevoke && selected.size > 0 && (
-        <SelectionBar data-testid="selection-bar">
-          <span>
-            {selected.size} item{selected.size === 1 ? "" : "s"} selected
-          </span>
-          <Button type="button" onClick={() => setSelected(new Set())}>
-            Clear
-          </Button>
-          <Button
-            $danger
-            type="button"
-            data-testid="revoke-selected"
-            onClick={() => setRevokeOpen(true)}
-          >
-            <Trash2 size={14} /> Revoke selected
-          </Button>
-        </SelectionBar>
-      )}
-
-      {revokeOpen && (
-        <Backdrop
-          onClick={(e) => e.target === e.currentTarget && setRevokeOpen(false)}
-        >
-          <Dialog role="dialog" aria-modal="true" aria-label="Revoke items">
-            <h2>
-              Revoke {selected.size} item{selected.size === 1 ? "" : "s"}
-            </h2>
-            <p>
-              They leave {who}&apos;s inventory and cannot be used or traded.
-              Their history stays readable, including the reason you give here.
-            </p>
-
-            <label htmlFor="revoke-reason">Reason (shown to members)</label>
-            <input
-              id="revoke-reason"
-              type="text"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Duplicate payout from a bot retry"
-            />
-
-            <label htmlFor="revoke-staff-note">Staff note (private)</label>
-            <input
-              id="revoke-staff-note"
-              type="text"
-              value={staffNote}
-              onChange={(e) => setStaffNote(e.target.value)}
-              placeholder="Optional. Never shown to members."
-            />
-
-            <DialogActions>
-              <Button type="button" onClick={() => setRevokeOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                $danger
-                type="button"
-                data-testid="confirm-revoke"
-                disabled={!reason.trim() || revoking}
-                onClick={submitRevoke}
-              >
-                {revoking ? "Revoking…" : "Revoke"}
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </Backdrop>
       )}
     </Container>
   );

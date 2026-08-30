@@ -85,13 +85,21 @@ const StatsTable = styled.table`
     text-transform: uppercase;
     color: ${({ theme }) => theme.colors.text.muted};
     font-weight: 600;
-    padding: 0.6rem 0.75rem;
+    padding: 0.75rem 1rem;
     border-bottom: 1px solid ${({ theme }) => theme.colors.border};
     white-space: nowrap;
   }
 
+  /* Numbers get room: five columns of digits jammed together is unreadable
+     however correct they are. */
+  th:not(:first-child):not(:last-child),
+  td:not(:first-child):not(:last-child) {
+    text-align: right;
+    padding-right: 1.5rem;
+  }
+
   td {
-    padding: 0.7rem 0.75rem;
+    padding: 1.125rem 1rem;
     border-bottom: 1px solid ${({ theme }) => theme.colors.border};
     vertical-align: middle;
     color: ${({ theme }) => theme.colors.text.primary};
@@ -135,13 +143,14 @@ const Num = styled.td<{ $tone?: "up" | "down" | "attn" }>`
 const ItemCell = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.875rem;
   min-width: 0;
 `;
 
 const ItemTypeMeta = styled.div`
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: ${({ theme }) => theme.colors.text.muted};
+  margin-top: 0.15rem;
 `;
 
 const RowActions = styled.div`
