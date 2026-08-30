@@ -118,6 +118,52 @@ export const TRADE_QUERY = gql`
   ${TRADE_FRAGMENT}
 `;
 
+/**
+ * Everything the composer needs, in one round trip.
+ *
+ * Both inventories and the proposer's balances, because the composer shows all
+ * three at once and fetching them separately would leave the three panes
+ * arriving at different moments.
+ */
+export const TRADE_COMPOSER_QUERY = gql`
+  query TradeComposer($communityId: ID!, $meId: ID!, $themId: ID!) {
+    mine: memberHoldings(communityId: $communityId, userId: $meId) {
+      holdings {
+        count
+        itemType {
+          id
+          name
+          isTradeable
+        }
+        items {
+          id
+        }
+      }
+    }
+    theirs: memberHoldings(communityId: $communityId, userId: $themId) {
+      holdings {
+        count
+        itemType {
+          id
+          name
+          isTradeable
+        }
+      }
+    }
+    wallet: memberWallet(communityId: $communityId, userId: $meId) {
+      balances {
+        amount
+        currency {
+          id
+          name
+          code
+          symbol
+        }
+      }
+    }
+  }
+`;
+
 // ==================== Mutations ====================
 
 export const PROPOSE_TRADE = gql`
@@ -159,6 +205,7 @@ export const CANCEL_TRADE = gql`
 export {
   useTradesQuery,
   useTradeQuery,
+  useTradeComposerQuery,
   useProposeTradeMutation,
   useAcceptTradeMutation,
   useDeclineTradeMutation,

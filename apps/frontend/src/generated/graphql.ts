@@ -5223,6 +5223,15 @@ export type TradeQueryVariables = Exact<{
 
 export type TradeQuery = { __typename?: 'Query', trade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
+export type TradeComposerQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  meId: Scalars['ID']['input'];
+  themId: Scalars['ID']['input'];
+}>;
+
+
+export type TradeComposerQuery = { __typename?: 'Query', mine: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean }, items: Array<{ __typename?: 'Item', id: string }> }> }, theirs: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean } }> }, wallet: { __typename?: 'MemberWallet', balances: Array<{ __typename?: 'CurrencyBalanceLine', amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }> } };
+
 export type ProposeTradeMutationVariables = Exact<{
   input: CreateTradeInput;
 }>;
@@ -13571,6 +13580,79 @@ export type TradeQueryHookResult = ReturnType<typeof useTradeQuery>;
 export type TradeLazyQueryHookResult = ReturnType<typeof useTradeLazyQuery>;
 export type TradeSuspenseQueryHookResult = ReturnType<typeof useTradeSuspenseQuery>;
 export type TradeQueryResult = Apollo.QueryResult<TradeQuery, TradeQueryVariables>;
+export const TradeComposerDocument = gql`
+    query TradeComposer($communityId: ID!, $meId: ID!, $themId: ID!) {
+  mine: memberHoldings(communityId: $communityId, userId: $meId) {
+    holdings {
+      count
+      itemType {
+        id
+        name
+        isTradeable
+      }
+      items {
+        id
+      }
+    }
+  }
+  theirs: memberHoldings(communityId: $communityId, userId: $themId) {
+    holdings {
+      count
+      itemType {
+        id
+        name
+        isTradeable
+      }
+    }
+  }
+  wallet: memberWallet(communityId: $communityId, userId: $meId) {
+    balances {
+      amount
+      currency {
+        id
+        name
+        code
+        symbol
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useTradeComposerQuery__
+ *
+ * To run a query within a React component, call `useTradeComposerQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTradeComposerQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTradeComposerQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      meId: // value for 'meId'
+ *      themId: // value for 'themId'
+ *   },
+ * });
+ */
+export function useTradeComposerQuery(baseOptions: Apollo.QueryHookOptions<TradeComposerQuery, TradeComposerQueryVariables> & ({ variables: TradeComposerQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<TradeComposerQuery, TradeComposerQueryVariables>(TradeComposerDocument, options);
+      }
+export function useTradeComposerLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TradeComposerQuery, TradeComposerQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<TradeComposerQuery, TradeComposerQueryVariables>(TradeComposerDocument, options);
+        }
+export function useTradeComposerSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TradeComposerQuery, TradeComposerQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<TradeComposerQuery, TradeComposerQueryVariables>(TradeComposerDocument, options);
+        }
+export type TradeComposerQueryHookResult = ReturnType<typeof useTradeComposerQuery>;
+export type TradeComposerLazyQueryHookResult = ReturnType<typeof useTradeComposerLazyQuery>;
+export type TradeComposerSuspenseQueryHookResult = ReturnType<typeof useTradeComposerSuspenseQuery>;
+export type TradeComposerQueryResult = Apollo.QueryResult<TradeComposerQuery, TradeComposerQueryVariables>;
 export const ProposeTradeDocument = gql`
     mutation ProposeTrade($input: CreateTradeInput!) {
   proposeTrade(input: $input) {

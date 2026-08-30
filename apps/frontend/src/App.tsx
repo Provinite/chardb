@@ -52,6 +52,7 @@ import { CommunityMembersPage } from "./pages/CommunityMembersPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { TradesPage } from "./pages/TradesPage";
 import { TradeOfferPage } from "./pages/TradeOfferPage";
+import { TradeComposerPage } from "./pages/TradeComposerPage";
 import { CommunitySettingsPage } from "./pages/CommunitySettingsPage";
 import { ImageModerationPage } from "./pages/ImageModerationPage";
 import { TraitReviewPage } from "./pages/TraitReviewPage";
@@ -384,6 +385,16 @@ function App() {
           element={
             <ProtectedRoute>
               <TradeOfferPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* The composer IS community-scoped, unlike the inbox: an offer moves
+            items and coin that only exist inside one community. */}
+        <Route
+          path="/communities/:communityId/trades/new"
+          element={
+            <ProtectedRoute>
+              <TradeComposerPage />
             </ProtectedRoute>
           }
         />
