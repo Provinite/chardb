@@ -142,8 +142,8 @@ const Empty = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
-const Modal = styled.div<{ isOpen: boolean }>`
-  display: ${({ isOpen }) => (isOpen ? "flex" : "none")};
+const Modal = styled.div<{ $isOpen: boolean }>`
+  display: ${({ $isOpen }) => ($isOpen ? "flex" : "none")};
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
@@ -325,7 +325,10 @@ export const CommunityShopAdminPage: React.FC = () => {
     skip: !communityId,
   });
   const { data: itemTypeData } = useGetItemTypesQuery({
-    variables: { filters: { communityId: communityId as string, limit: 200 } },
+    // 100 is the server's cap. Asking for more is a validation error, and
+    // because it fails on its own query the page still renders -- the New
+    // listing button simply never appears, with nothing to say why.
+    variables: { filters: { communityId: communityId as string, limit: 100 } },
     skip: !communityId,
   });
 
@@ -483,6 +486,17 @@ export const CommunityShopAdminPage: React.FC = () => {
         </Empty>
       )}
 
+      {currencies.length > 0 && itemTypes.length === 0 && (
+        <Empty>
+          This community has no item types yet, and a listing has to grant
+          something.{" "}
+          <Link to={`/communities/${communityId}/admin/items`}>
+            Create one first
+          </Link>
+          .
+        </Empty>
+      )}
+
       {currencies.length > 0 && items.length === 0 ? (
         <Empty data-testid="shop-admin-empty">
           <p>
@@ -566,7 +580,7 @@ export const CommunityShopAdminPage: React.FC = () => {
         )
       )}
 
-      <Modal isOpen={modalOpen}>
+      <Modal $isOpen={modalOpen}>
         <ModalContent data-testid="shop-item-dialog">
           <ModalTitle>
             {editing

@@ -245,8 +245,8 @@ const Empty = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
-const Modal = styled.div<{ isOpen: boolean }>`
-  display: ${({ isOpen }) => (isOpen ? "flex" : "none")};
+const Modal = styled.div<{ $isOpen: boolean }>`
+  display: ${({ $isOpen }) => ($isOpen ? "flex" : "none")};
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
@@ -564,7 +564,7 @@ export const CommunityShopPage: React.FC = () => {
 
       {/* Spending is irreversible after fifteen minutes, so it never happens
           on a single click. */}
-      <Modal isOpen={confirming}>
+      <Modal $isOpen={confirming}>
         <ModalContent data-testid="checkout-dialog">
           <ModalTitle>
             Buy {cart.count} thing{cart.count === 1 ? "" : "s"}?
