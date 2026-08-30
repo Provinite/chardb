@@ -1009,6 +1009,21 @@ export type Item = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+/** Item circulation across a whole community, by item type. */
+export type ItemEconomyReport = {
+  __typename?: 'ItemEconomyReport';
+  /** Largest circulation first. */
+  itemTypes: Array<ItemTypeEconomy>;
+  /** Granted minus revoked over the last 30 days. Negative means the community took more back than it gave out. */
+  netRecently: Scalars['Int']['output'];
+  /** Live items across every type. */
+  totalCirculation: Scalars['Int']['output'];
+  /** Distinct members holding at least one item of any type. */
+  totalHolders: Scalars['Int']['output'];
+  /** Unclaimed items across every type. */
+  totalUnclaimed: Scalars['Int']['output'];
+};
+
 /** One item, one event. Granting twelve tokens writes twelve rows; group them by batchId to collapse them back into one line. */
 export type ItemTransaction = {
   __typename?: 'ItemTransaction';
@@ -1099,6 +1114,22 @@ export type ItemTypeConnection = {
   hasMore: Scalars['Boolean']['output'];
   itemTypes: Array<ItemType>;
   total: Scalars['Int']['output'];
+};
+
+/** One item type, and how it is doing. */
+export type ItemTypeEconomy = {
+  __typename?: 'ItemTypeEconomy';
+  /** Live items of this type. Destroyed ones are not counted. */
+  circulation: Scalars['Int']['output'];
+  /** Items granted in the last 30 days. */
+  grantedRecently: Scalars['Int']['output'];
+  /** Distinct members holding at least one. Lower than circulation whenever somebody holds several. */
+  holderCount: Scalars['Int']['output'];
+  itemType: ItemType;
+  /** Items revoked in the last 30 days. */
+  revokedRecently: Scalars['Int']['output'];
+  /** Granted to an external account that was never linked. These are held, not lost -- but nobody has them. */
+  unclaimed: Scalars['Int']['output'];
 };
 
 export type ItemTypeFiltersInput = {
@@ -2019,6 +2050,8 @@ export type Query = {
   inviteCodesByRole: InviteCodeConnection;
   /** One item, including a destroyed one. Readable by any member of the community that owns its type. */
   item: Item;
+  /** Circulation, holders and recent movement for every item type in a community, largest first. */
+  itemEconomy: ItemEconomyReport;
   /** Every ledger row for one stack, oldest first. The provenance timeline. */
   itemProvenance: Array<ItemTransaction>;
   /** The item ledger for one community, newest first. Readable by any member. */
@@ -2380,6 +2413,11 @@ export type QueryInviteCodesByRoleArgs = {
 
 export type QueryItemArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryItemEconomyArgs = {
+  communityId: Scalars['ID']['input'];
 };
 
 
@@ -4097,6 +4135,13 @@ export type GetItemWithProvenanceQueryVariables = Exact<{
 
 
 export type GetItemWithProvenanceQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }, itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+
+export type GetItemEconomyQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type GetItemEconomyQuery = { __typename?: 'Query', itemEconomy: { __typename?: 'ItemEconomyReport', totalCirculation: number, totalHolders: number, totalUnclaimed: number, netRecently: number, itemTypes: Array<{ __typename?: 'ItemTypeEconomy', circulation: number, holderCount: number, grantedRecently: number, revokedRecently: number, unclaimed: number, itemType: { __typename?: 'ItemType', id: string } }> } };
 
 export type GetMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -9476,6 +9521,59 @@ export type GetItemWithProvenanceQueryHookResult = ReturnType<typeof useGetItemW
 export type GetItemWithProvenanceLazyQueryHookResult = ReturnType<typeof useGetItemWithProvenanceLazyQuery>;
 export type GetItemWithProvenanceSuspenseQueryHookResult = ReturnType<typeof useGetItemWithProvenanceSuspenseQuery>;
 export type GetItemWithProvenanceQueryResult = Apollo.QueryResult<GetItemWithProvenanceQuery, GetItemWithProvenanceQueryVariables>;
+export const GetItemEconomyDocument = gql`
+    query GetItemEconomy($communityId: ID!) {
+  itemEconomy(communityId: $communityId) {
+    totalCirculation
+    totalHolders
+    totalUnclaimed
+    netRecently
+    itemTypes {
+      circulation
+      holderCount
+      grantedRecently
+      revokedRecently
+      unclaimed
+      itemType {
+        id
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetItemEconomyQuery__
+ *
+ * To run a query within a React component, call `useGetItemEconomyQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetItemEconomyQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetItemEconomyQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useGetItemEconomyQuery(baseOptions: Apollo.QueryHookOptions<GetItemEconomyQuery, GetItemEconomyQueryVariables> & ({ variables: GetItemEconomyQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetItemEconomyQuery, GetItemEconomyQueryVariables>(GetItemEconomyDocument, options);
+      }
+export function useGetItemEconomyLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetItemEconomyQuery, GetItemEconomyQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetItemEconomyQuery, GetItemEconomyQueryVariables>(GetItemEconomyDocument, options);
+        }
+export function useGetItemEconomySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetItemEconomyQuery, GetItemEconomyQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetItemEconomyQuery, GetItemEconomyQueryVariables>(GetItemEconomyDocument, options);
+        }
+export type GetItemEconomyQueryHookResult = ReturnType<typeof useGetItemEconomyQuery>;
+export type GetItemEconomyLazyQueryHookResult = ReturnType<typeof useGetItemEconomyLazyQuery>;
+export type GetItemEconomySuspenseQueryHookResult = ReturnType<typeof useGetItemEconomySuspenseQuery>;
+export type GetItemEconomyQueryResult = Apollo.QueryResult<GetItemEconomyQuery, GetItemEconomyQueryVariables>;
 export const GetMediaDocument = gql`
     query GetMedia($filters: MediaFiltersInput) {
   media(filters: $filters) {

@@ -325,3 +325,135 @@ describe("ItemsService", () => {
     });
   });
 });
+
+describe("ItemsService.findItemEconomy", () => {
+  let service: ItemsService;
+
+  const types = [
+    { id: "potion", name: "Trait Change Potion", communityId: "comm1" },
+    { id: "locket", name: "Heirloom Locket", communityId: "comm1" },
+  ];
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ItemsService,
+        { provide: DatabaseService, useValue: mockDatabaseService },
+        {
+          provide: PendingOwnershipService,
+          useValue: mockPendingOwnershipService,
+        },
+        { provide: DiscordService, useValue: mockDiscordService },
+        { provide: ItemTransactionsService, useValue: mockItemTransactions },
+      ],
+    }).compile();
+    service = module.get<ItemsService>(ItemsService);
+
+    mockDatabaseService.itemType.findMany.mockResolvedValue(types);
+    mockDatabaseService.item.findMany.mockResolvedValue([]);
+    mockDatabaseService.itemTransaction.groupBy.mockResolvedValue([]);
+    mockDatabaseService.pendingOwnership.findMany.mockResolvedValue([]);
+  });
+
+  it("counts circulation and distinct holders separately", async () => {
+    // Three items, two of them held by the same person: circulation 3,
+    // holders 2. Conflating the two is the mistake this guards.
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      { itemTypeId: "potion", ownerId: "alice" },
+      { itemTypeId: "potion", ownerId: "alice" },
+      { itemTypeId: "potion", ownerId: "bob" },
+    ]);
+
+    const report = await service.findItemEconomy("comm1");
+    const potion = report.itemTypes.find((t) => t.itemType.id === "potion");
+
+    expect(potion?.circulation).toBe(3);
+    expect(potion?.holderCount).toBe(2);
+    expect(report.totalCirculation).toBe(3);
+    expect(report.totalHolders).toBe(2);
+  });
+
+  it("counts an unclaimed item in circulation but toward nobody's holdings", async () => {
+    // It exists and was minted, so supply is real -- but it is in no
+    // inventory, which is exactly the state the unclaimed column exists for.
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      { itemTypeId: "potion", ownerId: null },
+    ]);
+    mockDatabaseService.pendingOwnership.findMany.mockResolvedValue([
+      { item: { itemTypeId: "potion" } },
+    ]);
+
+    const report = await service.findItemEconomy("comm1");
+    const potion = report.itemTypes.find((t) => t.itemType.id === "potion");
+
+    expect(potion?.circulation).toBe(1);
+    expect(potion?.holderCount).toBe(0);
+    expect(potion?.unclaimed).toBe(1);
+    expect(report.totalHolders).toBe(0);
+  });
+
+  it("counts a holder of two types once in the community total", async () => {
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      { itemTypeId: "potion", ownerId: "alice" },
+      { itemTypeId: "locket", ownerId: "alice" },
+    ]);
+
+    const report = await service.findItemEconomy("comm1");
+
+    expect(report.totalHolders).toBe(1);
+    expect(report.itemTypes.every((t) => t.holderCount === 1)).toBe(true);
+  });
+
+  it("splits recent movement into grants and revokes, and nets them", async () => {
+    mockDatabaseService.itemTransaction.groupBy.mockResolvedValue([
+      { itemTypeId: "potion", kind: "GRANT", _count: { _all: 10 } },
+      { itemTypeId: "potion", kind: "REVOKE", _count: { _all: 4 } },
+      // IMPORT and CLAIM are not movement anyone caused; they must not count.
+      { itemTypeId: "potion", kind: "IMPORT", _count: { _all: 99 } },
+    ]);
+
+    const report = await service.findItemEconomy("comm1");
+    const potion = report.itemTypes.find((t) => t.itemType.id === "potion");
+
+    expect(potion?.grantedRecently).toBe(10);
+    expect(potion?.revokedRecently).toBe(4);
+    expect(report.netRecently).toBe(6);
+  });
+
+  it("only looks back 30 days", async () => {
+    await service.findItemEconomy("comm1");
+
+    const call = mockDatabaseService.itemTransaction.groupBy.mock
+      .calls[0][0] as { where: { createdAt: { gte: Date } } };
+    const days = (Date.now() - call.where.createdAt.gte.getTime()) / 86_400_000;
+    expect(Math.round(days)).toBe(30);
+  });
+
+  it("lists item types with nothing in circulation, biggest first", async () => {
+    // A type with zero items still belongs in the catalogue view -- that is
+    // itself the interesting fact about it.
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      { itemTypeId: "locket", ownerId: "alice" },
+    ]);
+
+    const report = await service.findItemEconomy("comm1");
+
+    expect(report.itemTypes.map((t) => t.itemType.id)).toEqual([
+      "locket",
+      "potion",
+    ]);
+    expect(
+      report.itemTypes.find((t) => t.itemType.id === "potion")?.circulation,
+    ).toBe(0);
+  });
+
+  it("excludes destroyed items from every count", async () => {
+    await service.findItemEconomy("comm1");
+
+    const call = mockDatabaseService.item.findMany.mock.calls[0][0] as {
+      where: { destroyedAt: null };
+    };
+    expect(call.where.destroyedAt).toBeNull();
+  });
+});

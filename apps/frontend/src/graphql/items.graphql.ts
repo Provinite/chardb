@@ -255,3 +255,26 @@ export const GET_ITEM_WITH_PROVENANCE = gql`
   ${ITEM_FRAGMENT}
   ${ITEM_TRANSACTION_FRAGMENT}
 `;
+
+// ==================== Item Economy ====================
+
+export const GET_ITEM_ECONOMY = gql`
+  query GetItemEconomy($communityId: ID!) {
+    itemEconomy(communityId: $communityId) {
+      totalCirculation
+      totalHolders
+      totalUnclaimed
+      netRecently
+      itemTypes {
+        circulation
+        holderCount
+        grantedRecently
+        revokedRecently
+        unclaimed
+        itemType {
+          id
+        }
+      }
+    }
+  }
+`;

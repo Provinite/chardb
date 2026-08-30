@@ -565,4 +565,101 @@ export class ItemsService {
 
     return userId;
   }
+
+  /**
+   * Circulation, holders and recent movement for every item type in a
+   * community.
+   *
+   * Four reads rather than one aggregate query, because the numbers come from
+   * three tables and two of them need a distinct count that Prisma's groupBy
+   * cannot express. Live items are fetched rather than counted so holders and
+   * circulation come off the same pass; the set is bounded by what one
+   * community has minted, which is small.
+   */
+  async findItemEconomy(communityId: string) {
+    const RECENT_DAYS = 30;
+    const since = new Date(Date.now() - RECENT_DAYS * 24 * 60 * 60 * 1000);
+
+    const [types, liveItems, recentMovement, unclaimedRows] = await Promise.all(
+      [
+        this.db.itemType.findMany({ where: { communityId } }),
+        this.db.item.findMany({
+          where: { destroyedAt: null, itemType: { communityId } },
+          select: { itemTypeId: true, ownerId: true },
+        }),
+        this.db.itemTransaction.groupBy({
+          by: ["itemTypeId", "kind"],
+          where: { communityId, createdAt: { gte: since } },
+          _count: { _all: true },
+        }),
+        this.db.pendingOwnership.findMany({
+          where: {
+            claimedAt: null,
+            item: { destroyedAt: null, itemType: { communityId } },
+          },
+          select: { item: { select: { itemTypeId: true } } },
+        }),
+      ],
+    );
+
+    const circulation = new Map<string, number>();
+    const holders = new Map<string, Set<string>>();
+    const everyHolder = new Set<string>();
+
+    for (const item of liveItems) {
+      circulation.set(
+        item.itemTypeId,
+        (circulation.get(item.itemTypeId) ?? 0) + 1,
+      );
+      if (!item.ownerId) continue;
+      // An unclaimed item has no owner, so it counts toward circulation but
+      // toward nobody's holdings.
+      const set = holders.get(item.itemTypeId) ?? new Set<string>();
+      set.add(item.ownerId);
+      holders.set(item.itemTypeId, set);
+      everyHolder.add(item.ownerId);
+    }
+
+    const movement = new Map<string, { granted: number; revoked: number }>();
+    for (const row of recentMovement) {
+      const entry = movement.get(row.itemTypeId) ?? { granted: 0, revoked: 0 };
+      if (row.kind === ItemTransactionKind.GRANT)
+        entry.granted += row._count._all;
+      else if (row.kind === ItemTransactionKind.REVOKE)
+        entry.revoked += row._count._all;
+      movement.set(row.itemTypeId, entry);
+    }
+
+    const unclaimed = new Map<string, number>();
+    for (const row of unclaimedRows) {
+      const id = row.item?.itemTypeId;
+      if (!id) continue;
+      unclaimed.set(id, (unclaimed.get(id) ?? 0) + 1);
+    }
+
+    const itemTypes = types
+      .map((itemType) => ({
+        itemType,
+        circulation: circulation.get(itemType.id) ?? 0,
+        holderCount: holders.get(itemType.id)?.size ?? 0,
+        grantedRecently: movement.get(itemType.id)?.granted ?? 0,
+        revokedRecently: movement.get(itemType.id)?.revoked ?? 0,
+        unclaimed: unclaimed.get(itemType.id) ?? 0,
+      }))
+      // Biggest first: that is the order someone scans for anomalies.
+      .sort((a, b) => b.circulation - a.circulation);
+
+    const netRecently = itemTypes.reduce(
+      (n, t) => n + t.grantedRecently - t.revokedRecently,
+      0,
+    );
+
+    return {
+      totalCirculation: liveItems.length,
+      totalHolders: everyHolder.size,
+      totalUnclaimed: unclaimedRows.length,
+      netRecently,
+      itemTypes,
+    };
+  }
 }

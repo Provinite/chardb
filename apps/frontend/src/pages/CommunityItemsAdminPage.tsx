@@ -1,15 +1,14 @@
-import React, { useState } from "react";
-import styled from "styled-components";
+import React, { useMemo, useState } from "react";
+import styled, { css } from "styled-components";
 import { useParams, Link } from "react-router-dom";
 import { Package, Plus, Edit2, Trash2, Gift, ExternalLink } from "lucide-react";
-import { Button, Card } from "@chardb/ui";
+import { Button } from "@chardb/ui";
 import {
   GrantTargetSelector,
   GrantTarget,
 } from "../components/GrantTargetSelector";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { ColorSelector, ColorPip } from "../components/colors";
-import { CopyIdButton } from "../components/CopyIdButton";
+import { ColorSelector } from "../components/colors";
 import { ImageUpload, ImageFile } from "../components/ImageUpload";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-hot-toast";
@@ -23,6 +22,7 @@ import {
   useUpdateItemTypeMutation,
   useDeleteItemTypeMutation,
   useGrantItemMutation,
+  useGetItemEconomyQuery,
 } from "../generated/graphql";
 
 const Container = styled.div`
@@ -65,33 +65,131 @@ const SectionTitle = styled.h2`
   margin: 0;
 `;
 
-const ItemTypeGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+const StatsTableWrap = styled.div`
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  overflow-x: auto;
+  background: ${({ theme }) => theme.colors.background};
 `;
 
-const ItemTypeCard = styled(Card)`
-  position: relative;
-`;
+const StatsTable = styled.table`
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  font-size: 0.875rem;
 
-const StyledCopyIdButton = styled(CopyIdButton)`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  opacity: 0;
-  transition: opacity 0.2s;
+  th {
+    text-align: left;
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.colors.text.muted};
+    font-weight: 600;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+    white-space: nowrap;
+  }
 
-  ${ItemTypeCard}:hover & {
-    opacity: 1;
+  td {
+    padding: 0.7rem 0.75rem;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+    vertical-align: middle;
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
   }
 `;
 
-const ItemTypeHeader = styled.div`
+/* An amber stripe rather than only a number: something owed to nobody reads
+   at a glance without having to be read. */
+const StatsRow = styled.tr<{ $attn: boolean }>`
+  &:hover {
+    background: ${({ theme }) => theme.colors.surface};
+  }
+
+  ${({ $attn, theme }) =>
+    $attn &&
+    css`
+      td:first-child {
+        box-shadow: inset 3px 0 0 ${theme.colors.warning};
+      }
+    `}
+`;
+
+const Num = styled.td<{ $tone?: "up" | "down" | "attn" }>`
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-weight: ${({ $tone }) => ($tone ? 600 : 400)};
+  color: ${({ theme, $tone }) =>
+    $tone === "up"
+      ? theme.colors.success
+      : $tone === "down"
+        ? theme.colors.danger
+        : $tone === "attn"
+          ? theme.colors.warning
+          : theme.colors.text.primary} !important;
+`;
+
+const ItemCell = styled.div`
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+`;
+
+const ItemTypeMeta = styled.div`
+  font-size: 0.6875rem;
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
+const RowActions = styled.div`
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+`;
+
+const Tiles = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+`;
+
+const Tile = styled.div<{ $attn?: boolean }>`
+  border: 1px solid
+    ${({ theme, $attn }) =>
+      $attn ? theme.colors.warning : theme.colors.border};
+  background: ${({ theme, $attn }) =>
+    $attn ? `${theme.colors.warning}14` : theme.colors.surface};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: 0.875rem 1rem;
+
+  .k {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    color: ${({ theme }) => theme.colors.text.muted};
+  }
+
+  .v {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.1;
+    margin-top: 0.3rem;
+    font-variant-numeric: tabular-nums;
+    color: ${({ theme, $attn }) =>
+      $attn ? theme.colors.warning : theme.colors.text.primary};
+  }
+
+  .d {
+    font-size: 0.75rem;
+    color: ${({ theme }) => theme.colors.text.muted};
+    margin-top: 0.3rem;
+  }
 `;
 
 const ItemTypeIcon = styled.div<{ color?: string }>`
@@ -113,11 +211,6 @@ const ItemTypeImage = styled.img`
   border-radius: 6px;
 `;
 
-const ItemTypeInfo = styled.div`
-  flex: 1;
-  min-width: 0;
-`;
-
 const ItemTypeName = styled.h3`
   font-size: 1.125rem;
   font-weight: 600;
@@ -126,41 +219,6 @@ const ItemTypeName = styled.h3`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-`;
-
-const ItemTypeCategory = styled.div`
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.muted};
-`;
-
-const ItemTypeDescription = styled.p`
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0 0 1rem 0;
-  line-height: 1.5;
-  font-size: 0.875rem;
-`;
-
-const ItemTypeProperties = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-`;
-
-const PropertyBadge = styled.span`
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  background: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-`;
-
-const ItemTypeActions = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
 `;
 
 const Modal = styled.div<{ isOpen: boolean }>`
@@ -300,6 +358,20 @@ export const CommunityItemsAdminPage: React.FC = () => {
     variables: { filters: { communityId, limit: 100 } },
     skip: !communityId,
   });
+
+  // Circulation numbers live beside the catalogue rather than on a separate
+  // page: the question "should I grant more of this?" is asked while looking
+  // at the item type, not somewhere else.
+  const { data: economyData } = useGetItemEconomyQuery({
+    variables: { communityId: communityId! },
+    skip: !communityId,
+  });
+
+  const economy = economyData?.itemEconomy;
+  const economyByType = useMemo(
+    () => new Map((economy?.itemTypes ?? []).map((t) => [t.itemType.id, t])),
+    [economy],
+  );
 
   const [createItemType] = useCreateItemTypeMutation();
   const [updateItemType] = useUpdateItemTypeMutation();
@@ -557,6 +629,32 @@ export const CommunityItemsAdminPage: React.FC = () => {
         </Subtitle>
       </Header>
 
+      <Tiles data-testid="economy-tiles">
+        <Tile>
+          <div className="k">In circulation</div>
+          <div className="v">{economy?.totalCirculation ?? 0}</div>
+          <div className="d">{itemTypes.length} item types</div>
+        </Tile>
+        <Tile>
+          <div className="k">Holders</div>
+          <div className="v">{economy?.totalHolders ?? 0}</div>
+          <div className="d">members holding something</div>
+        </Tile>
+        <Tile $attn={Boolean(economy?.totalUnclaimed)}>
+          <div className="k">Unclaimed</div>
+          <div className="v">{economy?.totalUnclaimed ?? 0}</div>
+          <div className="d">awaiting an account link</div>
+        </Tile>
+        <Tile>
+          <div className="k">Net 30d</div>
+          <div className="v">
+            {(economy?.netRecently ?? 0) > 0 ? "+" : ""}
+            {economy?.netRecently ?? 0}
+          </div>
+          <div className="d">granted minus revoked</div>
+        </Tile>
+      </Tiles>
+
       <Section>
         <SectionHeader>
           <SectionTitle>Item Types</SectionTitle>
@@ -579,101 +677,115 @@ export const CommunityItemsAdminPage: React.FC = () => {
             <p>No item types yet. Create one to get started!</p>
           </EmptyState>
         ) : (
-          <ItemTypeGrid>
-            {itemTypes.map((itemType) => (
-              // Container with no role and no unambiguous text of its own, so
-              // it carries an id the way trait-review-card does. The item type
-              // id makes the selector assert identity, not mere presence.
-              <ItemTypeCard
-                key={itemType.id}
-                data-testid="item-type-card"
-                data-item-type-id={itemType.id}
-              >
-                <StyledCopyIdButton id={itemType.id} />
-                <ItemTypeHeader>
-                  <ItemTypeIcon color={itemType.color?.hexCode}>
-                    {itemType.image ? (
-                      <ItemTypeImage
-                        src={
-                          itemType.image.thumbnailUrl ||
-                          itemType.image.originalUrl
-                        }
-                        alt={itemType.image.altText || itemType.name}
-                      />
-                    ) : (
-                      <Package size={24} />
-                    )}
-                  </ItemTypeIcon>
-                  <ItemTypeInfo>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                      }}
+          <StatsTableWrap>
+            <StatsTable>
+              <thead>
+                <tr>
+                  <th>Item type</th>
+                  <th>Circulation</th>
+                  <th>Held by</th>
+                  <th>Granted 30d</th>
+                  <th>Revoked 30d</th>
+                  <th>Unclaimed</th>
+                  <th aria-label="Actions" />
+                </tr>
+              </thead>
+              <tbody>
+                {itemTypes.map((itemType) => {
+                  const stats = economyByType.get(itemType.id);
+                  const unclaimed = stats?.unclaimed ?? 0;
+                  return (
+                    <StatsRow
+                      key={itemType.id}
+                      $attn={unclaimed > 0}
+                      data-testid="item-type-card"
+                      data-item-type-id={itemType.id}
                     >
-                      <ItemTypeName title={itemType.name}>
-                        {itemType.name}
-                      </ItemTypeName>
-                      {itemType.color && (
-                        <ColorPip color={itemType.color.hexCode} size="sm" />
-                      )}
-                    </div>
-                    {itemType.category && (
-                      <ItemTypeCategory>{itemType.category}</ItemTypeCategory>
-                    )}
-                  </ItemTypeInfo>
-                </ItemTypeHeader>
-
-                {itemType.description && (
-                  <ItemTypeDescription>
-                    {itemType.description}
-                  </ItemTypeDescription>
-                )}
-
-                <ItemTypeProperties>
-                  {itemType.isTradeable && (
-                    <PropertyBadge>Tradeable</PropertyBadge>
-                  )}
-                  {itemType.isConsumable && (
-                    <PropertyBadge>Consumable</PropertyBadge>
-                  )}
-                </ItemTypeProperties>
-
-                <ItemTypeActions>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    as={Link}
-                    to={`/item-types/${itemType.id}`}
-                  >
-                    <ExternalLink size={14} /> View
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => openGrantModal(itemType)}
-                  >
-                    <Gift size={14} /> Grant
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => openEditModal(itemType)}
-                  >
-                    <Edit2 size={14} /> Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => handleDeleteItemType(itemType.id)}
-                  >
-                    <Trash2 size={14} /> Delete
-                  </Button>
-                </ItemTypeActions>
-              </ItemTypeCard>
-            ))}
-          </ItemTypeGrid>
+                      <td>
+                        <ItemCell>
+                          <ItemTypeIcon color={itemType.color?.hexCode}>
+                            {itemType.image ? (
+                              <ItemTypeImage
+                                src={
+                                  itemType.image.thumbnailUrl ||
+                                  itemType.image.originalUrl
+                                }
+                                alt={itemType.image.altText || itemType.name}
+                              />
+                            ) : (
+                              <Package size={18} />
+                            )}
+                          </ItemTypeIcon>
+                          <div>
+                            <ItemTypeName title={itemType.name}>
+                              {itemType.name}
+                            </ItemTypeName>
+                            <ItemTypeMeta>
+                              {[
+                                itemType.category,
+                                itemType.isTradeable ? "Tradeable" : null,
+                                itemType.isConsumable ? "Consumable" : null,
+                              ]
+                                .filter(Boolean)
+                                .join(" \u00b7 ")}
+                            </ItemTypeMeta>
+                          </div>
+                        </ItemCell>
+                      </td>
+                      <Num>{stats?.circulation ?? 0}</Num>
+                      <Num>{stats?.holderCount ?? 0}</Num>
+                      <Num $tone={stats?.grantedRecently ? "up" : undefined}>
+                        {stats?.grantedRecently
+                          ? `+${stats.grantedRecently}`
+                          : "0"}
+                      </Num>
+                      <Num $tone={stats?.revokedRecently ? "down" : undefined}>
+                        {stats?.revokedRecently
+                          ? `\u2212${stats.revokedRecently}`
+                          : "0"}
+                      </Num>
+                      <Num $tone={unclaimed ? "attn" : undefined}>
+                        {unclaimed}
+                      </Num>
+                      <td>
+                        <RowActions>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            as={Link}
+                            to={`/item-types/${itemType.id}`}
+                          >
+                            <ExternalLink size={14} /> View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => openGrantModal(itemType)}
+                          >
+                            <Gift size={14} /> Grant
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => openEditModal(itemType)}
+                          >
+                            <Edit2 size={14} /> Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleDeleteItemType(itemType.id)}
+                          >
+                            <Trash2 size={14} /> Delete
+                          </Button>
+                        </RowActions>
+                      </td>
+                    </StatsRow>
+                  );
+                })}
+              </tbody>
+            </StatsTable>
+          </StatsTableWrap>
         )}
       </Section>
 

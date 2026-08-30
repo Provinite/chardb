@@ -1136,6 +1136,26 @@ type Item {
   updatedAt: DateTime!
 }
 
+"""Item circulation across a whole community, by item type."""
+type ItemEconomyReport {
+  """Largest circulation first."""
+  itemTypes: [ItemTypeEconomy!]!
+
+  """
+  Granted minus revoked over the last 30 days. Negative means the community took more back than it gave out.
+  """
+  netRecently: Int!
+
+  """Live items across every type."""
+  totalCirculation: Int!
+
+  """Distinct members holding at least one item of any type."""
+  totalHolders: Int!
+
+  """Unclaimed items across every type."""
+  totalUnclaimed: Int!
+}
+
 """
 One item, one event. Granting twelve tokens writes twelve rows; group them by batchId to collapse them back into one line.
 """
@@ -1248,6 +1268,29 @@ type ItemTypeConnection {
   hasMore: Boolean!
   itemTypes: [ItemType!]!
   total: Int!
+}
+
+"""One item type, and how it is doing."""
+type ItemTypeEconomy {
+  """Live items of this type. Destroyed ones are not counted."""
+  circulation: Int!
+
+  """Items granted in the last 30 days."""
+  grantedRecently: Int!
+
+  """
+  Distinct members holding at least one. Lower than circulation whenever somebody holds several.
+  """
+  holderCount: Int!
+  itemType: ItemType!
+
+  """Items revoked in the last 30 days."""
+  revokedRecently: Int!
+
+  """
+  Granted to an external account that was never linked. These are held, not lost -- but nobody has them.
+  """
+  unclaimed: Int!
 }
 
 input ItemTypeFiltersInput {
@@ -2231,6 +2274,11 @@ type Query {
   One item, including a destroyed one. Readable by any member of the community that owns its type.
   """
   item(id: ID!): Item!
+
+  """
+  Circulation, holders and recent movement for every item type in a community, largest first.
+  """
+  itemEconomy(communityId: ID!): ItemEconomyReport!
 
   """Every ledger row for one stack, oldest first. The provenance timeline."""
   itemProvenance(itemId: ID!): [ItemTransaction!]!

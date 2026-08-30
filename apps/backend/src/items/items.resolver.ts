@@ -27,6 +27,7 @@ import {
   ItemTypeConnection,
 } from "./entities/item-type.entity";
 import { Item as ItemEntity } from "./entities/item.entity";
+import { ItemEconomyReport } from "./entities/item-economy.entity";
 import { Community } from "../communities/entities/community.entity";
 import { Image } from "../images/entities/image.entity";
 import { User } from "../users/entities/user.entity";
@@ -164,6 +165,31 @@ export class ItemsResolver {
   async item(@Args("id", { type: () => ID }) id: string): Promise<ItemEntity> {
     const item = await this.itemsService.findItemById(id);
     return mapPrismaItemToGraphQL(item);
+  }
+
+  /**
+   * Gated on canManageItems: this is the catalogue owner's view of whether the
+   * catalogue is healthy, not the granter's queue.
+   */
+  @AllowCommunityPermission(CommunityPermission.CanManageItems)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Query(() => ItemEconomyReport, {
+    name: "itemEconomy",
+    description:
+      "Circulation, holders and recent movement for every item type in a " +
+      "community, largest first.",
+  })
+  async itemEconomy(
+    @Args("communityId", { type: () => ID }) communityId: string,
+  ): Promise<ItemEconomyReport> {
+    const report = await this.itemsService.findItemEconomy(communityId);
+    return {
+      ...report,
+      itemTypes: report.itemTypes.map((t) => ({
+        ...t,
+        itemType: mapPrismaItemTypeToGraphQL(t.itemType),
+      })),
+    };
   }
 
   // ==================== Item Mutations ====================
