@@ -196,6 +196,13 @@ export class ItemsService {
    *
    * `source` lets the ledger say what caused the grant. Without it a shop
    * purchase is indistinguishable from staff handing something over.
+   *
+   * Returns the ids it created, not the rows. The ids cost nothing -- they are
+   * generated here rather than read back, because `createMany` does not return
+   * them and the ledger rows need them in the same statement. Whole items are
+   * a caller's concern: a checkout grants one item per purchase line and wants
+   * none of them back, so re-reading each one with its joins would be a query
+   * per unit bought, spent inside the transaction, for nothing.
    */
   async createGranted(
     client: DbClient,
@@ -244,14 +251,7 @@ export class ItemsService {
       client,
     );
 
-    return client.item.findMany({
-      where: { id: { in: itemIds } },
-      include: {
-        itemType: { include: { community: true } },
-        owner: true,
-      },
-      orderBy: { id: "asc" },
-    });
+    return itemIds;
   }
 
   async grantItem(input: {
@@ -373,9 +373,7 @@ export class ItemsService {
     // while being wrong.
     //
     // No stacking, so no read-then-write and no race: N items is N inserts.
-    // The ids are generated here rather than read back because createMany does
-    // not return them, and the ledger rows need them in the same statement.
-    const items = await this.db.$transaction((tx) =>
+    const itemIds = await this.db.$transaction((tx) =>
       this.createGranted(tx, {
         itemTypeId,
         communityId: itemType.communityId,
@@ -389,9 +387,9 @@ export class ItemsService {
     // Pending ownership is one record per item -- PendingOwnership.itemId is
     // unique, and each instance claims independently.
     if (pendingOwner) {
-      for (const item of items) {
+      for (const itemId of itemIds) {
         await this.pendingOwnershipService.createForItem(
-          item.id,
+          itemId,
           pendingOwner.provider,
           pendingOwner.providerAccountId, // Already resolved earlier
           pendingOwner.displayIdentifier,
@@ -399,7 +397,17 @@ export class ItemsService {
       }
     }
 
-    return items;
+    // One read for the whole grant, and outside the transaction: this exists
+    // to answer the caller with whole items, which is not work the write needs
+    // to hold a connection open for.
+    return this.db.item.findMany({
+      where: { id: { in: itemIds } },
+      include: {
+        itemType: { include: { community: true } },
+        owner: true,
+      },
+      orderBy: { id: "asc" },
+    });
   }
 
   async findAllItems(filters: ItemFilters = {}) {
