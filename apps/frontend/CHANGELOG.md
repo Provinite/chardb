@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.4.0] - 2026-08-30
+
 ### Added
 
 - Shop pages: a storefront with a cart, confirmation, and undo for members, and

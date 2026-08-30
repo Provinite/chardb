@@ -7,17 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- **In-app notifications**: a `Notification` table, the `notifications` and
-  `unseenNotificationCount` queries, and mutations to mark them seen or read.
-  Written by follows, comments, item grants, item revokes and currency credits.
-
-- **`Notification.data` is a validated per-kind snapshot, not loose JSON.** One
-  zod schema per kind is the single source of truth: types are inferred from it
-  and fed to prisma-json-types-generator, so the generated client types the
-  column and a payload is never `any`. Adding a kind without a schema fails to
-  compile.
+## [v11.4.0] - 2026-08-30
 
 ### Fixed
 
@@ -36,20 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   logger rather than as a thrown error, so a broken app produced no output at
   all. It was hiding a real circular import between the notifications and auth
   modules.
-
-### Security
-
-- **An award could mint another community's currency.** `approveImage` checked
-  `canGrantItems` against the *image's* community but passed the caller's
-  `currencyId` through unvalidated, and `credit()` scopes membership to the
-  *currency's* community — where the recipient is a legitimate member. So a
-  moderator of a small community who was merely a member of a large one could
-  approve any image in the small one while naming the large one's currency,
-  and mint it to themselves. The award now verifies the currency belongs to
-  the image's community, and that every recipient is actually connected to the
-  media. Both are covered by tests confirmed to fail against the unfixed code.
-
-### Fixed
 
 - `ShopPurchaseLine.refundedBy` was declared on the entity but never
   populated, so it resolved to null on every refunded line.
@@ -89,6 +65,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now leave it in the database.
 
 ### Added
+
+- **In-app notifications**: a `Notification` table, the `notifications` and
+  `unseenNotificationCount` queries, and mutations to mark them seen or read.
+  Written by follows, comments, item grants, item revokes and currency credits.
+
+- **`Notification.data` is a validated per-kind snapshot, not loose JSON.** One
+  zod schema per kind is the single source of truth: types are inferred from it
+  and fed to prisma-json-types-generator, so the generated client types the
+  column and a payload is never `any`. Adding a kind without a schema fails to
+  compile.
 
 - Coin shop: communities can sell items for their own currency, with several
   price options per listing, stock and per-member limits, and a fifteen-minute
@@ -148,6 +134,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`Community.memberCount`** field resolver, readable unauthenticated like the
   `community` query itself.
+
+### Security
+
+- **An award could mint another community's currency.** `approveImage` checked
+  `canGrantItems` against the *image's* community but passed the caller's
+  `currencyId` through unvalidated, and `credit()` scopes membership to the
+  *currency's* community — where the recipient is a legitimate member. So a
+  moderator of a small community who was merely a member of a large one could
+  approve any image in the small one while naming the large one's currency,
+  and mint it to themselves. The award now verifies the currency belongs to
+  the image's community, and that every recipient is actually connected to the
+  media. Both are covered by tests confirmed to fail against the unfixed code.
 
 ## [v11.3.0] - 2026-08-30
 
