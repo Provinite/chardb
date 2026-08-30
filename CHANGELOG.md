@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Award currency when approving an upload** (#226). Moderators who can also
+  grant currency get a recipients widget on each moderation card listing
+  everyone the upload names — uploader, credited artist, media owner,
+  character owner — with an amount each. Approving pays them in the same
+  transaction as the approval.
+
 ## [v11.3.0] - 2026-08-30
 
 ### Added

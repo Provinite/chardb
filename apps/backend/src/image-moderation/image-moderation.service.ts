@@ -268,6 +268,12 @@ export class ImageModerationService {
     }
 
     const awards = (award?.awards ?? []).filter((a) => a.amount > 0);
+    // The ledger records the MEDIA, not the image. An image is an
+    // implementation detail of a media: a media that has been deleted means
+    // the upload is gone as far as anyone is concerned, so pointing a member's
+    // statement at the surviving image would name something with no
+    // user-facing existence -- and there is no route to view one either.
+    let sourceMediaId: string | null = null;
     if (awards.length > 0) {
       // The award widget is hidden from viewers without this permission, but
       // hiding a control is not a check. A mutation that trusted the client
@@ -278,6 +284,21 @@ export class ImageModerationService {
           "A currency is required when awarding for an approval",
         );
       }
+
+      // findFirst, like getImageCommunityId: an image can hang off several
+      // media, and the queue shows one of them. Which one is arbitrary, and
+      // for a queue item there is only ever the one the moderator was looking
+      // at.
+      const media = await this.db.media.findFirst({
+        where: { imageId },
+        select: { id: true },
+      });
+      if (!media) {
+        throw new BadRequestException(
+          "This image is not attached to any media, so there is nothing to award for",
+        );
+      }
+      sourceMediaId = media.id;
     }
 
     // Interactive form, not the array form: the currency credit has to run on
@@ -310,8 +331,8 @@ export class ImageModerationService {
               // The moderator caused this, so the ledger names them. The
               // permission to mint came from the community, not from the
               // approval -- but "who did it" is still the moderator.
-              source: CurrencyTransactionSource.IMAGE_APPROVAL,
-              sourceId: imageId,
+              source: CurrencyTransactionSource.MEDIA_APPROVAL,
+              sourceId: sourceMediaId,
               tx,
               // Approving must not fail because an uploader has since left.
               skipNonMembers: true,

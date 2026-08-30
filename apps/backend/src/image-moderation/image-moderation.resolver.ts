@@ -223,10 +223,20 @@ export class ImageModerationActionFieldsResolver {
   async resolveCurrencyAwards(
     @Parent() action: ImageModerationAction,
   ): Promise<CurrencyTransaction[]> {
+    // Two hops, because the ledger records the media rather than the image.
+    // That is the cost of pointing a member's statement at something they can
+    // actually look at, and it is paid here -- on an audit read -- rather than
+    // on the page every member sees.
+    const media = await this.database.media.findMany({
+      where: { imageId: action.imageId },
+      select: { id: true },
+    });
+    if (media.length === 0) return [];
+
     const rows = await this.database.currencyTransaction.findMany({
       where: {
-        source: CurrencyTransactionSource.IMAGE_APPROVAL,
-        sourceId: action.imageId,
+        source: CurrencyTransactionSource.MEDIA_APPROVAL,
+        sourceId: { in: media.map((m) => m.id) },
       },
       orderBy: { createdAt: "asc" },
     });

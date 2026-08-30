@@ -46,6 +46,8 @@ export function mapPrismaCurrencyTransactionToGraphQL(
     actorUserId: row.actorUserId,
     actorLabel: row.actorLabel,
     reason: row.reason,
+    source: row.source,
+    sourceId: row.sourceId,
     createdAt: row.createdAt,
   };
 }

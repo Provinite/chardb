@@ -8,6 +8,7 @@ import {
   SeedCreateSpeciesVariantDocument,
   SeedCreateTraitDocument,
   SeedRolesByCommunityDocument,
+  SeedCreateCurrencyDocument,
   TraitValueType,
 } from "../../generated/graphql.js";
 import { definePreset, type Persona } from "../types.js";
@@ -18,13 +19,36 @@ export interface CommunityBasicWorld {
   traits: {
     eyeColor: { id: string; name: string; values: Record<string, string> };
   };
-  roles: { admin: string; moderatorPlus: string; member: string };
+  roles: {
+    admin: string;
+    moderatorPlus: string;
+    member: string;
+    /** canModerateImages only. Must NOT see the award widget. */
+    imageMod: string;
+    /** canModerateImages AND canGrantItems. Sees it. */
+    payingMod: string;
+  };
+  /** One currency, so an approval has something to pay in. */
+  currency: { id: string; code: string; name: string };
+  /**
+   * A PENDING image awaiting moderation, deliberately naming three different
+   * people so the award widget's deduplication has something to separate:
+   * uploaded and owned by `member`, drawn by `artist`, depicting a character
+   * owned by `othermember`.
+   */
+  pendingImage: { imageId: string; mediaId: string };
   users: {
     siteadmin: Persona;
     commadmin: Persona;
     moderator: Persona;
     member: Persona;
     othermember: Persona;
+    /** Can moderate images, cannot grant currency. */
+    imagemod: Persona;
+    /** Can moderate images AND grant currency. */
+    payingmod: Persona;
+    /** Credited as the artist on the pending image. */
+    artist: Persona;
   };
   characters: {
     /** Owned by `member`; carries a trait value, so it has a PENDING review. */
@@ -52,6 +76,9 @@ export default definePreset<CommunityBasicWorld>({
     const moderator = await ctx.user("moderator");
     const member = await ctx.user("member");
     const othermember = await ctx.user("othermember");
+    const imagemod = await ctx.user("imagemod");
+    const payingmod = await ctx.user("payingmod");
+    const artist = await ctx.user("artist");
 
     // --- community. Auto-creates Admin/Moderator/Member roles and binds the
     // creator (commadmin) to Admin.
@@ -165,6 +192,84 @@ export default definePreset<CommunityBasicWorld>({
         },
       });
 
+    // ==================== Image moderation + currency ====================
+    //
+    // Two moderator roles, because the whole design of the award widget turns
+    // on the difference: moderating images and handing out prizes are separate
+    // permissions, and most moderators hold only the first.
+    const { createRole: imageMod } = await ctx
+      .as("commadmin")
+      .gql(SeedCreateRoleDocument, {
+        createRoleInput: {
+          name: "Image Moderator",
+          communityId: community.id,
+          canModerateImages: true,
+        },
+      });
+
+    const { createRole: payingMod } = await ctx
+      .as("commadmin")
+      .gql(SeedCreateRoleDocument, {
+        createRoleInput: {
+          name: "Paying Moderator",
+          communityId: community.id,
+          canModerateImages: true,
+          canGrantItems: true,
+          canManageItems: true,
+        },
+      });
+
+    for (const [userId, roleId] of [
+      [imagemod.userId, imageMod.id],
+      [payingmod.userId, payingMod.id],
+      [artist.userId, stock.Member],
+    ] as const) {
+      await ctx.as("siteadmin").gql(SeedCreateCommunityMemberDocument, {
+        createCommunityMemberInput: { userId, roleId },
+      });
+    }
+
+    const { createCurrency: currency } = await ctx
+      .as("payingmod")
+      .gql(SeedCreateCurrencyDocument, {
+        input: {
+          communityId: community.id,
+          name: "Hollow Coin",
+          code: "HC",
+          symbol: "\u2b21",
+        },
+      });
+
+    // Seeded through Prisma rather than the upload API: creating a real image
+    // means S3, sharp, and a multipart upload, none of which this fixture is
+    // testing. What matters is the shape -- a PENDING image reachable from a
+    // community through media -> character -> species.
+    const image = await ctx.prisma.image.create({
+      data: {
+        filename: "ridley-lanternfall.png",
+        originalFilename: "ridley-lanternfall.png",
+        originalUrl: "https://example.test/ridley-lanternfall.png",
+        uploaderId: member.userId,
+        artistId: artist.userId,
+        width: 800,
+        height: 600,
+        fileSize: 12345,
+        mimeType: "image/png",
+        moderationStatus: "PENDING",
+      },
+    });
+
+    // Attached to `plain`, which othermember owns, so uploader, artist and
+    // character owner are three different people.
+    const pendingMedia = await ctx.prisma.media.create({
+      data: {
+        title: "Ridley at the lantern festival",
+        ownerId: member.userId,
+        characterId: plain.id,
+        imageId: image.id,
+      },
+    });
+
     return {
       community: {
         id: community.id,
@@ -177,8 +282,21 @@ export default definePreset<CommunityBasicWorld>({
         admin: stock.Admin,
         moderatorPlus: modPlus.id,
         member: stock.Member,
+        imageMod: imageMod.id,
+        payingMod: payingMod.id,
       },
-      users: { siteadmin, commadmin, moderator, member, othermember },
+      currency: { id: currency.id, code: currency.code, name: currency.name },
+      pendingImage: { imageId: image.id, mediaId: pendingMedia.id },
+      users: {
+        siteadmin,
+        commadmin,
+        moderator,
+        member,
+        othermember,
+        imagemod,
+        payingmod,
+        artist,
+      },
       characters: {
         pending: {
           id: pending.id,

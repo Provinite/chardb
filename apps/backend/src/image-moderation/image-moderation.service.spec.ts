@@ -31,6 +31,7 @@ describe("ImageModerationService", () => {
   const IMAGE_ID = "image-1";
   const MODERATOR = "mod-1";
   const COMMUNITY = "comm-1";
+  const MEDIA_ID = "media-1";
 
   /** The data handed to imageModerationAction.create on the last call. */
   const creditCall = () =>
@@ -57,7 +58,10 @@ describe("ImageModerationService", () => {
     // for unless a test narrows it.
     mockDatabaseService.user.findUnique.mockResolvedValue({ isAdmin: false });
     mockPermissionService.hasCommunityPermission.mockResolvedValue(true);
+    // Serves both lookups the service makes on media: the community
+    // resolution and the source id for the ledger row.
     mockDatabaseService.media.findFirst.mockResolvedValue({
+      id: MEDIA_ID,
       character: { species: { communityId: COMMUNITY } },
     });
     mockDatabaseService.image.findUnique.mockResolvedValue({
@@ -139,13 +143,14 @@ describe("ImageModerationService", () => {
       );
     });
 
-    it("stamps the source so the ledger row can name the image", async () => {
+    it("stamps the source so the ledger row can name the media", async () => {
       await service.approveImage(IMAGE_ID, MODERATOR, award);
 
       expect(creditCall()).toEqual(
         expect.objectContaining({
-          source: CurrencyTransactionSource.IMAGE_APPROVAL,
-          sourceId: IMAGE_ID,
+          source: CurrencyTransactionSource.MEDIA_APPROVAL,
+          // The media, not the image: that is what a member can open.
+          sourceId: MEDIA_ID,
         }),
       );
     });

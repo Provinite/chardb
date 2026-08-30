@@ -31,6 +31,8 @@ export const CURRENCY_TRANSACTION_FRAGMENT = gql`
     actorUserId
     actorLabel
     reason
+    source
+    sourceId
     # Null for viewers without item permissions. The server decides, so the
     # page never has to.
     staffNote

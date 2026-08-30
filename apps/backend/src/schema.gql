@@ -855,6 +855,16 @@ type CurrencyTransaction {
   reason: String
 
   """
+  What caused this row. The reason says why in words; this says what in a form a reader can follow back to the source.
+  """
+  source: CurrencyTransactionSource!
+
+  """
+  The record named by `source` -- a media id for MEDIA_APPROVAL. Null exactly when source is DIRECT.
+  """
+  sourceId: ID
+
+  """
   Staff-only note. Null unless the viewer holds canManageItems or canGrantItems in this community.
   """
   staffNote: String
@@ -913,6 +923,17 @@ enum CurrencyTransactionKind {
   Moved between two members. Writes one row per side, sharing a batch id.
   """
   TRANSFER
+}
+
+"""What caused a currency movement."""
+enum CurrencyTransactionSource {
+  """Somebody acted directly, with no other record behind it."""
+  DIRECT
+
+  """
+  Awarded when uploaded media was approved in moderation. sourceId is the media -- an image is an implementation detail of a media.
+  """
+  MEDIA_APPROVAL
 }
 
 """

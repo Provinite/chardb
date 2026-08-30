@@ -1,5 +1,23 @@
 import { ObjectType, Field, ID, Int, registerEnumType } from "@nestjs/graphql";
-import { CurrencyTransactionKind } from "@chardb/database";
+import {
+  CurrencyTransactionKind,
+  CurrencyTransactionSource,
+} from "@chardb/database";
+
+registerEnumType(CurrencyTransactionSource, {
+  name: "CurrencyTransactionSource",
+  description: "What caused a currency movement.",
+  valuesMap: {
+    DIRECT: {
+      description: "Somebody acted directly, with no other record behind it.",
+    },
+    MEDIA_APPROVAL: {
+      description:
+        "Awarded when uploaded media was approved in moderation. sourceId is " +
+        "the media -- an image is an implementation detail of a media.",
+    },
+  },
+});
 
 registerEnumType(CurrencyTransactionKind, {
   name: "CurrencyTransactionKind",
@@ -93,6 +111,21 @@ export class CurrencyTransaction {
       "Member-facing. Visible to anyone who can read this statement.",
   })
   reason?: string | null;
+
+  @Field(() => CurrencyTransactionSource, {
+    description:
+      "What caused this row. The reason says why in words; this says what in " +
+      "a form a reader can follow back to the source.",
+  })
+  source: CurrencyTransactionSource;
+
+  @Field(() => ID, {
+    nullable: true,
+    description:
+      "The record named by `source` -- a media id for MEDIA_APPROVAL. Null " +
+      "exactly when source is DIRECT.",
+  })
+  sourceId?: string | null;
 
   // staffNote is deliberately NOT a plain @Field. It is resolved conditionally
   // so it can be nulled for viewers without item permissions, exactly as on

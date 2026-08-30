@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Award recipients widget** on each image moderation card. Lists everyone
+  the upload names, deduplicated — posting your own art of your own character
+  is one row reading `uploader · owner`, while gift art of someone else's
+  character is two or three — with an amount each and one currency for the
+  card. Approving sends them.
+
+  It renders only when the server returns recipients, which it does not for
+  viewers without `canGrantItems`. A moderator who only moderates sees the
+  queue exactly as before.
+
+  Someone who cannot be paid gets no input and says why, rather than an input
+  that would be silently ignored. The toast reports what the ledger recorded
+  rather than what was submitted, so a recipient who has left the community is
+  not claimed as paid.
+
+- **Ledger rows link to what paid for them.** A row created by an approval
+  carries "from an approved upload →" through to the media.
+
 ## [v11.3.0] - 2026-08-30
 
 ## [v11.2.0] - 2026-08-30

@@ -323,14 +323,14 @@ describe("CurrencyLedgerService", () => {
         awards: [{ userId: "userA", amount: 25 }],
         reason: "Upload approved",
         actorUserId: "staff1",
-        source: CurrencyTransactionSource.IMAGE_APPROVAL,
+        source: CurrencyTransactionSource.MEDIA_APPROVAL,
         sourceId: "image-7",
       });
 
       // Without this a member reading "+25, upload approved" has no way to
       // reach the upload, and an auditor cannot tell forty approvals apart.
       expect(writtenRows()[0]).toMatchObject({
-        source: CurrencyTransactionSource.IMAGE_APPROVAL,
+        source: CurrencyTransactionSource.MEDIA_APPROVAL,
         sourceId: "image-7",
       });
     });

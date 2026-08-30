@@ -877,8 +877,12 @@ enum CurrencyTransactionKind {
 enum CurrencyTransactionSource {
   /// A member or staff acted directly, with no other record behind it.
   DIRECT
-  /// Awarded when an uploaded image was approved. Source id is the image.
-  IMAGE_APPROVAL
+  /// Awarded when an uploaded piece of media was approved in moderation.
+  /// Source id is the MEDIA, not the image inside it: an image is an
+  /// implementation detail of a media, so a media that has been deleted means
+  /// the upload is gone as far as anyone is concerned, and pointing at the
+  /// surviving image would name something with no user-facing existence.
+  MEDIA_APPROVAL
 }
 
 /// One member's side of one currency movement. A transfer is two rows.
@@ -920,7 +924,7 @@ model CurrencyTransaction {
 
   /// What caused this row. DIRECT means somebody simply did it.
   source   CurrencyTransactionSource @default(DIRECT)
-  /// The id of the record named by `source` -- an image id for IMAGE_APPROVAL.
+  /// The id of the record named by `source` -- a media id for MEDIA_APPROVAL.
   ///
   /// Deliberately not a foreign key: it points at a different table depending
   /// on `source`, and a ledger row must outlive the thing that caused it. A
@@ -939,7 +943,7 @@ model CurrencyTransaction {
   @@index([userId, createdAt])
   @@index([currencyId, userId, createdAt])
   @@index([batchId])
-  /// Answers "what did approving this image pay out", which is the audit
+  /// Answers "what did approving this media pay out", which is the audit
   /// direction moderation needs. Partial-ish in practice: most rows are
   /// DIRECT with a null sourceId.
   @@index([source, sourceId])

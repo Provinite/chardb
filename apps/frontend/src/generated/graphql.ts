@@ -730,6 +730,10 @@ export type CurrencyTransaction = {
   kind: CurrencyTransactionKind;
   /** Member-facing. Visible to anyone who can read this statement. */
   reason: Maybe<Scalars['String']['output']>;
+  /** What caused this row. The reason says why in words; this says what in a form a reader can follow back to the source. */
+  source: CurrencyTransactionSource;
+  /** The record named by `source` -- a media id for MEDIA_APPROVAL. Null exactly when source is DIRECT. */
+  sourceId: Maybe<Scalars['ID']['output']>;
   /** Staff-only note. Null unless the viewer holds canManageItems or canGrantItems in this community. */
   staffNote: Maybe<Scalars['String']['output']>;
   user: Maybe<User>;
@@ -770,6 +774,14 @@ export enum CurrencyTransactionKind {
   Spend = 'SPEND',
   /** Moved between two members. Writes one row per side, sharing a batch id. */
   Transfer = 'TRANSFER'
+}
+
+/** What caused a currency movement. */
+export enum CurrencyTransactionSource {
+  /** Somebody acted directly, with no other record behind it. */
+  Direct = 'DIRECT',
+  /** Awarded when uploaded media was approved in moderation. sourceId is the media -- an image is an implementation detail of a media. */
+  MediaApproval = 'MEDIA_APPROVAL'
 }
 
 export type DeviantartUuidBackfillProgress = {
@@ -4038,7 +4050,7 @@ export type DeleteCommunityColorMutation = { __typename?: 'Mutation', deleteComm
 
 export type CurrencyFieldsFragment = { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string };
 
-export type CurrencyTransactionFieldsFragment = { __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
+export type CurrencyTransactionFieldsFragment = { __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, source: CurrencyTransactionSource, sourceId: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
 
 export type GetCurrenciesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -4068,7 +4080,7 @@ export type GetCurrencyTransactionsQueryVariables = Exact<{
 }>;
 
 
-export type GetCurrencyTransactionsQuery = { __typename?: 'Query', currencyTransactions: { __typename?: 'CurrencyTransactionConnection', total: number, hasMore: boolean, transactions: Array<{ __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
+export type GetCurrencyTransactionsQuery = { __typename?: 'Query', currencyTransactions: { __typename?: 'CurrencyTransactionConnection', total: number, hasMore: boolean, transactions: Array<{ __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, source: CurrencyTransactionSource, sourceId: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
 
 export type GetCurrencyHoldersQueryVariables = Exact<{
   currencyId: Scalars['ID']['input'];
@@ -5092,6 +5104,8 @@ export const CurrencyTransactionFieldsFragmentDoc = gql`
   actorUserId
   actorLabel
   reason
+  source
+  sourceId
   staffNote
   createdAt
   currency {

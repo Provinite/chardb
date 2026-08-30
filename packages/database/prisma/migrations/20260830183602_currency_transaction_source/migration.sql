@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "CurrencyTransactionSource" AS ENUM ('DIRECT', 'IMAGE_APPROVAL');
+CREATE TYPE "CurrencyTransactionSource" AS ENUM ('DIRECT', 'MEDIA_APPROVAL');
 
 -- AlterTable
 ALTER TABLE "currency_transactions" ADD COLUMN     "source" "CurrencyTransactionSource" NOT NULL DEFAULT 'DIRECT',
