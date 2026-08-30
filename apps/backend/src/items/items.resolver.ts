@@ -28,6 +28,7 @@ import {
 } from "./entities/item-type.entity";
 import { Item as ItemEntity } from "./entities/item.entity";
 import { ItemEconomyReport } from "./entities/item-economy.entity";
+import { MemberHoldingsReport } from "./entities/member-holdings.entity";
 import { Community } from "../communities/entities/community.entity";
 import { Image } from "../images/entities/image.entity";
 import { User } from "../users/entities/user.entity";
@@ -188,6 +189,40 @@ export class ItemsResolver {
       itemTypes: report.itemTypes.map((t) => ({
         ...t,
         itemType: mapPrismaItemTypeToGraphQL(t.itemType),
+      })),
+    };
+  }
+
+  /**
+   * Membership only, matching the ledger and provenance: inventories are
+   * public within a community, so this is the same page whether you are
+   * looking at yourself, a trade partner, or someone you are about to correct.
+   * Permissions add actions to it; they do not change what it shows.
+   */
+  @AllowCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Query(() => MemberHoldingsReport, {
+    name: "memberHoldings",
+    description:
+      "One member's live holdings in one community, grouped by item type and " +
+      "not paginated -- an inventory is a whole thing.",
+  })
+  async memberHoldings(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("userId", { type: () => ID }) userId: string,
+  ): Promise<MemberHoldingsReport> {
+    const report = await this.itemsService.findMemberHoldings(
+      userId,
+      communityId,
+    );
+
+    return {
+      ...report,
+      member: mapPrismaUserToGraphQL(report.member),
+      holdings: report.holdings.map((h) => ({
+        count: h.count,
+        itemType: mapPrismaItemTypeToGraphQL(h.itemType),
+        items: h.items.map(mapPrismaItemToGraphQL),
       })),
     };
   }

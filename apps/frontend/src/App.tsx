@@ -387,6 +387,17 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Same page either way: inventories are public within a community,
+            so a named member's holdings and your own are one view with
+            different actions rather than two pages of the same facts. */}
+        <Route
+          path="/communities/:communityId/members/:username/items"
+          element={
+            <ProtectedRoute>
+              <CommunityInventoryPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/communities/:communityId/inventory"
           element={

@@ -457,3 +457,112 @@ describe("ItemsService.findItemEconomy", () => {
     expect(call.where.destroyedAt).toBeNull();
   });
 });
+
+describe("ItemsService.findMemberHoldings", () => {
+  let service: ItemsService;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ItemsService,
+        { provide: DatabaseService, useValue: mockDatabaseService },
+        {
+          provide: PendingOwnershipService,
+          useValue: mockPendingOwnershipService,
+        },
+        { provide: DiscordService, useValue: mockDiscordService },
+        { provide: ItemTransactionsService, useValue: mockItemTransactions },
+      ],
+    }).compile();
+    service = module.get<ItemsService>(ItemsService);
+
+    mockDatabaseService.user.findUnique.mockResolvedValue({
+      id: "alice",
+      username: "alice",
+    });
+    mockDatabaseService.item.findMany.mockResolvedValue([]);
+    mockDatabaseService.pendingOwnership.count.mockResolvedValue(0);
+  });
+
+  const held = (id: string, typeId: string, name: string) => ({
+    id,
+    itemTypeId: typeId,
+    createdAt: new Date("2026-01-01"),
+    itemType: { id: typeId, name },
+  });
+
+  it("groups by item type and lists every item inside", async () => {
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      held("i1", "potion", "Potion"),
+      held("i2", "potion", "Potion"),
+      held("i3", "locket", "Locket"),
+    ]);
+
+    const report = await service.findMemberHoldings("alice", "comm1");
+
+    expect(report.totalItems).toBe(3);
+    expect(report.distinctTypes).toBe(2);
+    const potion = report.holdings.find((h) => h.itemType.id === "potion");
+    // Individually addressable, not just counted: revoking two of three means
+    // naming which two.
+    expect(potion?.count).toBe(2);
+    expect(potion?.items.map((i) => i.id)).toEqual(["i1", "i2"]);
+  });
+
+  it("does not paginate", async () => {
+    // The bug this replaces: User.inventories called findAllItems with no
+    // limit, took the default of 20, and reported the truncated length as the
+    // total. Nothing in the result said it had been cut short.
+    mockDatabaseService.item.findMany.mockResolvedValue(
+      Array.from({ length: 30 }, (_, i) => held(`i${i}`, "potion", "Potion")),
+    );
+
+    const report = await service.findMemberHoldings("alice", "comm1");
+
+    expect(report.totalItems).toBe(30);
+    expect(report.holdings[0].items).toHaveLength(30);
+    const call = mockDatabaseService.item.findMany.mock.calls[0][0] as {
+      take?: number;
+    };
+    expect(call.take).toBeUndefined();
+  });
+
+  it("excludes destroyed items and scopes to the community", async () => {
+    await service.findMemberHoldings("alice", "comm1");
+
+    const call = mockDatabaseService.item.findMany.mock.calls[0][0] as {
+      where: {
+        ownerId: string;
+        destroyedAt: null;
+        itemType: { communityId: string };
+      };
+    };
+    expect(call.where.ownerId).toBe("alice");
+    expect(call.where.destroyedAt).toBeNull();
+    expect(call.where.itemType.communityId).toBe("comm1");
+  });
+
+  it("orders holdings by size, largest first", async () => {
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      held("i1", "locket", "Locket"),
+      held("i2", "potion", "Potion"),
+      held("i3", "potion", "Potion"),
+    ]);
+
+    const report = await service.findMemberHoldings("alice", "comm1");
+
+    expect(report.holdings.map((h) => h.itemType.id)).toEqual([
+      "potion",
+      "locket",
+    ]);
+  });
+
+  it("refuses an unknown member", async () => {
+    mockDatabaseService.user.findUnique.mockResolvedValue(null);
+
+    await expect(service.findMemberHoldings("nobody", "comm1")).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+});

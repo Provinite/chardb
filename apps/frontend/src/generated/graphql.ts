@@ -1275,6 +1275,29 @@ export enum MediaType {
   Text = 'TEXT'
 }
 
+/** Every item of one type that a member holds. */
+export type MemberHolding = {
+  __typename?: 'MemberHolding';
+  count: Scalars['Int']['output'];
+  itemType: ItemType;
+  /** The items themselves, oldest first. Each has its own provenance, so they are listed rather than only counted. */
+  items: Array<Item>;
+};
+
+/** One member's holdings in one community, with what they are still owed. */
+export type MemberHoldingsReport = {
+  __typename?: 'MemberHoldingsReport';
+  /** Distinct item types held. */
+  distinctTypes: Scalars['Int']['output'];
+  /** Largest holding first. */
+  holdings: Array<MemberHolding>;
+  member: User;
+  /** Items granted to an external account this member has linked, but not yet claimed. Always 0 today -- claiming happens automatically on link -- and present so the page can say so rather than stay silent. */
+  pendingItems: Scalars['Int']['output'];
+  /** Live items held, across every type. */
+  totalItems: Scalars['Int']['output'];
+};
+
 /** The reason for rejecting an image */
 export enum ModerationRejectionReason {
   CopyrightIssue = 'COPYRIGHT_ISSUE',
@@ -2070,6 +2093,8 @@ export type Query = {
   mediaItem: Media;
   /** Get pending media for moderation queue (use pendingModerationImage field for actual image URLs) */
   mediaModerationQueue: MediaConnection;
+  /** One member's live holdings in one community, grouped by item type and not paginated -- an inventory is a whole thing. */
+  memberHoldings: MemberHoldingsReport;
   myCharacters: CharacterConnection;
   /** Get characters the current user can upload images to */
   myCharactersForImageUpload: CharacterConnection;
@@ -2466,6 +2491,12 @@ export type QueryMediaModerationQueueArgs = {
   communityId: Scalars['ID']['input'];
   first?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryMemberHoldingsArgs = {
+  communityId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -4142,6 +4173,14 @@ export type GetItemEconomyQueryVariables = Exact<{
 
 
 export type GetItemEconomyQuery = { __typename?: 'Query', itemEconomy: { __typename?: 'ItemEconomyReport', totalCirculation: number, totalHolders: number, totalUnclaimed: number, netRecently: number, itemTypes: Array<{ __typename?: 'ItemTypeEconomy', circulation: number, holderCount: number, grantedRecently: number, revokedRecently: number, unclaimed: number, itemType: { __typename?: 'ItemType', id: string } }> } };
+
+export type GetMemberHoldingsQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type GetMemberHoldingsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', totalItems: number, distinctTypes: number, pendingItems: number, member: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, category: string | null, isTradeable: boolean, isConsumable: boolean, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }> } };
 
 export type GetMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -9574,6 +9613,77 @@ export type GetItemEconomyQueryHookResult = ReturnType<typeof useGetItemEconomyQ
 export type GetItemEconomyLazyQueryHookResult = ReturnType<typeof useGetItemEconomyLazyQuery>;
 export type GetItemEconomySuspenseQueryHookResult = ReturnType<typeof useGetItemEconomySuspenseQuery>;
 export type GetItemEconomyQueryResult = Apollo.QueryResult<GetItemEconomyQuery, GetItemEconomyQueryVariables>;
+export const GetMemberHoldingsDocument = gql`
+    query GetMemberHoldings($communityId: ID!, $userId: ID!) {
+  memberHoldings(communityId: $communityId, userId: $userId) {
+    totalItems
+    distinctTypes
+    pendingItems
+    member {
+      ...UserBasic
+    }
+    holdings {
+      count
+      itemType {
+        id
+        name
+        description
+        category
+        isTradeable
+        isConsumable
+        color {
+          id
+          hexCode
+        }
+        image {
+          id
+          thumbnailUrl
+          originalUrl
+          altText
+        }
+      }
+      items {
+        id
+        createdAt
+      }
+    }
+  }
+}
+    ${UserBasicFragmentDoc}`;
+
+/**
+ * __useGetMemberHoldingsQuery__
+ *
+ * To run a query within a React component, call `useGetMemberHoldingsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMemberHoldingsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMemberHoldingsQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useGetMemberHoldingsQuery(baseOptions: Apollo.QueryHookOptions<GetMemberHoldingsQuery, GetMemberHoldingsQueryVariables> & ({ variables: GetMemberHoldingsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMemberHoldingsQuery, GetMemberHoldingsQueryVariables>(GetMemberHoldingsDocument, options);
+      }
+export function useGetMemberHoldingsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMemberHoldingsQuery, GetMemberHoldingsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMemberHoldingsQuery, GetMemberHoldingsQueryVariables>(GetMemberHoldingsDocument, options);
+        }
+export function useGetMemberHoldingsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMemberHoldingsQuery, GetMemberHoldingsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMemberHoldingsQuery, GetMemberHoldingsQueryVariables>(GetMemberHoldingsDocument, options);
+        }
+export type GetMemberHoldingsQueryHookResult = ReturnType<typeof useGetMemberHoldingsQuery>;
+export type GetMemberHoldingsLazyQueryHookResult = ReturnType<typeof useGetMemberHoldingsLazyQuery>;
+export type GetMemberHoldingsSuspenseQueryHookResult = ReturnType<typeof useGetMemberHoldingsSuspenseQuery>;
+export type GetMemberHoldingsQueryResult = Apollo.QueryResult<GetMemberHoldingsQuery, GetMemberHoldingsQueryVariables>;
 export const GetMediaDocument = gql`
     query GetMedia($filters: MediaFiltersInput) {
   media(filters: $filters) {

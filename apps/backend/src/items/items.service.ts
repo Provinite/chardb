@@ -662,4 +662,71 @@ export class ItemsService {
       itemTypes,
     };
   }
+
+  /**
+   * One member's live holdings in one community, grouped by item type.
+   *
+   * Deliberately unpaginated. An inventory is a whole thing -- a page that
+   * silently shows the first 20 of someone's 30 items is worse than one that
+   * takes an extra moment, and the count beside it would be a lie. The set is
+   * bounded by what one person holds in one community.
+   *
+   * This exists rather than reusing `User.inventories` because that field
+   * resolver calls `findAllItems` without a limit and so takes the default of
+   * 20, then reports `totalItems` as the length of the truncated array. Nothing
+   * about the result says it was cut short.
+   */
+  async findMemberHoldings(userId: string, communityId: string) {
+    const [member, items, pendingItems] = await Promise.all([
+      this.db.user.findUnique({ where: { id: userId } }),
+      this.db.item.findMany({
+        where: {
+          ownerId: userId,
+          destroyedAt: null,
+          itemType: { communityId },
+        },
+        include: { itemType: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      this.db.pendingOwnership.count({
+        where: {
+          claimedAt: null,
+          claimedByUserId: userId,
+          item: { destroyedAt: null, itemType: { communityId } },
+        },
+      }),
+    ]);
+
+    if (!member) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    const byType = new Map<
+      string,
+      { itemType: (typeof items)[number]["itemType"]; items: typeof items }
+    >();
+
+    for (const item of items) {
+      const group = byType.get(item.itemTypeId);
+      if (group) group.items.push(item);
+      else
+        byType.set(item.itemTypeId, { itemType: item.itemType, items: [item] });
+    }
+
+    const holdings = [...byType.values()]
+      .map((g) => ({
+        itemType: g.itemType,
+        count: g.items.length,
+        items: g.items,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      member,
+      totalItems: items.length,
+      distinctTypes: holdings.length,
+      pendingItems,
+      holdings,
+    };
+  }
 }

@@ -278,3 +278,44 @@ export const GET_ITEM_ECONOMY = gql`
     }
   }
 `;
+
+// ==================== Member Holdings ====================
+
+export const GET_MEMBER_HOLDINGS = gql`
+  query GetMemberHoldings($communityId: ID!, $userId: ID!) {
+    memberHoldings(communityId: $communityId, userId: $userId) {
+      totalItems
+      distinctTypes
+      pendingItems
+      member {
+        ...UserBasic
+      }
+      holdings {
+        count
+        itemType {
+          id
+          name
+          description
+          category
+          isTradeable
+          isConsumable
+          color {
+            id
+            hexCode
+          }
+          image {
+            id
+            thumbnailUrl
+            originalUrl
+            altText
+          }
+        }
+        items {
+          id
+          createdAt
+        }
+      }
+    }
+  }
+  ${USER_BASIC_FRAGMENT}
+`;

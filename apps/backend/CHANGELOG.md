@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`itemEconomy(communityId)`**: per item type, live circulation, distinct holders, grants and revokes over the last 30 days, and how many are unclaimed. Circulation and holders are counted separately on purpose — three potions held by one person is three in circulation and one holder, and an unclaimed item counts toward circulation but toward nobody's holdings.
+
+- **`memberHoldings(communityId, userId)`**: one member's live holdings, grouped by item type, with every individual item listed inside its group. Deliberately unpaginated: an inventory is a whole thing, and a count beside a truncated list is a lie.
+
+### Fixed
+
+- **`User.inventories` silently truncated at 20 items.** The field resolver called `findAllItems` without a limit, so it took the default of 20, then reported `totalItems` as the length of the truncated array — nothing in the result said it had been cut short. Anyone holding 21+ items in a community saw a partial inventory presented as complete. The holdings page now uses `memberHoldings`, which does not paginate; the old field is left in place for existing consumers.
+
 ## [v11.1.0] - 2026-08-30
 
 ### Added

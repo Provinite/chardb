@@ -1471,6 +1471,35 @@ enum MediaType {
   TEXT
 }
 
+"""Every item of one type that a member holds."""
+type MemberHolding {
+  count: Int!
+  itemType: ItemType!
+
+  """
+  The items themselves, oldest first. Each has its own provenance, so they are listed rather than only counted.
+  """
+  items: [Item!]!
+}
+
+"""One member's holdings in one community, with what they are still owed."""
+type MemberHoldingsReport {
+  """Distinct item types held."""
+  distinctTypes: Int!
+
+  """Largest holding first."""
+  holdings: [MemberHolding!]!
+  member: User!
+
+  """
+  Items granted to an external account this member has linked, but not yet claimed. Always 0 today -- claiming happens automatically on link -- and present so the page can say so rather than stay silent.
+  """
+  pendingItems: Int!
+
+  """Live items held, across every type."""
+  totalItems: Int!
+}
+
 """The reason for rejecting an image"""
 enum ModerationRejectionReason {
   COPYRIGHT_ISSUE
@@ -2312,6 +2341,11 @@ type Query {
   Get pending media for moderation queue (use pendingModerationImage field for actual image URLs)
   """
   mediaModerationQueue(communityId: ID!, first: Int = 20, offset: Int = 0): MediaConnection!
+
+  """
+  One member's live holdings in one community, grouped by item type and not paginated -- an inventory is a whole thing.
+  """
+  memberHoldings(communityId: ID!, userId: ID!): MemberHoldingsReport!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
 
   """Get characters the current user can upload images to"""
