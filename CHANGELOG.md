@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   character owner — with an amount each. Approving pays them in the same
   transaction as the approval.
 
+  Documented in the **Community Currency** walkthrough (a new "Rewarding an
+  upload" step, plus the ledger provenance it produces) and in the **Image
+  Moderation** walkthrough, with screenshots taken by driving a real upload
+  through the queue.
+
 ## [v11.3.0] - 2026-08-30
 
 ### Added
