@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Shop mutations returned rows without their per-viewer fields, so any caller
+  selecting them got an error after the write had already committed.
+
 - **`credit()` no longer takes a second pool connection inside a caller's
   transaction.** `loadWritableCurrency`, `findMembers` and `ensureBalanceRows`
   ran on the pool while the caller's interactive transaction held a connection
@@ -44,6 +47,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now leave it in the database.
 
 ### Added
+
+- Coin shop: communities can sell items for their own currency, with several
+  price options per listing, stock and per-member limits, and a fifteen-minute
+  self-serve refund.
 
 - **`CurrencyTransaction.source` / `.sourceId`**: what caused a ledger row.
   Until now currency had no notion of a cause, so an award could only say

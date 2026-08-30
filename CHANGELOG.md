@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Coin shop.** Communities can sell items for the currency they already
+  issue, documented in a new **Coin Shop** walkthrough.
+
 - **Award currency when approving an upload** (#226). Moderators who can also
   grant currency get a recipients widget on each moderation card listing
   everyone the upload names — uploader, credited artist, media owner,
