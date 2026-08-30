@@ -304,6 +304,33 @@ test.describe("item permissions", () => {
         }),
       ).resolves.toEqual({ revokeItems: 1 });
     });
+
+    test("an empty itemIds is refused, not crashed", async ({ world }) => {
+      // `[ID!]!` permits an empty array -- GraphQL only forbids null -- so this
+      // reaches the guard, which resolves the community from `itemIds.0` and
+      // finds nothing. It denies rather than throwing, which is the property
+      // worth pinning: the failure mode of an unresolvable community is closed,
+      // not open. Note the actor here HOLDS the permission, so a pass proves
+      // the guard denied on resolution rather than on authorisation.
+      await expect(
+        world.as("quartermaster").gql(SeedRevokeItemsDocument, {
+          itemIds: [],
+          reason: "Empty revoke",
+        }),
+      ).rejects.toThrow(NOT_ALLOWED);
+    });
+
+    test("nothing was destroyed by the empty revoke", async ({ world }) => {
+      await world
+        .as("quartermaster")
+        .gql(SeedRevokeItemsDocument, { itemIds: [], reason: "Empty revoke" })
+        .catch(() => undefined);
+
+      const { itemProvenance } = await world
+        .as("member")
+        .gql(SeedItemProvenanceDocument, { itemId: world.grantedItems.ids[0] });
+      expect(itemProvenance.map((t) => t.kind)).toEqual(["GRANT"]);
+    });
   });
 
   test.describe("reading the ledger — needs community membership only", () => {
