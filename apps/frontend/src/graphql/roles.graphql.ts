@@ -135,6 +135,12 @@ export const COMMUNITY_MEMBERS_WITH_ROLES = gql`
           username
           email
           displayName
+          avatarImage {
+            id
+            thumbnailUrl
+            originalUrl
+            altText
+          }
         }
         role {
           id

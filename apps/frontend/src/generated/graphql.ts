@@ -280,6 +280,8 @@ export type Community = {
   discordGuildName: Maybe<Scalars['String']['output']>;
   /** Unique identifier for the community */
   id: Scalars['ID']['output'];
+  /** Number of members in the community */
+  memberCount: Scalars['Int']['output'];
   /** Community members with optional search filtering */
   members: Array<User>;
   /** Name of the community */
@@ -3892,7 +3894,7 @@ export type CommunityByIdQueryVariables = Exact<{
 }>;
 
 
-export type CommunityByIdQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null, createdAt: string, updatedAt: string } };
+export type CommunityByIdQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null, memberCount: number, createdAt: string, updatedAt: string } };
 
 export type GetCommunityMembersQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -4643,7 +4645,7 @@ export type CommunityMembersWithRolesQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
+export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
 
 export type UpdateCommunityMemberMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -6684,6 +6686,7 @@ export const CommunityByIdDocument = gql`
     name
     discordGuildId
     discordGuildName
+    memberCount
     createdAt
     updatedAt
   }
@@ -11449,6 +11452,12 @@ export const CommunityMembersWithRolesDocument = gql`
         username
         email
         displayName
+        avatarImage {
+          id
+          thumbnailUrl
+          originalUrl
+          altText
+        }
       }
       role {
         id

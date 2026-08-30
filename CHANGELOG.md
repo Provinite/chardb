@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- CI checks `apps/backend/src/schema.gql` for drift, ahead of the existing
+  codegen check that reads it. Regenerate with `yarn workspace @chardb/backend
+  schema:emit`.
+
 ## [v11.3.0] - 2026-08-30
 
 ### Added
