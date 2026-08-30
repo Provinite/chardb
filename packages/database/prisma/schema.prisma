@@ -707,6 +707,7 @@ model ItemType {
   image        Image?            @relation("ItemTypeImage", fields: [imageId], references: [id], onDelete: SetNull)
   items        Item[]
   transactions ItemTransaction[]
+  tradeLines   TradeItem[]
 
   @@unique([name, communityId])
   @@map("item_types")
@@ -1293,7 +1294,22 @@ model Trade {
 model TradeItem {
   id      String @id @default(uuid())
   tradeId String @map("trade_id")
-  itemId  String @map("item_id")
+
+  /// Names one specific row, because its history is the point. Set on every
+  /// line the proposer offers -- they are at the composer, so they choose --
+  /// and on a request for one particular storied copy.
+  itemId String? @map("item_id")
+
+  /// Set together, for a line that will accept any rows of this type. The
+  /// default for anything requested: items of a type differ only by history, so
+  /// pinning a row makes an offer fail for a reason neither party can see, when
+  /// an identical one is sitting right there.
+  ///
+  /// Always sourced from the recipient. The giver chooses which rows to hand
+  /// over, and the recipient is the only giver who has not chosen yet -- the
+  /// proposer already did, at the composer.
+  itemTypeId String? @map("item_type_id")
+  quantity   Int?
 
   /// Who hands it over. Stored rather than derived from `Item.ownerId`: if the
   /// item changes hands while the offer sits, deriving would silently flip
@@ -1302,14 +1318,18 @@ model TradeItem {
   sourceUserId      String @map("source_user_id")
   destinationUserId String @map("destination_user_id")
 
-  trade           Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
-  item            Item  @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  sourceUser      User  @relation("TradeItemSource", fields: [sourceUserId], references: [id], onDelete: Cascade)
-  destinationUser User  @relation("TradeItemDestination", fields: [destinationUserId], references: [id], onDelete: Cascade)
+  trade           Trade     @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  item            Item?     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemType        ItemType? @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
+  sourceUser      User      @relation("TradeItemSource", fields: [sourceUserId], references: [id], onDelete: Cascade)
+  destinationUser User      @relation("TradeItemDestination", fields: [destinationUserId], references: [id], onDelete: Cascade)
 
-  /// The same item cannot be on the table twice in one trade.
+  /// The same row cannot be on the table twice in one trade. By-type lines are
+  /// not covered by this -- two lines for the same type would be one line with
+  /// a larger quantity, and the service merges them on write.
   @@unique([tradeId, itemId])
   @@index([itemId])
+  @@index([itemTypeId])
   @@map("trade_items")
 }
 

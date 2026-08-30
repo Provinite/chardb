@@ -37,7 +37,9 @@ CREATE TABLE "trades" (
 CREATE TABLE "trade_items" (
     "id" TEXT NOT NULL,
     "trade_id" TEXT NOT NULL,
-    "item_id" TEXT NOT NULL,
+    "item_id" TEXT,
+    "item_type_id" TEXT,
+    "quantity" INTEGER,
     "source_user_id" TEXT NOT NULL,
     "destination_user_id" TEXT NOT NULL,
 
@@ -69,6 +71,9 @@ CREATE INDEX "trades_community_id_created_at_idx" ON "trades"("community_id", "c
 CREATE INDEX "trade_items_item_id_idx" ON "trade_items"("item_id");
 
 -- CreateIndex
+CREATE INDEX "trade_items_item_type_id_idx" ON "trade_items"("item_type_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "trade_items_trade_id_item_id_key" ON "trade_items"("trade_id", "item_id");
 
 -- CreateIndex
@@ -88,6 +93,9 @@ ALTER TABLE "trade_items" ADD CONSTRAINT "trade_items_trade_id_fkey" FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE "trade_items" ADD CONSTRAINT "trade_items_item_id_fkey" FOREIGN KEY ("item_id") REFERENCES "items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "trade_items" ADD CONSTRAINT "trade_items_item_type_id_fkey" FOREIGN KEY ("item_type_id") REFERENCES "item_types"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "trade_items" ADD CONSTRAINT "trade_items_source_user_id_fkey" FOREIGN KEY ("source_user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -115,15 +123,25 @@ ALTER TABLE "trades" ADD CONSTRAINT "trades_parties_distinct"
   CHECK ("proposer_id" <> "recipient_id");
 
 -- CheckConstraint: a line moves something between two different people.
---
--- A line whose source and destination are the same person describes an item
--- leaving and arriving at one place, which settlement would faithfully record
--- as a transfer to nowhere.
 ALTER TABLE "trade_items" ADD CONSTRAINT "trade_items_ends_distinct"
   CHECK ("source_user_id" <> "destination_user_id");
 
 ALTER TABLE "trade_currency_lines" ADD CONSTRAINT "trade_currency_lines_ends_distinct"
   CHECK ("source_user_id" <> "destination_user_id");
+
+-- CheckConstraint: an item line names a row or a type, never both and never
+-- neither.
+--
+-- These are the two ways to say what is on the table -- "this exact potion" and
+-- "any two potions" -- and a row carrying both says two different things about
+-- the same line. Unlike "both ends are parties", this invariant lives entirely
+-- on one row, so the database can hold it rather than merely being told.
+ALTER TABLE "trade_items" ADD CONSTRAINT "trade_items_row_or_type"
+  CHECK (
+    ("item_id" IS NOT NULL AND "item_type_id" IS NULL AND "quantity" IS NULL)
+    OR
+    ("item_id" IS NULL AND "item_type_id" IS NOT NULL AND "quantity" IS NOT NULL AND "quantity" > 0)
+  );
 
 -- CheckConstraint: coin lines carry a positive amount.
 --
@@ -133,9 +151,6 @@ ALTER TABLE "trade_currency_lines" ADD CONSTRAINT "trade_currency_lines_amount_p
   CHECK ("amount" > 0);
 
 -- CheckConstraint: the settlement batch id exists exactly when the trade settled.
---
--- A batch id on an unsettled trade points at ledger rows that do not exist; an
--- accepted trade without one cannot be traced to what it did.
 ALTER TABLE "trades" ADD CONSTRAINT "trades_settlement_batch_matches_status"
   CHECK (("status" = 'ACCEPTED') = ("settlement_batch_id" IS NOT NULL));
 
