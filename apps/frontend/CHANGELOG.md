@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.0.0] - 2026-08-30
+
 ### Added
 
 - **Item Ledger page** (`/communities/:communityId/items/ledger`): every item movement in a community, with kind filter chips, search, and pagination. Linked from the community sidebar under **Community**, not Administration — any member can read it.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.0.0] - 2026-08-30
+
 ### Added
 
 - CI runs the unit test suites (backend Jest, frontend Vitest, da-import Vitest) on every pull request and on pushes to main, and a staging deploy now waits on them.
