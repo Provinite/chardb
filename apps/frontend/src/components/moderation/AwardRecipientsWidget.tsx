@@ -203,6 +203,7 @@ export const AwardRecipientsWidget: React.FC<AwardRecipientsWidgetProps> = ({
               <AmountInput
                 type="number"
                 min={1}
+                step={1}
                 placeholder="0"
                 aria-label={`Award to ${recipient.user.username}`}
                 value={amounts[recipient.userId] ?? ""}

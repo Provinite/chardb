@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **A fractional award amount no longer fails the whole approval.** A number
+  input yields `"2.5"` happily, which the server rejects as a non-integer with
+  a generic validation error and the image left pending. Amounts are truncated
+  before sending.
+
+- **The award panel is no longer offered to site admins who are not members of
+  the community.** Community permissions are role-based, so the approval would
+  refuse them — the panel rendered a button that could only throw.
+
 ### Added
 
 - **Award recipients widget** on each image moderation card. Lists everyone

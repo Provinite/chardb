@@ -701,7 +701,32 @@ export class MediaService {
     if (userIds.length === 0) return [];
 
     const [users, members] = await Promise.all([
-      this.db.user.findMany({ where: { id: { in: userIds } } }),
+      // Everything mapPrismaUserToGraphQL reads, and nothing else. The
+      // notable omission is passwordHash, which an unqualified findMany would
+      // pull into memory for up to four people on every card in the queue.
+      this.db.user.findMany({
+        where: { id: { in: userIds } },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          displayName: true,
+          bio: true,
+          avatarImageId: true,
+          website: true,
+          dateOfBirth: true,
+          isVerified: true,
+          isAdmin: true,
+          privacySettings: true,
+          canCreateCommunity: true,
+          canListUsers: true,
+          canListInviteCodes: true,
+          canCreateInviteCode: true,
+          canGrantGlobalPermissions: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
       // Membership hangs off the role, not off the community directly.
       this.db.communityMember.findMany({
         where: { userId: { in: userIds }, role: { communityId } },

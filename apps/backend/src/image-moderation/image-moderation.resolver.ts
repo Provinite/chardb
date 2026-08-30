@@ -11,7 +11,7 @@ import {
 import { UseGuards } from "@nestjs/common";
 import { ImageModerationService } from "./image-moderation.service";
 import { DatabaseService } from "../database/database.service";
-import { CurrencyTransactionSource } from "@prisma/client";
+import { CurrencyTransactionSource, ModerationStatus } from "@prisma/client";
 import { CurrencyTransaction } from "../currencies/entities/currency-transaction.entity";
 import { mapPrismaCurrencyTransactionToGraphQL } from "../currencies/utils/currency-resolver-mappers";
 import { MediaService } from "../media/media.service";
@@ -223,6 +223,11 @@ export class ImageModerationActionFieldsResolver {
   async resolveCurrencyAwards(
     @Parent() action: ImageModerationAction,
   ): Promise<CurrencyTransaction[]> {
+    // A rejection never pays, but the image may carry awards from an earlier
+    // approval. Matching on the media alone would attribute those to this
+    // action and contradict what this field says it returns.
+    if (action.action !== ModerationStatus.APPROVED) return [];
+
     // Two hops, because the ledger records the media rather than the image.
     // That is the cost of pointing a member's statement at something they can
     // actually look at, and it is paid here -- on an audit read -- rather than

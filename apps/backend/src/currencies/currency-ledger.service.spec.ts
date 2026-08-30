@@ -352,11 +352,20 @@ describe("CurrencyLedgerService", () => {
     });
 
     it("joins a caller's transaction rather than opening its own", async () => {
+      // Spread from the shared mock rather than hand-rolled: a real
+      // transaction client carries every model, and the reads now run on
+      // it too. A fake with only the write models would pass while the
+      // service was still reaching past the transaction to the pool.
       const tx = {
+        ...mockDatabaseService,
         currencyBalance: {
+          ...mockDatabaseService.currencyBalance,
           update: jest.fn().mockResolvedValue({ amount: 25 }),
         },
-        currencyTransaction: { create: jest.fn().mockResolvedValue({}) },
+        currencyTransaction: {
+          ...mockDatabaseService.currencyTransaction,
+          create: jest.fn().mockResolvedValue({}),
+        },
       };
 
       await service.credit({
@@ -646,9 +655,20 @@ describe("CurrencyLedgerService", () => {
     });
 
     it("joins a caller's transaction rather than opening its own", async () => {
+      // Spread from the shared mock rather than hand-rolled: a real
+      // transaction client carries every model, and the reads now run on
+      // it too. A fake with only the write models would pass while the
+      // service was still reaching past the transaction to the pool.
       const tx = {
-        currencyBalance: { update: jest.fn().mockResolvedValue({ amount: 5 }) },
-        currencyTransaction: { create: jest.fn().mockResolvedValue({}) },
+        ...mockDatabaseService,
+        currencyBalance: {
+          ...mockDatabaseService.currencyBalance,
+          update: jest.fn().mockResolvedValue({ amount: 5 }),
+        },
+        currencyTransaction: {
+          ...mockDatabaseService.currencyTransaction,
+          create: jest.fn().mockResolvedValue({}),
+        },
       };
 
       // A shop purchase must commit the item and the payment together, so the

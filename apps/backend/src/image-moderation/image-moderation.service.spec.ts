@@ -6,6 +6,7 @@ import { DatabaseService } from "../database/database.service";
 import { PermissionService } from "../auth/PermissionService";
 import { EmailService } from "../email/email.service";
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
+import { MediaService } from "../media/media.service";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { mockDatabaseService } from "../../test/setup";
 
@@ -24,6 +25,7 @@ const mockEmailService = {
   sendImageRejectedEmail: jest.fn(),
 };
 const mockLedger = { credit: jest.fn() };
+const mockMediaService = { findAwardRecipients: jest.fn() };
 
 describe("ImageModerationService", () => {
   let service: ImageModerationService;
@@ -49,6 +51,7 @@ describe("ImageModerationService", () => {
         { provide: PermissionService, useValue: mockPermissionService },
         { provide: EmailService, useValue: mockEmailService },
         { provide: CurrencyLedgerService, useValue: mockLedger },
+        { provide: MediaService, useValue: mockMediaService },
       ],
     }).compile();
 
@@ -80,6 +83,15 @@ describe("ImageModerationService", () => {
       paid: [],
       skipped: [],
     });
+    // The currency belongs to the image's community, and both recipients are
+    // connected to the media, unless a test says otherwise.
+    mockDatabaseService.currency.findUnique.mockResolvedValue({
+      communityId: COMMUNITY,
+    });
+    mockMediaService.findAwardRecipients.mockResolvedValue([
+      { userId: "uploader-1" },
+      { userId: "artist-1" },
+    ]);
   });
 
   describe("approveImage without an award", () => {
@@ -175,6 +187,47 @@ describe("ImageModerationService", () => {
       );
     });
 
+    it("refuses a currency from a different community", async () => {
+      mockDatabaseService.currency.findUnique.mockResolvedValue({
+        communityId: "some-other-community",
+      });
+
+      // The permission check passes -- the caller really can grant in THIS
+      // image's community. Without this check the coin would be minted from
+      // whichever community they named, so a moderator of a small community
+      // who is merely a member of a large one could mint the large one's
+      // currency to themselves. credit() cannot catch it: there the recipient
+      // is a legitimate member of the currency's own community.
+      await expect(
+        service.approveImage(IMAGE_ID, MODERATOR, award),
+      ).rejects.toThrow(/does not belong to this image's community/i);
+      expect(mockLedger.credit).not.toHaveBeenCalled();
+      expect(mockDatabaseService.image.update).not.toHaveBeenCalled();
+    });
+
+    it("refuses a currency that does not exist", async () => {
+      mockDatabaseService.currency.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.approveImage(IMAGE_ID, MODERATOR, award),
+      ).rejects.toThrow(/does not belong to this image's community/i);
+    });
+
+    it("refuses a recipient with no connection to the upload", async () => {
+      mockMediaService.findAwardRecipients.mockResolvedValue([
+        { userId: "uploader-1" },
+      ]);
+
+      // Not a privilege escalation -- this caller could pay artist-1 through
+      // mintCurrency anyway. It is about the ledger not lying: a
+      // MEDIA_APPROVAL row naming somebody unconnected to the upload makes
+      // the source attribution worthless.
+      await expect(
+        service.approveImage(IMAGE_ID, MODERATOR, award),
+      ).rejects.toThrow(/connected to this upload/i);
+      expect(mockLedger.credit).not.toHaveBeenCalled();
+    });
+
     it("refuses an award from a moderator without canGrantItems", async () => {
       mockPermissionService.hasCommunityPermission.mockImplementation(
         (_userId: string, _communityId: string, permission: string) =>
@@ -236,15 +289,18 @@ describe("ImageModerationService", () => {
       expect(mockLedger.credit).toHaveBeenCalled();
     });
 
-    it("refuses an award on an image belonging to no community", async () => {
+    it("refuses an award on an image attached to no media", async () => {
       mockDatabaseService.media.findFirst.mockResolvedValue(null);
       mockDatabaseService.user.findUnique.mockResolvedValue({ isAdmin: true });
 
-      // A global admin can moderate a community-less image, but there is no
-      // currency for it to be paid in.
+      // A global admin can moderate a media-less image, but there is nothing
+      // for the ledger row to point at and no community to find a currency
+      // in. The media check runs first because it is the more specific of the
+      // two -- no media implies no community, but not the reverse.
       await expect(
         service.approveImage(IMAGE_ID, MODERATOR, award),
-      ).rejects.toThrow(/does not belong to a community/i);
+      ).rejects.toThrow(/not attached to any media/i);
+      expect(mockDatabaseService.image.update).not.toHaveBeenCalled();
     });
   });
 

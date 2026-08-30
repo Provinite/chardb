@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **An award could mint another community's currency.** `approveImage` checked
+  `canGrantItems` against the *image's* community but passed the caller's
+  `currencyId` through unvalidated, and `credit()` scopes membership to the
+  *currency's* community — where the recipient is a legitimate member. So a
+  moderator of a small community who was merely a member of a large one could
+  approve any image in the small one while naming the large one's currency,
+  and mint it to themselves. The award now verifies the currency belongs to
+  the image's community, and that every recipient is actually connected to the
+  media. Both are covered by tests confirmed to fail against the unfixed code.
+
+### Fixed
+
+- **`credit()` no longer takes a second pool connection inside a caller's
+  transaction.** `loadWritableCurrency`, `findMembers` and `ensureBalanceRows`
+  ran on the pool while the caller's interactive transaction held a connection
+  of its own. Enough concurrent callers and every connection is held by a
+  transaction waiting for one that only another waiting transaction could
+  release, until the pool times all of them out. They now run on the client
+  they are given.
+
+  `ensureBalanceRows` moving inside the transaction also corrects a comment
+  that contradicted itself: `ON CONFLICT DO NOTHING` is precisely the
+  construct that does *not* raise a unique violation, so the stated reason for
+  keeping it outside was never valid.
+
+- **`ImageModerationAction.currencyAwards` reported a previous approval's
+  payout.** It matched only on the media, so a rejection of a previously
+  awarded image returned a non-empty list, contradicting the field's own
+  description. It now returns nothing for anything but an approval.
+
+- **`mapPrismaUserToGraphQL` no longer requires `passwordHash`**, which it
+  never read. Requiring it forced every caller to SELECT it; award recipients
+  now leave it in the database.
+
 ### Added
 
 - **`CurrencyTransaction.source` / `.sourceId`**: what caused a ledger row.

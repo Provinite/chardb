@@ -53,7 +53,16 @@ type PrismaUser = Prisma.UserGetPayload<{}>;
  * Maps Prisma User result to GraphQL User entity
  * Only includes scalar fields - relations handled by field resolvers
  */
-export function mapPrismaUserToGraphQL(prismaUser: PrismaUser): User {
+/**
+ * `passwordHash` is excluded from the parameter, not merely unread.
+ *
+ * The mapper never touched it, but requiring it forced every caller to SELECT
+ * it -- so a query that deliberately left it in the database failed to type
+ * check. Callers passing a whole row still satisfy this.
+ */
+export function mapPrismaUserToGraphQL(
+  prismaUser: Omit<PrismaUser, "passwordHash">,
+): User {
   return {
     id: prismaUser.id,
     username: prismaUser.username,

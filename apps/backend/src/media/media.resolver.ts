@@ -465,7 +465,12 @@ export class MediaResolver {
    * An empty list means something different: the viewer may reward, but this
    * media names nobody who can be paid.
    */
-  @AllowGlobalAdmin()
+  // Deliberately NOT @AllowGlobalAdmin, unlike its neighbours. Community
+  // permissions are purely role-based -- PermissionService has no isAdmin
+  // short-circuit -- so a site admin who is not a member of the community
+  // fails the check the approval itself makes. Granting them the field would
+  // render a widget whose Approve button then throws, leaving the image
+  // pending with a permission error. Better to not offer it.
   @AllowCommunityPermission(CommunityPermission.CanGrantItems)
   @ResolveCommunityFrom({ characterId: "$root.characterId" })
   @UseFilters(NullOnForbiddenFilter)

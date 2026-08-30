@@ -6,6 +6,10 @@ import {
   SeedCurrencyTransactionsDocument,
   CurrencyTransactionSource,
   MediaAwardRelation,
+  SeedCreateCommunityDocument,
+  SeedCreateCommunityMemberDocument,
+  SeedCreateCurrencyDocument,
+  SeedRolesByCommunityDocument,
 } from "../../src/generated/graphql.js";
 
 const test = presetTest("community-basic");
@@ -243,6 +247,74 @@ test.describe("approval awards", () => {
       expect(
         memberWallet.balances.find((b) => b.currency.code === "HC")?.amount,
       ).toBe(40);
+    });
+  });
+
+  test.describe("cross-community minting", () => {
+    test.beforeEach(async ({ world }) => {
+      await world.reset();
+    });
+
+    test("a currency from another community is refused", async ({ world }) => {
+      // The shape of the hole this guards: permission is checked against the
+      // image's community, so a moderator of a small community who is merely
+      // a MEMBER of a large one could name the large one's currency and mint
+      // it to themselves. Nothing downstream catches it -- there they are a
+      // legitimate member of that currency's own community.
+      const { createCommunity: other } = await world
+        .as("commadmin")
+        .gql(SeedCreateCommunityDocument, {
+          createCommunityInput: { name: `Elsewhere ${Date.now()}` },
+        });
+
+      const { rolesByCommunity } = await world
+        .as("commadmin")
+        .gql(SeedRolesByCommunityDocument, { communityId: other.id });
+      const memberRole = rolesByCommunity.nodes.find(
+        (r) => r.name === "Member",
+      );
+
+      // The attacker is an ordinary member over there, and can grant here.
+      await world.as("siteadmin").gql(SeedCreateCommunityMemberDocument, {
+        createCommunityMemberInput: {
+          userId: world.users.payingmod.userId,
+          roleId: memberRole!.id,
+        },
+      });
+
+      const { createCurrency: theirCurrency } = await world
+        .as("commadmin")
+        .gql(SeedCreateCurrencyDocument, {
+          input: { communityId: other.id, name: "Their Coin", code: "TC" },
+        });
+
+      await expect(
+        world.as("payingmod").gql(SeedApproveImageDocument, {
+          input: {
+            imageId: world.pendingImage.imageId,
+            currencyId: theirCurrency.id,
+            awards: [{ userId: world.users.payingmod.userId, amount: 1000000 }],
+          },
+        }),
+      ).rejects.toThrow(/does not belong to this image's community/i);
+    });
+
+    test("an award to somebody unconnected to the upload is refused", async ({
+      world,
+    }) => {
+      // commadmin is a member here and could be paid through mintCurrency, so
+      // this is not about privilege. It is about the ledger not lying: a
+      // MEDIA_APPROVAL row naming somebody with no relationship to the upload
+      // makes the source attribution worthless.
+      await expect(
+        world.as("payingmod").gql(SeedApproveImageDocument, {
+          input: {
+            imageId: world.pendingImage.imageId,
+            currencyId: world.currency.id,
+            awards: [{ userId: world.users.commadmin.userId, amount: 25 }],
+          },
+        }),
+      ).rejects.toThrow(/connected to this upload/i);
     });
   });
 

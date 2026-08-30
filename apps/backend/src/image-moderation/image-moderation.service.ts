@@ -16,6 +16,7 @@ import {
   CurrencyTransactionSource,
 } from "@prisma/client";
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
+import { MediaService } from "../media/media.service";
 import { ImageModerationQueueFiltersInput } from "./dto/image-moderation.dto";
 import {
   queueImageInclude,
@@ -38,16 +39,41 @@ export class ImageModerationService {
     private readonly permissionService: PermissionService,
     private readonly emailService: EmailService,
     private readonly currencyLedger: CurrencyLedgerService,
+    private readonly mediaService: MediaService,
   ) {}
 
   /**
-   * Refuse an award from someone who may moderate but may not grant.
+   * Validate an award before any of it is applied.
    *
-   * Moderating images and handing out prizes are separate jobs with separate
-   * permissions, and most moderators hold only the first. This is the check
-   * that matters -- the widget being hidden is a convenience, not a control.
+   * Three separate things have to hold, and checking only the first is a
+   * privilege escalation rather than a missing nicety:
+   *
+   * 1. The caller may grant currency **in this image's community**. Moderating
+   *    images and handing out prizes are separate permissions and most
+   *    moderators hold only the first. The widget being hidden is a
+   *    convenience, never the control.
+   * 2. The currency belongs to that same community. Without this, permission
+   *    is checked against the image's community while the coin is minted from
+   *    whichever community the caller names -- so a moderator of a small
+   *    community who is merely a *member* of a large one could mint the large
+   *    one's currency to themselves. `credit()` cannot catch this: it scopes
+   *    membership to the currency's own community, where the recipient is
+   *    legitimately a member.
+   * 3. Every recipient is actually connected to the media. A holder of
+   *    canGrantItems could pay them anyway through `mintCurrency`, so this is
+   *    not about privilege -- it is about the ledger row not lying. A
+   *    MEDIA_APPROVAL row naming somebody with no relationship to the upload
+   *    makes the source attribution worthless.
+   *
+   * @returns the community the image belongs to.
    */
-  private async assertCanAward(userId: string, imageId: string) {
+  private async assertAwardIsValid(
+    userId: string,
+    imageId: string,
+    mediaId: string,
+    currencyId: string,
+    recipientIds: string[],
+  ): Promise<string> {
     const communityId = await this.getImageCommunityId(imageId);
     if (!communityId) {
       throw new BadRequestException(
@@ -65,6 +91,30 @@ export class ImageModerationService {
         "You do not have permission to award currency in this community",
       );
     }
+
+    const currency = await this.db.currency.findUnique({
+      where: { id: currencyId },
+      select: { communityId: true },
+    });
+    if (!currency || currency.communityId !== communityId) {
+      throw new BadRequestException(
+        "That currency does not belong to this image's community",
+      );
+    }
+
+    const allowed = new Set(
+      (await this.mediaService.findAwardRecipients(mediaId, communityId)).map(
+        (recipient) => recipient.userId,
+      ),
+    );
+    const strangers = recipientIds.filter((id) => !allowed.has(id));
+    if (strangers.length > 0) {
+      throw new BadRequestException(
+        "An award can only go to someone connected to this upload",
+      );
+    }
+
+    return communityId;
   }
 
   /**
@@ -275,10 +325,6 @@ export class ImageModerationService {
     // user-facing existence -- and there is no route to view one either.
     let sourceMediaId: string | null = null;
     if (awards.length > 0) {
-      // The award widget is hidden from viewers without this permission, but
-      // hiding a control is not a check. A mutation that trusted the client
-      // here would let anyone who can moderate mint unlimited currency.
-      await this.assertCanAward(moderatorId, imageId);
       if (!award?.currencyId) {
         throw new BadRequestException(
           "A currency is required when awarding for an approval",
@@ -298,6 +344,15 @@ export class ImageModerationService {
           "This image is not attached to any media, so there is nothing to award for",
         );
       }
+
+      // Everything the client sent is checked here, before a single row moves.
+      await this.assertAwardIsValid(
+        moderatorId,
+        imageId,
+        media.id,
+        award.currencyId,
+        awards.map((a) => a.userId),
+      );
       sourceMediaId = media.id;
     }
 
