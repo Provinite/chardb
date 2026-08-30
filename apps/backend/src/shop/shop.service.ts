@@ -32,6 +32,41 @@ export interface CheckoutLineInput {
   quantity: number;
 }
 
+/**
+ * Everything a listing needs before a viewer can be told about it.
+ *
+ * One definition because every path that returns a `ShopItem` has to satisfy
+ * the same GraphQL shape, and the fields that are computed per viewer --
+ * `affordable`, `purchasedByViewer` -- are non-nullable. A path that loads
+ * less than this cannot be decorated, and a mutation that returns an
+ * undecorated row fails at serialisation time, after its write has committed.
+ */
+const SHOP_ITEM_INCLUDE = {
+  itemType: true,
+  prices: {
+    orderBy: { sortOrder: "asc" },
+    include: { components: { include: { currency: true } } },
+  },
+} satisfies Prisma.ShopItemInclude;
+
+type PricedShopItem = Prisma.ShopItemGetPayload<{
+  include: typeof SHOP_ITEM_INCLUDE;
+}>;
+
+/**
+ * A purchase line carries the whole listing, because a line is shown next to
+ * what it bought. That makes the listing's viewer-computed fields this shape's
+ * problem too, so it loads enough to decorate them.
+ */
+const PURCHASE_LINE_INCLUDE = {
+  shopItem: { include: SHOP_ITEM_INCLUDE },
+  costs: { include: { currency: true } },
+} satisfies Prisma.ShopPurchaseLineInclude;
+
+type PurchaseWithLines = Prisma.ShopPurchaseGetPayload<{
+  include: { lines: { include: typeof PURCHASE_LINE_INCLUDE } };
+}>;
+
 @Injectable()
 export class ShopService {
   constructor(
@@ -51,13 +86,7 @@ export class ShopService {
   async findShopItems(communityId: string, includeInactive = false) {
     return this.db.shopItem.findMany({
       where: { communityId, ...(includeInactive ? {} : { active: true }) },
-      include: {
-        itemType: true,
-        prices: {
-          orderBy: { sortOrder: "asc" },
-          include: { components: { include: { currency: true } } },
-        },
-      },
+      include: SHOP_ITEM_INCLUDE,
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
   }
@@ -65,13 +94,7 @@ export class ShopService {
   async findShopItemOrThrow(id: string) {
     const item = await this.db.shopItem.findUnique({
       where: { id },
-      include: {
-        itemType: true,
-        prices: {
-          orderBy: { sortOrder: "asc" },
-          include: { components: { include: { currency: true } } },
-        },
-      },
+      include: SHOP_ITEM_INCLUDE,
     });
     if (!item) throw new NotFoundException(`Shop item ${id} not found`);
     return item;
@@ -103,10 +126,7 @@ export class ShopService {
       where: { communityId, buyerId },
       include: {
         lines: {
-          include: {
-            shopItem: { include: { itemType: true } },
-            costs: { include: { currency: true } },
-          },
+          include: PURCHASE_LINE_INCLUDE,
           orderBy: { createdAt: "asc" },
         },
       },
@@ -156,13 +176,7 @@ export class ShopService {
           })),
         },
       },
-      include: {
-        itemType: true,
-        prices: {
-          orderBy: { sortOrder: "asc" },
-          include: { components: { include: { currency: true } } },
-        },
-      },
+      include: SHOP_ITEM_INCLUDE,
     });
   }
 
@@ -290,6 +304,36 @@ export class ShopService {
     includeInactive = false,
   ) {
     const items = await this.findShopItems(communityId, includeInactive);
+    return this.decorateItems(communityId, viewerId, items);
+  }
+
+  /**
+   * One listing, as its viewer sees it.
+   *
+   * Used by the admin mutations: what they return has to satisfy the same
+   * non-nullable fields the storefront query does, and the cheapest way to be
+   * sure of that is to answer with the same shape from the same code.
+   */
+  async findShopItemForViewer(id: string, viewerId: string) {
+    const item = await this.findShopItemOrThrow(id);
+    const [decorated] = await this.decorateItems(item.communityId, viewerId, [
+      item,
+    ]);
+    return decorated;
+  }
+
+  /**
+   * Attach the per-viewer fields to a set of listings.
+   *
+   * Two queries regardless of how many listings, because the alternative --
+   * resolving `affordable` per price and `purchasedByViewer` per item -- is a
+   * query per row on a page that exists to show many rows.
+   */
+  private async decorateItems(
+    communityId: string,
+    viewerId: string,
+    items: PricedShopItem[],
+  ) {
     if (items.length === 0) return [];
 
     const [balances, counts] = await Promise.all([
@@ -300,6 +344,7 @@ export class ShopService {
       this.db.shopPurchaseLine.groupBy({
         by: ["shopItemId"],
         where: {
+          shopItemId: { in: items.map((item) => item.id) },
           refundedAt: null,
           purchase: { buyerId: viewerId, communityId },
         },
@@ -330,7 +375,24 @@ export class ShopService {
    * with no explanation is the kind of thing that becomes a support message.
    */
   async findPurchasesForViewer(communityId: string, viewerId: string) {
-    const purchases = await this.findPurchases(communityId, viewerId);
+    return this.decoratePurchases(
+      communityId,
+      viewerId,
+      await this.findPurchases(communityId, viewerId),
+    );
+  }
+
+  /**
+   * Attach the per-viewer fields to a set of purchases.
+   *
+   * Shared with checkout so that a freshly bought purchase answers with the
+   * same shape, and the same refund reasoning, as one read back later.
+   */
+  private async decoratePurchases(
+    communityId: string,
+    viewerId: string,
+    purchases: PurchaseWithLines[],
+  ) {
     const lineIds = purchases.flatMap((p) => p.lines.map((l) => l.id));
     if (lineIds.length === 0) return [];
 
@@ -351,6 +413,17 @@ export class ShopService {
     });
     const itemById = new Map(items.map((i) => [i.id, i]));
 
+    // A line shows the listing it bought, and that listing is a full
+    // `ShopItem` -- so it owes the same per-viewer fields the storefront does.
+    // Decorated once for the distinct listings rather than once per line,
+    // since buying three of something is three lines naming one listing.
+    const listings = await this.decorateItems(
+      communityId,
+      viewerId,
+      dedupeById(purchases.flatMap((p) => p.lines.map((l) => l.shopItem))),
+    );
+    const listingById = new Map(listings.map((l) => [l.id, l]));
+
     const now = Date.now();
 
     return purchases.map((purchase) => ({
@@ -362,8 +435,16 @@ export class ShopService {
           now,
           viewerId,
         );
+        const listing = listingById.get(line.shopItemId);
+        if (!listing) {
+          // Impossible: the map was built from these very lines. Thrown
+          // rather than falling back to the undecorated row, because that
+          // fallback is what produces a null non-nullable field.
+          throw new Error(`Listing ${line.shopItemId} vanished mid-request`);
+        }
         return {
           ...line,
+          shopItem: listing,
           refundableByViewer: blocked === null,
           refundBlockedReason: blocked,
         };
@@ -398,7 +479,7 @@ export class ShopService {
 
     const purchaseId = randomUUID();
 
-    return this.db.$transaction(async (tx) => {
+    const purchase = await this.db.$transaction(async (tx) => {
       await tx.shopPurchase.create({
         data: { id: purchaseId, communityId, buyerId },
       });
@@ -548,14 +629,21 @@ export class ShopService {
         where: { id: purchaseId },
         include: {
           lines: {
-            include: {
-              shopItem: { include: { itemType: true } },
-              costs: { include: { currency: true } },
-            },
+            include: PURCHASE_LINE_INCLUDE,
+            orderBy: { createdAt: "asc" },
           },
         },
       });
     });
+
+    // Decorated after the commit, not inside it. The per-viewer fields are
+    // read-only and the balances they depend on have just changed, so they
+    // want the committed state -- and doing it here keeps the transaction as
+    // short as the writes require.
+    const [decorated] = await this.decoratePurchases(communityId, buyerId, [
+      purchase,
+    ]);
+    return decorated;
   }
 
   // ==================== Refunds ====================
@@ -626,7 +714,7 @@ export class ShopService {
       );
     }
 
-    return this.db.$transaction(async (tx) => {
+    const refunded = await this.db.$transaction(async (tx) => {
       // Claim the line first. Two refunds racing on the same line both pass
       // the checks above; only one can move it out of the unrefunded state,
       // and the loser updates nothing.
@@ -677,10 +765,36 @@ export class ShopService {
 
       return tx.shopPurchaseLine.findUniqueOrThrow({
         where: { id: lineId },
-        include: { costs: { include: { currency: true } }, purchase: true },
+        include: { ...PURCHASE_LINE_INCLUDE, purchase: true },
       });
     });
+
+    // Answered through the same decoration the purchase list uses, so a
+    // refunded line reads identically whether it came back from the mutation
+    // or from a refetch afterwards.
+    const [listing] = await this.decorateItems(
+      refunded.purchase.communityId,
+      actorId,
+      [refunded.shopItem],
+    );
+    const blocked = refundBlockedReason(
+      { ...refunded, buyerId: refunded.purchase.buyerId },
+      undefined,
+      Date.now(),
+      actorId,
+    );
+    return {
+      ...refunded,
+      shopItem: listing,
+      refundableByViewer: false,
+      refundBlockedReason: blocked,
+    };
   }
+}
+
+/** First occurrence wins; they are the same row read more than once. */
+function dedupeById<T extends { id: string }>(rows: T[]): T[] {
+  return [...new Map(rows.map((row) => [row.id, row])).values()];
 }
 
 /** Postgres refuses the decrement when the last unit is already gone. */

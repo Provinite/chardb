@@ -12,14 +12,18 @@ export class ItemType {
   @Field()
   name: string;
 
-  @Field({ nullable: true })
-  description?: string;
+  // Nullable columns are typed `| null` rather than only `?`, so a row read
+  // straight from Prisma satisfies this without a cast. The two are the same
+  // to GraphQL, and casting is how a missing non-nullable field reaches
+  // serialisation unnoticed.
+  @Field(() => String, { nullable: true })
+  description?: string | null;
 
   @Field(() => ID)
   communityId: string;
 
-  @Field({ nullable: true })
-  category?: string;
+  @Field(() => String, { nullable: true })
+  category?: string | null;
 
   @Field()
   isTradeable: boolean;
@@ -28,13 +32,13 @@ export class ItemType {
   isConsumable: boolean;
 
   // Not a GraphQL field - used internally by field resolver
-  imageId?: string;
+  imageId?: string | null;
 
   @Field(() => Image, { nullable: true })
-  image?: Image;
+  image?: Image | null;
 
   @Field(() => ID, { nullable: true })
-  colorId?: string;
+  colorId?: string | null;
 
   @Field(() => GraphQLJSON, { nullable: true })
   metadata?: unknown;

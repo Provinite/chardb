@@ -63,7 +63,7 @@ export class ShopResolver {
       user.id,
       includeInactive && canManage,
     );
-    return rows as unknown as ShopItem[];
+    return rows;
   }
 
   @AllowCommunityPermission(CommunityPermission.Any)
@@ -79,7 +79,7 @@ export class ShopResolver {
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<ShopPurchase[]> {
     const rows = await this.shop.findPurchasesForViewer(communityId, user.id);
-    return rows as unknown as ShopPurchase[];
+    return rows;
   }
 
   // ==================== Admin ====================
@@ -89,9 +89,15 @@ export class ShopResolver {
   @Mutation(() => ShopItem)
   async createShopItem(
     @Args("input") input: CreateShopItemInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<ShopItem> {
     const row = await this.shop.createShopItem(input);
-    return row as unknown as ShopItem;
+    // Read back through the viewer projection rather than returning the row
+    // straight from the write. `ShopItem` has non-nullable fields that only
+    // exist relative to whoever is asking, and a mutation that returns a row
+    // without them fails *after* committing -- which looks to the caller like
+    // the write did not happen.
+    return this.shop.findShopItemForViewer(row.id, user.id);
   }
 
   @AllowCommunityPermission(CommunityPermission.CanManageItems)
@@ -100,9 +106,10 @@ export class ShopResolver {
   async updateShopItem(
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: UpdateShopItemInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<ShopItem> {
     const row = await this.shop.updateShopItem(id, input);
-    return row as unknown as ShopItem;
+    return this.shop.findShopItemForViewer(row.id, user.id);
   }
 
   // ==================== Buying ====================
@@ -125,7 +132,7 @@ export class ShopResolver {
       user.id,
       input.lines,
     );
-    return row as unknown as ShopPurchase;
+    return row;
   }
 
   @AllowCommunityPermission(CommunityPermission.Any)
@@ -152,6 +159,6 @@ export class ShopResolver {
       : false;
 
     const row = await this.shop.refundLine(lineId, user.id, isStaff);
-    return row as unknown as ShopPurchaseLine;
+    return row;
   }
 }

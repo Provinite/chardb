@@ -402,6 +402,12 @@ query SeedMediaModerationQueue($communityId: ID!) {
 # ==================== Shop ====================
 
 # Requires community CanManageItems.
+#
+# These select `purchasedByViewer` and `affordable` deliberately. They are
+# non-nullable and computed per viewer, so a mutation that answers with a row
+# straight from the write serialises them as null and fails *after*
+# committing. Selecting them here is what makes that a test failure rather
+# than something the storefront discovers.
 mutation SeedCreateShopItem($input: CreateShopItemInput!) {
   createShopItem(input: $input) {
     id
@@ -409,8 +415,10 @@ mutation SeedCreateShopItem($input: CreateShopItemInput!) {
     stock
     maxPerUser
     active
+    purchasedByViewer
     prices {
       id
+      affordable
       components {
         amount
         currency {
@@ -426,8 +434,10 @@ mutation SeedUpdateShopItem($id: ID!, $input: UpdateShopItemInput!) {
     id
     active
     stock
+    purchasedByViewer
     prices {
       id
+      affordable
       components {
         amount
         currency {
@@ -446,6 +456,8 @@ mutation SeedCheckout($input: CheckoutInput!) {
     lines {
       id
       refundedAt
+      refundableByViewer
+      refundBlockedReason
       costs {
         amount
         currency {
@@ -455,6 +467,11 @@ mutation SeedCheckout($input: CheckoutInput!) {
       shopItem {
         id
         name
+        purchasedByViewer
+        prices {
+          id
+          affordable
+        }
       }
     }
   }
@@ -464,6 +481,17 @@ mutation SeedRefundShopLine($lineId: ID!) {
   refundShopPurchaseLine(lineId: $lineId) {
     id
     refundedAt
+    refundableByViewer
+    refundBlockedReason
+    shopItem {
+      id
+      stock
+      purchasedByViewer
+      prices {
+        id
+        affordable
+      }
+    }
   }
 }
 
@@ -502,6 +530,15 @@ query SeedMyShopPurchases($communityId: ID!) {
         amount
         currency {
           code
+        }
+      }
+      shopItem {
+        id
+        name
+        purchasedByViewer
+        prices {
+          id
+          affordable
         }
       }
     }
