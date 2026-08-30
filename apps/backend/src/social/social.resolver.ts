@@ -25,7 +25,6 @@ import {
   ActivityItem,
   ActivityFeedInput,
 } from "./dto/social-query.dto";
-import { Follow } from "./entities/follow.entity";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
