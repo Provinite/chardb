@@ -1,6 +1,6 @@
 {
   "name": "@chardb/e2e",
-  "version": "10.2.1",
+  "version": "10.2.2",
   "private": true,
   "scripts": {
     "e2e": "yarn codegen && playwright test",
