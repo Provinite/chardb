@@ -156,9 +156,9 @@ describe("CurrenciesService", () => {
         uniqueViolation("currencies_community_id_code_key"),
       );
 
-      await expect(
-        service.update("cur1", { code: "gem" }),
-      ).rejects.toThrow(/code GEM/);
+      await expect(service.update("cur1", { code: "gem" })).rejects.toThrow(
+        /code GEM/,
+      );
     });
 
     it("surfaces a conflict as a ConflictException", async () => {
@@ -255,7 +255,9 @@ describe("CurrenciesService", () => {
       mockDatabaseService.currency.findMany.mockResolvedValue([]);
 
       expect(await service.findSupply("comm1")).toEqual([]);
-      expect(mockDatabaseService.currencyBalance.groupBy).not.toHaveBeenCalled();
+      expect(
+        mockDatabaseService.currencyBalance.groupBy,
+      ).not.toHaveBeenCalled();
     });
 
     it("includes archived currencies, which still hold balances", async () => {

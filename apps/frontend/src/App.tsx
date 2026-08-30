@@ -63,6 +63,8 @@ import { DeviantArtCallbackPage } from "./pages/DeviantArtCallbackPage";
 import { DiscordCallbackPage } from "./pages/DiscordCallbackPage";
 import { ToyhouseCallbackPage } from "./pages/ToyhouseCallbackPage";
 import { CommunityItemsAdminPage } from "./pages/CommunityItemsAdminPage";
+import { CommunityCurrenciesAdminPage } from "./pages/CommunityCurrenciesAdminPage";
+import { CommunityCurrencyLedgerPage } from "./pages/CommunityCurrencyLedgerPage";
 import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
 import { CommunityItemLedgerPage } from "./pages/CommunityItemLedgerPage";
 import { ItemProvenancePage } from "./pages/ItemProvenancePage";
@@ -411,6 +413,27 @@ function App() {
           element={
             <ProtectedRoute>
               <CommunityItemLedgerPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Currency management sits under the community rather than under
+            /admin, because the supply table is readable by any member and
+            only the actions on it are gated. */}
+        <Route
+          path="/communities/:communityId/currencies"
+          element={
+            <ProtectedRoute>
+              <CommunityCurrenciesAdminPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Declared before the ledger's own path would be ambiguous with a
+            currency id, so this stays a literal segment. */}
+        <Route
+          path="/communities/:communityId/currencies/ledger"
+          element={
+            <ProtectedRoute>
+              <CommunityCurrencyLedgerPage />
             </ProtectedRoute>
           }
         />

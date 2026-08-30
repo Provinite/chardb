@@ -3,6 +3,7 @@ import styled, { css } from "styled-components";
 import { useParams, Link } from "react-router-dom";
 import { Package, ChevronDown } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { CurrencyWallet } from "../components/currency/CurrencyWallet";
 import { useAuth } from "../contexts/AuthContext";
 import {
   useCommunityByIdQuery,
@@ -335,6 +336,17 @@ export const CommunityInventoryPage: React.FC = () => {
           </Subtitle>
         </div>
       </Header>
+
+      {/* Coin and items are one answer to "what does this person have".
+          Splitting them across two pages makes a trade partner check twice.
+          Renders nothing when the community defines no currencies. */}
+      {communityId && targetUserId && (
+        <CurrencyWallet
+          communityId={communityId}
+          userId={targetUserId}
+          isOwnWallet={viewingSelf}
+        />
+      )}
 
       <Tiles>
         <Tile data-testid="holdings-total">
