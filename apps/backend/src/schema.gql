@@ -51,6 +51,17 @@ type AuthPayload {
   refreshToken: String!
 }
 
+input BurnCurrencyInput {
+  """How much to remove, as a positive number."""
+  amount: Int!
+  currencyId: ID!
+
+  """Member-facing. Required, because it is public."""
+  reason: String!
+  staffNote: String
+  userId: ID!
+}
+
 type Character {
   _count: CharacterCount!
 
@@ -479,6 +490,18 @@ input CreateCommunityMemberInput {
   userId: ID!
 }
 
+input CreateCurrencyInput {
+  """
+  Short display code, unique within the community. Letters and digits only, stored uppercase.
+  """
+  code: String!
+  colorId: ID
+  communityId: ID!
+  description: String
+  name: String!
+  symbol: String
+}
+
 input CreateEnumValueInput {
   """ID of the color for this enum value"""
   colorId: ID
@@ -710,6 +733,175 @@ input CreateTraitListEntryInput {
 
   """Type of values this trait stores"""
   valueType: TraitValueType!
+}
+
+"""
+A community-defined unit of account. A community may define any number of them; they never convert into one another and never leave their community.
+"""
+type Currency {
+  """
+  When set, the currency takes no new transactions. Existing balances and statements stay readable -- deleting it would destroy the history of everything ever bought with it.
+  """
+  archivedAt: DateTime
+
+  """Short display code, unique within the community: "HC"."""
+  code: String!
+  colorId: ID
+  communityId: ID!
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  name: String!
+
+  """
+  Glyph rendered before the amount. Readers should fall back to the code when this is null.
+  """
+  symbol: String
+  updatedAt: DateTime!
+}
+
+"""What one member holds of one currency."""
+type CurrencyBalance {
+  amount: Int!
+  currency: Currency!
+  id: ID!
+  updatedAt: DateTime!
+  user: User
+  userId: ID!
+}
+
+type CurrencyBalanceLine {
+  """Zero when the member has never held any of this currency."""
+  amount: Int!
+  currency: Currency!
+
+  """When this balance last moved. Null if it never has."""
+  updatedAt: DateTime
+}
+
+"""What a community's currency is doing, in aggregate."""
+type CurrencySupply {
+  currency: Currency!
+
+  """Members holding a non-zero balance."""
+  holders: Int!
+
+  """
+  Total held across every member. Coin at a sink has been burned, so this is the whole supply, not a share of it.
+  """
+  inCirculation: Int!
+
+  """The largest single balance. Zero when nobody holds any."""
+  largestBalance: Int!
+
+  """Minted over the last 30 days."""
+  mintedLast30Days: Int!
+
+  """
+  Removed over the last 30 days, as a positive number. Burns and spends together -- both leave circulation.
+  """
+  removedLast30Days: Int!
+}
+
+"""
+One member's side of one currency movement. A transfer is two rows sharing a batch id, so each member's statement reads correctly on its own.
+"""
+type CurrencyTransaction {
+  """
+  Names a non-user actor ("discord-bot", "system"). Set exactly when actorUserId is null.
+  """
+  actorLabel: String
+  actorUser: User
+
+  """Null for anything the system did on its own."""
+  actorUserId: ID
+
+  """
+  Signed delta on this row's owner. Negative for BURN, SPEND, and the sending side of a TRANSFER.
+  """
+  amount: Int!
+
+  """
+  The owner's balance immediately after this row was applied, as returned by the increment itself.
+  """
+  balanceAfter: Int!
+
+  """
+  Shared by every row one operation wrote -- both legs of a transfer, or every member in a bulk mint.
+  """
+  batchId: ID!
+  counterparty: User
+
+  """The member on the other side of a transfer."""
+  counterpartyId: ID
+  createdAt: DateTime!
+  currency: Currency!
+  currencyId: ID!
+  id: ID!
+  kind: CurrencyTransactionKind!
+
+  """Member-facing. Visible to anyone who can read this statement."""
+  reason: String
+
+  """
+  Staff-only note. Null unless the viewer holds canManageItems or canGrantItems in this community.
+  """
+  staffNote: String
+  user: User
+
+  """Whose balance this row moved."""
+  userId: ID!
+}
+
+type CurrencyTransactionConnection {
+  hasMore: Boolean!
+  total: Int!
+  transactions: [CurrencyTransaction!]!
+}
+
+input CurrencyTransactionFiltersInput {
+  """Required. A statement is always scoped to one community."""
+  communityId: ID!
+  currencyId: ID
+
+  """Match any of these kinds. Omit for all kinds."""
+  kinds: [CurrencyTransactionKind!]
+  limit: Int! = 25
+  offset: Int! = 0
+
+  """
+  Matches currency name and public reason. Never searches staff notes -- a member must not be able to probe for hidden text.
+  """
+  search: String
+
+  """
+  Matches rows where this user owns the row, is the counterparty, or is the actor.
+  """
+  userId: ID
+}
+
+"""How currency moved."""
+enum CurrencyTransactionKind {
+  """
+  Removed from a member's balance by staff, as a correction or a penalty.
+  """
+  BURN
+
+  """Written by a migration for a balance that predates this ledger."""
+  IMPORT
+
+  """Created into a member's balance by staff. Coin has no other source."""
+  MINT
+
+  """
+  Spent by the member at a sink. Leaves circulation; there is no treasury.
+  """
+  SPEND
+
+  """
+  Moved between two members. Writes one row per side, sharing a batch id.
+  """
+  TRANSFER
 }
 
 """
@@ -1500,6 +1692,30 @@ type MemberHoldingsReport {
   totalItems: Int!
 }
 
+"""
+Every currency in a community alongside what this member holds of it, including the ones they hold none of.
+
+Currencies with a zero balance are included deliberately: a wallet that hides them cannot tell a member that a currency exists, which is exactly what they need to know before they can earn any.
+"""
+type MemberWallet {
+  balances: [CurrencyBalanceLine!]!
+  communityId: ID!
+  userId: ID!
+}
+
+input MintCurrencyInput {
+  """How much each named member receives. Positive."""
+  amount: Int!
+  currencyId: ID!
+
+  """Member-facing. Required, because it is public."""
+  reason: String!
+  staffNote: String
+
+  """Who receives it. At least one."""
+  userIds: [ID!]!
+}
+
 """The reason for rejecting an image"""
 enum ModerationRejectionReason {
   COPYRIGHT_ISSUE
@@ -1540,6 +1756,11 @@ type Mutation {
   """
   assignCharacterSpecies(id: ID!, input: AssignCharacterSpeciesInput!): Character!
 
+  """
+  Remove currency from a member's balance. Refuses to take more than they hold.
+  """
+  burnCurrency(input: BurnCurrencyInput!): String!
+
   """Cancel a running DeviantArt UUID backfill job."""
   cancelDeviantartUuidBackfill: Boolean!
 
@@ -1578,6 +1799,7 @@ type Mutation {
     """Community membership creation data"""
     createCommunityMemberInput: CreateCommunityMemberInput!
   ): CommunityMember!
+  createCurrency(input: CreateCurrencyInput!): Currency!
 
   """Create a new enum value"""
   createEnumValue(
@@ -1674,6 +1896,11 @@ type Mutation {
     guildId: ID!
   ): Community!
   login(input: LoginInput!): AuthPayload!
+
+  """
+  Create currency into one or more members' balances. Returns the batch id every row it wrote shares.
+  """
+  mintCurrency(input: MintCurrencyInput!): String!
 
   """
   Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete.
@@ -1815,6 +2042,9 @@ type Mutation {
   toggleLike(input: ToggleLikeInput!): LikeResult!
   transferCharacter(id: ID!, input: TransferCharacterInput!): Character!
 
+  """Send currency to another member. Writes both sides as one batch."""
+  transferCurrency(input: TransferCurrencyInput!): String!
+
   """Unlink a Discord guild from a community"""
   unlinkDiscordGuild(
     """Community ID"""
@@ -1853,6 +2083,7 @@ type Mutation {
     """Community membership update data"""
     updateCommunityMemberInput: UpdateCommunityMemberInput!
   ): CommunityMember!
+  updateCurrency(id: ID!, input: UpdateCurrencyInput!): Currency!
 
   """Update an enum value"""
   updateEnumValue(
@@ -2162,6 +2393,21 @@ type Query {
     userId: ID!
   ): CommunityMemberConnection!
 
+  """Every currency a community defines. Readable by any member."""
+  currencies(communityId: ID!, includeArchived: Boolean! = false): [Currency!]!
+  currency(id: ID!): Currency!
+
+  """Who holds a currency, largest balance first."""
+  currencyHolders(currencyId: ID!, limit: Int! = 50, offset: Int! = 0): [CurrencyBalance!]!
+
+  """Circulation, holders, and 30-day mint and removal volume per currency."""
+  currencySupply(communityId: ID!): [CurrencySupply!]!
+
+  """
+  The currency ledger for one community, newest first. A transfer is two rows sharing a batchId. Readable by any member.
+  """
+  currencyTransactions(filters: CurrencyTransactionFiltersInput!): CurrencyTransactionConnection!
+
   """Get the Discord bot invite URL"""
   discordBotInviteUrl: String!
 
@@ -2346,6 +2592,11 @@ type Query {
   One member's live holdings in one community, grouped by item type and not paginated -- an inventory is a whole thing.
   """
   memberHoldings(communityId: ID!, userId: ID!): MemberHoldingsReport!
+
+  """
+  What one member holds of every currency in a community, including the ones they hold none of.
+  """
+  memberWallet(communityId: ID!, userId: ID!): MemberWallet!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
 
   """Get characters the current user can upload images to"""
@@ -3070,6 +3321,17 @@ input TransferCharacterInput {
   newOwnerId: ID!
 }
 
+input TransferCurrencyInput {
+  amount: Int!
+  currencyId: ID!
+
+  """Member-facing note on the transfer."""
+  reason: String
+
+  """Who receives it."""
+  toUserId: ID!
+}
+
 input UnlinkExternalAccountInput {
   provider: ExternalAccountProvider!
 }
@@ -3127,6 +3389,18 @@ input UpdateCommunityInput {
 input UpdateCommunityMemberInput {
   """The ID of the role to assign to the member"""
   roleId: ID!
+}
+
+input UpdateCurrencyInput {
+  """
+  Archive or restore. An archived currency takes no new transactions but keeps every balance and statement row readable.
+  """
+  archived: Boolean
+  code: String
+  colorId: ID
+  description: String
+  name: String
+  symbol: String
 }
 
 input UpdateEnumValueInput {
