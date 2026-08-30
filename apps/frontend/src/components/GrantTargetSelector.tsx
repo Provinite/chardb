@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import styled from "styled-components";
-import { UserTypeahead, SelectedUser } from "@chardb/ui";
+import { Avatar, UserTypeahead, SelectedUser } from "@chardb/ui";
 import { RadioGroup, Radio } from "@chardb/ui";
 import { Input } from "@chardb/ui";
 import { Alert } from "@chardb/ui";
@@ -200,13 +200,6 @@ const ResolvedUserCard = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.primary};
   border-radius: 6px;
   margin-top: ${({ theme }) => theme.spacing.sm};
-`;
-
-const Avatar = styled.img`
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
 `;
 
 const UserInfo = styled.div`
@@ -608,12 +601,16 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
 
             {resolvedUser && (
               <ResolvedUserCard>
-                {resolvedUser.avatarUrl && (
-                  <Avatar
-                    src={resolvedUser.avatarUrl}
-                    alt={resolvedUser.username}
-                  />
-                )}
+                <Avatar
+                  // Discord hands back a bare avatar URL, not an image record.
+                  image={
+                    resolvedUser.avatarUrl
+                      ? { originalUrl: resolvedUser.avatarUrl }
+                      : null
+                  }
+                  name={resolvedUser.displayName || resolvedUser.username}
+                  size={48}
+                />
                 <UserInfo>
                   <Username>
                     {resolvedUser.displayName || resolvedUser.username}

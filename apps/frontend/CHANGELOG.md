@@ -11,8 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Member list rows show the member's real avatar, falling back to initials.
 
+### Fixed
+
+- The activity feed and the permission matrix show real avatars; both rendered
+  initials for everyone before.
+- A user profile's recent media now asks for `visibility` and `textContent`,
+  which `MediaGrid` needs and the query never selected.
+
 ### Changed
 
+- Every user avatar now renders through the shared `Avatar` from `@chardb/ui`,
+  replacing thirteen per-file copies that had drifted apart.
 - The community page reads its member count from `Community.memberCount`
   instead of fetching a one-row page of the permission-gated member list, which
   had silently shown non-members `0`.

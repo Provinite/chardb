@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import styled from "styled-components";
+import { Avatar } from "./Avatar";
 
 export interface SelectedUser {
   id: string;
@@ -66,28 +67,6 @@ const InputWrapper = styled.div<{ $hasError?: boolean; $disabled?: boolean }>`
           ? theme.colors.error
           : theme.colors.text.muted};
   }
-`;
-
-const Avatar = styled.img`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-`;
-
-const AvatarPlaceholder = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.primary};
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-  flex-shrink: 0;
 `;
 
 const SelectedUserInfo = styled.div`
@@ -363,21 +342,13 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
     }
   };
 
-  const renderAvatar = (user: SelectedUser) => {
-    if (user.avatarImage) {
-      return (
-        <Avatar
-          src={user.avatarImage.thumbnailUrl || user.avatarImage.originalUrl}
-          alt={user.avatarImage.altText || user.username}
-        />
-      );
-    }
-    return (
-      <AvatarPlaceholder>
-        {user.username.charAt(0).toUpperCase()}
-      </AvatarPlaceholder>
-    );
-  };
+  const renderAvatar = (user: SelectedUser) => (
+    <Avatar
+      image={user.avatarImage}
+      name={user.displayName || user.username}
+      size={32}
+    />
+  );
 
   const shouldShowDropdown =
     isOpen &&

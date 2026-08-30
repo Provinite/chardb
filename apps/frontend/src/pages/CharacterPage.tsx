@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 
-import { Button } from "@chardb/ui";
+import { Avatar, Button } from "@chardb/ui";
 import {
   useGetCharacterQuery,
   useDeleteCharacterMutation,
@@ -262,18 +262,9 @@ const OwnerLink = styled(Link)`
   }
 `;
 
-const OwnerAvatar = styled.div`
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.surface};
+const OwnerAvatar = styled(Avatar)`
   border: 3px solid ${({ theme }) => theme.colors.border};
-  display: flex;
-  align-items: center;
-  justify-content: center;
   margin-bottom: ${({ theme }) => theme.spacing.md};
-  font-size: 2rem;
-  color: ${({ theme }) => theme.colors.text.muted};
 `;
 
 const OwnerName = styled.h3`
@@ -694,24 +685,11 @@ export const CharacterPage: React.FC = () => {
         {character.owner ? (
           <OwnerInfo>
             <OwnerLink to={`/user/${character.owner.username}`}>
-              <OwnerAvatar>
-                {character.owner.avatarImage ? (
-                  <img
-                    src={
-                      character.owner.avatarImage.thumbnailUrl ||
-                      character.owner.avatarImage.originalUrl
-                    }
-                    alt={
-                      character.owner.avatarImage.altText ||
-                      character.owner.displayName ||
-                      character.owner.username
-                    }
-                  />
-                ) : (
-                  character.owner.displayName?.[0] ||
-                  character.owner.username[0]
-                )}
-              </OwnerAvatar>
+              <OwnerAvatar
+                image={character.owner.avatarImage}
+                name={character.owner.displayName || character.owner.username}
+                size={80}
+              />
               <OwnerName>
                 {character.owner.displayName || character.owner.username}
               </OwnerName>

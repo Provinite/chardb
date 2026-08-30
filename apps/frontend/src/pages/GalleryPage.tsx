@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { Avatar } from "@chardb/ui";
 import {
   useGetGalleryQuery,
   useGetMediaQuery,
@@ -133,18 +134,9 @@ const OwnerInfo = styled.div`
   }
 `;
 
-const OwnerAvatar = styled.div`
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.surface};
+const OwnerAvatar = styled(Avatar)`
   border: 3px solid ${({ theme }) => theme.colors.border};
-  display: flex;
-  align-items: center;
-  justify-content: center;
   margin-bottom: ${({ theme }) => theme.spacing.md};
-  font-size: 2rem;
-  color: ${({ theme }) => theme.colors.text.muted};
 `;
 
 const OwnerName = styled.h3`
@@ -422,23 +414,11 @@ export const GalleryPage: React.FC = () => {
           </GalleryBasics>
 
           <OwnerInfo>
-            <OwnerAvatar>
-              {gallery.owner.avatarImage ? (
-                <img
-                  src={
-                    gallery.owner.avatarImage.thumbnailUrl ||
-                    gallery.owner.avatarImage.originalUrl
-                  }
-                  alt={
-                    gallery.owner.avatarImage.altText ||
-                    gallery.owner.displayName ||
-                    gallery.owner.username
-                  }
-                />
-              ) : (
-                gallery.owner.displayName?.[0] || gallery.owner.username[0]
-              )}
-            </OwnerAvatar>
+            <OwnerAvatar
+              image={gallery.owner.avatarImage}
+              name={gallery.owner.displayName || gallery.owner.username}
+              size={80}
+            />
             <OwnerName>
               {gallery.owner.displayName || gallery.owner.username}
             </OwnerName>

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
+import { Avatar } from "@chardb/ui";
 import { Users, Search, Package } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import {
@@ -92,29 +93,6 @@ const MemberRow = styled.div`
   &:hover {
     background: ${({ theme }) => theme.colors.surface};
   }
-`;
-
-const AvatarImage = styled.img`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  flex: none;
-  object-fit: cover;
-  background: ${({ theme }) => theme.colors.surface};
-`;
-
-const Avatar = styled.div`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  flex: none;
-  display: grid;
-  place-items: center;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  background: ${({ theme }) => theme.colors.primary}20;
-  color: ${({ theme }) => theme.colors.primary};
 `;
 
 const Who = styled.div`
@@ -211,13 +189,6 @@ const LoadingContainer = styled.div`
   min-height: 400px;
 `;
 
-const initials = (name: string) =>
-  name
-    .split(/[\s_-]+/)
-    .slice(0, 2)
-    .map((part) => part[0] ?? "")
-    .join("");
-
 export const CommunityMembersPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
   const [search, setSearch] = useState("");
@@ -309,21 +280,13 @@ export const CommunityMembersPage: React.FC = () => {
         <List data-testid="member-list">
           {shown.map((m) => {
             const name = m.user.displayName || m.user.username;
-            const avatar = m.user.avatarImage;
             return (
               <MemberRow
                 key={m.id}
                 data-testid="member-row"
                 data-username={m.user.username}
               >
-                {avatar ? (
-                  <AvatarImage
-                    src={avatar.thumbnailUrl || avatar.originalUrl}
-                    alt={avatar.altText || name}
-                  />
-                ) : (
-                  <Avatar>{initials(name)}</Avatar>
-                )}
+                <Avatar image={m.user.avatarImage} name={name} size={36} />
                 <Who>
                   <Name>
                     <Link to={`/user/${m.user.username}`}>{name}</Link>

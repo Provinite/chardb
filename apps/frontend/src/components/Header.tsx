@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { Button } from "@chardb/ui";
+import { Avatar, Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -62,13 +62,6 @@ const UserInfo = styled(Link)`
   }
 `;
 
-const Avatar = styled.img`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-`;
-
 const Username = styled.span`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   color: ${({ theme }) => theme.colors.text.primary};
@@ -96,15 +89,11 @@ export const Header: React.FC = () => {
               <NavLink to="/character/create">Create Character</NavLink>
               <NavLink to="/upload">Upload</NavLink>
               <UserInfo to={`/user/${user.username}`}>
-                {user.avatarImage && (
-                  <Avatar
-                    src={
-                      user.avatarImage.thumbnailUrl ||
-                      user.avatarImage.originalUrl
-                    }
-                    alt={user.avatarImage.altText || user.username}
-                  />
-                )}
+                <Avatar
+                  image={user.avatarImage}
+                  name={user.displayName || user.username}
+                  size={32}
+                />
                 <Username>{user.displayName || user.username}</Username>
               </UserInfo>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
