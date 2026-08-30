@@ -170,7 +170,11 @@ mutation SeedUpdateItem($id: ID!, $input: UpdateItemInput!) {
 # `reason` is required: it is public, and it is what a member sees on the
 # provenance of an item that was taken away from them. Soft -- the items stay
 # readable, marked destroyed. Returns the count revoked.
-mutation SeedRevokeItems($itemIds: [ID!]!, $reason: String!, $staffNote: String) {
+mutation SeedRevokeItems(
+  $itemIds: [ID!]!
+  $reason: String!
+  $staffNote: String
+) {
   revokeItems(itemIds: $itemIds, reason: $reason, staffNote: $staffNote)
 }
 
@@ -394,6 +398,206 @@ query SeedMediaModerationQueue($communityId: ID!) {
         user {
           username
         }
+      }
+    }
+  }
+}
+
+# ==================== Shop ====================
+
+# Requires community CanManageItems.
+#
+# These select `purchasedByViewer` and `affordable` deliberately. They are
+# non-nullable and computed per viewer, so a mutation that answers with a row
+# straight from the write serialises them as null and fails *after*
+# committing. Selecting them here is what makes that a test failure rather
+# than something the storefront discovers.
+mutation SeedCreateShopItem($input: CreateShopItemInput!) {
+  createShopItem(input: $input) {
+    id
+    name
+    stock
+    maxPerUser
+    active
+    purchasedByViewer
+    prices {
+      id
+      affordable
+      components {
+        amount
+        currency {
+          code
+        }
+      }
+    }
+  }
+}
+
+mutation SeedUpdateShopItem($id: ID!, $input: UpdateShopItemInput!) {
+  updateShopItem(id: $id, input: $input) {
+    id
+    active
+    stock
+    purchasedByViewer
+    prices {
+      id
+      affordable
+      components {
+        amount
+        currency {
+          code
+        }
+      }
+    }
+  }
+}
+
+# Needs only membership. The balance is the authorisation.
+mutation SeedCheckout($input: CheckoutInput!) {
+  checkout(input: $input) {
+    id
+    createdAt
+    lines {
+      id
+      refundedAt
+      refundableByViewer
+      refundBlockedReason
+      costs {
+        amount
+        currency {
+          code
+        }
+      }
+      shopItem {
+        id
+        name
+        purchasedByViewer
+        prices {
+          id
+          affordable
+        }
+      }
+    }
+  }
+}
+
+# Used to take a buyer out of the community and check that a refund which
+# cannot pay them is refused rather than destroying their item for nothing.
+query SeedCommunityMembers($communityId: ID!) {
+  communityMembersByCommunity(communityId: $communityId, first: 50) {
+    nodes {
+      id
+      userId
+    }
+  }
+}
+
+mutation SeedRemoveCommunityMember($id: ID!) {
+  removeCommunityMember(id: $id) {
+    id
+  }
+}
+
+mutation SeedRefundShopLine($lineId: ID!) {
+  refundShopPurchaseLine(lineId: $lineId) {
+    id
+    refundedAt
+    refundableByViewer
+    refundBlockedReason
+    shopItem {
+      id
+      stock
+      purchasedByViewer
+      prices {
+        id
+        affordable
+      }
+    }
+  }
+}
+
+query SeedShopItems($communityId: ID!, $includeInactive: Boolean) {
+  shopItems(communityId: $communityId, includeInactive: $includeInactive) {
+    id
+    name
+    stock
+    maxPerUser
+    active
+    purchasedByViewer
+    prices {
+      id
+      affordable
+      components {
+        amount
+        currency {
+          id
+          code
+        }
+      }
+    }
+  }
+}
+
+query SeedCommunityShopPurchases($communityId: ID!, $buyerId: ID) {
+  communityShopPurchases(communityId: $communityId, buyerId: $buyerId) {
+    id
+    buyerId
+    buyer {
+      username
+    }
+    lines {
+      id
+      refundedAt
+      refundableByViewer
+      refundBlockedReason
+      refundedBy {
+        username
+      }
+      shopItem {
+        id
+        name
+      }
+    }
+  }
+}
+
+query SeedMyShopPurchases($communityId: ID!) {
+  myShopPurchases(communityId: $communityId) {
+    id
+    createdAt
+    lines {
+      id
+      refundedAt
+      refundableByViewer
+      refundBlockedReason
+      costs {
+        amount
+        currency {
+          code
+        }
+      }
+      shopItem {
+        id
+        name
+        purchasedByViewer
+        prices {
+          id
+          affordable
+        }
+      }
+    }
+  }
+}
+
+# What one member holds, grouped by item type. Unpaginated by design.
+query SeedMemberHoldings($communityId: ID!, $userId: ID!) {
+  memberHoldings(communityId: $communityId, userId: $userId) {
+    totalItems
+    holdings {
+      count
+      itemType {
+        id
+        name
       }
     }
   }

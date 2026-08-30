@@ -18,6 +18,9 @@ import {
   ScrollText,
   Search,
   Coins,
+  ShoppingCart,
+  Store,
+  Receipt,
 } from "lucide-react";
 import { spotlight } from "@mantine/spotlight";
 import { CommunityNavigationItem } from "./CommunityNavigationItem";
@@ -536,6 +539,15 @@ export const CommunityNavigationSidebar: React.FC<
               isNested
             />
 
+            {/* Any member can shop; what is for sale is configured under
+                Administration. */}
+            <CommunityNavigationItem
+              to={`${communityBasePath}/shop`}
+              icon={ShoppingCart}
+              label="Shop"
+              isNested
+            />
+
             {/* Invite Codes - requires invite permissions */}
             {hasInvitePermissions && (
               <CommunityNavigationItem
@@ -627,6 +639,27 @@ export const CommunityNavigationSidebar: React.FC<
 
               {/* Items - requires item management permissions */}
               {(permissions.canManageItems || permissions.canGrantItems) && (
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/admin/shop`}
+                  icon={Store}
+                  label="Shop"
+                  isNested
+                />
+              )}
+
+              {/* Refunding past the buyer's own window is a grant-shaped
+                  action, so it follows canGrantItems rather than the
+                  permission for defining what is sold. */}
+              {permissions.canGrantItems && (
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/admin/shop/purchases`}
+                  icon={Receipt}
+                  label="Shop Purchases"
+                  isNested
+                />
+              )}
+
+              {hasAdminPermissions && (
                 <CommunityNavigationItem
                   to={`${communityBasePath}/admin/items`}
                   icon={Package}

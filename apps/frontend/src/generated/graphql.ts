@@ -224,6 +224,20 @@ export type CharacterTraitValueInput = {
   value?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CheckoutInput = {
+  communityId: Scalars['ID']['input'];
+  /** The cart. Prices are re-read server-side; this only says which option was picked, never what it costs. */
+  lines: Array<CheckoutLineInputDto>;
+};
+
+export type CheckoutLineInputDto = {
+  /** At most ten. The same limit applies across lines. */
+  quantity: Scalars['Int']['input'];
+  shopItemId: Scalars['ID']['input'];
+  /** Which price option was chosen. */
+  shopPriceId: Scalars['ID']['input'];
+};
+
 /** Input for claiming an invite code */
 export type ClaimInviteCodeInput = {
   /** The ID of the user who is claiming this invite code */
@@ -582,6 +596,21 @@ export type CreateRoleInput = {
   name: Scalars['String']['input'];
 };
 
+export type CreateShopItemInput = {
+  communityId: Scalars['ID']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** What buying this grants. */
+  itemTypeId: Scalars['ID']['input'];
+  /** Omit for no cap. */
+  maxPerUser?: InputMaybe<Scalars['Int']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** At least one, or nobody can buy it. */
+  prices: Array<ShopPriceInput>;
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
+  /** Omit for unlimited. */
+  stock?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type CreateSpeciesInput = {
   /** ID of the community that owns this species */
   communityId: Scalars['ID']['input'];
@@ -783,7 +812,8 @@ export enum CurrencyTransactionSource {
   /** Somebody acted directly, with no other record behind it. */
   Direct = 'DIRECT',
   /** Awarded when uploaded media was approved in moderation. sourceId is the media -- an image is an implementation detail of a media. */
-  MediaApproval = 'MEDIA_APPROVAL'
+  MediaApproval = 'MEDIA_APPROVAL',
+  ShopPurchase = 'SHOP_PURCHASE'
 }
 
 export type DeviantartUuidBackfillProgress = {
@@ -1542,6 +1572,8 @@ export type Mutation = {
   burnCurrency: Scalars['String']['output'];
   /** Cancel a running DeviantArt UUID backfill job. */
   cancelDeviantartUuidBackfill: Scalars['Boolean']['output'];
+  /** Buy a cart. Everything commits together, or nothing does. */
+  checkout: ShopPurchase;
   /** Claim an invite code to join a community */
   claimInviteCode: InviteCode;
   createCharacter: Character;
@@ -1566,6 +1598,7 @@ export type Mutation = {
   createItemType: ItemType;
   /** Create a new role */
   createRole: Role;
+  createShopItem: ShopItem;
   /** Create a new species */
   createSpecies: Species;
   /** Create a new species variant */
@@ -1606,6 +1639,8 @@ export type Mutation = {
   /** Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete. */
   purgeCharacter: Scalars['Boolean']['output'];
   refreshToken: Scalars['String']['output'];
+  /** Undo one unit. The buyer may do this inside the window; staff at any time. Nothing is rewritten -- the coin comes back as new ledger rows. */
+  refundShopPurchaseLine: ShopPurchaseLine;
   /** Reject an image (moderator action) */
   rejectImage: ImageModerationAction;
   /** Remove a character ownership change record */
@@ -1684,6 +1719,7 @@ export type Mutation = {
   updateProfile: User;
   /** Update a role */
   updateRole: Role;
+  updateShopItem: ShopItem;
   /** Update a species */
   updateSpecies: Species;
   /** Update a species variant */
@@ -1729,6 +1765,11 @@ export type MutationAssignCharacterSpeciesArgs = {
 
 export type MutationBurnCurrencyArgs = {
   input: BurnCurrencyInput;
+};
+
+
+export type MutationCheckoutArgs = {
+  input: CheckoutInput;
 };
 
 
@@ -1805,6 +1846,11 @@ export type MutationCreateItemTypeArgs = {
 
 export type MutationCreateRoleArgs = {
   createRoleInput: CreateRoleInput;
+};
+
+
+export type MutationCreateShopItemArgs = {
+  input: CreateShopItemInput;
 };
 
 
@@ -1916,6 +1962,11 @@ export type MutationPurgeCharacterArgs = {
 
 export type MutationRefreshTokenArgs = {
   token: Scalars['String']['input'];
+};
+
+
+export type MutationRefundShopPurchaseLineArgs = {
+  lineId: Scalars['ID']['input'];
 };
 
 
@@ -2172,6 +2223,12 @@ export type MutationUpdateRoleArgs = {
 };
 
 
+export type MutationUpdateShopItemArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateShopItemInput;
+};
+
+
 export type MutationUpdateSpeciesArgs = {
   id: Scalars['ID']['input'];
   updateSpeciesInput: UpdateSpeciesInput;
@@ -2351,6 +2408,8 @@ export type Query = {
   communityMembersByCommunity: CommunityMemberConnection;
   /** Get community members by user ID with pagination */
   communityMembersByUser: CommunityMemberConnection;
+  /** Every member's purchases, newest first, for staff handling a refund past the buyer's own undo window. */
+  communityShopPurchases: Array<ShopPurchase>;
   /** Every currency a community defines. Readable by any member. */
   currencies: Array<Currency>;
   currency: Currency;
@@ -2436,6 +2495,8 @@ export type Query = {
   myImages: ImageConnection;
   /** Retrieves media owned by the current authenticated user */
   myMedia: MediaConnection;
+  /** The viewer's own purchases, newest first, each line saying whether it can still be undone and why not. */
+  myShopPurchases: Array<ShopPurchase>;
   /** Your notifications, newest first. */
   notifications: NotificationConnection;
   /** Get count of pending images for a community */
@@ -2452,6 +2513,8 @@ export type Query = {
   rolesByCommunity: RoleConnection;
   /** Search for tags by name or get popular suggestions */
   searchTags: Array<Tag>;
+  /** What a community sells, priced, with what the viewer can afford. */
+  shopItems: Array<ShopItem>;
   /** Get all species with pagination */
   species: SpeciesConnection;
   /** Get species by community ID with pagination */
@@ -2637,6 +2700,13 @@ export type QueryCommunityMembersByUserArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   userId: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityShopPurchasesArgs = {
+  buyerId?: InputMaybe<Scalars['ID']['input']>;
+  communityId: Scalars['ID']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -2899,6 +2969,11 @@ export type QueryMyMediaArgs = {
 };
 
 
+export type QueryMyShopPurchasesArgs = {
+  communityId: Scalars['ID']['input'];
+};
+
+
 export type QueryNotificationsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -2943,6 +3018,12 @@ export type QueryRolesByCommunityArgs = {
 export type QuerySearchTagsArgs = {
   limit?: InputMaybe<Scalars['Float']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryShopItemsArgs = {
+  communityId: Scalars['ID']['input'];
+  includeInactive?: Scalars['Boolean']['input'];
 };
 
 
@@ -3197,6 +3278,95 @@ export type RoleConnection = {
 
 export type SetMainMediaInput = {
   mediaId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** Something a community sells for its own currency. */
+export type ShopItem = {
+  __typename?: 'ShopItem';
+  active: Scalars['Boolean']['output'];
+  communityId: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  description: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  itemType: ItemType;
+  itemTypeId: Scalars['ID']['output'];
+  /** Null means no cap. Counted across every purchase. */
+  maxPerUser: Maybe<Scalars['Int']['output']>;
+  /** Falls back to the item type's name when unset. */
+  name: Maybe<Scalars['String']['output']>;
+  prices: Array<ShopPrice>;
+  /** How many of this the viewer already holds against its cap. Refunded purchases do not count. */
+  purchasedByViewer: Scalars['Int']['output'];
+  sortOrder: Scalars['Int']['output'];
+  /** Null means unlimited. Zero means sold out, which is not the same as unavailable -- a sold-out listing still says what it was. */
+  stock: Maybe<Scalars['Int']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+/** One way to pay for a listing. A buyer picks exactly one option and pays all of its components -- mixing across options is not a thing. */
+export type ShopPrice = {
+  __typename?: 'ShopPrice';
+  /** Whether the viewer currently holds enough of every currency this option asks for. Advisory -- checkout is what actually decides. */
+  affordable: Scalars['Boolean']['output'];
+  components: Array<ShopPriceComponent>;
+  id: Scalars['ID']['output'];
+  sortOrder: Scalars['Int']['output'];
+};
+
+/** One currency a price option asks for. */
+export type ShopPriceComponent = {
+  __typename?: 'ShopPriceComponent';
+  amount: Scalars['Int']['output'];
+  currency: Currency;
+  currencyId: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+};
+
+export type ShopPriceComponentInput = {
+  amount: Scalars['Int']['input'];
+  currencyId: Scalars['ID']['input'];
+};
+
+/** One way to pay. Several components means one price asking for several currencies at once, not several alternative prices. */
+export type ShopPriceInput = {
+  components: Array<ShopPriceComponentInput>;
+};
+
+/** One checkout. */
+export type ShopPurchase = {
+  __typename?: 'ShopPurchase';
+  /** Who bought it. What a staff view is looking at. */
+  buyer: Maybe<User>;
+  buyerId: Scalars['ID']['output'];
+  communityId: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  lines: Array<ShopPurchaseLine>;
+};
+
+/** One unit bought: one item, at one price, once. Quantity lives in the number of these rather than a column, so a refund can name exactly what it gave back. */
+export type ShopPurchaseLine = {
+  __typename?: 'ShopPurchaseLine';
+  /** What was actually paid, copied at checkout. A later price change does not alter what a refund returns. */
+  costs: Array<ShopPurchaseLineCost>;
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  purchaseId: Scalars['ID']['output'];
+  /** Why it cannot be undone, when it cannot. */
+  refundBlockedReason: Maybe<Scalars['String']['output']>;
+  /** Whether the viewer can undo this right now. False once the window has passed, once it is already refunded, or once the item has been used, destroyed or handed on. */
+  refundableByViewer: Scalars['Boolean']['output'];
+  refundedAt: Maybe<Scalars['DateTime']['output']>;
+  refundedBy: Maybe<User>;
+  shopItem: ShopItem;
+};
+
+/** What one unit of a purchase cost, at the time. */
+export type ShopPurchaseLineCost = {
+  __typename?: 'ShopPurchaseLineCost';
+  amount: Scalars['Int']['output'];
+  currency: Currency;
+  currencyId: Scalars['ID']['output'];
 };
 
 export type SignupInput = {
@@ -3685,6 +3855,17 @@ export type UpdateRoleInput = {
   canUploadOwnCharacterImages?: InputMaybe<Scalars['Boolean']['input']>;
   /** The name of the role */
   name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateShopItemInput = {
+  active?: InputMaybe<Scalars['Boolean']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  maxPerUser?: InputMaybe<Scalars['Int']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** Replaces every option when given. Past purchases keep what they paid, which is copied onto the line rather than read back through here. */
+  prices?: InputMaybe<Array<ShopPriceInput>>;
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
+  stock?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type UpdateSpeciesInput = {
@@ -4820,6 +5001,63 @@ export type UpdateCommunityMemberMutationVariables = Exact<{
 
 export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
 
+export type ShopPriceFieldsFragment = { __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> };
+
+export type ShopItemFieldsFragment = { __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> };
+
+export type GetShopItemsQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  includeInactive?: InputMaybe<Scalars['Boolean']['input']>;
+}>;
+
+
+export type GetShopItemsQuery = { __typename?: 'Query', shopItems: Array<{ __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> }> };
+
+export type GetMyShopPurchasesQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type GetMyShopPurchasesQuery = { __typename?: 'Query', myShopPurchases: Array<{ __typename?: 'ShopPurchase', id: string, createdAt: string, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, createdAt: string, refundedAt: string | null, refundableByViewer: boolean, refundBlockedReason: string | null, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null, itemType: { __typename?: 'ItemType', id: string, name: string } } }> }> };
+
+export type GetCommunityShopPurchasesQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  buyerId?: InputMaybe<Scalars['ID']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetCommunityShopPurchasesQuery = { __typename?: 'Query', communityShopPurchases: Array<{ __typename?: 'ShopPurchase', id: string, createdAt: string, buyerId: string, buyer: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, createdAt: string, refundedAt: string | null, refundableByViewer: boolean, refundBlockedReason: string | null, refundedBy: { __typename?: 'User', id: string, username: string } | null, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null, itemType: { __typename?: 'ItemType', id: string, name: string } } }> }> };
+
+export type CheckoutMutationVariables = Exact<{
+  input: CheckoutInput;
+}>;
+
+
+export type CheckoutMutation = { __typename?: 'Mutation', checkout: { __typename?: 'ShopPurchase', id: string, createdAt: string, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null } }> } };
+
+export type RefundShopPurchaseLineMutationVariables = Exact<{
+  lineId: Scalars['ID']['input'];
+}>;
+
+
+export type RefundShopPurchaseLineMutation = { __typename?: 'Mutation', refundShopPurchaseLine: { __typename?: 'ShopPurchaseLine', id: string, refundedAt: string | null } };
+
+export type CreateShopItemMutationVariables = Exact<{
+  input: CreateShopItemInput;
+}>;
+
+
+export type CreateShopItemMutation = { __typename?: 'Mutation', createShopItem: { __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> } };
+
+export type UpdateShopItemMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateShopItemInput;
+}>;
+
+
+export type UpdateShopItemMutation = { __typename?: 'Mutation', updateShopItem: { __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> } };
+
 export type UserWithAvatarFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
 export type ToggleLikeMutationVariables = Exact<{
@@ -5418,6 +5656,50 @@ export const NotificationFieldsFragmentDoc = gql`
   }
 }
     `;
+export const ShopPriceFieldsFragmentDoc = gql`
+    fragment ShopPriceFields on ShopPrice {
+  id
+  sortOrder
+  affordable
+  components {
+    id
+    amount
+    currency {
+      ...CurrencyFields
+    }
+  }
+}
+    ${CurrencyFieldsFragmentDoc}`;
+export const ShopItemFieldsFragmentDoc = gql`
+    fragment ShopItemFields on ShopItem {
+  id
+  communityId
+  itemTypeId
+  name
+  description
+  stock
+  maxPerUser
+  active
+  sortOrder
+  purchasedByViewer
+  itemType {
+    id
+    name
+    category
+    isTradeable
+    isConsumable
+    image {
+      id
+      thumbnailUrl
+      originalUrl
+      altText
+    }
+  }
+  prices {
+    ...ShopPriceFields
+  }
+}
+    ${ShopPriceFieldsFragmentDoc}`;
 export const UserWithAvatarFragmentDoc = gql`
     fragment UserWithAvatar on User {
   id
@@ -11989,6 +12271,335 @@ export function useUpdateCommunityMemberMutation(baseOptions?: Apollo.MutationHo
 export type UpdateCommunityMemberMutationHookResult = ReturnType<typeof useUpdateCommunityMemberMutation>;
 export type UpdateCommunityMemberMutationResult = Apollo.MutationResult<UpdateCommunityMemberMutation>;
 export type UpdateCommunityMemberMutationOptions = Apollo.BaseMutationOptions<UpdateCommunityMemberMutation, UpdateCommunityMemberMutationVariables>;
+export const GetShopItemsDocument = gql`
+    query GetShopItems($communityId: ID!, $includeInactive: Boolean) {
+  shopItems(communityId: $communityId, includeInactive: $includeInactive) {
+    ...ShopItemFields
+  }
+}
+    ${ShopItemFieldsFragmentDoc}`;
+
+/**
+ * __useGetShopItemsQuery__
+ *
+ * To run a query within a React component, call `useGetShopItemsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetShopItemsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetShopItemsQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      includeInactive: // value for 'includeInactive'
+ *   },
+ * });
+ */
+export function useGetShopItemsQuery(baseOptions: Apollo.QueryHookOptions<GetShopItemsQuery, GetShopItemsQueryVariables> & ({ variables: GetShopItemsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetShopItemsQuery, GetShopItemsQueryVariables>(GetShopItemsDocument, options);
+      }
+export function useGetShopItemsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetShopItemsQuery, GetShopItemsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetShopItemsQuery, GetShopItemsQueryVariables>(GetShopItemsDocument, options);
+        }
+export function useGetShopItemsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetShopItemsQuery, GetShopItemsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetShopItemsQuery, GetShopItemsQueryVariables>(GetShopItemsDocument, options);
+        }
+export type GetShopItemsQueryHookResult = ReturnType<typeof useGetShopItemsQuery>;
+export type GetShopItemsLazyQueryHookResult = ReturnType<typeof useGetShopItemsLazyQuery>;
+export type GetShopItemsSuspenseQueryHookResult = ReturnType<typeof useGetShopItemsSuspenseQuery>;
+export type GetShopItemsQueryResult = Apollo.QueryResult<GetShopItemsQuery, GetShopItemsQueryVariables>;
+export const GetMyShopPurchasesDocument = gql`
+    query GetMyShopPurchases($communityId: ID!) {
+  myShopPurchases(communityId: $communityId) {
+    id
+    createdAt
+    lines {
+      id
+      createdAt
+      refundedAt
+      refundableByViewer
+      refundBlockedReason
+      costs {
+        amount
+        currency {
+          ...CurrencyFields
+        }
+      }
+      shopItem {
+        id
+        name
+        itemType {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+    ${CurrencyFieldsFragmentDoc}`;
+
+/**
+ * __useGetMyShopPurchasesQuery__
+ *
+ * To run a query within a React component, call `useGetMyShopPurchasesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMyShopPurchasesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMyShopPurchasesQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useGetMyShopPurchasesQuery(baseOptions: Apollo.QueryHookOptions<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables> & ({ variables: GetMyShopPurchasesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>(GetMyShopPurchasesDocument, options);
+      }
+export function useGetMyShopPurchasesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>(GetMyShopPurchasesDocument, options);
+        }
+export function useGetMyShopPurchasesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>(GetMyShopPurchasesDocument, options);
+        }
+export type GetMyShopPurchasesQueryHookResult = ReturnType<typeof useGetMyShopPurchasesQuery>;
+export type GetMyShopPurchasesLazyQueryHookResult = ReturnType<typeof useGetMyShopPurchasesLazyQuery>;
+export type GetMyShopPurchasesSuspenseQueryHookResult = ReturnType<typeof useGetMyShopPurchasesSuspenseQuery>;
+export type GetMyShopPurchasesQueryResult = Apollo.QueryResult<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>;
+export const GetCommunityShopPurchasesDocument = gql`
+    query GetCommunityShopPurchases($communityId: ID!, $buyerId: ID, $limit: Int) {
+  communityShopPurchases(
+    communityId: $communityId
+    buyerId: $buyerId
+    limit: $limit
+  ) {
+    id
+    createdAt
+    buyerId
+    buyer {
+      id
+      username
+      displayName
+    }
+    lines {
+      id
+      createdAt
+      refundedAt
+      refundableByViewer
+      refundBlockedReason
+      refundedBy {
+        id
+        username
+      }
+      costs {
+        amount
+        currency {
+          ...CurrencyFields
+        }
+      }
+      shopItem {
+        id
+        name
+        itemType {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+    ${CurrencyFieldsFragmentDoc}`;
+
+/**
+ * __useGetCommunityShopPurchasesQuery__
+ *
+ * To run a query within a React component, call `useGetCommunityShopPurchasesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCommunityShopPurchasesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCommunityShopPurchasesQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      buyerId: // value for 'buyerId'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function useGetCommunityShopPurchasesQuery(baseOptions: Apollo.QueryHookOptions<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables> & ({ variables: GetCommunityShopPurchasesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables>(GetCommunityShopPurchasesDocument, options);
+      }
+export function useGetCommunityShopPurchasesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables>(GetCommunityShopPurchasesDocument, options);
+        }
+export function useGetCommunityShopPurchasesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables>(GetCommunityShopPurchasesDocument, options);
+        }
+export type GetCommunityShopPurchasesQueryHookResult = ReturnType<typeof useGetCommunityShopPurchasesQuery>;
+export type GetCommunityShopPurchasesLazyQueryHookResult = ReturnType<typeof useGetCommunityShopPurchasesLazyQuery>;
+export type GetCommunityShopPurchasesSuspenseQueryHookResult = ReturnType<typeof useGetCommunityShopPurchasesSuspenseQuery>;
+export type GetCommunityShopPurchasesQueryResult = Apollo.QueryResult<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables>;
+export const CheckoutDocument = gql`
+    mutation Checkout($input: CheckoutInput!) {
+  checkout(input: $input) {
+    id
+    createdAt
+    lines {
+      id
+      costs {
+        amount
+        currency {
+          ...CurrencyFields
+        }
+      }
+      shopItem {
+        id
+        name
+      }
+    }
+  }
+}
+    ${CurrencyFieldsFragmentDoc}`;
+export type CheckoutMutationFn = Apollo.MutationFunction<CheckoutMutation, CheckoutMutationVariables>;
+
+/**
+ * __useCheckoutMutation__
+ *
+ * To run a mutation, you first call `useCheckoutMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCheckoutMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [checkoutMutation, { data, loading, error }] = useCheckoutMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCheckoutMutation(baseOptions?: Apollo.MutationHookOptions<CheckoutMutation, CheckoutMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CheckoutMutation, CheckoutMutationVariables>(CheckoutDocument, options);
+      }
+export type CheckoutMutationHookResult = ReturnType<typeof useCheckoutMutation>;
+export type CheckoutMutationResult = Apollo.MutationResult<CheckoutMutation>;
+export type CheckoutMutationOptions = Apollo.BaseMutationOptions<CheckoutMutation, CheckoutMutationVariables>;
+export const RefundShopPurchaseLineDocument = gql`
+    mutation RefundShopPurchaseLine($lineId: ID!) {
+  refundShopPurchaseLine(lineId: $lineId) {
+    id
+    refundedAt
+  }
+}
+    `;
+export type RefundShopPurchaseLineMutationFn = Apollo.MutationFunction<RefundShopPurchaseLineMutation, RefundShopPurchaseLineMutationVariables>;
+
+/**
+ * __useRefundShopPurchaseLineMutation__
+ *
+ * To run a mutation, you first call `useRefundShopPurchaseLineMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRefundShopPurchaseLineMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [refundShopPurchaseLineMutation, { data, loading, error }] = useRefundShopPurchaseLineMutation({
+ *   variables: {
+ *      lineId: // value for 'lineId'
+ *   },
+ * });
+ */
+export function useRefundShopPurchaseLineMutation(baseOptions?: Apollo.MutationHookOptions<RefundShopPurchaseLineMutation, RefundShopPurchaseLineMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RefundShopPurchaseLineMutation, RefundShopPurchaseLineMutationVariables>(RefundShopPurchaseLineDocument, options);
+      }
+export type RefundShopPurchaseLineMutationHookResult = ReturnType<typeof useRefundShopPurchaseLineMutation>;
+export type RefundShopPurchaseLineMutationResult = Apollo.MutationResult<RefundShopPurchaseLineMutation>;
+export type RefundShopPurchaseLineMutationOptions = Apollo.BaseMutationOptions<RefundShopPurchaseLineMutation, RefundShopPurchaseLineMutationVariables>;
+export const CreateShopItemDocument = gql`
+    mutation CreateShopItem($input: CreateShopItemInput!) {
+  createShopItem(input: $input) {
+    ...ShopItemFields
+  }
+}
+    ${ShopItemFieldsFragmentDoc}`;
+export type CreateShopItemMutationFn = Apollo.MutationFunction<CreateShopItemMutation, CreateShopItemMutationVariables>;
+
+/**
+ * __useCreateShopItemMutation__
+ *
+ * To run a mutation, you first call `useCreateShopItemMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateShopItemMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createShopItemMutation, { data, loading, error }] = useCreateShopItemMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateShopItemMutation(baseOptions?: Apollo.MutationHookOptions<CreateShopItemMutation, CreateShopItemMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateShopItemMutation, CreateShopItemMutationVariables>(CreateShopItemDocument, options);
+      }
+export type CreateShopItemMutationHookResult = ReturnType<typeof useCreateShopItemMutation>;
+export type CreateShopItemMutationResult = Apollo.MutationResult<CreateShopItemMutation>;
+export type CreateShopItemMutationOptions = Apollo.BaseMutationOptions<CreateShopItemMutation, CreateShopItemMutationVariables>;
+export const UpdateShopItemDocument = gql`
+    mutation UpdateShopItem($id: ID!, $input: UpdateShopItemInput!) {
+  updateShopItem(id: $id, input: $input) {
+    ...ShopItemFields
+  }
+}
+    ${ShopItemFieldsFragmentDoc}`;
+export type UpdateShopItemMutationFn = Apollo.MutationFunction<UpdateShopItemMutation, UpdateShopItemMutationVariables>;
+
+/**
+ * __useUpdateShopItemMutation__
+ *
+ * To run a mutation, you first call `useUpdateShopItemMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateShopItemMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateShopItemMutation, { data, loading, error }] = useUpdateShopItemMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateShopItemMutation(baseOptions?: Apollo.MutationHookOptions<UpdateShopItemMutation, UpdateShopItemMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateShopItemMutation, UpdateShopItemMutationVariables>(UpdateShopItemDocument, options);
+      }
+export type UpdateShopItemMutationHookResult = ReturnType<typeof useUpdateShopItemMutation>;
+export type UpdateShopItemMutationResult = Apollo.MutationResult<UpdateShopItemMutation>;
+export type UpdateShopItemMutationOptions = Apollo.BaseMutationOptions<UpdateShopItemMutation, UpdateShopItemMutationVariables>;
 export const ToggleLikeDocument = gql`
     mutation ToggleLike($input: ToggleLikeInput!) {
   toggleLike(input: $input) {

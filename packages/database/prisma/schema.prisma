@@ -70,6 +70,19 @@ enum ItemTransactionKind {
   IMPORT
 }
 
+/// What caused an item to move.
+///
+/// Deliberately a separate enum from CurrencyTransactionSource rather than one
+/// shared across both ledgers. Sharing would be tidier, but that enum has
+/// already shipped and renaming it costs a migration to save two duplicated
+/// values -- and the two lists are free to diverge, which they will.
+enum ItemTransactionSource {
+  /// Somebody acted directly, with no other record behind it.
+  DIRECT
+  /// Granted by a community shop purchase. Source id is the purchase line.
+  SHOP_PURCHASE
+}
+
 enum TraitReviewSource {
   IMPORT
   MYO
@@ -146,6 +159,8 @@ model User {
   currencyTransactions             CurrencyTransaction[] @relation("CurrencyTransactionUser")
   currencyTransactionsCounterparty CurrencyTransaction[] @relation("CurrencyTransactionCounterparty")
   currencyTransactionsActed        CurrencyTransaction[] @relation("CurrencyTransactionActor")
+  shopPurchases                    ShopPurchase[]        @relation("ShopPurchaseBuyer")
+  shopLinesRefunded                ShopPurchaseLine[]    @relation("ShopLineRefunder")
 
   // Pending ownership claims
   claimedPendingItems PendingOwnership[]
@@ -512,6 +527,8 @@ model Community {
   communityColors      CommunityColor[]
   itemTransactions     ItemTransaction[]
   currencies           Currency[]
+  shopItems            ShopItem[]
+  shopPurchases        ShopPurchase[]
   notifications        Notification[]
 
   @@map("communities")
@@ -697,6 +714,7 @@ model ItemType {
   image        Image?            @relation("ItemTypeImage", fields: [imageId], references: [id], onDelete: SetNull)
   items        Item[]
   transactions ItemTransaction[]
+  ShopItem     ShopItem[]
 
   @@unique([name, communityId])
   @@map("item_types")
@@ -778,6 +796,12 @@ model ItemTransaction {
   /// community. Keeps candid internal detail out of a public audit trail.
   staffNote String? @map("staff_note") @db.Text
 
+  /// What caused this row. DIRECT means somebody simply did it.
+  source   ItemTransactionSource @default(DIRECT)
+  /// The id of the record named by `source`. Not a foreign key, for the same
+  /// reason as on the currency ledger: a ledger row must outlive its cause.
+  sourceId String?               @map("source_id")
+
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
@@ -791,6 +815,7 @@ model ItemTransaction {
   // One row per item per event means this table grows fastest of anything here,
   // so every read path it serves gets a covering leading column.
   @@index([communityId, createdAt])
+  @@index([source, sourceId])
   @@index([itemId, createdAt])
   @@index([itemTypeId, createdAt])
   @@index([toUserId, createdAt])
@@ -820,10 +845,12 @@ model Currency {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  community    Community             @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  color        CommunityColor?       @relation(fields: [colorId], references: [id], onDelete: SetNull)
-  balances     CurrencyBalance[]
-  transactions CurrencyTransaction[]
+  community             Community              @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  color                 CommunityColor?        @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  balances              CurrencyBalance[]
+  transactions          CurrencyTransaction[]
+  shopPriceComponents   ShopPriceComponent[]
+  shopPurchaseLineCosts ShopPurchaseLineCost[]
 
   @@unique([communityId, code])
   @@unique([communityId, name])
@@ -883,6 +910,10 @@ enum CurrencyTransactionKind {
 enum CurrencyTransactionSource {
   /// A member or staff acted directly, with no other record behind it.
   DIRECT
+  /// Spent buying something from the community shop. Source id is the
+  /// purchase LINE, not the purchase: a line is refundable a unit at a time,
+  /// so a refund needs something more precise than the order to point at.
+  SHOP_PURCHASE
   /// Awarded when an uploaded piece of media was approved in moderation.
   /// Source id is the MEDIA, not the image inside it: an image is an
   /// implementation detail of a media, so a media that has been deleted means
@@ -954,6 +985,156 @@ model CurrencyTransaction {
   /// DIRECT with a null sourceId.
   @@index([source, sourceId])
   @@map("currency_transactions")
+}
+
+/// Something a community sells for its own currency.
+///
+/// Backed by an ItemType, so buying grants a real item with real provenance
+/// rather than a shop-only object that the inventory knows nothing about.
+model ShopItem {
+  id          String @id @default(uuid())
+  communityId String @map("community_id")
+  itemTypeId  String @map("item_type_id")
+
+  /// Defaults to the item type's name when blank, but a shop listing often
+  /// wants its own wording ("Trait Change Potion (limit 1)").
+  name        String? @db.VarChar(100)
+  description String? @db.Text
+
+  /// Null means unlimited. Zero means sold out, which is different from
+  /// unavailable -- a sold-out listing still says what it was.
+  stock      Int?
+  /// Null means no cap. Counted across every purchase, not per checkout.
+  maxPerUser Int? @map("max_per_user")
+
+  /// Hidden from members without being deleted, so its purchase history and
+  /// the items it granted keep their meaning.
+  active    Boolean @default(true)
+  sortOrder Int     @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  community Community          @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  itemType  ItemType           @relation(fields: [itemTypeId], references: [id], onDelete: Restrict)
+  prices    ShopPrice[]
+  lines     ShopPurchaseLine[]
+
+  @@index([communityId, active, sortOrder])
+  @@map("shop_items")
+}
+
+/// One way to pay for a shop item.
+///
+/// An item can have several, and a buyer picks exactly one and pays all of it:
+/// "5 Clover" OR "2 Clover and 1 Star" OR "3 Star". Mixing across options, or
+/// paying part of one, is not a thing.
+model ShopPrice {
+  id         String @id @default(uuid())
+  shopItemId String @map("shop_item_id")
+  sortOrder  Int    @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  shopItem   ShopItem             @relation(fields: [shopItemId], references: [id], onDelete: Cascade)
+  components ShopPriceComponent[]
+  lines      ShopPurchaseLine[]
+
+  @@index([shopItemId, sortOrder])
+  @@map("shop_prices")
+}
+
+/// One currency and how much of it a price option asks for.
+model ShopPriceComponent {
+  id          String @id @default(uuid())
+  shopPriceId String @map("shop_price_id")
+  currencyId  String @map("currency_id")
+  amount      Int
+
+  shopPrice ShopPrice @relation(fields: [shopPriceId], references: [id], onDelete: Cascade)
+  currency  Currency  @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+
+  /// One entry per currency per option: "5 Clover and 3 more Clover" is a
+  /// single amount, not two components.
+  @@unique([shopPriceId, currencyId])
+  @@map("shop_price_components")
+}
+
+/// One checkout.
+///
+/// The order exists mostly to group its lines and to date the refund window;
+/// everything refundable is tracked on the lines, because a buyer can undo one
+/// potion out of three.
+model ShopPurchase {
+  id          String @id @default(uuid())
+  communityId String @map("community_id")
+  buyerId     String @map("buyer_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  community Community          @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  buyer     User               @relation("ShopPurchaseBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  lines     ShopPurchaseLine[]
+
+  @@index([communityId, createdAt])
+  @@index([buyerId, createdAt])
+  @@map("shop_purchases")
+}
+
+/// One unit bought: one item, at one price, once.
+///
+/// Quantity lives in the number of rows rather than in a column, which is the
+/// same call already made for items themselves. A line carrying `quantity: 3`
+/// and a `refundedQuantity` cannot say *which* of the three went back, and a
+/// refund that cannot name what it returned is the thing this whole design is
+/// trying to avoid. Buying three potions is three lines; the UI groups them.
+///
+/// Both ledgers point their `sourceId` here, so the single item this granted
+/// can be found rather than guessed at.
+model ShopPurchaseLine {
+  id          String  @id @default(uuid())
+  purchaseId  String  @map("purchase_id")
+  shopItemId  String  @map("shop_item_id")
+  /// The option chosen at checkout. Kept even if the option is later edited
+  /// or removed, which is why the amounts paid are copied onto the line.
+  shopPriceId String? @map("shop_price_id")
+
+  /// Set when this unit has been given back. Null means still bought.
+  refundedAt   DateTime? @map("refunded_at")
+  /// Who performed the refund -- the buyer within the undo window, or staff
+  /// afterwards. Null exactly when refundedAt is null.
+  refundedById String?   @map("refunded_by_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  purchase   ShopPurchase           @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  shopItem   ShopItem               @relation(fields: [shopItemId], references: [id], onDelete: Restrict)
+  price      ShopPrice?             @relation(fields: [shopPriceId], references: [id], onDelete: SetNull)
+  refundedBy User?                  @relation("ShopLineRefunder", fields: [refundedById], references: [id], onDelete: SetNull)
+  costs      ShopPurchaseLineCost[]
+
+  @@index([purchaseId])
+  @@index([shopItemId])
+  @@map("shop_purchase_lines")
+}
+
+/// What this line actually cost, in one currency, at the time.
+///
+/// Copied from the price option rather than read back through it: prices are
+/// edited, and a refund three days later must return what was paid, not what
+/// the item costs now.
+model ShopPurchaseLineCost {
+  id         String @id @default(uuid())
+  lineId     String @map("line_id")
+  currencyId String @map("currency_id")
+  /// A line is one unit, so this is exactly what a refund returns.
+  amount     Int
+
+  line     ShopPurchaseLine @relation(fields: [lineId], references: [id], onDelete: Cascade)
+  currency Currency         @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+
+  @@unique([lineId, currencyId])
+  @@map("shop_purchase_line_costs")
 }
 
 model Species {

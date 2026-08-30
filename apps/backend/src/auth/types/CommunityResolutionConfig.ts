@@ -37,6 +37,10 @@ export interface CommunityResolutionConfig {
   traitReviewId?: string;
   /** Path to currency ID in arguments */
   currencyId?: string;
+  /** Path to shop item ID in arguments */
+  shopItemId?: string;
+  /** Path to shop purchase line ID in arguments */
+  shopPurchaseLineId?: string;
   /** Path to community ID in arguments (direct) */
   communityId?: string;
 }
@@ -58,6 +62,8 @@ export const AllCommunityResolutionKeys = [
   "pendingOwnershipId",
   "traitReviewId",
   "currencyId",
+  "shopItemId",
+  "shopPurchaseLineId",
   "communityId",
 ] as const;
 

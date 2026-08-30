@@ -12,10 +12,14 @@ import {
   Prisma,
   ExternalAccountProvider,
   ItemTransactionKind,
+  ItemTransactionSource,
   NotificationKind,
   NotificationSubjectType,
 } from "@chardb/database";
-import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
+import {
+  ItemTransactionsService,
+  type DbClient,
+} from "../item-transactions/item-transactions.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { ItemTypeFilters } from "./dto/item-type.dto";
 import { ItemFilters } from "./dto/item.dto";
@@ -184,6 +188,76 @@ export class ItemsService {
    * Can also create items with pending ownership, for a recipient who has not
    * linked the external account yet.
    */
+  /**
+   * Create N items for a known owner and record the grant, on a given client.
+   *
+   * The core of {@link grantItem}, extracted so a caller that already has a
+   * transaction open -- a shop checkout paying for the item in the same breath
+   * -- can grant inside it rather than opening a second one. Everything
+   * grantItem does around this (resolving a Discord handle, opening pending
+   * ownership) is network work or a different shape entirely, and must stay
+   * outside a transaction.
+   *
+   * `source` lets the ledger say what caused the grant. Without it a shop
+   * purchase is indistinguishable from staff handing something over.
+   *
+   * Returns the ids it created, not the rows. The ids cost nothing -- they are
+   * generated here rather than read back, because `createMany` does not return
+   * them and the ledger rows need them in the same statement. Whole items are
+   * a caller's concern: a checkout grants one item per purchase line and wants
+   * none of them back, so re-reading each one with its joins would be a query
+   * per unit bought, spent inside the transaction, for nothing.
+   */
+  async createGranted(
+    client: DbClient,
+    input: {
+      itemTypeId: string;
+      communityId: string;
+      ownerId: string | null;
+      quantity: number;
+      metadata?: Prisma.InputJsonValue;
+      actor: ItemActor;
+      source?: ItemTransactionSource;
+      sourceId?: string | null;
+    },
+  ) {
+    // Every item and every ledger row commit together or not at all. A ledger
+    // that can disagree with `items` is worse than none: it looks
+    // authoritative while being wrong.
+    //
+    // No stacking, so no read-then-write and no race: N items is N inserts.
+    // The ids are generated here rather than read back because createMany does
+    // not return them, and the ledger rows need them in the same statement.
+    const itemIds = Array.from({ length: input.quantity }, () => randomUUID());
+
+    await client.item.createMany({
+      data: itemIds.map((id) => ({
+        id,
+        itemTypeId: input.itemTypeId,
+        ownerId: input.ownerId,
+        metadata: input.metadata || {},
+      })),
+    });
+
+    await this.itemTransactions.recordBatch(
+      {
+        communityId: input.communityId,
+        itemTypeId: input.itemTypeId,
+        itemIds,
+        kind: ItemTransactionKind.GRANT,
+        // Null for a grant still awaiting a claim: nobody holds it yet, and
+        // the CLAIM row written later is what names the eventual owner.
+        toUserId: input.ownerId,
+        source: input.source,
+        sourceId: input.sourceId,
+        ...input.actor,
+      },
+      client,
+    );
+
+    return itemIds;
+  }
+
   async grantItem(input: {
     itemTypeId: string;
     userId?: string | null; // Optional for orphaned items
@@ -303,37 +377,23 @@ export class ItemsService {
     // while being wrong.
     //
     // No stacking, so no read-then-write and no race: N items is N inserts.
-    // The ids are generated here rather than read back because createMany does
-    // not return them, and the ledger rows need them in the same statement.
-    const itemIds = Array.from({ length: quantity }, () => randomUUID());
-
-    const items = await this.db.$transaction(async (tx) => {
-      await tx.item.createMany({
-        data: itemIds.map((id) => ({
-          id,
-          itemTypeId,
-          ownerId: actualOwnerId ?? null,
-          metadata: metadata || {},
-        })),
+    const itemIds = await this.db.$transaction(async (tx) => {
+      const ids = await this.createGranted(tx, {
+        itemTypeId,
+        communityId: itemType.communityId,
+        ownerId: actualOwnerId ?? null,
+        quantity,
+        metadata,
+        actor: input.actor,
       });
-
-      await this.itemTransactions.recordBatch(
-        {
-          communityId: itemType.communityId,
-          itemTypeId,
-          itemIds,
-          kind: ItemTransactionKind.GRANT,
-          // Null for a grant still awaiting a claim: nobody holds it yet, and
-          // the CLAIM row written later is what names the eventual owner.
-          toUserId: actualOwnerId ?? null,
-          ...input.actor,
-        },
-        tx,
-      );
 
       // A grant of five identical potions is one notification saying five, not
       // five notifications. Nothing is sent for a grant still awaiting a claim:
       // there is no one to tell until the CLAIM names an owner.
+      //
+      // Here rather than in createGranted, so that buying something does not
+      // notify the buyer that they received it. A shop purchase is already the
+      // most direct possible confirmation of itself.
       if (actualOwnerId) {
         await this.notifications.create(
           {
@@ -341,7 +401,7 @@ export class ItemsService {
             kind: NotificationKind.ITEM_GRANTED,
             communityId: itemType.communityId,
             subjectType: NotificationSubjectType.ITEM,
-            subjectId: itemIds[0],
+            subjectId: ids[0],
             data: { subjectName: itemType.name.slice(0, 200), count: quantity },
             ...input.actor,
           },
@@ -349,22 +409,15 @@ export class ItemsService {
         );
       }
 
-      return tx.item.findMany({
-        where: { id: { in: itemIds } },
-        include: {
-          itemType: { include: { community: true } },
-          owner: true,
-        },
-        orderBy: { id: "asc" },
-      });
+      return ids;
     });
 
     // Pending ownership is one record per item -- PendingOwnership.itemId is
     // unique, and each instance claims independently.
     if (pendingOwner) {
-      for (const item of items) {
+      for (const itemId of itemIds) {
         await this.pendingOwnershipService.createForItem(
-          item.id,
+          itemId,
           pendingOwner.provider,
           pendingOwner.providerAccountId, // Already resolved earlier
           pendingOwner.displayIdentifier,
@@ -372,7 +425,17 @@ export class ItemsService {
       }
     }
 
-    return items;
+    // One read for the whole grant, and outside the transaction: this exists
+    // to answer the caller with whole items, which is not work the write needs
+    // to hold a connection open for.
+    return this.db.item.findMany({
+      where: { id: { in: itemIds } },
+      include: {
+        itemType: { include: { community: true } },
+        owner: true,
+      },
+      orderBy: { id: "asc" },
+    });
   }
 
   async findAllItems(filters: ItemFilters = {}) {
@@ -477,80 +540,127 @@ export class ItemsService {
     if (itemIds.length === 0) {
       throw new BadRequestException("No items given to revoke");
     }
+    return this.db.$transaction((tx) => this.destroyItems(tx, itemIds, actor));
+  }
 
-    return this.db.$transaction(async (tx) => {
-      const items = await tx.item.findMany({
-        where: { id: { in: itemIds }, destroyedAt: null },
-        include: { itemType: { select: { communityId: true, name: true } } },
-      });
+  /**
+   * Soft-destroy items and record the revoke, on a given client.
+   *
+   * The core of {@link revokeItems}, extracted so a caller already inside a
+   * transaction -- a shop refund handing back the coin in the same breath --
+   * can revoke within it rather than opening a second one.
+   */
+  async destroyItems(
+    client: DbClient,
+    itemIds: string[],
+    actor: ItemActor,
+    source?: ItemTransactionSource,
+    sourceId?: string | null,
+    /**
+     * Refuse unless the items are still held by this user.
+     *
+     * For callers whose right to destroy depends on who owns the item -- a
+     * refund may only take back what the buyer still has -- checking the owner
+     * before calling here is not enough, because a trade can land in between.
+     * Passed through to the UPDATE itself so the database re-evaluates it
+     * under the row lock.
+     */
+    expectedOwnerId?: string,
+  ) {
+    const items = await client.item.findMany({
+      where: { id: { in: itemIds }, destroyedAt: null },
+      // `name` is here for the revoke notification, which needs something to
+      // call the thing it is telling somebody about.
+      include: { itemType: { select: { communityId: true, name: true } } },
+    });
 
-      if (items.length !== itemIds.length) {
-        throw new NotFoundException(
-          "One or more of those items does not exist or is already destroyed",
-        );
-      }
+    if (items.length !== itemIds.length) {
+      throw new NotFoundException(
+        "One or more of those items does not exist or is already destroyed",
+      );
+    }
 
-      // A single revoke must not span item types: the ledger row carries the
-      // type, and callers that mix them are asking for two events, not one.
-      const typeIds = new Set(items.map((i) => i.itemTypeId));
-      if (typeIds.size > 1) {
-        throw new BadRequestException(
-          "All items in one revoke must share an item type",
-        );
-      }
+    // A single revoke must not span item types: the ledger row carries the
+    // type, and callers that mix them are asking for two events, not one.
+    const typeIds = new Set(items.map((i) => i.itemTypeId));
+    if (typeIds.size > 1) {
+      throw new BadRequestException(
+        "All items in one revoke must share an item type",
+      );
+    }
 
-      const ownerIds = new Set(items.map((i) => i.ownerId));
-      if (ownerIds.size > 1) {
-        throw new BadRequestException(
-          "All items in one revoke must share an owner",
-        );
-      }
+    const ownerIds = new Set(items.map((i) => i.ownerId));
+    if (ownerIds.size > 1) {
+      throw new BadRequestException(
+        "All items in one revoke must share an owner",
+      );
+    }
 
-      await tx.item.updateMany({
-        where: { id: { in: itemIds } },
-        data: {
-          destroyedAt: new Date(),
-          destroyedById: actor.actorUserId ?? null,
-        },
-      });
+    // The predicate goes in the UPDATE rather than being trusted from the
+    // read above. Postgres re-evaluates it after taking each row's lock, so a
+    // trade or a second revoke that commits in between makes this match
+    // nothing instead of destroying something it no longer should.
+    const destroyed = await client.item.updateMany({
+      where: {
+        id: { in: itemIds },
+        destroyedAt: null,
+        ...(expectedOwnerId === undefined ? {} : { ownerId: expectedOwnerId }),
+      },
+      data: {
+        destroyedAt: new Date(),
+        destroyedById: actor.actorUserId ?? null,
+      },
+    });
 
-      await this.itemTransactions.recordBatch(
+    if (destroyed.count !== itemIds.length) {
+      throw new ConflictException(
+        "Those items changed hands or were destroyed while this was running",
+      );
+    }
+
+    await this.itemTransactions.recordBatch(
+      {
+        communityId: items[0].itemType.communityId,
+        itemTypeId: items[0].itemTypeId,
+        itemIds,
+        kind: ItemTransactionKind.REVOKE,
+        fromUserId: items[0].ownerId,
+        source,
+        sourceId,
+        ...actor,
+      },
+      client,
+    );
+
+    // One notification for the whole revoke, matching the single ledger event.
+    // `reason` is the member-facing half of ItemActor, so a revoke that
+    // explained itself to the ledger explains itself here too. An unclaimed
+    // item has no owner to tell.
+    //
+    // Nobody is told about their own doing: a member undoing their own shop
+    // purchase does not need to be informed that their item was taken away.
+    // Staff revoking, or staff refunding on somebody's behalf, still does.
+    const selfInflicted = actor.actorUserId === items[0].ownerId;
+    if (items[0].ownerId && !selfInflicted) {
+      await this.notifications.create(
         {
+          recipientId: items[0].ownerId,
+          kind: NotificationKind.ITEM_REVOKED,
           communityId: items[0].itemType.communityId,
-          itemTypeId: items[0].itemTypeId,
-          itemIds,
-          kind: ItemTransactionKind.REVOKE,
-          fromUserId: items[0].ownerId,
+          subjectType: NotificationSubjectType.ITEM,
+          subjectId: items[0].id,
+          data: {
+            subjectName: items[0].itemType.name.slice(0, 200),
+            count: items.length,
+            reason: actor.reason?.slice(0, 500) ?? null,
+          },
           ...actor,
         },
-        tx,
+        client,
       );
+    }
 
-      // One notification for the whole revoke, matching the single ledger
-      // event. `reason` is the member-facing half of ItemActor, so a revoke
-      // that explained itself to the ledger explains itself here too. An
-      // unclaimed item has no owner to tell.
-      if (items[0].ownerId) {
-        await this.notifications.create(
-          {
-            recipientId: items[0].ownerId,
-            kind: NotificationKind.ITEM_REVOKED,
-            communityId: items[0].itemType.communityId,
-            subjectType: NotificationSubjectType.ITEM,
-            subjectId: items[0].id,
-            data: {
-              subjectName: items[0].itemType.name.slice(0, 200),
-              count: items.length,
-              reason: actor.reason?.slice(0, 500) ?? null,
-            },
-            ...actor,
-          },
-          tx,
-        );
-      }
-
-      return items.length;
-    });
+    return items.length;
   }
 
   /**

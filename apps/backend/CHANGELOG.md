@@ -51,6 +51,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `ShopPurchaseLine.refundedBy` was declared on the entity but never
+  populated, so it resolved to null on every refunded line.
+
+- One checkout may buy at most ten of a listing, counted across lines so the
+  limit cannot be split around.
+
+- Refunding a buyer who had left the community destroyed their item and
+  returned no coin. It is now refused.
+
+- `destroyItems` re-checks in the UPDATE rather than trusting an earlier read,
+  and a refund names the buyer, so a trade cannot cost a new owner their item.
+
+- Shop mutations returned rows without their per-viewer fields, so any caller
+  selecting them got an error after the write had already committed.
+
 - **`credit()` no longer takes a second pool connection inside a caller's
   transaction.** `loadWritableCurrency`, `findMembers` and `ensureBalanceRows`
   ran on the pool while the caller's interactive transaction held a connection
@@ -74,6 +89,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now leave it in the database.
 
 ### Added
+
+- Coin shop: communities can sell items for their own currency, with several
+  price options per listing, stock and per-member limits, and a fifteen-minute
+  self-serve refund.
+
+- `communityShopPurchases`: every member's purchases, for staff refunding past
+  the buyer's own undo window. Needs `canGrantItems`.
 
 - **`CurrencyTransaction.source` / `.sourceId`**: what caused a ledger row.
   Until now currency had no notion of a cause, so an award could only say

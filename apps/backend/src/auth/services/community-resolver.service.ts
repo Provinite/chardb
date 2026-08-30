@@ -363,6 +363,41 @@ export class CommunityResolverService {
   }
 
   /**
+   * Get the community ID for a shop item.
+   *
+   * Shop items have a direct communityId field.
+   */
+  async getShopItemCommunity(shopItemId: string): Promise<string> {
+    const shopItem = await this.prisma.shopItem.findUnique({
+      where: { id: shopItemId },
+      select: { communityId: true },
+    });
+
+    if (!shopItem) {
+      throw new Error(`ShopItem with ID ${shopItemId} not found`);
+    }
+
+    return shopItem.communityId;
+  }
+
+  /**
+   * Get the community ID for a shop purchase line.
+   * Resolution path: line -> purchase -> community
+   */
+  async getShopPurchaseLineCommunity(lineId: string): Promise<string> {
+    const line = await this.prisma.shopPurchaseLine.findUnique({
+      where: { id: lineId },
+      select: { purchase: { select: { communityId: true } } },
+    });
+
+    if (!line) {
+      throw new Error(`ShopPurchaseLine with ID ${lineId} not found`);
+    }
+
+    return line.purchase.communityId;
+  }
+
+  /**
    * Get the community ID for a community color.
    *
    * CommunityColors have a direct communityId field.
@@ -512,6 +547,8 @@ export class CommunityResolverService {
       pendingOwnershipId: this.getPendingOwnershipCommunity.bind(this),
       traitReviewId: this.getTraitReviewCommunity.bind(this),
       currencyId: this.getCurrencyCommunity.bind(this),
+      shopItemId: this.getShopItemCommunity.bind(this),
+      shopPurchaseLineId: this.getShopPurchaseLineCommunity.bind(this),
     };
 
     if (!config.type) {
