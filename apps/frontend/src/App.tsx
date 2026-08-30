@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import { Layout } from "./components/Layout";
 import { LoadingSpinner } from "./components/LoadingSpinner";
@@ -65,9 +65,16 @@ import { ToyhouseCallbackPage } from "./pages/ToyhouseCallbackPage";
 import { CommunityItemsAdminPage } from "./pages/CommunityItemsAdminPage";
 import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
 import { CommunityItemLedgerPage } from "./pages/CommunityItemLedgerPage";
+import { ItemProvenancePage } from "./pages/ItemProvenancePage";
 import { CommunityColorPalettePage } from "./pages/CommunityColorPalettePage";
 import { ItemTypePage } from "./pages/ItemTypePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+
+/** Forwards the legacy singular /item/:id to the canonical item type page. */
+const RedirectToItemType: React.FC = () => {
+  const { itemTypeId } = useParams<{ itemTypeId: string }>();
+  return <Navigate to={`/item-types/${itemTypeId}`} replace />;
+};
 
 function App() {
   const { loading } = useAuth();
@@ -105,8 +112,14 @@ function App() {
           element={<CommunityCharactersPage />}
         />
         <Route path="/species/:speciesId" element={<SpeciesPage />} />
-        <Route path="/items/:itemTypeId" element={<ItemTypePage />} />
-        <Route path="/item/:itemTypeId" element={<ItemTypePage />} />
+        {/* An "item" is now a single instance with its own history, so /items/
+            belongs to instances and the catalogue entry moved to /item-types/.
+            The singular /item/ alias (a0a2e5a) redirects rather than rendering
+            a second copy of the same page: one canonical URL, one forwarding
+            rule for whatever was linking to it. */}
+        <Route path="/item-types/:itemTypeId" element={<ItemTypePage />} />
+        <Route path="/item/:itemTypeId" element={<RedirectToItemType />} />
+        <Route path="/items/:itemId" element={<ItemProvenancePage />} />
 
         {/* OAuth callback routes */}
         <Route

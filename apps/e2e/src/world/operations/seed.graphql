@@ -245,3 +245,13 @@ mutation SeedUpdateItemType($id: ID!, $input: UpdateItemTypeInput!) {
 mutation SeedDeleteItemType($id: ID!) {
   deleteItemType(id: $id)
 }
+
+# One item, including a destroyed one. Membership-gated like itemProvenance.
+query SeedItem($id: ID!) {
+  item(id: $id) {
+    id
+    itemTypeId
+    ownerId
+    destroyedAt
+  }
+}

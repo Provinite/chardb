@@ -233,3 +233,17 @@ export const GET_ITEM_PROVENANCE = gql`
   }
   ${ITEM_TRANSACTION_FRAGMENT}
 `;
+
+// One request for the page: the item and its history are useless apart.
+export const GET_ITEM_WITH_PROVENANCE = gql`
+  query GetItemWithProvenance($itemId: ID!) {
+    item(id: $itemId) {
+      ...ItemFields
+    }
+    itemProvenance(itemId: $itemId) {
+      ...ItemTransactionFields
+    }
+  }
+  ${ITEM_FRAGMENT}
+  ${ITEM_TRANSACTION_FRAGMENT}
+`;

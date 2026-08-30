@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`item(id)` query**: fetch one item, including a destroyed one. Membership-gated like `itemProvenance` — a history page is no use without the item it belongs to, and a destroyed item's page has to keep working, which is the whole point of revoking softly.
+
 ## [v11.0.0] - 2026-08-30
 
 ### Added

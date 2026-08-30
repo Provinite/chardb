@@ -645,7 +645,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
                     size="sm"
                     variant="outline"
                     as={Link}
-                    to={`/items/${itemType.id}`}
+                    to={`/item-types/${itemType.id}`}
                   >
                     <ExternalLink size={14} /> View
                   </Button>

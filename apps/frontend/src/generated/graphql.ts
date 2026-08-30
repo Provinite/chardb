@@ -2017,6 +2017,8 @@ export type Query = {
   inviteCodesByCreator: InviteCodeConnection;
   /** Get invite codes by role ID with pagination */
   inviteCodesByRole: InviteCodeConnection;
+  /** One item, including a destroyed one. Readable by any member of the community that owns its type. */
+  item: Item;
   /** Every ledger row for one stack, oldest first. The provenance timeline. */
   itemProvenance: Array<ItemTransaction>;
   /** The item ledger for one community, newest first. Readable by any member. */
@@ -2373,6 +2375,11 @@ export type QueryInviteCodesByRoleArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   roleId: Scalars['ID']['input'];
+};
+
+
+export type QueryItemArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -4083,6 +4090,13 @@ export type GetItemProvenanceQueryVariables = Exact<{
 
 
 export type GetItemProvenanceQuery = { __typename?: 'Query', itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+
+export type GetItemWithProvenanceQueryVariables = Exact<{
+  itemId: Scalars['ID']['input'];
+}>;
+
+
+export type GetItemWithProvenanceQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }, itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type GetMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -9412,6 +9426,50 @@ export type GetItemProvenanceQueryHookResult = ReturnType<typeof useGetItemProve
 export type GetItemProvenanceLazyQueryHookResult = ReturnType<typeof useGetItemProvenanceLazyQuery>;
 export type GetItemProvenanceSuspenseQueryHookResult = ReturnType<typeof useGetItemProvenanceSuspenseQuery>;
 export type GetItemProvenanceQueryResult = Apollo.QueryResult<GetItemProvenanceQuery, GetItemProvenanceQueryVariables>;
+export const GetItemWithProvenanceDocument = gql`
+    query GetItemWithProvenance($itemId: ID!) {
+  item(id: $itemId) {
+    ...ItemFields
+  }
+  itemProvenance(itemId: $itemId) {
+    ...ItemTransactionFields
+  }
+}
+    ${ItemFieldsFragmentDoc}
+${ItemTransactionFieldsFragmentDoc}`;
+
+/**
+ * __useGetItemWithProvenanceQuery__
+ *
+ * To run a query within a React component, call `useGetItemWithProvenanceQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetItemWithProvenanceQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetItemWithProvenanceQuery({
+ *   variables: {
+ *      itemId: // value for 'itemId'
+ *   },
+ * });
+ */
+export function useGetItemWithProvenanceQuery(baseOptions: Apollo.QueryHookOptions<GetItemWithProvenanceQuery, GetItemWithProvenanceQueryVariables> & ({ variables: GetItemWithProvenanceQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetItemWithProvenanceQuery, GetItemWithProvenanceQueryVariables>(GetItemWithProvenanceDocument, options);
+      }
+export function useGetItemWithProvenanceLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetItemWithProvenanceQuery, GetItemWithProvenanceQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetItemWithProvenanceQuery, GetItemWithProvenanceQueryVariables>(GetItemWithProvenanceDocument, options);
+        }
+export function useGetItemWithProvenanceSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetItemWithProvenanceQuery, GetItemWithProvenanceQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetItemWithProvenanceQuery, GetItemWithProvenanceQueryVariables>(GetItemWithProvenanceDocument, options);
+        }
+export type GetItemWithProvenanceQueryHookResult = ReturnType<typeof useGetItemWithProvenanceQuery>;
+export type GetItemWithProvenanceLazyQueryHookResult = ReturnType<typeof useGetItemWithProvenanceLazyQuery>;
+export type GetItemWithProvenanceSuspenseQueryHookResult = ReturnType<typeof useGetItemWithProvenanceSuspenseQuery>;
+export type GetItemWithProvenanceQueryResult = Apollo.QueryResult<GetItemWithProvenanceQuery, GetItemWithProvenanceQueryVariables>;
 export const GetMediaDocument = gql`
     query GetMedia($filters: MediaFiltersInput) {
   media(filters: $filters) {

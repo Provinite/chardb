@@ -1,3 +1,4 @@
+import { ItemTransactionKind } from "../generated/graphql";
 import type {
   ItemFieldsFragment,
   ItemTransactionFieldsFragment,
@@ -19,6 +20,11 @@ import type {
 export interface DisplayStack {
   itemType: ItemFieldsFragment["itemType"];
   count: number;
+  /**
+   * The first item in the group. Only meaningful when `count` is 1 -- several
+   * items do not share a history, so there is no single one to link to.
+   */
+  itemId: string;
 }
 
 /**
@@ -36,7 +42,11 @@ export function groupIntoStacks(
     if (existing) {
       existing.count += 1;
     } else {
-      byType.set(item.itemType.id, { itemType: item.itemType, count: 1 });
+      byType.set(item.itemType.id, {
+        itemType: item.itemType,
+        count: 1,
+        itemId: item.id,
+      });
     }
   }
   return Array.from(byType.values());
@@ -66,3 +76,40 @@ export function collapseByBatch(
   }
   return Array.from(byBatch.values());
 }
+
+/**
+ * How each kind of movement is named and coloured.
+ *
+ * Shared because the ledger and a single item's history are two views of the
+ * same rows, and a "Revoked" pill that is red on one page and amber on the
+ * other would read as two different things.
+ */
+export const KIND_LABEL: Record<ItemTransactionKind, string> = {
+  [ItemTransactionKind.Grant]: "Granted",
+  [ItemTransactionKind.Revoke]: "Revoked",
+  [ItemTransactionKind.Transfer]: "Traded",
+  [ItemTransactionKind.Claim]: "Claimed",
+  [ItemTransactionKind.Use]: "Used",
+  [ItemTransactionKind.Import]: "Imported",
+};
+
+/** Semantic tone, resolved against the theme by whichever component renders it. */
+export type KindTone = "success" | "danger" | "info" | "warning" | "muted";
+
+export const kindTone = (kind: ItemTransactionKind): KindTone => {
+  switch (kind) {
+    case ItemTransactionKind.Grant:
+      return "success";
+    case ItemTransactionKind.Revoke:
+      return "danger";
+    case ItemTransactionKind.Transfer:
+      return "info";
+    case ItemTransactionKind.Claim:
+      return "warning";
+    case ItemTransactionKind.Use:
+    case ItemTransactionKind.Import:
+    default:
+      // Bookkeeping and consumption, not a movement anyone made.
+      return "muted";
+  }
+};
