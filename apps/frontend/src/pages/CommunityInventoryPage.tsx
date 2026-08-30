@@ -1,23 +1,41 @@
-import React from "react";
-import styled from "styled-components";
+import React, { useState } from "react";
+import styled, { css } from "styled-components";
 import { useParams, Link } from "react-router-dom";
-import { Package } from "lucide-react";
+import { Package, ChevronDown } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useAuth } from "../contexts/AuthContext";
 import {
   useCommunityByIdQuery,
-  useGetMyInventoryQuery,
+  useGetMemberHoldingsQuery,
+  useGetUserProfileQuery,
 } from "../generated/graphql";
-import { useAuth } from "../contexts/AuthContext";
-import { groupIntoStacks } from "../lib/itemDisplay";
+
+/**
+ * What one member holds in one community.
+ *
+ * One page, three audiences: a member looking at themselves, someone sizing up
+ * a trade partner, and staff about to correct something. Inventories are public
+ * within a community, so all three see the same thing.
+ *
+ * There are no staff actions here on purpose. Revoking happens on an item's own
+ * page, where its history is in front of you — you should not be able to take
+ * something away without first looking at what it is and where it came from.
+ * This page's job is to get you there.
+ */
 
 const Container = styled.div`
-  max-width: 1400px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 2rem;
 `;
 
 const Header = styled.div`
-  margin-bottom: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
 `;
 
 const Title = styled.h1`
@@ -32,120 +50,179 @@ const Subtitle = styled.p`
   margin: 0;
 `;
 
-const InventoryGrid = styled.div`
+const Tiles = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
 `;
 
-const ItemCard = styled(Link)<{ color?: string }>`
-  display: block;
+const Tile = styled.div`
+  border: 1px solid ${({ theme }) => theme.colors.border};
   background: ${({ theme }) => theme.colors.surface};
-  border: 2px solid ${({ color, theme }) => color || theme.colors.border};
-  border-radius: 12px;
-  padding: 1rem;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: 0.875rem 1rem;
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.shadows.md};
+  .k {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    color: ${({ theme }) => theme.colors.text.muted};
+  }
+
+  .v {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.1;
+    margin-top: 0.3rem;
+    font-variant-numeric: tabular-nums;
+    color: ${({ theme }) => theme.colors.text.primary};
   }
 `;
 
-const ItemIconContainer = styled.div<{ color?: string }>`
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 8px;
-  background: ${({ color, theme }) => color || theme.colors.primary}15;
-  border: 2px solid ${({ color, theme }) => color || theme.colors.primary};
+const Group = styled.div`
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  background: ${({ theme }) => theme.colors.background};
+  overflow: hidden;
+
+  & + & {
+    margin-top: 0.75rem;
+  }
+`;
+
+const GroupHead = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-  position: relative;
+  gap: 1rem;
+  padding: 1.125rem 1.25rem;
 `;
 
-const ItemImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 6px;
-`;
-
-const QuantityBadge = styled.div`
-  position: absolute;
-  bottom: 0.5rem;
-  right: 0.5rem;
-  background: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text.primary};
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  box-shadow: ${({ theme }) => theme.shadows.sm};
-`;
-
-const ItemInfo = styled.div``;
-
-const ItemName = styled.h3`
-  font-size: 1rem;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 0.25rem 0;
+const Swatch = styled.div<{ $hex?: string | null }>`
+  width: 48px;
+  height: 48px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  flex: none;
+  display: grid;
+  place-items: center;
   overflow: hidden;
-  text-overflow: ellipsis;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background: ${({ theme, $hex }) =>
+    $hex ? `${$hex}22` : theme.colors.surface};
+  color: ${({ theme, $hex }) => $hex || theme.colors.text.muted};
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const GroupInfo = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
+
+const GroupName = styled.div`
+  font-weight: 600;
+  font-size: 1.0625rem;
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: 0.125rem;
+`;
+
+const GroupMeta = styled.div`
+  font-size: 0.75rem;
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
+const Count = styled.span`
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: ${({ theme }) => theme.colors.text.primary};
   white-space: nowrap;
 `;
 
-const ItemCategory = styled.div`
-  font-size: 0.75rem;
-  color: ${({ theme }) => theme.colors.text.muted};
-  margin-bottom: 0.5rem;
-`;
-
-const ItemDescription = styled.p`
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-`;
-
-const EmptyState = styled.div`
-  text-align: center;
-  padding: 4rem 1rem;
-  color: ${({ theme }) => theme.colors.text.muted};
-`;
-
-const EmptyIcon = styled.div`
-  margin: 0 auto 1.5rem;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.surface};
-  display: flex;
+const Button = styled.button<{ $danger?: boolean }>`
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: ${({ theme }) => theme.colors.text.muted};
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  cursor: pointer;
+  border: 1px solid
+    ${({ theme, $danger }) =>
+      $danger ? theme.colors.danger : theme.colors.border};
+  background: ${({ theme }) => theme.colors.background};
+  color: ${({ theme, $danger }) =>
+    $danger ? theme.colors.danger : theme.colors.text.secondary};
+
+  &:hover:not(:disabled) {
+    background: ${({ theme, $danger }) =>
+      $danger ? `${theme.colors.danger}12` : theme.colors.surface};
+    color: ${({ theme, $danger }) =>
+      $danger ? theme.colors.danger : theme.colors.text.primary};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
-const EmptyTitle = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0 0 0.5rem 0;
-  color: ${({ theme }) => theme.colors.text.primary};
+const Expand = styled(Button)<{ $open: boolean }>`
+  svg:last-child {
+    transition: transform 0.15s;
+    ${({ $open }) =>
+      $open &&
+      css`
+        transform: rotate(180deg);
+      `}
+  }
 `;
 
-const EmptyDescription = styled.p`
+const Items = styled.ul`
+  list-style: none;
   margin: 0;
-  font-size: 1rem;
+  padding: 0 1.25rem 1.125rem 4.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+`;
+
+const ItemRow = styled.li`
+  a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid ${({ theme }) => theme.colors.border};
+    border-radius: ${({ theme }) => theme.borderRadius.md};
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    color: ${({ theme }) => theme.colors.text.secondary};
+
+    &:hover {
+      background: ${({ theme }) => theme.colors.surface};
+      color: ${({ theme }) => theme.colors.text.primary};
+      border-color: ${({ theme }) => theme.colors.primary};
+    }
+  }
+`;
+
+const Since = styled.span`
+  color: ${({ theme }) => theme.colors.text.muted};
+  font-size: 0.6875rem;
+`;
+
+const Empty = styled.div`
+  padding: 3rem 1rem;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.text.muted};
 `;
 
 const LoadingContainer = styled.div`
@@ -155,36 +232,77 @@ const LoadingContainer = styled.div`
   min-height: 400px;
 `;
 
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
 export const CommunityInventoryPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const { communityId, username } = useParams<{
+    communityId: string;
+    username?: string;
+  }>();
   const { user } = useAuth();
 
-  const { data: communityData, loading: communityLoading } =
-    useCommunityByIdQuery({
-      variables: { id: communityId! },
-      skip: !communityId,
-    });
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const { data: inventoryData, loading: inventoryLoading } =
-    useGetMyInventoryQuery({
-      variables: { communityId },
-      skip: !communityId || !user,
+  const { data: communityData } = useCommunityByIdQuery({
+    variables: { id: communityId! },
+    skip: !communityId,
+  });
+
+  // No username in the route means "my own", which is the common case and
+  // keeps /communities/:id/inventory working as it always has.
+  const viewingSelf = !username || username === user?.username;
+
+  // The route names a person, not an id, because that is what a shareable URL
+  // should say. One lookup turns it into the id the holdings query needs.
+  const { data: profileData, loading: profileLoading } = useGetUserProfileQuery(
+    {
+      variables: { username: username ?? "" },
+      skip: viewingSelf || !username,
+    },
+  );
+
+  const targetUserId = viewingSelf
+    ? user?.id
+    : profileData?.userProfile?.user.id;
+
+  const {
+    data,
+    loading: holdingsLoading,
+    error,
+  } = useGetMemberHoldingsQuery({
+    variables: { communityId: communityId!, userId: targetUserId ?? "" },
+    skip: !communityId || !targetUserId,
+  });
+
+  const loading = profileLoading || holdingsLoading;
+
+  const report = data?.memberHoldings;
+  const holdings = report?.holdings ?? [];
+
+  const toggleGroup = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
 
   if (!user) {
     return (
       <Container>
-        <EmptyState>
-          <EmptyTitle>Login Required</EmptyTitle>
-          <EmptyDescription>
-            Please log in to view your inventory.
-          </EmptyDescription>
-        </EmptyState>
+        <Empty>
+          <p>Please log in to view this inventory.</p>
+        </Empty>
       </Container>
     );
   }
 
-  if (communityLoading || inventoryLoading) {
+  if (loading && !data) {
     return (
       <LoadingContainer>
         <LoadingSpinner />
@@ -192,82 +310,130 @@ export const CommunityInventoryPage: React.FC = () => {
     );
   }
 
-  // Get the inventory for this community (will be first and only one since we filtered by communityId)
-  const inventory = inventoryData?.me?.inventories?.[0];
-  const items = inventory?.items || [];
+  if (error) {
+    return (
+      <Container>
+        <Empty>
+          <p>
+            That inventory could not be loaded. It may belong to a community you
+            are not a member of. {error.message}
+          </p>
+        </Empty>
+      </Container>
+    );
+  }
 
-  const stacks = groupIntoStacks(items);
+  const who = report?.member.displayName || report?.member.username;
 
   return (
     <Container>
       <Header>
-        <Title>Your Inventory</Title>
-        <Subtitle>
-          Items in {communityData?.community?.name || "this community"}
-        </Subtitle>
+        <div>
+          <Title>{viewingSelf ? "Your Inventory" : `${who}'s Items`}</Title>
+          <Subtitle>
+            Items in {communityData?.community?.name || "this community"}
+          </Subtitle>
+        </div>
       </Header>
 
-      {stacks.length === 0 ? (
-        <EmptyState>
-          <EmptyIcon>
-            <Package size={40} />
-          </EmptyIcon>
-          <EmptyTitle>No Items Yet</EmptyTitle>
-          <EmptyDescription>
-            You don't have any items in this community yet. Items can be granted
-            by community administrators.
-          </EmptyDescription>
-        </EmptyState>
-      ) : (
-        <InventoryGrid>
-          {stacks.map((stack) => (
-            <ItemCard
-              key={stack.itemType.id}
-              data-testid="inventory-tile"
-              data-item-type-id={stack.itemType.id}
-              // One item has one history, so link straight to it. Several do
-              // not share a history -- picking one arbitrarily would be a lie
-              // -- so a grouped tile goes to the catalogue entry instead.
-              to={
-                stack.count === 1
-                  ? `/communities/${communityId}/items/${stack.itemId}`
-                  : `/item-types/${stack.itemType.id}`
-              }
-              color={stack.itemType.color?.hexCode}
-            >
-              <ItemIconContainer color={stack.itemType.color?.hexCode}>
-                {stack.itemType.image ? (
-                  <ItemImage
-                    src={
-                      stack.itemType.image.thumbnailUrl ||
-                      stack.itemType.image.originalUrl
-                    }
-                    alt={stack.itemType.image.altText || stack.itemType.name}
-                  />
-                ) : (
-                  <Package size={48} />
-                )}
-                {stack.count > 1 && (
-                  <QuantityBadge>×{stack.count}</QuantityBadge>
-                )}
-              </ItemIconContainer>
+      <Tiles>
+        <Tile data-testid="holdings-total">
+          <div className="k">Items held</div>
+          <div className="v">{report?.totalItems ?? 0}</div>
+        </Tile>
+        <Tile>
+          <div className="k">Item types</div>
+          <div className="v">{report?.distinctTypes ?? 0}</div>
+        </Tile>
+      </Tiles>
 
-              <ItemInfo>
-                <ItemName title={stack.itemType.name}>
-                  {stack.itemType.name}
-                </ItemName>
-                {stack.itemType.category && (
-                  <ItemCategory>{stack.itemType.category}</ItemCategory>
+      {holdings.length === 0 ? (
+        <Empty>
+          <Package
+            size={40}
+            style={{ opacity: 0.5, marginBottom: "0.75rem" }}
+          />
+          <p>
+            {viewingSelf
+              ? "You don't have any items in this community yet. Items can be granted by community administrators."
+              : `${who} holds nothing in this community.`}
+          </p>
+        </Empty>
+      ) : (
+        <div data-testid="holdings-list">
+          {holdings.map((h) => {
+            // A single item needs no disclosure: there is nothing to collapse,
+            // and hiding one chip behind a click just puts a step between a
+            // member and the only history they could have wanted.
+            const open = expanded.has(h.itemType.id) || h.count === 1;
+            return (
+              <Group
+                key={h.itemType.id}
+                data-testid="holding-group"
+                data-item-type-id={h.itemType.id}
+              >
+                <GroupHead>
+                  <Swatch $hex={h.itemType.color?.hexCode}>
+                    {h.itemType.image ? (
+                      <img
+                        src={
+                          h.itemType.image.thumbnailUrl ||
+                          h.itemType.image.originalUrl
+                        }
+                        alt={h.itemType.image.altText || h.itemType.name}
+                      />
+                    ) : (
+                      <Package size={20} />
+                    )}
+                  </Swatch>
+                  <GroupInfo>
+                    <GroupName>
+                      <Link to={`/item-types/${h.itemType.id}`}>
+                        {h.itemType.name}
+                      </Link>
+                    </GroupName>
+                    <GroupMeta>
+                      {[
+                        h.itemType.category,
+                        h.itemType.isTradeable ? "Tradeable" : null,
+                        h.itemType.isConsumable ? "Consumable" : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </GroupMeta>
+                  </GroupInfo>
+                  <Count>×{h.count}</Count>
+                  {h.count > 1 && (
+                    <Expand
+                      type="button"
+                      $open={open}
+                      data-testid="expand-group"
+                      onClick={() => toggleGroup(h.itemType.id)}
+                    >
+                      {open ? "Hide" : "Show"} items
+                      <ChevronDown size={14} />
+                    </Expand>
+                  )}
+                </GroupHead>
+
+                {open && (
+                  <Items>
+                    {h.items.map((item, i) => (
+                      <ItemRow key={item.id} data-testid="holding-item">
+                        <Link
+                          to={`/communities/${communityId}/items/${item.id}`}
+                        >
+                          #{i + 1}
+                          <Since>{formatDate(item.createdAt)}</Since>
+                        </Link>
+                      </ItemRow>
+                    ))}
+                  </Items>
                 )}
-                {stack.itemType.description && (
-                  <ItemDescription>
-                    {stack.itemType.description}
-                  </ItemDescription>
-                )}
-              </ItemInfo>
-            </ItemCard>
-          ))}
-        </InventoryGrid>
+              </Group>
+            );
+          })}
+        </div>
       )}
     </Container>
   );

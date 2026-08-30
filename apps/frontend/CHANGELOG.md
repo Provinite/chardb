@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Member list** (`/communities/:communityId/members`): replaces a placeholder that said member management was "under development". Lists everyone with their role, searchable, with a link to each member's holdings — which is the point, since holdings were previously reachable only by typing a URL.
+
+- **Circulation numbers on the admin items page**: the item type grid becomes a table carrying circulation, holders, grants and revokes over 30 days, and unclaimed count, with community totals above it. A type with items owed to nobody gets an amber stripe rather than only a number.
+
+### Changed
+
+- **The inventory page is now one page for three audiences** (`/communities/:communityId/inventory`, or `/communities/:communityId/members/:username/items` for someone else). A member looking at themselves, someone sizing up a trade partner, and staff about to correct something all see the same facts; permissions add actions rather than changing what is shown.
+
+  Items are grouped by type with an expandable list of the individual items underneath, each linking to its own history.
+
+  **There are no staff actions on this page.** Revoking happens on an item's own page, where its history is in front of you — taking something away should require first looking at what it is and where it came from. An earlier draft put per-item checkboxes and a bulk revoke here; asking which of twenty-four interchangeable tokens to revoke was the wrong question, and the selection UI it needed was the worst part of the page.
+
+- **Names in the item ledger link to that member's holdings.**
+
 ## [v11.1.0] - 2026-08-30
 
 ### Added

@@ -325,3 +325,244 @@ describe("ItemsService", () => {
     });
   });
 });
+
+describe("ItemsService.findItemEconomy", () => {
+  let service: ItemsService;
+
+  const types = [
+    { id: "potion", name: "Trait Change Potion", communityId: "comm1" },
+    { id: "locket", name: "Heirloom Locket", communityId: "comm1" },
+  ];
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ItemsService,
+        { provide: DatabaseService, useValue: mockDatabaseService },
+        {
+          provide: PendingOwnershipService,
+          useValue: mockPendingOwnershipService,
+        },
+        { provide: DiscordService, useValue: mockDiscordService },
+        { provide: ItemTransactionsService, useValue: mockItemTransactions },
+      ],
+    }).compile();
+    service = module.get<ItemsService>(ItemsService);
+
+    mockDatabaseService.itemType.findMany.mockResolvedValue(types);
+    mockDatabaseService.item.findMany.mockResolvedValue([]);
+    mockDatabaseService.itemTransaction.groupBy.mockResolvedValue([]);
+    mockDatabaseService.pendingOwnership.findMany.mockResolvedValue([]);
+  });
+
+  it("counts circulation and distinct holders separately", async () => {
+    // Three items, two of them held by the same person: circulation 3,
+    // holders 2. Conflating the two is the mistake this guards.
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      { itemTypeId: "potion", ownerId: "alice" },
+      { itemTypeId: "potion", ownerId: "alice" },
+      { itemTypeId: "potion", ownerId: "bob" },
+    ]);
+
+    const report = await service.findItemEconomy("comm1");
+    const potion = report.itemTypes.find((t) => t.itemType.id === "potion");
+
+    expect(potion?.circulation).toBe(3);
+    expect(potion?.holderCount).toBe(2);
+    expect(report.totalCirculation).toBe(3);
+    expect(report.totalHolders).toBe(2);
+  });
+
+  it("counts an unclaimed item in circulation but toward nobody's holdings", async () => {
+    // It exists and was minted, so supply is real -- but it is in no
+    // inventory, which is exactly the state the unclaimed column exists for.
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      { itemTypeId: "potion", ownerId: null },
+    ]);
+    mockDatabaseService.pendingOwnership.findMany.mockResolvedValue([
+      { item: { itemTypeId: "potion" } },
+    ]);
+
+    const report = await service.findItemEconomy("comm1");
+    const potion = report.itemTypes.find((t) => t.itemType.id === "potion");
+
+    expect(potion?.circulation).toBe(1);
+    expect(potion?.holderCount).toBe(0);
+    expect(potion?.unclaimed).toBe(1);
+    expect(report.totalHolders).toBe(0);
+  });
+
+  it("counts a holder of two types once in the community total", async () => {
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      { itemTypeId: "potion", ownerId: "alice" },
+      { itemTypeId: "locket", ownerId: "alice" },
+    ]);
+
+    const report = await service.findItemEconomy("comm1");
+
+    expect(report.totalHolders).toBe(1);
+    expect(report.itemTypes.every((t) => t.holderCount === 1)).toBe(true);
+  });
+
+  it("splits recent movement into grants and revokes, and nets them", async () => {
+    mockDatabaseService.itemTransaction.groupBy.mockResolvedValue([
+      { itemTypeId: "potion", kind: "GRANT", _count: { _all: 10 } },
+      { itemTypeId: "potion", kind: "REVOKE", _count: { _all: 4 } },
+      // IMPORT and CLAIM are not movement anyone caused; they must not count.
+      { itemTypeId: "potion", kind: "IMPORT", _count: { _all: 99 } },
+    ]);
+
+    const report = await service.findItemEconomy("comm1");
+    const potion = report.itemTypes.find((t) => t.itemType.id === "potion");
+
+    expect(potion?.grantedRecently).toBe(10);
+    expect(potion?.revokedRecently).toBe(4);
+    expect(report.netRecently).toBe(6);
+  });
+
+  it("only looks back 30 days", async () => {
+    await service.findItemEconomy("comm1");
+
+    const call = mockDatabaseService.itemTransaction.groupBy.mock
+      .calls[0][0] as { where: { createdAt: { gte: Date } } };
+    const days = (Date.now() - call.where.createdAt.gte.getTime()) / 86_400_000;
+    expect(Math.round(days)).toBe(30);
+  });
+
+  it("lists item types with nothing in circulation, biggest first", async () => {
+    // A type with zero items still belongs in the catalogue view -- that is
+    // itself the interesting fact about it.
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      { itemTypeId: "locket", ownerId: "alice" },
+    ]);
+
+    const report = await service.findItemEconomy("comm1");
+
+    expect(report.itemTypes.map((t) => t.itemType.id)).toEqual([
+      "locket",
+      "potion",
+    ]);
+    expect(
+      report.itemTypes.find((t) => t.itemType.id === "potion")?.circulation,
+    ).toBe(0);
+  });
+
+  it("excludes destroyed items from every count", async () => {
+    await service.findItemEconomy("comm1");
+
+    const call = mockDatabaseService.item.findMany.mock.calls[0][0] as {
+      where: { destroyedAt: null };
+    };
+    expect(call.where.destroyedAt).toBeNull();
+  });
+});
+
+describe("ItemsService.findMemberHoldings", () => {
+  let service: ItemsService;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ItemsService,
+        { provide: DatabaseService, useValue: mockDatabaseService },
+        {
+          provide: PendingOwnershipService,
+          useValue: mockPendingOwnershipService,
+        },
+        { provide: DiscordService, useValue: mockDiscordService },
+        { provide: ItemTransactionsService, useValue: mockItemTransactions },
+      ],
+    }).compile();
+    service = module.get<ItemsService>(ItemsService);
+
+    mockDatabaseService.user.findUnique.mockResolvedValue({
+      id: "alice",
+      username: "alice",
+    });
+    mockDatabaseService.item.findMany.mockResolvedValue([]);
+    mockDatabaseService.pendingOwnership.count.mockResolvedValue(0);
+  });
+
+  const held = (id: string, typeId: string, name: string) => ({
+    id,
+    itemTypeId: typeId,
+    createdAt: new Date("2026-01-01"),
+    itemType: { id: typeId, name },
+  });
+
+  it("groups by item type and lists every item inside", async () => {
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      held("i1", "potion", "Potion"),
+      held("i2", "potion", "Potion"),
+      held("i3", "locket", "Locket"),
+    ]);
+
+    const report = await service.findMemberHoldings("alice", "comm1");
+
+    expect(report.totalItems).toBe(3);
+    expect(report.distinctTypes).toBe(2);
+    const potion = report.holdings.find((h) => h.itemType.id === "potion");
+    // Individually addressable, not just counted: revoking two of three means
+    // naming which two.
+    expect(potion?.count).toBe(2);
+    expect(potion?.items.map((i) => i.id)).toEqual(["i1", "i2"]);
+  });
+
+  it("does not paginate", async () => {
+    // The bug this replaces: User.inventories called findAllItems with no
+    // limit, took the default of 20, and reported the truncated length as the
+    // total. Nothing in the result said it had been cut short.
+    mockDatabaseService.item.findMany.mockResolvedValue(
+      Array.from({ length: 30 }, (_, i) => held(`i${i}`, "potion", "Potion")),
+    );
+
+    const report = await service.findMemberHoldings("alice", "comm1");
+
+    expect(report.totalItems).toBe(30);
+    expect(report.holdings[0].items).toHaveLength(30);
+    const call = mockDatabaseService.item.findMany.mock.calls[0][0] as {
+      take?: number;
+    };
+    expect(call.take).toBeUndefined();
+  });
+
+  it("excludes destroyed items and scopes to the community", async () => {
+    await service.findMemberHoldings("alice", "comm1");
+
+    const call = mockDatabaseService.item.findMany.mock.calls[0][0] as {
+      where: {
+        ownerId: string;
+        destroyedAt: null;
+        itemType: { communityId: string };
+      };
+    };
+    expect(call.where.ownerId).toBe("alice");
+    expect(call.where.destroyedAt).toBeNull();
+    expect(call.where.itemType.communityId).toBe("comm1");
+  });
+
+  it("orders holdings by size, largest first", async () => {
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      held("i1", "locket", "Locket"),
+      held("i2", "potion", "Potion"),
+      held("i3", "potion", "Potion"),
+    ]);
+
+    const report = await service.findMemberHoldings("alice", "comm1");
+
+    expect(report.holdings.map((h) => h.itemType.id)).toEqual([
+      "potion",
+      "locket",
+    ]);
+  });
+
+  it("refuses an unknown member", async () => {
+    mockDatabaseService.user.findUnique.mockResolvedValue(null);
+
+    await expect(service.findMemberHoldings("nobody", "comm1")).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+});

@@ -27,6 +27,8 @@ import {
   ItemTypeConnection,
 } from "./entities/item-type.entity";
 import { Item as ItemEntity } from "./entities/item.entity";
+import { ItemEconomyReport } from "./entities/item-economy.entity";
+import { MemberHoldingsReport } from "./entities/member-holdings.entity";
 import { Community } from "../communities/entities/community.entity";
 import { Image } from "../images/entities/image.entity";
 import { User } from "../users/entities/user.entity";
@@ -164,6 +166,65 @@ export class ItemsResolver {
   async item(@Args("id", { type: () => ID }) id: string): Promise<ItemEntity> {
     const item = await this.itemsService.findItemById(id);
     return mapPrismaItemToGraphQL(item);
+  }
+
+  /**
+   * Gated on canManageItems: this is the catalogue owner's view of whether the
+   * catalogue is healthy, not the granter's queue.
+   */
+  @AllowCommunityPermission(CommunityPermission.CanManageItems)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Query(() => ItemEconomyReport, {
+    name: "itemEconomy",
+    description:
+      "Circulation, holders and recent movement for every item type in a " +
+      "community, largest first.",
+  })
+  async itemEconomy(
+    @Args("communityId", { type: () => ID }) communityId: string,
+  ): Promise<ItemEconomyReport> {
+    const report = await this.itemsService.findItemEconomy(communityId);
+    return {
+      ...report,
+      itemTypes: report.itemTypes.map((t) => ({
+        ...t,
+        itemType: mapPrismaItemTypeToGraphQL(t.itemType),
+      })),
+    };
+  }
+
+  /**
+   * Membership only, matching the ledger and provenance: inventories are
+   * public within a community, so this is the same page whether you are
+   * looking at yourself, a trade partner, or someone you are about to correct.
+   * Permissions add actions to it; they do not change what it shows.
+   */
+  @AllowCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Query(() => MemberHoldingsReport, {
+    name: "memberHoldings",
+    description:
+      "One member's live holdings in one community, grouped by item type and " +
+      "not paginated -- an inventory is a whole thing.",
+  })
+  async memberHoldings(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("userId", { type: () => ID }) userId: string,
+  ): Promise<MemberHoldingsReport> {
+    const report = await this.itemsService.findMemberHoldings(
+      userId,
+      communityId,
+    );
+
+    return {
+      ...report,
+      member: mapPrismaUserToGraphQL(report.member),
+      holdings: report.holdings.map((h) => ({
+        count: h.count,
+        itemType: mapPrismaItemTypeToGraphQL(h.itemType),
+        items: h.items.map(mapPrismaItemToGraphQL),
+      })),
+    };
   }
 
   // ==================== Item Mutations ====================

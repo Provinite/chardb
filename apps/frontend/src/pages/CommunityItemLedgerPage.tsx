@@ -382,11 +382,25 @@ const displayName = (
  * from/to pair would print a bare dash and leave the reader to work out which
  * side is missing and why.
  */
-const PartyCell: React.FC<{ row: ItemTransactionFieldsFragment }> = ({
-  row,
-}) => {
+const PartyCell: React.FC<{
+  row: ItemTransactionFieldsFragment;
+  communityId?: string;
+}> = ({ row, communityId }) => {
   const from = displayName(row.fromUser);
   const to = displayName(row.toUser);
+
+  // A name in the ledger is the natural way into that person's holdings --
+  // the members page is still a placeholder, so this is the only route in.
+  const who = (label: string, u: ItemTransactionFieldsFragment["toUser"]) =>
+    communityId && u ? (
+      <Party>
+        <Link to={`/communities/${communityId}/members/${u.username}/items`}>
+          {label}
+        </Link>
+      </Party>
+    ) : (
+      <Party>{label}</Party>
+    );
 
   switch (row.kind) {
     case ItemTransactionKind.Grant:
@@ -394,13 +408,13 @@ const PartyCell: React.FC<{ row: ItemTransactionFieldsFragment }> = ({
         <>
           <Muted>—</Muted>
           <Arrow>→</Arrow>
-          {to ? <Party>{to}</Party> : <Muted>pending claim</Muted>}
+          {to ? who(to, row.toUser) : <Muted>pending claim</Muted>}
         </>
       );
     case ItemTransactionKind.Revoke:
       return (
         <>
-          {from ? <Party>{from}</Party> : <Muted>—</Muted>}
+          {from ? who(from, row.fromUser) : <Muted>—</Muted>}
           <Arrow>→</Arrow>
           <Muted>destroyed</Muted>
         </>
@@ -408,7 +422,7 @@ const PartyCell: React.FC<{ row: ItemTransactionFieldsFragment }> = ({
     case ItemTransactionKind.Use:
       return (
         <>
-          {from ? <Party>{from}</Party> : <Muted>—</Muted>}
+          {from ? who(from, row.fromUser) : <Muted>—</Muted>}
           <Arrow>→</Arrow>
           <Muted>consumed</Muted>
         </>
@@ -418,7 +432,7 @@ const PartyCell: React.FC<{ row: ItemTransactionFieldsFragment }> = ({
         <>
           <Muted>pending</Muted>
           <Arrow>→</Arrow>
-          {to ? <Party>{to}</Party> : <Muted>—</Muted>}
+          {to ? who(to, row.toUser) : <Muted>—</Muted>}
         </>
       );
     case ItemTransactionKind.Import:
@@ -429,7 +443,7 @@ const PartyCell: React.FC<{ row: ItemTransactionFieldsFragment }> = ({
         <>
           <Muted>unrecorded</Muted>
           <Arrow>→</Arrow>
-          {to ? <Party>{to}</Party> : <Muted>—</Muted>}
+          {to ? who(to, row.toUser) : <Muted>—</Muted>}
         </>
       );
     default:
@@ -437,7 +451,7 @@ const PartyCell: React.FC<{ row: ItemTransactionFieldsFragment }> = ({
         <>
           {from ? <Party>{from}</Party> : <Muted>—</Muted>}
           <Arrow>→</Arrow>
-          {to ? <Party>{to}</Party> : <Muted>—</Muted>}
+          {to ? who(to, row.toUser) : <Muted>—</Muted>}
         </>
       );
   }
@@ -625,7 +639,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
                         {count}
                       </Delta>
                       <td>
-                        <PartyCell row={row} />
+                        <PartyCell row={row} communityId={communityId} />
                       </td>
                       <td>
                         <Party>{actor}</Party>

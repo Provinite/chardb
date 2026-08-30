@@ -4,6 +4,7 @@ import {
   ItemTransactionKind,
   SeedItemTransactionsDocument,
   SeedItemTypesDocument,
+  SeedRevokeItemsDocument,
 } from "../../src/generated/graphql.js";
 
 const test = presetTest("community-items");
@@ -59,6 +60,51 @@ test.describe("as staff who can manage items", () => {
     // Stacking is gone from the model, so no badge may claim otherwise.
     await expect(page.getByText("Stackable")).toHaveCount(0);
     await expect(page.getByText(/Max:/)).toHaveCount(0);
+  });
+
+  test("reports circulation and holders per item type", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(adminUrl(world.community.id));
+
+    // `member` holds three potions: three in circulation, one holder. The page
+    // used to say neither, which is the whole point of this table.
+    const potion = card(page, world.itemTypes.potion.id);
+    await expect(potion).toContainText("3");
+
+    // The preset's 30 imported lockets are held by one person.
+    const locket = card(page, world.itemTypes.locket.id);
+    await expect(locket).toContainText("30");
+  });
+
+  test("summarises the community above the table", async ({ page, world }) => {
+    await page.goto(adminUrl(world.community.id));
+
+    // Scoped to the tiles: "Unclaimed" is also a column header below.
+    const tiles = page.getByTestId("economy-tiles");
+    await expect(tiles).toContainText("In circulation");
+    await expect(tiles).toContainText("Holders");
+    await expect(tiles).toContainText("Unclaimed");
+    await expect(tiles).toContainText("Net 30d");
+
+    // 3 potions + 30 imported lockets, held by member and othermember.
+    await expect(tiles).toContainText("33");
+    await expect(tiles).toContainText("2");
+  });
+
+  test("a revoke moves the numbers", async ({ page, world }) => {
+    await page.goto(adminUrl(world.community.id));
+    await expect(card(page, world.itemTypes.potion.id)).toContainText("3");
+
+    await world.as("quartermaster").gql(SeedRevokeItemsDocument, {
+      itemIds: world.grantedItems.ids.slice(0, 2),
+      reason: "Returned by the member",
+    });
+
+    await page.reload();
+    // Circulation counts live items only, so two fewer.
+    await expect(card(page, world.itemTypes.potion.id)).toContainText("1");
   });
 
   test("creates an item type", async ({ page, world }) => {

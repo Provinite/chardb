@@ -1,4 +1,5 @@
 import { presetTest, expect } from "../../src/fixtures.js";
+import type { Page } from "@playwright/test";
 import {
   ItemTransactionKind,
   SeedGrantItemDocument,
@@ -106,22 +107,26 @@ test.describe("writes reach the ledger", () => {
 test.describe("the inventory collapses what the ledger separates", () => {
   test.use({ persona: "member" });
 
-  test("three items show as one tile reading x3", async ({ page, world }) => {
+  const group = (page: Page, itemTypeId: string) =>
+    page.locator(
+      `[data-testid="holding-group"][data-item-type-id="${itemTypeId}"]`,
+    );
+
+  test("three items show as one group reading x3", async ({ page, world }) => {
     await page.goto(`${world.community.url}/inventory`);
 
-    const tile = page
-      .getByRole("link")
-      .filter({ hasText: world.itemTypes.potion.name });
+    const potion = group(page, world.itemTypes.potion.id);
 
-    // One tile, not three: stacking is a presentation choice now.
-    await expect(tile).toHaveCount(1);
-    await expect(tile).toContainText("×3");
+    // One group, not three: the items are stored separately and gathered for
+    // display.
+    await expect(potion).toHaveCount(1);
+    await expect(potion).toContainText("×3");
   });
 
   test("revoked items leave the inventory", async ({ page, world }) => {
-    // One of three, so the tile stays and the count drops. Revoking down to a
-    // single item would remove the badge entirely, which would pass for the
-    // wrong reason.
+    // One of three, so the group stays and the count drops. Revoking down to
+    // nothing would remove the group entirely, which would pass for the wrong
+    // reason.
     await world.as("quartermaster").gql(SeedRevokeItemsDocument, {
       itemIds: world.grantedItems.ids.slice(0, 1),
       reason: "Returned by the member",
@@ -129,9 +134,7 @@ test.describe("the inventory collapses what the ledger separates", () => {
 
     await page.goto(`${world.community.url}/inventory`);
 
-    await expect(
-      page.getByRole("link").filter({ hasText: world.itemTypes.potion.name }),
-    ).toContainText("×2");
+    await expect(group(page, world.itemTypes.potion.id)).toContainText("×2");
   });
 });
 

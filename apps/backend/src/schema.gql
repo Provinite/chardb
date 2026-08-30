@@ -1136,6 +1136,26 @@ type Item {
   updatedAt: DateTime!
 }
 
+"""Item circulation across a whole community, by item type."""
+type ItemEconomyReport {
+  """Largest circulation first."""
+  itemTypes: [ItemTypeEconomy!]!
+
+  """
+  Granted minus revoked over the last 30 days. Negative means the community took more back than it gave out.
+  """
+  netRecently: Int!
+
+  """Live items across every type."""
+  totalCirculation: Int!
+
+  """Distinct members holding at least one item of any type."""
+  totalHolders: Int!
+
+  """Unclaimed items across every type."""
+  totalUnclaimed: Int!
+}
+
 """
 One item, one event. Granting twelve tokens writes twelve rows; group them by batchId to collapse them back into one line.
 """
@@ -1248,6 +1268,29 @@ type ItemTypeConnection {
   hasMore: Boolean!
   itemTypes: [ItemType!]!
   total: Int!
+}
+
+"""One item type, and how it is doing."""
+type ItemTypeEconomy {
+  """Live items of this type. Destroyed ones are not counted."""
+  circulation: Int!
+
+  """Items granted in the last 30 days."""
+  grantedRecently: Int!
+
+  """
+  Distinct members holding at least one. Lower than circulation whenever somebody holds several.
+  """
+  holderCount: Int!
+  itemType: ItemType!
+
+  """Items revoked in the last 30 days."""
+  revokedRecently: Int!
+
+  """
+  Granted to an external account that was never linked. These are held, not lost -- but nobody has them.
+  """
+  unclaimed: Int!
 }
 
 input ItemTypeFiltersInput {
@@ -1426,6 +1469,35 @@ type MediaTag {
 enum MediaType {
   IMAGE
   TEXT
+}
+
+"""Every item of one type that a member holds."""
+type MemberHolding {
+  count: Int!
+  itemType: ItemType!
+
+  """
+  The items themselves, oldest first. Each has its own provenance, so they are listed rather than only counted.
+  """
+  items: [Item!]!
+}
+
+"""One member's holdings in one community, with what they are still owed."""
+type MemberHoldingsReport {
+  """Distinct item types held."""
+  distinctTypes: Int!
+
+  """Largest holding first."""
+  holdings: [MemberHolding!]!
+  member: User!
+
+  """
+  Items granted to an external account this member has linked, but not yet claimed. Always 0 today -- claiming happens automatically on link -- and present so the page can say so rather than stay silent.
+  """
+  pendingItems: Int!
+
+  """Live items held, across every type."""
+  totalItems: Int!
 }
 
 """The reason for rejecting an image"""
@@ -2232,6 +2304,11 @@ type Query {
   """
   item(id: ID!): Item!
 
+  """
+  Circulation, holders and recent movement for every item type in a community, largest first.
+  """
+  itemEconomy(communityId: ID!): ItemEconomyReport!
+
   """Every ledger row for one stack, oldest first. The provenance timeline."""
   itemProvenance(itemId: ID!): [ItemTransaction!]!
 
@@ -2264,6 +2341,11 @@ type Query {
   Get pending media for moderation queue (use pendingModerationImage field for actual image URLs)
   """
   mediaModerationQueue(communityId: ID!, first: Int = 20, offset: Int = 0): MediaConnection!
+
+  """
+  One member's live holdings in one community, grouped by item type and not paginated -- an inventory is a whole thing.
+  """
+  memberHoldings(communityId: ID!, userId: ID!): MemberHoldingsReport!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
 
   """Get characters the current user can upload images to"""

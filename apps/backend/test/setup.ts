@@ -156,6 +156,7 @@ const mockPrismaService = {
     findUnique: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
+    count: jest.fn(),
   },
   $transaction: jest.fn(),
 };
