@@ -13,14 +13,14 @@ const events = (page: Page) => page.getByTestId("provenance-event");
 const eventOfKind = (page: Page, kind: string) =>
   page.locator(`[data-testid="provenance-event"][data-kind="${kind}"]`);
 
-/** An inventory tile, keyed by item type so it asserts identity. */
 /** The item page is community-scoped so it renders inside community nav. */
 const itemUrl = (communityId: string, itemId: string) =>
   `/communities/${communityId}/items/${itemId}`;
 
-const tile = (page: Page, itemTypeId: string) =>
+/** An inventory holding group, keyed by item type so it asserts identity. */
+const group = (page: Page, itemTypeId: string) =>
   page.locator(
-    `[data-testid="inventory-tile"][data-item-type-id="${itemTypeId}"]`,
+    `[data-testid="holding-group"][data-item-type-id="${itemTypeId}"]`,
   );
 
 /**
@@ -142,7 +142,7 @@ test.describe("a destroyed item", () => {
     });
 
     await page.goto(`${world.community.url}/inventory`);
-    await expect(tile(page, world.itemTypes.potion.id)).toHaveCount(0);
+    await expect(group(page, world.itemTypes.potion.id)).toHaveCount(0);
 
     await page.goto(itemUrl(world.community.id, world.grantedItems.ids[0]));
     await expect(page.getByTestId("item-destroyed-banner")).toBeVisible();
@@ -203,7 +203,7 @@ test.describe("item URLs", () => {
     ).toBeVisible();
   });
 
-  test("a single-item tile links to the item, a grouped one to the type", async ({
+  test("a single item is reachable without expanding anything", async ({
     page,
     world,
   }) => {
@@ -222,20 +222,20 @@ test.describe("item URLs", () => {
 
     await page.goto(`${world.community.url}/inventory`);
 
-    // Three potions do not share a history, so the tile cannot point at any
-    // single one of them and falls back to the catalogue entry.
-    await expect(tile(page, world.itemTypes.potion.id)).toHaveAttribute(
-      "href",
-      `/item-types/${world.itemTypes.potion.id}`,
-    );
+    // A group of three needs opening -- the three do not share a history, so
+    // there is no single item for the group itself to point at.
+    const potions = group(page, world.itemTypes.potion.id);
+    await expect(potions.getByTestId("expand-group")).toBeVisible();
+    await expect(potions.getByTestId("holding-item")).toHaveCount(0);
 
-    // One locket has one history, so it links straight to it.
-    await expect(tile(page, world.itemTypes.locket.id)).toHaveAttribute(
-      "href",
-      itemUrl(world.community.id, grantItem[0].id),
-    );
+    // A group of one has nothing to collapse, so its item is already there.
+    const lockets = group(page, world.itemTypes.locket.id);
+    await expect(lockets.getByTestId("expand-group")).toHaveCount(0);
+    await expect(
+      lockets.getByTestId("holding-item").getByRole("link"),
+    ).toHaveAttribute("href", itemUrl(world.community.id, grantItem[0].id));
 
-    await tile(page, world.itemTypes.locket.id).click();
+    await lockets.getByTestId("holding-item").getByRole("link").click();
     await expect(page.getByTestId("item-status")).toContainText(
       `Held by ${world.users.member.username}`,
     );

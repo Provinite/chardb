@@ -362,7 +362,10 @@ export const CommunityInventoryPage: React.FC = () => {
       ) : (
         <div data-testid="holdings-list">
           {holdings.map((h) => {
-            const open = expanded.has(h.itemType.id);
+            // A single item needs no disclosure: there is nothing to collapse,
+            // and hiding one chip behind a click just puts a step between a
+            // member and the only history they could have wanted.
+            const open = expanded.has(h.itemType.id) || h.count === 1;
             return (
               <Group
                 key={h.itemType.id}
@@ -400,15 +403,17 @@ export const CommunityInventoryPage: React.FC = () => {
                     </GroupMeta>
                   </GroupInfo>
                   <Count>×{h.count}</Count>
-                  <Expand
-                    type="button"
-                    $open={open}
-                    data-testid="expand-group"
-                    onClick={() => toggleGroup(h.itemType.id)}
-                  >
-                    {open ? "Hide" : "Show"} items
-                    <ChevronDown size={14} />
-                  </Expand>
+                  {h.count > 1 && (
+                    <Expand
+                      type="button"
+                      $open={open}
+                      data-testid="expand-group"
+                      onClick={() => toggleGroup(h.itemType.id)}
+                    >
+                      {open ? "Hide" : "Show"} items
+                      <ChevronDown size={14} />
+                    </Expand>
+                  )}
                 </GroupHead>
 
                 {open && (
