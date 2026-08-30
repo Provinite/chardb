@@ -380,7 +380,7 @@ export class ImageModerationService {
     }
 
     // Update image and create action record in a transaction
-    const [updatedImage, action] = await this.db.$transaction([
+    const [, action] = await this.db.$transaction([
       this.db.image.update({
         where: { id: imageId },
         data: { moderationStatus: ModerationStatus.REJECTED },

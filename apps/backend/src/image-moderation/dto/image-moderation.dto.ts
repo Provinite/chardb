@@ -80,7 +80,8 @@ export class ApproveImageInput {
    */
   @Field(() => ID, {
     nullable: true,
-    description: "Required when awards are given. Must belong to this community.",
+    description:
+      "Required when awards are given. Must belong to this community.",
   })
   @IsOptional()
   @IsUUID()

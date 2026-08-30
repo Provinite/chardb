@@ -87,7 +87,7 @@ export class MediaResolver {
       description: "Optional filters for media query",
     })
     filters?: MediaFiltersInput,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<MediaConnection> {
     const serviceFilters = mapMediaFiltersInputToService(filters);
     const result = await this.mediaService.findAll(serviceFilters, user?.id);
@@ -101,7 +101,7 @@ export class MediaResolver {
   async mediaItem(
     @Args("id", { type: () => ID, description: "Media ID to retrieve" })
     id: string,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<MediaEntity> {
     const media = await this.mediaService.findOne(id, user?.id);
     return mapPrismaMediaToGraphQL(media);
@@ -112,7 +112,7 @@ export class MediaResolver {
     description: "Retrieves media owned by the current authenticated user",
   })
   async myMedia(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
     @Args("filters", {
       nullable: true,
       description: "Optional filters for media query",
@@ -142,7 +142,7 @@ export class MediaResolver {
       description: "Optional filters for media query",
     })
     filters?: MediaFiltersInput,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<MediaConnection> {
     const serviceFilters = mapMediaFiltersInputToService({
       ...filters,
@@ -167,7 +167,7 @@ export class MediaResolver {
       description: "Optional filters for media query",
     })
     filters?: MediaFiltersInput,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<MediaConnection> {
     const serviceFilters = mapMediaFiltersInputToService({
       ...filters,
@@ -192,7 +192,7 @@ export class MediaResolver {
       description: "Optional filters for media query",
     })
     filters?: MediaFiltersInput,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<MediaConnection> {
     const serviceFilters = mapMediaFiltersInputToService({
       ...filters,
@@ -207,7 +207,7 @@ export class MediaResolver {
   async createTextMedia(
     @Args("input", { description: "Text media creation parameters" })
     input: CreateTextMediaInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
     const serviceInput = mapCreateTextMediaInputToService(input);
     const media = await this.mediaService.createTextMedia(
@@ -539,7 +539,7 @@ export class MediaResolver {
   @ResolveField(() => Int, {
     description: "Number of likes this media has received",
   })
-  async likesCount(@Parent() media: MediaEntity): Promise<number> {
+  async likesCount(@Parent() _media: MediaEntity): Promise<number> {
     // TODO: Implement when social features are added
     return 0;
   }
@@ -554,8 +554,8 @@ export class MediaResolver {
     middleware: [sentinelValueMiddleware],
   })
   async userHasLiked(
-    @Parent() media: MediaEntity,
-    @CurrentUser() user?: any,
+    @Parent() _media: MediaEntity,
+    @CurrentUser() _user?: CurrentUserType,
   ): Promise<boolean> {
     // TODO: Implement when social features are added
     return false;

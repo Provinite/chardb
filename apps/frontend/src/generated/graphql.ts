@@ -44,8 +44,14 @@ export type ActivityItem = {
 };
 
 export type ApproveImageInput = {
+  /** Who to pay and how much. Requires canGrantItems; recipients who are not members of the community are skipped rather than refused. */
+  awards?: InputMaybe<Array<ImageAwardInput>>;
+  /** Required when awards are given. Must belong to this community. */
+  currencyId?: InputMaybe<Scalars['ID']['input']>;
   /** The ID of the image to approve */
   imageId: Scalars['ID']['input'];
+  /** Staff-only note recorded on the reward's ledger rows. */
+  staffNote?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ApproveTraitReviewInput = {
@@ -1012,6 +1018,12 @@ export type Image = {
   width: Scalars['Int']['output'];
 };
 
+export type ImageAwardInput = {
+  /** Positive. Omit the entry to pay nothing. */
+  amount: Scalars['Int']['input'];
+  userId: Scalars['ID']['input'];
+};
+
 export type ImageConnection = {
   __typename?: 'ImageConnection';
   hasMore: Scalars['Boolean']['output'];
@@ -1035,6 +1047,8 @@ export type ImageModerationAction = {
   action: ModerationStatus;
   /** When the moderation action was taken */
   createdAt: Scalars['DateTime']['output'];
+  /** Currency granted because this image was approved. Empty for a rejection, or when nothing was awarded. */
+  currencyAwards: Array<CurrencyTransaction>;
   id: Scalars['ID']['output'];
   image: Image;
   imageId: Scalars['ID']['output'];
@@ -1321,6 +1335,8 @@ export type ManageTagsInput = {
 /** Polymorphic media that can represent both images and text content */
 export type Media = {
   __typename?: 'Media';
+  /** People who could be awarded currency for this media. Null unless the viewer holds canGrantItems in the owning community. */
+  awardRecipients: Maybe<Array<MediaAwardRecipient>>;
   /** The character this media is associated with, if any */
   character: Maybe<Character>;
   /** Number of characters this media is associated with */
@@ -1364,6 +1380,25 @@ export type Media = {
   /** Visibility setting for the media */
   visibility: Visibility;
 };
+
+/** Somebody who could be rewarded for a piece of media, and why they qualify. Only returned to viewers who can actually grant currency. */
+export type MediaAwardRecipient = {
+  __typename?: 'MediaAwardRecipient';
+  /** False when they are not a member of this community, in which case currency cannot reach them and the award is refused. */
+  isMember: Scalars['Boolean']['output'];
+  /** Every way this person is connected to the media, so the reason they appear is never a guess. */
+  relations: Array<MediaAwardRelation>;
+  user: User;
+  userId: Scalars['ID']['output'];
+};
+
+/** How a person is connected to a piece of media. */
+export enum MediaAwardRelation {
+  Artist = 'ARTIST',
+  CharacterOwner = 'CHARACTER_OWNER',
+  MediaOwner = 'MEDIA_OWNER',
+  Uploader = 'UPLOADER'
+}
 
 /** Paginated connection result for media queries */
 export type MediaConnection = {
@@ -4314,7 +4349,7 @@ export type MediaModerationQueueQueryVariables = Exact<{
 }>;
 
 
-export type MediaModerationQueueQuery = { __typename?: 'Query', mediaModerationQueue: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, characterId: string | null, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } | null, pendingModerationImage: { __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } | null }> } };
+export type MediaModerationQueueQuery = { __typename?: 'Query', mediaModerationQueue: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, characterId: string | null, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } | null, pendingModerationImage: { __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } | null, awardRecipients: Array<{ __typename?: 'MediaAwardRecipient', userId: string, relations: Array<MediaAwardRelation>, isMember: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> | null }> } };
 
 export type GlobalImageModerationQueueQueryVariables = Exact<{
   filters?: InputMaybe<ImageModerationQueueFiltersInput>;
@@ -4342,7 +4377,7 @@ export type ApproveImageMutationVariables = Exact<{
 }>;
 
 
-export type ApproveImageMutation = { __typename?: 'Mutation', approveImage: { __typename?: 'ImageModerationAction', id: string, action: ModerationStatus, createdAt: string, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } } };
+export type ApproveImageMutation = { __typename?: 'Mutation', approveImage: { __typename?: 'ImageModerationAction', id: string, action: ModerationStatus, createdAt: string, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus }, currencyAwards: Array<{ __typename?: 'CurrencyTransaction', id: string, userId: string, amount: number, currency: { __typename?: 'Currency', id: string, code: string, symbol: string | null, name: string } }> } };
 
 export type RejectImageMutationVariables = Exact<{
   input: RejectImageInput;
@@ -9183,6 +9218,16 @@ export const MediaModerationQueueDocument = gql`
           displayName
         }
       }
+      awardRecipients {
+        userId
+        relations
+        isMember
+        user {
+          id
+          username
+          displayName
+        }
+      }
     }
     total
     hasMore
@@ -9375,6 +9420,17 @@ export const ApproveImageDocument = gql`
     image {
       id
       moderationStatus
+    }
+    currencyAwards {
+      id
+      userId
+      amount
+      currency {
+        id
+        code
+        symbol
+        name
+      }
     }
   }
 }

@@ -644,7 +644,9 @@ export class MediaService {
   async getCommunityIdForMedia(mediaId: string): Promise<string | null> {
     const media = await this.db.media.findUnique({
       where: { id: mediaId },
-      select: { character: { select: { species: { select: { communityId: true } } } } },
+      select: {
+        character: { select: { species: { select: { communityId: true } } } },
+      },
     });
     return media?.character?.species?.communityId ?? null;
   }

@@ -11,7 +11,13 @@ import {
 } from "./image-moderation.resolver";
 
 @Module({
-  imports: [DatabaseModule, AuthModule, EmailModule, MediaModule, CurrenciesModule],
+  imports: [
+    DatabaseModule,
+    AuthModule,
+    EmailModule,
+    MediaModule,
+    CurrenciesModule,
+  ],
   providers: [
     ImageModerationService,
     ImageModerationResolver,
