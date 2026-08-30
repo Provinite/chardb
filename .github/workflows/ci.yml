@@ -172,11 +172,28 @@ jobs:
           echo "Generated GraphQL types are up to date."
 
   test:
-    name: Unit tests
+    name: Unit tests (${{ matrix.name }})
     runs-on: ubuntu-latest
-    # Everything the root `yarn test` reaches: backend Jest, frontend Vitest,
-    # da-import Vitest. No database is involved -- the backend's Jest config
-    # ignores *.e2e.spec.ts, and the browser suite is the `e2e` job below.
+    # No database is involved -- the backend's Jest config ignores
+    # *.e2e.spec.ts, and the browser suite is the `e2e` job below.
+
+    strategy:
+      # One workspace per runner. `yarn workspaces foreach` is sequential and
+      # aborts on the first failure, so a single job would both serialise the
+      # suites and hide every failure after the first.
+      #
+      # Listed explicitly rather than discovered: a workspace that gains a
+      # `test` script has to be added here too. @chardb/e2e is absent on
+      # purpose -- its `test` script is a pointer to the `e2e` job.
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            workspace: "@chardb/backend"
+          - name: frontend
+            workspace: "@chardb/frontend"
+          - name: da-import
+            workspace: "@chardb/da-import"
 
     env:
       # @chardb/database's build runs prisma generate, which resolves
@@ -223,10 +240,9 @@ jobs:
             --include '@chardb/ui' \
             run build
 
-      # Runs every workspace's `test` script. Vitest sees CI=true and runs once
-      # instead of entering watch mode.
+      # Vitest sees CI=true and runs once instead of entering watch mode.
       - name: Run unit tests
-        run: yarn test
+        run: yarn workspace ${{ matrix.workspace }} run test
 
   e2e:
     name: Browser E2E
