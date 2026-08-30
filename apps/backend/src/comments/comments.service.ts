@@ -1,11 +1,14 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import type { Prisma } from "@chardb/database";
+import { NotificationKind, NotificationSubjectType } from "@chardb/database";
+import { NotificationsService } from "../notifications/notifications.service";
 import { notDeleted } from "../common/utils/prisma-filters";
 
 /**
@@ -64,7 +67,12 @@ export interface CommentFiltersServiceInput {
 
 @Injectable()
 export class CommentsService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  private readonly logger = new Logger(CommentsService.name);
+
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   async create(authorId: string, input: CreateCommentServiceInput) {
     // Validate that the entity exists
@@ -90,7 +98,118 @@ export class CommentsService {
       data: createData,
     });
 
+    await this.notifyOwner(authorId, comment.id, input);
+
     return comment;
+  }
+
+  /**
+   * Tells whoever owns the commented-on thing that it was commented on.
+   *
+   * Deliberately outside the comment write and deliberately swallowing its own
+   * failures: the comment is the thing the user asked for, and losing the
+   * notification is a far better outcome than losing the comment. A reply is
+   * still reported against the parent entity rather than the parent comment's
+   * author, which means a thread's other participants hear nothing -- worth
+   * fixing when replies get their own kind.
+   */
+  private async notifyOwner(
+    authorId: string,
+    commentId: string,
+    input: CreateCommentServiceInput,
+  ): Promise<void> {
+    try {
+      const target = await this.resolveCommentTarget(
+        input.entityType,
+        input.entityId,
+      );
+      // Commenting on your own thing is not news.
+      if (!target || target.ownerId === authorId) return;
+
+      await this.notifications.create({
+        recipientId: target.ownerId,
+        kind: NotificationKind.COMMENT_RECEIVED,
+        actorUserId: authorId,
+        subjectType: target.subjectType,
+        subjectId: input.entityId,
+        data: {
+          subjectName: target.name.slice(0, 200),
+          excerpt: input.content.slice(0, 280),
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Comment ${commentId} was created but its notification was not: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /** Who to tell about a comment, and what to call the thing commented on. */
+  private async resolveCommentTarget(
+    entityType: CommentableTypeFilter,
+    entityId: string,
+  ): Promise<{
+    ownerId: string;
+    name: string;
+    subjectType: NotificationSubjectType;
+  } | null> {
+    switch (entityType) {
+      case CommentableTypeFilter.CHARACTER: {
+        const character = await this.databaseService.character.findFirst({
+          where: { id: entityId, ...notDeleted },
+          select: { ownerId: true, name: true },
+        });
+        // An orphaned character has no owner to tell.
+        return character?.ownerId
+          ? {
+              ownerId: character.ownerId,
+              name: character.name,
+              subjectType: NotificationSubjectType.CHARACTER,
+            }
+          : null;
+      }
+      case CommentableTypeFilter.IMAGE: {
+        const image = await this.databaseService.image.findUnique({
+          where: { id: entityId },
+          select: { uploaderId: true, altText: true, originalFilename: true },
+        });
+        return image
+          ? {
+              ownerId: image.uploaderId,
+              name: image.altText || image.originalFilename,
+              subjectType: NotificationSubjectType.IMAGE,
+            }
+          : null;
+      }
+      case CommentableTypeFilter.GALLERY: {
+        const gallery = await this.databaseService.gallery.findUnique({
+          where: { id: entityId },
+          select: { ownerId: true, name: true },
+        });
+        return gallery
+          ? {
+              ownerId: gallery.ownerId,
+              name: gallery.name,
+              subjectType: NotificationSubjectType.GALLERY,
+            }
+          : null;
+      }
+      case CommentableTypeFilter.USER: {
+        const user = await this.databaseService.user.findUnique({
+          where: { id: entityId },
+          select: { id: true, username: true, displayName: true },
+        });
+        return user
+          ? {
+              ownerId: user.id,
+              name: user.displayName || user.username,
+              subjectType: NotificationSubjectType.USER,
+            }
+          : null;
+      }
+    }
   }
 
   async findOne(id: string) {

@@ -6,7 +6,11 @@ import {
 } from "@chardb/database";
 import { CurrencyLedgerService } from "./currency-ledger.service";
 import { DatabaseService } from "../database/database.service";
-import { mockDatabaseService } from "../../test/setup";
+import {
+  mockDatabaseService,
+  mockNotificationsService,
+} from "../../test/setup";
+import { NotificationsService } from "../notifications/notifications.service";
 
 /** The shape the service writes into currency_transactions. */
 interface LedgerRow {
@@ -71,6 +75,10 @@ describe("CurrencyLedgerService", () => {
       providers: [
         CurrencyLedgerService,
         { provide: DatabaseService, useValue: mockDatabaseService },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
       ],
     }).compile();
 

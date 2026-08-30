@@ -1,5 +1,7 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
+import { NotificationKind, NotificationSubjectType } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { notDeleted } from "../common/utils/prisma-filters";
 import {
   LikeableType,
@@ -15,7 +17,10 @@ import {
 
 @Injectable()
 export class SocialService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   async toggleLike(
     userId: string,
@@ -287,6 +292,21 @@ export class SocialService {
           },
         });
         isFollowing = true;
+
+        // Only on the follow, never the unfollow: being told someone stopped
+        // following you is a notification nobody wants. Inside the transaction
+        // so a follow that rolls back does not leave the news behind.
+        await this.notifications.create(
+          {
+            recipientId: targetUserId,
+            kind: NotificationKind.FOLLOW_RECEIVED,
+            actorUserId: userId,
+            data: {},
+            subjectType: NotificationSubjectType.USER,
+            subjectId: userId,
+          },
+          tx,
+        );
       }
 
       // Get updated counts

@@ -48,6 +48,23 @@ export class NotificationsService {
   constructor(private readonly prisma: DatabaseService) {}
 
   /**
+   * Resolves the actor pair to the one shape the CHECK constraint accepts.
+   *
+   * Producers inherit their actor from whatever they already had -- `ItemActor`
+   * lets both halves be null -- so normalising once here is what stops a
+   * producer that forgot a label from failing at the database. An actor that
+   * names nobody becomes "system", which is what it was.
+   */
+  private actorColumns(input: {
+    actorUserId?: string | null;
+    actorLabel?: string | null;
+  }) {
+    return input.actorUserId
+      ? { actorUserId: input.actorUserId, actorLabel: null }
+      : { actorUserId: null, actorLabel: input.actorLabel || "system" };
+  }
+
+  /**
    * Writes one notification.
    *
    * Producers call this inside whatever transaction they already hold, by
@@ -69,8 +86,7 @@ export class NotificationsService {
       data: {
         recipientId: input.recipientId,
         kind: input.kind,
-        actorUserId: input.actorUserId ?? null,
-        actorLabel: input.actorLabel ?? null,
+        ...this.actorColumns(input),
         communityId: input.communityId ?? null,
         body: input.body ?? null,
         subjectType: input.subjectType ?? null,
@@ -104,8 +120,7 @@ export class NotificationsService {
       data: recipients.map((recipientId) => ({
         recipientId,
         kind: input.kind,
-        actorUserId: input.actorUserId ?? null,
-        actorLabel: input.actorLabel ?? null,
+        ...this.actorColumns(input),
         communityId: input.communityId ?? null,
         body: input.body ?? null,
         subjectType: input.subjectType ?? null,

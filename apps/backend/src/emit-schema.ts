@@ -46,7 +46,11 @@ async function main(): Promise<void> {
   const { NestFactory } = await import("@nestjs/core");
   const { AppModule } = await import("./app.module");
 
-  const app = await NestFactory.create(AppModule, { logger: false });
+  // Errors only. Silencing the logger entirely hides Nest's own bootstrap
+  // diagnostics -- a dependency it cannot resolve is reported by the logger,
+  // not by a thrown error, so `logger: false` turns a clear message into an
+  // exit code with no output.
+  const app = await NestFactory.create(AppModule, { logger: ["error"] });
   await app.init();
   await app.close();
 }

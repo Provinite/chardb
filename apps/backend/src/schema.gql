@@ -2356,6 +2356,7 @@ enum NotificationSubjectType {
   COMMENT
   CURRENCY
   GALLERY
+  IMAGE
   ITEM
   MEDIA
   USER

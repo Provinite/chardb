@@ -12,8 +12,11 @@ import {
   Prisma,
   ExternalAccountProvider,
   ItemTransactionKind,
+  NotificationKind,
+  NotificationSubjectType,
 } from "@chardb/database";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { ItemTypeFilters } from "./dto/item-type.dto";
 import { ItemFilters } from "./dto/item.dto";
 
@@ -44,6 +47,7 @@ export class ItemsService {
     private readonly pendingOwnershipService: PendingOwnershipService,
     private readonly discordService: DiscordService,
     private readonly itemTransactions: ItemTransactionsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ==================== ItemType Methods ====================
@@ -327,6 +331,24 @@ export class ItemsService {
         tx,
       );
 
+      // A grant of five identical potions is one notification saying five, not
+      // five notifications. Nothing is sent for a grant still awaiting a claim:
+      // there is no one to tell until the CLAIM names an owner.
+      if (actualOwnerId) {
+        await this.notifications.create(
+          {
+            recipientId: actualOwnerId,
+            kind: NotificationKind.ITEM_GRANTED,
+            communityId: itemType.communityId,
+            subjectType: NotificationSubjectType.ITEM,
+            subjectId: itemIds[0],
+            data: { subjectName: itemType.name.slice(0, 200), count: quantity },
+            ...input.actor,
+          },
+          tx,
+        );
+      }
+
       return tx.item.findMany({
         where: { id: { in: itemIds } },
         include: {
@@ -459,7 +481,7 @@ export class ItemsService {
     return this.db.$transaction(async (tx) => {
       const items = await tx.item.findMany({
         where: { id: { in: itemIds }, destroyedAt: null },
-        include: { itemType: { select: { communityId: true } } },
+        include: { itemType: { select: { communityId: true, name: true } } },
       });
 
       if (items.length !== itemIds.length) {
@@ -503,6 +525,29 @@ export class ItemsService {
         },
         tx,
       );
+
+      // One notification for the whole revoke, matching the single ledger
+      // event. `reason` is the member-facing half of ItemActor, so a revoke
+      // that explained itself to the ledger explains itself here too. An
+      // unclaimed item has no owner to tell.
+      if (items[0].ownerId) {
+        await this.notifications.create(
+          {
+            recipientId: items[0].ownerId,
+            kind: NotificationKind.ITEM_REVOKED,
+            communityId: items[0].itemType.communityId,
+            subjectType: NotificationSubjectType.ITEM,
+            subjectId: items[0].id,
+            data: {
+              subjectName: items[0].itemType.name.slice(0, 200),
+              count: items.length,
+              reason: actor.reason?.slice(0, 500) ?? null,
+            },
+            ...actor,
+          },
+          tx,
+        );
+      }
 
       return items.length;
     });

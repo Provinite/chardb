@@ -3,7 +3,11 @@ import { BadRequestException } from "@nestjs/common";
 import { SocialService } from "./social.service";
 import { DatabaseService } from "../database/database.service";
 import { LikeableType } from "./dto/like.dto";
-import { mockDatabaseService } from "../../test/setup";
+import {
+  mockDatabaseService,
+  mockNotificationsService,
+} from "../../test/setup";
+import { NotificationsService } from "../notifications/notifications.service";
 
 describe("SocialService", () => {
   let service: SocialService;
@@ -36,6 +40,10 @@ describe("SocialService", () => {
         {
           provide: DatabaseService,
           useValue: mockDatabaseService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();

@@ -183,6 +183,13 @@ const mockPrismaService = {
     count: jest.fn(),
     groupBy: jest.fn(),
   },
+  notification: {
+    create: jest.fn(),
+    createMany: jest.fn(),
+    findMany: jest.fn(),
+    updateMany: jest.fn(),
+    count: jest.fn(),
+  },
   pendingOwnership: {
     create: jest.fn(),
     findUnique: jest.fn(),
@@ -225,6 +232,24 @@ export const createTestingModule = async (providers = []) => {
 };
 
 export const mockDatabaseService = mockPrismaService;
+
+/**
+ * Stand-in for NotificationsService.
+ *
+ * Every producer now depends on it, so a spec that constructs one of those
+ * services has to provide something. Notifications are a side effect of the
+ * operation under test rather than part of its result, so the default is a
+ * no-op; a spec asserting that something was announced can read these mocks.
+ */
+export const mockNotificationsService = {
+  create: jest.fn().mockResolvedValue(undefined),
+  createMany: jest.fn().mockResolvedValue({ count: 0 }),
+  findForRecipient: jest.fn(),
+  countUnseen: jest.fn(),
+  markAllSeen: jest.fn(),
+  markRead: jest.fn(),
+  markAllRead: jest.fn(),
+};
 
 // Reset all mocks between tests
 beforeEach(() => {

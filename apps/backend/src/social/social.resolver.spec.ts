@@ -10,7 +10,11 @@ import {
 } from "./social.resolver";
 import { DatabaseService } from "../database/database.service";
 import { LikeableType } from "./dto/like.dto";
-import { mockDatabaseService } from "../../test/setup";
+import {
+  mockDatabaseService,
+  mockNotificationsService,
+} from "../../test/setup";
+import { NotificationsService } from "../notifications/notifications.service";
 
 describe("SocialResolver", () => {
   let resolver: SocialResolver;
@@ -58,6 +62,10 @@ describe("SocialResolver", () => {
         {
           provide: DatabaseService,
           useValue: mockDatabaseService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();
@@ -168,6 +176,10 @@ describe("CharacterLikesResolver", () => {
           provide: DatabaseService,
           useValue: mockDatabaseService,
         },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
       ],
     }).compile();
 
@@ -270,6 +282,10 @@ describe("ImageLikesResolver", () => {
           provide: DatabaseService,
           useValue: mockDatabaseService,
         },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
       ],
     }).compile();
 
@@ -331,6 +347,10 @@ describe("GalleryLikesResolver", () => {
         {
           provide: DatabaseService,
           useValue: mockDatabaseService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();
@@ -395,6 +415,10 @@ describe("CommentLikesResolver", () => {
         {
           provide: DatabaseService,
           useValue: mockDatabaseService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();
@@ -466,6 +490,10 @@ describe("SocialResolver - Follow System", () => {
         {
           provide: DatabaseService,
           useValue: mockDatabaseService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();
@@ -556,6 +584,10 @@ describe("UserFollowResolver", () => {
         {
           provide: DatabaseService,
           useValue: mockDatabaseService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();
