@@ -9,11 +9,13 @@ import { useShopCart } from "../hooks/useShopCart";
 import {
   useGetShopItemsQuery,
   useGetMyShopPurchasesQuery,
+  useGetMemberWalletQuery,
   useCheckoutMutation,
   useRefundShopPurchaseLineMutation,
   type ShopItemFieldsFragment,
 } from "../generated/graphql";
-import { formatPrice, sumPrices } from "../lib/currencyDisplay";
+import { useAuth } from "../contexts/AuthContext";
+import { formatAmount, formatPrice, sumPrices } from "../lib/currencyDisplay";
 
 /**
  * The shop as a member sees it.
@@ -52,6 +54,52 @@ const Subtitle = styled.p`
   color: ${({ theme }) => theme.colors.text.muted};
   margin: 0;
   max-width: 60ch;
+`;
+
+const Wallet = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 8px;
+  background: ${({ theme }) => theme.colors.surface};
+`;
+
+const WalletLabel = styled.span`
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
+const WalletAmounts = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+`;
+
+const WalletAmount = styled.span`
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const WalletEmpty = styled.span`
+  font-size: 1rem;
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
+const WalletLink = styled(Link)`
+  font-size: 0.75rem;
+  color: ${({ theme }) => theme.colors.primary};
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 const Layout = styled.div`
@@ -135,8 +183,12 @@ const PriceButton = styled.button<{ $affordable: boolean }>`
     border-color: ${({ theme }) => theme.colors.primary};
   }
 
+  /* Sold out and at-the-cap options are disabled whether or not the buyer can
+     afford them, so the dimming cannot be left to affordability alone -- an
+     affordable price that does nothing when clicked reads as a broken button. */
   &:disabled {
     cursor: not-allowed;
+    opacity: 0.45;
   }
 `;
 
@@ -285,12 +337,25 @@ const stockLabel = (item: ShopItemFieldsFragment): string | null => {
 
 export const CommunityShopPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
+  const { user } = useAuth();
   const cart = useShopCart(communityId);
   const [confirming, setConfirming] = useState(false);
 
   const { data, loading, error, refetch } = useGetShopItemsQuery({
     variables: { communityId: communityId as string },
     skip: !communityId,
+    fetchPolicy: "cache-and-network",
+  });
+
+  // What the buyer holds, in the header. The listings already dim what is
+  // unaffordable, but dimming says "not this one" without saying how short
+  // they are -- and the answer to that is two clicks away on another page.
+  const { data: walletData, refetch: refetchWallet } = useGetMemberWalletQuery({
+    variables: {
+      communityId: communityId as string,
+      userId: user?.id as string,
+    },
+    skip: !communityId || !user?.id,
     fetchPolicy: "cache-and-network",
   });
 
@@ -308,6 +373,14 @@ export const CommunityShopPage: React.FC = () => {
   const purchases = useMemo(
     () => purchaseData?.myShopPurchases ?? [],
     [purchaseData],
+  );
+  // Zero balances are dropped here, unlike the wallet page. That page teaches
+  // which currencies exist; this one is a running total while spending, and a
+  // row of zeroes next to the price of something is only discouraging.
+  const balances = useMemo(
+    () =>
+      (walletData?.memberWallet?.balances ?? []).filter((b) => b.amount > 0),
+    [walletData],
   );
 
   /** Cart lines joined back to the listing and price they name. */
@@ -353,7 +426,7 @@ export const CommunityShopPage: React.FC = () => {
       toast.success("Bought. You have fifteen minutes to undo it.");
       cart.clear();
       setConfirming(false);
-      await Promise.all([refetch(), refetchPurchases()]);
+      await Promise.all([refetch(), refetchPurchases(), refetchWallet()]);
     } catch (err) {
       // The server is the authority on stock and affordability, so its
       // message is the useful one -- the cart only ever guessed.
@@ -365,7 +438,7 @@ export const CommunityShopPage: React.FC = () => {
     try {
       await refundLine({ variables: { lineId } });
       toast.success("Refunded");
-      await Promise.all([refetch(), refetchPurchases()]);
+      await Promise.all([refetch(), refetchPurchases(), refetchWallet()]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not undo that");
     }
@@ -401,7 +474,23 @@ export const CommunityShopPage: React.FC = () => {
             — there is no treasury on the other side of this.
           </Subtitle>
         </div>
-        <Link to={`/communities/${communityId}/inventory`}>Your wallet</Link>
+        <Wallet>
+          <WalletLabel>Your wallet</WalletLabel>
+          <WalletAmounts>
+            {balances.length === 0 ? (
+              <WalletEmpty>Nothing yet</WalletEmpty>
+            ) : (
+              balances.map((balance) => (
+                <WalletAmount key={balance.currency.id}>
+                  {formatAmount(balance.amount, balance.currency)}
+                </WalletAmount>
+              ))
+            )}
+          </WalletAmounts>
+          <WalletLink to={`/communities/${communityId}/inventory`}>
+            Full wallet and history
+          </WalletLink>
+        </Wallet>
       </Header>
 
       <Layout>

@@ -275,10 +275,17 @@ function describeForCommunity(row: CurrencyTransactionFieldsFragment): {
       const recipient = row.amount < 0 ? row.counterparty : row.user;
       return { who: `${name(sender)} → ${name(recipient)}` };
     }
-    case CurrencyTransactionKind.Mint:
+    case CurrencyTransactionKind.Mint: {
+      // A member undoing their own purchase is the actor and the recipient of
+      // the refund, and "@member → @member" reads as a transfer to yourself.
+      // The reason already says what happened, so the arrow is dropped.
+      if (row.actorUser && row.actorUser.username === row.user?.username) {
+        return { who: name(row.user) };
+      }
       return {
         who: `${name(row.actorUser) === "someone" ? (row.actorLabel ?? "the system") : name(row.actorUser)} → ${name(row.user)}`,
       };
+    }
     case CurrencyTransactionKind.Burn:
       return {
         who: `${name(row.user)}, removed by ${name(row.actorUser) === "someone" ? (row.actorLabel ?? "the system") : name(row.actorUser)}`,
