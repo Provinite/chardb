@@ -1,6 +1,7 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
+import { Avatar } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FollowButton } from "../components/FollowButton";
 import { useGetFollowingQuery } from "../generated/graphql";
@@ -72,20 +73,6 @@ const UserCard = styled.div`
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
-`;
-
-const UserAvatar = styled.div`
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.background};
-  border: 2px solid ${({ theme }) => theme.colors.border};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: ${({ theme }) => theme.typography.fontSize.lg};
-  color: ${({ theme }) => theme.colors.text.muted};
-  flex-shrink: 0;
 `;
 
 const UserInfo = styled.div`
@@ -223,31 +210,11 @@ export const FollowingPage: React.FC = () => {
         <UserList>
           {following.map((followedUser) => (
             <UserCard key={followedUser.id}>
-              <UserAvatar>
-                {followedUser.avatarImage ? (
-                  <img
-                    src={
-                      followedUser.avatarImage.thumbnailUrl ||
-                      followedUser.avatarImage.originalUrl
-                    }
-                    alt={
-                      followedUser.avatarImage.altText ||
-                      followedUser.displayName ||
-                      followedUser.username
-                    }
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                    }}
-                  />
-                ) : (
-                  (
-                    followedUser.displayName?.[0] || followedUser.username[0]
-                  ).toUpperCase()
-                )}
-              </UserAvatar>
+              <Avatar
+                image={followedUser.avatarImage}
+                name={followedUser.displayName || followedUser.username}
+                size={50}
+              />
 
               <UserInfo>
                 <UserName>

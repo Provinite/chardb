@@ -1,10 +1,18 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { Avatar } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { LikeButton } from "../components/LikeButton";
-import { useGetActivityFeedQuery, LikeableType } from "../generated/graphql";
+import {
+  useGetActivityFeedQuery,
+  LikeableType,
+  type GetActivityFeedQuery,
+} from "../generated/graphql";
+
+/** One row of the feed, as the query returns it. */
+type FeedActivity = GetActivityFeedQuery["activityFeed"][number];
 
 const Container = styled.div`
   max-width: 800px;
@@ -52,20 +60,6 @@ const ActivityHeader = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   margin-bottom: ${({ theme }) => theme.spacing.md};
-`;
-
-const UserAvatar = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.background};
-  border: 2px solid ${({ theme }) => theme.colors.border};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  color: ${({ theme }) => theme.colors.text.muted};
-  flex-shrink: 0;
 `;
 
 const ActivityInfo = styled.div`
@@ -276,7 +270,7 @@ export const FeedPage: React.FC = () => {
     });
   };
 
-  const getActivityText = (activity: any) => {
+  const getActivityText = (activity: FeedActivity) => {
     switch (activity.type) {
       case "CHARACTER_CREATED":
         return "created a new character";
@@ -297,7 +291,7 @@ export const FeedPage: React.FC = () => {
     }
   };
 
-  const getContentLink = (activity: any) => {
+  const getContentLink = (activity: FeedActivity) => {
     switch (activity.type) {
       case "CHARACTER_CREATED":
       case "CHARACTER_LIKED":
@@ -313,7 +307,7 @@ export const FeedPage: React.FC = () => {
     }
   };
 
-  const getLikeableType = (activity: any) => {
+  const getLikeableType = (activity: FeedActivity) => {
     switch (activity.type) {
       case "CHARACTER_CREATED":
       case "CHARACTER_LIKED":
@@ -348,28 +342,13 @@ export const FeedPage: React.FC = () => {
         </EmptyState>
       ) : (
         <FeedContainer>
-          {activities.map((activity: any) => (
+          {activities.map((activity) => (
             <ActivityCard key={activity.id}>
               <ActivityHeader>
-                <UserAvatar>
-                  {activity.user.avatarUrl ? (
-                    <img
-                      src={activity.user.avatarUrl}
-                      alt={activity.user.displayName || activity.user.username}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    (
-                      activity.user.displayName?.[0] ||
-                      activity.user.username[0]
-                    ).toUpperCase()
-                  )}
-                </UserAvatar>
+                <Avatar
+                  image={activity.user.avatarImage}
+                  name={activity.user.displayName || activity.user.username}
+                />
 
                 <ActivityInfo>
                   <ActivityText>

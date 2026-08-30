@@ -73,6 +73,7 @@ export const GET_USER_PROFILE = gql`
         id
         title
         description
+        visibility
         createdAt
         owner {
           ...UserBasic
@@ -81,6 +82,11 @@ export const GET_USER_PROFILE = gql`
           id
           originalUrl
           thumbnailUrl
+          altText
+        }
+        textContent {
+          content
+          wordCount
         }
       }
       featuredCharacters {

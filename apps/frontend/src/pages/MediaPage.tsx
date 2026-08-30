@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 import { toast } from "react-hot-toast";
-import { Button } from "@chardb/ui";
+import { Avatar, Button } from "@chardb/ui";
 import {
   useGetMediaItemQuery,
   useDeleteMediaMutation,
@@ -165,17 +165,8 @@ const AuthorLink = styled(Link)`
   }
 `;
 
-const AuthorAvatar = styled.div`
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.background};
+const AuthorAvatar = styled(Avatar)`
   border: 2px solid ${({ theme }) => theme.colors.border};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  color: ${({ theme }) => theme.colors.text.muted};
 `;
 
 const AuthorDetails = styled.div`
@@ -530,23 +521,11 @@ export const MediaPage: React.FC = () => {
 
       <AuthorInfo>
         <AuthorLink to={`/user/${media.owner.username}`}>
-          <AuthorAvatar>
-            {media.owner.avatarImage ? (
-              <img
-                src={
-                  media.owner.avatarImage.thumbnailUrl ||
-                  media.owner.avatarImage.originalUrl
-                }
-                alt={
-                  media.owner.avatarImage.altText ||
-                  media.owner.displayName ||
-                  media.owner.username
-                }
-              />
-            ) : (
-              media.owner.displayName?.[0] || media.owner.username[0]
-            )}
-          </AuthorAvatar>
+          <AuthorAvatar
+            image={media.owner.avatarImage}
+            name={media.owner.displayName || media.owner.username}
+            size={60}
+          />
           <AuthorDetails>
             <AuthorName>
               {media.owner.displayName || media.owner.username}

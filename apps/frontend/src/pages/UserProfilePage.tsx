@@ -1,6 +1,7 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
+import { Avatar } from "@chardb/ui";
 import {
   useGetUserProfileQuery,
   useMyExternalAccountsQuery,
@@ -32,25 +33,10 @@ const ProfileHeader = styled.div`
   }
 `;
 
-const Avatar = styled.img`
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
+// The ring is this page's own: the profile avatar is the largest one in the
+// app and reads as a hole in the header without it.
+const ProfileAvatar = styled(Avatar)`
   border: 3px solid ${({ theme }) => theme.colors.border};
-`;
-
-const AvatarPlaceholder = styled.div`
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.primary};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 3rem;
-  color: white;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
 `;
 
 const ProfileInfo = styled.div`
@@ -346,16 +332,11 @@ export const UserProfilePage: React.FC = () => {
   return (
     <Container>
       <ProfileHeader>
-        {user.avatarImage ? (
-          <Avatar
-            src={user.avatarImage.thumbnailUrl || user.avatarImage.originalUrl}
-            alt={user.avatarImage.altText || `${user.username}'s avatar`}
-          />
-        ) : (
-          <AvatarPlaceholder>
-            {user.displayName?.[0] || user.username[0]}
-          </AvatarPlaceholder>
-        )}
+        <ProfileAvatar
+          image={user.avatarImage}
+          name={user.displayName || user.username}
+          size={120}
+        />
 
         <ProfileInfo>
           <Username>
@@ -402,7 +383,7 @@ export const UserProfilePage: React.FC = () => {
           <ConnectedAccountsSection>
             <ConnectedAccountsTitle>Connected Accounts</ConnectedAccountsTitle>
             <ConnectedAccountsList>
-              {externalAccountsData.myExternalAccounts.map((account: any) => (
+              {externalAccountsData.myExternalAccounts.map((account) => (
                 <ConnectedAccountBadge key={account.id}>
                   <AccountIcon>
                     {account.provider === "DEVIANTART"
@@ -547,7 +528,7 @@ export const UserProfilePage: React.FC = () => {
             </Link>
           </SectionHeader>
           <MediaGrid
-            media={recentMedia as any[]}
+            media={recentMedia}
             showOwner={false}
             emptyMessage="No media uploaded yet"
             emptyDescription="Upload some images or create text content to get started!"

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import styled from "styled-components";
+import { Avatar } from "./Avatar";
 
 export interface SelectedUser {
   id: string;
@@ -66,28 +67,6 @@ const InputWrapper = styled.div<{ $hasError?: boolean; $disabled?: boolean }>`
           ? theme.colors.error
           : theme.colors.text.muted};
   }
-`;
-
-const Avatar = styled.img`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-`;
-
-const AvatarPlaceholder = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.primary};
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-  flex-shrink: 0;
 `;
 
 const SelectedUserInfo = styled.div`
@@ -248,11 +227,6 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Debounced search
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
-    null,
-  );
-
   const performSearch = useCallback(
     (query: string) => {
       onSearch(query);
@@ -260,23 +234,16 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
     [onSearch],
   );
 
+  // Debounced search. The timer lives in the closure rather than in state:
+  // a state value is a render behind by the time the cleanup reads it, so the
+  // cleanup cleared the previous run's timer and left the current one to fire
+  // -- including after unmount.
   useEffect(() => {
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
+    const query = inputValue.trim();
+    if (query.length < 2) return;
 
-    if (inputValue.trim() && inputValue.length >= 2) {
-      const timeout = setTimeout(() => {
-        performSearch(inputValue.trim());
-      }, 300); // 300ms debounce
-      setSearchTimeout(timeout);
-    }
-
-    return () => {
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
-      }
-    };
+    const timeout = setTimeout(() => performSearch(query), 300);
+    return () => clearTimeout(timeout);
   }, [inputValue, performSearch]);
 
   // Handle clicks outside
@@ -363,21 +330,13 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
     }
   };
 
-  const renderAvatar = (user: SelectedUser) => {
-    if (user.avatarImage) {
-      return (
-        <Avatar
-          src={user.avatarImage.thumbnailUrl || user.avatarImage.originalUrl}
-          alt={user.avatarImage.altText || user.username}
-        />
-      );
-    }
-    return (
-      <AvatarPlaceholder>
-        {user.username.charAt(0).toUpperCase()}
-      </AvatarPlaceholder>
-    );
-  };
+  const renderAvatar = (user: SelectedUser) => (
+    <Avatar
+      image={user.avatarImage}
+      name={user.displayName || user.username}
+      size={32}
+    />
+  );
 
   const shouldShowDropdown =
     isOpen &&
