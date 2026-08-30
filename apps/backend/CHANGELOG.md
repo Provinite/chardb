@@ -15,9 +15,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Public reason, private staff note**: Item mutations take a member-facing `reason` and a staff-only `staffNote`. `staffNote` is resolved per viewer and returns null unless the viewer holds `canManageItems` or `canGrantItems` in that community. It is also deliberately excluded from the ledger's `search` filter, so a member cannot probe for the contents of a note they cannot read.
 
+- **`IMPORT` transaction kind**: written once, by the migration, for every item that already existed. It says only that the item predates the ledger — inventing a `GRANT` would put fabricated provenance on a page members can read, and an empty timeline reads to a member as a broken page rather than as missing history.
+
 - **`batchId` on ledger rows**: Shared by every row one operation writes. One item movement is one row, so granting twelve tokens writes twelve rows; the frontend collapses them back into a single line by grouping on this key rather than guessing from matching timestamps.
 
 - **`reason` on `PrizeEventDto`**: Optional and additive — an existing Discord bot producer that omits it still validates, and the handler falls back to a generic reason.
+
+### Migration
+
+- **`20260830045119_item_ledger_and_instances`** does the schema change and the data migration in one file, in a required order: stacks are expanded while `items.quantity` still exists, and genesis rows are written after `item_transactions` exists.
+
+  1. **Expands stacks.** A row with quantity 3 keeps its own id and gains two siblings, so any id referenced elsewhere stays valid.
+  2. **Carries pending ownership onto the siblings.** `pending_ownership.item_id` is UNIQUE — one record per item, not per stack. Without this step, expanding a pending stack of 3 leaves two items with a null owner and no pending record: unowned, unclaimable, invisible to every query, and a silent permanent loss of someone's prize.
+  3. **Writes one `IMPORT` row per pre-existing item**, all sharing one batch id so the ledger shows the migration as a single event.
+
+  Verified against seeded stacked data: 3 rows totalling 8 units became 8 items, a pending stack of 4 became 4 pending records with the provider account preserved, zero unclaimable items, and every item ended with exactly one ledger row.
+
+  **This migration is not reversible.** Once stacks are expanded and `quantity` is dropped, nothing records which rows were one stack. Rolling back means restoring from a snapshot.
 
 ### Changed
 

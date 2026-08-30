@@ -28,6 +28,7 @@ const KINDS: ReadonlyArray<{ kind: ItemTransactionKind; label: string }> = [
   { kind: ItemTransactionKind.Transfer, label: "Traded" },
   { kind: ItemTransactionKind.Claim, label: "Claimed" },
   { kind: ItemTransactionKind.Use, label: "Used" },
+  { kind: ItemTransactionKind.Import, label: "Imported" },
 ];
 
 const KIND_LABEL: Record<ItemTransactionKind, string> = {
@@ -36,6 +37,7 @@ const KIND_LABEL: Record<ItemTransactionKind, string> = {
   [ItemTransactionKind.Transfer]: "Traded",
   [ItemTransactionKind.Claim]: "Claimed",
   [ItemTransactionKind.Use]: "Used",
+  [ItemTransactionKind.Import]: "Imported",
 };
 
 const kindColor = (kind: ItemTransactionKind) => {
@@ -49,7 +51,10 @@ const kindColor = (kind: ItemTransactionKind) => {
     case ItemTransactionKind.Claim:
       return "warning";
     case ItemTransactionKind.Use:
+    case ItemTransactionKind.Import:
     default:
+      // Bookkeeping, not a movement anyone made. Deliberately the quietest
+      // colour on the page.
       return "muted";
   }
 };
@@ -471,6 +476,17 @@ const PartyCell: React.FC<{ row: ItemTransactionFieldsFragment }> = ({
       return (
         <>
           <Muted>pending</Muted>
+          <Arrow>→</Arrow>
+          {to ? <Party>{to}</Party> : <Muted>—</Muted>}
+        </>
+      );
+    case ItemTransactionKind.Import:
+      // These items predate the ledger. Their real origin was never recorded,
+      // and saying "unrecorded" is more honest than a bare dash that reads
+      // like a grant from nobody.
+      return (
+        <>
+          <Muted>unrecorded</Muted>
           <Arrow>→</Arrow>
           {to ? <Party>{to}</Party> : <Muted>—</Muted>}
         </>

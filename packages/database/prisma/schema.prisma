@@ -63,6 +63,11 @@ enum ItemTransactionKind {
   TRANSFER
   CLAIM
   USE
+  /// Written once, by the migration that introduced this table, for every item
+  /// that already existed. Says only "this item predates the ledger" -- its
+  /// real origin is unknown, and inventing a GRANT for it would put fabricated
+  /// provenance on a page members can read.
+  IMPORT
 }
 
 enum TraitReviewSource {

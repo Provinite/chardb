@@ -1210,6 +1210,7 @@ enum ItemTransactionKind {
 
   """Minted by staff or a bot and given to someone."""
   GRANT
+  IMPORT
 
   """Taken back and destroyed. Always a correction."""
   REVOKE

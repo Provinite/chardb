@@ -1065,6 +1065,7 @@ export enum ItemTransactionKind {
   Claim = 'CLAIM',
   /** Minted by staff or a bot and given to someone. */
   Grant = 'GRANT',
+  Import = 'IMPORT',
   /** Taken back and destroyed. Always a correction. */
   Revoke = 'REVOKE',
   /** Moved between two members. */
