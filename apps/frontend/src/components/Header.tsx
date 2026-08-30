@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Avatar, Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { ThemeToggle } from "./ThemeToggle";
+import { NotificationBell } from "./notifications/NotificationBell";
 
 const HeaderContainer = styled.header`
   background-color: ${({ theme }) => theme.colors.surface};
@@ -88,6 +89,7 @@ export const Header: React.FC = () => {
             <UserMenu>
               <NavLink to="/character/create">Create Character</NavLink>
               <NavLink to="/upload">Upload</NavLink>
+              <NotificationBell />
               <UserInfo to={`/user/${user.username}`}>
                 <Avatar
                   image={user.avatarImage}

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Notifications**: a bell in the top bar with an unseen count and a dropdown
+  of the most recent few, plus a full feed at `/notifications` with an unread
+  filter. Opening the dropdown clears the badge; a notification stays unread
+  until it is opened.
+
 - **Award recipients widget** on each image moderation card. Lists everyone
   the upload names, deduplicated — posting your own art of your own character
   is one row reading `uploader · owner`, while gift art of someone else's
