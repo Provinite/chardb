@@ -9,10 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Award recipients widget** on each image moderation card. Lists everyone
+  the upload names, deduplicated — posting your own art of your own character
+  is one row reading `uploader · owner`, while gift art of someone else's
+  character is two or three — with an amount each and one currency for the
+  card. Approving sends them.
+
+  It renders only when the server returns recipients, which it does not for
+  viewers without `canGrantItems`. A moderator who only moderates sees the
+  queue exactly as before.
+
+  Someone who cannot be paid gets no input and says why, rather than an input
+  that would be silently ignored. The toast reports what the ledger recorded
+  rather than what was submitted, so a recipient who has left the community is
+  not claimed as paid.
+
+- **Ledger rows link to what paid for them.** A row created by an approval
+  carries "from an approved upload →" through to the media.
+
 - Member list rows show the member's real avatar, falling back to initials.
 
 ### Fixed
 
+- **A fractional award amount no longer fails the whole approval.** A number
+  input yields `"2.5"` happily, which the server rejects as a non-integer with
+  a generic validation error and the image left pending. Amounts are truncated
+  before sending.
+- **The award panel is no longer offered to site admins who are not members of
+  the community.** Community permissions are role-based, so the approval would
+  refuse them — the panel rendered a button that could only throw.
 - The activity feed and the permission matrix show real avatars; both rendered
   initials for everyone before.
 - A user profile's recent media now asks for `visibility` and `textContent`,

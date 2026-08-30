@@ -333,6 +333,8 @@ query SeedCurrencyTransactions($filters: CurrencyTransactionFiltersInput!) {
       staffNote
       userId
       counterpartyId
+      source
+      sourceId
       currency {
         code
       }
@@ -355,6 +357,44 @@ query SeedCurrencyHolders($currencyId: ID!) {
     amount
     user {
       username
+    }
+  }
+}
+
+# ==================== Image moderation ====================
+
+mutation SeedApproveImage($input: ApproveImageInput!) {
+  approveImage(input: $input) {
+    id
+    action
+    currencyAwards {
+      userId
+      amount
+      source
+      sourceId
+      currency {
+        code
+      }
+    }
+  }
+}
+
+# `awardRecipients` is null -- not empty -- for a viewer without
+# canGrantItems, which is what hides the award widget.
+query SeedMediaModerationQueue($communityId: ID!) {
+  mediaModerationQueue(communityId: $communityId, first: 20, offset: 0) {
+    total
+    media {
+      id
+      title
+      awardRecipients {
+        userId
+        relations
+        isMember
+        user {
+          username
+        }
+      }
     }
   }
 }

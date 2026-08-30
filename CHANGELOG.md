@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Award currency when approving an upload** (#226). Moderators who can also
+  grant currency get a recipients widget on each moderation card listing
+  everyone the upload names — uploader, credited artist, media owner,
+  character owner — with an amount each. Approving pays them in the same
+  transaction as the approval.
+
+  Documented in the **Community Currency** walkthrough (a new "Rewarding an
+  upload" step, plus the ledger provenance it produces) and in the **Image
+  Moderation** walkthrough, with screenshots taken by driving a real upload
+  through the queue.
+
 - CI checks `apps/backend/src/schema.gql` for drift, ahead of the existing
   codegen check that reads it. Regenerate with `yarn workspace @chardb/backend
   schema:emit`.

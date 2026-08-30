@@ -399,10 +399,95 @@
         </div>
       </div>
 
-      <!-- Step 3: supply table -->
+      <!-- Step 3: earning from approvals -->
       <div class="step">
         <div class="step-header">
           <div class="step-number">3</div>
+          <h2 class="step-title">Rewarding an upload</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Granting from the Currencies page is deliberate and occasional. The
+            other way coin enters circulation is routine: rewarding people for
+            what they post, from inside the moderation queue they are already
+            working through.
+          </p>
+          <p>
+            A moderator who can also grant currency sees an
+            <strong>Award currency</strong> panel on each card, listing everyone
+            the upload names.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-award-widget.png"
+              alt="The image moderation queue with an Award currency panel on the card, listing the uploader and the artist with an amount field each"
+            />
+            <div class="screenshot-caption">
+              One pending upload, with the people who could be rewarded for it.
+            </div>
+          </div>
+          <div class="highlight-box">
+            <strong>One row per person, not per relationship.</strong> Somebody
+            can be several things at once — here the uploader also owns the
+            media and owns the character depicted, so they are one row reading
+            <em>uploader · owner · character owner</em> rather than three. The
+            credited artist is a different person, so they get their own row and
+            their own amount.
+          </div>
+          <p>
+            Fill in whatever each person should get and press
+            <strong>Approve</strong> once. The running total is there so a
+            mistyped figure is visible before it is paid, not after.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-award-widget-filled.png"
+              alt="The award panel with 25 entered for the uploader and 40 for the artist, and a line reading Approving grants 65 in total"
+            />
+            <div class="screenshot-caption">
+              Different people, different amounts, one action.
+            </div>
+          </div>
+          <div class="highlight-box">
+            <strong>Approving and paying are one operation.</strong> They commit
+            together or not at all. An approval that quietly failed to pay, or a
+            payment for an upload that never went live, are both worse than the
+            whole thing failing and being retried.
+          </div>
+          <p>
+            Leaving the amounts blank is normal. An approval with nothing filled
+            in behaves exactly as it did before any of this existed.
+          </p>
+
+          <h3 style="margin: 1.5rem 0 0.5rem">Who sees the panel</h3>
+          <p>
+            Only moderators who can also grant currency. Moderating images and
+            handing out rewards are separate permissions, and most moderators
+            hold only the first — for them the queue is unchanged.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-award-no-permission.png"
+              alt="The same moderation queue seen by a moderator without currency permissions, showing only Approve and Reject"
+            />
+            <div class="screenshot-caption">
+              The same queue, same card, for a moderator who cannot grant
+              currency. No panel, and nothing else changes.
+            </div>
+          </div>
+          <div class="highlight-box">
+            <strong>The panel is hidden by the server, not by the page.</strong>
+            It is not sent to anyone who cannot use it, and the approval itself
+            refuses an award from them regardless. Hiding a control is a
+            convenience; it is never the thing keeping anyone out.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: supply table -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
           <h2 class="step-title">Reading the supply table</h2>
         </div>
         <div class="step-content">
@@ -481,7 +566,7 @@
       <!-- Step 4: wallet -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">4</div>
+          <div class="step-number">5</div>
           <h2 class="step-title">A member's wallet</h2>
         </div>
         <div class="step-content">
@@ -513,7 +598,7 @@
       <!-- Step 5: transfers -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">5</div>
+          <div class="step-number">6</div>
           <h2 class="step-title">Sending currency to another member</h2>
         </div>
         <div class="step-content">
@@ -570,7 +655,7 @@
       <!-- Step 6: ledger -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">6</div>
+          <div class="step-number">7</div>
           <h2 class="step-title">The currency ledger</h2>
         </div>
         <div class="step-content">
@@ -621,6 +706,27 @@
               </tr>
             </tbody>
           </table>
+          <p>
+            A row created by an approval says so, and links back to the upload
+            it paid for.
+          </p>
+          <div class="screenshot">
+            <img
+              src="currency-award-ledger.png"
+              alt="Two ledger rows reading Granted, each with a link labelled from an approved upload"
+            />
+            <div class="screenshot-caption">
+              The reward from the previous step, as both members will see it.
+            </div>
+          </div>
+          <div class="highlight-box">
+            <strong>Where the money came from is part of the record.</strong>
+            The reason line says why in words; the link underneath says what,
+            and goes there. Without it a member reading
+            <em>&ldquo;+25, upload approved&rdquo;</em> has no way to tell which
+            upload, and staff looking back over forty approvals cannot tell the
+            rows apart at all.
+          </div>
           <div class="highlight-box">
             <strong>A transfer is one line, not two.</strong> Underneath, it is
             recorded as two entries — a debit and a credit — so that each
@@ -639,7 +745,7 @@
       <!-- Step 7: staff notes -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">7</div>
+          <div class="step-number">8</div>
           <h2 class="step-title">What a member sees instead</h2>
         </div>
         <div class="step-content">
@@ -670,7 +776,7 @@
       <!-- Step 8: archiving -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">8</div>
+          <div class="step-number">9</div>
           <h2 class="step-title">Retiring a currency</h2>
         </div>
         <div class="step-content">

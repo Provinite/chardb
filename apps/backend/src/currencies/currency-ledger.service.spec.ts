@@ -1,6 +1,9 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
-import { CurrencyTransactionKind } from "@chardb/database";
+import {
+  CurrencyTransactionKind,
+  CurrencyTransactionSource,
+} from "@chardb/database";
 import { CurrencyLedgerService } from "./currency-ledger.service";
 import { DatabaseService } from "../database/database.service";
 import { mockDatabaseService } from "../../test/setup";
@@ -289,6 +292,188 @@ describe("CurrencyLedgerService", () => {
     });
   });
 
+  describe("credit", () => {
+    it("pays each recipient their own amount in one batch", async () => {
+      mockDatabaseService.currencyBalance.update
+        .mockResolvedValueOnce({ amount: 125 })
+        .mockResolvedValueOnce({ amount: 240 });
+
+      const result = await service.credit({
+        currencyId: "cur1",
+        awards: [
+          { userId: "userA", amount: 25 },
+          { userId: "userB", amount: 40 },
+        ],
+        reason: "Upload approved",
+        actorUserId: "staff1",
+      });
+
+      const rows = writtenRows();
+      // One event, two amounts. Calling mint twice would have scattered a
+      // single decision across the ledger as unrelated events.
+      expect(new Set(rows.map((r) => r.batchId)).size).toBe(1);
+      expect(rows.find((r) => r.userId === "userA")?.amount).toBe(25);
+      expect(rows.find((r) => r.userId === "userB")?.amount).toBe(40);
+      expect(result.paid).toHaveLength(2);
+    });
+
+    it("records the source so the row can say what caused it", async () => {
+      await service.credit({
+        currencyId: "cur1",
+        awards: [{ userId: "userA", amount: 25 }],
+        reason: "Upload approved",
+        actorUserId: "staff1",
+        source: CurrencyTransactionSource.MEDIA_APPROVAL,
+        sourceId: "image-7",
+      });
+
+      // Without this a member reading "+25, upload approved" has no way to
+      // reach the upload, and an auditor cannot tell forty approvals apart.
+      expect(writtenRows()[0]).toMatchObject({
+        source: CurrencyTransactionSource.MEDIA_APPROVAL,
+        sourceId: "image-7",
+      });
+    });
+
+    it("defaults to a DIRECT row with no source id", async () => {
+      await service.credit({
+        currencyId: "cur1",
+        awards: [{ userId: "userA", amount: 25 }],
+        reason: "Prompt reward",
+        actorUserId: "staff1",
+      });
+
+      // The pair is enforced by a CHECK constraint, so a DIRECT row carrying
+      // a source id would be rejected by the database.
+      expect(writtenRows()[0]).toMatchObject({
+        source: CurrencyTransactionSource.DIRECT,
+        sourceId: null,
+      });
+    });
+
+    it("joins a caller's transaction rather than opening its own", async () => {
+      // Spread from the shared mock rather than hand-rolled: a real
+      // transaction client carries every model, and the reads now run on
+      // it too. A fake with only the write models would pass while the
+      // service was still reaching past the transaction to the pool.
+      const tx = {
+        ...mockDatabaseService,
+        currencyBalance: {
+          ...mockDatabaseService.currencyBalance,
+          update: jest.fn().mockResolvedValue({ amount: 25 }),
+        },
+        currencyTransaction: {
+          ...mockDatabaseService.currencyTransaction,
+          create: jest.fn().mockResolvedValue({}),
+        },
+      };
+
+      await service.credit({
+        currencyId: "cur1",
+        awards: [{ userId: "userA", amount: 25 }],
+        reason: "Upload approved",
+        actorUserId: "staff1",
+        tx: tx as never,
+      });
+
+      // The award has to commit with whatever caused it. Approved-but-unpaid
+      // and paid-but-unapproved are both worse than the whole thing failing.
+      expect(tx.currencyTransaction.create).toHaveBeenCalled();
+      expect(mockDatabaseService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it("merges duplicate recipients instead of paying them twice", async () => {
+      await service.credit({
+        currencyId: "cur1",
+        awards: [
+          { userId: "userA", amount: 25 },
+          { userId: "userA", amount: 40 },
+        ],
+        reason: "Upload approved",
+        actorUserId: "staff1",
+      });
+
+      // One person can hold several relations to a media -- uploader and
+      // artist and owner -- and must still be paid once.
+      const rows = writtenRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].amount).toBe(65);
+    });
+
+    it("ignores zero and negative amounts", async () => {
+      const result = await service.credit({
+        currencyId: "cur1",
+        awards: [
+          { userId: "userA", amount: 0 },
+          { userId: "userB", amount: -5 },
+        ],
+        reason: "Upload approved",
+        actorUserId: "staff1",
+      });
+
+      expect(writtenRows()).toHaveLength(0);
+      expect(result.paid).toHaveLength(0);
+      // A zero-amount ledger row is refused by a CHECK constraint anyway; not
+      // writing one is the point.
+      expect(mockDatabaseService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it("skips non-members when asked, and reports who", async () => {
+      mockDatabaseService.communityMember.findMany.mockResolvedValue([
+        { userId: "userA" },
+      ]);
+
+      const result = await service.credit({
+        currencyId: "cur1",
+        awards: [
+          { userId: "userA", amount: 25 },
+          { userId: "gone", amount: 25 },
+        ],
+        reason: "Upload approved",
+        actorUserId: "staff1",
+        skipNonMembers: true,
+      });
+
+      // Approving an upload must not fail because the uploader has since
+      // left the community.
+      expect(result.paid.map((p) => p.userId)).toEqual(["userA"]);
+      expect(result.skipped).toEqual(["gone"]);
+      expect(writtenRows()).toHaveLength(1);
+    });
+
+    it("still refuses non-members by default", async () => {
+      mockDatabaseService.communityMember.findMany.mockResolvedValue([]);
+
+      await expect(
+        service.credit({
+          currencyId: "cur1",
+          awards: [{ userId: "outsider", amount: 25 }],
+          reason: "Prompt reward",
+          actorUserId: "staff1",
+        }),
+      ).rejects.toThrow(/not a member/i);
+    });
+
+    it("writes nothing when every recipient was skipped", async () => {
+      mockDatabaseService.communityMember.findMany.mockResolvedValue([]);
+
+      const result = await service.credit({
+        currencyId: "cur1",
+        awards: [{ userId: "gone", amount: 25 }],
+        reason: "Upload approved",
+        actorUserId: "staff1",
+        skipNonMembers: true,
+      });
+
+      expect(result.paid).toHaveLength(0);
+      expect(writtenRows()).toHaveLength(0);
+      // Not even a balance row: nobody is being paid.
+      expect(
+        mockDatabaseService.currencyBalance.createMany,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
   describe("burn", () => {
     it("writes a negative amount", async () => {
       balanceBecomes(40);
@@ -470,9 +655,20 @@ describe("CurrencyLedgerService", () => {
     });
 
     it("joins a caller's transaction rather than opening its own", async () => {
+      // Spread from the shared mock rather than hand-rolled: a real
+      // transaction client carries every model, and the reads now run on
+      // it too. A fake with only the write models would pass while the
+      // service was still reaching past the transaction to the pool.
       const tx = {
-        currencyBalance: { update: jest.fn().mockResolvedValue({ amount: 5 }) },
-        currencyTransaction: { create: jest.fn().mockResolvedValue({}) },
+        ...mockDatabaseService,
+        currencyBalance: {
+          ...mockDatabaseService.currencyBalance,
+          update: jest.fn().mockResolvedValue({ amount: 5 }),
+        },
+        currencyTransaction: {
+          ...mockDatabaseService.currencyTransaction,
+          create: jest.fn().mockResolvedValue({}),
+        },
       };
 
       // A shop purchase must commit the item and the payment together, so the

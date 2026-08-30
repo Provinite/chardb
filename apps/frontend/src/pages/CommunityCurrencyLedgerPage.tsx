@@ -8,6 +8,7 @@ import {
   useGetCurrencyTransactionsQuery,
   useGetCurrenciesQuery,
   CurrencyTransactionKind,
+  CurrencyTransactionSource,
   type CurrencyTransactionFieldsFragment,
 } from "../generated/graphql";
 import {
@@ -196,6 +197,13 @@ const StaffLabel = styled.span`
   font-weight: 600;
   color: ${({ theme }) => theme.colors.warning};
   margin-right: 0.35rem;
+`;
+
+const SourceLink = styled(Link)`
+  display: inline-block;
+  margin-top: 0.3rem;
+  font-size: 0.8125rem;
+  color: ${({ theme }) => theme.colors.primary};
 `;
 
 const EntrySide = styled.div`
@@ -437,6 +445,17 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
                       </Link>
                     </EntryHeadline>
                     {row.reason && <Reason>{row.reason}</Reason>}
+                    {/* The reason says why in words; this says what, and
+                        is clickable. Without it "+25, upload approved" gives
+                        a member no way to reach the upload it paid for. The
+                        id is a media, which is the thing there is a page
+                        for -- an image is an implementation detail of one. */}
+                    {row.source === CurrencyTransactionSource.MediaApproval &&
+                      row.sourceId && (
+                        <SourceLink to={`/media/${row.sourceId}`}>
+                          from an approved upload →
+                        </SourceLink>
+                      )}
                     {row.staffNote && (
                       <StaffNote>
                         <StaffLabel>Staff note</StaffLabel>

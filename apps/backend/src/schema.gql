@@ -23,8 +23,19 @@ type ActivityItem {
 }
 
 input ApproveImageInput {
+  """
+  Who to pay and how much. Requires canGrantItems; recipients who are not members of the community are skipped rather than refused.
+  """
+  awards: [ImageAwardInput!]
+
+  """Required when awards are given. Must belong to this community."""
+  currencyId: ID
+
   """The ID of the image to approve"""
   imageId: ID!
+
+  """Staff-only note recorded on the reward's ledger rows."""
+  staffNote: String
 }
 
 input ApproveTraitReviewInput {
@@ -847,6 +858,16 @@ type CurrencyTransaction {
   reason: String
 
   """
+  What caused this row. The reason says why in words; this says what in a form a reader can follow back to the source.
+  """
+  source: CurrencyTransactionSource!
+
+  """
+  The record named by `source` -- a media id for MEDIA_APPROVAL. Null exactly when source is DIRECT.
+  """
+  sourceId: ID
+
+  """
   Staff-only note. Null unless the viewer holds canManageItems or canGrantItems in this community.
   """
   staffNote: String
@@ -905,6 +926,17 @@ enum CurrencyTransactionKind {
   Moved between two members. Writes one row per side, sharing a batch id.
   """
   TRANSFER
+}
+
+"""What caused a currency movement."""
+enum CurrencyTransactionSource {
+  """Somebody acted directly, with no other record behind it."""
+  DIRECT
+
+  """
+  Awarded when uploaded media was approved in moderation. sourceId is the media -- an image is an implementation detail of a media.
+  """
+  MEDIA_APPROVAL
 }
 
 """
@@ -1175,6 +1207,12 @@ type Image {
   width: Int!
 }
 
+input ImageAwardInput {
+  """Positive. Omit the entry to pay nothing."""
+  amount: Int!
+  userId: ID!
+}
+
 type ImageConnection {
   hasMore: Boolean!
   images: [Image!]!
@@ -1197,6 +1235,11 @@ type ImageModerationAction {
 
   """When the moderation action was taken"""
   createdAt: DateTime!
+
+  """
+  Currency granted because this image was approved. Empty for a rejection, or when nothing was awarded.
+  """
+  currencyAwards: [CurrencyTransaction!]!
   id: ID!
   image: Image!
   imageId: ID!
@@ -1539,6 +1582,11 @@ input ManageTagsInput {
 
 """Polymorphic media that can represent both images and text content"""
 type Media {
+  """
+  People who could be awarded currency for this media. Null unless the viewer holds canGrantItems in the owning community.
+  """
+  awardRecipients: [MediaAwardRecipient!]
+
   """The character this media is associated with, if any"""
   character: Character
 
@@ -1604,6 +1652,31 @@ type Media {
 
   """Visibility setting for the media"""
   visibility: Visibility!
+}
+
+"""
+Somebody who could be rewarded for a piece of media, and why they qualify. Only returned to viewers who can actually grant currency.
+"""
+type MediaAwardRecipient {
+  """
+  False when they are not a member of this community, in which case currency cannot reach them and the award is refused.
+  """
+  isMember: Boolean!
+
+  """
+  Every way this person is connected to the media, so the reason they appear is never a guess.
+  """
+  relations: [MediaAwardRelation!]!
+  user: User!
+  userId: ID!
+}
+
+"""How a person is connected to a piece of media."""
+enum MediaAwardRelation {
+  ARTIST
+  CHARACTER_OWNER
+  MEDIA_OWNER
+  UPLOADER
 }
 
 """Paginated connection result for media queries"""

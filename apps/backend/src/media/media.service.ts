@@ -10,6 +10,7 @@ import type { Prisma, Visibility, TextFormatting } from "@chardb/database";
 import { ModerationStatus } from "@prisma/client";
 import { ImagesService } from "../images/images.service";
 import { notDeleted } from "../common/utils/prisma-filters";
+import { MediaAwardRelation } from "./entities/media-award-recipient.entity";
 
 /**
  * Service layer input types for media operations.
@@ -630,6 +631,125 @@ export class MediaService {
           species: { communityId },
         },
       },
+    });
+  }
+
+  /**
+   * Which community a media belongs to, via its character's species.
+   *
+   * The same path the moderation queue filters on, so anything the queue
+   * returns resolves here. Null for media with no character -- a gallery
+   * upload belongs to no community and therefore to no currency.
+   */
+  async getCommunityIdForMedia(mediaId: string): Promise<string | null> {
+    const media = await this.db.media.findUnique({
+      where: { id: mediaId },
+      select: {
+        character: { select: { species: { select: { communityId: true } } } },
+      },
+    });
+    return media?.character?.species?.communityId ?? null;
+  }
+
+  /**
+   * Who could be rewarded for a piece of media, and why they qualify.
+   *
+   * Four relations can name a person -- image uploader, credited artist, media
+   * owner, character owner -- and in the ordinary case of somebody posting
+   * their own art of their own character they are all the same account. So the
+   * result is deduplicated by user and carries a list of relations, which is
+   * what makes the uncommon case legible: gift art of someone else's character
+   * yields two or three distinct people, each with a different claim.
+   *
+   * `isMember` is resolved here rather than left to the caller because
+   * currency cannot reach a non-member, and offering an award that will be
+   * refused is worse than not offering it.
+   */
+  async findAwardRecipients(mediaId: string, communityId: string) {
+    const media = await this.db.media.findUnique({
+      where: { id: mediaId },
+      select: {
+        ownerId: true,
+        image: { select: { uploaderId: true, artistId: true } },
+        character: { select: { ownerId: true } },
+      },
+    });
+
+    if (!media) return [];
+
+    // Ordered so the list reads uploader-first, which is the person the
+    // moderator is most often looking for.
+    const claims: Array<[string | null | undefined, MediaAwardRelation]> = [
+      [media.image?.uploaderId, MediaAwardRelation.UPLOADER],
+      [media.image?.artistId, MediaAwardRelation.ARTIST],
+      [media.ownerId, MediaAwardRelation.MEDIA_OWNER],
+      [media.character?.ownerId, MediaAwardRelation.CHARACTER_OWNER],
+    ];
+
+    const byUser = new Map<string, MediaAwardRelation[]>();
+    for (const [userId, relation] of claims) {
+      if (!userId) continue;
+      const existing = byUser.get(userId);
+      if (existing) {
+        existing.push(relation);
+      } else {
+        byUser.set(userId, [relation]);
+      }
+    }
+
+    const userIds = [...byUser.keys()];
+    if (userIds.length === 0) return [];
+
+    const [users, members] = await Promise.all([
+      // Everything mapPrismaUserToGraphQL reads, and nothing else. The
+      // notable omission is passwordHash, which an unqualified findMany would
+      // pull into memory for up to four people on every card in the queue.
+      this.db.user.findMany({
+        where: { id: { in: userIds } },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          displayName: true,
+          bio: true,
+          avatarImageId: true,
+          website: true,
+          dateOfBirth: true,
+          isVerified: true,
+          isAdmin: true,
+          privacySettings: true,
+          canCreateCommunity: true,
+          canListUsers: true,
+          canListInviteCodes: true,
+          canCreateInviteCode: true,
+          canGrantGlobalPermissions: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+      // Membership hangs off the role, not off the community directly.
+      this.db.communityMember.findMany({
+        where: { userId: { in: userIds }, role: { communityId } },
+        select: { userId: true },
+      }),
+    ]);
+
+    const memberIds = new Set(members.map((m) => m.userId));
+    const usersById = new Map(users.map((u) => [u.id, u]));
+
+    return userIds.flatMap((userId) => {
+      const user = usersById.get(userId);
+      // A deleted account can still be named by a stale id; it is not a
+      // recipient.
+      if (!user) return [];
+      return [
+        {
+          userId,
+          user,
+          relations: byUser.get(userId) as MediaAwardRelation[],
+          isMember: memberIds.has(userId),
+        },
+      ];
     });
   }
 }

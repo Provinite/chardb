@@ -16,6 +16,17 @@ import {
   ModerationStatus,
 } from "../../generated/graphql";
 import { RejectImageModal } from "./RejectImageModal";
+import {
+  AwardRecipientsWidget,
+  type AwardRecipient,
+  type AwardCurrency,
+} from "./AwardRecipientsWidget";
+
+/** What the card hands back to the queue when Approve carries a reward. */
+export interface ApproveAward {
+  currencyId?: string;
+  awards: Array<{ userId: string; amount: number }>;
+}
 
 /**
  * Local type for the image moderation card item.
@@ -44,6 +55,11 @@ export interface ImageModerationCardItem {
   communityId?: string | null;
   communityName?: string | null;
   mediaTitle?: string | null;
+  /**
+   * Null when the viewer cannot grant currency -- the server decides this, so
+   * the widget's absence is a permission outcome rather than a UI guess.
+   */
+  awardRecipients?: AwardRecipient[] | null;
 }
 
 const Card = styled.div`
@@ -190,7 +206,9 @@ const TimestampText = styled(Caption)`
 
 interface ImageModerationCardProps {
   item: ImageModerationCardItem;
-  onApprove: (imageId: string) => Promise<void>;
+  /** Currencies the community defines. Empty means nothing can be awarded. */
+  currencies?: AwardCurrency[];
+  onApprove: (imageId: string, award?: ApproveAward) => Promise<void>;
   onReject: (
     imageId: string,
     reason: ModerationRejectionReason,
@@ -202,6 +220,7 @@ interface ImageModerationCardProps {
 
 export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
   item,
+  currencies = [],
   onApprove,
   onReject,
   approving = false,
@@ -209,12 +228,31 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
 }) => {
   const [showFullImage, setShowFullImage] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [currencyId, setCurrencyId] = useState(currencies[0]?.id ?? "");
+  const [amounts, setAmounts] = useState<Record<string, string>>({});
 
   const { image, characterId, characterName, communityName, mediaTitle } = item;
   const isLoading = approving || rejecting;
+  const recipients = item.awardRecipients ?? [];
 
   const handleApprove = async () => {
-    await onApprove(image.id);
+    // Only positive amounts for people who can actually be paid. A number
+    // typed against a non-member has no input to be typed into, but filtering
+    // here too keeps the request honest regardless of how it was produced.
+    const payable = recipients.filter((r) => r.isMember);
+    const awards = payable
+      .map((r) => ({
+        userId: r.userId,
+        amount: Number(amounts[r.userId] ?? ""),
+      }))
+      .filter((a) => Number.isFinite(a.amount) && a.amount > 0);
+
+    await onApprove(
+      image.id,
+      awards.length > 0
+        ? { currencyId: currencyId || currencies[0]?.id, awards }
+        : undefined,
+    );
   };
 
   const handleRejectConfirm = async (
@@ -300,6 +338,23 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
           </MetaRow>
 
           <Divider />
+
+          {/* Absent entirely for moderators without grant permission: the
+              server returns null rather than an empty list, so there is
+              nothing to render and Approve behaves exactly as before. */}
+          {item.awardRecipients && (
+            <AwardRecipientsWidget
+              recipients={recipients}
+              currencies={currencies}
+              currencyId={currencyId || currencies[0]?.id || ""}
+              onCurrencyChange={setCurrencyId}
+              amounts={amounts}
+              onAmountChange={(userId, value) =>
+                setAmounts((current) => ({ ...current, [userId]: value }))
+              }
+              disabled={isLoading}
+            />
+          )}
 
           <ActionButtons>
             <ApproveButton

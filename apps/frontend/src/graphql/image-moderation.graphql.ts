@@ -92,6 +92,18 @@ export const MEDIA_MODERATION_QUEUE = gql`
             displayName
           }
         }
+        # Null unless the viewer holds canGrantItems in this community, which
+        # is what gates the award widget. The server decides, not the client.
+        awardRecipients {
+          userId
+          relations
+          isMember
+          user {
+            id
+            username
+            displayName
+          }
+        }
       }
       total
       hasMore
@@ -161,6 +173,19 @@ export const APPROVE_IMAGE = gql`
       image {
         id
         moderationStatus
+      }
+      # Read back off the ledger, so the toast reports what was actually
+      # paid rather than what the client asked for.
+      currencyAwards {
+        id
+        userId
+        amount
+        currency {
+          id
+          code
+          symbol
+          name
+        }
       }
     }
   }

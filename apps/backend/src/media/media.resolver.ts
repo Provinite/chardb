@@ -57,6 +57,8 @@ import { mapPrismaGalleryToGraphQL } from "../galleries/utils/gallery-resolver-m
 import { mapPrismaImageToGraphQL } from "../images/utils/image-resolver-mappers";
 import { FalseOnForbiddenFilter } from "../auth/filters/FalseOnForbiddenFilter";
 import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
+import { MediaAwardRecipient } from "./entities/media-award-recipient.entity";
+import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
 
 /**
  * GraphQL resolver for media operations
@@ -85,7 +87,7 @@ export class MediaResolver {
       description: "Optional filters for media query",
     })
     filters?: MediaFiltersInput,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<MediaConnection> {
     const serviceFilters = mapMediaFiltersInputToService(filters);
     const result = await this.mediaService.findAll(serviceFilters, user?.id);
@@ -99,7 +101,7 @@ export class MediaResolver {
   async mediaItem(
     @Args("id", { type: () => ID, description: "Media ID to retrieve" })
     id: string,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<MediaEntity> {
     const media = await this.mediaService.findOne(id, user?.id);
     return mapPrismaMediaToGraphQL(media);
@@ -110,7 +112,7 @@ export class MediaResolver {
     description: "Retrieves media owned by the current authenticated user",
   })
   async myMedia(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
     @Args("filters", {
       nullable: true,
       description: "Optional filters for media query",
@@ -140,7 +142,7 @@ export class MediaResolver {
       description: "Optional filters for media query",
     })
     filters?: MediaFiltersInput,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<MediaConnection> {
     const serviceFilters = mapMediaFiltersInputToService({
       ...filters,
@@ -165,7 +167,7 @@ export class MediaResolver {
       description: "Optional filters for media query",
     })
     filters?: MediaFiltersInput,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<MediaConnection> {
     const serviceFilters = mapMediaFiltersInputToService({
       ...filters,
@@ -190,7 +192,7 @@ export class MediaResolver {
       description: "Optional filters for media query",
     })
     filters?: MediaFiltersInput,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<MediaConnection> {
     const serviceFilters = mapMediaFiltersInputToService({
       ...filters,
@@ -205,7 +207,7 @@ export class MediaResolver {
   async createTextMedia(
     @Args("input", { description: "Text media creation parameters" })
     input: CreateTextMediaInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<MediaEntity> {
     const serviceInput = mapCreateTextMediaInputToService(input);
     const media = await this.mediaService.createTextMedia(
@@ -451,6 +453,58 @@ export class MediaResolver {
   }
 
   /**
+   * Who could be rewarded for this media, for a viewer able to reward them.
+   *
+   * Null -- not an error, and not an empty list -- for anyone without
+   * `canGrantItems`, so the moderation queue still loads for moderators who
+   * only moderate, and the award widget simply does not render. Deciding this
+   * on the server rather than in the client is the point: the mutation refuses
+   * awards from the same people, and one of those checks being the only one
+   * would be the bug.
+   *
+   * An empty list means something different: the viewer may reward, but this
+   * media names nobody who can be paid.
+   */
+  // Deliberately NOT @AllowGlobalAdmin, unlike its neighbours. Community
+  // permissions are purely role-based -- PermissionService has no isAdmin
+  // short-circuit -- so a site admin who is not a member of the community
+  // fails the check the approval itself makes. Granting them the field would
+  // render a widget whose Approve button then throws, leaving the image
+  // pending with a permission error. Better to not offer it.
+  @AllowCommunityPermission(CommunityPermission.CanGrantItems)
+  @ResolveCommunityFrom({ characterId: "$root.characterId" })
+  @UseFilters(NullOnForbiddenFilter)
+  @ResolveField(() => [MediaAwardRecipient], {
+    nullable: true,
+    description:
+      "People who could be awarded currency for this media. Null unless the " +
+      "viewer holds canGrantItems in the owning community.",
+    middleware: [sentinelValueMiddleware],
+  })
+  async awardRecipients(
+    @Parent() media: MediaEntity,
+  ): Promise<MediaAwardRecipient[] | null> {
+    // Currency is community-scoped, and a media reaches a community only
+    // through its character. Without one there is no currency to award.
+    if (!media.characterId) return null;
+
+    const communityId = await this.mediaService.getCommunityIdForMedia(
+      media.id,
+    );
+    if (!communityId) return null;
+
+    const recipients = await this.mediaService.findAwardRecipients(
+      media.id,
+      communityId,
+    );
+
+    return recipients.map((recipient) => ({
+      ...recipient,
+      user: mapPrismaUserToGraphQL(recipient.user),
+    }));
+  }
+
+  /**
    * Resolves the text content for text media
    */
   @AllowUnauthenticated()
@@ -490,7 +544,7 @@ export class MediaResolver {
   @ResolveField(() => Int, {
     description: "Number of likes this media has received",
   })
-  async likesCount(@Parent() media: MediaEntity): Promise<number> {
+  async likesCount(@Parent() _media: MediaEntity): Promise<number> {
     // TODO: Implement when social features are added
     return 0;
   }
@@ -505,8 +559,8 @@ export class MediaResolver {
     middleware: [sentinelValueMiddleware],
   })
   async userHasLiked(
-    @Parent() media: MediaEntity,
-    @CurrentUser() user?: any,
+    @Parent() _media: MediaEntity,
+    @CurrentUser() _user?: CurrentUserType,
   ): Promise<boolean> {
     // TODO: Implement when social features are added
     return false;

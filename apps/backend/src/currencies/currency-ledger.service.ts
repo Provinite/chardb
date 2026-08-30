@@ -5,7 +5,11 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import { randomUUID } from "crypto";
-import { Prisma, CurrencyTransactionKind } from "@chardb/database";
+import {
+  Prisma,
+  CurrencyTransactionKind,
+  CurrencyTransactionSource,
+} from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 import {
   CurrencyTransactionFilters,
@@ -26,6 +30,46 @@ export type DbClient = DatabaseService | Prisma.TransactionClient;
 
 /** The CHECK constraint that stops a balance going negative. */
 const NON_NEGATIVE_CONSTRAINT = "currency_balances_amount_non_negative";
+
+/** One recipient and what they are owed by a single event. */
+export interface CreditAward {
+  userId: string;
+  amount: number;
+}
+
+export interface CreditOptions {
+  currencyId: string;
+  awards: CreditAward[];
+  /** Member-facing, and the same for every recipient in the batch. */
+  reason: string;
+  staffNote?: string | null;
+  actorUserId: string | null;
+  actorLabel?: string | null;
+  /**
+   * What caused this. Leave unset for a direct staff action; set it, with a
+   * sourceId, when another record is responsible -- the pair is enforced by a
+   * CHECK constraint.
+   */
+  source?: CurrencyTransactionSource;
+  sourceId?: string | null;
+  /** Join the caller's transaction so the credit commits with whatever caused it. */
+  tx?: Prisma.TransactionClient;
+  /**
+   * Drop recipients who are not members instead of refusing the whole batch.
+   *
+   * For callers where paying is a side effect of something else that must
+   * still succeed: approving an upload should not fail because the uploader
+   * has since left the community.
+   */
+  skipNonMembers?: boolean;
+}
+
+export interface CreditResult {
+  batchId: string;
+  paid: CreditAward[];
+  /** Named but not paid, because they are not members. */
+  skipped: string[];
+}
 
 /**
  * Did this error come from the non-negative balance constraint?
@@ -48,21 +92,27 @@ export class CurrencyLedgerService {
   /**
    * Make sure a balance row exists, without caring whether it already did.
    *
-   * Runs outside the surrounding transaction on purpose. `createMany` with
-   * `skipDuplicates` is `INSERT ... ON CONFLICT DO NOTHING`, so two callers
-   * racing to open the same member's first balance both succeed. Doing it
-   * inside the transaction instead would let the loser hit a unique violation,
-   * which aborts the whole Postgres transaction and loses work that had
-   * nothing to do with the race.
+   * `createMany` with `skipDuplicates` is `INSERT ... ON CONFLICT DO NOTHING`,
+   * so two callers racing to open the same member's first balance both
+   * succeed: the loser blocks on the conflicting row's lock until the winner
+   * commits, then inserts nothing and carries on. No unique violation is
+   * raised, which is why this is safe to run inside a caller's transaction.
+   *
+   * It runs on whichever client it is given, and that matters. Reaching for
+   * the pool here while a caller's interactive transaction is open would take
+   * a *second* connection per call -- and once enough of those run at once,
+   * every connection is held by a transaction waiting for a connection that
+   * can never free, until the pool times all of them out.
    *
    * With the row guaranteed present, every balance change downstream is a
    * plain UPDATE, which Postgres serialises on the row lock for free.
    */
   private async ensureBalanceRows(
+    client: DbClient,
     currencyId: string,
     userIds: string[],
   ): Promise<void> {
-    await this.db.currencyBalance.createMany({
+    await client.currencyBalance.createMany({
       data: userIds.map((userId) => ({ currencyId, userId, amount: 0 })),
       skipDuplicates: true,
     });
@@ -93,8 +143,8 @@ export class CurrencyLedgerService {
   }
 
   /** Load a currency and refuse to touch one that is archived. */
-  private async loadWritableCurrency(currencyId: string) {
-    const currency = await this.db.currency.findUnique({
+  private async loadWritableCurrency(client: DbClient, currencyId: string) {
+    const currency = await client.currency.findUnique({
       where: { id: currencyId },
     });
     if (!currency) {
@@ -115,17 +165,12 @@ export class CurrencyLedgerService {
    * belongs to, and shows up in a wallet its holder cannot reach.
    */
   private async assertMembers(
+    client: DbClient,
     communityId: string,
     userIds: string[],
   ): Promise<void> {
     const unique = [...new Set(userIds)];
-    // Membership hangs off the role, not off the community directly: a member
-    // row names a role, and the role names the community.
-    const members = await this.db.communityMember.findMany({
-      where: { userId: { in: unique }, role: { communityId } },
-      select: { userId: true },
-    });
-    const found = new Set(members.map((m) => m.userId));
+    const found = await this.findMembers(client, communityId, unique);
     const missing = unique.filter((id) => !found.has(id));
     if (missing.length > 0) {
       throw new BadRequestException(
@@ -134,7 +179,128 @@ export class CurrencyLedgerService {
     }
   }
 
+  /** Which of these users belong to the community. */
+  private async findMembers(
+    client: DbClient,
+    communityId: string,
+    userIds: string[],
+  ): Promise<Set<string>> {
+    if (userIds.length === 0) return new Set();
+    // Membership hangs off the role, not off the community directly: a member
+    // row names a role, and the role names the community.
+    const members = await client.communityMember.findMany({
+      where: { userId: { in: userIds }, role: { communityId } },
+      select: { userId: true },
+    });
+    return new Set(members.map((m) => m.userId));
+  }
+
   // ==================== Movement ====================
+
+  /**
+   * Create coin into one or more members' balances, one amount per recipient.
+   *
+   * The general form behind {@link mint}. Separate amounts matter because a
+   * single event can legitimately pay people differently -- approving an
+   * upload might award the artist more than the uploader -- and that has to
+   * stay ONE batch. Calling mint once per person would scatter a single
+   * decision across the ledger as unrelated events.
+   */
+  async credit(options: CreditOptions): Promise<CreditResult> {
+    const {
+      currencyId,
+      reason,
+      staffNote,
+      actorUserId,
+      actorLabel,
+      source = CurrencyTransactionSource.DIRECT,
+      sourceId = null,
+      tx,
+      skipNonMembers = false,
+    } = options;
+
+    // Every query below runs on one client: the caller's transaction when
+    // there is one, the pool otherwise. Reaching past a caller's transaction
+    // to the pool would hold two connections at once, and enough concurrent
+    // callers doing that deadlock the pool -- each transaction waiting for a
+    // connection only another waiting transaction could release.
+    const read: DbClient = tx ?? this.db;
+
+    const currency = await this.loadWritableCurrency(read, currencyId);
+
+    // Merge duplicate recipients rather than paying twice, and sort. Sorting
+    // is the deadlock guard: two concurrent batches over overlapping
+    // recipients would otherwise take the same row locks in different orders.
+    const totals = new Map<string, number>();
+    for (const award of options.awards) {
+      if (award.amount <= 0) continue;
+      totals.set(award.userId, (totals.get(award.userId) ?? 0) + award.amount);
+    }
+    const requested = [...totals.keys()].sort();
+
+    let userIds = requested;
+    let skipped: string[] = [];
+    if (skipNonMembers) {
+      const members = await this.findMembers(
+        read,
+        currency.communityId,
+        requested,
+      );
+      userIds = requested.filter((id) => members.has(id));
+      skipped = requested.filter((id) => !members.has(id));
+    } else {
+      await this.assertMembers(read, currency.communityId, requested);
+    }
+
+    const batchId = randomUUID();
+    if (userIds.length === 0) {
+      return { batchId, paid: [], skipped };
+    }
+
+    const run = async (client: DbClient) => {
+      await this.ensureBalanceRows(client, currency.id, userIds);
+      for (const userId of userIds) {
+        const amount = totals.get(userId) as number;
+        const balanceAfter = await this.applyDelta(
+          client,
+          currency.id,
+          userId,
+          amount,
+        );
+        await client.currencyTransaction.create({
+          data: {
+            currencyId: currency.id,
+            userId,
+            kind: CurrencyTransactionKind.MINT,
+            amount,
+            balanceAfter,
+            batchId,
+            actorUserId: actorUserId ?? null,
+            actorLabel: actorUserId ? null : (actorLabel ?? "system"),
+            reason,
+            staffNote: staffNote ?? null,
+            source,
+            sourceId,
+          },
+        });
+      }
+    };
+
+    if (tx) {
+      await run(tx);
+    } else {
+      await this.db.$transaction(run);
+    }
+
+    return {
+      batchId,
+      paid: userIds.map((userId) => ({
+        userId,
+        amount: totals.get(userId) as number,
+      })),
+      skipped,
+    };
+  }
 
   /**
    * Create coin into one or more members' balances.
@@ -147,41 +313,17 @@ export class CurrencyLedgerService {
     actorUserId: string | null,
     actorLabel?: string | null,
   ): Promise<string> {
-    const currency = await this.loadWritableCurrency(input.currencyId);
-    // Sorted for the same reason the transfer legs are: two bulk mints over
-    // overlapping recipient lists would otherwise take the same row locks in
-    // different orders and deadlock each other.
-    const userIds = [...new Set(input.userIds)].sort();
-    await this.assertMembers(currency.communityId, userIds);
-    await this.ensureBalanceRows(currency.id, userIds);
-
-    const batchId = randomUUID();
-
-    await this.db.$transaction(async (tx) => {
-      for (const userId of userIds) {
-        const balanceAfter = await this.applyDelta(
-          tx,
-          currency.id,
-          userId,
-          input.amount,
-        );
-        await tx.currencyTransaction.create({
-          data: {
-            currencyId: currency.id,
-            userId,
-            kind: CurrencyTransactionKind.MINT,
-            amount: input.amount,
-            balanceAfter,
-            batchId,
-            actorUserId: actorUserId ?? null,
-            actorLabel: actorUserId ? null : (actorLabel ?? "system"),
-            reason: input.reason,
-            staffNote: input.staffNote ?? null,
-          },
-        });
-      }
+    const { batchId } = await this.credit({
+      currencyId: input.currencyId,
+      awards: input.userIds.map((userId) => ({
+        userId,
+        amount: input.amount,
+      })),
+      reason: input.reason,
+      staffNote: input.staffNote,
+      actorUserId,
+      actorLabel,
     });
-
     return batchId;
   }
 
@@ -197,14 +339,14 @@ export class CurrencyLedgerService {
     actorUserId: string | null,
     actorLabel?: string | null,
   ): Promise<string> {
-    const currency = await this.loadWritableCurrency(input.currencyId);
-    await this.assertMembers(currency.communityId, [input.userId]);
-    await this.ensureBalanceRows(currency.id, [input.userId]);
+    const currency = await this.loadWritableCurrency(this.db, input.currencyId);
+    await this.assertMembers(this.db, currency.communityId, [input.userId]);
 
     const batchId = randomUUID();
 
     try {
       await this.db.$transaction(async (tx) => {
+        await this.ensureBalanceRows(tx, currency.id, [input.userId]);
         const balanceAfter = await this.applyDelta(
           tx,
           currency.id,
@@ -253,17 +395,20 @@ export class CurrencyLedgerService {
       throw new BadRequestException("Cannot transfer currency to yourself");
     }
 
-    const currency = await this.loadWritableCurrency(input.currencyId);
-    await this.assertMembers(currency.communityId, [
+    const currency = await this.loadWritableCurrency(this.db, input.currencyId);
+    await this.assertMembers(this.db, currency.communityId, [
       fromUserId,
       input.toUserId,
     ]);
-    await this.ensureBalanceRows(currency.id, [fromUserId, input.toUserId]);
 
     const batchId = randomUUID();
 
     try {
       await this.db.$transaction(async (tx) => {
+        await this.ensureBalanceRows(tx, currency.id, [
+          fromUserId,
+          input.toUserId,
+        ]);
         // Touch the two balances in a fixed order, sorted by user id rather
         // than by which side is sending.
         //
@@ -358,12 +503,12 @@ export class CurrencyLedgerService {
       throw new BadRequestException("Spend amount must be positive");
     }
 
-    const currency = await this.loadWritableCurrency(currencyId);
-    await this.ensureBalanceRows(currency.id, [userId]);
+    const currency = await this.loadWritableCurrency(tx ?? this.db, currencyId);
 
     const batchId = randomUUID();
 
     const run = async (client: Prisma.TransactionClient) => {
+      await this.ensureBalanceRows(client, currency.id, [userId]);
       const balanceAfter = await this.applyDelta(
         client,
         currency.id,

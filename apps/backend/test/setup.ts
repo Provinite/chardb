@@ -116,9 +116,16 @@ const mockPrismaService = {
   media: {
     create: jest.fn(),
     findUnique: jest.fn(),
+    findFirst: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    count: jest.fn(),
+  },
+  imageModerationAction: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
     count: jest.fn(),
   },
   itemType: {
@@ -186,11 +193,22 @@ const mockPrismaService = {
   $transaction: jest.fn(),
 };
 
-// Wire up $transaction to pass itself as the tx argument.
-// jest.clearAllMocks() only clears call history, not implementations, so this persists.
+// Wire up $transaction to support both forms Prisma offers, because the
+// codebase uses both: the interactive callback form (which gets the mock
+// itself as its tx client) and the array form (which resolves the promises it
+// was handed). A mock that only knew the callback form failed any test whose
+// code path used the other one, with an error about the array not being a
+// function.
+//
+// jest.clearAllMocks() only clears call history, not implementations, so this
+// persists across tests.
 mockPrismaService.$transaction.mockImplementation(
-  (callback: (prisma: typeof mockPrismaService) => unknown) =>
-    callback(mockPrismaService),
+  (
+    arg:
+      | ((prisma: typeof mockPrismaService) => unknown)
+      | Array<Promise<unknown>>,
+  ) =>
+    typeof arg === "function" ? arg(mockPrismaService) : Promise.all(arg ?? []),
 );
 
 // Global test utilities

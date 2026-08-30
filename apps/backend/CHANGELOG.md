@@ -7,7 +7,92 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **An award could mint another community's currency.** `approveImage` checked
+  `canGrantItems` against the *image's* community but passed the caller's
+  `currencyId` through unvalidated, and `credit()` scopes membership to the
+  *currency's* community — where the recipient is a legitimate member. So a
+  moderator of a small community who was merely a member of a large one could
+  approve any image in the small one while naming the large one's currency,
+  and mint it to themselves. The award now verifies the currency belongs to
+  the image's community, and that every recipient is actually connected to the
+  media. Both are covered by tests confirmed to fail against the unfixed code.
+
+### Fixed
+
+- **`credit()` no longer takes a second pool connection inside a caller's
+  transaction.** `loadWritableCurrency`, `findMembers` and `ensureBalanceRows`
+  ran on the pool while the caller's interactive transaction held a connection
+  of its own. Enough concurrent callers and every connection is held by a
+  transaction waiting for one that only another waiting transaction could
+  release, until the pool times all of them out. They now run on the client
+  they are given.
+
+  `ensureBalanceRows` moving inside the transaction also corrects a comment
+  that contradicted itself: `ON CONFLICT DO NOTHING` is precisely the
+  construct that does *not* raise a unique violation, so the stated reason for
+  keeping it outside was never valid.
+
+- **`ImageModerationAction.currencyAwards` reported a previous approval's
+  payout.** It matched only on the media, so a rejection of a previously
+  awarded image returned a non-empty list, contradicting the field's own
+  description. It now returns nothing for anything but an approval.
+
+- **`mapPrismaUserToGraphQL` no longer requires `passwordHash`**, which it
+  never read. Requiring it forced every caller to SELECT it; award recipients
+  now leave it in the database.
+
 ### Added
+
+- **`CurrencyTransaction.source` / `.sourceId`**: what caused a ledger row.
+  Until now currency had no notion of a cause, so an award could only say
+  "+25, upload approved" — telling a member nothing about which upload and
+  giving an auditor no way to tell forty approvals apart. The item ledger
+  never had this problem because every `ItemTransaction` names its item.
+
+  `sourceId` holds the **media**, not the image. An image is an implementation
+  detail of a media: a deleted media means the upload is gone as far as anyone
+  is concerned, so pointing at the surviving image would name something with
+  no user-facing existence — and there is no page for one either.
+
+  Deliberately not a foreign key. A ledger row must outlive whatever caused
+  it, and a cascade that erased coin along with a deleted media would be far
+  worse than a dangling id. A CHECK keeps the pair coherent: `DIRECT` exactly
+  when `sourceId` is null.
+
+- **`CurrencyLedgerService.credit()`** generalises `mint()`: per-recipient
+  amounts in one batch, an optional caller transaction, and an opt-in to skip
+  non-members. Per-recipient amounts matter because paying the artist more
+  than the uploader is a real case that must still read as a single event.
+  `mint()` delegates to it; all existing currency tests pass untouched.
+
+- **`Media.awardRecipients`**: the deduplicated people who could be paid for a
+  media, each with their relations and whether currency can reach them.
+  Returns null — via the existing `NullOnForbiddenFilter` pattern — for
+  viewers without `canGrantItems`, so the moderation queue still loads for
+  moderators who only moderate.
+
+- **`ImageModerationAction.currencyAwards`**: what an approval paid, read back
+  off the ledger rather than stored twice, so the two cannot disagree.
+
+### Changed
+
+- **`approveImage` accepts an optional award** and runs in an interactive
+  transaction rather than the array form, so the approval and the payment
+  commit together. Approved-but-unpaid and paid-but-unapproved are both worse
+  than the whole thing failing. The mutation re-checks `canGrantItems`: the
+  widget is hidden from moderators who lack it, but hiding a control is not a
+  check.
+
+### Tests
+
+- **First tests for the image moderation service** — approve and reject had no
+  coverage at all. 261 backend tests, up from 237.
+
+- The shared `$transaction` mock now supports both forms Prisma offers. It
+  only knew the interactive callback form, so any test touching a code path
+  that used the array form failed with "callback is not a function".
 
 - **`Community.memberCount`** field resolver, readable unauthenticated like the
   `community` query itself.

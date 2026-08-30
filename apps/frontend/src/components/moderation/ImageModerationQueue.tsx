@@ -6,9 +6,11 @@ import {
   useMediaModerationQueueQuery,
   useApproveImageMutation,
   useRejectImageMutation,
+  useGetCurrenciesQuery,
   ModerationRejectionReason,
 } from "../../generated/graphql";
-import { ImageModerationCard } from "./ImageModerationCard";
+import { formatAmount } from "../../lib/currencyDisplay";
+import { ImageModerationCard, type ApproveAward } from "./ImageModerationCard";
 
 const Container = styled.div`
   display: flex;
@@ -126,6 +128,15 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Fetched unconditionally: a moderator without grant permission gets a
+  // null awardRecipients from the server anyway, so the widget never renders
+  // and this list is simply unused.
+  const { data: currencyData } = useGetCurrenciesQuery({
+    variables: { communityId },
+    skip: !communityId,
+  });
+  const currencies = currencyData?.currencies ?? [];
+
   const { data, loading, error, refetch } = useMediaModerationQueueQuery({
     variables: {
       communityId,
@@ -148,13 +159,33 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleApprove = async (imageId: string) => {
+  const handleApprove = async (imageId: string, award?: ApproveAward) => {
     setActionInProgress(imageId);
     try {
-      await approveImage({
-        variables: { input: { imageId } },
+      const result = await approveImage({
+        variables: {
+          input: {
+            imageId,
+            ...(award
+              ? { currencyId: award.currencyId, awards: award.awards }
+              : {}),
+          },
+        },
       });
-      showToast("Image approved successfully");
+
+      // Reported from the ledger rows the server actually wrote, not from
+      // what was submitted -- a recipient who has left the community is
+      // skipped, and saying they were paid would be a lie.
+      const paid = result.data?.approveImage?.currencyAwards ?? [];
+      if (paid.length > 0) {
+        const total = paid.reduce((sum, row) => sum + row.amount, 0);
+        showToast(
+          `Image approved. Granted ${formatAmount(total, paid[0].currency)} across ` +
+            `${paid.length} ${paid.length === 1 ? "member" : "members"}.`,
+        );
+      } else {
+        showToast("Image approved successfully");
+      }
       await refetch();
     } catch (err) {
       console.error("Failed to approve image:", err);
@@ -289,7 +320,9 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
                     communityName:
                       mediaItem.character?.species?.community?.name ?? null,
                     mediaTitle: mediaItem.title,
+                    awardRecipients: mediaItem.awardRecipients,
                   }}
+                  currencies={currencies}
                   onApprove={handleApprove}
                   onReject={handleReject}
                   approving={actionInProgress === image.id}
