@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.2.0] - 2026-08-30
+
 ### Added
 
 - **Member list** (`/communities/:communityId/members`): replaces a placeholder that said member management was "under development". Lists everyone with their role, searchable, with a link to each member's holdings — which is the point, since holdings were previously reachable only by typing a URL.

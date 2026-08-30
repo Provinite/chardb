@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.2.0] - 2026-08-30
+
 ### Added
 
 - **`itemEconomy(communityId)`**: per item type, live circulation, distinct holders, grants and revokes over the last 30 days, and how many are unclaimed. Circulation and holders are counted separately on purpose — three potions held by one person is three in circulation and one holder, and an unclaimed item counts toward circulation but toward nobody's holdings.
