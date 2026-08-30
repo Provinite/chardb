@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useMutation } from "@apollo/client";
 import styled from "styled-components";
-import { Button } from "@chardb/ui";
+import { Avatar, Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { CREATE_COMMENT } from "../graphql/social.graphql";
 import { CommentableType } from "../generated/graphql";
@@ -20,20 +20,6 @@ const FormHeader = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   margin-bottom: ${({ theme }) => theme.spacing.md};
-`;
-
-const UserAvatar = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.background};
-  border: 2px solid ${({ theme }) => theme.colors.border};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  color: ${({ theme }) => theme.colors.text.muted};
-  flex-shrink: 0;
 `;
 
 const FormTitle = styled.h4`
@@ -197,26 +183,10 @@ export const CommentForm: React.FC<CommentFormProps> = ({
     <FormContainer>
       {!compact && (
         <FormHeader>
-          <UserAvatar>
-            {user.avatarImage ? (
-              <img
-                src={
-                  user.avatarImage.thumbnailUrl || user.avatarImage.originalUrl
-                }
-                alt={
-                  user.avatarImage.altText || user.displayName || user.username
-                }
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                }}
-              />
-            ) : (
-              (user.displayName?.[0] || user.username[0]).toUpperCase()
-            )}
-          </UserAvatar>
+          <Avatar
+            image={user.avatarImage}
+            name={user.displayName || user.username}
+          />
           <FormTitle>
             {parentId ? "Write a reply" : "Leave a comment"}
           </FormTitle>

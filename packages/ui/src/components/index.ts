@@ -1,3 +1,4 @@
+export * from "./Avatar";
 export * from "./Button";
 export * from "./TagInput";
 export * from "./UserTypeahead";

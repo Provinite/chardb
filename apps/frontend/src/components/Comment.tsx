@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useMutation } from "@apollo/client";
 import styled from "styled-components";
-import { Button } from "@chardb/ui";
+import { Avatar, Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { UPDATE_COMMENT, DELETE_COMMENT } from "../graphql/social.graphql";
 import { LikeButton } from "./LikeButton";
@@ -24,20 +24,6 @@ const CommentHeader = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
-`;
-
-const AuthorAvatar = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.surface};
-  border: 2px solid ${({ theme }) => theme.colors.border};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.muted};
-  flex-shrink: 0;
 `;
 
 const AuthorInfo = styled.div`
@@ -274,31 +260,11 @@ export const Comment: React.FC<CommentProps> = ({
   return (
     <CommentContainer isReply={isReply}>
       <CommentHeader>
-        <AuthorAvatar>
-          {comment.author.avatarImage ? (
-            <img
-              src={
-                comment.author.avatarImage.thumbnailUrl ||
-                comment.author.avatarImage.originalUrl
-              }
-              alt={
-                comment.author.avatarImage.altText ||
-                comment.author.displayName ||
-                comment.author.username
-              }
-              style={{
-                width: "100%",
-                height: "100%",
-                borderRadius: "50%",
-                objectFit: "cover",
-              }}
-            />
-          ) : (
-            (
-              comment.author.displayName?.[0] || comment.author.username[0]
-            ).toUpperCase()
-          )}
-        </AuthorAvatar>
+        <Avatar
+          image={comment.author.avatarImage}
+          name={comment.author.displayName || comment.author.username}
+          size={32}
+        />
 
         <AuthorInfo>
           <AuthorName>

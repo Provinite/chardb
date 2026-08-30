@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import styled from "styled-components";
+import { Avatar } from "@chardb/ui";
 import { Users, Shield, Search, Check, X, Crown } from "lucide-react";
 import {
   useCommunityMembersWithRolesQuery,
@@ -211,19 +212,6 @@ const UserInfo = styled.div`
   min-width: 200px;
 `;
 
-const UserAvatar = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colors.primary}20;
-  color: ${({ theme }) => theme.colors.primary};
-  font-weight: 600;
-  font-size: 0.875rem;
-`;
-
 const UserDetails = styled.div`
   display: flex;
   flex-direction: column;
@@ -339,8 +327,16 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
   const [updateCommunityMember, { loading: updating }] =
     useUpdateCommunityMemberMutation();
 
-  const members = membersData?.communityMembersByCommunity?.nodes || [];
-  const roles = rolesData?.rolesByCommunity?.nodes || [];
+  // Memoised because `?? []` mints a new array on every render where the query
+  // has no data, which would make the useMemos below recompute every time.
+  const members = useMemo(
+    () => membersData?.communityMembersByCommunity?.nodes ?? [],
+    [membersData],
+  );
+  const roles = useMemo(
+    () => rolesData?.rolesByCommunity?.nodes ?? [],
+    [rolesData],
+  );
 
   // Filter members based on search term
   const filteredMembers = useMemo(() => {
@@ -375,19 +371,6 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
       console.error("Failed to update member role:", error);
       // TODO: Show error toast
     }
-  };
-
-  // Get user initials for avatar
-  const getUserInitials = (user: any) => {
-    if (user?.displayName) {
-      return user.displayName
-        .split(" ")
-        .map((name: string) => name[0])
-        .join("")
-        .toUpperCase()
-        .substring(0, 2);
-    }
-    return user?.username?.[0]?.toUpperCase() || "?";
   };
 
   // Calculate statistics
@@ -522,7 +505,13 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
               <MatrixRow key={member.id}>
                 <UserCell $sticky>
                   <UserInfo>
-                    <UserAvatar>{getUserInitials(member.user)}</UserAvatar>
+                    <Avatar
+                      image={member.user?.avatarImage}
+                      name={
+                        member.user?.displayName || member.user?.username || "?"
+                      }
+                      size={32}
+                    />
                     <UserDetails>
                       <UserName>
                         {member.user?.displayName || member.user?.username}
