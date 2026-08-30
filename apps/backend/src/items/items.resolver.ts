@@ -189,10 +189,10 @@ export class ItemsResolver {
     return mapPrismaItemToGraphQL(item);
   }
 
+  // The community is resolved from the first item only. Safe because the
+  // service rejects a revoke whose items span more than one item type, and an
+  // item type belongs to exactly one community.
   @AllowCommunityPermission(CommunityPermission.CanGrantItems)
-  // Resolves the community from the first item only. Safe because the service
-  // rejects a revoke whose items span more than one item type, and an item
-  // type belongs to exactly one community.
   @ResolveCommunityFrom({ itemId: "itemIds.0" })
   @Mutation(() => Int, {
     description:

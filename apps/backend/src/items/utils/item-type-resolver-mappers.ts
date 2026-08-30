@@ -1,18 +1,14 @@
-import { Prisma } from "@chardb/database";
+import { ItemType } from "@chardb/database";
 import {
   ItemType as ItemTypeEntity,
   ItemTypeConnection,
 } from "../entities/item-type.entity";
 
-// `object` rather than `{}`: the point is "no include clause", not "any
-// non-nullish value".
-type PrismaItemType = Prisma.ItemTypeGetPayload<object>;
-
 /**
  * Maps a Prisma ItemType model to a GraphQL ItemType entity
  */
 export function mapPrismaItemTypeToGraphQL(
-  prismaItemType: PrismaItemType,
+  prismaItemType: ItemType,
 ): ItemTypeEntity {
   return {
     id: prismaItemType.id,
@@ -34,7 +30,7 @@ export function mapPrismaItemTypeToGraphQL(
  * Maps a service result to a GraphQL ItemTypeConnection
  */
 export function mapPrismaItemTypeConnectionToGraphQL(result: {
-  itemTypes: PrismaItemType[];
+  itemTypes: ItemType[];
   total: number;
   hasMore: boolean;
 }): ItemTypeConnection {

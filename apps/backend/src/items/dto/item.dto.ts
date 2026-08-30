@@ -75,9 +75,6 @@ export class GrantItemInput {
 
 @InputType()
 export class UpdateItemInput {
-  // No quantity: an item is one item. More means grantItem, fewer means
-  // revokeItems -- and both of those write ledger rows, which is why neither
-  // belongs behind an "update".
   @Field(() => String, { nullable: true })
   @IsOptional()
   metadata?: Prisma.InputJsonValue;

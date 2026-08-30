@@ -26,8 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   The tests were verified to fail against the bug: reintroducing `@AllowAnyAuthenticated()` on `grantItem` alone turned its three rejection cases red while the positive control and every other operation stayed green.
 
-  **The same pattern exists elsewhere and is not fixed here.** The global permission guard ORs every decorator together, so `@AllowAnyAuthenticated()` sitting beside `@AllowCommunityPermission(...)` or `@AllowGlobalPermission(...)` neutralises the second check. `characters.resolver.ts` has at least one such handler, and `communities`, `roles`, `media`, `community-members` and `image-moderation` resolvers each carry both decorators and are worth auditing. This needs its own pass — it is an authorization audit, not a side effect of an inventory change.
-
 ## [v10.2.2] - 2026-08-29
 
 No functional change. The v10.2.1 entry claimed task definitions now declare `runtimePlatform` explicitly instead of relying on ECS inferring it; they always declared it, and the entry has been corrected (#264).

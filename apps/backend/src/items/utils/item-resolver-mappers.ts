@@ -1,8 +1,7 @@
-import { Prisma } from "@chardb/database";
+import { Item, Prisma } from "@chardb/database";
 import { Item as ItemEntity, ItemConnection } from "../entities/item.entity";
 
-// Type alias for Prisma Item payload (with included relations)
-type PrismaItem = Prisma.ItemGetPayload<{
+type PrismaItemWithRelations = Prisma.ItemGetPayload<{
   include: {
     itemType: {
       include: {
@@ -13,16 +12,9 @@ type PrismaItem = Prisma.ItemGetPayload<{
   };
 }>;
 
-// Also support basic Item without includes. `object` rather than `{}`: the
-// point is "no include clause", not "any non-nullish value".
-type PrismaItemBasic = Prisma.ItemGetPayload<object>;
-
-/**
- * Maps a Prisma Item model to a GraphQL Item entity
- * Handles both basic Items and Items with included relations
- */
+/** Accepts an Item with or without the relations the services include. */
 export function mapPrismaItemToGraphQL(
-  prismaItem: PrismaItem | PrismaItemBasic,
+  prismaItem: Item | PrismaItemWithRelations,
 ): ItemEntity {
   return {
     id: prismaItem.id,
@@ -39,7 +31,7 @@ export function mapPrismaItemToGraphQL(
  * Maps a service result to a GraphQL ItemConnection
  */
 export function mapPrismaItemConnectionToGraphQL(result: {
-  items: (PrismaItem | PrismaItemBasic)[];
+  items: (Item | PrismaItemWithRelations)[];
   total: number;
   hasMore: boolean;
 }): ItemConnection {

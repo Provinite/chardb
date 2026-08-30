@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Item mutations were not permission-gated.** Every mutation in `items.resolver.ts` carried both `@AllowAnyAuthenticated()` and `@AllowCommunityPermission(...)`. The global guard ORs all permission decorators together, so the pair meant *authenticated OR permitted* — which is just *authenticated*. **Any logged-in user could create item types, grant items, and delete items in any community.** Removing `@AllowAnyAuthenticated()` from those handlers makes the community check bind.
 
-  This pattern appears elsewhere in the codebase and the remaining occurrences are **not** fixed here — see the note in the root changelog.
+  Only the item resolvers are fixed here.
 
 - **Every failing GraphQL operation logged as a success.** The Apollo logging plugin in `app.module.ts` read `response.errors`, which Apollo 4 does not have — errors live under `response.body.singleResult`. The check was always falsy. Found by typing the plugin's `any` parameters against Apollo's own request-context types.
 
