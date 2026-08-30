@@ -9,6 +9,7 @@ import {
   useMarkNotificationsReadMutation,
 } from "../../graphql/notifications.graphql";
 import { NotificationRow } from "./NotificationRow";
+import { useAuth } from "../../contexts/AuthContext";
 
 /**
  * How often the badge asks the server whether anything happened.
@@ -122,9 +123,12 @@ const Empty = styled.div`
 export const NotificationBell: React.FC = () => {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const userId = user?.id;
 
   const { data: countData, refetch: refetchCount } =
     useUnseenNotificationCountQuery({
+      skip: !userId,
       pollInterval: POLL_MS,
       // A backgrounded tab should cost nothing; this is Apollo's own switch for
       // that, and it resumes on its own when the tab comes back.
@@ -157,6 +161,15 @@ export const NotificationBell: React.FC = () => {
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [refetchCount]);
+
+  // The header outlives a login, so this component does not remount when the
+  // session changes and nothing clears the Apollo cache on the way through.
+  // Without this the badge shows the previous session's number until the poll
+  // comes round -- zero for someone who just signed in, or worse, the count
+  // belonging to whoever was signed in before them.
+  useEffect(() => {
+    if (userId) void refetchCount();
+  }, [userId, refetchCount]);
 
   useEffect(() => {
     if (!open) return;

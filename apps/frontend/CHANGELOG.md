@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   filter. Opening the dropdown clears the badge; a notification stays unread
   until it is opened.
 
+### Fixed
+
+- **The notification badge showed the previous session's count after signing
+  in.** The header outlives a login, so the bell never remounted and nothing
+  clears the Apollo cache in between — the number stayed stale until the
+  five-minute poll came round, or showed the count belonging to whoever was
+  signed in before.
+
 - **Award recipients widget** on each image moderation card. Lists everyone
   the upload names, deduplicated — posting your own art of your own character
   is one row reading `uploader · owner`, while gift art of someone else's

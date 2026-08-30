@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notifications - Feature Walkthrough</title>
+    <meta name="description" content="A bell in the top bar, a dropdown of what just happened, and a full history. Follows, comments, item grants and currency all report themselves." />
+    <link rel="canonical" href="https://provinite.github.io/chardb/docs/notifications.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Notifications" />
+    <meta property="og:description" content="A bell in the top bar, a dropdown of what just happened, and a full history. Follows, comments, item grants and currency all report themselves." />
+    <meta property="og:url" content="https://provinite.github.io/chardb/docs/notifications.html" />
+    <meta property="og:image" content="https://provinite.github.io/chardb/docs/notifications-dropdown.png" />
+    <meta property="og:image:alt" content="The CharDB notification dropdown showing a follow, a comment, and a currency grant." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .dim {
+        color: #8b93c7;
+      }
+
+      .kinds {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      .kinds th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid #e0e0e0;
+        color: #333;
+      }
+
+      .kinds td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+        color: #555;
+        vertical-align: top;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.55rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .pill.granted {
+        color: #0e7c56;
+        background: #0e9f6e22;
+      }
+      .pill.revoked {
+        color: #b91c1c;
+        background: #dc262622;
+      }
+      .pill.traded {
+        color: #0e7490;
+        background: #0891b222;
+      }
+      .pill.claimed {
+        color: #a16207;
+        background: #d9770622;
+      }
+      .pill.used,
+      .pill.imported {
+        color: #52606d;
+        background: #64748b22;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Notifications</h1>
+        <p>A bell, a dropdown, and a history of what happened to you</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Things happen to you on CharDB while you are not looking. Someone
+            follows you, someone comments on a character, staff hand you an item
+            or a pile of coin. Notifications are how you find out.
+          </p>
+          <p>
+            A bell in the top bar carries a count. Opening it shows the most
+            recent few; <strong>/notifications</strong> has the whole history
+            with an unread filter. Clicking one takes you to the thing it is
+            about.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">🔔</div>
+              <h4>Badge</h4>
+              <p>How many have arrived since you last looked</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">📋</div>
+              <h4>Dropdown</h4>
+              <p>The most recent few, without leaving the page</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🗂️</div>
+              <h4>History</h4>
+              <p>Everything, filtered to unread when you want it</p>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <strong>Seen and read are different things.</strong> The badge means
+            "new since you last looked", so opening the dropdown clears it. A
+            notification stays marked unread — and visibly so — until you
+            actually open it. Glancing at the bell should not silently mark
+            forty things as dealt with.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">The badge</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The bell sits between Upload and your avatar. When something has
+            arrived since you last opened it, it carries a count.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="notifications-badge.png"
+            alt="The CharDB top bar with a bell icon carrying a red badge showing one new notification."
+          />
+          <div class="screenshot-caption">
+            One new notification. The count stops at 99+.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">What a notification says</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Each row names who caused it, what they did, and when. A comment
+            brings enough of itself along to be recognisable. Anything belonging
+            to a community says which one.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="notifications-dropdown.png"
+            alt="The notification dropdown open over the dashboard, showing four notifications: two follows, a comment with an excerpt, and a currency grant labelled with its community."
+          />
+          <div class="screenshot-caption">
+            Four notifications. The tinted rows are unread.
+          </div>
+        </div>
+
+        <div class="step-content">
+          <p>These are the kinds that exist today:</p>
+          <table class="kinds">
+            <thead>
+              <tr>
+                <th>Kind</th>
+                <th>Reads as</th>
+                <th>Takes you to</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Follow</strong></td>
+                <td>Moderator followed you</td>
+                <td>Their profile</td>
+              </tr>
+              <tr>
+                <td><strong>Comment</strong></td>
+                <td>
+                  Moderator commented on Member's Character, with the first line
+                  or so of the comment
+                </td>
+                <td>The character, gallery or media commented on</td>
+              </tr>
+              <tr>
+                <td><strong>Item granted</strong></td>
+                <td>Staff gave you 3 &times; Rusty Locket</td>
+                <td>The item</td>
+              </tr>
+              <tr>
+                <td><strong>Item revoked</strong></td>
+                <td>
+                  Staff took back 3 &times; Rusty Locket, and the reason if one
+                  was given
+                </td>
+                <td>The item</td>
+              </tr>
+              <tr>
+                <td><strong>Currency received</strong></td>
+                <td>Community Admin sent you 250 Hollow Coin</td>
+                <td>The community's currencies</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="highlight-box">
+            <strong>One event, one notification.</strong> A grant of five
+            identical potions says "5 &times;" rather than arriving five times,
+            and revoking three items is a single line. This matches the ledger,
+            where those are one event too.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">The full history</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>See all notifications</strong> at the bottom of the dropdown
+            opens the history. Same rows, no limit, plus a filter for the ones
+            you have not opened yet and a way to clear them all at once.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="notifications-feed.png"
+            alt="The notifications page listing four notifications, all tinted to show they are unread, with All and Unread filter tabs and a Mark all read button."
+          />
+          <div class="screenshot-caption">
+            Unread notifications carry a tint, so a run of new ones reads as a
+            block rather than a row of dots.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="notifications-feed-read.png"
+            alt="The same notifications page after marking everything read, with the tint gone from every row."
+          />
+          <div class="screenshot-caption">
+            After <strong>Mark all read</strong>. Nothing is deleted — read is a
+            state, not a removal.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">What happens to old ones</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A notification is written the moment the thing happens, and it keeps
+            a copy of what it needs to say. That has a consequence worth
+            knowing: if the item is later revoked, the character deleted, or the
+            currency renamed, <strong>the notification still reads correctly</strong>.
+            It said what it said at the time.
+          </p>
+          <p>
+            What can stop working is the link. Clicking a notification whose
+            subject no longer exists takes you to a page that is gone. The
+            message stays; the destination is the part that can rot.
+          </p>
+          <div class="highlight-box">
+            <strong>This is deliberate.</strong> The alternative — deleting the
+            notification when its subject disappears — would quietly erase the
+            record that staff took something from you, at exactly the moment
+            that record matters most.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">How current the badge is</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The badge refreshes every five minutes, and again whenever you come
+            back to the tab. A backgrounded tab costs nothing.
+          </p>
+          <p>
+            So the count can be up to five minutes stale if you sit on the same
+            page without switching away. Switching back to the tab, or loading
+            any page, brings it current. Notifications are not chat; nothing
+            here is urgent enough to justify asking the server every few seconds
+            on behalf of everyone signed in.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Notifications &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>
