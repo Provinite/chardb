@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.0.0] - 2026-08-30
+
 ### Added
 
 - **Item ledger**: New `ItemTransaction` model recording every item movement — `GRANT`, `REVOKE`, `TRANSFER`, `CLAIM`, `USE` — with the actor, both parties, and a reason. Every write path produces rows inside the same database transaction as the item mutation, including the SQS prize consumer and the pending-ownership claim job. Exposed as `itemTransactions(filters)` (a community's ledger) and `itemProvenance(itemId)` (one item's history).
