@@ -94,6 +94,15 @@ const MemberRow = styled.div`
   }
 `;
 
+const AvatarImage = styled.img`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex: none;
+  object-fit: cover;
+  background: ${({ theme }) => theme.colors.surface};
+`;
+
 const Avatar = styled.div`
   width: 36px;
   height: 36px;
@@ -300,13 +309,21 @@ export const CommunityMembersPage: React.FC = () => {
         <List data-testid="member-list">
           {shown.map((m) => {
             const name = m.user.displayName || m.user.username;
+            const avatar = m.user.avatarImage;
             return (
               <MemberRow
                 key={m.id}
                 data-testid="member-row"
                 data-username={m.user.username}
               >
-                <Avatar>{initials(name)}</Avatar>
+                {avatar ? (
+                  <AvatarImage
+                    src={avatar.thumbnailUrl || avatar.originalUrl}
+                    alt={avatar.altText || name}
+                  />
+                ) : (
+                  <Avatar>{initials(name)}</Avatar>
+                )}
                 <Who>
                   <Name>
                     <Link to={`/user/${m.user.username}`}>{name}</Link>

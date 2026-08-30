@@ -58,6 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   only knew the interactive callback form, so any test touching a code path
   that used the array form failed with "callback is not a function".
 
+- **`Community.memberCount`** field resolver, readable unauthenticated like the
+  `community` query itself.
+
 ## [v11.3.0] - 2026-08-30
 
 ## [v11.2.0] - 2026-08-30

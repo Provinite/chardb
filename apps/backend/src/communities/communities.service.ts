@@ -72,7 +72,7 @@ export class CommunitiesService {
         },
       });
 
-      const moderatorRole = await prisma.role.create({
+      await prisma.role.create({
         data: {
           name: "Moderator",
           communityId: community.id,
@@ -95,7 +95,7 @@ export class CommunitiesService {
         },
       });
 
-      const memberRole = await prisma.role.create({
+      await prisma.role.create({
         data: {
           name: "Member",
           communityId: community.id,
@@ -168,7 +168,7 @@ export class CommunitiesService {
 
   /** Update a community */
   async update(id: string, input: UpdateCommunityServiceInput) {
-    const community = await this.findOne(id); // This will throw if not found
+    await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.CommunityUpdateInput = {};
 
@@ -223,6 +223,16 @@ export class CommunitiesService {
       },
       take: Math.min(filters.limit || 10, 20), // Max 20
       orderBy: { username: "asc" },
+    });
+  }
+
+  /**
+   * Count the members of a community. Membership is reached through Role, so
+   * this counts memberships whose role belongs to the community.
+   */
+  async countMembers(communityId: string) {
+    return this.prisma.communityMember.count({
+      where: { role: { communityId } },
     });
   }
 }

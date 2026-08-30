@@ -135,6 +135,16 @@ export class CommunitiesResolver {
     return members.map(mapPrismaUserToGraphQL);
   }
 
+  // Unauthenticated, like the `community` query that exposes it: the member
+  // count is public metadata on the community header, not member data.
+  @AllowUnauthenticated()
+  @ResolveField("memberCount", () => Int, {
+    description: "Number of members in the community",
+  })
+  async resolveMemberCount(@Parent() community: Community): Promise<number> {
+    return this.communitiesService.countMembers(community.id);
+  }
+
   // Discord Integration
 
   @AllowAnyAuthenticated()
