@@ -9,34 +9,19 @@ import {
   UserFollowResolver,
 } from "./social.resolver";
 import { DatabaseService } from "../database/database.service";
+import { Visibility, ModerationStatus } from "@chardb/database";
+import { CommentableType } from "../comments/dto/comment.dto";
 import { LikeableType } from "./dto/like.dto";
-import { mockDatabaseService } from "../../test/setup";
+import {
+  mockAuthUser,
+  mockDatabaseService,
+  mockNotificationsService,
+} from "../../test/setup";
+import { NotificationsService } from "../notifications/notifications.service";
 
 describe("SocialResolver", () => {
   let resolver: SocialResolver;
   let service: SocialService;
-  let db: typeof mockDatabaseService;
-
-  const mockUser = {
-    id: "user-1",
-    username: "testuser",
-    email: "test@example.com",
-    isAdmin: false,
-    isVerified: true,
-    privacySettings: {},
-    canCreateCommunity: false,
-    canListUsers: false,
-    canListInviteCodes: false,
-    canCreateInviteCode: false,
-    canGrantGlobalPermissions: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    externalAccounts: [],
-    communityMemberships: [],
-    followersCount: 0,
-    followingCount: 0,
-    userIsFollowing: false,
-  };
 
   const mockLikeResult = {
     isLiked: true,
@@ -59,12 +44,15 @@ describe("SocialResolver", () => {
           provide: DatabaseService,
           useValue: mockDatabaseService,
         },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
       ],
     }).compile();
 
     resolver = module.get<SocialResolver>(SocialResolver);
     service = module.get<SocialService>(SocialService);
-    db = module.get<DatabaseService>(DatabaseService) as any;
   });
 
   describe("toggleLike", () => {
@@ -76,7 +64,7 @@ describe("SocialResolver", () => {
 
       jest.spyOn(service, "toggleLike").mockResolvedValue(mockLikeResult);
 
-      const result = await resolver.toggleLike(input, mockUser);
+      const result = await resolver.toggleLike(input, mockAuthUser);
 
       expect(result).toEqual(mockLikeResult);
       expect(service.toggleLike).toHaveBeenCalledWith("user-1", input);
@@ -90,7 +78,7 @@ describe("SocialResolver", () => {
       const result = await resolver.likeStatus(
         LikeableType.CHARACTER,
         "character-1",
-        mockUser,
+        mockAuthUser,
       );
 
       expect(result).toEqual(mockLikeStatus);
@@ -129,7 +117,7 @@ describe("CharacterLikesResolver", () => {
     name: "Test Character",
     ownerId: "user-1",
     isOrphaned: false,
-    visibility: "PUBLIC" as any,
+    visibility: Visibility.PUBLIC,
     isSellable: false,
     isTradeable: false,
     tags: [],
@@ -168,6 +156,10 @@ describe("CharacterLikesResolver", () => {
           provide: DatabaseService,
           useValue: mockDatabaseService,
         },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
       ],
     }).compile();
 
@@ -193,7 +185,7 @@ describe("CharacterLikesResolver", () => {
     it("should return true when user has liked the character", async () => {
       jest.spyOn(service, "getUserHasLiked").mockResolvedValue(true);
 
-      const result = await resolver.userHasLiked(mockCharacter, mockUser);
+      const result = await resolver.userHasLiked(mockCharacter, mockAuthUser);
 
       expect(result).toBe(true);
       expect(service.getUserHasLiked).toHaveBeenCalledWith(
@@ -206,7 +198,7 @@ describe("CharacterLikesResolver", () => {
     it("should return like status for authenticated user", async () => {
       jest.spyOn(service, "getUserHasLiked").mockResolvedValue(false);
 
-      const result = await resolver.userHasLiked(mockCharacter, mockUser);
+      const result = await resolver.userHasLiked(mockCharacter, mockAuthUser);
 
       expect(result).toBe(false);
       expect(service.getUserHasLiked).toHaveBeenCalledWith(
@@ -233,8 +225,8 @@ describe("ImageLikesResolver", () => {
     fileSize: 1000,
     mimeType: "image/jpeg",
     isNsfw: false,
-    visibility: "PUBLIC" as any,
-    moderationStatus: "APPROVED" as any,
+    visibility: Visibility.PUBLIC,
+    moderationStatus: ModerationStatus.APPROVED,
     createdAt: new Date(),
     updatedAt: new Date(),
     uploader: {
@@ -270,6 +262,10 @@ describe("ImageLikesResolver", () => {
           provide: DatabaseService,
           useValue: mockDatabaseService,
         },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
       ],
     }).compile();
 
@@ -300,7 +296,7 @@ describe("GalleryLikesResolver", () => {
     id: "gallery-1",
     name: "Test Gallery",
     ownerId: "user-1",
-    visibility: "PUBLIC" as any,
+    visibility: Visibility.PUBLIC,
     sortOrder: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -332,6 +328,10 @@ describe("GalleryLikesResolver", () => {
           provide: DatabaseService,
           useValue: mockDatabaseService,
         },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
       ],
     }).compile();
 
@@ -361,7 +361,7 @@ describe("CommentLikesResolver", () => {
   const mockComment = {
     id: "comment-1",
     content: "Test comment",
-    commentableType: "CHARACTER" as any,
+    commentableType: CommentableType.CHARACTER,
     commentableId: "character-1",
     authorId: "user-1",
     isHidden: false,
@@ -395,6 +395,10 @@ describe("CommentLikesResolver", () => {
         {
           provide: DatabaseService,
           useValue: mockDatabaseService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();
@@ -467,6 +471,10 @@ describe("SocialResolver - Follow System", () => {
           provide: DatabaseService,
           useValue: mockDatabaseService,
         },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
       ],
     }).compile();
 
@@ -480,7 +488,7 @@ describe("SocialResolver - Follow System", () => {
 
       jest.spyOn(service, "toggleFollow").mockResolvedValue(mockFollowResult);
 
-      const result = await resolver.toggleFollow(input, mockUser);
+      const result = await resolver.toggleFollow(input, mockAuthUser);
 
       expect(result).toEqual(mockFollowResult);
       expect(service.toggleFollow).toHaveBeenCalledWith("user-1", input);
@@ -493,7 +501,7 @@ describe("SocialResolver - Follow System", () => {
         .spyOn(service, "getFollowStatus")
         .mockResolvedValue(mockFollowStatus);
 
-      const result = await resolver.followStatus("user-2", mockUser);
+      const result = await resolver.followStatus("user-2", mockAuthUser);
 
       expect(result).toEqual(mockFollowStatus);
       expect(service.getFollowStatus).toHaveBeenCalledWith("user-2", "user-1");
@@ -507,7 +515,7 @@ describe("SocialResolver - Follow System", () => {
       };
       jest.spyOn(service, "getFollowStatus").mockResolvedValue(authStatus);
 
-      const result = await resolver.followStatus("user-2", mockUser);
+      const result = await resolver.followStatus("user-2", mockAuthUser);
 
       expect(result).toEqual(authStatus);
       expect(service.getFollowStatus).toHaveBeenCalledWith(
@@ -543,7 +551,11 @@ describe("UserFollowResolver", () => {
     userIsFollowing: false,
   };
 
+  // Deliberately a different person from the profile being viewed: these tests
+  // check that the resolver passes the target and the viewer in that order, and
+  // a shared fixture for both would pass whichever way round it got them.
   const mockCurrentUser = {
+    ...mockAuthUser,
     id: "user-2",
     username: "currentuser",
   };
@@ -556,6 +568,10 @@ describe("UserFollowResolver", () => {
         {
           provide: DatabaseService,
           useValue: mockDatabaseService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();

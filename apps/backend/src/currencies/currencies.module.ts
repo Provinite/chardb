@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 import { CurrenciesService } from "./currencies.service";
 import { CurrencyLedgerService } from "./currency-ledger.service";
 import {
@@ -10,7 +11,7 @@ import {
 } from "./currencies.resolver";
 
 @Module({
-  imports: [DatabaseModule, AuthModule],
+  imports: [DatabaseModule, AuthModule, NotificationsModule],
   providers: [
     CurrenciesService,
     CurrencyLedgerService,

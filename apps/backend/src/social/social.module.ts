@@ -10,9 +10,10 @@ import {
   UserFollowResolver,
 } from "./social.resolver";
 import { DatabaseModule } from "../database/database.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, NotificationsModule],
   providers: [
     SocialService,
     SocialResolver,

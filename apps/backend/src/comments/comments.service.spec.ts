@@ -6,7 +6,11 @@ import {
 } from "@nestjs/common";
 import { CommentsService, CommentableTypeFilter } from "./comments.service";
 import { DatabaseService } from "../database/database.service";
-import { mockDatabaseService } from "../../test/setup";
+import {
+  mockDatabaseService,
+  mockNotificationsService,
+} from "../../test/setup";
+import { NotificationsService } from "../notifications/notifications.service";
 
 describe("CommentsService", () => {
   let service: CommentsService;
@@ -39,6 +43,10 @@ describe("CommentsService", () => {
         {
           provide: DatabaseService,
           useValue: mockDatabaseService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();
