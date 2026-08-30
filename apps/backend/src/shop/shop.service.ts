@@ -114,6 +114,263 @@ export class ShopService {
     });
   }
 
+  // ==================== Admin ====================
+
+  async createShopItem(input: {
+    communityId: string;
+    itemTypeId: string;
+    name?: string | null;
+    description?: string | null;
+    stock?: number | null;
+    maxPerUser?: number | null;
+    sortOrder?: number | null;
+    prices: Array<{
+      components: Array<{ currencyId: string; amount: number }>;
+    }>;
+  }) {
+    await this.assertPricesBelongTo(input.communityId, input.prices);
+
+    const itemType = await this.db.itemType.findUnique({
+      where: { id: input.itemTypeId },
+      select: { communityId: true },
+    });
+    if (!itemType || itemType.communityId !== input.communityId) {
+      throw new BadRequestException(
+        "That item type does not belong to this community",
+      );
+    }
+
+    return this.db.shopItem.create({
+      data: {
+        communityId: input.communityId,
+        itemTypeId: input.itemTypeId,
+        name: input.name?.trim() || null,
+        description: input.description?.trim() || null,
+        stock: input.stock ?? null,
+        maxPerUser: input.maxPerUser ?? null,
+        sortOrder: input.sortOrder ?? 0,
+        prices: {
+          create: input.prices.map((price, index) => ({
+            sortOrder: index,
+            components: { create: price.components },
+          })),
+        },
+      },
+      include: {
+        itemType: true,
+        prices: {
+          orderBy: { sortOrder: "asc" },
+          include: { components: { include: { currency: true } } },
+        },
+      },
+    });
+  }
+
+  async updateShopItem(
+    id: string,
+    input: {
+      name?: string | null;
+      description?: string | null;
+      stock?: number | null;
+      maxPerUser?: number | null;
+      sortOrder?: number | null;
+      active?: boolean | null;
+      prices?: Array<{
+        components: Array<{ currencyId: string; amount: number }>;
+      }> | null;
+    },
+  ) {
+    const existing = await this.db.shopItem.findUnique({
+      where: { id },
+      select: { communityId: true },
+    });
+    if (!existing) throw new NotFoundException(`Shop item ${id} not found`);
+
+    if (input.prices) {
+      await this.assertPricesBelongTo(existing.communityId, input.prices);
+    }
+
+    return this.db.$transaction(async (tx) => {
+      const data: Prisma.ShopItemUpdateInput = {};
+      if (input.name !== undefined) data.name = input.name?.trim() || null;
+      if (input.description !== undefined) {
+        data.description = input.description?.trim() || null;
+      }
+      if (input.stock !== undefined) data.stock = input.stock;
+      if (input.maxPerUser !== undefined) data.maxPerUser = input.maxPerUser;
+      if (input.sortOrder !== undefined && input.sortOrder !== null) {
+        data.sortOrder = input.sortOrder;
+      }
+      if (input.active !== undefined && input.active !== null) {
+        data.active = input.active;
+      }
+
+      await tx.shopItem.update({ where: { id }, data });
+
+      if (input.prices) {
+        // Replaced wholesale rather than diffed. Past purchases are unaffected
+        // -- what they paid is copied onto the line, and a line's price
+        // reference is nulled rather than cascading.
+        await tx.shopPrice.deleteMany({ where: { shopItemId: id } });
+        for (const [index, price] of input.prices.entries()) {
+          await tx.shopPrice.create({
+            data: {
+              shopItemId: id,
+              sortOrder: index,
+              components: { create: price.components },
+            },
+          });
+        }
+      }
+
+      return tx.shopItem.findUniqueOrThrow({
+        where: { id },
+        include: {
+          itemType: true,
+          prices: {
+            orderBy: { sortOrder: "asc" },
+            include: { components: { include: { currency: true } } },
+          },
+        },
+      });
+    });
+  }
+
+  /**
+   * Every currency named by a price must belong to the same community, and be
+   * spendable.
+   *
+   * Without the first check a listing could be priced in another community's
+   * coin -- the same shape of hole as awarding across communities. Without the
+   * second, an option could name a currency nobody can be charged in, and the
+   * listing would look buyable while never being so.
+   */
+  private async assertPricesBelongTo(
+    communityId: string,
+    prices: Array<{ components: Array<{ currencyId: string }> }>,
+  ) {
+    const ids = [
+      ...new Set(prices.flatMap((p) => p.components.map((c) => c.currencyId))),
+    ];
+    if (ids.length === 0) return;
+
+    const currencies = await this.db.currency.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, communityId: true, archivedAt: true, name: true },
+    });
+
+    for (const id of ids) {
+      const currency = currencies.find((c) => c.id === id);
+      if (!currency || currency.communityId !== communityId) {
+        throw new BadRequestException(
+          "A price names a currency from another community",
+        );
+      }
+      if (currency.archivedAt) {
+        throw new BadRequestException(
+          `${currency.name} is archived and cannot be charged`,
+        );
+      }
+    }
+  }
+
+  // ==================== Viewer-aware reads ====================
+
+  /**
+   * The shop as one member sees it: what it costs, what they can afford, and
+   * how much of their allowance is spent.
+   *
+   * Affordability is advisory. It is computed from balances read a moment ago,
+   * and checkout is what actually decides -- a page that says "you can afford
+   * this" and a purchase that says otherwise is a race, not a lie.
+   */
+  async findShopForViewer(
+    communityId: string,
+    viewerId: string,
+    includeInactive = false,
+  ) {
+    const items = await this.findShopItems(communityId, includeInactive);
+    if (items.length === 0) return [];
+
+    const [balances, counts] = await Promise.all([
+      this.db.currencyBalance.findMany({
+        where: { userId: viewerId, currency: { communityId } },
+        select: { currencyId: true, amount: true },
+      }),
+      this.db.shopPurchaseLine.groupBy({
+        by: ["shopItemId"],
+        where: {
+          refundedAt: null,
+          purchase: { buyerId: viewerId, communityId },
+        },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const held = new Map(balances.map((b) => [b.currencyId, b.amount]));
+    const bought = new Map(counts.map((c) => [c.shopItemId, c._count._all]));
+
+    return items.map((item) => ({
+      ...item,
+      purchasedByViewer: bought.get(item.id) ?? 0,
+      prices: item.prices.map((price) => ({
+        ...price,
+        affordable: price.components.every(
+          (component) =>
+            (held.get(component.currencyId) ?? 0) >= component.amount,
+        ),
+      })),
+    }));
+  }
+
+  /**
+   * A member's purchases, each line saying whether it can still be undone.
+   *
+   * The reason is returned alongside the flag because "you cannot undo this"
+   * with no explanation is the kind of thing that becomes a support message.
+   */
+  async findPurchasesForViewer(communityId: string, viewerId: string) {
+    const purchases = await this.findPurchases(communityId, viewerId);
+    const lineIds = purchases.flatMap((p) => p.lines.map((l) => l.id));
+    if (lineIds.length === 0) return [];
+
+    // One query for every line's granted item, rather than one per line.
+    const grants = await this.db.itemTransaction.findMany({
+      where: {
+        source: ItemTransactionSource.SHOP_PURCHASE,
+        sourceId: { in: lineIds },
+        kind: ItemTransactionKind.GRANT,
+      },
+      select: { sourceId: true, itemId: true },
+    });
+    const itemByLine = new Map(grants.map((g) => [g.sourceId, g.itemId]));
+
+    const items = await this.db.item.findMany({
+      where: { id: { in: grants.map((g) => g.itemId) } },
+      select: { id: true, ownerId: true, destroyedAt: true },
+    });
+    const itemById = new Map(items.map((i) => [i.id, i]));
+
+    const now = Date.now();
+
+    return purchases.map((purchase) => ({
+      ...purchase,
+      lines: purchase.lines.map((line) => {
+        const blocked = refundBlockedReason(
+          { ...line, buyerId: purchase.buyerId },
+          itemById.get(itemByLine.get(line.id) ?? ""),
+          now,
+          viewerId,
+        );
+        return {
+          ...line,
+          refundableByViewer: blocked === null,
+          refundBlockedReason: blocked,
+        };
+      }),
+    }));
+  }
+
   // ==================== Checkout ====================
 
   /**
@@ -430,4 +687,27 @@ export class ShopService {
 function isStockExhausted(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   return error.message.includes("shop_items_stock_non_negative");
+}
+
+/**
+ * Why a buyer cannot undo a line, or null when they can.
+ *
+ * Staff are not covered here: they may refund at any time, and the reasons
+ * below are the ones a buyer sees.
+ */
+function refundBlockedReason(
+  line: { refundedAt: Date | null; createdAt: Date; buyerId: string },
+  item: { ownerId: string | null; destroyedAt: Date | null } | undefined,
+  now: number,
+  viewerId: string,
+): string | null {
+  if (line.buyerId !== viewerId) return "This is not your purchase";
+  if (line.refundedAt) return "Already refunded";
+  if (now - line.createdAt.getTime() > REFUND_WINDOW_MS) {
+    return "The undo window has passed -- ask a moderator";
+  }
+  if (!item) return "Nothing to give back";
+  if (item.destroyedAt) return "That item has been used or destroyed";
+  if (item.ownerId !== viewerId) return "That item has changed hands";
+  return null;
 }

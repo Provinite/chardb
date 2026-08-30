@@ -227,6 +227,23 @@ input CharacterTraitValueInput {
   value: String
 }
 
+input CheckoutInput {
+  communityId: ID!
+
+  """
+  The cart. Prices are re-read server-side; this only says which option was picked, never what it costs.
+  """
+  lines: [CheckoutLineInputDto!]!
+}
+
+input CheckoutLineInputDto {
+  quantity: Int!
+  shopItemId: ID!
+
+  """Which price option was chosen."""
+  shopPriceId: ID!
+}
+
 """Input for claiming an invite code"""
 input ClaimInviteCodeInput {
   """The ID of the user who is claiming this invite code"""
@@ -650,6 +667,25 @@ input CreateRoleInput {
 
   """The name of the role"""
   name: String!
+}
+
+input CreateShopItemInput {
+  communityId: ID!
+  description: String
+
+  """What buying this grants."""
+  itemTypeId: ID!
+
+  """Omit for no cap."""
+  maxPerUser: Int
+  name: String
+
+  """At least one, or nobody can buy it."""
+  prices: [ShopPriceInput!]!
+  sortOrder: Int
+
+  """Omit for unlimited."""
+  stock: Int
 }
 
 input CreateSpeciesInput {
@@ -1841,6 +1877,9 @@ type Mutation {
   """Cancel a running DeviantArt UUID backfill job."""
   cancelDeviantartUuidBackfill: Boolean!
 
+  """Buy a cart. Everything commits together, or nothing does."""
+  checkout(input: CheckoutInput!): ShopPurchase!
+
   """Claim an invite code to join a community"""
   claimInviteCode(
     """Invite code claim data"""
@@ -1903,6 +1942,7 @@ type Mutation {
     """Role creation data"""
     createRoleInput: CreateRoleInput!
   ): Role!
+  createShopItem(input: CreateShopItemInput!): ShopItem!
 
   """Create a new species"""
   createSpecies(
@@ -1984,6 +2024,11 @@ type Mutation {
   """
   purgeCharacter(id: ID!): Boolean!
   refreshToken(token: String!): String!
+
+  """
+  Undo one unit. The buyer may do this inside the window; staff at any time. Nothing is rewritten -- the coin comes back as new ledger rows.
+  """
+  refundShopPurchaseLine(lineId: ID!): ShopPurchaseLine!
 
   """Reject an image (moderator action)"""
   rejectImage(input: RejectImageInput!): ImageModerationAction!
@@ -2215,6 +2260,7 @@ type Mutation {
     """Role update data"""
     updateRoleInput: UpdateRoleInput!
   ): Role!
+  updateShopItem(id: ID!, input: UpdateShopItemInput!): ShopItem!
 
   """Update a species"""
   updateSpecies(
@@ -2691,6 +2737,11 @@ type Query {
     filters: MediaFiltersInput
   ): MediaConnection!
 
+  """
+  The viewer's own purchases, newest first, each line saying whether it can still be undone and why not.
+  """
+  myShopPurchases(communityId: ID!): [ShopPurchase!]!
+
   """Get count of pending images for a community"""
   pendingImageCount(communityId: ID!): Int!
 
@@ -2743,6 +2794,9 @@ type Query {
     """Search term to filter tags. If empty, returns popular suggestions"""
     search: String
   ): [Tag!]!
+
+  """What a community sells, priced, with what the viewer can afford."""
+  shopItems(communityId: ID!, includeInactive: Boolean! = false): [ShopItem!]!
 
   """Get all species with pagination"""
   species(
@@ -3047,6 +3101,109 @@ type RoleConnection {
 
 input SetMainMediaInput {
   mediaId: ID
+}
+
+"""Something a community sells for its own currency."""
+type ShopItem {
+  active: Boolean!
+  communityId: ID!
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  itemType: ItemType!
+  itemTypeId: ID!
+
+  """Null means no cap. Counted across every purchase."""
+  maxPerUser: Int
+
+  """Falls back to the item type's name when unset."""
+  name: String
+  prices: [ShopPrice!]!
+
+  """
+  How many of this the viewer already holds against its cap. Refunded purchases do not count.
+  """
+  purchasedByViewer: Int!
+  sortOrder: Int!
+
+  """
+  Null means unlimited. Zero means sold out, which is not the same as unavailable -- a sold-out listing still says what it was.
+  """
+  stock: Int
+  updatedAt: DateTime!
+}
+
+"""
+One way to pay for a listing. A buyer picks exactly one option and pays all of its components -- mixing across options is not a thing.
+"""
+type ShopPrice {
+  """
+  Whether the viewer currently holds enough of every currency this option asks for. Advisory -- checkout is what actually decides.
+  """
+  affordable: Boolean!
+  components: [ShopPriceComponent!]!
+  id: ID!
+  sortOrder: Int!
+}
+
+"""One currency a price option asks for."""
+type ShopPriceComponent {
+  amount: Int!
+  currency: Currency!
+  currencyId: ID!
+  id: ID!
+}
+
+input ShopPriceComponentInput {
+  amount: Int!
+  currencyId: ID!
+}
+
+"""
+One way to pay. Several components means one price asking for several currencies at once, not several alternative prices.
+"""
+input ShopPriceInput {
+  components: [ShopPriceComponentInput!]!
+}
+
+"""One checkout."""
+type ShopPurchase {
+  buyerId: ID!
+  communityId: ID!
+  createdAt: DateTime!
+  id: ID!
+  lines: [ShopPurchaseLine!]!
+}
+
+"""
+One unit bought: one item, at one price, once. Quantity lives in the number of these rather than a column, so a refund can name exactly what it gave back.
+"""
+type ShopPurchaseLine {
+  """
+  What was actually paid, copied at checkout. A later price change does not alter what a refund returns.
+  """
+  costs: [ShopPurchaseLineCost!]!
+  createdAt: DateTime!
+  id: ID!
+  purchaseId: ID!
+
+  """Why it cannot be undone, when it cannot."""
+  refundBlockedReason: String
+
+  """
+  Whether the viewer can undo this right now. False once the window has passed, once it is already refunded, or once the item has been used, destroyed or handed on.
+  """
+  refundableByViewer: Boolean!
+  refundedAt: DateTime
+  refundedBy: User
+  shopItem: ShopItem!
+}
+
+"""What one unit of a purchase cost, at the time."""
+type ShopPurchaseLineCost {
+  amount: Int!
+  currency: Currency!
+  currencyId: ID!
 }
 
 input SignupInput {
@@ -3638,6 +3795,20 @@ input UpdateRoleInput {
 
   """The name of the role"""
   name: String
+}
+
+input UpdateShopItemInput {
+  active: Boolean
+  description: String
+  maxPerUser: Int
+  name: String
+
+  """
+  Replaces every option when given. Past purchases keep what they paid, which is copied onto the line rather than read back through here.
+  """
+  prices: [ShopPriceInput!]
+  sortOrder: Int
+  stock: Int
 }
 
 input UpdateSpeciesInput {
