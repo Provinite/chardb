@@ -171,6 +171,79 @@ jobs:
           fi
           echo "Generated GraphQL types are up to date."
 
+  test:
+    name: Unit tests (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    # No database is involved -- the backend's Jest config ignores
+    # *.e2e.spec.ts, and the browser suite is the `e2e` job below.
+
+    strategy:
+      # One workspace per runner. `yarn workspaces foreach` is sequential and
+      # aborts on the first failure, so a single job would both serialise the
+      # suites and hide every failure after the first.
+      #
+      # Listed explicitly rather than discovered: a workspace that gains a
+      # `test` script has to be added here too. @chardb/e2e is absent on
+      # purpose -- its `test` script is a pointer to the `e2e` job.
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            workspace: "@chardb/backend"
+          - name: frontend
+            workspace: "@chardb/frontend"
+          - name: da-import
+            workspace: "@chardb/da-import"
+
+    env:
+      # @chardb/database's build runs prisma generate, which resolves
+      # env("DATABASE_URL") without ever connecting.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            .yarn/install-state.gz
+          key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: yarn install --immutable
+
+      # The suites import @chardb/{database,shared,ui} through their `types` and
+      # `main` fields, which point at gitignored dist/. @chardb/database's build
+      # also runs prisma generate, without which the backend specs fail to
+      # compile against a stale or absent client.
+      - name: Build workspace packages
+        run: |
+          yarn workspaces foreach -A --parallel \
+            --include '@chardb/database' \
+            --include '@chardb/shared' \
+            --include '@chardb/ui' \
+            run build
+
+      # Vitest sees CI=true and runs once instead of entering watch mode.
+      - name: Run unit tests
+        run: yarn workspace ${{ matrix.workspace }} run test
+
   e2e:
     name: Browser E2E
     runs-on: ubuntu-latest
@@ -268,7 +341,7 @@ jobs:
   # ---------------------------------------------------------------------------
   deploy-backend:
     name: Deploy backend to staging
-    needs: [lint, verify, e2e]
+    needs: [lint, verify, test, e2e]
     if: >-
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')

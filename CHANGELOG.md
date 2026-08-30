@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- CI runs the unit test suites (backend Jest, frontend Vitest, da-import Vitest) on every pull request and on pushes to main, and a staging deploy now waits on them.
+
 ## [v10.2.2] - 2026-08-29
 
 No functional change. The v10.2.1 entry claimed task definitions now declare `runtimePlatform` explicitly instead of relying on ECS inferring it; they always declared it, and the entry has been corrected (#264).
