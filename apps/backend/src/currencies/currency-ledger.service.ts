@@ -52,6 +52,11 @@ export interface CreditOptions {
    */
   source?: CurrencyTransactionSource;
   sourceId?: string | null;
+  /**
+   * Share one batch id across several credits that are really one event --
+   * a refund returning two different currencies is one refund.
+   */
+  batchId?: string;
   /** Join the caller's transaction so the credit commits with whatever caused it. */
   tx?: Prisma.TransactionClient;
   /**
@@ -270,7 +275,7 @@ export class CurrencyLedgerService {
       await this.assertMembers(read, currency.communityId, requested);
     }
 
-    const batchId = randomUUID();
+    const batchId = options.batchId ?? randomUUID();
     if (userIds.length === 0) {
       return { batchId, paid: [], skipped };
     }

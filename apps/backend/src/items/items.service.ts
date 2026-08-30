@@ -504,57 +504,73 @@ export class ItemsService {
     if (itemIds.length === 0) {
       throw new BadRequestException("No items given to revoke");
     }
+    return this.db.$transaction((tx) => this.destroyItems(tx, itemIds, actor));
+  }
 
-    return this.db.$transaction(async (tx) => {
-      const items = await tx.item.findMany({
-        where: { id: { in: itemIds }, destroyedAt: null },
-        include: { itemType: { select: { communityId: true } } },
-      });
-
-      if (items.length !== itemIds.length) {
-        throw new NotFoundException(
-          "One or more of those items does not exist or is already destroyed",
-        );
-      }
-
-      // A single revoke must not span item types: the ledger row carries the
-      // type, and callers that mix them are asking for two events, not one.
-      const typeIds = new Set(items.map((i) => i.itemTypeId));
-      if (typeIds.size > 1) {
-        throw new BadRequestException(
-          "All items in one revoke must share an item type",
-        );
-      }
-
-      const ownerIds = new Set(items.map((i) => i.ownerId));
-      if (ownerIds.size > 1) {
-        throw new BadRequestException(
-          "All items in one revoke must share an owner",
-        );
-      }
-
-      await tx.item.updateMany({
-        where: { id: { in: itemIds } },
-        data: {
-          destroyedAt: new Date(),
-          destroyedById: actor.actorUserId ?? null,
-        },
-      });
-
-      await this.itemTransactions.recordBatch(
-        {
-          communityId: items[0].itemType.communityId,
-          itemTypeId: items[0].itemTypeId,
-          itemIds,
-          kind: ItemTransactionKind.REVOKE,
-          fromUserId: items[0].ownerId,
-          ...actor,
-        },
-        tx,
-      );
-
-      return items.length;
+  /**
+   * Soft-destroy items and record the revoke, on a given client.
+   *
+   * The core of {@link revokeItems}, extracted so a caller already inside a
+   * transaction -- a shop refund handing back the coin in the same breath --
+   * can revoke within it rather than opening a second one.
+   */
+  async destroyItems(
+    client: DbClient,
+    itemIds: string[],
+    actor: ItemActor,
+    source?: ItemTransactionSource,
+    sourceId?: string | null,
+  ) {
+    const items = await client.item.findMany({
+      where: { id: { in: itemIds }, destroyedAt: null },
+      include: { itemType: { select: { communityId: true } } },
     });
+
+    if (items.length !== itemIds.length) {
+      throw new NotFoundException(
+        "One or more of those items does not exist or is already destroyed",
+      );
+    }
+
+    // A single revoke must not span item types: the ledger row carries the
+    // type, and callers that mix them are asking for two events, not one.
+    const typeIds = new Set(items.map((i) => i.itemTypeId));
+    if (typeIds.size > 1) {
+      throw new BadRequestException(
+        "All items in one revoke must share an item type",
+      );
+    }
+
+    const ownerIds = new Set(items.map((i) => i.ownerId));
+    if (ownerIds.size > 1) {
+      throw new BadRequestException(
+        "All items in one revoke must share an owner",
+      );
+    }
+
+    await client.item.updateMany({
+      where: { id: { in: itemIds } },
+      data: {
+        destroyedAt: new Date(),
+        destroyedById: actor.actorUserId ?? null,
+      },
+    });
+
+    await this.itemTransactions.recordBatch(
+      {
+        communityId: items[0].itemType.communityId,
+        itemTypeId: items[0].itemTypeId,
+        itemIds,
+        kind: ItemTransactionKind.REVOKE,
+        fromUserId: items[0].ownerId,
+        source,
+        sourceId,
+        ...actor,
+      },
+      client,
+    );
+
+    return items.length;
   }
 
   /**
