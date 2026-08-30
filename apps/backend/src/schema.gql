@@ -2015,6 +2015,19 @@ type Mutation {
   ): Community!
   login(input: LoginInput!): AuthPayload!
 
+  """Marks all of your notifications read."""
+  markAllNotificationsRead: Int!
+
+  """
+  Marks specific notifications read. Ids that are not yours match nothing. Returns how many were affected.
+  """
+  markNotificationsRead(ids: [ID!]!): Int!
+
+  """
+  Clears the badge, without marking anything read. Called when the dropdown opens. Returns how many were affected.
+  """
+  markNotificationsSeen: Int!
+
   """
   Create currency into one or more members' balances. Returns the batch id every row it wrote shares.
   """
@@ -2313,6 +2326,88 @@ type Mutation {
     """Trait order updates for a species variant"""
     input: UpdateTraitOrdersInput!
   ): [TraitListEntry!]!
+}
+
+"""
+One thing that happened, addressed to one recipient. Rows are snapshots: the display fields were captured when the notification was written, so a notification about a since-deleted subject still says what happened, and its link is the part that goes dead.
+"""
+type Notification {
+  """Who caused it. Null when it was not a person."""
+  actor: User
+
+  """Names a non-user actor: "system". Set exactly when actor is null."""
+  actorLabel: String
+
+  """How much currency arrived."""
+  amount: Int
+
+  """Free text, for the kinds that carry it."""
+  body: String
+
+  """The community this belongs to, for kinds that are scoped to one."""
+  community: Community
+
+  """How many, for the kinds that move a quantity of something."""
+  count: Int
+  createdAt: DateTime!
+
+  """Enough of a comment to recognise it in a dropdown row."""
+  excerpt: String
+  id: ID!
+  kind: NotificationKind!
+
+  """When the recipient opened this particular notification."""
+  readAt: DateTime
+
+  """Why, when staff gave a reason."""
+  reason: String
+
+  """
+  When the badge stopped counting this. Set in bulk when the recipient opens the dropdown.
+  """
+  seenAt: DateTime
+
+  """
+  The subject's id. Deliberately not a foreign key, so it may name something that has since been deleted.
+  """
+  subjectId: ID
+
+  """
+  What the notification is about, named when it was written: an item type, a currency, a commented-on character.
+  """
+  subjectName: String
+  subjectType: NotificationSubjectType
+}
+
+"""A page of notifications, newest first."""
+type NotificationConnection {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  nodes: [Notification!]!
+  totalCount: Int!
+}
+
+"""What happened. Determines which of the snapshot fields below are set."""
+enum NotificationKind {
+  COMMENT_RECEIVED
+  CURRENCY_RECEIVED
+  FOLLOW_RECEIVED
+  ITEM_GRANTED
+  ITEM_REVOKED
+}
+
+"""
+What clicking the notification opens. Paired with subjectId, and null on notifications that link nowhere.
+"""
+enum NotificationSubjectType {
+  CHARACTER
+  COMMENT
+  CURRENCY
+  GALLERY
+  IMAGE
+  ITEM
+  MEDIA
+  USER
 }
 
 input OwnerIdUpdate {
@@ -2743,6 +2838,9 @@ type Query {
   """
   myShopPurchases(communityId: ID!): [ShopPurchase!]!
 
+  """Your notifications, newest first."""
+  notifications(after: String, first: Int = 20, unreadOnly: Boolean): NotificationConnection!
+
   """Get count of pending images for a community"""
   pendingImageCount(communityId: ID!): Int!
 
@@ -2926,6 +3024,11 @@ type Query {
     """Optional species variant ID for ordered trait display"""
     variantId: ID
   ): TraitConnection!
+
+  """
+  How many notifications the badge should show. Its own query, and a bare indexed count, because it is the one thing polled on a timer.
+  """
+  unseenNotificationCount: Int!
   user(id: ID, username: String): User
   userCharacters(filters: CharacterFiltersInput, userId: ID!): CharacterConnection!
   userGalleries(filters: GalleryFiltersInput, userId: ID!): GalleryConnection!

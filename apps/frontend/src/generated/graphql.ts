@@ -1628,6 +1628,12 @@ export type Mutation = {
   /** Link a Discord guild to a community */
   linkDiscordGuild: Community;
   login: AuthPayload;
+  /** Marks all of your notifications read. */
+  markAllNotificationsRead: Scalars['Int']['output'];
+  /** Marks specific notifications read. Ids that are not yours match nothing. Returns how many were affected. */
+  markNotificationsRead: Scalars['Int']['output'];
+  /** Clears the badge, without marking anything read. Called when the dropdown opens. Returns how many were affected. */
+  markNotificationsSeen: Scalars['Int']['output'];
   /** Create currency into one or more members' balances. Returns the batch id every row it wrote shares. */
   mintCurrency: Scalars['String']['output'];
   /** Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete. */
@@ -1936,6 +1942,11 @@ export type MutationLinkDiscordGuildArgs = {
 
 export type MutationLoginArgs = {
   input: LoginInput;
+};
+
+
+export type MutationMarkNotificationsReadArgs = {
+  ids: Array<Scalars['ID']['input']>;
 };
 
 
@@ -2252,6 +2263,69 @@ export type MutationUpdateTraitOrdersArgs = {
   input: UpdateTraitOrdersInput;
 };
 
+/** One thing that happened, addressed to one recipient. Rows are snapshots: the display fields were captured when the notification was written, so a notification about a since-deleted subject still says what happened, and its link is the part that goes dead. */
+export type Notification = {
+  __typename?: 'Notification';
+  /** Who caused it. Null when it was not a person. */
+  actor: Maybe<User>;
+  /** Names a non-user actor: "system". Set exactly when actor is null. */
+  actorLabel: Maybe<Scalars['String']['output']>;
+  /** How much currency arrived. */
+  amount: Maybe<Scalars['Int']['output']>;
+  /** Free text, for the kinds that carry it. */
+  body: Maybe<Scalars['String']['output']>;
+  /** The community this belongs to, for kinds that are scoped to one. */
+  community: Maybe<Community>;
+  /** How many, for the kinds that move a quantity of something. */
+  count: Maybe<Scalars['Int']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  /** Enough of a comment to recognise it in a dropdown row. */
+  excerpt: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  kind: NotificationKind;
+  /** When the recipient opened this particular notification. */
+  readAt: Maybe<Scalars['DateTime']['output']>;
+  /** Why, when staff gave a reason. */
+  reason: Maybe<Scalars['String']['output']>;
+  /** When the badge stopped counting this. Set in bulk when the recipient opens the dropdown. */
+  seenAt: Maybe<Scalars['DateTime']['output']>;
+  /** The subject's id. Deliberately not a foreign key, so it may name something that has since been deleted. */
+  subjectId: Maybe<Scalars['ID']['output']>;
+  /** What the notification is about, named when it was written: an item type, a currency, a commented-on character. */
+  subjectName: Maybe<Scalars['String']['output']>;
+  subjectType: Maybe<NotificationSubjectType>;
+};
+
+/** A page of notifications, newest first. */
+export type NotificationConnection = {
+  __typename?: 'NotificationConnection';
+  hasNextPage: Scalars['Boolean']['output'];
+  hasPreviousPage: Scalars['Boolean']['output'];
+  nodes: Array<Notification>;
+  totalCount: Scalars['Int']['output'];
+};
+
+/** What happened. Determines which of the snapshot fields below are set. */
+export enum NotificationKind {
+  CommentReceived = 'COMMENT_RECEIVED',
+  CurrencyReceived = 'CURRENCY_RECEIVED',
+  FollowReceived = 'FOLLOW_RECEIVED',
+  ItemGranted = 'ITEM_GRANTED',
+  ItemRevoked = 'ITEM_REVOKED'
+}
+
+/** What clicking the notification opens. Paired with subjectId, and null on notifications that link nowhere. */
+export enum NotificationSubjectType {
+  Character = 'CHARACTER',
+  Comment = 'COMMENT',
+  Currency = 'CURRENCY',
+  Gallery = 'GALLERY',
+  Image = 'IMAGE',
+  Item = 'ITEM',
+  Media = 'MEDIA',
+  User = 'USER'
+}
+
 export type OwnerIdUpdate = {
   /** Set owner ID (null = orphan character) */
   set?: InputMaybe<Scalars['ID']['input']>;
@@ -2421,6 +2495,8 @@ export type Query = {
   myMedia: MediaConnection;
   /** The viewer's own purchases, newest first, each line saying whether it can still be undone and why not. */
   myShopPurchases: Array<ShopPurchase>;
+  /** Your notifications, newest first. */
+  notifications: NotificationConnection;
   /** Get count of pending images for a community */
   pendingImageCount: Scalars['Int']['output'];
   /** Get count of pending trait reviews for a community */
@@ -2465,6 +2541,8 @@ export type Query = {
   traits: TraitConnection;
   /** Get traits by species ID with pagination, optionally ordered by variant-specific order */
   traitsBySpecies: TraitConnection;
+  /** How many notifications the badge should show. Its own query, and a bare indexed count, because it is the one thing polled on a timer. */
+  unseenNotificationCount: Scalars['Int']['output'];
   user: Maybe<User>;
   userCharacters: CharacterConnection;
   userGalleries: GalleryConnection;
@@ -2884,6 +2962,13 @@ export type QueryMyMediaArgs = {
 
 export type QueryMyShopPurchasesArgs = {
   communityId: Scalars['ID']['input'];
+};
+
+
+export type QueryNotificationsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  unreadOnly?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
@@ -4831,6 +4916,39 @@ export type RemoveMediaTagsMutationVariables = Exact<{
 
 export type RemoveMediaTagsMutation = { __typename?: 'Mutation', removeMediaTags: { __typename?: 'Media', id: string, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
+export type NotificationFieldsFragment = { __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string } | null };
+
+export type NotificationsQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  unreadOnly?: InputMaybe<Scalars['Boolean']['input']>;
+}>;
+
+
+export type NotificationsQuery = { __typename?: 'Query', notifications: { __typename?: 'NotificationConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string } | null }> } };
+
+export type UnseenNotificationCountQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type UnseenNotificationCountQuery = { __typename?: 'Query', unseenNotificationCount: number };
+
+export type MarkNotificationsSeenMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MarkNotificationsSeenMutation = { __typename?: 'Mutation', markNotificationsSeen: number };
+
+export type MarkNotificationsReadMutationVariables = Exact<{
+  ids: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+}>;
+
+
+export type MarkNotificationsReadMutation = { __typename?: 'Mutation', markNotificationsRead: number };
+
+export type MarkAllNotificationsReadMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MarkAllNotificationsReadMutation = { __typename?: 'Mutation', markAllNotificationsRead: number };
+
 export type RolesByCommunityDetailedQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
   first: Scalars['Int']['input'];
@@ -5485,6 +5603,39 @@ export const ItemTransactionFieldsFragmentDoc = gql`
   }
 }
     ${UserBasicFragmentDoc}`;
+export const NotificationFieldsFragmentDoc = gql`
+    fragment NotificationFields on Notification {
+  id
+  kind
+  createdAt
+  seenAt
+  readAt
+  actorLabel
+  subjectType
+  subjectId
+  body
+  subjectName
+  count
+  amount
+  reason
+  excerpt
+  actor {
+    id
+    username
+    displayName
+    avatarImage {
+      id
+      thumbnailUrl
+      originalUrl
+      altText
+    }
+  }
+  community {
+    id
+    name
+  }
+}
+    `;
 export const ShopPriceFieldsFragmentDoc = gql`
     fragment ShopPriceFields on ShopPrice {
   id
@@ -11572,6 +11723,181 @@ export function useRemoveMediaTagsMutation(baseOptions?: Apollo.MutationHookOpti
 export type RemoveMediaTagsMutationHookResult = ReturnType<typeof useRemoveMediaTagsMutation>;
 export type RemoveMediaTagsMutationResult = Apollo.MutationResult<RemoveMediaTagsMutation>;
 export type RemoveMediaTagsMutationOptions = Apollo.BaseMutationOptions<RemoveMediaTagsMutation, RemoveMediaTagsMutationVariables>;
+export const NotificationsDocument = gql`
+    query Notifications($first: Int, $after: String, $unreadOnly: Boolean) {
+  notifications(first: $first, after: $after, unreadOnly: $unreadOnly) {
+    nodes {
+      ...NotificationFields
+    }
+    totalCount
+    hasNextPage
+    hasPreviousPage
+  }
+}
+    ${NotificationFieldsFragmentDoc}`;
+
+/**
+ * __useNotificationsQuery__
+ *
+ * To run a query within a React component, call `useNotificationsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useNotificationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useNotificationsQuery({
+ *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *      unreadOnly: // value for 'unreadOnly'
+ *   },
+ * });
+ */
+export function useNotificationsQuery(baseOptions?: Apollo.QueryHookOptions<NotificationsQuery, NotificationsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<NotificationsQuery, NotificationsQueryVariables>(NotificationsDocument, options);
+      }
+export function useNotificationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<NotificationsQuery, NotificationsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<NotificationsQuery, NotificationsQueryVariables>(NotificationsDocument, options);
+        }
+export function useNotificationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<NotificationsQuery, NotificationsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<NotificationsQuery, NotificationsQueryVariables>(NotificationsDocument, options);
+        }
+export type NotificationsQueryHookResult = ReturnType<typeof useNotificationsQuery>;
+export type NotificationsLazyQueryHookResult = ReturnType<typeof useNotificationsLazyQuery>;
+export type NotificationsSuspenseQueryHookResult = ReturnType<typeof useNotificationsSuspenseQuery>;
+export type NotificationsQueryResult = Apollo.QueryResult<NotificationsQuery, NotificationsQueryVariables>;
+export const UnseenNotificationCountDocument = gql`
+    query UnseenNotificationCount {
+  unseenNotificationCount
+}
+    `;
+
+/**
+ * __useUnseenNotificationCountQuery__
+ *
+ * To run a query within a React component, call `useUnseenNotificationCountQuery` and pass it any options that fit your needs.
+ * When your component renders, `useUnseenNotificationCountQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUnseenNotificationCountQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useUnseenNotificationCountQuery(baseOptions?: Apollo.QueryHookOptions<UnseenNotificationCountQuery, UnseenNotificationCountQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<UnseenNotificationCountQuery, UnseenNotificationCountQueryVariables>(UnseenNotificationCountDocument, options);
+      }
+export function useUnseenNotificationCountLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<UnseenNotificationCountQuery, UnseenNotificationCountQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<UnseenNotificationCountQuery, UnseenNotificationCountQueryVariables>(UnseenNotificationCountDocument, options);
+        }
+export function useUnseenNotificationCountSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<UnseenNotificationCountQuery, UnseenNotificationCountQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<UnseenNotificationCountQuery, UnseenNotificationCountQueryVariables>(UnseenNotificationCountDocument, options);
+        }
+export type UnseenNotificationCountQueryHookResult = ReturnType<typeof useUnseenNotificationCountQuery>;
+export type UnseenNotificationCountLazyQueryHookResult = ReturnType<typeof useUnseenNotificationCountLazyQuery>;
+export type UnseenNotificationCountSuspenseQueryHookResult = ReturnType<typeof useUnseenNotificationCountSuspenseQuery>;
+export type UnseenNotificationCountQueryResult = Apollo.QueryResult<UnseenNotificationCountQuery, UnseenNotificationCountQueryVariables>;
+export const MarkNotificationsSeenDocument = gql`
+    mutation MarkNotificationsSeen {
+  markNotificationsSeen
+}
+    `;
+export type MarkNotificationsSeenMutationFn = Apollo.MutationFunction<MarkNotificationsSeenMutation, MarkNotificationsSeenMutationVariables>;
+
+/**
+ * __useMarkNotificationsSeenMutation__
+ *
+ * To run a mutation, you first call `useMarkNotificationsSeenMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useMarkNotificationsSeenMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [markNotificationsSeenMutation, { data, loading, error }] = useMarkNotificationsSeenMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useMarkNotificationsSeenMutation(baseOptions?: Apollo.MutationHookOptions<MarkNotificationsSeenMutation, MarkNotificationsSeenMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<MarkNotificationsSeenMutation, MarkNotificationsSeenMutationVariables>(MarkNotificationsSeenDocument, options);
+      }
+export type MarkNotificationsSeenMutationHookResult = ReturnType<typeof useMarkNotificationsSeenMutation>;
+export type MarkNotificationsSeenMutationResult = Apollo.MutationResult<MarkNotificationsSeenMutation>;
+export type MarkNotificationsSeenMutationOptions = Apollo.BaseMutationOptions<MarkNotificationsSeenMutation, MarkNotificationsSeenMutationVariables>;
+export const MarkNotificationsReadDocument = gql`
+    mutation MarkNotificationsRead($ids: [ID!]!) {
+  markNotificationsRead(ids: $ids)
+}
+    `;
+export type MarkNotificationsReadMutationFn = Apollo.MutationFunction<MarkNotificationsReadMutation, MarkNotificationsReadMutationVariables>;
+
+/**
+ * __useMarkNotificationsReadMutation__
+ *
+ * To run a mutation, you first call `useMarkNotificationsReadMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useMarkNotificationsReadMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [markNotificationsReadMutation, { data, loading, error }] = useMarkNotificationsReadMutation({
+ *   variables: {
+ *      ids: // value for 'ids'
+ *   },
+ * });
+ */
+export function useMarkNotificationsReadMutation(baseOptions?: Apollo.MutationHookOptions<MarkNotificationsReadMutation, MarkNotificationsReadMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<MarkNotificationsReadMutation, MarkNotificationsReadMutationVariables>(MarkNotificationsReadDocument, options);
+      }
+export type MarkNotificationsReadMutationHookResult = ReturnType<typeof useMarkNotificationsReadMutation>;
+export type MarkNotificationsReadMutationResult = Apollo.MutationResult<MarkNotificationsReadMutation>;
+export type MarkNotificationsReadMutationOptions = Apollo.BaseMutationOptions<MarkNotificationsReadMutation, MarkNotificationsReadMutationVariables>;
+export const MarkAllNotificationsReadDocument = gql`
+    mutation MarkAllNotificationsRead {
+  markAllNotificationsRead
+}
+    `;
+export type MarkAllNotificationsReadMutationFn = Apollo.MutationFunction<MarkAllNotificationsReadMutation, MarkAllNotificationsReadMutationVariables>;
+
+/**
+ * __useMarkAllNotificationsReadMutation__
+ *
+ * To run a mutation, you first call `useMarkAllNotificationsReadMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useMarkAllNotificationsReadMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [markAllNotificationsReadMutation, { data, loading, error }] = useMarkAllNotificationsReadMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useMarkAllNotificationsReadMutation(baseOptions?: Apollo.MutationHookOptions<MarkAllNotificationsReadMutation, MarkAllNotificationsReadMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<MarkAllNotificationsReadMutation, MarkAllNotificationsReadMutationVariables>(MarkAllNotificationsReadDocument, options);
+      }
+export type MarkAllNotificationsReadMutationHookResult = ReturnType<typeof useMarkAllNotificationsReadMutation>;
+export type MarkAllNotificationsReadMutationResult = Apollo.MutationResult<MarkAllNotificationsReadMutation>;
+export type MarkAllNotificationsReadMutationOptions = Apollo.BaseMutationOptions<MarkAllNotificationsReadMutation, MarkAllNotificationsReadMutationVariables>;
 export const RolesByCommunityDetailedDocument = gql`
     query RolesByCommunityDetailed($communityId: ID!, $first: Int!, $after: String) {
   rolesByCommunity(communityId: $communityId, first: $first, after: $after) {

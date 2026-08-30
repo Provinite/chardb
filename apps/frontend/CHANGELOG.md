@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a listings and price editor for staff. The buyer's balance shows in the
   header so prices mean something without opening the wallet.
 
+- **Notifications**: a bell in the top bar with an unseen count and a dropdown
+  of the most recent few, plus a full feed at `/notifications` with an unread
+  filter. Opening the dropdown clears the badge; a notification stays unread
+  until it is opened.
+
 - **Award recipients widget** on each image moderation card. Lists everyone
   the upload names, deduplicated — posting your own art of your own character
   is one row reading `uploader · owner`, while gift art of someone else's
@@ -34,6 +39,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Member list rows show the member's real avatar, falling back to initials.
 
 ### Fixed
+
+- **Logging out did not clear the Apollo cache**, so the next person to sign in
+  on the same browser could see the previous user's cached data — their
+  notifications, their `me`, their liked characters — until each query's network
+  reply landed. Found during the security review of the notification work.
+
+- **The notification badge showed the previous session's count after signing
+  in.** The header outlives a login, so the bell never remounted and nothing
+  clears the Apollo cache in between — the number stayed stale until the
+  five-minute poll came round, or showed the count belonging to whoever was
+  signed in before.
 
 - Sold-out and at-the-cap shop prices now look disabled, not just unaffordable
   ones.

@@ -6,6 +6,7 @@ import { UsersModule } from "../users/users.module";
 import { CharactersModule } from "../characters/characters.module";
 import { ImagesModule } from "../images/images.module";
 import { GalleriesModule } from "../galleries/galleries.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { GalleriesModule } from "../galleries/galleries.module";
     CharactersModule,
     ImagesModule,
     GalleriesModule,
+    NotificationsModule,
   ],
   providers: [CommentsService, CommentsResolver],
   exports: [CommentsService],

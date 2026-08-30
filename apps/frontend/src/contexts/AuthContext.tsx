@@ -7,6 +7,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
+import { ApolloError, useApolloClient } from "@apollo/client";
 import { toast } from "react-hot-toast";
 import {
   useLoginMutation,
@@ -39,9 +40,29 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+/**
+ * The message to show when an auth mutation fails.
+ *
+ * Apollo reports a rejected mutation and a transport failure on different
+ * properties, and a thrown value is not guaranteed to be either, so each shape
+ * is narrowed rather than reached through with optional chaining.
+ */
+function authErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApolloError) {
+    return (
+      error.graphQLErrors[0]?.message ||
+      error.networkError?.message ||
+      error.message ||
+      fallback
+    );
+  }
+  return error instanceof Error ? error.message : fallback;
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const apolloClient = useApolloClient();
 
   const [loginMutation] = useLoginMutation();
   const [signupMutation] = useSignupMutation();
@@ -99,14 +120,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return true;
         }
         return false;
-      } catch (error: any) {
+      } catch (error) {
         console.error("Login error:", error);
-        const errorMessage =
-          error?.graphQLErrors?.[0]?.message ||
-          error?.networkError?.message ||
-          error?.message ||
-          "Login failed";
-        toast.error(errorMessage);
+        toast.error(authErrorMessage(error, "Login failed"));
         return false;
       }
     },
@@ -143,14 +159,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return true;
         }
         return false;
-      } catch (error: any) {
+      } catch (error) {
         console.error("Signup error:", error);
-        const errorMessage =
-          error?.graphQLErrors?.[0]?.message ||
-          error?.networkError?.message ||
-          error?.message ||
-          "Signup failed";
-        toast.error(errorMessage);
+        toast.error(authErrorMessage(error, "Signup failed"));
         return false;
       }
     },
@@ -161,8 +172,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     setUser(null);
+
+    // Every cached query was answered for the person who just left. Without
+    // this, the next person to sign in on this browser renders the previous
+    // user's data from cache while the network reply is in flight -- their
+    // notifications, their liked characters, their `me`. Tokens being gone does
+    // not help, because a cache hit never reaches the network.
+    //
+    // clearStore, not resetStore: resetStore refetches every active query, and
+    // the queries active at this moment belong to a session that has ended.
+    void apolloClient.clearStore();
+
     toast.success("Logged out successfully");
-  }, []);
+  }, [apolloClient]);
 
   const refreshAccessToken = useCallback(async (): Promise<boolean> => {
     try {

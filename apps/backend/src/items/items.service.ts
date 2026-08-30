@@ -13,11 +13,14 @@ import {
   ExternalAccountProvider,
   ItemTransactionKind,
   ItemTransactionSource,
+  NotificationKind,
+  NotificationSubjectType,
 } from "@chardb/database";
 import {
   ItemTransactionsService,
   type DbClient,
 } from "../item-transactions/item-transactions.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { ItemTypeFilters } from "./dto/item-type.dto";
 import { ItemFilters } from "./dto/item.dto";
 
@@ -48,6 +51,7 @@ export class ItemsService {
     private readonly pendingOwnershipService: PendingOwnershipService,
     private readonly discordService: DiscordService,
     private readonly itemTransactions: ItemTransactionsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ==================== ItemType Methods ====================
@@ -373,16 +377,40 @@ export class ItemsService {
     // while being wrong.
     //
     // No stacking, so no read-then-write and no race: N items is N inserts.
-    const itemIds = await this.db.$transaction((tx) =>
-      this.createGranted(tx, {
+    const itemIds = await this.db.$transaction(async (tx) => {
+      const ids = await this.createGranted(tx, {
         itemTypeId,
         communityId: itemType.communityId,
         ownerId: actualOwnerId ?? null,
         quantity,
         metadata,
         actor: input.actor,
-      }),
-    );
+      });
+
+      // A grant of five identical potions is one notification saying five, not
+      // five notifications. Nothing is sent for a grant still awaiting a claim:
+      // there is no one to tell until the CLAIM names an owner.
+      //
+      // Here rather than in createGranted, so that buying something does not
+      // notify the buyer that they received it. A shop purchase is already the
+      // most direct possible confirmation of itself.
+      if (actualOwnerId) {
+        await this.notifications.create(
+          {
+            recipientId: actualOwnerId,
+            kind: NotificationKind.ITEM_GRANTED,
+            communityId: itemType.communityId,
+            subjectType: NotificationSubjectType.ITEM,
+            subjectId: ids[0],
+            data: { subjectName: itemType.name.slice(0, 200), count: quantity },
+            ...input.actor,
+          },
+          tx,
+        );
+      }
+
+      return ids;
+    });
 
     // Pending ownership is one record per item -- PendingOwnership.itemId is
     // unique, and each instance claims independently.
@@ -541,7 +569,9 @@ export class ItemsService {
   ) {
     const items = await client.item.findMany({
       where: { id: { in: itemIds }, destroyedAt: null },
-      include: { itemType: { select: { communityId: true } } },
+      // `name` is here for the revoke notification, which needs something to
+      // call the thing it is telling somebody about.
+      include: { itemType: { select: { communityId: true, name: true } } },
     });
 
     if (items.length !== itemIds.length) {
@@ -601,6 +631,34 @@ export class ItemsService {
       },
       client,
     );
+
+    // One notification for the whole revoke, matching the single ledger event.
+    // `reason` is the member-facing half of ItemActor, so a revoke that
+    // explained itself to the ledger explains itself here too. An unclaimed
+    // item has no owner to tell.
+    //
+    // Nobody is told about their own doing: a member undoing their own shop
+    // purchase does not need to be informed that their item was taken away.
+    // Staff revoking, or staff refunding on somebody's behalf, still does.
+    const selfInflicted = actor.actorUserId === items[0].ownerId;
+    if (items[0].ownerId && !selfInflicted) {
+      await this.notifications.create(
+        {
+          recipientId: items[0].ownerId,
+          kind: NotificationKind.ITEM_REVOKED,
+          communityId: items[0].itemType.communityId,
+          subjectType: NotificationSubjectType.ITEM,
+          subjectId: items[0].id,
+          data: {
+            subjectName: items[0].itemType.name.slice(0, 200),
+            count: items.length,
+            reason: actor.reason?.slice(0, 500) ?? null,
+          },
+          ...actor,
+        },
+        client,
+      );
+    }
 
     return items.length;
   }

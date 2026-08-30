@@ -49,6 +49,7 @@ import { EnumValueManagementPage } from "./pages/EnumValueManagementPage";
 import { EnumValueSettingsPage } from "./pages/EnumValueSettingsPage";
 import { PermissionManagementPage } from "./pages/PermissionManagementPage";
 import { CommunityMembersPage } from "./pages/CommunityMembersPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 import { CommunitySettingsPage } from "./pages/CommunitySettingsPage";
 import { ImageModerationPage } from "./pages/ImageModerationPage";
 import { TraitReviewPage } from "./pages/TraitReviewPage";
@@ -356,6 +357,14 @@ function App() {
           element={
             <ProtectedRoute>
               <PermissionManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
             </ProtectedRoute>
           }
         />

@@ -11,7 +11,11 @@ import { PendingOwnershipService } from "../pending-ownership/pending-ownership.
 import { DiscordService } from "../discord/discord.service";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
 import { ItemTransactionKind } from "@chardb/database";
-import { mockDatabaseService } from "../../test/setup";
+import {
+  mockDatabaseService,
+  mockNotificationsService,
+} from "../../test/setup";
+import { NotificationsService } from "../notifications/notifications.service";
 
 const mockPendingOwnershipService = {
   createForItem: jest.fn(),
@@ -54,6 +58,10 @@ describe("ItemsService", () => {
       providers: [
         ItemsService,
         { provide: DatabaseService, useValue: mockDatabaseService },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
         {
           provide: PendingOwnershipService,
           useValue: mockPendingOwnershipService,
@@ -232,14 +240,18 @@ describe("ItemsService", () => {
         itemTypeId: "type1",
         ownerId: "user1",
         quantity: 1,
-        itemType: { communityId: "comm1" },
+        // `name` is selected alongside communityId so the revoke notification
+        // can say what was taken.
+        itemType: { communityId: "comm1", name: "Rusty Locket" },
       },
       {
         id: "i2",
         itemTypeId: "type1",
         ownerId: "user1",
         quantity: 1,
-        itemType: { communityId: "comm1" },
+        // `name` is selected alongside communityId so the revoke notification
+        // can say what was taken.
+        itemType: { communityId: "comm1", name: "Rusty Locket" },
       },
     ];
 
@@ -404,6 +416,10 @@ describe("ItemsService.findItemEconomy", () => {
         ItemsService,
         { provide: DatabaseService, useValue: mockDatabaseService },
         {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
+        {
           provide: PendingOwnershipService,
           useValue: mockPendingOwnershipService,
         },
@@ -530,6 +546,10 @@ describe("ItemsService.findMemberHoldings", () => {
       providers: [
         ItemsService,
         { provide: DatabaseService, useValue: mockDatabaseService },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
         {
           provide: PendingOwnershipService,
           useValue: mockPendingOwnershipService,

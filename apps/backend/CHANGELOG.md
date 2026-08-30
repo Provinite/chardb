@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **In-app notifications**: a `Notification` table, the `notifications` and
+  `unseenNotificationCount` queries, and mutations to mark them seen or read.
+  Written by follows, comments, item grants, item revokes and currency credits.
+
+- **`Notification.data` is a validated per-kind snapshot, not loose JSON.** One
+  zod schema per kind is the single source of truth: types are inferred from it
+  and fed to prisma-json-types-generator, so the generated client types the
+  column and a payload is never `any`. Adding a kind without a schema fails to
+  compile.
+
+### Fixed
+
+- **`likedMedia` never returned `imageCount` or `textCount`.** Both are non-null
+  on `MediaConnection`, so asking for either was an error at runtime. The social
+  service now counts them the way `MediaService.findAll` does.
+
+- **The social module returned raw Prisma rows where it declared GraphQL
+  entities**, held together by `any` on seven service methods. It now maps
+  through the same `mapPrismaXToGraphQL` functions every other module uses, so
+  `likedCharacters` returns a `Character` with its computed `isOrphaned` rather
+  than a row that merely resembled one.
+
+- **`schema:emit` reported a failed boot as a bare exit code.** It passed
+  `logger: false`, and Nest reports an unresolvable dependency through the
+  logger rather than as a thrown error, so a broken app produced no output at
+  all. It was hiding a real circular import between the notifications and auth
+  modules.
+
 ### Security
 
 - **An award could mint another community's currency.** `approveImage` checked

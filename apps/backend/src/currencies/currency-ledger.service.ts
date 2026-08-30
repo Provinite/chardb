@@ -9,8 +9,11 @@ import {
   Prisma,
   CurrencyTransactionKind,
   CurrencyTransactionSource,
+  NotificationKind,
+  NotificationSubjectType,
 } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import {
   CurrencyTransactionFilters,
   MintCurrencyInput,
@@ -108,7 +111,10 @@ function isOverdraft(error: unknown): boolean {
 
 @Injectable()
 export class CurrencyLedgerService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   // ==================== Balance mechanics ====================
 
@@ -306,6 +312,23 @@ export class CurrencyLedgerService {
             sourceId,
           },
         });
+
+        // On the same client as the ledger row, so coin that arrives is
+        // announced and coin that rolls back is not. Telling someone about
+        // money they do not have would be worse than telling them nothing.
+        await this.notifications.create(
+          {
+            recipientId: userId,
+            kind: NotificationKind.CURRENCY_RECEIVED,
+            communityId: currency.communityId,
+            subjectType: NotificationSubjectType.CURRENCY,
+            subjectId: currency.id,
+            data: { subjectName: currency.name.slice(0, 200), amount },
+            actorUserId,
+            actorLabel,
+          },
+          client,
+        );
       }
     };
 
