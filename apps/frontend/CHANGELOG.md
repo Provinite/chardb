@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a listings and price editor for staff. The buyer's balance shows in the
   header so prices mean something without opening the wallet.
 
+- **Shop Purchases** (`/communities/:communityId/admin/shop/purchases`): every
+  member's purchases, with a refund not bound by the buyer's fifteen minutes.
+  Members were being told to ask a moderator who had no button to press.
+
 - **Notifications**: a bell in the top bar with an unseen count and a dropdown
   of the most recent few, plus a full feed at `/notifications` with an unread
   filter. Opening the dropdown clears the badge; a notification stays unread

@@ -7,11 +7,14 @@ import {
   describeRow,
   collapseTransferLegs,
   netIssued,
+  formatPrice,
+  sumPrices,
   CURRENCY_KIND_LABEL,
 } from "../currencyDisplay";
 
 const HC = { code: "HC", symbol: null };
 const GEM = { code: "GEM", symbol: "◆" };
+const SS = { code: "SS", symbol: "✦" };
 
 describe("formatAmount", () => {
   it("puts the code after the number when there is no symbol", () => {
@@ -202,6 +205,99 @@ describe("netIssued", () => {
 
   it("is zero over no rows", () => {
     expect(netIssued([])).toBe(0);
+  });
+});
+
+describe("formatPrice", () => {
+  it("renders a single-currency price as one amount", () => {
+    expect(formatPrice([{ amount: 50, currency: HC }])).toBe("50 HC");
+  });
+
+  it("joins the currencies of one option with a plus", () => {
+    // One option asking for two currencies is a price you pay all of, not a
+    // choice between them -- "and", never "or".
+    expect(
+      formatPrice([
+        { amount: 20, currency: HC },
+        { amount: 1, currency: SS },
+      ]),
+    ).toBe("20 HC + ✦1");
+  });
+
+  it("keeps the order it was given", () => {
+    // The order is the staff's, set in the price editor. Re-sorting it would
+    // silently disagree with the admin page.
+    expect(
+      formatPrice([
+        { amount: 1, currency: SS },
+        { amount: 20, currency: HC },
+      ]),
+    ).toBe("✦1 + 20 HC");
+  });
+
+  it("says Free rather than rendering an empty string", () => {
+    // A price with no components should never reach a member, but an empty
+    // string in a button is a rendering bug that looks like a missing price.
+    expect(formatPrice([])).toBe("Free");
+  });
+});
+
+describe("sumPrices", () => {
+  it("adds amounts of the same currency", () => {
+    expect(
+      sumPrices([[{ amount: 20, currency: HC }], [{ amount: 30, currency: HC }]]),
+    ).toEqual([{ currency: HC, amount: 50 }]);
+  });
+
+  it("keeps different currencies apart rather than adding them", () => {
+    // Currencies never convert. A cart costing 20 HC and 1 SS has no single
+    // total, and inventing one would be a lie about what is being spent.
+    expect(
+      sumPrices([[{ amount: 20, currency: HC }], [{ amount: 1, currency: SS }]]),
+    ).toEqual([
+      { currency: HC, amount: 20 },
+      { currency: SS, amount: 1 },
+    ]);
+  });
+
+  it("totals a mixed cart per currency", () => {
+    // Two potions at 20 HC + 1 SS, and one locket at 120 HC.
+    const total = sumPrices([
+      [
+        { amount: 20, currency: HC },
+        { amount: 1, currency: SS },
+      ],
+      [
+        { amount: 20, currency: HC },
+        { amount: 1, currency: SS },
+      ],
+      [{ amount: 120, currency: HC }],
+    ]);
+
+    expect(total).toEqual([
+      { currency: HC, amount: 160 },
+      { currency: SS, amount: 2 },
+    ]);
+  });
+
+  it("orders by currency code, so a total does not reshuffle as lines change", () => {
+    expect(
+      sumPrices([[{ amount: 1, currency: SS }], [{ amount: 5, currency: GEM }]]).map(
+        (t) => t.currency.code,
+      ),
+    ).toEqual(["GEM", "SS"]);
+  });
+
+  it("is empty for an empty cart", () => {
+    expect(sumPrices([])).toEqual([]);
+  });
+
+  it("does not mutate the components it was given", () => {
+    // The same price object is rendered on the listing and summed in the
+    // cart; accumulating into it would make the listing's price grow.
+    const price = [{ amount: 20, currency: HC }];
+    sumPrices([price, price]);
+    expect(price[0].amount).toBe(20);
   });
 });
 

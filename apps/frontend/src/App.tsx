@@ -68,6 +68,7 @@ import { CommunityCurrenciesAdminPage } from "./pages/CommunityCurrenciesAdminPa
 import { CommunityCurrencyLedgerPage } from "./pages/CommunityCurrencyLedgerPage";
 import { CommunityShopPage } from "./pages/CommunityShopPage";
 import { CommunityShopAdminPage } from "./pages/CommunityShopAdminPage";
+import { CommunityShopPurchasesPage } from "./pages/CommunityShopPurchasesPage";
 import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
 import { CommunityItemLedgerPage } from "./pages/CommunityItemLedgerPage";
 import { ItemProvenancePage } from "./pages/ItemProvenancePage";
@@ -464,6 +465,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CommunityShopAdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/admin/shop/purchases"
+          element={
+            <ProtectedRoute>
+              <CommunityShopPurchasesPage />
             </ProtectedRoute>
           }
         />

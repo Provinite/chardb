@@ -2408,6 +2408,8 @@ export type Query = {
   communityMembersByCommunity: CommunityMemberConnection;
   /** Get community members by user ID with pagination */
   communityMembersByUser: CommunityMemberConnection;
+  /** Every member's purchases, newest first, for staff handling a refund past the buyer's own undo window. */
+  communityShopPurchases: Array<ShopPurchase>;
   /** Every currency a community defines. Readable by any member. */
   currencies: Array<Currency>;
   currency: Currency;
@@ -2698,6 +2700,13 @@ export type QueryCommunityMembersByUserArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   userId: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityShopPurchasesArgs = {
+  buyerId?: InputMaybe<Scalars['ID']['input']>;
+  communityId: Scalars['ID']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -3326,6 +3335,8 @@ export type ShopPriceInput = {
 /** One checkout. */
 export type ShopPurchase = {
   __typename?: 'ShopPurchase';
+  /** Who bought it. What a staff view is looking at. */
+  buyer: Maybe<User>;
   buyerId: Scalars['ID']['output'];
   communityId: Scalars['ID']['output'];
   createdAt: Scalars['DateTime']['output'];
@@ -5008,6 +5019,15 @@ export type GetMyShopPurchasesQueryVariables = Exact<{
 
 
 export type GetMyShopPurchasesQuery = { __typename?: 'Query', myShopPurchases: Array<{ __typename?: 'ShopPurchase', id: string, createdAt: string, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, createdAt: string, refundedAt: string | null, refundableByViewer: boolean, refundBlockedReason: string | null, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null, itemType: { __typename?: 'ItemType', id: string, name: string } } }> }> };
+
+export type GetCommunityShopPurchasesQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  buyerId?: InputMaybe<Scalars['ID']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetCommunityShopPurchasesQuery = { __typename?: 'Query', communityShopPurchases: Array<{ __typename?: 'ShopPurchase', id: string, createdAt: string, buyerId: string, buyer: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, createdAt: string, refundedAt: string | null, refundableByViewer: boolean, refundBlockedReason: string | null, refundedBy: { __typename?: 'User', id: string, username: string } | null, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null, itemType: { __typename?: 'ItemType', id: string, name: string } } }> }> };
 
 export type CheckoutMutationVariables = Exact<{
   input: CheckoutInput;
@@ -12354,6 +12374,84 @@ export type GetMyShopPurchasesQueryHookResult = ReturnType<typeof useGetMyShopPu
 export type GetMyShopPurchasesLazyQueryHookResult = ReturnType<typeof useGetMyShopPurchasesLazyQuery>;
 export type GetMyShopPurchasesSuspenseQueryHookResult = ReturnType<typeof useGetMyShopPurchasesSuspenseQuery>;
 export type GetMyShopPurchasesQueryResult = Apollo.QueryResult<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>;
+export const GetCommunityShopPurchasesDocument = gql`
+    query GetCommunityShopPurchases($communityId: ID!, $buyerId: ID, $limit: Int) {
+  communityShopPurchases(
+    communityId: $communityId
+    buyerId: $buyerId
+    limit: $limit
+  ) {
+    id
+    createdAt
+    buyerId
+    buyer {
+      id
+      username
+      displayName
+    }
+    lines {
+      id
+      createdAt
+      refundedAt
+      refundableByViewer
+      refundBlockedReason
+      refundedBy {
+        id
+        username
+      }
+      costs {
+        amount
+        currency {
+          ...CurrencyFields
+        }
+      }
+      shopItem {
+        id
+        name
+        itemType {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+    ${CurrencyFieldsFragmentDoc}`;
+
+/**
+ * __useGetCommunityShopPurchasesQuery__
+ *
+ * To run a query within a React component, call `useGetCommunityShopPurchasesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCommunityShopPurchasesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCommunityShopPurchasesQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      buyerId: // value for 'buyerId'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function useGetCommunityShopPurchasesQuery(baseOptions: Apollo.QueryHookOptions<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables> & ({ variables: GetCommunityShopPurchasesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables>(GetCommunityShopPurchasesDocument, options);
+      }
+export function useGetCommunityShopPurchasesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables>(GetCommunityShopPurchasesDocument, options);
+        }
+export function useGetCommunityShopPurchasesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables>(GetCommunityShopPurchasesDocument, options);
+        }
+export type GetCommunityShopPurchasesQueryHookResult = ReturnType<typeof useGetCommunityShopPurchasesQuery>;
+export type GetCommunityShopPurchasesLazyQueryHookResult = ReturnType<typeof useGetCommunityShopPurchasesLazyQuery>;
+export type GetCommunityShopPurchasesSuspenseQueryHookResult = ReturnType<typeof useGetCommunityShopPurchasesSuspenseQuery>;
+export type GetCommunityShopPurchasesQueryResult = Apollo.QueryResult<GetCommunityShopPurchasesQuery, GetCommunityShopPurchasesQueryVariables>;
 export const CheckoutDocument = gql`
     mutation Checkout($input: CheckoutInput!) {
   checkout(input: $input) {

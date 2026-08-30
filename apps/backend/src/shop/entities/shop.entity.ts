@@ -173,6 +173,12 @@ export class ShopPurchase {
   @Field(() => ID)
   buyerId: string;
 
+  @Field(() => User, {
+    nullable: true,
+    description: "Who bought it. What a staff view is looking at.",
+  })
+  buyer?: User | null;
+
   @Field(() => [ShopPurchaseLine])
   lines: ShopPurchaseLine[];
 

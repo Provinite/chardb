@@ -14,6 +14,7 @@ import {
   SeedMintCurrencyDocument,
   SeedCommunityMembersDocument,
   SeedRemoveCommunityMemberDocument,
+  SeedCommunityShopPurchasesDocument,
 } from "../../src/generated/graphql.js";
 
 const test = presetTest("community-items");
@@ -683,6 +684,83 @@ test.describe("coin shop", () => {
       );
       // Three seeded plus the one just bought, none destroyed.
       expect(potions?.count).toBe(4);
+    });
+
+    test("staff see the community's purchases, and may refund past the window", async ({
+      world,
+    }) => {
+      const { checkout } = await world.as("member").gql(SeedCheckoutDocument, {
+        input: {
+          communityId: world.community.id,
+          lines: [
+            {
+              shopItemId: world.shop.potionListing.id,
+              shopPriceId: world.shop.potionListing.priceIds[0],
+              quantity: 1,
+            },
+          ],
+        },
+      });
+      const lineId = checkout.lines[0].id;
+
+      const { communityShopPurchases } = await world
+        .as("quartermaster")
+        .gql(SeedCommunityShopPurchasesDocument, {
+          communityId: world.community.id,
+        });
+
+      const purchase = communityShopPurchases.find((p) => p.id === checkout.id);
+      expect(purchase?.buyer?.username).toBe(world.users.member.username);
+
+      const line = purchase?.lines.find((l) => l.id === lineId);
+      // "Not your purchase" and the undo window are the buyer's reasons, not
+      // staff's. Neither should block a moderator.
+      expect(line?.refundableByViewer).toBe(true);
+      expect(line?.refundBlockedReason).toBeNull();
+    });
+
+    test("a refunded line says who refunded it", async ({ world }) => {
+      const { checkout } = await world.as("member").gql(SeedCheckoutDocument, {
+        input: {
+          communityId: world.community.id,
+          lines: [
+            {
+              shopItemId: world.shop.potionListing.id,
+              shopPriceId: world.shop.potionListing.priceIds[0],
+              quantity: 1,
+            },
+          ],
+        },
+      });
+
+      await world.as("quartermaster").gql(SeedRefundShopLineDocument, {
+        lineId: checkout.lines[0].id,
+      });
+
+      const { communityShopPurchases } = await world
+        .as("quartermaster")
+        .gql(SeedCommunityShopPurchasesDocument, {
+          communityId: world.community.id,
+        });
+      const line = communityShopPurchases
+        .find((p) => p.id === checkout.id)
+        ?.lines.find((l) => l.id === checkout.lines[0].id);
+
+      expect(line?.refundedAt).toBeTruthy();
+      expect(line?.refundedBy?.username).toBe(
+        world.users.quartermaster.username,
+      );
+      expect(line?.refundBlockedReason).toBe("Already refunded");
+    });
+
+    test("an ordinary member cannot read the community's purchases", async ({
+      world,
+    }) => {
+      await expect(
+        world.as("member").gql(SeedCommunityShopPurchasesDocument, {
+          communityId: world.community.id,
+        }),
+      ).rejects.toThrow(NOT_ALLOWED);
     });
 
     test("staff can refund somebody else's purchase", async ({ world }) => {

@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Args, ID } from "@nestjs/graphql";
+import { Resolver, Query, Mutation, Args, ID, Int } from "@nestjs/graphql";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
@@ -80,6 +80,34 @@ export class ShopResolver {
   ): Promise<ShopPurchase[]> {
     const rows = await this.shop.findPurchasesForViewer(communityId, user.id);
     return rows;
+  }
+
+  /**
+   * The same purchases seen from outside.
+   *
+   * Gated on `canGrantItems` -- the permission that already means "may move
+   * items and coin on somebody else's behalf" -- rather than on
+   * `canManageItems`, which is about defining what exists.
+   */
+  @AllowCommunityPermission(CommunityPermission.CanGrantItems)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Query(() => [ShopPurchase], {
+    name: "communityShopPurchases",
+    description:
+      "Every member's purchases, newest first, for staff handling a refund " +
+      "past the buyer's own undo window.",
+  })
+  async communityShopPurchases(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("buyerId", { type: () => ID, nullable: true }) buyerId: string | null,
+    @Args("limit", { type: () => Int, nullable: true, defaultValue: 50 })
+    limit: number,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<ShopPurchase[]> {
+    return this.shop.findPurchasesForCommunity(communityId, user.id, {
+      buyerId,
+      limit,
+    });
   }
 
   // ==================== Admin ====================

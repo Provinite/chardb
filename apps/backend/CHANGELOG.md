@@ -51,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `ShopPurchaseLine.refundedBy` was declared on the entity but never
+  populated, so it resolved to null on every refunded line.
+
 - One checkout may buy at most ten of a listing, counted across lines so the
   limit cannot be split around.
 
@@ -90,6 +93,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Coin shop: communities can sell items for their own currency, with several
   price options per listing, stock and per-member limits, and a fifteen-minute
   self-serve refund.
+
+- `communityShopPurchases`: every member's purchases, for staff refunding past
+  the buyer's own undo window. Needs `canGrantItems`.
 
 - **`CurrencyTransaction.source` / `.sourceId`**: what caused a ledger row.
   Until now currency had no notion of a cause, so an award could only say

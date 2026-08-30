@@ -20,6 +20,7 @@ import {
   Coins,
   ShoppingCart,
   Store,
+  Receipt,
 } from "lucide-react";
 import { spotlight } from "@mantine/spotlight";
 import { CommunityNavigationItem } from "./CommunityNavigationItem";
@@ -642,6 +643,18 @@ export const CommunityNavigationSidebar: React.FC<
                   to={`${communityBasePath}/admin/shop`}
                   icon={Store}
                   label="Shop"
+                  isNested
+                />
+              )}
+
+              {/* Refunding past the buyer's own window is a grant-shaped
+                  action, so it follows canGrantItems rather than the
+                  permission for defining what is sold. */}
+              {permissions.canGrantItems && (
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/admin/shop/purchases`}
+                  icon={Receipt}
+                  label="Shop Purchases"
                   isNested
                 />
               )}

@@ -2612,6 +2612,11 @@ type Query {
     userId: ID!
   ): CommunityMemberConnection!
 
+  """
+  Every member's purchases, newest first, for staff handling a refund past the buyer's own undo window.
+  """
+  communityShopPurchases(buyerId: ID, communityId: ID!, limit: Int = 50): [ShopPurchase!]!
+
   """Every currency a community defines. Readable by any member."""
   currencies(communityId: ID!, includeArchived: Boolean! = false): [Currency!]!
   currency(id: ID!): Currency!
@@ -3272,6 +3277,8 @@ input ShopPriceInput {
 
 """One checkout."""
 type ShopPurchase {
+  """Who bought it. What a staff view is looking at."""
+  buyer: User
   buyerId: ID!
   communityId: ID!
   createdAt: DateTime!

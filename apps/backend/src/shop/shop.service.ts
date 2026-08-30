@@ -16,6 +16,10 @@ import { DatabaseService } from "../database/database.service";
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { ItemsService } from "../items/items.service";
 import { MAX_UNITS_PER_ITEM } from "./dto/shop.dto";
+import {
+  mapPrismaUserToGraphQL,
+  userMapperSelect,
+} from "../users/utils/user-resolver-mappers";
 
 /**
  * How long a buyer may undo their own purchase.
@@ -62,10 +66,27 @@ type PricedShopItem = Prisma.ShopItemGetPayload<{
 const PURCHASE_LINE_INCLUDE = {
   shopItem: { include: SHOP_ITEM_INCLUDE },
   costs: { include: { currency: true } },
+  // `refundedBy` is on the entity and was resolving to null on every refunded
+  // line for want of this. A staff view of a refund whose whole point is
+  // accountability should say who did it.
+  //
+  // Selected rather than included whole: `userMapperSelect` exists so a join
+  // for a username does not drag every password hash in the result set into
+  // memory.
+  refundedBy: { select: userMapperSelect },
 } satisfies Prisma.ShopPurchaseLineInclude;
 
+/** A purchase and everything shown beside it. */
+const PURCHASE_INCLUDE = {
+  buyer: { select: userMapperSelect },
+  lines: {
+    include: PURCHASE_LINE_INCLUDE,
+    orderBy: { createdAt: "asc" },
+  },
+} satisfies Prisma.ShopPurchaseInclude;
+
 type PurchaseWithLines = Prisma.ShopPurchaseGetPayload<{
-  include: { lines: { include: typeof PURCHASE_LINE_INCLUDE } };
+  include: typeof PURCHASE_INCLUDE;
 }>;
 
 @Injectable()
@@ -125,12 +146,7 @@ export class ShopService {
   async findPurchases(communityId: string, buyerId: string) {
     return this.db.shopPurchase.findMany({
       where: { communityId, buyerId },
-      include: {
-        lines: {
-          include: PURCHASE_LINE_INCLUDE,
-          orderBy: { createdAt: "asc" },
-        },
-      },
+      include: PURCHASE_INCLUDE,
       orderBy: { createdAt: "desc" },
     });
   }
@@ -384,6 +400,34 @@ export class ShopService {
   }
 
   /**
+   * A community's purchases, for staff.
+   *
+   * The buyer's own list is the same data seen from inside; this is the view
+   * that makes "ask a moderator" a thing a moderator can act on. Newest first
+   * and capped, because the useful question is nearly always about something
+   * that just happened.
+   */
+  async findPurchasesForCommunity(
+    communityId: string,
+    viewerId: string,
+    options: { buyerId?: string | null; limit?: number } = {},
+  ) {
+    const take = Math.min(Math.max(options.limit ?? 50, 1), 100);
+
+    const purchases = await this.db.shopPurchase.findMany({
+      where: {
+        communityId,
+        ...(options.buyerId ? { buyerId: options.buyerId } : {}),
+      },
+      include: PURCHASE_INCLUDE,
+      orderBy: { createdAt: "desc" },
+      take,
+    });
+
+    return this.decoratePurchases(communityId, viewerId, purchases, true);
+  }
+
+  /**
    * Attach the per-viewer fields to a set of purchases.
    *
    * Shared with checkout so that a freshly bought purchase answers with the
@@ -393,6 +437,7 @@ export class ShopService {
     communityId: string,
     viewerId: string,
     purchases: PurchaseWithLines[],
+    isStaff = false,
   ) {
     const lineIds = purchases.flatMap((p) => p.lines.map((l) => l.id));
     if (lineIds.length === 0) return [];
@@ -429,12 +474,14 @@ export class ShopService {
 
     return purchases.map((purchase) => ({
       ...purchase,
+      buyer: mapPrismaUserToGraphQL(purchase.buyer),
       lines: purchase.lines.map((line) => {
         const blocked = refundBlockedReason(
           { ...line, buyerId: purchase.buyerId },
           itemById.get(itemByLine.get(line.id) ?? ""),
           now,
           viewerId,
+          isStaff,
         );
         const listing = listingById.get(line.shopItemId);
         if (!listing) {
@@ -446,6 +493,9 @@ export class ShopService {
         return {
           ...line,
           shopItem: listing,
+          refundedBy: line.refundedBy
+            ? mapPrismaUserToGraphQL(line.refundedBy)
+            : null,
           refundableByViewer: blocked === null,
           refundBlockedReason: blocked,
         };
@@ -643,12 +693,7 @@ export class ShopService {
 
       return tx.shopPurchase.findUniqueOrThrow({
         where: { id: purchaseId },
-        include: {
-          lines: {
-            include: PURCHASE_LINE_INCLUDE,
-            orderBy: { createdAt: "asc" },
-          },
-        },
+        include: PURCHASE_INCLUDE,
       });
     });
 
@@ -826,6 +871,9 @@ export class ShopService {
     return {
       ...refunded,
       shopItem: listing,
+      refundedBy: refunded.refundedBy
+        ? mapPrismaUserToGraphQL(refunded.refundedBy)
+        : null,
       refundableByViewer: false,
       refundBlockedReason: blocked,
     };
@@ -854,14 +902,27 @@ function refundBlockedReason(
   item: { ownerId: string | null; destroyedAt: Date | null } | undefined,
   now: number,
   viewerId: string,
+  isStaff = false,
 ): string | null {
-  if (line.buyerId !== viewerId) return "This is not your purchase";
-  if (line.refundedAt) return "Already refunded";
-  if (now - line.createdAt.getTime() > REFUND_WINDOW_MS) {
-    return "The undo window has passed -- ask a moderator";
+  // Two of the reasons are the buyer's alone. Staff may refund somebody
+  // else's purchase, and at any age -- that is the whole point of the window
+  // being fifteen minutes rather than forever.
+  if (!isStaff) {
+    if (line.buyerId !== viewerId) return "This is not your purchase";
+    if (
+      !line.refundedAt &&
+      now - line.createdAt.getTime() > REFUND_WINDOW_MS
+    ) {
+      return "The undo window has passed -- ask a moderator";
+    }
   }
+
+  if (line.refundedAt) return "Already refunded";
+
+  // What is left is what makes a refund impossible for anyone: there has to
+  // be an item, it has to still exist, and the buyer has to still hold it.
   if (!item) return "Nothing to give back";
   if (item.destroyedAt) return "That item has been used or destroyed";
-  if (item.ownerId !== viewerId) return "That item has changed hands";
+  if (item.ownerId !== line.buyerId) return "That item has changed hands";
   return null;
 }

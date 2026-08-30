@@ -92,6 +92,57 @@ export const GET_MY_SHOP_PURCHASES = gql`
   ${CURRENCY_FRAGMENT}
 `;
 
+export const GET_COMMUNITY_SHOP_PURCHASES = gql`
+  query GetCommunityShopPurchases(
+    $communityId: ID!
+    $buyerId: ID
+    $limit: Int
+  ) {
+    communityShopPurchases(
+      communityId: $communityId
+      buyerId: $buyerId
+      limit: $limit
+    ) {
+      id
+      createdAt
+      buyerId
+      buyer {
+        id
+        username
+        displayName
+      }
+      lines {
+        id
+        createdAt
+        refundedAt
+        # Computed for a staff viewer, so the undo window is not one of the
+        # reasons and "not your purchase" never appears.
+        refundableByViewer
+        refundBlockedReason
+        refundedBy {
+          id
+          username
+        }
+        costs {
+          amount
+          currency {
+            ...CurrencyFields
+          }
+        }
+        shopItem {
+          id
+          name
+          itemType {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+  ${CURRENCY_FRAGMENT}
+`;
+
 export const CHECKOUT = gql`
   mutation Checkout($input: CheckoutInput!) {
     checkout(input: $input) {

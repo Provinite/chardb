@@ -534,6 +534,29 @@ query SeedShopItems($communityId: ID!, $includeInactive: Boolean) {
   }
 }
 
+query SeedCommunityShopPurchases($communityId: ID!, $buyerId: ID) {
+  communityShopPurchases(communityId: $communityId, buyerId: $buyerId) {
+    id
+    buyerId
+    buyer {
+      username
+    }
+    lines {
+      id
+      refundedAt
+      refundableByViewer
+      refundBlockedReason
+      refundedBy {
+        username
+      }
+      shopItem {
+        id
+        name
+      }
+    }
+  }
+}
+
 query SeedMyShopPurchases($communityId: ID!) {
   myShopPurchases(communityId: $communityId) {
     id
