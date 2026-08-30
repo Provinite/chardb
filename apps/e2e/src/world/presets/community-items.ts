@@ -9,6 +9,7 @@ import {
   SeedUpdateCurrencyDocument,
   SeedMintCurrencyDocument,
   SeedTransferCurrencyDocument,
+  SeedCreateShopItemDocument,
 } from "../../generated/graphql.js";
 import { definePreset, type Persona } from "../types.js";
 
@@ -46,6 +47,19 @@ export interface CommunityItemsWorld {
   /** What each persona holds of `coin` after seeding. */
   balances: { member: number; othermember: number };
   currencyUrls: { admin: string; ledger: string };
+  /**
+   * Two listings, priced deliberately differently.
+   *
+   * `potionListing` has three price options -- one currency, two currencies,
+   * and the other currency alone -- because a shop that only ever charges one
+   * thing never exercises the case the price model exists for.
+   */
+  shop: {
+    potionListing: { id: string; priceIds: string[] };
+    /** Stock of exactly 2, so exhaustion is reachable in a test. */
+    locketListing: { id: string; priceIds: string[] };
+    url: string;
+  };
   roles: { admin: string; quartermaster: string; member: string };
   users: {
     siteadmin: Persona;
@@ -263,6 +277,47 @@ export default definePreset<CommunityItemsWorld>({
       },
     });
 
+    // ==================== Shop ====================
+
+    // The member has 380 HC and 0 FT after the transfer above, so the
+    // single-currency option is affordable and the ones needing FT are not.
+    // That asymmetry is the point: affordability is per option, not per item.
+    const { createShopItem: potionListing } = await asQuartermaster.gql(
+      SeedCreateShopItemDocument,
+      {
+        input: {
+          communityId: community.id,
+          itemTypeId: potion.id,
+          name: "Trait Change Potion",
+          description: "Rewrites one trait on one character.",
+          maxPerUser: 3,
+          prices: [
+            { components: [{ currencyId: coin.id, amount: 50 }] },
+            {
+              components: [
+                { currencyId: coin.id, amount: 20 },
+                { currencyId: token.id, amount: 2 },
+              ],
+            },
+            { components: [{ currencyId: token.id, amount: 5 }] },
+          ],
+        },
+      },
+    );
+
+    const { createShopItem: locketListing } = await asQuartermaster.gql(
+      SeedCreateShopItemDocument,
+      {
+        input: {
+          communityId: community.id,
+          itemTypeId: locket.id,
+          name: "Heirloom Locket",
+          stock: 2,
+          prices: [{ components: [{ currencyId: coin.id, amount: 10 }] }],
+        },
+      },
+    );
+
     return {
       community: {
         id: community.id,
@@ -279,6 +334,17 @@ export default definePreset<CommunityItemsWorld>({
       currencyUrls: {
         admin: `/communities/${community.id}/currencies`,
         ledger: `/communities/${community.id}/currencies/ledger`,
+      },
+      shop: {
+        potionListing: {
+          id: potionListing.id,
+          priceIds: potionListing.prices.map((p) => p.id),
+        },
+        locketListing: {
+          id: locketListing.id,
+          priceIds: locketListing.prices.map((p) => p.id),
+        },
+        url: `/communities/${community.id}/shop`,
       },
       itemTypes: {
         potion: { id: potion.id, name: potion.name },

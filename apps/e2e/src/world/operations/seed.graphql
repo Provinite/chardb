@@ -398,3 +398,126 @@ query SeedMediaModerationQueue($communityId: ID!) {
     }
   }
 }
+
+# ==================== Shop ====================
+
+# Requires community CanManageItems.
+mutation SeedCreateShopItem($input: CreateShopItemInput!) {
+  createShopItem(input: $input) {
+    id
+    name
+    stock
+    maxPerUser
+    active
+    prices {
+      id
+      components {
+        amount
+        currency {
+          code
+        }
+      }
+    }
+  }
+}
+
+mutation SeedUpdateShopItem($id: ID!, $input: UpdateShopItemInput!) {
+  updateShopItem(id: $id, input: $input) {
+    id
+    active
+    stock
+    prices {
+      id
+      components {
+        amount
+        currency {
+          code
+        }
+      }
+    }
+  }
+}
+
+# Needs only membership. The balance is the authorisation.
+mutation SeedCheckout($input: CheckoutInput!) {
+  checkout(input: $input) {
+    id
+    createdAt
+    lines {
+      id
+      refundedAt
+      costs {
+        amount
+        currency {
+          code
+        }
+      }
+      shopItem {
+        id
+        name
+      }
+    }
+  }
+}
+
+mutation SeedRefundShopLine($lineId: ID!) {
+  refundShopPurchaseLine(lineId: $lineId) {
+    id
+    refundedAt
+  }
+}
+
+query SeedShopItems($communityId: ID!, $includeInactive: Boolean) {
+  shopItems(communityId: $communityId, includeInactive: $includeInactive) {
+    id
+    name
+    stock
+    maxPerUser
+    active
+    purchasedByViewer
+    prices {
+      id
+      affordable
+      components {
+        amount
+        currency {
+          id
+          code
+        }
+      }
+    }
+  }
+}
+
+query SeedMyShopPurchases($communityId: ID!) {
+  myShopPurchases(communityId: $communityId) {
+    id
+    createdAt
+    lines {
+      id
+      refundedAt
+      refundableByViewer
+      refundBlockedReason
+      costs {
+        amount
+        currency {
+          code
+        }
+      }
+    }
+  }
+}
+
+# What one member holds, grouped by item type. Unpaginated by design.
+query SeedMemberHoldings($communityId: ID!, $userId: ID!) {
+  memberHoldings(communityId: $communityId, userId: $userId) {
+    totalItems
+    holdings {
+      count
+      itemType {
+        id
+        name
+      }
+    }
+  }
+}

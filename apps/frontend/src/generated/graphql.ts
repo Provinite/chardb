@@ -224,6 +224,19 @@ export type CharacterTraitValueInput = {
   value?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CheckoutInput = {
+  communityId: Scalars['ID']['input'];
+  /** The cart. Prices are re-read server-side; this only says which option was picked, never what it costs. */
+  lines: Array<CheckoutLineInputDto>;
+};
+
+export type CheckoutLineInputDto = {
+  quantity: Scalars['Int']['input'];
+  shopItemId: Scalars['ID']['input'];
+  /** Which price option was chosen. */
+  shopPriceId: Scalars['ID']['input'];
+};
+
 /** Input for claiming an invite code */
 export type ClaimInviteCodeInput = {
   /** The ID of the user who is claiming this invite code */
@@ -582,6 +595,21 @@ export type CreateRoleInput = {
   name: Scalars['String']['input'];
 };
 
+export type CreateShopItemInput = {
+  communityId: Scalars['ID']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** What buying this grants. */
+  itemTypeId: Scalars['ID']['input'];
+  /** Omit for no cap. */
+  maxPerUser?: InputMaybe<Scalars['Int']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** At least one, or nobody can buy it. */
+  prices: Array<ShopPriceInput>;
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
+  /** Omit for unlimited. */
+  stock?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type CreateSpeciesInput = {
   /** ID of the community that owns this species */
   communityId: Scalars['ID']['input'];
@@ -783,7 +811,8 @@ export enum CurrencyTransactionSource {
   /** Somebody acted directly, with no other record behind it. */
   Direct = 'DIRECT',
   /** Awarded when uploaded media was approved in moderation. sourceId is the media -- an image is an implementation detail of a media. */
-  MediaApproval = 'MEDIA_APPROVAL'
+  MediaApproval = 'MEDIA_APPROVAL',
+  ShopPurchase = 'SHOP_PURCHASE'
 }
 
 export type DeviantartUuidBackfillProgress = {
@@ -1542,6 +1571,8 @@ export type Mutation = {
   burnCurrency: Scalars['String']['output'];
   /** Cancel a running DeviantArt UUID backfill job. */
   cancelDeviantartUuidBackfill: Scalars['Boolean']['output'];
+  /** Buy a cart. Everything commits together, or nothing does. */
+  checkout: ShopPurchase;
   /** Claim an invite code to join a community */
   claimInviteCode: InviteCode;
   createCharacter: Character;
@@ -1566,6 +1597,7 @@ export type Mutation = {
   createItemType: ItemType;
   /** Create a new role */
   createRole: Role;
+  createShopItem: ShopItem;
   /** Create a new species */
   createSpecies: Species;
   /** Create a new species variant */
@@ -1600,6 +1632,8 @@ export type Mutation = {
   /** Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete. */
   purgeCharacter: Scalars['Boolean']['output'];
   refreshToken: Scalars['String']['output'];
+  /** Undo one unit. The buyer may do this inside the window; staff at any time. Nothing is rewritten -- the coin comes back as new ledger rows. */
+  refundShopPurchaseLine: ShopPurchaseLine;
   /** Reject an image (moderator action) */
   rejectImage: ImageModerationAction;
   /** Remove a character ownership change record */
@@ -1678,6 +1712,7 @@ export type Mutation = {
   updateProfile: User;
   /** Update a role */
   updateRole: Role;
+  updateShopItem: ShopItem;
   /** Update a species */
   updateSpecies: Species;
   /** Update a species variant */
@@ -1723,6 +1758,11 @@ export type MutationAssignCharacterSpeciesArgs = {
 
 export type MutationBurnCurrencyArgs = {
   input: BurnCurrencyInput;
+};
+
+
+export type MutationCheckoutArgs = {
+  input: CheckoutInput;
 };
 
 
@@ -1799,6 +1839,11 @@ export type MutationCreateItemTypeArgs = {
 
 export type MutationCreateRoleArgs = {
   createRoleInput: CreateRoleInput;
+};
+
+
+export type MutationCreateShopItemArgs = {
+  input: CreateShopItemInput;
 };
 
 
@@ -1905,6 +1950,11 @@ export type MutationPurgeCharacterArgs = {
 
 export type MutationRefreshTokenArgs = {
   token: Scalars['String']['input'];
+};
+
+
+export type MutationRefundShopPurchaseLineArgs = {
+  lineId: Scalars['ID']['input'];
 };
 
 
@@ -2161,6 +2211,12 @@ export type MutationUpdateRoleArgs = {
 };
 
 
+export type MutationUpdateShopItemArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateShopItemInput;
+};
+
+
 export type MutationUpdateSpeciesArgs = {
   id: Scalars['ID']['input'];
   updateSpeciesInput: UpdateSpeciesInput;
@@ -2362,6 +2418,8 @@ export type Query = {
   myImages: ImageConnection;
   /** Retrieves media owned by the current authenticated user */
   myMedia: MediaConnection;
+  /** The viewer's own purchases, newest first, each line saying whether it can still be undone and why not. */
+  myShopPurchases: Array<ShopPurchase>;
   /** Get count of pending images for a community */
   pendingImageCount: Scalars['Int']['output'];
   /** Get count of pending trait reviews for a community */
@@ -2376,6 +2434,8 @@ export type Query = {
   rolesByCommunity: RoleConnection;
   /** Search for tags by name or get popular suggestions */
   searchTags: Array<Tag>;
+  /** What a community sells, priced, with what the viewer can afford. */
+  shopItems: Array<ShopItem>;
   /** Get all species with pagination */
   species: SpeciesConnection;
   /** Get species by community ID with pagination */
@@ -2821,6 +2881,11 @@ export type QueryMyMediaArgs = {
 };
 
 
+export type QueryMyShopPurchasesArgs = {
+  communityId: Scalars['ID']['input'];
+};
+
+
 export type QueryPendingImageCountArgs = {
   communityId: Scalars['ID']['input'];
 };
@@ -2858,6 +2923,12 @@ export type QueryRolesByCommunityArgs = {
 export type QuerySearchTagsArgs = {
   limit?: InputMaybe<Scalars['Float']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryShopItemsArgs = {
+  communityId: Scalars['ID']['input'];
+  includeInactive?: Scalars['Boolean']['input'];
 };
 
 
@@ -3112,6 +3183,93 @@ export type RoleConnection = {
 
 export type SetMainMediaInput = {
   mediaId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** Something a community sells for its own currency. */
+export type ShopItem = {
+  __typename?: 'ShopItem';
+  active: Scalars['Boolean']['output'];
+  communityId: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  description: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  itemType: ItemType;
+  itemTypeId: Scalars['ID']['output'];
+  /** Null means no cap. Counted across every purchase. */
+  maxPerUser: Maybe<Scalars['Int']['output']>;
+  /** Falls back to the item type's name when unset. */
+  name: Maybe<Scalars['String']['output']>;
+  prices: Array<ShopPrice>;
+  /** How many of this the viewer already holds against its cap. Refunded purchases do not count. */
+  purchasedByViewer: Scalars['Int']['output'];
+  sortOrder: Scalars['Int']['output'];
+  /** Null means unlimited. Zero means sold out, which is not the same as unavailable -- a sold-out listing still says what it was. */
+  stock: Maybe<Scalars['Int']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+/** One way to pay for a listing. A buyer picks exactly one option and pays all of its components -- mixing across options is not a thing. */
+export type ShopPrice = {
+  __typename?: 'ShopPrice';
+  /** Whether the viewer currently holds enough of every currency this option asks for. Advisory -- checkout is what actually decides. */
+  affordable: Scalars['Boolean']['output'];
+  components: Array<ShopPriceComponent>;
+  id: Scalars['ID']['output'];
+  sortOrder: Scalars['Int']['output'];
+};
+
+/** One currency a price option asks for. */
+export type ShopPriceComponent = {
+  __typename?: 'ShopPriceComponent';
+  amount: Scalars['Int']['output'];
+  currency: Currency;
+  currencyId: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+};
+
+export type ShopPriceComponentInput = {
+  amount: Scalars['Int']['input'];
+  currencyId: Scalars['ID']['input'];
+};
+
+/** One way to pay. Several components means one price asking for several currencies at once, not several alternative prices. */
+export type ShopPriceInput = {
+  components: Array<ShopPriceComponentInput>;
+};
+
+/** One checkout. */
+export type ShopPurchase = {
+  __typename?: 'ShopPurchase';
+  buyerId: Scalars['ID']['output'];
+  communityId: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  lines: Array<ShopPurchaseLine>;
+};
+
+/** One unit bought: one item, at one price, once. Quantity lives in the number of these rather than a column, so a refund can name exactly what it gave back. */
+export type ShopPurchaseLine = {
+  __typename?: 'ShopPurchaseLine';
+  /** What was actually paid, copied at checkout. A later price change does not alter what a refund returns. */
+  costs: Array<ShopPurchaseLineCost>;
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  purchaseId: Scalars['ID']['output'];
+  /** Why it cannot be undone, when it cannot. */
+  refundBlockedReason: Maybe<Scalars['String']['output']>;
+  /** Whether the viewer can undo this right now. False once the window has passed, once it is already refunded, or once the item has been used, destroyed or handed on. */
+  refundableByViewer: Scalars['Boolean']['output'];
+  refundedAt: Maybe<Scalars['DateTime']['output']>;
+  refundedBy: Maybe<User>;
+  shopItem: ShopItem;
+};
+
+/** What one unit of a purchase cost, at the time. */
+export type ShopPurchaseLineCost = {
+  __typename?: 'ShopPurchaseLineCost';
+  amount: Scalars['Int']['output'];
+  currency: Currency;
+  currencyId: Scalars['ID']['output'];
 };
 
 export type SignupInput = {
@@ -3600,6 +3758,17 @@ export type UpdateRoleInput = {
   canUploadOwnCharacterImages?: InputMaybe<Scalars['Boolean']['input']>;
   /** The name of the role */
   name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateShopItemInput = {
+  active?: InputMaybe<Scalars['Boolean']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  maxPerUser?: InputMaybe<Scalars['Int']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** Replaces every option when given. Past purchases keep what they paid, which is copied onto the line rather than read back through here. */
+  prices?: InputMaybe<Array<ShopPriceInput>>;
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
+  stock?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type UpdateSpeciesInput = {
