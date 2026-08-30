@@ -94,14 +94,14 @@ export class CharactersService {
     },
   ) {
     const { characterData, tags, assignToSelf = true } = input;
-    const pendingOwner = input.pendingOwner;
+    let pendingOwner = input.pendingOwner;
 
     // Determine the actual owner:
     // - If pendingOwner is provided, character is orphaned (ownerId = null)
     // - If assignToSelf is false, character is orphaned (ownerId = null)
     // - Otherwise, owner is the current user (userId)
     // - Can be reassigned if external account is already claimed
-    const actualOwnerId = pendingOwner || !assignToSelf ? null : userId;
+    let actualOwnerId = pendingOwner || !assignToSelf ? null : userId;
 
     // Extract speciesId early for validation and Discord resolution
     const speciesId = characterData.species?.connect?.id;

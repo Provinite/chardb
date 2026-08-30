@@ -577,10 +577,42 @@ describe("CurrencyLedgerService", () => {
   });
 
   describe("findHolders", () => {
-    it("excludes zero balances", async () => {
+    beforeEach(() => {
       mockDatabaseService.currencyBalance.findMany.mockResolvedValue([]);
       mockDatabaseService.currencyBalance.count.mockResolvedValue(0);
+    });
 
+    /** The page arguments handed to Prisma on the last query. */
+    const lastPaging = () =>
+      mockDatabaseService.currencyBalance.findMany.mock.calls.at(-1)?.[0] as {
+        take: number;
+        skip: number;
+      };
+
+    it("caps the page size", async () => {
+      await service.findHolders("cur1", 100000);
+
+      // `limit` arrives as a bare Int arg rather than a field on an
+      // @InputType, so the validation pipe that caps the ledger's page size
+      // never runs on it. Unclamped, any member could ask for every balance
+      // in the community in one query.
+      expect(lastPaging().take).toBe(100);
+    });
+
+    it("refuses a non-positive page size", async () => {
+      await service.findHolders("cur1", 0);
+      expect(lastPaging().take).toBe(1);
+
+      await service.findHolders("cur1", -5);
+      expect(lastPaging().take).toBe(1);
+    });
+
+    it("refuses a negative offset", async () => {
+      await service.findHolders("cur1", 50, -20);
+      expect(lastPaging().skip).toBe(0);
+    });
+
+    it("excludes zero balances", async () => {
       await service.findHolders("cur1");
 
       // This answers "where did the coin go". Someone holding none is not

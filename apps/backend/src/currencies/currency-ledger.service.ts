@@ -496,6 +496,14 @@ export class CurrencyLedgerService {
    * did the coin go", and a member holding none is not part of that answer.
    */
   async findHolders(currencyId: string, limit = 50, offset = 0) {
+    // Clamped here rather than on the resolver argument. `limit` arrives as a
+    // bare Int arg, not a field on an @InputType, so the validation pipe that
+    // caps the ledger's page size at 100 never runs on it -- an unclamped
+    // `take` would let any member ask for every balance in one query. Doing it
+    // in the service also covers callers that never touch the resolver.
+    const take = Math.min(Math.max(Math.trunc(limit) || 0, 1), 100);
+    const skip = Math.max(Math.trunc(offset) || 0, 0);
+
     const where: Prisma.CurrencyBalanceWhereInput = {
       currencyId,
       amount: { gt: 0 },
@@ -505,13 +513,13 @@ export class CurrencyLedgerService {
       this.db.currencyBalance.findMany({
         where,
         orderBy: [{ amount: "desc" }, { updatedAt: "asc" }],
-        take: limit,
-        skip: offset,
+        take,
+        skip,
         include: { currency: true },
       }),
       this.db.currencyBalance.count({ where }),
     ]);
 
-    return { balances, total, hasMore: offset + balances.length < total };
+    return { balances, total, hasMore: skip + balances.length < total };
   }
 }

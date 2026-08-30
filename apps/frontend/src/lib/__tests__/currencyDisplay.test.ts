@@ -126,9 +126,24 @@ describe("collapseTransferLegs", () => {
 
   it("keeps every row of a bulk grant, even though they share a batch", () => {
     const rows = [
-      { id: "a", batchId: "b1", amount: 50, kind: CurrencyTransactionKind.Mint },
-      { id: "b", batchId: "b1", amount: 50, kind: CurrencyTransactionKind.Mint },
-      { id: "c", batchId: "b1", amount: 50, kind: CurrencyTransactionKind.Mint },
+      {
+        id: "a",
+        batchId: "b1",
+        amount: 50,
+        kind: CurrencyTransactionKind.Mint,
+      },
+      {
+        id: "b",
+        batchId: "b1",
+        amount: 50,
+        kind: CurrencyTransactionKind.Mint,
+      },
+      {
+        id: "c",
+        batchId: "b1",
+        amount: 50,
+        kind: CurrencyTransactionKind.Mint,
+      },
     ];
 
     // Each recipient genuinely received their own coin. Rolling eleven people
