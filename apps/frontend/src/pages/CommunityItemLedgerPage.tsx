@@ -9,7 +9,7 @@ import {
   useGetItemTransactionsQuery,
   type ItemTransactionFieldsFragment,
 } from "../generated/graphql";
-import { collapseByBatch } from "../lib/itemDisplay";
+import { collapseByBatch, KIND_LABEL, kindTone } from "../lib/itemDisplay";
 
 /**
  * The item ledger: every movement of every item in one community.
@@ -31,34 +31,6 @@ const KINDS: ReadonlyArray<{ kind: ItemTransactionKind; label: string }> = [
   { kind: ItemTransactionKind.Use, label: "Used" },
   { kind: ItemTransactionKind.Import, label: "Imported" },
 ];
-
-const KIND_LABEL: Record<ItemTransactionKind, string> = {
-  [ItemTransactionKind.Grant]: "Granted",
-  [ItemTransactionKind.Revoke]: "Revoked",
-  [ItemTransactionKind.Transfer]: "Traded",
-  [ItemTransactionKind.Claim]: "Claimed",
-  [ItemTransactionKind.Use]: "Used",
-  [ItemTransactionKind.Import]: "Imported",
-};
-
-const kindColor = (kind: ItemTransactionKind) => {
-  switch (kind) {
-    case ItemTransactionKind.Grant:
-      return "success";
-    case ItemTransactionKind.Revoke:
-      return "danger";
-    case ItemTransactionKind.Transfer:
-      return "info";
-    case ItemTransactionKind.Claim:
-      return "warning";
-    case ItemTransactionKind.Use:
-    case ItemTransactionKind.Import:
-    default:
-      // Bookkeeping, not a movement anyone made. Deliberately the quietest
-      // colour on the page.
-      return "muted";
-  }
-};
 
 const Container = styled.div`
   max-width: 1200px;
@@ -603,7 +575,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
                     <tr key={row.batchId}>
                       <When>{formatWhen(row.createdAt)}</When>
                       <td>
-                        <KindPill $tone={kindColor(row.kind)}>
+                        <KindPill $tone={kindTone(row.kind)}>
                           {KIND_LABEL[row.kind]}
                         </KindPill>
                       </td>
@@ -627,7 +599,16 @@ export const CommunityItemLedgerPage: React.FC = () => {
                           </Swatch>
                           <div>
                             <ItemName>
-                              <Link to={`/items/${row.itemType.id}`}>
+                              {/* A collapsed batch covers several items, which
+                                  do not share a history -- only a row standing
+                                  for one item can link to it. */}
+                              <Link
+                                to={
+                                  count === 1 && row.itemId
+                                    ? `/communities/${communityId}/items/${row.itemId}`
+                                    : `/item-types/${row.itemType.id}`
+                                }
+                              >
                                 {row.itemType.name}
                               </Link>
                             </ItemName>

@@ -1,3 +1,4 @@
+import { ItemTransactionKind } from "../generated/graphql";
 import type {
   ItemFieldsFragment,
   ItemTransactionFieldsFragment,
@@ -19,6 +20,11 @@ import type {
 export interface DisplayStack {
   itemType: ItemFieldsFragment["itemType"];
   count: number;
+  /**
+   * The first item in the group. Only meaningful when `count` is 1 -- several
+   * items do not share a history, so there is no single one to link to.
+   */
+  itemId: string;
 }
 
 /**
@@ -36,7 +42,11 @@ export function groupIntoStacks(
     if (existing) {
       existing.count += 1;
     } else {
-      byType.set(item.itemType.id, { itemType: item.itemType, count: 1 });
+      byType.set(item.itemType.id, {
+        itemType: item.itemType,
+        count: 1,
+        itemId: item.id,
+      });
     }
   }
   return Array.from(byType.values());
@@ -65,4 +75,101 @@ export function collapseByBatch(
     }
   }
   return Array.from(byBatch.values());
+}
+
+/**
+ * How each kind of movement is named and coloured.
+ *
+ * Shared because the ledger and a single item's history are two views of the
+ * same rows, and a "Revoked" pill that is red on one page and amber on the
+ * other would read as two different things.
+ */
+export const KIND_LABEL: Record<ItemTransactionKind, string> = {
+  [ItemTransactionKind.Grant]: "Granted",
+  [ItemTransactionKind.Revoke]: "Revoked",
+  [ItemTransactionKind.Transfer]: "Traded",
+  [ItemTransactionKind.Claim]: "Claimed",
+  [ItemTransactionKind.Use]: "Used",
+  [ItemTransactionKind.Import]: "Imported",
+};
+
+/** Semantic tone, resolved against the theme by whichever component renders it. */
+export type KindTone = "success" | "danger" | "info" | "warning" | "muted";
+
+export const kindTone = (kind: ItemTransactionKind): KindTone => {
+  switch (kind) {
+    case ItemTransactionKind.Grant:
+      return "success";
+    case ItemTransactionKind.Revoke:
+      return "danger";
+    case ItemTransactionKind.Transfer:
+      return "info";
+    case ItemTransactionKind.Claim:
+      return "warning";
+    case ItemTransactionKind.Use:
+    case ItemTransactionKind.Import:
+    default:
+      // Bookkeeping and consumption, not a movement anyone made.
+      return "muted";
+  }
+};
+
+export interface CustodySpell {
+  /** Null while the item was awaiting a claim, or after it was destroyed. */
+  holder: ItemTransactionFieldsFragment["toUser"];
+  /** The event that put the item in this holder's hands. */
+  since: string;
+  /** The event that took it away, or null if they still hold it. */
+  until: string | null;
+  /** True for the run that ends because the item was destroyed. */
+  endedByDestruction: boolean;
+}
+
+/**
+ * Who has held this item, and when.
+ *
+ * Derived rather than stored: the ledger already knows, because every event
+ * that changes hands names both sides. Reading it off the timeline keeps the
+ * two views incapable of disagreeing.
+ *
+ * A run ends when the next event moves the item to someone else or destroys
+ * it. Events that do not change hands -- a use, a note-only correction --
+ * extend the current run rather than starting a new one.
+ */
+export function chainOfCustody(
+  rows: readonly ItemTransactionFieldsFragment[],
+): CustodySpell[] {
+  const spells: CustodySpell[] = [];
+
+  for (const row of rows) {
+    const destroys =
+      row.kind === ItemTransactionKind.Revoke ||
+      row.kind === ItemTransactionKind.Use;
+
+    if (destroys) {
+      const open = spells[spells.length - 1];
+      if (open && open.until === null) {
+        open.until = row.createdAt;
+        open.endedByDestruction = true;
+      }
+      continue;
+    }
+
+    const next = row.toUser;
+    const open = spells[spells.length - 1];
+
+    // Same hands as before: not a new run.
+    if (open && open.until === null && open.holder?.id === next?.id) continue;
+
+    if (open && open.until === null) open.until = row.createdAt;
+
+    spells.push({
+      holder: next,
+      since: row.createdAt,
+      until: null,
+      endedByDestruction: false,
+    });
+  }
+
+  return spells;
 }

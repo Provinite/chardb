@@ -142,6 +142,30 @@ export class ItemsResolver {
     return mapPrismaItemTypeToGraphQL(itemType);
   }
 
+  // ==================== Item Queries ====================
+
+  /**
+   * Membership only, matching `itemProvenance`: an item's history is public
+   * within its community so it can act as a trust signal before a trade, and a
+   * history page is no use without the item it belongs to.
+   *
+   * Destroyed items are returned deliberately. They are excluded from
+   * inventories, but their page has to keep working -- that is the whole point
+   * of revoking softly.
+   */
+  @AllowCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ itemId: "id" })
+  @Query(() => ItemEntity, {
+    name: "item",
+    description:
+      "One item, including a destroyed one. Readable by any member of the " +
+      "community that owns its type.",
+  })
+  async item(@Args("id", { type: () => ID }) id: string): Promise<ItemEntity> {
+    const item = await this.itemsService.findItemById(id);
+    return mapPrismaItemToGraphQL(item);
+  }
+
   // ==================== Item Mutations ====================
 
   @AllowCommunityPermission(CommunityPermission.CanGrantItems)

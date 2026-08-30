@@ -2227,6 +2227,11 @@ type Query {
     roleId: ID!
   ): InviteCodeConnection!
 
+  """
+  One item, including a destroyed one. Readable by any member of the community that owns its type.
+  """
+  item(id: ID!): Item!
+
   """Every ledger row for one stack, oldest first. The provenance timeline."""
   itemProvenance(itemId: ID!): [ItemTransaction!]!
 

@@ -233,3 +233,25 @@ export const GET_ITEM_PROVENANCE = gql`
   }
   ${ITEM_TRANSACTION_FRAGMENT}
 `;
+
+// One request for the page: the item and its history are useless apart.
+// The community comes along so the page can name it and verify that the
+// community in the URL is the one the item actually belongs to.
+export const GET_ITEM_WITH_PROVENANCE = gql`
+  query GetItemWithProvenance($itemId: ID!) {
+    item(id: $itemId) {
+      ...ItemFields
+      itemType {
+        community {
+          id
+          name
+        }
+      }
+    }
+    itemProvenance(itemId: $itemId) {
+      ...ItemTransactionFields
+    }
+  }
+  ${ITEM_FRAGMENT}
+  ${ITEM_TRANSACTION_FRAGMENT}
+`;

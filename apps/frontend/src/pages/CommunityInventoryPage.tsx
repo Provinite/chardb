@@ -223,9 +223,16 @@ export const CommunityInventoryPage: React.FC = () => {
           {stacks.map((stack) => (
             <ItemCard
               key={stack.itemType.id}
-              // Links to the item type, not an instance. A stack of three has
-              // three provenances; picking one arbitrarily would be a lie.
-              to={`/items/${stack.itemType.id}`}
+              data-testid="inventory-tile"
+              data-item-type-id={stack.itemType.id}
+              // One item has one history, so link straight to it. Several do
+              // not share a history -- picking one arbitrarily would be a lie
+              // -- so a grouped tile goes to the catalogue entry instead.
+              to={
+                stack.count === 1
+                  ? `/communities/${communityId}/items/${stack.itemId}`
+                  : `/item-types/${stack.itemType.id}`
+              }
               color={stack.itemType.color?.hexCode}
             >
               <ItemIconContainer color={stack.itemType.color?.hexCode}>

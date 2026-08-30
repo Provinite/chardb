@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Item Ledger &amp; Provenance - Feature Walkthrough</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .dim {
+        color: #8b93c7;
+      }
+
+      .kinds {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      .kinds th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid #e0e0e0;
+        color: #333;
+      }
+
+      .kinds td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+        color: #555;
+        vertical-align: top;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.55rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .pill.granted {
+        color: #0e7c56;
+        background: #0e9f6e22;
+      }
+      .pill.revoked {
+        color: #b91c1c;
+        background: #dc262622;
+      }
+      .pill.traded {
+        color: #0e7490;
+        background: #0891b222;
+      }
+      .pill.claimed {
+        color: #a16207;
+        background: #d9770622;
+      }
+      .pill.used,
+      .pill.imported {
+        color: #52606d;
+        background: #64748b22;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Item Ledger &amp; Provenance</h1>
+        <p>
+          Where every item came from, who moved it, and why
+        </p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Every item movement in a community is now recorded. Granting,
+            revoking, trading, claiming and using an item each write an entry
+            naming <strong>who did it</strong>,
+            <strong>who it moved between</strong>, and <strong>why</strong>.
+          </p>
+          <p>
+            An item's history is <strong>public within its community</strong>.
+            Any member can read it, not just staff. That is deliberate: before
+            trading with someone you can check where the thing they are offering
+            actually came from, which is only useful if you don't need
+            permission to look.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">📜</div>
+              <h4>Community ledger</h4>
+              <p>Every movement, filterable and searchable</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🔗</div>
+              <h4>Per-item history</h4>
+              <p>One object's story, start to finish</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🔒</div>
+              <h4>Private staff notes</h4>
+              <p>Internal detail, kept out of public view</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🧾</div>
+              <h4>Nothing is lost</h4>
+              <p>Revoked items keep their history</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: the ledger -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">The community ledger</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Open <strong>Item Ledger</strong> under <strong>Community</strong>
+            in the sidebar. It lists every item movement in that community,
+            newest first, with filter chips per event type and a search box that
+            matches item names, members and reasons.
+          </p>
+          <p>
+            Each row is one <em>event</em>, not one item. Granting three potions
+            in a single action is one line reading <strong>+3</strong> — the
+            quantity column counts the whole batch even when the page is only
+            showing part of it.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Who can read it:</strong> any member of the community. The
+            permissions that matter are on the actions that
+            <em>write</em> entries — granting and revoking — not on reading them
+            back.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-ledger-staff.png"
+            alt="Item Ledger page showing four events: a revoke, two grants and an imported batch, each with reasons and staff notes"
+          />
+          <div class="screenshot-caption">
+            The ledger as a staff member sees it. Italic lines beneath a reason
+            are private staff notes.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: event types -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">What the event types mean</h2>
+        </div>
+        <div class="step-content">
+          <table class="kinds">
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>What happened</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pill granted">Granted</span></td>
+                <td>
+                  Staff or a bot created the item and gave it to someone. It has
+                  no source — nobody lost it.
+                </td>
+              </tr>
+              <tr>
+                <td><span class="pill revoked">Revoked</span></td>
+                <td>
+                  Taken back and destroyed. Always a correction, and always
+                  carries a public reason.
+                </td>
+              </tr>
+              <tr>
+                <td><span class="pill traded">Traded</span></td>
+                <td>Moved between two members.</td>
+              </tr>
+              <tr>
+                <td><span class="pill claimed">Claimed</span></td>
+                <td>
+                  Released to its owner once they linked the external account it
+                  was awarded to.
+                </td>
+              </tr>
+              <tr>
+                <td><span class="pill used">Used</span></td>
+                <td>Consumed by its holder.</td>
+              </tr>
+              <tr>
+                <td><span class="pill imported">Imported</span></td>
+                <td>
+                  The item already existed when the ledger was introduced. Its
+                  earlier history was never recorded, and the entry says exactly
+                  that rather than inventing an origin.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>
+            Actions taken by something other than a person are labelled — a
+            Discord prize payout shows as <strong>discord-bot</strong>, and
+            entries written by the platform itself show as
+            <strong>system</strong>.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 3: public vs staff -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Public reasons, private staff notes</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Every action can carry two separate pieces of text:
+          </p>
+          <ul>
+            <li>
+              A <strong>reason</strong>, which is member-facing. It appears on
+              the ledger and on the item's own history page, so write it for the
+              person it happened to.
+            </li>
+            <li>
+              A <strong>staff note</strong>, which only members holding item
+              permissions can see. This is where internal detail belongs —
+              mis-grants, bot retries, context about a member.
+            </li>
+          </ul>
+          <p>
+            Compare the screenshot below with the one above. Same four events,
+            same community, viewed by a member without item permissions: the
+            reasons are all there, and the staff notes are simply absent.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Staff notes are never searchable.</strong> The ledger's
+            search deliberately ignores them, so a member cannot probe for the
+            contents of a note they are not allowed to read.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-ledger-member.png"
+            alt="The same ledger viewed by a plain member, with staff notes absent and no Administration section in the sidebar"
+          />
+          <div class="screenshot-caption">
+            The same ledger as an ordinary member. Reasons remain; staff notes
+            are gone.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: item history -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">One item's history</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Every item has its own page showing just that object's story, oldest
+            first. A history reads forwards; the ledger is a feed and reads
+            backwards.
+          </p>
+          <p>
+            Reach it from an inventory tile or from the ledger. A tile showing a
+            single item links straight to it. A tile grouping several does not —
+            three potions do not share a history, so picking one of them to
+            represent the others would be misleading, and the tile links to the
+            item type instead.
+          </p>
+          <p>Beside the timeline sit two panels:</p>
+          <ul>
+            <li>
+              <strong>Chain of custody</strong> — everyone who has held the
+              item and for how long, newest first. It is derived from the
+              history rather than stored separately, so the two cannot disagree.
+            </li>
+            <li>
+              <strong>This item</strong> — where it came from, when it was first
+              seen, whether it can be traded or consumed, and which community it
+              belongs to.
+            </li>
+          </ul>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-provenance-staff.png"
+            alt="Item page showing the history timeline beside a chain of custody panel and an item facts panel"
+          />
+          <div class="screenshot-caption">
+            An item page: history on the left, who has held it and what it is on
+            the right.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-inventory-grouped.png"
+            alt="Community inventory showing a Trait Change Potion tile marked x3 and a MYO Slot tile marked x12"
+          />
+          <div class="screenshot-caption">
+            Items are stored individually and grouped for display — this member
+            holds three potions and twelve slots.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: a revoked item -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Revoked items keep their history</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Revoking destroys an item. It leaves the holder's inventory
+            immediately and cannot be used or traded — but its page keeps
+            working, and its history stays readable.
+          </p>
+          <p>
+            That is the whole point. The moment anyone asks "why was this taken
+            away?" is exactly the moment a deleted record would have been most
+            useful, so revoking marks the item destroyed rather than erasing it.
+          </p>
+
+          <div class="highlight-box">
+            <strong>A public reason is required to revoke.</strong> It is shown
+            to the member it was taken from, so it is not optional and it is not
+            private.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-provenance-destroyed.png"
+            alt="Item page for a destroyed Trait Change Potion, showing a red destroyed banner and a two-event history"
+          />
+          <div class="screenshot-caption">
+            A duplicate bot payout, granted and then corrected. Both halves of
+            the story survive.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: imported items -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">Items that pre-date the ledger</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Items that already existed when the ledger was introduced get a
+            single entry marking them as such. They are not shown as grants,
+            because nobody granted them — the honest answer is that their origin
+            was never recorded, and the entry says so.
+          </p>
+
+          <div class="example">
+            Imported <span class="dim">·</span> unrecorded &rarr; Member<br />
+            <span class="dim"
+              >Recorded when the item ledger was introduced. Earlier history was
+              not tracked.</span
+            >
+          </div>
+
+          <p>
+            Everything that happens to those items <em>after</em> that point is
+            recorded normally, so a long-held item builds real history from the
+            moment the ledger arrives.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-provenance-imported.png"
+            alt="Item page for an imported MYO Slot showing a single entry stating its earlier history was not tracked"
+          />
+          <div class="screenshot-caption">
+            An item that existed before the ledger. One honest entry rather than
+            a fabricated origin.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7: items are individual -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <h2 class="step-title">Why items are tracked individually</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Items used to be stored as a count — three potions were one record
+            with a quantity of three. They are now three separate records.
+          </p>
+          <p>
+            This is what makes history possible at all. If a record's quantity
+            went from two to four to three, it cannot say which two of the three
+            came from a particular trade. Storing each item separately gives
+            every one an unbroken chain.
+          </p>
+          <p>Nothing changes in day-to-day use:</p>
+          <ul>
+            <li>
+              Inventories still show one tile per item type with a count on it.
+            </li>
+            <li>
+              Granting a quantity of five still takes one action — it simply
+              creates five items and records one event.
+            </li>
+            <li>
+              Staff can revoke part of what someone holds, naming specific items
+              rather than editing a number.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 8: revoking -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">8</div>
+          <h2 class="step-title">Revoking an item</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Members holding the <strong>grant items</strong> permission see a
+            <strong>Revoke</strong> button on any item still in circulation. It
+            asks for two things:
+          </p>
+          <ul>
+            <li>
+              A <strong>reason</strong>, which is required. It is shown to the
+              member the item is taken from, on the item's own page.
+            </li>
+            <li>
+              An optional <strong>staff note</strong>, which only members with
+              item permissions ever see.
+            </li>
+          </ul>
+          <p>
+            The item leaves the holder's inventory immediately. Its page keeps
+            working, the chain of custody shows the run ending in
+            <em>(destroyed)</em>, and both halves of the story stay readable.
+          </p>
+
+          <div class="highlight-box">
+            <strong>There is no undo.</strong> Revoking is itself the
+            correction, and it is recorded like any other event — if it was a
+            mistake, grant the item again and say so in the reason.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-revoke-dialog.png"
+            alt="Revoke dialog asking for a public reason and an optional private staff note"
+          />
+          <div class="screenshot-caption">
+            The revoke dialog. The confirm button stays disabled until a reason
+            is given.
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Item Ledger &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>
