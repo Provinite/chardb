@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Trading**: a composer at `/communities/:id/trades/new`, an inbox at
+  `/trades` covering both offers you sent and offers you received, and an offer
+  page to accept, decline, counter or withdraw. Coin is a price field per side
+  rather than a line on the table; what you offer is specific items, what you
+  ask for is a type and a count.
+
 - **Notifications**: a bell in the top bar with an unseen count and a dropdown
   of the most recent few, plus a full feed at `/notifications` with an unread
   filter. Opening the dropdown clears the badge; a notification stays unread

@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Member-to-member trading**: `Trade`, `TradeItem` and `TradeCurrencyLine`,
+  with `trades`/`trade` queries and propose, accept, decline and cancel
+  mutations. Settlement moves items and coin in one transaction across both
+  ledgers, sharing one batch id.
+
+- **Trades are not escrowed.** What an offer names is checked when it is written
+  and checked again, decisively, at accept — so an offer never holds property
+  hostage and a declined one needs nothing released.
+
+- **Requests name an item type and a count, not a row.** Items of a type differ
+  only by history, so pinning a row made offers fail when an identical one was
+  available. Naming a row remains possible for when the history is the point.
+
+- **`CurrencyLedgerService.transfer()`** takes the optional `tx` and `batchId`
+  that `credit()` already had, so coin can settle inside a caller's transaction.
+
 - **In-app notifications**: a `Notification` table, the `notifications` and
   `unseenNotificationCount` queries, and mutations to mark them seen or read.
   Written by follows, comments, item grants, item revokes and currency credits.
