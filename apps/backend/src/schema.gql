@@ -84,9 +84,27 @@ type Character {
   customFields: String
   details: String
   id: ID!
+
+  """Free to a good home."""
+  isFreebie: Boolean!
+
+  """Open to offers, without saying in advance what kind."""
+  isOpenToOffers: Boolean!
   isOrphaned: Boolean!
+
+  """For sale, in real money. Paired with `price`."""
   isSellable: Boolean!
+
+  """For sale, in a community's own currency."""
+  isSellableForCoin: Boolean!
+
+  """
+  Open to trades for other characters. The only one of these flags the trade system reads: it is consent to a real transfer, checked when an offer is written and again when it settles.
+  """
   isTradeable: Boolean!
+
+  """Open to trades for art."""
+  isTradeableForArt: Boolean!
   likesCount: Int!
 
   """Main media item for this character (image or text)"""
@@ -129,6 +147,18 @@ type Character {
   visibility: Visibility!
 }
 
+"""
+A way an owner has said they are open to being asked about a character. All are advertisements except TRADE_CHARACTERS, which the trade system enforces.
+"""
+enum CharacterAvailability {
+  FOR_SALE
+  FOR_SALE_COIN
+  FREEBIE
+  OFFERS
+  TRADE_ART
+  TRADE_CHARACTERS
+}
+
 type CharacterConnection {
   characters: [Character!]!
   hasMore: Boolean!
@@ -140,9 +170,13 @@ type CharacterCount {
 }
 
 input CharacterFiltersInput {
+  """
+  Any of these, not all -- a row of checkboxes. An empty or omitted list is no filter rather than one matching nothing.
+  """
+  availability: [CharacterAvailability!]
   communityId: ID
-  isSellable: Boolean
-  isTradeable: Boolean
+  isSellable: Boolean @deprecated(reason: "Use `availability: [TRADE_CHARACTERS]`. Kept because it is the only one of these that can also ask for the negative.")
+  isTradeable: Boolean @deprecated(reason: "Use `availability: [TRADE_CHARACTERS]`. Kept because it is the only one of these that can also ask for the negative.")
   limit: Int! = 20
   maxPrice: Float
   minPrice: Float
@@ -446,8 +480,12 @@ input CreateCharacterInput {
   assignToSelf: Boolean! = true
   customFields: String
   details: String
+  isFreebie: Boolean! = false
+  isOpenToOffers: Boolean! = false
   isSellable: Boolean! = false
+  isSellableForCoin: Boolean! = false
   isTradeable: Boolean! = false
+  isTradeableForArt: Boolean! = false
   name: String!
 
   """Create character with pending ownership for an external account"""
@@ -3946,8 +3984,12 @@ input UnlinkExternalAccountInput {
 input UpdateCharacterProfileInput {
   customFields: String
   details: String
+  isFreebie: Boolean
+  isOpenToOffers: Boolean
   isSellable: Boolean
+  isSellableForCoin: Boolean
   isTradeable: Boolean
+  isTradeableForArt: Boolean
   mainMediaId: ID
   name: String
 

@@ -1,12 +1,7 @@
 import { ObjectType, Field, ID, Float, Int } from "@nestjs/graphql";
 import { Visibility, ModerationStatus } from "@chardb/database";
-import { User } from "../../users/entities/user.entity";
 import { Tag } from "../../shared/entities/tag.entity";
-import { Image } from "../../images/entities/image.entity";
-import { Media } from "../../media/entities/media.entity";
 import { CharacterTraitValue } from "../../shared/types/character-trait.types";
-import { SpeciesVariant } from "../../species-variants/entities/species-variant.entity";
-import { Species } from "../../species/entities/species.entity";
 
 @ObjectType()
 export class CharacterCount {
@@ -66,11 +61,30 @@ export class Character {
   @Field(() => Visibility)
   visibility: Visibility;
 
-  @Field()
+  @Field({ description: "For sale, in real money. Paired with `price`." })
   isSellable: boolean;
 
-  @Field()
+  @Field({
+    description:
+      "Open to trades for other characters. The only one of these flags the " +
+      "trade system reads: it is consent to a real transfer, checked when an " +
+      "offer is written and again when it settles.",
+  })
   isTradeable: boolean;
+
+  @Field({ description: "For sale, in a community's own currency." })
+  isSellableForCoin: boolean;
+
+  @Field({ description: "Open to trades for art." })
+  isTradeableForArt: boolean;
+
+  @Field({
+    description: "Open to offers, without saying in advance what kind.",
+  })
+  isOpenToOffers: boolean;
+
+  @Field({ description: "Free to a good home." })
+  isFreebie: boolean;
 
   @Field(() => Float, { nullable: true })
   price?: number;

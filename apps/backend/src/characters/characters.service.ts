@@ -21,6 +21,10 @@ import {
 } from "@chardb/database";
 import { TraitReviewService } from "../trait-review/trait-review.service";
 import { notDeleted } from "../common/utils/prisma-filters";
+import {
+  availabilityWhere,
+  CharacterAvailability,
+} from "./character-availability";
 
 /**
  * Field classification for permission checks.
@@ -34,6 +38,10 @@ const PROFILE_FIELDS = new Set([
   "visibility",
   "isSellable",
   "isTradeable",
+  "isSellableForCoin",
+  "isTradeableForArt",
+  "isOpenToOffers",
+  "isFreebie",
   "price",
   "customFields",
   "mainMedia",
@@ -64,6 +72,7 @@ export interface CharacterServiceFilters {
   visibility?: Visibility;
   isSellable?: boolean;
   isTradeable?: boolean;
+  availability?: CharacterAvailability[];
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;
@@ -94,14 +103,14 @@ export class CharactersService {
     },
   ) {
     const { characterData, tags, assignToSelf = true } = input;
-    let pendingOwner = input.pendingOwner;
+    const pendingOwner = input.pendingOwner;
 
     // Determine the actual owner:
     // - If pendingOwner is provided, character is orphaned (ownerId = null)
     // - If assignToSelf is false, character is orphaned (ownerId = null)
     // - Otherwise, owner is the current user (userId)
     // - Can be reassigned if external account is already claimed
-    let actualOwnerId = pendingOwner || !assignToSelf ? null : userId;
+    const actualOwnerId = pendingOwner || !assignToSelf ? null : userId;
 
     // Extract speciesId early for validation and Discord resolution
     const speciesId = characterData.species?.connect?.id;
@@ -239,6 +248,7 @@ export class CharactersService {
       visibility,
       isSellable,
       isTradeable,
+      availability,
       minPrice,
       maxPrice,
       sortBy = "created",
@@ -279,6 +289,11 @@ export class CharactersService {
         visibility !== undefined ? { visibility } : {},
         isSellable !== undefined ? { isSellable } : {},
         isTradeable !== undefined ? { isTradeable } : {},
+
+        // AND'd against the two above, not merged with them. They are separate
+        // questions: `isTradeable: false` asks for characters that are not
+        // open to trades, which a list of things to include cannot express.
+        availabilityWhere(availability),
 
         // Price range filter
         minPrice !== undefined || maxPrice !== undefined

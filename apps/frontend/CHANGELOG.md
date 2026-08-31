@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Browse characters by what their owners are open to.** Six availability
+  kinds on the create and edit forms, a badge each on the character page, and a
+  row of checkboxes in Advanced Search where ticking several means "any of
+  these" (#312).
+
+### Changed
+
+- The character page's Trading Information card lists only what the owner said
+  yes to, rather than every setting with a Yes or a No beside it (#312).
+- Advanced Search's "Status" and "Trading" dropdowns are replaced by the
+  checkbox row. Existing `?isSellable=true` / `?isTradeable=true` links still
+  filter (#312).
+
+### Added
+
 - **Characters on the trade table**: the composer can offer and ask for
   characters, and a character open to trades carries a "Propose a Trade" button
   for members who do not own it. A character that is not open to trades shows

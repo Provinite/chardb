@@ -41,6 +41,10 @@ import {
 } from "../generated/graphql";
 import { CharacterDetailsEditor } from "../components/character/CharacterDetailsEditor";
 import { CustomFieldsEditor } from "../components/CustomFieldsEditor";
+import {
+  AVAILABILITY_KINDS,
+  TRADE_CHARACTERS_NOTE,
+} from "../lib/characterAvailability";
 
 const characterSchema = z.object({
   name: z
@@ -56,6 +60,10 @@ const characterSchema = z.object({
   visibility: z.enum(["PUBLIC", "UNLISTED", "PRIVATE"]),
   isSellable: z.boolean(),
   isTradeable: z.boolean(),
+  isSellableForCoin: z.boolean(),
+  isTradeableForArt: z.boolean(),
+  isOpenToOffers: z.boolean(),
+  isFreebie: z.boolean(),
   price: z
     .string()
     .optional()
@@ -192,6 +200,12 @@ const Checkbox = styled.input.attrs({ type: "checkbox" })`
   width: 16px;
   height: 16px;
   accent-color: ${({ theme }) => theme.colors.primary};
+`;
+
+const FieldNote = styled.p`
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: ${({ theme }) => theme.colors.text.muted};
 `;
 
 const ErrorMessage = styled.span`
@@ -355,6 +369,10 @@ export const EditCharacterPage: React.FC = () => {
       visibility: "PUBLIC",
       isSellable: false,
       isTradeable: false,
+      isSellableForCoin: false,
+      isTradeableForArt: false,
+      isOpenToOffers: false,
+      isFreebie: false,
       price: "",
       tags: [],
     },
@@ -387,6 +405,10 @@ export const EditCharacterPage: React.FC = () => {
         visibility: character.visibility,
         isSellable: character.isSellable,
         isTradeable: character.isTradeable,
+        isSellableForCoin: character.isSellableForCoin,
+        isTradeableForArt: character.isTradeableForArt,
+        isOpenToOffers: character.isOpenToOffers,
+        isFreebie: character.isFreebie,
         price: character.price?.toString() || "",
         tags: [],
       });
@@ -562,6 +584,10 @@ export const EditCharacterPage: React.FC = () => {
         visibility: data.visibility as Visibility,
         isSellable: data.isSellable,
         isTradeable: data.isTradeable,
+        isSellableForCoin: data.isSellableForCoin,
+        isTradeableForArt: data.isTradeableForArt,
+        isOpenToOffers: data.isOpenToOffers,
+        isFreebie: data.isFreebie,
         price:
           data.price && data.isSellable ? parseFloat(data.price) : undefined,
         tags,
@@ -741,23 +767,22 @@ export const EditCharacterPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Trading Options</Label>
+              <Label>Open to</Label>
               <CheckboxGroup>
-                <CheckboxLabel>
-                  <Checkbox
-                    {...register("isTradeable")}
-                    disabled={!canEditProfile}
-                  />
-                  Available for trading
-                </CheckboxLabel>
-                <CheckboxLabel>
-                  <Checkbox
-                    {...register("isSellable")}
-                    disabled={!canEditProfile}
-                  />
-                  Available for sale
-                </CheckboxLabel>
+                {AVAILABILITY_KINDS.map((kind) => (
+                  <CheckboxLabel key={kind.field}>
+                    <Checkbox
+                      {...register(kind.field)}
+                      disabled={!canEditProfile}
+                    />
+                    {kind.label}
+                  </CheckboxLabel>
+                ))}
               </CheckboxGroup>
+              {/* Against the one box that lets somebody else start something.
+                  The rest are notices, and nobody should learn the difference
+                  by being sent an offer they did not know they invited. */}
+              <FieldNote>{TRADE_CHARACTERS_NOTE}</FieldNote>
             </FormGroup>
           </FormRow>
 

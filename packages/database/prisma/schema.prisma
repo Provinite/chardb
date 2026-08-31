@@ -238,8 +238,29 @@ model Character {
   creatorId         String?           @map("creator_id")
   mainMediaId       String?           @map("main_media_id")
   visibility        Visibility        @default(PUBLIC)
+
+  /// What the owner will entertain being asked about, each defaulting to no.
+  ///
+  /// All but `isTradeable` are advertisements. They say what an owner is open
+  /// to and leave the arranging to a comment thread, which is what the things
+  /// they describe actually are -- there is no mechanism here that settles a
+  /// character for a piece of art. `isTradeable` is the exception and the
+  /// reason the rest cannot simply be one "for offers" flag: the trade system
+  /// reads it, at propose and again at settlement, so it is consent to a real
+  /// transfer rather than a label. A character open to art trades has not
+  /// thereby agreed to be put on a trade table.
   isSellable        Boolean           @default(false) @map("is_sellable")
+  isSellableForCoin Boolean           @default(false) @map("is_sellable_for_coin")
   isTradeable       Boolean           @default(false) @map("is_tradeable")
+  isTradeableForArt Boolean           @default(false) @map("is_tradeable_for_art")
+  isOpenToOffers    Boolean           @default(false) @map("is_open_to_offers")
+  isFreebie         Boolean           @default(false) @map("is_freebie")
+
+  /// Asking price for `isSellable`, in real money. The coin equivalent has no
+  /// price field: community currencies are per-community and a character
+  /// reaches at most one, so a number here could not say which currency it was
+  /// in without a second column to name it. Owners put the figure in the
+  /// character's details until that is worth doing properly.
   price             Decimal?          @db.Decimal(10, 2)
   customFields      Json              @default("{}") @map("custom_fields")
   /// [CharacterTraitValuesJson]

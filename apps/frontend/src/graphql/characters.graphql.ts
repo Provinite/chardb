@@ -18,6 +18,10 @@ export const GET_CHARACTERS = gql`
         visibility
         isSellable
         isTradeable
+        isSellableForCoin
+        isTradeableForArt
+        isOpenToOffers
+        isFreebie
         price
         tags
         customFields
@@ -117,6 +121,10 @@ export const GET_CHARACTER = gql`
       visibility
       isSellable
       isTradeable
+      isSellableForCoin
+      isTradeableForArt
+      isOpenToOffers
+      isFreebie
       price
       tags
       customFields
@@ -180,6 +188,10 @@ export const GET_MY_CHARACTERS = gql`
         visibility
         isSellable
         isTradeable
+        isSellableForCoin
+        isTradeableForArt
+        isOpenToOffers
+        isFreebie
         price
         tags
         customFields
@@ -290,6 +302,10 @@ export const CREATE_CHARACTER = gql`
       visibility
       isSellable
       isTradeable
+      isSellableForCoin
+      isTradeableForArt
+      isOpenToOffers
+      isFreebie
       price
       tags
       customFields
@@ -343,6 +359,10 @@ export const ASSIGN_CHARACTER_SPECIES = gql`
       visibility
       isSellable
       isTradeable
+      isSellableForCoin
+      isTradeableForArt
+      isOpenToOffers
+      isFreebie
       price
       tags
       customFields
@@ -402,6 +422,10 @@ export const TRANSFER_CHARACTER = gql`
       visibility
       isSellable
       isTradeable
+      isSellableForCoin
+      isTradeableForArt
+      isOpenToOffers
+      isFreebie
       price
       tags
       customFields
@@ -496,6 +520,10 @@ export const UPDATE_CHARACTER_PROFILE = gql`
       visibility
       isSellable
       isTradeable
+      isSellableForCoin
+      isTradeableForArt
+      isOpenToOffers
+      isFreebie
       price
       tags
       customFields

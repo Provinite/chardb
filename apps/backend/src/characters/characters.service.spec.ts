@@ -10,6 +10,7 @@ import { PermissionService } from "../auth/PermissionService";
 import { TraitReviewService } from "../trait-review/trait-review.service";
 import { ModerationStatus, TraitValueType, Visibility } from "@chardb/database";
 import { mockDatabaseService } from "../../test/setup";
+import { CharacterAvailability } from "./character-availability";
 
 const mockTagsService = {
   getCharacterTags: jest.fn(),
@@ -161,6 +162,92 @@ describe("CharactersService", () => {
       const [call] = db.character.findMany.mock.calls;
       const where = call[0].where;
       expect(where.AND).toEqual(expect.arrayContaining([{ deletedAt: null }]));
+    });
+
+    describe("availability", () => {
+      beforeEach(() => {
+        db.character.findMany.mockResolvedValue([]);
+        db.character.count.mockResolvedValue(0);
+      });
+
+      /** The AND clause the filter builds, for the last findAll. */
+      const lastWhere = () =>
+        db.character.findMany.mock.calls.at(-1)?.[0].where.AND as Array<
+          Record<string, unknown>
+        >;
+
+      it("asks for any of the ticked kinds, not all of them", async () => {
+        await service.findAll({
+          availability: [
+            CharacterAvailability.FREEBIE,
+            CharacterAvailability.OFFERS,
+          ],
+        });
+
+        // A row of checkboxes means "any of these". AND'ing them would return
+        // nothing for most combinations and read as a broken filter rather
+        // than a strict one.
+        expect(lastWhere()).toEqual(
+          expect.arrayContaining([
+            { OR: [{ isFreebie: true }, { isOpenToOffers: true }] },
+          ]),
+        );
+      });
+
+      it("maps each kind to its own column", async () => {
+        await service.findAll({
+          availability: [
+            CharacterAvailability.FOR_SALE,
+            CharacterAvailability.FOR_SALE_COIN,
+            CharacterAvailability.TRADE_CHARACTERS,
+            CharacterAvailability.TRADE_ART,
+          ],
+        });
+
+        // Sale-for-money and sale-for-coin are different columns, and so are
+        // the two kinds of trade. Collapsing either pair would make the
+        // browse filter answer a question nobody asked -- and in the trade
+        // case would imply consent to a transfer that was never given.
+        expect(lastWhere()).toEqual(
+          expect.arrayContaining([
+            {
+              OR: [
+                { isSellable: true },
+                { isSellableForCoin: true },
+                { isTradeable: true },
+                { isTradeableForArt: true },
+              ],
+            },
+          ]),
+        );
+      });
+
+      it("treats an empty list as no filter at all", async () => {
+        await service.findAll({ availability: [] });
+
+        // Unticking the last box returns you to browsing everything. A filter
+        // matching nothing would look like the list had broken.
+        expect(lastWhere()).not.toEqual(
+          expect.arrayContaining([expect.objectContaining({ OR: [] })]),
+        );
+      });
+
+      it("keeps the negative filter separate from the ticked kinds", async () => {
+        await service.findAll({
+          isTradeable: false,
+          availability: [CharacterAvailability.FREEBIE],
+        });
+
+        // "not open to trades" is a different question from "any of these",
+        // and a list of things to include cannot express it. Both clauses
+        // land, AND'd.
+        expect(lastWhere()).toEqual(
+          expect.arrayContaining([
+            { isTradeable: false },
+            { OR: [{ isFreebie: true }] },
+          ]),
+        );
+      });
     });
   });
 
