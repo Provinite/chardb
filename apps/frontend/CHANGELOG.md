@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The trade composer defaults its price field to the currency you hold most of,
+  and never offers an archived one — archived currencies keep their balances but
+  refuse new transactions, so pricing an offer in one is rejected at send.
+
 - **Trading**: a composer at `/communities/:id/trades/new`, an inbox at
   `/trades` covering both offers you sent and offers you received, and an offer
   page to accept, decline, counter or withdraw. Coin is a price field per side

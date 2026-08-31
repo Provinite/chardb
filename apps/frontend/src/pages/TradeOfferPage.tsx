@@ -284,6 +284,7 @@ export const TradeOfferPage: React.FC = () => {
               <Button
                 variant="ghost"
                 disabled={declining}
+                data-testid="decline-trade"
                 onClick={() =>
                   run(() => declineTrade({ variables: { id: trade.id } }))
                 }
@@ -309,6 +310,7 @@ export const TradeOfferPage: React.FC = () => {
               <Button
                 variant="primary"
                 disabled={accepting}
+                data-testid="accept-trade"
                 onClick={() =>
                   run(() => acceptTrade({ variables: { id: trade.id } }))
                 }
@@ -321,6 +323,7 @@ export const TradeOfferPage: React.FC = () => {
             <Button
               variant="ghost"
               disabled={cancelling}
+              data-testid="cancel-trade"
               onClick={() =>
                 run(() => cancelTrade({ variables: { id: trade.id } }))
               }

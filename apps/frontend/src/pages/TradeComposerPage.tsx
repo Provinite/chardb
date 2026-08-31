@@ -250,9 +250,22 @@ export const TradeComposerPage: React.FC = () => {
   // query resolves, which would make the useMemo below recompute each time.
   const mine = useMemo(() => data?.mine.holdings ?? [], [data]);
   const theirs = useMemo(() => data?.theirs.holdings ?? [], [data]);
-  const balances = useMemo(() => data?.wallet.balances ?? [], [data]);
+  // Archived currencies keep their balances and stay readable, but refuse new
+  // transactions. Offering one as the price would be rejected at send, with a
+  // message about archiving that the member can do nothing about.
+  const balances = useMemo(
+    () => (data?.wallet.balances ?? []).filter((b) => !b.currency.archivedAt),
+    [data],
+  );
+  // Default to whichever currency they actually hold most of. Taking the first
+  // one the wallet happens to return offers a price field reading "0 FT" to
+  // someone sitting on 380 HC, which is a worse guess than no guess.
+  const richest = useMemo(
+    () => [...balances].sort((a, b) => b.amount - a.amount)[0],
+    [balances],
+  );
   const currency =
-    balances.find((b) => b.currency.id === currencyId) ?? balances[0];
+    balances.find((b) => b.currency.id === currencyId) ?? richest;
 
   const toggleOffer = useCallback((itemId: string) => {
     setOffering((prev) => {
@@ -412,6 +425,10 @@ export const TradeComposerPage: React.FC = () => {
                   $on={offering.has(item.id)}
                   disabled={!h.itemType.isTradeable}
                   onClick={() => toggleOffer(item.id)}
+                  data-testid="offer-pick"
+                  data-item-id={item.id}
+                  data-item-type-id={h.itemType.id}
+                  data-tradeable={h.itemType.isTradeable ? "true" : "false"}
                 >
                   <span>{h.itemType.name}</span>
                   {h.itemType.isTradeable ? (
@@ -537,6 +554,9 @@ export const TradeComposerPage: React.FC = () => {
                 $on={requesting.has(h.itemType.id)}
                 disabled={!h.itemType.isTradeable}
                 onClick={() => bumpRequest(h.itemType.id, 1, h.count)}
+                data-testid="request-pick"
+                data-item-type-id={h.itemType.id}
+                data-tradeable={h.itemType.isTradeable ? "true" : "false"}
               >
                 <span>{h.itemType.name}</span>
                 {h.itemType.isTradeable ? (
@@ -575,6 +595,7 @@ export const TradeComposerPage: React.FC = () => {
           variant="primary"
           disabled={empty || overdrawn || sending}
           onClick={send}
+          data-testid="send-offer"
         >
           Send offer
         </Button>

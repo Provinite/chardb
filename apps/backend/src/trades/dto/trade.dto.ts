@@ -1,6 +1,7 @@
 import { Field, ID, InputType, Int } from "@nestjs/graphql";
 import {
   IsArray,
+  IsBoolean,
   IsInt,
   IsOptional,
   IsString,
@@ -57,6 +58,11 @@ export class TradeCoinInput {
   @Min(1)
   amount: number;
 
+  // @IsBoolean is load-bearing, not decoration: the global pipe runs with
+  // `whitelist` and `forbidNonWhitelisted`, so a property carrying no
+  // class-validator decorator is stripped and then rejected. A DTO field
+  // without one fails every request that sets it.
+  @IsBoolean()
   @Field({
     description:
       "True when the proposer pays it, false when they are asking for it. " +

@@ -5230,7 +5230,7 @@ export type TradeComposerQueryVariables = Exact<{
 }>;
 
 
-export type TradeComposerQuery = { __typename?: 'Query', mine: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean }, items: Array<{ __typename?: 'Item', id: string }> }> }, theirs: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean } }> }, wallet: { __typename?: 'MemberWallet', balances: Array<{ __typename?: 'CurrencyBalanceLine', amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }> } };
+export type TradeComposerQuery = { __typename?: 'Query', mine: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean }, items: Array<{ __typename?: 'Item', id: string }> }> }, theirs: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean } }> }, wallet: { __typename?: 'MemberWallet', balances: Array<{ __typename?: 'CurrencyBalanceLine', amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null, archivedAt: string | null } }> } };
 
 export type ProposeTradeMutationVariables = Exact<{
   input: CreateTradeInput;
@@ -13613,6 +13613,7 @@ export const TradeComposerDocument = gql`
         name
         code
         symbol
+        archivedAt
       }
     }
   }

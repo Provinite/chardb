@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **E2E: 7 trading specs** in `apps/e2e/tests/trades`, covering composing an
+  offer, settlement moving items and coin together, decline, withdraw, the
+  double-promise refusal, and that a non-party cannot read an offer. They found
+  two bugs no unit test could reach.
+
 - **Product walkthrough for notifications** on the docs site
   (`docs/docs/notifications.html`), with screenshots taken by driving a real
   follow, comment and currency grant through a running instance.
