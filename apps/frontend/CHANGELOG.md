@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Trades in the sidebar**: the global one links to the whole inbox, a
+  community's links to `/trades?community=<id>` for just that community's
+  offers, with a chip to clear the narrowing.
+
 - The trade composer defaults its price field to the currency you hold most of,
   and never offers an archived one — archived currencies keep their balances but
   refuse new transactions, so pricing an offer in one is rejected at send.
@@ -25,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   until it is opened.
 
 ### Fixed
+
+- **Counter left you with nothing**: it declined the offer and then opened the
+  composer addressed by username where a user id was expected, so the table came
+  up blank behind a decline that had already gone through. It now passes the id,
+  waits for the decline to land before navigating, and seeds the composer from
+  the offer it is countering with the sides swapped.
 
 - **Logging out did not clear the Apollo cache**, so the next person to sign in
   on the same browser could see the previous user's cached data — their

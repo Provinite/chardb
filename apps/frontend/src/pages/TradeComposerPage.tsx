@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
 import { ArrowDownUp } from "lucide-react";
@@ -7,6 +13,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import {
   useTradeComposerQuery,
+  useTradeQuery,
   useProposeTradeMutation,
 } from "../graphql/trades.graphql";
 
@@ -228,6 +235,8 @@ export const TradeComposerPage: React.FC = () => {
   const { user } = useAuth();
 
   const themId = params.get("with") ?? "";
+  /** A declined offer to open the table from, set by the Counter button. */
+  const mirrorId = params.get("mirror") ?? "";
 
   /** Item ids I am handing over. */
   const [offering, setOffering] = useState<Set<string>>(new Set());
@@ -242,6 +251,11 @@ export const TradeComposerPage: React.FC = () => {
   const { data, loading } = useTradeComposerQuery({
     variables: { communityId: communityId!, meId: user?.id ?? "", themId },
     skip: !communityId || !user?.id || !themId,
+  });
+
+  const { data: mirrorData, loading: mirroring } = useTradeQuery({
+    variables: { id: mirrorId },
+    skip: !mirrorId,
   });
 
   const [proposeTrade, { loading: sending }] = useProposeTradeMutation();
@@ -266,6 +280,63 @@ export const TradeComposerPage: React.FC = () => {
   );
   const currency =
     balances.find((b) => b.currency.id === currencyId) ?? richest;
+
+  // Countering opens the composer on the same table with the sides swapped, so
+  // that "not quite" is an edit rather than a retype. Seeded once and never
+  // again: after the first pass the state belongs to the member, and a refetch
+  // must not quietly undo what they changed.
+  const seeded = useRef(false);
+  useEffect(() => {
+    const mirror = mirrorData?.trade;
+    if (seeded.current || !mirror || !data || !user) return;
+    seeded.current = true;
+
+    const wants = new Map<string, number>();
+    const gives = new Set<string>();
+    // My rows, per type, to draw from as the mirrored requests are filled.
+    const spare = new Map<string, string[]>(
+      mine
+        .filter((h) => h.itemType.isTradeable)
+        .map((h) => [h.itemType.id, h.items.map((i) => i.id)]),
+    );
+
+    for (const line of mirror.items) {
+      const typeId = line.item?.itemTypeId ?? line.itemType?.id;
+      if (!typeId) continue;
+      const count = line.quantity ?? 1;
+
+      if (line.destinationUser.id === user.id) {
+        // Was coming to me, so I ask for it again -- by type, because their
+        // particular row was never mine to pin and the composer asks in types.
+        // Clamped to what they hold now, which silently drops anything they
+        // have since traded away rather than seeding an offer that cannot fill.
+        const held = theirs.find((h) => h.itemType.id === typeId);
+        if (!held?.itemType.isTradeable) continue;
+        wants.set(
+          typeId,
+          Math.min((wants.get(typeId) ?? 0) + count, held.count),
+        );
+      } else if (line.sourceUser.id === user.id) {
+        // Was being asked of me by type, so now I pick the actual rows.
+        for (const id of (spare.get(typeId) ?? []).splice(0, count)) {
+          gives.add(id);
+        }
+      }
+    }
+
+    for (const line of mirror.currencyLines) {
+      if (line.sourceUser.id === user.id) {
+        setCurrencyId(line.currency.id);
+        setCoinOut(String(line.amount));
+      } else if (line.destinationUser.id === user.id) {
+        setCurrencyId(line.currency.id);
+        setCoinIn(String(line.amount));
+      }
+    }
+
+    setRequesting(wants);
+    setOffering(gives);
+  }, [mirrorData, data, mine, theirs, user]);
 
   const toggleOffer = useCallback((itemId: string) => {
     setOffering((prev) => {
@@ -371,7 +442,9 @@ export const TradeComposerPage: React.FC = () => {
     );
   }
 
-  if (loading && !data) {
+  // A counter waits for the offer it mirrors too, or the panes would render
+  // empty and then fill themselves a moment later under the member's cursor.
+  if ((loading && !data) || (mirroring && !mirrorData)) {
     return (
       <LoadingWrap>
         <LoadingSpinner />
@@ -381,10 +454,11 @@ export const TradeComposerPage: React.FC = () => {
 
   return (
     <Container>
-      <Title>New trade offer</Title>
+      <Title>{mirrorId ? "Counter-offer" : "New trade offer"}</Title>
       <Sub>
-        Nothing moves until they accept, and everything is checked again at that
-        moment.
+        {mirrorId
+          ? "Their offer, with the sides swapped. Change what you like before sending."
+          : "Nothing moves until they accept, and everything is checked again at that moment."}
       </Sub>
 
       {balances.length > 1 && (
@@ -445,7 +519,7 @@ export const TradeComposerPage: React.FC = () => {
         <Pane>
           <PaneHead>The table</PaneHead>
           <PaneBody>
-            <Side $mine>
+            <Side $mine data-testid="table-give">
               <SideHead>You give</SideHead>
               {offeredRows.length === 0 ? (
                 <SideEmpty>No items offered</SideEmpty>
@@ -486,7 +560,7 @@ export const TradeComposerPage: React.FC = () => {
               <ArrowDownUp size={16} />
             </Swap>
 
-            <Side>
+            <Side data-testid="table-receive">
               <SideHead>You receive</SideHead>
               {requesting.size === 0 ? (
                 <SideEmpty>No items requested</SideEmpty>

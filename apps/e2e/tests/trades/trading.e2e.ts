@@ -208,8 +208,110 @@ test.describe("answering an offer", () => {
   });
 });
 
+test.describe("countering an offer", () => {
+  test.use({ persona: "member" });
+
+  test.beforeEach(async ({ world }) => {
+    await world.reset();
+  });
+
+  test("opens the composer on the same table, sides swapped", async ({
+    page,
+    world,
+    browser,
+  }) => {
+    const tradeUrl = await offerPotionForCoin(page, world, 100);
+    const tradeId = tradeUrl.split("/").pop() as string;
+
+    const them = await pageAs(browser, world.storageState("othermember"));
+    try {
+      await them.page.goto(tradeUrl);
+      await them.page.getByTestId("counter-trade").click();
+      await them.page.waitForURL(/\/trades\/new\?/);
+
+      // The composer addresses people by id. It said `with=<username>` once,
+      // which loaded nobody's inventory and left a blank table behind a decline
+      // that had already gone through.
+      expect(them.page.url()).toContain(`with=${world.users.member.userId}`);
+      expect(them.page.url()).toContain(`mirror=${tradeId}`);
+
+      // Swapped, not copied. The potion that was coming to them is now what
+      // they ask for, and the coin they were paying is what they offer.
+      await expect(
+        them.page.getByRole("heading", { name: /counter-offer/i }),
+      ).toBeVisible();
+      await expect(them.page.getByTestId("table-receive")).toContainText(
+        "Trait Change Potion",
+      );
+      await expect(them.page.getByLabel(/hollow coin you give$/i)).toHaveValue(
+        "100",
+      );
+    } finally {
+      await them.close();
+    }
+
+    // Countering is a decline plus a fresh offer, and the decline is the half
+    // that already happened. The original must not still be answerable.
+    await page.goto(tradeUrl);
+    await expect(page.getByTestId("trade-status")).toContainText(/declined/i);
+  });
+
+  test("the counter can be edited before it is sent, and settles as edited", async ({
+    page,
+    world,
+    browser,
+  }) => {
+    const tradeUrl = await offerPotionForCoin(page, world, 100);
+
+    let counterUrl: string;
+    const them = await pageAs(browser, world.storageState("othermember"));
+    try {
+      await them.page.goto(tradeUrl);
+      await them.page.getByTestId("counter-trade").click();
+      await them.page.waitForURL(/\/trades\/new\?/);
+
+      // The seed is a starting point, not a fixture. Haggling 100 down to 60 is
+      // the entire reason the button exists.
+      await them.page.getByLabel(/hollow coin you give$/i).fill("60");
+      await them.page.getByTestId("send-offer").click();
+      await them.page.waitForURL(/\/trades\/[0-9a-f-]{36}$/);
+      counterUrl = them.page.url();
+    } finally {
+      await them.close();
+    }
+
+    await page.goto(counterUrl);
+    await expect(page.getByTestId("offer-receive")).toContainText("60");
+    await page.getByTestId("accept-trade").click();
+    await expect(page.getByTestId("trade-status")).toContainText(/settled/i);
+
+    // 60 rather than 100, and one potion gone: the edit settled, not the seed.
+    await page.goto(`/communities/${world.community.id}/inventory`);
+    await expect(page.getByTestId("wallet-HC")).toContainText("440");
+    await expect(
+      page.locator(
+        `[data-testid="holding-group"][data-item-type-id="${world.itemTypes.potion.id}"]`,
+      ),
+    ).toContainText("×2");
+  });
+
+  test("is offered to the recipient only", async ({ page, world }) => {
+    const tradeUrl = await offerPotionForCoin(page, world, 100);
+
+    // Countering your own offer is withdrawing it and writing another, and
+    // that button is already there under its own name.
+    await page.goto(tradeUrl);
+    await expect(page.getByTestId("counter-trade")).toHaveCount(0);
+    await expect(page.getByTestId("cancel-trade")).toBeVisible();
+  });
+});
+
 test.describe("who can see an offer", () => {
   test.use({ persona: "outsider" });
+
+  test.beforeEach(async ({ world }) => {
+    await world.reset();
+  });
 
   test("someone who is not a party cannot read it", async ({
     page,

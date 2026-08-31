@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, X } from "lucide-react";
 import { Avatar, Button } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
+import { useCommunityByIdQuery } from "../generated/graphql";
 import {
   EffectiveTradeStatus,
   useTradesQuery,
@@ -103,6 +104,26 @@ const Meta = styled.div`
   white-space: nowrap;
 `;
 
+/** Says which community the list is narrowed to, and clears the narrowing. */
+const Scope = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  text-decoration: none;
+  font-size: 0.75rem;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
 const Empty = styled.div`
   padding: 4rem 1rem;
   text-align: center;
@@ -131,13 +152,24 @@ const LoadingWrap = styled.div`
  */
 export const TradesPage: React.FC = () => {
   const { user } = useAuth();
+  const [params] = useSearchParams();
   const [status, setStatus] = useState<EffectiveTradeStatus | undefined>(
     EffectiveTradeStatus.Pending,
   );
   const [limit, setLimit] = useState(PAGE_SIZE);
 
+  // Arriving from a community's sidebar narrows the list to that community.
+  // Arriving from the global one does not, because an offer waiting on you is
+  // waiting on you wherever it was made.
+  const communityId = params.get("community") ?? undefined;
+
+  const { data: communityData } = useCommunityByIdQuery({
+    variables: { id: communityId! },
+    skip: !communityId,
+  });
+
   const { data, loading, error } = useTradesQuery({
-    variables: { status, first: limit },
+    variables: { communityId, status, first: limit },
     fetchPolicy: "cache-and-network",
   });
 
@@ -181,6 +213,13 @@ export const TradesPage: React.FC = () => {
           </Tab>
         </Tabs>
       </Header>
+
+      {communityId && (
+        <Scope to="/trades" data-testid="trade-scope">
+          {communityData?.community.name ?? "This community"} only
+          <X size={12} />
+        </Scope>
+      )}
 
       {error ? (
         <Empty>Those trades could not be loaded. {error.message}</Empty>

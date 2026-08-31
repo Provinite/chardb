@@ -195,12 +195,14 @@ export const TradeOfferPage: React.FC = () => {
   );
   const actions = trade ? actionsFor(trade, viewerId) : null;
 
+  /** Runs an action, surfacing its failure. Returns whether it went through. */
   const run = useCallback(
     async (fn: () => Promise<unknown>) => {
       setProblem(null);
       try {
         await fn();
         await refetch();
+        return true;
       } catch (err) {
         // Settlement re-checks everything, so this is where "they no longer
         // hold it" and "you cannot cover that" actually surface. The message is
@@ -208,6 +210,7 @@ export const TradeOfferPage: React.FC = () => {
         setProblem(
           err instanceof Error ? err.message : "That could not be completed",
         );
+        return false;
       }
     },
     [refetch],
@@ -260,14 +263,14 @@ export const TradeOfferPage: React.FC = () => {
       </Header>
 
       <Table>
-        <Side $mine>
+        <Side $mine data-testid="offer-give">
           <SideHead>You give</SideHead>
           <LineRows items={sides.giving.items} coin={sides.giving.coin} />
         </Side>
         <Swap>
           <ArrowDownUp size={16} />
         </Swap>
-        <Side>
+        <Side data-testid="offer-receive">
           <SideHead>You receive</SideHead>
           <LineRows items={sides.receiving.items} coin={sides.receiving.coin} />
         </Side>
@@ -294,16 +297,20 @@ export const TradeOfferPage: React.FC = () => {
               <Button
                 variant="secondary"
                 disabled={declining}
-                onClick={() =>
-                  // Counter is a decline plus a fresh offer, composed here.
-                  // The server never sees a counter-offer.
-                  run(async () => {
-                    await declineTrade({ variables: { id: trade.id } });
-                    navigate(
-                      `/communities/${trade.community.id}/trades/new?with=${other.username}&mirror=${trade.id}`,
-                    );
-                  })
-                }
+                data-testid="counter-trade"
+                onClick={async () => {
+                  // Counter is a decline plus a fresh offer, composed here. The
+                  // server never sees a counter-offer, so this offer really is
+                  // over either way -- which is why the navigation waits on the
+                  // decline actually landing rather than assuming it did.
+                  const declined = await run(() =>
+                    declineTrade({ variables: { id: trade.id } }),
+                  );
+                  if (!declined) return;
+                  navigate(
+                    `/communities/${trade.community.id}/trades/new?with=${other.id}&mirror=${trade.id}`,
+                  );
+                }}
               >
                 Counter…
               </Button>
