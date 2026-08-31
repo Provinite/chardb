@@ -40,6 +40,20 @@ export interface CreditAward {
   amount: number;
 }
 
+/** What a caller can override when moving coin between two members. */
+export interface TransferOptions {
+  /**
+   * Run inside a transaction the caller already holds. A trade settles items
+   * and coin together, and half a settlement is worse than none.
+   */
+  tx?: Prisma.TransactionClient;
+  /**
+   * Share a batch id with rows written elsewhere. A trade uses one id across
+   * both ledgers so its consequences can be found from either side.
+   */
+  batchId?: string;
+}
+
 export interface CreditOptions {
   currencyId: string;
   awards: CreditAward[];
@@ -436,21 +450,30 @@ export class CurrencyLedgerService {
   async transfer(
     input: TransferCurrencyInput,
     fromUserId: string,
+    options: TransferOptions = {},
   ): Promise<string> {
     if (input.toUserId === fromUserId) {
       throw new BadRequestException("Cannot transfer currency to yourself");
     }
 
-    const currency = await this.loadWritableCurrency(this.db, input.currencyId);
-    await this.assertMembers(this.db, currency.communityId, [
+    // Same rule as credit(): every query runs on one client, the caller's
+    // transaction when there is one and the pool otherwise. Reaching past a
+    // caller's transaction holds two connections at once, and enough of those
+    // deadlock the pool.
+    const read: DbClient = options.tx ?? this.db;
+
+    const currency = await this.loadWritableCurrency(read, input.currencyId);
+    await this.assertMembers(read, currency.communityId, [
       fromUserId,
       input.toUserId,
     ]);
 
-    const batchId = randomUUID();
+    // A trade settles items and coin together and wants one batch id across
+    // both ledgers, so a caller may supply it rather than take ours.
+    const batchId = options.batchId ?? randomUUID();
 
-    try {
-      await this.db.$transaction(async (tx) => {
+    const run = async (tx: DbClient) => {
+      {
         await this.ensureBalanceRows(tx, currency.id, [
           fromUserId,
           input.toUserId,
@@ -514,7 +537,15 @@ export class CurrencyLedgerService {
             },
           ],
         });
-      });
+      }
+    };
+
+    try {
+      if (options.tx) {
+        await run(options.tx);
+      } else {
+        await this.db.$transaction(run);
+      }
     } catch (error) {
       if (isOverdraft(error)) {
         throw new BadRequestException(

@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import {
+  ArrowLeftRight,
   BarChart3,
   Users,
   User,
@@ -516,6 +517,17 @@ export const CommunityNavigationSidebar: React.FC<
               to={`${communityBasePath}/inventory`}
               icon={Package}
               label="Inventory"
+              isNested
+            />
+
+            {/* Trades - the same inbox as the global one, narrowed to here.
+                Offers are always made inside a community, so arriving from a
+                community's sidebar and being shown everyone else's would be
+                answering a question nobody asked. */}
+            <CommunityNavigationItem
+              to={`/trades?community=${communityId}`}
+              icon={ArrowLeftRight}
+              label="Trades"
               isNested
             />
 

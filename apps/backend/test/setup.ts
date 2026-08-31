@@ -184,6 +184,23 @@ const mockPrismaService = {
     count: jest.fn(),
     groupBy: jest.fn(),
   },
+  trade: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findUniqueOrThrow: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    updateMany: jest.fn(),
+    count: jest.fn(),
+  },
+  tradeItem: {
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+  },
+  tradeCurrencyLine: {
+    findMany: jest.fn(),
+    aggregate: jest.fn(),
+  },
   notification: {
     create: jest.fn(),
     createMany: jest.fn(),

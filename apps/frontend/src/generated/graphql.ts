@@ -649,6 +649,16 @@ export type CreateTextMediaInput = {
   visibility?: Visibility;
 };
 
+export type CreateTradeInput = {
+  coin?: Array<TradeCoinInput>;
+  communityId: Scalars['ID']['input'];
+  expiresInDays?: InputMaybe<Scalars['Int']['input']>;
+  note?: InputMaybe<Scalars['String']['input']>;
+  offering?: Array<OfferedTradeItemInput>;
+  recipientId: Scalars['ID']['input'];
+  requesting?: Array<RequestedTradeItemInput>;
+};
+
 export type CreateTraitInput = {
   /** Whether this trait allows an optional free-text clarifier on each value */
   allowsClarifier?: InputMaybe<Scalars['Boolean']['input']>;
@@ -871,6 +881,15 @@ export type EditAndApproveTraitReviewInput = {
   /** The ID of the review to edit and approve */
   reviewId: Scalars['ID']['input'];
 };
+
+/** Where an offer stands with the clock applied. A PENDING trade past its expiresAt reports EXPIRED and will not settle. */
+export enum EffectiveTradeStatus {
+  Accepted = 'ACCEPTED',
+  Cancelled = 'CANCELLED',
+  Declined = 'DECLINED',
+  Expired = 'EXPIRED',
+  Pending = 'PENDING'
+}
 
 export type EnumValue = {
   __typename?: 'EnumValue';
@@ -1232,7 +1251,7 @@ export type ItemTransaction = {
   actorUserId: Maybe<Scalars['ID']['output']>;
   /** Shared by every row one operation wrote. Group on this to collapse a bulk grant into a single line. */
   batchId: Scalars['ID']['output'];
-  /** How many items this event touched in total. Counting loaded rows is wrong once a batch straddles a page boundary, so the server counts it. */
+  /** How many items moved this way in this event: same batch, same item type, same direction. Counting loaded rows is wrong once a batch straddles a page boundary, so the server counts it. A trade settles as one batch carrying two legs that differ in both type and direction, so a plain per-batch count would report each leg as the size of the whole trade. */
   batchSize: Scalars['Int']['output'];
   communityId: Scalars['ID']['output'];
   createdAt: Scalars['DateTime']['output'];
@@ -1559,6 +1578,8 @@ export enum ModerationStatus {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  /** Accept and settle. Items and coin move in one transaction across both ledgers, or the whole accept fails. */
+  acceptTrade: Trade;
   addCharacterTags: Character;
   /** Adds tags to a media item */
   addMediaTags: Media;
@@ -1572,10 +1593,14 @@ export type Mutation = {
   burnCurrency: Scalars['String']['output'];
   /** Cancel a running DeviantArt UUID backfill job. */
   cancelDeviantartUuidBackfill: Scalars['Boolean']['output'];
+  /** Withdraw an offer you sent. */
+  cancelTrade: Trade;
   /** Buy a cart. Everything commits together, or nothing does. */
   checkout: ShopPurchase;
   /** Claim an invite code to join a community */
   claimInviteCode: InviteCode;
+  /** Answer an offer with a different one. Declines the original and sends the replacement in a single step, so opening a counter and thinking better of it costs the offer nothing. Returns the new trade. */
+  counterTrade: Trade;
   createCharacter: Character;
   /** Create a new character ownership change record */
   createCharacterOwnershipChange: CharacterOwnershipChange;
@@ -1609,6 +1634,8 @@ export type Mutation = {
   createTrait: Trait;
   /** Create a new trait list entry */
   createTraitListEntry: TraitListEntry;
+  /** Refuse an offer. Nothing was held, so nothing is released. To refuse and reply with your own terms, use counterTrade instead. */
+  declineTrade: Trade;
   /** Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. A character with no species has no community to resolve permissions from, so once it has been removed from its species (see kickCharacterFromSpecies) only a global admin can delete it. */
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
@@ -1636,6 +1663,8 @@ export type Mutation = {
   markNotificationsSeen: Scalars['Int']['output'];
   /** Create currency into one or more members' balances. Returns the batch id every row it wrote shares. */
   mintCurrency: Scalars['String']['output'];
+  /** Compose an offer. Nothing is reserved: what it names is checked now so you are told early, and checked again decisively at accept. */
+  proposeTrade: Trade;
   /** Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete. */
   purgeCharacter: Scalars['Boolean']['output'];
   refreshToken: Scalars['String']['output'];
@@ -1735,6 +1764,12 @@ export type Mutation = {
 };
 
 
+export type MutationAcceptTradeArgs = {
+  id: Scalars['ID']['input'];
+  selections?: InputMaybe<Array<TradeSelectionInput>>;
+};
+
+
 export type MutationAddCharacterTagsArgs = {
   id: Scalars['ID']['input'];
   input: ManageTagsInput;
@@ -1768,6 +1803,11 @@ export type MutationBurnCurrencyArgs = {
 };
 
 
+export type MutationCancelTradeArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationCheckoutArgs = {
   input: CheckoutInput;
 };
@@ -1776,6 +1816,12 @@ export type MutationCheckoutArgs = {
 export type MutationClaimInviteCodeArgs = {
   claimInviteCodeInput: ClaimInviteCodeInput;
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationCounterTradeArgs = {
+  id: Scalars['ID']['input'];
+  input: CreateTradeInput;
 };
 
 
@@ -1879,6 +1925,11 @@ export type MutationCreateTraitListEntryArgs = {
 };
 
 
+export type MutationDeclineTradeArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteCharacterArgs = {
   id: Scalars['ID']['input'];
 };
@@ -1952,6 +2003,11 @@ export type MutationMarkNotificationsReadArgs = {
 
 export type MutationMintCurrencyArgs = {
   input: MintCurrencyInput;
+};
+
+
+export type MutationProposeTradeArgs = {
+  input: CreateTradeInput;
 };
 
 
@@ -2311,7 +2367,10 @@ export enum NotificationKind {
   CurrencyReceived = 'CURRENCY_RECEIVED',
   FollowReceived = 'FOLLOW_RECEIVED',
   ItemGranted = 'ITEM_GRANTED',
-  ItemRevoked = 'ITEM_REVOKED'
+  ItemRevoked = 'ITEM_REVOKED',
+  TradeAccepted = 'TRADE_ACCEPTED',
+  TradeDeclined = 'TRADE_DECLINED',
+  TradeOffered = 'TRADE_OFFERED'
 }
 
 /** What clicking the notification opens. Paired with subjectId, and null on notifications that link nowhere. */
@@ -2323,8 +2382,14 @@ export enum NotificationSubjectType {
   Image = 'IMAGE',
   Item = 'ITEM',
   Media = 'MEDIA',
+  Trade = 'TRADE',
   User = 'USER'
 }
+
+/** A row the proposer hands over. Always a specific item: the proposer is at the composer, so they are the giver who gets to choose. */
+export type OfferedTradeItemInput = {
+  itemId: Scalars['ID']['input'];
+};
 
 export type OwnerIdUpdate = {
   /** Set owner ID (null = orphan character) */
@@ -2527,6 +2592,10 @@ export type Query = {
   speciesVariants: SpeciesVariantConnection;
   /** Get species variants by species ID with pagination */
   speciesVariantsBySpecies: SpeciesVariantConnection;
+  /** One of your trades. Readable by either party, nobody else. */
+  trade: Trade;
+  /** Your trades, newest first -- both the offers waiting on you and the ones you have out. */
+  trades: TradeConnection;
   /** Get a trait by ID */
   traitById: Trait;
   /** Get all trait list entries with pagination */
@@ -3063,6 +3132,19 @@ export type QuerySpeciesVariantsBySpeciesArgs = {
 };
 
 
+export type QueryTradeArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryTradesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<EffectiveTradeStatus>;
+};
+
+
 export type QueryTraitByIdArgs = {
   id: Scalars['ID']['input'];
 };
@@ -3186,6 +3268,13 @@ export type RemovalResponse = {
 
 export type ReorderGalleriesInput = {
   galleryIds: Array<Scalars['ID']['input']>;
+};
+
+/** Something the proposer asks for. Give itemTypeId and quantity for the usual case -- any rows of that type will do, and the recipient chooses which when they accept. Give itemId only when one particular item's history is the point. */
+export type RequestedTradeItemInput = {
+  itemId?: InputMaybe<Scalars['ID']['input']>;
+  itemTypeId?: InputMaybe<Scalars['ID']['input']>;
+  quantity?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type ResetPasswordInput = {
@@ -3489,6 +3578,77 @@ export type ToggleFollowInput = {
 export type ToggleLikeInput = {
   entityId: Scalars['ID']['input'];
   entityType: LikeableType;
+};
+
+/** One member's offer to another. Nothing is held while it stands: what it names is checked when it is written and checked again, decisively, when it is accepted. */
+export type Trade = {
+  __typename?: 'Trade';
+  community: Community;
+  createdAt: Scalars['DateTime']['output'];
+  currencyLines: Array<TradeCurrencyLine>;
+  expiresAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  items: Array<TradeItem>;
+  note: Maybe<Scalars['String']['output']>;
+  proposer: User;
+  recipient: User;
+  respondedAt: Maybe<Scalars['DateTime']['output']>;
+  /** Shared by every ledger row this settlement wrote, on both the item and the currency ledger. Null until accepted. */
+  settlementBatchId: Maybe<Scalars['String']['output']>;
+  /** Use this rather than a stored status: it accounts for expiry, which is a date and never written to the row. */
+  status: EffectiveTradeStatus;
+};
+
+/** Coin on the table, in one direction. */
+export type TradeCoinInput = {
+  amount: Scalars['Int']['input'];
+  currencyId: Scalars['ID']['input'];
+  /** True when the proposer pays it, false when they are asking for it. Amounts in the same currency on both sides are netted. */
+  fromProposer: Scalars['Boolean']['input'];
+};
+
+/** A page of trades, newest first. */
+export type TradeConnection = {
+  __typename?: 'TradeConnection';
+  hasNextPage: Scalars['Boolean']['output'];
+  hasPreviousPage: Scalars['Boolean']['output'];
+  nodes: Array<Trade>;
+  totalCount: Scalars['Int']['output'];
+};
+
+/** Coin on the table, moving one way. */
+export type TradeCurrencyLine = {
+  __typename?: 'TradeCurrencyLine';
+  /** Always positive. Direction is the source and destination, not a sign. Opposing amounts in one currency are netted when the offer is written. */
+  amount: Scalars['Int']['output'];
+  currency: Currency;
+  destinationUser: User;
+  id: Scalars['ID']['output'];
+  sourceUser: User;
+};
+
+/** One line on the table: either a specific item, or a quantity of an item type that any rows can satisfy. */
+export type TradeItem = {
+  __typename?: 'TradeItem';
+  /** Who receives it. */
+  destinationUser: User;
+  id: Scalars['ID']['output'];
+  /** The exact row this line names. Set when the history of a particular item is the point, and on everything the proposer offers. */
+  item: Maybe<Item>;
+  /** The type this line asks for, when any rows of it will do. Paired with quantity, and always something the recipient hands over. */
+  itemType: Maybe<ItemType>;
+  /** How many of itemType. Null on a line that names a row. */
+  quantity: Maybe<Scalars['Int']['output']>;
+  /** Who hands it over. */
+  sourceUser: User;
+};
+
+/** Which of your rows satisfy one by-type line. Optional -- omit it and rows are chosen for you, newest first. Supply it when one particular copy is one you would rather keep. */
+export type TradeSelectionInput = {
+  /** Exactly as many rows as the line's quantity. */
+  itemIds: Array<Scalars['ID']['input']>;
+  /** The TradeItem line being satisfied. */
+  tradeItemId: Scalars['ID']['input'];
 };
 
 export type Trait = {
@@ -5290,6 +5450,71 @@ export type SearchTagsQueryVariables = Exact<{
 
 export type SearchTagsQuery = { __typename?: 'Query', searchTags: Array<{ __typename?: 'Tag', id: string, name: string, displayName: string, category: string | null, color: string | null, createdAt: string }> };
 
+export type TradeFieldsFragment = { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> };
+
+export type TradesQueryVariables = Exact<{
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<EffectiveTradeStatus>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type TradesQuery = { __typename?: 'Query', trades: { __typename?: 'TradeConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> }> } };
+
+export type TradeQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type TradeQuery = { __typename?: 'Query', trade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+
+export type TradeComposerQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  meId: Scalars['ID']['input'];
+  themId: Scalars['ID']['input'];
+}>;
+
+
+export type TradeComposerQuery = { __typename?: 'Query', mine: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean }, items: Array<{ __typename?: 'Item', id: string }> }> }, theirs: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean } }> }, wallet: { __typename?: 'MemberWallet', balances: Array<{ __typename?: 'CurrencyBalanceLine', amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null, archivedAt: string | null } }> } };
+
+export type ProposeTradeMutationVariables = Exact<{
+  input: CreateTradeInput;
+}>;
+
+
+export type ProposeTradeMutation = { __typename?: 'Mutation', proposeTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+
+export type CounterTradeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: CreateTradeInput;
+}>;
+
+
+export type CounterTradeMutation = { __typename?: 'Mutation', counterTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+
+export type AcceptTradeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  selections?: InputMaybe<Array<TradeSelectionInput> | TradeSelectionInput>;
+}>;
+
+
+export type AcceptTradeMutation = { __typename?: 'Mutation', acceptTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+
+export type DeclineTradeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeclineTradeMutation = { __typename?: 'Mutation', declineTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+
+export type CancelTradeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type CancelTradeMutation = { __typename?: 'Mutation', cancelTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+
 export type TraitListEntryDetailsFragment = { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> } };
 
 export type TraitListEntriesByVariantQueryVariables = Exact<{
@@ -5792,6 +6017,89 @@ export const TraitConnectionDetailsFragmentDoc = gql`
   totalCount
 }
     ${TraitDetailsFragmentDoc}`;
+export const TradeFieldsFragmentDoc = gql`
+    fragment TradeFields on Trade {
+  id
+  status
+  note
+  expiresAt
+  respondedAt
+  settlementBatchId
+  createdAt
+  community {
+    id
+    name
+  }
+  proposer {
+    id
+    username
+    displayName
+    avatarImage {
+      id
+      thumbnailUrl
+      originalUrl
+      altText
+    }
+  }
+  recipient {
+    id
+    username
+    displayName
+    avatarImage {
+      id
+      thumbnailUrl
+      originalUrl
+      altText
+    }
+  }
+  items {
+    id
+    quantity
+    item {
+      id
+      itemTypeId
+      itemType {
+        id
+        name
+      }
+    }
+    itemType {
+      id
+      name
+    }
+    sourceUser {
+      id
+      username
+      displayName
+    }
+    destinationUser {
+      id
+      username
+      displayName
+    }
+  }
+  currencyLines {
+    id
+    amount
+    currency {
+      id
+      name
+      code
+      symbol
+    }
+    sourceUser {
+      id
+      username
+      displayName
+    }
+    destinationUser {
+      id
+      username
+      displayName
+    }
+  }
+}
+    `;
 export const TraitListEntryDetailsFragmentDoc = gql`
     fragment TraitListEntryDetails on TraitListEntry {
   id
@@ -13815,6 +14123,335 @@ export type SearchTagsQueryHookResult = ReturnType<typeof useSearchTagsQuery>;
 export type SearchTagsLazyQueryHookResult = ReturnType<typeof useSearchTagsLazyQuery>;
 export type SearchTagsSuspenseQueryHookResult = ReturnType<typeof useSearchTagsSuspenseQuery>;
 export type SearchTagsQueryResult = Apollo.QueryResult<SearchTagsQuery, SearchTagsQueryVariables>;
+export const TradesDocument = gql`
+    query Trades($communityId: ID, $status: EffectiveTradeStatus, $first: Int, $after: String) {
+  trades(communityId: $communityId, status: $status, first: $first, after: $after) {
+    nodes {
+      ...TradeFields
+    }
+    totalCount
+    hasNextPage
+    hasPreviousPage
+  }
+}
+    ${TradeFieldsFragmentDoc}`;
+
+/**
+ * __useTradesQuery__
+ *
+ * To run a query within a React component, call `useTradesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTradesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTradesQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      status: // value for 'status'
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *   },
+ * });
+ */
+export function useTradesQuery(baseOptions?: Apollo.QueryHookOptions<TradesQuery, TradesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<TradesQuery, TradesQueryVariables>(TradesDocument, options);
+      }
+export function useTradesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TradesQuery, TradesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<TradesQuery, TradesQueryVariables>(TradesDocument, options);
+        }
+export function useTradesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TradesQuery, TradesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<TradesQuery, TradesQueryVariables>(TradesDocument, options);
+        }
+export type TradesQueryHookResult = ReturnType<typeof useTradesQuery>;
+export type TradesLazyQueryHookResult = ReturnType<typeof useTradesLazyQuery>;
+export type TradesSuspenseQueryHookResult = ReturnType<typeof useTradesSuspenseQuery>;
+export type TradesQueryResult = Apollo.QueryResult<TradesQuery, TradesQueryVariables>;
+export const TradeDocument = gql`
+    query Trade($id: ID!) {
+  trade(id: $id) {
+    ...TradeFields
+  }
+}
+    ${TradeFieldsFragmentDoc}`;
+
+/**
+ * __useTradeQuery__
+ *
+ * To run a query within a React component, call `useTradeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTradeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTradeQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useTradeQuery(baseOptions: Apollo.QueryHookOptions<TradeQuery, TradeQueryVariables> & ({ variables: TradeQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<TradeQuery, TradeQueryVariables>(TradeDocument, options);
+      }
+export function useTradeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TradeQuery, TradeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<TradeQuery, TradeQueryVariables>(TradeDocument, options);
+        }
+export function useTradeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TradeQuery, TradeQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<TradeQuery, TradeQueryVariables>(TradeDocument, options);
+        }
+export type TradeQueryHookResult = ReturnType<typeof useTradeQuery>;
+export type TradeLazyQueryHookResult = ReturnType<typeof useTradeLazyQuery>;
+export type TradeSuspenseQueryHookResult = ReturnType<typeof useTradeSuspenseQuery>;
+export type TradeQueryResult = Apollo.QueryResult<TradeQuery, TradeQueryVariables>;
+export const TradeComposerDocument = gql`
+    query TradeComposer($communityId: ID!, $meId: ID!, $themId: ID!) {
+  mine: memberHoldings(communityId: $communityId, userId: $meId) {
+    holdings {
+      count
+      itemType {
+        id
+        name
+        isTradeable
+      }
+      items {
+        id
+      }
+    }
+  }
+  theirs: memberHoldings(communityId: $communityId, userId: $themId) {
+    holdings {
+      count
+      itemType {
+        id
+        name
+        isTradeable
+      }
+    }
+  }
+  wallet: memberWallet(communityId: $communityId, userId: $meId) {
+    balances {
+      amount
+      currency {
+        id
+        name
+        code
+        symbol
+        archivedAt
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useTradeComposerQuery__
+ *
+ * To run a query within a React component, call `useTradeComposerQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTradeComposerQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTradeComposerQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      meId: // value for 'meId'
+ *      themId: // value for 'themId'
+ *   },
+ * });
+ */
+export function useTradeComposerQuery(baseOptions: Apollo.QueryHookOptions<TradeComposerQuery, TradeComposerQueryVariables> & ({ variables: TradeComposerQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<TradeComposerQuery, TradeComposerQueryVariables>(TradeComposerDocument, options);
+      }
+export function useTradeComposerLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TradeComposerQuery, TradeComposerQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<TradeComposerQuery, TradeComposerQueryVariables>(TradeComposerDocument, options);
+        }
+export function useTradeComposerSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TradeComposerQuery, TradeComposerQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<TradeComposerQuery, TradeComposerQueryVariables>(TradeComposerDocument, options);
+        }
+export type TradeComposerQueryHookResult = ReturnType<typeof useTradeComposerQuery>;
+export type TradeComposerLazyQueryHookResult = ReturnType<typeof useTradeComposerLazyQuery>;
+export type TradeComposerSuspenseQueryHookResult = ReturnType<typeof useTradeComposerSuspenseQuery>;
+export type TradeComposerQueryResult = Apollo.QueryResult<TradeComposerQuery, TradeComposerQueryVariables>;
+export const ProposeTradeDocument = gql`
+    mutation ProposeTrade($input: CreateTradeInput!) {
+  proposeTrade(input: $input) {
+    ...TradeFields
+  }
+}
+    ${TradeFieldsFragmentDoc}`;
+export type ProposeTradeMutationFn = Apollo.MutationFunction<ProposeTradeMutation, ProposeTradeMutationVariables>;
+
+/**
+ * __useProposeTradeMutation__
+ *
+ * To run a mutation, you first call `useProposeTradeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useProposeTradeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [proposeTradeMutation, { data, loading, error }] = useProposeTradeMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useProposeTradeMutation(baseOptions?: Apollo.MutationHookOptions<ProposeTradeMutation, ProposeTradeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ProposeTradeMutation, ProposeTradeMutationVariables>(ProposeTradeDocument, options);
+      }
+export type ProposeTradeMutationHookResult = ReturnType<typeof useProposeTradeMutation>;
+export type ProposeTradeMutationResult = Apollo.MutationResult<ProposeTradeMutation>;
+export type ProposeTradeMutationOptions = Apollo.BaseMutationOptions<ProposeTradeMutation, ProposeTradeMutationVariables>;
+export const CounterTradeDocument = gql`
+    mutation CounterTrade($id: ID!, $input: CreateTradeInput!) {
+  counterTrade(id: $id, input: $input) {
+    ...TradeFields
+  }
+}
+    ${TradeFieldsFragmentDoc}`;
+export type CounterTradeMutationFn = Apollo.MutationFunction<CounterTradeMutation, CounterTradeMutationVariables>;
+
+/**
+ * __useCounterTradeMutation__
+ *
+ * To run a mutation, you first call `useCounterTradeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCounterTradeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [counterTradeMutation, { data, loading, error }] = useCounterTradeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCounterTradeMutation(baseOptions?: Apollo.MutationHookOptions<CounterTradeMutation, CounterTradeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CounterTradeMutation, CounterTradeMutationVariables>(CounterTradeDocument, options);
+      }
+export type CounterTradeMutationHookResult = ReturnType<typeof useCounterTradeMutation>;
+export type CounterTradeMutationResult = Apollo.MutationResult<CounterTradeMutation>;
+export type CounterTradeMutationOptions = Apollo.BaseMutationOptions<CounterTradeMutation, CounterTradeMutationVariables>;
+export const AcceptTradeDocument = gql`
+    mutation AcceptTrade($id: ID!, $selections: [TradeSelectionInput!]) {
+  acceptTrade(id: $id, selections: $selections) {
+    ...TradeFields
+  }
+}
+    ${TradeFieldsFragmentDoc}`;
+export type AcceptTradeMutationFn = Apollo.MutationFunction<AcceptTradeMutation, AcceptTradeMutationVariables>;
+
+/**
+ * __useAcceptTradeMutation__
+ *
+ * To run a mutation, you first call `useAcceptTradeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAcceptTradeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [acceptTradeMutation, { data, loading, error }] = useAcceptTradeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      selections: // value for 'selections'
+ *   },
+ * });
+ */
+export function useAcceptTradeMutation(baseOptions?: Apollo.MutationHookOptions<AcceptTradeMutation, AcceptTradeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AcceptTradeMutation, AcceptTradeMutationVariables>(AcceptTradeDocument, options);
+      }
+export type AcceptTradeMutationHookResult = ReturnType<typeof useAcceptTradeMutation>;
+export type AcceptTradeMutationResult = Apollo.MutationResult<AcceptTradeMutation>;
+export type AcceptTradeMutationOptions = Apollo.BaseMutationOptions<AcceptTradeMutation, AcceptTradeMutationVariables>;
+export const DeclineTradeDocument = gql`
+    mutation DeclineTrade($id: ID!) {
+  declineTrade(id: $id) {
+    ...TradeFields
+  }
+}
+    ${TradeFieldsFragmentDoc}`;
+export type DeclineTradeMutationFn = Apollo.MutationFunction<DeclineTradeMutation, DeclineTradeMutationVariables>;
+
+/**
+ * __useDeclineTradeMutation__
+ *
+ * To run a mutation, you first call `useDeclineTradeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeclineTradeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [declineTradeMutation, { data, loading, error }] = useDeclineTradeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeclineTradeMutation(baseOptions?: Apollo.MutationHookOptions<DeclineTradeMutation, DeclineTradeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeclineTradeMutation, DeclineTradeMutationVariables>(DeclineTradeDocument, options);
+      }
+export type DeclineTradeMutationHookResult = ReturnType<typeof useDeclineTradeMutation>;
+export type DeclineTradeMutationResult = Apollo.MutationResult<DeclineTradeMutation>;
+export type DeclineTradeMutationOptions = Apollo.BaseMutationOptions<DeclineTradeMutation, DeclineTradeMutationVariables>;
+export const CancelTradeDocument = gql`
+    mutation CancelTrade($id: ID!) {
+  cancelTrade(id: $id) {
+    ...TradeFields
+  }
+}
+    ${TradeFieldsFragmentDoc}`;
+export type CancelTradeMutationFn = Apollo.MutationFunction<CancelTradeMutation, CancelTradeMutationVariables>;
+
+/**
+ * __useCancelTradeMutation__
+ *
+ * To run a mutation, you first call `useCancelTradeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCancelTradeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [cancelTradeMutation, { data, loading, error }] = useCancelTradeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useCancelTradeMutation(baseOptions?: Apollo.MutationHookOptions<CancelTradeMutation, CancelTradeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CancelTradeMutation, CancelTradeMutationVariables>(CancelTradeDocument, options);
+      }
+export type CancelTradeMutationHookResult = ReturnType<typeof useCancelTradeMutation>;
+export type CancelTradeMutationResult = Apollo.MutationResult<CancelTradeMutation>;
+export type CancelTradeMutationOptions = Apollo.BaseMutationOptions<CancelTradeMutation, CancelTradeMutationVariables>;
 export const TraitListEntriesByVariantDocument = gql`
     query TraitListEntriesByVariant($variantId: ID!, $first: Int) {
   traitListEntriesBySpeciesVariant(speciesVariantId: $variantId, first: $first) {

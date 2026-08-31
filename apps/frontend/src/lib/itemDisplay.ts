@@ -55,26 +55,43 @@ export function groupIntoStacks(
 export interface LedgerEntry {
   row: ItemTransactionFieldsFragment;
   count: number;
+  /** Stable identity for this line: one leg of one event. */
+  key: string;
 }
 
+/** Same leg: same event, same item type, same direction. */
+const legKey = (row: ItemTransactionFieldsFragment): string =>
+  [
+    row.batchId,
+    row.itemType?.id ?? "",
+    row.fromUser?.id ?? "",
+    row.toUser?.id ?? "",
+  ].join("|");
+
 /**
- * Collapses one ledger row per item back into one line per event.
+ * Collapses one ledger row per item back into one line per leg of an event.
  *
  * The count comes from `batchSize`, not from how many rows of the batch happen
  * to be on this page. Those differ constantly — the migration writes one batch
  * per pre-existing item, so a real ledger opens on a batch of several hundred
  * against a page size of 25, and counting loaded rows would show "+25".
+ *
+ * A leg rather than a batch, because a settled trade is one batch carrying two
+ * of them: a potion going out and a charm coming back. Collapsing on the batch
+ * alone rendered that as a single line naming one of the two types and
+ * counting both.
  */
 export function collapseByBatch(
   rows: readonly ItemTransactionFieldsFragment[],
 ): LedgerEntry[] {
-  const byBatch = new Map<string, LedgerEntry>();
+  const byLeg = new Map<string, LedgerEntry>();
   for (const row of rows) {
-    if (!byBatch.has(row.batchId)) {
-      byBatch.set(row.batchId, { row, count: row.batchSize });
+    const key = legKey(row);
+    if (!byLeg.has(key)) {
+      byLeg.set(key, { row, count: row.batchSize, key });
     }
   }
-  return Array.from(byBatch.values());
+  return Array.from(byLeg.values());
 }
 
 /**

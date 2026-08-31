@@ -49,6 +49,19 @@ const payloadSchemas = {
     subjectName: z.string().max(200),
     amount: z.number().int().positive(),
   }),
+
+  // Trades summarise their shape rather than snapshotting every line: the trade
+  // itself is the record, it is linked from the notification, and unlike a
+  // revoked item it does not disappear.
+  [NotificationKind.TRADE_OFFERED]: z.object({
+    itemCount: z.number().int().nonnegative(),
+    currencyCount: z.number().int().nonnegative(),
+  }),
+  [NotificationKind.TRADE_ACCEPTED]: z.object({
+    itemCount: z.number().int().nonnegative(),
+    currencyCount: z.number().int().nonnegative(),
+  }),
+  [NotificationKind.TRADE_DECLINED]: z.object({}),
 } as const satisfies Record<NotificationKind, z.ZodObject<z.ZodRawShape>>;
 
 /** The payload shape for each kind, keyed by kind. */

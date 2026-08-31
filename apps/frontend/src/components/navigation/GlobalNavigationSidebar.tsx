@@ -5,6 +5,7 @@ import {
   User,
   Heart,
   Activity,
+  ArrowLeftRight,
   LayoutGrid,
   Image,
   Users,
@@ -273,6 +274,15 @@ export const GlobalNavigationSidebar: React.FC<
               to="/feed"
               icon={Activity}
               label="Activity Feed"
+            />
+
+            {/* Global rather than per-community: an offer waiting on you is
+                waiting on you wherever it was made, and the whole point of one
+                inbox is not having to remember which community to check. */}
+            <CommunityNavigationItem
+              to="/trades"
+              icon={ArrowLeftRight}
+              label="Trades"
             />
 
             <CommunityNavigationItem

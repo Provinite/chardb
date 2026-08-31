@@ -7,7 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Trading**: a composer at `/communities/:id/trades/new`, an inbox at
+  `/trades` covering both offers you sent and offers you received, and an offer
+  page to accept, decline, counter or withdraw. Coin is a price field per side
+  rather than a line on the table; what you offer is specific items, what you
+  ask for is a type and a count.
+
+- **Trades in the sidebar**: the global one links to the whole inbox, a
+  community's to `/trades?community=<id>` for that community's offers only.
+
+- The trade composer defaults its price field to the currency you hold most of,
+  and never offers an archived one — those refuse new transactions, so pricing
+  an offer in one is rejected at send.
+
 ### Fixed
+
+- **Counter left you with nothing.** It declined the offer on the button press
+  and opened the composer addressed by username where a user id was expected, so
+  the table came up blank behind a decline that had already gone through.
+  Counter now only opens the composer, seeded from the offer it answers; sending
+  it is what declines the original, and the two happen together.
+
+- **An offer named no item.** A line pinning one specific item read as "1 item",
+  because the fragment never asked for that item's type.
+
+- **The item ledger collapsed a settled trade into one wrong line**, grouping by
+  batch when a trade's batch carries two types moving opposite ways. It now
+  groups by leg: one line per type per direction.
+
+- **Your untradeable holdings crowded the composer.** They collapse to one
+  locked line with a count instead of one row per copy.
 
 - Character traits now display in the order the species variant defines, on the
   character page and in the trait review queue. They were showing in the order

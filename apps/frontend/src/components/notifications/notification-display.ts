@@ -36,6 +36,8 @@ export function notificationHref(
         : null;
     case NotificationSubjectType.Currency:
       return community ? `/communities/${community.id}/currencies` : null;
+    case NotificationSubjectType.Trade:
+      return `/trades/${subjectId}`;
     case NotificationSubjectType.Comment:
     case NotificationSubjectType.Image:
       // Neither has a page of its own: a comment is rendered inside whatever it
@@ -81,5 +83,11 @@ export function notificationSentence(
     }
     case NotificationKind.CurrencyReceived:
       return `sent you ${amount ?? 0} ${name}`;
+    case NotificationKind.TradeOffered:
+      return "offered you a trade";
+    case NotificationKind.TradeAccepted:
+      return "accepted your trade";
+    case NotificationKind.TradeDeclined:
+      return "declined your trade";
   }
 }

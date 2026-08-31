@@ -46,8 +46,12 @@ export class ItemTransaction {
 
   @Field(() => Int, {
     description:
-      "How many items this event touched in total. Counting loaded rows is " +
-      "wrong once a batch straddles a page boundary, so the server counts it.",
+      "How many items moved this way in this event: same batch, same item " +
+      "type, same direction. Counting loaded rows is wrong once a batch " +
+      "straddles a page boundary, so the server counts it. A trade settles " +
+      "as one batch carrying two legs that differ in both type and " +
+      "direction, so a plain per-batch count would report each leg as the " +
+      "size of the whole trade.",
   })
   batchSize: number;
 
