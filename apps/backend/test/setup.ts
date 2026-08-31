@@ -18,8 +18,14 @@ const mockPrismaService = {
     findFirst: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
     delete: jest.fn(),
     count: jest.fn(),
+  },
+  characterOwnershipChange: {
+    create: jest.fn(),
+    createMany: jest.fn(),
+    findMany: jest.fn(),
   },
   traitReview: {
     create: jest.fn(),
@@ -194,6 +200,10 @@ const mockPrismaService = {
     count: jest.fn(),
   },
   tradeItem: {
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+  },
+  tradeCharacter: {
     findFirst: jest.fn(),
     findMany: jest.fn(),
   },

@@ -10,6 +10,8 @@ import {
   SeedMintCurrencyDocument,
   SeedTransferCurrencyDocument,
   SeedCreateShopItemDocument,
+  SeedCreateSpeciesDocument,
+  SeedCreateCharacterDocument,
 } from "../../generated/graphql.js";
 import { definePreset, type Persona } from "../types.js";
 
@@ -48,6 +50,21 @@ export interface CommunityItemsWorld {
      * and refunded as normal -- but it cannot move between members.
      */
     bound: { id: string; code: string; name: string };
+  };
+  /**
+   * A species, and the characters hanging off it.
+   *
+   * The species is not optional scenery: it is the only route from a character
+   * to a community, so a character trade cannot be scoped without one.
+   */
+  species: { id: string; name: string };
+  characters: {
+    /** `member`'s, open to trades. The one that changes hands. */
+    bramblefoot: { id: string; name: string; url: string };
+    /** `member`'s, closed. Must offer no trade affordance anywhere. */
+    hearthstone: { id: string; name: string; url: string };
+    /** `othermember`'s, open. The one a trade is composed to ask for. */
+    marrowfen: { id: string; name: string; url: string };
   };
   /** What each persona holds of `coin` after seeding. */
   balances: { member: number; othermember: number };
@@ -218,6 +235,45 @@ export default definePreset<CommunityItemsWorld>({
       })),
     });
 
+    // ==================== Species and characters ====================
+
+    // createSpecies has no global-admin bypass, so the actor must genuinely
+    // hold canCreateSpecies. commadmin does, as the community's Admin.
+    const { createSpecies: species } = await ctx
+      .as("commadmin")
+      .gql(SeedCreateSpeciesDocument, {
+        createSpeciesInput: {
+          name: "Thornwing",
+          communityId: community.id,
+        },
+      });
+
+    // assignToSelf, so each character is owned by whoever seeds it. The stock
+    // Member role carries canCreateCharacter, so both members can.
+    const character = async (
+      persona: "member" | "othermember",
+      name: string,
+      isTradeable: boolean,
+    ) => {
+      const { createCharacter } = await ctx
+        .as(persona)
+        .gql(SeedCreateCharacterDocument, {
+          input: { name, speciesId: species.id, isTradeable },
+        });
+      return {
+        id: createCharacter.id,
+        name: createCharacter.name,
+        url: `/character/${createCharacter.id}`,
+      };
+    };
+
+    // The asymmetry the character-trade tests need: one open character on each
+    // side to trade, and one closed one to prove the flag withholds the whole
+    // affordance rather than greying it out.
+    const bramblefoot = await character("member", "Bramblefoot", true);
+    const hearthstone = await character("member", "Hearthstone", false);
+    const marrowfen = await character("othermember", "Marrowfen", true);
+
     // ==================== Currency ====================
 
     const asQuartermaster = ctx.as("quartermaster");
@@ -385,6 +441,8 @@ export default definePreset<CommunityItemsWorld>({
         retired: { id: retired.id, code: retired.code, name: retired.name },
         bound: { id: bound.id, code: bound.code, name: bound.name },
       },
+      species: { id: species.id, name: species.name },
+      characters: { bramblefoot, hearthstone, marrowfen },
       balances: { member: 380, othermember: 620 },
       currencyUrls: {
         admin: `/communities/${community.id}/currencies`,

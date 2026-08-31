@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ArrowDownUp } from "lucide-react";
 import { Avatar, Button } from "@chardb/ui";
@@ -15,6 +15,7 @@ import {
 } from "../graphql/trades.graphql";
 import {
   actionsFor,
+  describeCharacter,
   describeCoin,
   describeLine,
   describeExpiry,
@@ -90,6 +91,15 @@ const Line = styled.div`
   font-size: 0.9375rem;
 `;
 
+const CharacterLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 const Swap = styled.div`
   display: flex;
   align-items: center;
@@ -142,18 +152,30 @@ const LoadingWrap = styled.div`
 
 function LineRows({
   items,
+  characters,
   coin,
 }: {
   items: TradeFieldsFragment["items"];
+  characters: TradeFieldsFragment["characterLines"];
   coin: TradeFieldsFragment["currencyLines"];
 }) {
-  if (items.length === 0 && coin.length === 0) {
+  if (items.length === 0 && characters.length === 0 && coin.length === 0) {
     return <Empty>Nothing</Empty>;
   }
   return (
     <>
       {items.map((line) => (
         <Line key={line.id}>{describeLine(line)}</Line>
+      ))}
+      {/* Linked where items are not: a character is a page someone is being
+          asked to take on, and deciding without looking at it is not a
+          decision. An item is a name and a count. */}
+      {characters.map((line) => (
+        <Line key={line.id}>
+          <CharacterLink to={`/character/${line.character.id}`}>
+            {describeCharacter(line)}
+          </CharacterLink>
+        </Line>
       ))}
       {coin.map((line) => (
         <Line key={line.id}>{describeCoin(line)}</Line>
@@ -265,14 +287,22 @@ export const TradeOfferPage: React.FC = () => {
       <Table>
         <Side $mine data-testid="offer-give">
           <SideHead>You give</SideHead>
-          <LineRows items={sides.giving.items} coin={sides.giving.coin} />
+          <LineRows
+            items={sides.giving.items}
+            characters={sides.giving.characters}
+            coin={sides.giving.coin}
+          />
         </Side>
         <Swap>
           <ArrowDownUp size={16} />
         </Swap>
         <Side data-testid="offer-receive">
           <SideHead>You receive</SideHead>
-          <LineRows items={sides.receiving.items} coin={sides.receiving.coin} />
+          <LineRows
+            items={sides.receiving.items}
+            characters={sides.receiving.characters}
+            coin={sides.receiving.coin}
+          />
         </Side>
       </Table>
 

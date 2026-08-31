@@ -47,6 +47,19 @@ export class RequestedTradeItemInput {
   itemId?: string;
 }
 
+@InputType({
+  description:
+    "A character on the table. One shape for both directions, unlike items: " +
+    "an item line can ask for any copies of a type, and a character has no " +
+    "copies -- there is one of it, and it is the one you meant. Which side " +
+    "it is on is the field it arrives in.",
+})
+export class TradeCharacterInput {
+  @Field(() => ID)
+  @IsString()
+  characterId: string;
+}
+
 @InputType({ description: "Coin on the table, in one direction." })
 export class TradeCoinInput {
   @Field(() => ID)
@@ -92,6 +105,29 @@ export class CreateTradeInput {
   @ValidateNested({ each: true })
   @Type(() => RequestedTradeItemInput)
   requesting: RequestedTradeItemInput[];
+
+  @Field(() => [TradeCharacterInput], {
+    defaultValue: [],
+    description:
+      "Characters the proposer hands over. Each must be theirs, open to " +
+      "trades, and in this community by way of its species.",
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TradeCharacterInput)
+  offeringCharacters: TradeCharacterInput[];
+
+  @Field(() => [TradeCharacterInput], {
+    defaultValue: [],
+    description:
+      "Characters the proposer asks for. Each must be the recipient's, and " +
+      "open to trades -- the flag is the owner's standing answer to being " +
+      "asked, and it is honoured again at settlement.",
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TradeCharacterInput)
+  requestingCharacters: TradeCharacterInput[];
 
   @Field(() => [TradeCoinInput], { defaultValue: [] })
   @IsArray()

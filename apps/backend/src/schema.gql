@@ -749,8 +749,18 @@ input CreateTradeInput {
   expiresInDays: Int
   note: String
   offering: [OfferedTradeItemInput!]! = []
+
+  """
+  Characters the proposer hands over. Each must be theirs, open to trades, and in this community by way of its species.
+  """
+  offeringCharacters: [TradeCharacterInput!]! = []
   recipientId: ID!
   requesting: [RequestedTradeItemInput!]! = []
+
+  """
+  Characters the proposer asks for. Each must be the recipient's, and open to trades -- the flag is the owner's standing answer to being asked, and it is honoured again at settlement.
+  """
+  requestingCharacters: [TradeCharacterInput!]! = []
 }
 
 input CreateTraitInput {
@@ -1882,7 +1892,7 @@ enum ModerationStatus {
 
 type Mutation {
   """
-  Accept and settle. Items and coin move in one transaction across both ledgers, or the whole accept fails.
+  Accept and settle. Items, characters and coin move in one transaction across all three ledgers, or the whole accept fails.
   """
   acceptTrade(
     id: ID!
@@ -3591,6 +3601,7 @@ input ToggleLikeInput {
 One member's offer to another. Nothing is held while it stands: what it names is checked when it is written and checked again, decisively, when it is accepted.
 """
 type Trade {
+  characterLines: [TradeCharacter!]!
   community: Community!
   createdAt: DateTime!
   currencyLines: [TradeCurrencyLine!]!
@@ -3603,7 +3614,7 @@ type Trade {
   respondedAt: DateTime
 
   """
-  Shared by every ledger row this settlement wrote, on both the item and the currency ledger. Null until accepted.
+  Shared by every ledger row this settlement wrote, across the item ledger, the currency ledger and the character ownership log. Null until accepted.
   """
   settlementBatchId: String
 
@@ -3611,6 +3622,27 @@ type Trade {
   Use this rather than a stored status: it accounts for expiry, which is a date and never written to the row.
   """
   status: EffectiveTradeStatus!
+}
+
+"""
+One character on the table, moving one way. Always a specific character: there is one of each, so there is no by-type equivalent of the item line.
+"""
+type TradeCharacter {
+  character: Character!
+
+  """Who receives them."""
+  destinationUser: User!
+  id: ID!
+
+  """Who hands them over."""
+  sourceUser: User!
+}
+
+"""
+A character on the table. One shape for both directions, unlike items: an item line can ask for any copies of a type, and a character has no copies -- there is one of it, and it is the one you meant. Which side it is on is the field it arrives in.
+"""
+input TradeCharacterInput {
+  characterId: ID!
 }
 
 """Coin on the table, in one direction."""

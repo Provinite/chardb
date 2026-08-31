@@ -179,12 +179,14 @@ model User {
   notifications      Notification[] @relation("NotificationRecipient")
   causedNotifications Notification[] @relation("NotificationActor")
 
-  // Trading. Two relations for the offers themselves, and four more because
+  // Trading. Two relations for the offers themselves, and six more because
   // every line on the table names both ends of its own movement.
   proposedTrades           Trade[]             @relation("TradeProposer")
   receivedTrades           Trade[]             @relation("TradeRecipient")
   tradeItemsGiven          TradeItem[]         @relation("TradeItemSource")
   tradeItemsReceived       TradeItem[]         @relation("TradeItemDestination")
+  tradeCharactersGiven     TradeCharacter[]    @relation("TradeCharacterSource")
+  tradeCharactersReceived  TradeCharacter[]    @relation("TradeCharacterDestination")
   tradeCurrencyGiven       TradeCurrencyLine[] @relation("TradeCurrencySource")
   tradeCurrencyReceived    TradeCurrencyLine[] @relation("TradeCurrencyDestination")
 
@@ -268,6 +270,9 @@ model Character {
 
   // Ownership change tracking
   ownershipChanges CharacterOwnershipChange[]
+
+  /// Every offer this character has been named in, settled or not.
+  tradeLines TradeCharacter[]
 
   // Pending ownership
   pendingOwnership PendingOwnership?
@@ -658,13 +663,24 @@ model CharacterOwnershipChange {
   characterId String   @map("character_id")
   fromUserId  String?  @map("from_user_id")
   toUserId    String   @map("to_user_id")
-  createdAt   DateTime @default(now()) @map("created_at")
+
+  /// Set when this move was one leg of something larger, and carries the same
+  /// value as the `settlementBatchId` on the trade that caused it -- the same
+  /// id the item and currency ledgers were written with. Null for a direct
+  /// transfer, which is its own whole cause.
+  ///
+  /// Not a foreign key, for the reason the item ledger gives: a record of what
+  /// happened must outlive the thing that made it happen.
+  batchId String? @map("batch_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
   fromUser  User?     @relation("CharacterOwnershipChangeFrom", fields: [fromUserId], references: [id], onDelete: SetNull)
   toUser    User      @relation("CharacterOwnershipChangeTo", fields: [toUserId], references: [id], onDelete: Cascade)
 
+  @@index([batchId])
   @@map("character_ownership_changes")
 }
 
@@ -1437,14 +1453,14 @@ enum TradeStatus {
   CANCELLED
 }
 
-/// One member's offer to another: some items each way, and coin.
+/// One member's offer to another: some items and characters each way, and coin.
 ///
-/// Nothing is escrowed while an offer stands. Items and balances are checked
-/// when it is composed and checked again when it is accepted, and only the
-/// second check decides anything -- so an offer never holds property hostage,
-/// and a declined or abandoned offer needs nothing released. The cost is that
-/// an offer can become unhonourable while it sits, which settlement reports
-/// rather than prevents.
+/// Nothing is escrowed while an offer stands. Items, characters and balances
+/// are checked when it is composed and checked again when it is accepted, and
+/// only the second check decides anything -- so an offer never holds property
+/// hostage, and a declined or abandoned offer needs nothing released. The cost
+/// is that an offer can become unhonourable while it sits, which settlement
+/// reports rather than prevents.
 model Trade {
   id          String      @id @default(uuid())
   communityId String      @map("community_id")
@@ -1463,19 +1479,21 @@ model Trade {
   /// When it was accepted, declined or cancelled. Null exactly while PENDING.
   respondedAt DateTime? @map("responded_at")
 
-  /// The batch id shared by every ledger row settlement wrote, on both the item
-  /// and the currency ledger. Null until accepted. This is what makes a trade
-  /// traceable to its consequences without storing those consequences twice.
+  /// The batch id shared by every ledger row settlement wrote, across the item
+  /// ledger, the currency ledger and the character ownership log. Null until
+  /// accepted. This is what makes a trade traceable to its consequences
+  /// without storing those consequences twice.
   settlementBatchId String? @map("settlement_batch_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  community     Community           @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  proposer      User                @relation("TradeProposer", fields: [proposerId], references: [id], onDelete: Cascade)
-  recipient     User                @relation("TradeRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  items         TradeItem[]
-  currencyLines TradeCurrencyLine[]
+  community      Community           @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  proposer       User                @relation("TradeProposer", fields: [proposerId], references: [id], onDelete: Cascade)
+  recipient      User                @relation("TradeRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  items          TradeItem[]
+  characterLines TradeCharacter[]
+  currencyLines  TradeCurrencyLine[]
 
   /// Both inboxes: "offers waiting on me" and "offers I have out".
   @@index([recipientId, status, createdAt])
@@ -1530,6 +1548,44 @@ model TradeItem {
   @@index([itemId])
   @@index([itemTypeId])
   @@map("trade_items")
+}
+
+/// One character on the table, and which way it moves.
+///
+/// A table of its own rather than a third shape of `TradeItem`, because the
+/// distinction that model is built around does not exist here. An item line is
+/// a row or a type-and-quantity: copies of a type differ only by history, so
+/// asking for any of them is the sensible default. A character has no type and
+/// no copies -- there is one of it, and it is the one you meant. Folding that
+/// in would widen `trade_items_row_or_type` to a third arm and leave `quantity`
+/// meaningless on every character line.
+///
+/// `sourceUserId` and `destinationUserId` mirror `TradeItem` so settlement
+/// copies rather than translates, and so a line reads on its own without
+/// joining the trade to find out who the parties are.
+model TradeCharacter {
+  id          String @id @default(uuid())
+  tradeId     String @map("trade_id")
+  characterId String @map("character_id")
+
+  /// Who hands it over. Stored rather than derived from `Character.ownerId`:
+  /// if the character changes hands while the offer sits, deriving would
+  /// silently flip which way the trade points. Settlement compares this
+  /// against the character's real owner and refuses when they disagree.
+  sourceUserId      String @map("source_user_id")
+  destinationUserId String @map("destination_user_id")
+
+  trade           Trade     @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  character       Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  sourceUser      User      @relation("TradeCharacterSource", fields: [sourceUserId], references: [id], onDelete: Cascade)
+  destinationUser User      @relation("TradeCharacterDestination", fields: [destinationUserId], references: [id], onDelete: Cascade)
+
+  /// The same character cannot be on the table twice in one trade. Unlike the
+  /// item equivalent there is no by-type case to carve out, so this covers
+  /// every character line there is.
+  @@unique([tradeId, characterId])
+  @@index([characterId])
+  @@map("trade_characters")
 }
 
 /// Coin on the table, in one direction.

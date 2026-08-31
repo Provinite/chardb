@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Characters on the trade table**: the composer can offer and ask for
+  characters, and a character open to trades carries a "Propose a Trade" button
+  for members who do not own it. A character that is not open to trades shows
+  no trade affordance at all (#302).
+
 ## [v11.6.0] - 2026-08-31
 
 ### Changed

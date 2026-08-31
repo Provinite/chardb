@@ -321,6 +321,28 @@ const TradingValue = styled.span`
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
 `;
 
+/**
+ * The trade button, below the rows rather than in one.
+ *
+ * A TradingRow is a label and its value. This is an action, and putting it in
+ * the value column would make "Open to Trades: Yes" and the way to act on it
+ * read as the same fact.
+ */
+const TradeAction = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.xs};
+  margin-top: ${({ theme }) => theme.spacing.md};
+  padding-top: ${({ theme }) => theme.spacing.md};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
+const TradeActionNote = styled.span`
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
 const Price = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSize.lg};
   color: ${({ theme }) => theme.colors.success};
@@ -434,8 +456,32 @@ export const CharacterPage: React.FC = () => {
   const character = data?.character;
 
   // Get user's permissions in the character's community
-  const { permissions } = useUserCommunityRole(
+  const { permissions, userRole } = useUserCommunityRole(
     character?.species?.community?.id,
+  );
+
+  /**
+   * Whether to offer this viewer a way to propose a trade for this character.
+   *
+   * Every clause is a way the offer would be a dead end, and a dead end here
+   * is worse than nothing: the owner set `isTradeable` because people ask
+   * regardless, so an affordance that cannot work still costs them the ask.
+   * Which is also why a failure renders nothing rather than something
+   * disabled -- a greyed-out button and a "trades are off" tooltip are both
+   * still an invitation to try anyway.
+   */
+  const tradeCommunityId = character?.species?.community?.id;
+  const canProposeTrade = Boolean(
+    character?.isTradeable &&
+      user &&
+      character.owner &&
+      character.owner.id !== user.id &&
+      // Characters reach a community through their species, and a trade is
+      // scoped to one. No species, no community, nowhere to trade.
+      tradeCommunityId &&
+      // Both parties must be members, and this is the half we can see from
+      // here. An owner who never joined is caught at send instead.
+      userRole,
   );
 
   const [deleteCharacter, { loading: deleting }] = useDeleteCharacterMutation();
@@ -690,7 +736,7 @@ export const CharacterPage: React.FC = () => {
                 name={character.owner.displayName || character.owner.username}
                 size={80}
               />
-              <OwnerName>
+              <OwnerName data-testid="character-owner">
                 {character.owner.displayName || character.owner.username}
               </OwnerName>
               <OwnerRole>Character Owner</OwnerRole>
@@ -776,6 +822,28 @@ export const CharacterPage: React.FC = () => {
                 <TradingLabel>Price:</TradingLabel>
                 <Price>${character.price.toFixed(2)}</Price>
               </TradingRow>
+            )}
+            {canProposeTrade && (
+              <TradeAction>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  data-testid="propose-character-trade"
+                  onClick={() =>
+                    navigate(
+                      `/communities/${tradeCommunityId}/trades/new?with=${character.owner?.id}&character=${character.id}`,
+                    )
+                  }
+                >
+                  Propose a Trade
+                </Button>
+                <TradeActionNote>
+                  Opens an offer with {character.name} on their side. Nothing
+                  moves until{" "}
+                  {character.owner?.displayName ?? character.owner?.username}{" "}
+                  accepts.
+                </TradeActionNote>
+              </TradeAction>
             )}
           </TradingInfo>
         </ContentSection>

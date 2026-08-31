@@ -11,6 +11,7 @@ import {
   TradeStatus,
   NotificationKind,
   NotificationSubjectType,
+  Visibility,
 } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
@@ -41,6 +42,13 @@ export const TRADE_INCLUDE = {
       destinationUser: { select: userMapperSelect },
     },
   },
+  characterLines: {
+    include: {
+      character: true,
+      sourceUser: { select: userMapperSelect },
+      destinationUser: { select: userMapperSelect },
+    },
+  },
   currencyLines: {
     include: {
       currency: true,
@@ -58,6 +66,11 @@ type TradeForResponse = Prisma.TradeGetPayload<{
         item: { include: { itemType: true } };
         itemType: true;
       };
+    };
+    // The name, so a character that has become unavailable can be named in the
+    // refusal rather than left as an id the member has to go and look up.
+    characterLines: {
+      include: { character: { select: { id: true; name: true } } };
     };
     // The code, so a shortfall can be reported in the unit the member sees
     // rather than as a bare number.
@@ -110,6 +123,19 @@ export type TradeRequestedItemInput =
   | { itemTypeId: string; quantity: number }
   | { itemId: string };
 
+/**
+ * A character on the table, in either direction.
+ *
+ * One shape for both sides, unlike items. A by-type line exists because copies
+ * of an item type are interchangeable, and no two characters are -- there is
+ * one of each, and it is the one you meant. So a character is named the same
+ * way whether it is being offered or asked for, and which side it is on is the
+ * array it arrives in.
+ */
+export interface TradeCharacterInput {
+  characterId: string;
+}
+
 /** Coin on the table, in one direction. */
 export interface TradeCoinInput {
   currencyId: string;
@@ -124,6 +150,10 @@ export interface CreateTradeInput {
   offering: TradeOfferedItemInput[];
   /** What the proposer wants back, by type unless a row is named. */
   requesting: TradeRequestedItemInput[];
+  /** Characters the proposer hands over. */
+  offeringCharacters: TradeCharacterInput[];
+  /** Characters the proposer asks for, each held by the recipient. */
+  requestingCharacters: TradeCharacterInput[];
   coin: TradeCoinInput[];
   note?: string | null;
   expiresInDays?: number;
@@ -177,7 +207,7 @@ export class TradesService {
 
     const trade = await this.db.trade.create({
       data,
-      include: { items: true, currencyLines: true },
+      include: { items: true, characterLines: true, currencyLines: true },
     });
 
     await this.notifyRecipient(trade.id, proposerId, input);
@@ -233,7 +263,7 @@ export class TradesService {
 
       return tx.trade.create({
         data,
-        include: { items: true, currencyLines: true },
+        include: { items: true, characterLines: true, currencyLines: true },
       });
     });
 
@@ -258,6 +288,8 @@ export class TradesService {
     if (
       input.offering.length === 0 &&
       input.requesting.length === 0 &&
+      input.offeringCharacters.length === 0 &&
+      input.requestingCharacters.length === 0 &&
       input.coin.length === 0
     ) {
       throw new BadRequestException("A trade needs something on the table");
@@ -282,6 +314,34 @@ export class TradesService {
         input.requesting,
       )),
     ];
+    // Across both sides, not just within one. A character named on both is a
+    // line that hands someone over and asks for them back, and the unique
+    // index would refuse it anyway -- but as a constraint violation rather
+    // than as something a member can read.
+    const characterIds = [
+      ...input.offeringCharacters,
+      ...input.requestingCharacters,
+    ].map((c) => c.characterId);
+    if (new Set(characterIds).size !== characterIds.length) {
+      throw new BadRequestException("The same character is on the table twice");
+    }
+
+    const characterLines = [
+      ...(await this.resolveCharacterLines(
+        input.communityId,
+        proposerId,
+        input.recipientId,
+        input.offeringCharacters,
+        "offering",
+      )),
+      ...(await this.resolveCharacterLines(
+        input.communityId,
+        proposerId,
+        input.recipientId,
+        input.requestingCharacters,
+        "requesting",
+      )),
+    ];
     const coinLines = await this.resolveCoinLines(
       input.communityId,
       proposerId,
@@ -301,6 +361,7 @@ export class TradesService {
       note: input.note?.trim() || null,
       expiresAt,
       items: { create: lines },
+      characterLines: { create: characterLines },
       currencyLines: { create: coinLines },
     };
   }
@@ -491,6 +552,116 @@ export class TradesService {
   }
 
   /**
+   * Turn characters on either side into stored lines.
+   *
+   * One method for both directions, where items need two. An item line can be
+   * a row or a type-and-quantity and the choice depends on which side it is
+   * on; a character is always the one character it names, so the only thing
+   * the side decides is who holds it now and who holds it after.
+   *
+   * `isTradeable` is the owner's consent and it is checked here and again at
+   * settlement. Default false, so silence is a no -- a character nobody has
+   * opted in cannot be put on a table by someone who wants it.
+   *
+   * PRIVATE characters are refused outright. Visibility is `ownerId === you`
+   * with no shared-with concept anywhere, so a private character on a line is
+   * one the other party is being asked to accept without being allowed to look
+   * at it. Opting a character in to trades while keeping it private is a
+   * contradiction, and this is where it is named.
+   */
+  private async resolveCharacterLines(
+    communityId: string,
+    proposerId: string,
+    recipientId: string,
+    characters: TradeCharacterInput[],
+    side: "offering" | "requesting",
+  ): Promise<Prisma.TradeCharacterUncheckedCreateWithoutTradeInput[]> {
+    if (characters.length === 0) return [];
+
+    const offering = side === "offering";
+    const holderId = offering ? proposerId : recipientId;
+    const destinationId = offering ? recipientId : proposerId;
+    const ids = characters.map((c) => c.characterId);
+
+    const rows = await this.db.character.findMany({
+      where: { id: { in: ids }, deletedAt: null },
+      select: {
+        id: true,
+        name: true,
+        ownerId: true,
+        isTradeable: true,
+        visibility: true,
+        species: { select: { communityId: true } },
+      },
+    });
+    if (rows.length !== ids.length) {
+      throw new BadRequestException(
+        "One or more of those characters does not exist or has been deleted",
+      );
+    }
+
+    // Only your own side. Nothing is escrowed, so a character can sit in
+    // several of your open offers and settle against whichever is accepted
+    // first, leaving the rest to fail in front of the other party for a reason
+    // they cannot see. Refusing here moves that conversation to the person who
+    // caused it. A character you are asking for is not yours to double-promise
+    // -- several people bidding for the same character is the market working.
+    if (offering) {
+      const alreadyPromised = await this.db.tradeCharacter.findFirst({
+        where: {
+          characterId: { in: ids },
+          sourceUserId: proposerId,
+          trade: {
+            status: TradeStatus.PENDING,
+            expiresAt: { gt: new Date() },
+            proposerId,
+          },
+        },
+        include: { character: { select: { name: true } } },
+      });
+      if (alreadyPromised) {
+        throw new BadRequestException(
+          `You have already offered ${alreadyPromised.character.name} in another open trade`,
+        );
+      }
+    }
+
+    return rows.map((character) => {
+      // Characters reach a community through their species and no other way,
+      // so one without a species is in no community and cannot be traded in
+      // any of them.
+      if (character.species?.communityId !== communityId) {
+        throw new BadRequestException(
+          `${character.name} does not belong to this community`,
+        );
+      }
+      if (!character.isTradeable) {
+        throw new BadRequestException(
+          `${character.name} is not open to trades`,
+        );
+      }
+      if (character.visibility === Visibility.PRIVATE) {
+        throw new BadRequestException(
+          `${character.name} is private, and cannot be put on a table the other member cannot see`,
+        );
+      }
+      if (character.ownerId !== holderId) {
+        throw new BadRequestException(
+          offering
+            ? `You do not own ${character.name}`
+            : `${character.name} is not owned by the member you are offering to`,
+        );
+      }
+
+      return {
+        characterId: character.id,
+        sourceUserId: holderId,
+        destinationUserId: destinationId,
+      };
+    });
+  }
+
+  /**
    * Turn the requested coin into stored lines, netting opposing amounts.
    *
    * "Give 250, ask 100 back" is one line of 150. Coin is fungible, so the two
@@ -667,6 +838,7 @@ export class TradesService {
       const resolved = await this.resolveSelections(tx, trade, selections);
       await this.assertStillTradeable(tx, trade, resolved);
       await this.moveItems(tx, trade, resolved, batchId);
+      await this.moveCharacters(tx, trade, batchId);
       await this.moveCoin(tx, trade, batchId);
 
       const settled = await tx.trade.update({
@@ -676,7 +848,7 @@ export class TradesService {
           respondedAt: new Date(),
           settlementBatchId: batchId,
         },
-        include: { items: true, currencyLines: true },
+        include: { items: true, characterLines: true, currencyLines: true },
       });
 
       // Inside the transaction: a settlement that rolls back must not leave the
@@ -691,6 +863,7 @@ export class TradesService {
           subjectId: trade.id,
           data: {
             itemCount: resolved.length,
+            characterCount: trade.characterLines.length,
             currencyCount: trade.currencyLines.length,
           },
         },
@@ -797,6 +970,27 @@ export class TradesService {
       if (locked.length) {
         throw new BadRequestException(
           `${locked[0].name} can no longer be traded`,
+        );
+      }
+    }
+
+    // The consent half, and the reason it matters most here. An owner can
+    // close their character to trades while an offer sits, and that is exactly
+    // when they would -- the flag is a standing answer to being asked, so what
+    // settlement must honour is the answer now, not the one that was true when
+    // somebody wrote the offer.
+    if (trade.characterLines.length) {
+      const closed = await tx.character.findMany({
+        where: {
+          id: { in: trade.characterLines.map((l) => l.characterId) },
+          OR: [{ isTradeable: false }, { deletedAt: { not: null } }],
+        },
+        select: { name: true },
+      });
+
+      if (closed.length) {
+        throw new BadRequestException(
+          `${closed[0].name} is no longer open to trades`,
         );
       }
     }
@@ -952,6 +1146,64 @@ export class TradesService {
   }
 
   /**
+   * Move every character, and write the ownership log rows for it.
+   *
+   * The same conditional-update shape `moveItems` uses, and for the same
+   * reason: checking and then writing leaves a window, while putting the check
+   * in the WHERE clause means a concurrent transfer loses the race rather than
+   * being overwritten by it. That matters more here than for items. A
+   * character is one thing, so every offer naming it is a bid on the same
+   * object, and the first accept has to be the only one that lands.
+   *
+   * `isTradeable` rides along in the WHERE as well. `assertStillTradeable`
+   * already refused a closed character with a message worth reading; this is
+   * the same check made unraceable, so consent withdrawn between that query
+   * and this write still stops the move.
+   *
+   * Rows are written straight onto the transaction client rather than through
+   * `CharacterOwnershipChangesService`, which takes no `tx` and whose module
+   * would pull `AuthModule` in behind it and close the cycle this module is
+   * built to avoid. `CharactersService` writes them the same way.
+   */
+  private async moveCharacters(
+    tx: Prisma.TransactionClient,
+    trade: TradeForResponse,
+    batchId: string,
+  ) {
+    if (trade.characterLines.length === 0) return;
+
+    for (const line of trade.characterLines) {
+      const { count } = await tx.character.updateMany({
+        where: {
+          id: line.characterId,
+          ownerId: line.sourceUserId,
+          isTradeable: true,
+          deletedAt: null,
+        },
+        data: { ownerId: line.destinationUserId },
+      });
+
+      if (count !== 1) {
+        throw new BadRequestException(
+          `${line.character.name} is no longer available from the member offering them`,
+        );
+      }
+    }
+
+    // One row per character rather than per direction, because the character
+    // log is per character and always has been. They share the trade's batch
+    // id, so a settlement still reads as one thing across all three ledgers.
+    await tx.characterOwnershipChange.createMany({
+      data: trade.characterLines.map((line) => ({
+        characterId: line.characterId,
+        fromUserId: line.sourceUserId,
+        toUserId: line.destinationUserId,
+        batchId,
+      })),
+    });
+  }
+
+  /**
    * Move every coin line, on the same transaction and the same batch id.
    *
    * The shortfall is checked here rather than left to the ledger, because the
@@ -1052,7 +1304,7 @@ export class TradesService {
     }
     return this.db.trade.findUniqueOrThrow({
       where: { id: tradeId },
-      include: { items: true, currencyLines: true },
+      include: { items: true, characterLines: true, currencyLines: true },
     });
   }
 
@@ -1139,6 +1391,9 @@ export class TradesService {
         items: {
           include: { item: { include: { itemType: true } }, itemType: true },
         },
+        characterLines: {
+          include: { character: { select: { id: true, name: true } } },
+        },
         currencyLines: { include: { currency: { select: { code: true } } } },
       },
     });
@@ -1164,6 +1419,8 @@ export class TradesService {
       body: input.note?.trim() || null,
       data: {
         itemCount: input.offering.length + input.requesting.length,
+        characterCount:
+          input.offeringCharacters.length + input.requestingCharacters.length,
         currencyCount: input.coin.length,
       },
     });

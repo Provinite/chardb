@@ -5,6 +5,7 @@ import { Community } from "../../communities/entities/community.entity";
 import { Item } from "../../items/entities/item.entity";
 import { ItemType } from "../../items/entities/item-type.entity";
 import { Currency } from "../../currencies/entities/currency.entity";
+import { Character } from "../../characters/entities/character.entity";
 
 registerEnumType(TradeStatus, {
   name: "TradeStatus",
@@ -71,6 +72,26 @@ export class TradeItem {
   destinationUser: User;
 }
 
+@ObjectType({
+  description:
+    "One character on the table, moving one way. Always a specific " +
+    "character: there is one of each, so there is no by-type equivalent of " +
+    "the item line.",
+})
+export class TradeCharacter {
+  @Field(() => ID)
+  id: string;
+
+  @Field(() => Character)
+  character: Character;
+
+  @Field(() => User, { description: "Who hands them over." })
+  sourceUser: User;
+
+  @Field(() => User, { description: "Who receives them." })
+  destinationUser: User;
+}
+
 @ObjectType({ description: "Coin on the table, moving one way." })
 export class TradeCurrencyLine {
   @Field(() => ID)
@@ -131,8 +152,9 @@ export class Trade {
   @Field(() => String, {
     nullable: true,
     description:
-      "Shared by every ledger row this settlement wrote, on both the item and " +
-      "the currency ledger. Null until accepted.",
+      "Shared by every ledger row this settlement wrote, across the item " +
+      "ledger, the currency ledger and the character ownership log. Null " +
+      "until accepted.",
   })
   settlementBatchId?: string | null;
 
@@ -141,6 +163,9 @@ export class Trade {
 
   @Field(() => [TradeItem])
   items: TradeItem[];
+
+  @Field(() => [TradeCharacter])
+  characterLines: TradeCharacter[];
 
   @Field(() => [TradeCurrencyLine])
   currencyLines: TradeCurrencyLine[];
