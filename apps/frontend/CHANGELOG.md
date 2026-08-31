@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.6.0] - 2026-08-31
+
 ### Changed
 
 - A shop listing you cannot buy now says why in a highlighted notice rather
