@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ArrowLeftRight, X } from "lucide-react";
 import { Avatar, Button } from "@chardb/ui";
@@ -152,16 +152,14 @@ const LoadingWrap = styled.div`
  */
 export const TradesPage: React.FC = () => {
   const { user } = useAuth();
-  const [params] = useSearchParams();
+  // Which community, if any, is in the path rather than in a query string.
+  // The sidebar reads community context off the pathname, so a narrowing it
+  // cannot see is a narrowing that costs the member their community nav.
+  const { communityId } = useParams<{ communityId?: string }>();
   const [status, setStatus] = useState<EffectiveTradeStatus | undefined>(
     EffectiveTradeStatus.Pending,
   );
   const [limit, setLimit] = useState(PAGE_SIZE);
-
-  // Arriving from a community's sidebar narrows the list to that community.
-  // Arriving from the global one does not, because an offer waiting on you is
-  // waiting on you wherever it was made.
-  const communityId = params.get("community") ?? undefined;
 
   const { data: communityData } = useCommunityByIdQuery({
     variables: { id: communityId! },
@@ -242,10 +240,13 @@ export const TradesPage: React.FC = () => {
             const other = incoming ? trade.proposer : trade.recipient;
             const name = other.displayName || other.username;
             const sides = sidesFor(trade, viewerId);
+            // Through the trade's own community, not the one this list is
+            // narrowed to -- the global inbox has no narrowing, and an offer
+            // is a single-community thing wherever you found it.
             return (
               <Row
                 key={trade.id}
-                to={`/trades/${trade.id}`}
+                to={`/communities/${trade.community.id}/trades/${trade.id}`}
                 data-testid="trade-row"
               >
                 <Avatar image={other.avatarImage} name={name} size={38} />
