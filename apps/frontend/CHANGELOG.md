@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Your untradeable holdings crowded the composer.** They collapse to one
   locked line with a count instead of one row per copy.
 
+- Character traits now display in the order the species variant defines, on the
+  character page and in the trait review queue. They were showing in the order
+  they were last saved, so reordering a variant's traits changed nothing (#233).
+
 ## [v11.4.0] - 2026-08-30
 
 ### Added

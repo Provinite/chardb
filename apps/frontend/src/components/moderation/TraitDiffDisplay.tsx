@@ -3,6 +3,8 @@ import styled from "styled-components";
 import { Type, Hash, Calendar, List } from "lucide-react";
 import { TraitValueType } from "../../generated/graphql";
 import { ColorPip } from "../colors/ColorPip";
+import { useTraitOrder } from "../../hooks/useTraitOrder";
+import { sortByTraitOrder } from "../../lib/traitOrder";
 
 type TraitValue = {
   traitId: string;
@@ -52,6 +54,13 @@ function renderLabel(v: GroupedValue): string {
 interface TraitDiffDisplayProps {
   previousTraitValues: TraitValue[];
   proposedTraitValues: TraitValue[];
+  /**
+   * The character's species and variant, used to order the diff the way staff
+   * arranged the variant's traits. A review read in a different order from the
+   * species panel is the thing that makes a masterlist check slow.
+   */
+  speciesId?: string | null;
+  speciesVariantId?: string | null;
 }
 
 const Container = styled.div`
@@ -236,7 +245,11 @@ function groupTraitValues(traitValues: TraitValue[]) {
 export const TraitDiffDisplay: React.FC<TraitDiffDisplayProps> = ({
   previousTraitValues,
   proposedTraitValues,
+  speciesId,
+  speciesVariantId,
 }) => {
+  const { order } = useTraitOrder(speciesId, speciesVariantId);
+
   const diffedTraits = useMemo(() => {
     const prevGrouped = groupTraitValues(previousTraitValues);
     const propGrouped = groupTraitValues(proposedTraitValues);
@@ -287,8 +300,10 @@ export const TraitDiffDisplay: React.FC<TraitDiffDisplayProps> = ({
       }
     }
 
-    return result;
-  }, [previousTraitValues, proposedTraitValues]);
+    // Built from a Set of trait ids, so the order so far is whatever order the
+    // two stored arrays happened to be in. The variant decides it instead.
+    return sortByTraitOrder(result, (trait) => trait.traitId, order);
+  }, [previousTraitValues, proposedTraitValues, order]);
 
   return (
     <Container>
@@ -297,7 +312,7 @@ export const TraitDiffDisplay: React.FC<TraitDiffDisplayProps> = ({
           <TraitItem key={trait.traitId} $status={trait.status}>
             <TraitHeader>
               <TraitIcon>{getTraitTypeIcon(trait.valueType)}</TraitIcon>
-              <TraitName>{trait.traitName}</TraitName>
+              <TraitName data-testid="trait-name">{trait.traitName}</TraitName>
               {trait.status !== "unchanged" && (
                 <StatusBadge $status={trait.status}>{trait.status}</StatusBadge>
               )}
