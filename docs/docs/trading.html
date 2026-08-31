@@ -243,13 +243,19 @@
         <div class="step-content">
           <p>
             A trade is an offer one member makes to another inside a community:
-            some of your items and some of your coin, for some of theirs. You
+            some of your items, characters and coin, for some of theirs. You
             build it, they answer it. Until they answer, nothing has happened.
           </p>
           <p>
-            Both sides of a trade can carry items, currency, or both, and either
-            side can be empty — a gift is just a trade that asks for nothing
-            back.
+            Both sides of a trade can carry items, characters, currency, or any
+            mix, and either side can be empty — a gift is just a trade that asks
+            for nothing back.
+          </p>
+          <p>
+            Characters are opt-in and off by default. A character only appears
+            on a table if its owner has opened it to trades, and that stays true
+            right up to the moment the offer settles. <a href="#characters">Step
+            2</a> covers it.
           </p>
 
           <div class="feature-list">
@@ -266,7 +272,7 @@
             <div class="feature-item">
               <div class="icon">🔁</div>
               <h4>Settle</h4>
-              <p>Items and coin move together, or not at all</p>
+              <p>Everything moves together, or nothing does</p>
             </div>
           </div>
 
@@ -298,10 +304,10 @@
         <div class="screenshot">
           <img
             src="trade-composer.png"
-            alt="The CharDB trade composer. Left pane lists three Trait Change Potions to offer, the middle shows one potion and 75 HC on the You give side against one Sunfeather Charm on the You receive side, and the right pane lists a locked Heirloom Locket and a Sunfeather Charm."
+            alt="The CharDB trade composer. The left pane lists three Trait Change Potions and, under a Characters heading, Bramblefoot. The middle shows one potion and 75 HC on the You give side against Marrowfen on the You receive side. The right pane lists a locked Heirloom Locket and, under Characters, Marrowfen marked on table."
           />
           <div class="screenshot-caption">
-            One potion and 75 coin, for one of their charms.
+            One potion and 75 coin, for one of their characters.
           </div>
         </div>
 
@@ -322,6 +328,12 @@
             listing thirty of them one by one when none can be picked.
           </p>
           <p>
+            Characters sit below the items in each pane, under their own
+            heading. They are separated because they behave differently, which
+            <a href="#characters">step 2</a> gets into — an item is a name and a
+            count, and a character is somebody with a page.
+          </p>
+          <p>
             Coin is a field on each side of the table rather than a line on it,
             because it is a price rather than a thing. Put an amount on both
             sides and only the difference is sent: 250 out and 100 back becomes
@@ -340,15 +352,109 @@
       </div>
 
       <!-- Step 2 -->
-      <div class="step">
+      <div class="step" id="characters">
         <div class="step-header">
           <div class="step-number">2</div>
+          <h2 class="step-title">Trading characters</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A character can go on the table like anything else, but only if its
+            owner has said so. <strong>Open to Trades is off by default</strong>
+            and it is the owner's switch, on the character's own edit page.
+          </p>
+          <div class="highlight-box">
+            <strong>The default is off for a reason.</strong> Owners get asked
+            about their characters whether or not they want to be, so the flag
+            is not a formality — it is the answer, given once, in advance. A
+            character that has not been opened to trades therefore offers
+            <em>no</em> trade affordance at all: not a greyed-out button, not a
+            "trades are off" tooltip, nothing. Both of those are still an
+            invitation to ask, which is the thing the switch exists to stop.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trade-character-button.png"
+            alt="Marrowfen's character page, owned by othermember, showing an Open to Trades badge and a Trading Information card containing Available for Sale: No, Open to Trades: Yes, and a Propose a Trade button."
+          />
+          <div class="screenshot-caption">
+            A character open to trades, seen by someone who is not its owner.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            The button is the way in. It opens the composer already pointed at
+            the owner, with the character on the side you are asking for —
+            because arriving here from someone else's character page means you
+            want it. Fill in your half and send.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trade-character-composer.png"
+            alt="The trade composer opened from Marrowfen's page. Marrowfen is already on the You receive side, and Bramblefoot has been added to the You give side. Both appear highlighted and marked on table in their owners' panes."
+          />
+          <div class="screenshot-caption">
+            Marrowfen arrives already on the table. Bramblefoot goes back the
+            other way.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>The panes only list characters that are already open.</strong>
+            A closed one is absent rather than locked — which is the opposite of
+            how an untradeable <em>item</em> is shown, and deliberately so. An
+            item type is locked by community staff, so leaving it visible
+            answers the question of where it went. A character is closed by its
+            own owner, and its absence is the switch doing exactly what they set
+            it to.
+          </p>
+          <p>
+            <strong>You cannot ask for any character of a type.</strong> Items
+            let you do that because copies of a type are interchangeable, and no
+            two characters are — there is one of each, and it is the one you
+            meant. So a character line names the character, which also means the
+            offer will fail at settlement if they part with them first. There is
+            no looser way to ask for a particular character.
+          </p>
+          <p>
+            The same rule against double-promising applies, and matters more
+            here: because there is only one of a character, every open offer
+            naming it is a bid on the same thing.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trade-character-offer.png"
+            alt="A sent offer titled 'Your offer to othermember', awaiting an answer, showing Bramblefoot under You give and Marrowfen under You receive, both rendered as links."
+          />
+          <div class="screenshot-caption">
+            On the offer itself, characters are links. Items are not — deciding
+            whether to accept a character means looking at it.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            One thing the button does not do is check whether the other member
+            has joined this community. A trade needs both parties to be members
+            of it, and if they are not, the offer is refused when you send it
+            rather than hidden beforehand.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
           <h2 class="step-title">One item, one open offer</h2>
         </div>
         <div class="step-content">
           <p>
-            You cannot put the same item on the table in two open offers at once.
-            Try it and the offer is refused with the item named.
+            You cannot put the same item or character on the table in two open
+            offers at once. Try it and the offer is refused with the thing
+            named.
           </p>
         </div>
         <div class="screenshot">
@@ -370,9 +476,14 @@
             problem in front of the only person who can do anything about it.
           </div>
           <p>
-            This applies to <em>your</em> specific items. Asking two different
-            people for one of their charms is fine, because you are asking for a
-            type rather than a copy, and either of them can still fill it.
+            This applies to <em>your</em> specific items and characters. Asking
+            two different people for one of their charms is fine, because you
+            are asking for a type rather than a copy, and either of them can
+            still fill it. Asking two people for their characters is fine for
+            the same reason — those are two different characters. Several people
+            bidding for one character is fine too: only the first accept can
+            land, and that is the market working rather than a conflict to
+            prevent.
           </p>
           <p>
             <strong>Coin works the same way.</strong> What you can put on the
@@ -384,10 +495,10 @@
         </div>
       </div>
 
-      <!-- Step 3 -->
+      <!-- Step 4 -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">3</div>
+          <div class="step-number">4</div>
           <h2 class="step-title">Your trades</h2>
         </div>
         <div class="step-content">
@@ -417,10 +528,10 @@
         </div>
       </div>
 
-      <!-- Step 4 -->
+      <!-- Step 5 -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">4</div>
+          <div class="step-number">5</div>
           <h2 class="step-title">Answering one</h2>
         </div>
         <div class="step-content">
@@ -489,10 +600,10 @@
         </div>
       </div>
 
-      <!-- Step 5 -->
+      <!-- Step 6 -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">5</div>
+          <div class="step-number">6</div>
           <h2 class="step-title">Countering</h2>
         </div>
         <div class="step-content">
@@ -531,16 +642,17 @@
         </div>
       </div>
 
-      <!-- Step 6 -->
+      <!-- Step 7 -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">6</div>
+          <div class="step-number">7</div>
           <h2 class="step-title">Settlement</h2>
         </div>
         <div class="step-content">
           <p>
-            Accepting moves everything at once: every item on both sides and the
-            coin, in a single step that either completes or does nothing.
+            Accepting moves everything at once: every item and character on both
+            sides and the coin, in a single step that either completes or does
+            nothing.
           </p>
         </div>
         <div class="screenshot">
@@ -558,8 +670,9 @@
             checked again at this moment rather than trusted from when the offer
             was written: that both of you still hold what you promised, that the
             payer can cover the coin, that the item types are still tradeable,
-            and that the offer has not expired. If any of that has changed, the
-            trade fails and says which part — and nothing moves.
+            that every character on the table is still open to trades, and that
+            the offer has not expired. If any of that has changed, the trade
+            fails and says which part — and nothing moves.
           </p>
           <div class="highlight-box">
             <strong>An offer that fails at accept is not a bug.</strong> It is
@@ -567,13 +680,40 @@
             names the line that no longer holds. The alternative — settling
             anyway — would move items their owner had already promised elsewhere.
           </div>
+          <p>
+            The character check is the one that matters most, because it is
+            about consent rather than availability. An owner can close a
+            character to trades at any point while an offer for it is standing,
+            and that is exactly when they would. What settlement honours is the
+            answer now, not the answer that was true when somebody wrote the
+            offer.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trade-character-settled.png"
+            alt="Marrowfen's character page after the trade settled. The owner panel now reads member, with a smaller line underneath reading Created by othermember, and the Trading Information card no longer offers a Propose a Trade button."
+          />
+          <div class="screenshot-caption">
+            Marrowfen, now owned by the other member. Note what did not move:
+            the creator credit.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>A trade moves ownership and nothing else.</strong> The
+            character's creator credit, its gallery, its comments and its
+            history all stay attached to the character. Its Open to Trades
+            setting stays on too, so its new owner should turn it off if they do
+            not want to be asked.
+          </p>
         </div>
       </div>
 
-      <!-- Step 7 -->
+      <!-- Step 8 -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">7</div>
+          <div class="step-number">8</div>
           <h2 class="step-title">What it leaves behind</h2>
         </div>
         <div class="step-content">
@@ -604,9 +744,18 @@
         </div>
         <div class="step-content">
           <p>
-            Both legs of one settlement share an identifier, so the item movement
-            and the coin movement can be recognised as parts of the same event
-            rather than two things that happened to occur together.
+            A character that changed hands is recorded too, on the character's
+            own ownership history rather than in either community ledger — an
+            ownership change belongs to the character, and follows it if it
+            later leaves the community. That record is not yet shown anywhere in
+            the interface; the character's owner panel is currently the visible
+            answer to who holds it.
+          </p>
+          <p>
+            Every leg of one settlement shares an identifier, so the item
+            movement, the coin movement and the character's change of hands can
+            be recognised as parts of the same event rather than three things
+            that happened to occur together.
           </p>
           <p>
             Declining, withdrawing and expiring write nothing to either ledger.

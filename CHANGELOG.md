@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **E2E: 8 character-trading specs** in `apps/e2e/tests/trades`, most of them
+  about what a character its owner has not opted in offers: nothing, at every
+  surface (#302).
+
+- The `community-items` preset carries a species and three characters — one
+  open to trades on each side, and one closed — which is the asymmetry a
+  character-trade spec needs (#302).
+
+### Changed
+
+- **The trading walkthrough covers characters** (`docs/docs/trading.html`): a
+  new step on opting in and what the flag withholds until you do, with
+  screenshots taken against a seeded instance. The composer screenshot was
+  retaken, since its panes changed (#302).
+
 ## [v11.6.0] - 2026-08-31
 
 ### Added
