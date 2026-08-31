@@ -48,6 +48,19 @@ test.describe("currency admin page", () => {
       await expect(row).toContainText(/archived/i);
     });
 
+    test("an untradeable currency is marked, and still grantable", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(world.currencyUrls.admin);
+
+      const row = page.getByTestId("currency-row-PP");
+      await expect(row).toContainText(/untradeable/i);
+      // The distinction from archiving, in one assertion: this currency is
+      // fully alive to staff. Only movement between members has stopped.
+      await expect(page.getByTestId("grant-PP")).toBeVisible();
+    });
+
     test("staff see Grant and Remove actions", async ({ page, world }) => {
       await page.goto(world.currencyUrls.admin);
       await expect(page.getByTestId("grant-HC")).toBeVisible();
@@ -162,6 +175,23 @@ test.describe("currency wallet", () => {
       await expect(
         page.getByTestId("wallet-FT").getByRole("button", { name: /send/i }),
       ).toHaveCount(0);
+    });
+
+    test("says why an untradeable currency cannot be sent", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(`/communities/${world.community.id}/inventory`);
+
+      // The member holds 40 of it, so the absence of Send is about the
+      // currency rather than the balance -- and a card that silently lost its
+      // button, on a wallet where every other card has one, reads as a bug.
+      const card = page.getByTestId("wallet-PP");
+      await expect(card).toContainText("40 PP");
+      await expect(card.getByRole("button", { name: /send/i })).toHaveCount(0);
+      await expect(card.getByTestId("currency-bound")).toContainText(
+        /cannot be given away/i,
+      );
     });
 
     test.describe("sending", () => {

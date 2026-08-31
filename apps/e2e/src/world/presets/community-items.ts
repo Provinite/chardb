@@ -43,6 +43,11 @@ export interface CommunityItemsWorld {
     token: { id: string; code: string; name: string };
     /** Archived. Must refuse new transactions but stay readable. */
     retired: { id: string; code: string; name: string };
+    /**
+     * Untradeable, and `member` holds 40 of it. Fully alive -- granted, spent
+     * and refunded as normal -- but it cannot move between members.
+     */
+    bound: { id: string; code: string; name: string };
   };
   /** What each persona holds of `coin` after seeding. */
   balances: { member: number; othermember: number };
@@ -253,6 +258,32 @@ export default definePreset<CommunityItemsWorld>({
       input: { archived: true },
     });
 
+    // An untradeable currency: members earn and spend it but cannot hand it to
+    // each other. Created tradeable and then turned off, because that is the
+    // order the product allows and the specs care what happens to a currency
+    // people already hold.
+    const { createCurrency: bound } = await asQuartermaster.gql(
+      SeedCreateCurrencyDocument,
+      {
+        input: {
+          communityId: community.id,
+          name: "Prompt Points",
+          code: "PP",
+        },
+      },
+    );
+    await asQuartermaster.gql(SeedUpdateCurrencyDocument, {
+      id: bound.id,
+      input: { isTradeable: false },
+    });
+
+    // Balance written directly rather than minted. How the member came to hold
+    // it is not what any spec is about, and a grant would add a MINT row to a
+    // ledger whose row counts the currency specs assert on.
+    await ctx.prisma.currencyBalance.create({
+      data: { currencyId: bound.id, userId: member.userId, amount: 40 },
+    });
+
     // One grant to two members at once. Writes two rows sharing a batch id,
     // which is what a prize round looks like.
     await asQuartermaster.gql(SeedMintCurrencyDocument, {
@@ -329,6 +360,7 @@ export default definePreset<CommunityItemsWorld>({
         coin: { id: coin.id, code: coin.code, name: coin.name },
         token: { id: token.id, code: token.code, name: token.name },
         retired: { id: retired.id, code: retired.code, name: retired.name },
+        bound: { id: bound.id, code: bound.code, name: bound.name },
       },
       balances: { member: 380, othermember: 620 },
       currencyUrls: {

@@ -2,6 +2,7 @@ import { Field, InputType, Int, ID } from "@nestjs/graphql";
 import {
   IsString,
   IsOptional,
+  IsBoolean,
   IsInt,
   IsUUID,
   IsEnum,
@@ -54,6 +55,17 @@ export class CreateCurrencyInput {
   @IsOptional()
   @IsUUID()
   colorId?: string;
+
+  @Field({
+    nullable: true,
+    defaultValue: true,
+    description:
+      "Whether members may hand this to each other. Defaults to true, which " +
+      "is what a currency normally is.",
+  })
+  @IsOptional()
+  @IsBoolean()
+  isTradeable?: boolean;
 }
 
 @InputType()
@@ -93,10 +105,22 @@ export class UpdateCurrencyInput {
   @Field({
     nullable: true,
     description:
+      "Whether members may hand this to each other, by trade or by a direct " +
+      "send. Turning it off leaves every existing balance alone and stops " +
+      "only new movement between members.",
+  })
+  @IsOptional()
+  @IsBoolean()
+  isTradeable?: boolean;
+
+  @Field({
+    nullable: true,
+    description:
       "Archive or restore. An archived currency takes no new transactions " +
       "but keeps every balance and statement row readable.",
   })
   @IsOptional()
+  @IsBoolean()
   archived?: boolean;
 }
 

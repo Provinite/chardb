@@ -326,6 +326,20 @@ test.describe("currency API", () => {
       ).rejects.toThrow(/do not have|not enough|insufficient/i);
     });
 
+    test("a member cannot send an untradeable currency", async ({ world }) => {
+      // Enforced at the ledger, not just hidden in the wallet. The Send button
+      // being absent is a courtesy; this is the rule.
+      await expect(
+        world.as("member").gql(SeedTransferCurrencyDocument, {
+          input: {
+            currencyId: world.currencies.bound.id,
+            toUserId: world.users.othermember.userId,
+            amount: 10,
+          },
+        }),
+      ).rejects.toThrow(/cannot be sent to another member/i);
+    });
+
     test("a refused transfer credits nobody", async ({ world }) => {
       const before = await world.as("member").gql(SeedMemberWalletDocument, {
         communityId: world.community.id,

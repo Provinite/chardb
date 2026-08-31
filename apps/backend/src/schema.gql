@@ -530,6 +530,11 @@ input CreateCurrencyInput {
   colorId: ID
   communityId: ID!
   description: String
+
+  """
+  Whether members may hand this to each other. Defaults to true, which is what a currency normally is.
+  """
+  isTradeable: Boolean = true
   name: String!
   symbol: String
 }
@@ -801,7 +806,7 @@ A community-defined unit of account. A community may define any number of them; 
 """
 type Currency {
   """
-  When set, the currency takes no new transactions. Existing balances and statements stay readable -- deleting it would destroy the history of everything ever bought with it.
+  When set, the currency takes no new transactions. Existing balances and statements stay readable -- deleting it would destroy the history of everything ever bought with it. Distinct from isTradeable, which leaves the currency fully alive to everyone but its own holders.
   """
   archivedAt: DateTime
 
@@ -812,6 +817,11 @@ type Currency {
   createdAt: DateTime!
   description: String
   id: ID!
+
+  """
+  Whether members may hand this to each other, by trade or by a direct send. Staff grants, shop purchases and refunds are unaffected: an untradeable currency is still earned and still spent, it just cannot move sideways.
+  """
+  isTradeable: Boolean!
   name: String!
 
   """
@@ -3919,6 +3929,11 @@ input UpdateCurrencyInput {
   code: String
   colorId: ID
   description: String
+
+  """
+  Whether members may hand this to each other, by trade or by a direct send. Turning it off leaves every existing balance alone and stops only new movement between members.
+  """
+  isTradeable: Boolean
   name: String
   symbol: String
 }
