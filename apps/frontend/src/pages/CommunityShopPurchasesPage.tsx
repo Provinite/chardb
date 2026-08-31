@@ -196,7 +196,10 @@ export const CommunityShopPurchasesPage: React.FC = () => {
 
   if (!communityId) return null;
 
-  if (loading || roleLoading) {
+  // Only before there is anything to show. This query is cache-and-network,
+  // which reports loading on every background revalidation too, so a bare
+  // `loading` check replaced the whole page with a spinner on every visit.
+  if ((loading && !data) || roleLoading) {
     return (
       <Container>
         <LoadingSpinner />
