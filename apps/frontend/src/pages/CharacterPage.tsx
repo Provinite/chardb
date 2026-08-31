@@ -731,7 +731,11 @@ export const CharacterPage: React.FC = () => {
       {character.traitValues && character.traitValues.length > 0 && (
         <ContentSection>
           <SectionTitle>Character Traits</SectionTitle>
-          <CharacterTraitsDisplay traitValues={character.traitValues} />
+          <CharacterTraitsDisplay
+            traitValues={character.traitValues}
+            speciesId={character.speciesId}
+            speciesVariantId={character.speciesVariantId}
+          />
         </ContentSection>
       )}
 

@@ -3,6 +3,8 @@ import styled from "styled-components";
 import { Type, Hash, Calendar, List } from "lucide-react";
 import { GetCharacterQuery, TraitValueType } from "../../generated/graphql";
 import { ColorPip } from "../colors/ColorPip";
+import { useTraitOrder } from "../../hooks/useTraitOrder";
+import { sortByTraitOrder } from "../../lib/traitOrder";
 
 /**
  * Character Traits Display Component
@@ -114,6 +116,13 @@ type CharacterTraitValue = NonNullable<
 
 interface CharacterTraitsDisplayProps {
   traitValues: CharacterTraitValue[];
+  /**
+   * The character's species and variant, used to order the traits the way
+   * staff arranged them. Without both, values render in the order they were
+   * stored, which is the order they were last saved in.
+   */
+  speciesId?: string | null;
+  speciesVariantId?: string | null;
 }
 
 // Helper function to get trait type icon
@@ -134,12 +143,17 @@ const getTraitTypeIcon = (type: TraitValueType) => {
 
 export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
   traitValues,
+  speciesId,
+  speciesVariantId,
 }) => {
+  const { order } = useTraitOrder(speciesId, speciesVariantId);
+
   // Group trait values by traitId
   const groupedTraits = useMemo(() => {
     const grouped = new Map<
       string,
       {
+        traitId: string;
         trait: NonNullable<CharacterTraitValue["trait"]>;
         values: Array<{
           value: string | number | boolean | null;
@@ -156,6 +170,7 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
 
       if (!grouped.has(tv.traitId)) {
         grouped.set(tv.traitId, {
+          traitId: tv.traitId,
           trait: tv.trait,
           values: [],
         });
@@ -170,8 +185,15 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
       });
     }
 
-    return Array.from(grouped.values());
-  }, [traitValues]);
+    // Map insertion order is the order the values were stored in, which is
+    // whenever the character was last saved. The variant decides the real
+    // order; until it loads, this sorts to no change.
+    return sortByTraitOrder(
+      Array.from(grouped.values()),
+      (group) => group.traitId,
+      order,
+    );
+  }, [traitValues, order]);
 
   if (groupedTraits.length === 0) {
     return (
@@ -189,7 +211,7 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
             <TraitItem key={trait.name}>
               <TraitHeader>
                 <TraitIcon>{getTraitTypeIcon(trait.valueType)}</TraitIcon>
-                <TraitName>{trait.name}</TraitName>
+                <TraitName data-testid="trait-name">{trait.name}</TraitName>
                 {isMultiValue && (
                   <MultiValueIndicator>×{values.length}</MultiValueIndicator>
                 )}
