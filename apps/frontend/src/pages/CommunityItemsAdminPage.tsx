@@ -286,6 +286,13 @@ const Label = styled.label`
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
+/** Says the rule in the label, rather than leaving the form to refuse you. */
+const Hint = styled.span`
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
 const Input = styled.input`
   padding: 0.75rem;
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -1054,7 +1061,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label htmlFor="grant-item-quantity">Quantity *</Label>
+              <Label htmlFor="grant-item-quantity">
+                Quantity * <Hint>At most {MAX_GRANT_QUANTITY}.</Hint>
+              </Label>
               <Input
                 id="grant-item-quantity"
                 required
