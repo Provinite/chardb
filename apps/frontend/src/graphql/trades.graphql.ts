@@ -185,6 +185,22 @@ export const PROPOSE_TRADE = gql`
   ${TRADE_FRAGMENT}
 `;
 
+/**
+ * Decline and reply in one step.
+ *
+ * Not two calls from here. Declining on the button press meant abandoning the
+ * composer left the member with neither offer and no way back to the one they
+ * had been sent.
+ */
+export const COUNTER_TRADE = gql`
+  mutation CounterTrade($id: ID!, $input: CreateTradeInput!) {
+    counterTrade(id: $id, input: $input) {
+      ...TradeFields
+    }
+  }
+  ${TRADE_FRAGMENT}
+`;
+
 export const ACCEPT_TRADE = gql`
   mutation AcceptTrade($id: ID!, $selections: [TradeSelectionInput!]) {
     acceptTrade(id: $id, selections: $selections) {
@@ -217,6 +233,7 @@ export {
   useTradeQuery,
   useTradeComposerQuery,
   useProposeTradeMutation,
+  useCounterTradeMutation,
   useAcceptTradeMutation,
   useDeclineTradeMutation,
   useCancelTradeMutation,

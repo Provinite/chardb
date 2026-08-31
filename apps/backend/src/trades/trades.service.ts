@@ -59,7 +59,9 @@ type TradeForResponse = Prisma.TradeGetPayload<{
         itemType: true;
       };
     };
-    currencyLines: true;
+    // The code, so a shortfall can be reported in the unit the member sees
+    // rather than as a bare number.
+    currencyLines: { include: { currency: { select: { code: true } } } };
   };
 }>;
 
@@ -171,6 +173,85 @@ export class TradesService {
    * them is made again, authoritatively, when the recipient accepts.
    */
   async create(proposerId: string, input: CreateTradeInput) {
+    const data = await this.draft(proposerId, input);
+
+    const trade = await this.db.trade.create({
+      data,
+      include: { items: true, currencyLines: true },
+    });
+
+    await this.notifyRecipient(trade.id, proposerId, input);
+
+    return trade;
+  }
+
+  /**
+   * Answer an offer with a different one.
+   *
+   * The decline and the new offer are one step, so nothing is lost by opening
+   * the composer and thinking better of it. Countering used to be two calls
+   * from the client, which meant the decline landed the moment the button was
+   * pressed: abandon the composer and the original was gone, with no way back
+   * to what you had been offered.
+   *
+   * One notification, not two. The original proposer is the recipient of both,
+   * and a counter arriving says everything a decline would have.
+   */
+  async counter(userId: string, tradeId: string, input: CreateTradeInput) {
+    const original = await this.loadForResponse(tradeId);
+
+    if (original.recipientId !== userId) {
+      throw new ForbiddenException("Only the recipient can counter this trade");
+    }
+    if (effectiveStatus(original) === "EXPIRED") {
+      throw new BadRequestException("That offer has expired");
+    }
+    if (
+      input.communityId !== original.communityId ||
+      input.recipientId !== original.proposerId
+    ) {
+      throw new BadRequestException(
+        "A counter-offer goes back to the member who made the offer, in the same community",
+      );
+    }
+
+    // Resolved before the transaction opens, because it is several reads and
+    // holding a write transaction across them buys nothing -- everything it
+    // checks is advisory and gets checked again at accept anyway.
+    const data = await this.draft(userId, input);
+
+    const trade = await this.db.$transaction(async (tx) => {
+      // Conditional on PENDING, so a race with the proposer withdrawing loses
+      // rather than declining a trade that is already closed.
+      const { count } = await tx.trade.updateMany({
+        where: { id: tradeId, status: TradeStatus.PENDING },
+        data: { status: TradeStatus.DECLINED, respondedAt: new Date() },
+      });
+      if (count !== 1) {
+        throw new BadRequestException("That trade is no longer open");
+      }
+
+      return tx.trade.create({
+        data,
+        include: { items: true, currencyLines: true },
+      });
+    });
+
+    await this.notifyRecipient(trade.id, userId, input);
+
+    return trade;
+  }
+
+  /**
+   * Validate an offer and resolve it into the row a create would write.
+   *
+   * Shared by composing and countering, which differ only in what else happens
+   * in the same breath.
+   */
+  private async draft(
+    proposerId: string,
+    input: CreateTradeInput,
+  ): Promise<Prisma.TradeUncheckedCreateInput> {
     if (input.recipientId === proposerId) {
       throw new BadRequestException("You cannot trade with yourself");
     }
@@ -213,22 +294,15 @@ export class TradesService {
       expiresAt.getDate() + (input.expiresInDays ?? DEFAULT_EXPIRY_DAYS),
     );
 
-    const trade = await this.db.trade.create({
-      data: {
-        communityId: input.communityId,
-        proposerId,
-        recipientId: input.recipientId,
-        note: input.note?.trim() || null,
-        expiresAt,
-        items: { create: lines },
-        currencyLines: { create: coinLines },
-      },
-      include: { items: true, currencyLines: true },
-    });
-
-    await this.notifyRecipient(trade.id, proposerId, input);
-
-    return trade;
+    return {
+      communityId: input.communityId,
+      proposerId,
+      recipientId: input.recipientId,
+      note: input.note?.trim() || null,
+      expiresAt,
+      items: { create: lines },
+      currencyLines: { create: coinLines },
+    };
   }
 
   /**
@@ -455,17 +529,80 @@ export class TradesService {
       );
     }
 
-    return (
-      [...net.entries()]
-        // A currency that nets to zero is not on the table at all.
-        .filter(([, delta]) => delta !== 0)
-        .map(([currencyId, delta]) => ({
-          currencyId,
-          amount: Math.abs(delta),
-          sourceUserId: delta > 0 ? proposerId : recipientId,
-          destinationUserId: delta > 0 ? recipientId : proposerId,
-        }))
-    );
+    const lines = [...net.entries()]
+      // A currency that nets to zero is not on the table at all.
+      .filter(([, delta]) => delta !== 0)
+      .map(([currencyId, delta]) => ({
+        currencyId,
+        amount: Math.abs(delta),
+        sourceUserId: delta > 0 ? proposerId : recipientId,
+        destinationUserId: delta > 0 ? recipientId : proposerId,
+      }));
+
+    await this.assertCanCoverCoin(proposerId, lines);
+
+    return lines;
+  }
+
+  /**
+   * Stop the proposer promising coin they will not have.
+   *
+   * The counterpart to the double-promise check on items, and for the same
+   * reason: nothing is escrowed, so three offers can each promise 300 of a 380
+   * balance, and the first to settle leaves the rest to fail at accept in front
+   * of someone with no way to see why. Availability is the balance minus what
+   * is already committed in the proposer's other open offers.
+   *
+   * Only the proposer's side. What the recipient owes is left alone, exactly as
+   * a by-type request against their holdings is: their balance is theirs to
+   * change between now and answering, and refusing an ask they could easily
+   * meet by then would be reserving someone else's property to no purpose.
+   */
+  private async assertCanCoverCoin(
+    proposerId: string,
+    lines: { currencyId: string; amount: number; sourceUserId: string }[],
+  ) {
+    for (const line of lines) {
+      if (line.sourceUserId !== proposerId) continue;
+
+      const [held, committed] = await Promise.all([
+        this.db.currencyBalance.findUnique({
+          where: {
+            currencyId_userId: {
+              currencyId: line.currencyId,
+              userId: proposerId,
+            },
+          },
+          select: { amount: true, currency: { select: { code: true } } },
+        }),
+        this.db.tradeCurrencyLine.aggregate({
+          where: {
+            currencyId: line.currencyId,
+            sourceUserId: proposerId,
+            trade: {
+              status: TradeStatus.PENDING,
+              expiresAt: { gt: new Date() },
+              proposerId,
+            },
+          },
+          _sum: { amount: true },
+        }),
+      ]);
+
+      const balance = held?.amount ?? 0;
+      const promised = committed._sum.amount ?? 0;
+      if (balance - promised >= line.amount) continue;
+
+      // Naming the commitment matters: "you do not have 300" is baffling to
+      // someone looking at a balance of 380, and sends them to the wallet
+      // rather than to the offers they have forgotten about.
+      const code = held?.currency.code ?? "";
+      throw new BadRequestException(
+        promised > 0
+          ? `That offer needs ${line.amount} ${code}, but ${promised} of your ${balance} is already promised in other open offers`
+          : `You do not have ${line.amount} ${code}`,
+      );
+    }
   }
 
   private async assertMembers(communityId: string, userIds: string[]) {
@@ -781,13 +918,41 @@ export class TradesService {
     }
   }
 
-  /** Move every coin line, on the same transaction and the same batch id. */
+  /**
+   * Move every coin line, on the same transaction and the same batch id.
+   *
+   * The shortfall is checked here rather than left to the ledger, because the
+   * ledger phrases it as "You do not have 120 HC to send" -- addressed to the
+   * caller, who in a trade is whoever clicked accept. When the proposer is the
+   * one who came up short, that told the recipient they were broke while they
+   * sat on plenty. The balance floor is still a database constraint and still
+   * the authority; this only decides what the member reads.
+   */
   private async moveCoin(
     tx: Prisma.TransactionClient,
     trade: TradeForResponse,
     batchId: string,
   ) {
     for (const line of trade.currencyLines) {
+      const held = await tx.currencyBalance.findUnique({
+        where: {
+          currencyId_userId: {
+            currencyId: line.currencyId,
+            userId: line.sourceUserId,
+          },
+        },
+        select: { amount: true },
+      });
+
+      if ((held?.amount ?? 0) < line.amount) {
+        const short = `${line.amount} ${line.currency.code}`;
+        throw new BadRequestException(
+          line.sourceUserId === trade.recipientId
+            ? `You do not have ${short} to complete this trade`
+            : `The member who made this offer no longer has ${short}`,
+        );
+      }
+
       await this.currencyLedger.transfer(
         {
           currencyId: line.currencyId,
@@ -804,9 +969,9 @@ export class TradesService {
   /**
    * The recipient says no. Nothing was held, so nothing is released.
    *
-   * The proposer is told, because they are waiting on an answer. A counter is
-   * this plus a new offer -- the client declines and reopens the composer
-   * pre-filled -- so there is nothing here for it.
+   * The proposer is told, because they are waiting on an answer. Countering
+   * closes a trade the same way but in one step with the replacement, so it
+   * does not come through here -- see {@link counter}.
    */
   async decline(tradeId: string, userId: string) {
     const trade = await this.loadForResponse(tradeId);
@@ -941,7 +1106,7 @@ export class TradesService {
         items: {
           include: { item: { include: { itemType: true } }, itemType: true },
         },
-        currencyLines: true,
+        currencyLines: { include: { currency: { select: { code: true } } } },
       },
     });
     if (!trade) throw new NotFoundException("Trade not found");

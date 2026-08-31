@@ -85,6 +85,34 @@ export class TradesResolver {
   @AllowAnyAuthenticated()
   @Mutation(() => Trade, {
     description:
+      "Answer an offer with a different one. Declines the original and sends " +
+      "the replacement in a single step, so opening a counter and thinking " +
+      "better of it costs the offer nothing. Returns the new trade.",
+  })
+  async counterTrade(
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+    @Args("id", {
+      type: () => ID,
+      description: "The offer being answered. It is declined.",
+    })
+    id: string,
+    @Args("input") input: CreateTradeInput,
+  ): Promise<Trade> {
+    const trade = await this.trades.counter(user.id, id, {
+      communityId: input.communityId,
+      recipientId: input.recipientId,
+      offering: input.offering,
+      requesting: input.requesting.map(toRequestedItem),
+      coin: input.coin,
+      note: input.note,
+      expiresInDays: input.expiresInDays,
+    });
+    return mapTradeToGraphQL(await this.trades.findOne(trade.id, user.id));
+  }
+
+  @AllowAnyAuthenticated()
+  @Mutation(() => Trade, {
+    description:
       "Accept and settle. Items and coin move in one transaction across both " +
       "ledgers, or the whole accept fails.",
   })
@@ -108,8 +136,8 @@ export class TradesResolver {
   @AllowAnyAuthenticated()
   @Mutation(() => Trade, {
     description:
-      "Refuse an offer. Nothing was held, so nothing is released. A counter " +
-      "is this plus a fresh offer, composed by the client.",
+      "Refuse an offer. Nothing was held, so nothing is released. To refuse " +
+      "and reply with your own terms, use counterTrade instead.",
   })
   async declineTrade(
     @CurrentUser() user: AuthenticatedCurrentUserType,

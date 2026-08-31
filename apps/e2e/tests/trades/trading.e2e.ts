@@ -127,6 +127,33 @@ test.describe("composing an offer", () => {
 
     await expect(page.getByRole("alert")).toContainText(/already offered/i);
   });
+
+  test("refuses to promise coin already promised elsewhere", async ({
+    page,
+    world,
+  }) => {
+    // 300 of member's 380 goes out in the first offer.
+    await page.goto(
+      composerUrl(world.community.id, world.users.othermember.userId),
+    );
+    await page.getByLabel(/hollow coin you give$/i).fill("300");
+    await page.getByTestId("send-offer").click();
+    await page.waitForURL(/\/trades\/[0-9a-f-]{36}$/);
+
+    // The second cannot settle whatever the wallet says, so it is refused here
+    // rather than at accept in front of someone who cannot see the first offer.
+    // The balance alone would have allowed it, which is why the message has to
+    // name the commitment.
+    await page.goto(
+      composerUrl(world.community.id, world.users.othermember.userId),
+    );
+    await page.getByLabel(/hollow coin you give$/i).fill("200");
+    await page.getByTestId("send-offer").click();
+
+    await expect(page.getByRole("alert")).toContainText(
+      /300 of your 380 is already promised/i,
+    );
+  });
 });
 
 test.describe("answering an offer", () => {
@@ -319,10 +346,35 @@ test.describe("countering an offer", () => {
       await them.close();
     }
 
-    // Countering is a decline plus a fresh offer, and the decline is the half
-    // that already happened. The original must not still be answerable.
+    // Opening a counter costs the offer nothing. Declining on the button press
+    // meant a member who thought better of it was left with neither offer and
+    // no way back to what they had been sent.
     await page.goto(tradeUrl);
-    await expect(page.getByTestId("trade-status")).toContainText(/declined/i);
+    await expect(page.getByTestId("trade-status")).toContainText(/awaiting/i);
+  });
+
+  test("abandoning a counter leaves the original answerable", async ({
+    page,
+    world,
+    browser,
+  }) => {
+    const tradeUrl = await offerPotionForCoin(page, world, 100);
+
+    const them = await pageAs(browser, world.storageState("othermember"));
+    try {
+      await them.page.goto(tradeUrl);
+      await them.page.getByTestId("counter-trade").click();
+      await them.page.waitForURL(/\/trades\/new\?/);
+
+      // Walk away from the composer, come back, and accept the original.
+      await them.page.goto(tradeUrl);
+      await them.page.getByTestId("accept-trade").click();
+      await expect(them.page.getByTestId("trade-status")).toContainText(
+        /settled/i,
+      );
+    } finally {
+      await them.close();
+    }
   });
 
   test("the counter can be edited before it is sent, and settles as edited", async ({
@@ -348,6 +400,10 @@ test.describe("countering an offer", () => {
     } finally {
       await them.close();
     }
+
+    // Sending it is what closes the original, and the two happen together.
+    await page.goto(tradeUrl);
+    await expect(page.getByTestId("trade-status")).toContainText(/declined/i);
 
     await page.goto(counterUrl);
     await expect(page.getByTestId("offer-receive")).toContainText("60");

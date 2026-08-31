@@ -1567,6 +1567,8 @@ export type Mutation = {
   cancelTrade: Trade;
   /** Claim an invite code to join a community */
   claimInviteCode: InviteCode;
+  /** Answer an offer with a different one. Declines the original and sends the replacement in a single step, so opening a counter and thinking better of it costs the offer nothing. Returns the new trade. */
+  counterTrade: Trade;
   createCharacter: Character;
   /** Create a new character ownership change record */
   createCharacterOwnershipChange: CharacterOwnershipChange;
@@ -1599,7 +1601,7 @@ export type Mutation = {
   createTrait: Trait;
   /** Create a new trait list entry */
   createTraitListEntry: TraitListEntry;
-  /** Refuse an offer. Nothing was held, so nothing is released. A counter is this plus a fresh offer, composed by the client. */
+  /** Refuse an offer. Nothing was held, so nothing is released. To refuse and reply with your own terms, use counterTrade instead. */
   declineTrade: Trade;
   /** Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. A character with no species has no community to resolve permissions from, so once it has been removed from its species (see kickCharacterFromSpecies) only a global admin can delete it. */
   deleteCharacter: Scalars['Boolean']['output'];
@@ -1773,6 +1775,12 @@ export type MutationCancelTradeArgs = {
 export type MutationClaimInviteCodeArgs = {
   claimInviteCodeInput: ClaimInviteCodeInput;
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationCounterTradeArgs = {
+  id: Scalars['ID']['input'];
+  input: CreateTradeInput;
 };
 
 
@@ -5238,6 +5246,14 @@ export type ProposeTradeMutationVariables = Exact<{
 
 
 export type ProposeTradeMutation = { __typename?: 'Mutation', proposeTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+
+export type CounterTradeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: CreateTradeInput;
+}>;
+
+
+export type CounterTradeMutation = { __typename?: 'Mutation', counterTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type AcceptTradeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -13691,6 +13707,40 @@ export function useProposeTradeMutation(baseOptions?: Apollo.MutationHookOptions
 export type ProposeTradeMutationHookResult = ReturnType<typeof useProposeTradeMutation>;
 export type ProposeTradeMutationResult = Apollo.MutationResult<ProposeTradeMutation>;
 export type ProposeTradeMutationOptions = Apollo.BaseMutationOptions<ProposeTradeMutation, ProposeTradeMutationVariables>;
+export const CounterTradeDocument = gql`
+    mutation CounterTrade($id: ID!, $input: CreateTradeInput!) {
+  counterTrade(id: $id, input: $input) {
+    ...TradeFields
+  }
+}
+    ${TradeFieldsFragmentDoc}`;
+export type CounterTradeMutationFn = Apollo.MutationFunction<CounterTradeMutation, CounterTradeMutationVariables>;
+
+/**
+ * __useCounterTradeMutation__
+ *
+ * To run a mutation, you first call `useCounterTradeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCounterTradeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [counterTradeMutation, { data, loading, error }] = useCounterTradeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCounterTradeMutation(baseOptions?: Apollo.MutationHookOptions<CounterTradeMutation, CounterTradeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CounterTradeMutation, CounterTradeMutationVariables>(CounterTradeDocument, options);
+      }
+export type CounterTradeMutationHookResult = ReturnType<typeof useCounterTradeMutation>;
+export type CounterTradeMutationResult = Apollo.MutationResult<CounterTradeMutation>;
+export type CounterTradeMutationOptions = Apollo.BaseMutationOptions<CounterTradeMutation, CounterTradeMutationVariables>;
 export const AcceptTradeDocument = gql`
     mutation AcceptTrade($id: ID!, $selections: [TradeSelectionInput!]) {
   acceptTrade(id: $id, selections: $selections) {

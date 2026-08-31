@@ -1883,6 +1883,15 @@ type Mutation {
     """Invite code ID"""
     id: ID!
   ): InviteCode!
+
+  """
+  Answer an offer with a different one. Declines the original and sends the replacement in a single step, so opening a counter and thinking better of it costs the offer nothing. Returns the new trade.
+  """
+  counterTrade(
+    """The offer being answered. It is declined."""
+    id: ID!
+    input: CreateTradeInput!
+  ): Trade!
   createCharacter(input: CreateCharacterInput!): Character!
 
   """Create a new character ownership change record"""
@@ -1969,7 +1978,7 @@ type Mutation {
   ): TraitListEntry!
 
   """
-  Refuse an offer. Nothing was held, so nothing is released. A counter is this plus a fresh offer, composed by the client.
+  Refuse an offer. Nothing was held, so nothing is released. To refuse and reply with your own terms, use counterTrade instead.
   """
   declineTrade(id: ID!): Trade!
 

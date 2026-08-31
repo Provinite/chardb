@@ -15,6 +15,7 @@ import {
   useTradeComposerQuery,
   useTradeQuery,
   useProposeTradeMutation,
+  useCounterTradeMutation,
 } from "../graphql/trades.graphql";
 
 const Container = styled.div`
@@ -258,7 +259,9 @@ export const TradeComposerPage: React.FC = () => {
     skip: !mirrorId,
   });
 
-  const [proposeTrade, { loading: sending }] = useProposeTradeMutation();
+  const [proposeTrade, { loading: proposing }] = useProposeTradeMutation();
+  const [counterTrade, { loading: countering }] = useCounterTradeMutation();
+  const sending = proposing || countering;
 
   // Memoised because `?? []` mints a new array on every render before the
   // query resolves, which would make the useMemo below recompute each time.
@@ -400,21 +403,26 @@ export const TradeComposerPage: React.FC = () => {
           : []),
       ];
 
-      const result = await proposeTrade({
-        variables: {
-          input: {
-            communityId: communityId as string,
-            recipientId: themId,
-            offering: [...offering].map((itemId) => ({ itemId })),
-            requesting: [...requesting.entries()].map(
-              ([itemTypeId, quantity]) => ({ itemTypeId, quantity }),
-            ),
-            coin,
-            note: note.trim() || undefined,
-          },
-        },
-      });
-      const id = result.data?.proposeTrade.id;
+      const input = {
+        communityId: communityId as string,
+        recipientId: themId,
+        offering: [...offering].map((itemId) => ({ itemId })),
+        requesting: [...requesting.entries()].map(([itemTypeId, quantity]) => ({
+          itemTypeId,
+          quantity,
+        })),
+        coin,
+        note: note.trim() || undefined,
+      };
+
+      // Countering declines the offer it answers, and does it here rather than
+      // on the Counter button so that opening the composer and abandoning it
+      // leaves the original standing.
+      const id = mirrorId
+        ? (await counterTrade({ variables: { id: mirrorId, input } })).data
+            ?.counterTrade.id
+        : (await proposeTrade({ variables: { input } })).data?.proposeTrade.id;
+
       if (id) navigate(`/trades/${id}`);
     } catch (err) {
       setProblem(
@@ -426,6 +434,8 @@ export const TradeComposerPage: React.FC = () => {
     back,
     currency,
     proposeTrade,
+    counterTrade,
+    mirrorId,
     communityId,
     themId,
     offering,
@@ -457,7 +467,7 @@ export const TradeComposerPage: React.FC = () => {
       <Title>{mirrorId ? "Counter-offer" : "New trade offer"}</Title>
       <Sub>
         {mirrorId
-          ? "Their offer, now yours to edit. Change what you like before sending it back."
+          ? "Their offer, now yours to edit. Theirs stands until you send this, and sending it declines theirs."
           : "Nothing moves until they accept, and everything is checked again at that moment."}
       </Sub>
 
@@ -686,7 +696,7 @@ export const TradeComposerPage: React.FC = () => {
           onClick={send}
           data-testid="send-offer"
         >
-          Send offer
+          {mirrorId ? "Send counter" : "Send offer"}
         </Button>
       </Foot>
     </Container>

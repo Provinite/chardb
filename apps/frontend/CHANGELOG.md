@@ -39,11 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Your untradeable holdings crowded the composer.** They collapse to one
   locked line with a count instead of one row per copy.
 
-- **Counter left you with nothing.** It declined the offer and opened the
-  composer addressed by username where a user id was expected, so the table came
-  up blank behind a decline that had already gone through. It now passes the id,
-  waits for the decline to land, and seeds the composer from the offer it is
-  countering.
+- **Counter left you with nothing.** It declined the offer on the button press
+  and opened the composer addressed by username where a user id was expected, so
+  the table came up blank behind a decline that had already gone through.
+  Counter now only opens the composer, seeded from the offer it answers; sending
+  it is what declines the original, and the two happen together.
 
 - **Logging out did not clear the Apollo cache**, so the next person to sign in
   on the same browser could see the previous user's cached data — their

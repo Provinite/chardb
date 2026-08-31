@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mutations. Settlement moves items and coin in one transaction across both
   ledgers, sharing one batch id.
 
+- **`counterTrade`** declines an offer and sends the replacement in one step, so
+  opening a counter and abandoning it costs the original nothing.
+
+- **Compose-time coin guard**: an offer cannot promise more than the proposer's
+  balance minus what their other open offers already promise. The counterpart to
+  the double-promise check on items.
+
 - **Trades are not escrowed.** What an offer names is checked when it is written
   and checked again, decisively, at accept — so an offer never holds property
   hostage and a declined one needs nothing released.
@@ -36,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   compile.
 
 ### Fixed
+
+- **A trade shortfall named the wrong person.** The ledger phrases it as "You do
+  not have 120 HC", addressed to whoever called it — which at settlement is the
+  accepter, even when the proposer is the one who came up short.
 
 - **Accepting a trade did not re-check tradeability**, so a type locked after an
   offer was written still settled through it.

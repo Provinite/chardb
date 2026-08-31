@@ -296,21 +296,15 @@ export const TradeOfferPage: React.FC = () => {
               </Button>
               <Button
                 variant="secondary"
-                disabled={declining}
                 data-testid="counter-trade"
-                onClick={async () => {
-                  // Counter is a decline plus a fresh offer, composed here. The
-                  // server never sees a counter-offer, so this offer really is
-                  // over either way -- which is why the navigation waits on the
-                  // decline actually landing rather than assuming it did.
-                  const declined = await run(() =>
-                    declineTrade({ variables: { id: trade.id } }),
-                  );
-                  if (!declined) return;
+                onClick={() =>
+                  // Only navigation. The decline happens with the replacement
+                  // when the counter is sent, so opening the composer and
+                  // changing your mind leaves this offer exactly as it was.
                   navigate(
                     `/communities/${trade.community.id}/trades/new?with=${other.id}&mirror=${trade.id}`,
-                  );
-                }}
+                  )
+                }
               >
                 Counter…
               </Button>

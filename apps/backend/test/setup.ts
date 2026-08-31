@@ -199,6 +199,7 @@ const mockPrismaService = {
   },
   tradeCurrencyLine: {
     findMany: jest.fn(),
+    aggregate: jest.fn(),
   },
   notification: {
     create: jest.fn(),
