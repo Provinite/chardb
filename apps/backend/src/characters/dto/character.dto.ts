@@ -116,7 +116,10 @@ export class CreateCharacterInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  customFields?: any; // JSON field
+  @IsString()
+  // A JSON document, carried as a string. Same as the update input's, which
+  // has always said so -- the mapper JSON.parses it either way.
+  customFields?: string;
 
   @Field(() => [CharacterTraitValueInput], {
     defaultValue: [],

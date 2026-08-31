@@ -54,7 +54,10 @@ export const AVAILABILITY_COLUMN = {
   [CharacterAvailability.TRADE_ART]: "isTradeableForArt",
   [CharacterAvailability.OFFERS]: "isOpenToOffers",
   [CharacterAvailability.FREEBIE]: "isFreebie",
-} as const satisfies Record<CharacterAvailability, keyof Prisma.CharacterWhereInput>;
+} as const satisfies Record<
+  CharacterAvailability,
+  keyof Prisma.CharacterWhereInput
+>;
 
 /**
  * "Any of these", which is what a row of checkboxes means.

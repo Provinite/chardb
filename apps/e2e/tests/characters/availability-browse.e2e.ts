@@ -24,7 +24,9 @@ async function filterBy(page: Page, kinds: string[]) {
   await page.getByRole("button", { name: /advanced search/i }).click();
   for (const kind of kinds) {
     await page
-      .locator(`[data-testid="availability-filter"][data-availability="${kind}"]`)
+      .locator(
+        `[data-testid="availability-filter"][data-availability="${kind}"]`,
+      )
       .check();
   }
   await page.getByRole("button", { name: /search characters/i }).click();
@@ -117,7 +119,9 @@ test.describe("what a character page says it is open to", () => {
   }) => {
     await page.goto(world.characters.marrowfen.url);
 
-    await expect(page.getByText("Open to Trades", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("Open to Trades", { exact: true }),
+    ).toBeVisible();
     await expect(
       page.getByText("For Sale (coin)", { exact: true }),
     ).toBeVisible();

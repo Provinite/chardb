@@ -30,7 +30,9 @@ function parseAvailabilityParam(raw: string | null): CharacterAvailability[] {
   return raw
     .split(",")
     .map((value) => value.trim().toUpperCase())
-    .filter((value) => AVAILABILITY_VALUES.has(value)) as CharacterAvailability[];
+    .filter((value) =>
+      AVAILABILITY_VALUES.has(value),
+    ) as CharacterAvailability[];
 }
 
 const Container = styled.div`
@@ -264,7 +266,9 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
     if (searchFields) params.searchFields = searchFields;
 
     // `availability=FREEBIE,OFFERS` is the shape the checkbox row writes.
-    const availability = parseAvailabilityParam(searchParams.get("availability"));
+    const availability = parseAvailabilityParam(
+      searchParams.get("availability"),
+    );
 
     // The two booleans this replaced. Links and bookmarks carrying them still
     // exist, and a shared search that silently stopped filtering would be

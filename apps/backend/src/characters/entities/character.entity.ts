@@ -1,12 +1,7 @@
 import { ObjectType, Field, ID, Float, Int } from "@nestjs/graphql";
 import { Visibility, ModerationStatus } from "@chardb/database";
-import { User } from "../../users/entities/user.entity";
 import { Tag } from "../../shared/entities/tag.entity";
-import { Image } from "../../images/entities/image.entity";
-import { Media } from "../../media/entities/media.entity";
 import { CharacterTraitValue } from "../../shared/types/character-trait.types";
-import { SpeciesVariant } from "../../species-variants/entities/species-variant.entity";
-import { Species } from "../../species/entities/species.entity";
 
 @ObjectType()
 export class CharacterCount {

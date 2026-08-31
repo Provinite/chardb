@@ -172,8 +172,9 @@ describe("CharactersService", () => {
 
       /** The AND clause the filter builds, for the last findAll. */
       const lastWhere = () =>
-        db.character.findMany.mock.calls.at(-1)?.[0].where
-          .AND as Array<Record<string, unknown>>;
+        db.character.findMany.mock.calls.at(-1)?.[0].where.AND as Array<
+          Record<string, unknown>
+        >;
 
       it("asks for any of the ticked kinds, not all of them", async () => {
         await service.findAll({

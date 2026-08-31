@@ -243,7 +243,6 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
             />
           </PriceGroup>
         </FormGroup>
-
       </SearchRow>
 
       {/* A row of checkboxes rather than the two dropdowns this replaced.

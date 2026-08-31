@@ -11,7 +11,6 @@ import {
 import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
 import { CharacterTraitValueInput } from "../dto/character-trait.dto";
 import { Character, CharacterConnection } from "../entities/character.entity";
-import { CharacterTraitValue } from "../../shared/types/character-trait.types";
 
 /**
  * Resolver layer mapping functions to convert GraphQL DTOs to Prisma types
@@ -164,7 +163,7 @@ export function mapUpdateCharacterRegistryInputToService(
 }
 
 // Define the exact Prisma return type
-type PrismaCharacter = Prisma.CharacterGetPayload<{}>;
+type PrismaCharacter = Prisma.CharacterGetPayload<Record<string, never>>;
 
 /**
  * Maps Prisma Character result to GraphQL Character entity
