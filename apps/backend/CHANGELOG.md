@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Character trade lines**: a trade can carry characters in either direction,
+  settled with the items and coin on one transaction and one batch id.
+  `Character.isTradeable` is enforced at propose and again at settlement, and a
+  character is scoped to the community its species belongs to (#302).
+
 ## [v11.6.0] - 2026-08-31
 
 ### Added

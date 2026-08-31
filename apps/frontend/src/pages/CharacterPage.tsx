@@ -736,7 +736,7 @@ export const CharacterPage: React.FC = () => {
                 name={character.owner.displayName || character.owner.username}
                 size={80}
               />
-              <OwnerName>
+              <OwnerName data-testid="character-owner">
                 {character.owner.displayName || character.owner.username}
               </OwnerName>
               <OwnerRole>Character Owner</OwnerRole>

@@ -94,6 +94,20 @@ mutation SeedCreateCharacter($input: CreateCharacterInput!) {
   }
 }
 
+# Flipping isTradeable mid-test, which is the whole point of the settlement
+# re-check: nothing is escrowed, so an owner can close a character to trades
+# while an offer for it is standing. Requires canEditOwnCharacter, which the
+# stock Member role carries.
+mutation SeedUpdateCharacterProfile(
+  $id: ID!
+  $input: UpdateCharacterProfileInput!
+) {
+  updateCharacterProfile(id: $id, input: $input) {
+    id
+    isTradeable
+  }
+}
+
 query SeedTraitReviewQueue($communityId: ID!, $first: Int, $offset: Int) {
   traitReviewQueue(communityId: $communityId, first: $first, offset: $offset) {
     total
