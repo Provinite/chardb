@@ -259,7 +259,9 @@ export const SpeciesPage: React.FC = () => {
     skip: !speciesId,
   });
 
-  if (loading) {
+  // `&& !data`: this query is cache-and-network, which reports loading on
+  // every background revalidation, so a bare check blanks the page on revisit.
+  if (loading && !data) {
     return (
       <Container>
         <LoadingContainer>
@@ -404,7 +406,10 @@ export const SpeciesPage: React.FC = () => {
         <SectionGrid>
           {availableSections.map((section) => {
             const CardComponent = section.available
-              ? ({ children, ...props }: any) => (
+              ? ({
+                  children,
+                  ...props
+                }: React.ComponentProps<typeof SectionCard>) => (
                   <Link
                     to={section.path}
                     style={{ textDecoration: "none", color: "inherit" }}
