@@ -37,7 +37,13 @@ export function notificationHref(
     case NotificationSubjectType.Currency:
       return community ? `/communities/${community.id}/currencies` : null;
     case NotificationSubjectType.Trade:
-      return `/trades/${subjectId}`;
+      // Like Item below it, and for the same reason: the page lives under the
+      // community, so without one there is nowhere to send them. Every trade
+      // notification sets it, so the null branch is defensive rather than a
+      // case anyone should hit.
+      return community
+        ? `/communities/${community.id}/trades/${subjectId}`
+        : null;
     case NotificationSubjectType.Comment:
     case NotificationSubjectType.Image:
       // Neither has a page of its own: a comment is rendered inside whatever it

@@ -372,6 +372,9 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* The cross-community inbox: every offer waiting on you, wherever it
+            was made. Deliberately not nested -- not having to remember which
+            community to check is the whole point of it. */}
         <Route
           path="/trades"
           element={
@@ -380,24 +383,39 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* Not nested under a community: a member's trades are one inbox
-            regardless of which community each offer belongs to, and the trade
-            itself names its community. */}
+        {/* Everything else about a trade IS community-scoped, and says so in
+            the path rather than in a query string. The sidebar reads community
+            context off the pathname -- Layout sits outside Routes, so
+            useParams() is not available to it -- which means a page reachable
+            only as `/trades?community=<id>` was in a community the navigation
+            could not see, and dropped the member to global nav (#293).
+
+            The same list, narrowed to one community. */}
         <Route
-          path="/trades/:tradeId"
+          path="/communities/:communityId/trades"
           element={
             <ProtectedRoute>
-              <TradeOfferPage />
+              <TradesPage />
             </ProtectedRoute>
           }
         />
-        {/* The composer IS community-scoped, unlike the inbox: an offer moves
-            items and coin that only exist inside one community. */}
+        {/* `new` is static and :tradeId is dynamic, so the router ranks the
+            composer above the detail page regardless of the order here. */}
         <Route
           path="/communities/:communityId/trades/new"
           element={
             <ProtectedRoute>
               <TradeComposerPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* One offer. A trade belongs to exactly one community, so there is
+            one URL for it and it carries that community. */}
+        <Route
+          path="/communities/:communityId/trades/:tradeId"
+          element={
+            <ProtectedRoute>
+              <TradeOfferPage />
             </ProtectedRoute>
           }
         />

@@ -29,6 +29,7 @@ import { CommunityNavigationGroup } from "./CommunityNavigationGroup";
 import { CommunitySwitcher } from "./CommunitySwitcher";
 import { GlobalNavigationSidebar } from "./GlobalNavigationSidebar";
 import { useUserCommunityRole } from "../../hooks/useUserCommunityRole";
+import { isCommunityRoute } from "../../lib/communityRoutes";
 import {
   useSpeciesByIdQuery,
   useGetCharacterQuery,
@@ -206,21 +207,6 @@ const SubsectionLabel = styled.div`
   letter-spacing: 0.5px;
   font-style: italic;
 `;
-
-/**
- * Checks if the current route is a community-scoped route
- */
-const isCommunityRoute = (pathname: string): boolean => {
-  const communityRoutes = [
-    /^\/communities\/[^/]+/,
-    /^\/species\/[^/]+/,
-    /^\/character\/[^/]+/,
-    /^\/variants\/[^/]+/,
-    /^\/traits\/[^/]+/,
-    /^\/items\/[^/]+/,
-  ];
-  return communityRoutes.some((pattern) => pattern.test(pathname));
-};
 
 /**
  * Extract community ID from pathname since Layout is outside Routes
@@ -525,7 +511,7 @@ export const CommunityNavigationSidebar: React.FC<
                 community's sidebar and being shown everyone else's would be
                 answering a question nobody asked. */}
             <CommunityNavigationItem
-              to={`/trades?community=${communityId}`}
+              to={`${communityBasePath}/trades`}
               icon={ArrowLeftRight}
               label="Trades"
               isNested
