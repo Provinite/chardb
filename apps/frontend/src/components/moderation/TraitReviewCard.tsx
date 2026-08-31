@@ -250,6 +250,8 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
           <TraitDiffDisplay
             previousTraitValues={review.previousTraitValues}
             proposedTraitValues={review.proposedTraitValues}
+            speciesId={review.character?.speciesId}
+            speciesVariantId={review.character?.speciesVariantId}
           />
 
           <Actions>

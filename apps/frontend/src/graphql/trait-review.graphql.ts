@@ -59,6 +59,10 @@ export const TRAIT_REVIEW_QUEUE = gql`
           }
           character {
             id
+            # Ordering the diff the way the variant orders its traits, rather
+            # than the order the values happened to be stored in.
+            speciesId
+            speciesVariantId
             mainMedia {
               pendingModerationImage {
                 mediumUrl
