@@ -1,7 +1,13 @@
 import React, { useMemo, useState } from "react";
 import styled, { css } from "styled-components";
 import { useParams, Link } from "react-router-dom";
-import { ShoppingCart, Package, Undo2, Check } from "lucide-react";
+import {
+  ShoppingCart,
+  Package,
+  Undo2,
+  Check,
+  AlertTriangle,
+} from "lucide-react";
 import { Button } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -119,7 +125,7 @@ const Grid = styled.div`
   gap: 1rem;
 `;
 
-const Card = styled.div<{ $soldOut: boolean }>`
+const Card = styled.div<{ $blocked: boolean }>`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 12px;
   background: ${({ theme }) => theme.colors.surface};
@@ -127,11 +133,41 @@ const Card = styled.div<{ $soldOut: boolean }>`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  ${({ $soldOut }) =>
-    $soldOut &&
+
+  /*
+   * Dimmed per child rather than on the card, so the notice explaining why it
+   * is dimmed stays legible. Opacity on a parent makes a stacking context and
+   * a child cannot come back out of it -- the callout would be muted along
+   * with the very thing it is there to explain.
+   */
+  ${({ $blocked }) =>
+    $blocked &&
     css`
-      opacity: 0.55;
+      & > *:not([data-blocked-notice]) {
+        opacity: 0.55;
+      }
     `}
+`;
+
+/**
+ * Why this listing cannot be bought, said where the buttons are.
+ *
+ * Tinted rather than muted: it was previously rendered in CardMeta, the same
+ * style as "Grants Trait Change Potion", so the one line that explained a
+ * blocked card looked exactly like the line describing it.
+ */
+const BlockedNotice = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text.primary};
+  background: ${({ theme }) => theme.colors.warning}20;
+  border: 1px solid ${({ theme }) => theme.colors.warning}45;
 `;
 
 const CardName = styled.div`
@@ -335,6 +371,37 @@ const stockLabel = (item: ShopItemFieldsFragment): string | null => {
   return `${item.stock} left`;
 };
 
+/** Nobody can buy it, as opposed to this viewer having spent their allowance. */
+const isSoldOut = (item: ShopItemFieldsFragment) => item.stock === 0;
+
+/** This viewer holds as many as the listing lets one person hold. */
+const isCapped = (item: ShopItemFieldsFragment) =>
+  item.maxPerUser !== null &&
+  item.maxPerUser !== undefined &&
+  item.purchasedByViewer >= item.maxPerUser;
+
+/**
+ * Why a price cannot be acted on, or null when it can.
+ *
+ * One source for the notice on the card and the tooltip on each button, so the
+ * two cannot say different things. Ordered by precedence: a sold-out listing
+ * is sold out whether or not you could have afforded it.
+ *
+ * Affordability is last and deliberately does not disable anything. It is
+ * computed from balances read a moment ago, and checkout is what decides -- a
+ * button that refuses a purchase the server would have allowed is worse than
+ * one that lets the server say no.
+ */
+const blockedReason = (
+  item: ShopItemFieldsFragment,
+  affordable: boolean,
+): string | null => {
+  if (isSoldOut(item)) return "Sold out";
+  if (isCapped(item)) return "Purchase limit reached";
+  if (!affordable) return "You cannot afford this yet";
+  return null;
+};
+
 export const CommunityShopPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
   const { user } = useAuth();
@@ -503,15 +570,15 @@ export const CommunityShopPage: React.FC = () => {
           ) : (
             <Grid data-testid="shop-grid">
               {items.map((item) => {
-                const soldOut = item.stock === 0;
-                const capped =
-                  item.maxPerUser !== null &&
-                  item.maxPerUser !== undefined &&
-                  item.purchasedByViewer >= item.maxPerUser;
+                const soldOut = isSoldOut(item);
+                const capped = isCapped(item);
+                // Affordability does not block, so the card's own notice is
+                // about the two states that do.
+                const cardReason = blockedReason(item, true);
                 return (
                   <Card
                     key={item.id}
-                    $soldOut={soldOut}
+                    $blocked={soldOut || capped}
                     data-testid={`shop-item-${item.id}`}
                   >
                     <CardName>{item.name || item.itemType.name}</CardName>
@@ -531,10 +598,12 @@ export const CommunityShopPage: React.FC = () => {
                           key={price.id}
                           $affordable={price.affordable}
                           disabled={soldOut || capped}
+                          // Every reason it cannot be acted on, not only the
+                          // one that leaves the button enabled. A button
+                          // disabled by stock or by the cap used to explain
+                          // nothing at all on hover.
                           title={
-                            price.affordable
-                              ? undefined
-                              : "You cannot afford this yet"
+                            blockedReason(item, price.affordable) ?? undefined
                           }
                           onClick={() => cart.add(item.id, price.id)}
                           data-testid={`shop-price-${price.id}`}
@@ -544,10 +613,14 @@ export const CommunityShopPage: React.FC = () => {
                         </PriceButton>
                       ))}
                     </Prices>
-                    {(soldOut || capped) && (
-                      <CardMeta>
-                        {soldOut ? "Sold out" : "You have all you may have"}
-                      </CardMeta>
+                    {cardReason && (
+                      <BlockedNotice
+                        data-blocked-notice
+                        data-testid={`shop-blocked-${item.id}`}
+                      >
+                        <AlertTriangle size={14} />
+                        {cardReason}
+                      </BlockedNotice>
                     )}
                   </Card>
                 );

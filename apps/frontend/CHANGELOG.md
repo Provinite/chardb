@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A shop listing you cannot buy now says why in a highlighted notice rather
+  than a line styled like the item's own description, and hitting your own
+  purchase limit dims the card the way selling out already did (#290).
+
 ### Added
 
 - **A character's full media page** (`/character/:id/media`). The gallery had
