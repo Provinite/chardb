@@ -1,5 +1,6 @@
 import { presetTest, expect } from "../../src/fixtures.js";
 import type { Browser, Page } from "@playwright/test";
+import { SeedUpdateItemTypeDocument } from "../../src/generated/graphql.js";
 const test = presetTest("community-items");
 
 /**
@@ -163,6 +164,74 @@ test.describe("answering an offer", () => {
     }
   });
 
+  test("refuses a type locked after the offer was written", async ({
+    page,
+    world,
+    browser,
+  }) => {
+    const tradeUrl = await offerPotionForCoin(page, world, 100);
+
+    // Nothing is held while an offer stands, so staff can lock a type in the
+    // gap -- and that is usually exactly when they would, because something has
+    // gone wrong with it. Compose time already refused untradeable types; if
+    // accept trusts that, the offers open at the moment of the decision settle
+    // straight through it.
+    await world.as("quartermaster").gql(SeedUpdateItemTypeDocument, {
+      id: world.itemTypes.potion.id,
+      input: { isTradeable: false },
+    });
+
+    const them = await pageAs(browser, world.storageState("othermember"));
+    try {
+      await them.page.goto(tradeUrl);
+      await them.page.getByTestId("accept-trade").click();
+      await expect(them.page.getByRole("alert")).toContainText(
+        /no longer be traded/i,
+      );
+      await expect(them.page.getByTestId("trade-status")).toContainText(
+        /awaiting/i,
+      );
+    } finally {
+      await them.close();
+    }
+
+    // Failed settlement is all-or-nothing: the coin must not have moved either.
+    await page.goto(`/communities/${world.community.id}/inventory`);
+    await expect(
+      page.locator(
+        `[data-testid="holding-group"][data-item-type-id="${world.itemTypes.potion.id}"]`,
+      ),
+    ).toContainText("×3");
+    await expect(page.getByTestId("wallet-HC")).toContainText("380");
+  });
+
+  test("writes one ledger line per leg", async ({ page, world, browser }) => {
+    const tradeUrl = await offerPotionForCoin(page, world, 100);
+
+    const them = await pageAs(browser, world.storageState("othermember"));
+    try {
+      await them.page.goto(tradeUrl);
+      await them.page.getByTestId("accept-trade").click();
+      await expect(them.page.getByTestId("trade-status")).toContainText(
+        /settled/i,
+      );
+    } finally {
+      await them.close();
+    }
+
+    // The ledger collapses a batch into one line, which is right for a grant
+    // and wrong for a settlement: this one moves a potion out and nothing back,
+    // but a trade of two item types shares a batch across both directions and
+    // read as "3 × <one of the two types>" until the collapse keyed on the leg.
+    await page.goto(world.community.ledgerUrl);
+    const traded = page.locator('[data-testid="ledger-row"]', {
+      hasText: "Trade settled",
+    });
+    await expect(traded).toHaveCount(1);
+    await expect(traded).toContainText(world.itemTypes.potion.name);
+    await expect(traded).toContainText("+1");
+  });
+
   test("declining settles nothing", async ({ page, world, browser }) => {
     const tradeUrl = await offerPotionForCoin(page, world, 100);
 
@@ -215,7 +284,7 @@ test.describe("countering an offer", () => {
     await world.reset();
   });
 
-  test("opens the composer on the same table, sides swapped", async ({
+  test("opens the composer on the same table, ready to edit", async ({
     page,
     world,
     browser,

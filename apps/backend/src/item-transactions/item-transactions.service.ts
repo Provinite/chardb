@@ -70,30 +70,48 @@ export class ItemTransactionsService {
   }
 
   /**
-   * Annotate rows with the true size of the batch they belong to.
+   * Annotate rows with how many items moved the same way in the same event.
    *
-   * The frontend collapses a batch into one line, and counting the rows it
+   * The frontend collapses these into one line, and counting the rows it
    * happens to have loaded is wrong the moment a batch straddles a page
    * boundary -- the migration writes one batch per pre-existing item, so the
    * very first page of a real ledger would otherwise read "+25" for a batch of
    * several hundred. One extra grouped count per page buys the honest number.
+   *
+   * The grouping is per leg, not per batch. A grant has only one leg, so the
+   * two are the same thing there. A settled trade does not: its batch carries
+   * a potion going one way and a charm coming back, and counting the batch
+   * reported "Trait Change Potion +2" for one potion and one charm.
    */
-  private async withBatchSizes<T extends { batchId: string }>(
-    rows: T[],
-  ): Promise<(T & { batchSize: number })[]> {
+  private async withBatchSizes<
+    T extends {
+      batchId: string;
+      itemTypeId: string;
+      fromUserId: string | null;
+      toUserId: string | null;
+    },
+  >(rows: T[]): Promise<(T & { batchSize: number })[]> {
     if (rows.length === 0) return [];
+
+    const legKey = (r: {
+      batchId: string;
+      itemTypeId: string;
+      fromUserId: string | null;
+      toUserId: string | null;
+    }): string =>
+      [r.batchId, r.itemTypeId, r.fromUserId ?? "", r.toUserId ?? ""].join("|");
 
     const batchIds = [...new Set(rows.map((r) => r.batchId))];
     const counts = await this.db.itemTransaction.groupBy({
-      by: ["batchId"],
+      by: ["batchId", "itemTypeId", "fromUserId", "toUserId"],
       where: { batchId: { in: batchIds } },
       _count: { _all: true },
     });
-    const sizeByBatch = new Map(counts.map((c) => [c.batchId, c._count._all]));
+    const sizeByLeg = new Map(counts.map((c) => [legKey(c), c._count._all]));
 
     return rows.map((r) => ({
       ...r,
-      batchSize: sizeByBatch.get(r.batchId) ?? 1,
+      batchSize: sizeByLeg.get(legKey(r)) ?? 1,
     }));
   }
 

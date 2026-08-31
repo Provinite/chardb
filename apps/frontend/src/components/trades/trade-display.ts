@@ -38,14 +38,20 @@ export function sidesFor(
   };
 }
 
-/** What one line is called: a named row, or a quantity of a type. */
+/**
+ * What one line is called: a named row, or a quantity of a type.
+ *
+ * A row line carries no type of its own -- it points at one particular item --
+ * so its name comes from the item it pins. Falling through to "1 item" left the
+ * recipient reading an offer that never said what was in it.
+ */
 export function describeLine(line: ItemLine): string {
   if (line.itemType && line.quantity) {
     return line.quantity > 1
       ? `${line.quantity} × ${line.itemType.name}`
       : line.itemType.name;
   }
-  return line.item ? "1 item" : "an item";
+  return line.item?.itemType.name ?? "an item";
 }
 
 /** "250 HC", using the code when there is no symbol. */

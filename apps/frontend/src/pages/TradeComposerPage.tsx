@@ -457,7 +457,7 @@ export const TradeComposerPage: React.FC = () => {
       <Title>{mirrorId ? "Counter-offer" : "New trade offer"}</Title>
       <Sub>
         {mirrorId
-          ? "Their offer, with the sides swapped. Change what you like before sending."
+          ? "Their offer, now yours to edit. Change what you like before sending it back."
           : "Nothing moves until they accept, and everything is checked again at that moment."}
       </Sub>
 
@@ -492,26 +492,41 @@ export const TradeComposerPage: React.FC = () => {
           <PaneBody>
             {mine.length === 0 && <SideEmpty>You hold nothing here.</SideEmpty>}
             {mine.flatMap((h) =>
-              h.items.map((item) => (
-                <Pick
-                  key={item.id}
-                  type="button"
-                  $on={offering.has(item.id)}
-                  disabled={!h.itemType.isTradeable}
-                  onClick={() => toggleOffer(item.id)}
-                  data-testid="offer-pick"
-                  data-item-id={item.id}
-                  data-item-type-id={h.itemType.id}
-                  data-tradeable={h.itemType.isTradeable ? "true" : "false"}
-                >
-                  <span>{h.itemType.name}</span>
-                  {h.itemType.isTradeable ? (
-                    <Qty>{offering.has(item.id) ? "on table" : "offer"}</Qty>
-                  ) : (
-                    <Lock>locked</Lock>
-                  )}
-                </Pick>
-              )),
+              // A tradeable type is one row per copy, because which copy you
+              // hand over is yours to decide. An untradeable one collapses to a
+              // single locked line: you cannot pick any of them, and thirty
+              // identical rows would push what you can offer off the bottom of
+              // the pane. It stays visible rather than hidden so the member can
+              // see it is theirs and see why it will not move.
+              h.itemType.isTradeable
+                ? h.items.map((item) => (
+                    <Pick
+                      key={item.id}
+                      type="button"
+                      $on={offering.has(item.id)}
+                      onClick={() => toggleOffer(item.id)}
+                      data-testid="offer-pick"
+                      data-item-id={item.id}
+                      data-item-type-id={h.itemType.id}
+                      data-tradeable="true"
+                    >
+                      <span>{h.itemType.name}</span>
+                      <Qty>{offering.has(item.id) ? "on table" : "offer"}</Qty>
+                    </Pick>
+                  ))
+                : [
+                    <Pick
+                      key={h.itemType.id}
+                      type="button"
+                      disabled
+                      data-testid="offer-pick"
+                      data-item-type-id={h.itemType.id}
+                      data-tradeable="false"
+                    >
+                      <span>{h.itemType.name}</span>
+                      <Lock>locked{h.count > 1 ? ` ×${h.count}` : ""}</Lock>
+                    </Pick>,
+                  ],
             )}
           </PaneBody>
         </Pane>

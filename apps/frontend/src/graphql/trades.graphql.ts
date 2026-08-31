@@ -44,6 +44,12 @@ export const TRADE_FRAGMENT = gql`
       item {
         id
         itemTypeId
+        # A row line names no type of its own, so without this the offer page
+        # can only say "1 item" -- which is not something anyone can answer.
+        itemType {
+          id
+          name
+        }
       }
       itemType {
         id

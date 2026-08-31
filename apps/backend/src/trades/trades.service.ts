@@ -521,6 +521,7 @@ export class TradesService {
       }
 
       const resolved = await this.resolveSelections(tx, trade, selections);
+      await this.assertStillTradeable(tx, resolved);
       await this.moveItems(tx, trade, resolved, batchId);
       await this.moveCoin(tx, trade, batchId);
 
@@ -614,6 +615,39 @@ export class TradesService {
     }
 
     return moves;
+  }
+
+  /**
+   * Re-check tradeability against the types actually about to move.
+   *
+   * Compose time already refused an untradeable type, but nothing is held while
+   * an offer stands and staff can lock a type in between -- which is usually
+   * exactly when they would, because something has gone wrong with it. Without
+   * this the offer settles anyway and the community's decision is bypassed by
+   * whichever trades happened to be open when it was made.
+   *
+   * Inside the settlement transaction, on the resolved moves rather than the
+   * lines, so a by-type line is judged on the rows it actually resolved to.
+   */
+  private async assertStillTradeable(
+    tx: Prisma.TransactionClient,
+    moves: ResolvedMove[],
+  ) {
+    if (moves.length === 0) return;
+
+    const locked = await tx.itemType.findMany({
+      where: {
+        id: { in: [...new Set(moves.map((m) => m.itemTypeId))] },
+        isTradeable: false,
+      },
+      select: { name: true },
+    });
+
+    if (locked.length) {
+      throw new BadRequestException(
+        `${locked[0].name} can no longer be traded`,
+      );
+    }
   }
 
   /**

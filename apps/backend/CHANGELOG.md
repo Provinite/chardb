@@ -37,6 +37,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Accepting a trade did not re-check tradeability**, so a type locked after an
+  offer was written still settled through it.
+
+- **`ItemTransaction.batchSize` counted the whole batch**, so each leg of a
+  settlement reported the size of both. It now counts per batch, type and
+  direction.
+
 - **`likedMedia` never returned `imageCount` or `textCount`.** Both are non-null
   on `MediaConnection`, so asking for either was an error at runtime. The social
   service now counts them the way `MediaService.findAll` does.

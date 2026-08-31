@@ -10,12 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Trades in the sidebar**: the global one links to the whole inbox, a
-  community's links to `/trades?community=<id>` for just that community's
-  offers, with a chip to clear the narrowing.
+  community's to `/trades?community=<id>` for that community's offers only.
 
 - The trade composer defaults its price field to the currency you hold most of,
-  and never offers an archived one — archived currencies keep their balances but
-  refuse new transactions, so pricing an offer in one is rejected at send.
+  and never offers an archived one — those refuse new transactions, so pricing
+  an offer in one is rejected at send.
 
 - **Trading**: a composer at `/communities/:id/trades/new`, an inbox at
   `/trades` covering both offers you sent and offers you received, and an offer
@@ -30,11 +29,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Counter left you with nothing**: it declined the offer and then opened the
+- **An offer named no item.** A line pinning one specific item read as "1 item",
+  because the fragment never asked for that item's type.
+
+- **The item ledger collapsed a settled trade into one wrong line**, grouping by
+  batch when a trade's batch carries two types moving opposite ways. It now
+  groups by leg: one line per type per direction.
+
+- **Your untradeable holdings crowded the composer.** They collapse to one
+  locked line with a count instead of one row per copy.
+
+- **Counter left you with nothing.** It declined the offer and opened the
   composer addressed by username where a user id was expected, so the table came
   up blank behind a decline that had already gone through. It now passes the id,
-  waits for the decline to land before navigating, and seeds the composer from
-  the offer it is countering with the sides swapped.
+  waits for the decline to land, and seeds the composer from the offer it is
+  countering.
 
 - **Logging out did not clear the Apollo cache**, so the next person to sign in
   on the same browser could see the previous user's cached data — their

@@ -580,13 +580,13 @@ export const CommunityItemLedgerPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {entries.map(({ row, count }) => {
+                {entries.map(({ row, count, key }) => {
                   const actor =
                     displayName(row.actorUser) || row.actorLabel || "—";
                   const isBot = !row.actorUser && !!row.actorLabel;
                   const sign = signFor(row.kind);
                   return (
-                    <tr key={row.batchId}>
+                    <tr key={key} data-testid="ledger-row">
                       <When>{formatWhen(row.createdAt)}</When>
                       <td>
                         <KindPill $tone={kindTone(row.kind)}>

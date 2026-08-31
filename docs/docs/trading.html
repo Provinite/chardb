@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trading - Feature Walkthrough</title>
+    <meta name="description" content="Member-to-member trading: build an offer of items and coin, answer one, counter it, and read what settlement wrote to both ledgers." />
+    <link rel="canonical" href="https://provinite.github.io/chardb/docs/trading.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Trading" />
+    <meta property="og:description" content="Member-to-member trading: build an offer of items and coin, answer one, counter it, and read what settlement wrote to both ledgers." />
+    <meta property="og:url" content="https://provinite.github.io/chardb/docs/trading.html" />
+    <meta property="og:image" content="https://provinite.github.io/chardb/docs/trade-composer.png" />
+    <meta property="og:image:alt" content="The CharDB trade composer, showing your items on the left, the table in the middle, and their items on the right." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .kinds {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      .kinds th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid #e0e0e0;
+        color: #333;
+      }
+
+      .kinds td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+        color: #555;
+        vertical-align: top;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.55rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .pill.pending {
+        color: #4c1d95;
+        background: #7c3aed22;
+      }
+      .pill.settled {
+        color: #0e7c56;
+        background: #0e9f6e22;
+      }
+      .pill.declined,
+      .pill.withdrawn,
+      .pill.expired {
+        color: #52606d;
+        background: #64748b22;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Trading</h1>
+        <p>Two members, one table, and nothing moving until both agree</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A trade is an offer one member makes to another inside a community:
+            some of your items and some of your coin, for some of theirs. You
+            build it, they answer it. Until they answer, nothing has happened.
+          </p>
+          <p>
+            Both sides of a trade can carry items, currency, or both, and either
+            side can be empty — a gift is just a trade that asks for nothing
+            back.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">🧾</div>
+              <h4>Compose</h4>
+              <p>Pick what you give and what you want</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">📥</div>
+              <h4>Answer</h4>
+              <p>Accept, decline, or counter</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🔁</div>
+              <h4>Settle</h4>
+              <p>Items and coin move together, or not at all</p>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <strong>Nothing is escrowed.</strong> An open offer does not take
+            anything off you or freeze your inventory — you keep everything
+            until the moment it settles. That is deliberate: the alternative is
+            a member whose items are locked up in an offer the other party
+            forgot about. The cost is that an offer can go stale, which is why
+            every condition is checked again at accept rather than trusted from
+            when it was written.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Building an offer</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Start from a member's row on the community's <strong>Members</strong>
+            page. The composer has three panes: what you hold on the left, what
+            they hold on the right, and the table you are building in the middle.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trade-composer.png"
+            alt="The CharDB trade composer. Left pane lists three Trait Change Potions to offer, the middle shows one potion and 75 HC on the You give side against one Sunfeather Charm on the You receive side, and the right pane lists a locked Heirloom Locket and a Sunfeather Charm."
+          />
+          <div class="screenshot-caption">
+            One potion and 75 coin, for one of their charms.
+          </div>
+        </div>
+
+        <div class="step-content">
+          <p>
+            <strong>The two panes are not symmetrical, and that is the point.</strong>
+            Your side lists every copy separately, because you are here and can
+            choose which one leaves. Their side lists one line per item type with
+            a count, because any copy will do — pinning one of theirs would make
+            the offer fail the moment they traded that particular copy to someone
+            else.
+          </p>
+          <p>
+            An item type its community has marked untradeable shows as
+            <strong>locked</strong> rather than being hidden, so you can see it
+            is there and see why it will not move. Your own untradeable holdings
+            collapse to a single locked line with a count; there is no point
+            listing thirty of them one by one when none can be picked.
+          </p>
+          <p>
+            Coin is a field on each side of the table rather than a line on it,
+            because it is a price rather than a thing. Put an amount on both
+            sides and only the difference is sent: 250 out and 100 back becomes
+            150 one way. The currency picker only offers currencies you actually
+            hold, and never an archived one — archived currencies keep their
+            balances and stay readable but refuse new transactions.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">One item, one open offer</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            You cannot put the same item on the table in two open offers at once.
+            Try it and the offer is refused with the item named.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trade-double-promise.png"
+            alt="The trade composer showing a red error reading 'You have already offered that Trait Change Potion in another open trade' beneath the panes."
+          />
+          <div class="screenshot-caption">
+            Refused at send, naming the item, while you can still pick a
+            different one.
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="highlight-box">
+            <strong>Why not just let both stand?</strong> Because only one of
+            them could ever settle. The second person to accept would hit a
+            failure they had no way to see coming and no way to fix — the item
+            was gone before they clicked. Refusing at compose time puts the
+            problem in front of the only person who can do anything about it.
+          </div>
+          <p>
+            This applies to <em>your</em> specific items. Asking two different
+            people for one of their charms is fine, because you are asking for a
+            type rather than a copy, and either of them can still fill it.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Your trades</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Trades</strong> in the sidebar is one list holding both
+            directions: offers waiting on you and offers you have out. Each row
+            says which way it points in its own words, so there is no second
+            place to check before you know whether anything needs you.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trade-inbox.png"
+            alt="The CharDB trades list scoped to Thornfield Hollow, showing an incoming offer of a Sunfeather Charm for a Trait Change Potion and 120 coin, above a declined outgoing offer of the same charm for a potion and 75 coin."
+          />
+          <div class="screenshot-caption">
+            Open, Settled and All. The chip under the heading narrows the list to
+            one community; the × clears it.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            Reaching it from a community's sidebar narrows it to that community.
+            Reaching it from the global sidebar does not, because an offer
+            waiting on you is waiting on you wherever it was made.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Answering one</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            An offer reads from your side: what you give at the top, what you
+            receive below it, and the sender's note underneath.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trade-offer.png"
+            alt="An offer page reading 'Offer from member', marked Awaiting an answer, showing a Sunfeather Charm on the You give side and a Trait Change Potion plus 75 coin on the You receive side, with Decline, Counter and Accept trade buttons."
+          />
+          <div class="screenshot-caption">
+            The same trade the other member built, told the other way round.
+          </div>
+        </div>
+
+        <div class="step-content">
+          <p>These are the states an offer can be in:</p>
+          <table class="kinds">
+            <thead>
+              <tr>
+                <th>State</th>
+                <th>Means</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pill pending">Awaiting an answer</span></td>
+                <td>Open. The recipient can accept, decline or counter; the sender can withdraw</td>
+              </tr>
+              <tr>
+                <td><span class="pill settled">Settled</span></td>
+                <td>Accepted, and everything on the table has moved</td>
+              </tr>
+              <tr>
+                <td><span class="pill declined">Declined</span></td>
+                <td>The recipient said no, or countered</td>
+              </tr>
+              <tr>
+                <td><span class="pill withdrawn">Withdrawn</span></td>
+                <td>The sender took it back before it was answered</td>
+              </tr>
+              <tr>
+                <td><span class="pill expired">Expired</span></td>
+                <td>Nobody answered within seven days</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="highlight-box">
+            <strong>Expiry is a deadline, not an event.</strong> An offer carries
+            a date, and it is judged against the clock whenever anyone looks at
+            it — including at the moment someone tries to accept. Nothing has to
+            run on a schedule to sweep old offers, and there is no window in
+            which an offer reads as expired but can still be accepted.
+          </div>
+
+          <p>
+            Accepting sends no choice about which of their copies you get. A
+            by-type line means any of them will do, so the giver's side picks —
+            newest first — rather than asking you a question you have no basis to
+            answer.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Countering</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Counter…</strong> is a decline and a fresh offer in one
+            motion. The offer you were sent ends, and the composer opens on the
+            same table with you as the sender, ready to edit.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trade-counter.png"
+            alt="The composer titled Counter-offer, pre-filled with a Sunfeather Charm on the You give side and a Trait Change Potion plus 75 coin on the You receive side. The left pane shows a single collapsed 'Heirloom Locket locked ×30' line above two Sunfeather Charms."
+          />
+          <div class="screenshot-caption">
+            Their offer, carried over. Change the coin, swap an item, send it
+            back.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            What was coming to you becomes what you ask for, what was being asked
+            of you becomes rows picked from your own holdings, and the coin flips
+            direction. Anything they have traded away since they wrote the offer
+            is quietly dropped rather than carried over into a request that could
+            not be filled.
+          </p>
+          <div class="highlight-box">
+            <strong>The original really is over.</strong> There is no chain of
+            linked offers and no way to go back and accept the one you countered
+            — countering it declined it. If you only wanted to think about it,
+            leave it open; it will keep for seven days.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">Settlement</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Accepting moves everything at once: every item on both sides and the
+            coin, in a single step that either completes or does nothing.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trade-settled.png"
+            alt="The offer page after acceptance, marked Settled, showing a Trait Change Potion and 120 coin given and a Sunfeather Charm received."
+          />
+          <div class="screenshot-caption">
+            Settled. The expiry line is gone, and so are the buttons.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            Because nothing was held while the offer stood, every condition is
+            checked again at this moment rather than trusted from when the offer
+            was written: that both of you still hold what you promised, that the
+            payer can cover the coin, that the item types are still tradeable,
+            and that the offer has not expired. If any of that has changed, the
+            trade fails and says which part — and nothing moves.
+          </p>
+          <div class="highlight-box">
+            <strong>An offer that fails at accept is not a bug.</strong> It is
+            the honest outcome of an offer that has gone stale, and the message
+            names the line that no longer holds. The alternative — settling
+            anyway — would move items their owner had already promised elsewhere.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <h2 class="step-title">What it leaves behind</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A settled trade writes to both community ledgers, which any member
+            can read. This is what makes a traded item's history something you
+            can check rather than something you have to take on trust.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trade-ledger.png"
+            alt="The item ledger showing two Traded rows from one settlement: a Sunfeather Charm going from othermember to member, and a Trait Change Potion going from member to othermember, both reading 'Trade settled'."
+          />
+          <div class="screenshot-caption">
+            One line per leg. A trade moves two different things in two different
+            directions, so it is two lines rather than one.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trade-coin-ledger.png"
+            alt="The currency ledger showing a transfer of 120 Hollow Coin from member to othermember with the reason 'Trade settled'."
+          />
+          <div class="screenshot-caption">
+            The coin leg, in the currency ledger, under the same reason.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            Both legs of one settlement share an identifier, so the item movement
+            and the coin movement can be recognised as parts of the same event
+            rather than two things that happened to occur together.
+          </p>
+          <p>
+            Declining, withdrawing and expiring write nothing to either ledger.
+            Nothing was held while the offer stood, so there is nothing to
+            release — and a ledger recording every offer that was never taken up
+            would bury the movements that actually happened.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Trading &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>
