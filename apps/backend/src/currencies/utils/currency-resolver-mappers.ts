@@ -17,6 +17,7 @@ export function mapPrismaCurrencyToGraphQL(row: PrismaCurrency): Currency {
     symbol: row.symbol,
     description: row.description,
     colorId: row.colorId,
+    isTradeable: row.isTradeable,
     archivedAt: row.archivedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

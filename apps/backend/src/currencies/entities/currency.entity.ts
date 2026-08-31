@@ -35,12 +35,22 @@ export class Currency {
   @Field(() => ID, { nullable: true })
   colorId?: string | null;
 
+  @Field({
+    description:
+      "Whether members may hand this to each other, by trade or by a direct " +
+      "send. Staff grants, shop purchases and refunds are unaffected: an " +
+      "untradeable currency is still earned and still spent, it just cannot " +
+      "move sideways.",
+  })
+  isTradeable: boolean;
+
   @Field(() => Date, {
     nullable: true,
     description:
       "When set, the currency takes no new transactions. Existing balances " +
       "and statements stay readable -- deleting it would destroy the history " +
-      "of everything ever bought with it.",
+      "of everything ever bought with it. Distinct from isTradeable, which " +
+      "leaves the currency fully alive to everyone but its own holders.",
   })
   archivedAt?: Date | null;
 

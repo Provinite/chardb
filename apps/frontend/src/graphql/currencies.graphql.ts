@@ -12,6 +12,7 @@ export const CURRENCY_FRAGMENT = gql`
     symbol
     description
     colorId
+    isTradeable
     archivedAt
     createdAt
     updatedAt

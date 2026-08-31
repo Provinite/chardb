@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
-import { Send } from "lucide-react";
+import { Send, Lock } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import {
@@ -89,6 +89,16 @@ const SendButton = styled.button`
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
   }
+`;
+
+/** Sits where Send would, so the card does not look like it lost a button. */
+const Bound = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8125rem;
+  padding: 0.3rem 0.55rem;
+  color: ${({ theme }) => theme.colors.text.muted};
 `;
 
 const Modal = styled.div<{ isOpen: boolean }>`
@@ -265,16 +275,28 @@ export const CurrencyWallet: React.FC<CurrencyWalletProps> = ({
           >
             <Amount>{formatAmount(line.amount, line.currency)}</Amount>
             <CurrencyName>{line.currency.name}</CurrencyName>
-            {isOwnWallet && line.amount > 0 && (
-              <CardActions>
-                <SendButton
-                  type="button"
-                  onClick={() => setSending(line.currency)}
-                >
-                  <Send size={13} /> Send
-                </SendButton>
-              </CardActions>
-            )}
+            {/* Said rather than merely omitted. A Send button that is simply
+                absent reads as a bug on a wallet that has one on every other
+                card, and the member cannot tell whether it is the currency or
+                their balance. */}
+            {isOwnWallet &&
+              line.amount > 0 &&
+              (line.currency.isTradeable ? (
+                <CardActions>
+                  <SendButton
+                    type="button"
+                    onClick={() => setSending(line.currency)}
+                  >
+                    <Send size={13} /> Send
+                  </SendButton>
+                </CardActions>
+              ) : (
+                <CardActions>
+                  <Bound data-testid="currency-bound">
+                    <Lock size={12} /> Cannot be given away
+                  </Bound>
+                </CardActions>
+              ))}
           </Card>
         ))}
       </Cards>

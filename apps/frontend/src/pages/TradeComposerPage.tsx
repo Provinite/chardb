@@ -267,11 +267,16 @@ export const TradeComposerPage: React.FC = () => {
   // query resolves, which would make the useMemo below recompute each time.
   const mine = useMemo(() => data?.mine.holdings ?? [], [data]);
   const theirs = useMemo(() => data?.theirs.holdings ?? [], [data]);
-  // Archived currencies keep their balances and stay readable, but refuse new
-  // transactions. Offering one as the price would be rejected at send, with a
-  // message about archiving that the member can do nothing about.
+  // Two ways a currency you hold cannot price an offer. Archived ones keep
+  // their balances and stay readable but refuse new transactions; untradeable
+  // ones are fully alive and merely cannot move between members. Either way,
+  // offering it would be rejected at send with a message the member can do
+  // nothing about, so neither reaches the picker.
   const balances = useMemo(
-    () => (data?.wallet.balances ?? []).filter((b) => !b.currency.archivedAt),
+    () =>
+      (data?.wallet.balances ?? []).filter(
+        (b) => !b.currency.archivedAt && b.currency.isTradeable,
+      ),
     [data],
   );
   // Default to whichever currency they actually hold most of. Taking the first
@@ -481,6 +486,7 @@ export const TradeComposerPage: React.FC = () => {
             Coin{" "}
             <select
               value={currency?.currency.id ?? ""}
+              data-testid="coin-picker"
               onChange={(e) => setCurrencyId(e.target.value)}
             >
               {balances.map((b) => (

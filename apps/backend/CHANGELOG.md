@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Currency.isTradeable`**: an untradeable currency is still granted, spent
+  and refunded, but stops moving between members — refused by `transfer()`, at
+  propose and again at settlement.
+
 - **Member-to-member trading**: `Trade`, `TradeItem` and `TradeCurrencyLine`,
   with `trades`/`trade` queries and propose, accept, decline and cancel
   mutations. Settlement moves items and coin in one transaction across both

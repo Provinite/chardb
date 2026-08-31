@@ -463,6 +463,19 @@ export class CurrencyLedgerService {
     const read: DbClient = options.tx ?? this.db;
 
     const currency = await this.loadWritableCurrency(read, input.currencyId);
+
+    // Checked here rather than in loadWritableCurrency, which every writer
+    // shares: an untradeable currency is still granted by staff, still spent
+    // in the shop and still refunded. It is only movement between members
+    // that stops, and this is one of the two routes for that -- the other
+    // being a trade's coin lines, refused where trades are composed and again
+    // where they settle.
+    if (!currency.isTradeable) {
+      throw new BadRequestException(
+        `${currency.name} cannot be sent to another member`,
+      );
+    }
+
     await this.assertMembers(read, currency.communityId, [
       fromUserId,
       input.toUserId,

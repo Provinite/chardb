@@ -143,6 +143,31 @@ const ArchivedTag = styled.span`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
+/** Untradeable is a live state, not a retired one, so it is not muted grey. */
+const BoundTag = styled(ArchivedTag)`
+  color: ${({ theme }) => theme.colors.warning};
+`;
+
+const CheckLabel = styled.label`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+
+  input {
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+  }
+`;
+
+const CheckHint = styled.span`
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8125rem;
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
 const CurrencyDescription = styled.div`
   font-size: 0.8125rem;
   color: ${({ theme }) => theme.colors.text.muted};
@@ -327,6 +352,9 @@ const blankForm = {
   code: "",
   symbol: "",
   description: "",
+  // Tradeable is what a currency normally is, so that is the default and the
+  // form asks you to opt out rather than to opt in.
+  isTradeable: true,
 };
 
 export const CommunityCurrenciesAdminPage: React.FC = () => {
@@ -391,6 +419,7 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
       code: currency.code,
       symbol: currency.symbol ?? "",
       description: currency.description ?? "",
+      isTradeable: currency.isTradeable,
     });
     setModal("edit");
   };
@@ -427,6 +456,7 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
               code: form.code,
               symbol: form.symbol || null,
               description: form.description || null,
+              isTradeable: form.isTradeable,
             },
           },
         });
@@ -440,6 +470,7 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
               code: form.code,
               symbol: form.symbol || undefined,
               description: form.description || undefined,
+              isTradeable: form.isTradeable,
             },
           },
         });
@@ -622,6 +653,11 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
                         </Link>
                         <Code>{row.currency.code}</Code>
                         {archived && <ArchivedTag>Archived</ArchivedTag>}
+                        {!row.currency.isTradeable && (
+                          <BoundTag data-testid="currency-untradeable">
+                            Untradeable
+                          </BoundTag>
+                        )}
                       </CurrencyName>
                       {row.currency.description && (
                         <CurrencyDescription>
@@ -753,6 +789,26 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
                 }
                 placeholder="Earned from prompts and spent in the shop."
               />
+            </FormGroup>
+            <FormGroup>
+              <CheckLabel>
+                <input
+                  type="checkbox"
+                  checked={form.isTradeable}
+                  data-testid="currency-tradeable"
+                  onChange={(e) =>
+                    setForm({ ...form, isTradeable: e.target.checked })
+                  }
+                />
+                <span>
+                  Members can give this to each other
+                  <CheckHint>
+                    Off means it can still be granted, spent in the shop and
+                    refunded — it just cannot be traded or sent to another
+                    member. Existing balances are untouched either way.
+                  </CheckHint>
+                </span>
+              </CheckLabel>
             </FormGroup>
             {form.name && form.code && (
               <Preview>

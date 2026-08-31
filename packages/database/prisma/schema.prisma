@@ -851,9 +851,27 @@ model Currency {
   description String? @db.Text
   colorId     String? @map("color_id")
 
+  /// Whether members may hand this to each other -- by trade or by a direct
+  /// send. Staff grants, shop purchases and refunds are unaffected, so an
+  /// untradeable currency is still earned and still spent; it just cannot
+  /// move sideways.
+  ///
+  /// Both member-to-member routes or neither. Blocking trades while leaving
+  /// `transferCurrency` open would be a rule with its own workaround sitting
+  /// next to it.
+  ///
+  /// The same flag on ItemType means the same thing, which is why it shares
+  /// the name: items have no direct transfer, so "tradeable" is already the
+  /// whole of "can move between members" there.
+  isTradeable Boolean @default(true) @map("is_tradeable")
+
   /// Archived currencies stop accepting new transactions but keep every
   /// balance and statement row readable. Deleting one would destroy the
   /// history of everything ever bought with it.
+  ///
+  /// Distinct from `isTradeable`: archiving retires the currency for
+  /// everyone including staff, where an untradeable currency is fully alive
+  /// and merely cannot be passed between members.
   archivedAt DateTime? @map("archived_at")
 
   createdAt DateTime @default(now()) @map("created_at")

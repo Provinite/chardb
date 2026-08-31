@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Untradeable currencies**: a checkbox on the currency form, an Untradeable
+  tag in the supply table, and a wallet card that says "Cannot be given away"
+  where Send would be. The trade composer leaves them out of the price picker.
+
 - **Trading**: a composer at `/communities/:id/trades/new`, an inbox at
   `/trades` covering both offers you sent and offers you received, and an offer
   page to accept, decline, counter or withdraw. Coin is a price field per side

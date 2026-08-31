@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The `community-items` preset carries an untradeable currency, Prompt Points,
+  which `member` holds 40 of.
+
 - **E2E: 14 trading specs** in `apps/e2e/tests/trades`, covering compose,
   settle, decline, withdraw, counter and the refusals around each.
 
