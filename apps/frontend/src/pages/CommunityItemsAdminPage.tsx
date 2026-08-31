@@ -362,10 +362,17 @@ export const CommunityItemsAdminPage: React.FC = () => {
   const {
     data: itemTypesData,
     loading: itemTypesLoading,
+    error: itemTypesError,
     refetch: refetchItemTypes,
   } = useGetItemTypesQuery({
     variables: { filters: { communityId, limit: 100 } },
     skip: !communityId,
+    // Apollo's default is cache-first, which never revalidates. This page's
+    // own mutations refetch, so it looked correct to whoever was editing --
+    // but a type added by another admin, or in another tab, stayed invisible
+    // for the life of the session. Refreshing the browser was the only way to
+    // see it, because that is what discards the cache.
+    fetchPolicy: "cache-and-network",
   });
 
   // Circulation numbers live beside the catalogue rather than on a separate
@@ -374,6 +381,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
   const { data: economyData } = useGetItemEconomyQuery({
     variables: { communityId: communityId! },
     skip: !communityId,
+    // Same reason as above: circulation counts move every time anybody grants
+    // or revokes anything, so a cached copy is stale almost immediately.
+    fetchPolicy: "cache-and-network",
   });
 
   const economy = economyData?.itemEconomy;
@@ -618,11 +628,34 @@ export const CommunityItemsAdminPage: React.FC = () => {
     setIsGrantModalOpen(true);
   };
 
-  if (communityLoading || itemTypesLoading) {
+  // Only while there is nothing to show. `cache-and-network` reports loading
+  // on every background revalidation too, and blanking a populated page to a
+  // spinner each time somebody visits it would be worse than the staleness
+  // this is here to fix.
+  const isFirstLoad =
+    (communityLoading && !communityData) ||
+    (itemTypesLoading && !itemTypesData);
+
+  if (isFirstLoad) {
     return (
       <LoadingContainer>
         <LoadingSpinner />
       </LoadingContainer>
+    );
+  }
+
+  // Distinguishable from "this community has no item types", which is what a
+  // failed request used to look like: the error was never read, and `|| []`
+  // turned it into an empty catalogue with nothing said.
+  if (itemTypesError && !itemTypesData) {
+    return (
+      <Container>
+        <EmptyState>
+          <h3>Could not load item types</h3>
+          <p>{itemTypesError.message}</p>
+          <Button onClick={() => refetchItemTypes()}>Try again</Button>
+        </EmptyState>
+      </Container>
     );
   }
 
