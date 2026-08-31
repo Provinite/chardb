@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { ItemsService } from "./items.service";
 import type { DbClient } from "../item-transactions/item-transactions.service";
+import { MAX_GRANT_QUANTITY } from "./dto/item.dto";
 import { DatabaseService } from "../database/database.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
 import { DiscordService } from "../discord/discord.service";
@@ -251,6 +252,53 @@ describe("ItemsService", () => {
           actor,
         }),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it("refuses a quantity above the cap", async () => {
+      await expect(
+        service.grantItem({
+          itemTypeId: "type1",
+          userId: "user1",
+          quantity: MAX_GRANT_QUANTITY + 1,
+          actor,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockDatabaseService.item.createMany).not.toHaveBeenCalled();
+    });
+
+    it("allows exactly the cap", async () => {
+      // The boundary, so the check cannot quietly become off-by-one.
+      await service.grantItem({
+        itemTypeId: "type1",
+        userId: "user1",
+        quantity: MAX_GRANT_QUANTITY,
+        actor,
+      });
+
+      const { data } = mockDatabaseService.item.createMany.mock.calls[0][0] as {
+        data: unknown[];
+      };
+      expect(data).toHaveLength(MAX_GRANT_QUANTITY);
+    });
+
+    it("caps callers that never touch the GraphQL input", async () => {
+      // The Discord prize queue calls this service directly, and its own
+      // message DTO has no maximum -- so this check, not the @Max on
+      // GrantItemInput, is what bounds it.
+      await expect(
+        service.grantItem({
+          itemTypeId: "type1",
+          quantity: 5000,
+          pendingOwner: {
+            provider: "DISCORD",
+            providerAccountId: "214000000000009071",
+          },
+          actor: { actorLabel: "discord-bot", reason: "Discord prize award" },
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockDatabaseService.item.createMany).not.toHaveBeenCalled();
     });
 
     it("refuses to grant to someone outside the community", async () => {

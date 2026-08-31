@@ -1046,6 +1046,7 @@ export type GrantItemInput = {
   metadata?: InputMaybe<Scalars['String']['input']>;
   /** Create item with pending ownership for an external account */
   pendingOwner?: InputMaybe<PendingOwnerInput>;
+  /** How many to create. At most 100. */
   quantity?: Scalars['Int']['input'];
   /** Member-facing note recorded on the ledger. Visible to anyone who can read the community's item history. */
   reason?: InputMaybe<Scalars['String']['input']>;
