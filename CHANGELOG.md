@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Staging deploys no longer fill the host's disk.** `deploy.sh` prunes unused
+  images after a successful deploy; without it the host kept one ~850MB image
+  per merge and dropped none, which took staging down on 2026-08-31.
+
 ### Added
 
 - **E2E: 7 availability-browse specs** in `apps/e2e/tests/characters`, the
