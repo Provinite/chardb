@@ -73,6 +73,7 @@ import { CommunityCurrencyLedgerPage } from "./pages/CommunityCurrencyLedgerPage
 import { CommunityShopPage } from "./pages/CommunityShopPage";
 import { CommunityShopAdminPage } from "./pages/CommunityShopAdminPage";
 import { CommunityShopPurchasesPage } from "./pages/CommunityShopPurchasesPage";
+import { CommunityShopMyPurchasesPage } from "./pages/CommunityShopMyPurchasesPage";
 import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
 import { CommunityItemLedgerPage } from "./pages/CommunityItemLedgerPage";
 import { ItemProvenancePage } from "./pages/ItemProvenancePage";
@@ -493,6 +494,17 @@ function App() {
           element={
             <ProtectedRoute>
               <CommunityShopPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* The buyer's own history. Under /shop rather than /admin/shop: the
+            staff page at the latter answers about everyone, this one only
+            about you, and it needs no permission beyond membership. */}
+        <Route
+          path="/communities/:communityId/shop/purchases"
+          element={
+            <ProtectedRoute>
+              <CommunityShopMyPurchasesPage />
             </ProtectedRoute>
           }
         />

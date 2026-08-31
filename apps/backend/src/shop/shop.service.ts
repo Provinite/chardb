@@ -16,6 +16,7 @@ import { DatabaseService } from "../database/database.service";
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { ItemsService } from "../items/items.service";
 import { MAX_UNITS_PER_ITEM } from "./dto/shop.dto";
+import { ShopPurchaseLineStatus } from "./entities/shop.entity";
 import {
   mapPrismaUserToGraphQL,
   userMapperSelect,
@@ -400,6 +401,85 @@ export class ShopService {
   }
 
   /**
+   * The viewer's own purchase lines: searchable, filterable, paged.
+   *
+   * Lines rather than purchases because a line is the unit a buyer counts and
+   * acts on. "I bought ten items, then ten more" is twenty lines across two
+   * checkouts, and a filter for "refunded" or a search for an item name means
+   * nothing at the level of a basket that may hold both.
+   *
+   * Paged on the server, so a member with a long history is not sent all of it
+   * to have most of it thrown away -- which is exactly how the eight-line
+   * sidebar panel came to hide everything behind it (#289).
+   */
+  async findPurchaseLinesForViewer(
+    viewerId: string,
+    filters: {
+      communityId: string;
+      search?: string | null;
+      status?: ShopPurchaseLineStatus | null;
+      limit?: number;
+      offset?: number;
+    },
+  ) {
+    const take = Math.min(Math.max(filters.limit ?? 25, 1), 100);
+    const skip = Math.max(filters.offset ?? 0, 0);
+    const search = filters.search?.trim();
+
+    const where: Prisma.ShopPurchaseLineWhereInput = {
+      purchase: { communityId: filters.communityId, buyerId: viewerId },
+      ...(filters.status === ShopPurchaseLineStatus.REFUNDED
+        ? { refundedAt: { not: null } }
+        : filters.status === ShopPurchaseLineStatus.ACTIVE
+          ? { refundedAt: null }
+          : {}),
+      // A listing's name is optional and falls back to its item type's, so a
+      // search that only looked at one of them would miss whichever the buyer
+      // actually saw on the card.
+      ...(search
+        ? {
+            shopItem: {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                {
+                  itemType: {
+                    name: { contains: search, mode: "insensitive" },
+                  },
+                },
+              ],
+            },
+          }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      this.db.shopPurchaseLine.findMany({
+        where,
+        include: {
+          ...PURCHASE_LINE_INCLUDE,
+          purchase: { select: { buyerId: true, createdAt: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take,
+        skip,
+      }),
+      this.db.shopPurchaseLine.count({ where }),
+    ]);
+
+    const lines = await this.decorateLines(
+      filters.communityId,
+      viewerId,
+      rows.map((row) => ({
+        ...row,
+        buyerId: row.purchase.buyerId,
+        purchasedAt: row.purchase.createdAt,
+      })),
+    );
+
+    return { lines, total, hasMore: skip + rows.length < total };
+  }
+
+  /**
    * A community's purchases, for staff.
    *
    * The buyer's own list is the same data seen from inside; this is the view
@@ -439,7 +519,56 @@ export class ShopService {
     purchases: PurchaseWithLines[],
     isStaff = false,
   ) {
-    const lineIds = purchases.flatMap((p) => p.lines.map((l) => l.id));
+    const decorated = await this.decorateLines(
+      communityId,
+      viewerId,
+      purchases.flatMap((p) =>
+        p.lines.map((line) => ({
+          ...line,
+          buyerId: p.buyerId,
+          purchasedAt: p.createdAt,
+        })),
+      ),
+      isStaff,
+    );
+    if (decorated.length === 0) return [];
+
+    const byPurchase = new Map<string, (typeof decorated)[number][]>();
+    for (const line of decorated) {
+      const bucket = byPurchase.get(line.purchaseId);
+      if (bucket) bucket.push(line);
+      else byPurchase.set(line.purchaseId, [line]);
+    }
+
+    return purchases.map((purchase) => ({
+      ...purchase,
+      buyer: mapPrismaUserToGraphQL(purchase.buyer),
+      lines: byPurchase.get(purchase.id) ?? [],
+    }));
+  }
+
+  /**
+   * Attach the per-viewer fields to a flat set of lines.
+   *
+   * A line is what a buyer actually counts -- "I bought ten things" -- so it
+   * is the level a history pages and filters at. Purchases are the transaction
+   * that produced them, and grouping back into one is the caller's job.
+   *
+   * Every lookup here is one query for the whole set rather than one per line,
+   * which is the reason this is not simply done inside the map below.
+   */
+  private async decorateLines(
+    communityId: string,
+    viewerId: string,
+    lines: Array<
+      PurchaseWithLines["lines"][number] & {
+        buyerId: string;
+        purchasedAt: Date;
+      }
+    >,
+    isStaff = false,
+  ) {
+    const lineIds = lines.map((l) => l.id);
     if (lineIds.length === 0) return [];
 
     // One query for every line's granted item, rather than one per line.
@@ -466,41 +595,37 @@ export class ShopService {
     const listings = await this.decorateItems(
       communityId,
       viewerId,
-      dedupeById(purchases.flatMap((p) => p.lines.map((l) => l.shopItem))),
+      dedupeById(lines.map((l) => l.shopItem)),
     );
     const listingById = new Map(listings.map((l) => [l.id, l]));
 
     const now = Date.now();
 
-    return purchases.map((purchase) => ({
-      ...purchase,
-      buyer: mapPrismaUserToGraphQL(purchase.buyer),
-      lines: purchase.lines.map((line) => {
-        const blocked = refundBlockedReason(
-          { ...line, buyerId: purchase.buyerId },
-          itemById.get(itemByLine.get(line.id) ?? ""),
-          now,
-          viewerId,
-          isStaff,
-        );
-        const listing = listingById.get(line.shopItemId);
-        if (!listing) {
-          // Impossible: the map was built from these very lines. Thrown
-          // rather than falling back to the undecorated row, because that
-          // fallback is what produces a null non-nullable field.
-          throw new Error(`Listing ${line.shopItemId} vanished mid-request`);
-        }
-        return {
-          ...line,
-          shopItem: listing,
-          refundedBy: line.refundedBy
-            ? mapPrismaUserToGraphQL(line.refundedBy)
-            : null,
-          refundableByViewer: blocked === null,
-          refundBlockedReason: blocked,
-        };
-      }),
-    }));
+    return lines.map((line) => {
+      const blocked = refundBlockedReason(
+        line,
+        itemById.get(itemByLine.get(line.id) ?? ""),
+        now,
+        viewerId,
+        isStaff,
+      );
+      const listing = listingById.get(line.shopItemId);
+      if (!listing) {
+        // Impossible: the map was built from these very lines. Thrown rather
+        // than falling back to the undecorated row, because that fallback is
+        // what produces a null non-nullable field.
+        throw new Error(`Listing ${line.shopItemId} vanished mid-request`);
+      }
+      return {
+        ...line,
+        shopItem: listing,
+        refundedBy: line.refundedBy
+          ? mapPrismaUserToGraphQL(line.refundedBy)
+          : null,
+        refundableByViewer: blocked === null,
+        refundBlockedReason: blocked,
+      };
+    });
   }
 
   // ==================== Checkout ====================
@@ -871,6 +996,7 @@ export class ShopService {
     return {
       ...refunded,
       shopItem: listing,
+      purchasedAt: refunded.purchase.createdAt,
       refundedBy: refunded.refundedBy
         ? mapPrismaUserToGraphQL(refunded.refundedBy)
         : null,

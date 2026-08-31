@@ -8,7 +8,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useShopCart, MAX_UNITS_PER_ITEM } from "../hooks/useShopCart";
 import {
   useGetShopItemsQuery,
-  useGetMyShopPurchasesQuery,
+  useGetMyShopPurchaseLinesQuery,
   useGetMemberWalletQuery,
   useCheckoutMutation,
   useRefundShopPurchaseLineMutation,
@@ -258,6 +258,9 @@ const Muted = styled.span`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
+/** How many lines the sidebar panel shows before deferring to the page. */
+const PANEL_LINES = 8;
+
 const PurchaseRow = styled.div`
   display: flex;
   align-items: center;
@@ -269,6 +272,18 @@ const PurchaseRow = styled.div`
   &:last-child {
     border-bottom: none;
   }
+`;
+
+/** Says how much of the history the panel is not showing, and links to it. */
+const PanelFooter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  font-size: 0.8125rem;
 `;
 
 const UndoButton = styled.button`
@@ -359,9 +374,14 @@ export const CommunityShopPage: React.FC = () => {
     fetchPolicy: "cache-and-network",
   });
 
+  // Eight, asked for as eight rather than fetched whole and sliced. `total`
+  // comes back counted against the same filters, which is what lets the panel
+  // say how much it is not showing instead of silently dropping it (#289).
   const { data: purchaseData, refetch: refetchPurchases } =
-    useGetMyShopPurchasesQuery({
-      variables: { communityId: communityId as string },
+    useGetMyShopPurchaseLinesQuery({
+      variables: {
+        filters: { communityId: communityId as string, limit: PANEL_LINES },
+      },
       skip: !communityId,
       fetchPolicy: "cache-and-network",
     });
@@ -370,10 +390,11 @@ export const CommunityShopPage: React.FC = () => {
   const [refundLine] = useRefundShopPurchaseLineMutation();
 
   const items = useMemo(() => data?.shopItems ?? [], [data]);
-  const purchases = useMemo(
-    () => purchaseData?.myShopPurchases ?? [],
+  const purchaseLines = useMemo(
+    () => purchaseData?.myShopPurchaseLines.lines ?? [],
     [purchaseData],
   );
+  const purchaseTotal = purchaseData?.myShopPurchaseLines.total ?? 0;
   // Zero balances are dropped here, unlike the wallet page. That page teaches
   // which currencies exist; this one is a running total while spending, and a
   // row of zeroes next to the price of something is only discouraging.
@@ -611,42 +632,49 @@ export const CommunityShopPage: React.FC = () => {
 
           <Panel data-testid="shop-purchases">
             <PanelTitle>Recent purchases</PanelTitle>
-            {purchases.length === 0 ? (
+            {purchaseLines.length === 0 ? (
               <Muted>Nothing bought yet.</Muted>
             ) : (
-              purchases
-                .flatMap((p) => p.lines)
-                .slice(0, 8)
-                .map((line) => (
-                  <PurchaseRow
-                    key={line.id}
-                    data-testid={`purchase-${line.id}`}
-                  >
-                    <CartName>
-                      <div>
-                        {line.shopItem.name || line.shopItem.itemType.name}
-                      </div>
-                      <Muted>
-                        {formatPrice(line.costs)}
-                        {line.refundedAt ? " · refunded" : ""}
-                      </Muted>
-                    </CartName>
-                    {line.refundableByViewer ? (
-                      <UndoButton
-                        onClick={() => handleUndo(line.id)}
-                        data-testid={`undo-${line.id}`}
-                      >
-                        <Undo2 size={12} /> Undo
-                      </UndoButton>
-                    ) : (
-                      // The server says why, so the reason is never a guess
-                      // made from a timestamp on this side.
-                      <Muted title={line.refundBlockedReason ?? undefined}>
-                        {line.refundedAt ? <Check size={14} /> : "—"}
-                      </Muted>
-                    )}
-                  </PurchaseRow>
-                ))
+              purchaseLines.map((line) => (
+                <PurchaseRow key={line.id} data-testid={`purchase-${line.id}`}>
+                  <CartName>
+                    <div>
+                      {line.shopItem.name || line.shopItem.itemType.name}
+                    </div>
+                    <Muted>
+                      {formatPrice(line.costs)}
+                      {line.refundedAt ? " · refunded" : ""}
+                    </Muted>
+                  </CartName>
+                  {line.refundableByViewer ? (
+                    <UndoButton
+                      onClick={() => handleUndo(line.id)}
+                      data-testid={`undo-${line.id}`}
+                    >
+                      <Undo2 size={12} /> Undo
+                    </UndoButton>
+                  ) : (
+                    // The server says why, so the reason is never a guess
+                    // made from a timestamp on this side.
+                    <Muted title={line.refundBlockedReason ?? undefined}>
+                      {line.refundedAt ? <Check size={14} /> : "—"}
+                    </Muted>
+                  )}
+                </PurchaseRow>
+              ))
+            )}
+            {/* Truncation said out loud. Silently showing the eight most
+                recent is how a buyer with twenty purchases concluded the
+                older ten were gone (#289). */}
+            {purchaseTotal > purchaseLines.length && (
+              <PanelFooter data-testid="shop-purchases-more">
+                <Muted>
+                  Showing {purchaseLines.length} of {purchaseTotal}
+                </Muted>
+                <Link to={`/communities/${communityId}/shop/purchases`}>
+                  View all
+                </Link>
+              </PanelFooter>
             )}
           </Panel>
         </Aside>

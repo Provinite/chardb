@@ -59,37 +59,50 @@ export const GET_SHOP_ITEMS = gql`
   ${SHOP_ITEM_FRAGMENT}
 `;
 
-export const GET_MY_SHOP_PURCHASES = gql`
-  query GetMyShopPurchases($communityId: ID!) {
-    myShopPurchases(communityId: $communityId) {
+/**
+ * One line of a purchase, as both the sidebar panel and the history page show
+ * it. Lines rather than purchases because that is the unit a buyer counts.
+ */
+export const MY_SHOP_PURCHASE_LINE_FRAGMENT = gql`
+  fragment MyShopPurchaseLineFields on ShopPurchaseLine {
+    id
+    purchasedAt
+    refundedAt
+    # The server decides both, so the page never has to work out whether the
+    # undo window has passed or the item has since been used.
+    refundableByViewer
+    refundBlockedReason
+    costs {
+      amount
+      currency {
+        ...CurrencyFields
+      }
+    }
+    shopItem {
       id
-      createdAt
-      lines {
+      name
+      itemType {
         id
-        createdAt
-        refundedAt
-        # The server decides both, so the page never has to work out whether
-        # the undo window has passed or the item has since been used.
-        refundableByViewer
-        refundBlockedReason
-        costs {
-          amount
-          currency {
-            ...CurrencyFields
-          }
-        }
-        shopItem {
-          id
-          name
-          itemType {
-            id
-            name
-          }
-        }
+        name
       }
     }
   }
   ${CURRENCY_FRAGMENT}
+`;
+
+export const GET_MY_SHOP_PURCHASE_LINES = gql`
+  query GetMyShopPurchaseLines($filters: ShopPurchaseLineFiltersInput!) {
+    myShopPurchaseLines(filters: $filters) {
+      lines {
+        ...MyShopPurchaseLineFields
+      }
+      # Counted against the same filters, so the panel can say what it is
+      # showing eight of rather than silently dropping the rest.
+      total
+      hasMore
+    }
+  }
+  ${MY_SHOP_PURCHASE_LINE_FRAGMENT}
 `;
 
 export const GET_COMMUNITY_SHOP_PURCHASES = gql`

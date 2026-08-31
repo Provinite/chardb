@@ -2916,6 +2916,11 @@ type Query {
   ): MediaConnection!
 
   """
+  The viewer's own purchase lines, newest first, searchable and paged. A line is what a buyer counts and acts on, so it is the level a history filters at.
+  """
+  myShopPurchaseLines(filters: ShopPurchaseLineFiltersInput!): ShopPurchaseLineConnection!
+
+  """
   The viewer's own purchases, newest first, each line saying whether it can still be undone and why not.
   """
   myShopPurchases(communityId: ID!): [ShopPurchase!]!
@@ -3392,6 +3397,11 @@ type ShopPurchaseLine {
   id: ID!
   purchaseId: ID!
 
+  """
+  When the checkout that produced this line happened. Carried on the line so a flat history can be dated without loading its purchase.
+  """
+  purchasedAt: DateTime!
+
   """Why it cannot be undone, when it cannot."""
   refundBlockedReason: String
 
@@ -3404,11 +3414,43 @@ type ShopPurchaseLine {
   shopItem: ShopItem!
 }
 
+"""
+A page of the viewer's own purchase lines, newest first, with the total matching the same filters so a caller can say what it is showing part of.
+"""
+type ShopPurchaseLineConnection {
+  hasMore: Boolean!
+  lines: [ShopPurchaseLine!]!
+
+  """Every line matching the filters, not just this page."""
+  total: Int!
+}
+
 """What one unit of a purchase cost, at the time."""
 type ShopPurchaseLineCost {
   amount: Int!
   currency: Currency!
   currencyId: ID!
+}
+
+input ShopPurchaseLineFiltersInput {
+  """Required. A purchase history is always one community's."""
+  communityId: ID!
+  limit: Int! = 25
+  offset: Int! = 0
+
+  """
+  Matches the listing's name, or its item type's name when the listing does not override it -- whichever the buyer actually saw on the card.
+  """
+  search: String
+
+  """Omit for both."""
+  status: ShopPurchaseLineStatus
+}
+
+"""Whether a purchase line still stands or has been refunded."""
+enum ShopPurchaseLineStatus {
+  ACTIVE
+  REFUNDED
 }
 
 input SignupInput {
