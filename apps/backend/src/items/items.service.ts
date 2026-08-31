@@ -22,7 +22,7 @@ import {
 } from "../item-transactions/item-transactions.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { ItemTypeFilters } from "./dto/item-type.dto";
-import { ItemFilters } from "./dto/item.dto";
+import { ItemFilters, MAX_GRANT_QUANTITY } from "./dto/item.dto";
 
 export interface PendingOwnerInput {
   provider: ExternalAccountProvider;
@@ -283,6 +283,17 @@ export class ItemsService {
 
     if (quantity < 1) {
       throw new BadRequestException("Quantity must be at least 1");
+    }
+
+    // Also checked here, not only on GrantItemInput. The Discord prize queue
+    // calls this service directly and its own message DTO has no maximum at
+    // all, so a cap that lived on the GraphQL input would leave the one
+    // unbounded caller unbounded -- and it is the expensive one, since a
+    // pending-owner grant writes a claim row per item.
+    if (quantity > MAX_GRANT_QUANTITY) {
+      throw new BadRequestException(
+        `Cannot grant more than ${MAX_GRANT_QUANTITY} at once`,
+      );
     }
 
     // Get the item type to check if it's stackable

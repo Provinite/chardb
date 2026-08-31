@@ -25,6 +25,14 @@ import {
   useGetItemEconomyQuery,
 } from "../generated/graphql";
 
+/**
+ * Mirrors the server's `MAX_GRANT_QUANTITY`, which is the one that decides.
+ * Repeated rather than shared for the same reason `useShopCart` repeats the
+ * shop's cap: this is only here so the form can refuse a number before
+ * spending a request on it.
+ */
+const MAX_GRANT_QUANTITY = 100;
+
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -278,6 +286,13 @@ const Label = styled.label`
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
+/** Says the rule in the label, rather than leaving the form to refuse you. */
+const Hint = styled.span`
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
 const Input = styled.input`
   padding: 0.75rem;
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -395,7 +410,10 @@ export const CommunityItemsAdminPage: React.FC = () => {
   const [createItemType] = useCreateItemTypeMutation();
   const [updateItemType] = useUpdateItemTypeMutation();
   const [deleteItemType] = useDeleteItemTypeMutation();
-  const [grantItem] = useGrantItemMutation();
+  // `granting` is what stops a slow grant being submitted twice. The reporter
+  // pressed the button again when nothing seemed to happen, which queued
+  // several thousand-unit grants behind each other.
+  const [grantItem, { loading: granting }] = useGrantItemMutation();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -1043,12 +1061,17 @@ export const CommunityItemsAdminPage: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label htmlFor="grant-item-quantity">Quantity *</Label>
+              <Label htmlFor="grant-item-quantity">
+                Quantity * <Hint>At most {MAX_GRANT_QUANTITY}.</Hint>
+              </Label>
               <Input
                 id="grant-item-quantity"
                 required
                 type="number"
                 min="1"
+                // The server's cap, so an over-large number is refused here
+                // rather than after a request that has to be waited out.
+                max={MAX_GRANT_QUANTITY}
                 value={grantFormData.quantity}
                 onChange={(e) =>
                   setGrantFormData({
@@ -1070,10 +1093,11 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Button
                 type="submit"
                 disabled={
-                  grantTarget?.type === "pending" && !isGrantTargetValid
+                  granting ||
+                  (grantTarget?.type === "pending" && !isGrantTargetValid)
                 }
               >
-                Grant Item
+                {granting ? "Granting…" : "Grant Item"}
               </Button>
             </FormActions>
           </Form>

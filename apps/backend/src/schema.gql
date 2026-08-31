@@ -1232,6 +1232,8 @@ input GrantItemInput {
 
   """Create item with pending ownership for an external account"""
   pendingOwner: PendingOwnerInput
+
+  """How many to create. At most 100."""
   quantity: Int! = 1
 
   """
