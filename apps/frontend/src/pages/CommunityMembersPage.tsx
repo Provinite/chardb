@@ -2,7 +2,8 @@ import React, { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
-import { Users, Search, Package } from "lucide-react";
+import { Users, Search, Package, ArrowLeftRight } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import {
   useCommunityByIdQuery,
@@ -191,6 +192,7 @@ const LoadingContainer = styled.div`
 
 export const CommunityMembersPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(PAGE_SIZE);
 
@@ -303,6 +305,15 @@ export const CommunityMembersPage: React.FC = () => {
                 >
                   <Package size={14} /> Items
                 </ItemsLink>
+                {/* Hidden on your own row: the server refuses a trade with
+                    yourself, so offering the button would be a dead end. */}
+                {m.user.id !== user?.id && (
+                  <ItemsLink
+                    to={`/communities/${communityId}/trades/new?with=${m.user.id}`}
+                  >
+                    <ArrowLeftRight size={14} /> Trade
+                  </ItemsLink>
+                )}
               </MemberRow>
             );
           })}

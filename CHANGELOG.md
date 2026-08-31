@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **E2E: 14 trading specs** in `apps/e2e/tests/trades`, covering compose,
+  settle, decline, withdraw, counter and the refusals around each.
+
+- **Unit coverage of settlement**, which the trade specs previously stopped
+  short of: the guards that decide whether property actually moves are now
+  driven inside the accept transaction.
+
+- **Product walkthrough for trading** (`docs/docs/trading.html`).
+
 ## [v11.4.0] - 2026-08-30
 
 ### Added

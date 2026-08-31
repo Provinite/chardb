@@ -738,6 +738,16 @@ input CreateTextMediaInput {
   visibility: Visibility! = PUBLIC
 }
 
+input CreateTradeInput {
+  coin: [TradeCoinInput!]! = []
+  communityId: ID!
+  expiresInDays: Int
+  note: String
+  offering: [OfferedTradeItemInput!]! = []
+  recipientId: ID!
+  requesting: [RequestedTradeItemInput!]! = []
+}
+
 input CreateTraitInput {
   """
   Whether this trait allows an optional free-text clarifier on each value
@@ -1038,6 +1048,17 @@ input EditAndApproveTraitReviewInput {
 
   """The ID of the review to edit and approve"""
   reviewId: ID!
+}
+
+"""
+Where an offer stands with the clock applied. A PENDING trade past its expiresAt reports EXPIRED and will not settle.
+"""
+enum EffectiveTradeStatus {
+  ACCEPTED
+  CANCELLED
+  DECLINED
+  EXPIRED
+  PENDING
 }
 
 type EnumValue {
@@ -1451,7 +1472,7 @@ type ItemTransaction {
   batchId: ID!
 
   """
-  How many items this event touched in total. Counting loaded rows is wrong once a batch straddles a page boundary, so the server counts it.
+  How many items moved this way in this event: same batch, same item type, same direction. Counting loaded rows is wrong once a batch straddles a page boundary, so the server counts it. A trade settles as one batch carrying two legs that differ in both type and direction, so a plain per-batch count would report each leg as the size of the whole trade.
   """
   batchSize: Int!
   communityId: ID!
@@ -1848,6 +1869,17 @@ enum ModerationStatus {
 }
 
 type Mutation {
+  """
+  Accept and settle. Items and coin move in one transaction across both ledgers, or the whole accept fails.
+  """
+  acceptTrade(
+    id: ID!
+
+    """
+    Optional. Names which of your rows satisfy a by-type line. Leave it out and rows are chosen for you, newest first -- by-type means any will do, so there is usually nothing to decide.
+    """
+    selections: [TradeSelectionInput!]
+  ): Trade!
   addCharacterTags(id: ID!, input: ManageTagsInput!): Character!
 
   """Adds tags to a media item"""
@@ -1878,6 +1910,9 @@ type Mutation {
   """Cancel a running DeviantArt UUID backfill job."""
   cancelDeviantartUuidBackfill: Boolean!
 
+  """Withdraw an offer you sent."""
+  cancelTrade(id: ID!): Trade!
+
   """Buy a cart. Everything commits together, or nothing does."""
   checkout(input: CheckoutInput!): ShopPurchase!
 
@@ -1889,6 +1924,15 @@ type Mutation {
     """Invite code ID"""
     id: ID!
   ): InviteCode!
+
+  """
+  Answer an offer with a different one. Declines the original and sends the replacement in a single step, so opening a counter and thinking better of it costs the offer nothing. Returns the new trade.
+  """
+  counterTrade(
+    """The offer being answered. It is declined."""
+    id: ID!
+    input: CreateTradeInput!
+  ): Trade!
   createCharacter(input: CreateCharacterInput!): Character!
 
   """Create a new character ownership change record"""
@@ -1976,6 +2020,11 @@ type Mutation {
   ): TraitListEntry!
 
   """
+  Refuse an offer. Nothing was held, so nothing is released. To refuse and reply with your own terms, use counterTrade instead.
+  """
+  declineTrade(id: ID!): Trade!
+
+  """
   Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. A character with no species has no community to resolve permissions from, so once it has been removed from its species (see kickCharacterFromSpecies) only a global admin can delete it.
   """
   deleteCharacter(id: ID!): Boolean!
@@ -2032,6 +2081,11 @@ type Mutation {
   Create currency into one or more members' balances. Returns the batch id every row it wrote shares.
   """
   mintCurrency(input: MintCurrencyInput!): String!
+
+  """
+  Compose an offer. Nothing is reserved: what it names is checked now so you are told early, and checked again decisively at accept.
+  """
+  proposeTrade(input: CreateTradeInput!): Trade!
 
   """
   Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete.
@@ -2394,6 +2448,9 @@ enum NotificationKind {
   FOLLOW_RECEIVED
   ITEM_GRANTED
   ITEM_REVOKED
+  TRADE_ACCEPTED
+  TRADE_DECLINED
+  TRADE_OFFERED
 }
 
 """
@@ -2407,7 +2464,15 @@ enum NotificationSubjectType {
   IMAGE
   ITEM
   MEDIA
+  TRADE
   USER
+}
+
+"""
+A row the proposer hands over. Always a specific item: the proposer is at the composer, so they are the giver who gets to choose.
+"""
+input OfferedTradeItemInput {
+  itemId: ID!
 }
 
 input OwnerIdUpdate {
@@ -2956,6 +3021,14 @@ type Query {
     speciesId: ID!
   ): SpeciesVariantConnection!
 
+  """One of your trades. Readable by either party, nobody else."""
+  trade(id: ID!): Trade!
+
+  """
+  Your trades, newest first -- both the offers waiting on you and the ones you have out.
+  """
+  trades(after: String, communityId: ID, first: Int = 20, status: EffectiveTradeStatus): TradeConnection!
+
   """Get a trait by ID"""
   traitById(
     """Trait ID"""
@@ -3083,6 +3156,15 @@ type RemovalResponse {
 
 input ReorderGalleriesInput {
   galleryIds: [ID!]!
+}
+
+"""
+Something the proposer asks for. Give itemTypeId and quantity for the usual case -- any rows of that type will do, and the recipient chooses which when they accept. Give itemId only when one particular item's history is the point.
+"""
+input RequestedTradeItemInput {
+  itemId: ID
+  itemTypeId: ID
+  quantity: Int
 }
 
 input ResetPasswordInput {
@@ -3449,6 +3531,99 @@ input ToggleFollowInput {
 input ToggleLikeInput {
   entityId: ID!
   entityType: LikeableType!
+}
+
+"""
+One member's offer to another. Nothing is held while it stands: what it names is checked when it is written and checked again, decisively, when it is accepted.
+"""
+type Trade {
+  community: Community!
+  createdAt: DateTime!
+  currencyLines: [TradeCurrencyLine!]!
+  expiresAt: DateTime!
+  id: ID!
+  items: [TradeItem!]!
+  note: String
+  proposer: User!
+  recipient: User!
+  respondedAt: DateTime
+
+  """
+  Shared by every ledger row this settlement wrote, on both the item and the currency ledger. Null until accepted.
+  """
+  settlementBatchId: String
+
+  """
+  Use this rather than a stored status: it accounts for expiry, which is a date and never written to the row.
+  """
+  status: EffectiveTradeStatus!
+}
+
+"""Coin on the table, in one direction."""
+input TradeCoinInput {
+  amount: Int!
+  currencyId: ID!
+
+  """
+  True when the proposer pays it, false when they are asking for it. Amounts in the same currency on both sides are netted.
+  """
+  fromProposer: Boolean!
+}
+
+"""A page of trades, newest first."""
+type TradeConnection {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  nodes: [Trade!]!
+  totalCount: Int!
+}
+
+"""Coin on the table, moving one way."""
+type TradeCurrencyLine {
+  """
+  Always positive. Direction is the source and destination, not a sign. Opposing amounts in one currency are netted when the offer is written.
+  """
+  amount: Int!
+  currency: Currency!
+  destinationUser: User!
+  id: ID!
+  sourceUser: User!
+}
+
+"""
+One line on the table: either a specific item, or a quantity of an item type that any rows can satisfy.
+"""
+type TradeItem {
+  """Who receives it."""
+  destinationUser: User!
+  id: ID!
+
+  """
+  The exact row this line names. Set when the history of a particular item is the point, and on everything the proposer offers.
+  """
+  item: Item
+
+  """
+  The type this line asks for, when any rows of it will do. Paired with quantity, and always something the recipient hands over.
+  """
+  itemType: ItemType
+
+  """How many of itemType. Null on a line that names a row."""
+  quantity: Int
+
+  """Who hands it over."""
+  sourceUser: User!
+}
+
+"""
+Which of your rows satisfy one by-type line. Optional -- omit it and rows are chosen for you, newest first. Supply it when one particular copy is one you would rather keep.
+"""
+input TradeSelectionInput {
+  """Exactly as many rows as the line's quantity."""
+  itemIds: [ID!]!
+
+  """The TradeItem line being satisfied."""
+  tradeItemId: ID!
 }
 
 type Trait {

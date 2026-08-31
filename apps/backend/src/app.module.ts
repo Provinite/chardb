@@ -41,6 +41,7 @@ import { ItemTransactionsModule } from "./item-transactions/item-transactions.mo
 import { CurrenciesModule } from "./currencies/currencies.module";
 import { ShopModule } from "./shop/shop.module";
 import { NotificationsModule } from "./notifications/notifications.module";
+import { TradesModule } from "./trades/trades.module";
 import { CommunityColorsModule } from "./community-colors/community-colors.module";
 import { PendingOwnershipModule } from "./pending-ownership/pending-ownership.module";
 import { DiscordModule } from "./discord/discord.module";
@@ -265,6 +266,7 @@ import { Request, Response } from "express";
     CurrenciesModule,
     ShopModule,
     NotificationsModule,
+    TradesModule,
     CommunityColorsModule,
     PendingOwnershipModule,
     DiscordModule,
