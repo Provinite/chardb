@@ -221,7 +221,9 @@ export const CommunityPage: React.FC = () => {
     fetchPolicy: "cache-and-network",
   });
 
-  if (loading) {
+  // `&& !data`: this query is cache-and-network, which reports loading on
+  // every background revalidation, so a bare check blanks the page on revisit.
+  if (loading && !data) {
     return (
       <Container>
         <LoadingContainer>
