@@ -5,6 +5,7 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { CommunityNavigationSidebar } from "./navigation/CommunityNavigationSidebar";
 import { GlobalNavigationSidebar } from "./navigation/GlobalNavigationSidebar";
+import { isCommunityRoute } from "../lib/communityRoutes";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -29,21 +30,6 @@ const Main = styled.main`
   padding: 2rem 0;
   min-width: 0; /* Prevents flex item from overflowing */
 `;
-
-/**
- * Checks if the current route is a community-scoped route
- */
-const isCommunityRoute = (pathname: string): boolean => {
-  const communityRoutes = [
-    /^\/communities\/[^/]+/,
-    /^\/species\/[^/]+/,
-    /^\/character\/[^/]+/,
-    /^\/variants\/[^/]+/,
-    /^\/traits\/[^/]+/,
-    /^\/items\/[^/]+/,
-  ];
-  return communityRoutes.some((pattern) => pattern.test(pathname));
-};
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();

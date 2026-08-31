@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A shop listing you cannot buy now says why in a highlighted notice rather
+  than a line styled like the item's own description, and hitting your own
+  purchase limit dims the card the way selling out already did (#290).
+
 ### Added
 
 - **Your purchases** (`/communities/:communityId/shop/purchases`): a buyer's own
@@ -26,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The shop's Recent purchases panel hid everything past its eighth line**, so
   a buyer who checked out twice could neither see nor undo the first batch. It
   now says "showing 8 of 23 · view all" and links to the full history (#289).
+
+- **Trade pages dropped you out of community navigation** (#293). The sidebar
+  reads community context from the pathname, so `/trades?community=<id>` was
+  in a community it could not see. The scoped inbox and an offer now live at
+  `/communities/:communityId/trades[/:tradeId]`; `/trades` stays the
+  cross-community inbox. The old URLs are gone rather than redirected.
 
 - The grant form now bounds its quantity at 100 and disables its button while
   the grant is running, so a slow grant cannot be submitted several times over

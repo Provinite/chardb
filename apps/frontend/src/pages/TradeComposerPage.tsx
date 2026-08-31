@@ -428,7 +428,7 @@ export const TradeComposerPage: React.FC = () => {
             ?.counterTrade.id
         : (await proposeTrade({ variables: { input } })).data?.proposeTrade.id;
 
-      if (id) navigate(`/trades/${id}`);
+      if (id) navigate(`/communities/${communityId}/trades/${id}`);
     } catch (err) {
       setProblem(
         err instanceof Error ? err.message : "That offer could not be sent",
