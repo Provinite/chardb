@@ -299,6 +299,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   return (
     <Card
       to={`/media/${media.id}`}
+      data-testid="media-card"
       aria-label={`View ${isImage ? "image" : "text"} ${media.title}`}
     >
       <MediaSection>

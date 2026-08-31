@@ -7,11 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A character's full media page** (`/character/:id/media`). The gallery had
+  linked there for as long as a character could have more media than fits, but
+  the route did not exist, so the link landed on Not Found (#222).
+
 ### Fixed
 
 - Four pages replaced themselves with a loading spinner on every visit rather
   than only the first: shop purchases, a community, an item type, and a
   species.
+
+- A character's media gallery stopped at eight with no way to see the rest, and
+  the gallery asked for the same counts twice on every load.
 
 ## [v11.5.0] - 2026-08-30
 
