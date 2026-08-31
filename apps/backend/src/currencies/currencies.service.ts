@@ -57,6 +57,7 @@ export class CurrenciesService {
           symbol: input.symbol?.trim() || null,
           description: input.description?.trim() || null,
           colorId: input.colorId ?? null,
+          isTradeable: input.isTradeable ?? true,
         },
       });
     } catch (error) {
@@ -78,6 +79,11 @@ export class CurrenciesService {
       data.color = input.colorId
         ? { connect: { id: input.colorId } }
         : { disconnect: true };
+    }
+    if (input.isTradeable !== undefined) {
+      // Nothing is rewritten for existing holders: turning this off stops new
+      // movement between members and leaves every balance exactly where it is.
+      data.isTradeable = input.isTradeable;
     }
     if (input.archived !== undefined) {
       data.archivedAt = input.archived ? new Date() : null;

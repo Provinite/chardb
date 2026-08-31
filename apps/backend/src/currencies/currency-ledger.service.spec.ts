@@ -60,6 +60,7 @@ describe("CurrencyLedgerService", () => {
     communityId: "comm1",
     name: "Hollow Coin",
     code: "HC",
+    isTradeable: true,
     archivedAt: null,
   };
 
@@ -575,6 +576,21 @@ describe("CurrencyLedgerService", () => {
       expect(rows.every((r) => r.actorUserId === "userA")).toBe(true);
     });
 
+    it("refuses an untradeable currency", async () => {
+      mockDatabaseService.currency.findUnique.mockResolvedValue({
+        ...currency,
+        isTradeable: false,
+      });
+
+      await expect(
+        service.transfer(
+          { currencyId: "cur1", toUserId: "userB", amount: 25 },
+          "userA",
+        ),
+      ).rejects.toThrow(/cannot be sent to another member/i);
+      expect(writtenRows()).toHaveLength(0);
+    });
+
     it("touches the two balances in user-id order, not sender-first", async () => {
       // "userA" sorts before "userZ", so a transfer in either direction takes
       // the locks in the same order. Without this, A paying Z while Z pays A
@@ -641,6 +657,52 @@ describe("CurrencyLedgerService", () => {
           "userA",
         ),
       ).rejects.toThrow(/You do not have 500 HC/);
+    });
+  });
+
+  /**
+   * Untradeable stops one thing only.
+   *
+   * The flag lives on the currency, which every writer here loads through the
+   * same helper, so the easy mistake is to check it there and quietly stop
+   * staff granting and members spending as well. These pin the blast radius:
+   * the currency is fully alive, it just cannot move sideways.
+   */
+  describe("an untradeable currency", () => {
+    beforeEach(() => {
+      mockDatabaseService.currency.findUnique.mockResolvedValue({
+        ...currency,
+        isTradeable: false,
+      });
+    });
+
+    it("can still be granted by staff", async () => {
+      await expect(
+        service.mint(
+          {
+            currencyId: "cur1",
+            userIds: ["userA"],
+            amount: 50,
+            reason: "Placed in the summer prompt",
+          },
+          "staff1",
+        ),
+      ).resolves.toBeDefined();
+    });
+
+    it("can still be spent", async () => {
+      await expect(
+        service.spend("cur1", "userA", 10, "Bought a charm"),
+      ).resolves.toBeDefined();
+    });
+
+    it("can still be taken back by staff", async () => {
+      await expect(
+        service.burn(
+          { currencyId: "cur1", userId: "userA", amount: 10, reason: "Fix" },
+          "staff1",
+        ),
+      ).resolves.toBeDefined();
     });
   });
 

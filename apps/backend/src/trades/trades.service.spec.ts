@@ -183,7 +183,9 @@ describe("TradesService", () => {
 
   describe("coin", () => {
     beforeEach(() => {
-      mockDatabaseService.currency.findMany.mockResolvedValue([{ id: "cur1" }]);
+      mockDatabaseService.currency.findMany.mockResolvedValue([
+        { id: "cur1", name: "Hollow Coin", isTradeable: true },
+      ]);
     });
 
     it("nets opposing amounts into one line", async () => {
@@ -244,6 +246,22 @@ describe("TradesService", () => {
           coin: [{ currencyId: "cur1", amount: 1.5, fromProposer: true }],
         }),
       ).rejects.toThrow(/whole and positive/i);
+    });
+
+    it("refuses an untradeable currency", async () => {
+      mockDatabaseService.currency.findMany.mockResolvedValue([
+        { id: "cur1", name: "Prompt Points", isTradeable: false },
+      ]);
+
+      // Named specifically. The lookup above it also refuses a currency from
+      // another community, and "does not belong here, or is archived" sends
+      // someone to a different place than "cannot be traded" does.
+      await expect(
+        service.create("alice", {
+          ...baseInput,
+          coin: [{ currencyId: "cur1", amount: 100, fromProposer: true }],
+        }),
+      ).rejects.toThrow(/Prompt Points cannot be traded/i);
     });
 
     it("refuses to promise coin the proposer does not have", async () => {
@@ -400,8 +418,10 @@ describe("TradesService", () => {
     beforeEach(() => {
       mockDatabaseService.trade.findUnique.mockResolvedValue(settling);
       // Nothing has been locked, the row is still alice's, and bob is good for
-      // the coin. Each test spoils exactly one of those.
+      // the coin. Each test spoils exactly one of those. The two findMany
+      // stubs return the locked rows, so empty means nothing is locked.
       mockDatabaseService.itemType.findMany.mockResolvedValue([]);
+      mockDatabaseService.currency.findMany.mockResolvedValue([]);
       mockDatabaseService.item.updateMany.mockResolvedValue({ count: 1 });
       mockDatabaseService.currencyBalance.findUnique.mockResolvedValue({
         amount: 500,
@@ -448,6 +468,22 @@ describe("TradesService", () => {
       await expect(service.accept("t1", "bob")).rejects.toThrow(
         /can no longer be traded/i,
       );
+      expect(mockCurrencyLedger.transfer).not.toHaveBeenCalled();
+    });
+
+    it("refuses a currency locked after the offer was written", async () => {
+      mockDatabaseService.currency.findMany.mockResolvedValue([
+        { name: "Hollow Coin" },
+      ]);
+
+      // transfer() refuses an untradeable currency on its own, so the trade
+      // would fail either way -- but only after the items had already moved
+      // inside the transaction, and with a message about sending coin rather
+      // than about this trade. Checked here, nothing moves at all.
+      await expect(service.accept("t1", "bob")).rejects.toThrow(
+        /Hollow Coin can no longer be traded/i,
+      );
+      expect(mockDatabaseService.item.updateMany).not.toHaveBeenCalled();
       expect(mockCurrencyLedger.transfer).not.toHaveBeenCalled();
     });
 
@@ -517,7 +553,9 @@ describe("TradesService", () => {
 
     beforeEach(() => {
       mockDatabaseService.trade.findUnique.mockResolvedValue(pending);
-      mockDatabaseService.currency.findMany.mockResolvedValue([{ id: "cur1" }]);
+      mockDatabaseService.currency.findMany.mockResolvedValue([
+        { id: "cur1", name: "Hollow Coin", isTradeable: true },
+      ]);
       mockDatabaseService.trade.updateMany.mockResolvedValue({ count: 1 });
     });
 

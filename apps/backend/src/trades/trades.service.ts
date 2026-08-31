@@ -521,12 +521,19 @@ export class TradesService {
     const currencyIds = [...net.keys()];
     const currencies = await this.db.currency.findMany({
       where: { id: { in: currencyIds }, communityId, archivedAt: null },
-      select: { id: true },
+      select: { id: true, name: true, isTradeable: true },
     });
     if (currencies.length !== currencyIds.length) {
       throw new BadRequestException(
         "One or more of those currencies does not belong to this community, or is archived",
       );
+    }
+
+    // Named separately from the check above because "not in this community"
+    // and "cannot be traded" send the composer's user to different places.
+    const untradeable = currencies.find((c) => !c.isTradeable);
+    if (untradeable) {
+      throw new BadRequestException(`${untradeable.name} cannot be traded`);
     }
 
     const lines = [...net.entries()]
@@ -658,7 +665,7 @@ export class TradesService {
       }
 
       const resolved = await this.resolveSelections(tx, trade, selections);
-      await this.assertStillTradeable(tx, resolved);
+      await this.assertStillTradeable(tx, trade, resolved);
       await this.moveItems(tx, trade, resolved, batchId);
       await this.moveCoin(tx, trade, batchId);
 
@@ -755,35 +762,61 @@ export class TradesService {
   }
 
   /**
-   * Re-check tradeability against the types actually about to move.
+   * Re-check tradeability against what is actually about to move.
    *
-   * Compose time already refused an untradeable type, but nothing is held while
-   * an offer stands and staff can lock a type in between -- which is usually
-   * exactly when they would, because something has gone wrong with it. Without
-   * this the offer settles anyway and the community's decision is bypassed by
-   * whichever trades happened to be open when it was made.
+   * Compose time already refused an untradeable item type or currency, but
+   * nothing is held while an offer stands and staff can lock either in between
+   * -- which is usually exactly when they would, because something has gone
+   * wrong with it. Without this the offer settles anyway and the community's
+   * decision is bypassed by whichever trades happened to be open when it was
+   * made.
    *
-   * Inside the settlement transaction, on the resolved moves rather than the
-   * lines, so a by-type line is judged on the rows it actually resolved to.
+   * Inside the settlement transaction, and for items on the resolved moves
+   * rather than the lines, so a by-type line is judged on the rows it actually
+   * resolved to.
+   *
+   * The coin half is also enforced by `transfer()` itself, which refuses an
+   * untradeable currency whoever asks. Checking here as well means a trade
+   * fails before any item has moved and with a message about the trade, rather
+   * than part-way through settlement with one about sending coin.
    */
   private async assertStillTradeable(
     tx: Prisma.TransactionClient,
+    trade: TradeForResponse,
     moves: ResolvedMove[],
   ) {
-    if (moves.length === 0) return;
+    if (moves.length) {
+      const locked = await tx.itemType.findMany({
+        where: {
+          id: { in: [...new Set(moves.map((m) => m.itemTypeId))] },
+          isTradeable: false,
+        },
+        select: { name: true },
+      });
 
-    const locked = await tx.itemType.findMany({
-      where: {
-        id: { in: [...new Set(moves.map((m) => m.itemTypeId))] },
-        isTradeable: false,
-      },
-      select: { name: true },
-    });
+      if (locked.length) {
+        throw new BadRequestException(
+          `${locked[0].name} can no longer be traded`,
+        );
+      }
+    }
 
-    if (locked.length) {
-      throw new BadRequestException(
-        `${locked[0].name} can no longer be traded`,
-      );
+    if (trade.currencyLines.length) {
+      const lockedCoin = await tx.currency.findMany({
+        where: {
+          id: {
+            in: [...new Set(trade.currencyLines.map((l) => l.currencyId))],
+          },
+          isTradeable: false,
+        },
+        select: { name: true },
+      });
+
+      if (lockedCoin.length) {
+        throw new BadRequestException(
+          `${lockedCoin[0].name} can no longer be traded`,
+        );
+      }
     }
   }
 

@@ -128,6 +128,22 @@ test.describe("composing an offer", () => {
     await expect(page.getByRole("alert")).toContainText(/already offered/i);
   });
 
+  test("does not offer an untradeable currency as a price", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(
+      composerUrl(world.community.id, world.users.othermember.userId),
+    );
+
+    // `member` holds 40 PP, so it is in the wallet and would be in the picker
+    // on balance alone. Offering it would be refused at send with a message
+    // about a rule the member cannot do anything about from here.
+    const picker = page.getByTestId("coin-picker");
+    await expect(picker).toContainText("Hollow Coin");
+    await expect(picker).not.toContainText("Prompt Points");
+  });
+
   test("refuses to promise coin already promised elsewhere", async ({
     page,
     world,

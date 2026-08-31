@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Untradeable currencies**: a checkbox on the currency form, an Untradeable
+  tag in the supply table, and a wallet card that says "Cannot be given away"
+  where Send would be. The trade composer leaves them out of the price picker.
+
 ### Fixed
 
 - Four pages replaced themselves with a loading spinner on every visit rather

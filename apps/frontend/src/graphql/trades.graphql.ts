@@ -164,10 +164,13 @@ export const TRADE_COMPOSER_QUERY = gql`
           name
           code
           symbol
-          # An archived currency still holds balances and stays readable, but
-          # refuses new transactions -- so the composer has to know not to
-          # price an offer in one.
+          # Two different reasons a currency cannot price an offer, both of
+          # which the composer has to know about or it renders a picker whose
+          # every choice is rejected at send. Archived means the currency takes
+          # no new transactions at all; untradeable means members may still
+          # earn and spend it, just not hand it to each other.
           archivedAt
+          isTradeable
         }
       }
     }

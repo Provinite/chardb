@@ -492,6 +492,8 @@ export type CreateCurrencyInput = {
   colorId?: InputMaybe<Scalars['ID']['input']>;
   communityId: Scalars['ID']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
+  /** Whether members may hand this to each other. Defaults to true, which is what a currency normally is. */
+  isTradeable?: InputMaybe<Scalars['Boolean']['input']>;
   name: Scalars['String']['input'];
   symbol?: InputMaybe<Scalars['String']['input']>;
 };
@@ -696,7 +698,7 @@ export type CreateTraitListEntryInput = {
 /** A community-defined unit of account. A community may define any number of them; they never convert into one another and never leave their community. */
 export type Currency = {
   __typename?: 'Currency';
-  /** When set, the currency takes no new transactions. Existing balances and statements stay readable -- deleting it would destroy the history of everything ever bought with it. */
+  /** When set, the currency takes no new transactions. Existing balances and statements stay readable -- deleting it would destroy the history of everything ever bought with it. Distinct from isTradeable, which leaves the currency fully alive to everyone but its own holders. */
   archivedAt: Maybe<Scalars['DateTime']['output']>;
   /** Short display code, unique within the community: "HC". */
   code: Scalars['String']['output'];
@@ -705,6 +707,8 @@ export type Currency = {
   createdAt: Scalars['DateTime']['output'];
   description: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  /** Whether members may hand this to each other, by trade or by a direct send. Staff grants, shop purchases and refunds are unaffected: an untradeable currency is still earned and still spent, it just cannot move sideways. */
+  isTradeable: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   /** Glyph rendered before the amount. Readers should fall back to the code when this is null. */
   symbol: Maybe<Scalars['String']['output']>;
@@ -3891,6 +3895,8 @@ export type UpdateCurrencyInput = {
   code?: InputMaybe<Scalars['String']['input']>;
   colorId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  /** Whether members may hand this to each other, by trade or by a direct send. Turning it off leaves every existing balance alone and stops only new movement between members. */
+  isTradeable?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   symbol?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4476,9 +4482,9 @@ export type DeleteCommunityColorMutationVariables = Exact<{
 
 export type DeleteCommunityColorMutation = { __typename?: 'Mutation', deleteCommunityColor: boolean };
 
-export type CurrencyFieldsFragment = { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string };
+export type CurrencyFieldsFragment = { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string };
 
-export type CurrencyTransactionFieldsFragment = { __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, source: CurrencyTransactionSource, sourceId: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
+export type CurrencyTransactionFieldsFragment = { __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, source: CurrencyTransactionSource, sourceId: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
 
 export type GetCurrenciesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -4486,14 +4492,14 @@ export type GetCurrenciesQueryVariables = Exact<{
 }>;
 
 
-export type GetCurrenciesQuery = { __typename?: 'Query', currencies: Array<{ __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string }> };
+export type GetCurrenciesQuery = { __typename?: 'Query', currencies: Array<{ __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string }> };
 
 export type GetCurrencySupplyQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
 }>;
 
 
-export type GetCurrencySupplyQuery = { __typename?: 'Query', currencySupply: Array<{ __typename?: 'CurrencySupply', inCirculation: number, holders: number, mintedLast30Days: number, removedLast30Days: number, largestBalance: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> };
+export type GetCurrencySupplyQuery = { __typename?: 'Query', currencySupply: Array<{ __typename?: 'CurrencySupply', inCirculation: number, holders: number, mintedLast30Days: number, removedLast30Days: number, largestBalance: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }> };
 
 export type GetMemberWalletQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -4501,14 +4507,14 @@ export type GetMemberWalletQueryVariables = Exact<{
 }>;
 
 
-export type GetMemberWalletQuery = { __typename?: 'Query', memberWallet: { __typename?: 'MemberWallet', userId: string, communityId: string, balances: Array<{ __typename?: 'CurrencyBalanceLine', amount: number, updatedAt: string | null, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> } };
+export type GetMemberWalletQuery = { __typename?: 'Query', memberWallet: { __typename?: 'MemberWallet', userId: string, communityId: string, balances: Array<{ __typename?: 'CurrencyBalanceLine', amount: number, updatedAt: string | null, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }> } };
 
 export type GetCurrencyTransactionsQueryVariables = Exact<{
   filters: CurrencyTransactionFiltersInput;
 }>;
 
 
-export type GetCurrencyTransactionsQuery = { __typename?: 'Query', currencyTransactions: { __typename?: 'CurrencyTransactionConnection', total: number, hasMore: boolean, transactions: Array<{ __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, source: CurrencyTransactionSource, sourceId: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
+export type GetCurrencyTransactionsQuery = { __typename?: 'Query', currencyTransactions: { __typename?: 'CurrencyTransactionConnection', total: number, hasMore: boolean, transactions: Array<{ __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, source: CurrencyTransactionSource, sourceId: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
 
 export type GetCurrencyHoldersQueryVariables = Exact<{
   currencyId: Scalars['ID']['input'];
@@ -4517,14 +4523,14 @@ export type GetCurrencyHoldersQueryVariables = Exact<{
 }>;
 
 
-export type GetCurrencyHoldersQuery = { __typename?: 'Query', currencyHolders: Array<{ __typename?: 'CurrencyBalance', id: string, userId: string, amount: number, updatedAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+export type GetCurrencyHoldersQuery = { __typename?: 'Query', currencyHolders: Array<{ __typename?: 'CurrencyBalance', id: string, userId: string, amount: number, updatedAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type CreateCurrencyMutationVariables = Exact<{
   input: CreateCurrencyInput;
 }>;
 
 
-export type CreateCurrencyMutation = { __typename?: 'Mutation', createCurrency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } };
+export type CreateCurrencyMutation = { __typename?: 'Mutation', createCurrency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } };
 
 export type UpdateCurrencyMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4532,7 +4538,7 @@ export type UpdateCurrencyMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCurrencyMutation = { __typename?: 'Mutation', updateCurrency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } };
+export type UpdateCurrencyMutation = { __typename?: 'Mutation', updateCurrency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } };
 
 export type MintCurrencyMutationVariables = Exact<{
   input: MintCurrencyInput;
@@ -5161,9 +5167,9 @@ export type UpdateCommunityMemberMutationVariables = Exact<{
 
 export type UpdateCommunityMemberMutation = { __typename?: 'Mutation', updateCommunityMember: { __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } } };
 
-export type ShopPriceFieldsFragment = { __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> };
+export type ShopPriceFieldsFragment = { __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }> };
 
-export type ShopItemFieldsFragment = { __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> };
+export type ShopItemFieldsFragment = { __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> };
 
 export type GetShopItemsQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5171,14 +5177,14 @@ export type GetShopItemsQueryVariables = Exact<{
 }>;
 
 
-export type GetShopItemsQuery = { __typename?: 'Query', shopItems: Array<{ __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> }> };
+export type GetShopItemsQuery = { __typename?: 'Query', shopItems: Array<{ __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> }> };
 
 export type GetMyShopPurchasesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
 }>;
 
 
-export type GetMyShopPurchasesQuery = { __typename?: 'Query', myShopPurchases: Array<{ __typename?: 'ShopPurchase', id: string, createdAt: string, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, createdAt: string, refundedAt: string | null, refundableByViewer: boolean, refundBlockedReason: string | null, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null, itemType: { __typename?: 'ItemType', id: string, name: string } } }> }> };
+export type GetMyShopPurchasesQuery = { __typename?: 'Query', myShopPurchases: Array<{ __typename?: 'ShopPurchase', id: string, createdAt: string, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, createdAt: string, refundedAt: string | null, refundableByViewer: boolean, refundBlockedReason: string | null, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null, itemType: { __typename?: 'ItemType', id: string, name: string } } }> }> };
 
 export type GetCommunityShopPurchasesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5187,14 +5193,14 @@ export type GetCommunityShopPurchasesQueryVariables = Exact<{
 }>;
 
 
-export type GetCommunityShopPurchasesQuery = { __typename?: 'Query', communityShopPurchases: Array<{ __typename?: 'ShopPurchase', id: string, createdAt: string, buyerId: string, buyer: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, createdAt: string, refundedAt: string | null, refundableByViewer: boolean, refundBlockedReason: string | null, refundedBy: { __typename?: 'User', id: string, username: string } | null, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null, itemType: { __typename?: 'ItemType', id: string, name: string } } }> }> };
+export type GetCommunityShopPurchasesQuery = { __typename?: 'Query', communityShopPurchases: Array<{ __typename?: 'ShopPurchase', id: string, createdAt: string, buyerId: string, buyer: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, createdAt: string, refundedAt: string | null, refundableByViewer: boolean, refundBlockedReason: string | null, refundedBy: { __typename?: 'User', id: string, username: string } | null, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null, itemType: { __typename?: 'ItemType', id: string, name: string } } }> }> };
 
 export type CheckoutMutationVariables = Exact<{
   input: CheckoutInput;
 }>;
 
 
-export type CheckoutMutation = { __typename?: 'Mutation', checkout: { __typename?: 'ShopPurchase', id: string, createdAt: string, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null } }> } };
+export type CheckoutMutation = { __typename?: 'Mutation', checkout: { __typename?: 'ShopPurchase', id: string, createdAt: string, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null } }> } };
 
 export type RefundShopPurchaseLineMutationVariables = Exact<{
   lineId: Scalars['ID']['input'];
@@ -5208,7 +5214,7 @@ export type CreateShopItemMutationVariables = Exact<{
 }>;
 
 
-export type CreateShopItemMutation = { __typename?: 'Mutation', createShopItem: { __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> } };
+export type CreateShopItemMutation = { __typename?: 'Mutation', createShopItem: { __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> } };
 
 export type UpdateShopItemMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5216,7 +5222,7 @@ export type UpdateShopItemMutationVariables = Exact<{
 }>;
 
 
-export type UpdateShopItemMutation = { __typename?: 'Mutation', updateShopItem: { __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> } };
+export type UpdateShopItemMutation = { __typename?: 'Mutation', updateShopItem: { __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> } };
 
 export type UserWithAvatarFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
@@ -5476,7 +5482,7 @@ export type TradeComposerQueryVariables = Exact<{
 }>;
 
 
-export type TradeComposerQuery = { __typename?: 'Query', mine: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean }, items: Array<{ __typename?: 'Item', id: string }> }> }, theirs: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean } }> }, wallet: { __typename?: 'MemberWallet', balances: Array<{ __typename?: 'CurrencyBalanceLine', amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null, archivedAt: string | null } }> } };
+export type TradeComposerQuery = { __typename?: 'Query', mine: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean }, items: Array<{ __typename?: 'Item', id: string }> }> }, theirs: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean } }> }, wallet: { __typename?: 'MemberWallet', balances: Array<{ __typename?: 'CurrencyBalanceLine', amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null, archivedAt: string | null, isTradeable: boolean } }> } };
 
 export type ProposeTradeMutationVariables = Exact<{
   input: CreateTradeInput;
@@ -5656,6 +5662,7 @@ export const CurrencyFieldsFragmentDoc = gql`
   symbol
   description
   colorId
+  isTradeable
   archivedAt
   createdAt
   updatedAt
@@ -14245,6 +14252,7 @@ export const TradeComposerDocument = gql`
         code
         symbol
         archivedAt
+        isTradeable
       }
     }
   }
