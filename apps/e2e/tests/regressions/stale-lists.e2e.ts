@@ -86,9 +86,9 @@ test("the shop listing form offers an item type created elsewhere", async ({
   await clickTo(page, "/admin/shop");
 
   await page.getByRole("button", { name: "New listing" }).click();
-  await expect(
-    page.getByRole("combobox", { name: /Item type/ }),
-  ).toContainText("Tidecaller Shell");
+  await expect(page.getByRole("combobox", { name: /Item type/ })).toContainText(
+    "Tidecaller Shell",
+  );
 });
 
 test("the shop listing form offers a currency created elsewhere", async ({
