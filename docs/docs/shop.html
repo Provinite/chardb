@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Coin Shop - Feature Walkthrough</title>
+    <meta name="description" content="Communities can sell items for their own currency. Several ways to pay, a cart, stock and per-member limits, and a fifteen-minute undo on every purchase." />
+    <link rel="canonical" href="https://provinite.github.io/chardb/docs/shop.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Coin Shop" />
+    <meta property="og:description" content="Communities can sell items for their own currency. Several ways to pay, a cart, stock and per-member limits, and a fifteen-minute undo on every purchase." />
+    <meta property="og:url" content="https://provinite.github.io/chardb/docs/shop.html" />
+    <meta property="og:image" content="https://provinite.github.io/chardb/docs/shop-storefront.png" />
+    <meta property="og:image:alt" content="The CharDB coin shop storefront showing two listings, their prices, a wallet balance, and a cart." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .dim {
+        color: #8b93c7;
+      }
+
+      .kinds {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      .kinds th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid #e0e0e0;
+        color: #333;
+      }
+
+      .kinds td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+        color: #555;
+        vertical-align: top;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.55rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .pill.granted {
+        color: #0e7c56;
+        background: #0e9f6e22;
+      }
+      .pill.revoked {
+        color: #b91c1c;
+        background: #dc262622;
+      }
+      .pill.traded {
+        color: #0e7490;
+        background: #0891b222;
+      }
+      .pill.claimed {
+        color: #a16207;
+        background: #d9770622;
+      }
+      .pill.used,
+      .pill.imported {
+        color: #52606d;
+        background: #64748b22;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Coin Shop</h1>
+        <p>Sell items for the currency your community already issues</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A community shop turns
+            <a href="currency.html">currency</a> back into
+            <a href="item-ledger.html">items</a>. Staff list what is for sale
+            and what it costs; members spend what they have earned. Buying
+            grants a <strong>real item</strong> — the same kind staff grant by
+            hand, with its own row in the item ledger and its own history.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">🏷️</div>
+              <h4>Several ways to pay</h4>
+              <p>One listing, many price options</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🛒</div>
+              <h4>A cart</h4>
+              <p>Buy several things in one go</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">↩️</div>
+              <h4>Fifteen-minute undo</h4>
+              <p>Members fix their own misclicks</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🔒</div>
+              <h4>Stock and caps</h4>
+              <p>Limited runs, one per member</p>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <strong>Nothing is deducted twice.</strong> Stock, coin, and the
+            granted item all move in a single transaction. A purchase that
+            charged and granted nothing, or granted without charging, is worse
+            than one that fails and is tried again — so a shop that runs out
+            mid-checkout takes nothing at all.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Listing something for sale</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Shop</strong> under <strong>Administration</strong> is where
+            staff define listings. It needs
+            <code>canManageItems</code> — the same permission as creating item
+            types, because a listing is a promise to grant one.
+          </p>
+          <div class="screenshot">
+            <img
+              src="shop-admin-empty.png"
+              alt="The shop administration page for a community with no listings yet"
+            />
+            <div class="screenshot-caption">
+              A community that has not listed anything yet.
+            </div>
+          </div>
+          <p>
+            A listing points at an <strong>item type</strong> that already
+            exists. Everything else is optional: a display name and description
+            if the shop should say something the item type does not,
+            <strong>stock</strong> if the run is limited, and a
+            <strong>limit per member</strong> if one person should not take them
+            all.
+          </p>
+          <div class="highlight-box">
+            <strong>Stock and per-member limits are different things.</strong>
+            Stock is how many exist to sell. A per-member limit is how many one
+            member may hold at once — and it counts what they
+            <em>have</em>, not how many times they have clicked buy, so undoing
+            a purchase gives the allowance back.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Prices: options, and what is in them</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A listing has one or more <strong>price options</strong>. Each
+            option is one complete way to pay, and a buyer picks exactly one.
+            An option can ask for <strong>several currencies at once</strong>.
+          </p>
+          <div class="example">
+            Trait Change Potion<br />
+            <span class="dim">Option 1 &mdash;</span> 50 Hollow Coin<br />
+            <span class="dim">Option 2 &mdash;</span> 20 Hollow Coin
+            <em>and</em> 1 Star Shard
+          </div>
+          <p>
+            Those are two ways to buy the same potion, not two potions. The
+            editor keeps the distinction in its two buttons:
+            <strong>Another way to pay</strong> adds an option;
+            <strong>and another currency</strong> adds a second currency inside
+            the option you are already editing.
+          </p>
+          <div class="screenshot">
+            <img
+              src="shop-price-editor.png"
+              alt="The new listing dialog with two price options: 50 Hollow Coin, and 20 Hollow Coin plus 1 Star Shard"
+            />
+            <div class="screenshot-caption">
+              One listing, two ways to pay for it. The second option asks for
+              two currencies together.
+            </div>
+          </div>
+          <div class="screenshot">
+            <img
+              src="shop-admin-listings.png"
+              alt="The shop administration table showing two listings with their prices, stock, and per-member limits"
+            />
+            <div class="screenshot-caption">
+              Both listings. The potion is unlimited but capped at three per
+              member; the locket has a run of two and no cap.
+            </div>
+          </div>
+          <div class="highlight-box">
+            <strong>Editing a price never changes what was already paid.</strong>
+            The amounts are copied onto the purchase when it happens. Put a
+            listing on sale next week and last week's refunds still return last
+            week's price.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">The storefront</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Members see <strong>Shop</strong> under
+            <strong>Community</strong>. Every listing shows its options, what
+            the buyer already holds, and how much of any per-member limit they
+            have used.
+          </p>
+          <div class="screenshot">
+            <img
+              src="shop-storefront.png"
+              alt="The member shop showing two listings, their price options, a wallet balance of 325 Hollow Coin and 2 Star Shard, and an empty cart"
+            />
+            <div class="screenshot-caption">
+              The buyer's balance sits in the header, so the prices next to it
+              mean something without a trip to the wallet.
+            </div>
+          </div>
+          <p>
+            Options a member cannot afford are <strong>dimmed, not hidden</strong>.
+            A price you cannot pay yet is information — it tells you what to go
+            and earn. Hiding it just makes the shop look smaller than it is.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">The cart, and confirming</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Adding to the cart picks <strong>the listing and the option</strong>.
+            Two of the same item bought at different options stay on separate
+            lines, because they are genuinely different purchases.
+          </p>
+          <div class="screenshot">
+            <img
+              src="shop-cart.png"
+              alt="The cart holding two Trait Change Potions at 20 Hollow Coin plus 1 Star Shard each and one Heirloom Locket at 120 Hollow Coin, totalling 160 Hollow Coin and 2 Star Shard"
+            />
+            <div class="screenshot-caption">
+              Totals stay per currency. ⬡160 <em>and</em> ✦2 — never added
+              together into a single number, because they are not the same
+              thing.
+            </div>
+          </div>
+          <p>
+            Buying always asks first, and the confirmation says exactly what
+            will be spent.
+          </p>
+          <div class="screenshot">
+            <img
+              src="shop-confirm.png"
+              alt="A confirmation dialog reading Buy 3 things, itemising two potions and one locket, and stating the total spend"
+            />
+            <div class="screenshot-caption">
+              The last chance to read the total before any coin moves.
+            </div>
+          </div>
+          <div class="highlight-box">
+            <strong>The cart never decides the price.</strong> It records which
+            option you picked; the amounts are read from the database at
+            checkout. Affordability shown on the page is advisory — the
+            purchase itself is what decides, so a balance that changed a second
+            ago cannot be spent twice.
+          </div>
+          <div class="screenshot">
+            <img
+              src="shop-cannot-afford.png"
+              alt="A shop purchase refused with the message You cannot afford that"
+            />
+            <div class="screenshot-caption">
+              Refused at checkout, with nothing taken.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">What a purchase leaves behind</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The coin comes off the balance, the items land in the inventory, and
+            every unit bought becomes its own line under
+            <strong>Recent purchases</strong>.
+          </p>
+          <div class="screenshot">
+            <img
+              src="shop-bought.png"
+              alt="The shop after buying, with the balance reduced, the locket down to one left, and three purchase lines each with an Undo button"
+            />
+            <div class="screenshot-caption">
+              Three units bought, three lines. Each one can be undone on its
+              own.
+            </div>
+          </div>
+          <div class="screenshot">
+            <img
+              src="shop-inventory.png"
+              alt="The member inventory showing three Trait Change Potions and one Heirloom Locket alongside the remaining currency balance"
+            />
+            <div class="screenshot-caption">
+              Bought items are ordinary items — tradeable, usable, and visible
+              in the item ledger like any other.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">Undo, for fifteen minutes</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A buyer can undo their own purchase for
+            <strong>fifteen minutes</strong>. The item is taken back, the stock
+            goes up, and the coin returns.
+          </p>
+          <div class="screenshot">
+            <img
+              src="shop-undo.png"
+              alt="A refunded purchase line marked refunded, with the balance restored and the locket back to two left"
+            />
+            <div class="screenshot-caption">
+              The coin is back, the locket is back on the shelf, and the line
+              is marked refunded rather than removed.
+            </div>
+          </div>
+          <p>
+            It is deliberately short. This is an undo button for the wrong
+            click, not a returns policy — past the window the item has had time
+            to be traded, used, or shown to somebody. After that a moderator can
+            still refund it, and the page says so instead of leaving the buyer
+            guessing.
+          </p>
+          <div class="highlight-box">
+            <strong>Some purchases cannot be undone at all.</strong> If the item
+            has been used, destroyed, or traded away, there is nothing to give
+            back. The button explains which of those applies rather than simply
+            failing.
+          </div>
+          <p>
+            Staff have their own list, under
+            <strong>Shop Purchases</strong> in the Administration section:
+            everyone's purchases, newest first, with a refund button that is
+            not bound by the fifteen minutes. It needs
+            <code>canGrantItems</code> — the permission that already means
+            "may move items and coin on somebody else's behalf".
+          </p>
+          <div class="screenshot">
+            <img
+              src="shop-staff-purchases.png"
+              alt="The staff shop purchases page listing each member's purchases with refund buttons, and refunded lines naming who refunded them"
+            />
+            <div class="screenshot-caption">
+              Refunded lines stay on the list and say who refunded them. A page
+              that hid them could not answer "has someone already dealt with
+              this?"
+            </div>
+          </div>
+          <div class="highlight-box">
+            <strong>The reasons staff cannot override are the real ones.</strong>
+            The undo window and "this is not your purchase" are the buyer's
+            limits and do not apply here. An item that has been used,
+            destroyed, or traded still cannot come back for anybody — and
+            neither can coin belonging to somebody who has since left the
+            community, so that refund is refused rather than taking the item
+            and giving nothing back.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <h2 class="step-title">Running out, and hitting the cap</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A listing with stock stops selling when it reaches zero. It stays on
+            the page, marked sold out, rather than disappearing — a listing that
+            vanishes looks like it never existed.
+          </p>
+          <div class="screenshot">
+            <img
+              src="shop-soldout.png"
+              alt="The Heirloom Locket listing dimmed and marked Sold out, with its price option disabled"
+            />
+            <div class="screenshot-caption">
+              Sold out. Refunding one puts it straight back on sale.
+            </div>
+          </div>
+          <p>
+            A per-member limit works the same way, but only for the member who
+            reached it.
+          </p>
+          <div class="screenshot">
+            <img
+              src="shop-cap.png"
+              alt="The Trait Change Potion listing showing 3 of 3 bought with both price options disabled and the note You have all you may have"
+            />
+            <div class="screenshot-caption">
+              Three of three. Everyone else can still buy it.
+            </div>
+          </div>
+          <div class="highlight-box">
+            <strong>The last one goes to one buyer.</strong> Two members
+            clicking buy on the final unit at the same moment do not both get
+            it. The database refuses the second decrement outright rather than
+            the shop checking stock and hoping nothing changed in between.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 8 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">8</div>
+          <h2 class="step-title">What the ledger says afterwards</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Every purchase and every refund is a line in the community's
+            <a href="currency.html">currency ledger</a>, readable by any member.
+          </p>
+          <div class="screenshot">
+            <img
+              src="shop-ledger.png"
+              alt="The community currency ledger showing shop purchases as spends and refunds as grants, alongside staff grants"
+            />
+            <div class="screenshot-caption">
+              Spends and refunds sit side by side with the grants that funded
+              them.
+            </div>
+          </div>
+          <p>
+            A refund is <strong>a new line, not an edit</strong>. The original
+            spend stays exactly where it was and the returned coin appears
+            underneath it. The history reads as two things that happened, which
+            is what did happen — a ledger that quietly rewrote itself would be
+            no use in the argument it exists to settle.
+          </p>
+          <p>
+            One cart is <strong>one spend per currency</strong>, not one per
+            item. Buying three things at once reads as a single purchase,
+            because that is how the buyer experienced it.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Coin Shop &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>

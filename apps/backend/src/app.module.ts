@@ -39,6 +39,7 @@ import { ExternalAccountsModule } from "./external-accounts/external-accounts.mo
 import { ItemsModule } from "./items/items.module";
 import { ItemTransactionsModule } from "./item-transactions/item-transactions.module";
 import { CurrenciesModule } from "./currencies/currencies.module";
+import { ShopModule } from "./shop/shop.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { TradesModule } from "./trades/trades.module";
 import { CommunityColorsModule } from "./community-colors/community-colors.module";
@@ -263,6 +264,7 @@ import { Request, Response } from "express";
     ItemsModule,
     ItemTransactionsModule,
     CurrenciesModule,
+    ShopModule,
     NotificationsModule,
     TradesModule,
     CommunityColorsModule,

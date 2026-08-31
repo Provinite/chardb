@@ -1,11 +1,16 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
 import { ItemsService } from "./items.service";
+import type { DbClient } from "../item-transactions/item-transactions.service";
 import { DatabaseService } from "../database/database.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
 import { DiscordService } from "../discord/discord.service";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
-import { ItemTransactionKind } from "@chardb/database";
+import { ItemTransactionKind, NotificationKind } from "@chardb/database";
 import {
   mockDatabaseService,
   mockNotificationsService,
@@ -177,6 +182,60 @@ describe("ItemsService", () => {
       );
     });
 
+    it("sends one notification for the whole grant", async () => {
+      await service.grantItem({
+        itemTypeId: "type1",
+        userId: "user1",
+        quantity: 3,
+        actor,
+      });
+
+      expect(mockNotificationsService.create).toHaveBeenCalledTimes(1);
+      const [payload] = mockNotificationsService.create.mock.calls[0] as [
+        {
+          recipientId: string;
+          kind: NotificationKind;
+          data: { count: number };
+        },
+      ];
+      expect(payload.recipientId).toBe("user1");
+      expect(payload.kind).toBe(NotificationKind.ITEM_GRANTED);
+      expect(payload.data.count).toBe(3);
+    });
+
+    it("says nothing for a grant still awaiting a claim", async () => {
+      // There is no one to tell until the CLAIM names an owner.
+      mockPendingOwnershipService.checkIfAccountClaimed.mockResolvedValue(null);
+      mockDiscordService.validateUserId.mockResolvedValue(true);
+
+      await service.grantItem({
+        itemTypeId: "type1",
+        quantity: 1,
+        pendingOwner: {
+          provider: "DISCORD",
+          providerAccountId: "214000000000009071",
+        },
+        actor,
+      });
+
+      expect(mockNotificationsService.create).not.toHaveBeenCalled();
+    });
+
+    it("createGranted itself notifies nobody", async () => {
+      // The notification belongs to grantItem, not to the shared core. A shop
+      // purchase grants through createGranted, and telling buyers they have
+      // received the thing they just bought is noise.
+      await service.createGranted(mockDatabaseService as unknown as DbClient, {
+        itemTypeId: "type1",
+        communityId: "comm1",
+        ownerId: "user1",
+        quantity: 1,
+        actor,
+      });
+
+      expect(mockNotificationsService.create).not.toHaveBeenCalled();
+    });
+
     it("refuses a grant with neither an owner nor a pending owner", async () => {
       await expect(
         service.grantItem({ itemTypeId: "type1", quantity: 1, actor }),
@@ -223,6 +282,12 @@ describe("ItemsService", () => {
   });
 
   describe("revokeItems", () => {
+    /** Every named row still matched when the UPDATE ran. */
+    const allMatched = (ids: string[]) =>
+      mockDatabaseService.item.updateMany.mockResolvedValue({
+        count: ids.length,
+      });
+
     const liveItems = [
       {
         id: "i1",
@@ -246,6 +311,7 @@ describe("ItemsService", () => {
 
     it("destroys softly, so provenance outlives the item", async () => {
       mockDatabaseService.item.findMany.mockResolvedValue(liveItems);
+      allMatched(["i1", "i2"]);
 
       await service.revokeItems(["i1", "i2"], actor);
 
@@ -259,6 +325,7 @@ describe("ItemsService", () => {
 
     it("records one REVOKE batch naming the former owner", async () => {
       mockDatabaseService.item.findMany.mockResolvedValue(liveItems);
+      allMatched(["i1", "i2"]);
 
       await service.revokeItems(["i1", "i2"], actor);
 
@@ -307,6 +374,103 @@ describe("ItemsService", () => {
       await expect(service.revokeItems([], actor)).rejects.toThrow(
         BadRequestException,
       );
+    });
+
+    it("re-checks in the UPDATE rather than trusting the read", async () => {
+      // The read said both were live; by the time the UPDATE ran, one was
+      // not. Reading and then writing would have destroyed the other anyway
+      // and recorded a ledger row for both.
+      mockDatabaseService.item.findMany.mockResolvedValue(liveItems);
+      mockDatabaseService.item.updateMany.mockResolvedValue({ count: 1 });
+
+      await expect(service.revokeItems(["i1", "i2"], actor)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(mockItemTransactions.recordBatch).not.toHaveBeenCalled();
+    });
+
+    it("scopes the destroy to an expected owner when given one", async () => {
+      // A refund may only take back what the buyer still holds. Naming the
+      // owner in the UPDATE is what makes a trade landing mid-refund lose the
+      // race rather than cost the new owner their item.
+      mockDatabaseService.item.findMany.mockResolvedValue([liveItems[0]]);
+      allMatched(["i1"]);
+
+      await service.destroyItems(
+        // The mock stands in for a transaction client; it implements the
+        // handful of models this touches rather than the whole interface.
+        mockDatabaseService as unknown as DbClient,
+        ["i1"],
+        actor,
+        undefined,
+        null,
+        "user1",
+      );
+
+      const call = mockDatabaseService.item.updateMany.mock.calls[0][0] as {
+        where: { ownerId?: string; destroyedAt: null };
+      };
+      expect(call.where.ownerId).toBe("user1");
+      expect(call.where.destroyedAt).toBeNull();
+    });
+
+    it("tells the former owner that staff took it", async () => {
+      mockDatabaseService.item.findMany.mockResolvedValue(liveItems);
+      allMatched(["i1", "i2"]);
+
+      await service.revokeItems(["i1", "i2"], actor);
+
+      expect(mockNotificationsService.create).toHaveBeenCalledTimes(1);
+      const [payload] = mockNotificationsService.create.mock.calls[0] as [
+        {
+          recipientId: string;
+          kind: NotificationKind;
+          data: { count: number; reason: string | null };
+        },
+      ];
+      expect(payload.recipientId).toBe("user1");
+      expect(payload.kind).toBe(NotificationKind.ITEM_REVOKED);
+      // One notification for the whole revoke, matching the single ledger
+      // event, rather than one per item.
+      expect(payload.data.count).toBe(2);
+      expect(payload.data.reason).toBe("Prompt completion");
+    });
+
+    it("says nothing when the owner did it to themselves", async () => {
+      // A member undoing their own shop purchase does not need telling that
+      // their item was taken away. They are the one who took it.
+      mockDatabaseService.item.findMany.mockResolvedValue(liveItems);
+      allMatched(["i1", "i2"]);
+
+      await service.revokeItems(["i1", "i2"], {
+        actorUserId: "user1",
+        reason: "Shop purchase refunded",
+      });
+
+      expect(mockNotificationsService.create).not.toHaveBeenCalled();
+    });
+
+    it("says nothing about an item nobody holds yet", async () => {
+      mockDatabaseService.item.findMany.mockResolvedValue([
+        { ...liveItems[0], ownerId: null },
+      ]);
+      allMatched(["i1"]);
+
+      await service.revokeItems(["i1"], actor);
+
+      expect(mockNotificationsService.create).not.toHaveBeenCalled();
+    });
+
+    it("leaves the owner unconstrained when none is expected", async () => {
+      mockDatabaseService.item.findMany.mockResolvedValue([liveItems[0]]);
+      allMatched(["i1"]);
+
+      await service.revokeItems(["i1"], actor);
+
+      const call = mockDatabaseService.item.updateMany.mock.calls[0][0] as {
+        where: { ownerId?: string };
+      };
+      expect(call.where.ownerId).toBeUndefined();
     });
   });
 

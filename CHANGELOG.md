@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Product walkthrough for trading** (`docs/docs/trading.html`).
 
+## [v11.4.0] - 2026-08-30
+
+### Added
+
+- **Coin shop.** Communities can sell items for the currency they already
+  issue, documented in a new **Coin Shop** walkthrough.
+
 - **Product walkthrough for notifications** on the docs site
   (`docs/docs/notifications.html`), with screenshots taken by driving a real
   follow, comment and currency grant through a running instance.

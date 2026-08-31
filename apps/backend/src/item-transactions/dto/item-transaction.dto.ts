@@ -10,7 +10,7 @@ import {
   Max,
   MaxLength,
 } from "class-validator";
-import { ItemTransactionKind } from "@chardb/database";
+import { ItemTransactionKind, ItemTransactionSource } from "@chardb/database";
 
 @InputType()
 export class ItemTransactionFiltersInput {
@@ -107,4 +107,12 @@ export interface RecordItemBatchInput {
   actorLabel?: string | null;
   reason?: string | null;
   staffNote?: string | null;
+  /**
+   * What caused this batch, when something other than a person did.
+   *
+   * The pair is enforced by a CHECK constraint: DIRECT exactly when sourceId
+   * is null.
+   */
+  source?: ItemTransactionSource;
+  sourceId?: string | null;
 }

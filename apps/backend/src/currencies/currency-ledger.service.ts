@@ -69,6 +69,11 @@ export interface CreditOptions {
    */
   source?: CurrencyTransactionSource;
   sourceId?: string | null;
+  /**
+   * Share one batch id across several credits that are really one event --
+   * a refund returning two different currencies is one refund.
+   */
+  batchId?: string;
   /** Join the caller's transaction so the credit commits with whatever caused it. */
   tx?: Prisma.TransactionClient;
   /**
@@ -79,6 +84,24 @@ export interface CreditOptions {
    * has since left the community.
    */
   skipNonMembers?: boolean;
+}
+
+/** One currency and how much of it a single event moves. */
+export interface CurrencyAmount {
+  currencyId: string;
+  amount: number;
+}
+
+export interface DebitOptions {
+  userId: string;
+  /** Positive amounts. Several currencies is one price, not several prices. */
+  amounts: CurrencyAmount[];
+  reason: string;
+  source?: CurrencyTransactionSource;
+  sourceId?: string | null;
+  /** Share one batch id across several debits that are really one event. */
+  batchId?: string;
+  tx?: Prisma.TransactionClient;
 }
 
 export interface CreditResult {
@@ -272,7 +295,7 @@ export class CurrencyLedgerService {
       await this.assertMembers(read, currency.communityId, requested);
     }
 
-    const batchId = randomUUID();
+    const batchId = options.batchId ?? randomUUID();
     if (userIds.length === 0) {
       return { batchId, paid: [], skipped };
     }
@@ -536,11 +559,83 @@ export class CurrencyLedgerService {
   }
 
   /**
+   * Spend several currencies at once, as one event.
+   *
+   * A shop price can ask for two Clover *and* one Star, and that is a single
+   * purchase rather than two unrelated spends. Every row shares a batch id so
+   * a member's statement collapses it back into the one thing that happened.
+   *
+   * Currencies are touched in a fixed order for the same reason recipients
+   * are elsewhere: two concurrent checkouts over overlapping currencies would
+   * otherwise take the same balance row locks in different orders.
+   */
+  async debit(options: DebitOptions): Promise<string> {
+    const {
+      userId,
+      reason,
+      source = CurrencyTransactionSource.DIRECT,
+      sourceId = null,
+      tx,
+    } = options;
+
+    const amounts = [...options.amounts]
+      .filter((a) => a.amount > 0)
+      .sort((a, b) => (a.currencyId < b.currencyId ? -1 : 1));
+    const batchId = options.batchId ?? randomUUID();
+    if (amounts.length === 0) return batchId;
+
+    const run = async (c: DbClient) => {
+      for (const { currencyId, amount } of amounts) {
+        const currency = await this.loadWritableCurrency(c, currencyId);
+        await this.ensureBalanceRows(c, currency.id, [userId]);
+        const balanceAfter = await this.applyDelta(
+          c,
+          currency.id,
+          userId,
+          -amount,
+        );
+        await c.currencyTransaction.create({
+          data: {
+            currencyId: currency.id,
+            userId,
+            kind: CurrencyTransactionKind.SPEND,
+            amount: -amount,
+            balanceAfter,
+            batchId,
+            actorUserId: userId,
+            reason,
+            source,
+            sourceId,
+          },
+        });
+      }
+    };
+
+    try {
+      if (tx) {
+        await run(tx);
+      } else {
+        await this.db.$transaction(run);
+      }
+    } catch (error) {
+      if (isOverdraft(error)) {
+        // Which currency ran out is deliberately not named: the caller knows
+        // the whole price and can say "you need 2 more Clover" far better
+        // than this can.
+        throw new ConflictException("You cannot afford that");
+      }
+      throw error;
+    }
+    return batchId;
+  }
+
+  /**
    * Burn coin at a sink -- a shop purchase, an entry fee.
    *
-   * Deliberately separate from {@link burn}: a member spending their own coin
-   * and staff taking it away are different events, and collapsing them would
-   * make a shop look like a punishment in the member's own statement.
+   * The single-currency form of {@link debit}, which is where the mechanics
+   * live. Deliberately separate from {@link burn}: a member spending their own
+   * coin and staff taking it away are different events, and collapsing them
+   * would make a shop look like a punishment in the member's own statement.
    *
    * Currency spent leaves circulation entirely. There is no treasury to
    * receive it, because a treasury balance nobody can see or spend is a number
@@ -556,49 +651,12 @@ export class CurrencyLedgerService {
     if (amount <= 0) {
       throw new BadRequestException("Spend amount must be positive");
     }
-
-    const currency = await this.loadWritableCurrency(tx ?? this.db, currencyId);
-
-    const batchId = randomUUID();
-
-    const run = async (client: Prisma.TransactionClient) => {
-      await this.ensureBalanceRows(client, currency.id, [userId]);
-      const balanceAfter = await this.applyDelta(
-        client,
-        currency.id,
-        userId,
-        -amount,
-      );
-      await client.currencyTransaction.create({
-        data: {
-          currencyId: currency.id,
-          userId,
-          kind: CurrencyTransactionKind.SPEND,
-          amount: -amount,
-          balanceAfter,
-          batchId,
-          actorUserId: userId,
-          reason,
-        },
-      });
-    };
-
-    try {
-      if (tx) {
-        await run(tx);
-      } else {
-        await this.db.$transaction(run);
-      }
-    } catch (error) {
-      if (isOverdraft(error)) {
-        throw new ConflictException(
-          `Not enough ${currency.code}: this costs ${amount}`,
-        );
-      }
-      throw error;
-    }
-
-    return batchId;
+    return this.debit({
+      userId,
+      amounts: [{ currencyId, amount }],
+      reason,
+      tx,
+    });
   }
 
   // ==================== Reads ====================

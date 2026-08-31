@@ -69,6 +69,9 @@ import { ToyhouseCallbackPage } from "./pages/ToyhouseCallbackPage";
 import { CommunityItemsAdminPage } from "./pages/CommunityItemsAdminPage";
 import { CommunityCurrenciesAdminPage } from "./pages/CommunityCurrenciesAdminPage";
 import { CommunityCurrencyLedgerPage } from "./pages/CommunityCurrencyLedgerPage";
+import { CommunityShopPage } from "./pages/CommunityShopPage";
+import { CommunityShopAdminPage } from "./pages/CommunityShopAdminPage";
+import { CommunityShopPurchasesPage } from "./pages/CommunityShopPurchasesPage";
 import { CommunityInventoryPage } from "./pages/CommunityInventoryPage";
 import { CommunityItemLedgerPage } from "./pages/CommunityItemLedgerPage";
 import { ItemProvenancePage } from "./pages/ItemProvenancePage";
@@ -475,6 +478,33 @@ function App() {
           element={
             <ProtectedRoute>
               <CommunityCurrencyLedgerPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* The shop members see, and the one staff configure. Separate pages
+            rather than one with a mode: the buying page is a storefront and
+            the admin page is a table, and neither wants to be the other. */}
+        <Route
+          path="/communities/:communityId/shop"
+          element={
+            <ProtectedRoute>
+              <CommunityShopPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/admin/shop"
+          element={
+            <ProtectedRoute>
+              <CommunityShopAdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/admin/shop/purchases"
+          element={
+            <ProtectedRoute>
+              <CommunityShopPurchasesPage />
             </ProtectedRoute>
           }
         />

@@ -32,16 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`CurrencyLedgerService.transfer()`** takes the optional `tx` and `batchId`
   that `credit()` already had, so coin can settle inside a caller's transaction.
 
-- **In-app notifications**: a `Notification` table, the `notifications` and
-  `unseenNotificationCount` queries, and mutations to mark them seen or read.
-  Written by follows, comments, item grants, item revokes and currency credits.
-
-- **`Notification.data` is a validated per-kind snapshot, not loose JSON.** One
-  zod schema per kind is the single source of truth: types are inferred from it
-  and fed to prisma-json-types-generator, so the generated client types the
-  column and a payload is never `any`. Adding a kind without a schema fails to
-  compile.
-
 ### Fixed
 
 - **A trade shortfall named the wrong person.** The ledger phrases it as "You do
@@ -54,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`ItemTransaction.batchSize` counted the whole batch**, so each leg of a
   settlement reported the size of both. It now counts per batch, type and
   direction.
+
+## [v11.4.0] - 2026-08-30
+
+### Fixed
 
 - **`likedMedia` never returned `imageCount` or `textCount`.** Both are non-null
   on `MediaConnection`, so asking for either was an error at runtime. The social
@@ -71,19 +65,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   all. It was hiding a real circular import between the notifications and auth
   modules.
 
-### Security
+- `ShopPurchaseLine.refundedBy` was declared on the entity but never
+  populated, so it resolved to null on every refunded line.
 
-- **An award could mint another community's currency.** `approveImage` checked
-  `canGrantItems` against the *image's* community but passed the caller's
-  `currencyId` through unvalidated, and `credit()` scopes membership to the
-  *currency's* community — where the recipient is a legitimate member. So a
-  moderator of a small community who was merely a member of a large one could
-  approve any image in the small one while naming the large one's currency,
-  and mint it to themselves. The award now verifies the currency belongs to
-  the image's community, and that every recipient is actually connected to the
-  media. Both are covered by tests confirmed to fail against the unfixed code.
+- One checkout may buy at most ten of a listing, counted across lines so the
+  limit cannot be split around.
 
-### Fixed
+- Refunding a buyer who had left the community destroyed their item and
+  returned no coin. It is now refused.
+
+- `destroyItems` re-checks in the UPDATE rather than trusting an earlier read,
+  and a refund names the buyer, so a trade cannot cost a new owner their item.
+
+- Shop mutations returned rows without their per-viewer fields, so any caller
+  selecting them got an error after the write had already committed.
 
 - **`credit()` no longer takes a second pool connection inside a caller's
   transaction.** `loadWritableCurrency`, `findMembers` and `ensureBalanceRows`
@@ -108,6 +103,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now leave it in the database.
 
 ### Added
+
+- **In-app notifications**: a `Notification` table, the `notifications` and
+  `unseenNotificationCount` queries, and mutations to mark them seen or read.
+  Written by follows, comments, item grants, item revokes and currency credits.
+
+- **`Notification.data` is a validated per-kind snapshot, not loose JSON.** One
+  zod schema per kind is the single source of truth: types are inferred from it
+  and fed to prisma-json-types-generator, so the generated client types the
+  column and a payload is never `any`. Adding a kind without a schema fails to
+  compile.
+
+- Coin shop: communities can sell items for their own currency, with several
+  price options per listing, stock and per-member limits, and a fifteen-minute
+  self-serve refund.
+
+- `communityShopPurchases`: every member's purchases, for staff refunding past
+  the buyer's own undo window. Needs `canGrantItems`.
 
 - **`CurrencyTransaction.source` / `.sourceId`**: what caused a ledger row.
   Until now currency had no notion of a cause, so an award could only say
@@ -160,6 +172,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`Community.memberCount`** field resolver, readable unauthenticated like the
   `community` query itself.
+
+### Security
+
+- **An award could mint another community's currency.** `approveImage` checked
+  `canGrantItems` against the *image's* community but passed the caller's
+  `currencyId` through unvalidated, and `credit()` scopes membership to the
+  *currency's* community — where the recipient is a legitimate member. So a
+  moderator of a small community who was merely a member of a large one could
+  approve any image in the small one while naming the large one's currency,
+  and mint it to themselves. The award now verifies the currency belongs to
+  the image's community, and that every recipient is actually connected to the
+  media. Both are covered by tests confirmed to fail against the unfixed code.
 
 ## [v11.3.0] - 2026-08-30
 

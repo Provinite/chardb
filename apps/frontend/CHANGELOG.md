@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Trading**: a composer at `/communities/:id/trades/new`, an inbox at
+  `/trades` covering both offers you sent and offers you received, and an offer
+  page to accept, decline, counter or withdraw. Coin is a price field per side
+  rather than a line on the table; what you offer is specific items, what you
+  ask for is a type and a count.
+
 - **Trades in the sidebar**: the global one links to the whole inbox, a
   community's to `/trades?community=<id>` for that community's offers only.
 
@@ -16,18 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and never offers an archived one — those refuse new transactions, so pricing
   an offer in one is rejected at send.
 
-- **Trading**: a composer at `/communities/:id/trades/new`, an inbox at
-  `/trades` covering both offers you sent and offers you received, and an offer
-  page to accept, decline, counter or withdraw. Coin is a price field per side
-  rather than a line on the table; what you offer is specific items, what you
-  ask for is a type and a count.
-
-- **Notifications**: a bell in the top bar with an unseen count and a dropdown
-  of the most recent few, plus a full feed at `/notifications` with an unread
-  filter. Opening the dropdown clears the badge; a notification stays unread
-  until it is opened.
-
 ### Fixed
+
+- **Counter left you with nothing.** It declined the offer on the button press
+  and opened the composer addressed by username where a user id was expected, so
+  the table came up blank behind a decline that had already gone through.
+  Counter now only opens the composer, seeded from the offer it answers; sending
+  it is what declines the original, and the two happen together.
 
 - **An offer named no item.** A line pinning one specific item read as "1 item",
   because the fragment never asked for that item's type.
@@ -39,22 +40,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Your untradeable holdings crowded the composer.** They collapse to one
   locked line with a count instead of one row per copy.
 
-- **Counter left you with nothing.** It declined the offer on the button press
-  and opened the composer addressed by username where a user id was expected, so
-  the table came up blank behind a decline that had already gone through.
-  Counter now only opens the composer, seeded from the offer it answers; sending
-  it is what declines the original, and the two happen together.
+## [v11.4.0] - 2026-08-30
 
-- **Logging out did not clear the Apollo cache**, so the next person to sign in
-  on the same browser could see the previous user's cached data — their
-  notifications, their `me`, their liked characters — until each query's network
-  reply landed. Found during the security review of the notification work.
+### Added
 
-- **The notification badge showed the previous session's count after signing
-  in.** The header outlives a login, so the bell never remounted and nothing
-  clears the Apollo cache in between — the number stayed stale until the
-  five-minute poll came round, or showed the count belonging to whoever was
-  signed in before.
+- Shop pages: a storefront with a cart, confirmation, and undo for members, and
+  a listings and price editor for staff. The buyer's balance shows in the
+  header so prices mean something without opening the wallet.
+
+- **Shop Purchases** (`/communities/:communityId/admin/shop/purchases`): every
+  member's purchases, with a refund not bound by the buyer's fifteen minutes.
+  Members were being told to ask a moderator who had no button to press.
+
+- **Notifications**: a bell in the top bar with an unseen count and a dropdown
+  of the most recent few, plus a full feed at `/notifications` with an unread
+  filter. Opening the dropdown clears the badge; a notification stays unread
+  until it is opened.
 
 - **Award recipients widget** on each image moderation card. Lists everyone
   the upload names, deduplicated — posting your own art of your own character
@@ -77,6 +78,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Member list rows show the member's real avatar, falling back to initials.
 
 ### Fixed
+
+- **Logging out did not clear the Apollo cache**, so the next person to sign in
+  on the same browser could see the previous user's cached data — their
+  notifications, their `me`, their liked characters — until each query's network
+  reply landed. Found during the security review of the notification work.
+
+- **The notification badge showed the previous session's count after signing
+  in.** The header outlives a login, so the bell never remounted and nothing
+  clears the Apollo cache in between — the number stayed stale until the
+  five-minute poll came round, or showed the count belonging to whoever was
+  signed in before.
+
+- Sold-out and at-the-cap shop prices now look disabled, not just unaffordable
+  ones.
+
+- A refund credits the member who asked for it, so the community ledger read it
+  as "@member → @member". Self-directed grants no longer show the arrow.
 
 - **A fractional award amount no longer fails the whole approval.** A number
   input yields `"2.5"` happily, which the server rejects as a non-integer with
