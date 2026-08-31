@@ -130,6 +130,30 @@ const SideHead = styled.h2`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
+/**
+ * A divider inside a pane, between the items and the characters.
+ *
+ * They are different enough to be worth separating: an item is a name and a
+ * count, a character is somebody with a page. Without the break the two run
+ * together into one list where a character reads as a strangely-named item.
+ */
+const GroupHead = styled.div`
+  margin-top: 0.5rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: ${({ theme }) => theme.colors.text.muted};
+
+  /* Nothing above it to divide from, when a member holds only characters. */
+  &:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+`;
+
 const Row = styled.div`
   display: flex;
   align-items: center;
@@ -228,6 +252,13 @@ const LoadingWrap = styled.div`
  * rows, because you are here and can choose. What you ask for is a type and a
  * count, because any of theirs will do and pinning one would make the offer
  * fail the moment they trade that copy away.
+ *
+ * Characters do not have that asymmetry and cannot be made to. There is one of
+ * each, so both sides name the character itself and both are a plain set. The
+ * offer does become the fragile kind the item panes are shaped to avoid -- if
+ * they trade that character away first, the offer fails at settlement -- but
+ * that is what asking for a particular character means, and there is no
+ * looser way to ask for one.
  */
 export const TradeComposerPage: React.FC = () => {
   const { communityId } = useParams<{ communityId: string }>();
@@ -238,11 +269,25 @@ export const TradeComposerPage: React.FC = () => {
   const themId = params.get("with") ?? "";
   /** A declined offer to open the table from, set by the Counter button. */
   const mirrorId = params.get("mirror") ?? "";
+  /**
+   * A character to open the table wanting, set by the button on a character
+   * page. Always lands on the asking side: the button renders only on
+   * characters the viewer does not own, so arriving here is bidding for one.
+   */
+  const seedCharacterId = params.get("character") ?? "";
 
   /** Item ids I am handing over. */
   const [offering, setOffering] = useState<Set<string>>(new Set());
   /** itemTypeId -> how many of theirs I want. */
   const [requesting, setRequesting] = useState<Map<string, number>>(new Map());
+  /** Character ids I am handing over. */
+  const [offeringCharacters, setOfferingCharacters] = useState<Set<string>>(
+    new Set(),
+  );
+  /** Character ids of theirs I am asking for. */
+  const [requestingCharacters, setRequestingCharacters] = useState<Set<string>>(
+    new Set(),
+  );
   const [coinOut, setCoinOut] = useState("");
   const [coinIn, setCoinIn] = useState("");
   const [currencyId, setCurrencyId] = useState<string>("");
@@ -267,6 +312,18 @@ export const TradeComposerPage: React.FC = () => {
   // query resolves, which would make the useMemo below recompute each time.
   const mine = useMemo(() => data?.mine.holdings ?? [], [data]);
   const theirs = useMemo(() => data?.theirs.holdings ?? [], [data]);
+  // Already filtered to the tradeable ones by the query. A character that is
+  // not open to trades is not a greyed-out choice here, it is absent -- the
+  // flag is a standing answer to being asked, and showing it at all would be
+  // the asking it exists to prevent.
+  const myCharacters = useMemo(
+    () => data?.myCharacters.characters ?? [],
+    [data],
+  );
+  const theirCharacters = useMemo(
+    () => data?.theirCharacters.characters ?? [],
+    [data],
+  );
   // Two ways a currency you hold cannot price an offer. Archived ones keep
   // their balances and stay readable but refuse new transactions; untradeable
   // ones are fully alive and merely cannot move between members. Either way,
@@ -332,6 +389,26 @@ export const TradeComposerPage: React.FC = () => {
       }
     }
 
+    // Characters carry across as themselves, in whichever direction they were
+    // already going. Clamped to what each side still holds and still has open
+    // to trades, which drops a character sold or closed since the original
+    // rather than seeding a table that cannot be sent.
+    const characterGives = new Set<string>();
+    const characterWants = new Set<string>();
+    for (const line of mirror.characterLines) {
+      if (
+        line.destinationUser.id === user.id &&
+        theirCharacters.some((c) => c.id === line.character.id)
+      ) {
+        characterWants.add(line.character.id);
+      } else if (
+        line.sourceUser.id === user.id &&
+        myCharacters.some((c) => c.id === line.character.id)
+      ) {
+        characterGives.add(line.character.id);
+      }
+    }
+
     for (const line of mirror.currencyLines) {
       if (line.sourceUser.id === user.id) {
         setCurrencyId(line.currency.id);
@@ -344,7 +421,21 @@ export const TradeComposerPage: React.FC = () => {
 
     setRequesting(wants);
     setOffering(gives);
-  }, [mirrorData, data, mine, theirs, user]);
+    setRequestingCharacters(characterWants);
+    setOfferingCharacters(characterGives);
+  }, [mirrorData, data, mine, theirs, myCharacters, theirCharacters, user]);
+
+  // The character page's button, landing on the asking side. Dropped unless
+  // the member being traded with actually holds it and has it open -- a
+  // hand-made URL naming someone else's character would otherwise seed a table
+  // the server refuses, and blame the member for it at send.
+  const characterSeeded = useRef(false);
+  useEffect(() => {
+    if (characterSeeded.current || !seedCharacterId || !data) return;
+    characterSeeded.current = true;
+    if (!theirCharacters.some((c) => c.id === seedCharacterId)) return;
+    setRequestingCharacters((prev) => new Set(prev).add(seedCharacterId));
+  }, [seedCharacterId, data, theirCharacters]);
 
   const toggleOffer = useCallback((itemId: string) => {
     setOffering((prev) => {
@@ -354,6 +445,28 @@ export const TradeComposerPage: React.FC = () => {
       return next;
     });
   }, []);
+
+  /**
+   * Toggle a character on or off one side.
+   *
+   * The same handler for both, where items need a toggle and a stepper. A
+   * character is on the table or it is not; there is no third state a count
+   * could express.
+   */
+  const toggleCharacter = useCallback(
+    (
+      setSide: React.Dispatch<React.SetStateAction<Set<string>>>,
+      characterId: string,
+    ) => {
+      setSide((prev) => {
+        const next = new Set(prev);
+        if (next.has(characterId)) next.delete(characterId);
+        else next.add(characterId);
+        return next;
+      });
+    },
+    [],
+  );
 
   const bumpRequest = useCallback((typeId: string, by: number, max: number) => {
     setRequesting((prev) => {
@@ -370,7 +483,12 @@ export const TradeComposerPage: React.FC = () => {
   const net = out - back;
   const overdrawn = currency ? out > currency.amount : out > 0;
   const empty =
-    offering.size === 0 && requesting.size === 0 && out === 0 && back === 0;
+    offering.size === 0 &&
+    requesting.size === 0 &&
+    offeringCharacters.size === 0 &&
+    requestingCharacters.size === 0 &&
+    out === 0 &&
+    back === 0;
 
   const offeredRows = useMemo(
     () =>
@@ -380,6 +498,15 @@ export const TradeComposerPage: React.FC = () => {
           .map((i) => ({ id: i.id, name: h.itemType.name })),
       ),
     [mine, offering],
+  );
+
+  const offeredCharacters = useMemo(
+    () => myCharacters.filter((c) => offeringCharacters.has(c.id)),
+    [myCharacters, offeringCharacters],
+  );
+  const requestedCharacters = useMemo(
+    () => theirCharacters.filter((c) => requestingCharacters.has(c.id)),
+    [theirCharacters, requestingCharacters],
   );
 
   const send = useCallback(async () => {
@@ -416,6 +543,12 @@ export const TradeComposerPage: React.FC = () => {
           itemTypeId,
           quantity,
         })),
+        offeringCharacters: [...offeringCharacters].map((characterId) => ({
+          characterId,
+        })),
+        requestingCharacters: [...requestingCharacters].map((characterId) => ({
+          characterId,
+        })),
         coin,
         note: note.trim() || undefined,
       };
@@ -445,6 +578,8 @@ export const TradeComposerPage: React.FC = () => {
     themId,
     offering,
     requesting,
+    offeringCharacters,
+    requestingCharacters,
     note,
     navigate,
   ]);
@@ -503,10 +638,12 @@ export const TradeComposerPage: React.FC = () => {
       <Panes>
         <Pane>
           <PaneHead>
-            Your items <Hint>tap to offer</Hint>
+            Yours <Hint>tap to offer</Hint>
           </PaneHead>
           <PaneBody>
-            {mine.length === 0 && <SideEmpty>You hold nothing here.</SideEmpty>}
+            {mine.length === 0 && myCharacters.length === 0 && (
+              <SideEmpty>You hold nothing here.</SideEmpty>
+            )}
             {mine.flatMap((h) =>
               // A tradeable type is one row per copy, because which copy you
               // hand over is yours to decide. An untradeable one collapses to a
@@ -544,6 +681,28 @@ export const TradeComposerPage: React.FC = () => {
                     </Pick>,
                   ],
             )}
+
+            {/* Only the ones you have opened to trades. A closed character is
+                absent rather than locked, unlike an untradeable item type:
+                the item is locked by staff and you would wonder where it
+                went, while this one is closed by you and its absence is the
+                setting doing what you set it to. */}
+            {myCharacters.length > 0 && <GroupHead>Characters</GroupHead>}
+            {myCharacters.map((c) => (
+              <Pick
+                key={c.id}
+                type="button"
+                $on={offeringCharacters.has(c.id)}
+                onClick={() => toggleCharacter(setOfferingCharacters, c.id)}
+                data-testid="offer-character-pick"
+                data-character-id={c.id}
+              >
+                <span>{c.name}</span>
+                <Qty>
+                  {offeringCharacters.has(c.id) ? "on table" : "offer"}
+                </Qty>
+              </Pick>
+            ))}
           </PaneBody>
         </Pane>
 
@@ -552,23 +711,41 @@ export const TradeComposerPage: React.FC = () => {
           <PaneBody>
             <Side $mine data-testid="table-give">
               <SideHead>You give</SideHead>
-              {offeredRows.length === 0 ? (
-                <SideEmpty>No items offered</SideEmpty>
+              {offeredRows.length === 0 && offeredCharacters.length === 0 ? (
+                <SideEmpty>Nothing offered</SideEmpty>
               ) : (
-                offeredRows.map((row) => (
-                  <Row key={row.id}>
-                    <span>{row.name}</span>
-                    <Stepper>
-                      <button
-                        type="button"
-                        aria-label={`Remove ${row.name}`}
-                        onClick={() => toggleOffer(row.id)}
-                      >
-                        ×
-                      </button>
-                    </Stepper>
-                  </Row>
-                ))
+                <>
+                  {offeredRows.map((row) => (
+                    <Row key={row.id}>
+                      <span>{row.name}</span>
+                      <Stepper>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${row.name}`}
+                          onClick={() => toggleOffer(row.id)}
+                        >
+                          ×
+                        </button>
+                      </Stepper>
+                    </Row>
+                  ))}
+                  {offeredCharacters.map((c) => (
+                    <Row key={c.id} data-testid="table-give-character">
+                      <span>{c.name}</span>
+                      <Stepper>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${c.name}`}
+                          onClick={() =>
+                            toggleCharacter(setOfferingCharacters, c.id)
+                          }
+                        >
+                          ×
+                        </button>
+                      </Stepper>
+                    </Row>
+                  ))}
+                </>
               )}
               {currency && (
                 <Price>
@@ -593,38 +770,60 @@ export const TradeComposerPage: React.FC = () => {
 
             <Side data-testid="table-receive">
               <SideHead>You receive</SideHead>
-              {requesting.size === 0 ? (
-                <SideEmpty>No items requested</SideEmpty>
+              {requesting.size === 0 && requestedCharacters.length === 0 ? (
+                <SideEmpty>Nothing requested</SideEmpty>
               ) : (
-                [...requesting.entries()].map(([typeId, qty]) => {
-                  const held = theirs.find((h) => h.itemType.id === typeId);
-                  return (
-                    <Row key={typeId}>
-                      <span>{held?.itemType.name ?? "Item"}</span>
+                <>
+                  {[...requesting.entries()].map(([typeId, qty]) => {
+                    const held = theirs.find((h) => h.itemType.id === typeId);
+                    return (
+                      <Row key={typeId}>
+                        <span>{held?.itemType.name ?? "Item"}</span>
+                        <Stepper>
+                          <button
+                            type="button"
+                            aria-label="Fewer"
+                            onClick={() =>
+                              bumpRequest(typeId, -1, held?.count ?? 1)
+                            }
+                          >
+                            −
+                          </button>
+                          <span>{qty}</span>
+                          <button
+                            type="button"
+                            aria-label="More"
+                            onClick={() =>
+                              bumpRequest(typeId, 1, held?.count ?? 1)
+                            }
+                          >
+                            +
+                          </button>
+                        </Stepper>
+                      </Row>
+                    );
+                  })}
+                  {/* A remove button and no stepper, where the item rows above
+                      have both. There is one of this character, so a count
+                      would be a control whose only legal value is the one it
+                      already shows. */}
+                  {requestedCharacters.map((c) => (
+                    <Row key={c.id} data-testid="table-receive-character">
+                      <span>{c.name}</span>
                       <Stepper>
                         <button
                           type="button"
-                          aria-label="Fewer"
+                          aria-label={`Remove ${c.name}`}
                           onClick={() =>
-                            bumpRequest(typeId, -1, held?.count ?? 1)
+                            toggleCharacter(setRequestingCharacters, c.id)
                           }
                         >
-                          −
-                        </button>
-                        <span>{qty}</span>
-                        <button
-                          type="button"
-                          aria-label="More"
-                          onClick={() =>
-                            bumpRequest(typeId, 1, held?.count ?? 1)
-                          }
-                        >
-                          +
+                          ×
                         </button>
                       </Stepper>
                     </Row>
-                  );
-                })
+                  ))}
+                </>
               )}
               {currency && (
                 <Price>
@@ -646,10 +845,13 @@ export const TradeComposerPage: React.FC = () => {
 
         <Pane>
           <PaneHead>
-            Their items <Hint>any copy will do</Hint>
+            {/* Was "any copy will do", which is true of the items and false of
+                the characters below them. A hint that is right about half a
+                pane is worse than one that only says what to do with it. */}
+            Theirs <Hint>tap to ask for</Hint>
           </PaneHead>
           <PaneBody>
-            {theirs.length === 0 && (
+            {theirs.length === 0 && theirCharacters.length === 0 && (
               <SideEmpty>They hold nothing here.</SideEmpty>
             )}
             {theirs.map((h) => (
@@ -669,6 +871,26 @@ export const TradeComposerPage: React.FC = () => {
                 ) : (
                   <Lock>locked</Lock>
                 )}
+              </Pick>
+            ))}
+
+            {/* Named, where the items above are asked for by type. There is
+                no looser way to ask for a character, so this is the one line
+                kind that fails at settlement if they part with it first. */}
+            {theirCharacters.length > 0 && <GroupHead>Characters</GroupHead>}
+            {theirCharacters.map((c) => (
+              <Pick
+                key={c.id}
+                type="button"
+                $on={requestingCharacters.has(c.id)}
+                onClick={() => toggleCharacter(setRequestingCharacters, c.id)}
+                data-testid="request-character-pick"
+                data-character-id={c.id}
+              >
+                <span>{c.name}</span>
+                <Qty>
+                  {requestingCharacters.has(c.id) ? "on table" : "ask for"}
+                </Qty>
               </Pick>
             ))}
           </PaneBody>

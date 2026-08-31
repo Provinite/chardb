@@ -66,6 +66,23 @@ export const TRADE_FRAGMENT = gql`
         displayName
       }
     }
+    characterLines {
+      id
+      character {
+        id
+        name
+      }
+      sourceUser {
+        id
+        username
+        displayName
+      }
+      destinationUser {
+        id
+        username
+        displayName
+      }
+    }
     currencyLines {
       id
       amount
@@ -127,9 +144,9 @@ export const TRADE_QUERY = gql`
 /**
  * Everything the composer needs, in one round trip.
  *
- * Both inventories and the proposer's balances, because the composer shows all
- * three at once and fetching them separately would leave the three panes
- * arriving at different moments.
+ * Both inventories, both sets of tradeable characters, and the proposer's
+ * balances, because the composer shows them at once and fetching them
+ * separately would leave the panes arriving at different moments.
  */
 export const TRADE_COMPOSER_QUERY = gql`
   query TradeComposer($communityId: ID!, $meId: ID!, $themId: ID!) {
@@ -154,6 +171,36 @@ export const TRADE_COMPOSER_QUERY = gql`
           name
           isTradeable
         }
+      }
+    }
+    # Only the characters already open to trades, on both sides. A closed one
+    # is not a choice the composer can offer -- the server refuses it, and the
+    # flag is the owner's standing answer to being asked, so showing it greyed
+    # out would be the invitation the flag exists to withhold.
+    myCharacters: characters(
+      filters: {
+        ownerId: $meId
+        communityId: $communityId
+        isTradeable: true
+        limit: 100
+      }
+    ) {
+      characters {
+        id
+        name
+      }
+    }
+    theirCharacters: characters(
+      filters: {
+        ownerId: $themId
+        communityId: $communityId
+        isTradeable: true
+        limit: 100
+      }
+    ) {
+      characters {
+        id
+        name
       }
     }
     wallet: memberWallet(communityId: $communityId, userId: $meId) {

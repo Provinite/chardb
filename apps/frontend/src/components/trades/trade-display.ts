@@ -4,12 +4,20 @@ import {
 } from "../../graphql/trades.graphql";
 
 type ItemLine = TradeFieldsFragment["items"][number];
+type CharacterLine = TradeFieldsFragment["characterLines"][number];
 type CoinLine = TradeFieldsFragment["currencyLines"][number];
+
+/** One half of a trade: everything moving one way. */
+export interface TradeSide {
+  items: ItemLine[];
+  characters: CharacterLine[];
+  coin: CoinLine[];
+}
 
 /** The two halves of a trade, from one viewer's point of view. */
 export interface TradeSides {
-  giving: { items: ItemLine[]; coin: CoinLine[] };
-  receiving: { items: ItemLine[]; coin: CoinLine[] };
+  giving: TradeSide;
+  receiving: TradeSide;
 }
 
 /**
@@ -27,10 +35,16 @@ export function sidesFor(
   return {
     giving: {
       items: trade.items.filter((l) => l.sourceUser.id === viewerId),
+      characters: trade.characterLines.filter(
+        (l) => l.sourceUser.id === viewerId,
+      ),
       coin: trade.currencyLines.filter((l) => l.sourceUser.id === viewerId),
     },
     receiving: {
       items: trade.items.filter((l) => l.destinationUser.id === viewerId),
+      characters: trade.characterLines.filter(
+        (l) => l.destinationUser.id === viewerId,
+      ),
       coin: trade.currencyLines.filter(
         (l) => l.destinationUser.id === viewerId,
       ),
@@ -54,6 +68,16 @@ export function describeLine(line: ItemLine): string {
   return line.item?.itemType.name ?? "an item";
 }
 
+/**
+ * What a character line is called.
+ *
+ * Just the name, and no quantity: there is one of each character, so a count
+ * would be a number that is always 1 and reads as though it might not be.
+ */
+export function describeCharacter(line: CharacterLine): string {
+  return line.character.name;
+}
+
 /** "250 HC", using the code when there is no symbol. */
 export function describeCoin(line: CoinLine): string {
   const unit = line.currency.symbol || line.currency.code;
@@ -61,12 +85,10 @@ export function describeCoin(line: CoinLine): string {
 }
 
 /** A one-line summary of a side, for a list row. */
-export function summariseSide(side: {
-  items: ItemLine[];
-  coin: CoinLine[];
-}): string {
+export function summariseSide(side: TradeSide): string {
   const parts = [
     ...side.items.map(describeLine),
+    ...side.characters.map(describeCharacter),
     ...side.coin.map(describeCoin),
   ];
   if (parts.length === 0) return "nothing";
