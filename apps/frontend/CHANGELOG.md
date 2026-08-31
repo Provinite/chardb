@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Your purchases** (`/communities/:communityId/shop/purchases`): a buyer's own
+  history, searchable by item, filterable by active or refunded, and paged.
+  Undo works from here on anything still inside its fifteen minutes (#289).
+
 - **A character's full media page** (`/character/:id/media`). The gallery had
   linked there for as long as a character could have more media than fits, but
   the route did not exist, so the link landed on Not Found (#222).
@@ -24,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   where Send would be. The trade composer leaves them out of the price picker.
 
 ### Fixed
+
+- **The shop's Recent purchases panel hid everything past its eighth line**, so
+  a buyer who checked out twice could neither see nor undo the first batch. It
+  now says "showing 8 of 23 · view all" and links to the full history (#289).
 
 - **Trade pages dropped you out of community navigation** (#293). The sidebar
   reads community context from the pathname, so `/trades?community=<id>` was

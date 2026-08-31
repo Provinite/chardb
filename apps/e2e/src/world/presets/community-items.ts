@@ -63,6 +63,12 @@ export interface CommunityItemsWorld {
     potionListing: { id: string; priceIds: string[] };
     /** Stock of exactly 2, so exhaustion is reachable in a test. */
     locketListing: { id: string; priceIds: string[] };
+    /**
+     * 1 coin, no stock cap, no per-member cap. For tests that need more lines
+     * than the other two listings can produce between them -- the truncation
+     * cases, where the interesting number is larger than five.
+     */
+    bulkListing: { id: string; priceIds: string[] };
     url: string;
   };
   roles: { admin: string; quartermaster: string; member: string };
@@ -349,6 +355,23 @@ export default definePreset<CommunityItemsWorld>({
       },
     );
 
+    // Cheap, unlimited, and dull on purpose. The other two listings are capped
+    // -- three per member, two in stock -- so between them a member can own at
+    // most five lines, and the sidebar panel's truncation does not begin until
+    // eight. Reproducing #289 needs a listing somebody can simply buy a lot of.
+    const { createShopItem: bulkListing } = await asQuartermaster.gql(
+      SeedCreateShopItemDocument,
+      {
+        input: {
+          communityId: community.id,
+          itemTypeId: potion.id,
+          name: "Practice Potion",
+          description: "Buy as many as you like.",
+          prices: [{ components: [{ currencyId: coin.id, amount: 1 }] }],
+        },
+      },
+    );
+
     return {
       community: {
         id: community.id,
@@ -375,6 +398,10 @@ export default definePreset<CommunityItemsWorld>({
         locketListing: {
           id: locketListing.id,
           priceIds: locketListing.prices.map((p) => p.id),
+        },
+        bulkListing: {
+          id: bulkListing.id,
+          priceIds: bulkListing.prices.map((p) => p.id),
         },
         url: `/communities/${community.id}/shop`,
       },

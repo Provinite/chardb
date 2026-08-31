@@ -2565,6 +2565,8 @@ export type Query = {
   myImages: ImageConnection;
   /** Retrieves media owned by the current authenticated user */
   myMedia: MediaConnection;
+  /** The viewer's own purchase lines, newest first, searchable and paged. A line is what a buyer counts and acts on, so it is the level a history filters at. */
+  myShopPurchaseLines: ShopPurchaseLineConnection;
   /** The viewer's own purchases, newest first, each line saying whether it can still be undone and why not. */
   myShopPurchases: Array<ShopPurchase>;
   /** Your notifications, newest first. */
@@ -3043,6 +3045,11 @@ export type QueryMyMediaArgs = {
 };
 
 
+export type QueryMyShopPurchaseLinesArgs = {
+  filters: ShopPurchaseLineFiltersInput;
+};
+
+
 export type QueryMyShopPurchasesArgs = {
   communityId: Scalars['ID']['input'];
 };
@@ -3446,6 +3453,8 @@ export type ShopPurchaseLine = {
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   purchaseId: Scalars['ID']['output'];
+  /** When the checkout that produced this line happened. Carried on the line so a flat history can be dated without loading its purchase. */
+  purchasedAt: Scalars['DateTime']['output'];
   /** Why it cannot be undone, when it cannot. */
   refundBlockedReason: Maybe<Scalars['String']['output']>;
   /** Whether the viewer can undo this right now. False once the window has passed, once it is already refunded, or once the item has been used, destroyed or handed on. */
@@ -3455,6 +3464,15 @@ export type ShopPurchaseLine = {
   shopItem: ShopItem;
 };
 
+/** A page of the viewer's own purchase lines, newest first, with the total matching the same filters so a caller can say what it is showing part of. */
+export type ShopPurchaseLineConnection = {
+  __typename?: 'ShopPurchaseLineConnection';
+  hasMore: Scalars['Boolean']['output'];
+  lines: Array<ShopPurchaseLine>;
+  /** Every line matching the filters, not just this page. */
+  total: Scalars['Int']['output'];
+};
+
 /** What one unit of a purchase cost, at the time. */
 export type ShopPurchaseLineCost = {
   __typename?: 'ShopPurchaseLineCost';
@@ -3462,6 +3480,23 @@ export type ShopPurchaseLineCost = {
   currency: Currency;
   currencyId: Scalars['ID']['output'];
 };
+
+export type ShopPurchaseLineFiltersInput = {
+  /** Required. A purchase history is always one community's. */
+  communityId: Scalars['ID']['input'];
+  limit?: Scalars['Int']['input'];
+  offset?: Scalars['Int']['input'];
+  /** Matches the listing's name, or its item type's name when the listing does not override it -- whichever the buyer actually saw on the card. */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Omit for both. */
+  status?: InputMaybe<ShopPurchaseLineStatus>;
+};
+
+/** Whether a purchase line still stands or has been refunded. */
+export enum ShopPurchaseLineStatus {
+  Active = 'ACTIVE',
+  Refunded = 'REFUNDED'
+}
 
 export type SignupInput = {
   displayName?: InputMaybe<Scalars['String']['input']>;
@@ -5180,12 +5215,14 @@ export type GetShopItemsQueryVariables = Exact<{
 
 export type GetShopItemsQuery = { __typename?: 'Query', shopItems: Array<{ __typename?: 'ShopItem', id: string, communityId: string, itemTypeId: string, name: string | null, description: string | null, stock: number | null, maxPerUser: number | null, active: boolean, sortOrder: number, purchasedByViewer: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, isTradeable: boolean, isConsumable: boolean, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, prices: Array<{ __typename?: 'ShopPrice', id: string, sortOrder: number, affordable: boolean, components: Array<{ __typename?: 'ShopPriceComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }> }> }> };
 
-export type GetMyShopPurchasesQueryVariables = Exact<{
-  communityId: Scalars['ID']['input'];
+export type MyShopPurchaseLineFieldsFragment = { __typename?: 'ShopPurchaseLine', id: string, purchasedAt: string, refundedAt: string | null, refundableByViewer: boolean, refundBlockedReason: string | null, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null, itemType: { __typename?: 'ItemType', id: string, name: string } } };
+
+export type GetMyShopPurchaseLinesQueryVariables = Exact<{
+  filters: ShopPurchaseLineFiltersInput;
 }>;
 
 
-export type GetMyShopPurchasesQuery = { __typename?: 'Query', myShopPurchases: Array<{ __typename?: 'ShopPurchase', id: string, createdAt: string, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, createdAt: string, refundedAt: string | null, refundableByViewer: boolean, refundBlockedReason: string | null, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null, itemType: { __typename?: 'ItemType', id: string, name: string } } }> }> };
+export type GetMyShopPurchaseLinesQuery = { __typename?: 'Query', myShopPurchaseLines: { __typename?: 'ShopPurchaseLineConnection', total: number, hasMore: boolean, lines: Array<{ __typename?: 'ShopPurchaseLine', id: string, purchasedAt: string, refundedAt: string | null, refundableByViewer: boolean, refundBlockedReason: string | null, costs: Array<{ __typename?: 'ShopPurchaseLineCost', amount: number, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string } }>, shopItem: { __typename?: 'ShopItem', id: string, name: string | null, itemType: { __typename?: 'ItemType', id: string, name: string } } }> } };
 
 export type GetCommunityShopPurchasesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5933,6 +5970,29 @@ export const ShopItemFieldsFragmentDoc = gql`
   }
 }
     ${ShopPriceFieldsFragmentDoc}`;
+export const MyShopPurchaseLineFieldsFragmentDoc = gql`
+    fragment MyShopPurchaseLineFields on ShopPurchaseLine {
+  id
+  purchasedAt
+  refundedAt
+  refundableByViewer
+  refundBlockedReason
+  costs {
+    amount
+    currency {
+      ...CurrencyFields
+    }
+  }
+  shopItem {
+    id
+    name
+    itemType {
+      id
+      name
+    }
+  }
+}
+    ${CurrencyFieldsFragmentDoc}`;
 export const UserWithAvatarFragmentDoc = gql`
     fragment UserWithAvatar on User {
   id
@@ -12628,68 +12688,50 @@ export type GetShopItemsQueryHookResult = ReturnType<typeof useGetShopItemsQuery
 export type GetShopItemsLazyQueryHookResult = ReturnType<typeof useGetShopItemsLazyQuery>;
 export type GetShopItemsSuspenseQueryHookResult = ReturnType<typeof useGetShopItemsSuspenseQuery>;
 export type GetShopItemsQueryResult = Apollo.QueryResult<GetShopItemsQuery, GetShopItemsQueryVariables>;
-export const GetMyShopPurchasesDocument = gql`
-    query GetMyShopPurchases($communityId: ID!) {
-  myShopPurchases(communityId: $communityId) {
-    id
-    createdAt
+export const GetMyShopPurchaseLinesDocument = gql`
+    query GetMyShopPurchaseLines($filters: ShopPurchaseLineFiltersInput!) {
+  myShopPurchaseLines(filters: $filters) {
     lines {
-      id
-      createdAt
-      refundedAt
-      refundableByViewer
-      refundBlockedReason
-      costs {
-        amount
-        currency {
-          ...CurrencyFields
-        }
-      }
-      shopItem {
-        id
-        name
-        itemType {
-          id
-          name
-        }
-      }
+      ...MyShopPurchaseLineFields
     }
+    total
+    hasMore
   }
 }
-    ${CurrencyFieldsFragmentDoc}`;
+    ${MyShopPurchaseLineFieldsFragmentDoc}`;
 
 /**
- * __useGetMyShopPurchasesQuery__
+ * __useGetMyShopPurchaseLinesQuery__
  *
- * To run a query within a React component, call `useGetMyShopPurchasesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetMyShopPurchasesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetMyShopPurchaseLinesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMyShopPurchaseLinesQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetMyShopPurchasesQuery({
+ * const { data, loading, error } = useGetMyShopPurchaseLinesQuery({
  *   variables: {
- *      communityId: // value for 'communityId'
+ *      filters: // value for 'filters'
  *   },
  * });
  */
-export function useGetMyShopPurchasesQuery(baseOptions: Apollo.QueryHookOptions<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables> & ({ variables: GetMyShopPurchasesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetMyShopPurchaseLinesQuery(baseOptions: Apollo.QueryHookOptions<GetMyShopPurchaseLinesQuery, GetMyShopPurchaseLinesQueryVariables> & ({ variables: GetMyShopPurchaseLinesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>(GetMyShopPurchasesDocument, options);
+        return Apollo.useQuery<GetMyShopPurchaseLinesQuery, GetMyShopPurchaseLinesQueryVariables>(GetMyShopPurchaseLinesDocument, options);
       }
-export function useGetMyShopPurchasesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>) {
+export function useGetMyShopPurchaseLinesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyShopPurchaseLinesQuery, GetMyShopPurchaseLinesQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>(GetMyShopPurchasesDocument, options);
+          return Apollo.useLazyQuery<GetMyShopPurchaseLinesQuery, GetMyShopPurchaseLinesQueryVariables>(GetMyShopPurchaseLinesDocument, options);
         }
-export function useGetMyShopPurchasesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>) {
+export function useGetMyShopPurchaseLinesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyShopPurchaseLinesQuery, GetMyShopPurchaseLinesQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>(GetMyShopPurchasesDocument, options);
+          return Apollo.useSuspenseQuery<GetMyShopPurchaseLinesQuery, GetMyShopPurchaseLinesQueryVariables>(GetMyShopPurchaseLinesDocument, options);
         }
-export type GetMyShopPurchasesQueryHookResult = ReturnType<typeof useGetMyShopPurchasesQuery>;
-export type GetMyShopPurchasesLazyQueryHookResult = ReturnType<typeof useGetMyShopPurchasesLazyQuery>;
-export type GetMyShopPurchasesSuspenseQueryHookResult = ReturnType<typeof useGetMyShopPurchasesSuspenseQuery>;
-export type GetMyShopPurchasesQueryResult = Apollo.QueryResult<GetMyShopPurchasesQuery, GetMyShopPurchasesQueryVariables>;
+export type GetMyShopPurchaseLinesQueryHookResult = ReturnType<typeof useGetMyShopPurchaseLinesQuery>;
+export type GetMyShopPurchaseLinesLazyQueryHookResult = ReturnType<typeof useGetMyShopPurchaseLinesLazyQuery>;
+export type GetMyShopPurchaseLinesSuspenseQueryHookResult = ReturnType<typeof useGetMyShopPurchaseLinesSuspenseQuery>;
+export type GetMyShopPurchaseLinesQueryResult = Apollo.QueryResult<GetMyShopPurchaseLinesQuery, GetMyShopPurchaseLinesQueryVariables>;
 export const GetCommunityShopPurchasesDocument = gql`
     query GetCommunityShopPurchases($communityId: ID!, $buyerId: ID, $limit: Int) {
   communityShopPurchases(

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`myShopPurchaseLines`**: the viewer's own purchase lines, searchable by
+  item, filterable by active or refunded, and paged with a total counted
+  against the same filters (#289).
+
 - **`Currency.isTradeable`**: an untradeable currency is still granted, spent
   and refunded, but stops moving between members — refused by `transfer()`, at
   propose and again at settlement.

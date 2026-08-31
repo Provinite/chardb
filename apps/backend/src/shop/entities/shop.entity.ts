@@ -1,7 +1,24 @@
-import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
+import { ObjectType, Field, ID, Int, registerEnumType } from "@nestjs/graphql";
 import { Currency } from "../../currencies/entities/currency.entity";
 import { ItemType } from "../../items/entities/item-type.entity";
 import { User } from "../../users/entities/user.entity";
+
+/**
+ * Whether a line still stands, for filtering a history.
+ *
+ * Deliberately the two states a stored column can answer for. "Refundable" is
+ * a per-viewer judgement made from the clock and the item's fate, so it is a
+ * badge on a row rather than something to filter a query by.
+ */
+export enum ShopPurchaseLineStatus {
+  ACTIVE = "ACTIVE",
+  REFUNDED = "REFUNDED",
+}
+
+registerEnumType(ShopPurchaseLineStatus, {
+  name: "ShopPurchaseLineStatus",
+  description: "Whether a purchase line still stands or has been refunded.",
+});
 
 @ObjectType({ description: "One currency a price option asks for." })
 export class ShopPriceComponent {
@@ -158,6 +175,13 @@ export class ShopPurchaseLine {
   })
   refundBlockedReason?: string | null;
 
+  @Field(() => Date, {
+    description:
+      "When the checkout that produced this line happened. Carried on the " +
+      "line so a flat history can be dated without loading its purchase.",
+  })
+  purchasedAt: Date;
+
   @Field()
   createdAt: Date;
 }
@@ -184,4 +208,22 @@ export class ShopPurchase {
 
   @Field()
   createdAt: Date;
+}
+
+@ObjectType({
+  description:
+    "A page of the viewer's own purchase lines, newest first, with the total " +
+    "matching the same filters so a caller can say what it is showing part of.",
+})
+export class ShopPurchaseLineConnection {
+  @Field(() => [ShopPurchaseLine])
+  lines: ShopPurchaseLine[];
+
+  @Field(() => Int, {
+    description: "Every line matching the filters, not just this page.",
+  })
+  total: number;
+
+  @Field()
+  hasMore: boolean;
 }

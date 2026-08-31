@@ -11,11 +11,13 @@ import {
   ShopItem,
   ShopPurchase,
   ShopPurchaseLine,
+  ShopPurchaseLineConnection,
 } from "./entities/shop.entity";
 import {
   CreateShopItemInput,
   UpdateShopItemInput,
   CheckoutInput,
+  ShopPurchaseLineFiltersInput,
 } from "./dto/shop.dto";
 
 /**
@@ -80,6 +82,22 @@ export class ShopResolver {
   ): Promise<ShopPurchase[]> {
     const rows = await this.shop.findPurchasesForViewer(communityId, user.id);
     return rows;
+  }
+
+  @AllowCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ communityId: "filters.communityId" })
+  @Query(() => ShopPurchaseLineConnection, {
+    name: "myShopPurchaseLines",
+    description:
+      "The viewer's own purchase lines, newest first, searchable and paged. " +
+      "A line is what a buyer counts and acts on, so it is the level a " +
+      "history filters at.",
+  })
+  async myShopPurchaseLines(
+    @Args("filters") filters: ShopPurchaseLineFiltersInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<ShopPurchaseLineConnection> {
+    return this.shop.findPurchaseLinesForViewer(user.id, filters);
   }
 
   /**

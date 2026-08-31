@@ -6,6 +6,7 @@ import {
   IsInt,
   IsArray,
   IsBoolean,
+  IsEnum,
   Min,
   Max,
   MaxLength,
@@ -14,6 +15,7 @@ import {
   ValidateNested,
 } from "class-validator";
 import { Type } from "class-transformer";
+import { ShopPurchaseLineStatus } from "../entities/shop.entity";
 
 /**
  * How many of one listing a single checkout may buy.
@@ -191,4 +193,53 @@ export class CheckoutInput {
   @ValidateNested({ each: true })
   @Type(() => CheckoutLineInputDto)
   lines: CheckoutLineInputDto[];
+}
+
+/**
+ * What a buyer is looking for in their own purchase history.
+ *
+ * Mirrors the ledger's filter inputs: one required community, a bounded page,
+ * and the narrowing terms beside them. Filtering server-side rather than in
+ * the page is the point -- a search that only looked at the rows already
+ * fetched would answer about the page rather than the history.
+ */
+@InputType()
+export class ShopPurchaseLineFiltersInput {
+  @Field(() => ID, {
+    description: "Required. A purchase history is always one community's.",
+  })
+  @IsUUID()
+  communityId: string;
+
+  @Field(() => Int, { defaultValue: 25 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @Field(() => Int, { defaultValue: 0 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  offset?: number;
+
+  @Field(() => String, {
+    nullable: true,
+    description:
+      "Matches the listing's name, or its item type's name when the listing " +
+      "does not override it -- whichever the buyer actually saw on the card.",
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  search?: string;
+
+  @Field(() => ShopPurchaseLineStatus, {
+    nullable: true,
+    description: "Omit for both.",
+  })
+  @IsOptional()
+  @IsEnum(ShopPurchaseLineStatus)
+  status?: ShopPurchaseLineStatus;
 }

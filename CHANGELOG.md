@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `community-items` preset carries an untradeable currency, Prompt Points,
   which `member` holds 40 of.
 
+- The `community-items` preset carries an uncapped shop listing, Practice
+  Potion, for tests needing more purchase lines than the capped listings can
+  produce between them.
+
 ## [v11.5.0] - 2026-08-30
 
 ### Added
