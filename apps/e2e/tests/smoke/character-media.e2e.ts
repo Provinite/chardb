@@ -47,7 +47,9 @@ test("View All reaches a real page holding everything", async ({
   await page.goto(character.url);
 
   await page
-    .getByRole("link", { name: new RegExp(`View All \\(${character.mediaCount}\\)`) })
+    .getByRole("link", {
+      name: new RegExp(`View All \\(${character.mediaCount}\\)`),
+    })
     .first()
     .click();
 
