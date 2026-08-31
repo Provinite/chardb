@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.5.0] - 2026-08-30
+
 ### Added
 
 - **Untradeable currencies**: a checkbox on the currency form, an Untradeable
@@ -47,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Character traits now display in the order the species variant defines, on the
   character page and in the trait review queue. They were showing in the order
   they were last saved, so reordering a variant's traits changed nothing (#233).
+
+- Six lists went stale until the browser was refreshed, so anything created by
+  another admin or in another tab never appeared: item types, the shop's item
+  type and currency pickers, currencies, members and species. A failed request
+  on the item types page also rendered as an empty catalogue rather than saying
+  anything went wrong.
 
 ## [v11.4.0] - 2026-08-30
 

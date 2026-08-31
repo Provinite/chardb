@@ -320,9 +320,12 @@ export const CommunityShopAdminPage: React.FC = () => {
     skip: !communityId,
     fetchPolicy: "cache-and-network",
   });
+  // Both of these fill pickers in the listing form, so a cached copy means a
+  // currency or item type created since this tab loaded cannot be sold.
   const { data: currencyData } = useGetCurrenciesQuery({
     variables: { communityId: communityId as string },
     skip: !communityId,
+    fetchPolicy: "cache-and-network",
   });
   const { data: itemTypeData } = useGetItemTypesQuery({
     // 100 is the server's cap. Asking for more is a validation error, and
@@ -330,6 +333,7 @@ export const CommunityShopAdminPage: React.FC = () => {
     // listing button simply never appears, with nothing to say why.
     variables: { filters: { communityId: communityId as string, limit: 100 } },
     skip: !communityId,
+    fetchPolicy: "cache-and-network",
   });
 
   const items = useMemo(() => data?.shopItems ?? [], [data]);

@@ -349,6 +349,9 @@ export const SpeciesManagementPage: React.FC = () => {
   } = useSpeciesByCommunityQuery({
     variables: { communityId: communityId ?? "", first: 50 },
     skip: !communityId,
+    // A species added by another admin stayed invisible here for the life of
+    // the session, which is the same defect the item types page had.
+    fetchPolicy: "cache-and-network",
   });
 
   // Fetch the specific community
@@ -449,7 +452,13 @@ export const SpeciesManagementPage: React.FC = () => {
   };
 
   // Loading state
-  if (speciesLoading || communityLoading) {
+  // `&& !data` on each: cache-and-network reports loading while revalidating
+  // in the background, and swapping a populated page for the loading skeleton
+  // every visit would be worse than the staleness it fixes.
+  if (
+    (speciesLoading && !speciesData) ||
+    (communityLoading && !communityData)
+  ) {
     return (
       <Container>
         <Header>
