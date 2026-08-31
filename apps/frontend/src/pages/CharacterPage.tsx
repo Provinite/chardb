@@ -839,8 +839,8 @@ export const CharacterPage: React.FC = () => {
                 </Button>
                 <TradeActionNote>
                   Opens an offer with {character.name} on their side. Nothing
-                  moves until {character.owner?.displayName ??
-                    character.owner?.username}{" "}
+                  moves until{" "}
+                  {character.owner?.displayName ?? character.owner?.username}{" "}
                   accepts.
                 </TradeActionNote>
               </TradeAction>

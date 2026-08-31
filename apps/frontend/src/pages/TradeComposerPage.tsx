@@ -698,9 +698,7 @@ export const TradeComposerPage: React.FC = () => {
                 data-character-id={c.id}
               >
                 <span>{c.name}</span>
-                <Qty>
-                  {offeringCharacters.has(c.id) ? "on table" : "offer"}
-                </Qty>
+                <Qty>{offeringCharacters.has(c.id) ? "on table" : "offer"}</Qty>
               </Pick>
             ))}
           </PaneBody>

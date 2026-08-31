@@ -342,7 +342,9 @@ describe("TradesService", () => {
           requestingCharacters: [{ characterId: "c1" }],
         }),
       ).resolves.toBeDefined();
-      expect(mockDatabaseService.tradeCharacter.findFirst).not.toHaveBeenCalled();
+      expect(
+        mockDatabaseService.tradeCharacter.findFirst,
+      ).not.toHaveBeenCalled();
     });
 
     it("refuses the same character on both sides of one offer", async () => {

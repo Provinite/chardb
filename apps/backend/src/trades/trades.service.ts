@@ -636,7 +636,9 @@ export class TradesService {
         );
       }
       if (!character.isTradeable) {
-        throw new BadRequestException(`${character.name} is not open to trades`);
+        throw new BadRequestException(
+          `${character.name} is not open to trades`,
+        );
       }
       if (character.visibility === Visibility.PRIVATE) {
         throw new BadRequestException(
