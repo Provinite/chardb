@@ -211,7 +211,7 @@ export const CharacterTraitsDisplay: React.FC<CharacterTraitsDisplayProps> = ({
             <TraitItem key={trait.name}>
               <TraitHeader>
                 <TraitIcon>{getTraitTypeIcon(trait.valueType)}</TraitIcon>
-                <TraitName>{trait.name}</TraitName>
+                <TraitName data-testid="trait-name">{trait.name}</TraitName>
                 {isMultiValue && (
                   <MultiValueIndicator>×{values.length}</MultiValueIndicator>
                 )}

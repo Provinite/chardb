@@ -312,7 +312,7 @@ export const TraitDiffDisplay: React.FC<TraitDiffDisplayProps> = ({
           <TraitItem key={trait.traitId} $status={trait.status}>
             <TraitHeader>
               <TraitIcon>{getTraitTypeIcon(trait.valueType)}</TraitIcon>
-              <TraitName>{trait.traitName}</TraitName>
+              <TraitName data-testid="trait-name">{trait.traitName}</TraitName>
               {trait.status !== "unchanged" && (
                 <StatusBadge $status={trait.status}>{trait.status}</StatusBadge>
               )}

@@ -260,6 +260,25 @@ query SeedItem($id: ID!) {
   }
 }
 
+# A trait's place in one variant's list. `order` here is the order characters
+# display their traits in, which is the whole point of the entry existing.
+# Requires community CanEditSpecies.
+mutation SeedCreateTraitListEntry($input: CreateTraitListEntryInput!) {
+  createTraitListEntry(createTraitListEntryInput: $input) {
+    id
+    order
+  }
+}
+
+# Reordering the variant's trait list -- what staff do in the species panel,
+# and what every existing character's display is supposed to follow.
+mutation SeedUpdateTraitOrders($input: UpdateTraitOrdersInput!) {
+  updateTraitOrders(input: $input) {
+    id
+    order
+  }
+}
+
 # ==================== Currency ====================
 
 # Requires community CanManageItems -- currency reuses the item permissions
