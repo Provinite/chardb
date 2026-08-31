@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Trade pages dropped you out of community navigation** (#293). The sidebar
+  reads community context from the pathname, so `/trades?community=<id>` was
+  in a community it could not see. The scoped inbox and an offer now live at
+  `/communities/:communityId/trades[/:tradeId]`; `/trades` stays the
+  cross-community inbox. The old URLs are gone rather than redirected.
+
 - The grant form now bounds its quantity at 100 and disables its button while
   the grant is running, so a slow grant cannot be submitted several times over
   (#291).
