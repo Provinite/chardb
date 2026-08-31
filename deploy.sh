@@ -278,6 +278,28 @@ sleep 30
 echo "🔍 Checking service status..."
 docker compose ps
 
+echo "🧹 Removing images no longer in use..."
+# Without this the host keeps one image per deploy and drops none. Main takes
+# something like ten merges on a busy day at ~850MB each, so a 50GB disk has
+# about a week in it. It ran out on 2026-08-31, and the failure is not a
+# gentle one: `docker compose down` has already run by the time the pull hits
+# the full disk, so the site is left down rather than merely un-updated.
+#
+# After `up -d`, so the images the running containers use are protected by
+# being referenced. `-a` rather than the default because these are not
+# dangling images -- each old deploy is a real tag, and only the running one
+# is spoken for.
+#
+# Nothing is held back for rollback, because nothing needs to be. Every tag is
+# in ECR; rolling back is a deploy at an older tag, which pulls it again.
+#
+# `|| true` so that tidying up cannot fail a deployment that already worked.
+docker image prune -af || true
+
+# Cheap, and it is the number that would have named this problem on the
+# deploy that first got close rather than the one that fell over.
+df -h / | awk 'NR==2 {print "💾 Disk: " $3 " used of " $2 " (" $5 "), " $4 " free"}'
+
 echo "✅ Deployment complete!"
 # IMDSv2: the instance sets http_tokens = "required", so an unauthenticated
 # IMDS read returns 401.
