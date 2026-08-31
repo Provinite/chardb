@@ -406,7 +406,10 @@ export const SpeciesPage: React.FC = () => {
         <SectionGrid>
           {availableSections.map((section) => {
             const CardComponent = section.available
-              ? ({ children, ...props }: any) => (
+              ? ({
+                  children,
+                  ...props
+                }: React.ComponentProps<typeof SectionCard>) => (
                   <Link
                     to={section.path}
                     style={{ textDecoration: "none", color: "inherit" }}
