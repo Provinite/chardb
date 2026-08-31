@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
-import { TradeStatus } from "@chardb/database";
+import { TradeStatus, Visibility } from "@chardb/database";
 import { TradesService } from "./trades.service";
 import { DatabaseService } from "../database/database.service";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
@@ -27,6 +27,20 @@ const item = (id: string, ownerId = "alice", itemTypeId = "type1") => ({
   },
 });
 
+/**
+ * A character open to trades, owned by `alice` and in `comm1` unless said
+ * otherwise. The species is what puts it in a community -- there is no other
+ * route -- so the tests that spoil scoping spoil the species.
+ */
+const character = (id: string, ownerId = "alice", name = "Bramblefoot") => ({
+  id,
+  name,
+  ownerId,
+  isTradeable: true,
+  visibility: Visibility.PUBLIC,
+  species: { communityId: "comm1" },
+});
+
 describe("TradesService", () => {
   let service: TradesService;
 
@@ -49,6 +63,8 @@ describe("TradesService", () => {
     // test says otherwise.
     mockDatabaseService.communityMember.count.mockResolvedValue(2);
     mockDatabaseService.tradeItem.findFirst.mockResolvedValue(null);
+    mockDatabaseService.tradeCharacter.findFirst.mockResolvedValue(null);
+    mockDatabaseService.character.findMany.mockResolvedValue([]);
     mockDatabaseService.tradeCurrencyLine.aggregate.mockResolvedValue({
       _sum: { amount: null },
     });
@@ -70,6 +86,7 @@ describe("TradesService", () => {
       mockDatabaseService.trade.create.mock.calls.at(-1)?.[0] as {
         data: {
           items: { create: Array<Record<string, unknown>> };
+          characterLines: { create: Array<Record<string, unknown>> };
           currencyLines: { create: Array<Record<string, unknown>> };
         };
       }
@@ -181,6 +198,172 @@ describe("TradesService", () => {
       // which is one decision more than the offer contains.
       expect(lastCreate().items.create).toHaveLength(1);
       expect(lastCreate().items.create[0].quantity).toBe(3);
+    });
+  });
+
+  describe("characters", () => {
+    it("records which way a character moves, from either side", async () => {
+      mockDatabaseService.character.findMany
+        .mockResolvedValueOnce([character("c1")])
+        .mockResolvedValueOnce([character("c2", "bob", "Marrowfen")]);
+
+      await service.create("alice", {
+        ...baseInput,
+        offeringCharacters: [{ characterId: "c1" }],
+        requestingCharacters: [{ characterId: "c2" }],
+      });
+
+      // The side a character arrives on is the whole of what direction means
+      // here. There is no by-type case to complicate it, so both ends are
+      // named on the line and settlement copies them rather than working them
+      // out again.
+      expect(lastCreate().characterLines.create).toEqual([
+        { characterId: "c1", sourceUserId: "alice", destinationUserId: "bob" },
+        { characterId: "c2", sourceUserId: "bob", destinationUserId: "alice" },
+      ]);
+    });
+
+    it("refuses a character nobody has opened to trades", async () => {
+      mockDatabaseService.character.findMany.mockResolvedValue([
+        { ...character("c1"), isTradeable: false },
+      ]);
+
+      // Default false, so silence is a no. Someone who wants a character
+      // cannot put it on a table by asking.
+      await expect(
+        service.create("alice", {
+          ...baseInput,
+          offeringCharacters: [{ characterId: "c1" }],
+        }),
+      ).rejects.toThrow(/not open to trades/i);
+    });
+
+    it("refuses a character whose species is in another community", async () => {
+      mockDatabaseService.character.findMany.mockResolvedValue([
+        { ...character("c1"), species: { communityId: "comm2" } },
+      ]);
+
+      await expect(
+        service.create("alice", {
+          ...baseInput,
+          offeringCharacters: [{ characterId: "c1" }],
+        }),
+      ).rejects.toThrow(/does not belong to this community/i);
+    });
+
+    it("refuses a character with no species at all", async () => {
+      mockDatabaseService.character.findMany.mockResolvedValue([
+        { ...character("c1"), species: null },
+      ]);
+
+      // Species is the only route from a character to a community, so one
+      // without a species is in none of them and tradeable in none of them.
+      await expect(
+        service.create("alice", {
+          ...baseInput,
+          offeringCharacters: [{ characterId: "c1" }],
+        }),
+      ).rejects.toThrow(/does not belong to this community/i);
+    });
+
+    it("refuses a private character", async () => {
+      mockDatabaseService.character.findMany.mockResolvedValue([
+        { ...character("c1"), visibility: Visibility.PRIVATE },
+      ]);
+
+      // Visibility is "the owner and nobody else", so a private character on
+      // a line is one the recipient is asked to accept without being allowed
+      // to look at it.
+      await expect(
+        service.create("alice", {
+          ...baseInput,
+          offeringCharacters: [{ characterId: "c1" }],
+        }),
+      ).rejects.toThrow(/is private/i);
+    });
+
+    it("refuses to offer a character you do not own", async () => {
+      mockDatabaseService.character.findMany.mockResolvedValue([
+        character("c1", "carol"),
+      ]);
+
+      await expect(
+        service.create("alice", {
+          ...baseInput,
+          offeringCharacters: [{ characterId: "c1" }],
+        }),
+      ).rejects.toThrow(/do not own/i);
+    });
+
+    it("refuses to ask for a character the other member does not own", async () => {
+      mockDatabaseService.character.findMany.mockResolvedValue([
+        character("c1", "carol"),
+      ]);
+
+      await expect(
+        service.create("alice", {
+          ...baseInput,
+          requestingCharacters: [{ characterId: "c1" }],
+        }),
+      ).rejects.toThrow(/not owned by the member you are offering to/i);
+    });
+
+    it("refuses a character already promised in another open offer", async () => {
+      mockDatabaseService.character.findMany.mockResolvedValue([
+        character("c1"),
+      ]);
+      mockDatabaseService.tradeCharacter.findFirst.mockResolvedValue({
+        character: { name: "Bramblefoot" },
+      });
+
+      // Nothing is escrowed, so the same character can sit in several of your
+      // offers and settle against whichever is accepted first. Refusing here
+      // puts that conversation in front of the person who caused it, rather
+      // than in front of whoever accepts second.
+      await expect(
+        service.create("alice", {
+          ...baseInput,
+          offeringCharacters: [{ characterId: "c1" }],
+        }),
+      ).rejects.toThrow(/already offered Bramblefoot in another open trade/i);
+    });
+
+    it("lets several members bid for the same character", async () => {
+      mockDatabaseService.character.findMany.mockResolvedValue([
+        character("c1", "bob"),
+      ]);
+
+      // The double-promise refusal is about what you are handing over, not
+      // what you are asking for. Someone else's character being wanted by two
+      // people is the market working, and the loser fails at settlement.
+      await expect(
+        service.create("alice", {
+          ...baseInput,
+          requestingCharacters: [{ characterId: "c1" }],
+        }),
+      ).resolves.toBeDefined();
+      expect(mockDatabaseService.tradeCharacter.findFirst).not.toHaveBeenCalled();
+    });
+
+    it("refuses the same character on both sides of one offer", async () => {
+      await expect(
+        service.create("alice", {
+          ...baseInput,
+          offeringCharacters: [{ characterId: "c1" }],
+          requestingCharacters: [{ characterId: "c1" }],
+        }),
+      ).rejects.toThrow(/same character is on the table twice/i);
+    });
+
+    it("refuses a character that has been deleted", async () => {
+      mockDatabaseService.character.findMany.mockResolvedValue([]);
+
+      await expect(
+        service.create("alice", {
+          ...baseInput,
+          offeringCharacters: [{ characterId: "c1" }],
+        }),
+      ).rejects.toThrow(/does not exist or has been deleted/i);
     });
   });
 
@@ -533,6 +716,115 @@ describe("TradesService", () => {
       await expect(service.accept("t1", "bob")).rejects.toThrow(
         /member who made this offer no longer has 120 HC/i,
       );
+    });
+
+    /**
+     * The character half of settlement.
+     *
+     * A character is one thing, so every open offer naming it is a bid on the
+     * same object and only the first accept can land. That makes the race
+     * these guard against real rather than theoretical, in a way the item case
+     * -- where a second identical copy is usually sitting right there -- is
+     * not.
+     */
+    describe("characters", () => {
+      /** The same trade, with Bramblefoot going from alice to bob. */
+      const withCharacter = {
+        ...settling,
+        characterLines: [
+          {
+            id: "cline1",
+            characterId: "c1",
+            sourceUserId: "alice",
+            destinationUserId: "bob",
+            character: { id: "c1", name: "Bramblefoot" },
+          },
+        ],
+      };
+
+      beforeEach(() => {
+        mockDatabaseService.trade.findUnique.mockResolvedValue(withCharacter);
+        // Nothing closed, and alice still owns them. As above, the findMany
+        // stub returns the closed rows, so empty means nothing is closed.
+        mockDatabaseService.character.findMany.mockResolvedValue([]);
+        mockDatabaseService.character.updateMany.mockResolvedValue({
+          count: 1,
+        });
+        mockDatabaseService.trade.update.mockResolvedValue({
+          ...withCharacter,
+          status: TradeStatus.ACCEPTED,
+        });
+      });
+
+      it("moves the character and logs it on the settlement batch", async () => {
+        await service.accept("t1", "bob");
+
+        // The ownership check rides in the WHERE rather than happening before
+        // it, so a transfer racing this one loses instead of being overwritten
+        // by it. isTradeable rides along for the same reason: consent
+        // withdrawn after assertStillTradeable still stops the move.
+        expect(mockDatabaseService.character.updateMany).toHaveBeenCalledWith({
+          where: {
+            id: "c1",
+            ownerId: "alice",
+            isTradeable: true,
+            deletedAt: null,
+          },
+          data: { ownerId: "bob" },
+        });
+
+        const batchId = (
+          mockDatabaseService.trade.update.mock.calls[0][0] as {
+            data: { settlementBatchId: string };
+          }
+        ).data.settlementBatchId;
+
+        // Three ledgers, one event. A character that moved without carrying
+        // the batch id would be a transfer nobody could tie back to its cause.
+        expect(
+          mockDatabaseService.characterOwnershipChange.createMany,
+        ).toHaveBeenCalledWith({
+          data: [
+            {
+              characterId: "c1",
+              fromUserId: "alice",
+              toUserId: "bob",
+              batchId,
+            },
+          ],
+        });
+      });
+
+      it("refuses a character closed to trades after the offer was written", async () => {
+        mockDatabaseService.character.findMany.mockResolvedValue([
+          { name: "Bramblefoot" },
+        ]);
+
+        // This is the whole point of the flag. It is a standing answer to
+        // being asked, so what settlement owes the owner is the answer now --
+        // and closing a character to trades while an offer sits is exactly
+        // when someone would.
+        await expect(service.accept("t1", "bob")).rejects.toThrow(
+          /Bramblefoot is no longer open to trades/i,
+        );
+        expect(mockDatabaseService.character.updateMany).not.toHaveBeenCalled();
+        expect(mockCurrencyLedger.transfer).not.toHaveBeenCalled();
+      });
+
+      it("refuses when the character has already changed hands", async () => {
+        mockDatabaseService.character.updateMany.mockResolvedValue({
+          count: 0,
+        });
+
+        // Someone else's accept landed first. The conditional update reports
+        // it by moving nothing, which is the only answer that cannot be racy.
+        await expect(service.accept("t1", "bob")).rejects.toThrow(
+          /Bramblefoot is no longer available/i,
+        );
+        expect(
+          mockDatabaseService.characterOwnershipChange.createMany,
+        ).not.toHaveBeenCalled();
+      });
     });
   });
 
