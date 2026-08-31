@@ -15,6 +15,8 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import { canUserEditCharacter } from "../lib/characterPermissions";
+import { setKinds } from "../lib/characterAvailability";
+import { CharacterAvailability } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
 import { CommentList } from "../components/CommentList";
 import { CharacterMediaGallery } from "../components/CharacterMediaGallery";
@@ -470,6 +472,9 @@ export const CharacterPage: React.FC = () => {
    * disabled -- a greyed-out button and a "trades are off" tooltip are both
    * still an invitation to try anyway.
    */
+  /** Everything the owner has opened this character to, in list order. */
+  const availability = character ? setKinds(character) : [];
+
   const tradeCommunityId = character?.species?.community?.id;
   const canProposeTrade = Boolean(
     character?.isTradeable &&
@@ -652,12 +657,20 @@ export const CharacterPage: React.FC = () => {
                   character.pendingOwnership.providerAccountId}
               </MetaBadge>
             )}
-            {character.isSellable && (
-              <MetaBadge variant="success">For Sale</MetaBadge>
-            )}
-            {character.isTradeable && (
-              <MetaBadge variant="warning">Open to Trades</MetaBadge>
-            )}
+            {/* One badge per kind the owner has ticked, in a fixed order so
+                two characters with the same settings read the same way. */}
+            {availability.map((kind) => (
+              <MetaBadge
+                key={kind.field}
+                variant={
+                  kind.value === CharacterAvailability.TradeCharacters
+                    ? "warning"
+                    : "success"
+                }
+              >
+                {kind.badge}
+              </MetaBadge>
+            ))}
             {character.traitReviewStatus === ModerationStatus.Pending && (
               <MetaBadge variant="warning">Traits Pending Review</MetaBadge>
             )}
@@ -803,20 +816,19 @@ export const CharacterPage: React.FC = () => {
         </ContentSection>
       ) : null}
 
-      {(character.isSellable || character.isTradeable) && (
+      {availability.length > 0 && (
         <ContentSection>
           <SectionTitle>Trading Information</SectionTitle>
           <TradingInfo>
-            <TradingRow>
-              <TradingLabel>Available for Sale:</TradingLabel>
-              <TradingValue>{character.isSellable ? "Yes" : "No"}</TradingValue>
-            </TradingRow>
-            <TradingRow>
-              <TradingLabel>Open to Trades:</TradingLabel>
-              <TradingValue>
-                {character.isTradeable ? "Yes" : "No"}
-              </TradingValue>
-            </TradingRow>
+            {/* Only what the owner said yes to. The old card listed every
+                setting with a Yes or a No, which made a character open to
+                nothing read as a list of refusals rather than a quiet page. */}
+            {availability.map((kind) => (
+              <TradingRow key={kind.field}>
+                <TradingLabel>{kind.label}</TradingLabel>
+                <TradingValue>Yes</TradingValue>
+              </TradingRow>
+            ))}
             {character.price && character.isSellable && (
               <TradingRow>
                 <TradingLabel>Price:</TradingLabel>

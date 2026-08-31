@@ -68,6 +68,10 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     visibility: characterData.visibility,
     isSellable: characterData.isSellable,
     isTradeable: characterData.isTradeable,
+    isSellableForCoin: characterData.isSellableForCoin,
+    isTradeableForArt: characterData.isTradeableForArt,
+    isOpenToOffers: characterData.isOpenToOffers,
+    isFreebie: characterData.isFreebie,
     price: characterData.price,
     customFields: characterData.customFields
       ? JSON.parse(characterData.customFields)
@@ -108,6 +112,14 @@ export function mapUpdateCharacterProfileInputToService(
     characterData.isSellable = inputData.isSellable;
   if (inputData.isTradeable !== undefined)
     characterData.isTradeable = inputData.isTradeable;
+  if (inputData.isSellableForCoin !== undefined)
+    characterData.isSellableForCoin = inputData.isSellableForCoin;
+  if (inputData.isTradeableForArt !== undefined)
+    characterData.isTradeableForArt = inputData.isTradeableForArt;
+  if (inputData.isOpenToOffers !== undefined)
+    characterData.isOpenToOffers = inputData.isOpenToOffers;
+  if (inputData.isFreebie !== undefined)
+    characterData.isFreebie = inputData.isFreebie;
   if (inputData.price !== undefined) characterData.price = inputData.price;
   if (inputData.customFields !== undefined) {
     characterData.customFields = inputData.customFields
@@ -175,6 +187,10 @@ export function mapPrismaCharacterToGraphQL(
     visibility: prismaCharacter.visibility,
     isSellable: prismaCharacter.isSellable,
     isTradeable: prismaCharacter.isTradeable,
+    isSellableForCoin: prismaCharacter.isSellableForCoin,
+    isTradeableForArt: prismaCharacter.isTradeableForArt,
+    isOpenToOffers: prismaCharacter.isOpenToOffers,
+    isFreebie: prismaCharacter.isFreebie,
     price: prismaCharacter.price?.toNumber(),
     customFields: prismaCharacter.customFields
       ? JSON.stringify(prismaCharacter.customFields)

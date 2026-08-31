@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **E2E: 7 availability-browse specs** in `apps/e2e/tests/characters`, the
+  load-bearing one being that two ticked boxes mean either rather than both —
+  an AND there returns an empty page, which reads as a broken filter (#312).
+
+- The `community-items` preset's three characters now carry three different
+  sets of availability kinds, so a filter has something to discriminate (#312).
+
 - **E2E: 8 character-trading specs** in `apps/e2e/tests/trades`, most of them
   about what a character its owner has not opted in offers: nothing, at every
   surface (#302).

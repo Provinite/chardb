@@ -59,11 +59,15 @@ export interface CommunityItemsWorld {
    */
   species: { id: string; name: string };
   characters: {
-    /** `member`'s, open to trades. The one that changes hands. */
+    /** `member`'s. Open to trades, and nothing else. Changes hands. */
     bramblefoot: { id: string; name: string; url: string };
-    /** `member`'s, closed. Must offer no trade affordance anywhere. */
+    /**
+     * `member`'s. A freebie, and closed to trades -- so it must offer no trade
+     * affordance anywhere while still being findable by an availability
+     * filter, which is the pair of facts the two suites need from it.
+     */
     hearthstone: { id: string; name: string; url: string };
-    /** `othermember`'s, open. The one a trade is composed to ask for. */
+    /** `othermember`'s. Open to trades and for sale in coin. */
     marrowfen: { id: string; name: string; url: string };
   };
   /** What each persona holds of `coin` after seeding. */
@@ -253,12 +257,16 @@ export default definePreset<CommunityItemsWorld>({
     const character = async (
       persona: "member" | "othermember",
       name: string,
-      isTradeable: boolean,
+      availability: {
+        isTradeable?: boolean;
+        isFreebie?: boolean;
+        isSellableForCoin?: boolean;
+      },
     ) => {
       const { createCharacter } = await ctx
         .as(persona)
         .gql(SeedCreateCharacterDocument, {
-          input: { name, speciesId: species.id, isTradeable },
+          input: { name, speciesId: species.id, ...availability },
         });
       return {
         id: createCharacter.id,
@@ -267,12 +275,21 @@ export default definePreset<CommunityItemsWorld>({
       };
     };
 
-    // The asymmetry the character-trade tests need: one open character on each
-    // side to trade, and one closed one to prove the flag withholds the whole
-    // affordance rather than greying it out.
-    const bramblefoot = await character("member", "Bramblefoot", true);
-    const hearthstone = await character("member", "Hearthstone", false);
-    const marrowfen = await character("othermember", "Marrowfen", true);
+    // Two asymmetries at once. For the trade specs: one open character on each
+    // side, and one closed to trades to prove the flag withholds the whole
+    // affordance rather than greying it out. For the browse specs: three
+    // different sets of availability kinds, so a filter has something to
+    // discriminate and "any of these" can be told apart from "all of these".
+    const bramblefoot = await character("member", "Bramblefoot", {
+      isTradeable: true,
+    });
+    const hearthstone = await character("member", "Hearthstone", {
+      isFreebie: true,
+    });
+    const marrowfen = await character("othermember", "Marrowfen", {
+      isTradeable: true,
+      isSellableForCoin: true,
+    });
 
     // ==================== Currency ====================
 

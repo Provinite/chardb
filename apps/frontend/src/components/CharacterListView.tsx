@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import styled from "styled-components";
 import {
   useGetCharactersQuery,
+  CharacterAvailability,
   CharacterFiltersInput,
 } from "../generated/graphql";
 import { LoadingSpinner } from "./LoadingSpinner";
@@ -12,6 +13,25 @@ import {
   AdvancedSearchForm,
   AdvancedSearchFilters,
 } from "./AdvancedSearchForm";
+
+const AVAILABILITY_VALUES = new Set<string>(
+  Object.values(CharacterAvailability),
+);
+
+/**
+ * Read `availability=FREEBIE,OFFERS` off the URL, dropping anything unknown.
+ *
+ * URLs are typed by hand and outlive deployments, so a value the enum has
+ * since lost has to be ignored rather than sent on to be rejected -- a stale
+ * bookmark should lose one checkbox, not the whole page.
+ */
+function parseAvailabilityParam(raw: string | null): CharacterAvailability[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((value) => value.trim().toUpperCase())
+    .filter((value) => AVAILABILITY_VALUES.has(value)) as CharacterAvailability[];
+}
 
 const Container = styled.div`
   max-width: 1200px;
@@ -237,13 +257,29 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
     const searchFields = searchParams.get("searchFields");
 
     if (search) params.search = search;
-    if (isSellable) params.isSellable = isSellable === "true";
-    if (isTradeable) params.isTradeable = isTradeable === "true";
     if (minPrice) params.minPrice = parseFloat(minPrice);
     if (maxPrice) params.maxPrice = parseFloat(maxPrice);
     if (sortBy) params.sortBy = sortBy;
     if (sortOrder) params.sortOrder = sortOrder;
     if (searchFields) params.searchFields = searchFields;
+
+    // `availability=FREEBIE,OFFERS` is the shape the checkbox row writes.
+    const availability = parseAvailabilityParam(searchParams.get("availability"));
+
+    // The two booleans this replaced. Links and bookmarks carrying them still
+    // exist, and a shared search that silently stopped filtering would be
+    // worse than one that errored -- so `?isTradeable=true` is read as a tick
+    // in the matching box. `=false` has no equivalent and stays a boolean,
+    // which is the one thing the checkbox row cannot ask.
+    const legacy: CharacterAvailability[] = [];
+    if (isSellable === "true") legacy.push(CharacterAvailability.ForSale);
+    if (isTradeable === "true")
+      legacy.push(CharacterAvailability.TradeCharacters);
+    if (isSellable === "false") params.isSellable = false;
+    if (isTradeable === "false") params.isTradeable = false;
+
+    const kinds = [...new Set([...availability, ...legacy])];
+    if (kinds.length) params.availability = kinds;
 
     return params;
   }, [searchParams, baseFilters, defaultFilters]);
@@ -254,8 +290,14 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
     searchParams.get("search") || "",
   );
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  // Seeded from the URL, so opening advanced search on a shared link shows the
+  // boxes that link actually ticked rather than an empty form beside a
+  // filtered list.
   const [currentAdvancedFilters, setCurrentAdvancedFilters] =
-    useState<AdvancedSearchFilters>({});
+    useState<AdvancedSearchFilters>(() => {
+      const availability = getInitialFilters().availability;
+      return availability?.length ? { availability } : {};
+    });
 
   // Update URL when filters change
   const updateURL = useCallback(
@@ -263,6 +305,8 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
       const params = new URLSearchParams();
 
       if (newFilters.search) params.set("search", newFilters.search);
+      if (newFilters.availability?.length)
+        params.set("availability", newFilters.availability.join(","));
       if (newFilters.isSellable !== undefined)
         params.set("isSellable", String(newFilters.isSellable));
       if (newFilters.isTradeable !== undefined)
@@ -313,23 +357,9 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
         ...baseFilters,
         limit: 12,
         offset: 0,
+        // The string coercion that used to live here is gone with the two
+        // dropdowns that produced it. Checkboxes give the enum directly.
         ...advancedFilters,
-        isSellable:
-          typeof advancedFilters.isSellable === "string"
-            ? advancedFilters.isSellable === "true"
-              ? true
-              : advancedFilters.isSellable === "false"
-                ? false
-                : undefined
-            : advancedFilters.isSellable,
-        isTradeable:
-          typeof advancedFilters.isTradeable === "string"
-            ? advancedFilters.isTradeable === "true"
-              ? true
-              : advancedFilters.isTradeable === "false"
-                ? false
-                : undefined
-            : advancedFilters.isTradeable,
       };
       setFilters(newFilters);
       updateURL(newFilters);

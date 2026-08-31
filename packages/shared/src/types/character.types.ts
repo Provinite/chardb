@@ -16,6 +16,10 @@ export const CharacterSchema = z.object({
   visibility: z.nativeEnum(Visibility).default(Visibility.PUBLIC),
   isSellable: z.boolean().default(false),
   isTradeable: z.boolean().default(false),
+  isSellableForCoin: z.boolean().default(false),
+  isTradeableForArt: z.boolean().default(false),
+  isOpenToOffers: z.boolean().default(false),
+  isFreebie: z.boolean().default(false),
   price: z.number().positive().optional(),
   tags: z.array(z.string()).default([]),
   customFields: z.record(z.any()).default({}),
@@ -34,6 +38,10 @@ export const CreateCharacterSchema = z.object({
   visibility: z.nativeEnum(Visibility).default(Visibility.PUBLIC),
   isSellable: z.boolean().default(false),
   isTradeable: z.boolean().default(false),
+  isSellableForCoin: z.boolean().default(false),
+  isTradeableForArt: z.boolean().default(false),
+  isOpenToOffers: z.boolean().default(false),
+  isFreebie: z.boolean().default(false),
   price: z.number().positive().optional(),
   tags: z.array(z.string()).default([]),
   customFields: z.record(z.any()).default({}),
@@ -43,6 +51,16 @@ export const UpdateCharacterSchema = CreateCharacterSchema.partial().extend({
   mainImageId: z.string().uuid().optional(),
 });
 
+/** The ways an owner can say they are open to being asked about a character. */
+export const CharacterAvailabilityValues = [
+  "FOR_SALE",
+  "FOR_SALE_COIN",
+  "TRADE_CHARACTERS",
+  "TRADE_ART",
+  "OFFERS",
+  "FREEBIE",
+] as const;
+
 export const CharacterSearchSchema = z.object({
   search: z.string().optional(),
   species: z.string().optional(),
@@ -51,6 +69,8 @@ export const CharacterSearchSchema = z.object({
   visibility: z.nativeEnum(Visibility).optional(),
   isSellable: z.boolean().optional(),
   isTradeable: z.boolean().optional(),
+  /** Any of these, not all -- a row of checkboxes. */
+  availability: z.array(z.enum(CharacterAvailabilityValues)).optional(),
 });
 
 export type Character = z.infer<typeof CharacterSchema>;

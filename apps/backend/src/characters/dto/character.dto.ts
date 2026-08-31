@@ -25,6 +25,7 @@ import { Type } from "class-transformer";
 import { Visibility, TraitReviewSource } from "@chardb/database";
 import { CharacterTraitValueInput } from "./character-trait.dto";
 import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
+import { CharacterAvailability } from "../character-availability";
 
 // Register enum for GraphQL
 registerEnumType(Visibility, {
@@ -80,6 +81,26 @@ export class CreateCharacterInput {
   @IsOptional()
   @IsBoolean()
   isTradeable?: boolean;
+
+  @Field({ defaultValue: false })
+  @IsOptional()
+  @IsBoolean()
+  isSellableForCoin?: boolean;
+
+  @Field({ defaultValue: false })
+  @IsOptional()
+  @IsBoolean()
+  isTradeableForArt?: boolean;
+
+  @Field({ defaultValue: false })
+  @IsOptional()
+  @IsBoolean()
+  isOpenToOffers?: boolean;
+
+  @Field({ defaultValue: false })
+  @IsOptional()
+  @IsBoolean()
+  isFreebie?: boolean;
 
   @Field(() => Float, { nullable: true })
   @IsOptional()
@@ -196,6 +217,26 @@ export class UpdateCharacterProfileInput {
   @IsOptional()
   @IsBoolean()
   isTradeable?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  isSellableForCoin?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  isTradeableForArt?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  isOpenToOffers?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  isFreebie?: boolean;
 
   @Field(() => Float, { nullable: true })
   @IsOptional()
@@ -357,15 +398,36 @@ export class CharacterFiltersInput {
   @IsEnum(Visibility)
   visibility?: Visibility;
 
-  @Field({ nullable: true })
+  @Field({
+    nullable: true,
+    deprecationReason:
+      "Use `availability: [TRADE_CHARACTERS]`. Kept because it is the only " +
+      "one of these that can also ask for the negative.",
+  })
   @IsOptional()
   @IsBoolean()
   isSellable?: boolean;
 
-  @Field({ nullable: true })
+  @Field({
+    nullable: true,
+    deprecationReason:
+      "Use `availability: [TRADE_CHARACTERS]`. Kept because it is the only " +
+      "one of these that can also ask for the negative.",
+  })
   @IsOptional()
   @IsBoolean()
   isTradeable?: boolean;
+
+  @Field(() => [CharacterAvailability], {
+    nullable: true,
+    description:
+      "Any of these, not all -- a row of checkboxes. An empty or omitted " +
+      "list is no filter rather than one matching nothing.",
+  })
+  @IsOptional()
+  @IsArray()
+  @IsEnum(CharacterAvailability, { each: true })
+  availability?: CharacterAvailability[];
 
   @Field(() => Float, { nullable: true })
   @IsOptional()
@@ -451,6 +513,7 @@ export interface CharacterFilters {
   visibility?: Visibility;
   isSellable?: boolean;
   isTradeable?: boolean;
+  availability?: CharacterAvailability[];
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;

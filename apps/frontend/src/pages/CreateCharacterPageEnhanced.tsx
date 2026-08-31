@@ -32,6 +32,10 @@ import { SpeciesSelector } from "../components/character/SpeciesSelector";
 import { TraitForm } from "../components/character/TraitForm";
 import { CharacterDetailsEditor } from "../components/character/CharacterDetailsEditor";
 import { CustomFieldsEditor } from "../components/CustomFieldsEditor";
+import {
+  AVAILABILITY_KINDS,
+  TRADE_CHARACTERS_NOTE,
+} from "../lib/characterAvailability";
 
 /**
  * Enhanced Character Creation Page with Species and Trait Integration
@@ -74,6 +78,10 @@ const characterSchema = z.object({
   visibility: z.nativeEnum(Visibility),
   isSellable: z.boolean(),
   isTradeable: z.boolean(),
+  isSellableForCoin: z.boolean(),
+  isTradeableForArt: z.boolean(),
+  isOpenToOffers: z.boolean(),
+  isFreebie: z.boolean(),
   price: z
     .string()
     .refine(
@@ -238,6 +246,12 @@ const ErrorMessage = styled.span`
   color: ${({ theme }) => theme.colors.danger};
 `;
 
+const FieldNote = styled.p`
+  margin: -0.5rem 0 1rem;
+  font-size: 0.8125rem;
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
 const ButtonRow = styled.div`
   display: flex;
   gap: 1rem;
@@ -354,6 +368,10 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
       visibility: Visibility.Public,
       isSellable: false,
       isTradeable: false,
+      isSellableForCoin: false,
+      isTradeableForArt: false,
+      isOpenToOffers: false,
+      isFreebie: false,
       details: "",
     },
   });
@@ -412,6 +430,10 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             visibility: data.visibility,
             isSellable: data.isSellable,
             isTradeable: data.isTradeable,
+            isSellableForCoin: data.isSellableForCoin,
+            isTradeableForArt: data.isTradeableForArt,
+            isOpenToOffers: data.isOpenToOffers,
+            isFreebie: data.isFreebie,
             price: data.price ? parseFloat(data.price) : undefined,
             tags: tags.length > 0 ? tags : undefined,
             speciesId: selectedSpecies?.id || undefined,
@@ -619,25 +641,23 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             </Select>
           </FormGroup>
 
+          <Label as="span">Open to</Label>
           <CheckboxRow>
-            <CheckboxGroup>
-              <Checkbox
-                {...register("isSellable")}
-                type="checkbox"
-                id="isSellable"
-              />
-              Character is for sale
-            </CheckboxGroup>
-
-            <CheckboxGroup>
-              <Checkbox
-                {...register("isTradeable")}
-                type="checkbox"
-                id="isTradeable"
-              />
-              Character is available for trade
-            </CheckboxGroup>
+            {AVAILABILITY_KINDS.map((kind) => (
+              <CheckboxGroup key={kind.field}>
+                <Checkbox
+                  {...register(kind.field)}
+                  type="checkbox"
+                  id={kind.field}
+                />
+                {kind.label}
+              </CheckboxGroup>
+            ))}
           </CheckboxRow>
+          {/* Only against the one box that lets somebody else start something.
+              The rest are notices, and nobody should learn the difference by
+              being sent an offer they did not know they had invited. */}
+          <FieldNote>{TRADE_CHARACTERS_NOTE}</FieldNote>
 
           {isSellable && (
             <FormGroup>

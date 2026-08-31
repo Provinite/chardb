@@ -2,6 +2,8 @@ import React from "react";
 import styled from "styled-components";
 import { useForm } from "react-hook-form";
 import { Button } from "@chardb/ui";
+import { AVAILABILITY_KINDS } from "../lib/characterAvailability";
+import { CharacterAvailability } from "../generated/graphql";
 
 const SearchForm = styled.form`
   display: flex;
@@ -33,6 +35,26 @@ const Label = styled.label`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const CheckboxRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.primary};
+  cursor: pointer;
+
+  input {
+    accent-color: ${({ theme }) => theme.colors.primary};
+    cursor: pointer;
+  }
 `;
 
 const Input = styled.input`
@@ -94,6 +116,8 @@ export interface AdvancedSearchFilters {
   maxPrice?: number;
   isSellable?: boolean;
   isTradeable?: boolean;
+  /** Any of these, not all -- a row of checkboxes. */
+  availability?: CharacterAvailability[];
   sortBy?: string;
   sortOrder?: string;
   searchFields?: string;
@@ -120,6 +144,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
       maxPrice: initialFilters.maxPrice,
       isSellable: initialFilters.isSellable,
       isTradeable: initialFilters.isTradeable,
+      availability: initialFilters.availability ?? [],
       sortBy: initialFilters.sortBy || "created",
       sortOrder: initialFilters.sortOrder || "desc",
       searchFields: initialFilters.searchFields || "all",
@@ -133,7 +158,10 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
         value !== "" &&
         value !== undefined &&
         value !== null &&
-        !(typeof value === "number" && isNaN(value))
+        !(typeof value === "number" && isNaN(value)) &&
+        // An unticked row is no filter rather than one matching nothing, so
+        // the empty array has to be dropped like an empty string is.
+        !(Array.isArray(value) && value.length === 0)
       ) {
         acc[key as keyof AdvancedSearchFilters] = value;
       }
@@ -151,6 +179,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
       maxPrice: undefined,
       isSellable: undefined,
       isTradeable: undefined,
+      availability: [],
       sortBy: "created",
       sortOrder: "desc",
       searchFields: "all",
@@ -215,30 +244,29 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
           </PriceGroup>
         </FormGroup>
 
-        <FormGroup>
-          <Label htmlFor="isSellable">Status</Label>
-          <Select
-            id="isSellable"
-            {...register("isSellable", { valueAsNumber: false })}
-          >
-            <option value="">Any Status</option>
-            <option value="true">For Sale</option>
-            <option value="false">Not For Sale</option>
-          </Select>
-        </FormGroup>
-
-        <FormGroup>
-          <Label htmlFor="isTradeable">Trading</Label>
-          <Select
-            id="isTradeable"
-            {...register("isTradeable", { valueAsNumber: false })}
-          >
-            <option value="">Any Trading</option>
-            <option value="true">Open to Trades</option>
-            <option value="false">Not Trading</option>
-          </Select>
-        </FormGroup>
       </SearchRow>
+
+      {/* A row of checkboxes rather than the two dropdowns this replaced.
+          Ticking several means "any of these", which is the question people
+          actually browse with -- "show me anything free or up for offers" is
+          one search, and a pair of single-select dropdowns could not ask it. */}
+      <FormGroup>
+        <Label as="span">Open to</Label>
+        <CheckboxRow>
+          {AVAILABILITY_KINDS.map((kind) => (
+            <CheckboxLabel key={kind.value}>
+              <input
+                type="checkbox"
+                value={kind.value}
+                data-testid="availability-filter"
+                data-availability={kind.value}
+                {...register("availability")}
+              />
+              {kind.label}
+            </CheckboxLabel>
+          ))}
+        </CheckboxRow>
+      </FormGroup>
 
       <SearchRow>
         <FormGroup>
