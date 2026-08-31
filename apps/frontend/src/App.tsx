@@ -15,6 +15,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { UserProfilePage } from "./pages/UserProfilePage";
 import { EditProfilePage } from "./pages/EditProfilePage";
 import { CharacterPage } from "./pages/CharacterPage";
+import { CharacterMediaPage } from "./pages/CharacterMediaPage";
 import { CharactersPage } from "./pages/CharactersPage";
 import { CreateCharacterPageEnhanced as CreateCharacterPage } from "./pages/CreateCharacterPageEnhanced";
 import { EditCharacterPage } from "./pages/EditCharacterPage";
@@ -108,6 +109,9 @@ function App() {
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route path="/characters" element={<CharactersPage />} />
         <Route path="/character/:id" element={<CharacterPage />} />
+        {/* Public like the character page itself: this is the same media, all
+            of it rather than the first pageful. */}
+        <Route path="/character/:id/media" element={<CharacterMediaPage />} />
         <Route path="/galleries" element={<GalleriesPage />} />
         <Route path="/gallery/:id" element={<GalleryPage />} />
         <Route path="/media" element={<MediaLibraryPage />} />

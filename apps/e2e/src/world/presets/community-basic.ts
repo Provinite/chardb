@@ -55,6 +55,18 @@ export interface CommunityBasicWorld {
     pending: { id: string; name: string; url: string };
     /** Owned by `othermember`. The "someone else's character" target. */
     plain: { id: string; name: string; url: string };
+    /**
+     * Owned by `member`, carrying more media than the character page shows at
+     * once. Its own character so that adding media cannot disturb the trait
+     * review or moderation fixtures.
+     */
+    gallery: {
+      id: string;
+      name: string;
+      url: string;
+      /** How many media it holds. Above the page's batch size on purpose. */
+      mediaCount: number;
+    };
   };
 }
 
@@ -270,6 +282,49 @@ export default definePreset<CommunityBasicWorld>({
       },
     });
 
+    // --- a character with more media than one page holds -------------------
+    //
+    // Its own character rather than more media on `pending` or `plain`, so the
+    // trait review and moderation fixtures keep the shapes they assert on.
+    const GALLERY_MEDIA = 10;
+
+    const { createCharacter: gallery } = await ctx
+      .as("member")
+      .gql(SeedCreateCharacterDocument, {
+        input: {
+          name: "Fennwick",
+          speciesId: species.id,
+          speciesVariantId: variant.id,
+        },
+      });
+
+    for (let i = 0; i < GALLERY_MEDIA; i++) {
+      const galleryImage = await ctx.prisma.image.create({
+        data: {
+          filename: `fennwick-${i}.png`,
+          originalFilename: `fennwick-${i}.png`,
+          originalUrl: `https://example.test/fennwick-${i}.png`,
+          uploaderId: member.userId,
+          width: 800,
+          height: 600,
+          fileSize: 12345,
+          mimeType: "image/png",
+          moderationStatus: "APPROVED",
+        },
+      });
+
+      await ctx.prisma.media.create({
+        data: {
+          // Numbered so a spec can tell one from another, and so the order
+          // they come back in is checkable.
+          title: `Fennwick ${String(i).padStart(2, "0")}`,
+          ownerId: member.userId,
+          characterId: gallery.id,
+          imageId: galleryImage.id,
+        },
+      });
+    }
+
     return {
       community: {
         id: community.id,
@@ -307,6 +362,12 @@ export default definePreset<CommunityBasicWorld>({
           id: plain.id,
           name: plain.name,
           url: `/character/${plain.id}`,
+        },
+        gallery: {
+          id: gallery.id,
+          name: gallery.name,
+          url: `/character/${gallery.id}`,
+          mediaCount: GALLERY_MEDIA,
         },
       },
     };
