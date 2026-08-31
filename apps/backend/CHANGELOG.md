@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and refunded, but stops moving between members — refused by `transfer()`, at
   propose and again at settlement.
 
+### Changed
+
+- An item grant is capped at 100 units, down from 9,999. Enforced in the
+  service as well as on the input, so the Discord prize queue — which had no
+  cap at all — is bound too (#291).
+
 ## [v11.5.0] - 2026-08-30
 
 ### Added

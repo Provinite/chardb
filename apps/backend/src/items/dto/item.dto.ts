@@ -15,6 +15,20 @@ import { Type } from "class-transformer";
 import { Prisma } from "@chardb/database";
 import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
 
+/**
+ * How many of one item type a single grant may create.
+ *
+ * Items do not stack, so a grant of N is N rows in `items` and N in the ledger,
+ * every one of which then has to be listed in an inventory and rendered. The
+ * previous ceiling was 9,999, which nothing downstream was built to absorb --
+ * a staff member granting a thousand of something watched the request hang and
+ * pressed the button again, which is how this was reported.
+ *
+ * 100 is generous for what grants are actually for, handing out event rewards,
+ * and two orders of magnitude below where it was.
+ */
+export const MAX_GRANT_QUANTITY = 100;
+
 @InputType()
 export class GrantItemInput {
   @Field(() => ID)
@@ -31,11 +45,14 @@ export class GrantItemInput {
   @IsUUID()
   userId?: string;
 
-  @Field(() => Int, { defaultValue: 1 })
+  @Field(() => Int, {
+    defaultValue: 1,
+    description: `How many to create. At most ${MAX_GRANT_QUANTITY}.`,
+  })
   @IsOptional()
   @IsNumber()
   @Min(1)
-  @Max(9999)
+  @Max(MAX_GRANT_QUANTITY)
   quantity?: number;
 
   @Field(() => String, { nullable: true })

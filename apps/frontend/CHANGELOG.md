@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/communities/:communityId/trades[/:tradeId]`; `/trades` stays the
   cross-community inbox. The old URLs are gone rather than redirected.
 
+- The grant form now bounds its quantity at 100 and disables its button while
+  the grant is running, so a slow grant cannot be submitted several times over
+  (#291).
+
 - Four pages replaced themselves with a loading spinner on every visit rather
   than only the first: shop purchases, a community, an item type, and a
   species.

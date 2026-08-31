@@ -5,6 +5,7 @@ import {
   SeedItemTransactionsDocument,
   SeedItemTypesDocument,
   SeedRevokeItemsDocument,
+  SeedGrantItemDocument,
 } from "../../src/generated/graphql.js";
 
 const test = presetTest("community-items");
@@ -226,6 +227,41 @@ test.describe("as staff who can manage items", () => {
         new Set(itemTransactions.transactions.map((t) => t.itemId)).size,
       ).toBe(2);
     }).toPass({ timeout: 15_000 });
+  });
+
+  test("a grant above the cap is refused and creates nothing", async ({
+    world,
+  }) => {
+    // The cap used to be 9,999. Items do not stack, so that many is that many
+    // rows in `items` and in the ledger, then all of them rendered in an
+    // inventory -- a staff member granting a thousand watched it hang and
+    // pressed the button again (#291).
+    await expect(
+      world.as("quartermaster").gql(SeedGrantItemDocument, {
+        input: {
+          itemTypeId: world.itemTypes.locket.id,
+          userId: world.users.member.userId,
+          quantity: 101,
+          reason: "Over the cap",
+        },
+      }),
+    ).rejects.toThrow();
+
+    // Refused whole: a partial grant would be worse than none, since the
+    // ledger would then disagree with what was asked for.
+    const { itemTransactions } = await world
+      .as("quartermaster")
+      .gql(SeedItemTransactionsDocument, {
+        filters: {
+          communityId: world.community.id,
+          itemTypeId: world.itemTypes.locket.id,
+          kinds: [ItemTransactionKind.Grant],
+          limit: 100,
+        },
+      });
+    expect(
+      itemTransactions.transactions.some((t) => t.reason === "Over the cap"),
+    ).toBe(false);
   });
 });
 
