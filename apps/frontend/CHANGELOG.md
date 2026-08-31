@@ -7,14 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- **Trade pages dropped you out of community navigation** (#293). The sidebar
-  reads community context from the pathname, so `/trades?community=<id>` was
-  in a community it could not see. The scoped inbox and an offer now live at
-  `/communities/:communityId/trades[/:tradeId]`; `/trades` stays the
-  cross-community inbox. The old URLs are gone rather than redirected.
-
 ### Added
 
 - **A character's full media page** (`/character/:id/media`). The gallery had
@@ -26,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   where Send would be. The trade composer leaves them out of the price picker.
 
 ### Fixed
+
+- **Trade pages dropped you out of community navigation** (#293). The sidebar
+  reads community context from the pathname, so `/trades?community=<id>` was
+  in a community it could not see. The scoped inbox and an offer now live at
+  `/communities/:communityId/trades[/:tradeId]`; `/trades` stays the
+  cross-community inbox. The old URLs are gone rather than redirected.
 
 - Four pages replaced themselves with a loading spinner on every visit rather
   than only the first: shop purchases, a community, an item type, and a
