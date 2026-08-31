@@ -28,7 +28,11 @@ test("spending your allowance says so, in its own right", async ({
     input: {
       communityId: world.community.id,
       lines: [
-        { shopItemId: listing.id, shopPriceId: listing.priceIds[0], quantity: 3 },
+        {
+          shopItemId: listing.id,
+          shopPriceId: listing.priceIds[0],
+          quantity: 3,
+        },
       ],
     },
   });
@@ -57,7 +61,11 @@ test("a sold-out listing says that instead", async ({ page, world }) => {
     input: {
       communityId: world.community.id,
       lines: [
-        { shopItemId: listing.id, shopPriceId: listing.priceIds[0], quantity: 2 },
+        {
+          shopItemId: listing.id,
+          shopPriceId: listing.priceIds[0],
+          quantity: 2,
+        },
       ],
     },
   });
