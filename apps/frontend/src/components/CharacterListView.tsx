@@ -13,6 +13,8 @@ import {
   AdvancedSearchForm,
   AdvancedSearchFilters,
 } from "./AdvancedSearchForm";
+import { Pager } from "./pagination/Pager";
+import { useOffsetPaging } from "../hooks/useOffsetPaging";
 
 const AVAILABILITY_VALUES = new Set<string>(
   Object.values(CharacterAvailability),
@@ -121,38 +123,6 @@ const SearchInput = styled.input`
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
   }
-`;
-
-const LoadMoreButton = styled.button`
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.secondary};
-  }
-
-  &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
-    outline-offset: 2px;
-  }
-
-  &:disabled {
-    background: ${({ theme }) => theme.colors.text.muted};
-    cursor: not-allowed;
-  }
-`;
-
-const ResultsCount = styled.p`
-  color: ${({ theme }) => theme.colors.text.muted};
-  margin-bottom: ${({ theme }) => theme.spacing.md};
 `;
 
 const SearchForm = styled.form`
@@ -382,30 +352,29 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
     updateURL(newFilters);
   }, [baseFilters, updateURL]);
 
-  const handleLoadMore = useCallback(() => {
-    if (data?.characters.hasMore) {
+  const { loadMore, loadingMore } = useOffsetPaging({
+    pageSize: filters.limit ?? 12,
+    loaded: data?.characters.characters.length ?? 0,
+    hasMore: data?.characters.hasMore ?? false,
+    load: ({ limit, offset }) =>
       fetchMore({
-        variables: {
-          filters: {
-            ...filters,
-            offset: data.characters.characters.length,
-          },
-        },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          return {
-            characters: {
-              ...fetchMoreResult.characters,
-              characters: [
-                ...prev.characters.characters,
-                ...fetchMoreResult.characters.characters,
-              ],
-            },
-          };
-        },
-      });
-    }
-  }, [data, filters, fetchMore]);
+        variables: { filters: { ...filters, limit, offset } },
+        // Append rather than replace. Apollo replaces the cached result by
+        // default, so without this Load More removes what it was adding to.
+        updateQuery: (prev, { fetchMoreResult }) =>
+          fetchMoreResult
+            ? {
+                characters: {
+                  ...fetchMoreResult.characters,
+                  characters: [
+                    ...prev.characters.characters,
+                    ...fetchMoreResult.characters.characters,
+                  ],
+                },
+              }
+            : prev,
+      }),
+  });
 
   if (error) {
     return (
@@ -473,14 +442,6 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
         </LoadingContainer>
       ) : (
         <>
-          {data?.characters && (
-            <ResultsCount>
-              Showing {data.characters.characters.length} of{" "}
-              {data.characters.total} characters
-              {Object.keys(currentAdvancedFilters).length > 0 && " (filtered)"}
-            </ResultsCount>
-          )}
-
           {data?.characters.characters.length === 0 ? (
             <EmptyState>
               <h3>No characters found</h3>
@@ -490,17 +451,25 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
               </p>
             </EmptyState>
           ) : (
-            <CharacterGrid
-              characters={data?.characters.characters || []}
-              showOwner={true}
-              showEditButton={false}
-            />
-          )}
-
-          {data?.characters.hasMore && (
-            <LoadMoreButton onClick={handleLoadMore} disabled={loading}>
-              {loading ? "Loading..." : "Load More Characters"}
-            </LoadMoreButton>
+            <Pager
+              showing={data?.characters.characters.length ?? 0}
+              total={data?.characters.total ?? 0}
+              hasMore={data?.characters.hasMore ?? false}
+              loadingMore={loadingMore}
+              onLoadMore={loadMore}
+              noun="characters"
+              qualifier={
+                Object.keys(currentAdvancedFilters).length > 0
+                  ? " (filtered)"
+                  : undefined
+              }
+            >
+              <CharacterGrid
+                characters={data?.characters.characters || []}
+                showOwner={true}
+                showEditButton={false}
+              />
+            </Pager>
           )}
         </>
       )}

@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CharacterGrid } from "../components/CharacterGrid";
+import { Pager } from "../components/pagination/Pager";
+import { useOffsetPaging } from "../hooks/useOffsetPaging";
 import { useAuth } from "../contexts/AuthContext";
 import { useGetMyCharactersQuery } from "../generated/graphql";
 
@@ -83,14 +85,50 @@ const ErrorContainer = styled.div`
   color: ${({ theme }) => theme.colors.error};
 `;
 
+/**
+ * How many to ask for, and to fetch on each Load More.
+ *
+ * Stated rather than left to the server's default, which is what this page
+ * used to do: `CharacterFiltersInput.limit` defaults to 20, so the page showed
+ * twenty characters and said nothing about the rest. A page size is a decision
+ * about this screen, and it should be made on this screen.
+ */
+const PAGE_SIZE = 24;
+
 export const MyCharactersPage: React.FC = () => {
   const { user } = useAuth();
 
-  const { data, loading, error } = useGetMyCharactersQuery({
+  const { data, loading, error, fetchMore } = useGetMyCharactersQuery({
+    variables: { filters: { limit: PAGE_SIZE, offset: 0 } },
     skip: !user,
   });
 
   const myCharacters = data?.myCharacters?.characters || [];
+
+  const { loadMore, loadingMore } = useOffsetPaging({
+    pageSize: PAGE_SIZE,
+    loaded: myCharacters.length,
+    hasMore: data?.myCharacters?.hasMore ?? false,
+    load: ({ limit, offset }) =>
+      fetchMore({
+        variables: { filters: { limit, offset } },
+        // Append rather than replace. Apollo replaces the cached result by
+        // default, so without this Load More removes the characters it was
+        // meant to add to.
+        updateQuery: (previous, { fetchMoreResult }) =>
+          fetchMoreResult
+            ? {
+                myCharacters: {
+                  ...fetchMoreResult.myCharacters,
+                  characters: [
+                    ...previous.myCharacters.characters,
+                    ...fetchMoreResult.myCharacters.characters,
+                  ],
+                },
+              }
+            : previous,
+      }),
+  });
 
   if (!user) {
     return (
@@ -102,7 +140,10 @@ export const MyCharactersPage: React.FC = () => {
     );
   }
 
-  if (loading) {
+  // `&& !data` so that Load More does not blank the page it is extending:
+  // fetchMore sets `loading` too, and a full-page spinner there would take
+  // away the characters already on screen along with the scroll position.
+  if (loading && !data) {
     return (
       <Container>
         <LoadingContainer>
@@ -143,11 +184,20 @@ export const MyCharactersPage: React.FC = () => {
           </CreateButton>
         </EmptyState>
       ) : (
-        <CharacterGrid
-          characters={myCharacters}
-          showOwner={false}
-          showEditButton={true}
-        />
+        <Pager
+          showing={myCharacters.length}
+          total={data?.myCharacters?.total ?? 0}
+          hasMore={data?.myCharacters?.hasMore ?? false}
+          loadingMore={loadingMore}
+          onLoadMore={loadMore}
+          noun="characters"
+        >
+          <CharacterGrid
+            characters={myCharacters}
+            showOwner={false}
+            showEditButton={true}
+          />
+        </Pager>
       )}
     </Container>
   );

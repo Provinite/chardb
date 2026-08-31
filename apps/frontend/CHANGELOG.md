@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **My Characters showed only the first 20, silently.** It now states how many
+  you have and pages through all of them; a member with more than a page saw a
+  screen that looked complete (#307, #215).
+
+### Added
+
+- A shared `useOffsetPaging` hook and `Pager` component for the eleven
+  offset-paged list queries, used by My Characters and Browse Characters
+  (#307).
+
 ## [v11.7.0] - 2026-08-31
 
 ### Added
