@@ -59,6 +59,7 @@ describe("TradesService", () => {
     mockDatabaseService.trade.create.mockResolvedValue({
       id: "t1",
       items: [],
+      characterLines: [],
       currencyLines: [],
     });
   });
@@ -79,6 +80,8 @@ describe("TradesService", () => {
     recipientId: "bob",
     offering: [],
     requesting: [],
+    offeringCharacters: [],
+    requestingCharacters: [],
     coin: [],
   };
 
@@ -326,6 +329,7 @@ describe("TradesService", () => {
       status: TradeStatus.PENDING,
       expiresAt: new Date(Date.now() + 86_400_000),
       items: [],
+      characterLines: [],
       currencyLines: [],
     };
 
@@ -403,6 +407,7 @@ describe("TradesService", () => {
           itemType: null,
         },
       ],
+      characterLines: [],
       currencyLines: [
         {
           id: "coin1",
@@ -540,6 +545,7 @@ describe("TradesService", () => {
       status: TradeStatus.PENDING,
       expiresAt: new Date(Date.now() + 86_400_000),
       items: [],
+      characterLines: [],
       currencyLines: [],
     };
 
@@ -548,6 +554,8 @@ describe("TradesService", () => {
       recipientId: "alice",
       offering: [],
       requesting: [],
+      offeringCharacters: [],
+      requestingCharacters: [],
       coin: [{ currencyId: "cur1", amount: 50, fromProposer: true }],
     };
 

@@ -75,6 +75,8 @@ export class TradesResolver {
       recipientId: input.recipientId,
       offering: input.offering,
       requesting: input.requesting.map(toRequestedItem),
+      offeringCharacters: input.offeringCharacters,
+      requestingCharacters: input.requestingCharacters,
       coin: input.coin,
       note: input.note,
       expiresInDays: input.expiresInDays,
@@ -103,6 +105,8 @@ export class TradesResolver {
       recipientId: input.recipientId,
       offering: input.offering,
       requesting: input.requesting.map(toRequestedItem),
+      offeringCharacters: input.offeringCharacters,
+      requestingCharacters: input.requestingCharacters,
       coin: input.coin,
       note: input.note,
       expiresInDays: input.expiresInDays,
@@ -113,8 +117,8 @@ export class TradesResolver {
   @AllowAnyAuthenticated()
   @Mutation(() => Trade, {
     description:
-      "Accept and settle. Items and coin move in one transaction across both " +
-      "ledgers, or the whole accept fails.",
+      "Accept and settle. Items, characters and coin move in one transaction " +
+      "across all three ledgers, or the whole accept fails.",
   })
   async acceptTrade(
     @CurrentUser() user: AuthenticatedCurrentUserType,

@@ -55,10 +55,16 @@ const payloadSchemas = {
   // revoked item it does not disappear.
   [NotificationKind.TRADE_OFFERED]: z.object({
     itemCount: z.number().int().nonnegative(),
+    // Optional where its siblings are not: rows written before trades could
+    // carry characters have no such key, and a payload is validated on the way
+    // in but not on the way out. Required here would describe old rows as
+    // holding a number they do not hold.
+    characterCount: z.number().int().nonnegative().optional(),
     currencyCount: z.number().int().nonnegative(),
   }),
   [NotificationKind.TRADE_ACCEPTED]: z.object({
     itemCount: z.number().int().nonnegative(),
+    characterCount: z.number().int().nonnegative().optional(),
     currencyCount: z.number().int().nonnegative(),
   }),
   [NotificationKind.TRADE_DECLINED]: z.object({}),

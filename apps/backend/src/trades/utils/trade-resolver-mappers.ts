@@ -2,6 +2,7 @@ import { Prisma, TradeStatus } from "@chardb/database";
 import {
   EffectiveTradeStatus,
   Trade,
+  TradeCharacter,
   TradeCurrencyLine,
   TradeItem,
 } from "../entities/trade.entity";
@@ -9,6 +10,7 @@ import { TRADE_INCLUDE } from "../trades.service";
 import { mapPrismaItemToGraphQL } from "../../items/utils/item-resolver-mappers";
 import { mapPrismaItemTypeToGraphQL } from "../../items/utils/item-type-resolver-mappers";
 import { mapPrismaCurrencyToGraphQL } from "../../currencies/utils/currency-resolver-mappers";
+import { mapPrismaCharacterToGraphQL } from "../../characters/utils/character-resolver-mappers";
 import { mapPrismaUserToGraphQL } from "../../users/utils/user-resolver-mappers";
 import { mapPrismaCommunityToGraphQL } from "../../communities/utils/community-resolver-mappers";
 
@@ -60,6 +62,17 @@ function mapItemLine(
   };
 }
 
+function mapCharacterLine(
+  line: PrismaTradeWithRelations["characterLines"][number],
+): TradeCharacter {
+  return {
+    id: line.id,
+    character: mapPrismaCharacterToGraphQL(line.character),
+    sourceUser: mapPrismaUserToGraphQL(line.sourceUser),
+    destinationUser: mapPrismaUserToGraphQL(line.destinationUser),
+  };
+}
+
 function mapCurrencyLine(
   line: PrismaTradeWithRelations["currencyLines"][number],
 ): TradeCurrencyLine {
@@ -85,6 +98,7 @@ export function mapTradeToGraphQL(trade: PrismaTradeWithRelations): Trade {
     settlementBatchId: trade.settlementBatchId,
     createdAt: trade.createdAt,
     items: trade.items.map(mapItemLine),
+    characterLines: trade.characterLines.map(mapCharacterLine),
     currencyLines: trade.currencyLines.map(mapCurrencyLine),
   };
 }
