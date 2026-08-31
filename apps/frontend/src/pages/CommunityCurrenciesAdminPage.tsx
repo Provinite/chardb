@@ -345,6 +345,10 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
   const { data, loading, error, refetch } = useGetCurrencySupplyQuery({
     variables: { communityId: communityId as string },
     skip: !communityId,
+    // Circulation and holder counts move whenever anybody grants, spends or
+    // transfers, so a cached copy is out of date almost immediately -- and
+    // this is the page somebody reads before deciding to mint more.
+    fetchPolicy: "cache-and-network",
   });
 
   // Only fetched for the mint and burn pickers. Staff need to name who is being
@@ -537,7 +541,10 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
     );
   }
 
-  if (loading) return <LoadingSpinner />;
+  // Only before there is anything to show. cache-and-network reports loading
+  // on every background revalidation, and replacing a populated table with a
+  // spinner on each visit would be worse than the staleness it fixes.
+  if (loading && !data) return <LoadingSpinner />;
 
   if (error) {
     return (

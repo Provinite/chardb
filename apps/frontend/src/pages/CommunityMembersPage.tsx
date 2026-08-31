@@ -202,6 +202,10 @@ export const CommunityMembersPage: React.FC = () => {
   const { data, loading, error } = useCommunityMembersWithRolesQuery({
     variables: { communityId: communityId!, first: limit },
     skip: !communityId,
+    // Membership changes elsewhere by definition -- people join, and staff
+    // change roles from the permissions page. A cached list would keep
+    // showing who was here when this tab opened.
+    fetchPolicy: "cache-and-network",
   });
 
   const members = useMemo(
