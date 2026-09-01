@@ -303,9 +303,7 @@ test.describe("using an item, through the page", () => {
     // after the decision to spend rather than before it -- and useless to
     // somebody weighing up a trade for one.
     const payout = page.getByTestId("item-type-use-payout");
-    await expect(payout).toContainText(
-      String(world.itemTypes.ticket.payout),
-    );
+    await expect(payout).toContainText(String(world.itemTypes.ticket.payout));
   });
 
   test("says nothing about payout on a type that pays nothing", async ({
