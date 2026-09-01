@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MYO Slots - Feature Walkthrough</title>
+    <meta name="description" content="An MYO slot is an item that makes a character. Staff decide which species and variants it can make; the holder spends it, designs the character, and staff review the traits." />
+    <link rel="canonical" href="https://provinite.github.io/chardb/docs/myo-slots.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="MYO Slots" />
+    <meta property="og:description" content="An MYO slot is an item that makes a character. Staff decide which species and variants it can make; the holder spends it, designs the character, and staff review the traits." />
+    <meta property="og:url" content="https://provinite.github.io/chardb/docs/myo-slots.html" />
+    <meta property="og:image" content="https://provinite.github.io/chardb/docs/myo-create-page.png" />
+    <meta property="og:image:alt" content="The CharDB character create page in MYO mode, with the species fixed by the ticket and only the variants that ticket allows." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .dim {
+        color: #8b93c7;
+      }
+
+      .kinds {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      .kinds th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid #e0e0e0;
+        color: #333;
+      }
+
+      .kinds td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+        color: #555;
+        vertical-align: top;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.55rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .pill.granted {
+        color: #0e7c56;
+        background: #0e9f6e22;
+      }
+      .pill.revoked {
+        color: #b91c1c;
+        background: #dc262622;
+      }
+      .pill.traded {
+        color: #0e7490;
+        background: #0891b222;
+      }
+      .pill.claimed {
+        color: #a16207;
+        background: #d9770622;
+      }
+      .pill.used,
+      .pill.imported {
+        color: #52606d;
+        background: #64748b22;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>MYO Slots</h1>
+        <p>An item that makes a character, and what happens on the way</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">What an MYO slot is</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>An MYO slot is an item that can be spent to make a
+            character.</strong> A community hands one out as an event prize, a
+            raffle win, or a shop purchase; the member spends it whenever they
+            like and designs a character of their own. Staff decide what it is
+            allowed to make and review the result. The community never has to
+            be in the room when it is spent.
+          </p>
+          <p>
+            <em>MYO</em> is the usual community shorthand for
+            <em>make your own</em>. There is no special "MYO slot" object in
+            CharDB &mdash; it is an
+            <a href="using-items.html">ordinary usable item</a> whose type has
+            been told which characters it makes. Which means it behaves like
+            every other item: it can be traded, granted, sold in the shop, and
+            it has a provenance page.
+          </p>
+          <p>
+            You can call the item type whatever you like &mdash;
+            <em>Thornwing MYO Ticket</em>, <em>Common Slot</em>,
+            <em>Design Voucher</em>. This page says "ticket" throughout because
+            the examples do.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">&#127903;</div>
+              <h4>Staff decide</h4>
+              <p>Which species, and which of its variants</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#127912;</div>
+              <h4>Members design</h4>
+              <p>Name, traits, details &mdash; the whole character</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#128269;</div>
+              <h4>Staff review</h4>
+              <p>Approve, correct, or refuse the traits</p>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <strong>Holding the ticket is the permission.</strong> A member
+            does not need the community's <em>create characters</em> permission
+            to spend one &mdash; that is the entire point. A ticket that only
+            worked for people who could already make characters would be worth
+            nothing to the people it is handed to.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Staff: setting what a ticket makes</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            On an item type's edit form, under
+            <strong>Administration &rarr; Items</strong>, there is a
+            <strong>Makes on use</strong> panel. Pick a species, then tick the
+            variants a holder may choose between. Save.
+          </p>
+          <p>
+            One species per ticket. The variants are a <em>list</em>, not a
+            single choice, because "good for a Common" and "good for a Common
+            or an Uncommon" are the same feature &mdash; the member picks one
+            of the ones you ticked when they spend it.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="myo-grant-editor.png"
+            alt="The Makes on use panel with the Thornwing species selected and the Common and Uncommon variants ticked."
+          />
+          <div class="screenshot-caption">
+            A ticket good for a Common or an Uncommon Thornwing. Rare is a
+            variant of the same species and is deliberately not ticked.
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="highlight-box">
+            <strong>Only a consumable item type can make characters.</strong>
+            Spending the ticket is what uses it up; a ticket that survived
+            being spent would make a character every time it was submitted. The
+            panel says so rather than letting you save and finding out later.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="myo-grant-not-consumable.png"
+            alt="The Makes on use panel on an item type that is not consumable, explaining that only a consumable item can make a character."
+          />
+          <div class="screenshot-caption">
+            The same panel on a keepsake. Tick <em>Consumable</em> on the item
+            type first.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            An item type does <strong>one thing</strong> when used. A type that
+            already
+            <a href="using-items.html">pays out currency</a> cannot also make
+            characters, and vice versa &mdash; clear one before setting the
+            other. Untick every variant to clear an MYO grant.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Seeing what a ticket makes</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The item type's own page states the species and every variant the
+            ticket can make. That page is public, so it is also what somebody
+            <em>considering a trade</em> for one can read &mdash; they do not
+            have to hold it first.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="myo-item-type.png"
+            alt="A Thornwing MYO Ticket's item type page showing a Makes on use section naming the species and its two allowed variants."
+          />
+          <div class="screenshot-caption">
+            <strong>Makes on use</strong>, beside where a currency ticket would
+            say what it pays.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Spending one</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            In your inventory, an MYO ticket carries a
+            <strong>Make a character</strong> button. Where a currency ticket
+            opens a confirm dialog, this one opens the character create page
+            &mdash; making a character needs a name, a variant and traits, and
+            none of that fits in a dialog.
+          </p>
+          <div class="highlight-box">
+            <strong>Following that link costs nothing.</strong> The ticket is
+            spent when you <em>submit the character</em>, not when you open the
+            form. Open it, change your mind, close the tab &mdash; the ticket
+            is still yours.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="myo-inventory.png"
+            alt="A member's community inventory with an MYO ticket group expanded, each ticket offering a Make a character button."
+          />
+          <div class="screenshot-caption">
+            Holding more than one of a type groups them; open the group to
+            reach the per-ticket buttons.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Designing the character</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The create page narrows itself to the ticket. The species is fixed
+            and stated rather than chosen, and the variant picker offers
+            <em>only</em> the variants that ticket allows &mdash; not every
+            variant the species has.
+          </p>
+          <p>
+            Everything else is the ordinary create form: name, details, custom
+            fields, tags, visibility, and whatever traits the species has
+            configured. You design the whole character.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="myo-create-page.png"
+            alt="The MYO panel on the create page, naming the ticket and the species and offering two variant chips, with Uncommon selected."
+          />
+          <div class="screenshot-caption">
+            The ticket panel, in place of the species picker. Pick one of the
+            variants it allows.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="myo-submit-button.png"
+            alt="The submit button, reading Spend ticket and make character."
+          />
+          <div class="screenshot-caption">
+            The submit button says what it costs.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>Two fields from the normal create page are absent here:</p>
+          <ul>
+            <li>
+              <strong>The official identifier</strong> is staff's to assign, so
+              a member cannot claim a desirable number. An approved MYO
+              character is given the next one in its species automatically.
+            </li>
+            <li>
+              <strong>Character ownership</strong> &mdash; making a character
+              for somebody else, or leaving it unowned, needs a separate
+              permission that a ticket does not grant. An MYO character is
+              always yours.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">What you get immediately</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The character is yours the moment you submit. It is not held back
+            pending approval &mdash; you can look at it, share it, edit its
+            profile, and it appears in your character list like any other.
+          </p>
+          <p>
+            What <em>is</em> pending is its <strong>traits</strong>. The
+            character carries a badge saying so, and the traits you chose sit
+            in the staff review queue until somebody looks at them.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="myo-character-pending.png"
+            alt="A newly made MYO character's page, showing a badge indicating its traits are pending review."
+          />
+          <div class="screenshot-caption">
+            Yours straight away, with its traits marked as awaiting review.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">The item ledger</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Spending a ticket writes a <span class="pill used">Used</span> row
+            on the community's item ledger, naming the member who spent it. The
+            ticket's own provenance page still works afterwards &mdash;
+            destroyed items keep their history, which is exactly the history a
+            dispute needs.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="myo-item-ledger.png"
+            alt="The community item ledger showing a Used row for an MYO ticket alongside earlier grants."
+          />
+          <div class="screenshot-caption">
+            The same <span class="pill used">Used</span> event a currency
+            ticket writes. What it produced differs; what happened to the item
+            does not.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <h2 class="step-title">Staff: reviewing it</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The character lands in
+            <strong>Moderation &rarr; Trait Reviews</strong>, tagged
+            <strong>MYO</strong> so it is distinguishable from a review that
+            came from an import or an ordinary edit. Reviewing needs the
+            <em>edit any character's registry</em> permission.
+          </p>
+          <p>The card carries the same actions every review does:</p>
+          <ul>
+            <li>
+              <strong>Approve</strong> &mdash; the traits stand as the member
+              chose them, and the character is numbered. See step 8.
+            </li>
+            <li>
+              <strong>Revert</strong> &mdash; refuse it. On an MYO character
+              this undoes the whole redemption rather than restoring traits it
+              never had. See step 9. You are asked for a reason.
+            </li>
+            <li>
+              <strong>Remove from Species</strong> and <strong>Delete</strong>
+              &mdash; the ordinary character-admin actions, unchanged. Neither
+              returns the ticket; only <strong>Revert</strong> does.
+            </li>
+          </ul>
+          <div class="highlight-box">
+            <strong>Reach for Revert rather than Delete</strong> when you want
+            the member to try again. Deleting the character removes it and
+            keeps the ticket spent, which is the one outcome nobody wants.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="myo-review-queue.png"
+            alt="The community trait review queue listing a pending MYO character with its proposed traits and the available staff actions."
+          />
+          <div class="screenshot-caption">
+            The same queue that handles imports and member trait edits.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 8 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">8</div>
+          <h2 class="step-title">Approval, and the registry number</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Approving clears the pending badge and, if the character has no
+            official identifier yet, gives it <strong>the next number in its
+            species</strong> &mdash; the highest number already in use plus
+            one, padded to the same width.
+          </p>
+          <div class="highlight-box">
+            <strong>Only MYO characters are numbered automatically.</strong>
+            Every other character is created by somebody who holds the registry
+            permission and types the number they meant; taking that over would
+            change something nobody asked to change. A species whose
+            identifiers are not plain numbers gets nothing assigned &mdash;
+            guessing a format would produce a number that looks official and is
+            not.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="myo-approved.png"
+            alt="The MYO character's page after approval, with the pending-review badge gone."
+          />
+          <div class="screenshot-caption">
+            The pending badge is gone once staff approve.
+          </div>
+        </div>
+        <div class="highlight-box">
+          <strong>The number is assigned but not shown on this page yet.</strong>
+          A character's page does not display its official identifier &mdash;
+          today the only place to read it is the character's edit form, under
+          the registry fields. Worth knowing before you tell members to look
+          for it.
+        </div>
+      </div>
+
+      <!-- Step 9 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">9</div>
+          <h2 class="step-title">Refusal puts the ticket back</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Refusing an MYO character <strong>undoes the redemption</strong>:
+            the character is removed and a ticket of the type that was spent is
+            returned to its holder. They can try again.
+          </p>
+          <p>
+            This is different from refusing any other trait review, which
+            restores the character's previous traits. An MYO character has no
+            previous traits &mdash; it did not exist before &mdash; so
+            "restoring" them would leave the member holding a character with
+            nothing on it <em>and</em> no ticket. Refusing a redemption undoes
+            the redemption.
+          </p>
+          <div class="highlight-box">
+            <strong>The returned ticket is a new one.</strong> The original was
+            genuinely spent and its history says so; un-spending it would make
+            the ledger lie. The two are linked on the ledger instead &mdash;
+            the <span class="pill used">Used</span> row names the character, and
+            the <span class="pill granted">Granted</span> row names the review
+            that sent it back.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="myo-refused-ledger.png"
+            alt="The item ledger showing the original Used row and, above it, a Granted row returning a replacement ticket after the character was refused."
+          />
+          <div class="screenshot-caption">
+            Both halves of the reversal, readable as one story.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 10 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">10</div>
+          <h2 class="step-title">Every reason a redemption is refused</h2>
+        </div>
+        <div class="step-content">
+          <table class="kinds">
+            <thead>
+              <tr>
+                <th>Reason</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>The variant is not one the ticket allows</td>
+                <td>
+                  Checked against the ticket, not the species. A ticket for a
+                  Common is not a ticket for everything under that species.
+                </td>
+              </tr>
+              <tr>
+                <td>The ticket makes nothing yet</td>
+                <td>
+                  Consumable, but no species and variants set. Spending it
+                  would destroy it and hand back nothing.
+                </td>
+              </tr>
+              <tr>
+                <td>The item type is not consumable</td>
+                <td>
+                  Spending is what uses it up. Without that the same ticket
+                  would make a character every time it was submitted.
+                </td>
+              </tr>
+              <tr>
+                <td>You have left the community</td>
+                <td>
+                  A species belongs to one community, and its characters need a
+                  member to own them.
+                </td>
+              </tr>
+              <tr>
+                <td>The ticket is not yours, or is already spent</td>
+                <td>
+                  Checked at the moment of the write, not before it, so a trade
+                  landing in between cannot be raced. Submitting the same form
+                  twice makes one character, not two.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            In every case the ticket survives. There is no path where a ticket
+            is spent and no character appears.
+          </p>
+          <p>
+            A ticket you cannot spend &mdash; already spent, or somebody
+            else's &mdash; says so when you open the create page, before you
+            have written anything.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB MYO Slots &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>
