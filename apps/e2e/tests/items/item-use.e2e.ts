@@ -1,6 +1,7 @@
 import { presetTest, expect } from "../../src/fixtures.js";
 import type { CommunityItemsWorld } from "../../src/world/presets/community-items.js";
 import type { World } from "../../src/world/types.js";
+import type { Page } from "@playwright/test";
 import {
   SeedUseItemDocument,
   SeedSetItemTypeUsePayoutDocument,
@@ -144,4 +145,100 @@ test.describe("using an item", () => {
       }),
     ).rejects.toThrow();
   });
+});
+
+/**
+ * The same thing through the screens a member actually uses.
+ *
+ * The block above proves the mechanism; none of it presses a button. These
+ * cover what was added on top: that the button appears where it should and
+ * nowhere else, that the confirm stands between a tap and an irreversible
+ * destroy, and that both halves of the result -- the item gone, the coin
+ * arrived -- are on screen afterwards without a reload.
+ */
+test.describe("using an item, through the page", () => {
+  test.use({ persona: "member" });
+
+  test.beforeEach(async ({ world }) => {
+    await world.reset();
+  });
+
+  const inventoryUrl = (communityId: string) =>
+    `/communities/${communityId}/inventory`;
+
+  /** Open a holding group, which is collapsed whenever it holds more than one. */
+  const showItems = async (page: Page, itemTypeId: string) => {
+    await page
+      .locator(`[data-item-type-id="${itemTypeId}"]`)
+      .getByTestId("expand-group")
+      .click();
+  };
+
+  test("shows the wallet growing and the item gone", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(inventoryUrl(world.community.id));
+
+    const wallet = page.getByTestId(`wallet-${world.currencies.coin.code}`);
+    await expect(wallet).toContainText(String(world.balances.member));
+
+    // member holds two tickets, so the group is collapsed and the per-item
+    // buttons are behind its disclosure. Worth noting as a UX point -- the
+    // primary action on a redeemable item is two clicks away -- but this is
+    // the behaviour as it stands.
+    await showItems(page, world.itemTypes.ticket.id);
+
+    const itemId = world.usableItems.ticketIds[0];
+    await page.getByTestId(`use-item-${itemId}`).click();
+    await expect(page.getByTestId("use-item-dialog")).toContainText(
+      String(world.itemTypes.ticket.payout),
+    );
+    await page.getByTestId("confirm-accept").click();
+
+    // Both halves of one event, on screen. The wallet is a separate component
+    // with its own query, so this is also what proves the refetch reaches it.
+    await expect(wallet).toContainText(
+      String(world.balances.member + world.itemTypes.ticket.payout),
+    );
+    await expect(page.getByTestId(`use-item-${itemId}`)).toHaveCount(0);
+  });
+
+  test("cancelling uses nothing", async ({ page, world }) => {
+    await page.goto(inventoryUrl(world.community.id));
+
+    await showItems(page, world.itemTypes.ticket.id);
+
+    const itemId = world.usableItems.ticketIds[0];
+    await page.getByTestId(`use-item-${itemId}`).click();
+    await page.getByTestId("confirm-cancel").click();
+
+    // A dialog that dismissed but used the item anyway would be worse than
+    // the single click it replaced.
+    await expect(page.getByTestId("use-item-dialog")).toHaveCount(0);
+    await expect(page.getByTestId(`use-item-${itemId}`)).toBeVisible();
+    await expect(
+      page.getByTestId(`wallet-${world.currencies.coin.code}`),
+    ).toContainText(String(world.balances.member));
+  });
+
+  test("offers no Use on an item that pays nothing", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(inventoryUrl(world.community.id));
+
+    // The Blank Ticket is consumable but configured with nothing. Using it
+    // would be refused, so the button is absent rather than present and
+    // doomed -- the same rule the trade button follows.
+    await expect(page.getByTestId("holdings-list")).toContainText(
+      world.itemTypes.blankTicket.name,
+    );
+    // One of them, so its group is already open and the absence below is a
+    // real absence rather than a collapsed disclosure.
+    await expect(
+      page.getByTestId(`use-item-${world.usableItems.blankTicketId}`),
+    ).toHaveCount(0);
+  });
+
 });

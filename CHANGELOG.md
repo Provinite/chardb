@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **E2E: 13 item-use specs**, most of them about the ways a feature that
-  creates currency could create it twice. The `community-items` preset carries
-  a Coin Ticket worth 250 and a Blank Ticket worth nothing.
+- **E2E: 16 item-use specs** — thirteen against the API, about the ways a
+  feature that creates currency could create it twice, and three driving the
+  real screens for the button, the confirm and the wallet updating. The
+  `community-items` preset carries a Coin Ticket worth 250 and a Blank Ticket
+  worth nothing.
 
 ### Changed
 
