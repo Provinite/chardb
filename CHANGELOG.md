@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **E2E: 23 edit-kit specs**, plus an Eye Color trait and two edit kits in the
+  `community-items` preset — one species-wide, one narrowed to Common (#171).
+
+### Added
+
 - **E2E: 25 MYO-ticket specs**, and three Thornwing variants in the
   `community-items` preset with a ticket good for two of them (#168).
 

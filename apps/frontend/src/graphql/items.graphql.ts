@@ -34,6 +34,20 @@ export const ITEM_TYPE_FRAGMENT = gql`
         name
       }
     }
+    useTraitEditGrant {
+      id
+      species {
+        id
+        species {
+          id
+          name
+        }
+        variants {
+          id
+          name
+        }
+      }
+    }
     image {
       id
       originalUrl
@@ -342,6 +356,20 @@ export const GET_MEMBER_HOLDINGS = gql`
               name
             }
           }
+          useTraitEditGrant {
+            id
+            species {
+              id
+              species {
+                id
+                name
+              }
+              variants {
+                id
+                name
+              }
+            }
+          }
           color {
             id
             hexCode
@@ -440,4 +468,130 @@ export const SET_ITEM_TYPE_MYO_GRANT = gql`
     }
   }
   ${ITEM_TYPE_FRAGMENT}
+`;
+
+export const SET_ITEM_TYPE_TRAIT_EDIT_GRANT = gql`
+  mutation SetItemTypeTraitEditGrant(
+    $input: SetItemTypeTraitEditGrantInput!
+  ) {
+    setItemTypeTraitEditGrant(input: $input) {
+      ...ItemTypeFields
+    }
+  }
+  ${ITEM_TYPE_FRAGMENT}
+`;
+
+/**
+ * A kit about to be spent, and which characters it covers.
+ *
+ * `destroyedAt` and `ownerId` are selected and **used**: the grant hangs off
+ * the item type, so a spent or borrowed kit would otherwise present a working
+ * editor and only refuse at submit. Same trap the MYO create page fell into.
+ */
+export const GET_EDIT_KIT = gql`
+  query GetEditKit($itemId: ID!) {
+    item(id: $itemId) {
+      id
+      ownerId
+      destroyedAt
+      itemType {
+        id
+        name
+        communityId
+        useTraitEditGrant {
+          id
+          species {
+            id
+            species {
+              id
+              name
+            }
+            variants {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * The edit kits a member holds in one community, for the character page's
+ * "use a kit" offer and for the kit picker.
+ */
+export const GET_MY_EDIT_KITS = gql`
+  query GetMyEditKits($communityId: ID!, $userId: ID!) {
+    memberHoldings(communityId: $communityId, userId: $userId) {
+      holdings {
+        count
+        items {
+          id
+        }
+        itemType {
+          id
+          name
+          useTraitEditGrant {
+            id
+            species {
+              id
+              species {
+                id
+                name
+              }
+              variants {
+                id
+                name
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Just enough of a member's characters to decide which a kit covers.
+ *
+ * Its own query rather than widening GET_MY_CHARACTERS: that one already
+ * selects twenty fields for a grid, is used on every My Characters load, and
+ * does not carry the variant this needs. Adding two fields there would make
+ * every page pay for one picker.
+ */
+export const GET_MY_CHARACTERS_FOR_EDIT_KIT = gql`
+  query GetMyCharactersForEditKit($filters: CharacterFiltersInput) {
+    myCharacters(filters: $filters) {
+      characters {
+        id
+        name
+        speciesId
+        speciesVariantId
+        traitReviewStatus
+        species {
+          id
+          name
+        }
+        speciesVariant {
+          id
+          name
+        }
+      }
+      total
+      hasMore
+    }
+  }
+`;
+
+export const EDIT_CHARACTER_TRAITS_WITH_KIT = gql`
+  mutation EditCharacterTraitsWithKit(
+    $input: EditCharacterTraitsWithKitInput!
+  ) {
+    editCharacterTraitsWithKit(input: $input) {
+      id
+      status
+      characterId
+    }
+  }
 `;

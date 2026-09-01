@@ -43,6 +43,41 @@ export class ItemUseMyoGrant {
   variants: SpeciesVariant[];
 }
 
+/** One species an edit kit covers, and which of its variants. */
+@ObjectType()
+export class ItemUseTraitEditGrantSpecies {
+  @Field(() => ID)
+  id: string;
+
+  @Field(() => Species)
+  species: Species;
+
+  @Field(() => [SpeciesVariant], {
+    description:
+      "Which variants of this species the kit is limited to. **Empty means " +
+      "every variant**, including a character with no variant set at all.",
+  })
+  variants: SpeciesVariant[];
+}
+
+/**
+ * Which characters an edit kit of this type can change the traits of.
+ *
+ * A list of species rather than one, which is the shape that makes this
+ * different from an MYO grant: a kit can be good for several species at once,
+ * each narrowed to its own variants or not narrowed at all.
+ */
+@ObjectType()
+export class ItemUseTraitEditGrant {
+  @Field(() => ID)
+  id: string;
+
+  @Field(() => [ItemUseTraitEditGrantSpecies], {
+    description: "Never empty -- a grant covering nothing is cleared instead.",
+  })
+  species: ItemUseTraitEditGrantSpecies[];
+}
+
 /**
  * What one use produced.
  *

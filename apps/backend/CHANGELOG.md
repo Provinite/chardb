@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Edit kits.** `editCharacterTraitsWithKit` destroys a kit and opens a
+  pending `USER_EDIT` review. **The character is not changed** — approving is
+  what applies the proposal (#171).
+
+- **Edit kit grants on an item type**, set with `setItemTypeTraitEditGrant`:
+  one or more species, each optionally narrowed to variants. A species with no
+  variants covers all of them, including characters with none set.
+
+- **Refusing a trait edit returns the kit** and leaves the traits alone. New
+  `ItemTransactionSource.TRAIT_EDIT_REDEMPTION` and `TRAIT_EDIT_REJECTION`.
+
+### Fixed
+
+- **`updateCharacterRegistry` never checked that a variant belonged to the
+  character's species**, so a character could be moved onto another species'
+  variant entirely. Now refused, and enforced by a partial unique index for
+  one pending trait review per character.
+
 ### Fixed
 
 - **`createCharacter` did not enforce `canCreateCharacter`.** Its resolver

@@ -29,6 +29,14 @@ import { ItemFilters, MAX_GRANT_QUANTITY } from "./dto/item.dto";
 /** The ceiling every other currency amount in the app carries. */
 const MAX_PAYOUT_AMOUNT = 1_000_000_000;
 
+/**
+ * The things an item type can do when used, named as staff see them.
+ *
+ * Exactly one per item type. The strings are user-facing -- they land in the
+ * refusal a staff member reads when they try to configure a second.
+ */
+type UseEffectKind = "payout" | "MYO grant" | "edit kit grant";
+
 export interface PendingOwnerInput {
   provider: ExternalAccountProvider;
   providerAccountId: string;
@@ -330,28 +338,41 @@ export class ItemsService {
   }
 
   /**
-   * Refuse configuring one use effect on a type that already has the other.
+   * Refuse configuring one use effect on a type that already carries another.
    *
-   * An item type does one thing when used. Two effects would mean a confirm
-   * dialog with two answers and, worse, two different moments of consumption:
-   * a payout is spent by pressing Use, an MYO ticket by submitting the
-   * character it makes. Refused where staff can see it rather than at
-   * redemption in front of a member.
+   * An item type does one thing when used. Several effects would mean a
+   * confirm dialog with several answers and, worse, several different moments
+   * of consumption: a payout is spent by pressing Use, an MYO ticket by
+   * submitting the character it makes, an edit kit by submitting a change to
+   * one. Refused where staff can see it rather than at redemption in front of
+   * a member.
+   *
+   * Every setter calls this, and it checks every *other* effect rather than
+   * one named counterpart. Adding the third effect to a pairwise check would
+   * have meant three call sites each knowing about two others, which is
+   * exactly the arrangement where the fourth gets forgotten in one of them.
    */
   private async refuseSecondUseEffect(
     itemTypeId: string,
-    configuring: "payout" | "MYO grant",
+    configuring: UseEffectKind,
     itemTypeName: string,
   ) {
-    const other = configuring === "payout" ? "MYO grant" : "payout";
-    const existing =
-      other === "payout"
-        ? await this.db.itemUsePayout.count({ where: { itemTypeId } })
-        : await this.db.itemUseMyoGrant.count({ where: { itemTypeId } });
+    const counts: Array<[UseEffectKind, number]> = [
+      ["payout", await this.db.itemUsePayout.count({ where: { itemTypeId } })],
+      [
+        "MYO grant",
+        await this.db.itemUseMyoGrant.count({ where: { itemTypeId } }),
+      ],
+      [
+        "edit kit grant",
+        await this.db.itemUseTraitEditGrant.count({ where: { itemTypeId } }),
+      ],
+    ];
 
-    if (existing > 0) {
+    const other = counts.find(([kind, n]) => kind !== configuring && n > 0);
+    if (other) {
       throw new BadRequestException(
-        `${itemTypeName} already has a ${other}, and an item type does one thing when used. Clear the ${other} first.`,
+        `${itemTypeName} already has a ${other[0]}, and an item type does one thing when used. Clear the ${other[0]} first.`,
       );
     }
   }
@@ -458,6 +479,133 @@ export class ItemsService {
       include: {
         species: true,
         variants: { include: { speciesVariant: true } },
+      },
+    });
+  }
+
+  /**
+   * Set, replace, or clear which characters an edit kit of this type can
+   * change the traits of.
+   *
+   * Wholesale, like the other two effects. A kit reads as a set -- "this kit
+   * edits any Thornwing, or a Rare Bramblecat" -- and a partial update would
+   * leave staff guessing what a species they did not mention still covers.
+   *
+   * **A species with no variants listed covers every variant of it**,
+   * including a character with no variant set at all. That is the ordinary
+   * thing to sell, so it is the state you get by naming a species and
+   * stopping. Listing variants narrows it.
+   *
+   * An empty species list clears the grant.
+   */
+  async setItemTypeTraitEditGrant(
+    itemTypeId: string,
+    species: Array<{ speciesId: string; speciesVariantIds: string[] }>,
+  ) {
+    const itemType = await this.db.itemType.findUnique({
+      where: { id: itemTypeId },
+      select: { id: true, name: true, communityId: true, isConsumable: true },
+    });
+    if (!itemType) {
+      throw new NotFoundException(`ItemType with ID ${itemTypeId} not found`);
+    }
+
+    if (species.length === 0) {
+      await this.db.itemUseTraitEditGrant.deleteMany({ where: { itemTypeId } });
+      return this.findItemTypeById(itemTypeId);
+    }
+
+    // Same rule the other two follow: spending is what uses the kit up, and a
+    // kit that survived being spent would buy an edit every time.
+    if (!itemType.isConsumable) {
+      throw new BadRequestException(
+        `${itemType.name} is not consumable, so spending it would not use it up. An edit kit grant needs a consumable item.`,
+      );
+    }
+
+    await this.refuseSecondUseEffect(
+      itemTypeId,
+      "edit kit grant",
+      itemType.name,
+    );
+
+    const speciesIds = species.map((s) => s.speciesId);
+    if (new Set(speciesIds).size !== speciesIds.length) {
+      throw new BadRequestException(
+        "An edit kit grant names the same species twice. Say its variants once instead.",
+      );
+    }
+
+    // The cross-community hole, closed in both directions: every species must
+    // belong to the item type's community, and every variant to the species
+    // it is listed under.
+    const rows = await this.db.species.findMany({
+      where: { id: { in: speciesIds } },
+      select: { id: true, name: true, communityId: true },
+    });
+    for (const s of species) {
+      const found = rows.find((r) => r.id === s.speciesId);
+      if (!found || found.communityId !== itemType.communityId) {
+        throw new BadRequestException(
+          "An edit kit grant names a species from another community",
+        );
+      }
+
+      const variantIds = [...new Set(s.speciesVariantIds)];
+      if (variantIds.length !== s.speciesVariantIds.length) {
+        throw new BadRequestException(
+          "An edit kit grant names the same variant twice",
+        );
+      }
+      if (variantIds.length === 0) continue;
+
+      const variants = await this.db.speciesVariant.findMany({
+        where: { id: { in: variantIds } },
+        select: { id: true, speciesId: true },
+      });
+      if (
+        variants.length !== variantIds.length ||
+        variants.some((v) => v.speciesId !== s.speciesId)
+      ) {
+        throw new BadRequestException(
+          `An edit kit grant names a variant that is not a ${found.name}`,
+        );
+      }
+    }
+
+    await this.db.$transaction(async (tx) => {
+      await tx.itemUseTraitEditGrant.deleteMany({ where: { itemTypeId } });
+      await tx.itemUseTraitEditGrant.create({
+        data: {
+          itemTypeId,
+          species: {
+            create: species.map((s) => ({
+              speciesId: s.speciesId,
+              variants: {
+                create: [...new Set(s.speciesVariantIds)].map((id) => ({
+                  speciesVariantId: id,
+                })),
+              },
+            })),
+          },
+        },
+      });
+    });
+
+    return this.findItemTypeById(itemTypeId);
+  }
+
+  /** What an edit kit of this type covers, or null when it covers nothing. */
+  async findItemTypeTraitEditGrant(itemTypeId: string) {
+    return this.db.itemUseTraitEditGrant.findUnique({
+      where: { itemTypeId },
+      include: {
+        species: {
+          include: {
+            species: true,
+            variants: { include: { speciesVariant: true } },
+          },
+        },
       },
     });
   }
@@ -851,16 +999,21 @@ export class ItemsService {
     // What this item type actually does.
     const effect = await this.resolveUseEffect(item.itemType, userId);
 
-    // Redeeming an MYO ticket needs input this mutation has no way to carry
-    // -- which variant, what name, which traits -- and produces a character
-    // rather than a payout. It is `createCharacterFromMyoTicket`, which
-    // destroys the ticket itself on the same terms.
+    // Both of the other effects need input this mutation has no way to carry
+    // -- which variant, what name, which traits, which character -- and
+    // produce something other than a payout. Each has its own mutation, which
+    // destroys the item itself on the same terms.
     //
     // Refused rather than quietly no-op'd: an API caller that reached here
-    // meant to spend something, and the ticket is still theirs afterwards.
+    // meant to spend something, and the item is still theirs afterwards.
     if (effect.kind === "MYO") {
       throw new BadRequestException(
         `${item.itemType.name} is redeemed by making a character with it, not by using it from your inventory`,
+      );
+    }
+    if (effect.kind === "TRAIT_EDIT") {
+      throw new BadRequestException(
+        `${item.itemType.name} is spent by editing a character's traits with it, not by using it from your inventory`,
       );
     }
 
@@ -917,6 +1070,16 @@ export class ItemsService {
                 variants: { include: { speciesVariant: true } },
               },
             },
+            useTraitEditGrant: {
+              include: {
+                species: {
+                  include: {
+                    species: true,
+                    variants: { include: { speciesVariant: true } },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -959,6 +1122,59 @@ export class ItemsService {
   }
 
   /**
+   * Everything an edit-kit redemption needs, with every item-side reason to
+   * refuse spent.
+   *
+   * Public for the same reason {@link resolveMyoRedemption} is: the item rules
+   * belong here beside the destroy that enforces them, and the character rules
+   * belong in EditKitsService. Returns before anything is written.
+   */
+  async resolveTraitEditRedemption(itemId: string, userId: string) {
+    const item = await this.loadUsableItem(itemId, userId);
+    const effect = await this.resolveUseEffect(item.itemType, userId);
+
+    if (effect.kind !== "TRAIT_EDIT") {
+      throw new BadRequestException(
+        `${item.itemType.name} does not edit character traits`,
+      );
+    }
+
+    return { item, itemType: item.itemType, grant: effect.grant };
+  }
+
+  /**
+   * Whether an edit kit's grant covers this character.
+   *
+   * A species with no variants listed covers every variant of it, and a
+   * character with no variant set at all -- that last case is the one a
+   * variant-list check gets wrong by omission, so it is spelled out rather
+   * than falling out of a comparison.
+   */
+  static traitEditGrantCovers(
+    grant: {
+      species: Array<{
+        speciesId: string;
+        variants: Array<{ speciesVariantId: string }>;
+      }>;
+    },
+    character: { speciesId: string | null; speciesVariantId: string | null },
+  ): boolean {
+    if (!character.speciesId) return false;
+
+    const entry = grant.species.find(
+      (s) => s.speciesId === character.speciesId,
+    );
+    if (!entry) return false;
+
+    // No variants listed means every variant, including none.
+    if (entry.variants.length === 0) return true;
+
+    return entry.variants.some(
+      (v) => v.speciesVariantId === character.speciesVariantId,
+    );
+  }
+
+  /**
    * Work out what using this type does, and refuse now if it cannot.
    *
    * Everything here was already checked when staff configured the effect. It
@@ -978,6 +1194,16 @@ export class ItemsService {
           include: {
             species: true;
             variants: { include: { speciesVariant: true } };
+          };
+        };
+        useTraitEditGrant: {
+          include: {
+            species: {
+              include: {
+                species: true;
+                variants: { include: { speciesVariant: true } };
+              };
+            };
           };
         };
       };
@@ -1003,6 +1229,14 @@ export class ItemsService {
         throw new BadRequestException(`${itemType.name} does nothing yet`);
       }
       return { kind: "MYO" as const, grant };
+    }
+
+    const editGrant = itemType.useTraitEditGrant;
+    if (editGrant) {
+      if (editGrant.species.length === 0) {
+        throw new BadRequestException(`${itemType.name} does nothing yet`);
+      }
+      return { kind: "TRAIT_EDIT" as const, grant: editGrant };
     }
 
     const payout = itemType.usePayout?.components ?? [];

@@ -532,6 +532,19 @@ export const CommunityInventoryPage: React.FC = () => {
                             Make a character
                           </UseButton>
                         )}
+                        {/* An edit kit needs a character before it needs
+                            anything else, so this is a link to a picker.
+                            Nothing is consumed by following it -- the kit is
+                            spent when the change is submitted. */}
+                        {viewingSelf && h.itemType.useTraitEditGrant && (
+                          <UseButton
+                            as={Link}
+                            to={`/communities/${communityId}/edit-kits/${item.id}`}
+                            data-testid={`use-item-${item.id}`}
+                          >
+                            Edit a character
+                          </UseButton>
+                        )}
                         {/* Only on your own inventory, and only when using it
                             would do something. A Use button on somebody
                             else's items, or on one that pays nothing, is a

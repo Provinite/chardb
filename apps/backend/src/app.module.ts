@@ -50,6 +50,7 @@ import { QueueConsumerModule } from "./queue-consumer/queue-consumer.module";
 import { ImageModerationModule } from "./image-moderation/image-moderation.module";
 import { TraitReviewModule } from "./trait-review/trait-review.module";
 import { MyoModule } from "./myo/myo.module";
+import { EditKitsModule } from "./edit-kits/edit-kits.module";
 import { DeviantartUuidBackfillModule } from "./jobs/deviantart-uuid-backfill/deviantart-uuid-backfill.module";
 import { Request, Response } from "express";
 
@@ -276,6 +277,7 @@ import { Request, Response } from "express";
     ImageModerationModule,
     TraitReviewModule,
     MyoModule,
+    EditKitsModule,
     DeviantartUuidBackfillModule,
   ],
 })

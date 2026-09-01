@@ -1116,6 +1116,33 @@ export class CharactersService {
       );
     }
 
+    // A variant belongs to exactly one species, and this never checked that
+    // it was *this* character's.
+    //
+    // Nothing else did either: the input accepts `speciesVariantId`, the
+    // mapper turns it into a `connect`, and the guard only asks whether the
+    // caller may edit registry fields at all. So anyone with registry rights
+    // could put a character on a variant of an entirely different species --
+    // which then decides its trait list, its display, and what an MYO or edit
+    // kit grant matches against.
+    const connectedVariantId = (
+      characterData.speciesVariant as
+        | { connect?: { id?: string } }
+        | undefined
+    )?.connect?.id;
+
+    if (connectedVariantId) {
+      const variant = await this.db.speciesVariant.findUnique({
+        where: { id: connectedVariantId },
+        select: { speciesId: true },
+      });
+      if (!variant || variant.speciesId !== character.speciesId) {
+        throw new BadRequestException(
+          "That variant belongs to a different species",
+        );
+      }
+    }
+
     // Validate trait values if provided
     if (characterData.traitValues) {
       const traitValues =
