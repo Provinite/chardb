@@ -59,6 +59,19 @@ export interface CommunityItemsWorld {
   };
   /** The three potions `member` holds, granted during seeding as one batch. */
   grantedItems: { ids: string[] };
+  /**
+   * How many undestroyed items this world contains.
+   *
+   * Here rather than in the spec that asserts on it. The economy tile's spec
+   * used to hard-code 36; when the preset gained MYO tickets it said 38 and
+   * broke, and the first repair -- summing these arrays *in the spec* -- broke
+   * again the moment edit kits arrived. A spec in another package cannot be
+   * the place that knows what this world holds.
+   *
+   * **Adding a granted item type means adding it to this sum**, which sits
+   * beside the grants rather than a directory away.
+   */
+  totalCirculation: number;
   /** `member`'s two Coin Tickets and one Blank Ticket. */
   usableItems: { ticketIds: string[]; blankTicketId: string };
   /** `member`'s two MYO tickets. Two, so one can be spent and one kept. */
@@ -806,6 +819,14 @@ export default definePreset<CommunityItemsWorld>({
       },
       traits: { eyeColor: { id: eyeColor.id, values: eyeColorValues } },
       grantedItems: { ids: grantItem.map((i) => i.id) },
+      totalCirculation:
+        grantItem.length +
+        IMPORT_COUNT +
+        ticketItems.length +
+        blankTicketItems.length +
+        myoItems.length +
+        editKitItems.length +
+        commonOnlyKitItems.length,
       importedItems: {
         ids: importedIds,
         batchId: IMPORT_BATCH,
