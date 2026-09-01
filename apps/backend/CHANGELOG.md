@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`createCharacter` did not enforce `canCreateCharacter`.** Its resolver
+  decorator is OR'd with `@AllowAnyAuthenticated`, so any logged-in user could
+  create a character in any species through the API. Now checked in
+  `CharactersService.create`, where `assignSpecies` already checked it.
+
 ### Added
 
 - **MYO tickets.** `createCharacterFromMyoTicket` destroys a ticket and makes

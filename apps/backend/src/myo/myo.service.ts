@@ -42,13 +42,11 @@ export class MyoService {
    * `createCharacter` precisely so that exemption cannot leak onto the
    * ordinary path.
    *
-   * Worth knowing while reading that: `createCharacter` does not actually
-   * enforce `canCreateCharacter` today. It carries `@AllowAnyAuthenticated`
-   * beside the permission decorator and those are OR'd, so any logged-in user
-   * passes. The frontend hides species the member lacks the permission for,
-   * which is why nobody has noticed. That is pre-existing and not this
-   * mutation's to fix -- but it means the exemption here is currently
-   * theoretical, and will start mattering the day that guard is tightened.
+   * That exemption only means something because `CharactersService.create`
+   * now enforces `canCreateCharacter` itself. Its resolver decorator never
+   * did -- `@AllowAnyAuthenticated` sits beside the permission and the two are
+   * OR'd -- so the gate this route exists to bypass had to be built before
+   * bypassing it meant anything.
    *
    * The ordering is the same one `useItem` uses and load-bearing for the same
    * reason. Destroy first, conditionally on the member still holding it, then

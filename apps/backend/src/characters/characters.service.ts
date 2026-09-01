@@ -116,6 +116,10 @@ export class CharactersService {
     const speciesId = characterData.species?.connect?.id;
     const traitValues = characterData.traitValues;
 
+    if (speciesId) {
+      await this.assertCanCreateForSpecies(userId, speciesId);
+    }
+
     // Validate trait values if species and trait values are provided
     if (
       speciesId &&
@@ -1128,6 +1132,53 @@ export class CharactersService {
     });
 
     return updatedCharacter;
+  }
+
+  /**
+   * Refuse unless this user may create characters in the species' community.
+   *
+   * `createCharacter` has carried `@AllowCommunityPermission(CanCreateCharacter)`
+   * since it was written, but that decorator sits beside `@AllowAnyAuthenticated`
+   * and the two are OR'd -- so until this, any logged-in user could create a
+   * character in any species. The frontend's SpeciesSelector filters by the
+   * permission, which is why it went unnoticed: the hole was only reachable
+   * through the API.
+   *
+   * The check belongs here rather than in a rearranged decorator because
+   * {@link assignSpecies} already does it here, for the same permission and
+   * the same reason -- attaching a species to an existing character is the
+   * same act, done later. One of the two paths enforcing it and not the other
+   * is how the gap survived.
+   *
+   * Global admins pass. The DA import runs as one and is not necessarily a
+   * member of the community it imports into, and `@AllowGlobalAdmin` is how
+   * every comparable mutation says the same thing.
+   */
+  private async assertCanCreateForSpecies(userId: string, speciesId: string) {
+    const actor = await this.db.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+    if (actor?.isAdmin) return;
+
+    const species = await this.db.species.findUnique({
+      where: { id: speciesId },
+      select: { communityId: true },
+    });
+    if (!species) {
+      throw new NotFoundException(`Species with ID ${speciesId} not found`);
+    }
+
+    const hasPermission = await this.permissionService.hasCommunityPermission(
+      userId,
+      species.communityId,
+      CommunityPermission.CanCreateCharacter,
+    );
+    if (!hasPermission) {
+      throw new ForbiddenException(
+        "You do not have permission to create characters for this species",
+      );
+    }
   }
 
   /**

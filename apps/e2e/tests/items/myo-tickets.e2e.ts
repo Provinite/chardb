@@ -13,6 +13,7 @@ import {
   SeedApproveTraitReviewDocument,
   SeedRevertTraitReviewDocument,
   SeedUpdateRoleDocument,
+  SeedCreateCharacterDocument,
 } from "../../src/generated/graphql.js";
 
 const test = presetTest("community-items");
@@ -81,19 +82,25 @@ test.describe("spending an MYO ticket", () => {
   });
 
   test("does not need permission to create characters", async ({ world }) => {
-    // Redemption is authorized by the ticket, so taking canCreateCharacter
-    // away must not stop it. Guards against somebody later "tidying up" by
-    // adding an @AllowCommunityPermission to the mutation, which would make
-    // tickets worthless to exactly the members they are issued to.
+    // The whole point of the feature, and the assertion that fails if the
+    // ticket is not the authorization. Take canCreateCharacter off the Member
+    // role, prove ordinary creation is now refused, then redeem anyway.
     //
-    // Note this does not prove creation is otherwise gated: `createCharacter`
-    // carries @AllowAnyAuthenticated alongside its permission decorator, and
-    // those are OR'd, so any logged-in user passes it today regardless. That
-    // is pre-existing and outside this feature.
+    // The refusal half is load-bearing in both directions: it is also what
+    // proves `createCharacter` is gated at all. That check lives in
+    // CharactersService rather than on the resolver, because the resolver's
+    // permission decorator is OR'd with @AllowAnyAuthenticated and so passes
+    // everyone.
     await world.as("commadmin").gql(SeedUpdateRoleDocument, {
       id: world.roles.member,
       updateRoleInput: { canCreateCharacter: false },
     });
+
+    await expect(
+      world.as("member").gql(SeedCreateCharacterDocument, {
+        input: { name: "Refused", speciesId: world.species.id },
+      }),
+    ).rejects.toThrow(/do not have permission/i);
 
     const { createCharacterFromMyoTicket } = await world
       .as("member")
