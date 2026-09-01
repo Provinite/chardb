@@ -331,7 +331,9 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   const ticketSpendable = Boolean(
     ticket && !ticket.destroyedAt && ticket.ownerId === user?.id,
   );
-  const grant = ticketSpendable ? (ticket?.itemType?.useMyoGrant ?? null) : null;
+  const grant = ticketSpendable
+    ? (ticket?.itemType?.useMyoGrant ?? null)
+    : null;
 
   // Species and variant state
   const [selectedSpecies, setSelectedSpecies] =
